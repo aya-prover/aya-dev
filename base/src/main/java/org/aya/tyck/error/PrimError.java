@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;

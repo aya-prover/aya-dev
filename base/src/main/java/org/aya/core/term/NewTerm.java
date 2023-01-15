@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.FieldDef;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;

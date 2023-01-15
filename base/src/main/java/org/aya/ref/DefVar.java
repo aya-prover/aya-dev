@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.resolve.ResolveInfo;

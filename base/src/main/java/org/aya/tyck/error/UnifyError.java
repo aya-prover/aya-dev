@@ -3,7 +3,7 @@
 package org.aya.tyck.error;
 
 import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.ExprProblem;

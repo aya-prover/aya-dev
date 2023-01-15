@@ -4,7 +4,7 @@ package org.aya.ide.action;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;

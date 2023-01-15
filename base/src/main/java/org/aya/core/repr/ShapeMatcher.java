@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;

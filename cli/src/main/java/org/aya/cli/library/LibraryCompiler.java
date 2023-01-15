@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -14,7 +14,7 @@ import org.aya.cli.utils.AyaCompiler;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.InterruptException;

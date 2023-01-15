@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -8,17 +8,21 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.LitKind;
-import org.aya.cli.parse.AyaGKProducer;
+import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.GeneralizedVar;
+import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
-import org.aya.generic.util.InternalException;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.util.InternalException;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Link;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -48,7 +52,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var addition = lexer.allTheWayDown().view()
         .filter(x -> AyaParserDefinitionBase.NOT_IN_CONCRETE.contains(x.type()))
         .map(token -> {
-          var sourcePos = AyaGKProducer.sourcePosOf(token, file);
+          var sourcePos = AyaProducer.sourcePosOf(token, file);
           HighlightInfo.HighlightSymbol type;
           if (AyaParserDefinitionBase.KEYWORDS.contains(token.type())) {
             type = new HighlightInfo.SymLit(LitKind.Keyword);

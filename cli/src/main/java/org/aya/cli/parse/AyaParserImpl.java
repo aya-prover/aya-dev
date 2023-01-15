@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -41,7 +41,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
     var node = parseNode("prim a : " + code);
     var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
-    return new AyaGKProducer(Either.right(sourcePos), reporter).type(type);
+    return new AyaProducer(Either.right(sourcePos), reporter).type(type);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
@@ -55,7 +55,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
 
   private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull String code, @NotNull SourceFile errorReport) {
     var node = reportErrorElements(parseNode(code), errorReport);
-    return new AyaGKProducer(Either.left(errorReport), reporter).program(node);
+    return new AyaProducer(Either.left(errorReport), reporter).program(node);
   }
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {
@@ -72,7 +72,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     node.childrenView()
       .filter(i -> ERROR.contains(i.elementType()))
       .forEach(e ->
-        reporter.report(new ParseError(AyaGKProducer.sourcePosOf(e, file),
+        reporter.report(new ParseError(AyaProducer.sourcePosOf(e, file),
           "Cannot parse")
         ));
     return node;

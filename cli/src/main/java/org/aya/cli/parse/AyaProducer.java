@@ -24,6 +24,9 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.DeclInfo;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
@@ -57,11 +60,11 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  *     For psi nodes with <code>extends</code> attribute in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
  *     <ul>
  *       <li>Use {@link GenericNode#peekChild(TokenSet)}, {@link GenericNode#child(TokenSet)} if you want to obtain
- *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaGKProducer#EXPR}, {@link AyaGKProducer#STMT},
- *       {@link AyaGKProducer#ARGUMENT} and something alike.</li>
+ *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaProducer#EXPR}, {@link AyaProducer#STMT},
+ *       {@link AyaProducer#ARGUMENT} and something alike.</li>
  *       <li>Use {@link GenericNode#is(IElementType)} to pattern-matching on the node.</li>
  *       <li>Note that extends nodes are flattened so producing concrete tree from parse tree is different from
- *       other nodes, compare {@link AyaGKProducer#expr(GenericNode)} and its bnf rule for more details.</li>
+ *       other nodes, compare {@link AyaProducer#expr(GenericNode)} and its bnf rule for more details.</li>
  *       <li>You may inspect the produced node tree by the <code>toDebugString</code> method.</li>
  *       <li>If you edited extends attribute in the bnf file, do not forgot to update them here. We don't have any compile-time error
  *       thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!</li>
@@ -72,7 +75,7 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  * @author kiva
  * @see AyaPsiElementTypes
  */
-public record AyaGKProducer(
+public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
@@ -368,17 +371,12 @@ public record AyaGKProducer(
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var bind = node.peekChild(BIND_BLOCK);
+    var info = declInfo(node, x -> false);
     return new TeleDecl.StructField(
-      nameOrInfix.component1().sourcePos(),
-      sourcePosOf(node),
-      nameOrInfix.component2(),
-      nameOrInfix.component1().data(),
-      tele,
+      info.info, info.name, tele,
       typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
-      node.peekChild(KW_COERCE) != null,
-      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+      node.peekChild(KW_COERCE) != null
     );
   }
 

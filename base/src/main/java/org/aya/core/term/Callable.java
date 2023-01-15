@@ -3,8 +3,8 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;

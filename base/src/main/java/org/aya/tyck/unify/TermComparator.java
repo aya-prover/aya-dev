@@ -9,7 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;

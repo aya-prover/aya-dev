@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -9,14 +9,14 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.cli.literate.SyntaxHighlight;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.ide.Resolver;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
