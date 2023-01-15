@@ -88,7 +88,7 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    *
    * @author kiva
    */
-  sealed interface Resulted permits ClassDecl, Telescopic {
+  sealed interface Resulted permits Telescopic {
     @Nullable Expr result();
     void modifyResult(@NotNull UnaryOperator<@NotNull Expr> f);
   }
