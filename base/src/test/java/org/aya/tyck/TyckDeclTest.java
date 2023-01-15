@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -7,7 +7,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;

@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.ref.DefVar;

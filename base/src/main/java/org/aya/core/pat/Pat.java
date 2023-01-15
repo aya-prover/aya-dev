@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.repr.ShapeRecognition;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide;
 
@@ -8,10 +8,10 @@ import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;

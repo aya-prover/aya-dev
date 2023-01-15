@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -8,8 +8,8 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.FindReferences;
 import org.aya.ide.syntax.SyntaxDeclAction;

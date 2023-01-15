@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.function.TriFunction;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.generic.util.NormalizeMode;

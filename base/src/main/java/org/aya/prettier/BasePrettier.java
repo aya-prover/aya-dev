@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -7,7 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.guest0x0.cubical.Formula;

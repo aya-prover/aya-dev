@@ -4,8 +4,8 @@ package org.aya.core.def;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Decl;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;

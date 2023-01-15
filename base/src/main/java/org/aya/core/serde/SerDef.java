@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import kala.tuple.Tuple;
-import org.aya.concrete.stmt.TeleDecl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;

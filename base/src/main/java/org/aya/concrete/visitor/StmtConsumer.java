@@ -2,7 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Generalize;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.ClassDecl;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;

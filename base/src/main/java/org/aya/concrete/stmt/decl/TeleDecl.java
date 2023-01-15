@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.stmt;
+package org.aya.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -8,6 +8,7 @@ import kala.control.Either;
 import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
+import org.aya.concrete.stmt.BindBlock;
 import org.aya.core.def.*;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.SortTerm;

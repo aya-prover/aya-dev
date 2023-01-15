@@ -12,6 +12,8 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.decl.Decl;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;

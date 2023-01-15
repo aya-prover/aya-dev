@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -6,8 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.ide.Resolver;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.util.error.SourcePos;
