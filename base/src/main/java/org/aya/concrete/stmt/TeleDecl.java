@@ -16,7 +16,6 @@ import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.util.Arg;
-import org.aya.util.binop.OpDecl;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,20 +38,18 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   public @Nullable Def.Signature<RetTy> signature;
 
   public sealed abstract static class TopLevel<RetTy extends Term> extends TeleDecl<RetTy> implements Decl.TopLevel {
-    private final @NotNull Decl.Personality personality;
+    private final @NotNull DeclInfo.Personality personality;
     public @Nullable Context ctx = null;
 
     protected TopLevel(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility, @Nullable OpInfo opInfo,
-      @NotNull BindBlock bindBlock, @NotNull ImmutableSeq<Expr.Param> telescope,
-      @Nullable Expr result, @NotNull Personality personality
+      @NotNull DeclInfo info, @NotNull ImmutableSeq<Expr.Param> telescope,
+      @Nullable Expr result, @NotNull DeclInfo.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result);
+      super(info, telescope, result);
       this.personality = personality;
     }
 
-    @Override public @NotNull Decl.Personality personality() {
+    @Override public @NotNull DeclInfo.Personality personality() {
       return personality;
     }
 
@@ -86,14 +83,11 @@ public sealed abstract class TeleDecl<RetTy extends Term>
   }
 
   protected TeleDecl(
-    @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-    @NotNull Accessibility accessibility,
-    @Nullable OpInfo opInfo,
-    @NotNull BindBlock bindBlock,
+    @NotNull DeclInfo info,
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @Nullable Expr result
   ) {
-    super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
+    super(info);
     this.result = result;
     this.telescope = telescope;
   }
@@ -115,7 +109,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, null, BindBlock.EMPTY, telescope, result, Personality.NORMAL);
+      super(new DeclInfo(Accessibility.Public, sourcePos, entireSourcePos, null, BindBlock.EMPTY), telescope, result, DeclInfo.Personality.NORMAL);
       this.ref = DefVar.concrete(this, name);
     }
 
@@ -148,7 +142,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       boolean coerce, @Nullable Expr result,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, bindBlock, telescope, result);
+      super(new DeclInfo(Accessibility.Public, sourcePos, entireSourcePos, opInfo, bindBlock), telescope, result);
       this.clauses = clauses;
       this.coerce = coerce;
       this.patterns = patterns;
@@ -182,17 +176,14 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public final @NotNull MutableList<@NotNull CtorDef> checkedBody = MutableList.create();
 
     public DataDecl(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility,
-      @Nullable OpInfo opInfo,
+      @NotNull DeclInfo info,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result,
       @NotNull ImmutableSeq<DataCtor> body,
-      @NotNull BindBlock bindBlock,
-      @NotNull Decl.Personality personality
+      @NotNull DeclInfo.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
+      super(info, telescope, result, personality);
       this.body = body;
       this.ref = DefVar.concrete(this, name);
       body.forEach(ctors -> ctors.dataRef = ref);
@@ -213,18 +204,15 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public final @NotNull ImmutableSeq<StructField> fields;
 
     public StructDecl(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility,
-      @Nullable OpInfo opInfo,
+      @NotNull DeclInfo info,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
       // @NotNull ImmutableSeq<String> superClassNames,
       @NotNull ImmutableSeq<StructField> fields,
-      @NotNull BindBlock bindBlock,
-      @NotNull Decl.Personality personality
+      @NotNull DeclInfo.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
+      super(info, telescope, result, personality);
       this.fields = fields;
       this.ref = DefVar.concrete(this, name);
       fields.forEach(field -> field.structRef = ref);
@@ -251,7 +239,7 @@ public sealed abstract class TeleDecl<RetTy extends Term>
       boolean coerce,
       @NotNull BindBlock bindBlock
     ) {
-      super(sourcePos, entireSourcePos, Accessibility.Public, opInfo, bindBlock, telescope, result);
+      super(new DeclInfo(Accessibility.Public, sourcePos, entireSourcePos, opInfo, bindBlock), telescope, result);
       this.coerce = coerce;
       this.body = body;
       this.ref = DefVar.concrete(this, name);
@@ -274,18 +262,15 @@ public sealed abstract class TeleDecl<RetTy extends Term>
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
 
     public FnDecl(
-      @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
-      @NotNull Accessibility accessibility,
+      @NotNull DeclInfo info,
       @NotNull EnumSet<Modifier> modifiers,
-      @Nullable OpDecl.OpInfo opInfo,
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
-      @NotNull BindBlock bindBlock,
-      @NotNull Decl.Personality personality
+      @NotNull DeclInfo.Personality personality
     ) {
-      super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock, telescope, result, personality);
+      super(info, telescope, result, personality);
       this.modifiers = modifiers;
       this.ref = DefVar.concrete(this, name);
       this.body = body;

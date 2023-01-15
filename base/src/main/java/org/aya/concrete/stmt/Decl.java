@@ -40,21 +40,27 @@ import java.util.function.UnaryOperator;
  * @see ClassDecl
  */
 public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits CommonDecl {
-  /** @see org.aya.generic.Modifier */
-  enum Personality {
-    /** Denotes that the definition is a normal definition (default behavior) */
-    NORMAL,
-    /** Denotes that the definition is an example (same as normal, but in separated context) */
-    EXAMPLE,
-    /** Denotes that the definition is a counterexample (errors expected, in separated context) */
-    COUNTEREXAMPLE,
+  @Contract(pure = true) @NotNull DefVar<?, ?> ref();
+  @Contract(pure = true) @NotNull DeclInfo info();
+  default @NotNull BindBlock bindBlock() {
+    return info().bindBlock();
   }
 
-  @Override @NotNull Accessibility accessibility();
-  @Contract(pure = true) @NotNull DefVar<?, ?> ref();
-  @NotNull BindBlock bindBlock();
-  @Override @Nullable OpInfo opInfo();
-  @NotNull SourcePos entireSourcePos();
+  default @NotNull SourcePos entireSourcePos() {
+    return info().entireSourcePos();
+  }
+
+  @Override default @NotNull SourcePos sourcePos() {
+    return info().sourcePos();
+  }
+
+  @Override default @NotNull Accessibility accessibility() {
+    return info().accessibility();
+  }
+
+  @Override default @Nullable OpInfo opInfo() {
+    return info().opInfo();
+  }
 
   @Override default boolean needTyck(@NotNull ImmutableSeq<String> currentMod) {
     return ref().isInModule(currentMod) && ref().core == null;
@@ -79,7 +85,7 @@ public sealed interface Decl extends OpDecl, SourceNode, TyckUnit, Stmt permits 
    * @author kiva
    */
   sealed interface TopLevel permits ClassDecl, TeleDecl.TopLevel {
-    @NotNull Personality personality();
+    @NotNull DeclInfo.Personality personality();
     @Nullable Context getCtx();
     void setCtx(@NotNull Context ctx);
   }

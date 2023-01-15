@@ -4,8 +4,6 @@ package org.aya.concrete.stmt;
 
 import org.aya.core.def.ClassDef;
 import org.aya.resolve.context.Context;
-import org.aya.util.binop.OpDecl;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
  * @see Decl
  */
 public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implements Decl.TopLevel {
-  private final @NotNull Decl.Personality personality;
+  private final @NotNull DeclInfo.Personality personality;
   public @Nullable Context ctx = null;
 
-  @Override public @NotNull Decl.Personality personality() {
+  @Override public @NotNull DeclInfo.Personality personality() {
     return personality;
   }
 
@@ -31,15 +29,8 @@ public non-sealed/*sealed*/ abstract class ClassDecl extends CommonDecl implemen
     this.ctx = ctx;
   }
 
-  protected ClassDecl(
-    @NotNull SourcePos sourcePos,
-    @NotNull SourcePos entireSourcePos,
-    @Nullable OpDecl.OpInfo opInfo,
-    @NotNull BindBlock bindBlock,
-    @NotNull Decl.Personality personality,
-    @NotNull Accessibility accessibility
-  ) {
-    super(sourcePos, entireSourcePos, accessibility, opInfo, bindBlock);
+  protected ClassDecl(@NotNull DeclInfo info, @NotNull DeclInfo.Personality personality) {
+    super(info);
     this.personality = personality;
   }
 }

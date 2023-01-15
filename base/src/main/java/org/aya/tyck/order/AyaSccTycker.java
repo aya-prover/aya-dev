@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.DeclInfo;
 import org.aya.concrete.stmt.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
@@ -199,7 +200,7 @@ public record AyaSccTycker(
 
   private @NotNull ExprTycker reuseTopLevel(@NotNull Decl.TopLevel decl) {
     // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality() == Decl.Personality.COUNTEREXAMPLE) {
+    if (decl.personality() == DeclInfo.Personality.COUNTEREXAMPLE) {
       var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
       return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder);
     }

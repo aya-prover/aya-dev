@@ -98,7 +98,7 @@ public record AyaGKProducer(
       var stmts = MutableList.<Stmt>create();
       var result = decl(node, stmts);
       if (result != null) stmts.prepend(result);
-      if (result instanceof Decl.TopLevel top && top.personality() == Decl.Personality.COUNTEREXAMPLE) {
+      if (result instanceof Decl.TopLevel top && top.personality() == DeclInfo.Personality.COUNTEREXAMPLE) {
         stmts.firstOption(stmt -> !(stmt instanceof Decl))
           .ifDefined(stmt -> reporter.report(new BadCounterexampleWarn(stmt)));
         return stmts.<Stmt>filterIsInstance(Decl.class).toImmutableSeq();
@@ -289,18 +289,21 @@ public record AyaGKProducer(
       var gelatin = inline.get();
       reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
     }
-    return new TeleDecl.FnDecl(
+    var info = new DeclInfo(
+      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
-      sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
+      nameOrInfix.component2(),
+      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+    );
+    return new TeleDecl.FnDecl(
+      info,
       modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
         () -> EnumSet.noneOf(Modifier.class))),
-      nameOrInfix.component2(),
       nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       dynamite,
-      bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
   }
@@ -325,7 +328,7 @@ public record AyaGKProducer(
       modiSet.accessibility().data(),
       new QualifiedID(decl.sourcePos(), decl.ref().name()),
       UseHide.EMPTY,
-      modiSet.personality().data() == Decl.Personality.EXAMPLE,
+      modiSet.personality().data() == DeclInfo.Personality.EXAMPLE,
       true
     ));
   }
@@ -342,16 +345,19 @@ public record AyaGKProducer(
     var bind = node.peekChild(BIND_BLOCK);
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var decl = new TeleDecl.DataDecl(
+    var info = new DeclInfo(
+      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
-      sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component2(),
+      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+    );
+    var decl = new TeleDecl.DataDecl(
+      info,
       nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       body,
-      bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
 
@@ -380,16 +386,19 @@ public record AyaGKProducer(
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var decl = new TeleDecl.StructDecl(
+    var info = new DeclInfo(
+      sample == DeclInfo.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component1().sourcePos(),
       sourcePosOf(node),
-      sample == Decl.Personality.NORMAL ? acc : Stmt.Accessibility.Private,
       nameOrInfix.component2(),
+      bind == null ? BindBlock.EMPTY : bindBlock(bind)
+    );
+    var decl = new TeleDecl.StructDecl(
+      info,
       nameOrInfix.component1().data(),
       tele,
       typeOrNull(node.peekChild(TYPE)),
       fields,
-      bind == null ? BindBlock.EMPTY : bindBlock(bind),
       sample
     );
     giveMeOpen(modifier, decl, additional);
@@ -940,10 +949,10 @@ public record AyaGKProducer(
     return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
-  public @NotNull Decl.Personality sampleModifiers(@Nullable GenericNode<?> node) {
-    if (node == null) return Decl.Personality.NORMAL;
-    if (node.peekChild(KW_EXAMPLE) != null) return Decl.Personality.EXAMPLE;
-    if (node.peekChild(KW_COUNTEREXAMPLE) != null) return Decl.Personality.COUNTEREXAMPLE;
+  public @NotNull DeclInfo.Personality sampleModifiers(@Nullable GenericNode<?> node) {
+    if (node == null) return DeclInfo.Personality.NORMAL;
+    if (node.peekChild(KW_EXAMPLE) != null) return DeclInfo.Personality.EXAMPLE;
+    if (node.peekChild(KW_COUNTEREXAMPLE) != null) return DeclInfo.Personality.COUNTEREXAMPLE;
     return unreachable(node);
   }
 

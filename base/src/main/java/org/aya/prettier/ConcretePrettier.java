@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -332,8 +332,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     };
   }
 
-  private Stmt.Accessibility defaultAcc(@NotNull Decl.Personality personality) {
-    return personality == Decl.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
+  private Stmt.Accessibility defaultAcc(@NotNull DeclInfo.Personality personality) {
+    return personality == DeclInfo.Personality.NORMAL ? Stmt.Accessibility.Public : Stmt.Accessibility.Private;
   }
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
@@ -422,7 +422,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         term(Outer.Free, doBind.expr()));
   }
 
-  public @NotNull Doc visitPersonality(@NotNull Decl.Personality personality) {
+  public @NotNull Doc visitPersonality(@NotNull DeclInfo.Personality personality) {
     return switch (personality) {
       case NORMAL -> Doc.empty();
       case EXAMPLE -> Doc.styled(KEYWORD, "example");
