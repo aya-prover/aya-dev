@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.generic.Constants;
 import org.aya.generic.util.InterruptException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
@@ -31,8 +30,6 @@ import java.util.function.Predicate;
  * @author re-xyr
  */
 public interface Context {
-  ImmutableSeq<String> TOP_LEVEL_MOD_NAME = ImmutableSeq.empty();
-
   @Nullable Context parent();
   @NotNull Reporter reporter();
   @NotNull Path underlyingFile();
@@ -229,7 +226,8 @@ public interface Context {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
     var exists = getUnqualifiedMaybe(name, null, sourcePos);
-    if (toWarn.test(exists == null ? null : exists.data()) && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
+    if (toWarn.test(exists == null ? null : exists.data())
+      && (!(ref.generateKind() instanceof GenerateKind.Anonymous))) {
       reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
