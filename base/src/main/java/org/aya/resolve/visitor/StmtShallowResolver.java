@@ -10,7 +10,6 @@ import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
-import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;
@@ -42,7 +41,7 @@ public record StmtShallowResolver(
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
-        context.importModules(ModulePath.This.resolve(mod.name()), newCtx.exports(), mod.accessibility(), mod.sourcePos());
+        context.importModuleExports(ModulePath.This.resolve(mod.name()), newCtx.exports(), mod.accessibility(), mod.sourcePos());
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path().asModulePath();
@@ -52,7 +51,7 @@ public record StmtShallowResolver(
         var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
         var as = cmd.asName();
         var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
-        context.importModules(importedName, mod.exports(), Stmt.Accessibility.Private, cmd.sourcePos());
+        context.importModuleExports(importedName, mod.exports(), Stmt.Accessibility.Private, cmd.sourcePos());
         // TODO: ModulePath
         resolveInfo.imports().put(importedName, success);
       }

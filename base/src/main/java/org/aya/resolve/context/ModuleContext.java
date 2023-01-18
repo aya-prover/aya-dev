@@ -35,16 +35,26 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    * @apiNote empty list => this module
    * @implNote This module should be automatically imported.
    */
-  @Override @NotNull MutableMap<ModulePath, MutableModuleExport> modules();
+  @Override @NotNull MutableMap<ModulePath, ModuleExport> modules();
+
+  @NotNull MutableModuleExport thisModule();
+
+  default void importModule(
+    @NotNull ModuleLikeContext module,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
+    importModuleExports(ModulePath.ofQualified(module.moduleName()), module.exports(), accessibility, sourcePos);
+  }
 
   /**
    * Import the whole module (including itself and re-exports)
    *
-   * @see ModuleContext#importModule(ModulePath.Qualified, MutableModuleExport, Stmt.Accessibility, SourcePos)
+   * @see ModuleContext#importModule(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
    */
-  default void importModules(
+  default void importModuleExports(
     @NotNull ModulePath.Qualified modName,
-    @NotNull Map<ModulePath, MutableModuleExport> module,
+    @NotNull Map<ModulePath, ModuleExport> module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
@@ -60,7 +70,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    */
   default void importModule(
     @NotNull ModulePath.Qualified componentName,
-    @NotNull MutableModuleExport moduleExport,
+    @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
@@ -157,8 +167,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
   default void doDefine(@NotNull String name, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
     if (ref instanceof DefVar<?, ?> defVar) {
-      var thisModule = modules().get(ModulePath.This);
-      var success = thisModule.export(ModulePath.This, name, defVar);
+      var success = thisModule().export(ModulePath.This, name, defVar);
 
       if (!success) {
         reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));

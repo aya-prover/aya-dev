@@ -44,7 +44,7 @@ public record MockModuleContext(
   }
 
   @Override
-  public @NotNull Map<ModulePath, MutableModuleExport> modules() {
+  public @NotNull Map<ModulePath, ModuleExport> modules() {
     return ImmutableMap.of(ModulePath.This, thisExports);
   }
 
@@ -85,7 +85,7 @@ public record MockModuleContext(
   }
 
   @Override
-  public @NotNull Map<ModulePath, MutableModuleExport> exports() {
+  public @NotNull Map<ModulePath, ModuleExport> exports() {
     return Map.of(ModulePath.This, thisExports());
   }
 }

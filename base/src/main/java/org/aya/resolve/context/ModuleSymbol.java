@@ -3,6 +3,8 @@
 package org.aya.resolve.context;
 
 import kala.collection.Map;
+import kala.collection.MapView;
+import kala.collection.SetView;
 import kala.control.Option;
 import kala.control.Result;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +52,17 @@ public interface ModuleSymbol<T extends ContextUnit> {
 
   boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified);
 
+  /// region API Adapter
+
   @NotNull Map<String, Map<ModulePath, T>> toMap();
 
+  @NotNull SetView<String> keysView();
+
+  @NotNull MapView<String, Map<ModulePath, T>> view();
+
   void forEach(@NotNull BiConsumer<String, Map<ModulePath, T>> action);
+
+  /// endregion
 
   enum Error {
     NotFound,

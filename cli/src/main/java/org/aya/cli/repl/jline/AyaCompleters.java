@@ -46,7 +46,7 @@ public interface AyaCompleters {
       context.modules.view().forEach((mod, contents) -> {
         var modName = mod.toImmutableSeq().joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR);
         if (!modName.startsWith(fixed.component1())) return;
-        contents.symbols().table().keysView()
+        contents.symbols().keysView()
           .map(name -> (fixed.component2() ? Constants.SCOPE_SEPARATOR : modName) + name)
           .map(Candidate::new)
           .forEach(candidates::add);

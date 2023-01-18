@@ -33,15 +33,15 @@ public interface ModuleLikeContext extends Context {
   /**
    * Modules this module imported (including itself)
    */
-  @NotNull Map<ModulePath, MutableModuleExport> modules();
+  @NotNull Map<ModulePath, ModuleExport> modules();
 
   /**
    * The things that this module exported.
    */
-  @NotNull Map<ModulePath, MutableModuleExport> exports();
+  @NotNull Map<ModulePath, ModuleExport> exports();
 
   @Override
-  default @Nullable MutableModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
+  default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
     return modules().getOrNull(modName);
   }
 

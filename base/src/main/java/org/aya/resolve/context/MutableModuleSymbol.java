@@ -3,6 +3,8 @@
 package org.aya.resolve.context;
 
 import kala.collection.Map;
+import kala.collection.MapView;
+import kala.collection.SetView;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
@@ -40,6 +42,16 @@ public record MutableModuleSymbol<T extends ContextUnit>(
   @Override
   public @NotNull Map<String, Map<ModulePath, T>> toMap() {
     return Map.from(table().toImmutableSeq());
+  }
+
+  @Override
+  public @NotNull SetView<String> keysView() {
+    return table().keysView();
+  }
+
+  @Override
+  public @NotNull MapView<String, Map<ModulePath, T>> view() {
+    return table().view().mapValues((k, v) -> v);
   }
 
   /**

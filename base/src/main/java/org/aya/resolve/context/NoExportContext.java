@@ -19,7 +19,7 @@ import java.nio.file.Path;
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
   @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols,
-  @NotNull MutableMap<ModulePath, MutableModuleExport> modules
+  @NotNull MutableMap<ModulePath, ModuleExport> modules
 ) implements ModuleContext {
   @Override
   public @NotNull ImmutableSeq<String> moduleName() {
@@ -39,7 +39,13 @@ public record NoExportContext(
   }
 
   @Override
-  public @NotNull Map<ModulePath, MutableModuleExport> exports() {
+  public @NotNull Map<ModulePath, ModuleExport> exports() {
     return Map.empty();
+  }
+
+  @Override
+  public @NotNull MutableModuleExport thisModule() {
+    // TODO: too dirty!!
+    return (MutableModuleExport) modules().get(ModulePath.This);
   }
 }

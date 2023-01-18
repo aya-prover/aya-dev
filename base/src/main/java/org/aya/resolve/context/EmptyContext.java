@@ -42,7 +42,7 @@ public record EmptyContext(
   }
 
   @Override
-  public @Nullable MutableModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
+  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
     return null;
   }
 }

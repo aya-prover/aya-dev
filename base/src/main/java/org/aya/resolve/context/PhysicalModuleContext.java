@@ -20,10 +20,12 @@ import org.jetbrains.annotations.Nullable;
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols = new MutableModuleSymbol<>();
-  public final @NotNull MutableMap<ModulePath, MutableModuleExport> modules =
-    MutableHashMap.of(ModulePath.This, new MutableModuleExport());
-  public final @NotNull MutableMap<ModulePath, MutableModuleExport> exports =
-    MutableHashMap.of(ModulePath.This, new MutableModuleExport());
+  public final @NotNull MutableModuleExport thisModule = new MutableModuleExport();
+  public final @NotNull MutableModuleExport thisModuleExport = new MutableModuleExport();
+  public final @NotNull MutableMap<ModulePath, ModuleExport> modules =
+          MutableHashMap.of(ModulePath.This, thisModule);
+  public final @NotNull MutableMap<ModulePath, ModuleExport> exports =
+          MutableHashMap.of(ModulePath.This, thisModuleExport);
   public final @NotNull MutableSet<String> duplicated = MutableSet.create();
 
   private final @NotNull ImmutableSeq<String> moduleName;
@@ -41,10 +43,10 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
-    @NotNull ModulePath.Qualified componentName,
-    @NotNull MutableModuleExport modExport,
-    @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+          @NotNull ModulePath.Qualified componentName,
+          @NotNull ModuleExport modExport,
+          @NotNull Stmt.Accessibility accessibility,
+          @NotNull SourcePos sourcePos
   ) {
     ModuleContext.super.importModule(componentName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
@@ -56,8 +58,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
     if (duplicated.contains(name)) return;
 
-    var myExport = exports.get(ModulePath.This);
-    var success = myExport.export(componentName, name, ref);
+    var success = thisModuleExport.export(componentName, name, ref);
 
     if (!success) {
       reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
@@ -77,12 +78,17 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return symbols;
   }
 
-  @Override public @NotNull MutableMap<ModulePath, MutableModuleExport> modules() {
+  @Override public @NotNull MutableMap<ModulePath, ModuleExport> modules() {
     return modules;
   }
 
   @Override
-  public @NotNull Map<ModulePath, MutableModuleExport> exports() {
-    return exports;
+  public @NotNull Map<ModulePath, ModuleExport> exports() {
+    return Map.from(exports);
+  }
+
+  @Override
+  public @NotNull MutableModuleExport thisModule() {
+    return thisModule;
   }
 }

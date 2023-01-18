@@ -188,7 +188,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  @Nullable MutableModuleExport getModuleLocalMaybe(@NotNull ModulePath modName);
+  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName);
 
   /**
    * Trying to get a {@link MutableModuleExport} of module {@param modName}.
@@ -196,7 +196,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  default @Nullable MutableModuleExport getModuleMaybe(@NotNull ModulePath modName) {
+  default @Nullable ModuleExport getModuleMaybe(@NotNull ModulePath modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 

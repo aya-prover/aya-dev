@@ -118,11 +118,7 @@ public class ReplCompiler {
     owner.librarySources()
       .map(src -> src.resolveInfo().get().thisModule())
       .filterIsInstance(PhysicalModuleContext.class)
-      .forEach(mod -> context.importModules(
-        ModulePath.ofQualified(context.moduleName()),
-        context.exports(),
-        Stmt.Accessibility.Public,
-        SourcePos.NONE));
+      .forEach(mod -> context.importModule(mod, Stmt.Accessibility.Public, SourcePos.NONE));
     owner.libraryDeps().forEach(this::importModule);
   }
 

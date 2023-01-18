@@ -97,7 +97,7 @@ public record CompiledAya(
     var serialization = new Serialization(state, resolveInfo, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
-    var exports = ctx.exports().get(ModulePath.This).symbols().table().view().map((k, vs) ->
+    var exports = ctx.exports().get(ModulePath.This).symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::toImmutableSeq))));
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
@@ -186,7 +186,7 @@ public record CompiledAya(
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
-      thisResolve.thisModule().importModules(componentName, mod.exports(), Stmt.Accessibility.Private, SourcePos.SER);
+      thisResolve.thisModule().importModuleExports(componentName, mod.exports(), Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(componentName,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
@@ -280,7 +280,7 @@ public record CompiledAya(
           if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
           innerCtx.define(ctorDef.ref(), SourcePos.SER);
         });
-        context.importModules(
+        context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),
           innerCtx.exports(),
           Stmt.Accessibility.Public,
@@ -293,7 +293,7 @@ public record CompiledAya(
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
           innerCtx.define(fieldDef.ref(), SourcePos.SER);
         });
-        context.importModules(
+        context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),
           innerCtx.exports(),
           Stmt.Accessibility.Public,
