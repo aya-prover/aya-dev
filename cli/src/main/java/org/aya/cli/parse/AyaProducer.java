@@ -173,7 +173,8 @@ public record AyaProducer(
       var asId = weakId(useAs.child(WEAK_ID)).data();
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
-      return new UseHide.Name(wholePos, name.data(), asId,
+      var qname = new QualifiedID(wholePos, name.data());    // TODO: Fix this
+      return new UseHide.Name(qname, asId,
         asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });

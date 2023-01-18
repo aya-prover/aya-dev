@@ -4,14 +4,11 @@ package org.aya.cli.repl;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.value.MutableValue;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.ref.AnyVar;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.ref.DefVar;
+import org.aya.resolve.context.*;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,23 +22,31 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   @Override
   public void addGlobal(
-    @NotNull ImmutableSeq<String> modName,
-    @NotNull String name,
-    Stmt.@NotNull Accessibility accessibility,
-    @NotNull AnyVar ref,
-    @NotNull SourcePos sourcePos) {
-    definitions.getOrPut(name, MutableHashMap::of).set(modName, ref);
-    if (accessibility == Stmt.Accessibility.Public) {
-      exports.get(TOP_LEVEL_MOD_NAME).exportAnyway(name, ref);
+    @NotNull GlobalSymbol symbol,
+    @NotNull SourcePos sourcePos
+  ) {
+    var modName = symbol.componentName();
+    var name = symbol.unqualifiedName();
+    symbols().addAnyway(modName, name, symbol.data());
+
+    var export = symbol.exportMaybe();
+    if (export != null) {
+      this.doExport(modName, name, export, sourcePos);
     }
   }
 
   @Override
+  public void doExport(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    exports().get(ModulePath.This).exportAnyway(component, name, ref);
+  }
+
+  @Override
   public void importModule(
+    @NotNull ModulePath.Qualified componentName,
+    @NotNull MutableModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
-    @NotNull SourcePos sourcePos,
-    ImmutableSeq<String> componentName,
-    ModuleExport mod) {
+    @NotNull SourcePos sourcePos
+  ) {
     modules.put(componentName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
   }
@@ -70,7 +75,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var bors = downstream.get();
     RepoLike.super.merge();
     if (bors == null) return;
-    this.definitions.putAll(bors.definitions);
+    this.symbols.table().putAll(bors.symbols.table());
     this.exports.putAll(bors.exports);
     this.modules.putAll(bors.modules);
   }
