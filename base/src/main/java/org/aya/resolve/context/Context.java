@@ -12,6 +12,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.InterruptException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.error.AccessibilityError;
 import org.aya.resolve.error.NameProblem;
@@ -55,12 +56,12 @@ public interface Context {
     else return p.moduleName();
   }
 
-  @Contract("_->fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
+  @Contract("_ -> fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
     reporter().report(problem);
     throw new ResolvingInterruptedException();
   }
 
-  default <T> @NotNull T reportAllAndThrow(@NotNull SeqLike<Problem> problems) {
+  @Contract("_ -> fail") default <T> @NotNull T reportAllAndThrow(@NotNull SeqLike<Problem> problems) {
     reportAll(problems);
     throw new ResolvingInterruptedException();
   }
@@ -75,7 +76,7 @@ public interface Context {
 
   default @NotNull ContextUnit get(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
     return name.isUnqualified()
-      ? getUnqualified(name.justName(), accessibility, name.sourcePos())
+      ? getUnqualified(name.name(), accessibility, name.sourcePos())
       : getQualified(name, accessibility, name.sourcePos());
   }
 
@@ -84,13 +85,13 @@ public interface Context {
   }
 
   /**
-   * Trying to obtain a symbol by {@param name}
+   * Trying to get a symbol by {@param name}
    *
    * @return null if failed
    */
   default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
     return name.isUnqualified()
-      ? getUnqualifiedMaybe(name.justName(), accessibility, name.sourcePos())
+      ? getUnqualifiedMaybe(name.name(), accessibility, name.sourcePos())
       : getQualifiedMaybe(name, accessibility, name.sourcePos());
   }
 
@@ -99,9 +100,7 @@ public interface Context {
   }
 
   /**
-   * Searching a symbol by {@param name} in {@code this} context with {@param accessibility}
-   *
-   * @param accessibility null if no accessibility check
+   * Trying to get a symbol by unqualified name {@param name} in {@code this} context with {@param accessibility}
    */
   @Nullable ContextUnit getUnqualifiedLocalMaybe(
     @NotNull String name,
@@ -109,6 +108,15 @@ public interface Context {
     @NotNull SourcePos sourcePos
   );
 
+  /**
+   * Trying to get a symbol which can referred by unqualified name {@param name} in the whole context with {@param accessibility}.
+   *
+   * @param name          the unqualified name
+   * @param accessibility the accessibility, null if no accessibility checking
+   * @param sourcePos     the source pos for error reporting
+   * @return null if not found
+   * @see Context#getUnqualifiedLocalMaybe(String, Stmt.Accessibility, SourcePos)
+   */
   default @Nullable ContextUnit getUnqualifiedMaybe(
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
@@ -157,7 +165,7 @@ public interface Context {
   }
 
   /**
-   * Searching a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}<br/>
+   * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}<br/>
    * You should import the module before referring something in it.
    *
    * @param accessibility null if no accessibility check
