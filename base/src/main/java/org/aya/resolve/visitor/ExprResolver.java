@@ -246,7 +246,7 @@ public record ExprResolver(
           case Pattern.QualifiedRef qref -> {
             var qid = qref.qualifiedID();
             var maybe = ctx.get().iterate(c -> {
-              var myMaybe = c.getQualifiedLocalMaybe(qid.component(), qid.justName(), null, qref.sourcePos());
+              var myMaybe = c.getQualifiedLocalMaybe(qid.component(), qid.name(), null, qref.sourcePos());
               if (myMaybe == null) return null;
 
               // TODO: ditto

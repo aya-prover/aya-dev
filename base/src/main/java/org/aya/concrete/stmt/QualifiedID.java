@@ -34,10 +34,6 @@ public record QualifiedID(
     return component() == ModulePath.This;
   }
 
-  public @NotNull String justName() {
-    return name;
-  }
-
   public @NotNull String join() {
     return join(ids());
   }

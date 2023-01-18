@@ -756,7 +756,7 @@ public record AyaProducer(
     if (node.is(ATOM_BIND_PATTERN)) {
       var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
       if (qualifiedId.isUnqualified()) {
-        return new Pattern.Bind(sourcePos, LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.justName())));
+        return new Pattern.Bind(sourcePos, LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
       }
       return new Pattern.QualifiedRef(sourcePos, qualifiedId);
     }

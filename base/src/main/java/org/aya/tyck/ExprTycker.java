@@ -160,7 +160,7 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projectee.wellTyped(), pseudoSigma, resultTy, state));
           return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), resultTy);
         }, sp -> {
-          var fieldName = sp.justName();
+          var fieldName = sp.name();
           if (!(projectee.type() instanceof StructCall structCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           // TODO[ice]: instantiate the type
