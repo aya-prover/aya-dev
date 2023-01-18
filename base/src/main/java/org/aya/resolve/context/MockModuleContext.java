@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <h1>(Mock Module) Context</h1>
+ * A (Mock Module) Context is a weaker module context than {@link ModuleContext},
+ * which is not able to importing, every definition are exported automatically, also there is no any submodule.
  */
 public record MockModuleContext(
   @Override @NotNull Context parent,

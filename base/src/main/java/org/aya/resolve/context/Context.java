@@ -67,24 +67,36 @@ public interface Context {
     problems.forEach(x -> reporter().report(x));
   }
 
+  /**
+   * Getting a symbol by name {@param name} without accessibility checking
+   *
+   * @param name an id which probably unqualified
+   */
   default @NotNull ContextUnit get(@NotNull QualifiedID name) {
     return get(name, null);
   }
 
+  /**
+   * Getting a symbol by name {@param name} with {@param accessibility}
+   *
+   * @param name          an id which probably unqualified
+   * @param accessibility an option accessibility
+   */
   default @NotNull ContextUnit get(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
     return name.isUnqualified()
       ? getUnqualified(name.name(), accessibility, name.sourcePos())
       : getQualified(name, accessibility, name.sourcePos());
   }
 
+  /**
+   * @see Context#get(QualifiedID)
+   */
   default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name) {
     return getMaybe(name, null);
   }
 
   /**
-   * Trying to get a symbol by {@param name}
-   *
-   * @return null if failed
+   * @see Context#get(QualifiedID, Stmt.Accessibility)
    */
   default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
     return name.isUnqualified()
@@ -122,6 +134,9 @@ public interface Context {
     return iterate(c -> c.getUnqualifiedLocalMaybe(name, accessibility, sourcePos));
   }
 
+  /**
+   * @see Context#getUnqualified(String, Stmt.Accessibility, SourcePos)
+   */
   default @NotNull ContextUnit getUnqualified(
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
@@ -133,9 +148,10 @@ public interface Context {
   }
 
   /**
-   * Searching a symbol by qualified id {@code {modName}::{name}} in {@code }this context with {@param accessibility}
+   * Trying to get a symbol by qualified id {@code {modName}::{name}} in {@code this} context with {@param accessibility}.
    *
    * @param accessibility null if no accessibility check
+   * @return a symbol in component {@param modName}, even it is {@link ModulePath#This}; null if not found
    */
   @Nullable ContextUnit getQualifiedLocalMaybe(
     @NotNull ModulePath modName,
@@ -144,6 +160,11 @@ public interface Context {
     @NotNull SourcePos sourcePos
   );
 
+  /**
+   * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}.
+   *
+   * @see Context#getQualifiedLocalMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
+   */
   default @Nullable ContextUnit getQualifiedMaybe(
     @NotNull ModulePath modName,
     @NotNull String name,
@@ -153,6 +174,9 @@ public interface Context {
     return iterate(c -> c.getQualifiedLocalMaybe(modName, name, accessibility, sourcePos));
   }
 
+  /**
+   * @see Context#getQualifiedMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
+   */
   default @Nullable ContextUnit getQualifiedMaybe(
     @NotNull QualifiedID qualifiedID,
     @Nullable Stmt.Accessibility accessibility,
@@ -162,10 +186,7 @@ public interface Context {
   }
 
   /**
-   * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}<br/>
-   * You should import the module before referring something in it.
-   *
-   * @param accessibility null if no accessibility check
+   * @see Context#getQualifiedMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
    */
   default @NotNull ContextUnit getQualified(
     @NotNull ModulePath modName,
@@ -179,6 +200,9 @@ public interface Context {
     return result;
   }
 
+  /**
+   * @see Context#getQualified(ModulePath, String, Stmt.Accessibility, SourcePos)
+   */
   default @NotNull ContextUnit getQualified(
     @NotNull QualifiedID qualifiedID,
     @Nullable Stmt.Accessibility accessibility,
@@ -188,7 +212,7 @@ public interface Context {
   }
 
   /**
-   * Trying to get a {@link MutableModuleExport} of module {@param modName} locally.
+   * Trying to get a {@link ModuleExport} by a module {@param modName} in {@code this} context.
    *
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
@@ -196,7 +220,7 @@ public interface Context {
   @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName);
 
   /**
-   * Trying to get a {@link MutableModuleExport} of module {@param modName}.
+   * Trying to get a {@link ModuleExport} by a module {@param modName} in the whole context.
    *
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
