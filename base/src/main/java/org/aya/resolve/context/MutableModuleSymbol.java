@@ -173,4 +173,8 @@ public record MutableModuleSymbol<T extends ContextUnit>(
   public void forEach(@NotNull BiConsumer<String, Map<ModulePath, T>> action) {
     table().forEach(action);
   }
+
+  public void clear() {
+    table().clear();
+  }
 }
