@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A data class that contains all public definitions/re-exports of some module.
- * TODO: readonly interface
  */
 public record MutableModuleExport(@NotNull MutableModuleSymbol<ContextUnit.Outside> symbols) implements ModuleExport {
   public MutableModuleExport() {

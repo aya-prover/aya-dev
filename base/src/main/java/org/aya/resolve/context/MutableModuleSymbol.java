@@ -15,7 +15,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A container of symbols. TODO: immutable interface
+ * A container of symbols.
  *
  * @param table `Unqualified -> (Component -> Symbol)`<br/>
  *              It says a `Symbol` can be referred by `{Component}::{Unqualified}`

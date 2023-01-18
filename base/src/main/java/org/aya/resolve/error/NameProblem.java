@@ -196,7 +196,7 @@ public interface NameProblem extends Problem {
       var possible = MutableList.<String>create();
       if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
         if (mod.symbols().contains(name)) {
-          // TODO: probably ambiguous
+          // TODO: The name `{modName}::{name}` is probably ambiguous
           possible.append(modName.resolve(name).toString());
         }
       });
