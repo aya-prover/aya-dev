@@ -1,6 +1,6 @@
 module A {
   open private data Nat | O | S Nat
-  def suc (x : Nat) => S x
+  private def suc (x : Nat) => S x
 }
 
 open A

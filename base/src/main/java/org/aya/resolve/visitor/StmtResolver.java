@@ -67,7 +67,7 @@ public interface StmtResolver {
         resolver.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl);
-          bodyResolver.enterHead();
+          bodyResolver.enterHead(ctor.accessibility());
           var mCtx = MutableValue.create(resolver.ctx());
           ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
           resolveMemberSignature(ctor, bodyResolver, mCtx);
@@ -85,7 +85,7 @@ public interface StmtResolver {
         resolver.enterBody();
         decl.fields.forEach(field -> {
           var bodyResolver = resolver.member(decl);
-          bodyResolver.enterHead();
+          bodyResolver.enterHead(field.accessibility());
           var mCtx = MutableValue.create(resolver.ctx());
           resolveMemberSignature(field, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
@@ -132,7 +132,7 @@ public interface StmtResolver {
   ) {
     assert decl.ctx != null;
     var resolver = new ExprResolver(decl.ctx, options);
-    resolver.enterHead();
+    resolver.enterHead(decl.accessibility());
     var mCtx = MutableValue.create(decl.ctx);
     var telescope = decl.telescope.map(param -> resolver.resolve(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
@@ -164,7 +164,7 @@ public interface StmtResolver {
     @NotNull OpDecl self, @NotNull AyaBinOpSet opSet, @NotNull Context ctx,
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
-    if (ctx.get(id) instanceof DefVar<?, ?> defVar) {
+    if (ctx.get(id).data() instanceof DefVar<?, ?> defVar) {
       var opDecl = defVar.resolveOpDecl(ctx.moduleName());
       if (opDecl != null) {
         opSet.bind(self, pred, opDecl, id.sourcePos());

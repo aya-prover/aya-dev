@@ -1,0 +1,12 @@
+In file $FILE:3:15 ->
+
+  1 │   private open data Unit | unit
+  2 │   
+  3 │   def justUnit : Unit => unit
+    │                  ╰──╯
+
+Error: This term is invisible for other modules
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?

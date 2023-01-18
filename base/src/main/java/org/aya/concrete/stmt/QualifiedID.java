@@ -5,28 +5,45 @@ package org.aya.concrete.stmt;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Constants;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record QualifiedID(
   @Override @NotNull SourcePos sourcePos,
-  @NotNull ImmutableSeq<@NotNull String> ids
+  @NotNull ModulePath component,
+  @NotNull String name
 ) implements SourceNode {
+  /**
+   * @param ids not empty
+   */
+  public QualifiedID(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<String> ids) {
+    this(sourcePos, ModulePath.from(ids.dropLast(1)), ids.last());
+  }
+
   public QualifiedID(@NotNull SourcePos sourcePos, @NotNull String id) {
     this(sourcePos, ImmutableSeq.of(id));
   }
 
+  public @NotNull ImmutableSeq<String> ids() {
+    return component().toImmutableSeq().appended(name);
+  }
+
   public boolean isUnqualified() {
-    return ids.sizeEquals(1);
+    return component() == ModulePath.This;
   }
 
   public @NotNull String justName() {
-    return ids.last();
+    return name;
   }
 
   public @NotNull String join() {
-    return join(this.ids);
+    return join(ids());
+  }
+
+  public @NotNull ModulePath.Qualified asModulePath() {
+    return component().resolve(name);
   }
 
   public static @NotNull String join(@NotNull Seq<@NotNull String> ids) {

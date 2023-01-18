@@ -1,171 +1,163 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.collection.SetView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.control.Option;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.UseHide;
-import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * A data class that contains all public definitions/re-exports of some module.
- */
-public record ModuleExport(@NotNull MutableMap<String, AnyVar> exports) {
-  public ModuleExport() {
-    this(MutableMap.create());
-  }
+public interface ModuleExport {
+  @NotNull ModuleSymbol<ContextUnit.Outside> symbols();
 
-  /**
-   * @return false if failed
-   */
-  public boolean export(@NotNull String name, @NotNull AnyVar ref) {
-    var exists = putIfAbsent(name, ref);
-    return exists.isEmpty();
-  }
-
-  public boolean exportAnyway(@NotNull String name, @NotNull AnyVar ref) {
-    var exists = put(name, ref);
-    return exists.isEmpty();
-  }
-
-  /**
-   * @return Ok if all the names are valid, and returns the new {@link ModuleExport};
-   * Err if some names are invalid.
-   */
   @Contract(pure = true)
-  public @NotNull Result filter(@NotNull ImmutableSeq<WithPos<String>> names, boolean isUse) {
-    var oldExports = exports();
-    var newExports = MutableMap.<String, AnyVar>create();
-    var badNames = MutableList.<WithPos<String>>create();
+  default @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
+    var oldSymbols = symbols();
+    MutableModuleSymbol<ContextUnit.Outside> newSymbols;
+    var badNames = MutableList.<QualifiedID>create();
+    var ambiNames = MutableList.<WithPos<String>>create();
 
-    if (isUse) {
-      // use names
-      names.forEach(name -> {
-        var def = oldExports.getOption(name.data());
-        if (def.isDefined()) {
-          newExports.put(name.data(), def.get());
-        } else {
-          badNames.append(name);
-        }
-      });
-    } else {
-      // hide names
-      newExports.putAll(oldExports);
+    switch (strategy) {
+      case Using -> {
+        newSymbols = new MutableModuleSymbol<>();
+        names.forEach(qname -> {
+          var def = oldSymbols.getDefinitely(qname.component(), qname.name());
 
-      names.forEach(name -> {
-        // remove slowly
-        var def = newExports.remove(name.data());
-        if (def.isEmpty()) {
-          // 😱 not defined!!
-          badNames.append(name);
-        }
-      });
+          if (def.isOk()) {
+            newSymbols.add(qname.component(), qname.name(), def.get());
+          } else {
+            switch (def.getErr()) {
+              case NotFound -> badNames.append(qname);
+              case Ambiguous -> ambiNames.append(new WithPos<>(qname.sourcePos(), qname.name()));
+            }
+          }
+        });
+      }
+      case Hiding -> {
+        newSymbols = new MutableModuleSymbol<>(new MutableModuleSymbol<>(oldSymbols));
+
+        names.forEach(qname -> {
+          var def = newSymbols.removeDefinitely(qname.component(), qname.name());
+
+          if (def.isErr()) {
+            switch (def.getErr()) {
+              case NotFound -> badNames.append(qname);
+              case Ambiguous -> ambiNames.append(new WithPos<>(qname.sourcePos(), qname.name()));
+            }
+          }
+        });
+      }
+      default -> throw new AssertionError("I mean, this case is impossible.");
     }
 
-    return new Result(new ModuleExport(newExports), badNames.toImmutableSeq(), ImmutableSeq.empty());
+    var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
+
+    return new ExportResult(
+      hasError ? this : new MutableModuleExport(newSymbols),
+      badNames.toImmutableSeq(),
+      ambiNames.toImmutableSeq(),
+      ImmutableSeq.empty());
   }
 
   @Contract(pure = true)
-  public @NotNull Result map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
-    var oldExports = exports();
-    var newExports = MutableMap.from(oldExports);
+  default @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
+    var oldSymbols = symbols();
+    var newSymbols = new MutableModuleSymbol<>(oldSymbols);
     var badNames = MutableList.<WithPos<String>>create();
-    var ambigNames = MutableList.<WithPos<String>>create();
+    var ambiNames = MutableList.<WithPos<String>>create();
+    var shadowNames = MutableList.<WithPos<String>>create();
 
     mapper.forEach(pair -> {
       var pos = pair.sourcePos();
-      var from = pair.data().from();
+      var fromModule = ModulePath.from(pair.data().fromModule());
+      var from = pair.data().name();
       var to = pair.data().to();
-      if (from.equals(to)) return;
+      if (fromModule == ModulePath.This && from.equals(to)) return;
 
-      var ref = oldExports.getOption(from);
-      var ambig = newExports.getOption(to).isDefined();
+      var ref = oldSymbols.getDefinitely(fromModule, from);
+      if (ref.isOk()) {
+        // ref didn't process ->
+        //   oldSymbols has ref <-> newSymbols has ref
+        //   /\ oldSymbols[ref] = newSymbols[ref]
 
-      if (ref.isDefined()) {
-        // k didn't process ->
-        //   oldExports has k <-> newExports has k
-        //   /\ oldExports[k] = newExports[k]
-
-        // If there is an export with name v, ambiguous!
-        if (ambig) {
-          ambigNames.append(new WithPos<>(pos, to));
+        var candidates = newSymbols.getMut(to);
+        var isShadow = candidates.isNotEmpty();
+        // If there is an export with name `to`, shadow!
+        if (isShadow) {
+          // do clear
+          candidates.clear();
+          shadowNames.append(new WithPos<>(pos, to));
         }
 
-        // we still perform the ambiguous `as`
-        newExports.remove(from);
-        newExports.put(to, ref.get());
+        // remove `from`, should not fail.
+        var result = newSymbols.removeDefinitely(fromModule, from);
+        assert result.isOk() : "Bug!";
+        assert result.get() == ref.get() : "Bug!";
+
+        // now, candidates is empty
+        candidates.put(ModulePath.This, ref.get());
       } else {
-        // not defined, not good
-        badNames.append(new WithPos<>(pos, from));
+        // not defined or ambiguous, not good
+        switch (ref.getErr()) {
+          case NotFound -> badNames.append(new WithPos<>(pos, from));
+          case Ambiguous -> ambiNames.append(new WithPos<>(pos, from));
+        }
       }
     });
 
-    return new Result(new ModuleExport(newExports), badNames.toImmutableSeq(), ambigNames.toImmutableSeq());
+    var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
+
+    return new ExportResult(
+      hasError ? this : new MutableModuleExport(newSymbols),
+      badNames.map(x -> new QualifiedID(x.sourcePos(), x.data())),
+      ambiNames.toImmutableSeq(),
+      shadowNames.toImmutableSeq()
+    );
   }
 
-  /// region API Adapter
-
-  public @NotNull AnyVar get(@NotNull String key) {
-    return exports().get(key);
-  }
-
-  public @Nullable AnyVar getOrNull(@NotNull String key) {
-    return exports().getOrNull(key);
-  }
-
-  public @NotNull Option<AnyVar> getOption(@NotNull String key) {
-    return exports().getOption(key);
-  }
-
-  public boolean containsKey(@NotNull String key) {
-    return exports().containsKey(key);
-  }
-
-  public @NotNull SetView<String> keysView() {
-    return exports().keysView();
-  }
-
-  public @NotNull Option<AnyVar> put(@NotNull String key, @NotNull AnyVar value) {
-    return exports().put(key, value);
-  }
-
-  public @NotNull Option<AnyVar> putIfAbsent(@NotNull String key, @NotNull AnyVar value) {
-    return exports().putIfAbsent(key, value);
-  }
-
-  /// endregion
-
-  public record Result(
+  /**
+   * @param result         the new module export if success, the old module export if failed.
+   * @param ambiguousNames Ambiguous always occurs with unqualified name, so it is {@link String} instead of {@link QualifiedID}
+   */
+  record ExportResult(
     @NotNull ModuleExport result,
-    @NotNull ImmutableSeq<WithPos<String>> invalidNames,
-    @NotNull ImmutableSeq<WithPos<String>> ambiguousNames) {
+    @NotNull ImmutableSeq<QualifiedID> invalidNames,
+    @NotNull ImmutableSeq<WithPos<String>> ambiguousNames,
+    @NotNull ImmutableSeq<WithPos<String>> shadowNames
+  ) {
     public boolean anyError() {
-      return invalidNames().isNotEmpty();
+      return invalidNames().isNotEmpty() || ambiguousNames().isNotEmpty();
     }
 
     public boolean anyWarn() {
-      return ambiguousNames().isNotEmpty();
+      return shadowNames().isNotEmpty();
     }
 
-    public SeqView<Problem> problems(@NotNull ImmutableSeq<String> modName) {
+    public SeqView<Problem> problems(@NotNull ModulePath modName) {
       SeqView<Problem> invalidNameProblems = invalidNames().view()
-        .map(name -> new NameProblem.QualifiedNameNotFoundError(modName, name.data(), name.sourcePos()));
+        .map(name -> new NameProblem.QualifiedNameNotFoundError(
+          modName.concat(name.component()),
+          name.name(),
+          name.sourcePos()));
 
       SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
-        .map(name -> new NameProblem.AmbiguousNameWarn(name.data(), name.sourcePos()));
+        .map(name -> {
+          var old = result();
+          var disambi = old.symbols().getCandidates(name.data()).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq();
+          return new NameProblem.AmbiguousNameError(name.data(), ImmutableSeq.narrow(disambi), name.sourcePos());
+        });
 
-      return invalidNameProblems.concat(ambiguousNameProblems);
+      SeqView<Problem> shadowNameProblems = shadowNames().view()
+        .map(name -> new NameProblem.ShadowingWarn(name.data(), name.sourcePos()));
+
+      return shadowNameProblems.concat(invalidNameProblems).concat(ambiguousNameProblems);
     }
   }
 }

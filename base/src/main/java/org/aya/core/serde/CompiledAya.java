@@ -4,21 +4,22 @@ package org.aya.core.serde;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
 import org.aya.concrete.stmt.BindBlock;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
 import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
-import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
+import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
@@ -30,33 +31,57 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.function.Function;
 
 /**
  * The .ayac file representation.
  *
+ * @param exports Each name is consisted with {@code This Module Name}, {@code Export Module Name} and {@code Symbol Name}
  * @author kiva
  */
 public record CompiledAya(
   @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
-  @NotNull ImmutableSeq<SerDef.QName> exports,
+  @NotNull SerExport exports,
   @NotNull ImmutableMap<ImmutableSeq<String>, SerUseHide> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps,
   @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
-  /** @see org.aya.concrete.stmt.UseHide */
+  /**
+   * @see org.aya.concrete.stmt.UseHide
+   */
   record SerUseHide(
     boolean isUsing,
-    @NotNull ImmutableSeq<String> names,
+    @NotNull ImmutableSeq<ImmutableSeq<String>> names,
     @NotNull ImmutableSeq<UseHide.Rename> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(UseHide.Name::id),
+        useHide.list().map(x -> x.id().ids()),
         useHide.renaming().map(WithPos::data)
       );
+    }
+  }
+
+  /**
+   * @param exports (Unqualified Name -> Candidates)
+   */
+  record SerExport(
+    @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
+  ) implements Serializable {
+    public boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {
+      assert module.isNotEmpty() : "Sanity check";
+      assert qname.mod().sizeGreaterThanOrEquals(module.size());
+
+      var qmod = qname.mod();
+      var component = ModulePath.from(qmod.drop(module.size()));
+
+      // A QName refers to a def,
+      // which means it was defined in {module} if `component == This`;
+      //                    defined in {component} if `component != This`
+      return exports.getOption(qname.name())
+        .map(components -> components.contains(component.toImmutableSeq()))
+        .getOrDefault(false);
     }
   }
 
@@ -72,28 +97,25 @@ public record CompiledAya(
     var serialization = new Serialization(state, resolveInfo, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
-    var modName = ctx.moduleName();
-    var exports = ctx.exports.view().map((k, vs) -> {
-      var qnameMod = modName.appendedAll(k);
-      return vs.exports().view().map((n, v) -> new SerDef.QName(qnameMod, n));
-    }).flatMap(Function.identity()).toImmutableSeq();
+    var exports = ctx.exports().get(ModulePath.This).symbols().table().view().map((k, vs) ->
+      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::toImmutableSeq))));
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
-    return new CompiledAya(imports, exports,
-      resolveInfo.reExports().view()
-        .map((k, v) -> Tuple.of(k, SerUseHide.from(v)))
-        .toImmutableMap(),
+    return new CompiledAya(imports,
+      new SerExport(ImmutableMap.from(exports)),
+      ImmutableMap.from(resolveInfo.reExports().view()
+        // TODO: maybe incorrect, k.toImmutableSeq() can be a renamed module name
+        .map((k, v) -> Tuple.of(k.toImmutableSeq(), SerUseHide.from(v)))),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
-      resolveInfo.opRename().view().map((k, v) -> {
+      ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
           var name = state.def(k);
           var info = v.component1().opInfo();
           var renamed = new SerDef.SerRenamedOp(info.name(), info.assoc(), serialization.serBind(v.component2()));
           return Tuple.of(v.component3(), name, renamed);
         })
         .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
-        .map(Tuple3::tail)
-        .toImmutableMap()
+        .map(Tuple3::tail))
     );
   }
 
@@ -114,7 +136,8 @@ public record CompiledAya(
       switch (serDef) {
         case SerDef.Data data -> data.bodies().forEachWith(((DataDef) def).body, this::serOp);
         case SerDef.Struct struct -> struct.fields().forEachWith(((StructDef) def).fields, this::serOp);
-        default -> {}
+        default -> {
+        }
       }
     }
 
@@ -152,20 +175,23 @@ public record CompiledAya(
     return resolveInfo;
   }
 
-  /** like {@link StmtShallowResolver} but only resolve import */
+  /**
+   * like {@link StmtShallowResolver} but only resolve import
+   */
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
+      var componentName = ModulePath.ofQualified(modName);
       var success = loader.load(modName);
       if (success == null)
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
-      thisResolve.imports().put(success.thisModule().moduleName(), success);
+      thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), success);
       var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
-      thisResolve.thisModule().importModules(modName, Stmt.Accessibility.Private, mod.exports, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modName,
+      thisResolve.thisModule().importModules(componentName, mod.exports(), Stmt.Accessibility.Private, SourcePos.SER);
+      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(componentName,
         Stmt.Accessibility.Public,
-        useHide.names().map(x -> new WithPos<>(SourcePos.SER, x)),
+        useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
-        SourcePos.SER, useHide.isUsing()));
+        SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
       var acc = this.reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
@@ -173,7 +199,9 @@ public record CompiledAya(
     }
   }
 
-  /** like {@link StmtResolver} but only resolve operator */
+  /**
+   * like {@link StmtResolver} but only resolve operator
+   */
   private void deOp(@NotNull SerTerm.DeState state, @NotNull ResolveInfo resolveInfo) {
     // deserialize defined operator
     serOps.forEach(serOp -> {
@@ -240,50 +268,60 @@ public record CompiledAya(
     shapeFactory.bonjour(def);
     switch (serDef) {
       case SerDef.Fn fn -> {
-        if (isExported(fn.name())) {
-          export(context, drop, fn.name(), def.ref());
-          export(context, fn.name().name(), def.ref());
+        if (isExported(mod, fn.name())) {
+          export(context, fn.name(), def.ref());
         }
       }
       case SerDef.Data data -> {
-        var innerCtx = context.derive(data.name().name());
-        if (isExported(data.name())) export(context, data.name().name(), def.ref());
+        // The accessibility doesn't matter, this context is readonly
+        var innerCtx = context.mock(def.ref(), Stmt.Accessibility.Public);
+        if (isExported(mod, data.name())) export(context, data.name(), def.ref());
         data.bodies().forEachWith(((DataDef) def).body, (ctor, ctorDef) -> {
-          if (isExported(ctor.self())) export(context, drop, ctor.self(), ctorDef.ref);
-          export(innerCtx, ctor.self().name(), ctorDef.ref);
+          if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
+          innerCtx.define(ctorDef.ref(), SourcePos.SER);
         });
-        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
+        context.importModules(
+          ModulePath.This.resolve(def.ref().name()),
+          innerCtx.exports(),
+          Stmt.Accessibility.Public,
+          SourcePos.SER);
       }
       case SerDef.Struct struct -> {
-        var innerCtx = context.derive(struct.name().name());
-        if (isExported(struct.name())) export(context, struct.name().name(), def.ref());
+        var innerCtx = context.mock(def.ref(), Stmt.Accessibility.Public);
+        if (isExported(mod, struct.name())) export(context, struct.name(), def.ref());
         struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
-          if (isExported(field.self())) export(context, drop, field.self(), fieldDef.ref);
-          export(innerCtx, field.self().name(), fieldDef.ref);
+          if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
+          innerCtx.define(fieldDef.ref(), SourcePos.SER);
         });
-        context.importModules(innerCtx.moduleName().drop(drop), Stmt.Accessibility.Public, innerCtx.exports, SourcePos.SER);
+        context.importModules(
+          ModulePath.This.resolve(def.ref().name()),
+          innerCtx.exports(),
+          Stmt.Accessibility.Public,
+          SourcePos.SER);
       }
-      case SerDef.Prim prim -> export(context, prim.name().id, def.ref());
-      default -> {}
+      case SerDef.Prim prim -> export(context, ModulePath.This, prim.name().id, def.ref());
+      default -> {
+      }
     }
   }
 
-  private void export(@NotNull PhysicalModuleContext context, int dropMod, @NotNull SerDef.QName qname, DefVar<?, ?> ref) {
-    export(context, qname.mod().drop(dropMod), qname.name(), ref);
+  private void export(@NotNull PhysicalModuleContext context, @NotNull SerDef.QName qname, @NotNull DefVar<?, ?> ref) {
+    var modName = context.moduleName();
+    var qmodName = ModulePath.from(qname.mod().drop(modName.size()));
+
+    export(context, qmodName, qname.name(), ref);
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull String name, @NotNull AnyVar var) {
-    export(context, ImmutableSeq.empty(), name, var);
+  private void export(
+    @NotNull PhysicalModuleContext context,
+    @NotNull ModulePath component,
+    @NotNull String name,
+    @NotNull DefVar<?, ?> var
+  ) {
+    context.doExport(component, name, var, SourcePos.SER);
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull ImmutableSeq<String> mod, @NotNull String name, @NotNull AnyVar var) {
-    context.exports.getOrPut(Context.TOP_LEVEL_MOD_NAME, ModuleExport::new)
-      .export(name, var);
-    context.exports.getOrPut(mod, ModuleExport::new)
-      .export(name, var);
-  }
-
-  private boolean isExported(@NotNull SerDef.QName qname) {
-    return exports.contains(qname);
+  private boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {
+    return exports.isExported(module, qname);
   }
 }

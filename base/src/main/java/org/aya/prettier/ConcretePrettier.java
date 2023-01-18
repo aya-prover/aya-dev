@@ -24,6 +24,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.prettier.PrettierOptions;
@@ -322,8 +323,10 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           case Using -> "using";
           case Hiding -> "hiding";
         }),
-        Doc.parened(Doc.commaList(cmd.useHide().list().view().map(name -> name.asName().equals(name.id()) ? Doc.plain(name.id())
-          : Doc.sep(Doc.plain(name.id()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName())))))
+        Doc.parened(Doc.commaList(cmd.useHide().list().view()
+          .map(name -> name.id().component() == ModulePath.This && name.asName().equals(name.id().name())
+            ? Doc.plain(name.id().name())
+            : Doc.sep(Doc.plain(name.id().join()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName())))))
       );
       case Command.Module mod -> Doc.vcat(
         Doc.sep(visitAccess(mod.accessibility(), Stmt.Accessibility.Public),

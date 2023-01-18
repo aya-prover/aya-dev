@@ -13,6 +13,7 @@ import org.aya.ref.AnyVar;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -106,13 +107,13 @@ public interface NameProblem extends Problem {
   }
 
   record ModNameNotFoundError(
-    @NotNull Seq<String> modName,
+    @NotNull ModulePath modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(modName().toString())),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -157,14 +158,14 @@ public interface NameProblem extends Problem {
   }
 
   record QualifiedNameNotFoundError(
-    @NotNull Seq<String> modName,
+    @NotNull ModulePath modName,
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
-        Doc.code(Doc.cat(Doc.plain(QualifiedID.join(modName)), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
+        Doc.code(Doc.cat(Doc.plain(modName().toString()), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -194,7 +195,10 @@ public interface NameProblem extends Problem {
       while (ctx instanceof BindContext bindCtx) ctx = bindCtx.parent();
       var possible = MutableList.<String>create();
       if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
-        if (mod.containsKey(name)) possible.append(QualifiedID.join(modName.appended(name)));
+        if (mod.symbols().contains(name)) {
+          // TODO: probably ambiguous
+          possible.append(modName.resolve(name).toString());
+        }
       });
       return possible.toImmutableSeq();
     }

@@ -2,12 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Seq;
+import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import org.aya.concrete.stmt.Stmt;
-import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +19,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions = MutableHashMap.create();
-  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules =
-    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
-  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> exports =
-    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
+  public final @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols = new MutableModuleSymbol<>();
+  public final @NotNull MutableMap<ModulePath, MutableModuleExport> modules =
+    MutableHashMap.of(ModulePath.This, new MutableModuleExport());
+  public final @NotNull MutableMap<ModulePath, MutableModuleExport> exports =
+    MutableHashMap.of(ModulePath.This, new MutableModuleExport());
+  public final @NotNull MutableSet<String> duplicated = MutableSet.create();
 
   private final @NotNull ImmutableSeq<String> moduleName;
 
@@ -39,32 +41,26 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
+    @NotNull ModulePath.Qualified componentName,
+    @NotNull MutableModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos,
-    ImmutableSeq<String> componentName,
-    ModuleExport modExport
+    @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModule(accessibility, sourcePos, componentName, modExport);
+    ModuleContext.super.importModule(componentName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       this.exports.set(componentName, modExport);
     }
   }
 
-  @Override public void addGlobal(
-    @NotNull ImmutableSeq<String> modName,
-    @NotNull String name,
-    @NotNull Stmt.Accessibility accessibility,
-    @NotNull AnyVar ref,
-    @NotNull SourcePos sourcePos
-  ) {
-    ModuleContext.super.addGlobal(modName, name, accessibility, ref, sourcePos);
-    if (accessibility == Stmt.Accessibility.Public) {
-      var myExport = exports.get(TOP_LEVEL_MOD_NAME);
-      var success = myExport.export(name, ref);
+  @Override
+  public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    if (duplicated.contains(name)) return;
 
-      if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
-      }
+    var myExport = exports.get(ModulePath.This);
+    var success = myExport.export(componentName, name, ref);
+
+    if (!success) {
+      reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
     }
   }
 
@@ -77,11 +73,16 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return parent;
   }
 
-  @Override public @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions() {
-    return definitions;
+  @Override public @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols() {
+    return symbols;
   }
 
-  @Override public @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules() {
+  @Override public @NotNull MutableMap<ModulePath, MutableModuleExport> modules() {
     return modules;
+  }
+
+  @Override
+  public @NotNull Map<ModulePath, MutableModuleExport> exports() {
+    return exports;
   }
 }

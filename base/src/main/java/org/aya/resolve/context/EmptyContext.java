@@ -2,8 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.immutable.ImmutableSeq;
-import org.aya.ref.AnyVar;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -24,17 +23,26 @@ public record EmptyContext(
     return null;
   }
 
-  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override public @Nullable ContextUnit getUnqualifiedLocalMaybe(
+    @NotNull String name,
+    @Nullable Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
     return null;
   }
 
   @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  public @Nullable ContextUnit getQualifiedLocalMaybe(
+    @NotNull ModulePath modName,
+    @NotNull String name,
+    @Nullable Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
     return null;
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  public @Nullable MutableModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
     return null;
   }
 }

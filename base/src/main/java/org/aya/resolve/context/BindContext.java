@@ -2,9 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.ref.AnyVar;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -41,18 +40,27 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    if (name.equals(this.name)) return ref;
+  @Override public @Nullable ContextUnit.Local getUnqualifiedLocalMaybe(
+    @NotNull String name,
+    @Nullable Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
+    if (name.equals(this.name)) return new ContextUnit.Local(ref);
     else return null;
   }
 
   @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
-    return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
+  public @Nullable ContextUnit getQualifiedLocalMaybe(
+    @NotNull ModulePath modName,
+    @NotNull String name,
+    @Nullable Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
+    return parent.getQualifiedLocalMaybe(modName, name, accessibility, sourcePos);
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  public @Nullable MutableModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
     return null;
   }
 }

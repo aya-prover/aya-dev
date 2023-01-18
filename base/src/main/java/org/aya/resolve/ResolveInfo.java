@@ -15,6 +15,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.trace.Trace;
@@ -44,8 +45,8 @@ public record ResolveInfo(
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
-  @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> imports,
-  @NotNull MutableMap<ImmutableSeq<String>, UseHide> reExports,
+  @NotNull MutableMap<ModulePath, ResolveInfo> imports,
+  @NotNull MutableMap<ModulePath, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
   public ResolveInfo(
