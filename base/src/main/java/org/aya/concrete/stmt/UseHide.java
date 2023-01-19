@@ -35,21 +35,18 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
   }
 
   public record Name(
+    @NotNull SourcePos sourcePos,
     @NotNull QualifiedID id,
     @NotNull String asName,
     @NotNull Assoc asAssoc,
     @NotNull BindBlock asBind
   ) implements SourceNode {
     public Name(@NotNull WithPos<@NotNull String> simple) {
-      this(new QualifiedID(simple.sourcePos(), simple.data()), simple.data(), Assoc.Invalid, BindBlock.EMPTY);
+      this(simple.sourcePos(), new QualifiedID(simple.sourcePos(), simple.data()), simple.data(), Assoc.Invalid, BindBlock.EMPTY);
     }
 
     public Rename rename() {
       return new Rename(id.component().toImmutableSeq(), id().name(), asName());
-    }
-
-    public @NotNull SourcePos sourcePos() {
-      return id.sourcePos();
     }
   }
 }

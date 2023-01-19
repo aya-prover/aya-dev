@@ -167,14 +167,14 @@ public record AyaProducer(
   public SeqView<UseHide.Name> useIdsComma(@NotNull GenericNode<?> node) {
     return node.childrenOfType(USE_ID).map(id -> {
       var wholePos = sourcePosOf(id);
-      var name = weakId(id.child(WEAK_ID));
+      var name = weakId(id.child(WEAK_ID));     // TODO: qualifiedId
       var useAs = id.peekChild(USE_AS);
       if (useAs == null) return new UseHide.Name(name);
       var asId = weakId(useAs.child(WEAK_ID)).data();
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
-      var qname = new QualifiedID(wholePos, name.data());    // TODO: Fix this
-      return new UseHide.Name(qname, asId,
+      var qname = new QualifiedID(name.sourcePos(), name.data());
+      return new UseHide.Name(wholePos, qname, asId,
         asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });
