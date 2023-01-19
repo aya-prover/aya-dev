@@ -51,7 +51,7 @@ public record BindContext(
 
   @Override
   public @Nullable ContextUnit getQualifiedLocalMaybe(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos

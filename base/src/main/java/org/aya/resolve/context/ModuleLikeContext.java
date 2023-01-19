@@ -72,7 +72,7 @@ public interface ModuleLikeContext extends Context {
 
   @Override
   default @Nullable ContextUnit getQualifiedLocalMaybe(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos

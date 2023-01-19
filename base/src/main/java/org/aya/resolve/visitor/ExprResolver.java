@@ -22,6 +22,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
@@ -245,8 +246,9 @@ public record ExprResolver(
           }
           case Pattern.QualifiedRef qref -> {
             var qid = qref.qualifiedID();
+            assert qid.component() instanceof ModulePath.Qualified;
             var maybe = ctx.get().iterate(c -> {
-              var myMaybe = c.getQualifiedLocalMaybe(qid.component(), qid.name(), null, qref.sourcePos());
+              var myMaybe = c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), null, qref.sourcePos());
               if (myMaybe == null) return null;
 
               // TODO: ditto

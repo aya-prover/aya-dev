@@ -83,9 +83,10 @@ public interface Context {
    * @param accessibility an option accessibility
    */
   default @NotNull ContextUnit get(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
-    return name.isUnqualified()
-      ? getUnqualified(name.name(), accessibility, name.sourcePos())
-      : getQualified(name, accessibility, name.sourcePos());
+    return switch (name.component()) {
+      case ModulePath.This aThis -> getUnqualified(name.name(), accessibility, name.sourcePos());
+      case ModulePath.Qualified qualified -> getQualified(qualified, name.name(), accessibility, name.sourcePos());
+    };
   }
 
   /**
@@ -99,9 +100,10 @@ public interface Context {
    * @see Context#get(QualifiedID, Stmt.Accessibility)
    */
   default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
-    return name.isUnqualified()
-      ? getUnqualifiedMaybe(name.name(), accessibility, name.sourcePos())
-      : getQualifiedMaybe(name, accessibility, name.sourcePos());
+    return switch (name.component()) {
+      case ModulePath.This aThis -> getUnqualifiedMaybe(name.name(), accessibility, name.sourcePos());
+      case ModulePath.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), accessibility, name.sourcePos());
+    };
   }
 
   default MutableList<LocalVar> collect(@NotNull MutableList<LocalVar> container) {
@@ -154,7 +156,7 @@ public interface Context {
    * @return a symbol in component {@param modName}, even it is {@link ModulePath#This}; null if not found
    */
   @Nullable ContextUnit getQualifiedLocalMaybe(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -163,10 +165,10 @@ public interface Context {
   /**
    * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}.
    *
-   * @see Context#getQualifiedLocalMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
+   * @see Context#getQualifiedLocalMaybe(ModulePath.Qualified, String, Stmt.Accessibility, SourcePos)
    */
   default @Nullable ContextUnit getQualifiedMaybe(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -175,21 +177,10 @@ public interface Context {
   }
 
   /**
-   * @see Context#getQualifiedMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
-   */
-  default @Nullable ContextUnit getQualifiedMaybe(
-    @NotNull QualifiedID qualifiedID,
-    @Nullable Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) {
-    return getQualifiedMaybe(qualifiedID.component(), qualifiedID.name(), accessibility, sourcePos);
-  }
-
-  /**
-   * @see Context#getQualifiedMaybe(ModulePath, String, Stmt.Accessibility, SourcePos)
+   * @see Context#getQualifiedMaybe(ModulePath.Qualified, String, Stmt.Accessibility, SourcePos)
    */
   default @NotNull ContextUnit getQualified(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -198,17 +189,6 @@ public interface Context {
     if (result == null)
       reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
     return result;
-  }
-
-  /**
-   * @see Context#getQualified(ModulePath, String, Stmt.Accessibility, SourcePos)
-   */
-  default @NotNull ContextUnit getQualified(
-    @NotNull QualifiedID qualifiedID,
-    @Nullable Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) {
-    return getQualified(qualifiedID.component(), qualifiedID.name(), accessibility, sourcePos);
   }
 
   /**
