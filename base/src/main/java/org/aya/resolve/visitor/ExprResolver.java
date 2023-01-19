@@ -232,13 +232,14 @@ public record ExprResolver(
             var maybe = ctx.get().iterate(c -> {
               var myMaybe = c.getUnqualifiedLocalMaybe(bind.bind().name(), null, bind.sourcePos());
               if (myMaybe == null) return null;
+              if (myMaybe.data() instanceof DefVar<?, ?> def && (
+                def.core instanceof CtorDef
+                  || def.concrete instanceof TeleDecl.DataCtor
+                  || def.core instanceof PrimDef
+                  || def.concrete instanceof TeleDecl.PrimDecl
+              )) return def;
 
-              // TODO: cleanup ?
-              return switch (myMaybe.data()) {
-                case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
-                  || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
-                default -> null;
-              };
+              return null;
             });
             if (maybe != null) yield new Pattern.Ctor(bind, maybe);
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
@@ -251,12 +252,14 @@ public record ExprResolver(
               var myMaybe = c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), null, qref.sourcePos());
               if (myMaybe == null) return null;
 
-              // TODO: ditto
-              return switch (myMaybe.data()) {
-                case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
-                  || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
-                default -> null;
-              };
+              if (myMaybe.data() instanceof DefVar<?, ?> def && (
+                def.core instanceof CtorDef
+                  || def.concrete instanceof TeleDecl.DataCtor
+                  || def.core instanceof PrimDef
+                  || def.concrete instanceof TeleDecl.PrimDecl
+              )) return def;
+
+              return null;
             });
             if (maybe != null) yield new Pattern.Ctor(qref, maybe);
             yield EndoPattern.super.post(pattern);
