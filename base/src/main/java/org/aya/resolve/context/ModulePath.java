@@ -34,6 +34,10 @@ public sealed interface ModulePath {
   }
 
   record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
+    public Qualified {
+      assert ids.isNotEmpty() : "Sanity check";
+    }
+
     @Override
     public @NotNull ImmutableSeq<String> toImmutableSeq() {
       return ids;
