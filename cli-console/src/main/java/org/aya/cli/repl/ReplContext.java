@@ -5,7 +5,6 @@ package org.aya.cli.repl;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
-import kala.value.MutableValue;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
-  private final @NotNull MutableValue<@Nullable ReplContext> downstream = MutableValue.create();
+  private @Nullable ReplContext downstream = null;
 
   public ReplContext(@NotNull Context parent, @NotNull ImmutableSeq<String> name) {
     super(parent, name);
@@ -56,8 +55,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return new ReplContext(this, this.moduleName().appended(extraName));
   }
 
-  @Override public @NotNull MutableValue<ReplContext> downstream() {
-    return downstream;
+  @Override public void setDownstream(@Nullable ReplContext downstream) {
+    this.downstream = downstream;
   }
 
   public @NotNull ReplContext fork() {
@@ -67,7 +66,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override public void merge() {
-    var bors = downstream.get();
+    var bors = downstream;
     RepoLike.super.merge();
     if (bors == null) return;
     this.definitions.putAll(bors.definitions);
