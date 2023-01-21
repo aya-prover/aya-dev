@@ -45,6 +45,7 @@ jlink {
   imageDir.set(jlinkImageDir)
   mergedModule {
     uses("org.jline.terminal.impl.jansi.JansiTerminalProvider")
+    requires("java.logging")
   }
   launcher {
     mainClass.set(Constants.mainClassQName)
