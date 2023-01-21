@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -6,9 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
+import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.Codifier;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;

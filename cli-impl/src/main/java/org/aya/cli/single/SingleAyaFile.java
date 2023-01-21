@@ -5,12 +5,11 @@ package org.aya.cli.single;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import org.aya.cli.Main;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.HighlightsCollector;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
-import org.aya.cli.utils.MainArgs;
+import org.aya.cli.utils.CliEnums;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.desugar.Desugarer;
@@ -42,13 +41,13 @@ import java.util.function.BiFunction;
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.PrettyInfo parsePrettyInfo(@NotNull CompilerFlags flags) {
     if (flags.prettyInfo() != null) return flags.prettyInfo();
-    return Main.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
+    return CompilerFlags.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
   }
 
   @SuppressWarnings("unchecked") default void pretty(
     @NotNull CompilerFlags compilerFlags,
     @NotNull ImmutableSeq<? extends AyaDocile> doc,
-    @NotNull MainArgs.PrettyStage currentStage
+    @NotNull CliEnums.PrettyStage currentStage
   ) throws IOException {
     var flags = parsePrettyInfo(compilerFlags);
     if (flags == null || currentStage != flags.prettyStage()) return;
@@ -67,7 +66,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     var renderOptions = flags.renderOptions();
     var withStyleDef = !flags.prettyNoCodeStyle();
-    if (currentStage == MainArgs.PrettyStage.literate) {
+    if (currentStage == CliEnums.PrettyStage.literate) {
       var text = renderOptions.render(out,
         docitfy((ImmutableSeq<Stmt>) doc, flags.prettierOptions()),
         true,

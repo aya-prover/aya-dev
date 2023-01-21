@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
 CommonTasks.nativeImageConfig(project)
@@ -13,8 +13,8 @@ dependencies {
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.junit.jupiter", "junit-jupiter-params", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
-  testImplementation(project(":cli"))
-  testImplementation(project(":lsp"))
+  testImplementation(project(":cli-impl"))
+  testImplementation(project(":ide"))
 }
 
 plugins {

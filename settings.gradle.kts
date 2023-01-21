@@ -10,7 +10,8 @@ dependencyResolutionManagement {
 }
 
 include(
-  "cli",
+  "cli-impl",
+  "cli-console",
   "tools",
   "tools-repl",
   "base",

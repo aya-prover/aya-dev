@@ -1,13 +1,13 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.utils;
+package org.aya.cli.console;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.render.RenderOptions;
+import org.aya.cli.utils.CliEnums.PrettyFormat;
+import org.aya.cli.utils.CliEnums.PrettyStage;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -105,27 +105,6 @@ public class MainArgs {
   public enum PredefinedStyle {
     emacs,
     intellij,
-  }
-
-  public enum PrettyStage {
-    raw,
-    scoped,
-    typed,
-    literate,
-  }
-
-  public enum PrettyFormat {
-    html(RenderOptions.OutputTarget.HTML),
-    plain(RenderOptions.OutputTarget.Plain),
-    latex(RenderOptions.OutputTarget.LaTeX),
-    markdown(RenderOptions.OutputTarget.AyaMd),
-    unix(RenderOptions.OutputTarget.Terminal);
-
-    public final @NotNull RenderOptions.OutputTarget target;
-
-    PrettyFormat(RenderOptions.@NotNull OutputTarget target) {
-      this.target = target;
-    }
   }
 
   public enum ReplType {

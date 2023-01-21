@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
@@ -8,9 +8,9 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.repl.gk.GKReplLexer;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.util.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.CmdCompleter;

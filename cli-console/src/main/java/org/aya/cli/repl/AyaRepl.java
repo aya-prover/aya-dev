@@ -1,18 +1,18 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import org.aya.cli.console.AnsiReporter;
+import org.aya.cli.console.MainArgs;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
-import org.aya.cli.single.CliReporter;
-import org.aya.cli.utils.MainArgs;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.*;
 import org.aya.util.reporter.Problem;
@@ -89,7 +89,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
 
   public AyaRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) {
     this.config = config;
-    replCompiler = new ReplCompiler(modulePaths, new CliReporter(true,
+    replCompiler = new ReplCompiler(modulePaths, new AnsiReporter(true,
       () -> config.enableUnicode, () -> config.prettierOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
   }

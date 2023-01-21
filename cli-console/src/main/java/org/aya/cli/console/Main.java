@@ -1,6 +1,6 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli;
+package org.aya.cli.console;
 
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
@@ -8,21 +8,16 @@ import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
-import org.aya.cli.utils.MainArgs;
 import org.aya.core.def.PrimDef;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -54,7 +49,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var replConfig = ReplConfig.loadFromDefault();
     var prettierOptions = replConfig.prettierOptions;
-    var reporter = CliReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
     var renderOptions = replConfig.renderOptions;
     switch (prettyColor) {
       case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
@@ -63,7 +58,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     }
     replConfig.close();
     var pretty = prettyStage == null
-      ? (outputPath != null ? prettyInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
+      ? (outputPath != null ? CompilerFlags.prettyInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
       : new CompilerFlags.PrettyInfo(
         asciiOnly,
         prettyNoCodeStyle,
@@ -90,29 +85,5 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println(new MarkdownTrace(2, prettierOptions, asciiOnly)
         .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
-  }
-
-  public static @NotNull MainArgs.PrettyFormat detectFormat(@NotNull Path outputFile) {
-    var name = outputFile.getFileName().toString();
-    if (name.endsWith(".md")) return PrettyFormat.markdown;
-    if (name.endsWith(".tex")) return PrettyFormat.latex;
-    if (name.endsWith(".html")) return PrettyFormat.html;
-    return PrettyFormat.plain;
-  }
-
-  public static @Nullable CompilerFlags.PrettyInfo prettyInfoFromOutput(
-    @Nullable Path outputFile,
-    @NotNull RenderOptions renderOptions,
-    boolean noCodeStyle
-  ) {
-    if (outputFile != null) return new CompilerFlags.PrettyInfo(
-      false,
-      noCodeStyle,
-      PrettyStage.literate,
-      detectFormat(outputFile),
-      AyaPrettierOptions.pretty(),
-      renderOptions,
-      null);
-    return null;
   }
 }

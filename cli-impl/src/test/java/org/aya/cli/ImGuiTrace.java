@@ -1,19 +1,18 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.cli.single.CliReporter;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.Problem;
+import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.ThrowingReporter;
 import org.ice1000.jimgui.*;
 import org.ice1000.jimgui.util.JImGuiUtil;
 import org.ice1000.jimgui.util.JniLoader;
@@ -168,7 +167,9 @@ public class ImGuiTrace {
 
   public static void main(String[] args) throws IOException {
     var traceBuilder = new Trace.Builder();
-    var compiler = new SingleFileCompiler(CliReporter.stdio(true, AyaPrettierOptions.informative(), Problem.Severity.WARN),
+    // var compiler = new SingleFileCompiler(CliReporter.stdio(true, AyaPrettierOptions.informative(), Problem.Severity.WARN),
+    //   null, traceBuilder);
+    var compiler = new SingleFileCompiler(new ThrowingReporter(AyaPrettierOptions.informative()),
       null, traceBuilder);
     var sourceFile = Paths.get("test.aya");
     compiler.compile(sourceFile,

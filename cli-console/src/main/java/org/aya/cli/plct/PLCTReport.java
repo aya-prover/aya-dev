@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.plct;
 
@@ -7,7 +7,7 @@ import com.google.gson.JsonDeserializer;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.cli.utils.MainArgs;
+import org.aya.cli.console.MainArgs;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

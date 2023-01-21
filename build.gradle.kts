@@ -24,7 +24,7 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-val useJacoco = listOf("base", "pretty", "cli")
+val useJacoco = listOf("base", "pretty", "cli-impl")
 
 /** gradle.properties or environmental variables */
 fun propOrEnv(name: String): String =

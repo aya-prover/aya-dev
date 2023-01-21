@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.utils.AyaCompiler;
-import org.aya.cli.utils.MainArgs;
+import org.aya.cli.utils.CliEnums;
 import org.aya.core.def.PrimDef;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
@@ -52,14 +52,14 @@ public record SingleFileCompiler(
       var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
-      ayaFile.pretty(flags, program, MainArgs.PrettyStage.raw);
+      ayaFile.pretty(flags, program, CliEnums.PrettyStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         ayaFile.tyckAdditional(moduleResolve);
-        ayaFile.pretty(flags, program, MainArgs.PrettyStage.scoped);
-        ayaFile.pretty(flags, defs, MainArgs.PrettyStage.typed);
-        if (reporter.noError()) ayaFile.pretty(flags, program, MainArgs.PrettyStage.literate);
+        ayaFile.pretty(flags, program, CliEnums.PrettyStage.scoped);
+        ayaFile.pretty(flags, defs, CliEnums.PrettyStage.typed);
+        if (reporter.noError()) ayaFile.pretty(flags, program, CliEnums.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });

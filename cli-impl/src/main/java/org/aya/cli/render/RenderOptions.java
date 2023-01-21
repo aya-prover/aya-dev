@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.render;
 
@@ -125,12 +125,14 @@ public class RenderOptions {
 
   public @NotNull StringStylist stylist(@NotNull OutputTarget output) throws IOException, JsonParseException {
     if (isDefault()) return defaultStylist(output);
+    final var c = buildColorScheme();
+    final var s = buildStyleFamily();
     return switch (output) {
-      case Terminal -> new UnixTermStylist(buildColorScheme(), buildStyleFamily());
-      case LaTeX -> new TeXStylist(buildColorScheme(), buildStyleFamily());
-      case AyaMd -> new MdStylist(buildColorScheme(), buildStyleFamily());
-      case HTML -> new Html5Stylist(buildColorScheme(), buildStyleFamily());
-      case Plain -> new DebugStylist(buildColorScheme(), buildStyleFamily());
+      case Terminal -> new UnixTermStylist(c, s);
+      case LaTeX -> new TeXStylist(c, s);
+      case AyaMd -> new MdStylist(c, s);
+      case HTML -> new Html5Stylist(c, s);
+      case Plain -> new DebugStylist(c, s);
     };
   }
 
