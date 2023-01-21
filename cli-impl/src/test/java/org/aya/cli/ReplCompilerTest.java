@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.ReplCompiler;
+import org.aya.cli.interactive.ReplCompiler;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
@@ -26,10 +26,7 @@ public class ReplCompilerTest {
   public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), new ThrowingReporter(AyaPrettierOptions.debug()), null);
 
   @BeforeEach public void setup() {
-    var ctx = compiler.getContext();
-    ctx.modules.clear();
-    ctx.exports.clear();
-    ctx.definitions.clear();
+    compiler.getContext().clear();
   }
 
   @Test public void library() throws IOException {
@@ -37,6 +34,10 @@ public class ReplCompilerTest {
     assertNotNull(findContext("Nat::zero"));
     assertNotNull(findContext("Vec::vnil"));
     assertNotNull(findContext("Vec:::>"));
+  }
+
+  @Test public void simpleExpr() {
+    compile("Prop");
   }
 
   @Test public void issue382() {

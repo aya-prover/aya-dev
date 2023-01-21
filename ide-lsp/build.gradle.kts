@@ -9,6 +9,7 @@ dependencies {
   // NOTE: use `api`. IntelliJ plugin needs it temporarily (should depend on ide instead of lsp).
   api(project(":ide"))
   api("org.aya-prover.upstream", "javacs-protocol", version = deps.getProperty("version.aya-upstream"))
+  implementation(project(":cli-console"))
   implementation("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
@@ -43,8 +44,8 @@ jlink {
   addExtraDependencies("jline-terminal-jansi")
   imageDir.set(jlinkImageDir)
   mergedModule {
-    additive = true
-    uses("org.jline.terminal.spi.JansiSupport")
+    uses("org.jline.terminal.impl.jansi.JansiTerminalProvider")
+    requires("java.logging")
   }
   launcher {
     mainClass.set(Constants.mainClassQName)
@@ -52,11 +53,11 @@ jlink {
     jvmArgs = mutableListOf("--enable-preview")
   }
   secondaryLauncher {
-    this as org.beryx.jlink.data.SecondaryLauncherData
     name = "aya"
-    mainClass = "org.aya.cli.Main"
-    moduleName = "aya.cli"
     jvmArgs = mutableListOf("--enable-preview")
+    this as org.beryx.jlink.data.SecondaryLauncherData
+    mainClass = "org.aya.cli.console.Main"
+    moduleName = "aya.cli.console"
   }
 }
 

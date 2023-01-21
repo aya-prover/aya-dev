@@ -1,6 +1,6 @@
 module aya.ide.lsp {
+  requires transitive aya.cli.console;
   requires aya.base;
-  requires aya.cli.impl;
   requires aya.ide;
 
   requires static org.jetbrains.annotations;

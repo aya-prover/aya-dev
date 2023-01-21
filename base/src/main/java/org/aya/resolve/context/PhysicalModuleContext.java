@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,5 +84,11 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   @Override public @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules() {
     return modules;
+  }
+
+  @Contract(mutates = "this") public void clear() {
+    modules.clear();
+    exports.clear();
+    definitions.clear();
   }
 }

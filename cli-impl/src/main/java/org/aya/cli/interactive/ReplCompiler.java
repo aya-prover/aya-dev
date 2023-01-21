@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl;
+package org.aya.cli.interactive;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -50,7 +50,7 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 public class ReplCompiler {
-  final @NotNull CountingReporter reporter;
+  public final @NotNull CountingReporter reporter;
   private final @NotNull SourceFileLocator locator;
   private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;

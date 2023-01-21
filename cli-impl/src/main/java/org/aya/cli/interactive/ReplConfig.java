@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.repl;
+package org.aya.cli.interactive;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -22,8 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ReplConfig implements AutoCloseable {
-  public static final @NotNull RenderOptions.OutputTarget DEFAULT_OUTPUT_TARGET = RenderOptions.OutputTarget.Terminal;
-
   public transient final Option<Path> configFile;
   public @NotNull String prompt = "> ";
   public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;

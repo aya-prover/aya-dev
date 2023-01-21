@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.console;
 
+import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
-import org.aya.cli.repl.ReplConfig;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.core.def.PrimDef;
