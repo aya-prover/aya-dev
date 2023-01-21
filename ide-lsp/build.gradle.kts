@@ -44,8 +44,7 @@ jlink {
   addExtraDependencies("jline-terminal-jansi")
   imageDir.set(jlinkImageDir)
   mergedModule {
-    additive = true
-    uses("org.jline.terminal.spi.JansiSupport")
+    uses("org.jline.terminal.impl.jansi.JansiTerminalProvider")
   }
   launcher {
     mainClass.set(Constants.mainClassQName)
@@ -53,11 +52,11 @@ jlink {
     jvmArgs = mutableListOf("--enable-preview")
   }
   secondaryLauncher {
-    this as org.beryx.jlink.data.SecondaryLauncherData
     name = "aya"
+    jvmArgs = mutableListOf("--enable-preview")
+    this as org.beryx.jlink.data.SecondaryLauncherData
     mainClass = "org.aya.cli.console.Main"
     moduleName = "aya.cli.console"
-    jvmArgs = mutableListOf("--enable-preview")
   }
 }
 
