@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.repl.ReplCompiler;
+import org.aya.cli.interactive.ReplCompiler;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;

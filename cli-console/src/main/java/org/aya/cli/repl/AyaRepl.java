@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.cli.console.AnsiReporter;
 import org.aya.cli.console.MainArgs;
+import org.aya.cli.interactive.ReplCompiler;
 import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.jline.AyaCompleters;
