@@ -1,6 +1,6 @@
 module aya.ide {
   requires aya.base;
-  requires aya.cli;
+  requires aya.cli.impl;
 
   requires static org.jetbrains.annotations;
 
