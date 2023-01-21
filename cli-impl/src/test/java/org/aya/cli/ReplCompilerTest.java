@@ -33,7 +33,7 @@ public class ReplCompilerTest {
   }
 
   @Test public void library() throws IOException {
-    compiler.loadToContext(Path.of("../lsp", "src", "test", "resources", "lsp-test-lib"));
+    compiler.loadToContext(Path.of("../ide-lsp", "src", "test", "resources", "lsp-test-lib"));
     assertNotNull(findContext("Nat::zero"));
     assertNotNull(findContext("Vec::vnil"));
     assertNotNull(findContext("Vec:::>"));

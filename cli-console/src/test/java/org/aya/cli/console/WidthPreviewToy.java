@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.console;
 
+import org.aya.cli.parse.AyaParserImpl;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.ThrowingReporter;
 import org.ice1000.jimgui.JImGui;
 import org.ice1000.jimgui.NativeBool;
 import org.ice1000.jimgui.NativeInt;
@@ -13,7 +15,8 @@ import org.ice1000.jimgui.util.JniLoader;
 
 public interface WidthPreviewToy {
   static void main(String[] args) {
-    var doc = ReplParserTest.AYA_GK_PARSER.expr("""
+    var ayaParser = new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.informative()));
+    var doc = ayaParser.expr("""
       do {
         x <- xs,
         y <- ys,

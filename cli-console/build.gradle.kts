@@ -8,10 +8,10 @@ application.mainClass.set(mainClassQName)
 CommonTasks.nativeImageConfig(project)
 
 dependencies {
-  implementation(project(":cli-impl"))
-  implementation(project(":tools-repl"))
+  api(project(":tools-repl"))
   val deps: java.util.Properties by rootProject.ext
-  api("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
+  implementation(project(":cli-impl"))
+  implementation("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
   annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
   val jlineVersion = deps.getProperty("version.jline")
   implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
