@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
 import kala.control.Option;
 import org.aya.cli.repl.ReplConfig;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.prettier.AyaPrettierOptions;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;

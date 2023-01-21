@@ -9,6 +9,5 @@ dependencies {
   implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
-  testImplementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
-  // testImplementation("org.ice1000.jimgui", "fun", version = deps.getProperty("version.jimgui"))
+  testImplementation(project(":cli-console"))
 }
