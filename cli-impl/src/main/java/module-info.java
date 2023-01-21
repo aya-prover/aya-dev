@@ -20,6 +20,4 @@ module aya.cli.impl {
   exports org.aya.cli.utils;
 
   opens org.aya.cli.library.json to com.google.gson;
-  opens org.aya.cli.render to aya.repl;
-  opens org.aya.cli.render.vscode to aya.repl;
 }
