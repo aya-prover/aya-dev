@@ -6,6 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.function.CheckedFunction;
 import kala.value.MutableValue;
+import org.aya.cli.interactive.ReplContext;
+import org.aya.cli.interactive.ReplShapeFactory;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;

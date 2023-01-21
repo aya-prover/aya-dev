@@ -3,7 +3,7 @@
 package org.aya.cli;
 
 import kala.control.Option;
-import org.aya.cli.repl.ReplConfig;
+import org.aya.cli.interactive.ReplConfig;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
 import org.intellij.lang.annotations.Language;

@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
+import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.render.RenderOptions;
-import org.aya.cli.repl.ReplConfig;
 import org.aya.pretty.doc.Doc;
 import org.junit.jupiter.api.Test;
 
