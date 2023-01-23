@@ -27,10 +27,7 @@ import java.util.function.Function;
  *
  * @author re-xyr
  */
-public record StmtShallowResolver(
-  @NotNull ModuleLoader loader,
-  @NotNull ResolveInfo resolveInfo
-) {
+public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
   public void resolveStmt(@NotNull SeqLike<Stmt> stmts, ModuleContext context) {
     stmts.forEach(stmt -> resolveStmt(stmt, context));
   }

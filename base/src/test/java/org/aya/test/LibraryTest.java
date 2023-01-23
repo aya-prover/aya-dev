@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
@@ -12,7 +12,7 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.core.def.PrimDef;
-import org.aya.lsp.prim.LspPrimFactory;
+import org.aya.ide.LspPrimFactory;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;

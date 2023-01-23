@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.BuildUtil
@@ -11,7 +11,7 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "2.25.0" apply false
+  id("org.beryx.jlink") version "2.26.0" apply false
 }
 
 var deps: Properties by rootProject.ext
@@ -24,8 +24,7 @@ allprojects {
   version = deps.getProperty("version.project")
 }
 
-@Suppress("unsupported")
-val useJacoco = ["base", "pretty", "cli"]
+val useJacoco = listOf("base", "pretty", "cli-impl")
 
 /** gradle.properties or environmental variables */
 fun propOrEnv(name: String): String =
