@@ -88,7 +88,7 @@ public record ExprResolver(
   }
 
   private @Nullable Stmt.Accessibility accessibility() {
-    return switch (where().peek()) {
+    return switch (where.peek()) {
       case Where.Body body -> null;
       case Where.Head head -> head.accessibility();
     };
@@ -160,7 +160,7 @@ public record ExprResolver(
             if (options.allowGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
-              assert owner != null : "Sainty check";
+              assert owner != null : "Sanity check";
               allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
               addReference(owner);
             } else {

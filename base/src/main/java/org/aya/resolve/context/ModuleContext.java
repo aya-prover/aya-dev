@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -110,13 +110,11 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     if (mapRes.anyError()) reportAllAndThrow(mapRes.problems(modName));
 
     var renamed = mapRes.result();
-    renamed.symbols().forEach((name, candidates) -> {
-      candidates.forEach((componentName, ref) -> {
-        var fullComponentName = modName.concat(componentName);
-        var symbol = new GlobalSymbol.Imported(fullComponentName, name, ref, accessibility);
-        addGlobal(symbol, sourcePos);
-      });
-    });
+    renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
+      var fullComponentName = modName.concat(componentName);
+      var symbol = new GlobalSymbol.Imported(fullComponentName, name, ref, accessibility);
+      addGlobal(symbol, sourcePos);
+    }));
 
     // report all warning
     reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
