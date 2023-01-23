@@ -12,49 +12,41 @@ public sealed interface ModulePath {
     private This() {
     }
 
-    @Override
-    public @NotNull ImmutableSeq<String> toImmutableSeq() {
+    @Override public @NotNull ImmutableSeq<String> toImmutableSeq() {
       return ImmutableSeq.empty();
     }
 
-    @Override
-    public @NotNull Qualified resolve(@NotNull String name) {
+    @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ImmutableSeq.of(name));
     }
 
-    @Override
-    public @NotNull ModulePath concat(@NotNull ModulePath path) {
+    @Override public @NotNull ModulePath concat(@NotNull ModulePath path) {
       return path;
     }
 
-    @Override
-    public @NotNull String toString() {
+    @Override public @NotNull String toString() {
       return "";
     }
   }
 
   record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
     public Qualified {
-      assert ids.isNotEmpty() : "Sanity check";
+      assert ids.isNotEmpty() : "Otherwise please use `This`";
     }
 
-    @Override
-    public @NotNull ImmutableSeq<String> toImmutableSeq() {
+    @Override public @NotNull ImmutableSeq<String> toImmutableSeq() {
       return ids;
     }
 
-    @Override
-    public @NotNull Qualified resolve(@NotNull String name) {
+    @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ids.appended(name));
     }
 
-    @Override
-    public @NotNull Qualified concat(@NotNull ModulePath path) {
+    @Override public @NotNull Qualified concat(@NotNull ModulePath path) {
       return new Qualified(ids.concat(path.toImmutableSeq()));
     }
 
-    @Override
-    public @NotNull String toString() {
+    @Override public @NotNull String toString() {
       return ids.joinToString(Constants.SCOPE_SEPARATOR);
     }
   }

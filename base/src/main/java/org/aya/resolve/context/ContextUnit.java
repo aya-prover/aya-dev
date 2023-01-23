@@ -3,7 +3,6 @@
 package org.aya.resolve.context;
 
 import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.Def;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -15,7 +14,7 @@ public sealed interface ContextUnit {
   sealed interface TopLevel extends ContextUnit permits Defined, Outside {
   }
 
-  sealed interface Defined extends ContextUnit, TopLevel permits Exportable, NotExportable {
+  sealed interface Defined extends TopLevel permits Exportable, NotExportable {
     @NotNull Stmt.Accessibility accessibility();
   }
 

@@ -24,9 +24,9 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull MutableModuleExport thisModule = new MutableModuleExport();
   public final @NotNull MutableModuleExport thisModuleExport = new MutableModuleExport();
   public final @NotNull MutableMap<ModulePath, ModuleExport> modules =
-          MutableHashMap.of(ModulePath.This, thisModule);
+    MutableHashMap.of(ModulePath.This, thisModule);
   public final @NotNull MutableMap<ModulePath, ModuleExport> exports =
-          MutableHashMap.of(ModulePath.This, thisModuleExport);
+    MutableHashMap.of(ModulePath.This, thisModuleExport);
   public final @NotNull MutableSet<String> duplicated = MutableSet.create();
 
   private final @NotNull ImmutableSeq<String> moduleName;
@@ -44,10 +44,10 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
-          @NotNull ModulePath.Qualified componentName,
-          @NotNull ModuleExport modExport,
-          @NotNull Stmt.Accessibility accessibility,
-          @NotNull SourcePos sourcePos
+    @NotNull ModulePath.Qualified componentName,
+    @NotNull ModuleExport modExport,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos
   ) {
     ModuleContext.super.importModule(componentName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
