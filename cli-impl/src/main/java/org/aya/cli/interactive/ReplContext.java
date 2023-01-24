@@ -4,11 +4,13 @@ package org.aya.cli.interactive;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.DefVar;
-import org.aya.resolve.context.*;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleExport;
+import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +43,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override
-  public void importModule(
+  public void importModuleExport(
     @NotNull ModulePath.Qualified componentName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,

@@ -50,7 +50,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
   /**
    * Import the whole module (including itself and re-exports)
    *
-   * @see ModuleContext#importModule(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
+   * @see ModuleContext#importModuleExport(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
    */
   default void importModuleExports(
     @NotNull ModulePath.Qualified modName,
@@ -58,7 +58,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    module.forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
+    module.forEach((name, mod) -> importModuleExport(modName.concat(name), mod, accessibility, sourcePos));
   }
 
   /**
@@ -68,7 +68,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    * @param componentName the name of the module
    * @param moduleExport  the module
    */
-  default void importModule(
+  default void importModuleExport(
     @NotNull ModulePath.Qualified componentName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,

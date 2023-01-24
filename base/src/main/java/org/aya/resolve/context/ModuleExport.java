@@ -28,7 +28,7 @@ public interface ModuleExport {
       case Using -> {
         newSymbols = new MutableModuleSymbol<>();
         names.forEach(qname -> {
-          var def = oldSymbols.getDefinitely(qname.component(), qname.name());
+          var def = oldSymbols.getMaybe(qname.component(), qname.name());
 
           if (def.isOk()) {
             newSymbols.add(qname.component(), qname.name(), def.get());
@@ -81,7 +81,7 @@ public interface ModuleExport {
       var to = pair.data().to();
       if (fromModule == ModulePath.This && from.equals(to)) return;
 
-      var ref = oldSymbols.getDefinitely(fromModule, from);
+      var ref = oldSymbols.getMaybe(fromModule, from);
       if (ref.isOk()) {
         // ref didn't process ->
         //   oldSymbols has ref <-> newSymbols has ref
@@ -150,7 +150,7 @@ public interface ModuleExport {
       SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
         .map(name -> {
           var old = result();
-          var disambi = old.symbols().getCandidates(name.data()).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq();
+          var disambi = old.symbols().resolveUnqualified(name.data()).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq();
           return new NameProblem.AmbiguousNameError(name.data(), ImmutableSeq.narrow(disambi), name.sourcePos());
         });
 

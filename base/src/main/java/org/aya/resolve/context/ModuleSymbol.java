@@ -10,7 +10,6 @@ import kala.control.Result;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
 public interface ModuleSymbol<T extends ContextUnit> {
 
@@ -20,7 +19,7 @@ public interface ModuleSymbol<T extends ContextUnit> {
    * @param unqualifiedName the unqualified name
    * @return the candidates, probably empty
    */
-  @NotNull Map<ModulePath, T> getCandidates(@NotNull String unqualifiedName);
+  @NotNull Map<ModulePath, T> resolveUnqualified(@NotNull String unqualifiedName);
 
   /**
    * Getting a symbol of an unqualified name {@param unqualifiedName} in component {@param component}
@@ -29,14 +28,23 @@ public interface ModuleSymbol<T extends ContextUnit> {
    * @param unqualifiedName the unqualified name
    * @return none if not found
    */
-  @NotNull Option<T> getQualifiedMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName);
+  default @NotNull Option<T> getQualifiedMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+    return resolveUnqualified(unqualifiedName).getOption(component);
+  }
 
   /**
    * Trying to get a symbol of an unqualified name definitely.
    *
    * @param unqualifiedName the unqualified name
    */
-  @NotNull Result<T, Error> getUnqualifiedDefinitely(@NotNull String unqualifiedName);
+  default @NotNull Result<T, Error> getUnqualifiedMaybe(@NotNull String unqualifiedName) {
+    var candidates = resolveUnqualified(unqualifiedName);
+
+    if (candidates.isEmpty()) return Result.err(Error.NotFound);
+    if (candidates.size() != 1) return Result.err(Error.Ambiguous);
+
+    return Result.ok(candidates.iterator().next().getValue());
+  }
 
   /**
    * Trying to get a symbol of an optional component and an unqualified name.
@@ -44,13 +52,31 @@ public interface ModuleSymbol<T extends ContextUnit> {
    * @param component       an optional component, none if `This`
    * @param unqualifiedName the unqualified name
    */
-  @NotNull Result<T, Error> getDefinitely(@NotNull ModulePath component, @NotNull String unqualifiedName);
+  default @NotNull Result<T, Error> getMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+    return switch (component) {
+      case ModulePath.Qualified qualified -> {
+        var result = getQualifiedMaybe(component, unqualifiedName);
+        if (result.isEmpty()) {
+          yield Result.err(Error.NotFound);
+        }
 
-  boolean contains(@NotNull String unqualified);
+        yield Result.ok(result.get());
+      }
+      case ModulePath.This aThis -> getUnqualifiedMaybe(unqualifiedName);
+    };
+  }
 
-  boolean containsDefinitely(@NotNull String unqualified);
+  default boolean contains(@NotNull String unqualified) {
+    return resolveUnqualified(unqualified).isNotEmpty();
+  }
 
-  boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified);
+  default boolean containsDefinitely(@NotNull String unqualified) {
+    return resolveUnqualified(unqualified).size() == 1;
+  }
+
+  default boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
+    return resolveUnqualified(unqualified).containsKey(component);
+  }
 
   /// region API Adapter
 

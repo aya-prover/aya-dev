@@ -73,7 +73,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = ctx.modules().get(mod).symbols().getDefinitely(use.id().component(), use.id().name()).map(ContextUnit.Outside::data);
+          var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name()).map(ContextUnit.Outside::data);
           assert symbol.isOk();   // checked in openModule
           var defVar = symbol.get();
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
@@ -146,7 +146,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
 
     var module = decl.ref().name();
-    context.importModule(
+    context.importModuleExport(
       ModulePath.This.resolve(module),
       innerCtx.thisExports(),
       decl.accessibility(),

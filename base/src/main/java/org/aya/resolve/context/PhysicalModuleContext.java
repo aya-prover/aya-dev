@@ -43,13 +43,13 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     this.moduleName = moduleName;
   }
 
-  @Override public void importModule(
+  @Override public void importModuleExport(
     @NotNull ModulePath.Qualified componentName,
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModule(componentName, modExport, accessibility, sourcePos);
+    ModuleContext.super.importModuleExport(componentName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       this.exports.set(componentName, modExport);
     }

@@ -50,7 +50,7 @@ public interface ModuleLikeContext extends Context {
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    var symbol = symbols().getUnqualifiedDefinitely(name);
+    var symbol = symbols().getUnqualifiedMaybe(name);
     if (symbol.isOk()) {
       var result = symbol.get();
       if (result instanceof ContextUnit.Exportable defined) {
@@ -64,7 +64,7 @@ public interface ModuleLikeContext extends Context {
         case NotFound -> null;
         case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
           name,
-          ImmutableSeq.narrow(symbols().getCandidates(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
+          ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
           sourcePos));
       };
     }
@@ -80,14 +80,14 @@ public interface ModuleLikeContext extends Context {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
 
-    var ref = mod.symbols().getUnqualifiedDefinitely(name);
+    var ref = mod.symbols().getUnqualifiedMaybe(name);
     if (ref.isOk()) return ref.get();
 
     return switch (ref.getErr()) {
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(mod.symbols().getCandidates(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
         sourcePos
       ));
     };
