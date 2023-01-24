@@ -28,20 +28,20 @@ public interface ModuleLikeContext extends Context {
   /**
    * Symbols that available in this module
    */
-  @NotNull ModuleSymbol<ContextUnit.TopLevel> symbols();
+  @NotNull ModuleSymbol<ContextUnit> symbols();
 
   /**
-   * Modules this module imported (including itself)
+   * Modules that this module imported.
    */
-  @NotNull Map<ModulePath, ModuleExport> modules();
+  @NotNull Map<ModulePath.Qualified, ModuleExport> modules();
 
   /**
-   * The things that this module exported.
+   * Modules that this module exported.
    */
   @NotNull Map<ModulePath, ModuleExport> exports();
 
   @Override
-  default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
+  default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return modules().getOrNull(modName);
   }
 
@@ -81,7 +81,7 @@ public interface ModuleLikeContext extends Context {
     if (mod == null) return null;
 
     var ref = mod.symbols().getUnqualifiedMaybe(name);
-    if (ref.isOk()) return ref.get();
+    if (ref.isOk()) return ContextUnit.ofPublic(ref.get());
 
     return switch (ref.getErr()) {
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));

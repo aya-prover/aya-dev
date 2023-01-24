@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
-public interface ModuleSymbol<T extends ContextUnit> {
+public interface ModuleSymbol<T> {
 
   /**
    * Getting the candidates of an unqualified name

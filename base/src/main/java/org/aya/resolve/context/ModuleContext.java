@@ -24,9 +24,9 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
   /**
    * All available symbols in this context<br>
    * {@code Unqualified -> (Module Name -> TopLevel)}<br>
-   * It says an {@link ContextUnit.TopLevel} can be referred by {@code {Module Name}::{Unqualified}}
+   * It says an {@link ContextUnit} can be referred by {@code {Module Name}::{Unqualified}}
    */
-  @Override @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols();
+  @Override @NotNull MutableModuleSymbol<ContextUnit> symbols();
 
   /**
    * All imported modules in this context.<br/>
@@ -35,9 +35,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    * @apiNote empty list => this module
    * @implNote This module should be automatically imported.
    */
-  @Override @NotNull MutableMap<ModulePath, ModuleExport> modules();
-
-  @NotNull MutableModuleExport thisModule();
+  @Override @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules();
 
   default void importModule(
     @NotNull ModuleLikeContext module,
@@ -120,7 +118,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
   }
 
-  default void define(@NotNull ContextUnit.Defined defined, @NotNull SourcePos sourcePos) {
+  default void define(@NotNull ContextUnit defined, @NotNull SourcePos sourcePos) {
     addGlobal(new GlobalSymbol.Defined(defined.data().name(), defined), sourcePos);
   }
 
@@ -164,13 +162,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
   }
 
   default void doDefine(@NotNull String name, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
-    if (ref instanceof DefVar<?, ?> defVar) {
-      var success = thisModule().export(ModulePath.This, name, defVar);
-
-      if (!success) {
-        reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-      }
-    }
+    // TODO: do nothing?
   }
 
   /**
@@ -180,7 +172,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
   // TODO: This is only used in ModuleContext#addGlobal
   sealed interface GlobalSymbol {
-    @NotNull ContextUnit.TopLevel data();
+    @NotNull ContextUnit data();
     @NotNull ModulePath componentName();
     @NotNull String unqualifiedName();
 
@@ -191,7 +183,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
     record Defined(
       @NotNull String unqualifiedName,
-      @NotNull ContextUnit.Defined data
+      @NotNull ContextUnit data
     ) implements GlobalSymbol {
       @Override
       public @NotNull ModulePath.This componentName() {
@@ -211,13 +203,18 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     record Imported(
       @NotNull ModulePath.Qualified componentName,
       @NotNull String unqualifiedName,
-      @NotNull ContextUnit.Outside data,
+      @NotNull DefVar<?, ?> ref,
       @NotNull Stmt.Accessibility accessibility
     ) implements GlobalSymbol {
       @Override
+      public @NotNull ContextUnit data() {
+        return ContextUnit.ofPublic(ref);
+      }
+
+      @Override
       public @Nullable DefVar<?, ?> exportMaybe() {
         if (accessibility == Stmt.Accessibility.Public) {
-          return data.data();
+          return ref;
         } else {
           return null;
         }

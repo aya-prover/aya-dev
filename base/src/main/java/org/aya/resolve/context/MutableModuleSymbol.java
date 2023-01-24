@@ -20,7 +20,7 @@ import java.util.function.BiConsumer;
  *              It says a `Symbol` can be referred by `{Component}::{Unqualified}`
  * @apiNote the methods that end with `Definitely` will get/remove only one symbol or fail if ambiguous.
  */
-public record MutableModuleSymbol<T extends ContextUnit>(
+public record MutableModuleSymbol<T>(
   @NotNull MutableMap<String, MutableMap<ModulePath, T>> table
 ) implements ModuleSymbol<T> {
   public MutableModuleSymbol() {

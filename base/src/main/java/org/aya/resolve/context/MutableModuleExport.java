@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A data class that contains all public definitions/re-exports of some module.
  */
-public record MutableModuleExport(@NotNull MutableModuleSymbol<ContextUnit.Outside> symbols) implements ModuleExport {
+public record MutableModuleExport(@NotNull MutableModuleSymbol<DefVar<?, ?>> symbols) implements ModuleExport {
   public MutableModuleExport() {
     this(new MutableModuleSymbol<>());
   }
@@ -18,7 +18,7 @@ public record MutableModuleExport(@NotNull MutableModuleSymbol<ContextUnit.Outsi
    * @return false if failed
    */
   public boolean export(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    var exists = symbols.add(component, name, ContextUnit.ofOutside(ref));
+    var exists = symbols.add(component, name, ref);
     return exists.isEmpty();
   }
 
@@ -27,6 +27,6 @@ public record MutableModuleExport(@NotNull MutableModuleSymbol<ContextUnit.Outsi
   }
 
   public void exportAnyway(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    symbols.addAnyway(component, name, ContextUnit.ofOutside(ref));
+    symbols.addAnyway(component, name, ref);
   }
 }

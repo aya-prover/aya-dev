@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -18,8 +18,8 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
-  @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols,
-  @NotNull MutableMap<ModulePath, ModuleExport> modules
+  @NotNull MutableModuleSymbol<ContextUnit> symbols,
+  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
 ) implements ModuleContext {
   @Override
   public @NotNull ImmutableSeq<String> moduleName() {
@@ -27,7 +27,7 @@ public record NoExportContext(
   }
 
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
-    this(parent, new MutableModuleSymbol<>(), MutableHashMap.of(ModulePath.This, new MutableModuleExport()));
+    this(parent, new MutableModuleSymbol<>(), MutableHashMap.create());
   }
 
   @Override public @NotNull Path underlyingFile() {
@@ -41,11 +41,5 @@ public record NoExportContext(
   @Override
   public @NotNull Map<ModulePath, ModuleExport> exports() {
     return Map.empty();
-  }
-
-  @Override
-  public @NotNull MutableModuleExport thisModule() {
-    // TODO: too dirty!!
-    return (MutableModuleExport) modules().get(ModulePath.This);
   }
 }

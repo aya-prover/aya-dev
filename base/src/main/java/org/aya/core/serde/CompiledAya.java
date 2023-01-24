@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -19,6 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ContextUnit;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
@@ -278,7 +279,7 @@ public record CompiledAya(
         if (isExported(mod, data.name())) export(context, data.name(), def.ref());
         data.bodies().forEachWith(((DataDef) def).body, (ctor, ctorDef) -> {
           if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
-          innerCtx.define(ctorDef.ref(), SourcePos.SER);
+          innerCtx.define(ContextUnit.ofPublic(ctorDef.ref()), SourcePos.SER);
         });
         context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),
@@ -291,7 +292,7 @@ public record CompiledAya(
         if (isExported(mod, struct.name())) export(context, struct.name(), def.ref());
         struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
-          innerCtx.define(fieldDef.ref(), SourcePos.SER);
+          innerCtx.define(ContextUnit.ofPublic(fieldDef.ref()), SourcePos.SER);
         });
         context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),

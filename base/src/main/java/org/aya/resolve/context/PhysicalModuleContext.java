@@ -6,7 +6,6 @@ import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
@@ -20,15 +19,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols = new MutableModuleSymbol<>();
-  public final @NotNull MutableModuleExport thisModule = new MutableModuleExport();
+  public final @NotNull MutableModuleSymbol<ContextUnit> symbols = new MutableModuleSymbol<>();
   public final @NotNull MutableModuleExport thisModuleExport = new MutableModuleExport();
-  public final @NotNull MutableMap<ModulePath, ModuleExport> modules =
-    MutableHashMap.of(ModulePath.This, thisModule);
+  public final @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules = MutableHashMap.create();
   public final @NotNull MutableMap<ModulePath, ModuleExport> exports =
     MutableHashMap.of(ModulePath.This, thisModuleExport);
-  public final @NotNull MutableSet<String> duplicated = MutableSet.create();
-
+  public final @NotNull MutableMap<String, ContextUnit.Exportable> permits = MutableMap.create();
   private final @NotNull ImmutableSeq<String> moduleName;
 
   @Override
@@ -41,6 +37,17 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public PhysicalModuleContext(@NotNull Context parent, @NotNull ImmutableSeq<String> moduleName) {
     this.parent = parent;
     this.moduleName = moduleName;
+  }
+
+  @Override
+  public @Nullable ContextUnit getUnqualifiedLocalMaybe(
+    @NotNull String name,
+    Stmt.@Nullable Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
+    var permitted = permits.getOption(name);
+    if (permitted.isDefined()) return permitted.get();
+    return ModuleContext.super.getUnqualifiedLocalMaybe(name, accessibility, sourcePos);
   }
 
   @Override public void importModuleExport(
@@ -57,8 +64,6 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   @Override
   public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    if (duplicated.contains(name)) return;
-
     var success = thisModuleExport.export(componentName, name, ref);
 
     if (!success) {
@@ -75,20 +80,16 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return parent;
   }
 
-  @Override public @NotNull MutableModuleSymbol<ContextUnit.TopLevel> symbols() {
+  @Override public @NotNull MutableModuleSymbol<ContextUnit> symbols() {
     return symbols;
   }
 
-  @Override public @NotNull MutableMap<ModulePath, ModuleExport> modules() {
+  @Override public @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules() {
     return modules;
   }
 
   @Override public @NotNull Map<ModulePath, ModuleExport> exports() {
     return Map.from(exports);
-  }
-
-  @Override public @NotNull MutableModuleExport thisModule() {
-    return thisModule;
   }
 
   @Contract(mutates = "this") public void clear() {

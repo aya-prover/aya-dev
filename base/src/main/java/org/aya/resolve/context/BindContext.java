@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -40,12 +40,12 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable ContextUnit.Local getUnqualifiedLocalMaybe(
+  @Override public @Nullable ContextUnit.NotExportable getUnqualifiedLocalMaybe(
     @NotNull String name,
     @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    if (name.equals(this.name)) return new ContextUnit.Local(ref);
+    if (name.equals(this.name)) return new ContextUnit.NotExportable(ref);
     else return null;
   }
 
@@ -60,7 +60,7 @@ public record BindContext(
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName) {
+  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -197,7 +197,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath modName);
+  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName);
 
   /**
    * Trying to get a {@link ModuleExport} by a module {@param modName} in the whole context.
@@ -205,7 +205,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  default @Nullable ModuleExport getModuleMaybe(@NotNull ModulePath modName) {
+  default @Nullable ModuleExport getModuleMaybe(@NotNull ModulePath.Qualified modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 
@@ -257,8 +257,10 @@ public interface Context {
     return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
   }
 
-  default @NotNull MockModuleContext mock(@NotNull DefVar<?, ?> defVar, @NotNull Stmt.Accessibility accessibility) {
-    return new MockModuleContext(this, new ContextUnit.Exportable(defVar, accessibility));
+  default @NotNull PhysicalModuleContext mock(@NotNull DefVar<?, ?> defVar, @NotNull Stmt.Accessibility accessibility) {
+    var sub = derive(defVar.name());
+    sub.permits.put(defVar.name(), new ContextUnit.Exportable(defVar, accessibility));
+    return sub;
   }
 
   class ResolvingInterruptedException extends InterruptException {

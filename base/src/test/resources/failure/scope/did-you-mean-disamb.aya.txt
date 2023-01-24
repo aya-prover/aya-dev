@@ -1,3 +1,21 @@
+In file $FILE:2:17 ->
+
+  1 │   open data Nat1 | zero | suc Nat1
+  2 │   open data Nat2 | zero | suc Nat2
+    │                    ╰──╯
+  3 │   
+
+Warning: The name `zero` shadows a previous local definition from outer scope
+
+In file $FILE:2:24 ->
+
+  1 │   open data Nat1 | zero | suc Nat1
+  2 │   open data Nat2 | zero | suc Nat2
+    │                           ╰─╯
+  3 │   
+
+Warning: The name `suc` shadows a previous local definition from outer scope
+
 In file $FILE:2:0 ->
 
   1 │   open data Nat1 | zero | suc Nat1
@@ -31,5 +49,5 @@ Error: The unqualified name `zero` is ambiguous
          `Nat2::zero`
 
 Resolving interrupted due to:
-1 error(s), 2 warning(s).
+1 error(s), 4 warning(s).
 What are you doing?

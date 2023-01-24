@@ -73,7 +73,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name()).map(ContextUnit.Outside::data);
+          var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name());
           assert symbol.isOk();   // checked in openModule
           var defVar = symbol.get();
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
@@ -97,7 +97,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mockCtx) -> {
           ctor.ref().module = mockCtx.moduleName();
-          mockCtx.define(ctor.ref(), ctor.sourcePos());
+          mockCtx.define(ContextUnit.ofPublic(ctor.ref()), ctor.sourcePos());
           resolveOpInfo(ctor, mockCtx);
         });
         resolveOpInfo(decl, innerCtx);
@@ -106,7 +106,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
           field.ref().module = mockCtx.moduleName();
-          mockCtx.define(field.ref, field.sourcePos());
+          mockCtx.define(ContextUnit.ofPublic(field.ref), field.sourcePos());
           resolveOpInfo(field, mockCtx);
         });
         resolveOpInfo(decl, innerCtx);
@@ -133,12 +133,12 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     }
   }
 
-  private <D extends Decl, Child extends Decl> MockModuleContext resolveChildren(
+  private <D extends Decl, Child extends Decl> PhysicalModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull Decl.TopLevel proof,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
-    @NotNull BiConsumer<Child, MockModuleContext> childResolver
+    @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
     assert decl == proof;
     var innerCtx = context.mock(decl.ref(), decl.accessibility());
@@ -148,7 +148,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     var module = decl.ref().name();
     context.importModuleExport(
       ModulePath.This.resolve(module),
-      innerCtx.thisExports(),
+      innerCtx.thisModuleExport,
       decl.accessibility(),
       decl.sourcePos()
     );

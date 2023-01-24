@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.UseHide;
+import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
@@ -15,12 +16,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public interface ModuleExport {
-  @NotNull ModuleSymbol<ContextUnit.Outside> symbols();
+  @NotNull ModuleSymbol<DefVar<?, ?>> symbols();
 
   @Contract(pure = true)
   default @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
     var oldSymbols = symbols();
-    MutableModuleSymbol<ContextUnit.Outside> newSymbols;
+    MutableModuleSymbol<DefVar<?, ?>> newSymbols;
     var badNames = MutableList.<QualifiedID>create();
     var ambiNames = MutableList.<WithPos<String>>create();
 
