@@ -11,7 +11,6 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.EndoPattern;
@@ -22,7 +21,6 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ContextUnit;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.resolve.error.PrimResolveError;
@@ -64,8 +62,8 @@ public record ExprResolver(
     return el.descent(enter(ctx));
   }
 
-  public void enterHead(@NotNull Stmt.Accessibility accessibility) {
-    where.push(new Where.Head(accessibility));
+  public void enterHead() {
+    where.push(Where.Head);
     reference.clear();
   }
 
@@ -87,21 +85,14 @@ public record ExprResolver(
     return new ExprResolver(ctx, RESTRICTIVE, allowedGeneralizes, reference, MutableStack.create(), this::addReference);
   }
 
-  private @Nullable Stmt.Accessibility accessibility() {
-    return switch (where.peek()) {
-      case Where.Body body -> null;
-      case Where.Head head -> head.accessibility();
-    };
-  }
-
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.RawProj(var pos, var tup, var id, var resolved, var coeLeft, var restr) -> {
         var resolvedIx = ctx.getMaybe(id);
         if (resolvedIx == null)
           ctx.reportAndThrow(new FieldError.UnknownField(id.sourcePos(), id.join()));
-        yield resolvedIx.data() == resolved ? expr
-          : new Expr.RawProj(pos, tup, id, resolvedIx.data(), coeLeft, restr);
+        yield resolvedIx == resolved ? expr
+          : new Expr.RawProj(pos, tup, id, resolvedIx, coeLeft, restr);
       }
       case Expr.Hole hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
@@ -154,7 +145,7 @@ public record ExprResolver(
         },
         right -> right.descent(this)
       ));
-      case Expr.Unresolved(var pos, var name) -> switch (ctx.get(name, accessibility()).data()) {
+      case Expr.Unresolved(var pos, var name) -> switch (ctx.get(name)) {
         case GeneralizedVar generalized -> {
           if (!allowedGeneralizes.containsKey(generalized)) {
             if (options.allowGeneralized) {
@@ -211,7 +202,7 @@ public record ExprResolver(
   private void addReference(@NotNull TyckUnit unit) {
     if (parentAdd != null) parentAdd.accept(unit);
     if (where.isEmpty()) throw new InternalException("where am I?");
-    if (where.peek() instanceof Where.Head) {
+    if (where.peek() == Where.Head) {
       reference.append(new TyckOrder.Head(unit));
       reference.append(new TyckOrder.Body(unit));
     } else {
@@ -231,7 +222,7 @@ public record ExprResolver(
         return switch (pattern) {
           case Pattern.Bind bind -> {
             var maybe = ctx.get().iterate(c ->
-              patternCon(c.getUnqualifiedLocalMaybe(bind.bind().name(), null, bind.sourcePos())));
+              patternCon(c.getUnqualifiedLocalMaybe(bind.bind().name(), bind.sourcePos())));
             if (maybe != null) yield new Pattern.Ctor(bind, maybe);
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
@@ -240,7 +231,7 @@ public record ExprResolver(
             var qid = qref.qualifiedID();
             assert qid.component() instanceof ModulePath.Qualified;
             var maybe = ctx.get().iterate(c ->
-              patternCon(c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), null, qref.sourcePos())));
+              patternCon(c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), qref.sourcePos())));
             if (maybe != null) yield new Pattern.Ctor(qref, maybe);
             yield EndoPattern.super.post(pattern);
           }
@@ -254,9 +245,9 @@ public record ExprResolver(
     }.apply(pattern);
   }
 
-  @Nullable private static DefVar<?, ?> patternCon(ContextUnit myMaybe) {
+  @Nullable private static DefVar<?, ?> patternCon(@Nullable AnyVar myMaybe) {
     if (myMaybe == null) return null;
-    if (myMaybe.data() instanceof DefVar<?, ?> def && (
+    if (myMaybe instanceof DefVar<?, ?> def && (
       def.core instanceof CtorDef
         || def.concrete instanceof TeleDecl.DataCtor
         || def.core instanceof PrimDef
@@ -285,14 +276,9 @@ public record ExprResolver(
     });
   }
 
-  public sealed interface Where {
-    record Head(@NotNull Stmt.Accessibility accessibility) implements Where {
-    }
-
-    record Body() implements Where {
-    }
-
-    Body Body = new Body();
+  public enum Where {
+    Head,
+    Body
   }
 
   public record Options(boolean allowGeneralized) {

@@ -24,9 +24,9 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
   /**
    * All available symbols in this context<br>
    * {@code Unqualified -> (Module Name -> TopLevel)}<br>
-   * It says an {@link ContextUnit} can be referred by {@code {Module Name}::{Unqualified}}
+   * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
    */
-  @Override @NotNull MutableModuleSymbol<ContextUnit> symbols();
+  @Override @NotNull MutableModuleSymbol<AnyVar> symbols();
 
   /**
    * All imported modules in this context.<br/>
@@ -118,8 +118,8 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
   }
 
-  default void define(@NotNull ContextUnit defined, @NotNull SourcePos sourcePos) {
-    addGlobal(new GlobalSymbol.Defined(defined.data().name(), defined), sourcePos);
+  default void define(@NotNull AnyVar defined, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
+    addGlobal(new GlobalSymbol.Defined(defined.name(), defined, accessibility), sourcePos);
   }
 
   /**
@@ -133,11 +133,11 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     var name = symbol.unqualifiedName();
     var symbols = symbols();
     if (!symbols.contains(name)) {
-      if (getUnqualifiedMaybe(name, null, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (symbols.containsDefinitely(modName, name)) {
-      reportAndThrow(new NameProblem.DuplicateNameError(name, symbol.data().data(), sourcePos));
+      reportAndThrow(new NameProblem.DuplicateNameError(name, symbol.data(), sourcePos));
     } else {
       reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
@@ -147,7 +147,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
         // Defined, not imported.
         var result = symbols.add(ModulePath.This, name, defined.data());
         assert result.isEmpty() : "Sanity check";
-        doDefine(name, defined.data().data(), sourcePos);
+        doDefine(name, defined.data(), sourcePos);
       }
       case GlobalSymbol.Imported imported -> {
         var result = symbols.add(modName, name, imported.data());
@@ -172,7 +172,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
   // TODO: This is only used in ModuleContext#addGlobal
   sealed interface GlobalSymbol {
-    @NotNull ContextUnit data();
+    @NotNull AnyVar data();
     @NotNull ModulePath componentName();
     @NotNull String unqualifiedName();
 
@@ -183,7 +183,8 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
     record Defined(
       @NotNull String unqualifiedName,
-      @NotNull ContextUnit data
+      @NotNull AnyVar data,
+      @NotNull Stmt.Accessibility accessibility
     ) implements GlobalSymbol {
       @Override
       public @NotNull ModulePath.This componentName() {
@@ -192,8 +193,8 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
 
       @Override
       public @Nullable DefVar<?, ?> exportMaybe() {
-        if (data instanceof ContextUnit.Exportable exportable && exportable.accessibility() == Stmt.Accessibility.Public) {
-          return exportable.data();
+        if (data instanceof DefVar<?, ?> defVar && accessibility() == Stmt.Accessibility.Public) {
+          return defVar;
         } else {
           return null;
         }
@@ -203,18 +204,14 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
     record Imported(
       @NotNull ModulePath.Qualified componentName,
       @NotNull String unqualifiedName,
-      @NotNull DefVar<?, ?> ref,
+      @NotNull DefVar<?, ?> data,
       @NotNull Stmt.Accessibility accessibility
     ) implements GlobalSymbol {
-      @Override
-      public @NotNull ContextUnit data() {
-        return ContextUnit.ofPublic(ref);
-      }
 
       @Override
       public @Nullable DefVar<?, ?> exportMaybe() {
         if (accessibility == Stmt.Accessibility.Public) {
-          return ref;
+          return data;
         } else {
           return null;
         }

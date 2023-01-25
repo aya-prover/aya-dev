@@ -1,8 +1,0 @@
-module A {
-  open private data Nat | O | S Nat
-  private def suc (x : Nat) => S x
-}
-
-open A
-
-def no-ctor => S O

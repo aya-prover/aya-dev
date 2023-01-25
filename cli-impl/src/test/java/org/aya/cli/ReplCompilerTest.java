@@ -8,8 +8,8 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.ref.AnyVar;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ContextUnit;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ public class ReplCompilerTest {
     assertNull(findContext("a"));
   }
 
-  private @Nullable ContextUnit findContext(@NotNull String name) {
+  private @Nullable AnyVar findContext(@NotNull String name) {
     try {
       var ctx = compiler.getContext();
       return ctx.getMaybe(new QualifiedID(SourcePos.NONE,

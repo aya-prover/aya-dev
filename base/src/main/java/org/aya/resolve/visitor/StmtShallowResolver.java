@@ -85,7 +85,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)
-          context.define(new ContextUnit.NotExportable(variable), variable.sourcePos);
+          context.define(variable, Stmt.Accessibility.Private, variable.sourcePos);
       }
     }
   }
@@ -95,10 +95,10 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mockCtx) -> {
-          ctor.ref().module = mockCtx.moduleName();
-          mockCtx.define(ContextUnit.ofPublic(ctor.ref()), ctor.sourcePos());
-          resolveOpInfo(ctor, mockCtx);
+        var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mCtx) -> {
+          ctor.ref().module = mCtx.moduleName();
+          mCtx.define(ctor.ref, Stmt.Accessibility.Public, ctor.sourcePos());
+          resolveOpInfo(ctor, mCtx);
         });
         resolveOpInfo(decl, innerCtx);
       }
@@ -106,7 +106,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
           field.ref().module = mockCtx.moduleName();
-          mockCtx.define(ContextUnit.ofPublic(field.ref), field.sourcePos());
+          mockCtx.define(field.ref, Stmt.Accessibility.Public, field.sourcePos());
           resolveOpInfo(field, mockCtx);
         });
         resolveOpInfo(decl, innerCtx);
@@ -141,7 +141,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
     assert decl == proof;
-    var innerCtx = context.mock(decl.ref(), decl.accessibility());
+    var innerCtx = context.derive(decl.ref().name());
 
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
 
@@ -174,7 +174,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     };
     decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.define(new ContextUnit.Exportable(decl.ref(), decl.accessibility()), decl.sourcePos());
+    ctx.define(decl.ref(), decl.accessibility(), decl.sourcePos());
     return ctx;
   }
 

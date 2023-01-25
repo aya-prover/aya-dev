@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import org.aya.concrete.stmt.Stmt;
+import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -23,19 +23,17 @@ public record EmptyContext(
     return null;
   }
 
-  @Override public @Nullable ContextUnit getUnqualifiedLocalMaybe(
+  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
     return null;
   }
 
   @Override
-  public @Nullable ContextUnit getQualifiedLocalMaybe(
+  public @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
     return null;

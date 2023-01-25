@@ -7,13 +7,10 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.util.InterruptException;
 import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
-import org.aya.resolve.error.AccessibilityError;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -68,41 +65,24 @@ public interface Context {
   }
 
   /**
-   * Getting a symbol by name {@param name} without accessibility checking
+   * Getting a symbol by name {@param name}.
    *
    * @param name an id which probably unqualified
    */
-  default @NotNull ContextUnit get(@NotNull QualifiedID name) {
-    return get(name, null);
-  }
-
-  /**
-   * Getting a symbol by name {@param name} with {@param accessibility}
-   *
-   * @param name          an id which probably unqualified
-   * @param accessibility an option accessibility
-   */
-  default @NotNull ContextUnit get(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
+  default @NotNull AnyVar get(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.This aThis -> getUnqualified(name.name(), accessibility, name.sourcePos());
-      case ModulePath.Qualified qualified -> getQualified(qualified, name.name(), accessibility, name.sourcePos());
+      case ModulePath.This aThis -> getUnqualified(name.name(), name.sourcePos());
+      case ModulePath.Qualified qualified -> getQualified(qualified, name.name(), name.sourcePos());
     };
   }
 
   /**
    * @see Context#get(QualifiedID)
    */
-  default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name) {
-    return getMaybe(name, null);
-  }
-
-  /**
-   * @see Context#get(QualifiedID, Stmt.Accessibility)
-   */
-  default @Nullable ContextUnit getMaybe(@NotNull QualifiedID name, @Nullable Stmt.Accessibility accessibility) {
+  default @Nullable AnyVar getMaybe(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.This aThis -> getUnqualifiedMaybe(name.name(), accessibility, name.sourcePos());
-      case ModulePath.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), accessibility, name.sourcePos());
+      case ModulePath.This aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
+      case ModulePath.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), name.sourcePos());
     };
   }
 
@@ -111,81 +91,73 @@ public interface Context {
   }
 
   /**
-   * Trying to get a symbol by unqualified name {@param name} in {@code this} context with {@param accessibility}
+   * Trying to get a symbol by unqualified name {@param name} in {@code this} context.
    */
-  @Nullable ContextUnit getUnqualifiedLocalMaybe(
+  @Nullable AnyVar getUnqualifiedLocalMaybe(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   );
 
   /**
-   * Trying to get a symbol which can referred by unqualified name {@param name} in the whole context with {@param accessibility}.
+   * Trying to get a symbol which can referred by unqualified name {@param name} in the whole context.
    *
-   * @param name          the unqualified name
-   * @param accessibility the accessibility, null if no accessibility checking
-   * @param sourcePos     the source pos for error reporting
+   * @param name      the unqualified name
+   * @param sourcePos the source pos for error reporting
    * @return null if not found
-   * @see Context#getUnqualifiedLocalMaybe(String, Stmt.Accessibility, SourcePos)
+   * @see Context#getUnqualifiedLocalMaybe(String, SourcePos)
    */
-  default @Nullable ContextUnit getUnqualifiedMaybe(
+  default @Nullable AnyVar getUnqualifiedMaybe(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    return iterate(c -> c.getUnqualifiedLocalMaybe(name, accessibility, sourcePos));
+    return iterate(c -> c.getUnqualifiedLocalMaybe(name, sourcePos));
   }
 
   /**
-   * @see Context#getUnqualified(String, Stmt.Accessibility, SourcePos)
+   * @see Context#getUnqualified(String, SourcePos)
    */
-  default @NotNull ContextUnit getUnqualified(
+  default @NotNull AnyVar getUnqualified(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    var result = getUnqualifiedMaybe(name, accessibility, sourcePos);
+    var result = getUnqualifiedMaybe(name, sourcePos);
     if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(this, name, sourcePos));
     return result;
   }
 
   /**
-   * Trying to get a symbol by qualified id {@code {modName}::{name}} in {@code this} context with {@param accessibility}.
+   * Trying to get a symbol by qualified id {@code {modName}::{name}} in {@code this} context
    *
-   * @param accessibility null if no accessibility check
    * @return a symbol in component {@param modName}, even it is {@link ModulePath#This}; null if not found
    */
-  @Nullable ContextUnit getQualifiedLocalMaybe(
+  @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   );
 
   /**
    * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}.
    *
-   * @see Context#getQualifiedLocalMaybe(ModulePath.Qualified, String, Stmt.Accessibility, SourcePos)
+   * @see Context#getQualifiedLocalMaybe(ModulePath.Qualified, String, SourcePos)
    */
-  default @Nullable ContextUnit getQualifiedMaybe(
+  default @Nullable AnyVar getQualifiedMaybe(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    return iterate(c -> c.getQualifiedLocalMaybe(modName, name, accessibility, sourcePos));
+    return iterate(c -> c.getQualifiedLocalMaybe(modName, name, sourcePos));
   }
 
   /**
-   * @see Context#getQualifiedMaybe(ModulePath.Qualified, String, Stmt.Accessibility, SourcePos)
+   * @see Context#getQualifiedMaybe(ModulePath.Qualified, String, SourcePos)
    */
-  default @NotNull ContextUnit getQualified(
+  default @NotNull AnyVar getQualified(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    var result = getQualifiedMaybe(modName, name, accessibility, sourcePos);
+    var result = getQualifiedMaybe(modName, name, sourcePos);
     if (result == null)
       reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
     return result;
@@ -229,24 +201,12 @@ public interface Context {
   ) {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
-    var exists = getUnqualifiedMaybe(name, null, sourcePos);
-    if (toWarn.test(exists == null ? null : exists.data())
+    var exists = getUnqualifiedMaybe(name, sourcePos);
+    if (toWarn.test(exists)
       && (!(ref.generateKind() instanceof GenerateKind.Anonymous))) {
       reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
     }
     return new BindContext(this, name, ref);
-  }
-
-  default @NotNull ContextUnit.Exportable checkAccessibility(
-    @NotNull ContextUnit.Exportable symbol,
-    @Nullable Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) {
-    if (symbol.accessibility() == Stmt.Accessibility.Private && accessibility == Stmt.Accessibility.Public) {
-      reportAndThrow(new AccessibilityError(sourcePos));
-    }
-
-    return symbol;
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
@@ -255,12 +215,6 @@ public interface Context {
 
   default @NotNull PhysicalModuleContext derive(@NotNull Seq<@NotNull String> extraName) {
     return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
-  }
-
-  default @NotNull PhysicalModuleContext mock(@NotNull DefVar<?, ?> defVar, @NotNull Stmt.Accessibility accessibility) {
-    var sub = derive(defVar.name());
-    sub.permits.put(defVar.name(), new ContextUnit.Exportable(defVar, accessibility));
-    return sub;
   }
 
   class ResolvingInterruptedException extends InterruptException {

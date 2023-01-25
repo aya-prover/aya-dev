@@ -1,3 +1,0 @@
-private open data Unit | unit
-
-def justUnit : Unit => unit

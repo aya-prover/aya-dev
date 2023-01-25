@@ -3,7 +3,7 @@
 package org.aya.resolve.context;
 
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -40,23 +40,21 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable ContextUnit.NotExportable getUnqualifiedLocalMaybe(
+  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    if (name.equals(this.name)) return new ContextUnit.NotExportable(ref);
+    if (name.equals(this.name)) return ref;
     else return null;
   }
 
   @Override
-  public @Nullable ContextUnit getQualifiedLocalMaybe(
+  public @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    return parent.getQualifiedLocalMaybe(modName, name, accessibility, sourcePos);
+    return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
   @Override

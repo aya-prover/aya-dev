@@ -6,6 +6,7 @@ import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
-  @NotNull MutableModuleSymbol<ContextUnit> symbols,
+  @NotNull MutableModuleSymbol<AnyVar> symbols,
   @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
 ) implements ModuleContext {
   @Override

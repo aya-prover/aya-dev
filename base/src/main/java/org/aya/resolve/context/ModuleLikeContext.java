@@ -4,7 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.ref.AnyVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -28,7 +28,7 @@ public interface ModuleLikeContext extends Context {
   /**
    * Symbols that available in this module
    */
-  @NotNull ModuleSymbol<ContextUnit> symbols();
+  @NotNull ModuleSymbol<AnyVar> symbols();
 
   /**
    * Modules that this module imported.
@@ -45,19 +45,13 @@ public interface ModuleLikeContext extends Context {
     return modules().getOrNull(modName);
   }
 
-  @Override default @Nullable ContextUnit getUnqualifiedLocalMaybe(
+  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
     var symbol = symbols().getUnqualifiedMaybe(name);
     if (symbol.isOk()) {
-      var result = symbol.get();
-      if (result instanceof ContextUnit.Exportable defined) {
-        return checkAccessibility(defined, accessibility, sourcePos);
-      } else {
-        return result;
-      }
+      return symbol.get();
     } else {
       // I am sure that this is not equivalent to null
       return switch (symbol.getErr()) {
@@ -71,17 +65,16 @@ public interface ModuleLikeContext extends Context {
   }
 
   @Override
-  default @Nullable ContextUnit getQualifiedLocalMaybe(
+  default @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModulePath.Qualified modName,
     @NotNull String name,
-    @Nullable Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
 
     var ref = mod.symbols().getUnqualifiedMaybe(name);
-    if (ref.isOk()) return ContextUnit.ofPublic(ref.get());
+    if (ref.isOk()) return ref.get();
 
     return switch (ref.getErr()) {
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));

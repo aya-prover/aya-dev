@@ -19,7 +19,6 @@ import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ContextUnit;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
@@ -275,11 +274,11 @@ public record CompiledAya(
       }
       case SerDef.Data data -> {
         // The accessibility doesn't matter, this context is readonly
-        var innerCtx = context.mock(def.ref(), Stmt.Accessibility.Public);
+        var innerCtx = context.derive(def.ref().name());
         if (isExported(mod, data.name())) export(context, data.name(), def.ref());
         data.bodies().forEachWith(((DataDef) def).body, (ctor, ctorDef) -> {
           if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
-          innerCtx.define(ContextUnit.ofPublic(ctorDef.ref()), SourcePos.SER);
+          innerCtx.define(ctorDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),
@@ -288,11 +287,11 @@ public record CompiledAya(
           SourcePos.SER);
       }
       case SerDef.Struct struct -> {
-        var innerCtx = context.mock(def.ref(), Stmt.Accessibility.Public);
+        var innerCtx = context.derive(def.ref().name());
         if (isExported(mod, struct.name())) export(context, struct.name(), def.ref());
         struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
-          innerCtx.define(ContextUnit.ofPublic(fieldDef.ref()), SourcePos.SER);
+          innerCtx.define(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModuleExports(
           ModulePath.This.resolve(def.ref().name()),
