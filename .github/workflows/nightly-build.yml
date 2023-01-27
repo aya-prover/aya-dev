@@ -53,7 +53,6 @@ jobs:
       - name: gradle publish
         uses: gradle/gradle-build-action@v2
         with:
-          dependencies-cache-enabled: true
           arguments: publish --info --no-daemon --stacktrace --warning-mode all
 
   nightly-build:
@@ -105,12 +104,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           dependencies-cache-enabled: true
-          arguments: fatjar --info --no-daemon --stacktrace --warning-mode all
+          arguments: fatJar --no-daemon --stacktrace --warning-mode all
 
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '22.2.0'
+          version: 'latest'
           java-version: '17'
           components: 'native-image'
           set-java-home: 'false'
