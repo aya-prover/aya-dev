@@ -134,7 +134,7 @@ public sealed interface SerDef extends Serializable {
   }
 
   /** To use serialized operators in {@link org.aya.concrete.desugar.AyaBinOpSet} */
-  record SerOpDecl(@NotNull OpInfo opInfo) implements OpDecl {
+  record SerOpDecl(@NotNull OpInfo opInfo) implements OpDecl, Serializable {
   }
 
   /** Serialized version of {@link org.aya.util.binop.OpDecl.OpInfo} */
