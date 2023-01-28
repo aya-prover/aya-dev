@@ -30,7 +30,6 @@ kala.control.Either$Right
 kala.control.Option
 kala.control.Option$NoneReplaced
 kala.control.AnyOption
-kala.function.Balances$Optimized
 kala.function.Hasher$Optimized
 kala.collection.ArraySeq
 kala.collection.internal.hash.HashBase
