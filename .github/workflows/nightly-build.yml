@@ -148,8 +148,8 @@ jobs:
 
       - name: Copy fat jar
         run: |
-          cp ./ide-lsp/build/libs/lsp-*-fat.jar ./lsp-fatjar.jar
-          cp ./cli-console/build/libs/cli-*-fat.jar ./cli-fatjar.jar
+          cp ./ide-lsp/build/libs/*-fat.jar ./lsp-fatjar.jar
+          cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
 
       - name: Zip Artifacts (Windows)
         uses: papeloto/action-zip@v1
