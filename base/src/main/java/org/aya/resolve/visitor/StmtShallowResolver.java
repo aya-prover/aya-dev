@@ -85,7 +85,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)
-          context.define(variable, Stmt.Accessibility.Private, variable.sourcePos);
+          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
       }
     }
   }
@@ -97,7 +97,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mCtx) -> {
           ctor.ref().module = mCtx.moduleName();
-          mCtx.define(ctor.ref, Stmt.Accessibility.Public, ctor.sourcePos());
+          mCtx.defineSymbol(ctor.ref, Stmt.Accessibility.Public, ctor.sourcePos());
           resolveOpInfo(ctor, mCtx);
         });
         resolveOpInfo(decl, innerCtx);
@@ -106,7 +106,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
           field.ref().module = mockCtx.moduleName();
-          mockCtx.define(field.ref, Stmt.Accessibility.Public, field.sourcePos());
+          mockCtx.defineSymbol(field.ref, Stmt.Accessibility.Public, field.sourcePos());
           resolveOpInfo(field, mockCtx);
         });
         resolveOpInfo(decl, innerCtx);
@@ -141,17 +141,17 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
     assert decl == proof;
-    var childCtx = context.derive(decl.ref().name());
-    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, childCtx));
+    var innerCtx = context.derive(decl.ref().name());
+    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
     context.importModule(
       ModulePath.This.resolve(module),
-      childCtx.thisExport,
+      innerCtx.thisExport,
       decl.accessibility(),
       decl.sourcePos()
     );
-    proof.setCtx(childCtx);
-    return childCtx;
+    proof.setCtx(innerCtx);
+    return innerCtx;
   }
 
   private void resolveOpInfo(@NotNull Decl decl, @NotNull Context context) {
@@ -172,7 +172,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     };
     decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.define(decl.ref(), decl.accessibility(), decl.sourcePos());
+    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
     return ctx;
   }
 

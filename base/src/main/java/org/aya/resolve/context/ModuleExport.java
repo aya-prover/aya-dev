@@ -168,15 +168,11 @@ public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
   }
 
   /**
-   * @return false if failed
+   * @return false if there already exist a symbol with the same name.
    */
-  public boolean export(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    var exists = symbols.add(component, name, ref);
+  public boolean export(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    var exists = symbols.add(modName, name, ref);
     return exists.isEmpty();
-  }
-
-  public boolean export(@NotNull QualifiedID qualifiedName, @NotNull DefVar<?, ?> ref) {
-    return export(qualifiedName.component(), qualifiedName.name(), ref);
   }
 
   public void exportAnyway(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {

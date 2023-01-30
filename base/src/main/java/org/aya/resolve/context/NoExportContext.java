@@ -6,8 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -32,10 +30,6 @@ public record NoExportContext(
 
   @Override public @NotNull Path underlyingFile() {
     return parent.underlyingFile();
-  }
-
-  @Override
-  public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
   }
 
   @Override public @NotNull MutableMap<ModulePath, ModuleExport> exports() {

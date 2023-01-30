@@ -163,10 +163,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
   }
 
-  default void define(@NotNull AnyVar defined, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    addGlobal(new GlobalSymbol.Defined(defined.name(), defined, accessibility), sourcePos);
-  }
-
   /**
    * Adding a new symbol to this module.
    */
@@ -192,7 +188,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         // Defined, not imported.
         var result = symbols.add(ModulePath.This, name, defined.data());
         assert result.isEmpty() : "Sanity check";
-        doDefine(name, defined.data(), sourcePos);
       }
       case GlobalSymbol.Imported imported -> {
         var result = symbols.add(modName, name, imported.data());
@@ -202,18 +197,19 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     var exportSymbol = symbol.exportMaybe();
     if (exportSymbol != null) {
-      doExport(modName, name, exportSymbol, sourcePos);
+      exportSymbol(modName, name, exportSymbol, sourcePos);
     }
   }
 
-  default void doDefine(@NotNull String name, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
-    // TODO: do nothing?
+  /**
+   * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
+   */
+  default void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
   }
 
-  /**
-   * Exporting an {@link AnyVar} with qualified id {@code {componentName}::{name}}
-   */
-  void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos);
+  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
+    addGlobal(new GlobalSymbol.Defined(ref.name(), ref, accessibility), sourcePos);
+  }
 
   // TODO: This is only used in ModuleContext#addGlobal
   sealed interface GlobalSymbol {

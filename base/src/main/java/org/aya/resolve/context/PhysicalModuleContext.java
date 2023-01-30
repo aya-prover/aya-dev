@@ -49,9 +49,8 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override
-  public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    var success = thisExport.export(componentName, name, ref);
-
+  public void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    var success = thisExport.export(modName, name, ref);
     if (!success) {
       reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
     }

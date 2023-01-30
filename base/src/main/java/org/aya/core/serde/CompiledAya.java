@@ -278,7 +278,7 @@ public record CompiledAya(
         if (isExported(mod, data.name())) export(context, data.name(), def.ref());
         data.bodies().forEachWith(((DataDef) def).body, (ctor, ctorDef) -> {
           if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
-          innerCtx.define(ctorDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
+          innerCtx.defineSymbol(ctorDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModule(
           ModulePath.This.resolve(def.ref().name()),
@@ -291,7 +291,7 @@ public record CompiledAya(
         if (isExported(mod, struct.name())) export(context, struct.name(), def.ref());
         struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
-          innerCtx.define(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
+          innerCtx.defineSymbol(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModule(
           ModulePath.This.resolve(def.ref().name()),
@@ -318,7 +318,7 @@ public record CompiledAya(
     @NotNull String name,
     @NotNull DefVar<?, ?> var
   ) {
-    context.doExport(component, name, var, SourcePos.SER);
+    context.exportSymbol(component, name, var, SourcePos.SER);
   }
 
   private boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {

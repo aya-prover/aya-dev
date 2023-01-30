@@ -34,13 +34,13 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
     var export = symbol.exportMaybe();
     if (export != null) {
-      this.doExport(modName, name, export, sourcePos);
+      this.exportSymbol(modName, name, export, sourcePos);
     }
   }
 
   @Override
-  public void doExport(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    thisExport.exportAnyway(component, name, ref);
+  public void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    thisExport.exportAnyway(modName, name, ref);
   }
 
   @Override public void importModule(
