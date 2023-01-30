@@ -38,17 +38,17 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
-        context.importModuleExports(ModulePath.This.resolve(mod.name()), newCtx.exports(), mod.accessibility(), mod.sourcePos());
+        context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path().asModulePath();
-        var success = loader.load(modulePath.toImmutableSeq());
+        var success = loader.load(modulePath.ids());
         if (success == null)
           context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
-        var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
+        var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
-        context.importModuleExports(importedName, mod.exports(), Stmt.Accessibility.Private, cmd.sourcePos());
+        context.importModule(importedName, mod, Stmt.Accessibility.Private, cmd.sourcePos());
         // TODO: ModulePath
         resolveInfo.imports().put(importedName, success);
       }
@@ -141,19 +141,17 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
     assert decl == proof;
-    var innerCtx = context.derive(decl.ref().name());
-
-    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
-
+    var childCtx = context.derive(decl.ref().name());
+    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, childCtx));
     var module = decl.ref().name();
-    context.importModuleExport(
+    context.importModule(
       ModulePath.This.resolve(module),
-      innerCtx.thisModuleExport,
+      childCtx.thisExport,
       decl.accessibility(),
       decl.sourcePos()
     );
-    proof.setCtx(innerCtx);
-    return innerCtx;
+    proof.setCtx(childCtx);
+    return childCtx;
   }
 
   private void resolveOpInfo(@NotNull Decl decl, @NotNull Context context) {

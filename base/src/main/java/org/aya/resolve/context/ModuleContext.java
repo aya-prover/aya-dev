@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
@@ -59,30 +58,22 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return modules().getOrNull(modName);
   }
 
-  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  ) {
+  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var symbol = symbols().getUnqualifiedMaybe(name);
-    if (symbol.isOk()) {
-      return symbol.get();
-    } else {
-      // I am sure that this is not equivalent to null
-      return switch (symbol.getErr()) {
-        case NotFound -> null;
-        case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
-          name,
-          ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
-          sourcePos));
-      };
-    }
+    if (symbol.isOk()) return symbol.get();
+
+    // I am sure that this is not equivalent to null
+    return switch (symbol.getErr()) {
+      case NotFound -> null;
+      case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
+        name,
+        ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().map(ModulePath::ids).toImmutableSeq()),
+        sourcePos));
+    };
   }
 
-  @Override default @Nullable AnyVar getQualifiedLocalMaybe(
-    @NotNull ModulePath.Qualified modName,
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  ) {
+  @Override
+  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModulePath.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
 
@@ -93,55 +84,47 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().map(ModulePath::ids).toImmutableSeq()),
         sourcePos
       ));
     };
   }
 
+  /**
+   * Import the whole module (including itself and its re-exports)
+   *
+   * @see ModuleContext#importModule(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
+   */
   default void importModule(
+    @NotNull ModulePath.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    importModuleExports(ModulePath.ofQualified(module.moduleName()), module.exports(), accessibility, sourcePos);
-  }
-
-  /**
-   * Import the whole module (including itself and re-exports)
-   *
-   * @see ModuleContext#importModuleExport(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
-   */
-  default void importModuleExports(
-    @NotNull ModulePath.Qualified modName,
-    @NotNull Map<ModulePath, ModuleExport> module,
-    @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) {
-    module.forEach((name, mod) -> importModuleExport(modName.concat(name), mod, accessibility, sourcePos));
+    module.exports().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
   }
 
   /**
    * Importing one module export.
    *
    * @param accessibility of importing, re-export if public
-   * @param componentName the name of the module
+   * @param modName       the name of the module
    * @param moduleExport  the module
    */
-  default void importModuleExport(
-    @NotNull ModulePath.Qualified componentName,
+  default void importModule(
+    @NotNull ModulePath.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
     var modules = modules();
-    if (modules.containsKey(componentName)) {
-      reportAndThrow(new NameProblem.DuplicateModNameError(componentName.toImmutableSeq(), sourcePos));
+    if (modules.containsKey(modName)) {
+      reportAndThrow(new NameProblem.DuplicateModNameError(modName.ids(), sourcePos));
     }
-    if (getModuleMaybe(componentName) != null) {
-      reporter().report(new NameProblem.ModShadowingWarn(componentName.toImmutableSeq(), sourcePos));
+    if (getModuleMaybe(modName) != null) {
+      reporter().report(new NameProblem.ModShadowingWarn(modName.ids(), sourcePos));
     }
-    modules.set(componentName, moduleExport);
+    modules.set(modName, moduleExport);
   }
 
   /**

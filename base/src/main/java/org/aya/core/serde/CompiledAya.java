@@ -80,7 +80,7 @@ public record CompiledAya(
       // which means it was defined in {module} if `component == This`;
       //                    defined in {component} if `component != This`
       return exports.getOption(qname.name())
-        .map(components -> components.contains(component.toImmutableSeq()))
+        .map(components -> components.contains(component.ids()))
         .getOrDefault(false);
     }
   }
@@ -98,14 +98,14 @@ public record CompiledAya(
     serialization.ser(defs);
 
     var exports = ctx.exports().get(ModulePath.This).symbols().view().map((k, vs) ->
-      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::toImmutableSeq))));
+      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::ids))));
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
     return new CompiledAya(imports,
       new SerExport(ImmutableMap.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
         // TODO: maybe incorrect, k.toImmutableSeq() can be a renamed module name
-        .map((k, v) -> Tuple.of(k.toImmutableSeq(), SerUseHide.from(v)))),
+        .map((k, v) -> Tuple.of(k.ids(), SerUseHide.from(v)))),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
       ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
@@ -180,13 +180,13 @@ public record CompiledAya(
    */
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var modName : imports) {
-      var componentName = ModulePath.ofQualified(modName);
+      var componentName = ModulePath.qualified(modName);
       var success = loader.load(modName);
       if (success == null)
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), success);
-      var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
-      thisResolve.thisModule().importModuleExports(componentName, mod.exports(), Stmt.Accessibility.Private, SourcePos.SER);
+      var mod = success.thisModule();
+      thisResolve.thisModule().importModule(componentName, mod, Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(componentName,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
@@ -280,9 +280,9 @@ public record CompiledAya(
           if (isExported(mod, ctor.self())) export(context, ctor.self(), ctorDef.ref);
           innerCtx.define(ctorDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
-        context.importModuleExports(
+        context.importModule(
           ModulePath.This.resolve(def.ref().name()),
-          innerCtx.exports(),
+          innerCtx,
           Stmt.Accessibility.Public,
           SourcePos.SER);
       }
@@ -293,9 +293,9 @@ public record CompiledAya(
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
           innerCtx.define(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
-        context.importModuleExports(
+        context.importModule(
           ModulePath.This.resolve(def.ref().name()),
-          innerCtx.exports(),
+          innerCtx,
           Stmt.Accessibility.Public,
           SourcePos.SER);
       }

@@ -18,11 +18,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
+  public final @NotNull ModuleExport thisExport = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
-  public final @NotNull ModuleExport thisModuleExport = new ModuleExport();
   public final @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules = MutableHashMap.create();
-  public final @NotNull MutableMap<ModulePath, ModuleExport> exports =
-    MutableHashMap.of(ModulePath.This, thisModuleExport);
+  public final @NotNull MutableMap<ModulePath, ModuleExport> exports = MutableHashMap.of(ModulePath.This, thisExport);
   private final @NotNull ImmutableSeq<String> moduleName;
 
   @Override
@@ -37,21 +36,21 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     this.moduleName = moduleName;
   }
 
-  @Override public void importModuleExport(
-    @NotNull ModulePath.Qualified componentName,
+  @Override public void importModule(
+    @NotNull ModulePath.Qualified modName,
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModuleExport(componentName, modExport, accessibility, sourcePos);
+    ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
-      this.exports.set(componentName, modExport);
+      this.exports.set(modName, modExport);
     }
   }
 
   @Override
   public void doExport(@NotNull ModulePath componentName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    var success = thisModuleExport.export(componentName, name, ref);
+    var success = thisExport.export(componentName, name, ref);
 
     if (!success) {
       reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));

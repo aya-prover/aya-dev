@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Constants;
+import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface ModulePath {
@@ -12,7 +12,7 @@ public sealed interface ModulePath {
     private This() {
     }
 
-    @Override public @NotNull ImmutableSeq<String> toImmutableSeq() {
+    @Override public @NotNull ImmutableSeq<String> ids() {
       return ImmutableSeq.empty();
     }
 
@@ -34,16 +34,12 @@ public sealed interface ModulePath {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
     }
 
-    @Override public @NotNull ImmutableSeq<String> toImmutableSeq() {
-      return ids;
-    }
-
     @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ids.appended(name));
     }
 
     @Override public @NotNull Qualified concat(@NotNull ModulePath path) {
-      return new Qualified(ids.concat(path.toImmutableSeq()));
+      return new Qualified(ids.concat(path.ids()));
     }
 
     @Override public @NotNull String toString() {
@@ -51,7 +47,7 @@ public sealed interface ModulePath {
     }
   }
 
-  @NotNull ImmutableSeq<String> toImmutableSeq();
+  @NotNull ImmutableSeq<String> ids();
   @NotNull Qualified resolve(@NotNull String name);
   @NotNull ModulePath concat(@NotNull ModulePath path);
   @NotNull String toString();
@@ -60,10 +56,9 @@ public sealed interface ModulePath {
 
   @NotNull This This = new This();
 
-  static @NotNull ModulePath from(@NotNull SeqLike<String> ids) {
+  static @NotNull ModulePath from(@NotNull ImmutableSeq<String> ids) {
     if (ids.isEmpty()) return This;
-
-    return new Qualified(ids.toImmutableSeq());
+    return new Qualified(ids);
   }
 
   /**
@@ -71,9 +66,9 @@ public sealed interface ModulePath {
    *
    * @param ids a not empty sequence
    */
-  static @NotNull ModulePath.Qualified ofQualified(@NotNull SeqLike<String> ids) {
-    if (ids.isEmpty()) throw new IndexOutOfBoundsException(0);
-    return new Qualified(ids.toImmutableSeq());
+  static @NotNull ModulePath.Qualified qualified(@NotNull ImmutableSeq<String> ids) {
+    if (ids.isEmpty()) throw new InternalException("A valid module path cannot be empty");
+    return new Qualified(ids);
   }
 
   /// endregion

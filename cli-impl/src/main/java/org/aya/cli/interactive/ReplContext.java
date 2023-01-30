@@ -40,18 +40,17 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   @Override
   public void doExport(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    thisModuleExport.exportAnyway(component, name, ref);
+    thisExport.exportAnyway(component, name, ref);
   }
 
-  @Override
-  public void importModuleExport(
-    @NotNull ModulePath.Qualified componentName,
+  @Override public void importModule(
+    @NotNull ModulePath.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    modules.put(componentName, mod);
-    if (accessibility == Stmt.Accessibility.Public) exports.set(componentName, mod);
+    modules.put(modName, mod);
+    if (accessibility == Stmt.Accessibility.Public) exports.set(modName, mod);
   }
 
   @Override public @NotNull ReplContext derive(@NotNull Seq<@NotNull String> extraName) {

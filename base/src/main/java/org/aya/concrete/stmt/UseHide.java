@@ -45,7 +45,7 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
     }
 
     public Rename rename() {
-      return new Rename(id.component().toImmutableSeq(), id().name(), asName());
+      return new Rename(id.component().ids(), id().name(), asName());
     }
   }
 }
