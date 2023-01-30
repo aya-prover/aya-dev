@@ -14,19 +14,31 @@ import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 /**
  * @author re-xyr
  */
-public sealed interface ModuleContext extends ModuleLikeContext permits NoExportContext, PhysicalModuleContext {
+public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
+  @Override @NotNull Context parent();
+  @Override default @NotNull Reporter reporter() {
+    return parent().reporter();
+  }
+  @Override default @NotNull Path underlyingFile() {
+    return parent().underlyingFile();
+  }
+
+
   /**
    * All available symbols in this context<br>
    * {@code Unqualified -> (Module Name -> TopLevel)}<br>
    * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
    */
-  @Override @NotNull ModuleSymbol<AnyVar> symbols();
+  @NotNull ModuleSymbol<AnyVar> symbols();
 
   /**
    * All imported modules in this context.<br/>
@@ -35,10 +47,60 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    * @apiNote empty list => this module
    * @implNote This module should be automatically imported.
    */
-  @Override @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules();
+  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules();
+
+
+  /**
+   * Modules that are exported by this module.
+   */
+  @NotNull MutableMap<ModulePath, ModuleExport> exports();
+
+  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
+    return modules().getOrNull(modName);
+  }
+
+  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(
+    @NotNull String name,
+    @NotNull SourcePos sourcePos
+  ) {
+    var symbol = symbols().getUnqualifiedMaybe(name);
+    if (symbol.isOk()) {
+      return symbol.get();
+    } else {
+      // I am sure that this is not equivalent to null
+      return switch (symbol.getErr()) {
+        case NotFound -> null;
+        case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
+          name,
+          ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
+          sourcePos));
+      };
+    }
+  }
+
+  @Override default @Nullable AnyVar getQualifiedLocalMaybe(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull String name,
+    @NotNull SourcePos sourcePos
+  ) {
+    var mod = modules().getOrNull(modName);
+    if (mod == null) return null;
+
+    var ref = mod.symbols().getUnqualifiedMaybe(name);
+    if (ref.isOk()) return ref.get();
+
+    return switch (ref.getErr()) {
+      case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
+        name,
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().map(ModulePath::toImmutableSeq).toImmutableSeq()),
+        sourcePos
+      ));
+    };
+  }
 
   default void importModule(
-    @NotNull ModuleLikeContext module,
+    @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {

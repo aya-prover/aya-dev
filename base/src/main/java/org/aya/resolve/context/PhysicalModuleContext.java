@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
@@ -76,7 +75,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return modules;
   }
 
-  @Override public @NotNull Map<ModulePath, ModuleExport> exports() {
-    return Map.from(exports);
+  @Override public @NotNull MutableMap<ModulePath, ModuleExport> exports() {
+    return exports;
   }
 }
