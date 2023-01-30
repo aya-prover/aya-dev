@@ -6,11 +6,13 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleExport;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,22 +27,27 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   @Override
   public void addGlobal(
-    @NotNull GlobalSymbol symbol,
+    boolean imported,
+    @NotNull AnyVar ref,
+    @NotNull ModulePath modName,
+    @NotNull String name,
+    Stmt.@NotNull Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    var modName = symbol.componentName();
-    var name = symbol.unqualifiedName();
-    symbols().addAnyway(modName, name, symbol.data());
-
-    var export = symbol.exportMaybe();
-    if (export != null) {
-      this.exportSymbol(modName, name, export, sourcePos);
+    symbols().addAnyway(modName, name, ref);
+    // TODO: refactor
+    if (ref instanceof DefVar<?,?> defVar && acc == Stmt.Accessibility.Public) {
+      var success = exportSymbol(modName, name, defVar, sourcePos);
+      if (!success) {
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
+      }
     }
   }
 
   @Override
-  public void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+  public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
     thisExport.exportAnyway(modName, name, ref);
+    return true;
   }
 
   @Override public void importModule(

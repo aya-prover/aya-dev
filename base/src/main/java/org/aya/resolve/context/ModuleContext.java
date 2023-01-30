@@ -155,8 +155,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
       var fullComponentName = modName.concat(componentName);
-      var symbol = new GlobalSymbol.Imported(fullComponentName, name, ref, accessibility);
-      addGlobal(symbol, sourcePos);
+      addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
     }));
 
     // report all warning
@@ -167,96 +166,48 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * Adding a new symbol to this module.
    */
   default void addGlobal(
-    @NotNull ModuleContext.GlobalSymbol symbol,
+    boolean imported,
+    @NotNull AnyVar ref,
+    @NotNull ModulePath modName,
+    @NotNull String name,
+    @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    var modName = symbol.componentName();
-    var name = symbol.unqualifiedName();
     var symbols = symbols();
     if (!symbols.contains(name)) {
       if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (symbols.containsDefinitely(modName, name)) {
-      reportAndThrow(new NameProblem.DuplicateNameError(name, symbol.data(), sourcePos));
+      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
       reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
-    switch (symbol) {
-      case GlobalSymbol.Defined defined -> {
-        // Defined, not imported.
-        var result = symbols.add(ModulePath.This, name, defined.data());
-        assert result.isEmpty() : "Sanity check";
-      }
-      case GlobalSymbol.Imported imported -> {
-        var result = symbols.add(modName, name, imported.data());
-        assert result.isEmpty() : "Sanity check";
-      }
-    }
+    // `imported == false` implies the `ref` is defined in this module,
+    // so `modName` should always be `ModulePath.This`.
+    assert imported || modName == ModulePath.This : "Sanity check";
+    var result = symbols.add(modName, name, ref);
+    assert result.isEmpty() : "Sanity check";
 
-    var exportSymbol = symbol.exportMaybe();
-    if (exportSymbol != null) {
-      exportSymbol(modName, name, exportSymbol, sourcePos);
+    // Only `DefVar`s can be exported.
+    if (ref instanceof DefVar<?,?> defVar && acc == Stmt.Accessibility.Public) {
+      var success = exportSymbol(modName, name, defVar, sourcePos);
+      if (!success) {
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
+      }
     }
   }
 
   /**
    * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
+   * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+  default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    return true;
   }
 
   default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    addGlobal(new GlobalSymbol.Defined(ref.name(), ref, accessibility), sourcePos);
-  }
-
-  // TODO: This is only used in ModuleContext#addGlobal
-  sealed interface GlobalSymbol {
-    @NotNull AnyVar data();
-    @NotNull ModulePath componentName();
-    @NotNull String unqualifiedName();
-
-    /**
-     * @return null if not visible to outside
-     */
-    @Nullable DefVar<?, ?> exportMaybe();
-
-    record Defined(
-      @NotNull String unqualifiedName,
-      @NotNull AnyVar data,
-      @NotNull Stmt.Accessibility accessibility
-    ) implements GlobalSymbol {
-      @Override
-      public @NotNull ModulePath.This componentName() {
-        return ModulePath.This;
-      }
-
-      @Override
-      public @Nullable DefVar<?, ?> exportMaybe() {
-        if (data instanceof DefVar<?, ?> defVar && accessibility() == Stmt.Accessibility.Public) {
-          return defVar;
-        } else {
-          return null;
-        }
-      }
-    }
-
-    record Imported(
-      @NotNull ModulePath.Qualified componentName,
-      @NotNull String unqualifiedName,
-      @NotNull DefVar<?, ?> data,
-      @NotNull Stmt.Accessibility accessibility
-    ) implements GlobalSymbol {
-
-      @Override
-      public @Nullable DefVar<?, ?> exportMaybe() {
-        if (accessibility == Stmt.Accessibility.Public) {
-          return data;
-        } else {
-          return null;
-        }
-      }
-    }
+    addGlobal(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
   }
 }

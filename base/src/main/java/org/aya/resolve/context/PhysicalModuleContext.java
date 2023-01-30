@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +48,8 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override
-  public void exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    var success = thisExport.export(modName, name, ref);
-    if (!success) {
-      reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
-    }
+  public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+    return thisExport.export(modName, name, ref);
   }
 
   public @NotNull NoExportContext exampleContext() {
