@@ -12,6 +12,7 @@ import org.aya.resolve.context.ModuleExport;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,5 +79,11 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     this.symbols.table().putAll(bors.symbols.table());
     this.exports.putAll(bors.exports);
     this.modules.putAll(bors.modules);
+  }
+
+  @Contract(mutates = "this") public void clear() {
+    modules.clear();
+    exports.clear();
+    symbols.table().clear();
   }
 }

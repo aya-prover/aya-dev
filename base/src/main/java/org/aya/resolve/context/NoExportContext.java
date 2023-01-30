@@ -19,7 +19,7 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
-  @NotNull MutableModuleSymbol<AnyVar> symbols,
+  @NotNull ModuleSymbol<AnyVar> symbols,
   @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
 ) implements ModuleContext {
   @Override
@@ -28,7 +28,7 @@ public record NoExportContext(
   }
 
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
-    this(parent, new MutableModuleSymbol<>(), MutableHashMap.create());
+    this(parent, new ModuleSymbol<>(), MutableHashMap.create());
   }
 
   @Override public @NotNull Path underlyingFile() {

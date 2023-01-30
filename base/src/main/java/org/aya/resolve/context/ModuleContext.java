@@ -26,7 +26,7 @@ public sealed interface ModuleContext extends ModuleLikeContext permits NoExport
    * {@code Unqualified -> (Module Name -> TopLevel)}<br>
    * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
    */
-  @Override @NotNull MutableModuleSymbol<AnyVar> symbols();
+  @Override @NotNull ModuleSymbol<AnyVar> symbols();
 
   /**
    * All imported modules in this context.<br/>

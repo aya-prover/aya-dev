@@ -51,7 +51,7 @@ public interface AyaCompleters {
           .map(Candidate::new)
           .forEach(candidates::add);
       });
-      context.symbols().table().keysView().map(Candidate::new).forEach(candidates::add);
+      context.symbols().keysView().map(Candidate::new).forEach(candidates::add);
     }
   }
 

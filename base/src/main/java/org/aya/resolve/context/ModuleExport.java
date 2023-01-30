@@ -15,19 +15,24 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public interface ModuleExport {
-  @NotNull ModuleSymbol<DefVar<?, ?>> symbols();
+/**
+ * A data class that contains all public definitions/re-exports of some module.
+ */
+public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
+  public ModuleExport() {
+    this(new ModuleSymbol<>());
+  }
 
   @Contract(pure = true)
-  default @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
+  @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
     var oldSymbols = symbols();
-    MutableModuleSymbol<DefVar<?, ?>> newSymbols;
+    ModuleSymbol<DefVar<?, ?>> newSymbols;
     var badNames = MutableList.<QualifiedID>create();
     var ambiNames = MutableList.<WithPos<String>>create();
 
     switch (strategy) {
       case Using -> {
-        newSymbols = new MutableModuleSymbol<>();
+        newSymbols = new ModuleSymbol<>();
         names.forEach(qname -> {
           var def = oldSymbols.getMaybe(qname.component(), qname.name());
 
@@ -42,7 +47,7 @@ public interface ModuleExport {
         });
       }
       case Hiding -> {
-        newSymbols = new MutableModuleSymbol<>(new MutableModuleSymbol<>(oldSymbols));
+        newSymbols = new ModuleSymbol<>(new ModuleSymbol<>(oldSymbols));
 
         names.forEach(qname -> {
           var def = newSymbols.removeDefinitely(qname.component(), qname.name());
@@ -61,16 +66,16 @@ public interface ModuleExport {
     var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
 
     return new ExportResult(
-      hasError ? this : new MutableModuleExport(newSymbols),
+      hasError ? this : new ModuleExport(newSymbols),
       badNames.toImmutableSeq(),
       ambiNames.toImmutableSeq(),
       ImmutableSeq.empty());
   }
 
   @Contract(pure = true)
-  default @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
+  @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
     var oldSymbols = symbols();
-    var newSymbols = new MutableModuleSymbol<>(oldSymbols);
+    var newSymbols = new ModuleSymbol<>(oldSymbols);
     var badNames = MutableList.<WithPos<String>>create();
     var ambiNames = MutableList.<WithPos<String>>create();
     var shadowNames = MutableList.<WithPos<String>>create();
@@ -116,7 +121,7 @@ public interface ModuleExport {
     var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
 
     return new ExportResult(
-      hasError ? this : new MutableModuleExport(newSymbols),
+      hasError ? this : new ModuleExport(newSymbols),
       badNames.map(x -> new QualifiedID(x.sourcePos(), x.data())),
       ambiNames.toImmutableSeq(),
       shadowNames.toImmutableSeq()
@@ -160,5 +165,21 @@ public interface ModuleExport {
 
       return shadowNameProblems.concat(invalidNameProblems).concat(ambiguousNameProblems);
     }
+  }
+
+  /**
+   * @return false if failed
+   */
+  public boolean export(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    var exists = symbols.add(component, name, ref);
+    return exists.isEmpty();
+  }
+
+  public boolean export(@NotNull QualifiedID qualifiedName, @NotNull DefVar<?, ?> ref) {
+    return export(qualifiedName.component(), qualifiedName.name(), ref);
+  }
+
+  public void exportAnyway(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    symbols.addAnyway(component, name, ref);
   }
 }

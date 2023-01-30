@@ -11,7 +11,6 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableModuleSymbol<AnyVar> symbols = new MutableModuleSymbol<>();
-  public final @NotNull MutableModuleExport thisModuleExport = new MutableModuleExport();
+  public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
+  public final @NotNull ModuleExport thisModuleExport = new ModuleExport();
   public final @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules = MutableHashMap.create();
   public final @NotNull MutableMap<ModulePath, ModuleExport> exports =
     MutableHashMap.of(ModulePath.This, thisModuleExport);
@@ -69,7 +68,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return parent;
   }
 
-  @Override public @NotNull MutableModuleSymbol<AnyVar> symbols() {
+  @Override public @NotNull ModuleSymbol<AnyVar> symbols() {
     return symbols;
   }
 
@@ -79,11 +78,5 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   @Override public @NotNull Map<ModulePath, ModuleExport> exports() {
     return Map.from(exports);
-  }
-
-  @Contract(mutates = "this") public void clear() {
-    modules.clear();
-    exports.clear();
-    symbols.clear();
   }
 }
