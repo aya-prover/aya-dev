@@ -40,13 +40,8 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    * @return the candidates, probably empty
    */
-  public @NotNull Map<ModulePath, T> resolveUnqualified(@NotNull String unqualifiedName) {
-    var result = table().getOption(unqualifiedName);
-    if (result.isEmpty()) {
-      return Map.empty();
-    } else {
-      return result.get();
-    }
+  public @NotNull MutableMap<ModulePath, T> resolveUnqualified(@NotNull String unqualifiedName) {
+    return table.getOrPut(unqualifiedName, MutableMap::create);
   }
 
   /**
@@ -82,24 +77,13 @@ public record ModuleSymbol<T>(
    */
   public @NotNull Result<T, Error> getMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
     return switch (component) {
-      case ModulePath.Qualified qualified -> {
-        var result = getQualifiedMaybe(component, unqualifiedName);
-        if (result.isEmpty()) {
-          yield Result.err(Error.NotFound);
-        }
-
-        yield Result.ok(result.get());
-      }
+      case ModulePath.Qualified qualified -> getQualifiedMaybe(component, unqualifiedName).toResult(Error.NotFound);
       case ModulePath.This aThis -> getUnqualifiedMaybe(unqualifiedName);
     };
   }
 
   public boolean contains(@NotNull String unqualified) {
     return resolveUnqualified(unqualified).isNotEmpty();
-  }
-
-  public boolean containsDefinitely(@NotNull String unqualified) {
-    return resolveUnqualified(unqualified).size() == 1;
   }
 
   public boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
@@ -113,38 +97,24 @@ public record ModuleSymbol<T>(
 
   /**
    * Adding a new symbol which can be referred by `{componentName}::{name}`
+   *
+   * @implNote This method always overwrites the symbol that is added in the past.
    */
   public Option<T> add(
     @NotNull ModulePath componentName,
     @NotNull String name,
     @NotNull T ref
   ) {
-    var candidates = table().getOrPut(name, MutableMap::create);
-    return candidates.putIfAbsent(componentName, ref);
-  }
-
-  public void addAnyway(
-    @NotNull ModulePath componentName,
-    @NotNull String name,
-    @NotNull T ref
-  ) {
-    this.table().getOrPut(name, MutableMap::create).put(componentName, ref);
-  }
-
-  public @NotNull MutableMap<ModulePath, T> getMut(@NotNull String unqualifiedName) {
-    return table().getOrPut(unqualifiedName, MutableMap::create);
+    var candidates = resolveUnqualified(name);
+    return candidates.put(componentName, ref);
   }
 
   public Option<T> remove(@NotNull ModulePath component, @NotNull String unqualifiedName) {
     return table().getOption(unqualifiedName).flatMap(x -> x.remove(component));
   }
 
-  public Option<Map<ModulePath, T>> removeAll(@NotNull String unqualifiedName) {
-    return Option.narrow(table().remove(unqualifiedName));
-  }
-
   public Result<T, Error> removeDefinitely(@NotNull String unqualifiedName) {
-    var candidates = getMut(unqualifiedName);
+    var candidates = resolveUnqualified(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
     if (candidates.size() != 1) return Result.err(Error.Ambiguous);

@@ -12,7 +12,6 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleExport;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     super(parent, name);
   }
 
-  @Override
-  public void addGlobal(
+  @Override public void addGlobal(
     boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModulePath modName,
@@ -34,19 +32,14 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     Stmt.@NotNull Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    symbols().addAnyway(modName, name, ref);
-    // TODO: refactor
-    if (ref instanceof DefVar<?,?> defVar && acc == Stmt.Accessibility.Public) {
-      var success = exportSymbol(modName, name, defVar, sourcePos);
-      if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
-      }
-    }
+    // REPL always overwrites symbols.
+    symbols().add(modName, name, ref);
+    // REPL exports nothing, because nothing can import REPL.
   }
 
-  @Override
-  public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
-    thisExport.exportAnyway(modName, name, ref);
+  @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    super.exportSymbol(modName, name, ref);
+    // REPL always overwrites symbols.
     return true;
   }
 

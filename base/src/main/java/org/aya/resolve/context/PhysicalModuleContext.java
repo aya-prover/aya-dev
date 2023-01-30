@@ -47,8 +47,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     }
   }
 
-  @Override
-  public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+  @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     return thisExport.export(modName, name, ref);
   }
 

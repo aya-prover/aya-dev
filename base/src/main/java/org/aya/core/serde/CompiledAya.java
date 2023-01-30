@@ -308,7 +308,6 @@ public record CompiledAya(
   private void export(@NotNull PhysicalModuleContext context, @NotNull SerDef.QName qname, @NotNull DefVar<?, ?> ref) {
     var modName = context.moduleName();
     var qmodName = ModulePath.from(qname.mod().drop(modName.size()));
-
     export(context, qmodName, qname.name(), ref);
   }
 
@@ -318,7 +317,8 @@ public record CompiledAya(
     @NotNull String name,
     @NotNull DefVar<?, ?> var
   ) {
-    context.exportSymbol(component, name, var, SourcePos.SER);
+    var success = context.exportSymbol(component, name, var);
+    assert success : "DuplicateExportError should not happen in CompiledAya";
   }
 
   private boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {

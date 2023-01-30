@@ -93,7 +93,7 @@ public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
         //   oldSymbols has ref <-> newSymbols has ref
         //   /\ oldSymbols[ref] = newSymbols[ref]
 
-        var candidates = newSymbols.getMut(to);
+        var candidates = newSymbols.resolveUnqualified(to);
         var isShadow = candidates.isNotEmpty();
         // If there is an export with name `to`, shadow!
         if (isShadow) {
@@ -173,9 +173,5 @@ public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
   public boolean export(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     var exists = symbols.add(modName, name, ref);
     return exists.isEmpty();
-  }
-
-  public void exportAnyway(@NotNull ModulePath component, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    symbols.addAnyway(component, name, ref);
   }
 }

@@ -188,11 +188,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     // so `modName` should always be `ModulePath.This`.
     assert imported || modName == ModulePath.This : "Sanity check";
     var result = symbols.add(modName, name, ref);
-    assert result.isEmpty() : "Sanity check";
+    assert result.isEmpty() : "Sanity check"; // should already be reported as an error
 
     // Only `DefVar`s can be exported.
     if (ref instanceof DefVar<?,?> defVar && acc == Stmt.Accessibility.Public) {
-      var success = exportSymbol(modName, name, defVar, sourcePos);
+      var success = exportSymbol(modName, name, defVar);
       if (!success) {
         reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
       }
@@ -203,7 +203,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref, @NotNull SourcePos sourcePos) {
+  default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     return true;
   }
 
