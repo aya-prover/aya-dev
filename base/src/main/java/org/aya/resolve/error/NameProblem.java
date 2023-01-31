@@ -4,7 +4,6 @@ package org.aya.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.generic.Constants;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -163,7 +162,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
-        Doc.code(Doc.cat(Doc.plain(modName.toString()), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
+        Doc.code(Doc.plain(modName.resolve(name).toString())),
         Doc.english("is not defined in the current scope")
       );
     }

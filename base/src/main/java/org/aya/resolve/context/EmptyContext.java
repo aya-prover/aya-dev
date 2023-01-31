@@ -16,10 +16,7 @@ import java.nio.file.Path;
  * @apiNote in each file's dependency tree there should be one and only one EmptyContext which is also the tree root.
  * @implNote EmptyContext is the context storing the underlying file, and its Reporter in the resolving stage.
  */
-public record EmptyContext(
-  @NotNull Reporter reporter,
-  @NotNull Path underlyingFile
-) implements Context {
+public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingFile) implements Context {
   @Override public @Nullable Context parent() {
     return null;
   }

@@ -45,8 +45,8 @@ public interface Context {
    */
   default @NotNull ImmutableSeq<String> moduleName() {
     var p = parent();
-    if (p == null) return ImmutableSeq.empty();
-    else return p.moduleName();
+    assert p != null;
+    return p.moduleName();
   }
 
   @Contract("_ -> fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {

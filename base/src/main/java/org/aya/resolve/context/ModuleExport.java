@@ -156,8 +156,8 @@ public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
       SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
         .map(name -> {
           var old = result();
-          var disambi = old.symbols().resolveUnqualified(name.data()).keysView().map(ModulePath::ids).toImmutableSeq();
-          return new NameProblem.AmbiguousNameError(name.data(), ImmutableSeq.narrow(disambi), name.sourcePos());
+          var disambi = old.symbols().resolveUnqualified(name.data()).keysView().toImmutableSeq();
+          return new NameProblem.AmbiguousNameError(name.data(), disambi, name.sourcePos());
         });
 
       SeqView<Problem> shadowNameProblems = shadowNames().view()
