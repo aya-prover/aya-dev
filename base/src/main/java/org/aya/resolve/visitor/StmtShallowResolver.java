@@ -41,10 +41,10 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
       }
       case Command.Import cmd -> {
-        var modulePath = cmd.path().asModulePath();
+        var modulePath = cmd.path();
         var success = loader.load(modulePath.ids());
         if (success == null)
-          context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
+          context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
@@ -53,7 +53,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         resolveInfo.imports().put(importedName, success);
       }
       case Command.Open cmd -> {
-        var mod = cmd.path().asModulePath();
+        var mod = cmd.path();
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;

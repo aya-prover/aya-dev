@@ -38,10 +38,6 @@ public record QualifiedID(
     return join(ids());
   }
 
-  public @NotNull ModulePath.Qualified asModulePath() {
-    return component().resolve(name);
-  }
-
   public static @NotNull String join(@NotNull Seq<@NotNull String> ids) {
     return ids.joinToString(Constants.SCOPE_SEPARATOR);
   }

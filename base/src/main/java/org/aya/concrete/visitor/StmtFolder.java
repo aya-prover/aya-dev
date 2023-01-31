@@ -11,12 +11,17 @@ import kala.value.LazyValue;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.BindBlock;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Generalize;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,11 +29,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
-  default @NotNull R foldModuleDecl(@NotNull R acc, @NotNull QualifiedID mod) {
+  default @NotNull R foldModuleDecl(@NotNull R acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
     return acc;
   }
 
-  default @NotNull R foldModuleRef(@NotNull R acc, @NotNull QualifiedID mod) {
+  default @NotNull R foldModuleRef(@NotNull R acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
     return acc;
   }
 
@@ -43,11 +48,11 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
   default @NotNull R fold(@NotNull R acc, @NotNull Stmt stmt) {
     return switch (stmt) {
       case Generalize g -> g.variables.foldLeft(acc, (a, v) -> foldVarDecl(a, v, v.sourcePos, noType()));
-      case Command.Module m -> foldModuleDecl(acc, new QualifiedID(m.sourcePos(), m.name()));
-      case Command.Import i -> foldModuleRef(acc, i.path());
+      case Command.Module m -> foldModuleDecl(acc, m.sourcePos(), new ModulePath.Qualified(m.name()));
+      case Command.Import i -> foldModuleRef(acc, i.sourcePos(), i.path());
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> {
-        acc = foldModuleRef(acc, o.path());
+        acc = foldModuleRef(acc, o.sourcePos(), o.path());
         // https://github.com/aya-prover/aya-dev/issues/721
         yield o.useHide().list().foldLeft(acc, (ac, v) -> fold(ac, v.asBind()));
       }

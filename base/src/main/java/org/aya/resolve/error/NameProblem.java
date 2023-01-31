@@ -2,10 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.Constants;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
@@ -34,7 +32,7 @@ public interface NameProblem extends Problem {
 
   record AmbiguousNameError(
     @NotNull String name,
-    @NotNull ImmutableSeq<Seq<String>> disambiguation,
+    @NotNull ImmutableSeq<ModulePath> disambiguation,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -47,7 +45,7 @@ public interface NameProblem extends Problem {
     }
 
     public @NotNull ImmutableSeq<String> didYouMean() {
-      return disambiguation.view().map(mod -> QualifiedID.join(mod.appended(name))).toImmutableSeq();
+      return disambiguation.view().map(mod -> mod.resolve(name).toString()).toImmutableSeq();
     }
   }
 
@@ -80,13 +78,13 @@ public interface NameProblem extends Problem {
   }
 
   record DuplicateModNameError(
-    @NotNull Seq<String> modName,
+    @NotNull ModulePath modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(modName.toString())),
         Doc.english("is already defined elsewhere")
       );
     }
@@ -113,33 +111,33 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(modName().toString())),
+        Doc.code(Doc.plain(modName.toString())),
         Doc.english("is not defined in the current scope")
       );
     }
   }
 
   record ModNotFoundError(
-    @NotNull Seq<String> modName,
+    @NotNull ModulePath modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(modName.toString())),
         Doc.english("is not found")
       );
     }
   }
 
   record ModShadowingWarn(
-    @NotNull Seq<String> modName,
+    @NotNull ModulePath modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(QualifiedID.join(modName))),
+        Doc.code(Doc.plain(modName.toString())),
         Doc.english("shadows a previous definition from outer scope")
       );
     }
@@ -165,7 +163,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
-        Doc.code(Doc.cat(Doc.plain(modName().toString()), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
+        Doc.code(Doc.cat(Doc.plain(modName.toString()), Doc.plain(Constants.SCOPE_SEPARATOR), Doc.plain(name))),
         Doc.english("is not defined in the current scope")
       );
     }

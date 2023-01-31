@@ -67,7 +67,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> null;
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().map(ModulePath::ids).toImmutableSeq()),
+        ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
         sourcePos));
     };
   }
@@ -84,7 +84,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().map(ModulePath::ids).toImmutableSeq()),
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
         sourcePos
       ));
     };
@@ -119,10 +119,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   ) {
     var modules = modules();
     if (modules.containsKey(modName)) {
-      reportAndThrow(new NameProblem.DuplicateModNameError(modName.ids(), sourcePos));
+      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
     }
     if (getModuleMaybe(modName) != null) {
-      reporter().report(new NameProblem.ModShadowingWarn(modName.ids(), sourcePos));
+      reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
     modules.set(modName, moduleExport);
   }
@@ -191,7 +191,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     assert result.isEmpty() : "Sanity check"; // should already be reported as an error
 
     // Only `DefVar`s can be exported.
-    if (ref instanceof DefVar<?,?> defVar && acc == Stmt.Accessibility.Public) {
+    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) {
       var success = exportSymbol(modName, name, defVar);
       if (!success) {
         reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
@@ -201,6 +201,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
   /**
    * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
+   *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
   default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {

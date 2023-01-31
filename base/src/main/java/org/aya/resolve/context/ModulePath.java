@@ -8,8 +8,13 @@ import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface ModulePath {
+  int size();
   final class This implements ModulePath {
     private This() {
+    }
+
+    @Override public int size() {
+      return 0;
     }
 
     @Override public @NotNull ImmutableSeq<String> ids() {
@@ -30,8 +35,16 @@ public sealed interface ModulePath {
   }
 
   record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
+    public Qualified(String @NotNull ... ids) {
+      this(ImmutableSeq.of(ids));
+    }
+
     public Qualified {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
+    }
+
+    @Override public int size() {
+      return ids.size();
     }
 
     @Override public @NotNull Qualified resolve(@NotNull String name) {

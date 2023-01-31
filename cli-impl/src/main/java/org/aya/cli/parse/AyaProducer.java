@@ -35,6 +35,7 @@ import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -120,7 +121,7 @@ public record AyaProducer(
     var importMod = node.child(QUALIFIED_ID);
     return new Command.Import(
       sourcePosOf(importMod),
-      qualifiedId(importMod),
+      modulePath(importMod),
       asId == null ? null : weakId(asId).data()
     );
   }
@@ -132,7 +133,7 @@ public record AyaProducer(
     var useHide = node.peekChild(USE_HIDE);
     var modNameNode = node.child(QUALIFIED_ID);
     var namePos = sourcePosOf(modNameNode);
-    var modName = qualifiedId(modNameNode);
+    var modName = modulePath(modNameNode);
     var openImport = node.peekChild(KW_IMPORT) != null;
     var open = new Command.Open(
       namePos,
@@ -325,7 +326,7 @@ public record AyaProducer(
     additional.append(new Command.Open(
       keyword,
       modiSet.accessibility().data(),
-      new QualifiedID(decl.sourcePos(), decl.ref().name()),
+      new ModulePath.Qualified(decl.ref().name()),
       UseHide.EMPTY,
       modiSet.personality().data() == DeclInfo.Personality.EXAMPLE,
       true
@@ -879,6 +880,12 @@ public record AyaProducer(
       node.childrenOfType(WEAK_ID)
         .map(this::weakId)
         .map(WithPos::data).toImmutableSeq());
+  }
+
+  public @NotNull ModulePath.Qualified modulePath(@NotNull GenericNode<?> node) {
+    return new ModulePath.Qualified(node.childrenOfType(WEAK_ID)
+      .map(this::weakId)
+      .map(WithPos::data).toImmutableSeq());
   }
 
   public @NotNull Modifier fnModifier(@NotNull GenericNode<?> node) {

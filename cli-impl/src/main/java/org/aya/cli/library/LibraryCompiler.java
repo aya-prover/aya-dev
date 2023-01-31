@@ -114,7 +114,8 @@ public class LibraryCompiler {
   private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
-      var recurse = owner.findModule(mod);
+      // TODO: use ModulePath
+      var recurse = owner.findModule(mod.ids());
       if (recurse == null) {
         reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
         throw new Context.ResolvingInterruptedException();

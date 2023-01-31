@@ -183,7 +183,7 @@ public record CompiledAya(
       var componentName = ModulePath.qualified(modName);
       var success = loader.load(modName);
       if (success == null)
-        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
+        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(componentName, SourcePos.SER));
       thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), success);
       var mod = success.thisModule();
       thisResolve.thisModule().importModule(componentName, mod, Stmt.Accessibility.Private, SourcePos.SER);

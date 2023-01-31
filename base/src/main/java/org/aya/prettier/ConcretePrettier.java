@@ -307,7 +307,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return switch (prestmt) {
       case Decl decl -> decl(decl);
       case Command.Import cmd -> {
-        var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
+        var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().toString()));
         if (cmd.asName() != null) {
           prelude.append(Doc.styled(KEYWORD, "as"));
           prelude.append(Doc.plain(cmd.asName()));
@@ -318,7 +318,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Command.Open cmd -> Doc.sepNonEmpty(
         visitAccess(cmd.accessibility(), Stmt.Accessibility.Private),
         Doc.styled(KEYWORD, "open"),
-        Doc.plain(cmd.path().join()),
+        Doc.plain(cmd.path().toString()),
         Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
           case Using -> "using";
           case Hiding -> "hiding";
