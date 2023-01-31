@@ -23,8 +23,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull MutableMap<ModulePath, ModuleExport> exports = MutableHashMap.of(ModulePath.This, thisExport);
   private final @NotNull ImmutableSeq<String> moduleName;
 
-  @Override
-  public @NotNull ImmutableSeq<String> moduleName() {
+  @Override public @NotNull ImmutableSeq<String> moduleName() {
     return moduleName;
   }
 

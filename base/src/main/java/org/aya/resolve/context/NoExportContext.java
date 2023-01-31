@@ -17,11 +17,15 @@ import java.nio.file.Path;
 public record NoExportContext(
   @NotNull PhysicalModuleContext parent,
   @NotNull ModuleSymbol<AnyVar> symbols,
-  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
+  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules,
+  @Override @NotNull ImmutableSeq<String> moduleName
 ) implements ModuleContext {
-  @Override
-  public @NotNull ImmutableSeq<String> moduleName() {
-    return parent.moduleName().appended(":NoExport");
+  public NoExportContext(
+    @NotNull PhysicalModuleContext parent,
+    @NotNull ModuleSymbol<AnyVar> symbols,
+    @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
+  ) {
+    this(parent, symbols, modules, parent.moduleName().appended(":NoExport"));
   }
 
   public NoExportContext(@NotNull PhysicalModuleContext parent) {
