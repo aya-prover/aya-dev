@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
@@ -53,7 +52,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (accessibility == Stmt.Accessibility.Public) exports.set(modName, mod);
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull Seq<@NotNull String> extraName) {
+  @Override public @NotNull ReplContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
     return new ReplContext(this, this.moduleName().concat(extraName));
   }
 

@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -210,10 +209,10 @@ public interface Context {
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
-    return new PhysicalModuleContext(this, this.moduleName().appended(extraName));
+    return derive(ImmutableSeq.of(extraName));
   }
 
-  default @NotNull PhysicalModuleContext derive(@NotNull Seq<@NotNull String> extraName) {
+  default @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
     return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
   }
 

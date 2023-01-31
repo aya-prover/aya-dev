@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.ref.AnyVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -37,6 +38,14 @@ public record EmptyContext(
     @NotNull SourcePos sourcePos
   ) {
     return null;
+  }
+
+  @Override public @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
+    return new PhysicalModuleContext(this, extraName);
+  }
+
+  @Override public @NotNull ImmutableSeq<String> moduleName() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
