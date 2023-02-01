@@ -111,10 +111,10 @@ public record ModuleExport(@NotNull ModuleSymbol<DefVar<?, ?>> symbols) {
         candidates.put(ModulePath.This, ref.get());
       } else {
         // not defined or ambiguous, not good
-        switch (ref.getErr()) {
-          case NotFound -> badNames.append(new WithPos<>(pos, from));
-          case Ambiguous -> ambiNames.append(new WithPos<>(pos, from));
-        }
+        (switch (ref.getErr()) {
+          case NotFound -> badNames;
+          case Ambiguous -> ambiNames;
+        }).append(new WithPos<>(pos, from));
       }
     });
 

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
@@ -52,7 +53,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   /**
    * Modules that are exported by this module.
    */
-  @NotNull MutableMap<ModulePath, ModuleExport> exports();
+  @NotNull Map<ModulePath, ModuleExport> exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return modules().getOrNull(modName);
