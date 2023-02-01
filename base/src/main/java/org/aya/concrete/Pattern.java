@@ -80,6 +80,9 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
   }
 
+  /**
+   * @param qualifiedID a qualified QualifiedID ({@code isUnqualified == false})
+   */
   record QualifiedRef(
     @NotNull SourcePos sourcePos,
     @NotNull QualifiedID qualifiedID,

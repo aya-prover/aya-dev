@@ -35,6 +35,7 @@ import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -120,7 +121,7 @@ public record AyaProducer(
     var importMod = node.child(QUALIFIED_ID);
     return new Command.Import(
       sourcePosOf(importMod),
-      qualifiedId(importMod),
+      modulePath(importMod),
       asId == null ? null : weakId(asId).data()
     );
   }
@@ -132,7 +133,7 @@ public record AyaProducer(
     var useHide = node.peekChild(USE_HIDE);
     var modNameNode = node.child(QUALIFIED_ID);
     var namePos = sourcePosOf(modNameNode);
-    var modName = qualifiedId(modNameNode);
+    var modName = modulePath(modNameNode);
     var openImport = node.peekChild(KW_IMPORT) != null;
     var open = new Command.Open(
       namePos,
@@ -167,13 +168,14 @@ public record AyaProducer(
   public SeqView<UseHide.Name> useIdsComma(@NotNull GenericNode<?> node) {
     return node.childrenOfType(USE_ID).map(id -> {
       var wholePos = sourcePosOf(id);
-      var name = weakId(id.child(WEAK_ID));
+      var name = weakId(id.child(WEAK_ID));     // TODO: qualifiedId
       var useAs = id.peekChild(USE_AS);
       if (useAs == null) return new UseHide.Name(name);
       var asId = weakId(useAs.child(WEAK_ID)).data();
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
-      return new UseHide.Name(wholePos, name.data(), asId,
+      var qname = new QualifiedID(name.sourcePos(), name.data());
+      return new UseHide.Name(wholePos, qname, asId,
         asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });
@@ -324,7 +326,7 @@ public record AyaProducer(
     additional.append(new Command.Open(
       keyword,
       modiSet.accessibility().data(),
-      new QualifiedID(decl.sourcePos(), decl.ref().name()),
+      new ModulePath.Qualified(decl.ref().name()),
       UseHide.EMPTY,
       modiSet.personality().data() == DeclInfo.Personality.EXAMPLE,
       true
@@ -755,7 +757,7 @@ public record AyaProducer(
     if (node.is(ATOM_BIND_PATTERN)) {
       var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
       if (qualifiedId.isUnqualified()) {
-        return new Pattern.Bind(sourcePos, LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.justName())));
+        return new Pattern.Bind(sourcePos, LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
       }
       return new Pattern.QualifiedRef(sourcePos, qualifiedId);
     }
@@ -878,6 +880,12 @@ public record AyaProducer(
       node.childrenOfType(WEAK_ID)
         .map(this::weakId)
         .map(WithPos::data).toImmutableSeq());
+  }
+
+  public @NotNull ModulePath.Qualified modulePath(@NotNull GenericNode<?> node) {
+    return new ModulePath.Qualified(node.childrenOfType(WEAK_ID)
+      .map(this::weakId)
+      .map(WithPos::data).toImmutableSeq());
   }
 
   public @NotNull Modifier fnModifier(@NotNull GenericNode<?> node) {

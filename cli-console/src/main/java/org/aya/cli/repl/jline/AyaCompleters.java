@@ -44,14 +44,14 @@ public interface AyaCompleters {
       var fixed = fixWord(word, line);
       var context = repl.replCompiler.getContext();
       context.modules.view().forEach((mod, contents) -> {
-        var modName = mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR);
+        var modName = mod.ids().joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR);
         if (!modName.startsWith(fixed.component1())) return;
-        contents.keysView()
+        contents.symbols().keysView()
           .map(name -> (fixed.component2() ? Constants.SCOPE_SEPARATOR : modName) + name)
           .map(Candidate::new)
           .forEach(candidates::add);
       });
-      context.definitions.keysView().map(Candidate::new).forEach(candidates::add);
+      context.symbols().keysView().map(Candidate::new).forEach(candidates::add);
     }
   }
 

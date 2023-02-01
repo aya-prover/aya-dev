@@ -1,15 +1,16 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Seq;
+import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
 import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -31,126 +32,184 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return parent().underlyingFile();
   }
 
-  // All available definitions in this context.
-  // Unqualified -> (Module Name -> AnyVar)
-  // It says a {AnyVar} can be referred by `{Module Name}::{Unqualified}`
-  @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions();
 
-  // All available modules in this context.
-  // Qualified Module -> Module Export
-  @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules();
+  /**
+   * All available symbols in this context<br>
+   * {@code Unqualified -> (Module Name -> TopLevel)}<br>
+   * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
+   */
+  @NotNull ModuleSymbol<AnyVar> symbols();
 
-  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var result = definitions().getOrNull(name);
-    if (result == null) return null;
-    if (result.size() == 1) return result.iterator().next().getValue();
-    return reportAndThrow(new NameProblem.AmbiguousNameError(
-      name,
-      result.keysView().toImmutableSeq(),
-      sourcePos));
-  }
+  /**
+   * All imported modules in this context.<br/>
+   * {@code Qualified Module -> Module Export}
+   *
+   * @apiNote empty list => this module
+   * @implNote This module should be automatically imported.
+   */
+  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules();
 
-  @Override
-  default @Nullable AnyVar getQualifiedLocalMaybe(
-    @NotNull ImmutableSeq<@NotNull String> modName,
-    @NotNull String name,
-    @NotNull SourcePos sourcePos) {
-    var mod = modules().getOrNull(modName);
-    if (mod == null) return null;
-    var ref = mod.getOrNull(name);
-    if (ref == null) reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
-    return ref;
-  }
 
-  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  /**
+   * Modules that are exported by this module.
+   */
+  @NotNull Map<ModulePath, ModuleExport> exports();
+
+  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return modules().getOrNull(modName);
   }
 
-  default void importModules(
-    @NotNull ImmutableSeq<String> modName,
+  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    var symbol = symbols().getUnqualifiedMaybe(name);
+    if (symbol.isOk()) return symbol.get();
+
+    // I am sure that this is not equivalent to null
+    return switch (symbol.getErr()) {
+      case NotFound -> null;
+      case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
+        name,
+        ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
+        sourcePos));
+    };
+  }
+
+  @Override
+  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModulePath.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+    var mod = modules().getOrNull(modName);
+    if (mod == null) return null;
+
+    var ref = mod.symbols().getUnqualifiedMaybe(name);
+    if (ref.isOk()) return ref.get();
+
+    return switch (ref.getErr()) {
+      case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
+        name,
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
+        sourcePos
+      ));
+    };
+  }
+
+  /**
+   * Import the whole module (including itself and its re-exports)
+   *
+   * @see ModuleContext#importModule(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
+   */
+  default void importModule(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> module,
     @NotNull SourcePos sourcePos
   ) {
-    module.forEach((name, mod) -> importModule(accessibility, sourcePos, modName.concat(name), mod));
+    module.exports().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
   }
 
+  /**
+   * Importing one module export.
+   *
+   * @param accessibility of importing, re-export if public
+   * @param modName       the name of the module
+   * @param moduleExport  the module
+   */
   default void importModule(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos,
-    ImmutableSeq<String> componentName,
-    ModuleExport moduleExport
+    @NotNull SourcePos sourcePos
   ) {
     var modules = modules();
-    if (modules.containsKey(componentName)) {
-      reportAndThrow(new NameProblem.DuplicateModNameError(componentName, sourcePos));
+    if (modules.containsKey(modName)) {
+      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
     }
-    if (getModuleMaybe(componentName) != null) {
-      reporter().report(new NameProblem.ModShadowingWarn(componentName, sourcePos));
+    if (getModuleMaybe(modName) != null) {
+      reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
-    modules.set(componentName, moduleExport);
+    modules.set(modName, moduleExport);
   }
 
+  /**
+   * Open an imported module
+   *
+   * @param modName the name of the module
+   * @param filter  use or hide which definitions
+   * @param rename  renaming
+   */
   default void openModule(
-    @NotNull ImmutableSeq<String> modName,
+    @NotNull ModulePath.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull ImmutableSeq<WithPos<String>> filter,
+    @NotNull ImmutableSeq<QualifiedID> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
-    boolean useOrHide
+    UseHide.Strategy strategy
   ) {
     var modExport = getModuleMaybe(modName);
     if (modExport == null) reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
 
-    var filterRes = modExport.filter(filter, useOrHide);
-    if (!filterRes.anyError()) {
-      var filtered = filterRes.result();
-      var mapRes = filtered.map(rename);
+    var filterRes = modExport.filter(filter, strategy);
+    if (filterRes.anyError()) reportAllAndThrow(filterRes.problems(modName));
 
-      if (!mapRes.anyError()) {
-        var renamed = mapRes.result();
-        renamed.exports().forEach((name, ref) ->
-          addGlobal(modName, name, accessibility, ref, sourcePos));
+    var filtered = filterRes.result();
+    var mapRes = filtered.map(rename);
+    if (mapRes.anyError()) reportAllAndThrow(mapRes.problems(modName));
 
-        // report all warning
-        reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
-      } else {
-        reportAllAndThrow(mapRes.problems(modName));
-      }
-    } else {
-      reportAllAndThrow(filterRes.problems(modName));
-    }
+    var renamed = mapRes.result();
+    renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
+      var fullComponentName = modName.concat(componentName);
+      addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
+    }));
+
+    // report all warning
+    reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
   }
 
-  default void addGlobalSimple(@NotNull Stmt.Accessibility acc, @NotNull AnyVar ref, @NotNull SourcePos sourcePos) {
-    addGlobal(TOP_LEVEL_MOD_NAME, ref.name(), acc, ref, sourcePos);
-  }
-
+  /**
+   * Adding a new symbol to this module.
+   */
   default void addGlobal(
-    @NotNull ImmutableSeq<String> modName,
-    @NotNull String name,
-    @NotNull Stmt.Accessibility accessibility,
+    boolean imported,
     @NotNull AnyVar ref,
+    @NotNull ModulePath modName,
+    @NotNull String name,
+    @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    var definitions = definitions();
-    if (!definitions.containsKey(name)) {
+    var symbols = symbols();
+    if (!symbols.contains(name)) {
       if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
-      definitions.set(name, MutableHashMap.create());
-    } else if (definitions.get(name).containsKey(modName)) {
+    } else if (symbols.containsDefinitely(modName, name)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
       reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
-    definitions.get(name).set(modName, ref);
-    if (modName.equals(TOP_LEVEL_MOD_NAME)) {
-      // Defined, not imported.
-      var success = modules().get(TOP_LEVEL_MOD_NAME).export(name, ref);
+
+    // `imported == false` implies the `ref` is defined in this module,
+    // so `modName` should always be `ModulePath.This`.
+    assert imported || modName == ModulePath.This : "Sanity check";
+    var result = symbols.add(modName, name, ref);
+    assert result.isEmpty() : "Sanity check"; // should already be reported as an error
+
+    // Only `DefVar`s can be exported.
+    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) {
+      var success = exportSymbol(modName, name, defVar);
       if (!success) {
-        reporter().report(new NameProblem.DuplicateExportError(name, sourcePos));
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
       }
     }
+  }
+
+  /**
+   * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
+   *
+   * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
+   */
+  default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    return true;
+  }
+
+  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
+    addGlobal(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
   }
 }

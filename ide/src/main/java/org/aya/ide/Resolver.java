@@ -23,6 +23,7 @@ import org.aya.ide.util.XY;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -132,13 +133,13 @@ public interface Resolver {
     }
 
     @Override
-    public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
-      return foldVarRef(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
+      return foldVarRef(acc, new ModuleVar(path), pos, noType());
     }
 
     @Override
-    public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull QualifiedID mod) {
-      return foldVarDecl(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+    public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
+      return foldVarDecl(acc, new ModuleVar(path), pos, noType());
     }
   }
 

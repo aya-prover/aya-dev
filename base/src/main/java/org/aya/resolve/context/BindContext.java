@@ -1,8 +1,7 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
@@ -41,18 +40,25 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
+    @NotNull String name,
+    @NotNull SourcePos sourcePos
+  ) {
     if (name.equals(this.name)) return ref;
     else return null;
   }
 
   @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ImmutableSeq<@NotNull String> modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  public @Nullable AnyVar getQualifiedLocalMaybe(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull String name,
+    @NotNull SourcePos sourcePos
+  ) {
     return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ImmutableSeq<String> modName) {
+  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return null;
   }
 }
