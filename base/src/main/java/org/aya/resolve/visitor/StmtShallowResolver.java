@@ -4,16 +4,12 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
-import kala.tuple.Tuple;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.InternalException;
-import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;
@@ -21,8 +17,6 @@ import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -44,31 +38,32 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case Command.Module mod -> {
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
-        context.importModules(ImmutableSeq.of(mod.name()), mod.accessibility(), newCtx.exports, mod.sourcePos());
+        context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
       }
       case Command.Import cmd -> {
-        var ids = cmd.path().ids();
-        var success = loader.load(ids);
+        var modulePath = cmd.path();
+        var success = loader.load(modulePath.ids());
         if (success == null)
-          context.reportAndThrow(new NameProblem.ModNotFoundError(cmd.path().ids(), cmd.sourcePos()));
-        var mod = (PhysicalModuleContext) success.thisModule(); // this cast should never fail
+          context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+        var mod = success.thisModule();
         var as = cmd.asName();
-        var importedName = as != null ? ImmutableSeq.of(as) : ids;
-        context.importModules(importedName, Stmt.Accessibility.Private, mod.exports, cmd.sourcePos());
+        var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
+        context.importModule(importedName, mod, Stmt.Accessibility.Private, cmd.sourcePos());
+        // TODO: ModulePath
         resolveInfo.imports().put(importedName, success);
       }
       case Command.Open cmd -> {
-        var mod = cmd.path().ids();
+        var mod = cmd.path();
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
         ctx.openModule(
           mod,
           acc,
-          useHide.list().map(x -> new WithPos<>(x.sourcePos(), x.id())),
+          useHide.list().map(UseHide.Name::id),
           useHide.renaming(),
           cmd.sourcePos(),
-          useHide.strategy() == UseHide.Strategy.Using);
+          useHide.strategy());
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
@@ -78,9 +73,9 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = ctx.getQualifiedLocalMaybe(mod, use.id(), SourcePos.NONE);
-          assert symbol instanceof DefVar<?, ?>;
-          var defVar = (DefVar<?, ?>) symbol;
+          var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name());
+          assert symbol.isOk();   // checked in openModule
+          var defVar = symbol.get();
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) bind.context().set(ctx);
@@ -90,7 +85,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case Generalize variables -> {
         variables.ctx = context;
         for (var variable : variables.variables)
-          context.addGlobalSimple(variables.accessibility(), variable, variable.sourcePos);
+          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
       }
     }
   }
@@ -100,12 +95,20 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), this::resolveDecl);
+        var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mCtx) -> {
+          ctor.ref().module = mCtx.moduleName();
+          mCtx.defineSymbol(ctor.ref, Stmt.Accessibility.Public, ctor.sourcePos());
+          resolveOpInfo(ctor, mCtx);
+        });
         resolveOpInfo(decl, innerCtx);
       }
       case TeleDecl.StructDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), this::resolveDecl);
+        var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
+          field.ref().module = mockCtx.moduleName();
+          mockCtx.defineSymbol(field.ref, Stmt.Accessibility.Public, field.sourcePos());
+          resolveOpInfo(field, mockCtx);
+        });
         resolveOpInfo(decl, innerCtx);
       }
       case TeleDecl.FnDecl decl -> {
@@ -126,20 +129,11 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         factory.factory(primID, decl.ref);
         resolveTopLevelDecl(decl, context);
       }
-      case TeleDecl.DataCtor ctor -> {
-        ctor.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos());
-        resolveOpInfo(ctor, context);
-      }
-      case TeleDecl.StructField field -> {
-        field.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos());
-        resolveOpInfo(field, context);
-      }
+      default -> throw new InternalException("🪲");
     }
   }
 
-  private <D extends Decl, Child extends Decl> ModuleContext resolveChildren(
+  private <D extends Decl, Child extends Decl> PhysicalModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull Decl.TopLevel proof,
     @NotNull ModuleContext context,
@@ -148,23 +142,19 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
   ) {
     assert decl == proof;
     var innerCtx = context.derive(decl.ref().name());
-    var children = childrenGet.apply(decl).map(child -> {
-      childResolver.accept(child, innerCtx);
-      return Tuple.of(child.ref().name(), child.ref());
-    });
-    context.importModules(
-      ImmutableSeq.of(decl.ref().name()),
+    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
+    var module = decl.ref().name();
+    context.importModule(
+      ModulePath.This.resolve(module),
+      innerCtx.thisExport,
       decl.accessibility(),
-      MutableHashMap.of(
-        Context.TOP_LEVEL_MOD_NAME,
-        new ModuleExport(MutableHashMap.from(children))),
       decl.sourcePos()
     );
     proof.setCtx(innerCtx);
     return innerCtx;
   }
 
-  private void resolveOpInfo(@NotNull Decl decl, @NotNull ModuleContext context) {
+  private void resolveOpInfo(@NotNull Decl decl, @NotNull Context context) {
     var bind = decl.bindBlock();
     if (bind != BindBlock.EMPTY) bind.context().set(context);
     if (decl.opInfo() != null) {
@@ -182,7 +172,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     };
     decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.addGlobalSimple(decl.accessibility(), decl.ref(), decl.sourcePos());
+    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
     return ctx;
   }
 

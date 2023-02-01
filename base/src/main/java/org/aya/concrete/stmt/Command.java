@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ public sealed interface Command extends Stmt {
    */
   record Import(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull QualifiedID path,
+    @NotNull ModulePath.Qualified path,
     @Nullable String asName
   ) implements Command {
     @Override public @NotNull Accessibility accessibility() {
@@ -32,7 +33,7 @@ public sealed interface Command extends Stmt {
   record Open(
     @Override @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
-    @NotNull QualifiedID path,
+    @NotNull ModulePath.Qualified path,
     @NotNull UseHide useHide,
     boolean openExample,
     boolean fromSugar

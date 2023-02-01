@@ -7,12 +7,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.value.LazyValue;
+import org.aya.cli.literate.HighlightInfo.DefKind;
 import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -28,6 +28,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -105,21 +106,21 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
-      case Pattern.Number num -> add(acc, LitKind.Int.toLit(num.sourcePos()));
+      case Pattern.Number(var pos, var $) -> add(acc, LitKind.Int.toLit(pos));
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
     // TODO: use `LinkId.page` for cross module link
-    return add(acc, HighlightInfo.DefKind.Module.toRef(mod.sourcePos(), Link.loc(mod.join()), null));
+    return add(acc, DefKind.Module.toRef(pos, Link.loc(path.toString()), null));
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull QualifiedID mod) {
+  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
     // TODO: use `LinkId.page` for cross module link
-    return add(acc, HighlightInfo.DefKind.Module.toDef(mod.sourcePos(), Link.loc(mod.join()), null));
+    return add(acc, DefKind.Module.toDef(pos, Link.loc(path.toString()), null));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
@@ -132,29 +133,29 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
     return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(var), type);
   }
 
-  @SuppressWarnings("DuplicateBranchesInSwitch")
-  public static @NotNull HighlightInfo.DefKind kindOf(@NotNull AnyVar var) {
+  @SuppressWarnings("unused")
+  public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
     record P(Decl decl, GenericDef def) {}
     return switch (var) {
-      case GeneralizedVar ignored -> HighlightInfo.DefKind.Generalized;
+      case GeneralizedVar ignored -> DefKind.Generalized;
       case DefVar<?, ?> defVar -> switch (new P(defVar.concrete, defVar.core)) {
-        case P(TeleDecl.FnDecl $, var $$) -> HighlightInfo.DefKind.Fn;
-        case P(TeleDecl.StructDecl $, var $$) -> HighlightInfo.DefKind.Struct;
-        case P(TeleDecl.StructField $, var $$) -> HighlightInfo.DefKind.Field;
-        case P(TeleDecl.DataDecl $, var $$) -> HighlightInfo.DefKind.Data;
-        case P(TeleDecl.DataCtor $, var $$) -> HighlightInfo.DefKind.Con;
-        case P(TeleDecl.PrimDecl $, var $$) -> HighlightInfo.DefKind.Prim;
-        case P(var $, FnDef $$) -> HighlightInfo.DefKind.Fn;
-        case P(var $, StructDef $$) -> HighlightInfo.DefKind.Struct;
-        case P(var $, FieldDef $$) -> HighlightInfo.DefKind.Field;
-        case P(var $, DataDef $$) -> HighlightInfo.DefKind.Data;
-        case P(var $, CtorDef $$) -> HighlightInfo.DefKind.Con;
-        case P(var $, PrimDef $$) -> HighlightInfo.DefKind.Prim;
-        default -> HighlightInfo.DefKind.Unknown;
+        case P(TeleDecl.FnDecl $, var $$) -> DefKind.Fn;
+        case P(TeleDecl.StructDecl $, var $$) -> DefKind.Struct;
+        case P(TeleDecl.StructField $, var $$) -> DefKind.Field;
+        case P(TeleDecl.DataDecl $, var $$) -> DefKind.Data;
+        case P(TeleDecl.DataCtor $, var $$) -> DefKind.Con;
+        case P(TeleDecl.PrimDecl $, var $$) -> DefKind.Prim;
+        case P(var $, FnDef $$) -> DefKind.Fn;
+        case P(var $, StructDef $$) -> DefKind.Struct;
+        case P(var $, FieldDef $$) -> DefKind.Field;
+        case P(var $, DataDef $$) -> DefKind.Data;
+        case P(var $, CtorDef $$) -> DefKind.Con;
+        case P(var $, PrimDef $$) -> DefKind.Prim;
+        default -> DefKind.Unknown;
       };
-      case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> HighlightInfo.DefKind.Generalized;
-      case LocalVar ignored -> HighlightInfo.DefKind.LocalVar;
-      default -> HighlightInfo.DefKind.Unknown;
+      case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> DefKind.Generalized;
+      case LocalVar ignored -> DefKind.LocalVar;
+      default -> DefKind.Unknown;
     };
   }
 }

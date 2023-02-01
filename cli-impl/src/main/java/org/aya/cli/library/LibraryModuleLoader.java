@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -73,12 +73,12 @@ record LibraryModuleLoader(
     // No compiled core is found, or source file is modified, compile it from source.
     var program = source.program().get();
     assert program != null;
-    var context = new EmptyContext(reporter(), sourcePath).derive(mod);
+    var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
     source.resolveInfo().set(resolveInfo);
     return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
       source.tycked().set(defs);
-      if (reporter().noError()) saveCompiledCore(source, moduleResolve, defs);
+      if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
     });
   }
 

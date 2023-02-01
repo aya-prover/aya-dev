@@ -21,6 +21,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
@@ -150,7 +151,7 @@ public record ExprResolver(
             if (options.allowGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
-              assert owner != null : "Sainty check";
+              assert owner != null : "Sanity check";
               allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
               addReference(owner);
             } else {
@@ -220,22 +221,17 @@ public record ExprResolver(
       @Override public @NotNull Pattern post(@NotNull Pattern pattern) {
         return switch (pattern) {
           case Pattern.Bind bind -> {
-            var maybe = ctx.get().iterate(c -> switch (c.getUnqualifiedLocalMaybe(bind.bind().name(), bind.sourcePos())) {
-              case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
-                || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
-              case null, default -> null;
-            });
+            var maybe = ctx.get().iterate(c ->
+              patternCon(c.getUnqualifiedLocalMaybe(bind.bind().name(), bind.sourcePos())));
             if (maybe != null) yield new Pattern.Ctor(bind, maybe);
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
           }
           case Pattern.QualifiedRef qref -> {
-            var qualification = qref.qualifiedID().ids().dropLast(1);
-            var maybe = ctx.get().iterate(c -> switch (c.getQualifiedLocalMaybe(qualification, qref.qualifiedID().justName(), qref.sourcePos())) {
-              case DefVar<?, ?> def when def.core instanceof CtorDef || def.concrete instanceof TeleDecl.DataCtor
-                || def.core instanceof PrimDef || def.concrete instanceof TeleDecl.PrimDecl -> def;
-              case null, default -> null;
-            });
+            var qid = qref.qualifiedID();
+            assert qid.component() instanceof ModulePath.Qualified;
+            var maybe = ctx.get().iterate(c ->
+              patternCon(c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), qref.sourcePos())));
             if (maybe != null) yield new Pattern.Ctor(qref, maybe);
             yield EndoPattern.super.post(pattern);
           }
@@ -247,6 +243,18 @@ public record ExprResolver(
         };
       }
     }.apply(pattern);
+  }
+
+  @Nullable private static DefVar<?, ?> patternCon(@Nullable AnyVar myMaybe) {
+    if (myMaybe == null) return null;
+    if (myMaybe instanceof DefVar<?, ?> def && (
+      def.core instanceof CtorDef
+        || def.concrete instanceof TeleDecl.DataCtor
+        || def.core instanceof PrimDef
+        || def.concrete instanceof TeleDecl.PrimDecl
+    )) return def;
+
+    return null;
   }
 
   private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx, @NotNull SourcePos sourcePos) {
@@ -268,8 +276,9 @@ public record ExprResolver(
     });
   }
 
-  enum Where {
-    Head, Body
+  public enum Where {
+    Head,
+    Body
   }
 
   public record Options(boolean allowGeneralized) {

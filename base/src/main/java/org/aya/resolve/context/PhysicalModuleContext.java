@@ -2,15 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
-import org.aya.resolve.error.NameProblem;
+import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,16 +17,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions = MutableHashMap.create();
-  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules =
-    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
-  public final @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> exports =
-    MutableHashMap.of(TOP_LEVEL_MOD_NAME, new ModuleExport());
-
+  public final @NotNull ModuleExport thisExport = new ModuleExport();
+  public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
+  public final @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules = MutableHashMap.create();
+  public final @NotNull MutableMap<ModulePath, ModuleExport> exports = MutableHashMap.of(ModulePath.This, thisExport);
   private final @NotNull ImmutableSeq<String> moduleName;
 
-  @Override
-  public @NotNull ImmutableSeq<String> moduleName() {
+  @Override public @NotNull ImmutableSeq<String> moduleName() {
     return moduleName;
   }
 
@@ -40,33 +35,19 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos,
-    ImmutableSeq<String> componentName,
-    ModuleExport modExport
+    @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModule(accessibility, sourcePos, componentName, modExport);
+    ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
-      this.exports.set(componentName, modExport);
+      this.exports.set(modName, modExport);
     }
   }
 
-  @Override public void addGlobal(
-    @NotNull ImmutableSeq<String> modName,
-    @NotNull String name,
-    @NotNull Stmt.Accessibility accessibility,
-    @NotNull AnyVar ref,
-    @NotNull SourcePos sourcePos
-  ) {
-    ModuleContext.super.addGlobal(modName, name, accessibility, ref, sourcePos);
-    if (accessibility == Stmt.Accessibility.Public) {
-      var myExport = exports.get(TOP_LEVEL_MOD_NAME);
-      var success = myExport.export(name, ref);
-
-      if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
-      }
-    }
+  @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    return thisExport.export(modName, name, ref);
   }
 
   public @NotNull NoExportContext exampleContext() {
@@ -78,17 +59,15 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return parent;
   }
 
-  @Override public @NotNull MutableMap<String, MutableMap<Seq<String>, AnyVar>> definitions() {
-    return definitions;
+  @Override public @NotNull ModuleSymbol<AnyVar> symbols() {
+    return symbols;
   }
 
-  @Override public @NotNull MutableMap<ImmutableSeq<String>, ModuleExport> modules() {
+  @Override public @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules() {
     return modules;
   }
 
-  @Contract(mutates = "this") public void clear() {
-    modules.clear();
-    exports.clear();
-    definitions.clear();
+  @Override public @NotNull MutableMap<ModulePath, ModuleExport> exports() {
+    return exports;
   }
 }

@@ -24,6 +24,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.prettier.PrettierOptions;
@@ -306,7 +307,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return switch (prestmt) {
       case Decl decl -> decl(decl);
       case Command.Import cmd -> {
-        var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().join()));
+        var prelude = MutableList.of(Doc.styled(KEYWORD, "import"), Doc.symbol(cmd.path().toString()));
         if (cmd.asName() != null) {
           prelude.append(Doc.styled(KEYWORD, "as"));
           prelude.append(Doc.plain(cmd.asName()));
@@ -317,13 +318,15 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Command.Open cmd -> Doc.sepNonEmpty(
         visitAccess(cmd.accessibility(), Stmt.Accessibility.Private),
         Doc.styled(KEYWORD, "open"),
-        Doc.plain(cmd.path().join()),
+        Doc.plain(cmd.path().toString()),
         Doc.styled(KEYWORD, switch (cmd.useHide().strategy()) {
           case Using -> "using";
           case Hiding -> "hiding";
         }),
-        Doc.parened(Doc.commaList(cmd.useHide().list().view().map(name -> name.asName().equals(name.id()) ? Doc.plain(name.id())
-          : Doc.sep(Doc.plain(name.id()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName())))))
+        Doc.parened(Doc.commaList(cmd.useHide().list().view()
+          .map(name -> name.id().component() == ModulePath.This && name.asName().equals(name.id().name())
+            ? Doc.plain(name.id().name())
+            : Doc.sep(Doc.plain(name.id().join()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName())))))
       );
       case Command.Module mod -> Doc.vcat(
         Doc.sep(visitAccess(mod.accessibility(), Stmt.Accessibility.Public),

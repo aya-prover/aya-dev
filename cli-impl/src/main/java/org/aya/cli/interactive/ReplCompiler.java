@@ -28,6 +28,7 @@ import org.aya.ref.DefVar;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
+import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
@@ -117,12 +118,7 @@ public class ReplCompiler {
     owner.librarySources()
       .map(src -> src.resolveInfo().get().thisModule())
       .filterIsInstance(PhysicalModuleContext.class)
-      .forEach(mod -> mod.exports.forEach((name, contents) -> context.importModule(
-        Stmt.Accessibility.Public,
-        SourcePos.NONE,
-        name,
-        contents
-      )));
+      .forEach(mod -> context.importModule(ModulePath.qualified(mod.moduleName()), mod, Stmt.Accessibility.Public, SourcePos.NONE));
     owner.libraryDeps().forEach(this::importModule);
   }
 
