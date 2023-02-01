@@ -132,12 +132,12 @@ public interface Resolver {
 
     @Override
     public @NotNull SeqView<WithPos<AnyVar>> foldModuleRef(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
-      return foldVarRef(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+      return foldVarRef(acc, new ModuleVar(path), pos, noType());
     }
 
     @Override
     public @NotNull SeqView<WithPos<AnyVar>> foldModuleDecl(@NotNull SeqView<WithPos<AnyVar>> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
-      return foldVarDecl(acc, new ModuleVar(mod), mod.sourcePos(), noType());
+      return foldVarDecl(acc, new ModuleVar(path), pos, noType());
     }
   }
 
