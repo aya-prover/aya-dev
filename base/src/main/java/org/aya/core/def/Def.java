@@ -9,7 +9,6 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
-import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.util.prettier.PrettierOptions;
@@ -21,7 +20,7 @@ import java.util.Objects;
 /**
  * @author ice1000
  */
-public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, TopLevelDef {
+public sealed interface Def extends GenericDef permits SubLevelDef, TopLevelDef {
   static @NotNull Term defType(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar) {
     return PiTerm.make(defTele(defVar), defResult(defVar));
   }
@@ -46,10 +45,6 @@ public sealed interface Def extends AyaDocile, GenericDef permits SubLevelDef, T
 
   @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();
   @NotNull ImmutableSeq<Term.Param> telescope();
-
-  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return new CorePrettier(options).def(this);
-  }
 
   /**
    * Signature of a definition, used in concrete and tycking.

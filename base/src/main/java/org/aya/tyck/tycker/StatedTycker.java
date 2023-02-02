@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
@@ -65,8 +66,9 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
       return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
-    } else if (var.core instanceof StructDef || var.concrete instanceof TeleDecl.StructDecl) {
-      return defCall((DefVar<StructDef, TeleDecl.StructDecl>) var, StructCall::new);
+    } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
+      // return defCall((DefVar<ClassDef, ClassDecl>) var, StructCall::new);
+      throw new UnsupportedOperationException("TODO");
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
