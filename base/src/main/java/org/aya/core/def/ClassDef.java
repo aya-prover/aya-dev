@@ -5,7 +5,6 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
 import org.aya.ref.DefVar;
@@ -13,20 +12,16 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ClassDef implements AyaDocile, GenericDef {
   public final DefVar<ClassDef, ClassDecl> ref;
-  public final @NotNull SortTerm result;
+  public final ImmutableSeq<Member> members;
 
-  public ClassDef(@NotNull DefVar<ClassDef, ClassDecl> ref, @NotNull SortTerm result) {
+  public ClassDef(@NotNull DefVar<ClassDef, ClassDecl> ref, @NotNull ImmutableSeq<Member> members) {
     ref.core = this;
     this.ref = ref;
-    this.result = result;
+    this.members = members;
   }
 
   @Override public @NotNull DefVar<? extends ClassDef, ? extends ClassDecl> ref() {
     return ref;
-  }
-
-  @Override public @NotNull SortTerm result() {
-    return result;
   }
 
   public static final class Member extends UserDef<Term> {

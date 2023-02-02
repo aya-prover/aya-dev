@@ -44,6 +44,7 @@ public sealed interface Def extends GenericDef permits SubLevelDef, TopLevelDef 
   }
 
   @Override @NotNull DefVar<? extends Def, ? extends Decl> ref();
+  @NotNull Term result();
   @NotNull ImmutableSeq<Term.Param> telescope();
 
   /**

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -16,8 +16,10 @@ public interface DefConsumer extends TermConsumer {
   }
 
   private void visitDef(@NotNull GenericDef def) {
-    if (def instanceof Def defwithTele) tele(defwithTele.telescope());
-    this.accept(def.result());
+    if (def instanceof Def dd) {
+      tele(dd.telescope());
+      this.accept(def.result());
+    }
   }
 
   default void visitMatching(@NotNull Term.Matching matching) {

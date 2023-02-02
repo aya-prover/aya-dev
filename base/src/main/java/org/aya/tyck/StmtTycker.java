@@ -191,10 +191,11 @@ public final class StmtTycker extends TracedTycker {
         var resultTy = resultTy(tycker, data);
         data.signature = new Def.Signature<>(tele, resultTy);
       }
-      case TeleDecl.StructDecl struct -> {
-        var tele = tele(tycker, struct.telescope, null);
-        var result = resultTy(tycker, struct);
-        struct.signature = new Def.Signature<>(tele, result);
+      case ClassDecl struct -> {
+        throw new UnsupportedOperationException("TODO");
+        // var tele = tele(tycker, struct.telescope, null);
+        // var result = resultTy(tycker, struct);
+        // struct.signature = new Def.Signature<>(tele, result);
       }
       case TeleDecl.PrimDecl prim -> {
         // This directly corresponds to the tycker.localCtx = new LocalCtx();

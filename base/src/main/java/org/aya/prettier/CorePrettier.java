@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -302,7 +302,7 @@ public class CorePrettier extends BasePrettier<Term> {
           linkDef(def.ref(), FN),
           visitTele(def.telescope()),
           Doc.symbol(":"),
-          term(Outer.Free, def.result())
+          term(Outer.Free, def.result)
         });
         var line1sep = Doc.sepNonEmpty(line1);
         yield def.body.fold(
@@ -313,6 +313,11 @@ public class CorePrettier extends BasePrettier<Term> {
         coe(field.coerce),
         linkDef(field.ref(), FIELD),
         visitTele(field.selfTele),
+        Doc.symbol(":"),
+        term(Outer.Free, field.result));
+      case ClassDef.Member field -> Doc.sepNonEmpty(Doc.symbol("|"),
+        linkDef(field.ref(), FIELD),
+        visitTele(field.telescope),
         Doc.symbol(":"),
         term(Outer.Free, field.result));
       case PrimDef def -> primDoc(def.ref());
@@ -331,14 +336,14 @@ public class CorePrettier extends BasePrettier<Term> {
         linkDef(def.ref(), STRUCT),
         visitTele(def.telescope()),
         Doc.symbol(":"),
-        term(Outer.Free, def.result())
+        term(Outer.Free, def.result)
       ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));
       case DataDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "data"),
           linkDef(def.ref(), DATA),
           visitTele(def.telescope()),
           Doc.symbol(":"),
-          term(Outer.Free, def.result()));
+          term(Outer.Free, def.result));
         yield Doc.vcat(Doc.sepNonEmpty(line1),
           Doc.nest(2, Doc.vcat(def.body.view().map(this::def))));
       }
