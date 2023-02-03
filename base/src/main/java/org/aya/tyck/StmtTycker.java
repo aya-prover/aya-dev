@@ -109,12 +109,9 @@ public final class StmtTycker extends TracedTycker {
         var body = decl.body.map(clause -> (CtorDef) tyck(clause, tycker));
         yield new DataDef(decl.ref, signature.param(), signature.result(), body);
       }
+      // Do nothing, these are just header.
       case TeleDecl.PrimDecl decl -> decl.ref.core;
-      case ClassDecl decl -> {
-        var body = decl.fields.map(field -> (ClassDef.Member) tyck(field, tycker));
-        yield new ClassDef(decl.ref, body);
-      }
-      // Do nothing, data constructors and fields are just header.
+      case ClassDecl decl -> decl.ref.core;
       case TeleDecl.DataCtor ctor -> ctor.ref.core;
       case TeleDecl.ClassMember field -> field.ref.core;
     };
@@ -151,7 +148,11 @@ public final class StmtTycker extends TracedTycker {
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope of " + decl.ref().name())));
     switch (decl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
+      case ClassDecl clazz -> {
+        var body = clazz.fields.map(field -> (ClassDef.Member) tyck(field, tycker));
+        // Invoke the constructor, so that `class.ref.core` is set.
+        new ClassDef(clazz.ref, body);
+      }
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
