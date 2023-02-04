@@ -32,7 +32,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return parent().underlyingFile();
   }
 
-
   /**
    * All available symbols in this context<br>
    * {@code Unqualified -> (Module Name -> TopLevel)}<br>
@@ -185,9 +184,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     var symbols = symbols();
     if (!symbols.contains(name)) {
-      if (ref instanceof LocalVar localVar
-        && getUnqualifiedMaybe(name, sourcePos) != null
-        && !(localVar.generateKind() instanceof GenerateKind.Anonymous)) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null
+        && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
