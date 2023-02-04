@@ -97,7 +97,7 @@ public record CompiledAya(
     var serialization = new Serialization(state, resolveInfo, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
-    var exports = ctx.exports().get(ModulePath.This).symbols().view().map((k, vs) ->
+    var exports = ctx.exports().symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::ids))));
 
     var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();

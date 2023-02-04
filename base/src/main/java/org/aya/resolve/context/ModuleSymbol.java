@@ -10,6 +10,7 @@ import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
@@ -86,8 +87,29 @@ public record ModuleSymbol<T>(
     return resolveUnqualified(unqualified).isNotEmpty();
   }
 
-  public boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
+  public boolean contains(@NotNull ModulePath component, @NotNull String unqualified) {
     return resolveUnqualified(unqualified).containsKey(component);
+  }
+
+  public @Nullable Error containsDefinitely(@NotNull String unqualified) {
+    return switch (resolveUnqualified(unqualified).size()) {
+      case 0 -> Error.NotFound;
+      case 1 -> null;
+      default -> Error.Ambiguous;
+    };
+  }
+
+  /**
+   * @return null if contains
+   */
+  public @Nullable Error containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
+    return switch (component) {
+      case ModulePath.Qualified qualified -> {
+        if (contains(qualified, unqualified)) yield null;
+        yield Error.NotFound;
+      }
+      case ModulePath.This aThis -> containsDefinitely(unqualified);
+    };
   }
 
   public enum Error {

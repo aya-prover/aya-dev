@@ -147,7 +147,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     var module = decl.ref().name();
     context.importModule(
       ModulePath.This.resolve(module),
-      innerCtx.thisExport,
+      innerCtx.exports,
       decl.accessibility(),
       decl.sourcePos()
     );

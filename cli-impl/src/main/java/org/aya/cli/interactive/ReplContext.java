@@ -33,7 +33,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   ) {
     // REPL always overwrites symbols.
     symbols().add(modName, name, ref);
-    // REPL exports nothing, because nothing can import REPL.
+    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(modName, name, defVar);
   }
 
   @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
@@ -49,7 +49,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull SourcePos sourcePos
   ) {
     modules.put(modName, mod);
-    if (accessibility == Stmt.Accessibility.Public) exports.set(modName, mod);
+    if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
   }
 
   @Override public @NotNull ReplContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
@@ -75,7 +75,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     RepoLike.super.merge();
     if (bors == null) return;
     this.symbols.table().putAll(bors.symbols.table());
-    this.exports.putAll(bors.exports);
+    this.exports.symbols().table().putAll(bors.exports.symbols().table());
+    this.exports.modules().putAll(bors.exports.modules());
     this.modules.putAll(bors.modules);
   }
 

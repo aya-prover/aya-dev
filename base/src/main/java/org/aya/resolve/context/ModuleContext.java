@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
@@ -51,9 +50,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
 
   /**
-   * Modules that are exported by this module.
+   * Things (symbol or module) that are exported by this module.
    */
-  @NotNull Map<ModulePath, ModuleExport> exports();
+  @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return modules().getOrNull(modName);
@@ -102,7 +101,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    module.exports().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
+    var export = module.exports();
+    importModule(modName, export, accessibility, sourcePos);
+    export.modules().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
   }
 
   /**
@@ -153,14 +154,17 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var mapRes = filtered.map(rename);
     if (mapRes.anyError()) reportAllAndThrow(mapRes.problems(modName));
 
+    // report all warning
+    reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
+
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
       var fullComponentName = modName.concat(componentName);
       addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
     }));
 
-    // report all warning
-    reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
+    // import the modules that {renamed} exported
+    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
   }
 
   /**
@@ -174,20 +178,31 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    var symbols = symbols();
-    if (!symbols.contains(name)) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
-        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
-      }
-    } else if (symbols.containsDefinitely(modName, name)) {
-      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-    } else {
-      reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
-    }
-
     // `imported == false` implies the `ref` is defined in this module,
     // so `modName` should always be `ModulePath.This`.
     assert imported || modName == ModulePath.This : "Sanity check";
+
+    var symbols = symbols();
+    if (!symbols.contains(name)) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
+        // {name} isn't used in this scope, but used in outer scope, shadow!
+        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
+      }
+    } else if (symbols.contains(modName, name)) {
+      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+    } else {
+      reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+
+      var candidates = symbols.resolveUnqualified(name);
+      if (candidates.containsKey(ModulePath.This)) {
+        // ignore importing
+        return;
+      } else if (modName == ModulePath.This) {
+        // shadow
+        candidates.clear();
+      }
+    }
+
     var result = symbols.add(modName, name, ref);
     assert result.isEmpty() : "Sanity check"; // should already be reported as an error
 
