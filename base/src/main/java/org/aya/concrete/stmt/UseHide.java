@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -22,7 +23,7 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
 
   public @NotNull ImmutableSeq<WithPos<Rename>> renaming() {
     if (strategy == Strategy.Hiding) return ImmutableSeq.empty();
-    return list.map(i -> new WithPos<>(i.sourcePos(), i.rename()));
+    return list.mapNotNull(i -> i.rename().map(x -> new WithPos<>(i.sourcePos(), x)).getOrNull());
   }
 
   /**
@@ -36,16 +37,20 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
   public record Name(
     @NotNull SourcePos sourcePos,
     @NotNull QualifiedID id,
-    @NotNull String asName,
+    @NotNull Option<String> asName,
     @NotNull Assoc asAssoc,
     @NotNull BindBlock asBind
   ) implements SourceNode {
     public Name(@NotNull WithPos<@NotNull String> simple) {
-      this(simple.sourcePos(), new QualifiedID(simple.sourcePos(), simple.data()), simple.data(), Assoc.Invalid, BindBlock.EMPTY);
+      this(simple.sourcePos(), new QualifiedID(simple.sourcePos(), simple.data()), Option.none(), Assoc.Invalid, BindBlock.EMPTY);
     }
 
-    public Rename rename() {
-      return new Rename(id.component().ids(), id().name(), asName());
+    public Name(@NotNull QualifiedID qname) {
+      this(qname.sourcePos(), qname, Option.none(), Assoc.Invalid, BindBlock.EMPTY);
+    }
+
+    public Option<Rename> rename() {
+      return asName.map(x -> new Rename(id.component().ids(), id.name(), x));
     }
   }
 }
