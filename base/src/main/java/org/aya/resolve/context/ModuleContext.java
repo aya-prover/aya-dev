@@ -7,9 +7,10 @@ import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
-import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenerateKind;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -184,7 +185,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     var symbols = symbols();
     if (!symbols.contains(name)) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
+      if (ref instanceof LocalVar localVar
+        && getUnqualifiedMaybe(name, sourcePos) != null
+        && !(localVar.generateKind() instanceof GenerateKind.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
