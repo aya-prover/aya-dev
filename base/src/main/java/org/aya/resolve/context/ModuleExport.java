@@ -203,6 +203,11 @@ public record ModuleExport(
     return exists.isEmpty();
   }
 
+  public void merge(@NotNull ModuleExport other) {
+    symbols.table().putAll(other.symbols.table());
+    modules.putAll(other.modules);
+  }
+
   public void clear() {
     symbols.table().clear();
     modules.clear();
@@ -212,7 +217,7 @@ public record ModuleExport(
     var symbol = symbols.getMaybe(component, name);
     var module = modules.getOption(component.resolve(name));      // `getOption` for beauty
 
-    if (symbol.isErr() && symbol.getErr() == ModuleSymbol.Error.Ambiguous)
+    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous)
       return Result.err(ModuleSymbol.Error.Ambiguous);
     if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
 

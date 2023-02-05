@@ -23,7 +23,7 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
 
   public @NotNull ImmutableSeq<WithPos<Rename>> renaming() {
     if (strategy == Strategy.Hiding) return ImmutableSeq.empty();
-    return list.mapNotNull(i -> i.rename().map(x -> new WithPos<>(i.sourcePos(), x)).getOrNull());
+    return list.flatMap(i -> i.rename().map(x -> new WithPos<>(i.sourcePos(), x)));
   }
 
   /**

@@ -154,7 +154,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var mapRes = filtered.map(rename);
     if (mapRes.anyError()) reportAllAndThrow(mapRes.problems(modName));
 
-    // report all warning
+    // report all warnings
     reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
 
     var renamed = mapRes.result();

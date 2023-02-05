@@ -74,10 +74,9 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var bors = downstream;
     RepoLike.super.merge();
     if (bors == null) return;
-    this.symbols.table().putAll(bors.symbols.table());
-    this.exports.symbols().table().putAll(bors.exports.symbols().table());
-    this.exports.modules().putAll(bors.exports.modules());
-    this.modules.putAll(bors.modules);
+    symbols.table().putAll(bors.symbols.table());
+    exports.merge(bors.exports);
+    modules.putAll(bors.modules);
   }
 
   @Contract(mutates = "this") public void clear() {
