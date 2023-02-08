@@ -474,12 +474,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record New(
     @NotNull SourcePos sourcePos,
+    boolean allowIncomplete,
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field> fields
   ) implements Expr {
     public @NotNull Expr.New update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
       return struct == struct() && fields.sameElements(fields(), true) ? this
-        : new New(sourcePos, struct, fields);
+        : new New(sourcePos, allowIncomplete, struct, fields);
     }
 
     @Override public @NotNull Expr.New descent(@NotNull UnaryOperator<@NotNull Expr> f) {

@@ -24,6 +24,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -226,7 +227,7 @@ public record AyaProducer(
     if (node.is(FN_DECL)) return fnDecl(node);
     if (node.is(PRIM_DECL)) return primDecl(node);
     if (node.is(DATA_DECL)) return dataDecl(node, additional);
-    if (node.is(STRUCT_DECL)) return structDecl(node, additional);
+    if (node.is(STRUCT_DECL)) return classDecl(node, additional);
     return unreachable(node);
   }
 
@@ -319,7 +320,7 @@ public record AyaProducer(
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
-  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
+  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
     var keyword = modiSet.openKw();
     if (keyword == null) return;
 
@@ -358,14 +359,12 @@ public record AyaProducer(
     return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
-  public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+  public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var info = declInfo(node, x -> true);
     if (info == null) return null;
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
-    var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var ty = typeOrNull(node.peekChild(TYPE));
     var personality = info.modifier.personality().data();
-    var decl = new TeleDecl.StructDecl(info.info, info.name, tele, ty, fields, personality);
+    var decl = new ClassDecl(info.info, info.name, personality, fields);
     giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
@@ -573,7 +572,7 @@ public record AyaProducer(
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
       var newBody = node.peekChild(NEW_BODY);
-      return new Expr.New(pos, struct,
+      return new Expr.New(pos, false, struct,
         newBody == null
           ? ImmutableSeq.empty()
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
@@ -901,13 +900,6 @@ public record AyaProducer(
   public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
     var wp = weakId(node.child(WEAK_ID));
     return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
-  }
-
-  public @NotNull DeclInfo.Personality sampleModifiers(@Nullable GenericNode<?> node) {
-    if (node == null) return DeclInfo.Personality.NORMAL;
-    if (node.peekChild(KW_EXAMPLE) != null) return DeclInfo.Personality.EXAMPLE;
-    if (node.peekChild(KW_COUNTEREXAMPLE) != null) return DeclInfo.Personality.COUNTEREXAMPLE;
-    return unreachable(node);
   }
 
   private <T> T unreachable(GenericNode<?> node) {
