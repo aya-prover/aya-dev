@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -24,7 +24,7 @@ public interface VarConsumer extends TermConsumer {
       case PrimCall prim -> var(prim.ref());
       case DataCall data -> var(data.ref());
       case ConCall con -> var(con.ref());
-      case StructCall struct -> var(struct.ref());
+      case ClassCall struct -> var(struct.ref());
       default -> {}
     }
     TermConsumer.super.accept(term);

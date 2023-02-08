@@ -102,7 +102,7 @@ public interface EndoTerm extends UnaryOperator<Term> {
     @Override public @NotNull Term post(@NotNull Term term) {
       return switch (term) {
         case SortTerm sort -> sort.elevate(lift);
-        case StructCall struct -> new StructCall(struct.ref(), struct.ulift() + lift, struct.args());
+        case ClassCall struct -> new ClassCall(struct.ref(), struct.ulift() + lift, struct.args());
         case DataCall data -> new DataCall(data.ref(), data.ulift() + lift, data.args());
         case ConCall con -> {
           var head = con.head();

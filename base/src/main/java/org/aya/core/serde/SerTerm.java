@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -147,8 +147,8 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   }
 
   record Struct(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull StructCall de(@NotNull DeState state) {
-      return new StructCall(state.resolve(name), data.ulift, data.de(state));
+    @Override public @NotNull ClassCall de(@NotNull DeState state) {
+      return new ClassCall(state.resolve(name), data.ulift, data.de(state));
     }
   }
 

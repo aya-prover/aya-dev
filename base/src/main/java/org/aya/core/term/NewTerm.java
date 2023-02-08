@@ -15,16 +15,16 @@ import java.util.function.UnaryOperator;
  * @author kiva
  */
 public record NewTerm(
-  @NotNull StructCall struct,
+  @NotNull ClassCall struct,
   @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params
 ) implements StableWHNF {
-  public @NotNull NewTerm update(@NotNull StructCall struct, @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params) {
+  public @NotNull NewTerm update(@NotNull ClassCall struct, @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params) {
     var equalParams = params == params()
       || params.view().map(Tuple::of).sameElements(params().view().map(Tuple::of));
     return struct == struct() && equalParams ? this : new NewTerm(struct, params);
   }
 
   @Override public @NotNull NewTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
-    return update((StructCall) f.apply(struct), ImmutableMap.from(params.view().map((k, v) -> Tuple.of(k, f.apply(v)))));
+    return update((ClassCall) f.apply(struct), ImmutableMap.from(params.view().map((k, v) -> Tuple.of(k, f.apply(v)))));
   }
 }

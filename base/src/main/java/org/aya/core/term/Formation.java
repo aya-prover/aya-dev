@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -7,5 +7,5 @@ package org.aya.core.term;
  * Note that {@link PrimCall} may also be term formers, but not necessarily.
  */
 public sealed interface Formation extends Term
-  permits DataCall, IntervalTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, StructCall {
+  permits DataCall, IntervalTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, ClassCall {
 }

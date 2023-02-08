@@ -261,7 +261,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
-      case StructCall type1 -> {
+      case ClassCall type1 -> {
         var fieldSigs = type1.ref().core.fields;
         var paramSubst = ImmutableMap.from(Def.defTele(type1.ref()).zipView(type1.args()).map(x ->
           Tuple.of(x.component1().ref(), x.component2().term())));
@@ -404,7 +404,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
-      case Pair(StructCall lhs, StructCall rhs) -> {
+      case Pair(ClassCall lhs, ClassCall rhs) -> {
         if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
@@ -489,7 +489,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof StructCall)) yield null;
+        if (!(preStructType instanceof ClassCall)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }

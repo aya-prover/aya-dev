@@ -96,17 +96,17 @@ public final class ExprTycker extends PropTycker {
         var levels = lift.lift();
         yield new Result.Default(result.wellTyped().lift(levels), result.type().lift(levels));
       }
-      case Expr.New aNew -> {
-        var structExpr = aNew.struct();
+      case Expr.New neu -> {
+        var structExpr = neu.struct();
         var struct = whnf(instImplicits(synthesize(structExpr), structExpr.sourcePos()).wellTyped());
-        if (!(struct instanceof StructCall structCall))
-          yield fail(structExpr, struct, BadTypeError.structCon(state, aNew, struct));
-        var structRef = structCall.ref();
-        var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), structCall.args().map(Arg::term));
+        if (!(struct instanceof ClassCall classCall))
+          yield fail(structExpr, struct, BadTypeError.structCon(state, neu, struct));
+        var structRef = classCall.ref();
+        var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), classCall.args().map(Arg::term));
 
         var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.ClassMember>, Term>>create();
         var missing = MutableList.<AnyVar>create();
-        var conFields = MutableMap.from(aNew.fields().view().map(t -> Tuple.of(t.name().data(), t)));
+        var conFields = MutableMap.from(neu.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
         for (var defField : structRef.core.fields) {
           var fieldRef = defField.ref();
@@ -116,7 +116,7 @@ public final class ExprTycker extends PropTycker {
               missing.append(fieldRef); // no value available, skip and prepare error reporting
             else {
               // use default value from defField
-              var field = defField.body.get().subst(subst, structCall.ulift());
+              var field = defField.body.get().subst(subst, classCall.ulift());
               fields.append(Tuple.of(fieldRef, field));
               subst.add(fieldRef, field);
             }
@@ -124,12 +124,12 @@ public final class ExprTycker extends PropTycker {
           }
           var conField = conFieldOpt.get();
           conField.resolvedField().set(fieldRef);
-          var type = Def.defType(fieldRef).subst(subst, structCall.ulift());
-          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, structCall.ulift());
+          var type = Def.defType(fieldRef).subst(subst, classCall.ulift());
+          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, classCall.ulift());
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
-            yield fail(aNew, structCall, new FieldError.ArgMismatch(aNew.sourcePos(), defField, bindings.size()));
+            yield fail(neu, classCall, new FieldError.ArgMismatch(neu.sourcePos(), defField, bindings.size()));
           }
           var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair.component1().sourcePos(), pair.component1().data(), pair.component2().explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
@@ -138,10 +138,10 @@ public final class ExprTycker extends PropTycker {
         }
 
         if (missing.isNotEmpty())
-          yield fail(aNew, structCall, new FieldError.MissingField(aNew.sourcePos(), missing.toImmutableSeq()));
+          yield fail(neu, classCall, new FieldError.MissingField(neu.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
-          yield fail(aNew, structCall, new FieldError.NoSuchField(aNew.sourcePos(), conFields.keysView().toImmutableSeq()));
-        yield new Result.Default(new NewTerm(structCall, ImmutableMap.from(fields)), structCall);
+          yield fail(neu, classCall, new FieldError.NoSuchField(neu.sourcePos(), conFields.keysView().toImmutableSeq()));
+        yield new Result.Default(new NewTerm(classCall, ImmutableMap.from(fields)), classCall);
       }
       case Expr.Proj proj -> {
         var struct = proj.tup();
@@ -161,7 +161,7 @@ public final class ExprTycker extends PropTycker {
           return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), resultTy);
         }, sp -> {
           var fieldName = sp.name();
-          if (!(projectee.type() instanceof StructCall structCall))
+          if (!(projectee.type() instanceof ClassCall classCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           // TODO[ice]: instantiate the type
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
@@ -171,10 +171,10 @@ public final class ExprTycker extends PropTycker {
           if (!inProp && fieldRef.core.inProp())
             return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
 
-          var structSubst = DeltaExpander.buildSubst(Def.defTele(structCall.ref()), structCall.args());
+          var structSubst = DeltaExpander.buildSubst(Def.defTele(classCall.ref()), classCall.args());
           var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
           var teleRenamed = tele.map(LamTerm::paramRenamed);
-          var access = new FieldTerm(projectee.wellTyped(), fieldRef, structCall.args(), teleRenamed.map(UntypedParam::toArg));
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, classCall.args(), teleRenamed.map(UntypedParam::toArg));
           return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
         });
       }

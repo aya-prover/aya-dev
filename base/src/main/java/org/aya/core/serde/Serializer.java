@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -93,7 +93,7 @@ public record Serializer(@NotNull Serializer.State state) {
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.conArgs()));
-      case StructCall structCall -> serializeStructCall(structCall);
+      case ClassCall classCall -> serializeStructCall(classCall);
       case DataCall dataCall -> serializeDataCall(dataCall);
       case PrimCall prim -> new SerTerm.Prim(
         state.def(prim.ref()),
@@ -169,10 +169,10 @@ public record Serializer(@NotNull Serializer.State state) {
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.Struct serializeStructCall(@NotNull StructCall structCall) {
+  private @NotNull SerTerm.Struct serializeStructCall(@NotNull ClassCall classCall) {
     return new SerTerm.Struct(
-      state.def(structCall.ref()),
-      serializeCall(structCall.ulift(), structCall.args()));
+      state.def(classCall.ref()),
+      serializeCall(classCall.ulift(), classCall.args()));
   }
 
   private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {

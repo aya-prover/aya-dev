@@ -77,7 +77,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
         var callRaw = tryPress(access.of());
-        if (!(callRaw instanceof StructCall call)) yield unreachable(access);
+        if (!(callRaw instanceof ClassCall call)) yield unreachable(access);
         var field = access.ref();
         var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
           .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
