@@ -117,12 +117,14 @@ public record AyaProducer(
   }
 
   public @NotNull Command.Import importCmd(@NotNull GenericNode<?> node) {
+    var acc = node.peekChild(KW_PUBLIC);
     var asId = node.peekChild(WEAK_ID);
     var importMod = node.child(QUALIFIED_ID);
     return new Command.Import(
       sourcePosOf(importMod),
       modulePath(importMod),
-      asId == null ? null : weakId(asId).data()
+      asId == null ? null : weakId(asId).data(),
+      acc == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public
     );
   }
 
@@ -144,7 +146,7 @@ public record AyaProducer(
       openImport
     );
     return openImport
-      ? ImmutableSeq.of(new Command.Import(namePos, modName, null), open)
+      ? ImmutableSeq.of(new Command.Import(namePos, modName, null, accessibility), open)
       : ImmutableSeq.of(open);
   }
 

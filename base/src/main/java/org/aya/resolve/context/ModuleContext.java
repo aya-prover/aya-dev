@@ -112,6 +112,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param accessibility of importing, re-export if public
    * @param modName       the name of the module
    * @param moduleExport  the module
+   * @return the module that actually imported, which can be different to {@param moduleExport}
    */
   default void importModule(
     @NotNull ModulePath.Qualified modName,
@@ -120,12 +121,18 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull SourcePos sourcePos
   ) {
     var modules = modules();
-    if (modules.containsKey(modName)) {
-      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
-    }
-    if (getModuleMaybe(modName) != null) {
+    var exists = modules.getOrNull(modName);
+    if (exists != null) {
+      // TODO: a little dirty, we may need a ModuleVar
+      if (exists != moduleExport) {
+        reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      } else {
+        return;
+      }
+    } else if (getModuleMaybe(modName) != null) {
       reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
+
     modules.set(modName, moduleExport);
   }
 
@@ -159,6 +166,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
+      // TODO: {componentName} can be invisible, so {fullComponentName} is probably incorrect
       var fullComponentName = modName.concat(componentName);
       addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
     }));
@@ -196,6 +204,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
       var candidates = symbols.resolveUnqualified(name);
       if (candidates.containsKey(ModulePath.This)) {
+        assert candidates.size() == 1;
         // ignore importing
         return;
       } else if (modName == ModulePath.This) {

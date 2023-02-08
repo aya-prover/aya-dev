@@ -152,6 +152,62 @@ public record ModuleExport(
   }
 
   /**
+   * @return false if there already exist a symbol with the same name.
+   */
+  public boolean export(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+    var exists = symbols.add(modName, name, ref);
+    return exists.isEmpty();
+  }
+
+  public boolean export(@NotNull ModulePath.Qualified componentName, @NotNull ModuleExport module) {
+    var exists = modules.put(componentName, module);
+    return exists.isEmpty();
+  }
+
+  public void putAll(@NotNull ModuleExport other) {
+    symbols.table().putAll(other.symbols.table());
+    modules.putAll(other.modules);
+  }
+
+  public void clear() {
+    symbols.table().clear();
+    modules.clear();
+  }
+
+  private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModulePath component, @NotNull String name) {
+    var symbol = symbols.getMaybe(component, name);
+    var module = modules.getOption(component.resolve(name));      // `getOption` for beauty
+
+    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous)
+      return Result.err(ModuleSymbol.Error.Ambiguous);
+    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
+
+    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
+  }
+
+  private Result<ExportUnit, ModuleSymbol.Error> removeMaybe(@NotNull ModulePath component, @NotNull String name) {
+    var symbol = symbols.removeDefinitely(component, name);
+    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous) return Result.err(ModuleSymbol.Error.Ambiguous);
+
+    var module = modules.remove(component.resolve(name));
+    // symbol.isEmpty <-> symbol.getErr() == NotFound
+    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
+
+    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
+  }
+
+  private record ExportUnit(@Nullable DefVar<?, ?> symbol, @Nullable ModuleExport module) {
+    public ExportUnit {
+      assert symbol != null || module != null : "Sanity check";
+    }
+
+    public void forEach(Consumer<DefVar<?, ?>> symbolConsumer, Consumer<ModuleExport> moduleConsumer) {
+      if (symbol != null) symbolConsumer.accept(symbol);
+      if (module != null) moduleConsumer.accept(module);
+    }
+  }
+
+  /**
    * @param result         the new module export if success, the old module export if failed.
    * @param ambiguousNames Ambiguous always occurs with unqualified name, so it is {@link String} instead of {@link QualifiedID}
    */
@@ -187,62 +243,6 @@ public record ModuleExport(
         .map(name -> new NameProblem.ShadowingWarn(name.data(), name.sourcePos()));
 
       return shadowNameProblems.concat(invalidNameProblems).concat(ambiguousNameProblems);
-    }
-  }
-
-  /**
-   * @return false if there already exist a symbol with the same name.
-   */
-  public boolean export(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    var exists = symbols.add(modName, name, ref);
-    return exists.isEmpty();
-  }
-
-  public boolean export(@NotNull ModulePath.Qualified componentName, @NotNull ModuleExport module) {
-    var exists = modules.put(componentName, module);
-    return exists.isEmpty();
-  }
-
-  public void merge(@NotNull ModuleExport other) {
-    symbols.table().putAll(other.symbols.table());
-    modules.putAll(other.modules);
-  }
-
-  public void clear() {
-    symbols.table().clear();
-    modules.clear();
-  }
-
-  private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModulePath component, @NotNull String name) {
-    var symbol = symbols.getMaybe(component, name);
-    var module = modules.getOption(component.resolve(name));      // `getOption` for beauty
-
-    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous)
-      return Result.err(ModuleSymbol.Error.Ambiguous);
-    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
-
-    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
-  }
-
-  private Result<ExportUnit, ModuleSymbol.Error> removeMaybe(@NotNull ModulePath component, @NotNull String name) {
-    var symbol = symbols.removeDefinitely(component, name);
-    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous) return Result.err(ModuleSymbol.Error.Ambiguous);
-
-    var module = modules.remove(component.resolve(name));
-    // symbol.isEmpty <-> symbol.getErr() == NotFound
-    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
-
-    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
-  }
-
-  private record ExportUnit(@Nullable DefVar<?, ?> symbol, @Nullable ModuleExport module) {
-    public ExportUnit {
-      assert symbol != null || module != null : "?";
-    }
-
-    public void forEach(Consumer<DefVar<?, ?>> symbolConsumer, Consumer<ModuleExport> moduleConsumer) {
-      if (symbol != null) symbolConsumer.accept(symbol);
-      if (module != null) moduleConsumer.accept(module);
     }
   }
 }

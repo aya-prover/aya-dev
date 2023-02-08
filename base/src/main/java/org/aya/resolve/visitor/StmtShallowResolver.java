@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.tuple.Tuple;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
@@ -48,9 +49,8 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
-        context.importModule(importedName, mod, Stmt.Accessibility.Private, cmd.sourcePos());
-        // TODO: ModulePath
-        resolveInfo.imports().put(importedName, success);
+        context.importModule(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+        resolveInfo.imports().put(importedName, Tuple.of(success, cmd.accessibility() == Stmt.Accessibility.Public));
       }
       case Command.Open cmd -> {
         var mod = cmd.path();
@@ -68,7 +68,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-          resolveInfo.open(modResolveInfo, cmd.sourcePos(), acc);
+          resolveInfo.open(modResolveInfo.component1(), cmd.sourcePos(), acc);
         });
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {

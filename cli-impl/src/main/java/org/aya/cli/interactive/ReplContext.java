@@ -75,7 +75,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     RepoLike.super.merge();
     if (bors == null) return;
     symbols.table().putAll(bors.symbols.table());
-    exports.merge(bors.exports);
+    exports.putAll(bors.exports);
     modules.putAll(bors.modules);
   }
 
