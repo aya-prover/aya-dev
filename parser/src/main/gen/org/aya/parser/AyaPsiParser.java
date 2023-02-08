@@ -924,29 +924,37 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_IMPORT qualifiedId (KW_AS weakId)?
+  // KW_PUBLIC? KW_IMPORT qualifiedId (KW_AS weakId)?
   public static boolean importCmd(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "importCmd")) return false;
-    if (!nextTokenIs(b, KW_IMPORT)) return false;
+    if (!nextTokenIs(b, "<import cmd>", KW_IMPORT, KW_PUBLIC)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, KW_IMPORT);
+    Marker m = enter_section_(b, l, _NONE_, IMPORT_CMD, "<import cmd>");
+    r = importCmd_0(b, l + 1);
+    r = r && consumeToken(b, KW_IMPORT);
     r = r && qualifiedId(b, l + 1);
-    r = r && importCmd_2(b, l + 1);
-    exit_section_(b, m, IMPORT_CMD, r);
+    r = r && importCmd_3(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // KW_PUBLIC?
+  private static boolean importCmd_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importCmd_0")) return false;
+    consumeToken(b, KW_PUBLIC);
+    return true;
+  }
+
   // (KW_AS weakId)?
-  private static boolean importCmd_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importCmd_2")) return false;
-    importCmd_2_0(b, l + 1);
+  private static boolean importCmd_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importCmd_3")) return false;
+    importCmd_3_0(b, l + 1);
     return true;
   }
 
   // KW_AS weakId
-  private static boolean importCmd_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importCmd_2_0")) return false;
+  private static boolean importCmd_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importCmd_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, KW_AS);
