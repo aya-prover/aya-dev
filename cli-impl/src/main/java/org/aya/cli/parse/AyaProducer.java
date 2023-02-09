@@ -319,7 +319,7 @@ public record AyaProducer(
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
-  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull TeleDecl<?> decl, @NotNull MutableList<Stmt> additional) {
+  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
     var keyword = modiSet.openKw();
     if (keyword == null) return;
 
@@ -347,15 +347,13 @@ public record AyaProducer(
 
   public @Nullable TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
     var dataCtorClause = node.peekChild(DATA_CTOR_CLAUSE);
-    if (dataCtorClause != null) return dataCtorClause(dataCtorClause);
+    if (dataCtorClause != null) return dataCtor(
+      patterns(dataCtorClause.child(PATTERNS).child(COMMA_SEP)),
+      dataCtorClause.child(DATA_CTOR));
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
     error(node.childrenView().first(), "Expect a data constructor");
     return null;
-  }
-
-  public @NotNull TeleDecl.DataCtor dataCtorClause(@NotNull GenericNode<?> node) {
-    return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
@@ -402,11 +400,12 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
+    var info = declInfo(node, x -> false);
+    if (info == null) return null;
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
-    var info = declInfo(node, x -> false);
     var par = partial(partial, partial != null ? sourcePosOf(partial) : info.info.sourcePos());
     var coe = node.peekChild(KW_COERCE) != null;
     return new TeleDecl.DataCtor(info.info, info.name, tele, par, patterns, coe, ty == null ? null : type(ty));
@@ -901,13 +900,6 @@ public record AyaProducer(
   public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
     var wp = weakId(node.child(WEAK_ID));
     return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
-  }
-
-  public @NotNull DeclInfo.Personality sampleModifiers(@Nullable GenericNode<?> node) {
-    if (node == null) return DeclInfo.Personality.NORMAL;
-    if (node.peekChild(KW_EXAMPLE) != null) return DeclInfo.Personality.EXAMPLE;
-    if (node.peekChild(KW_COUNTEREXAMPLE) != null) return DeclInfo.Personality.COUNTEREXAMPLE;
-    return unreachable(node);
   }
 
   private <T> T unreachable(GenericNode<?> node) {
