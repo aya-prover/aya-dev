@@ -1,0 +1,9 @@
+open import Arith::Nat::Core
+open import Data::Vec
+open import Paths
+
+def info => 2 :> 1 :> vnil
+
+example def one : info.1 = 2 => idp
+example def two : info.2 = 1 :> vnil => idp
+counterexample def err => info.3

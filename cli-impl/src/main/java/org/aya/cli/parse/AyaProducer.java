@@ -348,15 +348,13 @@ public record AyaProducer(
 
   public @Nullable TeleDecl.DataCtor dataBody(@NotNull GenericNode<?> node) {
     var dataCtorClause = node.peekChild(DATA_CTOR_CLAUSE);
-    if (dataCtorClause != null) return dataCtorClause(dataCtorClause);
+    if (dataCtorClause != null) return dataCtor(
+      patterns(dataCtorClause.child(PATTERNS).child(COMMA_SEP)),
+      dataCtorClause.child(DATA_CTOR));
     var dataCtor = node.peekChild(DATA_CTOR);
     if (dataCtor != null) return dataCtor(ImmutableSeq.empty(), dataCtor);
     error(node.childrenView().first(), "Expect a data constructor");
     return null;
-  }
-
-  public @NotNull TeleDecl.DataCtor dataCtorClause(@NotNull GenericNode<?> node) {
-    return dataCtor(patterns(node.child(PATTERNS).child(COMMA_SEP)), node.child(DATA_CTOR));
   }
 
   public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
@@ -401,11 +399,12 @@ public record AyaProducer(
     );
   }
 
-  public @NotNull TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
+    var info = declInfo(node, x -> false);
+    if (info == null) return null;
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
-    var info = declInfo(node, x -> false);
     var par = partial(partial, partial != null ? sourcePosOf(partial) : info.info.sourcePos());
     var coe = node.peekChild(KW_COERCE) != null;
     return new TeleDecl.DataCtor(info.info, info.name, tele, par, patterns, coe, ty == null ? null : type(ty));

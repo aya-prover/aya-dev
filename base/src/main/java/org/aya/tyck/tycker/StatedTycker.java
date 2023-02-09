@@ -16,6 +16,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * @see #whnf(Term)
  * @see #defCall
  * @see #inferRef(DefVar)
+ * @see #conOwnerSubst(ConCall)
  */
 public abstract sealed class StatedTycker extends TracedTycker permits MockTycker {
   public final @NotNull TyckState state;
@@ -99,5 +101,13 @@ public abstract sealed class StatedTycker extends TracedTycker permits MockTycke
   protected final boolean compareRestr(@NotNull Restr<Term> lhs, @NotNull Restr<Term> rhs) {
     return CofThy.conv(lhs, new Subst(), s -> CofThy.satisfied(s.restr(state, rhs)))
       && CofThy.conv(rhs, new Subst(), s -> CofThy.satisfied(s.restr(state, lhs)));
+  }
+
+  /**
+   * Used for getting the subst for an inductive type's constructor's types.
+   * This method handles both indexed and non-indexed constructors.
+   */
+  protected @NotNull Subst conOwnerSubst(@NotNull ConCall conCall) {
+    return PatternTycker.mischa(conCall.head().underlyingDataCall(), conCall.ref().core, state).get();
   }
 }

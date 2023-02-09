@@ -1,9 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import org.aya.core.visitor.Subst;
 import org.aya.prettier.AyaPrettierOptions;
 import org.jetbrains.annotations.Contract;
@@ -24,9 +23,8 @@ public record ProjTerm(@NotNull Term of, int ix) implements Elimination {
   }
 
   public static @NotNull Subst
-  projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope) {
+  projSubst(@NotNull Term term, int index, ImmutableSeq<Param> telescope, Subst subst) {
     // instantiate the type
-    var subst = new Subst(MutableMap.create());
     telescope.view().take(index).forEachIndexed((i, param) ->
       subst.add(param.ref(), new ProjTerm(term, i + 1)));
     return subst;
