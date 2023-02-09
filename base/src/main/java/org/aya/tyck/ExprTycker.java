@@ -147,18 +147,30 @@ public final class ExprTycker extends PropTycker {
         var struct = proj.tup();
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
+          var index = ix - 1;
+          var projecteeWHNF = whnf(projectee.wellTyped());
+          if (projecteeWHNF instanceof ConCall conCall) {
+            var conRef = conCall.ref().core;
+            var args = conCall.conArgs();
+            if (index < 0 || index >= args.size())
+              return fail(proj, new TupleError.ProjIxError(proj, ix, args.size()));
+            var projected = args.get(index).term();
+            var subst = conOwnerSubst(conCall);
+            ProjTerm.projSubst(projected, index, conRef.selfTele, subst);
+            var resultTy = conRef.selfTele.get(index).type().subst(subst).freezeHoles(state);
+            return new Result.Default(projected, resultTy);
+          }
           var pseudoSigma = projectee.type().freezeHoles(state);
           if (!(pseudoSigma instanceof SigmaTerm(var telescope)))
             return fail(struct, pseudoSigma, BadTypeError.sigmaAcc(state, struct, ix, pseudoSigma));
-          var index = ix - 1;
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
-          var subst = ProjTerm.projSubst(projectee.wellTyped(), index, telescope);
+          var subst = ProjTerm.projSubst(projecteeWHNF, index, telescope, new Subst());
           var resultTy = type.subst(subst).freezeHoles(state);
           if (inProp(pseudoSigma) && !inProp(resultTy))
-            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projectee.wellTyped(), pseudoSigma, resultTy, state));
-          return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), resultTy);
+            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projecteeWHNF, pseudoSigma, resultTy, state));
+          return new Result.Default(ProjTerm.proj(projecteeWHNF, ix), resultTy);
         }, sp -> {
           var fieldName = sp.name();
           if (!(projectee.type() instanceof StructCall structCall))

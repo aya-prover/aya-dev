@@ -111,7 +111,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         if (!(sigmaRaw instanceof SigmaTerm sigma)) yield null;
         var index = proj.ix() - 1;
         var telescope = sigma.params();
-        yield telescope.get(index).type().subst(ProjTerm.projSubst(proj.of(), index, telescope));
+        yield telescope.get(index).type().subst(ProjTerm.projSubst(proj.of(), index, telescope, new Subst()));
       }
       case MetaPatTerm metaPat -> metaPat.ref().type();
       case MetaLitTerm lit -> lit.type();

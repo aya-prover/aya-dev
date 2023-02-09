@@ -5,6 +5,7 @@ open import Paths
 open data Vec (A : Type) (n : Nat) : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
+  tighter =
 
 variable A B : Type
 variable n m o : Nat

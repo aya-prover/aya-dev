@@ -10,7 +10,6 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
@@ -26,7 +25,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.LevelError;
-import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -175,7 +173,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       case FnCall lhs when preRhs instanceof FnCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case ConCall lhs when preRhs instanceof ConCall rhs ->
-        lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl, lhs.ref());
+        lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
       case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
@@ -479,7 +477,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       case ConCall lhs -> switch (preRhs) {
         case ConCall rhs -> {
           var lef = lhs.ref();
-          yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl, lef);
+          yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
         }
         case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
@@ -532,16 +530,15 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    * {@link ConCall} may reduce according to conditions, so this comparison is a lossy one.
    * If called from {@link #doCompareUntyped} then probably not so lossy.
    */
-  private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl, DefVar<CtorDef, TeleDecl.DataCtor> lef) {
+  private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl) {
     var retType = synthesizer().press(lhs);
-    var dataRef = lef.core.dataRef;
+    var dataRef = lhs.ref().core.dataRef;
     if (Def.defResult(dataRef).isProp()) return retType;
     var dataAlgs = lhs.head().dataArgs();
     if (!visitArgs(dataAlgs, rhs.head().dataArgs(), lr, rl,
       Term.Param.subst(Def.defTele(dataRef), lhs.ulift()))) return null;
-    var ownerSubst = PatternTycker.mischa(lhs.head().underlyingDataCall(), lef.core, state).get();
     if (visitArgs(lhs.conArgs(), rhs.conArgs(), lr, rl,
-      Term.Param.subst(lef.core.selfTele, ownerSubst, lhs.ulift())))
+      Term.Param.subst(lhs.ref().core.selfTele, conOwnerSubst(lhs), lhs.ulift())))
       return retType;
     return null;
   }
