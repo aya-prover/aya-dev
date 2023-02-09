@@ -148,7 +148,8 @@ public final class ExprTycker extends PropTycker {
         var projectee = instImplicits(synthesize(struct), struct.sourcePos());
         yield proj.ix().fold(ix -> {
           var index = ix - 1;
-          if (projectee.wellTyped() instanceof ConCall conCall) {
+          var projecteeWHNF = whnf(projectee.wellTyped());
+          if (projecteeWHNF instanceof ConCall conCall) {
             var conRef = conCall.ref().core;
             var args = conCall.conArgs();
             if (index < 0 || index >= args.size())
@@ -165,11 +166,11 @@ public final class ExprTycker extends PropTycker {
           if (index < 0 || index >= telescope.size())
             return fail(proj, new TupleError.ProjIxError(proj, ix, telescope.size()));
           var type = telescope.get(index).type();
-          var subst = ProjTerm.projSubst(projectee.wellTyped(), index, telescope, new Subst());
+          var subst = ProjTerm.projSubst(projecteeWHNF, index, telescope, new Subst());
           var resultTy = type.subst(subst).freezeHoles(state);
           if (inProp(pseudoSigma) && !inProp(resultTy))
-            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projectee.wellTyped(), pseudoSigma, resultTy, state));
-          return new Result.Default(ProjTerm.proj(projectee.wellTyped(), ix), resultTy);
+            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projecteeWHNF, pseudoSigma, resultTy, state));
+          return new Result.Default(ProjTerm.proj(projecteeWHNF, ix), resultTy);
         }, sp -> {
           var fieldName = sp.name();
           if (!(projectee.type() instanceof StructCall structCall))
