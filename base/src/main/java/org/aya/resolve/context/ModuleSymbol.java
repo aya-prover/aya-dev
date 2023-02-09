@@ -65,9 +65,12 @@ public record ModuleSymbol<T>(
     var candidates = resolveUnqualified(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
-    if (candidates.size() != 1) return Result.err(Error.Ambiguous);
 
-    return Result.ok(candidates.iterator().next().getValue());
+    // TODO: I think this is a kind of evil that we put this here
+    var uniqueCandidates = candidates.valuesView().distinct();
+    if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
+
+    return Result.ok(uniqueCandidates.iterator().next());
   }
 
   /**
@@ -89,27 +92,6 @@ public record ModuleSymbol<T>(
 
   public boolean contains(@NotNull ModulePath component, @NotNull String unqualified) {
     return resolveUnqualified(unqualified).containsKey(component);
-  }
-
-  public @Nullable Error containsDefinitely(@NotNull String unqualified) {
-    return switch (resolveUnqualified(unqualified).size()) {
-      case 0 -> Error.NotFound;
-      case 1 -> null;
-      default -> Error.Ambiguous;
-    };
-  }
-
-  /**
-   * @return null if contains
-   */
-  public @Nullable Error containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
-    return switch (component) {
-      case ModulePath.Qualified qualified -> {
-        if (contains(qualified, unqualified)) yield null;
-        yield Error.NotFound;
-      }
-      case ModulePath.This aThis -> containsDefinitely(unqualified);
-    };
   }
 
   public enum Error {
@@ -139,9 +121,11 @@ public record ModuleSymbol<T>(
     var candidates = resolveUnqualified(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
-    if (candidates.size() != 1) return Result.err(Error.Ambiguous);
 
-    var result = candidates.iterator().next().getValue();
+    var uniqueCandidates = candidates.valuesView().distinct();
+    if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
+
+    var result = uniqueCandidates.iterator().next();
     candidates.clear();
 
     return Result.ok(result);

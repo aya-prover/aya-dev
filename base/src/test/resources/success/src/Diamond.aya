@@ -5,8 +5,9 @@ import Nonsense::Right as Right
 open Left
 open Right
 
-// The module 'Unit' is merged, so we can use (as a module) it directly
-// TODO: But, the symbol 'Unit' is ambiguous, even though those two candidates are the same one.
-def unit : Nonsense::Top::Unit => Unit::unit
+// The module 'Unit' is merged, so we can use (as a module) it directly.
+// ~~But, the symbol 'Unit' is ambiguous, even though those two candidates are the same one.~~
+// So does the symbol 'Unit'!
+def unit : Unit => Unit::unit
 def left-rigt-unit : Left::Nonsense::Top::Unit => Right::Nonsense::Top::Unit::unit
 def left-right-Unit : Left::Unit ↑ = Right::Unit => ↑ idp

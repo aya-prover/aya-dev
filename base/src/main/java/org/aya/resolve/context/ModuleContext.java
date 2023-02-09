@@ -123,7 +123,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var modules = modules();
     var exists = modules.getOrNull(modName);
     if (exists != null) {
-      // TODO: a little dirty, we may need a ModuleVar
       if (exists != moduleExport) {
         reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
       } else {
