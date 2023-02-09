@@ -36,7 +36,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
-import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
@@ -155,7 +154,7 @@ public final class ExprTycker extends PropTycker {
             if (index < 0 || index >= args.size())
               return fail(proj, new TupleError.ProjIxError(proj, ix, args.size()));
             var projected = args.get(index).term();
-            var subst = PatternTycker.mischa(conCall.head().underlyingDataCall(), conRef, state).get();
+            var subst = conOwnerSubst(conCall);
             ProjTerm.projSubst(projected, index, conRef.selfTele, subst);
             var resultTy = conRef.selfTele.get(index).type().subst(subst).freezeHoles(state);
             return new Result.Default(projected, resultTy);
