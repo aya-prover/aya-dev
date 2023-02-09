@@ -15,10 +15,7 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.FieldDef;
-import org.aya.core.def.PrimDef;
+import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
@@ -102,36 +99,39 @@ public final class ExprTycker extends PropTycker {
         if (!(struct instanceof ClassCall classCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, neu, struct));
         var structRef = classCall.ref();
-        var subst = new Subst(Def.defTele(structRef).map(Term.Param::ref), classCall.args().map(Arg::term));
+        var subst = new Subst();
 
-        var fields = MutableList.<Tuple2<DefVar<FieldDef, TeleDecl.ClassMember>, Term>>create();
+        var fields = MutableList.<Tuple2<DefVar<ClassDef.Member, TeleDecl.ClassMember>, Term>>create();
         var missing = MutableList.<AnyVar>create();
         var conFields = MutableMap.from(neu.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
-        for (var defField : structRef.core.fields) {
+        for (var defField : structRef.core.members) {
           var fieldRef = defField.ref();
           var conFieldOpt = conFields.remove(fieldRef.name());
           if (conFieldOpt.isEmpty()) {
-            if (defField.body.isEmpty())
-              missing.append(fieldRef); // no value available, skip and prepare error reporting
-            else {
-              // use default value from defField
-              var field = defField.body.get().subst(subst, classCall.ulift());
-              fields.append(Tuple.of(fieldRef, field));
-              subst.add(fieldRef, field);
-            }
+            // if (defField.body.isEmpty())
+            missing.append(fieldRef); // no value available, skip and prepare error reporting
+            // else {
+            //   // use default value from defField
+            //   var field = defField.body.get().subst(subst, classCall.ulift());
+            //   fields.append(Tuple.of(fieldRef, field));
+            //   subst.add(fieldRef, field);
+            // }
             continue;
           }
           var conField = conFieldOpt.get();
           conField.resolvedField().set(fieldRef);
           var type = Def.defType(fieldRef).subst(subst, classCall.ulift());
-          var telescope = Term.Param.subst(fieldRef.core.selfTele, subst, classCall.ulift());
+          var telescope = Term.Param.subst(fieldRef.core.telescope, subst, classCall.ulift());
           var bindings = conField.bindings();
           if (telescope.sizeLessThan(bindings.size())) {
             // TODO: Maybe it's better for field to have a SourcePos?
             yield fail(neu, classCall, new FieldError.ArgMismatch(neu.sourcePos(), defField, bindings.size()));
           }
-          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) -> new Expr.Lambda(conField.body().sourcePos(), new Expr.Param(pair.component1().sourcePos(), pair.component1().data(), pair.component2().explicit()), lamExpr));
+          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) ->
+            new Expr.Lambda(conField.body().sourcePos(),
+              new Expr.Param(pair.component1().sourcePos(),
+                pair.component1().data(), pair.component2().explicit()), lamExpr));
           var field = inherit(fieldExpr, type).wellTyped();
           fields.append(Tuple.of(fieldRef, field));
           subst.add(fieldRef, field);
