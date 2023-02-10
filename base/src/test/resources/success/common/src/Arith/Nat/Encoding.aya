@@ -1,0 +1,16 @@
+def Natλ => Pi (P : Prop) (P -> P) P -> P
+
+def zero : Natλ => \P s z => z
+def suc (x : Natλ) : Natλ => \P s z => s (x P s z)
+
+def add (x : Natλ) (y : Natλ) : Natλ => x Natλ suc y
+def mul (x : Natλ) (y : Natλ) : Natλ => x Natλ (add y) zero
+
+def three => suc (suc (suc zero))
+
+// Has to be in Prop, otherwise cannot fit in Natλ motive
+open data Nat : Prop
+| zero'
+| suc' Nat
+
+def toNat : Natλ -> Nat => \x => x Nat suc' 0
