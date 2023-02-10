@@ -9,8 +9,8 @@ def mul (x : Natλ) (y : Natλ) : Natλ => x Natλ (add y) zero
 def three => suc (suc (suc zero))
 
 // Has to be in Prop, otherwise cannot fit in Natλ motive
-open data Nat : Prop
+example open data Nat : Prop
 | zero'
 | suc' Nat
 
-def toNat : Natλ -> Nat => \x => x Nat suc' 0
+example def toNat : Natλ -> Nat => \x => x Nat suc' zero'
