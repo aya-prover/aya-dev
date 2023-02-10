@@ -33,7 +33,7 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
   }
 
   @Override
-  public boolean exists(@NotNull ImmutableSeq<@NotNull String> path) {
-    return cache.containsKey(QualifiedID.join(path)) || loader.exists(path);
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+    return cache.containsKey(QualifiedID.join(path)) || loader.existsFileLevelModule(path);
   }
 }

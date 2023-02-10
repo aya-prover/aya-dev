@@ -25,7 +25,7 @@ public record ModuleListLoader(
   }
 
   @Override
-  public boolean exists(@NotNull ImmutableSeq<@NotNull String> path) {
-    return loaders.anyMatch(loader -> loader.exists(path));
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+    return loaders.anyMatch(loader -> loader.existsFileLevelModule(path));
   }
 }

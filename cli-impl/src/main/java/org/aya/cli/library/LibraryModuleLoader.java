@@ -83,7 +83,7 @@ record LibraryModuleLoader(
   }
 
   @Override
-  public boolean exists(@NotNull ImmutableSeq<@NotNull String> path) {
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
     return owner.findModule(path) != null;
   }
 

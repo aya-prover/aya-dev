@@ -41,7 +41,7 @@ public record FileModuleLoader(
   }
 
   @Override
-  public boolean exists(@NotNull ImmutableSeq<@NotNull String> path) {
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
     return sourcePath.toFile().exists();
   }

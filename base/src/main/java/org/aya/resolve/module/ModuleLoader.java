@@ -80,5 +80,5 @@ public interface ModuleLoader {
   /**
    * @return if there is a module with path {@param path}, which can be untycked
    */
-  boolean exists(@NotNull ImmutableSeq<@NotNull String> path);
+  boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path);
 }
