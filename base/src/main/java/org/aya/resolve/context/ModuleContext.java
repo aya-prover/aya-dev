@@ -189,25 +189,35 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     assert imported || modName == ModulePath.This : "Sanity check";
 
     var symbols = symbols();
-    if (!symbols.contains(name)) {
+    var candidates = symbols.resolveUnqualified(name);
+    if (candidates.isEmpty()) {
       if (getUnqualifiedMaybe(name, sourcePos) != null
         && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
-    } else if (symbols.contains(modName, name)) {
+    } else if (candidates.containsKey(modName)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
-      reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+      var uniqueCandidates = candidates.valuesView().distinct();
+      if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
+        reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
 
-      var candidates = symbols.resolveUnqualified(name);
-      if (candidates.containsKey(ModulePath.This)) {
-        assert candidates.size() == 1;
-        // ignore importing
-        return;
-      } else if (modName == ModulePath.This) {
-        // shadow
-        candidates.clear();
+        if (candidates.containsKey(ModulePath.This)) {
+          // H : modName instance ModulePath.Qualified
+          // H0 : ref !in uniqueCandidates
+          assert candidates.size() == 1;
+          // ignore importing
+          return;
+        } else if (modName == ModulePath.This) {
+          // H : candidates.keys are all Qualified
+          // shadow
+          candidates.clear();
+        }
+      } else {
+        // H : uniqueCandidates.size == 1 && uniqueCandidates.iterator().next() == ref
+        assert modName != ModulePath.This : "Sanity check";     // already reported
+        assert candidates.keysView().allMatch(x -> x instanceof ModulePath.Qualified);
       }
     }
 
