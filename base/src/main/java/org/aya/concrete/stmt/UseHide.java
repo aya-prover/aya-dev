@@ -41,10 +41,6 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
     @NotNull Assoc asAssoc,
     @NotNull BindBlock asBind
   ) implements SourceNode {
-    public Name(@NotNull WithPos<@NotNull String> simple) {
-      this(simple.sourcePos(), new QualifiedID(simple.sourcePos(), simple.data()), Option.none(), Assoc.Invalid, BindBlock.EMPTY);
-    }
-
     public Name(@NotNull QualifiedID qname) {
       this(qname.sourcePos(), qname, Option.none(), Assoc.Invalid, BindBlock.EMPTY);
     }
