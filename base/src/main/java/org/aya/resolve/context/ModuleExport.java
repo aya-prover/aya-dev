@@ -164,15 +164,7 @@ public record ModuleExport(
     return exists.isEmpty();
   }
 
-  public void putAll(@NotNull ModuleExport other) {
-    symbols.table().putAll(other.symbols.table());
-    modules.putAll(other.modules);
-  }
-
-  public void clear() {
-    symbols.table().clear();
-    modules.clear();
-  }
+  /// region Helper Methods for Mapping/Filtering
 
   private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModulePath component, @NotNull String name) {
     var symbol = symbols.getMaybe(component, name);
@@ -206,6 +198,8 @@ public record ModuleExport(
       if (module != null) moduleConsumer.accept(module);
     }
   }
+
+  /// endregion
 
   /**
    * @param result         the new module export if success, the old module export if failed.

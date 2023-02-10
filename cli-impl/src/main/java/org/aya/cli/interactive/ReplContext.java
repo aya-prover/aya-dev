@@ -75,13 +75,15 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     RepoLike.super.merge();
     if (bors == null) return;
     symbols.table().putAll(bors.symbols.table());
-    exports.putAll(bors.exports);
+    exports.symbols().table().putAll(bors.exports.symbols().table());
+    exports.modules().putAll(bors.exports.modules());
     modules.putAll(bors.modules);
   }
 
   @Contract(mutates = "this") public void clear() {
     modules.clear();
-    exports.clear();
+    exports.symbols().table().clear();
+    exports.modules().clear();
     symbols.table().clear();
   }
 }
