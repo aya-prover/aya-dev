@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
@@ -76,4 +76,9 @@ public interface ModuleLoader {
   default @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path) {
     return load(path, this);
   }
+
+  /**
+   * @return if there is a module with path {@param path}, which can be untycked
+   */
+  boolean exists(@NotNull ImmutableSeq<@NotNull String> path);
 }

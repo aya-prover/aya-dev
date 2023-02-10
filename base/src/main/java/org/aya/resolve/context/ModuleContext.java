@@ -25,17 +25,17 @@ import java.nio.file.Path;
  */
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
   @Override @NotNull Context parent();
+
   @Override default @NotNull Reporter reporter() {
     return parent().reporter();
   }
+
   @Override default @NotNull Path underlyingFile() {
     return parent().underlyingFile();
   }
 
   /**
-   * All available symbols in this context<br>
-   * {@code Unqualified -> (Module Name -> TopLevel)}<br>
-   * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
+   * All available symbols in this context
    */
   @NotNull ModuleSymbol<AnyVar> symbols();
 
@@ -166,7 +166,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
       // TODO: {componentName} can be invisible, so {fullComponentName} is probably incorrect
       var fullComponentName = modName.concat(componentName);
-      addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
+      importSymbol(true, ref, fullComponentName, name, accessibility, sourcePos);
     }));
 
     // import the modules that {renamed} exported
@@ -176,7 +176,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   /**
    * Adding a new symbol to this module.
    */
-  default void addGlobal(
+  default void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModulePath modName,
@@ -233,6 +233,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    addGlobal(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
+    importSymbol(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
   }
 }

@@ -37,6 +37,13 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     switch (stmt) {
       case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
+        var wholeModeName = context.moduleName().appended(mod.name());
+        // Is there a module with path {context.moduleName}::{mod.name} ?
+        if (loader.exists(wholeModeName)) {
+          // 🥲
+          context.reportAndThrow(new NameProblem.DuplicateModNameError(ModulePath.qualified(wholeModeName), mod.sourcePos()));
+        }
+
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
         context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());

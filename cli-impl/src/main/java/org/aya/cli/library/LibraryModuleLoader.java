@@ -82,6 +82,11 @@ record LibraryModuleLoader(
     });
   }
 
+  @Override
+  public boolean exists(@NotNull ImmutableSeq<@NotNull String> path) {
+    return owner.findModule(path) != null;
+  }
+
   private @Nullable ResolveInfo loadCompiledCore(
     @NotNull ImmutableSeq<String> mod, @Nullable Path sourcePath,
     @Nullable Path corePath, @NotNull ModuleLoader recurseLoader

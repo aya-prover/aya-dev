@@ -23,7 +23,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     super(parent, name);
   }
 
-  @Override public void addGlobal(
+  @Override public void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModulePath modName,
