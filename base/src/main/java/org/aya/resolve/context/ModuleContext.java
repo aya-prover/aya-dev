@@ -2,15 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.Map;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
-import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.ref.GenerateKind;
+import org.aya.ref.LocalVar;
 import org.aya.resolve.error.NameProblem;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -25,18 +25,17 @@ import java.nio.file.Path;
  */
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
   @Override @NotNull Context parent();
+
   @Override default @NotNull Reporter reporter() {
     return parent().reporter();
   }
+
   @Override default @NotNull Path underlyingFile() {
     return parent().underlyingFile();
   }
 
-
   /**
-   * All available symbols in this context<br>
-   * {@code Unqualified -> (Module Name -> TopLevel)}<br>
-   * It says an {@link AnyVar} can be referred by {@code {Module Name}::{Unqualified}}
+   * All available symbols in this context
    */
   @NotNull ModuleSymbol<AnyVar> symbols();
 
@@ -51,9 +50,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
 
   /**
-   * Modules that are exported by this module.
+   * Things (symbol or module) that are exported by this module.
    */
-  @NotNull Map<ModulePath, ModuleExport> exports();
+  @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
     return modules().getOrNull(modName);
@@ -102,7 +101,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
-    module.exports().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
+    var export = module.exports();
+    importModule(modName, export, accessibility, sourcePos);
+    export.modules().forEach((name, mod) -> importModule(modName.concat(name), mod, accessibility, sourcePos));
   }
 
   /**
@@ -119,12 +120,17 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull SourcePos sourcePos
   ) {
     var modules = modules();
-    if (modules.containsKey(modName)) {
-      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
-    }
-    if (getModuleMaybe(modName) != null) {
+    var exists = modules.getOrNull(modName);
+    if (exists != null) {
+      if (exists != moduleExport) {
+        reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      } else {
+        return;
+      }
+    } else if (getModuleMaybe(modName) != null) {
       reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
+
     modules.set(modName, moduleExport);
   }
 
@@ -153,20 +159,24 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var mapRes = filtered.map(rename);
     if (mapRes.anyError()) reportAllAndThrow(mapRes.problems(modName));
 
+    // report all warnings
+    reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
+
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, candidates) -> candidates.forEach((componentName, ref) -> {
+      // TODO: {componentName} can be invisible, so {fullComponentName} is probably incorrect
       var fullComponentName = modName.concat(componentName);
-      addGlobal(true, ref, fullComponentName, name, accessibility, sourcePos);
+      importSymbol(true, ref, fullComponentName, name, accessibility, sourcePos);
     }));
 
-    // report all warning
-    reportAll(filterRes.problems(modName).concat(mapRes.problems(modName)));
+    // import the modules that {renamed} exported
+    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
   }
 
   /**
    * Adding a new symbol to this module.
    */
-  default void addGlobal(
+  default void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModulePath modName,
@@ -174,20 +184,43 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
-    var symbols = symbols();
-    if (!symbols.contains(name)) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null && !name.startsWith(Constants.ANONYMOUS_PREFIX)) {
-        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
-      }
-    } else if (symbols.containsDefinitely(modName, name)) {
-      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-    } else {
-      reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
-    }
-
     // `imported == false` implies the `ref` is defined in this module,
     // so `modName` should always be `ModulePath.This`.
     assert imported || modName == ModulePath.This : "Sanity check";
+
+    var symbols = symbols();
+    var candidates = symbols.resolveUnqualified(name);
+    if (candidates.isEmpty()) {
+      if (getUnqualifiedMaybe(name, sourcePos) != null
+        && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {
+        // {name} isn't used in this scope, but used in outer scope, shadow!
+        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
+      }
+    } else if (candidates.containsKey(modName)) {
+      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+    } else {
+      var uniqueCandidates = candidates.valuesView().distinct();
+      if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
+        reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+
+        if (candidates.containsKey(ModulePath.This)) {
+          // H : modName instance ModulePath.Qualified
+          // H0 : ref !in uniqueCandidates
+          assert candidates.size() == 1;
+          // ignore importing
+          return;
+        } else if (modName == ModulePath.This) {
+          // H : candidates.keys are all Qualified
+          // shadow
+          candidates.clear();
+        }
+      } else {
+        // H : uniqueCandidates.size == 1 && uniqueCandidates.iterator().next() == ref
+        assert modName != ModulePath.This : "Sanity check";     // already reported
+        assert candidates.keysView().allMatch(x -> x instanceof ModulePath.Qualified);
+      }
+    }
+
     var result = symbols.add(modName, name, ref);
     assert result.isEmpty() : "Sanity check"; // should already be reported as an error
 
@@ -210,6 +243,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    addGlobal(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
+    importSymbol(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
   }
 }

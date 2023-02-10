@@ -1,4 +1,4 @@
-open import Nat
+open import NatCore
 
 open data Vec (A : Type) (n : Nat) : Type
 | A, 0 => vnil

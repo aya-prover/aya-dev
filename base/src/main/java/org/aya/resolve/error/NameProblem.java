@@ -4,6 +4,7 @@ package org.aya.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -85,6 +86,21 @@ public interface NameProblem extends Problem {
         Doc.english("The module name"),
         Doc.code(Doc.plain(modName.toString())),
         Doc.english("is already defined elsewhere")
+      );
+    }
+  }
+
+  record ClashModNameError(
+    @NotNull ImmutableSeq<String> modulePath,
+    @Override @NotNull SourcePos sourcePos
+  ) implements NameProblem.Error {
+    @Override
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(
+        Doc.english("The inner module"),
+        Doc.code(QualifiedID.join(modulePath)),
+        Doc.english("clashes with a file level module"),
+        Doc.code(modulePath.joinToString("/") + ".aya")
       );
     }
   }

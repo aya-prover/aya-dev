@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
@@ -30,5 +30,10 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
   load(@NotNull ImmutableSeq<String> path, @NotNull ModuleLoader recurseLoader) {
     var qualified = QualifiedID.join(path);
     return cache.getOrPut(qualified, () -> loader.load(path, recurseLoader));
+  }
+
+  @Override
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+    return cache.containsKey(QualifiedID.join(path)) || loader.existsFileLevelModule(path);
   }
 }

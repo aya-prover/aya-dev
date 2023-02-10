@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
@@ -24,5 +24,10 @@ public final class EmptyModuleLoader implements ModuleLoader {
   @Override public @Nullable ResolveInfo
   load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
     return null;
+  }
+
+  @Override
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+    return false;
   }
 }

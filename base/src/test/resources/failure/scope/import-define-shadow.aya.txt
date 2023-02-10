@@ -1,0 +1,11 @@
+In file $FILE:11:4 ->
+
+  9  │   open A
+  10 │   
+  11 │   def foo : Bool => false
+     │       ╰─╯
+
+Warning: The name `foo` introduces ambiguity and can only be accessed through a 
+         qualified name
+
+That looks right!

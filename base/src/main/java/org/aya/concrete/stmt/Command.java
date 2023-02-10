@@ -20,11 +20,9 @@ public sealed interface Command extends Stmt {
   record Import(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ModulePath.Qualified path,
-    @Nullable String asName
+    @Nullable String asName,
+    @NotNull Accessibility accessibility
   ) implements Command {
-    @Override public @NotNull Accessibility accessibility() {
-      return Accessibility.Private;
-    }
   }
 
   /**

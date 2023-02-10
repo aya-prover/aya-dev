@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
@@ -38,6 +38,12 @@ public record FileModuleLoader(
     } catch (IOException e) {
       return null;
     }
+  }
+
+  @Override
+  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
+    return sourcePath.toFile().exists();
   }
 
   public static void handleInternalError(@NotNull InternalException e) {
