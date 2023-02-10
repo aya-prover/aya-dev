@@ -65,8 +65,8 @@ public class LspTest {
       compile((a, e) -> {}),
       mutate("HelloWorld"),
       compile((a, e) -> assertRemake(a, e, "HelloWorld")),
-      mutate("Nat"),
-      compile((a, e) -> assertRemake(a, e, "Nat", "Vec", "HelloWorld")),
+      mutate("NatCore"),
+      compile((a, e) -> assertRemake(a, e, "NatCore", "Vec", "HelloWorld")),
       mutate("PathPrims"),
       compile((a, e) -> assertRemake(a, e, "PathPrims", "Path", "HelloWorld"))
     );

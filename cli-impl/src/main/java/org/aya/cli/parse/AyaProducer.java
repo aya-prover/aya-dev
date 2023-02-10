@@ -118,12 +118,14 @@ public record AyaProducer(
   }
 
   public @NotNull Command.Import importCmd(@NotNull GenericNode<?> node) {
+    var acc = node.peekChild(KW_PUBLIC);
     var asId = node.peekChild(WEAK_ID);
     var importMod = node.child(QUALIFIED_ID);
     return new Command.Import(
       sourcePosOf(importMod),
       modulePath(importMod),
-      asId == null ? null : weakId(asId).data()
+      asId == null ? null : weakId(asId).data(),
+      acc == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public
     );
   }
 
@@ -145,14 +147,14 @@ public record AyaProducer(
       openImport
     );
     return openImport
-      ? ImmutableSeq.of(new Command.Import(namePos, modName, null), open)
+      ? ImmutableSeq.of(new Command.Import(namePos, modName, null, accessibility), open)
       : ImmutableSeq.of(open);
   }
 
   public UseHide hideList(SeqView<GenericNode<?>> hideLists, UseHide.Strategy strategy) {
     return new UseHide(hideLists
       .mapNotNull(h -> h.peekChild(COMMA_SEP))
-      .flatMap(node -> node.childrenOfType(WEAK_ID).map(this::weakId))
+      .flatMap(node -> node.childrenOfType(QUALIFIED_ID).map(this::qualifiedId))
       .map(UseHide.Name::new)
       .toImmutableSeq(),
       strategy);
@@ -169,14 +171,13 @@ public record AyaProducer(
   public SeqView<UseHide.Name> useIdsComma(@NotNull GenericNode<?> node) {
     return node.childrenOfType(USE_ID).map(id -> {
       var wholePos = sourcePosOf(id);
-      var name = weakId(id.child(WEAK_ID));     // TODO: qualifiedId
+      var name = qualifiedId(id.child(QUALIFIED_ID));
       var useAs = id.peekChild(USE_AS);
       if (useAs == null) return new UseHide.Name(name);
       var asId = weakId(useAs.child(WEAK_ID)).data();
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
-      var qname = new QualifiedID(name.sourcePos(), name.data());
-      return new UseHide.Name(wholePos, qname, asId,
+      return new UseHide.Name(wholePos, name, Option.some(asId),
         asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });

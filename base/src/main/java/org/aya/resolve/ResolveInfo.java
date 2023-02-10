@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.stmt.BindBlock;
@@ -45,7 +46,7 @@ public record ResolveInfo(
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
-  @NotNull MutableMap<ModulePath, ResolveInfo> imports,
+  @NotNull MutableMap<ModulePath, Tuple2<ResolveInfo, Boolean>> imports,
   @NotNull MutableMap<ModulePath, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {

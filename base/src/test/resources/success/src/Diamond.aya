@@ -1,0 +1,13 @@
+open import Paths using (=, idp)
+import Nonsense::Left as Left
+import Nonsense::Right as Right
+
+open Left
+open Right
+
+// The module 'Unit' is merged, so we can use (as a module) it directly.
+// ~~But, the symbol 'Unit' is ambiguous, even though those two candidates are the same one.~~
+// So does the symbol 'Unit'!
+def unit : Unit => Unit::unit
+def left-rigt-unit : Left::Nonsense::Top::Unit => Right::Nonsense::Top::Unit::unit
+def left-right-Unit : Left::Unit ↑ = Right::Unit => ↑ idp

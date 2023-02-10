@@ -10,6 +10,7 @@ import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
@@ -64,9 +65,12 @@ public record ModuleSymbol<T>(
     var candidates = resolveUnqualified(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
-    if (candidates.size() != 1) return Result.err(Error.Ambiguous);
 
-    return Result.ok(candidates.iterator().next().getValue());
+    // TODO: I think this is a kind of evil that we put this here
+    var uniqueCandidates = candidates.valuesView().distinct();
+    if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
+
+    return Result.ok(uniqueCandidates.iterator().next());
   }
 
   /**
@@ -86,7 +90,7 @@ public record ModuleSymbol<T>(
     return resolveUnqualified(unqualified).isNotEmpty();
   }
 
-  public boolean containsDefinitely(@NotNull ModulePath component, @NotNull String unqualified) {
+  public boolean contains(@NotNull ModulePath component, @NotNull String unqualified) {
     return resolveUnqualified(unqualified).containsKey(component);
   }
 
@@ -117,9 +121,11 @@ public record ModuleSymbol<T>(
     var candidates = resolveUnqualified(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
-    if (candidates.size() != 1) return Result.err(Error.Ambiguous);
 
-    var result = candidates.iterator().next().getValue();
+    var uniqueCandidates = candidates.valuesView().distinct();
+    if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
+
+    var result = uniqueCandidates.iterator().next();
     candidates.clear();
 
     return Result.ok(result);

@@ -1,0 +1,26 @@
+open import Paths
+
+module Foo {
+  open data Unit | unit
+}
+
+def yes0 : Foo::Unit => Foo::unit
+def yes1 : Foo::Unit => Foo::Unit::unit
+
+open Foo
+
+def yes2 : Unit => Foo::unit
+def yes3 : Unit => Unit::unit
+def yes4 : Unit => unit
+
+module Bar {
+  module foo {
+    def what : Unit => unit
+  }
+
+  def foo : Unit => unit
+}
+
+open Bar using (foo)
+
+def yes5 : foo = foo::what => idp

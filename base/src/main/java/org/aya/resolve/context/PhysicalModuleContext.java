@@ -17,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull ModuleExport thisExport = new ModuleExport();
+  public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
   public final @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules = MutableHashMap.create();
-  public final @NotNull MutableMap<ModulePath, ModuleExport> exports = MutableHashMap.of(ModulePath.This, thisExport);
   private final @NotNull ImmutableSeq<String> moduleName;
 
   @Override public @NotNull ImmutableSeq<String> moduleName() {
@@ -42,12 +41,12 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   ) {
     ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
-      this.exports.set(modName, modExport);
+      exports.export(modName, modExport);
     }
   }
 
   @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
-    return thisExport.export(modName, name, ref);
+    return exports.export(modName, name, ref);
   }
 
   public @NotNull NoExportContext exampleContext() {
@@ -67,7 +66,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     return modules;
   }
 
-  @Override public @NotNull MutableMap<ModulePath, ModuleExport> exports() {
+  @Override public @NotNull ModuleExport exports() {
     return exports;
   }
 }

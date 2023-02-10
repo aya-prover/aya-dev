@@ -39,13 +39,16 @@ import java.io.Serializable;
  * @author kiva
  */
 public record CompiledAya(
-  @NotNull ImmutableSeq<ImmutableSeq<String>> imports,
+  @NotNull ImmutableSeq<SerImport> imports,
   @NotNull SerExport exports,
   @NotNull ImmutableMap<ImmutableSeq<String>, SerUseHide> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps,
   @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
+  record SerImport(boolean isPublic, @NotNull ImmutableSeq<String> moduleName) implements Serializable {
+  }
+
   /**
    * @see org.aya.concrete.stmt.UseHide
    */
@@ -97,10 +100,10 @@ public record CompiledAya(
     var serialization = new Serialization(state, resolveInfo, MutableList.create(), MutableList.create());
     serialization.ser(defs);
 
-    var exports = ctx.exports().get(ModulePath.This).symbols().view().map((k, vs) ->
+    var exports = ctx.exports().symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::ids))));
 
-    var imports = resolveInfo.imports().valuesView().map(i -> i.thisModule().moduleName()).toImmutableSeq();
+    var imports = resolveInfo.imports().valuesView().map(i -> new SerImport(i.component2(), i.component1().thisModule().moduleName())).toImmutableSeq();
     return new CompiledAya(imports,
       new SerExport(ImmutableMap.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
@@ -179,14 +182,16 @@ public record CompiledAya(
    * like {@link StmtShallowResolver} but only resolve import
    */
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
-    for (var modName : imports) {
+    for (var anImport : imports) {
+      var modName = anImport.moduleName;
+      var isPublic = anImport.isPublic;
       var componentName = ModulePath.qualified(modName);
       var success = loader.load(modName);
       if (success == null)
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(componentName, SourcePos.SER));
-      thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), success);
+      thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), Tuple.of(success, isPublic));
       var mod = success.thisModule();
-      thisResolve.thisModule().importModule(componentName, mod, Stmt.Accessibility.Private, SourcePos.SER);
+      thisResolve.thisModule().importModule(componentName, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(componentName,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),

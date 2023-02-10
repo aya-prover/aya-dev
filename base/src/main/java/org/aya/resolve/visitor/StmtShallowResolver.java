@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.tuple.Tuple;
 import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
@@ -36,6 +37,13 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     switch (stmt) {
       case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
+        var wholeModeName = context.moduleName().appended(mod.name());
+        // Is there a file level module with path {context.moduleName}::{mod.name} ?
+        if (loader.existsFileLevelModule(wholeModeName)) {
+          // 🥲
+          context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+        }
+
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
         context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
@@ -48,9 +56,8 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
-        context.importModule(importedName, mod, Stmt.Accessibility.Private, cmd.sourcePos());
-        // TODO: ModulePath
-        resolveInfo.imports().put(importedName, success);
+        context.importModule(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+        resolveInfo.imports().put(importedName, Tuple.of(success, cmd.accessibility() == Stmt.Accessibility.Public));
       }
       case Command.Open cmd -> {
         var mod = cmd.path();
@@ -68,7 +75,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-          resolveInfo.open(modResolveInfo, cmd.sourcePos(), acc);
+          resolveInfo.open(modResolveInfo.component1(), cmd.sourcePos(), acc);
         });
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
@@ -76,7 +83,8 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
           var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name());
           assert symbol.isOk();   // checked in openModule
           var defVar = symbol.get();
-          var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(use.asName(), use.asAssoc()));
+          var asName = use.asName().getOrDefault(use.id().name());      // TODO: probably incorrect
+          var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) bind.context().set(ctx);
           resolveInfo.renameOp(defVar, renamedOpDecl, bind, true);
@@ -155,7 +163,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     var module = decl.ref().name();
     context.importModule(
       ModulePath.This.resolve(module),
-      innerCtx.thisExport,
+      innerCtx.exports,
       decl.accessibility(),
       decl.sourcePos()
     );

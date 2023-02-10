@@ -23,7 +23,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     super(parent, name);
   }
 
-  @Override public void addGlobal(
+  @Override public void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModulePath modName,
@@ -33,7 +33,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   ) {
     // REPL always overwrites symbols.
     symbols().add(modName, name, ref);
-    // REPL exports nothing, because nothing can import REPL.
+    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(modName, name, defVar);
   }
 
   @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
@@ -49,7 +49,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull SourcePos sourcePos
   ) {
     modules.put(modName, mod);
-    if (accessibility == Stmt.Accessibility.Public) exports.set(modName, mod);
+    if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
   }
 
   @Override public @NotNull ReplContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
@@ -74,14 +74,16 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var bors = downstream;
     RepoLike.super.merge();
     if (bors == null) return;
-    this.symbols.table().putAll(bors.symbols.table());
-    this.exports.putAll(bors.exports);
-    this.modules.putAll(bors.modules);
+    symbols.table().putAll(bors.symbols.table());
+    exports.symbols().table().putAll(bors.exports.symbols().table());
+    exports.modules().putAll(bors.exports.modules());
+    modules.putAll(bors.modules);
   }
 
   @Contract(mutates = "this") public void clear() {
     modules.clear();
-    exports.clear();
+    exports.symbols().table().clear();
+    exports.modules().clear();
     symbols.table().clear();
   }
 }
