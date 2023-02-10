@@ -112,7 +112,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param accessibility of importing, re-export if public
    * @param modName       the name of the module
    * @param moduleExport  the module
-   * @return the module that actually imported, which can be different to {@param moduleExport}
    */
   default void importModule(
     @NotNull ModulePath.Qualified modName,
