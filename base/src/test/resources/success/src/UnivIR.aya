@@ -1,0 +1,15 @@
+open import Arith::Nat::Core
+
+open data U : Type
+| Nat'
+| infixr ×' U U
+| infixr →' U U
+  looser ×'
+
+def El U : Type
+| Nat' => Nat
+| a ×' b => Sig (El a) ** (El b)
+| a →' b => El a -> El b
+
+def ty-example : U => Nat' →' Nat' ×' (Nat' ×' Nat') ×' Nat'
+def val-example : El ty-example => λ x => (x, ((2, 3), 4))
