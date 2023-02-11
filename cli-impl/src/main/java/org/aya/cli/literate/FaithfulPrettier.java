@@ -57,8 +57,13 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       base = knifeCut.base;
 
       // If there's orphan text before the highlighted cut, add it to result as plain text.
-      if (!knifeCut.before.isEmpty())
-        docs.append(Doc.plain(knifeCut.before.toString()));
+      if (!knifeCut.before.isEmpty()) {
+        // TODO: handle whitespaces in the lexer, and use a new highlight type for them.
+        //  this workaround solution does not work for whitespace in LaTeX.
+        var lines = knifeCut.before.toString().split("\n", -1);
+        var orphan = ImmutableSeq.from(lines).map(Doc::plain);
+        docs.append(Doc.vcat(orphan));
+      }
       // Do not add to result if the highlighted cut contains nothing
       if (highlightPart != Doc.empty())
         docs.append(highlightPart);
