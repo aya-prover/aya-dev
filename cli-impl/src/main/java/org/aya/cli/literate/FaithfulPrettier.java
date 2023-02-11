@@ -52,7 +52,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       // Cut the `raw` text at `base` offset into three parts: before, current, and remaining,
       // which needs two split positions: `current.sourcePos().start` and `current.sourcePos().end`, respectively.
       var knifeCut = twoKnifeThreeParts(raw, base, current.sourcePos());
-      var highlightPart = highlightOne(knifeCut.current.toString(), current.type());
+      // move forward
       raw = knifeCut.remaining;
       base = knifeCut.base;
 
@@ -65,8 +65,9 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
         docs.append(Doc.vcat(orphan));
       }
       // Do not add to result if the highlighted cut contains nothing
-      if (highlightPart != Doc.empty())
-        docs.append(highlightPart);
+      var highlight = highlightOne(knifeCut.current.toString(), current.type());
+      if (highlight != Doc.empty())
+        docs.append(highlight);
     }
 
     if (!raw.isEmpty()) docs.append(Doc.plain(raw.toString()));
