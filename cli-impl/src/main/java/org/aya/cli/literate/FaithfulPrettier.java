@@ -45,7 +45,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     return doHighlight(StringSlice.of(raw), base, highlights);
   }
 
-  private @NotNull Doc doHighlight(@NotNull CharSequence raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  private @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
@@ -60,9 +60,11 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       if (!knifeCut.before.isEmpty()) {
         // TODO: handle whitespaces in the lexer, and use a new highlight type for them.
         //  this workaround solution does not work for whitespace in LaTeX.
-        var lines = knifeCut.before.toString().split("\n", -1);
-        var orphan = ImmutableSeq.from(lines).map(Doc::plain);
-        docs.append(Doc.vcat(orphan));
+        if (knifeCut.before.indexOf('\n') >= 0) {
+          docs.append(Doc.line());
+        } else {
+          docs.append(Doc.plain(knifeCut.before.toString()));
+        }
       }
       // Do not add to result if the highlighted cut contains nothing
       var highlight = highlightOne(knifeCut.current.toString(), current.type());
@@ -116,7 +118,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     };
   }
 
-  private static @NotNull KnifeCut twoKnifeThreeParts(@NotNull CharSequence raw, int base, @NotNull SourcePos twoKnife) {
+  private static @NotNull KnifeCut twoKnifeThreeParts(@NotNull StringSlice raw, int base, @NotNull SourcePos twoKnife) {
     var beginPart1 = twoKnife.tokenStartIndex() - base;
     var endPart1 = twoKnife.tokenEndIndex() + 1 - base;
     var part0 = raw.subSequence(0, beginPart1);
@@ -126,9 +128,9 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
   }
 
   record KnifeCut(
-    @NotNull CharSequence before,
-    @NotNull CharSequence current,
-    @NotNull CharSequence remaining,
+    @NotNull StringSlice before,
+    @NotNull StringSlice current,
+    @NotNull StringSlice remaining,
     int base
   ) {
   }
