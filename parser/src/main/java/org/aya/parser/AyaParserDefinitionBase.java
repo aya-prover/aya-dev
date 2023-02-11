@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.parser;
 
@@ -44,15 +44,18 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
   public static final @NotNull TokenSet COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT);
   public static final @NotNull TokenSet SKIP_COMMENTS = COMMENTS;
   public static final @NotNull TokenSet STRINGS = TokenSet.create(AyaPsiElementTypes.STRING);
+  /** non-text symbols that should be highlighted like keywords */
   public static final @NotNull TokenSet MARKERS = TokenSet.create(
-    AyaPsiElementTypes.COLON,
-    AyaPsiElementTypes.DEFINE_AS,
     AyaPsiElementTypes.TO,
-    AyaPsiElementTypes.BAR,
-    AyaPsiElementTypes.IMPLIES,
     AyaPsiElementTypes.LARROW,
-    AyaPsiElementTypes.SUCHTHAT
+    AyaPsiElementTypes.IMPLIES,
+    AyaPsiElementTypes.DEFINE_AS,
+    AyaPsiElementTypes.SUCHTHAT,
+    AyaPsiElementTypes.DOT,
+    AyaPsiElementTypes.BAR,
+    AyaPsiElementTypes.COLON
   );
+  /** text keywords */
   public static final @NotNull TokenSet KEYWORDS = TokenSet.create(
     AyaPsiElementTypes.KW_AS,
     AyaPsiElementTypes.KW_CODATA,
@@ -100,7 +103,21 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
     AyaPsiElementTypes.KW_USING,
     AyaPsiElementTypes.KW_VARIABLE
   );
-
-  // For SyntaxHighlight only
-  public static final @NotNull TokenSet NOT_IN_CONCRETE = TokenSet.orSet(KEYWORDS, SKIP_COMMENTS);
+  /** Anything that has a unicode variant. Keep in touch with AyaPsiLexer.flex */
+  public static final @NotNull TokenSet UNICODES = TokenSet.create(
+    AyaPsiElementTypes.KW_ULIFT,
+    AyaPsiElementTypes.KW_SIGMA,
+    AyaPsiElementTypes.KW_LAMBDA,
+    AyaPsiElementTypes.KW_PI,
+    AyaPsiElementTypes.KW_FORALL,
+    AyaPsiElementTypes.TO,
+    AyaPsiElementTypes.LARROW,
+    AyaPsiElementTypes.IMPLIES,
+    AyaPsiElementTypes.LIDIOM,
+    AyaPsiElementTypes.RIDIOM,
+    AyaPsiElementTypes.LPARTIAL,
+    AyaPsiElementTypes.RPARTIAL,
+    AyaPsiElementTypes.LPATH,
+    AyaPsiElementTypes.RPATH
+  );
 }

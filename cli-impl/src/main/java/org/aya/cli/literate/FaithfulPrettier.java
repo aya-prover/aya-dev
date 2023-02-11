@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -9,8 +9,8 @@ import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple4;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
@@ -107,19 +107,14 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case Generalized -> BasePrettier.GENERALIZED;
       case LocalVar, Unknown, Module -> null;
     };
-
-    if (style != null) {
-      return Doc.styled(style, raw);
-    } else {
-      return Doc.plain(raw);
-    }
+    return style != null ? Doc.styled(style, raw) : Doc.plain(raw);
   }
 
   private @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
-      case Keyword -> Doc.styled(BasePrettier.KEYWORD, raw);
+      case Keyword -> Doc.styled(BasePrettier.KEYWORD, Doc.symbol(raw));
       case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
     };
   }
