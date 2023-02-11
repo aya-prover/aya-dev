@@ -53,15 +53,15 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
         .mapNotNull(token -> {
           var sourcePos = AyaProducer.sourcePosOf(token, file);
           var tokenType = token.type();
-          if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
-            || AyaParserDefinitionBase.KEYWORDS.contains(tokenType)
-            || AyaParserDefinitionBase.MARKERS.contains(tokenType))
+          if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
             return new HighlightInfo.SymLit(LitKind.Keyword).toInfo(sourcePos);
           if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
             return new HighlightInfo.SymLit(LitKind.Comment).toInfo(sourcePos);
+          if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
+            || AyaParserDefinitionBase.MARKERS.contains(tokenType))
+            return new HighlightInfo.SymLit(LitKind.SpecialSymbol).toInfo(sourcePos);
           return null;
-        })
-        .toImmutableSeq();
+        }).toImmutableSeq();
       semantics = semantics.concat(addition);
     }
     return semantics;

@@ -111,6 +111,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
       case Keyword -> Doc.styled(BasePrettier.KEYWORD, Doc.symbol(raw));
       case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
+      case SpecialSymbol -> Doc.symbol(raw);
     };
   }
 
