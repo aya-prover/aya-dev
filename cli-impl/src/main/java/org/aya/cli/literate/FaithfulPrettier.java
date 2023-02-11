@@ -1,16 +1,13 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
 import com.intellij.openapi.util.text.StringUtil;
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple4;
-import org.aya.prettier.BasePrettier;
 import org.aya.generic.AyaDocile;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
@@ -18,22 +15,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record FaithfulPrettier(@NotNull PrettierOptions options) {
-  private static void checkHighlights(@NotNull SeqLike<HighlightInfo> highlights) {
-    var lastEndIndex = -1;
-
-    for (var highlight : highlights) {
-      var sp = highlight.sourcePos();
-
-      if (!(sp.tokenStartIndex() <= sp.tokenEndIndex())) {
+  private static void checkHighlights(@NotNull ImmutableSeq<HighlightInfo> highlights) {
+    highlights.foldLeft(-1, (lastEndIndex, h) -> {
+      var sp = h.sourcePos();
+      if (!(sp.tokenStartIndex() <= sp.tokenEndIndex()))
         throw new IllegalArgumentException("Invalid source pos: " + sp);
-      }
-
-      if (!(lastEndIndex < sp.tokenStartIndex())) {
+      if (!(lastEndIndex < sp.tokenStartIndex()))
         throw new IllegalArgumentException("Intersect with previous source pos: " + sp);
-      }
-
-      lastEndIndex = sp.tokenEndIndex();
-    }
+      return sp.tokenEndIndex();
+    });
   }
 
   /**
@@ -59,19 +49,25 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
-      var parts = twoKnifeThreeParts(raw, base, current.sourcePos());
-      if (!parts.component1().isEmpty()) docs.append(Doc.plain(parts.component1().toString()));
-      var highlightPart = highlightOne(parts.component2().toString(), current.type());
-      var remainPart = parts.component3();
-      var newBase = parts.component4();
+      // Cut the `raw` text at `base` offset into three parts: before, current, and remaining,
+      // which needs two split positions: `current.sourcePos().start` and `current.sourcePos().end`, respectively.
+      var knifeCut = twoKnifeThreeParts(raw, base, current.sourcePos());
+      // move forward
+      raw = knifeCut.remaining;
+      base = knifeCut.base;
 
-      if (highlightPart != Doc.empty()) {
-        // Hit if: SourcePos contains nothing
-        docs.append(highlightPart);
+      // If there's orphan text before the highlighted cut, add it to result as plain text.
+      if (!knifeCut.before.isEmpty()) {
+        // TODO: handle whitespaces in the lexer, and use a new highlight type for them.
+        //  this workaround solution does not work for whitespace in LaTeX.
+        var lines = knifeCut.before.toString().split("\n", -1);
+        var orphan = ImmutableSeq.from(lines).map(Doc::plain);
+        docs.append(Doc.vcat(orphan));
       }
-
-      raw = remainPart;
-      base = newBase;
+      // Do not add to result if the highlighted cut contains nothing
+      var highlight = highlightOne(knifeCut.current.toString(), current.type());
+      if (highlight != Doc.empty())
+        docs.append(highlight);
     }
 
     if (!raw.isEmpty()) docs.append(Doc.plain(raw.toString()));
@@ -107,31 +103,33 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case Generalized -> BasePrettier.GENERALIZED;
       case LocalVar, Unknown, Module -> null;
     };
-
-    if (style != null) {
-      return Doc.styled(style, raw);
-    } else {
-      return Doc.plain(raw);
-    }
+    return style != null ? Doc.styled(style, raw) : Doc.plain(raw);
   }
 
   private @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
       case Int -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
-      case Keyword -> Doc.styled(BasePrettier.KEYWORD, raw);
+      case Keyword -> Doc.styled(BasePrettier.KEYWORD, Doc.symbol(raw));
       case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
+      case SpecialSymbol -> Doc.symbol(raw);
     };
   }
 
-  private static @NotNull Tuple4<CharSequence, CharSequence, CharSequence, Integer>
-  twoKnifeThreeParts(@NotNull CharSequence raw, int base, @NotNull SourcePos twoKnife) {
+  private static @NotNull KnifeCut twoKnifeThreeParts(@NotNull CharSequence raw, int base, @NotNull SourcePos twoKnife) {
     var beginPart1 = twoKnife.tokenStartIndex() - base;
     var endPart1 = twoKnife.tokenEndIndex() + 1 - base;
     var part0 = raw.subSequence(0, beginPart1);
     var part1 = raw.subSequence(beginPart1, endPart1);
     var part2 = raw.subSequence(endPart1, raw.length());
+    return new KnifeCut(part0, part1, part2, twoKnife.tokenEndIndex() + 1);
+  }
 
-    return Tuple.of(part0, part1, part2, twoKnife.tokenEndIndex() + 1);
+  record KnifeCut(
+    @NotNull CharSequence before,
+    @NotNull CharSequence current,
+    @NotNull CharSequence remaining,
+    int base
+  ) {
   }
 }

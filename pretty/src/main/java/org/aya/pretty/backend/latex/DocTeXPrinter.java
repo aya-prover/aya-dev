@@ -30,6 +30,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     return Tuple.of(name, name);
   }
 
+  /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
@@ -40,13 +41,31 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("=>", "\\Rightarrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("_|_", "\\bot"),
+    Tuple.of("forall", "\\forall"),
+    Tuple.of("\u03A0", "\\Pi"),
+    Tuple.of("\u03A3", "\\Sigma"),
+    Tuple.of("\u03BB", "\\lambda"),
+    Tuple.of("\u2228", "\\lor"),
+    Tuple.of("\u2227", "\\land"),
+    Tuple.of("\u21D2", "\\Rightarrow"),
+    Tuple.of("\u2192", "\\to"),
+    Tuple.of("\u22A5", "\\bot"),
+    Tuple.of("\u2200", "\\forall"),
     Tuple.of("_", "\\textunderscore"),
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
-    id(":"), id("."),
-    id(":="),
-    id("("), id(")"),
+    id("(|"), id("|)"),
+    Tuple.of("\u2987", "(|"),
+    Tuple.of("\u2988", "|)"),
     id("[|"), id("|]"),
+    Tuple.of("\u27E6", "[|"),
+    Tuple.of("\u27E7", "|]"),
+    Tuple.of("{|", "\\{|"),
+    Tuple.of("|}", "|\\}"),
+    Tuple.of("\u2983", "\\{|"),
+    Tuple.of("\u2984", "|\\}"),
+    id(":"), id("."), id(":="),
+    id("("), id(")"),
     Tuple.of("{", "\\{"),
     Tuple.of("}", "\\}")
   );

@@ -20,7 +20,6 @@ import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.util.InternalException;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Link;
@@ -51,18 +50,18 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var lexer = AyaParserDefinitionBase.createLexer(false);
       lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
       var addition = lexer.allTheWayDown().view()
-        .filter(x -> AyaParserDefinitionBase.NOT_IN_CONCRETE.contains(x.type()))
-        .map(token -> {
+        .mapNotNull(token -> {
           var sourcePos = AyaProducer.sourcePosOf(token, file);
-          HighlightInfo.HighlightSymbol type;
-          if (AyaParserDefinitionBase.KEYWORDS.contains(token.type())) {
-            type = new HighlightInfo.SymLit(LitKind.Keyword);
-          } else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(token.type())) {
-            type = new HighlightInfo.SymLit(LitKind.Comment);
-          } else throw new InternalException("bug");
-
-          return new HighlightInfo(sourcePos, type);
-        });
+          var tokenType = token.type();
+          if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
+            return new HighlightInfo.SymLit(LitKind.Keyword).toInfo(sourcePos);
+          if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
+            return new HighlightInfo.SymLit(LitKind.Comment).toInfo(sourcePos);
+          if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
+            || AyaParserDefinitionBase.MARKERS.contains(tokenType))
+            return new HighlightInfo.SymLit(LitKind.SpecialSymbol).toInfo(sourcePos);
+          return null;
+        }).toImmutableSeq();
       semantics = semantics.concat(addition);
     }
     return semantics;

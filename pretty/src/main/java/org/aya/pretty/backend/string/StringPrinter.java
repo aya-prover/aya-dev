@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -110,12 +110,12 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   private static final @NotNull Map<String, String> unicodeMapping = Map.ofEntries(
     Tuple.of("Pi", "\u03A0"),
     Tuple.of("Sig", "\u03A3"),
-    Tuple.of("Sigma", "\u03A3"),
     Tuple.of("\\", "\u03BB"),
     Tuple.of("/\\", "\u2227"),
     Tuple.of("\\/", "\u2228"),
     Tuple.of("=>", "\u21D2"),
     Tuple.of("ulift", "\u2191"),
+    Tuple.of("forall", "\u2200"),
     Tuple.of("->", "\u2192"),
     Tuple.of("_|_", "\u22A5"),
     Tuple.of("top", "\u22A4"),
