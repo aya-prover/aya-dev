@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
+import com.intellij.psi.TokenType;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -9,6 +10,7 @@ import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.DefKind;
 import org.aya.cli.literate.HighlightInfo.LitKind;
+import org.aya.cli.literate.HighlightInfo.SymLit;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -51,16 +53,21 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
       var addition = lexer.allTheWayDown().view()
         .mapNotNull(token -> {
-          var sourcePos = AyaProducer.sourcePosOf(token, file);
           var tokenType = token.type();
+          SymLit r = null;
           if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
-            return new HighlightInfo.SymLit(LitKind.Keyword).toInfo(sourcePos);
-          if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
-            return new HighlightInfo.SymLit(LitKind.Comment).toInfo(sourcePos);
-          if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
+            r = new SymLit(LitKind.Keyword);
+          else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
+            r = new SymLit(LitKind.Comment);
+          else if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
             || AyaParserDefinitionBase.MARKERS.contains(tokenType))
-            return new HighlightInfo.SymLit(LitKind.SpecialSymbol).toInfo(sourcePos);
-          return null;
+            r = new SymLit(LitKind.SpecialSymbol);
+          if (tokenType == TokenType.WHITE_SPACE && token.range().getLength() <= 2) {
+            var text = token.range().substring(file.sourceCode());
+            if (text.contains("\n")) r = new SymLit(LitKind.Eol);
+          }
+          if (r == null) return null;
+          return r.toInfo(AyaProducer.sourcePosOf(token, file));
         }).toImmutableSeq();
       semantics = semantics.concat(addition);
     }

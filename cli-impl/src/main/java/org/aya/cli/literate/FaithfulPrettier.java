@@ -60,11 +60,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       if (!knifeCut.before.isEmpty()) {
         // TODO: handle whitespaces in the lexer, and use a new highlight type for them.
         //  this workaround solution does not work for whitespace in LaTeX.
-        if (knifeCut.before.indexOf('\n') >= 0) {
-          docs.append(Doc.line());
-        } else {
-          docs.append(Doc.plain(knifeCut.before.toString()));
-        }
+        docs.append(Doc.plain(knifeCut.before.toString()));
       }
       // Do not add to result if the highlighted cut contains nothing
       var highlight = highlightOne(knifeCut.current.toString(), current.type());
@@ -115,6 +111,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case Keyword -> Doc.styled(BasePrettier.KEYWORD, Doc.symbol(raw));
       case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
       case SpecialSymbol -> Doc.symbol(raw);
+      case Eol -> Doc.line();
     };
   }
 
