@@ -1,13 +1,15 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.tuple.primitive.IntTuple2;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
@@ -32,7 +34,6 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("UnknownLanguage")
 public class HighlighterTester {
   record ExpectedHighlightInfo(
     @NotNull SourcePos sourcePos,
@@ -92,15 +93,15 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    runTest(actual.view().sorted().distinct().toImmutableSeq(), Seq.of(expected));
+    var sortedActual = actual.view().distinct().sorted().toImmutableSeq().view();
+    if (sortedActual.last().type() instanceof HighlightInfo.SymLit(var kind) && kind == HighlightInfo.LitKind.Eol)
+      // Remove the last Eol
+      sortedActual = sortedActual.dropLast(1);
+    runTest(sortedActual, Seq.of(expected));
   }
 
-  public void runTest(@NotNull Seq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
-    assertEquals(actuals.size(), expecteds.size(), "size mismatch");
-    for (var tup : actuals.zipView(expecteds)) {
-      var actual = tup.component1();
-      var expected = tup.component2();
-
+  public void runTest(@NotNull SeqView<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
+    actuals.forEachWith(expecteds, (actual, expected) -> {
       if (expected == null) {
         switch (actual.type()) {
           case HighlightInfo.SymDef def -> checkDef(actual.sourcePos(), def);
@@ -108,12 +109,12 @@ public class HighlighterTester {
           default -> {}
         }
 
-        continue;
+        return;
       }
 
       assertEquals(
-        Tuple.of(expected.sourcePos.tokenStartIndex(), expected.sourcePos.tokenEndIndex()),
-        Tuple.of(actual.sourcePos().tokenStartIndex(), actual.sourcePos().tokenEndIndex()));
+        IntTuple2.of(expected.sourcePos.tokenStartIndex(), expected.sourcePos.tokenEndIndex()),
+        IntTuple2.of(actual.sourcePos().tokenStartIndex(), actual.sourcePos().tokenEndIndex()));
 
       var sourcePos = actual.sourcePos();
       var expectedText = expected.expected.display();
@@ -143,7 +144,8 @@ public class HighlighterTester {
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
       }
-    }
+    });
+    assertEquals(expecteds.size(), actuals.size(), "size mismatch");
   }
 
   /**
