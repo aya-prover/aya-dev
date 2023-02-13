@@ -4,7 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.FieldDef;
+import org.aya.core.def.ClassDef;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ import java.util.function.UnaryOperator;
  */
 public record FieldTerm(
   @NotNull Term of,
-  @NotNull DefVar<FieldDef, TeleDecl.ClassMember> ref,
+  @NotNull DefVar<ClassDef.Member, TeleDecl.ClassMember> ref,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
 ) implements Callable {

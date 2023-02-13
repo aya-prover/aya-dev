@@ -5,7 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.FieldDef;
+import org.aya.core.def.ClassDef;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,9 @@ import java.util.function.UnaryOperator;
  */
 public record NewTerm(
   @NotNull ClassCall struct,
-  @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params
+  @NotNull ImmutableMap<DefVar<ClassDef.Member, TeleDecl.ClassMember>, Term> params
 ) implements StableWHNF {
-  public @NotNull NewTerm update(@NotNull ClassCall struct, @NotNull ImmutableMap<DefVar<FieldDef, TeleDecl.ClassMember>, Term> params) {
+  public @NotNull NewTerm update(@NotNull ClassCall struct, @NotNull ImmutableMap<DefVar<ClassDef.Member, TeleDecl.ClassMember>, Term> params) {
     var equalParams = params == params()
       || params.view().map(Tuple::of).sameElements(params().view().map(Tuple::of));
     return struct == struct() && equalParams ? this : new NewTerm(struct, params);

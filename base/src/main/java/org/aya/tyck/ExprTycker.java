@@ -15,7 +15,10 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
-import org.aya.core.def.*;
+import org.aya.core.def.ClassDef;
+import org.aya.core.def.DataDef;
+import org.aya.core.def.Def;
+import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
@@ -176,7 +179,7 @@ public final class ExprTycker extends PropTycker {
           if (!(projectee.type() instanceof ClassCall classCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           // TODO[ice]: instantiate the type
-          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef field))
+          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof ClassDef.Member field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
