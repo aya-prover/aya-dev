@@ -4,6 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;

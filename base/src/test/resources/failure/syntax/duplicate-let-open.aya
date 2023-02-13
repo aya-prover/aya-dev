@@ -1,0 +1,6 @@
+data Nat | O | S Nat
+
+def what : Nat =>
+  let open Nat in
+    let open Nat in
+      S O
