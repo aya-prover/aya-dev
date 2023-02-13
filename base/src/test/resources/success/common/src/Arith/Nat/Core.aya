@@ -1,5 +1,4 @@
 open import Paths
-open import Logic::False
 open import Algebra::Formula
 
 open data Nat
@@ -49,11 +48,6 @@ def inline *-suc {m n : Nat} => *-suc-lemma m n
 def +-*-distl {n m : Nat} (k : Nat) : (m + k) * n = k * n + m * n
 | 0 => idp
 | suc k => pmap (_ +) (+-*-distl k) <==> sym +-assoc
-
-def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
-private def diag Nat : Type
-| 0 => Nat
-| suc a => False
 
 private def *-comm-lemma : Commutative (*)
 | 0, n => idp

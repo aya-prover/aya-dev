@@ -1,6 +1,12 @@
 open import Paths
-
-def isProp (A : Type) => Pi (a b : A) -> a = b
+def isProp (A : Type) => ∀ (a b : A) -> a = b
 def isSet (A : Type) : Type => ∀ (a b : A) -> isProp (a = b)
 
 def HProp => Sig (A : Type) ** isProp A
+def HSet => Sig (A : Type) ** isSet A
+
+open import Arith::Nat::Core
+def isHLvl Nat Type : Type
+| 0, A => isContr A
+| 1, A => isProp A
+| suc n, A => ∀ a b -> isHLvl n (a = b)
