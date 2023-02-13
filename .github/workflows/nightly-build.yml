@@ -45,11 +45,6 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: '19'
-      - name: Setup JavaAgent for guard pattern
-        run: |
-          # In case the file does not have a newline at the end
-          echo '' >> gradle.properties
-          echo "org.gradle.jvmargs = -javaagent:${{ github.workspace }}/gradle/guard-pattern-fix.jar" >> gradle.properties
       - name: gradle publish
         uses: gradle/gradle-build-action@v2
         with:
@@ -108,7 +103,7 @@ jobs:
         uses: graalvm/setup-graalvm@v1
         with:
           version: 'latest'
-          java-version: '17'
+          java-version: '19'
           components: 'native-image'
           set-java-home: 'false'
           github-token: ${{ secrets.GH_TOKEN }}

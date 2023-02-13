@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
@@ -30,7 +30,8 @@ final class CommonTasks {
 
       javaLauncher.set(
         toolchain.launcherFor {
-          languageVersion.set(JavaLanguageVersion.of(17))
+          // Remember to update .github/workflows/nightly-build.yml
+          languageVersion.set(JavaLanguageVersion.of(19))
           vendor.set(JvmVendorSpec.matching("GraalVM Community"))
         },
       )

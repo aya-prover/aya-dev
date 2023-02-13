@@ -37,14 +37,14 @@ kala.collection.mutable.MutableHashMap
 kala.collection.immutable.ImmutableArray
 kala.collection.immutable.ImmutableHashMap
 kala.collection.immutable.ImmutableHashSet
+kala.collection.immutable.ImmutableHashSet$SerializationWrapper
 kala.collection.immutable.ImmutableVector
 kala.collection.immutable.ImmutableVectors$Vector{0,6}
 kala.collection.immutable.ImmutableVectors$BigVector
 kala.collection.immutable.ImmutableSeqs$Seq{0,5}
-kala.collection.immutable.ImmutableSeqs$SeqN
+# kala.collection.immutable.ImmutableSeqs$CopiesSeqBase
 
 # Serialized core terms, for ObjectOutputStream
-org.aya.util.binop.OpDecl$OpInfo
 org.aya.core.repr.CodeShape$MomentId
 org.aya.concrete.stmt.UseHide$Rename
 org.aya.generic.SortKind
