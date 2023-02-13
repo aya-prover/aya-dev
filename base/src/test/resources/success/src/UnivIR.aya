@@ -1,15 +1,17 @@
 open import Arith::Nat::Core
 
 open data U : Type
-| Nat'
-| infixr ×' U U
-| infixr →' U U
-  looser ×'
+// Simple types
+| Nat' | infixr ×' U U | infixr →' U U looser ×'
+// Dependent types
+| Π' (dom : U) (El dom → U) | Σ' (dom : U) (El dom → U)
 
 def El U : Type
 | Nat' => Nat
-| a ×' b => Sig (El a) ** (El b)
+| a ×' b => Sig (El a) ** El b
 | a →' b => El a -> El b
+| Π' dom cod => Pi (d : El dom) -> El (cod d)
+| Σ' dom cod => Sig (d : El dom) ** El (cod d)
 
-def ty-example : U => Nat' →' Nat' ×' (Nat' ×' Nat') ×' Nat'
-def val-example : El ty-example => λ x => (x, ((2, 3), 4))
+def tyExample : U => Nat' →' Nat' ×' (Nat' ×' Nat') ×' Nat'
+def valExample : El tyExample => λ x => (x, ((2, 3), 4))

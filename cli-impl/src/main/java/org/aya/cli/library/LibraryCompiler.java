@@ -10,7 +10,7 @@ import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.cli.utils.AyaCompiler;
+import org.aya.cli.utils.CompilerUtil;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
@@ -146,7 +146,7 @@ public class LibraryCompiler {
       "Warning: command-line specified module path is ignored when compiling libraries.");
     if (flags.prettyInfo() != null) reporter.reportString(
       "Warning: command-line specified pretty info is ignored when compiling libraries.");
-    return AyaCompiler.catching(reporter, flags, this::make);
+    return CompilerUtil.catching(reporter, flags, this::make);
   }
 
   /**

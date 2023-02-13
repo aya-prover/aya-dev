@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.cli.utils.AyaCompiler;
+import org.aya.cli.utils.CompilerUtil;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.SerTerm;
@@ -79,6 +79,6 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ImmutableSeq<GenericDef> defs
   ) throws IOException {
     var coreFile = file.compiledCorePath();
-    AyaCompiler.saveCompiledCore(coreFile, resolveInfo, defs, serState);
+    CompilerUtil.saveCompiledCore(coreFile, resolveInfo, defs, serState);
   }
 }
