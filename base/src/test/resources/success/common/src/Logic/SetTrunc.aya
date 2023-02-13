@@ -7,7 +7,8 @@ open data SetTrunc (A : Type)
 
 variable A B : Type
 
-// def rec (A -> B) (isSet B) (SetTrunc A) : B
-// | f, x, inj a => f a
-// | f, x, trunc a b p q i j =>
-//    x (rec f x a) (rec f x b) (λ k => rec f x (p k)) (λ k => rec f x (q k)) i j
+// TODO: improve the termination checker so that it unfolds unrecursive calls generate unfolded lambdas properly
+def rec (A -> B) (isSet B) (SetTrunc A) : B
+| f, x, inj a => f a
+| f, x, trunc a b p q i j =>
+    x (rec f x a) (rec f x b) (λ k => rec f x (p k)) (λ k => rec f x (q k)) i j

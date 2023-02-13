@@ -49,7 +49,7 @@ public record CallResolver(
 
   private void resolveCall(@NotNull Callable callable) {
     if (!(callable.ref() instanceof DefVar<?, ?> defVar)) return;
-    var callee = ((Def) defVar.core);
+    var callee = (Def) defVar.core;
     if (!targets.contains(callee)) return;
     var matrix = new CallMatrix<>(callable, caller, callee, caller.telescope, callee.telescope());
     fillMatrix(callable, callee, matrix);
@@ -65,7 +65,7 @@ public record CallResolver(
       // No matching, the caller is a simple function (not defined by pattern matching).
       // We should compare caller telescope with callee arguments.
       : caller.telescope.view().map(p -> Tuple.of(p.toPat(), p));
-    var codomThings = callable.args().zip(callee.telescope());
+    var codomThings = callable.args().zipView(callee.telescope());
     for (var domThing : domThings) {
       for (var codomThing : codomThings) {
         var relation = compare(codomThing.component1().term(), domThing.component1().term());
