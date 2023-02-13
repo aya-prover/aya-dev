@@ -18,7 +18,7 @@ import java.util.EnumSet;
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\noindent");
+    cursor.invisibleContent("\\noindent{}");
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -116,7 +116,7 @@ public class AyaMdParserTest {
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.docitfy(stmts, AyaPrettierOptions.pretty()).toDoc();
+    var doc = literate.toDoc(stmts, AyaPrettierOptions.pretty()).toDoc();
     var expectedMd = doc.renderToAyaMd();
     Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
     Files.writeString(oneCase.outMdFile(), expectedMd);

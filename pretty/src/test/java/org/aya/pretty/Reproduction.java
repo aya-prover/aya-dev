@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
@@ -11,6 +11,6 @@ public class Reproduction {
   @Test public void mock() {
     var doc = Doc.nest(2, Doc.code(Doc.plain("hey")));
     assertEquals("  `hey'", doc.renderToTerminal());
-    assertEquals("\\noindent\\hspace*{1.0em}\\fbox{hey}", doc.renderToTeX());
+    assertEquals("\\noindent{}\\hspace*{1.0em}\\fbox{hey}", doc.renderToTeX());
   }
 }
