@@ -93,7 +93,10 @@ public record CallResolver(
           var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
           if (attempt == Relation.unk()) {
             var reduce = whnf(term); // `term` may be reduced to a constructor call
-            if (reduce != term) attempt = compare(reduce, ctor);
+            if (reduce instanceof ConCall) attempt = compare(reduce, ctor);
+            else {
+              System.out.println(reduce);
+            }
           }
           yield attempt;
         }
