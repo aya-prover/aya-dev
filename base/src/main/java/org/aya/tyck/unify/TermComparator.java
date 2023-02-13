@@ -154,7 +154,10 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     }
     lhs = whnf(lhs);
     rhs = whnf(rhs);
-    var x = doCompareUntyped(lhs, rhs, lr, rl);
+    Term x;
+    if (rhs instanceof MetaLitTerm || rhs instanceof MetaTerm)
+      x = doCompareUntyped(rhs, lhs, rl, lr);
+    else x = doCompareUntyped(lhs, rhs, lr, rl);
     traceExit();
     if (x != null) return whnf(x);
     if (failure == null) failure = new FailureData(lhs, rhs);
@@ -518,8 +521,29 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
+      case MetaLitTerm lhs -> {
+        if (preRhs instanceof IntegerTerm rhs) {
+          yield compareMetaLitWithLit(lhs, rhs.repr(), rhs.type(), lr, rl);
+        }
+        if (preRhs instanceof ListTerm rhs)
+          yield compareMetaLitWithLit(lhs, rhs.repr(), rhs.type(), lr, rl);
+        if (preRhs instanceof ConCall rhs)
+          throw new UnsupportedOperationException("TODO (I have no time to implement this)");
+        if (preRhs instanceof MetaLitTerm rhs)
+          yield compareMetaLitWithLit(lhs, rhs.repr(), rhs.type(), lr, rl);
+        yield null;
+      }
       case MetaTerm lhs -> solveMeta(lhs, preRhs, lr, rl, null);
     };
+  }
+
+  private @Nullable Term compareMetaLitWithLit(
+    @NotNull MetaLitTerm lhs, Object repr, @NotNull Term rhsType,
+    Sub lr, Sub rl
+  ) {
+    if (!Objects.equals(lhs.repr(), repr)) return null;
+    if (compare(lhs.type(), rhsType, lr, rl, null)) return lhs.type();
+    return null;
   }
 
   private static @NotNull InternalException noRules(@NotNull Term preLhs) {
