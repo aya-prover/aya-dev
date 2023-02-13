@@ -49,7 +49,7 @@ public record CallResolver(
 
   private void resolveCall(@NotNull Callable callable) {
     if (!(callable.ref() instanceof DefVar<?, ?> defVar)) return;
-    var callee = ((Def) defVar.core);
+    var callee = (Def) defVar.core;
     if (!targets.contains(callee)) return;
     var matrix = new CallMatrix<>(callable, caller, callee, caller.telescope, callee.telescope());
     fillMatrix(callable, callee, matrix);
@@ -65,7 +65,7 @@ public record CallResolver(
       // No matching, the caller is a simple function (not defined by pattern matching).
       // We should compare caller telescope with callee arguments.
       : caller.telescope.view().map(p -> Tuple.of(p.toPat(), p));
-    var codomThings = callable.args().zip(callee.telescope());
+    var codomThings = callable.args().zipView(callee.telescope());
     for (var domThing : domThings) {
       for (var codomThing : codomThings) {
         var relation = compare(codomThing.component1().term(), domThing.component1().term());
@@ -92,8 +92,17 @@ public record CallResolver(
           var subCompare = ctor.params().view().map(sub -> compare(term, sub.term()));
           var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
           if (attempt == Relation.unk()) {
-            var reduce = whnf(term); // `term` may be reduced to a constructor call
-            if (reduce != term) attempt = compare(reduce, ctor);
+            yield switch (whnf(term)) {
+              case ConCall con -> compare(con, ctor);
+              case IntegerTerm lit -> compare(lit, ctor);
+              // This is related to the predicativity issue mentioned in #907
+              case PAppTerm papp -> {
+                var head = papp.of();
+                while (head instanceof PAppTerm papp2) head = papp2.of();
+                yield compare(head, ctor);
+              }
+              default -> attempt;
+            };
           }
           yield attempt;
         }

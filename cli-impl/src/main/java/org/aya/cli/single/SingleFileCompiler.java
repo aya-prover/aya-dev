@@ -4,8 +4,8 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
-import org.aya.cli.utils.AyaCompiler;
 import org.aya.cli.utils.CliEnums;
+import org.aya.cli.utils.CompilerUtil;
 import org.aya.core.def.PrimDef;
 import org.aya.resolve.ModuleCallback;
 import org.aya.resolve.context.EmptyContext;
@@ -45,7 +45,7 @@ public record SingleFileCompiler(
   ) throws IOException {
     var reporter = CountingReporter.of(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
-    return AyaCompiler.catching(reporter, flags, () -> {
+    return CompilerUtil.catching(reporter, flags, () -> {
       var ctx = context.apply(reporter);
       var ayaParser = new AyaParserImpl(reporter);
       var fileManager = new SingleAyaFile.Factory(reporter);

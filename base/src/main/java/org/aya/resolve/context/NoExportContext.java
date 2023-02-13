@@ -12,23 +12,23 @@ import java.nio.file.Path;
 
 /**
  * @author ice1000
- * Used for examples and counterexamples
+ * Used for examples and counterexamples, also `let open`
  */
 public record NoExportContext(
-  @NotNull PhysicalModuleContext parent,
+  @NotNull Context parent,
   @NotNull ModuleSymbol<AnyVar> symbols,
   @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules,
   @Override @NotNull ImmutableSeq<String> moduleName
 ) implements ModuleContext {
   public NoExportContext(
-    @NotNull PhysicalModuleContext parent,
+    @NotNull Context parent,
     @NotNull ModuleSymbol<AnyVar> symbols,
     @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
   ) {
     this(parent, symbols, modules, parent.moduleName().appended(":NoExport"));
   }
 
-  public NoExportContext(@NotNull PhysicalModuleContext parent) {
+  public NoExportContext(@NotNull Context parent) {
     this(parent, new ModuleSymbol<>(), MutableHashMap.create());
   }
 

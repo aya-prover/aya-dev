@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -25,21 +25,32 @@ public class HighlighterTest {
       keyword(0, 3, "open"),
       whatever(),
       def(10, 12, "Nat", "nat", HighlightInfo.DefKind.Data),
+      whatever(), // eol
+      whatever(), // |
       def(16, 16, "O", "zero", HighlightInfo.DefKind.Con),
+      whatever(), // |
       def(20, 20, "S", "suc", HighlightInfo.DefKind.Con),
       ref(22, 24, "Nat", "nat", HighlightInfo.DefKind.Data),
+      whatever(), // eol
       whatever(),   // def
       def(31, 33, "add", HighlightInfo.DefKind.Fn),
       ref(35, 37, "Nat", "nat", HighlightInfo.DefKind.Data),
       ref(39, 41, "Nat", "nat", HighlightInfo.DefKind.Data),
+      whatever(), // :
       ref(45, 47, "Nat", "nat", HighlightInfo.DefKind.Data),
+      whatever(), // eol
+      whatever(), // |
       localDef(51, 51, "n", "n'"),
       litInt(54, 54, 0),
+      whatever(), // =>
       localRef(59, 59, "n", "n'"),
+      whatever(), // eol
+      whatever(), // |
       ref(63, 63, "S", "suc", HighlightInfo.DefKind.Con),
       // Note: n' is still available here, so use another name
       localDef(65, 65, "n", "n''"),
       localDef(68, 68, "m", "m'"),
+      whatever(), // =>
       ref(73, 73, "S", "suc", HighlightInfo.DefKind.Con),
       ref(76, 78, "add", HighlightInfo.DefKind.Fn),
       localRef(80, 80, "n", "n''"),
@@ -56,9 +67,13 @@ public class HighlighterTest {
 
     highlightAndTest(code,
       keyword(3, 6, "open"),
+      whatever(), // eol
       keyword(8, 11, "data"),
       def(14, 16, "Nat", "nat", HighlightInfo.DefKind.Data),
+      whatever(), // eol
+      whatever(),
       def(20, 20, "O", HighlightInfo.DefKind.Con),
+      whatever(),
       def(24, 24, "S", HighlightInfo.DefKind.Con),
       ref(26, 28, "Nat", "nat", HighlightInfo.DefKind.Data));
   }
@@ -88,8 +103,10 @@ public class HighlighterTest {
     highlightAndTest(code,
       keyword(0, 5, "module"),
       def(7, 7, "X", "x", HighlightInfo.DefKind.Module),
+      whatever(), // eol
       keyword(12, 15, "open"),
       ref(17, 17, "X", "x", HighlightInfo.DefKind.Module),
+      whatever(), // eol
       keyword(19, 22, "open"),
       keyword(24, 27, "data"),
       def(29, 29, "Y", "y", HighlightInfo.DefKind.Data));
@@ -110,20 +127,30 @@ public class HighlighterTest {
       def(10, 15, "Either", "DefEither", HighlightInfo.DefKind.Data),
       localDef(18, 18, "A", "LocalA"),
       localDef(20, 20, "B", "LocalB"),
+      whatever(), // :
       keyword(24, 27, "Type"),
+      whatever(), // eol
+      whatever(), // |
       def(32, 35, "Left", HighlightInfo.DefKind.Con),
       localRef(37, 37, "A", "LocalA"),
+      whatever(), // eol
+      whatever(), // |
       def(41, 45, "Right", HighlightInfo.DefKind.Con),
       localRef(47, 47, "B", "LocalB"),
 
+      whatever(), // eol
       keyword(50, 52, "def"),
       def(54, 59, "constA", HighlightInfo.DefKind.Fn),
       localDef(62, 62, "A", "LocalA'"),
+      whatever(), // :
       keyword(66, 69, "Type"),
       localDef(73, 73, "a", "Locala"),
       localDef(75, 75, "b"),
+      whatever(), // :
       localRef(79, 79, "A", "LocalA'"),
+      whatever(), // :
       localRef(84, 84, "A", "LocalA'"),
+      whatever(), // =>
       localRef(89, 89, "a", "Locala"));
   }
 
@@ -137,12 +164,17 @@ public class HighlighterTest {
     highlightAndTest(code,
       keyword(0, 7, "variable"),
       def(9, 9, "A", "GA", HighlightInfo.DefKind.Generalized),
+      whatever(), // :
       keyword(13, 16, "Type"),
+      whatever(), // eol
       keyword(19, 21, "def"),
       def(23, 24, "id", HighlightInfo.DefKind.Fn),
       localDef(27, 27, "a", "a"),
+      whatever(), // :
       ref(31, 31, "A", "GA", HighlightInfo.DefKind.Generalized),
+      whatever(), // :
       ref(36, 36, "A", "GA", HighlightInfo.DefKind.Generalized),
+      whatever(), // =>
       localRef(41, 41, "a", "a"));
   }
 }

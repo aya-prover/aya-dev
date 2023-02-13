@@ -53,12 +53,7 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 
 %unicode
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Whitespaces
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-EOL                 = \R
-WHITE_SPACE         = [ \t\r\n]+
+EOL = \R
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Identifier, adapted from AyaLexer.g4
@@ -198,8 +193,8 @@ BLOCK_COMMENT_END   = "*/"
   {NUMBER}              { return NUMBER; }
   {STRING}              { return STRING; }
 
-
-  {WHITE_SPACE}         { return WHITE_SPACE; }
+  {EOL}                 { return WHITE_SPACE; }
+  [\s]+                 { return WHITE_SPACE; }
 }
 
 

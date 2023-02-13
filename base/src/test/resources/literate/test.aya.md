@@ -27,7 +27,7 @@ Umm, now it looks good!
 Also, we can use some special characters as identifier:
 
 ```aya
-open data Bool | True | False
+open data Bool | true | false
 
 def > (lhs rhs : Unit) : Bool =>
 ```
@@ -35,5 +35,5 @@ def > (lhs rhs : Unit) : Bool =>
 It probably always false, I think.
 
 ```aya
-  False
+  false
 ```

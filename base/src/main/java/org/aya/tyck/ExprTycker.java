@@ -374,6 +374,7 @@ public final class ExprTycker extends PropTycker {
 
         yield new Result.Default(full, bodyResult.type());
       }
+      case Expr.LetOpen(var $, var $$, var $$$, var body) -> doSynthesize(body);
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }

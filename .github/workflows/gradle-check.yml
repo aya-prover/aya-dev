@@ -14,11 +14,6 @@ jobs:
         with:
           distribution: 'liberica'
           java-version: '19'
-      - name: Setup JavaAgent for guard pattern
-        run: |
-          # In case the file does not have a newline at the end
-          echo '' >> gradle.properties
-          echo "org.gradle.jvmargs = -javaagent:${{ github.workspace }}/gradle/guard-pattern-fix.jar" >> gradle.properties
       - uses: gradle/gradle-build-action@v2
         with:
           arguments: testCodeCoverageReport --no-daemon --stacktrace --warning-mode all

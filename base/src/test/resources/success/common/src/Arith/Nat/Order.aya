@@ -1,4 +1,5 @@
 open import Arith::Nat::Core
+open import Arith::Nat::Properties
 open import Logic::False
 open import Logic::Dec
 open import Paths

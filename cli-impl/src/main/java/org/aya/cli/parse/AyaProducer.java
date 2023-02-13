@@ -647,10 +647,21 @@ public record AyaProducer(
       if (arrayBlock.is(ARRAY_ELEMENTS_BLOCK)) return arrayElementList(arrayBlock, pos);
     }
     if (node.is(LET_EXPR)) {
-      var bindBlock = node.child(LET_BIND_BLOCK);
-      var binds = bindBlock.childrenOfType(LET_BIND).map(this::letBind);
+      var bindBlockMaybe = node.peekChild(LET_BIND_BLOCK);
       var body = expr(node.child(EXPR));
-      return Expr.buildLet(pos, binds, body);
+      if (bindBlockMaybe != null) {
+        var binds = bindBlockMaybe.childrenOfType(LET_BIND).map(this::letBind);
+        return Expr.buildLet(pos, binds, body);
+      } else {
+        // let open
+        var component = qualifiedId(node.child(QUALIFIED_ID));
+        var useHide = node.peekChild(USE_HIDE);
+
+        return new Expr.LetOpen(pos,
+          component.component().resolve(component.name()),
+          useHide == null ? UseHide.EMPTY : useHide(useHide),
+          body);
+      }
     }
     return unreachable(node);
   }

@@ -1,0 +1,18 @@
+open import Arith::Nat::Core
+open import Arith::Nat::Properties
+open import Algebra::Formula
+open import Paths
+
+def overlap infixl *' : BinOp Nat
+| 0, n => 0
+| m, 0 => 0
+| suc m, suc n => suc (m + n + m *' n)
+tighter +
+
+def overlap *'-*-iso (m n : Nat) : m *' n = m * n
+| 0, n => idp
+| m, 0 => idp
+| suc m, suc n => pmap (\x => suc (m + n + x)) (*'-*-iso m n)
+  <==> *-suc-suc m n
+
+def *'-*-eq : (*') = (*) => funExt2 (*') (*) *'-*-iso

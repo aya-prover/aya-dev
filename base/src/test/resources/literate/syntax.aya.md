@@ -15,3 +15,9 @@ def justId : Pi (a b : Nat) -> Sig (e : dependent a) ** (dependent e) =>
     | d := b
     in (c, d)
 ```
+
+For the following `code block`, you'll never see it:
+
+```aya-hidden
+example def foo => justId
+```

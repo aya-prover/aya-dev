@@ -9,7 +9,10 @@ import kala.control.Either;
 import kala.function.TriFunction;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
+import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.UseHide;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
@@ -22,6 +25,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.Result;
@@ -760,6 +764,35 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     public @NotNull Expr.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
+    }
+  }
+
+  // I think a new type is better than `Either<LetBind, Open> bind` in `Expr.Let`
+  record LetOpen(
+    @NotNull SourcePos sourcePos,
+    @NotNull ModulePath.Qualified componentName,
+    @NotNull UseHide useHide,
+    @NotNull Expr body
+  ) implements Expr {
+    public @NotNull LetOpen update(@NotNull Expr body) {
+      return this.body == body
+        ? this
+        : new LetOpen(sourcePos, componentName, useHide, body);
+    }
+
+    @Override
+    public @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(body));
+    }
+
+    public @NotNull Command.Open openCmd() {
+      return new Command.Open(
+        sourcePos,
+        Stmt.Accessibility.Private,
+        componentName,
+        useHide,
+        false, true
+      );
     }
   }
 

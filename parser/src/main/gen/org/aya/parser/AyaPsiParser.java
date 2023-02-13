@@ -2608,16 +2608,46 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // KW_LET letBindBlock KW_IN
+  // KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN
   private static boolean letExpr_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "letExpr_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_LET);
-    r = r && letBindBlock(b, l + 1);
+    r = r && letExpr_0_1(b, l + 1);
     r = r && consumeToken(b, KW_IN);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // KW_OPEN qualifiedId useHide? | letBindBlock
+  private static boolean letExpr_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letExpr_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = letExpr_0_1_0(b, l + 1);
+    if (!r) r = letBindBlock(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // KW_OPEN qualifiedId useHide?
+  private static boolean letExpr_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letExpr_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_OPEN);
+    r = r && qualifiedId(b, l + 1);
+    r = r && letExpr_0_1_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // useHide?
+  private static boolean letExpr_0_1_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letExpr_0_1_0_2")) return false;
+    useHide(b, l + 1);
+    return true;
   }
 
   // KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?

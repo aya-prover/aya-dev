@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.tuple.primitive.IntObjTuple2;
 import kala.value.MutableValue;
 import org.aya.concrete.remark.*;
 import org.aya.generic.util.InternalException;
@@ -34,7 +35,7 @@ public class AyaMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
     this.file = file;
     this.reporter = reporter;
-    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(x -> x.component1());
+    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(IntObjTuple2::component1);
   }
 
   public @NotNull Literate parseLiterate() {

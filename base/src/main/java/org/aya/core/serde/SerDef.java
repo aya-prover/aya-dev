@@ -189,10 +189,6 @@ public sealed interface SerDef extends Serializable {
       super(reason);
     }
 
-    @Override public void printHint() {
-      System.out.println(getMessage());
-    }
-
     @Override public int exitCode() {
       return 99;
     }
