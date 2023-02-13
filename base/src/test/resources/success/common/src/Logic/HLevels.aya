@@ -9,4 +9,4 @@ open import Arith::Nat::Core
 def isHLvl Nat Type : Type
 | 0, A => isContr A
 | 1, A => isProp A
-| suc n, A => ∀ a b -> isHLvl n (a = b)
+| suc n, A => ∀ (a b : A) -> isHLvl n (a = b)
