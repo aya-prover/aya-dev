@@ -103,7 +103,7 @@ jobs:
         uses: graalvm/setup-graalvm@v1
         with:
           version: 'latest'
-          java-version: '17'
+          java-version: '19'
           components: 'native-image'
           set-java-home: 'false'
           github-token: ${{ secrets.GH_TOKEN }}
