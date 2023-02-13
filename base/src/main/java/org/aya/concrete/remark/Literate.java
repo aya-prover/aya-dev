@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
@@ -65,6 +65,9 @@ public sealed interface Literate extends Docile {
     }
   }
 
+  /**
+   * A code snippet. For code blocks, see {@link CodeBlock}
+   */
   final class Code implements Literate {
     public final @NotNull String code;
     public final @NotNull SourcePos sourcePos;
@@ -93,14 +96,15 @@ public sealed interface Literate extends Docile {
   }
 
   /**
-   * A code block
+   * A code block.
    *
    * @implNote the content which this code block hold can be illegal, like
    * <pre>
    * ```aya<br/>
-   * def foo : Nat =>
+   * def foo : Nat =><br/>
    * ```<br/>
    * </pre>
+   * Note that the language has to be <code>aya</code> or <code>aya-hidden</code>
    */
   final class CodeBlock implements Literate {
     public final @NotNull String language;
@@ -120,11 +124,12 @@ public sealed interface Literate extends Docile {
     }
 
     public boolean isAya() {
-      return language.equalsIgnoreCase("aya");
+      return language.equalsIgnoreCase("aya")
+        || language.equalsIgnoreCase("aya-hidden");
     }
 
-    @Override
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
+      if (language.equalsIgnoreCase("aya-hidden")) return Doc.empty();
       var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
       return Doc.codeBlock(language, doc);
     }
