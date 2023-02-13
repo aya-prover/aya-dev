@@ -11,6 +11,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.EndoPattern;
@@ -22,6 +23,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
@@ -194,6 +196,12 @@ public record ExprResolver(
           letBind.update(telescope, result, definedAs),
           newBody
         );
+      }
+      case Expr.LetOpen(var pos, var component, var useHide, var body) -> {
+        var innerCtx = new NoExportContext(ctx);
+        // open module
+        innerCtx.openModule(component, Stmt.Accessibility.Private, pos, useHide);
+        yield enter(innerCtx).apply(body);
       }
       default -> EndoExpr.super.apply(expr);
     };

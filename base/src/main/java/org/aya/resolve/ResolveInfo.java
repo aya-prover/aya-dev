@@ -75,7 +75,7 @@ public record ResolveInfo(
    * @see #open(ResolveInfo, SourcePos, Stmt.Accessibility)
    */
   public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind, boolean definedHere) {
-    defVar.opDeclRename.put(thisModule().moduleName(), renamed);
+    defVar.opDeclRename.put(thisModule.moduleName(), renamed);
     opRename.put(defVar, Tuple.of(renamed, bind, definedHere));
   }
 

@@ -305,7 +305,7 @@ letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 letBindBlock ::= letBind | (BAR letBind)+
-letExpr ::= KW_LET letBindBlock KW_IN expr
+letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
 
 partialAtom ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*
