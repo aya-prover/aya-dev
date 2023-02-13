@@ -16,22 +16,22 @@
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
 
-## Showcase
+## What to expect?
 
 + Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
-+ De Morgan cubical type theory with generalized path types
-  similar to a bounded cubical subtype. We plan to switch to Cartesian later.
-  + Implementation prototype: [Guest0x0].
++ Cubical type theory with generalized path types
+  similar to a "bounded" cubical subtype. We plan to switch to Cartesian soon.
+  + Implementation prototype of De Morgan cubical: [Guest0x0].
   + Demonstration of higher inductive types: [3-torus] (three-dimensional torus!!).
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
-+ A literate programming mode with inline code fragment support, inspired from [1lab].
++ A literate programming mode with inline code fragment support, inspired from Agda and [1lab].
 + Binary operators, with precedence specified by a partial ordering
-  (instead of a number, such as in Haskell or Agda)
+  (instead of a number like in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
-+ A fairly good termination checker that does not assume predicativity.
++ A fairly good termination checker.
   We adapted some code from Agda's implementation to accept
   [more definitions][foetus] (which are rejected by, e.g. Arend).
 + Inference of type checking order. That is to say,
@@ -102,11 +102,11 @@ and here are some example build configurations:
 implementation group: 'org.aya-prover', name: '[project name]', version: '[latest version]'
 ```
 
-+ `[project name]` specifies the subproject of Aya you want to use, and the options are `pretty`, `base`, `cli`, `parser`, etc.
++ `[project name]` specifies the subproject of Aya you want to use, and the options are `pretty`, `base`, `cli-impl`, `cli-console`, `parser`, etc.
   + The type checker lives in `base` and `parser`.
   + The generalized pretty printing framework is in `pretty`.
-  + The generalized binary operator parser, generalized tree builder, generalized mutable graph,
-    and a bunch of other utilities (strings, files, etc.) are in `tools`.
+  + The generalized binary operator parser, generalized tree builder, generalized mutable graph, generalized termination checker,
+    and a bunch of other utilities (files, etc.) are in `tools`.
   + The command and argument parsing framework is in `tools-repl`.
-    It offers an implementation of ANTLR4-based jline3 parser and relevant facilities.
+    It offers an implementation of GrammarKit-based jline3 parser and relevant facilities.
 + `[latest version]` is what you see on this badge ![maven] .
