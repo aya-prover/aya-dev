@@ -352,12 +352,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
-      case TeleDecl.StructDecl decl -> {
-        var prelude = declPrelude(decl, "struct");
+      case ClassDecl decl -> {
+        var prelude = MutableList.of(Doc.styled(KEYWORD, "class"));
         prelude.append(linkDef(decl.ref, STRUCT));
-        prelude.append(visitTele(decl.telescope));
-        appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
             decl.fields.view().map(this::decl))))),
