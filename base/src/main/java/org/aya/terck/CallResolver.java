@@ -92,11 +92,17 @@ public record CallResolver(
           var subCompare = ctor.params().view().map(sub -> compare(term, sub.term()));
           var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
           if (attempt == Relation.unk()) {
-            var reduce = whnf(term); // `term` may be reduced to a constructor call
-            if (reduce instanceof ConCall) attempt = compare(reduce, ctor);
-            else {
-              System.out.println(reduce);
-            }
+            yield switch (whnf(term)) {
+              case ConCall con -> compare(con, ctor);
+              case IntegerTerm lit -> compare(lit, ctor);
+              // This is related to the predicativity issue mentioned in #907
+              case PAppTerm papp -> {
+                var head = papp.of();
+                while (head instanceof PAppTerm papp2) head = papp2.of();
+                yield compare(head, ctor);
+              }
+              default -> attempt;
+            };
           }
           yield attempt;
         }
