@@ -19,6 +19,9 @@ import java.util.List;
 @Command(name = "aya",
   mixinStandardHelpOptions = true,
   version = "Aya v" + GeneratedVersion.VERSION_STRING,
+  descriptionHeading = "%n@|bold,underline Description|@:%n%n",
+  parameterListHeading = "%n@|bold,underline Parameters|@:%n",
+  optionListHeading = "%n@|bold,underline Options|@:%n",
   showDefaultValues = true)
 public class MainArgs {
   public static class ReplAction {
