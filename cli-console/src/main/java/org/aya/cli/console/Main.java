@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
@@ -80,6 +81,10 @@ public class Main extends MainArgs implements Callable<Integer> {
     }
     var traceBuilder = enableTrace ? new Trace.Builder() : null;
     var compiler = new SingleFileCompiler(reporter, null, traceBuilder);
+    if (Files.notExists(filePath)) {
+      System.err.println("File not found: " + filePath);
+      return -1;
+    }
     var status = compiler.compile(filePath, flags, null);
     if (traceBuilder != null)
       System.err.println(new MarkdownTrace(2, prettierOptions, asciiOnly)
