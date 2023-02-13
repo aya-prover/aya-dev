@@ -76,12 +76,11 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
           if (use.asAssoc() == Assoc.Invalid) return;
           var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name());
           assert symbol.isOk();   // checked in openModule
-          var defVar = symbol.get();
           var asName = use.asName().getOrDefault(use.id().name());      // TODO: probably incorrect
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
           var bind = use.asBind();
           if (bind != BindBlock.EMPTY) bind.context().set(ctx);
-          resolveInfo.renameOp(defVar, renamedOpDecl, bind, true);
+          resolveInfo.renameOp(symbol.get(), renamedOpDecl, bind, true);
         });
       }
       case Generalize variables -> {

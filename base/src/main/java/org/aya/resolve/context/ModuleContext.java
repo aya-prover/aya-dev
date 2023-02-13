@@ -137,7 +137,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModulePath.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
-    UseHide useHide
+    @NotNull UseHide useHide
   ) {
     openModule(modName, accessibility,
       useHide.list().map(UseHide.Name::id),
