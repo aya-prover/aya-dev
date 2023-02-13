@@ -4,7 +4,6 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
@@ -133,6 +132,17 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     }
 
     modules.set(modName, moduleExport);
+  }
+  default void openModule(
+    @NotNull ModulePath.Qualified modName,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos,
+    UseHide useHide
+  ) {
+    openModule(modName, accessibility,
+      useHide.list().map(UseHide.Name::id),
+      useHide.renaming(),
+      sourcePos, useHide.strategy());
   }
 
   /**

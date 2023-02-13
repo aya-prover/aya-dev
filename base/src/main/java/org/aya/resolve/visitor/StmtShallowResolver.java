@@ -64,13 +64,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
-        ctx.openModule(
-          mod,
-          acc,
-          useHide.list().map(UseHide.Name::id),
-          useHide.renaming(),
-          cmd.sourcePos(),
-          useHide.strategy());
+        ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
