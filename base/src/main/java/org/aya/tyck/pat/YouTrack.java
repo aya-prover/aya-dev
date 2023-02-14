@@ -62,7 +62,7 @@ public record YouTrack(
       lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull MCT<Term, PatClassifier.PatErr> mct) {
+  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull MCT<Term> mct) {
     mct.forEach(results -> {
       var contents = results.contents()
         .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))

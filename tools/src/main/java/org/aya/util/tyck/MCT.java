@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck;
 
@@ -18,9 +18,9 @@ import java.util.function.Function;
  *
  * @author ice1000
  */
-public sealed interface MCT<Term, Err> {
-  static <Term, Pat, Err> @NotNull ImmutableSeq<SubPats<Pat>> extract(
-    PatClass<Term, Err> pats, @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq) {
+public sealed interface MCT<Term> {
+  static <Term, Pat> @NotNull ImmutableSeq<SubPats<Pat>> extract(
+    PatClass<Term> pats, @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq) {
     return pats.contents().map(subPatsSeq::get);
   }
   /**
@@ -30,10 +30,10 @@ public sealed interface MCT<Term, Err> {
    * @param classifier turn a set of sub-patterns into an MCT.
    * @return pattern classes
    */
-  static @NotNull <Term, Err, Pat, Param> MCT<Term, Err> classify(
+  static @NotNull <Term, Pat, Param> MCT<Term> classify(
     @NotNull SeqView<Param> telescope,
     @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq,
-    @NotNull BiFunction<SeqView<Param>, ImmutableSeq<SubPats<Pat>>, MCT<Term, Err>> classifier
+    @NotNull BiFunction<SeqView<Param>, ImmutableSeq<SubPats<Pat>>, MCT<Term>> classifier
   ) {
     while (telescope.isNotEmpty()) {
       var res = classifier.apply(telescope, subPatsSeq);
@@ -47,56 +47,56 @@ public sealed interface MCT<Term, Err> {
     return new Leaf<>(subPatsSeq.map(SubPats::ix));
   }
 
-  default @NotNull ImmutableSeq<PatClass<Term, Err>> toSeq() {
-    var buffer = MutableList.<PatClass<Term, Err>>create();
+  default @NotNull ImmutableSeq<PatClass<Term>> toSeq() {
+    var buffer = MutableList.<PatClass<Term>>create();
     forEach(buffer::append);
     return buffer.toImmutableSeq();
   }
-  default void forEach(@NotNull Consumer<PatClass<Term, Err>> f) {
-    var queue = MutableDeque.<MCT<Term, Err>>create();
+  default void forEach(@NotNull Consumer<PatClass<Term>> f) {
+    var queue = MutableDeque.<MCT<Term>>create();
     queue.enqueue(this);
     while (queue.isNotEmpty()) switch (queue.dequeue()) {
-      case PatClass<Term, Err> leaf -> f.accept(leaf);
-      case Node<Term, Err> node -> node.children.forEach(queue::enqueue);
+      case PatClass<Term> leaf -> f.accept(leaf);
+      case Node<Term> node -> node.children.forEach(queue::enqueue);
     }
   }
-  @NotNull MCT<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f);
-  @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f);
+  @NotNull MCT<Term> map(@NotNull Function<PatClass<Term>, PatClass<Term>> f);
+  @NotNull MCT<Term> flatMap(@NotNull Function<PatClass<Term>, MCT<Term>> f);
 
-  sealed interface PatClass<Term, Err> extends MCT<Term, Err> {
+  sealed interface PatClass<Term> extends MCT<Term> {
     @NotNull ImmutableSeq<Integer> contents();
 
-    @NotNull MCT<Term, Err> propagate(@NotNull MCT<Term, Err> mct);
+    @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct);
 
-    @Override default @NotNull PatClass<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {
+    @Override default @NotNull PatClass<Term> map(@NotNull Function<PatClass<Term>, PatClass<Term>> f) {
       return f.apply(this);
     }
-    @Override default @NotNull MCT<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f) {
+    @Override default @NotNull MCT<Term> flatMap(@NotNull Function<PatClass<Term>, MCT<Term>> f) {
       return f.apply(this);
     }
   }
 
-  record Leaf<Term, Err>(@NotNull ImmutableSeq<Integer> contents) implements PatClass<Term, Err> {
-    @Override public @NotNull MCT<Term, Err> propagate(@NotNull MCT<Term, Err> mct) {
+  record Leaf<Term>(@NotNull ImmutableSeq<Integer> contents) implements PatClass<Term> {
+    @Override public @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct) {
       return mct;
     }
   }
 
-  record Error<Term, Err>(
+  record Error<Term>(
     @NotNull ImmutableSeq<Integer> contents,
-    @NotNull Err errorMessage
-  ) implements PatClass<Term, Err> {
-    @Override public @NotNull MCT<Term, Err> propagate(@NotNull MCT<Term, Err> mct) {
+    @NotNull Object errorMessage
+  ) implements PatClass<Term> {
+    @Override public @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct) {
       return mct.map(newClz -> new Error<>(newClz.contents(), errorMessage));
     }
   }
 
-  record Node<Term, Err>(@NotNull Term type, @NotNull ImmutableSeq<MCT<Term, Err>> children) implements MCT<Term, Err> {
-    @Override public @NotNull Node<Term, Err> map(@NotNull Function<PatClass<Term, Err>, PatClass<Term, Err>> f) {
+  record Node<Term>(@NotNull Term type, @NotNull ImmutableSeq<MCT<Term>> children) implements MCT<Term> {
+    @Override public @NotNull Node<Term> map(@NotNull Function<PatClass<Term>, PatClass<Term>> f) {
       return new Node<>(type, children.map(child -> child.map(f)));
     }
 
-    @Override public @NotNull Node<Term, Err> flatMap(@NotNull Function<PatClass<Term, Err>, MCT<Term, Err>> f) {
+    @Override public @NotNull Node<Term> flatMap(@NotNull Function<PatClass<Term>, MCT<Term>> f) {
       return new Node<>(type, children.map(child -> child.flatMap(f)));
     }
   }
