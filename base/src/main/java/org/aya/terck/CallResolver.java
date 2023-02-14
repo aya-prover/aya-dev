@@ -11,7 +11,7 @@ import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.core.visitor.DefConsumer;
+import org.aya.core.visitor.DefVisitor;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.tyck.tycker.TyckState;
@@ -34,7 +34,7 @@ public record CallResolver(
   @NotNull MutableSet<Def> targets,
   @NotNull MutableValue<Term.Matching> currentMatching,
   @NotNull CallGraph<Callable, Def, Term.Param> graph
-) implements DefConsumer {
+) implements DefVisitor {
   public CallResolver(
     @NotNull PrimDef.Factory factory, @NotNull FnDef fn,
     @NotNull MutableSet<Def> targets,
@@ -145,14 +145,14 @@ public record CallResolver(
 
   @Override public void accept(@NotNull Term.Matching matching) {
     this.currentMatching.set(matching);
-    DefConsumer.super.accept(matching);
+    DefVisitor.super.accept(matching);
     this.currentMatching.set(null);
   }
 
-  @Override public @NotNull void pre(@NotNull Term term) {
+  @Override public @NotNull Term pre(@NotNull Term term) {
     // TODO: Rework error reporting to include the original call
     // term = whnf(term);
     if (term instanceof Callable call) resolveCall(call);
-    DefConsumer.super.pre(term);
+    return DefVisitor.super.pre(term);
   }
 }

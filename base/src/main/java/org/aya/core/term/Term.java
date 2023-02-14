@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 /**
@@ -133,6 +133,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return new Param(this, type);
     }
 
+    public void descentConsume(@NotNull Consumer<@NotNull Term> f) {
+      f.accept(type);
+    }
+
     @Contract(" -> new") public @NotNull Param implicitify() {
       return new Param(ref, type, false);
     }
@@ -185,18 +189,13 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
         : new Matching(sourcePos, patterns, body);
     }
 
-    public @NotNull Matching descent(@NotNull UnaryOperator<@NotNull Term> f) {
-      return update(patterns, f.apply(body));
-    }
-
-    public @NotNull Matching descent(@NotNull UnaryOperator<@NotNull Term> f, @NotNull UnaryOperator<@NotNull Pat> g) {
+    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
       return update(patterns.map(p -> p.descent(g)), f.apply(body));
     }
 
-    public @NotNull Matching descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
-      var body = f.apply(body());
-      if (body == body()) return this;
-      return new Matching(sourcePos, patterns, body);
+    public void descent(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+      patterns.forEach(a -> a.descentConsume(g));
+      f.accept(body);
     }
   }
 }

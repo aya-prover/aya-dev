@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import static org.aya.core.term.SortTerm.Set0;
 import static org.aya.core.term.SortTerm.Type0;
@@ -70,14 +70,10 @@ public final class PrimDef extends TopLevelDef<Term> {
     return result;
   }
 
-  public @NotNull PrimDef update(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
-    return telescope.sameElements(telescope(), true) && result == result()
-      ? this : new PrimDef(ref, telescope, result, id);
-  }
-
   @Override
-  public @NotNull PrimDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update(telescope.map(p -> p.descent(f)), f.apply(result));
+  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
   }
 
   @FunctionalInterface

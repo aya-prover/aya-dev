@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 /**
  * @author ice1000
@@ -45,20 +45,18 @@ public final class FnDef extends UserDef<Term> {
     return ref;
   }
 
-  public @NotNull FnDef update(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result, @NotNull Either<Term, ImmutableSeq<Term.Matching>> body) {
-    // TODO: Better comparison of `body`?
-    return telescope.sameElements(telescope(), true) && result == result() && body.equals(this.body)
-      ? this : new FnDef(ref, telescope, result, modifiers, body);
-  }
-
-  @Override public @NotNull FnDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update(telescope.map(p -> p.descent(f)), f.apply(result), body.map(f, matchings -> matchings.map(m -> m.descent(f, g))));
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    body.forEach(f, matchings -> matchings.forEach(m -> m.descent(f, g)));
   }
 
   // TODO: HACK! Special method to support hooking into the transformation of `Matching`
   //   This allows `CallResolver` to check termination based on the top level pattern clauses.
   //   But we now also support pattern matching within terms, so is this rather fragile?
-  public @NotNull FnDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g, @NotNull UnaryOperator<Term.Matching> h) {
-    return update(telescope.map(p -> p.descent(f)), f.apply(result), body.map(f, matchings -> matchings.map(h)));
+  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g, @NotNull Consumer<Term.Matching> h) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    body.forEach(f, matchings -> matchings.forEach(h));
   }
 }

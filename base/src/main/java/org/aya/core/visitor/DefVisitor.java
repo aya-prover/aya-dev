@@ -7,27 +7,24 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-public interface DefConsumer extends TermConsumer {
+public interface DefVisitor extends EndoTerm {
   default void accept(@NotNull GenericDef def) {
     switch (def) {
-      case FnDef fn -> fn.descent(this::apply, this::apply, m -> {
-        accept(m);
-        return m;
-      });
-      case GenericDef d -> d.descent(this::apply, this::apply);
+      case FnDef fn -> fn.descentConsume(this::accept, this::accept, this::accept);
+      case GenericDef d -> d.descentConsume(this::accept, this::accept);
     }
   }
 
   default void accept(@NotNull Term.Matching matching) {
-    matching.descent(this::apply, this::apply);
+    matching.descent(t -> {
+      apply(t);
+    }, this::accept);
   }
 
-  private Term apply(Term t) {
-    accept(t);
-    return t;
+  private void accept(Term t) {
+    apply(t);
   }
-  private Pat apply(Pat p) {
-    accept(p);
-    return p;
+  private void accept(Pat p) {
+    apply(p);
   }
 }

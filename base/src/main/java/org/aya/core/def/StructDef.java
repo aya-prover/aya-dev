@@ -10,7 +10,7 @@ import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 /**
  * core struct definition, corresponding to {@link TeleDecl.StructDecl}
@@ -38,12 +38,10 @@ public final class StructDef extends UserDef.Type {
     return ref;
   }
 
-  public @NotNull StructDef update(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull SortTerm result, @NotNull ImmutableSeq<FieldDef> fields) {
-    return telescope.sameElements(telescope(), true) && result == result() && fields.sameElements(this.fields, true)
-      ? this : new StructDef(ref, telescope, result, fields);
-  }
   @Override
-  public @NotNull StructDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update(telescope.map(p -> p.descent(f)), (SortTerm) f.apply(result), fields.map(field -> field.descent(f, g)));
+  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    fields.forEach(field -> field.descentConsume(f, g));
   }
 }

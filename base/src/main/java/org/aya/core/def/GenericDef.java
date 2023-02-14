@@ -8,7 +8,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 /**
  * @author zaoqi
@@ -18,5 +18,5 @@ public sealed interface GenericDef extends AyaDocile permits ClassDef, Def {
 
   @NotNull Term result();
 
-  @NotNull GenericDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g);
+  void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g);
 }

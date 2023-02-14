@@ -12,7 +12,7 @@ import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 
 public final class FieldDef extends SubLevelDef {
   public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
@@ -39,13 +39,10 @@ public final class FieldDef extends SubLevelDef {
     return ref;
   }
 
-  public @NotNull FieldDef update(@NotNull ImmutableSeq<Term.Param> selfTele, @NotNull SortTerm result, @NotNull Option<Term> body) {
-    return selfTele.sameElements(this.selfTele, true) && result == result() && body.sameElements(this.body, true)
-      ? this : new FieldDef(structRef, ref, ownerTele, selfTele, result, body, coerce);
-  }
-  @Override
-  public @NotNull FieldDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update(selfTele.map(p -> p.descent(f)), (SortTerm) f.apply(result), body.map(f));
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    selfTele.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    body.forEach(f);
   }
 
   private @NotNull SortTerm structResult() {
