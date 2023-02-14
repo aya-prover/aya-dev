@@ -16,6 +16,7 @@ import org.aya.core.def.GenericDef;
 import org.aya.core.def.UserDef;
 import org.aya.core.term.Callable;
 import org.aya.core.term.Term;
+import org.aya.generic.Modifier;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.terck.BadRecursion;
@@ -78,10 +79,18 @@ public record AyaSccTycker(
     if (headerOrder.sizeEquals(1)) {
       checkUnit(new TyckOrder.Body(headerOrder.first()));
     } else {
-      var tyckTasks = headerOrder.view()
-        .<TyckOrder>map(TyckOrder.Head::new)
-        .appendedAll(headerOrder.map(TyckOrder.Body::new))
-        .toImmutableSeq();
+      var tyckTasks = MutableList.<TyckOrder>create();
+      headerOrder.forEach(order -> {
+        if (order instanceof TeleDecl.FnDecl fn && fn.modifiers.contains(Modifier.Inline)) {
+          tyckTasks.append(new TyckOrder.Head(fn));
+          tyckTasks.append(new TyckOrder.Body(fn));
+        } else tyckTasks.append(new TyckOrder.Head(order));
+      });
+      headerOrder.forEach(order -> {
+        if (!(order instanceof TeleDecl.FnDecl fn) || !fn.modifiers.contains(Modifier.Inline)) {
+          tyckTasks.append(new TyckOrder.Body(order));
+        }
+      });
       tyckTasks.forEach(this::check);
       terck(tyckTasks.view());
     }

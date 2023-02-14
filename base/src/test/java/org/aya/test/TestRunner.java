@@ -146,6 +146,7 @@ public class TestRunner {
     try {
       var output = StringUtil.trimCRLF(hookOut);
       var expected = instantiateVars(testFile, StringUtil.trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
+      // assertEquals for better diff view in IntelliJ IDEA.
       assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());

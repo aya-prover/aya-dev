@@ -10,6 +10,7 @@ import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.ExprConsumer;
+import org.aya.generic.Modifier;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,12 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
           ctor.patterns.forEach(p -> accept(p.term()));
           accept(ctor.clauses);
         }
+        // for inline functions: no body: body should be treated as header.
+        if (decl instanceof TeleDecl.FnDecl fn && fn.modifiers.contains(Modifier.Inline))
+          fn.body.forEach(this, c -> c.forEach(cl -> {
+            cl.expr.forEach(this);
+            cl.patterns.forEach(p -> accept(p.term()));
+          }));
         // constructor and field should always depend on their data/struct header.
         if (decl instanceof TeleDecl.DataCtor ctor) references.append(ctor.dataRef.concrete);
         if (decl instanceof TeleDecl.StructField field) references.append(field.structRef.concrete);

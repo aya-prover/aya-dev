@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.generic.Modifier;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
@@ -58,8 +59,18 @@ public interface StmtResolver {
       case TeleDecl.FnDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
-        decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
-        addReferences(info, new TyckOrder.Body(decl), resolver);
+        if (decl.modifiers.contains(Modifier.Inline)) {
+          // inline functions: no body no body but you!
+          resolver.enterHead();
+          decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
+          var head = new TyckOrder.Head(decl);
+          addReferences(info, head, resolver);
+          addReferences(info, new TyckOrder.Body(decl), SeqView.of(head));
+        } else {
+          resolver.enterBody();
+          decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
+          addReferences(info, new TyckOrder.Body(decl), resolver);
+        }
       }
       case TeleDecl.DataDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
