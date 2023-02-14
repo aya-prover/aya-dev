@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -57,7 +57,7 @@ public record ReplParser<T>(
       if (shellAlike) return shellLike.parse(line, cursor, context);
     }
     // Drop whitespaces
-    lexer.reset(line, 0, line.length(), 0);
+    lexer.reset(line, 0);
     var tokens = lexer.allTheWayDown()
       .view()
       .filterNot(lexer::isWhitespace)

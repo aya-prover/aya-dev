@@ -62,9 +62,9 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
           else if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
             || AyaParserDefinitionBase.MARKERS.contains(tokenType))
             r = new SymLit(LitKind.SpecialSymbol);
-          if (tokenType == TokenType.WHITE_SPACE && token.range().getLength() <= 2) {
+          if (tokenType == TokenType.WHITE_SPACE) {
             var text = token.range().substring(file.sourceCode());
-            if (text.contains("\n")) r = new SymLit(LitKind.Eol);
+            r = new SymLit(text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
           }
           if (r == null) return null;
           return r.toInfo(AyaProducer.sourcePosOf(token, file));

@@ -68,7 +68,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var withStyleDef = !flags.prettyNoCodeStyle();
     if (currentStage == CliEnums.PrettyStage.literate) {
       var text = renderOptions.render(out,
-        docitfy((ImmutableSeq<Stmt>) doc, flags.prettierOptions()),
+        toDoc((ImmutableSeq<Stmt>) doc, flags.prettierOptions()),
         true,
         withStyleDef,
         !flags.ascii());
@@ -78,7 +78,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
         (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
     }
   }
-  @VisibleForTesting default @NotNull Doc docitfy(
+  @VisibleForTesting default @NotNull Doc toDoc(
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull PrettierOptions options) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);

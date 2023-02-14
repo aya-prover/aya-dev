@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ReplLexer<T> {
   void reset(@NotNull CharSequence buf, int start, int end, int initialState);
+
+  default void reset(@NotNull CharSequence buf, int initialState) {
+    reset(buf, 0, buf.length(), initialState);
+  }
 
   @NotNull ImmutableSeq<T> allTheWayDown();
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
@@ -18,8 +18,7 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Struct.key(), ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
     Tuple.of(AyaStyleKey.Con.key(), ColorScheme.colorOf(0.63f, 0.13f, 0.94f)),
     Tuple.of(AyaStyleKey.Field.key(), ColorScheme.colorOf(0, 0.55f, 0.55f)),
-    // I know this is exactly not 0x114514, but this color is better than that!
-    Tuple.of(AyaStyleKey.Comment.key(), ColorScheme.colorOf(0.11f, 0.45f, 0.14f))
+    Tuple.of(AyaStyleKey.Comment.key(), ColorScheme.colorOf(0.55f, 0.55f, 0.55f))
   ));
 
   /** The colors are from IntelliJ IDEA light theme. */
@@ -32,6 +31,6 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Struct.key(), 0x000000),
     Tuple.of(AyaStyleKey.Con.key(), 0x067D17),
     Tuple.of(AyaStyleKey.Field.key(), 0x871094),
-    Tuple.of(AyaStyleKey.Comment.key(), 0x114514)
+    Tuple.of(AyaStyleKey.Comment.key(), 0x8C8C8C)
   ));
 }
