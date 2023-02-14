@@ -213,9 +213,12 @@ public class HighlighterTester {
 
     Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
-    var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
+    var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts)
+      .filterNot(it -> it.type() instanceof HighlightInfo.SymLit(var kind)
+        && ignored.contains(kind));
     new HighlighterTester(code, result, expected).runTest();
   }
+  static Seq<HighlightInfo.LitKind> ignored = Seq.of(HighlightInfo.LitKind.Eol, HighlightInfo.LitKind.Whitespace);
 
   /// region Helper
 

@@ -53,8 +53,6 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 
 %unicode
 
-EOL = \R
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Identifier, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +99,7 @@ RPATH = \|\] | \u27E7
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-LINE_COMMENT        = "//" (.* | {EOL})
+LINE_COMMENT        = "//" (.* | \R)
 BLOCK_COMMENT_START = "/*"
 BLOCK_COMMENT_END   = "*/"
 
@@ -194,9 +192,9 @@ BLOCK_COMMENT_END   = "*/"
   {STRING}              { return STRING; }
 
   // whitespace tokens are treated separated for the convenience of LaTeX translation
-  {EOL}                 { return WHITE_SPACE; }
-  [ ]+                  { return WHITE_SPACE; }
-  [\t]+                 { return WHITE_SPACE; }
+  \R+  { return WHITE_SPACE; }
+  [ ]+ { return WHITE_SPACE; }
+  \t+  { return WHITE_SPACE; }
 }
 
 
