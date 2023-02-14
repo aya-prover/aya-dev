@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -9,7 +10,7 @@ import java.util.function.UnaryOperator;
 public final class IntervalTerm implements StableWHNF, Formation {
   public static final IntervalTerm INSTANCE = new IntervalTerm();
 
-  @Override public @NotNull IntervalTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull IntervalTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return this;
   }
 

@@ -8,6 +8,7 @@ import kala.control.Option;
 import kala.function.TriFunction;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.generic.util.NormalizeMode;
@@ -28,6 +29,7 @@ import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import static org.aya.core.term.SortTerm.Set0;
 import static org.aya.core.term.SortTerm.Type0;
@@ -66,6 +68,16 @@ public final class PrimDef extends TopLevelDef<Term> {
       if (signature != null) return signature.result();
     }
     return result;
+  }
+
+  public @NotNull PrimDef update(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Term result) {
+    return telescope.sameElements(telescope(), true) && result == result()
+      ? this : new PrimDef(ref, telescope, result, id);
+  }
+
+  @Override
+  public @NotNull PrimDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+    return update(telescope.map(p -> p.descent(f)), f.apply(result));
   }
 
   @FunctionalInterface

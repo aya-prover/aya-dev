@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ public record InTerm(@NotNull Term phi, @NotNull Term u) implements Term {
     return phi == phi() && u == u() ? this : new InTerm(phi, u);
   }
 
-  @Override public @NotNull InTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull InTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(phi), f.apply(u));
   }
 

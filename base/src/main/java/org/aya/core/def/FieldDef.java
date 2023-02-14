@@ -5,12 +5,14 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 public final class FieldDef extends SubLevelDef {
   public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
@@ -35,6 +37,15 @@ public final class FieldDef extends SubLevelDef {
 
   public @NotNull DefVar<FieldDef, TeleDecl.StructField> ref() {
     return ref;
+  }
+
+  public @NotNull FieldDef update(@NotNull ImmutableSeq<Term.Param> selfTele, @NotNull SortTerm result, @NotNull Option<Term> body) {
+    return selfTele.sameElements(this.selfTele, true) && result == result() && body.sameElements(this.body, true)
+      ? this : new FieldDef(structRef, ref, ownerTele, selfTele, result, body, coerce);
+  }
+  @Override
+  public @NotNull FieldDef descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+    return update(selfTele.map(p -> p.descent(f)), (SortTerm) f.apply(result), body.map(f));
   }
 
   private @NotNull SortTerm structResult() {

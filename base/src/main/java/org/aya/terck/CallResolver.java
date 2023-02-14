@@ -143,13 +143,15 @@ public record CallResolver(
     };
   }
 
-  @Override public void visitMatching(@NotNull Term.Matching matching) {
+  @Override public void accept(@NotNull Term.Matching matching) {
     this.currentMatching.set(matching);
-    DefConsumer.super.visitMatching(matching);
+    DefConsumer.super.accept(matching);
     this.currentMatching.set(null);
   }
 
-  @Override public void pre(@NotNull Term term) {
+  @Override public @NotNull void pre(@NotNull Term term) {
+    // TODO: Rework error reporting to include the original call
+    // term = whnf(term);
     if (term instanceof Callable call) resolveCall(call);
     DefConsumer.super.pre(term);
   }

@@ -40,8 +40,8 @@ import java.util.function.UnaryOperator;
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   // Descending an operation to the term AST
-  // NOTE: Currently we require the operation to preserve StructCall and DataCall.
-  @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f);
+  // NOTE: Currently we require the operation `f` to preserve StructCall, DataCall, and SortTerm.
+  @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g);
 
   default @NotNull Term subst(@NotNull AnyVar var, @NotNull Term term) {
     return subst(new Subst(var, term));
@@ -178,6 +178,19 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Pat.Preclause.weaken(this).toDoc(options);
+    }
+
+    public @NotNull Matching update(@NotNull ImmutableSeq<Arg<Pat>> patterns, @NotNull Term body) {
+      return body == body() && patterns.sameElements(patterns(), true) ? this
+        : new Matching(sourcePos, patterns, body);
+    }
+
+    public @NotNull Matching descent(@NotNull UnaryOperator<@NotNull Term> f) {
+      return update(patterns, f.apply(body));
+    }
+
+    public @NotNull Matching descent(@NotNull UnaryOperator<@NotNull Term> f, @NotNull UnaryOperator<@NotNull Pat> g) {
+      return update(patterns.map(p -> p.descent(g)), f.apply(body));
     }
 
     public @NotNull Matching descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {

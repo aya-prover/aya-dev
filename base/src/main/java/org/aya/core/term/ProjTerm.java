@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.Subst;
 import org.aya.prettier.AyaPrettierOptions;
 import org.jetbrains.annotations.Contract;
@@ -18,7 +19,7 @@ public record ProjTerm(@NotNull Term of, int ix) implements Elimination {
     return of == of() ? this : new ProjTerm(of, ix);
   }
 
-  @Override public @NotNull ProjTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull ProjTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(of));
   }
 

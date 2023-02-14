@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.SeqView;
+import org.aya.core.pat.Pat;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
     return asFormula == asFormula() ? this : new FormulaTerm(asFormula);
   }
 
-  @Override public @NotNull FormulaTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull FormulaTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(asFormula.fmap(f));
   }
 

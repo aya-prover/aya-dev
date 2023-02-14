@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.FieldDef;
+import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public record FieldTerm(
       : new FieldTerm(of, ref, structArgs, fieldArgs);
   }
 
-  @Override public @NotNull FieldTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull FieldTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(of), structArgs.map(arg -> arg.descent(f)), fieldArgs.map(arg -> arg.descent(f)));
   }
 

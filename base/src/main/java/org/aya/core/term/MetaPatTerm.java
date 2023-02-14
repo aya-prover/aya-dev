@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public record MetaPatTerm(@NotNull Pat.Meta ref) implements Term {
-  @Override public @NotNull MetaPatTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull MetaPatTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return this;
   }
 

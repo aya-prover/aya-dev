@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
+import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public record DataCall(
     return args.sameElements(args(), true) ? this : new DataCall(ref, ulift, args);
   }
 
-  @Override public @NotNull DataCall descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull DataCall descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(args.map(arg -> arg.descent(f)));
   }
 

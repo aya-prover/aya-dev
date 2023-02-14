@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.pat.Pat;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ public record PLamTerm(
     return body == body() ? this : new PLamTerm(params, body);
   }
 
-  @Override public @NotNull PLamTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull PLamTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(body));
   }
 }
