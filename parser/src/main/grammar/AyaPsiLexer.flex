@@ -193,8 +193,10 @@ BLOCK_COMMENT_END   = "*/"
   {NUMBER}              { return NUMBER; }
   {STRING}              { return STRING; }
 
+  // whitespace tokens are treated separated for the convenience of LaTeX translation
   {EOL}                 { return WHITE_SPACE; }
-  [\s]+                 { return WHITE_SPACE; }
+  [ ]+                  { return WHITE_SPACE; }
+  [\t]+                 { return WHITE_SPACE; }
 }
 
 
