@@ -5,6 +5,7 @@ package org.aya.tyck.pat;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
@@ -36,7 +37,7 @@ public record PatClassifier(
   @NotNull TyckState state,
   @NotNull PatTree.Builder builder
 ) {
-  public static @NotNull MCT<Term, PatErr> classify(
+  public static @NotNull MCT<Term> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull StatedTycker tycker,
     @NotNull SourcePos pos
@@ -46,7 +47,7 @@ public record PatClassifier(
 
   public record PatErr(@NotNull ImmutableSeq<Arg<Pattern>> missing) {}
 
-  @VisibleForTesting public static @NotNull MCT<Term, PatErr> classify(
+  @VisibleForTesting public static @NotNull MCT<Term> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos
@@ -55,10 +56,10 @@ public record PatClassifier(
     var classification = classifier.classifySub(telescope.view(), clauses.view()
       .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), index))
       .toImmutableSeq(), 5);
-    var errRef = MutableValue.<MCT.Error<Term, PatErr>>create();
+    var errRef = MutableValue.<MCT.Error<Term>>create();
     classification.forEach(pats -> {
-      if (errRef.get() == null && pats instanceof MCT.Error<Term, PatErr> error) {
-        reporter.report(new ClausesProblem.MissingCase(pos, error.errorMessage()));
+      if (errRef.get() == null && pats instanceof MCT.Error<Term> error) {
+        reporter.report(new ClausesProblem.MissingCase(pos, (PatErr) error.errorMessage()));
         errRef.set(error);
       }
     });
@@ -68,9 +69,9 @@ public record PatClassifier(
 
   public static int[] firstMatchDomination(
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull Reporter reporter, @NotNull MCT<Term, PatErr> mct
+    @NotNull Reporter reporter, @NotNull MCT<Term> mct
   ) {
-    if (mct instanceof MCT.Error<Term, PatErr>) return new int[0];
+    if (mct instanceof MCT.Error<Term>) return new int[0];
     // StackOverflow says they're initialized to zero
     var numbers = new int[clauses.size()];
     mct.forEach(results ->
@@ -82,7 +83,7 @@ public record PatClassifier(
     return numbers;
   }
 
-  private @NotNull MCT<Term, PatErr> classifySub(
+  private @NotNull MCT<Term> classifySub(
     @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses,
     int fuel
@@ -101,7 +102,7 @@ public record PatClassifier(
    * @param telescope must be nonempty
    * @see MCT#classify(SeqView, ImmutableSeq, BiFunction)
    */
-  private @Nullable MCT<Term, PatErr> classifySubImpl(
+  private @Nullable MCT<Term> classifySubImpl(
     @NotNull SeqView<Term.Param> telescope,
     @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses, int fuel
   ) {
@@ -111,7 +112,7 @@ public record PatClassifier(
     var normalize = target.type().normalize(state, NormalizeMode.WHNF);
     switch (normalize) {
       default -> {
-        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableSeq.empty(),
+        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
           new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
       }
       // The type is sigma type, and do we have any non-catchall patterns?
@@ -146,7 +147,7 @@ public record PatClassifier(
           // there are no clauses starting with a constructor pattern -- we don't need a split!
           clauses.noneMatch(subPats -> head(subPats) instanceof Pat.Ctor || head(subPats) instanceof Pat.ShapedInt)
         ) break;
-        var buffer = MutableList.<MCT<Term, PatErr>>create();
+        var buffer = MutableList.<MCT<Term>>create();
         var data = dataCall.ref();
         var body = Def.dataBody(data);
         if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
@@ -187,13 +188,13 @@ public record PatClassifier(
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
-            buffer.append(new MCT.Error<>(ImmutableSeq.empty(),
+            buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(),
               new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq())));
             builder.reduce();
             builder.unshift();
             continue;
           }
-          MCT<Term, PatErr> classified;
+          MCT<Term> classified;
           // The base case of classifying literals together with other patterns:
           // variable `nonEmpty` only has two kinds of patterns: bind and literal.
           // We should put all bind patterns altogether and check overlapping of literals, which avoids
@@ -215,12 +216,12 @@ public record PatClassifier(
               // Any remaining pattern?
               subPats -> subPats.allMatch(pat -> pat.pats().sizeEquals(1))
                 // No, we're done!
-                ? new MCT.Leaf<Term, PatErr>(subPats.map(MCT.SubPats::ix))
+                ? MCT.Leaf.<Term>of(subPats)
                 // Yes, classify the rest of them
                 : classifySub(conTele2.view(), subPats, fuelCopy));
             // Always add bind patterns as a separate group. See: https://github.com/aya-prover/aya-dev/issues/437
             // even though we will report duplicated domination warnings!
-            var allBinds = new MCT.Leaf<Term, PatErr>(hasBind.map(MCT.SubPats::ix));
+            var allBinds = MCT.Leaf.<Term>of(hasBind);
             classified = new MCT.Node<>(dataCall, allSub.appended(allBinds));
           } else {
             classified = classifySub(conTele2.view(), matches, fuel);

@@ -25,7 +25,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     // TODO: escape according to `outer`
     return content.replace("\\", "")
       .replace("_", "\\_")
-      .replace(" ", "~");
+      // This is a stupid hack. Maybe we can calculate consecutive spaces
+      .replace("  ", makeIndent(2))
+      .replace(" ", makeIndent(1));
   }
 
   private static @NotNull Tuple2<String, String> id(@NotNull String name) {
@@ -91,7 +93,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
-    cursor.lineBreakWith("\\\\\n");
+    cursor.lineBreakWith("~\\\\\n");
   }
 
   @Override
