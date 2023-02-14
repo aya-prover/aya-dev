@@ -4,6 +4,7 @@ package org.aya.util.tyck;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableDeque;
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.Contract;
@@ -21,7 +22,7 @@ import java.util.function.Function;
 public sealed interface MCT<Term> {
   static <Term, Pat> @NotNull ImmutableSeq<SubPats<Pat>> extract(
     PatClass<Term> pats, @NotNull ImmutableSeq<SubPats<Pat>> subPatsSeq) {
-    return pats.contents().map(subPatsSeq::get);
+    return pats.contents().mapToObj(subPatsSeq::get);
   }
   /**
    * Helper method to avoid stack being too deep and fuel being consumed for distinct patterns.
@@ -44,7 +45,7 @@ public sealed interface MCT<Term> {
       }
     }
     // Done
-    return new Leaf<>(subPatsSeq.map(SubPats::ix));
+    return Leaf.of(subPatsSeq);
   }
 
   default @NotNull ImmutableSeq<PatClass<Term>> toSeq() {
@@ -64,7 +65,7 @@ public sealed interface MCT<Term> {
   @NotNull MCT<Term> flatMap(@NotNull Function<PatClass<Term>, MCT<Term>> f);
 
   sealed interface PatClass<Term> extends MCT<Term> {
-    @NotNull ImmutableSeq<Integer> contents();
+    @NotNull ImmutableIntSeq contents();
 
     @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct);
 
@@ -76,14 +77,18 @@ public sealed interface MCT<Term> {
     }
   }
 
-  record Leaf<Term>(@NotNull ImmutableSeq<Integer> contents) implements PatClass<Term> {
+  record Leaf<Term>(@NotNull ImmutableIntSeq contents) implements PatClass<Term> {
+    public static <Term> Leaf<Term> of(@NotNull ImmutableSeq<? extends SubPats<?>> pats) {
+      return new Leaf<>(pats.view().map(SubPats::ix).collect(ImmutableIntSeq.factory()));
+    }
+
     @Override public @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct) {
       return mct;
     }
   }
 
   record Error<Term>(
-    @NotNull ImmutableSeq<Integer> contents,
+    @NotNull ImmutableIntSeq contents,
     @NotNull Object errorMessage
   ) implements PatClass<Term> {
     @Override public @NotNull MCT<Term> propagate(@NotNull MCT<Term> mct) {

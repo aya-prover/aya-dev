@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
-  public static @NotNull ImmutableSeq<MCT.PatClass<Term, PatClassifier.PatErr>> testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
+  public static @NotNull ImmutableSeq<MCT.PatClass<Term>> testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
     return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), AyaThrowingReporter.INSTANCE, SourcePos.NONE).toSeq();
   }

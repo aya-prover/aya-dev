@@ -4,6 +4,7 @@ module aya.util {
   requires static org.jetbrains.annotations;
   requires transitive kala.base;
   requires transitive kala.collection;
+  requires transitive kala.collection.primitive;
 
   exports org.aya.util.error;
   exports org.aya.util.binop;

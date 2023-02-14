@@ -5,6 +5,7 @@ package org.aya.tyck.pat;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
@@ -111,7 +112,7 @@ public record PatClassifier(
     var normalize = target.type().normalize(state, NormalizeMode.WHNF);
     switch (normalize) {
       default -> {
-        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableSeq.empty(),
+        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
           new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
       }
       // The type is sigma type, and do we have any non-catchall patterns?
@@ -187,7 +188,7 @@ public record PatClassifier(
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
-            buffer.append(new MCT.Error<>(ImmutableSeq.empty(),
+            buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(),
               new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq())));
             builder.reduce();
             builder.unshift();
@@ -215,12 +216,12 @@ public record PatClassifier(
               // Any remaining pattern?
               subPats -> subPats.allMatch(pat -> pat.pats().sizeEquals(1))
                 // No, we're done!
-                ? new MCT.Leaf<Term>(subPats.map(MCT.SubPats::ix))
+                ? MCT.Leaf.<Term>of(subPats)
                 // Yes, classify the rest of them
                 : classifySub(conTele2.view(), subPats, fuelCopy));
             // Always add bind patterns as a separate group. See: https://github.com/aya-prover/aya-dev/issues/437
             // even though we will report duplicated domination warnings!
-            var allBinds = new MCT.Leaf<Term>(hasBind.map(MCT.SubPats::ix));
+            var allBinds = MCT.Leaf.<Term>of(hasBind);
             classified = new MCT.Node<>(dataCall, allSub.appended(allBinds));
           } else {
             classified = classifySub(conTele2.view(), matches, fuel);
