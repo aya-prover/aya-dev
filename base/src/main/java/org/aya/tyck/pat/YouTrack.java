@@ -65,8 +65,9 @@ public record YouTrack(
   public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull MCT<Term> mct) {
     mct.forEach(results -> {
       var contents = results.contents()
-        .flatMap(i -> Pat.Preclause.lift(clauses.clauses().get(i))
-          .map(matching -> IntObjTuple2.of(i, matching)));
+        .mapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
+          .map(matching -> IntObjTuple2.of(i, matching)))
+        .flatMap(it -> it);
       for (int i = 1, size = contents.size(); i < size; i++)
         unifyClauses(clauses.result(), contents.get(i - 1), contents.get(i));
     });
