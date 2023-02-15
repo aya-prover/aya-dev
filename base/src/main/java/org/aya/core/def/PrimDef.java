@@ -8,6 +8,7 @@ import kala.control.Option;
 import kala.function.TriFunction;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.generic.util.NormalizeMode;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.aya.core.term.SortTerm.Set0;
@@ -66,6 +68,12 @@ public final class PrimDef extends TopLevelDef<Term> {
       if (signature != null) return signature.result();
     }
     return result;
+  }
+
+  @Override
+  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
   }
 
   @FunctionalInterface

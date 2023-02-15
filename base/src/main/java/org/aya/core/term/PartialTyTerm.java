@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.guest0x0.cubical.Restr;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ public record PartialTyTerm(@NotNull Term type, @NotNull Restr<Term> restr) impl
     return type == type() && restr == restr() ? this : new PartialTyTerm(type, restr);
   }
 
-  @Override public @NotNull PartialTyTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull PartialTyTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(type), restr.map(f));
   }
 

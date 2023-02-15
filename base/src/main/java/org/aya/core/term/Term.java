@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 /**
@@ -40,8 +40,8 @@ import java.util.function.UnaryOperator;
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   // Descending an operation to the term AST
-  // NOTE: Currently we require the operation to preserve StructCall and DataCall.
-  @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f);
+  // NOTE: Currently we require the operation `f` to preserve StructCall, DataCall, and SortTerm.
+  @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g);
 
   default @NotNull Term subst(@NotNull AnyVar var, @NotNull Term term) {
     return subst(new Subst(var, term));
@@ -133,6 +133,10 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return new Param(this, type);
     }
 
+    public void descentConsume(@NotNull Consumer<@NotNull Term> f) {
+      f.accept(type);
+    }
+
     @Contract(" -> new") public @NotNull Param implicitify() {
       return new Param(ref, type, false);
     }
@@ -180,10 +184,18 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return Pat.Preclause.weaken(this).toDoc(options);
     }
 
-    public @NotNull Matching descent(@NotNull Function<@NotNull Term, @NotNull Term> f) {
-      var body = f.apply(body());
-      if (body == body()) return this;
-      return new Matching(sourcePos, patterns, body);
+    public @NotNull Matching update(@NotNull ImmutableSeq<Arg<Pat>> patterns, @NotNull Term body) {
+      return body == body() && patterns.sameElements(patterns(), true) ? this
+        : new Matching(sourcePos, patterns, body);
+    }
+
+    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+      return update(patterns.map(p -> p.descent(g)), f.apply(body));
+    }
+
+    public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+      patterns.forEach(a -> a.descentConsume(g));
+      f.accept(body);
     }
   }
 }

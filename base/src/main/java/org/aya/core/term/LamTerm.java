@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import org.aya.core.UntypedParam;
+import org.aya.core.pat.Pat;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,7 @@ public record LamTerm(@NotNull Param param, @NotNull Term body) implements Stabl
     return body == body() ? this : new LamTerm(param(), body);
   }
 
-  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(body));
   }
 

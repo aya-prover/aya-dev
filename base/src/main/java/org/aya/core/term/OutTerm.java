@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.aya.guest0x0.cubical.Partial;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ public record OutTerm(@NotNull Term phi, @NotNull Term partial, @NotNull Term of
     return phi == phi() && partial == partial() && of == of() ? this : make(phi, partial, of);
   }
 
-  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(phi), f.apply(partial), f.apply(of));
   }
 

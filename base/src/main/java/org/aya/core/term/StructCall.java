@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.StructDef;
+import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public record StructCall(
     return args.sameElements(args(), true) ? this : new StructCall(ref(), ulift(), args);
   }
 
-  @Override public @NotNull StructCall descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull StructCall descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(args.map(arg -> arg.descent(f)));
   }
 }

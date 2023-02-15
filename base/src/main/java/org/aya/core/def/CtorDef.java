@@ -13,6 +13,7 @@ import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * @author ice1000, kiva
@@ -43,6 +44,16 @@ public final class CtorDef extends SubLevelDef {
 
   public @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref() {
     return ref;
+  }
+
+  @Override
+  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    pats.forEach(a -> a.descentConsume(g));
+    selfTele.forEach(p -> p.descentConsume(f));
+    clauses.fmap(cl -> {
+      f.accept(cl);
+      return cl;
+    });
   }
 
   @Override public @NotNull ImmutableSeq<Term.Param> telescope() {

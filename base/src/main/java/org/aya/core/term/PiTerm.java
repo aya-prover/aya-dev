@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
@@ -21,7 +22,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   public @NotNull PiTerm update(@NotNull Param param, @NotNull Term body) {
     return param == param() && body == body() ? this : new PiTerm(param, body);
   }
-  @Override public @NotNull PiTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull PiTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(param.descent(f), f.apply(body));
   }
 

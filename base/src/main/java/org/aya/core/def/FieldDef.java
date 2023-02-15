@@ -5,12 +5,14 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class FieldDef extends SubLevelDef {
   public final @NotNull DefVar<StructDef, TeleDecl.StructDecl> structRef;
@@ -35,6 +37,12 @@ public final class FieldDef extends SubLevelDef {
 
   public @NotNull DefVar<FieldDef, TeleDecl.StructField> ref() {
     return ref;
+  }
+
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    selfTele.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    body.forEach(f);
   }
 
   private @NotNull SortTerm structResult() {

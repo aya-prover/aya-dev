@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.guest0x0.cubical.CofThy;
@@ -28,7 +29,7 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
     return partial == partial() && rhsType == rhsType() ? this : new PartialTerm(partial, rhsType);
   }
 
-  @Override public @NotNull PartialTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull PartialTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(partial.map(f), f.apply(rhsType));
   }
 

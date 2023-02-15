@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.aya.generic.SortKind;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000, tsao-chi
  */
 public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, Formation {
-  @Override public @NotNull SortTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull SortTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return this;
   }
 

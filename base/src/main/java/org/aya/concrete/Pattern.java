@@ -38,32 +38,38 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     return new ConcretePrettier(options).pattern(this, true, BasePrettier.Outer.Free);
   }
 
-  default @NotNull Pattern descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
-    return switch (this) {
-      case Pattern.BinOpSeq(var pos, var seq) -> new Pattern.BinOpSeq(pos, descent(f, seq));
-      case Pattern.Ctor(var pos, var resolved, var params) -> new Pattern.Ctor(pos, resolved, descent(f, params));
-      case Pattern.Tuple(var pos, var patterns) -> new Pattern.Tuple(pos, descent(f, patterns));
-      case Pattern.List(var pos, var patterns) -> new Pattern.List(pos, patterns.map(f));
-      case Pattern.As(var pos, var inner, var as, var type) -> new Pattern.As(pos, f.apply(inner), as, type);
-      default -> this;
-    };
-  }
-  private static @NotNull ImmutableSeq<Arg<Pattern>>
-  descent(@NotNull UnaryOperator<@NotNull Pattern> f, @NotNull ImmutableSeq<Arg<Pattern>> seq) {
-    return seq.map(x -> x.descent(f));
-  }
+  @NotNull Pattern descent(@NotNull UnaryOperator<@NotNull Pattern> f);
 
   record Tuple(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Arg<Pattern>> patterns
   ) implements Pattern {
+    public @NotNull Tuple update(@NotNull ImmutableSeq<Arg<Pattern>> patterns) {
+      return patterns.sameElements(patterns(), true) ? this : new Tuple(sourcePos, patterns);
+    }
+
+    @Override public @NotNull Tuple descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return update(patterns.map(a -> a.descent(f)));
+    }
   }
 
-  record Number(@Override @NotNull SourcePos sourcePos, int number) implements Pattern {}
+  record Number(@Override @NotNull SourcePos sourcePos, int number) implements Pattern {
+    @Override public @NotNull Number descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return this;
+    }
+  }
 
-  record Absurd(@Override @NotNull SourcePos sourcePos) implements Pattern {}
+  record Absurd(@Override @NotNull SourcePos sourcePos) implements Pattern {
+    @Override public @NotNull Absurd descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return this;
+    }
+  }
 
-  record CalmFace(@Override @NotNull SourcePos sourcePos) implements Pattern {}
+  record CalmFace(@Override @NotNull SourcePos sourcePos) implements Pattern {
+    @Override public @NotNull CalmFace descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return this;
+    }
+  }
 
   /**
    * @param userType only generated when a typed lambda is pushed into the patterns
@@ -77,6 +83,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   ) implements Pattern {
     public Bind(@NotNull SourcePos sourcePos, @NotNull LocalVar bind) {
       this(sourcePos, bind, null, MutableValue.create());
+    }
+
+    @Override public @NotNull Bind descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return this;
     }
   }
 
@@ -92,6 +102,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     public QualifiedRef(@NotNull SourcePos sourcePos, @NotNull QualifiedID qualifiedID) {
       this(sourcePos, qualifiedID, null, MutableValue.create());
     }
+
+    @Override public @NotNull QualifiedRef descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return this;
+    }
   }
 
   record Ctor(
@@ -105,12 +119,27 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     public Ctor(@NotNull Pattern.QualifiedRef qref, @NotNull AnyVar maybe) {
       this(qref.sourcePos(), new WithPos<>(qref.sourcePos(), maybe), ImmutableSeq.empty());
     }
+
+    public @NotNull Ctor update(@NotNull ImmutableSeq<Arg<Pattern>> params) {
+      return params.sameElements(params(), true) ? this : new Ctor(sourcePos, resolved, params);
+    }
+
+    @Override public @NotNull Ctor descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return update(params.map(a -> a.descent(f)));
+    }
   }
 
   record BinOpSeq(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Arg<Pattern>> seq
   ) implements Pattern {
+    public @NotNull BinOpSeq update(@NotNull ImmutableSeq<Arg<Pattern>> seq) {
+      return seq.sameElements(seq(), true) ? this : new BinOpSeq(sourcePos, seq);
+    }
+
+    @Override public @NotNull BinOpSeq descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return update(seq.map(a -> a.descent(f)));
+    }
   }
 
   /**
@@ -125,6 +154,14 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     public static Arg<Pattern> wrap(@NotNull SourcePos pos, @NotNull Arg<Pattern> pattern, @NotNull LocalVar var) {
       return new Arg<>(new As(pos, pattern.term(), var, MutableValue.create()), pattern.explicit());
     }
+
+    public @NotNull As update(@NotNull Pattern pattern) {
+      return pattern == pattern() ? this : new As(sourcePos, pattern, as, type);
+    }
+
+    @Override public @NotNull As descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return update(f.apply(pattern));
+    }
   }
 
   /** Sugared List Pattern */
@@ -132,6 +169,13 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pattern> elements
   ) implements Pattern {
+    public @NotNull List update(@NotNull ImmutableSeq<Pattern> elements) {
+      return elements.sameElements(elements(), true) ? this : new List(sourcePos, elements);
+    }
+
+    @Override public @NotNull List descent(@NotNull UnaryOperator<@NotNull Pattern> f) {
+      return update(elements.map(f));
+    }
   }
 
   /**
@@ -159,7 +203,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     }
 
     public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
-      return update(Pattern.descent(g, patterns), expr.map(f));
+      return update(patterns.map(p -> p.descent(g)), expr.map(f));
     }
   }
 

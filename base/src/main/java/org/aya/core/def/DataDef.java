@@ -4,9 +4,12 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 /**
  * core data definition, corresponding to {@link TeleDecl.DataDecl}
@@ -34,6 +37,12 @@ public final class DataDef extends UserDef.Type {
 
   public @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref() {
     return ref;
+  }
+
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
+    body.forEach(c -> c.descentConsume(f, g));
   }
 
   /**

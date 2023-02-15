@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.control.Result;
 import org.aya.core.term.*;
-import org.aya.core.visitor.PatTraversal;
+import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.util.InternalException;
 import org.aya.util.Arg;
@@ -114,7 +114,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
     if (todo == null) {
       // don't infer
       if (!inferMeta) throw new Mismatch(true);
-      var bindSubst = new PatTraversal.MetaBind(subst, metaPat.ref().fakeBind().definition());
+      var bindSubst = new EndoTerm.MetaBind(subst, metaPat.ref().fakeBind().definition());
       var metalized = bindSubst.apply(pat);
       // solve as pat
       metaPat.ref().solution().set(metalized);

@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 /**
  * Patterns in the core syntax.
  *
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Debug.Renderer(text = "toTerm().toDoc(AyaPrettierOptions.debug()).debugRender()")
 public sealed interface Pat extends AyaDocile {
+  @NotNull Pat descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g);
   default @NotNull Term toTerm() {
     return PatToTerm.INSTANCE.visit(this);
   }
@@ -68,6 +71,14 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar bind,
     @NotNull Term type
   ) implements Pat {
+    public @NotNull Bind update(@NotNull Term type) {
+      return type == type() ? this : new Bind(bind, type);
+    }
+
+    @Override public @NotNull Bind descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      return update(g.apply(type));
+    }
+
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       ctx.put(bind, type.subst(rhsSubst));
     }
@@ -96,6 +107,16 @@ public sealed interface Pat extends AyaDocile {
     @NotNull LocalVar fakeBind,
     @NotNull Term type
   ) implements Pat {
+    public @NotNull Meta update(@NotNull Pat solution, @NotNull Term type) {
+      return solution == solution().get() && type == type()
+        ? this : new Meta(MutableValue.create(solution), fakeBind, type);
+    }
+
+    @Override public @NotNull Meta descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      var solution = solution().get();
+      return solution == null ? this : update(f.apply(solution), g.apply(type));
+    }
+
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       // Do nothing
       // This is safe because storeBindings is called only in extractTele which is
@@ -120,10 +141,13 @@ public sealed interface Pat extends AyaDocile {
         return value.inline(ctx);
       }
     }
-
   }
 
   record Absurd() implements Pat {
+    @Override public @NotNull Absurd descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      return this;
+    }
+
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       throw new InternalException("unreachable");
     }
@@ -138,6 +162,14 @@ public sealed interface Pat extends AyaDocile {
   }
 
   record Tuple(@NotNull ImmutableSeq<Arg<Pat>> pats) implements Pat {
+    public @NotNull Tuple update(@NotNull ImmutableSeq<Arg<Pat>> pats) {
+      return pats.sameElements(pats(), true) ? this : new Tuple(pats);
+    }
+
+    @Override public @NotNull Tuple descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      return update(pats.map(a -> a.descent(f)));
+    }
+
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       pats.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
@@ -156,6 +188,14 @@ public sealed interface Pat extends AyaDocile {
     @NotNull ImmutableSeq<Arg<Pat>> params,
     @NotNull DataCall type
   ) implements Pat {
+    public @NotNull Ctor update(@NotNull ImmutableSeq<Arg<Pat>> params, @NotNull DataCall type) {
+      return type == type() && params.sameElements(params(), true) ? this : new Ctor(ref, params, type);
+    }
+
+    @Override public @NotNull Ctor descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      return update(params.map(p -> p.descent(f)), (DataCall) g.apply(type));
+    }
+
     @Override public void storeBindings(@NotNull LocalCtx ctx, @NotNull Subst rhsSubst) {
       params.forEach(pat -> pat.term().storeBindings(ctx, rhsSubst));
     }
@@ -178,6 +218,13 @@ public sealed interface Pat extends AyaDocile {
     @Override @NotNull ShapeRecognition recognition,
     @NotNull DataCall type
   ) implements Pat, Shaped.Nat<Pat> {
+    public ShapedInt update(DataCall type) {
+      return type == type() ? this : new ShapedInt(repr, recognition, type);
+    }
+
+    @Override public @NotNull ShapedInt descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+      return update((DataCall) g.apply(type));
+    }
 
     @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       // The cast must succeed

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,12 +21,31 @@ public interface TermConsumer extends Consumer<Term> {
 
   default void post(@NotNull Term term) {}
 
+  default void pre(@NotNull Pat pat) {}
+
+  default void post(@NotNull Pat pat) {}
+
   default void accept(@NotNull Term term) {
     pre(term);
     term.descent(t -> {
       accept(t);
       return t;
+    }, p -> {
+      accept(p);
+      return p;
     });
     post(term);
+  }
+
+  default void accept(@NotNull Pat pat) {
+    pre(pat);
+    pat.descent(p -> {
+      accept(p);
+      return p;
+    }, t -> {
+      accept(t);
+      return t;
+    });
+    post(pat);
   }
 }
