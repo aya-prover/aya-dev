@@ -48,15 +48,6 @@ public final class FnDef extends UserDef<Term> {
   @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
     telescope.forEach(p -> p.descentConsume(f));
     f.accept(result);
-    body.forEach(f, matchings -> matchings.forEach(m -> m.descent(f, g)));
-  }
-
-  // TODO: HACK! Special method to support hooking into the transformation of `Matching`
-  //   This allows `CallResolver` to check termination based on the top level pattern clauses.
-  //   But we now also support pattern matching within terms, so is this rather fragile?
-  public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g, @NotNull Consumer<Term.Matching> h) {
-    telescope.forEach(p -> p.descentConsume(f));
-    f.accept(result);
-    body.forEach(f, matchings -> matchings.forEach(h));
+    body.forEach(f, matchings -> matchings.forEach(m -> m.descentConsume(f, g)));
   }
 }

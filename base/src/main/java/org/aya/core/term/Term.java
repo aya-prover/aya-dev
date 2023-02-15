@@ -193,7 +193,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
       return update(patterns.map(p -> p.descent(g)), f.apply(body));
     }
 
-    public void descent(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
       patterns.forEach(a -> a.descentConsume(g));
       f.accept(body);
     }
