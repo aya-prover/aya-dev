@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
@@ -27,14 +29,23 @@ public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
     Accessibility,
-    Personality
+    Personality,
+    Alpha
   }
 
   public enum Modifier {
+    // Common Modifiers
     Private(ModifierGroup.Accessibility, "private"),
     Example(ModifierGroup.Personality, "example", Private),
     Counterexample(ModifierGroup.Personality, "counterexample", Private),
-    Open(ModifierGroup.None, "open");
+
+    // ModuleLike Modifiers
+    Open(ModifierGroup.None, "open"),
+
+    // Function Modifiers
+    Opaque(ModifierGroup.Alpha, "opaque"),
+    Inline(ModifierGroup.Alpha, "inline"),
+    Overlap(ModifierGroup.None, "overlap");
 
     public final @NotNull ModifierGroup group;
     public final @NotNull String keyword;
@@ -54,7 +65,24 @@ public record ModifierParser(@NotNull Reporter reporter) {
   public record ModifierSet(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
-    @Nullable SourcePos openKw) {
+    @Nullable Either<SourcePos, SourcePos> alphaChannel,
+    @NotNull Map<Modifier, SourcePos> noneGroup
+  ) {
+    public @Nullable SourcePos openKw() {
+      return noneGroup.getOrNull(Modifier.Open);
+    }
+
+    public @Nullable SourcePos opaque() {
+      return alphaChannel != null ? alphaChannel.getLeftOption().getOrNull() : null;
+    }
+
+    public @Nullable SourcePos inline() {
+      return alphaChannel != null ? alphaChannel.getRightOption().getOrNull() : null;
+    }
+
+    public @Nullable SourcePos overlap() {
+      return noneGroup.getOrNull(Modifier.Overlap);
+    }
   }
 
   @TestOnly public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
