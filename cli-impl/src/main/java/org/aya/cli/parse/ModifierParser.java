@@ -7,6 +7,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.control.Option;
 import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
 import org.aya.cli.parse.error.DuplicatedModifierWarn;
@@ -62,26 +63,40 @@ public record ModifierParser(@NotNull Reporter reporter) {
     }
   }
 
+  public interface Modifiers {
+    @NotNull Option<WithPos<Stmt.Accessibility>> accessibility();
+    @NotNull Option<WithPos<DeclInfo.Personality>> personality();
+    @NotNull Option<SourcePos> openKw();
+    @NotNull Option<SourcePos> opaque();
+    @NotNull Option<SourcePos> inline();
+    @NotNull Option<SourcePos> overlap();
+  }
+
   public record ModifierSet(
-    @NotNull WithPos<Stmt.Accessibility> accessibility,
-    @NotNull WithPos<DeclInfo.Personality> personality,
+    @NotNull Option<WithPos<Stmt.Accessibility>> accessibility,
+    @NotNull Option<WithPos<DeclInfo.Personality>> personality,
     @Nullable Either<SourcePos, SourcePos> alphaChannel,
-    @NotNull Map<Modifier, SourcePos> noneGroup
-  ) {
-    public @Nullable SourcePos openKw() {
-      return noneGroup.getOrNull(Modifier.Open);
+    @NotNull Map<Modifier, SourcePos> noneGroup,
+    @Nullable Modifiers parent
+  ) implements Modifiers {
+    @Override
+    public @NotNull Option<SourcePos> openKw() {
+      return noneGroup.getOption(Modifier.Open);
     }
 
-    public @Nullable SourcePos opaque() {
-      return alphaChannel != null ? alphaChannel.getLeftOption().getOrNull() : null;
+    @Override
+    public @NotNull Option<SourcePos> opaque() {
+      return alphaChannel != null ? alphaChannel.getLeftOption() : Option.none();
     }
 
-    public @Nullable SourcePos inline() {
-      return alphaChannel != null ? alphaChannel.getRightOption().getOrNull() : null;
+    @Override
+    public @NotNull Option<SourcePos> inline() {
+      return alphaChannel != null ? alphaChannel.getRightOption() : Option.none();
     }
 
-    public @Nullable SourcePos overlap() {
-      return noneGroup.getOrNull(Modifier.Overlap);
+    @Override
+    public @NotNull Option<SourcePos> overlap() {
+      return noneGroup.getOption(Modifier.Overlap);
     }
   }
 
