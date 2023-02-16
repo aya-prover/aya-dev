@@ -15,6 +15,5 @@ def infixr ++ : BinOp (FMSet A)
 | x :< xs, ys => x :< xs ++ ys
 | comm x y xs i, ys => comm x y (xs ++ ys) i
 | trunc xs zs p q i j, ys =>
-// trunc (xs ++ ys) (zs ++ ys) (pmap (++ ys) p) (pmap (++ ys) q) i j
-  trunc (xs ++ ys) (zs ++ ys) (λ k => p k ++ ys) (λ k => q k ++ ys) i j
+  trunc (xs ++ ys) (zs ++ ys) (pmap (++ ys) p) (pmap (++ ys) q) i j
 tighter :< =
