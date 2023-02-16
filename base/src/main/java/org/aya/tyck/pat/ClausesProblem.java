@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.term.DataCall;
-import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.BasePrettier;
@@ -98,11 +97,11 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ErrorTerm err
+    @NotNull ImmutableSeq<Arg<Term>> err
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unhandled case:"),
-        err.description().toDoc(options));
+        BasePrettier.argsDoc(options, err));
     }
   }
 

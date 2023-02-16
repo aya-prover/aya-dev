@@ -15,7 +15,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
@@ -75,9 +74,8 @@ public final class PatClassifier extends StatedTycker {
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
     return cl.filter(it -> {
-      var err = err(it.term());
-      if (err.isDefined()) {
-        reporter.report(new ClausesProblem.MissingCase(pos, (ErrorTerm) err.get()));
+      if (it.cls().isEmpty()) {
+        reporter.report(new ClausesProblem.MissingCase(pos, it.term()));
         return false;
       }
       return true;
@@ -138,9 +136,12 @@ public final class PatClassifier extends StatedTycker {
         }
       }
       case DataCall dataCall -> {
-        // there are no clauses starting with a constructor pattern -- we don't need a split!
-        if (clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt))
-          break;
+        // In case clauses are empty, we're just making sure that the type is uninhabited,
+        // so proceed as if we have valid patterns
+        if (clauses.isNotEmpty() &&
+          // there are no clauses starting with a constructor pattern -- we don't need a split!
+          clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt)
+        ) break;
         var buffer = MutableList.<PatClass<Arg<Term>>>create();
         var data = dataCall.ref();
         var body = Def.dataBody(data);
@@ -164,6 +165,7 @@ public final class PatClassifier extends StatedTycker {
               : null);
           // The only matching cases are catch-all cases, and we skip these
           builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
+          var conHead = dataCall.conHead(ctor.ref);
           if (matches.isEmpty()) {
             if (hasCatchAll) {
               buffer.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), clsWithBindPat));
@@ -173,9 +175,10 @@ public final class PatClassifier extends StatedTycker {
             fuel1--;
             // In this case we give up and do not split on this constructor
             if (conTele.isEmpty() || fuel1 <= 0) {
-              buffer.append(new PatClass<>(new Arg<>(new ErrorTerm(options ->
-                Doc.join(Doc.symbol(","), new ConcretePrettier(options).patterns(builder.root().map(PatTree::toPattern))),
-                false), explicit), ImmutableIntSeq.empty()));
+              var err = new ErrorTerm(Doc.plain("..."), false);
+              buffer.append(new PatClass<>(new Arg<>(new ConCall(conHead,
+                conTele.isEmpty() ? ImmutableSeq.empty() : ImmutableSeq.of(new Arg<>(err, true))),
+                explicit), ImmutableIntSeq.empty()));
               // These must present here and the previous `shift` should not be moved below
               builder.reduceAndUnshift();
               continue;
@@ -183,7 +186,6 @@ public final class PatClassifier extends StatedTycker {
           }
           var classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
           builder.reduce();
-          var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
             args.cls().appendedAll(clsWithBindPat))));
