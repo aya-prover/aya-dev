@@ -58,8 +58,18 @@ public class TyckDeclTest {
   successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
+    return Tuple.of(res.component1(), res.component2().view()
+      .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)
+      .filter(Objects::nonNull).toImmutableSeq());
+  }
+
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>>
+  successHeadFirstTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
+    var res = successDesugarDecls(text);
+    var shapes = new AyaShape.Factory();
     res.component2().forEach(stmt -> {
-      if (stmt instanceof TeleDecl<?> decl) header(res.component1(), decl, null, shapes);
+      if (stmt instanceof TeleDecl<?> decl)
+        header(res.component1(), decl, null, shapes);
     });
     return Tuple.of(res.component1(), res.component2().view()
       .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)

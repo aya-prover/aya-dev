@@ -43,7 +43,7 @@ public class PatCCTest {
   }
 
   @Test public void nmIfElse() {
-    var res = TyckDeclTest.successTyckDecls("""
+    var res = TyckDeclTest.successHeadFirstTyckDecls("""
       open data CExp
       | at
       | if CExp CExp CExp
