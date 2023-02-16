@@ -44,6 +44,7 @@ public class PatCCTest {
        | a, suc b => suc (add a b)""");
     var decls = res.component2();
     var classified = testClassify(res.component1(), (FnDef) decls.get(1));
+    var xxx = testClassify2(res.component1(), (FnDef) decls.get(1));
     assertEquals(4, classified.size());
     classified.forEach(cls ->
       assertEquals(2, cls.contents().size()));
