@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import kala.control.Option;
 import kala.function.Functions;
 import org.aya.cli.parse.error.ContradictModifierError;
@@ -171,46 +170,49 @@ public record ModifierParser(@NotNull Reporter reporter) {
   }
 
   private record ModifierSet(
-    @Nullable WithPos<Stmt.Accessibility> accessibility,
-    @Nullable WithPos<DeclInfo.Personality> personality,
-    @Nullable Either<SourcePos, SourcePos> alphaChannel,
-    @NotNull ImmutableMap<Modifier, SourcePos> noneGroup,
+    @NotNull ImmutableMap<Modifier, SourcePos> mods,
     @NotNull Modifiers parent
   ) implements Modifiers {
     @Override
     @Contract(pure = true)
     public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-      return accessibility != null ? accessibility : parent.accessibility();
+      return mods.getOption(Modifier.Private)
+        .map(x -> new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private))
+        .getOrElse(parent::accessibility);
     }
 
     @Override
     @Contract(pure = true)
     public @NotNull WithPos<DeclInfo.Personality> personality() {
-      return personality != null ? personality : parent.personality();
+      return mods.getOption(Modifier.Example)
+        .map(x -> new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE))
+        .getOrElse(() -> mods.getOption(Modifier.Counterexample)
+          .map(x -> new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE))
+          .getOrElse(parent::personality));
     }
 
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos openKw() {
-      return noneGroup.getOrElse(Modifier.Open, parent::openKw);
+      return mods.getOrElse(Modifier.Open, parent::openKw);
     }
 
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos opaque() {
-      return alphaChannel != null && alphaChannel.isLeft() ? alphaChannel.getLeftValue() : parent.opaque();
+      return mods.getOrElse(Modifier.Opaque, parent::opaque);
     }
 
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos inline() {
-      return alphaChannel != null && alphaChannel.isRight() ? alphaChannel.getRightValue() : parent.inline();
+      return mods.getOrElse(Modifier.Inline, parent::inline);
     }
 
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos overlap() {
-      return noneGroup.getOrElse(Modifier.Overlap, parent::overlap);
+      return mods.getOrElse(Modifier.Overlap, parent::overlap);
     }
   }
 
@@ -275,53 +277,9 @@ public record ModifierParser(@NotNull Reporter reporter) {
       exists.put(modifier, pos);
     }
 
-    // accessibility
-    var accGroup = map.get(ModifierGroup.Accessibility);
-    WithPos<Stmt.Accessibility> acc = null;
-
-    if (accGroup != null && !accGroup.isEmpty()) {
-      var entry = accGroup.entrySet().iterator().next();
-      Stmt.Accessibility key = switch (entry.getKey()) {
-        case Private -> Stmt.Accessibility.Private;
-        default -> unreachable();
-      };
-
-      acc = new WithPos<>(entry.getValue(), key);
-    }
-
-    // personality
-    var persGroup = map.get(ModifierGroup.Personality);
-    WithPos<DeclInfo.Personality> pers = null;
-
-    if (persGroup != null && !persGroup.isEmpty()) {
-      var entry = persGroup.entrySet().iterator().next();
-      DeclInfo.Personality key = switch (entry.getKey()) {
-        case Example -> DeclInfo.Personality.EXAMPLE;
-        case Counterexample -> DeclInfo.Personality.COUNTEREXAMPLE;
-        default -> unreachable();
-      };
-
-      pers = new WithPos<>(entry.getValue(), key);
-    }
-
-    // alphaChannel
-    var alphaGroup = map.get(ModifierGroup.Alpha);
-    Either<SourcePos, SourcePos> alphaChan = null;
-
-    if (alphaGroup != null && !alphaGroup.isEmpty()) {
-      var entry = alphaGroup.entrySet().iterator().next();
-      var pos = entry.getValue();
-      alphaChan = switch (entry.getKey()) {
-        case Opaque -> Either.left(pos);
-        case Inline -> Either.right(pos);
-        default -> unreachable();
-      };
-    }
-
-    // others
-    var noneGroup = map.getOrDefault(ModifierGroup.None, new EnumMap<>(Modifier.class));
-
-    return new ModifierSet(acc, pers, alphaChan, ImmutableMap.from(noneGroup), filter.defaultValue);
+    return new ModifierSet(ImmutableMap.from(
+      ImmutableSeq.from(map.values()).flatMap(EnumMap::entrySet)
+    ), filter.defaultValue);
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
