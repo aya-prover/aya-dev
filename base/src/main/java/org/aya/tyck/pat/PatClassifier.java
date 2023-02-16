@@ -254,7 +254,7 @@ public final class PatClassifier extends StatedTycker {
           // If clauses has catch-all pattern(s), it would also be fine.
           clauses.noneMatch(seq -> head(seq) instanceof Pat.Bind)
         ) {
-          reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
+          // reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
           return null;
         }
       } else return null;
