@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck.pat;
 
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.Seq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  */
 public record Indexed<Pat>(@NotNull Pat pat, int ix) {
-  public static @NotNull ImmutableIntSeq indices(@NotNull ImmutableSeq<? extends Indexed<?>> cls) {
+  public static @NotNull ImmutableIntSeq indices(@NotNull Seq<? extends Indexed<?>> cls) {
     return cls.map(Indexed::ix).collect(ImmutableIntSeq.factory());
   }
 }

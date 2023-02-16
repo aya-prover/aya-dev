@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -28,6 +29,8 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+
+import java.util.stream.Collectors;
 
 /**
  * Formerly known as <code>PatClassifier</code>.
@@ -184,7 +187,17 @@ public final class PatClassifier extends StatedTycker {
               continue;
             }
           }
-          var classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
+          ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classes;
+          var lits = clauses.mapNotNull(cl -> cl.pat() instanceof Pat.ShapedInt i ?
+            new Indexed<>(i, cl.ix()) : null);
+          if (clauses.isNotEmpty() && lits.size() + clsWithBindPat.size() == clauses.size()) {
+            // There is only literals and bind patterns, no constructor patterns
+            classes = ImmutableSeq.from(lits.collect(Collectors.groupingBy(i -> i.pat().repr())).values())
+              .map(i -> new PatClass<>(ImmutableSeq.of(new Arg<>(i.get(0).pat().toTerm(), explicit)),
+                Indexed.indices(Seq.wrapJava(i))));
+          } else {
+            classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
+          }
           builder.reduce();
           buffer.appendAll(classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
