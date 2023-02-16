@@ -39,15 +39,13 @@ import java.util.stream.Collectors;
  */
 public final class PatClassifier extends StatedTycker {
   public final @NotNull SourcePos pos;
-  private final PatTree.Builder builder;
 
   public PatClassifier(
     @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder,
-    @NotNull TyckState state, @NotNull SourcePos pos, @NotNull PatTree.Builder builder
+    @NotNull TyckState state, @NotNull SourcePos pos
   ) {
     super(reporter, traceBuilder, state);
     this.pos = pos;
-    this.builder = builder;
   }
 
   public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classify(
@@ -72,7 +70,7 @@ public final class PatClassifier extends StatedTycker {
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
   ) {
-    var classifier = new PatClassifier(reporter, builder, state, pos, new PatTree.Builder());
+    var classifier = new PatClassifier(reporter, builder, state, pos);
     var cl = classifier.classifyN(false, new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
@@ -129,10 +127,8 @@ public final class PatClassifier extends StatedTycker {
             : null);
         // In case we do,
         if (clsWithTupPat.isNotEmpty()) {
-          builder.shift(new PatTree("", explicit, params.count(Term.Param::explicit)));
           params = new EndoTerm.Renamer().params(params.view());
           var classes = classifyN(hasCatchAll, subst.derive(), params.view(), clsWithTupPat, fuel);
-          builder.reduce();
           return classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new TupTerm(args.term())), explicit),
             args.cls().appendedAll(clsWithBindPat)));
@@ -166,13 +162,11 @@ public final class PatClassifier extends StatedTycker {
             ) instanceof Pat.Ctor c && c.ref() == ctor.ref()
               ? new Indexed<>(c.params().view().map(Arg::term), ix)
               : null);
-          // The only matching cases are catch-all cases, and we skip these
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           var conHead = dataCall.conHead(ctor.ref);
+          // The only matching cases are catch-all cases, and we skip these
           if (matches.isEmpty()) {
             if (hasCatchAll) {
               buffer.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), clsWithBindPat));
-              builder.reduceAndUnshift();
               continue;
             }
             fuel1--;
@@ -182,8 +176,6 @@ public final class PatClassifier extends StatedTycker {
               buffer.append(new PatClass<>(new Arg<>(new ConCall(conHead,
                 conTele.isEmpty() ? ImmutableSeq.empty() : ImmutableSeq.of(new Arg<>(err, true))),
                 explicit), ImmutableIntSeq.empty()));
-              // These must present here and the previous `shift` should not be moved below
-              builder.reduceAndUnshift();
               continue;
             }
           }
@@ -198,17 +190,13 @@ public final class PatClassifier extends StatedTycker {
           } else {
             classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
           }
-          builder.reduce();
           buffer.appendAll(classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
             args.cls().appendedAll(clsWithBindPat))));
-          builder.unshift();
         }
         return buffer.toImmutableSeq();
       }
     }
-    builder.shiftEmpty(explicit);
-    builder.unshift();
     return ImmutableSeq.of(new PatClass<>(param.toArg(), Indexed.indices(clauses)));
   }
 
