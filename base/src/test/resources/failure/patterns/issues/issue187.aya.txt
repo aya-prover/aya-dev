@@ -5,7 +5,8 @@ In file $FILE:4:4 ->
   4 │   def add {a b : Nat} : Nat
     │       ╰─╯
 
-Error: Unhandled case: {zero}, {zero}
+Error: Unhandled case:
+         {zero}, {zero}
 
 In file $FILE:8:3 ->
 

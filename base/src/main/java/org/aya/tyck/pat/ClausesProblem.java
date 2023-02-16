@@ -97,11 +97,12 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Arg<Term>> err
+    @NotNull ImmutableSeq<ImmutableSeq<Arg<Term>>> errs
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Unhandled case:"),
-        BasePrettier.argsDoc(options, err));
+      var cases = Doc.vcat(errs.map(err -> BasePrettier.argsDoc(options, err)));
+      return Doc.vcat(Doc.english("Unhandled case:"),
+        Doc.nest(2, cases));
     }
   }
 

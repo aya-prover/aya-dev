@@ -65,13 +65,14 @@ public final class PatClassifier extends StatedTycker {
     var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
-    return cl.filter(it -> {
-      if (it.cls().isEmpty()) {
-        reporter.report(new ClausesProblem.MissingCase(pos, it.term()));
-        return false;
-      }
-      return true;
+    var missing = MutableList.<ImmutableSeq<Arg<Term>>>create();
+    var success = MutableList.<PatClass<ImmutableSeq<Arg<Term>>>>create();
+    cl.forEach(c -> {
+      if (c.cls().isEmpty()) missing.append(c.term());
+      else success.append(c);
     });
+    if (missing.isNotEmpty()) reporter.report(new ClausesProblem.MissingCase(pos, missing.toImmutableSeq()));
+    return success.toImmutableSeq();
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(

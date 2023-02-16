@@ -5,43 +5,12 @@ In file $FILE:5:4 ->
   5 │   def add {a b : Nat} : Nat
     │       ╰─╯
 
-Error: Unhandled case: {zero}, {suc zero}
-
-In file $FILE:5:4 ->
-
-  3 │    | suc Nat
-  4 │
-  5 │   def add {a b : Nat} : Nat
-    │       ╰─╯
-
-Error: Unhandled case: {zero}, {suc (suc zero)}
-
-In file $FILE:5:4 ->
-
-  3 │    | suc Nat
-  4 │
-  5 │   def add {a b : Nat} : Nat
-    │       ╰─╯
-
-Error: Unhandled case: {zero}, {suc (suc (suc zero))}
-
-In file $FILE:5:4 ->
-
-  3 │    | suc Nat
-  4 │
-  5 │   def add {a b : Nat} : Nat
-    │       ╰─╯
-
-Error: Unhandled case: {zero}, {suc (suc (suc (suc zero)))}
-
-In file $FILE:5:4 ->
-
-  3 │    | suc Nat
-  4 │
-  5 │   def add {a b : Nat} : Nat
-    │       ╰─╯
-
-Error: Unhandled case: {zero}, {suc (suc (suc (suc (suc ...))))}
+Error: Unhandled case:
+         {zero}, {suc zero}
+         {zero}, {suc (suc zero)}
+         {zero}, {suc (suc (suc zero))}
+         {zero}, {suc (suc (suc (suc zero)))}
+         {zero}, {suc (suc (suc (suc (suc ...))))}
 
 In file $FILE:9:3 ->
 
@@ -52,5 +21,5 @@ In file $FILE:9:3 ->
 
 Warning: The 4th clause is dominated by the other clauses, hence unreachable
 
-5 error(s), 1 warning(s).
+1 error(s), 1 warning(s).
 What are you doing?

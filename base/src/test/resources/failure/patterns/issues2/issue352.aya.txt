@@ -15,7 +15,8 @@ In file $FILE:4:4 ->
   4 │   def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
     │       ╰────╯
 
-Error: Unhandled case: 
+Error: Unhandled case:
+         {A}, {B}, f, g, p
 
 1 error(s), 1 warning(s).
 What are you doing?
