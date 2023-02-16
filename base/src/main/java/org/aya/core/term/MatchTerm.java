@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import org.aya.core.pat.Pat;
 import org.aya.core.pat.PatMatcher;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -14,13 +15,13 @@ public record MatchTerm(
   @NotNull ImmutableSeq<Term> discriminant,
   @NotNull ImmutableSeq<Matching> clauses
 ) implements Term {
-  @Override public @NotNull MatchTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
-    return update(discriminant.map(f), clauses.map(cl -> cl.descent(f)));
-  }
-
-  private @NotNull MatchTerm update(@NotNull ImmutableSeq<Term> discriminant, ImmutableSeq<Matching> clauses) {
+  public @NotNull MatchTerm update(@NotNull ImmutableSeq<Term> discriminant, ImmutableSeq<Matching> clauses) {
     return discriminant.sameElements(discriminant(), true) && clauses.sameElements(clauses(), true) ? this
       : new MatchTerm(discriminant, clauses);
+  }
+
+  @Override public @NotNull MatchTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<@NotNull Pat> g) {
+    return update(discriminant.map(f), clauses.map(cl -> cl.descent(f, g)));
   }
 
   public @NotNull Option<Term> tryMatch() {

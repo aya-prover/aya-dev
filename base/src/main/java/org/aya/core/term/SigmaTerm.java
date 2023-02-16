@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
@@ -24,7 +25,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     return params.sameElements(params(), true) ? this : new SigmaTerm(params);
   }
 
-  @Override public @NotNull SigmaTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull SigmaTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(params.map(p -> p.descent(f)));
   }
 

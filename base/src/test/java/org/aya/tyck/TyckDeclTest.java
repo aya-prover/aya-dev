@@ -35,6 +35,11 @@ public class TyckDeclTest {
     return def;
   }
 
+  public static void header(@NotNull PrimDef.Factory factory, @NotNull TeleDecl<?> decl, Trace.@Nullable Builder builder, @NotNull AyaShape.Factory shapes) {
+    var tycker = new StmtTycker(AyaThrowingReporter.INSTANCE, builder);
+    tycker.tyckHeader(decl, tycker.newTycker(factory, shapes));
+  }
+
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<Stmt>> successDesugarDecls(@Language("Aya") @NonNls @NotNull String text) {
     var decls = ParseTest.parseStmt(text);
     var ctx = new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of("TestSource")).derive("decl");
@@ -49,9 +54,23 @@ public class TyckDeclTest {
     return primFactory;
   }
 
-  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>> successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>>
+  successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
+    return Tuple.of(res.component1(), res.component2().view()
+      .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)
+      .filter(Objects::nonNull).toImmutableSeq());
+  }
+
+  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>>
+  successHeadFirstTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
+    var res = successDesugarDecls(text);
+    var shapes = new AyaShape.Factory();
+    res.component2().forEach(stmt -> {
+      if (stmt instanceof TeleDecl<?> decl)
+        header(res.component1(), decl, null, shapes);
+    });
     return Tuple.of(res.component1(), res.component2().view()
       .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)
       .filter(Objects::nonNull).toImmutableSeq());

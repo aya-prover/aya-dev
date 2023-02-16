@@ -23,7 +23,7 @@ public class RenderOptionsTest {
     var opt = new RenderOptions();
     opt.checkDeserialization();
     assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Terminal, doc, false, false, true));
-    assertEquals("\\noindent\\fbox{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, false, false, true));
+    assertEquals("\\noindent{}\\fbox{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, false, false, true));
     assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, false, false, true));
     assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, false, false, true));
   }

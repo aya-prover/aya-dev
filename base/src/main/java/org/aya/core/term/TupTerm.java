@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.pat.Pat;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ public record TupTerm(@NotNull ImmutableSeq<Arg<Term>> items) implements StableW
     return items.sameElements(items(), true) ? this : new TupTerm(items);
   }
 
-  @Override public @NotNull TupTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull TupTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(items.map(i -> i.descent(f)));
   }
 

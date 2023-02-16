@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.pat.Pat;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
 import org.aya.generic.AyaDocile;
@@ -32,8 +33,8 @@ public record ErrorTerm(@NotNull AyaDocile description, boolean isReallyError) i
   private ErrorTerm update(AyaDocile description) {
     return description == description() ? this : new ErrorTerm(description, isReallyError);
   }
-  @Override public @NotNull ErrorTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
-    return description instanceof Term term ? update(term.descent(f)) : this;
+  @Override public @NotNull ErrorTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+    return description instanceof Term term ? update(term.descent(f, g)) : this;
   }
 
   public static @NotNull ErrorTerm typeOf(@NotNull Term origin) {

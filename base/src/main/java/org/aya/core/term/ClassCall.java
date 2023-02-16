@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.core.def.ClassDef;
+import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public record ClassCall(
     return args.sameElements(args(), true) ? this : new ClassCall(ref(), ulift(), args);
   }
 
-  @Override public @NotNull ClassCall descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull ClassCall descent(@NotNull UnaryOperator<@NotNull Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(args.map(arg -> arg.descent(f)));
   }
 }

@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.core.pat.Pat;
 import org.aya.core.visitor.Subst;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
@@ -29,7 +30,7 @@ public record PathTerm(
     return type == type() && partial == partial() ? this : new PathTerm(params, type, partial);
   }
 
-  @Override public @NotNull PathTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull PathTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(type), partial.map(f));
   }
 

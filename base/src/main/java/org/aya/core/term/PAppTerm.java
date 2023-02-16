@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.pat.Pat;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +18,8 @@ public record PAppTerm(
     return of == of() && args.sameElements(args(), true) && cube == cube() ? this : new PAppTerm(of, args, cube);
   }
 
-  @Override public @NotNull PAppTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
-    return update(f.apply(of), args.map(arg -> arg.descent(f)), cube.descent(f));
+  @Override public @NotNull PAppTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+    return update(f.apply(of), args.map(arg -> arg.descent(f)), cube.descent(f, g));
   }
 
   @SafeVarargs public PAppTerm(@NotNull Term of, @NotNull PathTerm cube, Arg<@NotNull Term> @NotNull ... args) {

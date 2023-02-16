@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
+// TODO: Also visit variables in patterns?
 public interface VarConsumer extends TermConsumer {
   void var(@NotNull AnyVar var);
 

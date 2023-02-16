@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.meta.Meta;
+import org.aya.core.pat.Pat;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public record MetaTerm(
       : new MetaTerm(ref, contextArgs, args);
   }
 
-  @Override public @NotNull MetaTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull MetaTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(contextArgs.map(arg -> arg.descent(f)), args.map(arg -> arg.descent(f)));
   }
 

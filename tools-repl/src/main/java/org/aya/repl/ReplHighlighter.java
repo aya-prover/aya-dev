@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -19,7 +19,7 @@ public abstract class ReplHighlighter<T> extends DefaultHighlighter {
   protected abstract @NotNull String renderToTerminal(@NotNull Doc doc);
 
   @Override public AttributedString highlight(LineReader reader, String buffer) {
-    lexer.reset(buffer, 0, buffer.length(), 0);
+    lexer.reset(buffer, 0);
     var tokens = lexer.allTheWayDown();
     var doc = Doc.cat(tokens.map(t -> highlight(lexer.tokenText(buffer, t), t)));
     return AttributedString.fromAnsi(renderToTerminal(doc));

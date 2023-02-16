@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple2;
 import org.aya.core.def.GenericDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.util.error.SourcePos;
@@ -23,7 +24,7 @@ public record MetaLitTerm(
     return type == type() ? this : new MetaLitTerm(sourcePos, repr, candidates, type);
   }
 
-  @Override public @NotNull MetaLitTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull MetaLitTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(type));
   }
 

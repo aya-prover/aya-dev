@@ -18,12 +18,16 @@ import java.util.EnumSet;
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\noindent");
+    cursor.invisibleContent("\\noindent{}");
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     // TODO: escape according to `outer`
-    return content.replace("\\", "").replace("_", "\\_");
+    return content.replace("\\", "")
+      .replace("_", "\\_")
+      // This is a stupid hack. Maybe we can calculate consecutive spaces
+      .replace("  ", makeIndent(2))
+      .replace(" ", makeIndent(1));
   }
 
   private static @NotNull Tuple2<String, String> id(@NotNull String name) {
@@ -79,7 +83,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
         return;
       }
     }
-    System.err.println("Warn: unknown symbol " + text);
+    if (!text.chars().allMatch(Character::isLetter)) System.err.println("Warn: unknown symbol " + text);
     renderPlainText(cursor, text, outer);
   }
 
@@ -89,10 +93,11 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
-    cursor.lineBreakWith("\\\\\n");
+    cursor.lineBreakWith("~\\\\\n");
   }
 
-  @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
+  @Override
+  protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("\\fbox{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");

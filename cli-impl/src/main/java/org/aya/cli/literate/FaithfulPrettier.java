@@ -3,6 +3,7 @@
 package org.aya.cli.literate;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
@@ -106,12 +107,12 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
 
   private @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
-      case Int -> Doc.plain(raw);
+      case Int, Whitespace -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));
       case Keyword -> Doc.styled(BasePrettier.KEYWORD, Doc.symbol(raw));
       case Comment -> Doc.styled(BasePrettier.COMMENT, raw);
       case SpecialSymbol -> Doc.symbol(raw);
-      case Eol -> Doc.line();
+      case Eol -> Doc.cat(Seq.fill(raw.length(), Doc.line()));
     };
   }
 

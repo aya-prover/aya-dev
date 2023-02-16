@@ -2,10 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
+import kala.value.MutableValue;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.util.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -29,8 +34,19 @@ public interface EndoTerm extends UnaryOperator<Term> {
     return term;
   }
 
+  default @NotNull Pat pre(@NotNull Pat pat) {
+    return pat;
+  }
+
+  default @NotNull Pat post(@NotNull Pat pat) {
+    return pat;
+  }
+
   default @NotNull Term apply(@NotNull Term term) {
-    return post(pre(term).descent(this));
+    return post(pre(term).descent(this, this::apply));
+  }
+  default @NotNull Pat apply(@NotNull Pat pat) {
+    return post(pre(pat).descent(this::apply, this));
   }
 
   /** Not an IntelliJ Renamer. */
@@ -39,9 +55,13 @@ public interface EndoTerm extends UnaryOperator<Term> {
       this(new Subst());
     }
 
+    public @NotNull ImmutableSeq<Term.Param> params(@NotNull SeqView<Term.Param> params) {
+      return params.map(p -> handleBinder(p.descent(this))).toImmutableSeq();
+    }
+
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
       var v = param.renameVar();
-      subst.addDirectly(param.ref(), new RefTerm(v));
+      subst.add(param.ref(), new RefTerm(v));
       return new Term.Param(v, param.type(), param.explicit());
     }
 
@@ -49,6 +69,13 @@ public interface EndoTerm extends UnaryOperator<Term> {
       var v = localVar.rename();
       subst.addDirectly(localVar, new RefTerm(v));
       return v;
+    }
+
+    @Override public @NotNull Pat pre(@NotNull Pat pat) {
+      return switch (pat) {
+        case Pat.Bind bind -> new Pat.Bind(handleBinder(bind.bind()), bind.type());
+        case Pat p -> p;
+      };
     }
 
     @Override public @NotNull Term pre(@NotNull Term term) {
@@ -113,6 +140,39 @@ public interface EndoTerm extends UnaryOperator<Term> {
         case PrimCall prim -> new PrimCall(prim.ref(), prim.ulift() + lift, prim.args());
         case Term misc -> misc;
       };
+    }
+  }
+
+  /**
+   * A traversal that disallow Pat.Meta
+   */
+  interface NoMeta extends EndoTerm {
+    default @NotNull Pat pre(@NotNull Pat pat) {
+      return switch (EndoTerm.super.pre(pat)) {
+        case Pat.Meta meta -> throw new InternalException("expected: no Pat.Meta, but actual: Pat.Meta");
+        case Pat p -> p;
+      };
+    }
+  }
+
+  /**
+   * subst all binding to corresponding MetaPat
+   */
+  record MetaBind(@NotNull Subst subst, @NotNull SourcePos definition) implements NoMeta {
+    @Override public @NotNull Pat post(@NotNull Pat pat) {
+      if (pat instanceof Pat.Bind(var bind, var type)) {
+        // every new var use the same definition location
+        var newVar = new LocalVar(bind.name(), definition);
+        // we are no need to add newVar to some localCtx, this will be done when we inline the Pat.Meta
+        var meta = new Pat.Meta(MutableValue.create(), newVar, type);
+
+        // add to subst
+        subst.addDirectly(bind, meta.toTerm());
+
+        return meta;
+      }
+
+      return NoMeta.super.post(pat);
     }
   }
 }

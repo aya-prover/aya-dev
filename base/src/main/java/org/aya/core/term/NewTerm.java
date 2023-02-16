@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.ClassDef;
+import org.aya.core.pat.Pat;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ public record NewTerm(
     return struct == struct() && equalParams ? this : new NewTerm(struct, params);
   }
 
-  @Override public @NotNull NewTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull NewTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update((ClassCall) f.apply(struct), ImmutableMap.from(params.view().map((k, v) -> Tuple.of(k, f.apply(v)))));
   }
 }

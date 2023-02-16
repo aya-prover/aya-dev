@@ -5,7 +5,17 @@ In file $FILE:5:4 ->
   5 │   def add {a b : Nat} : Nat
     │       ╰─╯
 
-Error: Unhandled case: {zero}, {suc zero}
+Error: Unhandled case:
+         {zero}, {suc zero}
 
-1 error(s), 0 warning(s).
+In file $FILE:10:3 ->
+
+  8  │    | {suc a}, {zero} => zero
+  9  │    | {suc a}, {b} => zero
+  10 │    | {suc a}, {suc b} => zero
+     │      ╰──────────────────────╯
+
+Warning: The 5th clause is dominated by the other clauses, hence unreachable
+
+1 error(s), 1 warning(s).
 What are you doing?

@@ -1,3 +1,19 @@
+In file $FILE:3:12 ->
+
+  1 │       open data Nat : Type 0 | zero | suc Nat
+  2 │       open data Ray (a : Nat) : Type | zero => eldath
+  3 │       def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
+    │                   ╰────────╯
+  4 │        | zero, eldath => suc zero
+    │          ╰──────────────────────╯ substituted to `suc zero`
+  5 │        | zero, eldath => zero
+    │          ╰──────────────────╯ substituted to `zero`
+
+Error: The 2nd and the 1st clauses are not confluent because we failed to unify
+         suc zero
+       and
+         zero
+
 In file $FILE:5:3 ->
 
   3 │   def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
@@ -17,22 +33,6 @@ In file $FILE:4:3 ->
 
 Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
          unreachable
-
-In file $FILE:3:12 ->
-
-  1 │       open data Nat : Type 0 | zero | suc Nat
-  2 │       open data Ray (a : Nat) : Type | zero => eldath
-  3 │       def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
-    │                   ╰────────╯
-  4 │        | zero, eldath => suc zero
-    │          ╰──────────────────────╯ substituted to `suc zero`
-  5 │        | zero, eldath => zero
-    │          ╰──────────────────╯ substituted to `zero`
-
-Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         suc zero
-       and
-         zero
 
 1 error(s), 2 warning(s).
 What are you doing?

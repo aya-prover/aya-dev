@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -38,5 +39,9 @@ public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) impl
 
   public @NotNull Arg<T> descent(@NotNull UnaryOperator<@NotNull T> f) {
     return update(f.apply(term));
+  }
+
+  public void descentConsume(@NotNull Consumer<@NotNull T> f) {
+    f.accept(term);
   }
 }

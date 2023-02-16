@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.mutable.MutableList;
+import org.aya.core.pat.Pat;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ public record AppTerm(@NotNull Term of, @NotNull Arg<@NotNull Term> arg) impleme
     return of == of() && arg == arg() ? this : AppTerm.make(of, arg);
   }
 
-  @Override public @NotNull Term descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(f.apply(of), arg.descent(f));
   }
 

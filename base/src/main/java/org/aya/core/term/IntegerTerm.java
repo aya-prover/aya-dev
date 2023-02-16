@@ -4,6 +4,7 @@ package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.util.Arg;
 import org.aya.generic.Shaped;
@@ -20,7 +21,7 @@ public record IntegerTerm(
     return type == type() ? this : new IntegerTerm(repr, recognition, type);
   }
 
-  @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<@NotNull Term> f) {
+  @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update((DataCall) f.apply(type));
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -97,11 +97,12 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull PatClassifier.PatErr pats
+    @NotNull ImmutableSeq<ImmutableSeq<Arg<Term>>> errs
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Unhandled case:"),
-        BasePrettier.argsDoc(options, pats.missing()));
+      var cases = Doc.vcat(errs.map(err -> BasePrettier.argsDoc(options, err)));
+      return Doc.vcat(Doc.english("Unhandled case:"),
+        Doc.nest(2, cases));
     }
   }
 
