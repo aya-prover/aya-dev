@@ -7,6 +7,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
+import org.aya.concrete.Pattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -56,6 +58,14 @@ public final class PatClassifier2 extends StatedTycker {
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos, tycker.traceBuilder);
   }
 
+  /**
+   * Don't change the return type, it interferes with type inference.
+   */
+  private static Option<Term> err(@NotNull ImmutableSeq<Arg<Term>> args) {
+    return args.view().mapNotNull(arg ->
+      arg.term() instanceof ErrorTerm ? arg.term() : null).firstOption();
+  }
+
   @VisibleForTesting public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>>
   classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
@@ -63,9 +73,17 @@ public final class PatClassifier2 extends StatedTycker {
     @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
   ) {
     var classifier = new PatClassifier2(reporter, builder, state, pos, new PatTree.Builder());
-    return classifier.classifyN(false, new Subst(), telescope.view(), clauses.view()
+    var cl = classifier.classifyN(false, new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
+    return cl.filter(it -> {
+      var err = err(it.term);
+      if (err.isDefined()) {
+        reporter.report(new ClausesProblem.MissingCase(pos, (ErrorTerm) err.get()));
+        return false;
+      }
+      return true;
+    });
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
@@ -123,7 +141,7 @@ public final class PatClassifier2 extends StatedTycker {
           var classes = classifyN(hasCatchAll, subst.derive(), params.view(), clsWithTupPat, fuel);
           builder.reduce();
           return classes.map(args -> new PatClass<>(
-            new Arg<>(new TupTerm(args.term), explicit),
+            new Arg<>(err(args.term).getOrElse(() -> new TupTerm(args.term)), explicit),
             args.cls.appendedAll(clsWithBindPat)));
         }
       }
@@ -175,7 +193,7 @@ public final class PatClassifier2 extends StatedTycker {
           builder.reduce();
           var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
-            new Arg<>(new ConCall(conHead, args.term), explicit),
+            new Arg<>(err(args.term).getOrElse(() -> new ConCall(conHead, args.term)), explicit),
             args.cls.appendedAll(clsWithBindPat))));
           builder.unshift();
         }
@@ -185,6 +203,21 @@ public final class PatClassifier2 extends StatedTycker {
     builder.shiftEmpty(explicit);
     builder.unshift();
     return ImmutableSeq.of(new PatClass<>(param.toArg(), clauses));
+  }
+
+  public static int[] firstMatchDomination(
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull Reporter reporter, @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classes
+  ) {
+    // StackOverflow says they're initialized to zero
+    var numbers = new int[clauses.size()];
+    classes.forEach(results ->
+      numbers[results.cls.min()]++);
+    // ^ The minimum is not always the first one
+    for (int i = 0; i < numbers.length; i++)
+      if (0 == numbers[i]) reporter.report(
+        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
+    return numbers;
   }
 
   public record PatClass<T>(@NotNull T term, @NotNull ImmutableIntSeq cls) {

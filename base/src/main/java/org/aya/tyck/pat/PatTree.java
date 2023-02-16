@@ -35,10 +35,6 @@ public record PatTree(
   }
 
   public final static class Builder extends TreeBuilder<PatTree> {
-    public @NotNull PatClassifier.PatErr toPatErr() {
-      return new PatClassifier.PatErr(root().map(PatTree::toPattern));
-    }
-
     public void shiftEmpty(boolean explicit) {
       append(new PatTree("_", explicit, 0));
     }

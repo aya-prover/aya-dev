@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -7,6 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.term.DataCall;
+import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.BasePrettier;
@@ -97,11 +98,11 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull PatClassifier.PatErr pats
+    @NotNull ErrorTerm err
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unhandled case:"),
-        BasePrettier.argsDoc(options, pats.missing()));
+        err.description().toDoc(options));
     }
   }
 

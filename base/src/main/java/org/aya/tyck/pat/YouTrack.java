@@ -18,14 +18,13 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
-import org.aya.util.tyck.MCT;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * YouTrack checks confluence.
  *
  * @author ice1000
- * @see PatClassifier#classify
+ * @see PatClassifier2#classify
  */
 public record YouTrack(
   @NotNull ImmutableSeq<Term.Param> telescope,
@@ -62,9 +61,9 @@ public record YouTrack(
       lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull MCT<Term> mct) {
+  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull ImmutableSeq<PatClassifier2.PatClass<ImmutableSeq<Arg<Term>>>> mct) {
     mct.forEach(results -> {
-      var contents = results.contents()
+      var contents = results.cls()
         .mapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)))
         .flatMap(it -> it);
