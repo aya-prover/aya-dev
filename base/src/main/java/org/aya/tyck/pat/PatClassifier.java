@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.CtorDef;
@@ -142,9 +143,14 @@ public final class PatClassifier extends StatedTycker {
         var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
         if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
           // There is only literals and bind patterns, no constructor patterns
-          return ImmutableSeq.from(lits.collect(Collectors.groupingBy(i -> i.pat().repr())).values())
+          var classes = Seq.from(lits.collect(
+              Collectors.groupingBy(i -> i.pat().repr())).values())
             .map(i -> new PatClass<>(new Arg<>(i.get(0).pat().toTerm(), explicit),
               Indexed.indices(Seq.wrapJava(i)).concat(binds)));
+          var ml = MutableArrayList.<PatClass<Arg<Term>>>create(classes.size() + 1);
+          ml.appendAll(classes);
+          ml.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), binds));
+          return ml.toImmutableSeq();
         }
 
         var buffer = MutableList.<PatClass<Arg<Term>>>create();
