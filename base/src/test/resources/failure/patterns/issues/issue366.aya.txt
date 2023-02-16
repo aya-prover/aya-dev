@@ -16,7 +16,7 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:5:3 ->
 
-  3 │   def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
+  3 │   overlap def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
   4 │    | zero, eldath => suc zero
   5 │    | zero, eldath => zero
     │      ╰──────────────────╯
@@ -27,7 +27,7 @@ Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
 In file $FILE:4:3 ->
 
   2 │   open data Ray (a : Nat) : Type | zero => eldath
-  3 │   def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
+  3 │   overlap def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
   4 │    | zero, eldath => suc zero
     │      ╰──────────────────────╯
 

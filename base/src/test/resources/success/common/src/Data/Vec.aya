@@ -14,13 +14,13 @@ def vmap (f : A -> B) (xs : Vec A n) : Vec B n
 | f, vnil => vnil
 | f, x :> xs => f x :> vmap f xs
 
-def overlap infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
+overlap def infix ++ (xs : Vec A n) (ys : Vec A m) : Vec A (n + m)
 | vnil, ys => ys
 | xs, vnil => xs
 | x :> xs, ys => x :> (xs ++ ys)
 tighter =
 
-def overlap ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
+overlap def ++-assoc (xs : Vec A n) (ys : Vec A m) (zs : Vec A o)
   : Path (\i => Vec A (+-assoc i)) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
 | vnil, ys, zs => idp
 | xs, vnil, zs => idp

@@ -608,23 +608,23 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // KW_PRIVATE
-  //                 | openKw
   //                 | KW_EXAMPLE
   //                 | KW_COUNTEREXAMPLE
   //                 | KW_OPAQUE
   //                 | KW_INLINE
   //                 | KW_OVERLAP
+  //                 | openKw
   public static boolean declModifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declModifiers")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, DECL_MODIFIERS, "<decl modifiers>");
     r = consumeToken(b, KW_PRIVATE);
-    if (!r) r = openKw(b, l + 1);
     if (!r) r = consumeToken(b, KW_EXAMPLE);
     if (!r) r = consumeToken(b, KW_COUNTEREXAMPLE);
     if (!r) r = consumeToken(b, KW_OPAQUE);
     if (!r) r = consumeToken(b, KW_INLINE);
     if (!r) r = consumeToken(b, KW_OVERLAP);
+    if (!r) r = openKw(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1650,6 +1650,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
   //                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
   //                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+  //                      | KW_OPAQUE | KW_INLINE | KW_OVERLAP
   static boolean stmt_first(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stmt_first")) return false;
     boolean r;
@@ -1666,6 +1667,9 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_PRIM);
     if (!r) r = consumeToken(b, KW_DATA);
     if (!r) r = consumeToken(b, KW_VARIABLE);
+    if (!r) r = consumeToken(b, KW_OPAQUE);
+    if (!r) r = consumeToken(b, KW_INLINE);
+    if (!r) r = consumeToken(b, KW_OVERLAP);
     return r;
   }
 

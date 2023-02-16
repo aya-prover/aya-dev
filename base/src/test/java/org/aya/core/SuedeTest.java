@@ -43,7 +43,7 @@ public class SuedeTest {
     suedeAll("""
       prim I
       prim intervalInv
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
       def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i { ~ i := a | i := b }
       def Eq (A : Type) (a b : A) : Type => Path (\\ i => A) a b
       variable A : Type

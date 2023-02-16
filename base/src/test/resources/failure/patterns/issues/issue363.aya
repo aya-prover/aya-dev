@@ -4,7 +4,7 @@ open data Nat : Type
 
 prim I
 prim intervalInv
-def inline ~ => intervalInv
+inline def ~ => intervalInv
 
 open data Int : Type
  | pos Nat

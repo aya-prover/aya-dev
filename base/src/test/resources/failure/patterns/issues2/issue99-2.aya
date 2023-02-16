@@ -1,6 +1,6 @@
 open data Unit : Type | unit
 
-def overlap test2 (a b : Unit) : Unit
+overlap def test2 (a b : Unit) : Unit
  | x, unit => unit
  | unit, y => unit
  | x, y => unit

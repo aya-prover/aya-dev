@@ -166,6 +166,7 @@ private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+                     | KW_OPAQUE | KW_INLINE | KW_OVERLAP
 
 private repl ::= REPL_COMMAND? expr
 
@@ -223,12 +224,12 @@ primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
 declModifiers ::= KW_PRIVATE
-                | openKw
                 | KW_EXAMPLE
                 | KW_COUNTEREXAMPLE
                 | KW_OPAQUE
                 | KW_INLINE
                 | KW_OVERLAP
+                | openKw
 
 structDecl
   ::= declModifiers*

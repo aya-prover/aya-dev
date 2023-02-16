@@ -18,7 +18,6 @@ import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
-import org.aya.cli.parse.ModifierParser.ModifierSet;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadModifierWarn;
@@ -281,12 +280,7 @@ public record AyaProducer(
   }
 
   public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
-    var info = declInfo(node, ModifierParser.Modifiers.ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      null,
-      Option.none(), Option.none(), Option.none()
-    ));
+    var info = declInfo(node, ModifierParser.Modifiers.fnFilter);
 
     if (info == null) return null;
 
@@ -348,9 +342,8 @@ public record AyaProducer(
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
       Option.none(), null, null, null
     );
-    var info = declInfo(node, new ModifierParser.Filter(ofDefault.defaultValue(), x -> {
-      return x != ModifierParser.Modifier.Counterexample || ofDefault.filter().test(x);
-    }));
+    var info = declInfo(node, new ModifierParser.Filter(ofDefault.defaultValue(), x ->
+      x != ModifierParser.Modifier.Counterexample && ofDefault.filter().test(x)));
     if (info == null) return null;
     var sample = info.modifier.personality().data();
     var ty = typeOrNull(node.peekChild(TYPE));
@@ -385,7 +378,7 @@ public record AyaProducer(
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var info = declInfo(node, ModifierParser.Modifiers.falseFilter);
+    var info = declInfo(node, ModifierParser.Modifiers.subDeclFilter);
     return new TeleDecl.StructField(
       info.info, info.name, tele,
       typeOrNull(node.peekChild(TYPE)),
@@ -415,7 +408,7 @@ public record AyaProducer(
   }
 
   public @Nullable TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
-    var info = declInfo(node, ModifierParser.Modifiers.falseFilter);
+    var info = declInfo(node, ModifierParser.Modifiers.subDeclFilter);
     if (info == null) return null;
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var partial = node.peekChild(PARTIAL_BLOCK);

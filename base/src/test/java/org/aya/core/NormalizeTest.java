@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -22,7 +22,7 @@ public class NormalizeTest {
   @Test public void unfoldPatterns() {
     var res = TyckDeclTest.successTyckDecls("""
       open data Nat : Type | zero | suc Nat
-      def overlap tracy (a b : Nat) : Nat
+      overlap def tracy (a b : Nat) : Nat
        | zero, a => a
        | a, zero => a
        | suc a, b => suc (tracy a b)
@@ -67,12 +67,12 @@ public class NormalizeTest {
       open data List (A : Type) : Type
         | nil
         | infixr :< A (List A)
-      def overlap infixl + (a b : Nat) : Nat
+      overlap def infixl + (a b : Nat) : Nat
         | zero, a => a
         | a, zero => a
         | suc a, b => suc (a + b)
         | a, suc b => suc (a + b)
-      def overlap infixr ++ {A : Type} (xs ys : List A) : List A
+      overlap def infixr ++ {A : Type} (xs ys : List A) : List A
         | nil, ys => ys
         | xs, nil => xs
         | a :< xs, ys => a :< (xs ++ ys)

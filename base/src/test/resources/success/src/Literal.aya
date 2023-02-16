@@ -61,7 +61,7 @@ def largeInt Nat : Nat
   | 2147483647 => 2147483647
   | suc a => suc a
 
-def overlap largeInt2 Nat Nat : Nat
+overlap def largeInt2 Nat Nat : Nat
   | a, b => a
   | 114514, 1919810 => 114514
 

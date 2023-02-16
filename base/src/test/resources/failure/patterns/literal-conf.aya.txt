@@ -2,7 +2,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap not-conf Nat : Nat
+  3 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   4 │         | zero => 1
     │           ╰───────╯ substituted to `1`
@@ -18,7 +18,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap not-conf Nat : Nat
+  3 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   4 │         | zero => 1
   5 │         | 0 => 0
@@ -40,17 +40,17 @@ In file $FILE:5:4 ->
   5 │     | 0 => 0
     │       ╰────╯
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
          unreachable
 
 In file $FILE:4:4 ->
 
-  2 │   
+  2 │
   3 │   def overlap not-conf Nat : Nat
   4 │     | zero => 1
     │       ╰───────╯
 
-Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be
          unreachable
 
 In file $FILE:6:4 ->
@@ -60,7 +60,7 @@ In file $FILE:6:4 ->
   6 │     | 1 => 1
     │       ╰────╯
 
-Warning: The 5th clause dominates the 3rd clause. The 3rd clause will be 
+Warning: The 5th clause dominates the 3rd clause. The 3rd clause will be
          unreachable
 
 In file $FILE:7:4 ->

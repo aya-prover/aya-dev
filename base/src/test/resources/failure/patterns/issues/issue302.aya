@@ -1,7 +1,7 @@
 open data Nat : Type
  | zero
  | suc Nat
-def overlap addN (a b : Nat) : Nat
+overlap def addN (a b : Nat) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN b a)

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cubical;
 
@@ -16,7 +16,7 @@ public class PathTest {
     var res = TyckDeclTest.successTyckDecls("""
       prim I
       prim intervalInv
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A { ~ i := a | i := b }
           
@@ -79,7 +79,7 @@ public class PathTest {
       prim Partial
       prim intervalInv
             
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
             
       def infix = {A : Type} (a b : A) : Type =>
         [| i |] A { ~ i := a | i := b }

@@ -1,7 +1,7 @@
 In file $FILE:6:15 ->
 
   4 │   
-  5 │   def overlap add (m n : Nat) : Type
+  5 │   overlap def add (m n : Nat) : Type
   6 │     | zero, n => n
     │                  ╰╯
 
@@ -14,7 +14,7 @@ Error: Cannot check the expression
 
 In file $FILE:7:15 ->
 
-  5 │   def overlap add (m n : Nat) : Type
+  5 │   overlap def add (m n : Nat) : Type
   6 │     | zero, n => n
   7 │     | m, zero => {??}
     │                  ╰──╯
@@ -86,7 +86,7 @@ Error: Cannot check the expression
 
 In file $FILE:7:15 ->
 
-  5 │   def overlap add (m n : Nat) : Type
+  5 │   overlap def add (m n : Nat) : Type
   6 │     | zero, n => n
   7 │     | m, zero => {??}
     │                  ╰──╯

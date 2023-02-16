@@ -64,6 +64,9 @@ public record ModifierParser(@NotNull Reporter reporter) {
     }
   }
 
+  /**
+   * @param defaultValue Forall (x : Modifier), filter x = true -> ((defaultValue x) success)
+   */
   public record Filter(
     @NotNull Modifiers defaultValue,
     @NotNull Predicate<Modifier> filter
@@ -82,7 +85,11 @@ public record ModifierParser(@NotNull Reporter reporter) {
       null, Option.none(), Option.none(), Option.none()
     );
 
-    Filter falseFilter = ofDefault(null, null, null, null, null, null);
+    Filter subDeclFilter = new Filter(ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      null, null, null, null
+    ).defaultValue, x -> false);
 
     /**
      * Forall parameters:<br/>
@@ -110,37 +117,37 @@ public record ModifierParser(@NotNull Reporter reporter) {
       return new Filter(new Modifiers() {
         @Override
         public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-          if (accessibility == null) throw new UnsupportedOperationException(":\\");
+          if (accessibility == null) throw new UnsupportedOperationException();
           return accessibility;
         }
 
         @Override
         public @NotNull WithPos<DeclInfo.Personality> personality() {
-          if (personality == null) throw new UnsupportedOperationException(":\\");
+          if (personality == null) throw new UnsupportedOperationException();
           return personality;
         }
 
         @Override
         public @Nullable SourcePos openKw() {
-          if (openKw == null) throw new UnsupportedOperationException(":\\");
+          if (openKw == null) throw new UnsupportedOperationException();
           return openKw.getOrNull();
         }
 
         @Override
         public @Nullable SourcePos opaque() {
-          if (opaque == null) throw new UnsupportedOperationException(":\\");
+          if (opaque == null) throw new UnsupportedOperationException();
           return opaque.getOrNull();
         }
 
         @Override
         public @Nullable SourcePos inline() {
-          if (inline == null) throw new UnsupportedOperationException(":\\");
+          if (inline == null) throw new UnsupportedOperationException();
           return inline.getOrNull();
         }
 
         @Override
         public @Nullable SourcePos overlap() {
-          if (overlap == null) throw new UnsupportedOperationException(":\\");
+          if (overlap == null) throw new UnsupportedOperationException();
           return overlap.getOrNull();
         }
       }, predi);
@@ -163,7 +170,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Nullable SourcePos overlap();
   }
 
-  public record ModifierSet(
+  private record ModifierSet(
     @Nullable WithPos<Stmt.Accessibility> accessibility,
     @Nullable WithPos<DeclInfo.Personality> personality,
     @Nullable Either<SourcePos, SourcePos> alphaChannel,
@@ -191,13 +198,13 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos opaque() {
-      return alphaChannel != null ? alphaChannel.getLeftOption().getOrNull() : parent.opaque();
+      return alphaChannel != null && alphaChannel.isLeft() ? alphaChannel.getLeftValue() : parent.opaque();
     }
 
     @Override
     @Contract(pure = true)
     public @Nullable SourcePos inline() {
-      return alphaChannel != null ? alphaChannel.getRightOption().getOrNull() : parent.inline();
+      return alphaChannel != null && alphaChannel.isRight() ? alphaChannel.getRightValue() : parent.inline();
     }
 
     @Override

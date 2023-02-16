@@ -52,11 +52,9 @@ public class ModifierParserTest {
     var modis2 = ImmutableSeq.of(new WithPos<>(SourcePos.NONE, Example));
     var returns2 = withParser(parser -> parser.parse(modis2)).component2();
 
-    assertEquals(new ModifierParser.ModifierSet(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE),
-      null
-    ), returns);
-    assertEquals(returns, returns2);
+    assertEquals(Stmt.Accessibility.Private, returns.accessibility().data());
+    assertEquals(DeclInfo.Personality.EXAMPLE, returns.personality().data());
+    assertEquals(Stmt.Accessibility.Private, returns2.accessibility().data());
+    assertEquals(DeclInfo.Personality.EXAMPLE, returns2.personality().data());
   }
 }
