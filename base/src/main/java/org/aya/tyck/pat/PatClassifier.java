@@ -71,7 +71,7 @@ public final class PatClassifier extends StatedTycker {
     @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
   ) {
     var classifier = new PatClassifier(reporter, builder, state, pos);
-    var cl = classifier.classifyN(false, new Subst(), telescope.view(), clauses.view()
+    var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
     return cl.filter(it -> {
@@ -84,16 +84,16 @@ public final class PatClassifier extends StatedTycker {
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
-    boolean hasCatchAll, @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
+    @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
     @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
   ) {
     if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
       ImmutableSeq.empty(), Indexed.indices(clauses)));
     var first = params.first();
-    var cls = classify1(hasCatchAll, subst, first.subst(subst),
+    var cls = classify1(subst, first.subst(subst),
       clauses.mapIndexed((ix, it) -> new Indexed<>(it.pat().first().inline(null), ix)), fuel);
     return cls.flatMap(subclauses ->
-      classifyN(hasCatchAll, subst.add(first.ref(), subclauses.term().term()),
+      classifyN(subst.add(first.ref(), subclauses.term().term()),
         // Drop heads of both
         params.drop(1),
         subclauses.extract(clauses.map(it ->
@@ -105,14 +105,10 @@ public final class PatClassifier extends StatedTycker {
    * @return Possibilities
    */
   @NotNull ImmutableSeq<PatClass<Arg<Term>>> classify1(
-    boolean preHasCatchAll, @NotNull Subst subst, @NotNull Term.Param param,
+    @NotNull Subst subst, @NotNull Term.Param param,
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   ) {
     var whnfTy = whnf(param.type());
-    var clsWithBindPat = clauses.view().mapIndexedNotNull((i, subPat) ->
-        subPat.pat() instanceof Pat.Bind ? i : null)
-      .collect(ImmutableIntSeq.factory());
-    var hasCatchAll = preHasCatchAll || clsWithBindPat.isNotEmpty();
     final var explicit = param.explicit();
     switch (whnfTy) {
       default -> {
@@ -121,17 +117,19 @@ public final class PatClassifier extends StatedTycker {
       // since patterns here are already well-typed
       case SigmaTerm(var params) -> {
         // The type is sigma type, and do we have any non-catchall patterns?
-        var clsWithTupPat = clauses.mapIndexedNotNull((i, subPat) ->
-          subPat.pat() instanceof Pat.Tuple tuple
-            ? new Indexed<>(tuple.pats().view().map(Arg::term), i)
-            : null);
         // In case we do,
-        if (clsWithTupPat.isNotEmpty()) {
-          params = new EndoTerm.Renamer().params(params.view());
-          var classes = classifyN(hasCatchAll, subst.derive(), params.view(), clsWithTupPat, fuel);
+        if (clauses.anyMatch(i -> i.pat() instanceof Pat.Tuple)) {
+          var params1 = new EndoTerm.Renamer().params(params.view());
+          var clsWithTupPat = clauses.mapIndexedNotNull((i, subPat) ->
+            switch (subPat.pat()) {
+              case Pat.Tuple tuple -> new Indexed<>(tuple.pats().view().map(Arg::term), i);
+              case Pat.Bind bind -> new Indexed<>(params1.view().map(p -> p.toPat().term()), i);
+              default -> null;
+            });
+          var classes = classifyN(subst.derive(), params1.view(), clsWithTupPat, fuel);
           return classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new TupTerm(args.term())), explicit),
-            args.cls().appendedAll(clsWithBindPat)));
+            args.cls()));
         }
       }
       case DataCall dataCall -> {
@@ -148,27 +146,17 @@ public final class PatClassifier extends StatedTycker {
         // For all constructors,
         for (var ctor : body) {
           var fuel1 = fuel;
-          var conTeleView = conTele(clauses, dataCall, ctor, pos);
+          var conTeleView = conTele(clauses, dataCall, ctor);
           if (conTeleView == null) continue;
           var conTele = new EndoTerm.Renamer().params(conTeleView);
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = clauses.mapIndexedNotNull((ix, subPat) ->
             // Convert to constructor form
-            (subPat.pat() instanceof Pat.ShapedInt i
-              ? i.constructorForm()
-              : subPat.pat()
-              // Then turn into `SubPats`
-            ) instanceof Pat.Ctor c && c.ref() == ctor.ref()
-              ? new Indexed<>(c.params().view().map(Arg::term), ix)
-              : null);
+            matches(conTele, ctor, ix, subPat));
           var conHead = dataCall.conHead(ctor.ref);
           // The only matching cases are catch-all cases, and we skip these
           if (matches.isEmpty()) {
-            if (hasCatchAll) {
-              buffer.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), clsWithBindPat));
-              continue;
-            }
             fuel1--;
             // In this case we give up and do not split on this constructor
             if (conTele.isEmpty() || fuel1 <= 0) {
@@ -182,22 +170,35 @@ public final class PatClassifier extends StatedTycker {
           ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classes;
           var lits = clauses.mapNotNull(cl -> cl.pat() instanceof Pat.ShapedInt i ?
             new Indexed<>(i, cl.ix()) : null);
-          if (clauses.isNotEmpty() && lits.size() + clsWithBindPat.size() == clauses.size()) {
+          var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
+          if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
             // There is only literals and bind patterns, no constructor patterns
             classes = ImmutableSeq.from(lits.collect(Collectors.groupingBy(i -> i.pat().repr())).values())
               .map(i -> new PatClass<>(ImmutableSeq.of(new Arg<>(i.get(0).pat().toTerm(), explicit)),
-                Indexed.indices(Seq.wrapJava(i))));
+                Indexed.indices(Seq.wrapJava(i)).concat(binds)));
           } else {
-            classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
+            classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
           }
           buffer.appendAll(classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
-            args.cls().appendedAll(clsWithBindPat))));
+            args.cls())));
         }
         return buffer.toImmutableSeq();
       }
     }
     return ImmutableSeq.of(new PatClass<>(param.toArg(), Indexed.indices(clauses)));
+  }
+
+  private static @Nullable Indexed<SeqView<Pat>> matches(
+    ImmutableSeq<Term.Param> conTele, CtorDef ctor, int ix, Indexed<Pat> subPat
+  ) {
+    return switch (subPat.pat() instanceof Pat.ShapedInt i
+      ? i.constructorForm()
+      : subPat.pat()) {
+      case Pat.Ctor c when c.ref() == ctor.ref() -> new Indexed<>(c.params().view().map(Arg::term), ix);
+      case Pat.Bind b -> new Indexed<>(conTele.view().map(p -> p.toPat().term()), ix);
+      default -> null;
+    };
   }
 
   public static int[] firstMatchDomination(
@@ -216,7 +217,7 @@ public final class PatClassifier extends StatedTycker {
   }
 
   private @Nullable SeqView<Term.Param>
-  conTele(@NotNull ImmutableSeq<? extends Indexed<?>> clauses, DataCall dataCall, CtorDef ctor, @NotNull SourcePos pos) {
+  conTele(@NotNull ImmutableSeq<? extends Indexed<?>> clauses, DataCall dataCall, CtorDef ctor) {
     var conTele = ctor.selfTele.view();
     // Check if this constructor is available by doing the obvious thing
     var matchy = PatternTycker.mischa(dataCall, ctor, state);
