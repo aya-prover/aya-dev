@@ -12,7 +12,6 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.ref.AnyVar;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.StatedTycker;
@@ -20,7 +19,6 @@ import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
-import org.aya.util.tyck.MCT;
 import org.aya.util.tyck.MCT.SubPats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +32,15 @@ import java.util.function.Function;
  */
 public final class PatClassifier2 extends StatedTycker {
   public final @NotNull SourcePos pos;
+  private final PatTree.Builder builder;
 
-  public PatClassifier2(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos) {
+  public PatClassifier2(
+    @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder,
+    @NotNull TyckState state, @NotNull SourcePos pos, @NotNull PatTree.Builder builder
+  ) {
     super(reporter, traceBuilder, state);
     this.pos = pos;
+    this.builder = builder;
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
@@ -76,6 +79,7 @@ public final class PatClassifier2 extends StatedTycker {
     var clsWithBindPat = clauses.view().mapIndexedNotNull((i, subPat) ->
         subPat.pat instanceof Pat.Bind ? i : null)
       .collect(ImmutableIntSeq.factory());
+    final var explicit = param.explicit();
     switch (whnfTy) {
       default -> {
       }
@@ -89,10 +93,12 @@ public final class PatClassifier2 extends StatedTycker {
             : null);
         // In case we do,
         if (clsWithTupPat.isNotEmpty()) {
+          builder.shift(new PatTree("", explicit, params.count(Term.Param::explicit)));
           params = new EndoTerm.Renamer().params(params.view());
           var classes = classifyN(subst.derive(), params.view(), clsWithTupPat, fuel);
+          builder.reduce();
           return classes.map(args -> new PatClass<>(
-            new Arg<>(new TupTerm(args.term), param.explicit()),
+            new Arg<>(new TupTerm(args.term), explicit),
             args.cls.appendedAll(clsWithBindPat)));
         }
       }
@@ -115,6 +121,7 @@ public final class PatClassifier2 extends StatedTycker {
           var conTele = new EndoTerm.Renamer().params(conTeleView);
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           var matches = clauses.mapIndexedNotNull((ix, subPat) ->
             // Convert to constructor form
             (subPat.pat instanceof Pat.ShapedInt i
@@ -130,26 +137,28 @@ public final class PatClassifier2 extends StatedTycker {
             // In this case we give up and do not split on this constructor
             if (conTele.isEmpty() || fuel1 <= 0) {
               // TODO: report error
+              builder.reduce();
+              builder.unshift();
               continue;
             }
           }
           var classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
+          builder.reduce();
           var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
-            new Arg<>(new ConCall(conHead, args.term), param.explicit()),
+            new Arg<>(new ConCall(conHead, args.term), explicit),
             args.cls.appendedAll(clsWithBindPat))));
+          builder.unshift();
         }
         return buffer.toImmutableSeq();
       }
     }
+    builder.shiftEmpty(explicit);
+    builder.unshift();
     return ImmutableSeq.of(new PatClass<>(param.toArg(), clauses));
   }
 
   public record PatClass<T>(@NotNull T term, @NotNull ImmutableIntSeq cls) {
-    public PatClass(@NotNull T term, @NotNull SeqView<SubPats<Pat>> cls) {
-      this(term, cls.map(SubPats::ix).collect(ImmutableIntSeq.factory()));
-    }
-
     PatClass(@NotNull T term, @NotNull ImmutableSeq<SubPat> cls) {
       this(term, cls.map(SubPat::ix).collect(ImmutableIntSeq.factory()));
     }
@@ -165,18 +174,7 @@ public final class PatClassifier2 extends StatedTycker {
     return pats.cls.mapToObj(subPatsSeq::get);
   }
 
-  private static @Nullable SubPats<Pat> matches(SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, AnyVar ctorRef) {
-    var head = head(subPats);
-    // Literals are matched against constructor patterns
-    if (head instanceof Pat.ShapedInt lit) head = lit.constructorForm();
-    if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
-      return new MCT.SubPats<>(ctorPat.params().view().map(Arg::term), ix);
-    if (head instanceof Pat.Bind)
-      return new MCT.SubPats<>(conTele.view().map(Term.Param::toPat).map(Arg::term), ix);
-    return null;
-  }
-
-  protected @Nullable SeqView<Term.Param>
+  private @Nullable SeqView<Term.Param>
   conTele(@NotNull ImmutableSeq<SubPat> clauses, DataCall dataCall, CtorDef ctor, @NotNull SourcePos pos) {
     var conTele = ctor.selfTele.view();
     // Check if this constructor is available by doing the obvious thing

@@ -115,8 +115,7 @@ public final class PatClassifier extends StatedTycker {
     var normalize = target.type().normalize(state, NormalizeMode.WHNF);
     switch (normalize) {
       default -> {
-        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
-          PatTree.toPatErr(builder));
+        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(), builder.toPatErr());
       }
       case SigmaTerm sigma -> {
         var hasTuple = clauses
@@ -172,8 +171,7 @@ public final class PatClassifier extends StatedTycker {
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
-            buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(),
-              PatTree.toPatErr(builder)));
+            buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(), builder.toPatErr()));
             builder.reduce();
             builder.unshift();
             continue;
