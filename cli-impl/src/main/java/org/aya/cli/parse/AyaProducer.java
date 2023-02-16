@@ -233,11 +233,12 @@ public record AyaProducer(
 
   /**
    * @return public if accessiblity is unspecified
-   * @see ModifierParser#parse(ImmutableSeq, Predicate)
+   * @see ModifierParser#parse(ImmutableSeq, ModifierParser.Filter)
    */
-  public @NotNull ModifierSet declModifiersOf(
+  public @NotNull ModifierParser.Modifiers declModifiersOf(
     @NotNull GenericNode<?> node,
-    @NotNull Predicate<ModifierParser.Modifier> filter) {
+    @NotNull ModifierParser.Filter filter
+  ) {
     var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.Modifier modifier = null;
@@ -245,6 +246,9 @@ public record AyaProducer(
       if (x.peekChild(KW_EXAMPLE) != null) modifier = ModifierParser.Modifier.Example;
       if (x.peekChild(KW_COUNTEREXAMPLE) != null) modifier = ModifierParser.Modifier.Counterexample;
       if (x.peekChild(OPEN_KW) != null) modifier = ModifierParser.Modifier.Open;
+      if (x.peekChild(KW_OPAQUE) != null) modifier = ModifierParser.Modifier.Opaque;
+      if (x.peekChild(KW_INLINE) != null) modifier = ModifierParser.Modifier.Inline;
+      if (x.peekChild(KW_OVERLAP) != null) modifier = ModifierParser.Modifier.Overlap;
       if (modifier == null) unreachable(x);
 
       return new WithPos<>(pos, modifier);
@@ -253,11 +257,11 @@ public record AyaProducer(
     return new ModifierParser(reporter()).parse(modifiers.toImmutableSeq(), filter);
   }
 
-  record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierSet modifier) {}
+  record DeclParseData(@NotNull DeclInfo info, @NotNull String name, @NotNull ModifierParser.Modifiers modifier) {}
 
   private @Nullable DeclParseData declInfo(
     @NotNull GenericNode<?> node,
-    @NotNull Predicate<ModifierParser.Modifier> filter
+    @NotNull ModifierParser.Filter filter
   ) {
     var modifier = declModifiersOf(node, filter);
     var bind = node.peekChild(BIND_BLOCK);
@@ -277,34 +281,36 @@ public record AyaProducer(
   }
 
   public @Nullable TeleDecl.FnDecl fnDecl(@NotNull GenericNode<?> node) {
+    var info = declInfo(node, ModifierParser.Modifiers.ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      null,
+      Option.none(), Option.none(), Option.none()
+    ));
+
+    if (info == null) return null;
+
     var fnBodyNode = node.peekChild(FN_BODY);
     if (fnBodyNode == null) {
       error(node.childrenView().first(), "Expect a function body");
       return null;
     }
 
-    var modifiers = node.childrenOfType(FN_MODIFIERS).map(m -> Tuple.of(m, fnModifier(m)))
-      .toImmutableSeq();
-    var inline = modifiers.find(t -> t.component2() == Modifier.Inline);
-    var opaque = modifiers.find(t -> t.component2() == Modifier.Opaque);
-    if (inline.isDefined() && opaque.isDefined()) {
-      var gunpowder = inline.get();
-      reporter.report(new BadModifierWarn(sourcePosOf(gunpowder.component1()), gunpowder.component2()));
-    }
     var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
-    var bind = node.peekChild(BIND_BLOCK);
-
     var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
-    if (dynamite.isRight() && inline.isDefined()) {
-      var gelatin = inline.get();
-      reporter.report(new BadModifierWarn(sourcePosOf(gelatin.component1()), gelatin.component2()));
+    if (dynamite.isRight() && info.modifier.inline() != null) {
+      reporter.report(new BadModifierWarn(info.modifier.inline(), Modifier.Inline));
     }
-    var info = declInfo(node, x -> x != ModifierParser.Modifier.Open);
-    if (info == null) return null;
+
     var sample = info.modifier.personality().data();
-    var fnMods = modifiers.map(Tuple2::getValue).collect(Collectors.toCollection(
-      () -> EnumSet.noneOf(Modifier.class)));
+
+    // TODO: any better code?
+    var fnMods = EnumSet.noneOf(Modifier.class);
+    if (info.modifier.opaque() != null) fnMods.add(Modifier.Opaque);
+    if (info.modifier.inline() != null) fnMods.add(Modifier.Inline);
+    if (info.modifier.overlap() != null) fnMods.add(Modifier.Overlap);
+
     var ty = typeOrNull(node.peekChild(TYPE));
     return new TeleDecl.FnDecl(info.info, fnMods, info.name, tele, ty, dynamite, sample);
   }
@@ -320,7 +326,7 @@ public record AyaProducer(
     return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
-  private void giveMeOpen(@NotNull ModifierSet modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
+  private void giveMeOpen(@NotNull ModifierParser.Modifiers modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
     var keyword = modiSet.openKw();
     if (keyword == null) return;
 
@@ -337,7 +343,14 @@ public record AyaProducer(
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var info = declInfo(node, x -> x != ModifierParser.Modifier.Counterexample);
+    var ofDefault = ModifierParser.Modifiers.ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      Option.none(), null, null, null
+    );
+    var info = declInfo(node, new ModifierParser.Filter(ofDefault.defaultValue(), x -> {
+      return x != ModifierParser.Modifier.Counterexample || ofDefault.filter().test(x);
+    }));
     if (info == null) return null;
     var sample = info.modifier.personality().data();
     var ty = typeOrNull(node.peekChild(TYPE));
@@ -358,7 +371,7 @@ public record AyaProducer(
   }
 
   public @NotNull TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var info = declInfo(node, x -> true);
+    var info = declInfo(node, ModifierParser.Modifiers.declFilter);
     if (info == null) return null;
     var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
@@ -372,7 +385,7 @@ public record AyaProducer(
   public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var nameOrInfix = declNameOrInfix(node.child(DECL_NAME_OR_INFIX));
-    var info = declInfo(node, x -> false);
+    var info = declInfo(node, ModifierParser.Modifiers.falseFilter);
     return new TeleDecl.StructField(
       info.info, info.name, tele,
       typeOrNull(node.peekChild(TYPE)),
@@ -402,7 +415,7 @@ public record AyaProducer(
   }
 
   public @Nullable TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
-    var info = declInfo(node, x -> false);
+    var info = declInfo(node, ModifierParser.Modifiers.falseFilter);
     if (info == null) return null;
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var partial = node.peekChild(PARTIAL_BLOCK);

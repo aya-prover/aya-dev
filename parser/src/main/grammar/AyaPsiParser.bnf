@@ -205,16 +205,12 @@ tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
 fnDecl ::= declModifiers*
- KW_DEF fnModifiers* declNameOrInfix
+ KW_DEF declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
 
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | barredClause*
-
-fnModifiers ::= KW_OPAQUE
-              | KW_INLINE
-              | KW_OVERLAP
 
 // turn the keyword into a psi node, so quick fix can easily delete it
 // see: BadCounterexampleInspection
@@ -226,7 +222,13 @@ openKw ::= KW_OPEN
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
-declModifiers ::= KW_PRIVATE | openKw | KW_EXAMPLE | KW_COUNTEREXAMPLE
+declModifiers ::= KW_PRIVATE
+                | openKw
+                | KW_EXAMPLE
+                | KW_COUNTEREXAMPLE
+                | KW_OPAQUE
+                | KW_INLINE
+                | KW_OVERLAP
 
 structDecl
   ::= declModifiers*

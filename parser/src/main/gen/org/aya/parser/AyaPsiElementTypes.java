@@ -44,7 +44,6 @@ public interface AyaPsiElementTypes {
   IElementType EXPR = new AyaPsiElementType("EXPR");
   IElementType FN_BODY = new AyaPsiElementType("FN_BODY");
   IElementType FN_DECL = new AyaPsiElementType("FN_DECL");
-  IElementType FN_MODIFIERS = new AyaPsiElementType("FN_MODIFIERS");
   IElementType FORALL_EXPR = new AyaPsiElementType("FORALL_EXPR");
   IElementType GENERALIZE = new AyaPsiElementType("GENERALIZE");
   IElementType GENERALIZE_PARAM_NAME = new AyaPsiElementType("GENERALIZE_PARAM_NAME");
