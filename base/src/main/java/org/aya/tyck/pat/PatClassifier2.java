@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
@@ -21,9 +22,11 @@ import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.tyck.MCT;
 import org.aya.util.tyck.MCT.SubPats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.Function;
 
@@ -43,6 +46,26 @@ public final class PatClassifier2 extends StatedTycker {
     super(reporter, traceBuilder, state);
     this.pos = pos;
     this.builder = builder;
+  }
+
+  public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classify(
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull StatedTycker tycker,
+    @NotNull SourcePos pos
+  ) {
+    return classify(clauses, telescope, tycker.state, tycker.reporter, pos, tycker.traceBuilder);
+  }
+
+  @VisibleForTesting public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>>
+  classify(
+    @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
+    @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
+  ) {
+    var classifier = new PatClassifier2(reporter, builder, state, pos, new PatTree.Builder());
+    return classifier.classifyN(new Subst(), telescope.view(), clauses.view()
+      .mapIndexed((i, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), i))
+      .toImmutableSeq(), 5);
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
