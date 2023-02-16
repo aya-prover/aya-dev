@@ -120,13 +120,13 @@ public final class PatClassifier extends StatedTycker {
         // In case we do,
         if (clauses.anyMatch(i -> i.pat() instanceof Pat.Tuple)) {
           var params1 = new EndoTerm.Renamer().params(params.view());
-          var clsWithTupPat = clauses.mapIndexedNotNull((i, subPat) ->
+          var matches = clauses.mapIndexedNotNull((i, subPat) ->
             switch (subPat.pat()) {
               case Pat.Tuple tuple -> new Indexed<>(tuple.pats().view().map(Arg::term), i);
               case Pat.Bind bind -> new Indexed<>(params1.view().map(p -> p.toPat().term()), i);
               default -> null;
             });
-          var classes = classifyN(subst.derive(), params1.view(), clsWithTupPat, fuel);
+          var classes = classifyN(subst.derive(), params1.view(), matches, fuel);
           return classes.map(args -> new PatClass<>(
             new Arg<>(err(args.term()).getOrElse(() -> new TupTerm(args.term())), explicit),
             args.cls()));

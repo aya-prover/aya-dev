@@ -20,7 +20,7 @@ public sealed interface Callable extends Term permits Callable.DefCall, FieldTer
   @NotNull AnyVar ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
   sealed interface DefCall extends Callable permits ConCall, DataCall, FnCall, PrimCall, StructCall {
-    @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
+    @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<? extends Term>> ref();
     int ulift();
   }
 

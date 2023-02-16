@@ -56,12 +56,12 @@ public interface EndoTerm extends UnaryOperator<Term> {
     }
 
     public @NotNull ImmutableSeq<Term.Param> params(@NotNull SeqView<Term.Param> params) {
-      return params.map(this::handleBinder).toImmutableSeq();
+      return params.map(p -> handleBinder(p.descent(this))).toImmutableSeq();
     }
 
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
       var v = param.renameVar();
-      subst.addDirectly(param.ref(), new RefTerm(v));
+      subst.add(param.ref(), new RefTerm(v));
       return new Term.Param(v, param.type(), param.explicit());
     }
 
