@@ -12,6 +12,8 @@ import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
+import org.aya.prettier.ConcretePrettier;
+import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.StatedTycker;
@@ -136,7 +138,9 @@ public final class PatClassifier2 extends StatedTycker {
             fuel1--;
             // In this case we give up and do not split on this constructor
             if (conTele.isEmpty() || fuel1 <= 0) {
-              // TODO: report error
+              buffer.append(new PatClass<>(new Arg<>(new ErrorTerm(options ->
+                Doc.join(Doc.symbol(","), new ConcretePrettier(options).patterns(builder.root().map(PatTree::toPattern))),
+                false), explicit), ImmutableIntSeq.empty()));
               builder.reduce();
               builder.unshift();
               continue;
