@@ -42,12 +42,12 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
 
 In file $FILE:9:4 ->
 
-  7 │   def overlap largeInt2 Nat Nat : Nat
+  7 │   overlap def largeInt2 Nat Nat : Nat
   8 │     | a, b => b
   9 │     | a, 1919810 => 1
     │       ╰─────────────╯
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:11:12 ->
@@ -106,7 +106,7 @@ In file $FILE:14:4 ->
   14 │     | a, 1919810 => 1
      │       ╰─────────────╯
 
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:13:4 ->
@@ -168,7 +168,7 @@ In file $FILE:22:4 ->
   22 │     | 1919810, a => 1
      │       ╰─────────────╯
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:24:12 ->
@@ -227,17 +227,17 @@ In file $FILE:27:4 ->
   27 │     | 1919810, a => 1
      │       ╰─────────────╯
 
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:26:4 ->
 
-  24 │   def overlap largeInt3-inv Nat Nat : Nat
+  24 │   overlap def largeInt3-inv Nat Nat : Nat
   25 │     | b, a => b
   26 │     | suc b, a => b
      │       ╰───────────╯
 
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
 In file $FILE:29:12 ->
@@ -263,12 +263,12 @@ Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:30:4 ->
 
-  28 │
+  28 │   
   29 │   overlap def multi-nodes Nat Nat : Nat
   30 │     | 114, 0 => 0
      │       ╰─────────╯
 
-Warning: The 5th clause dominates the 1st clause. The 1st clause will be
+Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
          unreachable
 
 In file $FILE:32:4 ->
@@ -278,7 +278,7 @@ In file $FILE:32:4 ->
   32 │     | 114, 514 => 515
      │       ╰─────────────╯
 
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:31:4 ->

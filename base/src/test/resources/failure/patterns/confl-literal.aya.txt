@@ -80,8 +80,8 @@ Error: The 2nd and the 6th clauses are not confluent because we failed to unify
 In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
-  2 │
-  3 │       def overlap test Nat : Nat
+  2 │       
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -115,12 +115,12 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:4:4 ->
 
-  2 │
-  3 │   def overlap test Nat : Nat
+  2 │   
+  3 │   overlap def test Nat : Nat
   4 │     | 0 => 0
     │       ╰────╯
 
-Warning: The 2nd clause dominates the 1st clause. The 1st clause will be
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
          unreachable
 
 In file $FILE:6:4 ->
@@ -140,7 +140,7 @@ In file $FILE:10:4 ->
   10 │     | 114514 => 1919
      │       ╰────────────╯
 
-Warning: The 2nd clause dominates the 7th clause. The 7th clause will be
+Warning: The 2nd clause dominates the 7th clause. The 7th clause will be 
          unreachable
 
 In file $FILE:7:4 ->
@@ -160,7 +160,7 @@ In file $FILE:9:4 ->
   9 │     | 2147483647 => 4
     │       ╰─────────────╯
 
-Warning: The 5th clause dominates the 6th clause. The 6th clause will be
+Warning: The 5th clause dominates the 6th clause. The 6th clause will be 
          unreachable
 
 In file $FILE:8:4 ->
@@ -170,7 +170,7 @@ In file $FILE:8:4 ->
   8 │     | 2147483647 => 3
     │       ╰─────────────╯
 
-Warning: The 6th clause dominates the 5th clause. The 5th clause will be
+Warning: The 6th clause dominates the 5th clause. The 5th clause will be 
          unreachable
 
 In file $FILE:9:4 ->
@@ -180,7 +180,7 @@ In file $FILE:9:4 ->
   9 │     | 2147483647 => 4
     │       ╰─────────────╯
 
-Warning: The 2nd clause dominates the 6th clause. The 6th clause will be
+Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
          unreachable
 
 6 error(s), 7 warning(s).

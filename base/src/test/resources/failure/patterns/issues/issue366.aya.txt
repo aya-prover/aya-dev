@@ -2,7 +2,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat : Type 0 | zero | suc Nat
   2 │       open data Ray (a : Nat) : Type | zero => eldath
-  3 │       def overlap ray-eldath (a : Nat) (ed40 : Ray a) : Nat
+  3 │       overlap def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
     │                   ╰────────╯
   4 │        | zero, eldath => suc zero
     │          ╰──────────────────────╯ substituted to `suc zero`
