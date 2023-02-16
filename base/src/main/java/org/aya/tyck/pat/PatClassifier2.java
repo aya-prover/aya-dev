@@ -63,22 +63,22 @@ public final class PatClassifier2 extends StatedTycker {
     @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
   ) {
     var classifier = new PatClassifier2(reporter, builder, state, pos, new PatTree.Builder());
-    return classifier.classifyN(new Subst(), telescope.view(), clauses.view()
+    return classifier.classifyN(false, new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
-    @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
+    boolean hasCatchAll, @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
     @NotNull ImmutableSeq<SubPats<Pat>> clauses, int fuel
   ) {
     if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
       ImmutableSeq.empty(), clauses.view()));
     var first = params.first();
-    var cls = classify1(subst, first.subst(subst),
+    var cls = classify1(hasCatchAll, subst, first.subst(subst),
       clauses.mapIndexed((ix, it) -> new SubPat(head(it), ix)), fuel);
     return cls.flatMap(subclauses ->
-      classifyN(subst.add(first.ref(), subclauses.term().term()),
+      classifyN(hasCatchAll, subst.add(first.ref(), subclauses.term().term()),
         // Drop heads of both
         params.drop(1),
         extract(subclauses, clauses.map(SubPats::drop)), fuel)
@@ -96,13 +96,14 @@ public final class PatClassifier2 extends StatedTycker {
    * @return Possibilities
    */
   @NotNull ImmutableSeq<PatClass<Arg<Term>>> classify1(
-    @NotNull Subst subst, @NotNull Term.Param param,
+    boolean preHasCatchAll, @NotNull Subst subst, @NotNull Term.Param param,
     @NotNull ImmutableSeq<SubPat> clauses, int fuel
   ) {
     var whnfTy = whnf(param.type());
     var clsWithBindPat = clauses.view().mapIndexedNotNull((i, subPat) ->
         subPat.pat instanceof Pat.Bind ? i : null)
       .collect(ImmutableIntSeq.factory());
+    var hasCatchAll = preHasCatchAll || clsWithBindPat.isNotEmpty();
     final var explicit = param.explicit();
     switch (whnfTy) {
       default -> {
@@ -119,7 +120,7 @@ public final class PatClassifier2 extends StatedTycker {
         if (clsWithTupPat.isNotEmpty()) {
           builder.shift(new PatTree("", explicit, params.count(Term.Param::explicit)));
           params = new EndoTerm.Renamer().params(params.view());
-          var classes = classifyN(subst.derive(), params.view(), clsWithTupPat, fuel);
+          var classes = classifyN(hasCatchAll, subst.derive(), params.view(), clsWithTupPat, fuel);
           builder.reduce();
           return classes.map(args -> new PatClass<>(
             new Arg<>(new TupTerm(args.term), explicit),
@@ -145,7 +146,6 @@ public final class PatClassifier2 extends StatedTycker {
           var conTele = new EndoTerm.Renamer().params(conTeleView);
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           var matches = clauses.mapIndexedNotNull((ix, subPat) ->
             // Convert to constructor form
             (subPat.pat instanceof Pat.ShapedInt i
@@ -155,20 +155,23 @@ public final class PatClassifier2 extends StatedTycker {
             ) instanceof Pat.Ctor c && c.ref() == ctor.ref()
               ? new SubPats<>(c.params().view().map(Arg::term), ix)
               : null);
-          var noMatch = matches.isEmpty() && clsWithBindPat.isEmpty();
-          if (noMatch) {
+          // The only matching cases are catch-all cases, and we skip these
+          if (matches.isEmpty()) {
+            if (hasCatchAll) {
+              buffer.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), clsWithBindPat));
+              continue;
+            }
             fuel1--;
             // In this case we give up and do not split on this constructor
             if (conTele.isEmpty() || fuel1 <= 0) {
               buffer.append(new PatClass<>(new Arg<>(new ErrorTerm(options ->
                 Doc.join(Doc.symbol(","), new ConcretePrettier(options).patterns(builder.root().map(PatTree::toPattern))),
                 false), explicit), ImmutableIntSeq.empty()));
-              builder.reduce();
-              builder.unshift();
               continue;
             }
           }
-          var classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
+          var classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
           builder.reduce();
           var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
@@ -185,10 +188,6 @@ public final class PatClassifier2 extends StatedTycker {
   }
 
   public record PatClass<T>(@NotNull T term, @NotNull ImmutableIntSeq cls) {
-    public PatClass {
-      System.out.println(cls);
-    }
-
     public PatClass(@NotNull T term, @NotNull SeqView<SubPats<Pat>> cls) {
       this(term, cls.map(SubPats::ix).collect(ImmutableIntSeq.factory()));
     }
