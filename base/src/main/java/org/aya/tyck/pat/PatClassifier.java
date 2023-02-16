@@ -163,9 +163,11 @@ public final class PatClassifier extends StatedTycker {
               ? new Indexed<>(c.params().view().map(Arg::term), ix)
               : null);
           // The only matching cases are catch-all cases, and we skip these
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           if (matches.isEmpty()) {
             if (hasCatchAll) {
               buffer.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), clsWithBindPat));
+              builder.reduceAndUnshift();
               continue;
             }
             fuel1--;
@@ -174,10 +176,11 @@ public final class PatClassifier extends StatedTycker {
               buffer.append(new PatClass<>(new Arg<>(new ErrorTerm(options ->
                 Doc.join(Doc.symbol(","), new ConcretePrettier(options).patterns(builder.root().map(PatTree::toPattern))),
                 false), explicit), ImmutableIntSeq.empty()));
+              // These must present here and the previous `shift` should not be moved below
+              builder.reduceAndUnshift();
               continue;
             }
           }
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           var classes = classifyN(hasCatchAll, subst.derive(), conTele.view(), matches, fuel1);
           builder.reduce();
           var conHead = dataCall.conHead(ctor.ref);
