@@ -15,6 +15,7 @@ import org.aya.core.term.*;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.AnyVar;
 import org.aya.tyck.error.TyckOrderError;
+import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
@@ -31,12 +32,16 @@ import java.util.stream.Collectors;
 /**
  * @author ice1000, kiva
  */
-public record PatClassifier(
-  @NotNull Reporter reporter,
-  @NotNull SourcePos pos,
-  @NotNull TyckState state,
-  @NotNull PatTree.Builder builder
-) {
+public final class PatClassifier extends StatedTycker {
+  public final @NotNull SourcePos pos;
+  private final @NotNull PatTree.Builder builder;
+
+  public PatClassifier(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos, PatTree.Builder builder) {
+    super(reporter, traceBuilder, state);
+    this.pos = pos;
+    this.builder = builder;
+  }
+
   public static @NotNull MCT<Term> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull StatedTycker tycker,
@@ -52,7 +57,7 @@ public record PatClassifier(
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
     @NotNull Reporter reporter, @NotNull SourcePos pos
   ) {
-    var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
+    var classifier = new PatClassifier(reporter, null, state, pos, new PatTree.Builder());
     var classification = classifier.classifySub(telescope.view(), clauses.view()
       .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), index))
       .toImmutableSeq(), 5);
@@ -92,12 +97,6 @@ public record PatClassifier(
       classifySubImpl(params, subPats, fuel));
   }
 
-  private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
-    var head = subPats.head();
-    // This 'inline' is actually a 'dereference'
-    return head.inline(null);
-  }
-
   /**
    * @param telescope must be nonempty
    * @see MCT#classify(SeqView, ImmutableSeq, BiFunction)
@@ -115,14 +114,10 @@ public record PatClassifier(
         if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
           new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
       }
-      // The type is sigma type, and do we have any non-catchall patterns?
-      // Note that we cannot have ill-typed patterns such as constructor patterns,
-      // since patterns here are already well-typed
       case SigmaTerm sigma -> {
         var hasTuple = clauses
           .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
             ? new MCT.SubPats<>(tuple.pats().view().map(Arg::term), index) : null);
-        // In case we do,
         if (hasTuple.isNotEmpty()) {
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
           builder.shiftEmpty(explicit);
@@ -153,38 +148,21 @@ public record PatClassifier(
         if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
         // For all constructors,
         for (var ctor : body) {
-          var conTele = ctor.selfTele.view();
-          // Check if this constructor is available by doing the obvious thing
-          var matchy = PatternTycker.mischa(dataCall, ctor, state);
-          // If not, check the reason why: it may fail negatively or positively
-          if (matchy.isErr()) {
-            // Index unification fails negatively
-            if (matchy.getErr()) {
-              // If clauses is empty, we continue splitting to see
-              // if we can ensure that the other cases are impossible, it would be fine.
-              if (clauses.isNotEmpty() &&
-                // If clauses has catch-all pattern(s), it would also be fine.
-                clauses.noneMatch(seq -> head(seq) instanceof Pat.Bind)) {
-                reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
-                continue;
-              }
-            } else continue;
-            // ^ If fails positively, this would be an impossible case
-          } else conTele = conTele.map(param -> param.subst(matchy.get()));
-          // Java wants a final local variable, let's alias it
-          var conTele2 = conTele.toImmutableSeq();
+          var conTele2 = conTele(clauses, dataCall, ctor, pos);
+          if (conTele2 == null) continue;
+          var conTele = conTele2.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = clauses.mapIndexedNotNull((ix, subPats) ->
-            matches(subPats, ix, conTele2, ctor.ref()));
+            matches(subPats, ix, conTele, ctor.ref()));
           // Push this constructor to the error message builder
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele2.count(Term.Param::explicit)));
+          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele.count(Term.Param::explicit)));
           // In case no pattern matches this constructor,
           var matchesEmpty = matches.isEmpty();
           // we consume one unit of fuel and,
           if (matchesEmpty) fuel--;
           // if the pattern has no arguments and no clause matches,
-          var definitely = matchesEmpty && conTele2.isEmpty() && telescope.sizeEquals(1);
+          var definitely = matchesEmpty && conTele.isEmpty() && telescope.sizeEquals(1);
           // we report an error.
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
@@ -218,16 +196,16 @@ public record PatClassifier(
                 // No, we're done!
                 ? MCT.Leaf.<Term>of(subPats)
                 // Yes, classify the rest of them
-                : classifySub(conTele2.view(), subPats, fuelCopy));
+                : classifySub(conTele.view(), subPats, fuelCopy));
             // Always add bind patterns as a separate group. See: https://github.com/aya-prover/aya-dev/issues/437
             // even though we will report duplicated domination warnings!
             var allBinds = MCT.Leaf.<Term>of(hasBind);
             classified = new MCT.Node<>(dataCall, allSub.appended(allBinds));
           } else {
-            classified = classifySub(conTele2.view(), matches, fuel);
+            classified = classifySub(conTele.view(), matches, fuel);
           }
           builder.reduce();
-          var conCall = new ConCall(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
+          var conCall = new ConCall(dataCall.conHead(ctor.ref), conTele.map(Term.Param::toArg));
           var newTele = telescope.drop(1)
             .map(param -> param.subst(target.ref(), conCall))
             .toImmutableSeq().view();
