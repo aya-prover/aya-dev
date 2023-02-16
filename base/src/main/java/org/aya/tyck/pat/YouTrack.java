@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * YouTrack checks confluence.
  *
  * @author ice1000
- * @see PatClassifier2#classify
+ * @see PatClassifier#classify
  */
 public record YouTrack(
   @NotNull ImmutableSeq<Term.Param> telescope,
@@ -61,7 +61,7 @@ public record YouTrack(
       lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull ImmutableSeq<PatClassifier2.PatClass<ImmutableSeq<Arg<Term>>>> mct) {
+  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull ImmutableSeq<PatClassifier.PatClass<ImmutableSeq<Arg<Term>>>> mct) {
     mct.forEach(results -> {
       var contents = results.cls()
         .mapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))

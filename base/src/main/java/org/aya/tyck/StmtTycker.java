@@ -24,7 +24,7 @@ import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.Conquer;
-import org.aya.tyck.pat.PatClassifier2;
+import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.YouTrack;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.TracedTycker;
@@ -91,7 +91,7 @@ public final class StmtTycker extends TracedTycker {
                 tracing(builder -> builder.shift(new Trace.LabelT(pos, "confluence check")));
                 var confluence = new YouTrack(signature.param(), tycker, pos);
                 confluence.check(result,
-                  PatClassifier2.classify(result.clauses(), signature.param(), tycker, pos));
+                  PatClassifier.classify(result.clauses(), signature.param(), tycker, pos));
                 tracing(TreeBuilder::reduce);
               }
             } else {

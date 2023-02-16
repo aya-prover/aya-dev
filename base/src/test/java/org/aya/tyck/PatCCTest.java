@@ -8,7 +8,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.aya.test.AyaThrowingReporter;
-import org.aya.tyck.pat.PatClassifier2;
+import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
@@ -21,10 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
-  public static @NotNull ImmutableSeq<PatClassifier2.PatClass<ImmutableSeq<Arg<Term>>>>
+  public static @NotNull ImmutableSeq<PatClassifier.PatClass<ImmutableSeq<Arg<Term>>>>
   testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
-    return PatClassifier2.classify(clauses, fnDef.telescope, new TyckState(factory), AyaThrowingReporter.INSTANCE, SourcePos.NONE, null);
+    return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), AyaThrowingReporter.INSTANCE, SourcePos.NONE, null);
   }
 
   @Test public void addCC() {

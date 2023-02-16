@@ -5,7 +5,6 @@ package org.aya.tyck.tycker;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
-import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
@@ -16,14 +15,13 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.pat.PatClassifier2;
+import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
-import org.aya.util.tyck.MCT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @see #inferRef(DefVar)
  * @see #conOwnerSubst(ConCall)
  */
-public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier2, MockTycker {
+public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier, MockTycker {
   public final @NotNull TyckState state;
 
   protected StatedTycker(@NotNull Reporter reporter, @Nullable Trace.Builder traceBuilder, @NotNull TyckState state) {
@@ -110,11 +108,5 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
    */
   protected @NotNull Subst conOwnerSubst(@NotNull ConCall conCall) {
     return PatternTycker.mischa(conCall.head().underlyingDataCall(), conCall.ref().core, state).get();
-  }
-
-  protected static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
-    var head = subPats.head();
-    // This 'inline' is actually a 'dereference'
-    return head.inline(null);
   }
 }
