@@ -9,6 +9,7 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
@@ -131,7 +132,7 @@ public final class PatClassifier extends StatedTycker {
           var fuelCopy = fuel;
           return classifySub(sigma.params().view(), hasTuple, fuel).flatMap(pat -> pat.propagate(
             // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
-            classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats<Pat>::drop), fuelCopy)));
+            classifySub(newTele, MCT.extract(pat, clauses.map(MCT.SubPats::drop)), fuelCopy)));
         }
       }
       // THE BIG GAME
@@ -148,9 +149,9 @@ public final class PatClassifier extends StatedTycker {
         if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
         // For all constructors,
         for (var ctor : body) {
-          var conTele2 = conTele(clauses, dataCall, ctor, pos);
-          if (conTele2 == null) continue;
-          var conTele = conTele2.toImmutableSeq();
+          var conTeleView = conTele(clauses, dataCall, ctor, pos);
+          if (conTeleView == null) continue;
+          var conTele = conTeleView.toImmutableSeq();
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = clauses.mapIndexedNotNull((ix, subPats) ->
@@ -233,5 +234,30 @@ public final class PatClassifier extends StatedTycker {
     if (head instanceof Pat.Bind)
       return new MCT.SubPats<>(conTele.view().map(Term.Param::toPat).map(Arg::term), ix);
     return null;
+  }
+
+  protected @Nullable SeqView<Term.Param>
+  conTele(@NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses, DataCall dataCall, CtorDef ctor, @NotNull SourcePos pos) {
+    var conTele = ctor.selfTele.view();
+    // Check if this constructor is available by doing the obvious thing
+    var matchy = PatternTycker.mischa(dataCall, ctor, state);
+    // If not, check the reason why: it may fail negatively or positively
+    if (matchy.isErr()) {
+      // Index unification fails negatively
+      if (matchy.getErr()) {
+        // If clauses is empty, we continue splitting to see
+        // if we can ensure that the other cases are impossible, it would be fine.
+        if (clauses.isNotEmpty() &&
+          // If clauses has catch-all pattern(s), it would also be fine.
+          clauses.noneMatch(seq -> head(seq) instanceof Pat.Bind)
+        ) {
+          reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
+          return null;
+        }
+      } else return null;
+      // ^ If fails positively, this would be an impossible case
+    } else conTele = conTele.map(param -> param.subst(matchy.get()));
+    // Java wants a final local variable, let's alias it
+    return conTele;
   }
 }

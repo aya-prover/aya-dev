@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
@@ -18,7 +16,7 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.pat.ClausesProblem;
+import org.aya.tyck.pat.MctBuilder;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
@@ -119,29 +117,5 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
     var head = subPats.head();
     // This 'inline' is actually a 'dereference'
     return head.inline(null);
-  }
-
-  protected @Nullable SeqView<Term.Param>
-  conTele(@NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses, DataCall dataCall, CtorDef ctor, @NotNull SourcePos pos) {
-    var conTele = ctor.selfTele.view();
-    // Check if this constructor is available by doing the obvious thing
-    var matchy = PatternTycker.mischa(dataCall, ctor, state);
-    // If not, check the reason why: it may fail negatively or positively
-    if (matchy.isErr()) {
-      // Index unification fails negatively
-      if (matchy.getErr()) {
-        // If clauses is empty, we continue splitting to see
-        // if we can ensure that the other cases are impossible, it would be fine.
-        if (clauses.isNotEmpty() &&
-          // If clauses has catch-all pattern(s), it would also be fine.
-          clauses.noneMatch(seq -> head(seq) instanceof Pat.Bind)) {
-          reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
-          return null;
-        }
-      } else return null;
-      // ^ If fails positively, this would be an impossible case
-    } else conTele = conTele.map(param -> param.subst(matchy.get()));
-    // Java wants a final local variable, let's alias it
-    return conTele;
   }
 }

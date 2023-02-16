@@ -112,6 +112,7 @@ public sealed interface MCT<Term> {
     }
 
     @Contract(pure = true) public @NotNull SubPats<Pat> drop() {
+      if (pats.isEmpty()) return this;
       return new SubPats<>(pats.drop(1), ix);
     }
   }
