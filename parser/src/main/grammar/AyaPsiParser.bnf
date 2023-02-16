@@ -223,6 +223,7 @@ openKw ::= KW_OPEN
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
+// IMPORTANT NOTE: Adding all of these to stmt_first or you will get parser errors!
 declModifiers ::= KW_PRIVATE
                 | KW_EXAMPLE
                 | KW_COUNTEREXAMPLE
