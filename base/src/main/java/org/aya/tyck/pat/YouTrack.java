@@ -3,6 +3,8 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedSet;
+import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple;
 import kala.tuple.primitive.IntObjTuple2;
 import org.aya.core.pat.Pat;
@@ -18,7 +20,7 @@ import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
-import org.aya.util.tyck.MCT;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,15 +33,20 @@ public record YouTrack(
   @NotNull ImmutableSeq<Term.Param> telescope,
   @NotNull ExprTycker tycker, @NotNull SourcePos pos
 ) {
-  private void unifyClauses(Term result, IntObjTuple2<Term.Matching> lhsInfo, IntObjTuple2<Term.Matching> rhsInfo) {
+  private void unifyClauses(
+    Term result,
+    IntObjTuple2<Term.Matching> lhsInfo,
+    IntObjTuple2<Term.Matching> rhsInfo,
+    MutableSet<ClausesProblem.Domination> doms
+  ) {
     var lhsSubst = new Subst();
     var rhsSubst = new Subst();
     var ctx = PatUnify.unifyPat(
       lhsInfo.component2().patterns().view().map(Arg::term),
       rhsInfo.component2().patterns().view().map(Arg::term),
       lhsSubst, rhsSubst, tycker.ctx.deriveMap());
-    domination(ctx, rhsSubst, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2());
-    domination(ctx, lhsSubst, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2());
+    domination(ctx, rhsSubst, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2(), doms);
+    domination(ctx, lhsSubst, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2(), doms);
     var lhsTerm = lhsInfo.component2().body().subst(lhsSubst);
     var rhsTerm = rhsInfo.component2().body().subst(rhsSubst);
     // TODO: Currently all holes at this point are in an ErrorTerm
@@ -55,21 +62,27 @@ public record YouTrack(
         comparison, new UnifyInfo(tycker.state), rhsInfo.component2().sourcePos(), lhsInfo.component2().sourcePos()));
   }
 
-  private void domination(LocalCtx ctx, Subst rhsSubst, int lhsIx, int rhsIx, Term.Matching matching) {
+  private void domination(
+    LocalCtx ctx, Subst rhsSubst,
+    int lhsIx, int rhsIx, Term.Matching matching,
+    MutableSet<ClausesProblem.Domination> doms
+  ) {
     if (rhsSubst.map().valuesView().allMatch(dom ->
       dom instanceof RefTerm(var ref) && ctx.contains(ref))
-    ) tycker.reporter.report(new ClausesProblem.Domination(
+    ) doms.add(new ClausesProblem.Domination(
       lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull MCT<Term> mct) {
+  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> mct) {
+    var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
-      var contents = results.contents()
+      var contents = results.cls()
         .mapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> IntObjTuple2.of(i, matching)))
         .flatMap(it -> it);
       for (int i = 1, size = contents.size(); i < size; i++)
-        unifyClauses(clauses.result(), contents.get(i - 1), contents.get(i));
+        unifyClauses(clauses.result(), contents.get(i - 1), contents.get(i), doms);
     });
+    doms.forEach(tycker.reporter::report);
   }
 }

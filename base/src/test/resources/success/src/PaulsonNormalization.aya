@@ -1,0 +1,16 @@
+open data CExp
+| at
+| if CExp CExp CExp
+
+open data nmAcc CExp : Type
+| at => atAcc
+| if at t e => ifAtAcc (nmAcc t) (nmAcc e)
+| if (if u v w) y z =>
+  ifIfAcc (h1 : nmAcc (if v y z)) (h2 : nmAcc (if w y z))
+          (nmAcc (if u (nm (if v y z) h1) (nm (if w y z) h2)))
+
+def nm (e : CExp) (nmAcc e) : CExp
+| at, atAcc => at
+| if at t e, ifAtAcc tAcc eAcc => if at (nm t tAcc) (nm e eAcc)
+| if (if u v w) y z, ifIfAcc h1 h2 h3 =>
+   nm (if u (nm (if v y z) h1) (nm (if w y z) h2)) h3

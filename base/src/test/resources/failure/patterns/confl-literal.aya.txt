@@ -1,3 +1,118 @@
+In file $FILE:3:12 ->
+
+  1  │       open data Nat | zero | suc Nat
+  2  │       
+  3  │       def overlap test Nat : Nat
+     │                   ╰──╯
+  4  │         | 0 => 0
+  5  │         | a => a
+     │           ╰────╯ substituted to `114514`
+  6  │         | suc a => suc a
+  7  │         | suc (suc a) => a
+  8  │         | 2147483647 => 3
+  9  │         | 2147483647 => 4
+  10 │         | 114514 => 1919
+     │           ╰────────────╯ substituted to `1919`
+
+Error: The 2nd and the 7th clauses are not confluent because we failed to unify
+         1919
+       and
+         114514
+
+In file $FILE:3:12 ->
+
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap test Nat : Nat
+    │                   ╰──╯
+  4 │         | 0 => 0
+  5 │         | a => a
+  6 │         | suc a => suc a
+    │           ╰────────────╯ substituted to `suc (suc a)`
+  7 │         | suc (suc a) => a
+    │           ╰──────────────╯ substituted to `a`
+
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
+         suc (suc a)
+       and
+         a
+
+In file $FILE:3:12 ->
+
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap test Nat : Nat
+    │                   ╰──╯
+  4 │         | 0 => 0
+  5 │         | a => a
+  6 │         | suc a => suc a
+  7 │         | suc (suc a) => a
+  8 │         | 2147483647 => 3
+    │           ╰─────────────╯ substituted to `3`
+  9 │         | 2147483647 => 4
+    │           ╰─────────────╯ substituted to `4`
+
+Error: The 6th and the 5th clauses are not confluent because we failed to unify
+         3
+       and
+         4
+
+In file $FILE:3:12 ->
+
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap test Nat : Nat
+    │                   ╰──╯
+  4 │         | 0 => 0
+  5 │         | a => a
+    │           ╰────╯ substituted to `2147483647`
+  6 │         | suc a => suc a
+  7 │         | suc (suc a) => a
+  8 │         | 2147483647 => 3
+  9 │         | 2147483647 => 4
+    │           ╰─────────────╯ substituted to `4`
+
+Error: The 2nd and the 6th clauses are not confluent because we failed to unify
+         4
+       and
+         2147483647
+
+In file $FILE:3:12 ->
+
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap test Nat : Nat
+    │                   ╰──╯
+  4 │         | 0 => 0
+  5 │         | a => a
+  6 │         | suc a => suc a
+    │           ╰────────────╯ substituted to `suc (suc a)`
+  7 │         | suc (suc a) => a
+    │           ╰──────────────╯ substituted to `a`
+
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
+         suc (suc a)
+       and
+         a
+
+In file $FILE:3:12 ->
+
+  1 │       open data Nat | zero | suc Nat
+  2 │       
+  3 │       def overlap test Nat : Nat
+    │                   ╰──╯
+  4 │         | 0 => 0
+  5 │         | a => a
+  6 │         | suc a => suc a
+    │           ╰────────────╯ substituted to `suc (suc a)`
+  7 │         | suc (suc a) => a
+    │           ╰──────────────╯ substituted to `a`
+
+Error: The 4th and the 3rd clauses are not confluent because we failed to unify
+         suc (suc a)
+       and
+         a
+
 In file $FILE:4:4 ->
 
   2 │   
@@ -28,37 +143,6 @@ In file $FILE:10:4 ->
 Warning: The 2nd clause dominates the 7th clause. The 7th clause will be 
          unreachable
 
-In file $FILE:3:12 ->
-
-  1  │       open data Nat | zero | suc Nat
-  2  │       
-  3  │       def overlap test Nat : Nat
-     │                   ╰──╯
-  4  │         | 0 => 0
-  5  │         | a => a
-     │           ╰────╯ substituted to `114514`
-  6  │         | suc a => suc a
-  7  │         | suc (suc a) => a
-  8  │         | 2147483647 => 3
-  9  │         | 2147483647 => 4
-  10 │         | 114514 => 1919
-     │           ╰────────────╯ substituted to `1919`
-
-Error: The 2nd and the 7th clauses are not confluent because we failed to unify
-         1919
-       and
-         114514
-
-In file $FILE:6:4 ->
-
-  4 │     | 0 => 0
-  5 │     | a => a
-  6 │     | suc a => suc a
-    │       ╰────────────╯
-
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
 In file $FILE:7:4 ->
 
   5 │     | a => a
@@ -68,24 +152,6 @@ In file $FILE:7:4 ->
 
 Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
          unreachable
-
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-  6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
-  7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
-
-Error: The 4th and the 3rd clauses are not confluent because we failed to unify
-         suc (suc a)
-       and
-         a
 
 In file $FILE:9:4 ->
 
@@ -107,26 +173,6 @@ In file $FILE:8:4 ->
 Warning: The 6th clause dominates the 5th clause. The 5th clause will be 
          unreachable
 
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-  6 │         | suc a => suc a
-  7 │         | suc (suc a) => a
-  8 │         | 2147483647 => 3
-    │           ╰─────────────╯ substituted to `3`
-  9 │         | 2147483647 => 4
-    │           ╰─────────────╯ substituted to `4`
-
-Error: The 6th and the 5th clauses are not confluent because we failed to unify
-         3
-       and
-         4
-
 In file $FILE:9:4 ->
 
   7 │     | suc (suc a) => a
@@ -137,101 +183,5 @@ In file $FILE:9:4 ->
 Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
          unreachable
 
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-    │           ╰────╯ substituted to `2147483647`
-  6 │         | suc a => suc a
-  7 │         | suc (suc a) => a
-  8 │         | 2147483647 => 3
-  9 │         | 2147483647 => 4
-    │           ╰─────────────╯ substituted to `4`
-
-Error: The 2nd and the 6th clauses are not confluent because we failed to unify
-         4
-       and
-         2147483647
-
-In file $FILE:6:4 ->
-
-  4 │     | 0 => 0
-  5 │     | a => a
-  6 │     | suc a => suc a
-    │       ╰────────────╯
-
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
-In file $FILE:7:4 ->
-
-  5 │     | a => a
-  6 │     | suc a => suc a
-  7 │     | suc (suc a) => a
-    │       ╰──────────────╯
-
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
-         unreachable
-
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-  6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
-  7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
-
-Error: The 4th and the 3rd clauses are not confluent because we failed to unify
-         suc (suc a)
-       and
-         a
-
-In file $FILE:6:4 ->
-
-  4 │     | 0 => 0
-  5 │     | a => a
-  6 │     | suc a => suc a
-    │       ╰────────────╯
-
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
-In file $FILE:7:4 ->
-
-  5 │     | a => a
-  6 │     | suc a => suc a
-  7 │     | suc (suc a) => a
-    │       ╰──────────────╯
-
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
-         unreachable
-
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-  6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
-  7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
-
-Error: The 4th and the 3rd clauses are not confluent because we failed to unify
-         suc (suc a)
-       and
-         a
-
-6 error(s), 12 warning(s).
+6 error(s), 7 warning(s).
 What are you doing?

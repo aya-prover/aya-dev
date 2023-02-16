@@ -2,258 +2,242 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
-import kala.value.MutableValue;
 import org.aya.concrete.Pattern;
+import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.generic.util.NormalizeMode;
-import org.aya.ref.AnyVar;
+import org.aya.core.visitor.EndoTerm;
+import org.aya.core.visitor.Subst;
+import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.TyckOrderError;
+import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
-import org.aya.util.tyck.MCT;
+import org.aya.util.tyck.pat.Indexed;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
- * @author ice1000, kiva
+ * Formerly known as <code>PatClassifier</code>.
+ *
+ * @author ice1000
  */
-public record PatClassifier(
-  @NotNull Reporter reporter,
-  @NotNull SourcePos pos,
-  @NotNull TyckState state,
-  @NotNull PatTree.Builder builder
-) {
-  public static @NotNull MCT<Term> classify(
+public final class PatClassifier extends StatedTycker {
+  public final @NotNull SourcePos pos;
+
+  public PatClassifier(
+    @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder,
+    @NotNull TyckState state, @NotNull SourcePos pos
+  ) {
+    super(reporter, traceBuilder, state);
+    this.pos = pos;
+  }
+
+  public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull StatedTycker tycker,
     @NotNull SourcePos pos
   ) {
-    return classify(clauses, telescope, tycker.state, tycker.reporter, pos);
+    return classify(clauses, telescope, tycker.state, tycker.reporter, pos, tycker.traceBuilder);
   }
 
-  public record PatErr(@NotNull ImmutableSeq<Arg<Pattern>> missing) {}
-
-  @VisibleForTesting public static @NotNull MCT<Term> classify(
+  @VisibleForTesting public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>>
+  classify(
     @NotNull SeqLike<? extends Pat.@NotNull Preclause<?>> clauses,
     @NotNull ImmutableSeq<Term.Param> telescope, @NotNull TyckState state,
-    @NotNull Reporter reporter, @NotNull SourcePos pos
+    @NotNull Reporter reporter, @NotNull SourcePos pos, Trace.@Nullable Builder builder
   ) {
-    var classifier = new PatClassifier(reporter, pos, state, new PatTree.Builder());
-    var classification = classifier.classifySub(telescope.view(), clauses.view()
-      .mapIndexed((index, clause) -> new MCT.SubPats<>(clause.patterns().view().map(Arg::term), index))
+    var classifier = new PatClassifier(reporter, builder, state, pos);
+    var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
+      .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
-    var errRef = MutableValue.<MCT.Error<Term>>create();
-    classification.forEach(pats -> {
-      if (errRef.get() == null && pats instanceof MCT.Error<Term> error) {
-        reporter.report(new ClausesProblem.MissingCase(pos, (PatErr) error.errorMessage()));
-        errRef.set(error);
-      }
+    var missing = MutableList.<ImmutableSeq<Arg<Term>>>create();
+    var success = MutableList.<PatClass<ImmutableSeq<Arg<Term>>>>create();
+    cl.forEach(c -> {
+      if (c.cls().isEmpty()) missing.append(c.term());
+      else success.append(c);
     });
-    // Return empty case tree on error
-    return errRef.get() != null ? errRef.get() : classification;
+    if (missing.isNotEmpty()) reporter.report(new ClausesProblem.MissingCase(pos, missing.toImmutableSeq()));
+    return success.toImmutableSeq();
+  }
+
+  public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
+    @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
+    @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
+  ) {
+    if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
+      ImmutableSeq.empty(), Indexed.indices(clauses)));
+    var first = params.first();
+    var cls = classify1(subst, first.subst(subst),
+      clauses.mapIndexed((ix, it) -> new Indexed<>(it.pat().first().inline(null), ix)), fuel);
+    return cls.flatMap(subclauses ->
+      classifyN(subst.add(first.ref(), subclauses.term().term()),
+        // Drop heads of both
+        params.drop(1),
+        subclauses.extract(clauses.map(it ->
+          new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
+        .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
+  }
+
+  /**
+   * @return Possibilities
+   */
+  @NotNull ImmutableSeq<PatClass<Arg<Term>>> classify1(
+    @NotNull Subst subst, @NotNull Term.Param param,
+    @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
+  ) {
+    var whnfTy = whnf(param.type());
+    final var explicit = param.explicit();
+    switch (whnfTy) {
+      default -> {
+      }
+      // Note that we cannot have ill-typed patterns such as constructor patterns,
+      // since patterns here are already well-typed
+      case SigmaTerm(var params) -> {
+        // The type is sigma type, and do we have any non-catchall patterns?
+        // In case we do,
+        if (clauses.anyMatch(i -> i.pat() instanceof Pat.Tuple)) {
+          var params1 = new EndoTerm.Renamer().params(params.view());
+          var matches = clauses.mapIndexedNotNull((i, subPat) ->
+            switch (subPat.pat()) {
+              case Pat.Tuple tuple -> new Indexed<>(tuple.pats().view().map(Arg::term), i);
+              case Pat.Bind bind -> new Indexed<>(params1.view().map(p -> p.toPat().term()), i);
+              default -> null;
+            });
+          var classes = classifyN(subst.derive(), params1.view(), matches, fuel);
+          return classes.map(args -> new PatClass<>(
+            new Arg<>(new TupTerm(args.term()), explicit),
+            args.cls()));
+        }
+      }
+      // THE BIG GAME
+      case DataCall dataCall -> {
+        // In case clauses are empty, we're just making sure that the type is uninhabited,
+        // so proceed as if we have valid patterns
+        if (clauses.isNotEmpty() &&
+          // there are no clauses starting with a constructor pattern -- we don't need a split!
+          clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt)
+        ) break;
+        var data = dataCall.ref();
+        var body = Def.dataBody(data);
+        if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
+
+        // Special optimization for literals
+        var lits = clauses.mapNotNull(cl -> cl.pat() instanceof Pat.ShapedInt i ?
+          new Indexed<>(i, cl.ix()) : null);
+        var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
+        if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
+          // There is only literals and bind patterns, no constructor patterns
+          var classes = Seq.from(lits.collect(
+              Collectors.groupingBy(i -> i.pat().repr())).values())
+            .map(i -> new PatClass<>(new Arg<>(i.get(0).pat().toTerm(), explicit),
+              Indexed.indices(Seq.wrapJava(i)).concat(binds)));
+          var ml = MutableArrayList.<PatClass<Arg<Term>>>create(classes.size() + 1);
+          ml.appendAll(classes);
+          ml.append(new PatClass<>(new Arg<>(new RefTerm(param.ref()), explicit), binds));
+          return ml.toImmutableSeq();
+        }
+
+        var buffer = MutableList.<PatClass<Arg<Term>>>create();
+        // For all constructors,
+        for (var ctor : body) {
+          var fuel1 = fuel;
+          var conTeleView = conTele(clauses, dataCall, ctor);
+          if (conTeleView == null) continue;
+          var conTele = new EndoTerm.Renamer().params(conTeleView);
+          // Find all patterns that are either catchall or splitting on this constructor,
+          // e.g. for `suc`, `suc (suc a)` will be picked
+          var matches = clauses.mapIndexedNotNull((ix, subPat) ->
+            // Convert to constructor form
+            matches(conTele, ctor, ix, subPat));
+          var conHead = dataCall.conHead(ctor.ref);
+          // The only matching cases are catch-all cases, and we skip these
+          if (matches.isEmpty()) {
+            fuel1--;
+            // In this case we give up and do not split on this constructor
+            if (conTele.isEmpty() || fuel1 <= 0) {
+              var err = new ErrorTerm(Doc.plain("..."), false);
+              buffer.append(new PatClass<>(new Arg<>(new ConCall(conHead,
+                conTele.isEmpty() ? ImmutableSeq.empty() : ImmutableSeq.of(new Arg<>(err, true))),
+                explicit), ImmutableIntSeq.empty()));
+              continue;
+            }
+          }
+          var classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
+          buffer.appendAll(classes.map(args -> new PatClass<>(
+            new Arg<>(new ConCall(conHead, args.term()), explicit),
+            args.cls())));
+        }
+        return buffer.toImmutableSeq();
+      }
+    }
+    return ImmutableSeq.of(new PatClass<>(param.toArg(), Indexed.indices(clauses)));
+  }
+
+  private static @Nullable Indexed<SeqView<Pat>> matches(
+    ImmutableSeq<Term.Param> conTele, CtorDef ctor, int ix, Indexed<Pat> subPat
+  ) {
+    return switch (subPat.pat() instanceof Pat.ShapedInt i
+      ? i.constructorForm()
+      : subPat.pat()) {
+      case Pat.Ctor c when c.ref() == ctor.ref() -> new Indexed<>(c.params().view().map(Arg::term), ix);
+      case Pat.Bind b -> new Indexed<>(conTele.view().map(p -> p.toPat().term()), ix);
+      default -> null;
+    };
   }
 
   public static int[] firstMatchDomination(
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull Reporter reporter, @NotNull MCT<Term> mct
+    @NotNull Reporter reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
   ) {
-    if (mct instanceof MCT.Error<Term>) return new int[0];
     // StackOverflow says they're initialized to zero
     var numbers = new int[clauses.size()];
-    mct.forEach(results ->
-      numbers[results.contents().min()]++);
-    // ^ The minimum is supposed to be the first one, but why not be robust?
+    classes.forEach(results ->
+      numbers[results.cls().min()]++);
+    // ^ The minimum is not always the first one
     for (int i = 0; i < numbers.length; i++)
       if (0 == numbers[i]) reporter.report(
         new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
     return numbers;
   }
 
-  private @NotNull MCT<Term> classifySub(
-    @NotNull SeqView<Term.Param> telescope,
-    @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses,
-    int fuel
-  ) {
-    return MCT.classify(telescope, clauses, (params, subPats) ->
-      classifySubImpl(params, subPats, fuel));
-  }
-
-  private static @NotNull Pat head(@NotNull MCT.SubPats<Pat> subPats) {
-    var head = subPats.head();
-    // This 'inline' is actually a 'dereference'
-    return head.inline(null);
-  }
-
-  /**
-   * @param telescope must be nonempty
-   * @see MCT#classify(SeqView, ImmutableSeq, BiFunction)
-   */
-  private @Nullable MCT<Term> classifySubImpl(
-    @NotNull SeqView<Term.Param> telescope,
-    @NotNull ImmutableSeq<MCT.SubPats<Pat>> clauses, int fuel
-  ) {
-    // We're going to split on this type
-    var target = telescope.first();
-    var explicit = target.explicit();
-    var normalize = target.type().normalize(state, NormalizeMode.WHNF);
-    switch (normalize) {
-      default -> {
-        if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
-          new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
-      }
-      // The type is sigma type, and do we have any non-catchall patterns?
-      // Note that we cannot have ill-typed patterns such as constructor patterns,
-      // since patterns here are already well-typed
-      case SigmaTerm sigma -> {
-        var hasTuple = clauses
-          .mapIndexedNotNull((index, subPats) -> head(subPats) instanceof Pat.Tuple tuple
-            ? new MCT.SubPats<>(tuple.pats().view().map(Arg::term), index) : null);
-        // In case we do,
-        if (hasTuple.isNotEmpty()) {
-          // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
-          builder.shiftEmpty(explicit);
-          // We will subst the telescope with this fake tuple term
-          var thatTuple = new TupTerm(sigma.params().map(Term.Param::toArg));
-          // Do it!! Just do it!!
-          var newTele = telescope.drop(1)
-            .map(param -> param.subst(target.ref(), thatTuple))
-            .toImmutableSeq().view();
-          // Classify according to the tuple elements
-          var fuelCopy = fuel;
-          return classifySub(sigma.params().view(), hasTuple, fuel).flatMap(pat -> pat.propagate(
-            // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
-            classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats<Pat>::drop), fuelCopy)));
+  private @Nullable SeqView<Term.Param>
+  conTele(@NotNull ImmutableSeq<? extends Indexed<?>> clauses, DataCall dataCall, CtorDef ctor) {
+    var conTele = ctor.selfTele.view();
+    // Check if this constructor is available by doing the obvious thing
+    var matchy = PatternTycker.mischa(dataCall, ctor, state);
+    // If not, check the reason why: it may fail negatively or positively
+    if (matchy.isErr()) {
+      // Index unification fails negatively
+      if (matchy.getErr()) {
+        // If clauses is empty, we continue splitting to see
+        // if we can ensure that the other cases are impossible, it would be fine.
+        if (clauses.isNotEmpty() &&
+          // If clauses has catch-all pattern(s), it would also be fine.
+          clauses.noneMatch(seq -> seq.pat() instanceof Pat.Bind)
+        ) {
+          reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
+          return null;
         }
-      }
-      // THE BIG GAME
-      case DataCall dataCall -> {
-        // If there are no remaining clauses, probably it's due to a previous `impossible` clause,
-        // but since we're going to remove this keyword, this check may not be needed in the future? LOL
-        if (clauses.anyMatch(subPats -> subPats.pats().isNotEmpty()) &&
-          // there are no clauses starting with a constructor pattern -- we don't need a split!
-          clauses.noneMatch(subPats -> head(subPats) instanceof Pat.Ctor || head(subPats) instanceof Pat.ShapedInt)
-        ) break;
-        var buffer = MutableList.<MCT<Term>>create();
-        var data = dataCall.ref();
-        var body = Def.dataBody(data);
-        if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
-        // For all constructors,
-        for (var ctor : body) {
-          var conTele = ctor.selfTele.view();
-          // Check if this constructor is available by doing the obvious thing
-          var matchy = PatternTycker.mischa(dataCall, ctor, state);
-          // If not, check the reason why: it may fail negatively or positively
-          if (matchy.isErr()) {
-            // Index unification fails negatively
-            if (matchy.getErr()) {
-              // If clauses is empty, we continue splitting to see
-              // if we can ensure that the other cases are impossible, it would be fine.
-              if (clauses.isNotEmpty() &&
-                // If clauses has catch-all pattern(s), it would also be fine.
-                clauses.noneMatch(seq -> head(seq) instanceof Pat.Bind)) {
-                reporter.report(new ClausesProblem.UnsureCase(pos, ctor, dataCall));
-                continue;
-              }
-            } else continue;
-            // ^ If fails positively, this would be an impossible case
-          } else conTele = conTele.map(param -> param.subst(matchy.get()));
-          // Java wants a final local variable, let's alias it
-          var conTele2 = conTele.toImmutableSeq();
-          // Find all patterns that are either catchall or splitting on this constructor,
-          // e.g. for `suc`, `suc (suc a)` will be picked
-          var matches = clauses.mapIndexedNotNull((ix, subPats) ->
-            matches(subPats, ix, conTele2, ctor.ref()));
-          // Push this constructor to the error message builder
-          builder.shift(new PatTree(ctor.ref().name(), explicit, conTele2.count(Term.Param::explicit)));
-          // In case no pattern matches this constructor,
-          var matchesEmpty = matches.isEmpty();
-          // we consume one unit of fuel and,
-          if (matchesEmpty) fuel--;
-          // if the pattern has no arguments and no clause matches,
-          var definitely = matchesEmpty && conTele2.isEmpty() && telescope.sizeEquals(1);
-          // we report an error.
-          // If we're running out of fuel, we also report an error.
-          if (definitely || fuel <= 0) {
-            buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(),
-              new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq())));
-            builder.reduce();
-            builder.unshift();
-            continue;
-          }
-          MCT<Term> classified;
-          // The base case of classifying literals together with other patterns:
-          // variable `nonEmpty` only has two kinds of patterns: bind and literal.
-          // We should put all bind patterns altogether and check overlapping of literals, which avoids
-          // converting them to constructor forms and preventing possible stack overflow
-          // (because literal overlapping check is simple).
-          var nonEmpty = matches.filter(subPats -> subPats.pats().isNotEmpty());
-          var hasLit = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.ShapedInt);
-          var hasBind = nonEmpty.filter(subPats -> head(subPats) instanceof Pat.Bind);
-          if (hasLit.isNotEmpty() && hasBind.isNotEmpty() && hasLit.size() + hasBind.size() == nonEmpty.size()) {
-            // We are in the base case -- group literals by their values, and add all bind patterns to each group.
-            var lits = hasLit
-              .collect(Collectors.groupingBy(subPats -> ((Pat.ShapedInt) head(subPats)).repr()))
-              .values().stream()
-              .map(ImmutableSeq::from)
-              .map(subPats -> subPats.concat(hasBind))
-              .collect(ImmutableSeq.factory());
-            int fuelCopy = fuel;
-            var allSub = lits.map(
-              // Any remaining pattern?
-              subPats -> subPats.allMatch(pat -> pat.pats().sizeEquals(1))
-                // No, we're done!
-                ? MCT.Leaf.<Term>of(subPats)
-                // Yes, classify the rest of them
-                : classifySub(conTele2.view(), subPats, fuelCopy));
-            // Always add bind patterns as a separate group. See: https://github.com/aya-prover/aya-dev/issues/437
-            // even though we will report duplicated domination warnings!
-            var allBinds = MCT.Leaf.<Term>of(hasBind);
-            classified = new MCT.Node<>(dataCall, allSub.appended(allBinds));
-          } else {
-            classified = classifySub(conTele2.view(), matches, fuel);
-          }
-          builder.reduce();
-          var conCall = new ConCall(dataCall.conHead(ctor.ref), conTele2.map(Term.Param::toArg));
-          var newTele = telescope.drop(1)
-            .map(param -> param.subst(target.ref(), conCall))
-            .toImmutableSeq().view();
-          var fuelCopy = fuel;
-          var rest = classified.flatMap(pat -> pat.propagate(
-            classifySub(newTele, MCT.extract(pat, clauses).map(MCT.SubPats::drop), fuelCopy)));
-          builder.unshift();
-          buffer.append(rest);
-        }
-        return new MCT.Node<>(dataCall, buffer.toImmutableSeq());
-      }
-    }
-    // Progress without pattern matching
-    builder.shiftEmpty(explicit);
-    builder.unshift();
-    return null; // Proceed loop
-  }
-
-  private static @Nullable MCT.SubPats<Pat> matches(MCT.SubPats<Pat> subPats, int ix, ImmutableSeq<Term.Param> conTele, AnyVar ctorRef) {
-    var head = head(subPats);
-    // Literals are matched against constructor patterns
-    if (head instanceof Pat.ShapedInt lit) head = lit.constructorForm();
-    if (head instanceof Pat.Ctor ctorPat && ctorPat.ref() == ctorRef)
-      return new MCT.SubPats<>(ctorPat.params().view().map(Arg::term), ix);
-    if (head instanceof Pat.Bind)
-      return new MCT.SubPats<>(conTele.view().map(Term.Param::toPat).map(Arg::term), ix);
-    return null;
+      } else return null;
+      // ^ If fails positively, this would be an impossible case
+    } else conTele = conTele.map(param -> param.subst(matchy.get()));
+    // Java wants a final local variable, let's alias it
+    return conTele;
   }
 }

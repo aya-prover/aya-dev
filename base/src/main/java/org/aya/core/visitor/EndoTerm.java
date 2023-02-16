@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.core.pat.Pat;
@@ -54,13 +55,13 @@ public interface EndoTerm extends UnaryOperator<Term> {
       this(new Subst());
     }
 
-    public @NotNull ImmutableSeq<Term.Param> params(@NotNull ImmutableSeq<Term.Param> params) {
-      return params.map(this::handleBinder);
+    public @NotNull ImmutableSeq<Term.Param> params(@NotNull SeqView<Term.Param> params) {
+      return params.map(p -> handleBinder(p.descent(this))).toImmutableSeq();
     }
 
     private @NotNull Term.Param handleBinder(@NotNull Term.Param param) {
       var v = param.renameVar();
-      subst.addDirectly(param.ref(), new RefTerm(v));
+      subst.add(param.ref(), new RefTerm(v));
       return new Term.Param(v, param.type(), param.explicit());
     }
 

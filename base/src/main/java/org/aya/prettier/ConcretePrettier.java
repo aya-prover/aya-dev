@@ -113,7 +113,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
           Doc.vcat(match.clauses().view()
             .map(clause -> Doc.sep(Doc.symbol("|"),
-              Doc.commaList(clause.patterns.map(p -> pattern(p, Outer.Free))),
+              patterns(clause.patterns),
               clause.expr.map(t -> Doc.cat(Doc.symbol("=>"), term(Outer.Free, t))).getOrDefault(Doc.empty())))
             .toImmutableSeq()));
       case Expr.RawProj expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
@@ -246,14 +246,17 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     ));
   }
 
+  public @NotNull Doc patterns(@NotNull ImmutableSeq<Arg<Pattern>> patterns) {
+    return Doc.commaList(patterns.map(pattern -> pattern(pattern, Outer.Free)));
+  }
+
   public @NotNull Doc pattern(@NotNull Arg<Pattern> pattern, Outer outer) {
     return pattern(pattern.term(), pattern.explicit(), outer);
   }
 
   public @NotNull Doc pattern(@NotNull Pattern pattern, boolean licit, Outer outer) {
     return switch (pattern) {
-      case Pattern.Tuple tuple -> Doc.licit(licit,
-        Doc.commaList(tuple.patterns().view().map(p -> pattern(p, Outer.Free))));
+      case Pattern.Tuple tuple -> Doc.licit(licit, patterns(tuple.patterns()));
       case Pattern.Absurd $ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
@@ -408,8 +411,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           visitTele(ctor.telescope),
           ret), 2, partial(ctor.clauses));
         if (ctor.patterns.isNotEmpty()) {
-          var pats = Doc.commaList(ctor.patterns.view().map(pattern -> pattern(pattern, Outer.Free)));
-          yield Doc.sep(Doc.symbol("|"), pats, Doc.plain("=>"), doc);
+          yield Doc.sep(Doc.symbol("|"), patterns(ctor.patterns), Doc.plain("=>"), doc);
         } else yield Doc.sep(Doc.symbol("|"), doc);
       }
     };
