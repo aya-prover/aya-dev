@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
@@ -146,7 +146,7 @@ public class TestRunner {
     try {
       var output = StringUtil.trimCRLF(hookOut);
       var expected = instantiateVars(testFile, StringUtil.trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
-       assertLinesMatch(expected.lines(), output.lines(), testFile.getFileName().toString());
+      assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }

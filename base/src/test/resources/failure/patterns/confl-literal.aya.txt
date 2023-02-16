@@ -195,43 +195,5 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
        and
          a
 
-In file $FILE:6:4 ->
-
-  4 │     | 0 => 0
-  5 │     | a => a
-  6 │     | suc a => suc a
-    │       ╰────────────╯
-
-Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
-In file $FILE:7:4 ->
-
-  5 │     | a => a
-  6 │     | suc a => suc a
-  7 │     | suc (suc a) => a
-    │       ╰──────────────╯
-
-Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
-         unreachable
-
-In file $FILE:3:12 ->
-
-  1 │       open data Nat | zero | suc Nat
-  2 │       
-  3 │       def overlap test Nat : Nat
-    │                   ╰──╯
-  4 │         | 0 => 0
-  5 │         | a => a
-  6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
-  7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
-
-Error: The 4th and the 3rd clauses are not confluent because we failed to unify
-         suc (suc a)
-       and
-         a
-
-6 error(s), 12 warning(s).
+5 error(s), 10 warning(s).
 What are you doing?

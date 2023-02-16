@@ -8,7 +8,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Option;
 import org.aya.concrete.Pattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
@@ -54,14 +53,6 @@ public final class PatClassifier extends StatedTycker {
     @NotNull SourcePos pos
   ) {
     return classify(clauses, telescope, tycker.state, tycker.reporter, pos, tycker.traceBuilder);
-  }
-
-  /**
-   * Don't change the return type, it interferes with type inference.
-   */
-  private static Option<Term> err(@NotNull ImmutableSeq<Arg<Term>> args) {
-    return args.view().mapNotNull(arg ->
-      arg.term() instanceof ErrorTerm ? arg.term() : null).firstOption();
   }
 
   @VisibleForTesting public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>>
@@ -128,10 +119,11 @@ public final class PatClassifier extends StatedTycker {
             });
           var classes = classifyN(subst.derive(), params1.view(), matches, fuel);
           return classes.map(args -> new PatClass<>(
-            new Arg<>(err(args.term()).getOrElse(() -> new TupTerm(args.term())), explicit),
+            new Arg<>(new TupTerm(args.term()), explicit),
             args.cls()));
         }
       }
+      // THE BIG GAME
       case DataCall dataCall -> {
         // In case clauses are empty, we're just making sure that the type is uninhabited,
         // so proceed as if we have valid patterns
@@ -139,10 +131,22 @@ public final class PatClassifier extends StatedTycker {
           // there are no clauses starting with a constructor pattern -- we don't need a split!
           clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt)
         ) break;
-        var buffer = MutableList.<PatClass<Arg<Term>>>create();
         var data = dataCall.ref();
         var body = Def.dataBody(data);
         if (data.core == null) reporter.report(new TyckOrderError.NotYetTyckedError(pos, data));
+
+        // Special optimization for literals
+        var lits = clauses.mapNotNull(cl -> cl.pat() instanceof Pat.ShapedInt i ?
+          new Indexed<>(i, cl.ix()) : null);
+        var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
+        if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
+          // There is only literals and bind patterns, no constructor patterns
+          return ImmutableSeq.from(lits.collect(Collectors.groupingBy(i -> i.pat().repr())).values())
+            .map(i -> new PatClass<>(new Arg<>(i.get(0).pat().toTerm(), explicit),
+              Indexed.indices(Seq.wrapJava(i)).concat(binds)));
+        }
+
+        var buffer = MutableList.<PatClass<Arg<Term>>>create();
         // For all constructors,
         for (var ctor : body) {
           var fuel1 = fuel;
@@ -167,20 +171,9 @@ public final class PatClassifier extends StatedTycker {
               continue;
             }
           }
-          ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classes;
-          var lits = clauses.mapNotNull(cl -> cl.pat() instanceof Pat.ShapedInt i ?
-            new Indexed<>(i, cl.ix()) : null);
-          var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
-          if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
-            // There is only literals and bind patterns, no constructor patterns
-            classes = ImmutableSeq.from(lits.collect(Collectors.groupingBy(i -> i.pat().repr())).values())
-              .map(i -> new PatClass<>(ImmutableSeq.of(new Arg<>(i.get(0).pat().toTerm(), explicit)),
-                Indexed.indices(Seq.wrapJava(i)).concat(binds)));
-          } else {
-            classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
-          }
+          var classes = classifyN(subst.derive(), conTele.view(), matches, fuel1);
           buffer.appendAll(classes.map(args -> new PatClass<>(
-            new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
+            new Arg<>(new ConCall(conHead, args.term()), explicit),
             args.cls())));
         }
         return buffer.toImmutableSeq();

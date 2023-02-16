@@ -103,32 +103,6 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
        and
          b
 
-In file $FILE:13:4 ->
-
-  11 │   def overlap largeInt3 Nat Nat : Nat
-  12 │     | a, b => b
-  13 │     | a, suc b => b
-     │       ╰───────────╯
-
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
-         unreachable
-
-In file $FILE:11:12 ->
-
-  9  │         | a, 1919810 => 1
-  10 │       
-  11 │       def overlap largeInt3 Nat Nat : Nat
-     │                   ╰───────╯
-  12 │         | a, b => b
-     │           ╰───────╯ substituted to `suc b`
-  13 │         | a, suc b => b
-     │           ╰───────────╯ substituted to `b`
-
-Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         suc b
-       and
-         b
-
 In file $FILE:18:4 ->
 
   16 │   def overlap largeInt1-inv Nat Nat : Nat
@@ -234,32 +208,6 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
        and
          b
 
-In file $FILE:26:4 ->
-
-  24 │   def overlap largeInt3-inv Nat Nat : Nat
-  25 │     | b, a => b
-  26 │     | suc b, a => b
-     │       ╰───────────╯
-
-Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
-         unreachable
-
-In file $FILE:24:12 ->
-
-  22 │         | 1919810, a => 1
-  23 │       
-  24 │       def overlap largeInt3-inv Nat Nat : Nat
-     │                   ╰───────────╯
-  25 │         | b, a => b
-     │           ╰───────╯ substituted to `suc b`
-  26 │         | suc b, a => b
-     │           ╰───────────╯ substituted to `b`
-
-Error: The 2nd and the 1st clauses are not confluent because we failed to unify
-         suc b
-       and
-         b
-
 In file $FILE:30:4 ->
 
   28 │   
@@ -311,16 +259,6 @@ In file $FILE:31:4 ->
 Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
          unreachable
 
-In file $FILE:31:4 ->
-
-  29 │   def overlap multi-nodes Nat Nat : Nat
-  30 │     | 114, 0 => 0
-  31 │     | 114, suc b => suc b
-     │       ╰─────────────────╯
-
-Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
-         unreachable
-
 In file $FILE:33:4 ->
 
   31 │     | 114, suc b => suc b
@@ -331,5 +269,5 @@ In file $FILE:33:4 ->
 Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
          unreachable
 
-11 error(s), 15 warning(s).
+9 error(s), 12 warning(s).
 What are you doing?
