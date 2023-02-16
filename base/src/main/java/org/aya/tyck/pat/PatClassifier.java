@@ -25,11 +25,10 @@ import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.pat.Indexed;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-
-import java.util.function.Function;
 
 /**
  * Formerly known as <code>PatClassifier</code>.
@@ -76,7 +75,7 @@ public final class PatClassifier extends StatedTycker {
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
       .toImmutableSeq(), 5);
     return cl.filter(it -> {
-      var err = err(it.term);
+      var err = err(it.term());
       if (err.isDefined()) {
         reporter.report(new ClausesProblem.MissingCase(pos, (ErrorTerm) err.get()));
         return false;
@@ -98,9 +97,9 @@ public final class PatClassifier extends StatedTycker {
       classifyN(hasCatchAll, subst.add(first.ref(), subclauses.term().term()),
         // Drop heads of both
         params.drop(1),
-        extract(subclauses, clauses.map(it ->
+        subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
-        .map(args -> args.map(ls -> ls.prepended(subclauses.term))));
+        .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
   }
 
   /**
@@ -134,17 +133,14 @@ public final class PatClassifier extends StatedTycker {
           var classes = classifyN(hasCatchAll, subst.derive(), params.view(), clsWithTupPat, fuel);
           builder.reduce();
           return classes.map(args -> new PatClass<>(
-            new Arg<>(err(args.term).getOrElse(() -> new TupTerm(args.term)), explicit),
-            args.cls.appendedAll(clsWithBindPat)));
+            new Arg<>(err(args.term()).getOrElse(() -> new TupTerm(args.term())), explicit),
+            args.cls().appendedAll(clsWithBindPat)));
         }
       }
       case DataCall dataCall -> {
-        // If there are no remaining clauses, probably it's due to a previous `impossible` clause,
-        // but since we're going to remove this keyword, this check may not be needed in the future? LOL
-        if (clauses.anyMatch(subPat -> subPat.pat() != null) &&
-          // there are no clauses starting with a constructor pattern -- we don't need a split!
-          clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt)
-        ) break;
+        // there are no clauses starting with a constructor pattern -- we don't need a split!
+        if (clauses.noneMatch(subPat -> subPat.pat() instanceof Pat.Ctor || subPat.pat() instanceof Pat.ShapedInt))
+          break;
         var buffer = MutableList.<PatClass<Arg<Term>>>create();
         var data = dataCall.ref();
         var body = Def.dataBody(data);
@@ -186,8 +182,8 @@ public final class PatClassifier extends StatedTycker {
           builder.reduce();
           var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
-            new Arg<>(err(args.term).getOrElse(() -> new ConCall(conHead, args.term)), explicit),
-            args.cls.appendedAll(clsWithBindPat))));
+            new Arg<>(err(args.term()).getOrElse(() -> new ConCall(conHead, args.term())), explicit),
+            args.cls().appendedAll(clsWithBindPat))));
           builder.unshift();
         }
         return buffer.toImmutableSeq();
@@ -200,27 +196,17 @@ public final class PatClassifier extends StatedTycker {
 
   public static int[] firstMatchDomination(
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull Reporter reporter, @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classes
+    @NotNull Reporter reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
   ) {
     // StackOverflow says they're initialized to zero
     var numbers = new int[clauses.size()];
     classes.forEach(results ->
-      numbers[results.cls.min()]++);
+      numbers[results.cls().min()]++);
     // ^ The minimum is not always the first one
     for (int i = 0; i < numbers.length; i++)
       if (0 == numbers[i]) reporter.report(
         new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
     return numbers;
-  }
-
-  public record PatClass<T>(@NotNull T term, @NotNull ImmutableIntSeq cls) {
-    public <R> @NotNull PatClass<R> map(Function<T, R> f) {
-      return new PatClass<>(f.apply(term), cls);
-    }
-  }
-
-  static <Pat> @NotNull ImmutableSeq<Pat> extract(PatClass<?> pats, @NotNull ImmutableSeq<Pat> seq) {
-    return pats.cls.mapToObj(seq::get);
   }
 
   private @Nullable SeqView<Term.Param>

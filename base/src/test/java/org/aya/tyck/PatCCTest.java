@@ -12,6 +12,7 @@ import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * CC = coverage and confluence
  */
 public class PatCCTest {
-  public static @NotNull ImmutableSeq<PatClassifier.PatClass<ImmutableSeq<Arg<Term>>>>
+  public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>>
   testClassify(@NotNull PrimDef.Factory factory, @NotNull FnDef fnDef) {
     var clauses = fnDef.body.getRightValue().map(Pat.Preclause::weaken);
     return PatClassifier.classify(clauses, fnDef.telescope, new TyckState(factory), AyaThrowingReporter.INSTANCE, SourcePos.NONE, null);
