@@ -43,11 +43,10 @@ public class PatCCTest {
        | suc a, b => suc (add a b)
        | a, suc b => suc (add a b)""");
     var decls = res.component2();
-    var classified = testClassify(res.component1(), (FnDef) decls.get(1));
-    var xxx = testClassify2(res.component1(), (FnDef) decls.get(1));
+    var classified = testClassify2(res.component1(), (FnDef) decls.get(1));
     assertEquals(4, classified.size());
     classified.forEach(cls ->
-      assertEquals(2, cls.contents().size()));
+      assertEquals(2, cls.cls().size()));
   }
 
   @Test public void maxCC() {
@@ -58,10 +57,10 @@ public class PatCCTest {
        | a, zero => a
        | suc a, suc b => suc (max a b)""");
     var decls = res.component2();
-    var classified = testClassify(res.component1(), (FnDef) decls.get(1));
+    var classified = testClassify2(res.component1(), (FnDef) decls.get(1));
     assertEquals(4, classified.size());
-    assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
-    assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
+    assertEquals(3, classified.filter(patClass -> patClass.cls().sizeEquals(1)).size());
+    assertEquals(1, classified.filter(patClass -> patClass.cls().sizeEquals(2)).size());
   }
 
   @Test public void tupleCC() {
@@ -73,9 +72,9 @@ public class PatCCTest {
        | (a, zero), y => a
        | (suc a, suc b), unit y => suc (max (a, b) (unit zero))""");
     var decls = res.component2();
-    var classified = testClassify(res.component1(), (FnDef) decls.get(2));
+    var classified = testClassify2(res.component1(), (FnDef) decls.get(2));
     assertEquals(4, classified.size());
-    assertEquals(3, classified.filter(patClass -> patClass.contents().sizeEquals(1)).size());
-    assertEquals(1, classified.filter(patClass -> patClass.contents().sizeEquals(2)).size());
+    assertEquals(3, classified.filter(patClass -> patClass.cls().sizeEquals(1)).size());
+    assertEquals(1, classified.filter(patClass -> patClass.cls().sizeEquals(2)).size());
   }
 }

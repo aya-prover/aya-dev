@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.primitive.MutableIntList;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -73,16 +72,16 @@ public final class PatClassifier2 extends StatedTycker {
     @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
     @NotNull ImmutableSeq<SubPats<Pat>> clauses, int fuel
   ) {
-    if (params.isEmpty()) return clauses.map(clause -> new PatClass<>(
-      ImmutableSeq.empty(), ImmutableIntSeq.empty()));
+    if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
+      ImmutableSeq.empty(), clauses.view()));
     var first = params.first();
     var cls = classify1(subst, first.subst(subst),
-      clauses.map(it -> new SubPat(head(it), it.ix())), fuel);
+      clauses.mapIndexed((ix, it) -> new SubPat(head(it), ix)), fuel);
     return cls.flatMap(subclauses ->
       classifyN(subst.add(first.ref(), subclauses.term().term()),
         // Drop heads of both
         params.drop(1),
-        clauses.map(SubPats::drop), fuel)
+        extract(subclauses, clauses.map(SubPats::drop)), fuel)
         .map(args -> args.map(ls -> ls.prepended(subclauses.term))));
   }
 
@@ -124,10 +123,7 @@ public final class PatClassifier2 extends StatedTycker {
           builder.reduce();
           return classes.map(args -> new PatClass<>(
             new Arg<>(new TupTerm(args.term), explicit),
-            extract(args, clauses)
-              .mapToIntTo(MutableIntList.from(clsWithBindPat), SubPat::ix)
-              .toImmutableSeq()
-          ));
+            args.cls.appendedAll(clsWithBindPat)));
         }
       }
       case DataCall dataCall -> {
@@ -177,9 +173,7 @@ public final class PatClassifier2 extends StatedTycker {
           var conHead = dataCall.conHead(ctor.ref);
           buffer.appendAll(classes.map(args -> new PatClass<>(
             new Arg<>(new ConCall(conHead, args.term), explicit),
-            extract(args, clauses)
-              .mapToIntTo(MutableIntList.from(clsWithBindPat), SubPat::ix)
-              .toImmutableSeq())));
+            args.cls.appendedAll(clsWithBindPat))));
           builder.unshift();
         }
         return buffer.toImmutableSeq();
@@ -191,6 +185,14 @@ public final class PatClassifier2 extends StatedTycker {
   }
 
   public record PatClass<T>(@NotNull T term, @NotNull ImmutableIntSeq cls) {
+    public PatClass {
+      System.out.println(cls);
+    }
+
+    public PatClass(@NotNull T term, @NotNull SeqView<SubPats<Pat>> cls) {
+      this(term, cls.map(SubPats::ix).collect(ImmutableIntSeq.factory()));
+    }
+
     PatClass(@NotNull T term, @NotNull ImmutableSeq<SubPat> cls) {
       this(term, cls.map(SubPat::ix).collect(ImmutableIntSeq.factory()));
     }
