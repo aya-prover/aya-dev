@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Pattern;
-import org.aya.util.Arg;
 import org.aya.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.TreeBuilder;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -28,8 +28,14 @@ public record PatTree(
     var childPatterns = children.isEmpty()
       ? ImmutableSeq.<Arg<Pattern>>fill(argsCount, new Arg<>(new Pattern.Bind(SourcePos.NONE, new LocalVar("_")), true))
       : children.view().map(PatTree::toPattern).toImmutableSeq();
-    var ctor = new Pattern.Ctor(SourcePos.NONE, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns);
+    var ctor = s.isEmpty()
+      ? new Pattern.Tuple(SourcePos.NONE, childPatterns)
+      : new Pattern.Ctor(SourcePos.NONE, new WithPos<>(SourcePos.NONE, new LocalVar(s)), childPatterns);
     return new Arg<>(ctor, explicit);
+  }
+
+  public static @NotNull PatClassifier.PatErr toPatErr(PatTree.@NotNull Builder builder) {
+    return new PatClassifier.PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq());
   }
 
   public final static class Builder extends TreeBuilder<PatTree> {

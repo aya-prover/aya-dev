@@ -16,8 +16,8 @@ import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.pat.MctBuilder;
 import org.aya.tyck.pat.PatClassifier;
+import org.aya.tyck.pat.PatClassifier2;
 import org.aya.tyck.pat.PatternTycker;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.unify.Unifier;
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * @see #inferRef(DefVar)
  * @see #conOwnerSubst(ConCall)
  */
-public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier, MockTycker {
+public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier2, PatClassifier, MockTycker {
   public final @NotNull TyckState state;
 
   protected StatedTycker(@NotNull Reporter reporter, @Nullable Trace.Builder traceBuilder, @NotNull TyckState state) {

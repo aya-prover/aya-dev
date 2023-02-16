@@ -37,7 +37,10 @@ public final class PatClassifier extends StatedTycker {
   public final @NotNull SourcePos pos;
   private final @NotNull PatTree.Builder builder;
 
-  public PatClassifier(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state, @NotNull SourcePos pos, PatTree.Builder builder) {
+  public PatClassifier(
+    @NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder,
+    @NotNull TyckState state, @NotNull SourcePos pos, PatTree.@NotNull Builder builder
+  ) {
     super(reporter, traceBuilder, state);
     this.pos = pos;
     this.builder = builder;
@@ -113,7 +116,7 @@ public final class PatClassifier extends StatedTycker {
     switch (normalize) {
       default -> {
         if (clauses.isEmpty()) return new MCT.Error<>(ImmutableIntSeq.empty(),
-          new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq()));
+          PatTree.toPatErr(builder));
       }
       case SigmaTerm sigma -> {
         var hasTuple = clauses
@@ -121,7 +124,7 @@ public final class PatClassifier extends StatedTycker {
             ? new MCT.SubPats<>(tuple.pats().view().map(Arg::term), index) : null);
         if (hasTuple.isNotEmpty()) {
           // Add a catchall pattern to the pattern tree builder since tuple patterns are irrefutable
-          builder.shiftEmpty(explicit);
+          builder.shift(new PatTree("", explicit, sigma.params().count(Term.Param::explicit)));
           // We will subst the telescope with this fake tuple term
           var thatTuple = new TupTerm(sigma.params().map(Term.Param::toArg));
           // Do it!! Just do it!!
@@ -130,7 +133,9 @@ public final class PatClassifier extends StatedTycker {
             .toImmutableSeq().view();
           // Classify according to the tuple elements
           var fuelCopy = fuel;
-          return classifySub(sigma.params().view(), hasTuple, fuel).flatMap(pat -> pat.propagate(
+          var sub = classifySub(sigma.params().view(), hasTuple, fuelCopy);
+          builder.reduce();
+          sub.flatMap(pat -> pat.propagate(
             // Then, classify according to the rest of the patterns (that comes after the tuple pattern)
             classifySub(newTele, MCT.extract(pat, clauses.map(MCT.SubPats::drop)), fuelCopy)));
         }
@@ -168,7 +173,7 @@ public final class PatClassifier extends StatedTycker {
           // If we're running out of fuel, we also report an error.
           if (definitely || fuel <= 0) {
             buffer.append(new MCT.Error<>(ImmutableIntSeq.empty(),
-              new PatErr(builder.root().view().map(PatTree::toPattern).toImmutableSeq())));
+              PatTree.toPatErr(builder)));
             builder.reduce();
             builder.unshift();
             continue;
