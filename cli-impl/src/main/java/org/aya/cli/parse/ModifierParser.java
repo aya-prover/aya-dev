@@ -71,23 +71,37 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @NotNull Predicate<Modifier> filter
   ) {}
 
+  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FULL;
+  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FN;
+
+  static {
+    FULL = new EnumMap<>(Modifier.class);
+    FULL.put(Modifier.Open, Option.none());
+    FULL.put(Modifier.Opaque, Option.none());
+    FULL.put(Modifier.Inline, Option.none());
+    FULL.put(Modifier.Overlap, Option.none());
+    FN = FULL.clone();
+    FN.remove(Modifier.Open);
+  }
+
   public interface Modifiers {
     Filter declFilter = ofDefault(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      Option.none(), null, null, null
+      new EnumMap<>(Modifier.class) {{
+        put(Modifier.Open, Option.none());
+      }}
     );
 
     Filter fnFilter = ofDefault(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      null, Option.none(), Option.none(), Option.none()
-    );
+      FN);
 
     Filter subDeclFilter = new Filter(ofDefault(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      null, null, null, null
+      new EnumMap<>(Modifier.class)
     ).defaultValue, x -> false);
 
     /**
@@ -99,57 +113,30 @@ public record ModifierParser(@NotNull Reporter reporter) {
     static @NotNull Filter ofDefault(
       @Nullable WithPos<Stmt.Accessibility> accessibility,
       @Nullable WithPos<DeclInfo.Personality> personality,
-      @Nullable Option<SourcePos> openKw,
-      @Nullable Option<SourcePos> opaque,
-      @Nullable Option<SourcePos> inline,
-      @Nullable Option<SourcePos> overlap
+      @NotNull EnumMap<Modifier, Option<SourcePos>> misc
     ) {
-      Predicate<Modifier> predi = (modi) -> switch (modi) {
+      Predicate<Modifier> pred = mod -> switch (mod) {
         case Private -> accessibility != null;
         case Example, Counterexample -> personality != null;
-        case Open -> openKw != null;
-        case Opaque -> opaque != null;
-        case Inline -> inline != null;
-        case Overlap -> overlap != null;
+        default -> misc.containsKey(mod);
       };
 
       return new Filter(new Modifiers() {
-        @Override
-        public @NotNull WithPos<Stmt.Accessibility> accessibility() {
+        @Override public @NotNull WithPos<Stmt.Accessibility> accessibility() {
           if (accessibility == null) throw new UnsupportedOperationException();
           return accessibility;
         }
 
-        @Override
-        public @NotNull WithPos<DeclInfo.Personality> personality() {
+        @Override public @NotNull WithPos<DeclInfo.Personality> personality() {
           if (personality == null) throw new UnsupportedOperationException();
           return personality;
         }
 
-        @Override
-        public @Nullable SourcePos openKw() {
-          if (openKw == null) throw new UnsupportedOperationException();
-          return openKw.getOrNull();
+        @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
+          if (!misc.containsKey(key)) throw new UnsupportedOperationException();
+          return misc.get(key).getOrNull();
         }
-
-        @Override
-        public @Nullable SourcePos opaque() {
-          if (opaque == null) throw new UnsupportedOperationException();
-          return opaque.getOrNull();
-        }
-
-        @Override
-        public @Nullable SourcePos inline() {
-          if (inline == null) throw new UnsupportedOperationException();
-          return inline.getOrNull();
-        }
-
-        @Override
-        public @Nullable SourcePos overlap() {
-          if (overlap == null) throw new UnsupportedOperationException();
-          return overlap.getOrNull();
-        }
-      }, predi);
+      }, pred);
     }
 
     /**
@@ -160,13 +147,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Contract(pure = true)
     @NotNull WithPos<DeclInfo.Personality> personality();
     @Contract(pure = true)
-    @Nullable SourcePos openKw();
-    @Contract(pure = true)
-    @Nullable SourcePos opaque();
-    @Contract(pure = true)
-    @Nullable SourcePos inline();
-    @Contract(pure = true)
-    @Nullable SourcePos overlap();
+    @Nullable SourcePos misc(@NotNull Modifier key);
   }
 
   private record ModifierSet(
@@ -191,28 +172,8 @@ public record ModifierParser(@NotNull Reporter reporter) {
           .getOrElse(parent::personality));
     }
 
-    @Override
-    @Contract(pure = true)
-    public @Nullable SourcePos openKw() {
-      return mods.getOrElse(Modifier.Open, parent::openKw);
-    }
-
-    @Override
-    @Contract(pure = true)
-    public @Nullable SourcePos opaque() {
-      return mods.getOrElse(Modifier.Opaque, parent::opaque);
-    }
-
-    @Override
-    @Contract(pure = true)
-    public @Nullable SourcePos inline() {
-      return mods.getOrElse(Modifier.Inline, parent::inline);
-    }
-
-    @Override
-    @Contract(pure = true)
-    public @Nullable SourcePos overlap() {
-      return mods.getOrElse(Modifier.Overlap, parent::overlap);
+    @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
+      return mods.getOrElse(key, () -> parent.misc(key));
     }
   }
 
@@ -220,8 +181,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     var filter = Modifiers.ofDefault(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      Option.none(), Option.none(), Option.none(), Option.none()
-    );
+      FULL);
     return parse(modifiers, filter);
   }
 

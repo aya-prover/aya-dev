@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -293,17 +292,18 @@ public record AyaProducer(
     var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
     var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
-    if (dynamite.isRight() && info.modifier.inline() != null) {
-      reporter.report(new BadModifierWarn(info.modifier.inline(), Modifier.Inline));
+    var inline = info.modifier.misc(ModifierParser.Modifier.Inline);
+    if (dynamite.isRight() && inline != null) {
+      reporter.report(new BadModifierWarn(inline, Modifier.Inline));
     }
 
     var sample = info.modifier.personality().data();
 
     // TODO: any better code?
     var fnMods = EnumSet.noneOf(Modifier.class);
-    if (info.modifier.opaque() != null) fnMods.add(Modifier.Opaque);
-    if (info.modifier.inline() != null) fnMods.add(Modifier.Inline);
-    if (info.modifier.overlap() != null) fnMods.add(Modifier.Overlap);
+    if (inline != null) fnMods.add(Modifier.Inline);
+    if (info.modifier.misc(ModifierParser.Modifier.Opaque) != null) fnMods.add(Modifier.Opaque);
+    if (info.modifier.misc(ModifierParser.Modifier.Overlap) != null) fnMods.add(Modifier.Overlap);
 
     var ty = typeOrNull(node.peekChild(TYPE));
     return new TeleDecl.FnDecl(info.info, fnMods, info.name, tele, ty, dynamite, sample);
@@ -321,7 +321,7 @@ public record AyaProducer(
   }
 
   private void giveMeOpen(@NotNull ModifierParser.Modifiers modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
-    var keyword = modiSet.openKw();
+    var keyword = modiSet.misc(ModifierParser.Modifier.Open);
     if (keyword == null) return;
 
     additional.append(new Command.Open(
@@ -337,11 +337,7 @@ public record AyaProducer(
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var ofDefault = ModifierParser.Modifiers.ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      Option.none(), null, null, null
-    );
+    var ofDefault = ModifierParser.Modifiers.declFilter;
     var info = declInfo(node, new ModifierParser.Filter(ofDefault.defaultValue(), x ->
       x != ModifierParser.Modifier.Counterexample && ofDefault.filter().test(x)));
     if (info == null) return null;
