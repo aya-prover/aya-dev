@@ -41,8 +41,8 @@ def funExt3 (f g : A -> B -> C -> D) (p : ∀ a b c -> f a b c = g a b c) : f = 
 // The most general path mapping
 def pmapd {A : I -> Type} (B : ∀ i -> A i -> Type)
     (f : ∀ i -> ∀ (a : A i) -> B i a)
-    {a : A 0} {b : A 1} (p : Path A a b)
-  : Path (\i => B i (p i)) (f 0 a) (f 1 b) => \ i => f i (p i)
+    (p : [| i |] A i)
+  : [| i |] B i (p i) { ~ i := f 0 (p 0) | i := f 1 (p 1) } => \ i => f i (p i)
 
 def hcomp2d
   {c d : A}

@@ -28,32 +28,51 @@ def ≤f⇒≤l (f : _) (n : Nat) (α ≤ f n) : α ≤ lim f
 | f, n, l≤ f≤ => l≤ (λ m => ≤f⇒≤l f n (f≤ m))
 
 def ≤∸⇒≤ {d : Depth β} (α ≤ pred d) : α ≤ β
-| {_}, z≤ => z≤
-| {_}, s≤ _ ≤∸ => s≤ d (≤∸⇒≤ ≤∸)
-| {_}, {lim f}, l≤ f≤ => l≤ (λ n => ≤∸⇒≤ (f≤ n))
+| z≤ => z≤
+| s≤ _ ≤∸ => s≤ d (≤∸⇒≤ ≤∸)
+| l≤ f≤ => l≤ (λ n => ≤∸⇒≤ (f≤ n))
 
 def ≤⇒∸≤ (d : Depth α) (α ≤ β) : pred d ≤ β
 | empty, s≤ _ ≤∸ => ≤∸⇒≤ ≤∸
 | next d, s≤ _ ≤∸ => ≤⇒∸≤ d (≤∸⇒≤ ≤∸)
 | exist n d, l≤ f≤ => ≤⇒∸≤ d (f≤ n)
 
+def l≤l {f g : Nat → Ord} (f≤g : ∀ n → f n ≤ g n) : lim f ≤ lim g =>
+  // l≤ (λ n => ≤f⇒≤l _ _ (f≤g n))
+  // seems to cause Aya to loop
+  l≤ (λ n => ≤f⇒≤l g n (f≤g n))
+
 def s≤s (p : α ≤ β) : suc α ≤ suc β => s≤ empty p
 
 def ≤-refl : Reflexive (≤)
 | {zero} => z≤
 | {suc α} => s≤s ≤-refl
-| {lim f} => l≤ {f := f} (λ n => ≤f⇒≤l f n ≤-refl)
+| {lim f} => l≤ (λ n => ≤f⇒≤l f n ≤-refl)
 
 def ≤-trans : Transitive (≤)
 | z≤, _ => z≤
 | s≤ empty α≤β, s≤ _ β≤γ => s≤ _ (≤-trans α≤β β≤γ)
 | s≤ (next d) α≤β, s≤ _ β≤γ => s≤ _ (≤-trans α≤β (≤⇒∸≤ d β≤γ))
 | s≤ (exist n d) α≤β, l≤ f≤γ => ≤-trans (s≤ d α≤β) (f≤γ n)
-| {lim f}, l≤ f≤β, β≤γ => l≤ (λ n => ≤-trans (f≤β n) β≤γ)
-// Agda does not need this explicitly
-| {suc _}, {zero}, s≤ () q, z≤
+| l≤ f≤β, β≤γ => l≤ (λ n => ≤-trans (f≤β n) β≤γ)
 
 def s∸≤ (d : Depth α) : suc (pred d) ≤ α
 | empty => ≤-refl
 | next d => s≤s (≤⇒∸≤ d ≤-refl)
 | exist n _ as dd => s≤ dd ≤-refl
+
+def infix ≈ : Rel Ord => λ α β => Sig (α ≤ β) ** β ≤ α
+
+// This implicit lambda is supposed to be omitted.
+def ≈-refl : Reflexive (≈) => λ {x} => (≤-refl , ≤-refl)
+
+def ≈-sym : Symmetric (≈)
+| (p , q) => (q , p)
+
+def ≤z⇒≈z' (α ≤ zero) : α ≈ zero
+| z≤ => ≈-refl
+| s≤ () _
+| {lim _}, ≤ => (≤ , z≤)
+
+def l≈l {f g : Nat → Ord} (f≈g : ∀ n → f n ≈ g n) : lim f ≈ lim g =>
+  (l≤l (λ n => (f≈g n) .1), l≤l (λ n => (f≈g n).2))
