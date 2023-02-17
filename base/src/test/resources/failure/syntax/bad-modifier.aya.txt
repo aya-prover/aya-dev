@@ -5,7 +5,7 @@ In file $FILE:1:5 ->
   2 │   
   3 │   private open private data False2
 
-Warning: This modifier is redundant, ignored.
+Error: The modifier open is redundant, ignored.
 
 In file $FILE:3:13 ->
 
@@ -14,7 +14,7 @@ In file $FILE:3:13 ->
   3 │   private open private data False2
     │                ╰─────╯
 
-Warning: This modifier is redundant, ignored.
+Error: The modifier private is redundant, ignored.
 
 In file $FILE:5:0 ->
 
@@ -32,7 +32,7 @@ In file $FILE:7:8 ->
   7 │   example counterexample def bar => foo
     │           ╰────────────╯
 
-Error: This modifier contradicts the others.
+Error: The modifier counterexample contradicts the others.
 
-2 error(s), 2 warning(s).
+4 error(s), 0 warning(s).
 What are you doing?
