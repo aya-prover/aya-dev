@@ -13,6 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 /**
+ * ClassCall is a very special construction in Aya.
+ * <ul>
+ *   <li>It is like a type when partially instantiated -- the type of "specifications" of the rest of the fields.</li>
+ *   <li>It is like a term when fully instantiated, whose type can be anything.</li>
+ *   <li>It can be applied like a function, which essentially inserts the nearest missing field.</li>
+ * </ul>
+ *
  * @author kiva
  */
 public record ClassCall(
