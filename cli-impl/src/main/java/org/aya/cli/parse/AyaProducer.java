@@ -284,7 +284,7 @@ public record AyaProducer(
       return null;
     }
 
-    var tele = telescope(node.childrenOfType(TELE).map(x -> x)); // make compiler happy
+    var tele = telescope(node.childrenOfType(TELE));
     var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
     var inline = info.modifier.misc(ModifierParser.Modifier.Inline);
@@ -331,7 +331,7 @@ public record AyaProducer(
 
   public @Nullable TeleDecl.DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
-    var tele = telescope(node.childrenOfType(TELE).map(x -> x));
+    var tele = telescope(node.childrenOfType(TELE));
     var ofDefault = ModifierParser.Modifiers.declFilter;
     var info = declInfo(node, new ModifierParser.Filter(ofDefault.defaultValue(), x ->
       x != ModifierParser.Modifier.Counterexample && ofDefault.filter().test(x)));
@@ -401,7 +401,7 @@ public record AyaProducer(
   public @Nullable TeleDecl.DataCtor dataCtor(@NotNull ImmutableSeq<Arg<Pattern>> patterns, @NotNull GenericNode<?> node) {
     var info = declInfo(node, ModifierParser.Modifiers.subDeclFilter);
     if (info == null) return null;
-    var tele = telescope(node.childrenOfType(TELE).map(x -> x));
+    var tele = telescope(node.childrenOfType(TELE));
     var partial = node.peekChild(PARTIAL_BLOCK);
     var ty = node.peekChild(TYPE);
     var par = partial(partial, partial != null ? sourcePosOf(partial) : info.info.sourcePos());
@@ -409,7 +409,7 @@ public record AyaProducer(
     return new TeleDecl.DataCtor(info.info, info.name, tele, par, patterns, coe, ty == null ? null : type(ty));
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<GenericNode<?>> telescope) {
+  public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<? extends GenericNode<?>> telescope) {
     return telescope.flatMap(this::tele).toImmutableSeq();
   }
 
@@ -583,7 +583,7 @@ public record AyaProducer(
           }).toImmutableSeq());
     }
     if (node.is(PI_EXPR)) return Expr.buildPi(pos,
-      telescope(node.childrenOfType(TELE).map(x -> x)).view(),
+      telescope(node.childrenOfType(TELE)).view(),
       expr(node.child(EXPR)));
     if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
       lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
@@ -591,7 +591,7 @@ public record AyaProducer(
     if (node.is(SIGMA_EXPR)) {
       var last = expr(node.child(EXPR));
       return new Expr.Sigma(pos,
-        telescope(node.childrenOfType(TELE).map(x -> x))
+        telescope(node.childrenOfType(TELE))
           .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true)));
     }
     if (node.is(LAMBDA_EXPR)) {

@@ -32,8 +32,7 @@ public record ModifierProblem(
       }));
   }
 
-  @Override
-  public @NotNull Severity level() {
+  @Override public @NotNull Severity level() {
     return reason == Reason.Duplicative ? Severity.WARN : Severity.ERROR;
   }
 }
