@@ -1,3 +1,4 @@
+// Warning: the feature used in this file is deprecated and will be removed soon
 def Natλ => Pi (P : Prop) (P -> P) P -> P
 
 def zero : Natλ => \P s z => z

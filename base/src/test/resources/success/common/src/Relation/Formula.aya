@@ -12,3 +12,7 @@ def TransFlip (P : Rel' A B) (Q : Rel' B C) (R : Rel' A C) => ∀ {x} {y} {z} ->
 
 def Transitive (r : Rel A) => Trans r r r
 
+// Generalised symmetry.
+def Sym (P : Rel' A B) (Q : Rel' B A) => ∀ {x} {y} -> P x y -> Q y x
+
+def Symmetric (r : Rel A) => Sym r r
