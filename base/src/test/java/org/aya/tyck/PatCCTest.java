@@ -31,7 +31,7 @@ public class PatCCTest {
   @Test public void addCC() {
     var res = TyckDeclTest.successTyckDecls("""
       open data Nat : Type | zero | suc Nat
-      def overlap add (a b : Nat) : Nat
+      overlap def add (a b : Nat) : Nat
        | zero, b => b
        | a, zero => a
        | suc a, b => suc (add a b)

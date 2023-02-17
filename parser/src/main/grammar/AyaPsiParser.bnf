@@ -166,6 +166,7 @@ private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+                     | KW_OPAQUE | KW_INLINE | KW_OVERLAP
 
 private repl ::= REPL_COMMAND? expr
 
@@ -205,16 +206,12 @@ tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
 fnDecl ::= declModifiers*
- KW_DEF fnModifiers* declNameOrInfix
+ KW_DEF declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
 
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | barredClause*
-
-fnModifiers ::= KW_OPAQUE
-              | KW_INLINE
-              | KW_OVERLAP
 
 // turn the keyword into a psi node, so quick fix can easily delete it
 // see: BadCounterexampleInspection
@@ -226,7 +223,14 @@ openKw ::= KW_OPEN
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
-declModifiers ::= KW_PRIVATE | openKw | KW_EXAMPLE | KW_COUNTEREXAMPLE
+// IMPORTANT NOTE: Adding all of these to stmt_first or you will get parser errors!
+declModifiers ::= KW_PRIVATE
+                | KW_EXAMPLE
+                | KW_COUNTEREXAMPLE
+                | KW_OPAQUE
+                | KW_INLINE
+                | KW_OVERLAP
+                | openKw
 
 structDecl
   ::= declModifiers*

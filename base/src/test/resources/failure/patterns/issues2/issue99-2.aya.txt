@@ -1,6 +1,6 @@
 In file $FILE:5:3 ->
 
-  3 │   def overlap test2 (a b : Unit) : Unit
+  3 │   overlap def test2 (a b : Unit) : Unit
   4 │    | x, unit => unit
   5 │    | unit, y => unit
     │      ╰─────────────╯

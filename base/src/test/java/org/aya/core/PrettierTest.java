@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core;
 
@@ -65,7 +65,7 @@ public class PrettierTest {
       prim I
       prim coe
       prim intervalInv
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
       def Path (A : I -> Type) (a : A 0) (b : A 1) : Type => [| i |] A i { ~ i := a | i := b }
       def Eq (A : Type) (a b : A) : Type => Path (\\ i => A) a b
       variable A : Type
@@ -131,7 +131,7 @@ public class PrettierTest {
     var decls = TyckDeclTest.successTyckDecls("""
       prim I
       prim intervalInv
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
       def Eq (A : Type) (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def infix = {A : Type} => Eq A
       open data Nat | zero | suc Nat
@@ -148,9 +148,9 @@ public class PrettierTest {
       prim intervalInv
       prim intervalMin
       prim intervalMax
-      def inline ~ => intervalInv
-      def inline infixl ∧ => intervalMin
-      def inline infixl ∨ => intervalMax
+      inline def ~ => intervalInv
+      inline def infixl ∧ => intervalMin
+      inline def infixl ∨ => intervalMax
       def Eq (A : Type) (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def infix = {A : Type} => Eq A
       def test1 {A : Type} {a : A} (p : a = a) (i j k : I) => p ((i ∨ j ∨ k) ∧ (k ∨ j ∨ i))
@@ -174,7 +174,7 @@ public class PrettierTest {
     var decls = TyckDeclTest.successTyckDecls("""
       prim I
       prim intervalInv
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
       def infix = {A : Type} (a b : A) : Type => [| i |] A { ~ i := a | i := b }
       def idp {A : Type} {a : A} : a = a => \\i => a
       def test {A : Type} {a b : A} (p : a = b) : a = b => \\i => p i

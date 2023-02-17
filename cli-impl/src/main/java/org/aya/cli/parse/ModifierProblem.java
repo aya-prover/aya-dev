@@ -1,8 +1,7 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.cli.parse.error;
+package org.aya.cli.parse;
 
-import org.aya.cli.parse.ModifierParser;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
@@ -10,20 +9,30 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record NotSuitableModifierError(
+public record ModifierProblem(
   @NotNull SourcePos sourcePos,
-  @NotNull ModifierParser.Modifier modifier
+  @NotNull ModifierParser.Modifier modifier,
+  @NotNull Reason reason
 ) implements Problem {
+  enum Reason {
+    Inappropriate,
+    Contradictory,
+    Duplicative
+  }
+
   @Override
   public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.sep(
       Doc.english("The modifier"),
       Doc.styled(BasePrettier.KEYWORD, modifier.keyword),
-      Doc.english("is not suitable here."));
+      Doc.english(switch (reason) {
+        case Inappropriate -> "is not suitable here.";
+        case Contradictory -> "contradicts the others.";
+        case Duplicative -> "is redundant, ignored.";
+      }));
   }
 
-  @Override
-  public @NotNull Severity level() {
-    return Severity.ERROR;
+  @Override public @NotNull Severity level() {
+    return reason == Reason.Duplicative ? Severity.WARN : Severity.ERROR;
   }
 }

@@ -2,7 +2,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap not-conf Nat : Nat
+  3 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   4 │         | zero => 1
     │           ╰───────╯ substituted to `1`
@@ -18,7 +18,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap not-conf Nat : Nat
+  3 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   4 │         | zero => 1
   5 │         | 0 => 0
@@ -35,7 +35,7 @@ Error: The 5th and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:5:4 ->
 
-  3 │   def overlap not-conf Nat : Nat
+  3 │   overlap def not-conf Nat : Nat
   4 │     | zero => 1
   5 │     | 0 => 0
     │       ╰────╯
@@ -46,7 +46,7 @@ Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
 In file $FILE:4:4 ->
 
   2 │   
-  3 │   def overlap not-conf Nat : Nat
+  3 │   overlap def not-conf Nat : Nat
   4 │     | zero => 1
     │       ╰───────╯
 

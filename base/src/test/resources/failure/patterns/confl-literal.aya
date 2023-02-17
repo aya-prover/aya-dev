@@ -1,6 +1,6 @@
 open data Nat | zero | suc Nat
 
-def overlap test Nat : Nat
+overlap def test Nat : Nat
   | 0 => 0
   | a => a
   | suc a => suc a

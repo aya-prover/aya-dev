@@ -2,19 +2,20 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import com.intellij.psi.tree.IElementType;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import kala.function.Functions;
-import org.aya.cli.parse.error.ContradictModifierError;
-import org.aya.cli.parse.error.DuplicatedModifierWarn;
-import org.aya.cli.parse.error.NotSuitableModifierError;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.generic.util.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,19 +24,32 @@ import java.util.EnumMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.aya.cli.parse.ModifierParser.ModifierGroup.*;
+import static org.aya.parser.AyaPsiElementTypes.*;
+
 public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
     Accessibility,
-    Personality
+    Personality,
+    Alpha
   }
 
   public enum Modifier {
-    Private(ModifierGroup.Accessibility, "private"),
-    Example(ModifierGroup.Personality, "example", Private),
-    Counterexample(ModifierGroup.Personality, "counterexample", Private),
-    Open(ModifierGroup.None, "open");
+    // Common Modifiers
+    Private(KW_PRIVATE, Accessibility, "private"),
+    Example(KW_EXAMPLE, Personality, "example", Private),
+    Counterexample(KW_COUNTEREXAMPLE, Personality, "counterexample", Private),
 
+    // ModuleLike Modifiers
+    Open(OPEN_KW, None, "open"),
+
+    // Function Modifiers
+    Opaque(KW_OPAQUE, Alpha, "opaque"),
+    Inline(KW_INLINE, Alpha, "inline"),
+    Overlap(KW_OVERLAP, None, "overlap");
+
+    public final @NotNull IElementType type;
     public final @NotNull ModifierGroup group;
     public final @NotNull String keyword;
 
@@ -44,21 +58,137 @@ public record ModifierParser(@NotNull Reporter reporter) {
      */
     public final @NotNull Modifier[] implies;
 
-    Modifier(@NotNull ModifierGroup group, @NotNull String keyword, @NotNull Modifier... implies) {
+    Modifier(
+      @NotNull IElementType type, @NotNull ModifierGroup group,
+      @NotNull String keyword, @NotNull Modifier @NotNull ... implies
+    ) {
+      this.type = type;
       this.group = group;
       this.keyword = keyword;
       this.implies = implies;
     }
   }
 
-  public record ModifierSet(
-    @NotNull WithPos<Stmt.Accessibility> accessibility,
-    @NotNull WithPos<DeclInfo.Personality> personality,
-    @Nullable SourcePos openKw) {
+  /**
+   * @param defaultValue Forall (x : Modifier), filter x = true -> ((defaultValue x) success)
+   */
+  public record Filter(
+    @NotNull Modifiers defaultValue,
+    @NotNull Predicate<Modifier> filter
+  ) {}
+
+  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FULL;
+  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FN;
+
+  static {
+    FULL = new EnumMap<>(Modifier.class);
+    FULL.put(Modifier.Open, Option.none());
+    FULL.put(Modifier.Opaque, Option.none());
+    FULL.put(Modifier.Inline, Option.none());
+    FULL.put(Modifier.Overlap, Option.none());
+    FN = FULL.clone();
+    FN.remove(Modifier.Open);
   }
 
-  @TestOnly public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
-    return parse(modifiers, x -> true);
+  public interface Modifiers {
+    Filter declFilter = ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      new EnumMap<>(Modifier.class) {{
+        put(Modifier.Open, Option.none());
+      }}
+    );
+
+    Filter fnFilter = ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      FN);
+
+    Filter subDeclFilter = new Filter(ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      new EnumMap<>(Modifier.class)
+    ).defaultValue, x -> false);
+
+    /**
+     * Forall parameters:<br/>
+     * null implies not allowed,<br/>
+     * none implies no default value,<br/>
+     * some implies yes default value<br/>
+     */
+    static @NotNull Filter ofDefault(
+      @Nullable WithPos<Stmt.Accessibility> accessibility,
+      @Nullable WithPos<DeclInfo.Personality> personality,
+      @NotNull EnumMap<Modifier, Option<SourcePos>> misc
+    ) {
+      Predicate<Modifier> pred = mod -> switch (mod) {
+        case Private -> accessibility != null;
+        case Example, Counterexample -> personality != null;
+        default -> misc.containsKey(mod);
+      };
+
+      return new Filter(new Modifiers() {
+        @Override public @NotNull WithPos<Stmt.Accessibility> accessibility() {
+          if (accessibility == null) throw new UnsupportedOperationException();
+          return accessibility;
+        }
+
+        @Override public @NotNull WithPos<DeclInfo.Personality> personality() {
+          if (personality == null) throw new UnsupportedOperationException();
+          return personality;
+        }
+
+        @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
+          if (!misc.containsKey(key)) throw new UnsupportedOperationException();
+          return misc.get(key).getOrNull();
+        }
+      }, pred);
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
+    @Contract(pure = true)
+    @NotNull WithPos<Stmt.Accessibility> accessibility();
+    @Contract(pure = true)
+    @NotNull WithPos<DeclInfo.Personality> personality();
+    @Contract(pure = true)
+    @Nullable SourcePos misc(@NotNull Modifier key);
+  }
+
+  private record ModifierSet(
+    @NotNull ImmutableMap<Modifier, SourcePos> mods,
+    @NotNull Modifiers parent
+  ) implements Modifiers {
+    @Override
+    @Contract(pure = true)
+    public @NotNull WithPos<Stmt.Accessibility> accessibility() {
+      if (mods.containsKey(Modifier.Private))
+        return new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private);
+      return parent.accessibility();
+    }
+
+    @Override
+    @Contract(pure = true)
+    public @NotNull WithPos<DeclInfo.Personality> personality() {
+      if (mods.containsKey(Modifier.Example))
+        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE);
+      if (mods.containsKey(Modifier.Counterexample))
+        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE);
+      return parent.personality();
+    }
+
+    @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
+      return mods.getOrElse(key, () -> parent.misc(key));
+    }
+  }
+
+  @TestOnly public @NotNull Modifiers parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
+    var filter = Modifiers.ofDefault(
+      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+      FULL);
+    return parse(modifiers, filter);
   }
 
   private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
@@ -74,7 +204,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
   /**
    * @param filter The filter also performs on the modifiers that expanded from input.
    */
-  public @NotNull ModifierSet parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers, @NotNull Predicate<Modifier> filter) {
+  public @NotNull Modifiers parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers, @NotNull Filter filter) {
     EnumMap<ModifierGroup, EnumMap<Modifier, SourcePos>> map = new EnumMap<>(ModifierGroup.class);
 
     modifiers = implication(modifiers).concat(modifiers);
@@ -85,7 +215,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
       var modifier = data.data();
 
       // do filter
-      if (!filter.test(data.data())) {
+      if (!filter.filter.test(data.data())) {
         reportUnsuitableModifier(data);
         continue;
       }
@@ -98,7 +228,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
         continue;
       }
 
-      if (modifier.group != ModifierGroup.None
+      if (modifier.group != None
         && !exists.isEmpty()
         // In fact, this boolean expression is always true
         && !exists.containsKey(modifier)) {
@@ -113,52 +243,21 @@ public record ModifierParser(@NotNull Reporter reporter) {
       exists.put(modifier, pos);
     }
 
-    // accessibility
-    var accGroup = map.get(ModifierGroup.Accessibility);
-    WithPos<Stmt.Accessibility> acc;
-
-    if (accGroup != null && !accGroup.isEmpty()) {
-      var entry = accGroup.entrySet().iterator().next();
-      Stmt.Accessibility key = switch (entry.getKey()) {
-        case Private -> Stmt.Accessibility.Private;
-        default -> unreachable();
-      };
-
-      acc = new WithPos<>(entry.getValue(), key);
-    } else acc = new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public);
-
-    // personality
-    var persGroup = map.get(ModifierGroup.Personality);
-    WithPos<DeclInfo.Personality> pers;
-
-    if (persGroup != null && !persGroup.isEmpty()) {
-      var entry = persGroup.entrySet().iterator().next();
-      DeclInfo.Personality key = switch (entry.getKey()) {
-        case Example -> DeclInfo.Personality.EXAMPLE;
-        case Counterexample -> DeclInfo.Personality.COUNTEREXAMPLE;
-        default -> unreachable();
-      };
-
-      pers = new WithPos<>(entry.getValue(), key);
-    } else pers = new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL);
-
-    // others
-    var noneGroup = map.get(ModifierGroup.None);
-    var openKw = noneGroup != null ? noneGroup.get(Modifier.Open) : null;
-
-    return new ModifierSet(acc, pers, openKw);
+    return new ModifierSet(ImmutableMap.from(
+      ImmutableSeq.from(map.values()).flatMap(EnumMap::entrySet)
+    ), filter.defaultValue);
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new NotSuitableModifierError(data.sourcePos(), data.data()));
+    reporter.report(new ModifierProblem(data.sourcePos(), data.data(), ModifierProblem.Reason.Inappropriate));
   }
 
   public void reportDuplicatedModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new DuplicatedModifierWarn(data.sourcePos(), data.data()));
+    reporter.report(new ModifierProblem(data.sourcePos(), data.data(), ModifierProblem.Reason.Duplicative));
   }
 
   public void reportContradictModifier(@NotNull WithPos<Modifier> current, @NotNull WithPos<Modifier> that) {
-    reporter.report(new ContradictModifierError(current.sourcePos(), current.data()));
+    reporter.report(new ModifierProblem(current.sourcePos(), current.data(), ModifierProblem.Reason.Contradictory));
   }
 
   public <T> T unreachable() {

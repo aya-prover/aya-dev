@@ -6,6 +6,6 @@ public open import Primitives using
   )
 
 variable A : Type
-def inline ∂ (i : I) => i ∨ ~ i
+inline def ∂ (i : I) => i ∨ ~ i
 
 example def psqueeze {a b : A} (p : I -> A) (i j : I) => p (i ∧ j)
