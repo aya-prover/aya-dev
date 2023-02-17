@@ -240,13 +240,8 @@ public record AyaProducer(
     var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.Modifier modifier = null;
-      if (x.peekChild(KW_PRIVATE) != null) modifier = ModifierParser.Modifier.Private;
-      if (x.peekChild(KW_EXAMPLE) != null) modifier = ModifierParser.Modifier.Example;
-      if (x.peekChild(KW_COUNTEREXAMPLE) != null) modifier = ModifierParser.Modifier.Counterexample;
-      if (x.peekChild(OPEN_KW) != null) modifier = ModifierParser.Modifier.Open;
-      if (x.peekChild(KW_OPAQUE) != null) modifier = ModifierParser.Modifier.Opaque;
-      if (x.peekChild(KW_INLINE) != null) modifier = ModifierParser.Modifier.Inline;
-      if (x.peekChild(KW_OVERLAP) != null) modifier = ModifierParser.Modifier.Overlap;
+      for (var mod : ModifierParser.Modifier.values())
+        if (x.peekChild(mod.type) != null) modifier = mod;
       if (modifier == null) unreachable(x);
 
       return new WithPos<>(pos, modifier);
@@ -899,13 +894,6 @@ public record AyaProducer(
     return new ModulePath.Qualified(node.childrenOfType(WEAK_ID)
       .map(this::weakId)
       .map(WithPos::data).toImmutableSeq());
-  }
-
-  public @NotNull Modifier fnModifier(@NotNull GenericNode<?> node) {
-    if (node.peekChild(KW_OPAQUE) != null) return Modifier.Opaque;
-    if (node.peekChild(KW_INLINE) != null) return Modifier.Inline;
-    if (node.peekChild(KW_OVERLAP) != null) return Modifier.Overlap;
-    return unreachable(node);
   }
 
   /**

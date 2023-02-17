@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
+import com.intellij.psi.tree.IElementType;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
@@ -26,6 +27,9 @@ import java.util.EnumMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.aya.cli.parse.ModifierParser.ModifierGroup.*;
+import static org.aya.parser.AyaPsiElementTypes.*;
+
 public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
@@ -36,18 +40,19 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
   public enum Modifier {
     // Common Modifiers
-    Private(ModifierGroup.Accessibility, "private"),
-    Example(ModifierGroup.Personality, "example", Private),
-    Counterexample(ModifierGroup.Personality, "counterexample", Private),
+    Private(KW_PRIVATE, Accessibility, "private"),
+    Example(KW_EXAMPLE, Personality, "example", Private),
+    Counterexample(KW_COUNTEREXAMPLE, Personality, "counterexample", Private),
 
     // ModuleLike Modifiers
-    Open(ModifierGroup.None, "open"),
+    Open(OPEN_KW, None, "open"),
 
     // Function Modifiers
-    Opaque(ModifierGroup.Alpha, "opaque"),
-    Inline(ModifierGroup.Alpha, "inline"),
-    Overlap(ModifierGroup.None, "overlap");
+    Opaque(KW_OPAQUE, Alpha, "opaque"),
+    Inline(KW_INLINE, Alpha, "inline"),
+    Overlap(KW_OVERLAP, None, "overlap");
 
+    public final @NotNull IElementType type;
     public final @NotNull ModifierGroup group;
     public final @NotNull String keyword;
 
@@ -56,7 +61,11 @@ public record ModifierParser(@NotNull Reporter reporter) {
      */
     public final @NotNull Modifier[] implies;
 
-    Modifier(@NotNull ModifierGroup group, @NotNull String keyword, @NotNull Modifier... implies) {
+    Modifier(
+      @NotNull IElementType type, @NotNull ModifierGroup group,
+      @NotNull String keyword, @NotNull Modifier @NotNull ... implies
+    ) {
+      this.type = type;
       this.group = group;
       this.keyword = keyword;
       this.implies = implies;
@@ -222,7 +231,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
         continue;
       }
 
-      if (modifier.group != ModifierGroup.None
+      if (modifier.group != None
         && !exists.isEmpty()
         // In fact, this boolean expression is always true
         && !exists.containsKey(modifier)) {
