@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public enum Modifier {
-  Open("open"),
   /**
    * Denotes that a function's invocations are never reduced.
    * Useful in debugging, when you really don't wanna see the full NF.

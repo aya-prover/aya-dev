@@ -9,9 +9,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.function.Functions;
-import org.aya.cli.parse.error.ContradictModifierError;
-import org.aya.cli.parse.error.DuplicatedModifierWarn;
-import org.aya.cli.parse.error.NotSuitableModifierError;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.generic.util.InternalException;
@@ -252,15 +249,15 @@ public record ModifierParser(@NotNull Reporter reporter) {
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new NotSuitableModifierError(data.sourcePos(), data.data()));
+    reporter.report(new ModifierError(data.sourcePos(), data.data(), ModifierError.Reason.Inappropriate));
   }
 
   public void reportDuplicatedModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new DuplicatedModifierWarn(data.sourcePos(), data.data()));
+    reporter.report(new ModifierError(data.sourcePos(), data.data(), ModifierError.Reason.Duplicative));
   }
 
   public void reportContradictModifier(@NotNull WithPos<Modifier> current, @NotNull WithPos<Modifier> that) {
-    reporter.report(new ContradictModifierError(current.sourcePos(), current.data()));
+    reporter.report(new ModifierError(current.sourcePos(), current.data(), ModifierError.Reason.Contradictory));
   }
 
   public <T> T unreachable() {
