@@ -153,7 +153,7 @@ public record CallResolver(
 
   @Override public @NotNull Term pre(@NotNull Term term) {
     // TODO: Rework error reporting to include the original call
-    term = new Expander.ConservativeWHNFer(new TyckState(factory), ImmutableSet.of(caller.ref)).apply(term);
+    term = new Expander.ConservativeWHNFer(new TyckState(factory), ImmutableSet.from(targets.map(Def::ref))).apply(term);
     if (term instanceof Callable call) resolveCall(call);
     return DefVisitor.super.pre(term);
   }

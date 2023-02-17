@@ -9,7 +9,7 @@ Error: The recursive definition `f` is not structurally recursive
 note: In particular, the problematic call is:
         f n
       whose call matrix is:
-        =
+        ?
 
 In file $FILE:6:4 ->
 
@@ -22,7 +22,7 @@ Error: The recursive definition `g` is not structurally recursive
 note: In particular, the problematic call is:
         g (suc n)
       whose call matrix is:
-        =
+        ?
 
 2 error(s), 0 warning(s).
 What are you doing?

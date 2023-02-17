@@ -35,16 +35,8 @@ public interface Expander extends DeltaExpander, BetaExpander {
         case StableWHNF whnf -> whnf;
         case ConCall con when (con.ref().core == null || con.ref().core.clauses.clauses().isEmpty()) -> con;
         case FnCall fn when opaqueVars.contains(fn.ref()) -> fn;
-        case FnCall fn -> {
-          var whnfer = new ConservativeWHNFer(state, opaqueVars.added(fn.ref()));
-          yield whnfer.superApply(term);
-        }
         default -> Expander.super.apply(term);
       };
-    }
-
-    private @NotNull Term superApply(@NotNull Term term) {
-      return Expander.super.apply(term);
     }
   }
   record Tracked(
