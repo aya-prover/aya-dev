@@ -9,30 +9,30 @@ def pred Nat : Nat
 | 0 => 0
 | suc n => n
 
-def overlap infixl + : BinOp Nat
+overlap def infixl + : BinOp Nat
 | 0, a => a
 | a, 0 => a
 | suc a, b => suc (a + b)
 | a, suc b => suc (a + b)
 tighter =
 
-private def overlap +-assoc-lemma : Associative (+)
+private overlap def +-assoc-lemma : Associative (+)
 | 0, b, c => idp
 | a, 0, c => idp
 | a, b, 0 => idp
 | suc a, b, c => pmap suc +-assoc
 | a, suc b, c => pmap suc +-assoc
 | a, b, suc c => pmap suc +-assoc
-def inline +-assoc {a b c : Nat} => +-assoc-lemma a b c
+inline def +-assoc {a b c : Nat} => +-assoc-lemma a b c
 
-private def overlap +-comm-lemma : Commutative (+)
+private overlap def +-comm-lemma : Commutative (+)
 | 0, a => idp
 | a, 0 => idp
 | suc a, b => pmap suc +-comm
 | a, suc b => pmap suc +-comm
-def inline +-comm {a b : Nat} => +-comm-lemma a b
+inline def +-comm {a b : Nat} => +-comm-lemma a b
 
-def overlap infixl * : BinOp Nat
+overlap def infixl * : BinOp Nat
 | 0, n => 0
 | m, 0 => 0
 | suc m, n => n + m * n
@@ -43,7 +43,7 @@ private def *-suc-lemma (m n : Nat) : m + m * n = m * suc n
 | suc m, n => pmap suc
   (<=3=> (sym +-assoc) (pmap (+ m * n) +-comm) +-assoc
    <==> pmap (n +) *-suc)
-def inline *-suc {m n : Nat} => *-suc-lemma m n
+inline def *-suc {m n : Nat} => *-suc-lemma m n
 
 def +-*-distl {n m : Nat} (k : Nat) : (m + k) * n = k * n + m * n
 | 0 => idp
@@ -54,9 +54,9 @@ private def *-comm-lemma : Commutative (*)
 | m, 0 => idp
 | suc m, n => pmap (n +) *-comm <==> *-suc
 // | m, suc n => sym *-suc <==> pmap (m +) *-comm
-def inline *-comm {m n : Nat} => *-comm-lemma m n
+inline def *-comm {m n : Nat} => *-comm-lemma m n
 
-private def overlap *-assoc-lemma : Associative (*)
+private overlap def *-assoc-lemma : Associative (*)
 | 0, _, _ => idp
 | suc m, _, _ => <=3=> (+-*-distl _) (pmap (+ _) *-assoc) +-comm
-def inline *-assoc {m n k : Nat} => *-assoc-lemma m n k
+inline def *-assoc {m n k : Nat} => *-assoc-lemma m n k

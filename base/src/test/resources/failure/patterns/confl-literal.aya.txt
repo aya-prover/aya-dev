@@ -2,7 +2,7 @@ In file $FILE:3:12 ->
 
   1  │       open data Nat | zero | suc Nat
   2  │       
-  3  │       def overlap test Nat : Nat
+  3  │       overlap def test Nat : Nat
      │                   ╰──╯
   4  │         | 0 => 0
   5  │         | a => a
@@ -23,7 +23,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap test Nat : Nat
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -41,7 +41,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap test Nat : Nat
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -61,7 +61,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap test Nat : Nat
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -81,7 +81,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap test Nat : Nat
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -99,7 +99,7 @@ In file $FILE:3:12 ->
 
   1 │       open data Nat | zero | suc Nat
   2 │       
-  3 │       def overlap test Nat : Nat
+  3 │       overlap def test Nat : Nat
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
@@ -116,7 +116,7 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
 In file $FILE:4:4 ->
 
   2 │   
-  3 │   def overlap test Nat : Nat
+  3 │   overlap def test Nat : Nat
   4 │     | 0 => 0
     │       ╰────╯
 

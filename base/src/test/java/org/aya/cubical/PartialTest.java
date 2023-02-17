@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cubical;
 
@@ -20,12 +20,12 @@ public class PartialTest {
       prim intervalMax
       prim intervalInv
             
-      def inline infix /\\ => intervalMin
+      inline def infix /\\ => intervalMin
       tighter \\/
 
-      def inline infix \\/ => intervalMax
+      inline def infix \\/ => intervalMax
 
-      def inline ~ => intervalInv
+      inline def ~ => intervalInv
 
       def t (A : Type) (i : I) (a : A) : Partial (~ i) A
         => {| ~ i := a |}

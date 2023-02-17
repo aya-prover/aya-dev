@@ -1,6 +1,6 @@
 prim I
 prim intervalInv
-def inline ~ => intervalInv
+inline def ~ => intervalInv
 open data Nat : Type
  | zero
  | suc Nat

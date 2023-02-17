@@ -2,7 +2,7 @@ open data Nat : Type 0
  | zero
  | suc Nat
 
-counterexample def overlap  addN (a b : Nat) : Nat
+counterexample overlap def  addN (a b : Nat) : Nat
  | zero, a => a
  | a, zero => a
  | suc a, b => suc (addN a b)

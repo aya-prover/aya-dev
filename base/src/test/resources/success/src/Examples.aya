@@ -13,7 +13,7 @@ example def abs (n : Int) : Nat
 
 example def abs2 (n : Int) => abs n
 
-counterexample def overlap absBad (n : Int) : Nat
+counterexample overlap def absBad (n : Int) : Nat
  | pos (suc n) => 1
  | pos zero => 1
  | neg n => 0

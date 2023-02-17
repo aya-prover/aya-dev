@@ -5,9 +5,9 @@ prim intervalMax
 prim intervalInv
 prim coe
 
-def inline infix ∧ => intervalMin tighter ∨
-def inline infix ∨ => intervalMax
-def inline ~ => intervalInv
+inline def infix ∧ => intervalMin tighter ∨
+inline def infix ∨ => intervalMax
+inline def ~ => intervalInv
 
 def YY (A : I -> Type) (a : A 0) (i : I) : A i
   => (\j => A (i ∧ j)).coe a freeze ~ i

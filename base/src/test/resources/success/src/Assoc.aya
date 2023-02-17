@@ -32,7 +32,7 @@ def fixr qed {A : Type} (a : A) : a = a => idp {A} {a}
 
 // -----------------------------------------
 
-def overlap infix +' (a b : Nat) : Nat
+overlap def infix +' (a b : Nat) : Nat
  | a, 0 => a
  | a, suc b => suc (a +' b)
  tighter = ==< qed

@@ -1,5 +1,5 @@
 open import Arith::Nat
-def overlap add {a biu : Nat} : Nat
+overlap def add {a biu : Nat} : Nat
  | {0}, {x} => biu
  | {suc a}, {0} => biu
  | {suc (suc a)}, {bua} => bua

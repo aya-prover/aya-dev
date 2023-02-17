@@ -2,7 +2,7 @@ In file $FILE:5:12 ->
 
   3 │        | suc Nat
   4 │       
-  5 │       def overlap addN (a b : Nat) : Nat
+  5 │       overlap def addN (a b : Nat) : Nat
     │                   ╰──╯
   6 │        | zero, a => suc a
     │          ╰──────────────╯ substituted to `suc zero`

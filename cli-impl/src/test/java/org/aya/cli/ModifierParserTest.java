@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.parse.ModifierParser;
-import org.aya.cli.parse.error.DuplicatedModifierWarn;
+import org.aya.cli.parse.ModifierProblem;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.util.error.SourcePos;
@@ -46,17 +46,15 @@ public class ModifierParserTest {
     assertEquals(1, reporter.problemSize(Problem.Severity.WARN));
 
     var warn = reporter.problems().first();
-    assertInstanceOf(DuplicatedModifierWarn.class, warn);
-    assertEquals(Private, ((DuplicatedModifierWarn) warn).modifier());
+    assertInstanceOf(ModifierProblem.class, warn);
+    assertEquals(Private, ((ModifierProblem) warn).modifier());
 
     var modis2 = ImmutableSeq.of(new WithPos<>(SourcePos.NONE, Example));
     var returns2 = withParser(parser -> parser.parse(modis2)).component2();
 
-    assertEquals(new ModifierParser.ModifierSet(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE),
-      null
-    ), returns);
-    assertEquals(returns, returns2);
+    assertEquals(Stmt.Accessibility.Private, returns.accessibility().data());
+    assertEquals(DeclInfo.Personality.EXAMPLE, returns.personality().data());
+    assertEquals(Stmt.Accessibility.Private, returns2.accessibility().data());
+    assertEquals(DeclInfo.Personality.EXAMPLE, returns2.personality().data());
   }
 }

@@ -365,8 +365,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         );
       }
       case TeleDecl.FnDecl decl -> {
-        var prelude = declPrelude(decl, "def");
+        var prelude = declPrelude(decl);
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));
+        prelude.append(Doc.styled(KEYWORD, "def"));
         prelude.append(linkDef(decl.ref, FN));
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
@@ -377,7 +378,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         );
       }
       case TeleDecl.DataDecl decl -> {
-        var prelude = declPrelude(decl, "data");
+        var prelude = declPrelude(decl);
+        prelude.append(Doc.styled(KEYWORD, "data"));
         prelude.append(linkDef(decl.ref, STRUCT));
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
@@ -414,11 +416,11 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     };
   }
 
-  private @NotNull MutableList<Doc> declPrelude(TeleDecl.TopLevel<?> decl, String name) {
+  private @NotNull MutableList<Doc> declPrelude(TeleDecl.TopLevel<?> decl) {
     return MutableList.of(
       visitAccess(decl.accessibility(), defaultAcc(decl.personality())),
-      visitPersonality(decl.personality()),
-      Doc.styled(KEYWORD, name));
+      visitPersonality(decl.personality())
+    );
   }
 
   /**
