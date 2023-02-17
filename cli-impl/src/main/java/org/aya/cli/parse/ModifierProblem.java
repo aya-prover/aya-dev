@@ -9,7 +9,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record ModifierError(
+public record ModifierProblem(
   @NotNull SourcePos sourcePos,
   @NotNull ModifierParser.Modifier modifier,
   @NotNull Reason reason
@@ -34,6 +34,6 @@ public record ModifierError(
 
   @Override
   public @NotNull Severity level() {
-    return Severity.ERROR;
+    return reason == Reason.Duplicative ? Severity.WARN : Severity.ERROR;
   }
 }

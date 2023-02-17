@@ -163,19 +163,19 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Override
     @Contract(pure = true)
     public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-      return mods.getOption(Modifier.Private)
-        .map(x -> new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private))
-        .getOrElse(parent::accessibility);
+      if (mods.containsKey(Modifier.Private))
+        return new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private);
+      return parent.accessibility();
     }
 
     @Override
     @Contract(pure = true)
     public @NotNull WithPos<DeclInfo.Personality> personality() {
-      return mods.getOption(Modifier.Example)
-        .map(x -> new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE))
-        .getOrElse(() -> mods.getOption(Modifier.Counterexample)
-          .map(x -> new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE))
-          .getOrElse(parent::personality));
+      if (mods.containsKey(Modifier.Example))
+        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE);
+      if (mods.containsKey(Modifier.Counterexample))
+        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE);
+      return parent.personality();
     }
 
     @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
@@ -249,15 +249,15 @@ public record ModifierParser(@NotNull Reporter reporter) {
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new ModifierError(data.sourcePos(), data.data(), ModifierError.Reason.Inappropriate));
+    reporter.report(new ModifierProblem(data.sourcePos(), data.data(), ModifierProblem.Reason.Inappropriate));
   }
 
   public void reportDuplicatedModifier(@NotNull WithPos<Modifier> data) {
-    reporter.report(new ModifierError(data.sourcePos(), data.data(), ModifierError.Reason.Duplicative));
+    reporter.report(new ModifierProblem(data.sourcePos(), data.data(), ModifierProblem.Reason.Duplicative));
   }
 
   public void reportContradictModifier(@NotNull WithPos<Modifier> current, @NotNull WithPos<Modifier> that) {
-    reporter.report(new ModifierError(current.sourcePos(), current.data(), ModifierError.Reason.Contradictory));
+    reporter.report(new ModifierProblem(current.sourcePos(), current.data(), ModifierProblem.Reason.Contradictory));
   }
 
   public <T> T unreachable() {
