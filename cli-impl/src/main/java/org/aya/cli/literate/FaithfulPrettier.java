@@ -10,6 +10,7 @@ import kala.text.StringSlice;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,8 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case Fn -> BasePrettier.FN;
       case Prim -> BasePrettier.PRIM;
       case Generalized -> BasePrettier.GENERALIZED;
-      case LocalVar, Unknown, Module -> null;
+      case LocalVar -> Style.italic();
+      case Unknown, Module -> null;
     };
     return style != null ? Doc.styled(style, raw) : Doc.plain(raw);
   }
