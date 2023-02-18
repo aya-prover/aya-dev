@@ -173,7 +173,12 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     };
     decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
+
+    // TODO: this is too specific!! is it good?
+    if (!(decl instanceof TeleDecl.FnDecl fnDecl) || (!fnDecl.isAnonymous)) {
+      ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
+    }
+
     return ctx;
   }
 

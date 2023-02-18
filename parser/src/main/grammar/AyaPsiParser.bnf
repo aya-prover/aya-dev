@@ -245,7 +245,7 @@ structField
 }
 
 dataDecl ::= declModifiers*
- KW_DATA declNameOrInfix
+ KW_DATA declNameOrInfix?
  tele* type? dataBody* bindBlock? { pin=2 }
 
 dataBody ::= BAR (dataCtorClause | dataCtor) {

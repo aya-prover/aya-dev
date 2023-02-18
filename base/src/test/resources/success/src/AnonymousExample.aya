@@ -1,0 +1,3 @@
+open data Unit | unit
+
+example def : Unit => unit

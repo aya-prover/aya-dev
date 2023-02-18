@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -7,6 +7,7 @@ import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourcePos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +60,8 @@ public interface Constants {
   static @NotNull LocalVar randomlyNamed(@NotNull SourcePos pos) {
     return new LocalVar(randomName(pos), pos, GenerateKind.Anonymous.INSTANCE);
   }
+
+  @Contract(pure = true)
   static @NotNull String randomName(@NotNull Object pos) {
     if (Global.NO_RANDOM_NAME) return ANONYMOUS_PREFIX;
     return ANONYMOUS_PREFIX + Math.abs(pos.hashCode()) % 10;
