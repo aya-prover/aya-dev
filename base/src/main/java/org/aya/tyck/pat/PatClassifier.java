@@ -33,8 +33,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.stream.Collectors;
 
 /**
- * Formerly known as <code>PatClassifier</code>.
- *
  * @author ice1000
  */
 public final class PatClassifier extends StatedTycker {
@@ -65,15 +63,11 @@ public final class PatClassifier extends StatedTycker {
     var classifier = new PatClassifier(reporter, builder, state, pos);
     var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
-      .toImmutableSeq(), 5);
-    var missing = MutableList.<ImmutableSeq<Arg<Term>>>create();
-    var success = MutableList.<PatClass<ImmutableSeq<Arg<Term>>>>create();
-    cl.forEach(c -> {
-      if (c.cls().isEmpty()) missing.append(c.term());
-      else success.append(c);
-    });
-    if (missing.isNotEmpty()) reporter.report(new ClausesProblem.MissingCase(pos, missing.toImmutableSeq()));
-    return success.toImmutableSeq();
+      .toImmutableSeq(), 4);
+    var p = cl.partition(c -> c.cls().isEmpty());
+    var missing = p.component1();
+    if (missing.isNotEmpty()) reporter.report(new ClausesProblem.MissingCase(pos, missing));
+    return p.component2();
   }
 
   public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
