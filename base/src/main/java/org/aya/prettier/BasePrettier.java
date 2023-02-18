@@ -295,7 +295,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   partial(@NotNull PrettierOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
     return switch (partial) {
       case Partial.Const<T> sad -> Doc.sepNonEmpty(lb, sad.u().toDoc(options), rb);
-      case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
+      case Partial.Split<T> hap when !showEmpty && hap.clauses().isEmpty() -> Doc.empty();
       case Partial.Split<T> hap -> Doc.sepNonEmpty(lb,
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
         rb);

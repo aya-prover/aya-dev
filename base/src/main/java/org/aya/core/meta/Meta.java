@@ -85,6 +85,12 @@ public final class Meta implements AnyVar {
     return new PiTerm(domParam, cod);
   }
 
+  public @NotNull Meta clone(@NotNull MetaInfo newInfo) {
+    var typed = new Meta(contextTele, telescope, name, newInfo, sourcePos);
+    typed.conditions.appendAll(conditions);
+    return typed;
+  }
+
   public @NotNull MetaTerm asPiDom(@NotNull SortTerm sort, @NotNull ImmutableSeq<Arg<Term>> contextArgs) {
     assert telescope.isEmpty();
     assert info instanceof MetaInfo.AnyType;

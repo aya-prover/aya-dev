@@ -10,7 +10,6 @@ import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 

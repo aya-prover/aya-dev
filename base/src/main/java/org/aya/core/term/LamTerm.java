@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -30,6 +30,7 @@ public record LamTerm(@NotNull Param param, @NotNull Term body) implements Stabl
   public static @NotNull Param param(@NotNull Term.Param param) {
     return new Param(param.ref(), param.explicit());
   }
+
   public static @NotNull Param paramRenamed(@NotNull Term.Param param) {
     return new Param(param.renameVar(), param.explicit());
   }
