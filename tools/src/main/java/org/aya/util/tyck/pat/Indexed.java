@@ -13,6 +13,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Indexed<Pat>(@NotNull Pat pat, int ix) {
   public static @NotNull ImmutableIntSeq indices(@NotNull Seq<? extends Indexed<?>> cls) {
-    return cls.map(Indexed::ix).collect(ImmutableIntSeq.factory());
+    return cls.view().mapToInt(ImmutableIntSeq.factory(), Indexed::ix);
   }
 }
