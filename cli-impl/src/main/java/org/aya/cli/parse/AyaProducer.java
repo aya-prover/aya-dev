@@ -148,7 +148,7 @@ public record AyaProducer(
       : ImmutableSeq.of(open);
   }
 
-  public UseHide hideList(SeqView<GenericNode<?>> hideLists, UseHide.Strategy strategy) {
+  public UseHide hideList(SeqView<? extends GenericNode<?>> hideLists, UseHide.Strategy strategy) {
     return new UseHide(hideLists
       .mapNotNull(h -> h.peekChild(COMMA_SEP))
       .flatMap(node -> node.childrenOfType(QUALIFIED_ID).map(this::qualifiedId))
@@ -157,7 +157,7 @@ public record AyaProducer(
       strategy);
   }
 
-  public UseHide useList(SeqView<GenericNode<?>> useLists, UseHide.Strategy strategy) {
+  public UseHide useList(SeqView<? extends GenericNode<?>> useLists, UseHide.Strategy strategy) {
     return new UseHide(useLists
       .mapNotNull(u -> u.peekChild(COMMA_SEP))
       .flatMap(this::useIdsComma)
@@ -206,10 +206,10 @@ public record AyaProducer(
 
   public @NotNull UseHide useHide(@NotNull GenericNode<?> node) {
     if (node.peekChild(KW_HIDING) != null) return hideList(
-      node.childrenOfType(HIDE_LIST).map(x -> x), // make compiler happy
+      node.childrenOfType(HIDE_LIST),
       UseHide.Strategy.Hiding);
     if (node.peekChild(KW_USING) != null) return useList(
-      node.childrenOfType(USE_LIST).map(x -> x),  // make compiler happy
+      node.childrenOfType(USE_LIST),
       UseHide.Strategy.Using);
     return unreachable(node);
   }
@@ -393,7 +393,7 @@ public record AyaProducer(
       id.sourcePos(),
       sourcePosOf(node),
       id.data(),
-      telescope(node.childrenOfType(TELE).map(x -> x)),
+      telescope(node.childrenOfType(TELE)),
       typeOrNull(node.peekChild(TYPE))
     );
   }
@@ -444,7 +444,7 @@ public record AyaProducer(
     return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toImmutableSeq();
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> lambdaTelescope(SeqView<GenericNode<?>> telescope) {
+  public @NotNull ImmutableSeq<Expr.Param> lambdaTelescope(SeqView<? extends GenericNode<?>> telescope) {
     return telescope.flatMap(this::lambdaTele).toImmutableSeq();
   }
 
@@ -586,7 +586,7 @@ public record AyaProducer(
       telescope(node.childrenOfType(TELE)).view(),
       expr(node.child(EXPR)));
     if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
-      lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x)).view(),
+      lambdaTelescope(node.childrenOfType(LAMBDA_TELE)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) {
       var last = expr(node.child(EXPR));

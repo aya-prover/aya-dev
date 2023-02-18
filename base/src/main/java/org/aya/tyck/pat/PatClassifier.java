@@ -33,8 +33,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.stream.Collectors;
 
 /**
- * Formerly known as <code>PatClassifier</code>.
- *
  * @author ice1000
  */
 public final class PatClassifier extends StatedTycker {

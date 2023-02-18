@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.render.vscode;
 
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class VscColorTheme {
   public static class TokenColor {
@@ -60,7 +61,7 @@ public class VscColorTheme {
         var settings = entry.settings;
 
         if (scopes != null && settings != null) {
-          scopes.fold(List::of, x -> x).forEach(scope -> {
+          scopes.fold(List::of, Function.identity()).forEach(scope -> {
             if (scope != null) {
               builder.put(scope, settings);
             }
