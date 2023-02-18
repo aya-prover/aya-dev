@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.*;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.error.BadExprError;
@@ -43,7 +44,7 @@ public record DoubleChecker(
       case ErrorTerm term -> true;
       case SigmaTerm sigma -> sigma.params().view()
         .allMatch(param -> inherit(param.type(), expected));
-      case LamTerm(var param, var body)when whnf(expected) instanceof PiTerm pi ->
+      case LamTerm(var param, var body) when whnf(expected) instanceof PiTerm pi ->
         unifier.ctx.with(param.ref(), pi.param().type(), () ->
           inherit(body, pi.substBody(new RefTerm(param.ref()))));
       case LamTerm lambda -> {
@@ -51,14 +52,14 @@ public record DoubleChecker(
         yield false;
       }
       // TODO[ice]: checkBoundaries
-      case PLamTerm(var params, var body)when whnf(expected) instanceof PathTerm path ->
+      case PLamTerm(var params, var body) when whnf(expected) instanceof PathTerm path ->
         unifier.ctx.withIntervals(params.view(), () ->
           inherit(body, path.substBody(params)));
-      case PartialTerm(var par, var rhsTy)when whnf(expected) instanceof PartialTyTerm(var ty, var phi) -> {
+      case PartialTerm(var par, var rhsTy) when whnf(expected) instanceof PartialTyTerm(var ty, var phi) -> {
         if (!PartialTerm.impliesCof(phi, par.restr(), unifier.state)) yield false;
         yield compare(rhsTy, ty);
       }
-      case TupTerm(var items)when whnf(expected) instanceof SigmaTerm sigma -> {
+      case TupTerm(var items) when whnf(expected) instanceof SigmaTerm sigma -> {
         var res = sigma.check(items, (e, t) -> {
           if (!inherit(e.term(), t)) return ErrorTerm.unexpected(e.term());
           return e.term();
@@ -71,6 +72,11 @@ public record DoubleChecker(
         if (!(whnf(expected) instanceof SortTerm sort)) yield Synthesizer.unreachable(expected);
         if (!synthesizer.inheritPiDom(dom.type(), sort)) yield false;
         yield unifier.ctx.with(dom, () -> inherit(cod, sort));
+      }
+      case MetaTerm meta when meta.ref().info instanceof MetaInfo.AnyType -> {
+        var newMeta = meta.ref().clone(new MetaInfo.Result(expected));
+        unifier.solveMeta(meta, new MetaTerm(newMeta, meta.contextArgs(), meta.args()), lr, rl, expected);
+        yield true;
       }
       case default -> compare(synthesizer.press(preterm), expected);
     };

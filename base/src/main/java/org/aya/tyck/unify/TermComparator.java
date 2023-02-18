@@ -12,6 +12,7 @@ import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
+import org.aya.core.meta.MetaInfo;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
@@ -127,7 +128,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     if (rhs instanceof MetaTerm rMeta) {
       // In case we're comparing two metas with one isType and the other has a type,
       // prefer solving the isType one to the typed one.
-      if (lhs instanceof MetaTerm lMeta && lMeta.ref().info.result() == null)
+      if (lhs instanceof MetaTerm lMeta && lMeta.ref().info instanceof MetaInfo.AnyType)
         return solveMeta(lMeta, rMeta, lr, rl, type) != null;
       return solveMeta(rMeta, lhs, rl, lr, type) != null;
     }
