@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
@@ -10,19 +10,19 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.ConcretePrettier;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
-import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +73,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
   /**
    * @param userType only generated when a typed lambda is pushed into the patterns
-   * @param type used in the LSP server
+   * @param type     used in the LSP server
    */
   record Bind(
     @NotNull SourcePos sourcePos,
@@ -116,6 +116,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
     public Ctor(@NotNull Pattern.Bind bind, @NotNull AnyVar maybe) {
       this(bind.sourcePos(), new WithPos<>(bind.sourcePos(), maybe), ImmutableSeq.empty());
     }
+
     public Ctor(@NotNull Pattern.QualifiedRef qref, @NotNull AnyVar maybe) {
       this(qref.sourcePos(), new WithPos<>(qref.sourcePos(), maybe), ImmutableSeq.empty());
     }

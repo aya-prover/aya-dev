@@ -98,8 +98,8 @@ public final class Unifier extends TermComparator {
     var needUnify = true;
     if (preRhs instanceof ErrorTerm) needUnify = false;
     else switch (meta.info) {
-      case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
-      case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
+      case MetaInfo.AnyType() when preRhs instanceof Formation -> needUnify = false;
+      case MetaInfo.AnyType() when preRhs instanceof MetaTerm rhsMeta -> {
         if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
           reportIllTyped(lhs, preRhs);
           return null;

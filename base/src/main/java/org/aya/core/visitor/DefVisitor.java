@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
-import org.aya.core.def.*;
+import org.aya.core.def.FnDef;
+import org.aya.core.def.GenericDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
