@@ -9,8 +9,7 @@ Error: Unhandled case:
          {zero}, {suc zero}
          {zero}, {suc (suc zero)}
          {zero}, {suc (suc (suc zero))}
-         {zero}, {suc (suc (suc (suc zero)))}
-         {zero}, {suc (suc (suc (suc (suc ...))))}
+         {zero}, {suc (suc (suc (suc ...)))}
 
 In file $FILE:9:3 ->
 

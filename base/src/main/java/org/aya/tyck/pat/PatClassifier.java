@@ -63,7 +63,7 @@ public final class PatClassifier extends StatedTycker {
     var classifier = new PatClassifier(reporter, builder, state, pos);
     var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
-      .toImmutableSeq(), 5);
+      .toImmutableSeq(), 4);
     var missing = MutableList.<ImmutableSeq<Arg<Term>>>create();
     var success = MutableList.<PatClass<ImmutableSeq<Arg<Term>>>>create();
     cl.forEach(c -> {
