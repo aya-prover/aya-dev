@@ -14,6 +14,7 @@ import org.aya.pretty.doc.Style;
  * For example, we will use `::` to distinguish nested "class" attributes in the HTML backend.
  *
  * @see org.aya.pretty.backend.html.Html5Stylist#styleKeyToCss(String)
+ * @see org.aya.pretty.backend.latex.TeXStylist#styleKeyToTex(String)
  */
 public enum AyaStyleKey {
   Keyword("Aya::Keyword"),
