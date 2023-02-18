@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
@@ -25,7 +25,8 @@ public enum AyaStyleKey {
   Field("Aya::Field"),
   Generalized("Aya::Generalized"),
   CallTerm("Aya::Call"),
-  Comment("Aya::Comment");
+  Comment("Aya::Comment"),
+  LocalVar("Aya::LocalVar");
 
   private final String key;
 
