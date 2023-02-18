@@ -1,0 +1,14 @@
+prim I prim coe prim coeFill
+prim intervalInv
+inline def ~ => intervalInv
+variable A B : Type
+def infix = (a b : A) => [| i |] A { i := b | ~ i := a }
+
+open data Bool | true | false
+def not Bool : Bool
+| true => false
+| false => true
+
+def id (x : Bool) => x
+
+def Goal => (λ x => not (not x)) = id
