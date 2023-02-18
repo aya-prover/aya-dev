@@ -18,7 +18,9 @@ import java.util.EnumSet;
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\noindent{}");
+    // cursor.invisibleContent("\\noindent{}");
+    // This prevents us from using \raggedright followed by a \setlength\parindent.
+    // We should expect users to deal with indentations themselves.
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
