@@ -40,10 +40,8 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         var wholeModeName = context.moduleName().appended(mod.name());
         // Is there a file level module with path {context.moduleName}::{mod.name} ?
         if (loader.existsFileLevelModule(wholeModeName)) {
-          // 🥲
           context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
         }
-
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
         context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
@@ -173,7 +171,10 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     };
     decl.setCtx(ctx);
     decl.ref().module = ctx.moduleName();
-    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
+    // Do not add anonymous functions to the context, as no one can refer to them
+    if (!(decl instanceof TeleDecl.FnDecl fnDecl) || (!fnDecl.isAnonymous)) {
+      ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
+    }
     return ctx;
   }
 

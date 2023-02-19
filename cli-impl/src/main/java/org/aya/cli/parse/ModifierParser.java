@@ -4,29 +4,31 @@ package org.aya.cli.parse;
 
 import com.intellij.psi.tree.IElementType;
 import kala.collection.Seq;
-import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import kala.function.Functions;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.DeclInfo;
-import org.aya.generic.util.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.aya.cli.parse.ModifierParser.ModifierGroup.*;
 import static org.aya.parser.AyaPsiElementTypes.*;
 
+/**
+ * Generalized modifier parser. There are two assumptions in this parser:
+ * 1. Availability. Whether a modifier is usable (can occur) in a declaration.
+ * 2. Presence. Whether a modifier is present (is specified) in a declaration.
+ *
+ * @author Hoshino Tened
+ */
 public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {
     None,
@@ -69,112 +71,105 @@ public record ModifierParser(@NotNull Reporter reporter) {
     }
   }
 
-  /**
-   * @param defaultValue Forall (x : Modifier), filter x = true -> ((defaultValue x) success)
+  /***
+   * For different declarations we have different modifiers that are available.
+   * @param defaultMods If a modifier is available, but not present in the declaration, we use the default value from here.
+   * @param available Checks if a modifier is available.
    */
   public record Filter(
-    @NotNull Modifiers defaultValue,
-    @NotNull Predicate<Modifier> filter
-  ) {}
-
-  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FULL;
-  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FN;
-
-  static {
-    FULL = new EnumMap<>(Modifier.class);
-    FULL.put(Modifier.Open, Option.none());
-    FULL.put(Modifier.Opaque, Option.none());
-    FULL.put(Modifier.Inline, Option.none());
-    FULL.put(Modifier.Overlap, Option.none());
-    FN = FULL.clone();
-    FN.remove(Modifier.Open);
-  }
-
-  public interface Modifiers {
-    Filter declFilter = ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      new EnumMap<>(Modifier.class) {{
-        put(Modifier.Open, Option.none());
-      }}
-    );
-
-    Filter fnFilter = ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      FN);
-
-    Filter subDeclFilter = new Filter(ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      new EnumMap<>(Modifier.class)
-    ).defaultValue, x -> false);
-
-    /**
-     * Forall parameters:<br/>
-     * null implies not allowed,<br/>
-     * none implies no default value,<br/>
-     * some implies yes default value<br/>
-     */
-    static @NotNull Filter ofDefault(
-      @Nullable WithPos<Stmt.Accessibility> accessibility,
-      @Nullable WithPos<DeclInfo.Personality> personality,
-      @NotNull EnumMap<Modifier, Option<SourcePos>> misc
-    ) {
-      Predicate<Modifier> pred = mod -> switch (mod) {
-        case Private -> accessibility != null;
-        case Example, Counterexample -> personality != null;
-        default -> misc.containsKey(mod);
-      };
-
-      return new Filter(new Modifiers() {
-        @Override public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-          if (accessibility == null) throw new UnsupportedOperationException();
-          return accessibility;
-        }
-
-        @Override public @NotNull WithPos<DeclInfo.Personality> personality() {
-          if (personality == null) throw new UnsupportedOperationException();
-          return personality;
-        }
-
-        @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
-          if (!misc.containsKey(key)) throw new UnsupportedOperationException();
-          return misc.get(key).getOrNull();
-        }
-      }, pred);
+    @NotNull Modifiers defaultMods,
+    @NotNull Predicate<Modifier> available
+  ) {
+    public @NotNull Filter and(@NotNull Predicate<Modifier> and) {
+      return new Filter(defaultMods, available.and(and));
     }
 
     /**
-     * @throws UnsupportedOperationException
+     * @param defaultAcc Default {@link org.aya.concrete.stmt.Stmt.Accessibility}
+     * @param defaultPer Default {@link org.aya.concrete.stmt.decl.DeclInfo.Personality}
+     * @param miscAvail  Available miscellaneous modifiers, see {@link DefaultModifiers#miscAvail}
      */
-    @Contract(pure = true)
-    @NotNull WithPos<Stmt.Accessibility> accessibility();
-    @Contract(pure = true)
-    @NotNull WithPos<DeclInfo.Personality> personality();
-    @Contract(pure = true)
-    @Nullable SourcePos misc(@NotNull Modifier key);
+    public static @NotNull Filter create(
+      @NotNull WithPos<Stmt.Accessibility> defaultAcc,
+      @NotNull WithPos<DeclInfo.Personality> defaultPer,
+      @NotNull EnumSet<Modifier> miscAvail
+    ) {
+      return new Filter(new DefaultModifiers(defaultAcc, defaultPer, miscAvail), mod -> switch (mod) {
+        case Private, Example, Counterexample -> true;
+        case Open, Opaque, Inline, Overlap -> miscAvail.contains(mod);
+      });
+    }
+  }
+
+  /**
+   * @param miscAvail Miscellaneous modifiers (open, inline, opaque, overlap) availability map.
+   *                  If a modifier is in the map (as the key), it is available.
+   */
+  record DefaultModifiers(
+    @NotNull WithPos<Stmt.Accessibility> accessibility,
+    @NotNull WithPos<DeclInfo.Personality> personality,
+    @NotNull EnumSet<Modifier> miscAvail
+  ) implements Modifiers {
+    @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
+      // Do not throw anything here, even the modifier is not available.
+      return null; // always not present, because miscAvail only says availability, not presence.
+    }
+  }
+
+  /** Only "open" is available to (data/struct) decls */
+  public static final Filter DECL_FILTER = Filter.create(
+    new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+    new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+    EnumSet.of(Modifier.Open)
+  );
+
+  /** "opaque", "inline" and "overlap" is available to functions. */
+  public static final Filter FN_FILTER = Filter.create(
+    new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+    new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+    EnumSet.of(Modifier.Opaque, Modifier.Inline, Modifier.Overlap));
+
+  /** nothing is available to sub-level decls (ctor/field). */
+  public static final Filter SUBDECL_FILTER = Filter.create(
+    new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
+    new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
+    EnumSet.noneOf(Modifier.class)
+  ).and(x -> false);
+
+  /** All parsed modifiers */
+  public interface Modifiers {
+    @Contract(pure = true) @NotNull WithPos<Stmt.Accessibility> accessibility();
+    @Contract(pure = true) @NotNull WithPos<DeclInfo.Personality> personality();
+    /**
+     * Miscellaneous modifiers are function modifiers ({@link org.aya.generic.Modifier}) plus "open".
+     *
+     * @return non-null source position if the modifier is present.
+     */
+    @Contract(pure = true) @Nullable SourcePos misc(@NotNull Modifier key);
+    default @NotNull EnumSet<org.aya.generic.Modifier> toFnModifiers() {
+      var fnMods = EnumSet.noneOf(org.aya.generic.Modifier.class);
+      if (misc(ModifierParser.Modifier.Inline) != null) fnMods.add(org.aya.generic.Modifier.Inline);
+      if (misc(ModifierParser.Modifier.Opaque) != null) fnMods.add(org.aya.generic.Modifier.Opaque);
+      if (misc(ModifierParser.Modifier.Overlap) != null) fnMods.add(org.aya.generic.Modifier.Overlap);
+      return fnMods;
+    }
   }
 
   private record ModifierSet(
     @NotNull ImmutableMap<Modifier, SourcePos> mods,
     @NotNull Modifiers parent
   ) implements Modifiers {
-    @Override
-    @Contract(pure = true)
-    public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-      if (mods.containsKey(Modifier.Private))
-        return new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private);
-      return parent.accessibility();
+    @Override @Contract(pure = true) public @NotNull WithPos<Stmt.Accessibility> accessibility() {
+      return mods.getOption(Modifier.Private)
+        .map(pos -> new WithPos<>(pos, Stmt.Accessibility.Private))
+        .getOrElse(parent::accessibility);
     }
 
-    @Override
-    @Contract(pure = true)
-    public @NotNull WithPos<DeclInfo.Personality> personality() {
+    @Override @Contract(pure = true) public @NotNull WithPos<DeclInfo.Personality> personality() {
       if (mods.containsKey(Modifier.Example))
-        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE);
+        return new WithPos<>(mods.get(Modifier.Example), DeclInfo.Personality.EXAMPLE);
       if (mods.containsKey(Modifier.Counterexample))
-        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE);
+        return new WithPos<>(mods.get(Modifier.Counterexample), DeclInfo.Personality.COUNTEREXAMPLE);
       return parent.personality();
     }
 
@@ -183,22 +178,13 @@ public record ModifierParser(@NotNull Reporter reporter) {
     }
   }
 
-  @TestOnly public @NotNull Modifiers parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
-    var filter = Modifiers.ofDefault(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      FULL);
-    return parse(modifiers, filter);
-  }
-
-  private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull SeqLike<WithPos<Modifier>> modifiers) {
-    var result = modifiers
-      .flatMap(modi -> Seq.from(modi.data().implies)
-        .map(imply -> new WithPos<>(modi.sourcePos(), imply)))
-      .collect(Collectors.toUnmodifiableMap(WithPos::data, Functions.identity(), (a, b) -> a))
-      .values();
-
-    return ImmutableSeq.from(result);
+  private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
+    return modifiers.view()
+      .flatMap(modi -> Seq.from(modi.data().implies).map(imply -> new WithPos<>(modi.sourcePos(), imply)))
+      .collect(ImmutableMap.collector(WithPos::data, x -> x))
+      // ^ distinctBy(WithPos::data)
+      .valuesView()
+      .toImmutableSeq();
   }
 
   /**
@@ -215,7 +201,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
       var modifier = data.data();
 
       // do filter
-      if (!filter.filter.test(data.data())) {
+      if (!filter.available.test(data.data())) {
         reportUnsuitableModifier(data);
         continue;
       }
@@ -245,7 +231,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
     return new ModifierSet(ImmutableMap.from(
       ImmutableSeq.from(map.values()).flatMap(EnumMap::entrySet)
-    ), filter.defaultValue);
+    ), filter.defaultMods);
   }
 
   public void reportUnsuitableModifier(@NotNull WithPos<Modifier> data) {
@@ -258,9 +244,5 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
   public void reportContradictModifier(@NotNull WithPos<Modifier> current, @NotNull WithPos<Modifier> that) {
     reporter.report(new ModifierProblem(current.sourcePos(), current.data(), ModifierProblem.Reason.Contradictory));
-  }
-
-  public <T> T unreachable() {
-    throw new InternalException("🪲");
   }
 }
