@@ -48,7 +48,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     // TODO: escape according to `outer`
     return content.replace("\\", "")
-      .replace("_", "\\_")
+      .replace("_", "\\textunderscore{}")
       // This is a stupid hack. Maybe we can calculate consecutive spaces
       .replace("  ", makeIndent(2))
       .replace(" ", makeIndent(1));
@@ -75,7 +75,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("\u2192", "\\to"),
     Tuple.of("\u22A5", "\\bot"),
     Tuple.of("\u2200", "\\forall"),
-    Tuple.of("_", "\\textunderscore"),
+    Tuple.of("_", "\\_"),
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
     id("(|"), id("|)"),
