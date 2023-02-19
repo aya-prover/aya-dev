@@ -45,7 +45,6 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -296,12 +295,7 @@ public record AyaProducer(
       reporter.report(new BadModifierWarn(inline, Modifier.Inline));
     }
 
-    // TODO: any better code?
-    var fnMods = EnumSet.noneOf(Modifier.class);
-    if (inline != null) fnMods.add(Modifier.Inline);
-    if (info.modifier.misc(ModifierParser.Modifier.Opaque) != null) fnMods.add(Modifier.Opaque);
-    if (info.modifier.misc(ModifierParser.Modifier.Overlap) != null) fnMods.add(Modifier.Overlap);
-
+    var fnMods = info.modifier().toFnModifiers();
     var tele = telescope(node.childrenOfType(TELE));
     var ty = typeOrNull(node.peekChild(TYPE));
     return new TeleDecl.FnDecl(info.info, fnMods, name, tele, ty, dynamite, sample, info.name == null);

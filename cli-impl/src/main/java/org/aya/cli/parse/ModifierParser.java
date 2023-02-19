@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.function.Predicate;
 
 import static org.aya.cli.parse.ModifierParser.ModifierGroup.*;
@@ -163,12 +164,17 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
   /** All parsed modifiers */
   public interface Modifiers {
-    @Contract(pure = true)
-    @NotNull WithPos<Stmt.Accessibility> accessibility();
-    @Contract(pure = true)
-    @NotNull WithPos<DeclInfo.Personality> personality();
-    @Contract(pure = true)
-    @Nullable SourcePos misc(@NotNull Modifier key);
+    @Contract(pure = true) @NotNull WithPos<Stmt.Accessibility> accessibility();
+    @Contract(pure = true) @NotNull WithPos<DeclInfo.Personality> personality();
+    /** Miscellaneous modifiers are function modifiers ({@link org.aya.generic.Modifier}) plus "open" */
+    @Contract(pure = true) @Nullable SourcePos misc(@NotNull Modifier key);
+    default @NotNull EnumSet<org.aya.generic.Modifier> toFnModifiers() {
+      var fnMods = EnumSet.noneOf(org.aya.generic.Modifier.class);
+      if (misc(ModifierParser.Modifier.Inline) != null) fnMods.add(org.aya.generic.Modifier.Inline);
+      if (misc(ModifierParser.Modifier.Opaque) != null) fnMods.add(org.aya.generic.Modifier.Opaque);
+      if (misc(ModifierParser.Modifier.Overlap) != null) fnMods.add(org.aya.generic.Modifier.Overlap);
+      return fnMods;
+    }
   }
 
   private record ModifierSet(
