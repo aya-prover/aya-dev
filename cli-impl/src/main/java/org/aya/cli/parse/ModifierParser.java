@@ -6,10 +6,8 @@ import com.intellij.psi.tree.IElementType;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.DeclInfo;
-import org.aya.generic.util.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -90,83 +88,64 @@ public record ModifierParser(@NotNull Reporter reporter) {
     /**
      * @param defaultAcc Default {@link org.aya.concrete.stmt.Stmt.Accessibility}
      * @param defaultPer Default {@link org.aya.concrete.stmt.decl.DeclInfo.Personality}
-     * @param miscAllow  Available modifiers among `open`, `opaque`, `inline` and `overlap`
+     * @param miscAvail  Available miscellaneous modifiers, see {@link DefaultModifiers#miscAvail}
      */
     public static @NotNull Filter create(
       @NotNull WithPos<Stmt.Accessibility> defaultAcc,
       @NotNull WithPos<DeclInfo.Personality> defaultPer,
-      @NotNull EnumMap<Modifier, Option<SourcePos>> miscAllow
+      @NotNull EnumSet<Modifier> miscAvail
     ) {
-      return new Filter(new DefaultModifiers(defaultAcc, defaultPer, miscAllow), mod -> switch (mod) {
+      return new Filter(new DefaultModifiers(defaultAcc, defaultPer, miscAvail), mod -> switch (mod) {
         case Private, Example, Counterexample -> true;
-        case Open, Opaque, Inline, Overlap -> miscAllow.containsKey(mod);
+        case Open, Opaque, Inline, Overlap -> miscAvail.contains(mod);
       });
     }
   }
 
+  /**
+   * @param miscAvail Miscellaneous modifiers (open, inline, opaque, overlap) availability map.
+   *                  If a modifier is in the map (as the key), it is available.
+   */
   record DefaultModifiers(
     @NotNull WithPos<Stmt.Accessibility> accessibility,
     @NotNull WithPos<DeclInfo.Personality> personality,
-    @NotNull EnumMap<Modifier, Option<SourcePos>> misc
+    @NotNull EnumSet<Modifier> miscAvail
   ) implements Modifiers {
     @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
-      if (!misc.containsKey(key)) throw new UnsupportedOperationException();
-      return misc.get(key).getOrNull();
+      // Do not throw anything here, even the modifier is not available.
+      return null; // always not present, because miscAvail only says availability, not presence.
     }
-  }
-
-  /**
-   * Miscellaneous modifiers (open, inline, opaque, overlap) availability map.
-   * If a modifier is in the map (as the key), it is available.
-   * <p>
-   * When this map is used as the underlying data source of {@link Modifiers#misc(Modifier)}
-   * (namely, {@link DefaultModifiers}, as the {@link Filter#defaultMods} in {@link Filter#create(WithPos, WithPos, EnumMap)}),
-   * it has the following additional semantics:
-   * <p>
-   * If the value is {@link Option#none()}, it is available, but it is not present in the declaration.
-   * If the value is {@link Option#some(Object)} (the Object should be a source position), it is available,
-   * and it is present in the declaration in the corresponding source position.
-   */
-  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FULL;
-  static final @NotNull EnumMap<Modifier, Option<SourcePos>> FN;
-
-  static {
-    FULL = new EnumMap<>(Modifier.class);
-    FULL.put(Modifier.Open, Option.none());
-    FULL.put(Modifier.Opaque, Option.none());
-    FULL.put(Modifier.Inline, Option.none());
-    FULL.put(Modifier.Overlap, Option.none());
-    FN = FULL.clone();
-    FN.remove(Modifier.Open);
   }
 
   /** Only "open" is available to (data/struct) decls */
   public static final Filter DECL_FILTER = Filter.create(
     new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
     new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-    new EnumMap<>(Modifier.class) {{
-      put(Modifier.Open, Option.none());
-    }}
+    EnumSet.of(Modifier.Open)
   );
 
   /** "opaque", "inline" and "overlap" is available to functions. */
   public static final Filter FN_FILTER = Filter.create(
     new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
     new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-    FN);
+    EnumSet.of(Modifier.Opaque, Modifier.Inline, Modifier.Overlap));
 
   /** nothing is available to sub-level decls (ctor/field). */
   public static final Filter SUBDECL_FILTER = Filter.create(
     new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
     new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-    new EnumMap<>(Modifier.class)
+    EnumSet.noneOf(Modifier.class)
   ).and(x -> false);
 
   /** All parsed modifiers */
   public interface Modifiers {
     @Contract(pure = true) @NotNull WithPos<Stmt.Accessibility> accessibility();
     @Contract(pure = true) @NotNull WithPos<DeclInfo.Personality> personality();
-    /** Miscellaneous modifiers are function modifiers ({@link org.aya.generic.Modifier}) plus "open" */
+    /**
+     * Miscellaneous modifiers are function modifiers ({@link org.aya.generic.Modifier}) plus "open".
+     *
+     * @return non-null source position if the modifier is present.
+     */
     @Contract(pure = true) @Nullable SourcePos misc(@NotNull Modifier key);
     default @NotNull EnumSet<org.aya.generic.Modifier> toFnModifiers() {
       var fnMods = EnumSet.noneOf(org.aya.generic.Modifier.class);
@@ -204,7 +183,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     var filter = Filter.create(
       new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
       new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      FULL);
+      EnumSet.of(Modifier.Opaque, Modifier.Inline, Modifier.Overlap, Modifier.Open));
     return parse(modifiers, filter);
   }
 
@@ -274,9 +253,5 @@ public record ModifierParser(@NotNull Reporter reporter) {
 
   public void reportContradictModifier(@NotNull WithPos<Modifier> current, @NotNull WithPos<Modifier> that) {
     reporter.report(new ModifierProblem(current.sourcePos(), current.data(), ModifierProblem.Reason.Contradictory));
-  }
-
-  public <T> T unreachable() {
-    throw new InternalException("🪲");
   }
 }
