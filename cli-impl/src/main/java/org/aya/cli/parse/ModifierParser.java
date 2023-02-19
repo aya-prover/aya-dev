@@ -161,16 +161,16 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @NotNull Modifiers parent
   ) implements Modifiers {
     @Override @Contract(pure = true) public @NotNull WithPos<Stmt.Accessibility> accessibility() {
-      if (mods.containsKey(Modifier.Private))
-        return new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Private);
-      return parent.accessibility();
+      return mods.getOption(Modifier.Private)
+        .map(pos -> new WithPos<>(pos, Stmt.Accessibility.Private))
+        .getOrElse(parent::accessibility);
     }
 
     @Override @Contract(pure = true) public @NotNull WithPos<DeclInfo.Personality> personality() {
       if (mods.containsKey(Modifier.Example))
-        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.EXAMPLE);
+        return new WithPos<>(mods.get(Modifier.Example), DeclInfo.Personality.EXAMPLE);
       if (mods.containsKey(Modifier.Counterexample))
-        return new WithPos<>(SourcePos.NONE, DeclInfo.Personality.COUNTEREXAMPLE);
+        return new WithPos<>(mods.get(Modifier.Counterexample), DeclInfo.Personality.COUNTEREXAMPLE);
       return parent.personality();
     }
 
