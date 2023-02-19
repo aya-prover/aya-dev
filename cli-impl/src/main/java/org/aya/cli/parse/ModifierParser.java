@@ -14,7 +14,6 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -177,14 +176,6 @@ public record ModifierParser(@NotNull Reporter reporter) {
     @Override public @Nullable SourcePos misc(@NotNull Modifier key) {
       return mods.getOrElse(key, () -> parent.misc(key));
     }
-  }
-
-  @TestOnly public @NotNull Modifiers parse(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
-    var filter = Filter.create(
-      new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-      new WithPos<>(SourcePos.NONE, DeclInfo.Personality.NORMAL),
-      EnumSet.of(Modifier.Opaque, Modifier.Inline, Modifier.Overlap, Modifier.Open));
-    return parse(modifiers, filter);
   }
 
   private @NotNull ImmutableSeq<WithPos<Modifier>> implication(@NotNull ImmutableSeq<WithPos<Modifier>> modifiers) {
