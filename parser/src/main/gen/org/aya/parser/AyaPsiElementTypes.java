@@ -147,7 +147,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_INFIXR = new AyaPsiTokenType("infixr");
   IElementType KW_INLINE = new AyaPsiTokenType("inline");
   IElementType KW_ISET = new AyaPsiTokenType("ISet");
-  IElementType KW_LAMBDA = new AyaPsiTokenType("\\");
+  IElementType KW_LAMBDA = new AyaPsiTokenType("fn");
   IElementType KW_LET = new AyaPsiTokenType("let");
   IElementType KW_LOOSER = new AyaPsiTokenType("looser");
   IElementType KW_MATCH = new AyaPsiTokenType("match");
@@ -157,7 +157,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_OPEN = new AyaPsiTokenType("open");
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");
   IElementType KW_OVERRIDE = new AyaPsiTokenType("override");
-  IElementType KW_PI = new AyaPsiTokenType("Pi");
+  IElementType KW_PI = new AyaPsiTokenType("Fn");
   IElementType KW_PRIM = new AyaPsiTokenType("prim");
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");
   IElementType KW_PROP = new AyaPsiTokenType("Prop");

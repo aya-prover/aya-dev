@@ -67,7 +67,7 @@ public class PathTest {
       def funExt
         {A B : Type}
         (f g : A -> B)
-        (p : Pi (a : A) -> f a = g a)
+        (p : Fn (a : A) -> f a = g a)
         : f = g
         => \\i a => p a i
       """);

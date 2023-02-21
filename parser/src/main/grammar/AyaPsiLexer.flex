@@ -83,8 +83,8 @@ OCT_DIGIT = [0-8]
 
 ULIFT = ulift | \u2191+
 SIGMA = Sig | \u03a3
-LAMBDA = \\ | \u03bb
-PI = Pi | \u03a0
+LAMBDA = \\ | fn
+PI = Fn
 FORALL = forall | \u2200
 TO = -> | \u2192
 LARROW = <- | \u2190

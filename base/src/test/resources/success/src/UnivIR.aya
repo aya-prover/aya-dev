@@ -10,8 +10,8 @@ def El U : Type
 | Nat' => Nat
 | a ×' b => Sig (El a) ** El b
 | a →' b => El a -> El b
-| Π' dom cod => Pi (d : El dom) -> El (cod d)
+| Π' dom cod => ∀ (d : El dom) -> El (cod d)
 | Σ' dom cod => Sig (d : El dom) ** El (cod d)
 
 def tyExample : U => Nat' →' Nat' ×' (Nat' ×' Nat') ×' Nat'
-def valExample : El tyExample => λ x => (x, ((2, 3), 4))
+def valExample : El tyExample => \ x => (x, ((2, 3), 4))

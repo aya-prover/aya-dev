@@ -24,11 +24,11 @@ public class PrettierTest {
     var doc2 = declDoc("def id {A : Type} (a : A) => a");
     var doc3 = declDoc("""
       def curry3 (A  B  C  D : Type)
-                  (f : Pi (x : Sig A B ** C) -> D)
+                  (f : Fn (x : Sig A B ** C) -> D)
                   (a : A) (b : B) (c : C) : D
         => f (a, b, c)
       def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
-                    (f : Pi A B C -> D)
+                    (f : Fn A B C -> D)
                     (p : Sig A B ** C) : D
         => f (p.1) (p.2) (p.3)""");
     assertFalse(Doc.cat(doc1, doc2, doc3).renderToHtml().isEmpty());
@@ -86,8 +86,8 @@ public class PrettierTest {
       def infix = (A B : Type) => A
       def infix == (A B : Type) => A looser =
       def infix <= (A B : Type) => A tighter =
-      def test1 (X : Type) => Pi (A : Type) -> A ulift = X
-      def test2 (X : Type) => (Pi (A : Type) -> A) ulift = X
+      def test1 (X : Type) => Fn (A : Type) -> A ulift = X
+      def test2 (X : Type) => (Fn (A : Type) -> A) ulift = X
 
       def infix ?= : Type -> Type -> Type => \\ (A B : Type) => A
       def use (A B : Type) => A ?= B
@@ -97,8 +97,8 @@ public class PrettierTest {
     var use = ((FnDef) decls.get(6)).body.getLeftValue();
     assertNotNull(decls.get(1).ref().concrete.toDoc(AyaPrettierOptions.informative()));
     assertNotNull(decls.get(2).ref().concrete.toDoc(AyaPrettierOptions.informative()));
-    assertEquals("Pi (A : Type 0) -> A = X", test1.toDoc(AyaPrettierOptions.informative()).debugRender());
-    assertEquals("(Pi (A : Type 0) -> A) = X", test2.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("Fn (A : Type 0) -> A = X", test1.toDoc(AyaPrettierOptions.informative()).debugRender());
+    assertEquals("(Fn (A : Type 0) -> A) = X", test2.toDoc(AyaPrettierOptions.informative()).debugRender());
     assertEquals("A ?= B", use.toDoc(AyaPrettierOptions.informative()).debugRender());
   }
 

@@ -22,8 +22,8 @@ def refl { A : Type } => new Isomorphism { A } { A } {
 struct Isomorphism' { A B : Type } : Type
   | to : A -> B
   | from : B -> A
-  | from∘to : Pi (a : A) -> from (to a) = a
-  | to∘from : Pi (b : B) -> to (from b) = b
+  | from∘to : Fn (a : A) -> from (to a) = a
+  | to∘from : Fn (b : B) -> to (from b) = b
 
 def refl' { A : Type } => new Isomorphism' { A } { A } {
   | to => ident

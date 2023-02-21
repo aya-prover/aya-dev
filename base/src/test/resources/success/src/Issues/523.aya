@@ -3,9 +3,9 @@ open import Paths
 open struct PseudoPath (A : I -> Type) (a : A 0) (b : A 1) : Type
  | at (i : I) : A i
 
-def path {A : I -> Type} (p : Pi (i : I) -> A i)
+def path {A : I -> Type} (p : Fn (i : I) -> A i)
   => new PseudoPath A (p 0) (p 1) { | at i => p i }
 
 variable A : Type
-def idp-old (a : A) => path {λ i => A} (λ i => a)
+def idp-old (a : A) => path {\ i => A} (\ i => a)
 def idp-proj (a : A) => (idp-old a) .at 0

@@ -4,7 +4,7 @@ In file $FILE:1:31 ->
     │                                  ╰────────╯
 
 Error: Cannot check
-         λ {x} ⇒ x
+         \ {x} ⇒ x
        against the Pi type
          A → A
        because explicitness do not match

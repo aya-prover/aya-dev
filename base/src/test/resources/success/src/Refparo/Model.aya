@@ -7,7 +7,7 @@ def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
   => (\y => eq y).primCoe x
 
 def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
-  => λ i => (λ j => A).primCoe x freeze (~ i)
+  => \ i => (\ j => A).primCoe x freeze (~ i)
 
 // *** Types
 
@@ -17,7 +17,7 @@ open struct EventT : Type 1
 def GetterT => EventT -> Type
 def SetterT => Type -> EventT -> EventT
 def Invariant (GetT : GetterT) (SetT : SetterT)
-  => Pi (T : EventT) (E : Type) -> E ↑ = GetT (SetT E T)
+  => Fn (T : EventT) (E : Type) -> E ↑ = GetT (SetT E T)
 
 // wish these getter/setters could be generated automatically
 def GetAgentT (T : EventT) => T.AgentT
@@ -29,7 +29,7 @@ def AgentT-inv : Invariant GetAgentT SetAgentT
 open struct Event (T : EventT) : Type
   | agent : T.AgentT
 
-def Getter (GetT : GetterT) => Pi {T : EventT} (Event T) -> GetT T
+def Getter (GetT : GetterT) => Fn {T : EventT} (Event T) -> GetT T
 
 def getAgent {T : EventT} (e : Event T) : T.AgentT => e.agent
 
@@ -53,11 +53,11 @@ def VP (T : EventT) => Verb T
 def BDP (E : Type) => Quantifier E
 
 def DP (SetT : SetterT) (E : Type)
-  => Pi {T : EventT} -> VP (SetT E T) -> VP (SetT E T)
+  => Fn {T : EventT} -> VP (SetT E T) -> VP (SetT E T)
 
 // thetas transform a BDP into a DP with that thematic role
 def Theta (SetT : SetterT) : Type 1
-  => Pi {E : Type} -> BDP E -> DP SetT E
+  => Fn {E : Type} -> BDP E -> DP SetT E
 
 def mkTheta (GetT : GetterT)
   (get : Getter GetT)

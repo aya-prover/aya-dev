@@ -1,9 +1,9 @@
-In file $FILE:6:29 ->
+In file $FILE:6:28 ->
 
   4 │   def test
   5 │    (F : Type -> Type)
-  6 │    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
-    │                                ╰╯
+  6 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g zero
+    │                               ╰╯
 
 Error: Cannot check the expression
          X
@@ -12,12 +12,12 @@ Error: Cannot check the expression
        against the type
          Type 0
 
-In file $FILE:6:16 ->
+In file $FILE:6:15 ->
 
   4 │   def test
   5 │    (F : Type -> Type)
-  6 │    (g : Pi (X : F _) -> F (Neg X)) : Nat => g zero
-    │                   ╰╯
+  6 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g zero
+    │                  ╰╯
 
 Error: Unsolved meta _
        in `F _`

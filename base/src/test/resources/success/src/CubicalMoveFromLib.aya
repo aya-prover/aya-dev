@@ -8,7 +8,7 @@ open import Paths
 // |              |
 // |              |
 // a ---- ab ---- b
-def HeteroSquare {A : Pi (i j : I) -> Type}
+def HeteroSquare {A : ∀ (i j : I) -> Type}
   {a : A 0 0} {b : A 0 1}
   {c : A 1 0} {d : A 1 1}
   (ab : Path (A 0) a b)
@@ -23,7 +23,7 @@ def HeteroSquare {A : Pi (i j : I) -> Type}
   }
 
 // TODO: eta
-def heteroSquare {A : Pi (i j : I) -> Type} (p : Pi (i j : I) -> A i j)
+def heteroSquare {A : ∀ (i j : I) -> Type} (p : ∀ (i j : I) -> A i j)
   : HeteroSquare {A} (\i => p 0 i) (\i => p 1 i)
     (\x => p x 0)
     (\x => p x 1) => \i j => p i j

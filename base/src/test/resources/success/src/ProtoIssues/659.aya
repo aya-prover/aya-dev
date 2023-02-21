@@ -1,10 +1,10 @@
-def imConst {A : Type} (a : A) : Pi {ignoreMe ignoreThis : A} -> A => a
-def imId {A : Type} : Pi {ignoreMe : A} -> A -> Pi {ignoreThis : A} -> A => \ a => a
+def imConst {A : Type} (a : A) : Fn {ignoreMe ignoreThis : A} -> A => a
+def imId {A : Type} : Fn {ignoreMe : A} -> A -> Fn {ignoreThis : A} -> A => \ a => a
 
 def id {A : Type} (x : A) : A => x
-def idId {A : Type} : Pi (x : A) -> A => (id id)
+def idId {A : Type} : Fn (x : A) -> A => (id id)
 
 def idS {A : Type} (x : Sig A ** A) : Sig A ** A => x
-def idIdS {A : Type} : Pi (x : Sig A ** A) -> Sig A ** A => (id id)
+def idIdS {A : Type} : Fn (x : Sig A ** A) -> Sig A ** A => (id id)
 
 // https://github.com/aya-prover/aya-prover-proto/issues/659

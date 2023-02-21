@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -177,7 +177,7 @@ public class CorePrettier extends BasePrettier<Term> {
         var params = MutableList.of(params0);
         var body = PiTerm.unpi(body0, UnaryOperator.identity(), params);
         var doc = Doc.sep(
-          Doc.styled(KEYWORD, Doc.symbol("Pi")),
+          Doc.styled(KEYWORD, Doc.symbol("Fn")),
           visitTele(params, body, Term::findUsages),
           Doc.symbol("->"),
           term(Outer.Codomain, body)
