@@ -108,7 +108,6 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   private static final @NotNull Map<String, String> unicodeMapping = Map.ofEntries(
-    Tuple.of("Pi", "\u03A0"),
     Tuple.of("Sig", "\u03A3"),
     Tuple.of("\\", "\u03BB"),
     Tuple.of("/\\", "\u2227"),

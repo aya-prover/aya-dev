@@ -3,4 +3,4 @@ open import Arith::Bool
 
 def id (x : Bool) => x
 
-def Goal => (λ x => not (not x)) = id
+def Goal => (\ x => not (not x)) = id

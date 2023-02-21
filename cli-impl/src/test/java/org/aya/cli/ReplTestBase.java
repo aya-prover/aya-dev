@@ -25,7 +25,7 @@ public class ReplTestBase {
     config.prompt = "";
   }
 
-  @NotNull protected Tuple2<String, String> repl(@Language("TEXT") @NotNull String input) {
+  @NotNull protected Tuple2<String, String> repl(@Language("Aya") @NotNull String input) {
     var out = new StringWriter();
     var err = new StringWriter();
     var reader = new StringReader(input + "\n:exit");

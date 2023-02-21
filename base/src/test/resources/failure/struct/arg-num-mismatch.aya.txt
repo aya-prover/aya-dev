@@ -1,7 +1,7 @@
 In file $FILE:6:5 ->
 
   4 │   
-  5 │   def path {A : I -> Type} (p : Pi (i : I) -> A i)
+  5 │   def path {A : I -> Type} (p : ∀ (i : I) -> A i)
   6 │     => new PseudoPath A (p 0) (p 1) { | at i j => p i }
     │        ╰──────────────────────────────────────────────╯
 

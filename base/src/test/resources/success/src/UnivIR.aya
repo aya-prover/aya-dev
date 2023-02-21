@@ -14,4 +14,4 @@ def El U : Type
 | Σ' dom cod => Sig (d : El dom) ** El (cod d)
 
 def tyExample : U => Nat' →' Nat' ×' (Nat' ×' Nat') ×' Nat'
-def valExample : El tyExample => λ x => (x, ((2, 3), 4))
+def valExample : El tyExample => \ x => (x, ((2, 3), 4))

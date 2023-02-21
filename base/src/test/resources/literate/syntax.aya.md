@@ -9,7 +9,7 @@ def dependent (x : Nat) : Type
 | x as x' => Nat
 
 // yes, just id
-def justId : Pi (a b : Nat) -> Sig (e : dependent a) ** (dependent e) => 
+def justId : Fn (a b : Nat) -> Sig (e : dependent a) ** (dependent e) => 
   \ a b => let
     | c := a
     | d := b

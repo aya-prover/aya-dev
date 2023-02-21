@@ -82,11 +82,11 @@ public class ParseTest {
   @Test public void successDecl() {
     parseFn("def a => 1");
     parseFn("def a (b : X) => b");
-    parseFn("def a (f : Pi a b c d -> a) => b");
+    parseFn("def a (f : Fn a b c d -> a) => b");
     parseFn("def a (t : Sig a b ** s) => b");
     parseFn("""
       def uncurry (A : Type) (B : Type) (C : Type)
-                   (f : Pi A B -> C)
+                   (f : Fn A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)""");
     parseData("data Unit");
@@ -129,17 +129,17 @@ public class ParseTest {
       && app.seq().get(1).term() instanceof Expr.Proj);
     assertTrue(parseExpr("(f a).1") instanceof Expr.Proj proj
       && proj.tup() instanceof Expr.BinOpSeq);
-    assertTrue(parseExpr("λ a => a") instanceof Expr.Lambda);
+    assertTrue(parseExpr("fn a => a") instanceof Expr.Lambda);
     assertTrue(parseExpr("\\ a => a") instanceof Expr.Lambda);
     assertTrue(parseExpr("\\ a b => a") instanceof Expr.Lambda);
-    assertTrue(parseExpr("Π a -> a") instanceof Expr.Pi dt);
-    assertTrue(parseExpr("Pi a -> a") instanceof Expr.Pi dt);
-    assertTrue(parseExpr("Pi a b -> a") instanceof Expr.Pi dt
+    assertTrue(parseExpr("∀ a -> a") instanceof Expr.Pi dt);
+    assertTrue(parseExpr("Fn a -> a") instanceof Expr.Pi dt);
+    assertTrue(parseExpr("Fn a b -> a") instanceof Expr.Pi dt
       && dt.last() instanceof Expr.Pi);
     assertTrue(parseExpr("Σ a ** b") instanceof Expr.Sigma dt);
     assertTrue(parseExpr("Sig a ** b") instanceof Expr.Sigma dt);
     assertTrue(parseExpr("Sig a b ** c") instanceof Expr.Sigma dt);
-    assertTrue(parseExpr("Pi (x : Sig a ** b) -> c") instanceof Expr.Pi dt && dt.param().type() instanceof Expr.Sigma);
+    assertTrue(parseExpr("Fn (x : Sig a ** b) -> c") instanceof Expr.Pi dt && dt.param().type() instanceof Expr.Sigma);
     parseTo("(f a) . 1", new Expr.Proj(
       SourcePos.NONE,
       new Expr.BinOpSeq(

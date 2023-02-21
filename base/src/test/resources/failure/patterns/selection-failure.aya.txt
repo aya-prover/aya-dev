@@ -1,7 +1,7 @@
 In file $FILE:8:21 ->
 
   6 │    | A, suc m => vcons A (Vect A m)
-  7 │   def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vect A n) : Vect B n
   8 │    | {A}, {B}, {n}, f, vnil => vnil
     │                        ╰──╯
 
@@ -12,7 +12,7 @@ Error: I'm not sure if there should be a case for
 
 In file $FILE:9:21 ->
 
-  7 │   def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+  7 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vect A n) : Vect B n
   8 │    | {A}, {B}, {n}, f, vnil => vnil
   9 │    | {A}, {B}, {n}, f, vcons x xs => _
     │                        ╰────────╯

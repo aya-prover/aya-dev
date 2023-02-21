@@ -11,7 +11,7 @@ def even Nat : Bool
 
 def say (i : Universe) : Type
   | nat => Nat
-  | pi a b => Pi (x : say a) -> say (b x)
+  | pi a b => Fn (x : say a) -> say (b x)
   | sig a b => Sig (x : say a) ** say (b x)
 
 open data Universe : Type
