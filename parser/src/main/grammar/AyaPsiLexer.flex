@@ -150,7 +150,6 @@ BLOCK_COMMENT_END   = "*/"
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
   "completed"           { return KW_COMPLETED; }
-  "Fn"                  { return KW_PI; }
   ":="                  { return DEFINE_AS; }
   "**"                  { return SUCHTHAT; }
   "."                   { return DOT; }
@@ -172,6 +171,7 @@ BLOCK_COMMENT_END   = "*/"
   {ULIFT}               { return KW_ULIFT; }
   {SIGMA}               { return KW_SIGMA; }
   {LAMBDA}              { return KW_LAMBDA; }
+  {PI}                  { return KW_PI; }
   {FORALL}              { return KW_FORALL; }
   {TO}                  { return TO; }
   {LARROW}              { return LARROW; }

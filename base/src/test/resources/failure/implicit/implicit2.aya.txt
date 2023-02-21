@@ -7,7 +7,7 @@ In file $FILE:4:32 ->
 
 Error: Unsolved meta a'
        in `y {a'}`
-       in `λ {_} ⇒ y {a'}`
+       in `\ {_} ⇒ y {a'}`
 
 1 error(s), 0 warning(s).
 What are you doing?
