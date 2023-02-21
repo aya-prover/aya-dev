@@ -83,8 +83,10 @@ OCT_DIGIT = [0-8]
 
 ULIFT = ulift | \u2191+
 SIGMA = Sig | \u03a3
+// TODO: replace with fn -- lambda as a keyword is too likely to
+//  be used as a variable name for mathematicians and type theorists
 LAMBDA = \\ | \u03bb
-PI = Pi | \u03a0
+PI = Fn
 FORALL = forall | \u2200
 TO = -> | \u2192
 LARROW = <- | \u2190
@@ -150,6 +152,7 @@ BLOCK_COMMENT_END   = "*/"
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
   "completed"           { return KW_COMPLETED; }
+  "Fn"                  { return KW_PI; }
   ":="                  { return DEFINE_AS; }
   "**"                  { return SUCHTHAT; }
   "."                   { return DOT; }
@@ -171,7 +174,6 @@ BLOCK_COMMENT_END   = "*/"
   {ULIFT}               { return KW_ULIFT; }
   {SIGMA}               { return KW_SIGMA; }
   {LAMBDA}              { return KW_LAMBDA; }
-  {PI}                  { return KW_PI; }
   {FORALL}              { return KW_FORALL; }
   {TO}                  { return TO; }
   {LARROW}              { return LARROW; }

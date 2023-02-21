@@ -4,6 +4,6 @@ open data Nat : Type
 open data Vect (A : Type) (n : Nat) : Type
  | A, zero => vnil
  | A, suc m => vcons A (Vect A m)
-def mapImpl {A B : Type} {n : Nat} (f : Pi A -> B) (xs : Vect A n) : Vect B n
+def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vect A n) : Vect B n
  | {A}, {B}, {n}, f, vnil => vnil
  | {A}, {B}, {n}, f, vcons x xs => _

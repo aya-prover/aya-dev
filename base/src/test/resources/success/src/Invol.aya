@@ -1,4 +1,4 @@
 open import Paths
 
-def path' {A : I -> Type} (p : Pi (i : I) -> A i)
+def path' {A : I -> Type} (p : ∀ (i : I) -> A i)
   : Path A (p 0) (p 1) => \x => p x

@@ -1,12 +1,12 @@
 open import Arith::Nat
 
 example def test1 : Nat => (+ 0) 0
-example def test2 : Pi Nat -> Nat => + 0
+example def test2 : Nat -> Nat => + 0
 example def test3 : Nat => (0 +) 0
-example def test4 : Pi Nat -> Nat => 0 +
+example def test4 : Nat -> Nat => 0 +
 
-def f1 (a : Pi Nat -> Nat -> Nat) : Nat => 0
-def f2 {a : Pi Nat -> Nat -> Nat} : Nat => 0
+def f1 (a : Nat -> Nat -> Nat) : Nat => 0
+def f2 {a : Nat -> Nat -> Nat} : Nat => 0
 
 example def add => +
 example def test5 : Nat => f1 (add)

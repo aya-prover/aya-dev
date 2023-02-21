@@ -1,5 +1,5 @@
 // Warning: the feature used in this file is deprecated and will be removed soon
-def Natλ => Pi (P : Prop) (P -> P) P -> P
+def Natλ => Fn (P : Prop) (P -> P) P -> P
 
 def zero : Natλ => \P s z => z
 def suc (x : Natλ) : Natλ => \P s z => s (x P s z)

@@ -33,7 +33,7 @@ def infix !! (l : Vec A n) (i : Fin n) : A
 | a :> l, fzero => a
 | a :> l, fsuc i => l !! i
 
-def fold (f : Pi B A -> B) (init : B) (xs : Vec A n) : B
+def fold (f : Fn B A -> B) (init : B) (xs : Vec A n) : B
 | f, init, vnil => init
 | f, acc, x :> xs => fold f (f acc x) xs
 
