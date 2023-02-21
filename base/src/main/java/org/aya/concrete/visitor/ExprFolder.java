@@ -35,7 +35,6 @@ public interface ExprFolder<R> extends PatternFolder<R> {
         var type = LazyValue.<Term>ofValue(IntervalTerm.INSTANCE);
         yield path.params().foldLeft(acc, (ac, var) -> foldVarDecl(ac, var, var.definition(), type));
       }
-      // TODO: type for array bind, let bind, and do bind
       case Expr.Array array -> array.arrayBlock().fold(
         left -> left.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos(), noType())),
         right -> acc
