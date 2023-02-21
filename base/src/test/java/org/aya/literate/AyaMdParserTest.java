@@ -4,6 +4,7 @@ package org.aya.literate;
 
 import kala.collection.SeqView;
 import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 public class AyaMdParserTest {
@@ -129,6 +131,13 @@ public class AyaMdParserTest {
     ), null);
     var actualMd = Files.readString(oneCase.outMdFile());
     assertLinesMatch(trim(expectedMd).lines(), trim(actualMd).lines());
+
+    // save some coverage
+    var actualTexInlinedStyle = doc.renderToTeX();
+    var actualTexWithHeader = new RenderOptions().render(RenderOptions.OutputTarget.LaTeX,
+      doc, true, true, true);
+    assertFalse(actualTexInlinedStyle.isEmpty());
+    assertFalse(actualTexWithHeader.isEmpty());
   }
 
   private @NotNull String trim(@NotNull String input) {
