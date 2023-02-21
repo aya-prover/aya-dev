@@ -1,0 +1,10 @@
+open data Option (A : Type) : Type
+| none
+| some A
+
+variable A B C : Type
+
+def map (f : A -> B) (x : Option A) : Option B
+| _, none   => none
+| f, some a => some (f a)
+
