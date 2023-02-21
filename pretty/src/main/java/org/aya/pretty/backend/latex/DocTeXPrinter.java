@@ -61,6 +61,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Sig", "\\Sigma"),
+    Tuple.of("\\", "\\textbackslash"),
     Tuple.of("\\/", "\\lor"),
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
