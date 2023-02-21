@@ -78,13 +78,12 @@ public record ExprResolver(
     return ctx == ctx() ? this : new ExprResolver(ctx, options, allowedGeneralizes, reference, where, parentAdd);
   }
 
-  public @NotNull ExprResolver member(@NotNull TyckUnit decl) {
-    return new ExprResolver(ctx, RESTRICTIVE, allowedGeneralizes, MutableList.of(new TyckOrder.Head(decl)), MutableStack.create(),
-      this::addReference);
-  }
-
-  public @NotNull ExprResolver body() {
-    return new ExprResolver(ctx, RESTRICTIVE, allowedGeneralizes, reference, MutableStack.create(), this::addReference);
+  public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
+    var resolver = new ExprResolver(ctx, RESTRICTIVE, allowedGeneralizes,
+      MutableList.of(new TyckOrder.Head(decl)),
+      MutableStack.create(), this::addReference);
+    resolver.where.push(initial);
+    return resolver;
   }
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {

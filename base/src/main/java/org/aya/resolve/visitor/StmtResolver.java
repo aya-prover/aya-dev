@@ -57,17 +57,15 @@ public interface StmtResolver {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
-        var bodyResolver = resolver.body();
-        bodyResolver.enterBody();
-        decl.body = decl.body.map(bodyResolver, pats -> pats.map(bodyResolver::apply));
+        resolver.enterBody();
+        decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.body.forEach(ctor -> {
-          var bodyResolver = resolver.member(decl);
-          bodyResolver.enterHead();
+          var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
           ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> ExprResolver.resolve(pattern, mCtx)));
           resolveMemberSignature(ctor, bodyResolver, mCtx);
@@ -84,8 +82,7 @@ public interface StmtResolver {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.fields.forEach(field -> {
-          var bodyResolver = resolver.member(decl);
-          bodyResolver.enterHead();
+          var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
           resolveMemberSignature(field, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()

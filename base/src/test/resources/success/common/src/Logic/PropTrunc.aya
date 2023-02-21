@@ -1,7 +1,7 @@
 open import Paths
 open import Logic::HLevels
 open import Logic::Dec
-import Logic::False
+import Logic::False as False
 
 open data PropTrunc (A : Type)
 | inj A
@@ -15,7 +15,7 @@ def rec (p : isProp B) (f : A → B) : PropTrunc A → B
 
 def decidable (d : Dec A) (p : PropTrunc A) : A
 | yes d, p => d
-| no d, p => Logic::False::elim (rec Logic::False::FalseProp d p)
+| no d, p => False::elim (rec False::FalseProp d p)
 
 def join (p : PropTrunc (PropTrunc A)) : PropTrunc A
   // TODO: investigate the scope error

@@ -85,7 +85,7 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToTeX() {
-    return render(new DocTeXPrinter(), new DocTeXPrinter.Config());
+    return render(new DocTeXPrinter(), new DocTeXPrinter.Config(false, false));
   }
 
   default <Out, Config extends PrinterConfig>

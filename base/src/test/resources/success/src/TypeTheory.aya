@@ -1,0 +1,27 @@
+// Type thoery in Type thoery
+// https://www.cs.nott.ac.uk/~psztxa/publ/tt-in-tt.pdf
+open import Paths
+
+open data Con : Type
+  | •
+  | infix ▷ (Γ : Con) (Ty Γ)
+
+open data Ty (Γ : Con) : Type
+  | Γ => U
+  | Γ => Pi (A : Ty Γ) (B : Ty (Γ ▷ A))
+  | Γ => El (A : Tm Γ U)
+  | Γ => T {∆ : Con} (Ty ∆) (s : Tms Γ ∆)
+
+open data Tms (Γ : Con) (Δ : Con) : Type
+  | Γ, •     => ε
+  | Γ, Δ ▷ A => infix :> (δ : Tms Γ Δ) (Tm Γ (T A δ))
+  | Γ, Δ     => ∘  {Θ : Con} (Tms Θ Δ) (Tms Γ Θ)
+  | Γ, Δ     => π₁ {A : Ty Δ} (Tms Γ (Δ ▷ A))
+  | Γ, Δ     => id (Γ = Δ)
+
+open data Tm (Γ : Con) (A : Ty Γ) : Type
+  | Γ,     Pi A B         => lam (Tm (Γ ▷ A) B)
+  | Γ ▷ A, B              => app (Tm Γ (Pi A B))
+  | Γ,     T {∆} A δ      => t (Tm ∆ A)
+  | Γ,     T {∆} A (π₁ δ) => π₂
+
