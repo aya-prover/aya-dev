@@ -87,8 +87,7 @@
     // symbols
     // KW_SIGMA =  'regexp:Sig|\u03a3'
     KW_SIGMA =  'Sig'
-    // KW_LAMBDA = 'fn'
-    KW_LAMBDA = '\'
+    KW_LAMBDA = 'fn'
     KW_PI = 'Fn'
     // KW_FORALL = 'regexp:forall|\u2200'
     KW_FORALL = 'forall'

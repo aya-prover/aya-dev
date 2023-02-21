@@ -83,9 +83,7 @@ OCT_DIGIT = [0-8]
 
 ULIFT = ulift | \u2191+
 SIGMA = Sig | \u03a3
-// TODO: replace with fn -- lambda as a keyword is too likely to
-//  be used as a variable name for mathematicians and type theorists
-LAMBDA = \\ | \u03bb
+LAMBDA = \\ | fn
 PI = Fn
 FORALL = forall | \u2200
 TO = -> | \u2192
