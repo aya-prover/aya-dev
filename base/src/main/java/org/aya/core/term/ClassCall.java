@@ -51,6 +51,11 @@ public record ClassCall(
     return fieldSubst;
   }
 
+  public boolean sameApply(@NotNull ClassCall other) {
+    return ref == other.ref && args.keysView().toImmutableSet().sameElements(other.args.keysView().toImmutableSet(), true);
+  }
+
+  /** must be called after checking {@link #sameApply(ClassCall)} if the return value is used in comparator. */
   public @NotNull ImmutableSeq<Arg<Term>> orderedArgs() {
     return ref.core.members.flatMap(m -> args.getOption(m.ref));
   }

@@ -265,8 +265,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         var fieldSubst = new Subst();
         for (var fieldSig : fieldSigs) {
           var dummy = fieldSig.telescope.map(x -> x.rename().toArg());
-          var l = new FieldTerm(lhs, fieldSig.ref(), type1.orderedArgs()) /* TODO: dummy */;
-          var r = new FieldTerm(rhs, fieldSig.ref(), type1.orderedArgs()) /* TODO: dummy */;
+          var l = new FieldTerm(lhs, fieldSig.ref(), type1.orderedArgs()) /* TODO[class]: dummy */;
+          var r = new FieldTerm(rhs, fieldSig.ref(), type1.orderedArgs()) /* TODO[class]: dummy */;
           fieldSubst.add(fieldSig.ref(), l);
           if (!compare(l, r, lr, rl, fieldSig.result().subst(fieldSubst))) yield false;
         }
@@ -400,7 +400,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
       case Pair(ClassCall lhs, ClassCall rhs) -> {
-        if (lhs.ref() != rhs.ref()) yield false;
+        if (!lhs.sameApply(rhs)) yield false; // TODO[class]: correct?
         yield visitArgs(lhs.orderedArgs(), rhs.orderedArgs(), lr, rl, SeqView.empty());
       }
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->

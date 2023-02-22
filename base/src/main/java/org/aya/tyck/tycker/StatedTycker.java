@@ -73,7 +73,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
       return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
       var classCall = new ClassCall((DefVar<ClassDef, ClassDecl>) var, 0, ImmutableMap.empty());
-      return new Result.Default(classCall, new SortTerm(SortKind.Type, 0)); // TODO: type of classCall
+      return new Result.Default(classCall, new SortTerm(SortKind.Type, 0)); // TODO[class]: type of classCall
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
@@ -82,7 +82,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
       return new Result.Default(telescopes.toConCall(conVar, 0), type);
     } else if (var.core instanceof MemberDef || var.concrete instanceof TeleDecl.ClassMember) {
       // the code runs to here because we are checking a StructField within a StructDecl
-      // TODO: this needs to be refactored to make use of instance resolution
+      // TODO[class]: this needs to be refactored to make use of instance resolution
       var field = (DefVar<MemberDef, TeleDecl.ClassMember>) var;
       return new Result.Default(new RefTerm.Field(field), Def.defType(field));
     } else {

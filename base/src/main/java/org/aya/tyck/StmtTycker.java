@@ -116,7 +116,7 @@ public final class StmtTycker extends TracedTycker {
         var classDef = member.classDef;
         var result = signature.result();
         // var body = member.body.map(e -> tycker.inherit(e, result).wellTyped());
-        // ^ TODO: what about this body?
+        // ^ TODO[class]: what about this body?
         yield new MemberDef(member.ref, classDef, signature.param(), result, member.coerce);
       }
       // Do nothing, these are just header.
