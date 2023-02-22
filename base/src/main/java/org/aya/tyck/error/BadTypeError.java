@@ -6,7 +6,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.core.def.FieldDef;
+import org.aya.core.def.ClassDef;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ExprProblem;
@@ -34,7 +34,7 @@ public record BadTypeError(
 
   @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
     if (expr instanceof Expr.App app && app.function() instanceof Expr.Ref ref
-      && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof FieldDef) {
+      && ref.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof ClassDef.Member) {
       var fix = new Expr.Proj(SourcePos.NONE, app.argument().term(),
         Either.right(new QualifiedID(SourcePos.NONE, defVar.name())));
       return Doc.sep(Doc.english("Did you mean"),

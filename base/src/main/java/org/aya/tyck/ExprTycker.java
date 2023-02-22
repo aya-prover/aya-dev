@@ -180,18 +180,17 @@ public final class ExprTycker extends PropTycker {
           // TODO[ice]: instantiate the type
           if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof ClassDef.Member field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
-          var fieldRef = field.ref();
+          var fieldRef = field.ref;
 
-          if (classCall.args().sizeLessThan(classCall.ref().core.members)) {
-            // TODO: report error
+          var fieldSubst = classCall.fieldSubst(field);
+          if (fieldSubst == null) {
+            throw new InternalException("TODO: missing field(s)");
           }
-          var fieldSubst = new Subst();
-          classCall.ref().core.members.forEachWith(classCall.args(), (defField, arg) ->
-            fieldSubst.add(defField.ref(), arg.term()));
           var tele = Term.Param.subst(fieldRef.core.telescope, fieldSubst, 0);
           var teleRenamed = tele.map(LamTerm::paramRenamed);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, teleRenamed.map(UntypedParam::toArg));
-          return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(fieldSubst)));
+          return new Result.Default(LamTerm.make(teleRenamed, access),
+            PiTerm.make(tele, Def.defResult(fieldRef).subst(fieldSubst)).rename());
         });
       }
       case Expr.Tuple tuple -> {

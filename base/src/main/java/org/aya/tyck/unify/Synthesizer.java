@@ -78,10 +78,11 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case FieldTerm access -> {
         var callRaw = tryPress(access.of());
         if (!(callRaw instanceof ClassCall call)) yield unreachable(access);
-        var field = access.ref();
-        var subst = DeltaExpander.buildSubst(Def.defTele(field), access.args())
-          .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
-        yield Def.defResult(field).subst(subst);
+        var field = access.ref().core;
+        var subst = call.fieldSubst(field);
+        assert subst != null;
+        subst.add(DeltaExpander.buildSubst(field.telescope, access.args()));
+        yield field.result.subst(subst);
       }
       case SigmaTerm sigma -> {
         var univ = MutableList.<SortTerm>create();

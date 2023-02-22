@@ -6,9 +6,11 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.core.def.ClassDef;
 import org.aya.core.pat.Pat;
+import org.aya.core.visitor.Subst;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -27,6 +29,17 @@ public record ClassCall(
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
 ) implements StableWHNF, Formation, Callable.Common {
+  public @Nullable Subst fieldSubst(@Nullable ClassDef.Member member) {
+    var fieldSubst = new Subst();
+    if (args.sizeLessThan(ref.core.members)) return null;
+    for (var mapping : ref.core.members.zip(args)) {
+      var defField = mapping.component1();
+      if (member == defField) break;
+      fieldSubst.add(defField.ref, mapping.component2().term());
+    }
+    return fieldSubst;
+  }
+
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.sameElements(args(), true) ? this : new ClassCall(ref(), ulift(), args);
   }
