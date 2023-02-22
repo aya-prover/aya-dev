@@ -41,7 +41,7 @@ import java.util.function.BiFunction;
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.PrettyInfo parsePrettyInfo(@NotNull CompilerFlags flags) {
     if (flags.prettyInfo() != null) return flags.prettyInfo();
-    return CompilerFlags.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false, false);
+    return CompilerFlags.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false, false, false);
   }
 
   @SuppressWarnings("unchecked") default void pretty(

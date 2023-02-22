@@ -22,13 +22,12 @@ public record CompilerFlags(
   @Nullable Path outputFile
 ) {
   public static @Nullable CompilerFlags.PrettyInfo prettyInfoFromOutput(
-    @Nullable Path outputFile,
-    @NotNull RenderOptions renderOptions,
-    boolean noCodeStyle, boolean inlineCodeStyle
+    @Nullable Path outputFile, @NotNull RenderOptions renderOptions,
+    boolean noCodeStyle, boolean inlineCodeStyle, boolean SSR
   ) {
     if (outputFile != null) return new PrettyInfo(
       false,
-      noCodeStyle, inlineCodeStyle,
+      noCodeStyle, inlineCodeStyle, SSR,
       CliEnums.PrettyStage.literate,
       CliEnums.detectFormat(outputFile),
       AyaPrettierOptions.pretty(),
@@ -41,6 +40,7 @@ public record CompilerFlags(
     boolean ascii,
     boolean prettyNoCodeStyle,
     boolean prettyInlineCodeStyle,
+    boolean prettySSR,
     @NotNull CliEnums.PrettyStage prettyStage,
     @NotNull CliEnums.PrettyFormat prettyFormat,
     @NotNull PrettierOptions prettierOptions,
@@ -48,8 +48,8 @@ public record CompilerFlags(
     @Nullable String prettyDir
   ) {
     public @NotNull RenderOptions.Opts renderOpts(boolean headerCode) {
-      return new RenderOptions.Opts(headerCode, !prettyNoCodeStyle,
-        !prettyInlineCodeStyle, !ascii, StringPrinterConfig.INFINITE_SIZE);
+      return new RenderOptions.Opts(headerCode, !prettyNoCodeStyle, !prettyInlineCodeStyle,
+        !ascii, StringPrinterConfig.INFINITE_SIZE, prettySSR);
     }
   }
 

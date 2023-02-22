@@ -134,9 +134,12 @@ public class AyaMdParserTest {
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var actualTexWithHeader = new RenderOptions().render(RenderOptions.OutputTarget.LaTeX,
-      doc, new RenderOptions.Opts(true, true, true, true, -1));
+      doc, new RenderOptions.Opts(true, true, true, true, -1, false));
+    var actualTexButKa = new RenderOptions().render(RenderOptions.OutputTarget.KaTeX,
+      doc, new RenderOptions.Opts(true, true, true, true, -1, false));
     assertFalse(actualTexInlinedStyle.isEmpty());
     assertFalse(actualTexWithHeader.isEmpty());
+    assertFalse(actualTexButKa.isEmpty());
   }
 
   private @NotNull String trim(@NotNull String input) {

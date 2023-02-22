@@ -149,7 +149,7 @@ public class RenderOptions {
     }
   }
 
-  public record Opts(boolean headerCode, boolean styleCode, boolean separateStyle, boolean unicode, int pageWidth) {
+  public record Opts(boolean headerCode, boolean styleCode, boolean separateStyle, boolean unicode, int pageWidth, boolean SSR) {
     public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
       config.set(PrinterConfig.PageOptions.PageWidth, pageWidth);
       config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
@@ -157,6 +157,7 @@ public class RenderOptions {
       config.set(StringPrinterConfig.StyleOptions.StyleCode, styleCode);
       config.set(StringPrinterConfig.StyleOptions.SeparateStyle, separateStyle);
       config.set(StringPrinterConfig.StyleOptions.AyaFlavored, true);
+      config.set(StringPrinterConfig.StyleOptions.ServerSideRendering, SSR);
       return config;
     }
   }
