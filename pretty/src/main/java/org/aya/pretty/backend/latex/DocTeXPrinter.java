@@ -30,7 +30,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   protected void renderStyleCommand(@NotNull Cursor cursor) {
-    if (!config.opt(SeparateStyle, false)) return;
+    if (!config.separateStyle()) return;
     if (!config.opt(StyleCode, false)) return;
     // colors are converted to `\definecolor` in package xcolor.
     var colors = TeXStylist.colorsToTex(config.getStylist().colorScheme);
@@ -45,7 +45,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
-    return config.opt(SeparateStyle, false) ? new TeXStylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
+    return config.separateStyle() ? new TeXStylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
@@ -101,9 +101,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
-        cursor.invisibleContent("$");
+        if (!config.KaTeX()) cursor.invisibleContent("$");
         cursor.visibleContent(commandMapping.get(k));
-        cursor.invisibleContent("$");
+        if (!config.KaTeX()) cursor.invisibleContent("$");
         return;
       }
     }
@@ -113,7 +113,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override public @NotNull String makeIndent(int indent) {
     if (indent == 0) return "";
-    return "\\hspace*{" + indent * 0.5 + "em}";
+    return (config.getStylist().KaTeX ? "\\hspace{" : "\\hspace*{") + indent * 0.5 + "em}";
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
@@ -144,6 +144,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   public static class Config extends StringPrinterConfig<TeXStylist> {
     public Config() {
       this(TeXStylist.DEFAULT);
+    }
+
+    public boolean KaTeX() {
+      return getStylist().KaTeX;
+    }
+
+    public boolean separateStyle() {
+      return opt(SeparateStyle, false) && !KaTeX();
     }
 
     public Config(@NotNull TeXStylist stylist) {

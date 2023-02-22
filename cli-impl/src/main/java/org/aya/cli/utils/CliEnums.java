@@ -12,6 +12,7 @@ public interface CliEnums {
     var name = outputFile.getFileName().toString();
     if (name.endsWith(".md")) return PrettyFormat.markdown;
     if (name.endsWith(".tex")) return PrettyFormat.latex;
+    if (name.endsWith(".katex")) return PrettyFormat.katex;
     if (name.endsWith(".html")) return PrettyFormat.html;
     return PrettyFormat.plain;
   }
@@ -26,6 +27,7 @@ public interface CliEnums {
     html(RenderOptions.OutputTarget.HTML),
     plain(RenderOptions.OutputTarget.Plain),
     latex(RenderOptions.OutputTarget.LaTeX),
+    katex(RenderOptions.OutputTarget.KaTeX),
     markdown(RenderOptions.OutputTarget.AyaMd),
     unix(RenderOptions.OutputTarget.Unix);
 

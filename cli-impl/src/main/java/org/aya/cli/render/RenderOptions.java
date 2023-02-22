@@ -37,6 +37,7 @@ public class RenderOptions {
   public enum OutputTarget {
     Unix(".txt"),
     LaTeX(".tex"),
+    KaTeX(".katex"),
     AyaMd(".md"),
     HTML(".html"),
     Plain(".txt");
@@ -118,6 +119,7 @@ public class RenderOptions {
     return switch (output) {
       case Unix -> AdaptiveCliStylist.INSTANCE;
       case LaTeX -> TeXStylist.DEFAULT;
+      case KaTeX -> TeXStylist.DEFAULT_KATEX;
       case AyaMd -> MdStylist.DEFAULT;
       case HTML -> Html5Stylist.DEFAULT;
       case Plain -> DebugStylist.DEFAULT;
@@ -130,7 +132,8 @@ public class RenderOptions {
     final var s = buildStyleFamily();
     return switch (output) {
       case Unix -> new UnixTermStylist(c, s);
-      case LaTeX -> new TeXStylist(c, s);
+      case LaTeX -> new TeXStylist(c, s, false);
+      case KaTeX -> new TeXStylist(c, s, true);
       case AyaMd -> new MdStylist(c, s);
       case HTML -> new Html5Stylist(c, s);
       case Plain -> new DebugStylist(c, s);
@@ -162,7 +165,7 @@ public class RenderOptions {
     var stylist = stylistOrDefault(output);
     return switch (output) {
       case Plain -> doc.renderToString(opts.setup(new StringPrinterConfig<>(stylist)));
-      case LaTeX -> doc.render(new DocTeXPrinter(), opts.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
+      case KaTeX, LaTeX -> doc.render(new DocTeXPrinter(), opts.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
       case HTML -> doc.render(new DocHtmlPrinter<>(), opts.setup(new DocHtmlPrinter.Config((Html5Stylist) stylist)));
       case AyaMd -> doc.render(new DocMdPrinter(), opts.setup(new DocMdPrinter.Config((MdStylist) stylist)));
       case Unix -> doc.render(new DocTermPrinter(), opts.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
