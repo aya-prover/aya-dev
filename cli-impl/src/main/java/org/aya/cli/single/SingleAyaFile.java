@@ -41,7 +41,7 @@ import java.util.function.BiFunction;
 public sealed interface SingleAyaFile extends GenericAyaFile {
   private static @Nullable CompilerFlags.PrettyInfo parsePrettyInfo(@NotNull CompilerFlags flags) {
     if (flags.prettyInfo() != null) return flags.prettyInfo();
-    return CompilerFlags.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false);
+    return CompilerFlags.prettyInfoFromOutput(flags.outputFile(), new RenderOptions(), false, false, false);
   }
 
   @SuppressWarnings("unchecked") default void pretty(
@@ -65,17 +65,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     }
 
     var renderOptions = flags.renderOptions();
-    var withStyleDef = !flags.prettyNoCodeStyle();
     if (currentStage == CliEnums.PrettyStage.literate) {
-      var text = renderOptions.render(out,
-        toDoc((ImmutableSeq<Stmt>) doc, flags.prettierOptions()),
-        true,
-        withStyleDef,
-        !flags.ascii());
+      var d = toDoc((ImmutableSeq<Stmt>) doc, flags.prettierOptions());
+      var text = renderOptions.render(out, d, flags.renderOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
       doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, hdr, withStyleDef, !flags.ascii()));
+        (d, hdr) -> renderOptions.render(out, d, flags.renderOpts(hdr)));
     }
   }
   @VisibleForTesting default @NotNull Doc toDoc(

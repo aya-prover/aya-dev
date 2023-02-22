@@ -87,8 +87,12 @@ public class MainArgs {
   public String prettyDir;
   @Option(names = {"--pretty-color"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
   public PredefinedStyle prettyColor;
-  @Option(names = {"--pretty-no-code-style"}, description = "Do not render styled code.")
+  @Option(names = {"--pretty-no-code-style"}, description = "Do not include default highlight styles.")
   public boolean prettyNoCodeStyle;
+  @Option(names = {"--pretty-inline-code-style"}, description = "Use inlined highlight styles.")
+  public boolean prettyInlineCodeStyle;
+  @Option(names = {"--pretty-ssr"}, description = "Generate Server-Side-Rendering code for literate output.")
+  public boolean prettySSR;
   @Option(names = {"--trace"}, description = "Enable tracing.")
   public boolean enableTrace;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")

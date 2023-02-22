@@ -159,7 +159,7 @@ public interface ReplCommands {
       var fallbackPath = options.path;
       try {
         options.updateColorScheme(colorParam.value);
-        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        options.stylist(RenderOptions.OutputTarget.Unix); // if there's error, report now.
         return Result.ok(options.prettyColorScheme(), true);
       } catch (IllegalArgumentException | IOException e) {
         options.colorScheme = fallback;
@@ -176,7 +176,7 @@ public interface ReplCommands {
       var fallback = options.styleFamily;
       try {
         options.updateStyleFamily(styleParam.value);
-        options.stylist(RenderOptions.OutputTarget.Terminal); // if there's error, report now.
+        options.stylist(RenderOptions.OutputTarget.Unix); // if there's error, report now.
         return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
       } catch (IllegalArgumentException | IOException e) {
         options.styleFamily = fallback;

@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.printer;
 
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,18 +42,30 @@ public interface PrinterConfig {
 
   @NotNull Stylist getStylist();
 
+  interface Options<T> {
+  }
+
+  enum PageOptions implements Options<Integer> {
+    PageWidth, PageHeight,
+  }
+
   /**
    * Basic configure for other configs to easily extend config flags.
    */
   class Basic<S extends Stylist> implements PrinterConfig {
-    private final int pageWidth;
-    private final int pageHeight;
+    protected final @NotNull MutableMap<Options<?>, Object> options = MutableMap.create();
     private final @NotNull S stylist;
 
-    public Basic(int pageWidth, int pageHeight, @NotNull S stylist) {
-      this.pageWidth = pageWidth;
-      this.pageHeight = pageHeight;
+    public Basic(@NotNull S stylist) {
       this.stylist = stylist;
+    }
+
+    @SuppressWarnings("unchecked") public @NotNull <T> T opt(@NotNull Options<T> key, @NotNull T defaultValue) {
+      return (T) options.getOrDefault(key, defaultValue);
+    }
+
+    public <T> void set(@NotNull Options<T> key, @NotNull T value) {
+      options.put(key, value);
     }
 
     @Override public @NotNull S getStylist() {
@@ -60,11 +73,11 @@ public interface PrinterConfig {
     }
 
     @Override public int getPageWidth() {
-      return pageWidth;
+      return opt(PageOptions.PageWidth, INFINITE_SIZE);
     }
 
     @Override public int getPageHeight() {
-      return pageHeight;
+      return opt(PageOptions.PageHeight, INFINITE_SIZE);
     }
   }
 }
