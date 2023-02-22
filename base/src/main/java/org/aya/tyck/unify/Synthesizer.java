@@ -79,7 +79,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var callRaw = tryPress(access.of());
         if (!(callRaw instanceof ClassCall call)) yield unreachable(access);
         var field = access.ref();
-        var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
+        var subst = DeltaExpander.buildSubst(Def.defTele(field), access.args())
           .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
         yield Def.defResult(field).subst(subst);
       }

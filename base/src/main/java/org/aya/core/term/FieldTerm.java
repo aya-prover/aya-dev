@@ -18,19 +18,14 @@ import java.util.function.UnaryOperator;
 public record FieldTerm(
   @NotNull Term of,
   @NotNull DefVar<ClassDef.Member, TeleDecl.ClassMember> ref,
-  @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> structArgs,
-  @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> fieldArgs
+  @Override @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
 ) implements Callable {
-  private FieldTerm update(Term of, ImmutableSeq<Arg<Term>> structArgs, ImmutableSeq<Arg<Term>> fieldArgs) {
-    return of == of() && structArgs.sameElements(structArgs(), true) && fieldArgs.sameElements(fieldArgs(), true) ? this
-      : new FieldTerm(of, ref, structArgs, fieldArgs);
+  private FieldTerm update(Term struct, ImmutableSeq<Arg<Term>> newArgs) {
+    return struct == of && newArgs.sameElements(args, true) ? this
+      : new FieldTerm(struct, ref, newArgs);
   }
 
   @Override public @NotNull FieldTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update(f.apply(of), structArgs.map(arg -> arg.descent(f)), fieldArgs.map(arg -> arg.descent(f)));
-  }
-
-  @Override public @NotNull ImmutableSeq<@NotNull Arg<Term>> args() {
-    return structArgs.concat(fieldArgs);
+    return update(f.apply(of), args.map(arg -> arg.descent(f)));
   }
 }

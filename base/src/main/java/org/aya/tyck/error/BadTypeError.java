@@ -73,14 +73,6 @@ public record BadTypeError(
       state);
   }
 
-  public static @NotNull BadTypeError projPropStruct(@NotNull TyckState state, @NotNull Expr expr, @NotNull String fieldName, @NotNull Term actualType) {
-    return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("access field"), Doc.code(Doc.plain(fieldName)), Doc.plain("of")),
-      Doc.english("of what you accessed"),
-      options -> Doc.english("non-Prop struct type"),
-      state);
-  }
-
   public static @NotNull BadTypeError structCon(@NotNull TyckState state, @NotNull Expr expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
       Doc.sep(Doc.plain("construct")),

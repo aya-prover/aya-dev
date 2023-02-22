@@ -102,7 +102,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case FieldTerm access -> new SerTerm.Access(
         serialize(access.of()), state.def(access.ref()),
         serializeArgs(access.structArgs()),
-        serializeArgs(access.fieldArgs()));
+        serializeArgs(access.args()));
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));

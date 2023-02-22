@@ -131,7 +131,7 @@ public class CorePrettier extends BasePrettier<Term> {
             linkRef(k, FIELD),
             Doc.symbol("=>"), term(Outer.Free, v)))
           .toImmutableSeq()));
-      case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.fieldArgs().view(), outer,
+      case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.args().view(), outer,
         options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
@@ -258,7 +258,7 @@ public class CorePrettier extends BasePrettier<Term> {
   private ImmutableSeq<Arg<Term>> visibleArgsOf(Callable call) {
     return call instanceof ConCall con
       ? con.conArgs() : call instanceof FieldTerm access
-      ? access.fieldArgs() : call.args();
+      ? access.args() : call.args();
   }
 
   private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {

@@ -1,4 +1,0 @@
-open struct Squash (A: Type): Prop
-  | value: A
-
-def badSquashElim {A: Type} {Q: Type} (f: A -> Q) (squash: Squash A): Q => f squash.value

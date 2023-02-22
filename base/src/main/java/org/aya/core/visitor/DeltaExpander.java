@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -56,7 +56,7 @@ public interface DeltaExpander extends EndoTerm {
       case FieldTerm access -> {
         var fieldDef = access.ref().core;
         if (access.of() instanceof NewTerm n) {
-          var fieldBody = access.fieldArgs().foldLeft(n.params().get(access.ref()), AppTerm::make);
+          var fieldBody = access.args().foldLeft(n.params().get(access.ref()), AppTerm::make);
           yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
         }
         yield access;

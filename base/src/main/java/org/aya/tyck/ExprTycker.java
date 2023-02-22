@@ -22,7 +22,6 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
-import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
@@ -183,14 +182,16 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref();
 
-          if (!inProp && fieldRef.core.inProp())
-            return fail(proj, BadTypeError.projPropStruct(state, struct, fieldName, projectee.type()));
-
-          var structSubst = DeltaExpander.buildSubst(Def.defTele(classCall.ref()), classCall.args());
-          var tele = Term.Param.subst(fieldRef.core.selfTele, structSubst, 0);
+          if (classCall.args().sizeLessThan(classCall.ref().core.members)) {
+            // TODO: report error
+          }
+          var fieldSubst = new Subst();
+          classCall.ref().core.members.forEachWith(classCall.args(), (defField, arg) ->
+            fieldSubst.add(defField.ref(), arg.term()));
+          var tele = Term.Param.subst(fieldRef.core.telescope, fieldSubst, 0);
           var teleRenamed = tele.map(LamTerm::paramRenamed);
-          var access = new FieldTerm(projectee.wellTyped(), fieldRef, classCall.args(), teleRenamed.map(UntypedParam::toArg));
-          return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(structSubst)));
+          var access = new FieldTerm(projectee.wellTyped(), fieldRef, teleRenamed.map(UntypedParam::toArg));
+          return new Result.Default(LamTerm.make(teleRenamed, access), PiTerm.make(tele, field.result().subst(fieldSubst)));
         });
       }
       case Expr.Tuple tuple -> {
