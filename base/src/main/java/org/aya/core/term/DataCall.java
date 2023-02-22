@@ -17,7 +17,7 @@ public record DataCall(
   @Override @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall, StableWHNF, Formation {
+) implements Callable.Tele, StableWHNF, Formation {
   public @NotNull DataCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.sameElements(args(), true) ? this : new DataCall(ref, ulift, args);
   }

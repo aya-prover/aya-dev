@@ -26,7 +26,7 @@ public record ClassCall(
   @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall, StableWHNF, Formation {
+) implements StableWHNF, Formation, Callable.Common {
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.sameElements(args(), true) ? this : new ClassCall(ref(), ulift(), args);
   }

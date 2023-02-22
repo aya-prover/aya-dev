@@ -16,7 +16,7 @@ public record FnCall(
   @Override @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall {
+) implements Callable.Tele {
   public @NotNull FnCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.sameElements(args(), true) ? this : new FnCall(ref, ulift, args);
   }

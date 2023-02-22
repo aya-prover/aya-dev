@@ -64,7 +64,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return switch (preterm) {
       case RefTerm(var var) -> ctx.get(var);
       case ConCall conCall -> conCall.head().underlyingDataCall();
-      case Callable.DefCall call -> Def.defResult(call.ref())
+      case Callable.Tele call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
       case MetaTerm hole -> {
@@ -104,7 +104,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
           } else return null;
         });
       }
-      case NewTerm neu -> neu.struct();
+      case NewTerm neu -> neu.inner();
       case ErrorTerm term -> ErrorTerm.typeOf(term.description());
       case ProjTerm proj -> {
         var sigmaRaw = tryPress(proj.of());

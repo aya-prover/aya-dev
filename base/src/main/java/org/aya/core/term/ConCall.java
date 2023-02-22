@@ -16,7 +16,7 @@ import java.util.function.UnaryOperator;
 public record ConCall(
   @NotNull ConCall.Head head,
   @NotNull ImmutableSeq<Arg<Term>> conArgs
-) implements Callable.DefCall {
+) implements Callable.Tele {
   public @NotNull ConCall update(@NotNull Head head, @NotNull ImmutableSeq<Arg<Term>> conArgs) {
     return head == head() && conArgs.sameElements(conArgs(), true) ? this : new ConCall(head, conArgs);
   }
