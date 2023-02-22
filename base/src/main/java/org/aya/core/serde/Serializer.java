@@ -35,7 +35,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serialize(field.result),
         field.coerce
       );
-      case ClassDef clazz -> new SerDef.Struct(
+      case ClassDef clazz -> new SerDef.Clazz(
         state.def(clazz.ref()),
         clazz.members.map(field -> (SerDef.Field) serialize(field))
       );
@@ -160,8 +160,8 @@ public record Serializer(@NotNull Serializer.State state) {
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.Class serializeClassCall(@NotNull ClassCall classCall) {
-    return new SerTerm.Class(
+  private @NotNull SerTerm.Clazz serializeClassCall(@NotNull ClassCall classCall) {
+    return new SerTerm.Clazz(
       state.def(classCall.ref()),
       serializeCall(classCall.ulift(), classCall.args()));
   }

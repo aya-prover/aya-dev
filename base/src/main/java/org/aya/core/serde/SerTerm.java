@@ -106,7 +106,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record New(@NotNull SerTerm.Class inner) implements SerTerm {
+  record New(@NotNull SerTerm.Clazz inner) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new NewTerm(inner.de(state));
     }
@@ -143,7 +143,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Class(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+  record Clazz(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull ClassCall de(@NotNull DeState state) {
       return new ClassCall(state.resolve(name), data.ulift, data.de(state));
     }

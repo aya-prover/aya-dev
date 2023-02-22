@@ -98,7 +98,7 @@ public sealed interface SerDef extends Serializable {
     }
   }
 
-  record Struct(
+  record Clazz(
     @NotNull QName name,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
