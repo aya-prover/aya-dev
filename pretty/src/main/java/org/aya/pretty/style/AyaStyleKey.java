@@ -22,7 +22,7 @@ public enum AyaStyleKey {
   Prim("Aya::Primitive"),
   Data("Aya::Data"),
   Con("Aya::Constructor"),
-  Class("Aya::Class"),
+  Clazz("Aya::Class"),
   Member("Aya::Member"),
   Generalized("Aya::Generalized"),
   CallTerm("Aya::Call"),

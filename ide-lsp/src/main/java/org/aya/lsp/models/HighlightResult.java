@@ -47,9 +47,9 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
           case Module -> Option.some(Kind.ModuleDef);
           case Fn -> Option.some(Kind.FnDef);
           case Data -> Option.some(Kind.DataDef);
-          case Struct -> Option.some(Kind.StructDef);
+          case Clazz -> Option.some(Kind.StructDef);
           case Con -> Option.some(Kind.ConDef);
-          case Field -> Option.some(Kind.FieldDef);
+          case Member -> Option.some(Kind.FieldDef);
           case Prim -> Option.some(Kind.PrimDef);
           case Unknown -> Option.none();
         };
@@ -59,9 +59,9 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
           case Module -> Option.some(Kind.ModuleRef);
           case Fn -> Option.some(Kind.FnRef);
           case Data -> Option.some(Kind.DataRef);
-          case Struct -> Option.some(Kind.StructRef);
+          case Clazz -> Option.some(Kind.StructRef);
           case Con -> Option.some(Kind.ConRef);
-          case Field -> Option.some(Kind.FieldRef);
+          case Member -> Option.some(Kind.FieldRef);
           case Prim -> Option.some(Kind.PrimRef);
           case Unknown -> Option.none();
         };

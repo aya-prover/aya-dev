@@ -401,7 +401,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       }
       case Pair(ClassCall lhs, ClassCall rhs) -> {
         if (lhs.ref() != rhs.ref()) yield false;
-        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+        yield visitArgs(lhs.args(), rhs.args(), lr, rl, SeqView.empty());
       }
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> false,

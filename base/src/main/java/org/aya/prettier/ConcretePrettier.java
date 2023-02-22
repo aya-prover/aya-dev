@@ -357,7 +357,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return switch (predecl) {
       case ClassDecl decl -> {
         var prelude = MutableList.of(Doc.styled(KEYWORD, "class"));
-        prelude.append(linkDef(decl.ref, CLASS));
+        prelude.append(linkDef(decl.ref, CLAZZ));
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
             decl.fields.view().map(this::decl))))),
@@ -380,7 +380,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case TeleDecl.DataDecl decl -> {
         var prelude = declPrelude(decl);
         prelude.append(Doc.styled(KEYWORD, "data"));
-        prelude.append(linkDef(decl.ref, CLASS));
+        prelude.append(linkDef(decl.ref, CLAZZ));
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),

@@ -10,6 +10,7 @@ import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
+import org.aya.generic.util.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
@@ -54,12 +55,13 @@ public interface DeltaExpander extends EndoTerm {
           .getOrDefault(hole);
       }
       case FieldTerm access -> {
-        var fieldDef = access.ref().core;
-        if (access.of() instanceof NewTerm n) {
-          var fieldBody = access.args().foldLeft(n.params().get(access.ref()), AppTerm::make);
-          yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
-        }
-        yield access;
+        // var fieldDef = access.ref().core;
+        // if (access.of() instanceof NewTerm n) {
+        //   var fieldBody = access.args().foldLeft(n.params().get(access.ref()), AppTerm::make);
+        //   yield apply(fieldBody.subst(buildSubst(fieldDef.ownerTele, access.structArgs())));
+        // }
+        // yield access;
+        throw new InternalException("TODO");
       }
       default -> term;
     };

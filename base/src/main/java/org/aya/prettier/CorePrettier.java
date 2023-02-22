@@ -183,7 +183,7 @@ public class CorePrettier extends BasePrettier<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLASS, classCall.args(), outer);
+      case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.args(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
         ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)
@@ -325,7 +325,7 @@ public class CorePrettier extends BasePrettier<Term> {
         yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false, Doc.empty(), Doc.empty()));
       }
       case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "class"),
-        linkDef(def.ref(), CLASS),
+        linkDef(def.ref(), CLAZZ),
         Doc.nest(2, Doc.vcat(def.members.view().map(this::def)))));
       case DataDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "data"),

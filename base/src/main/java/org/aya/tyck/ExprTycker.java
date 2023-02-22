@@ -4,7 +4,6 @@ package org.aya.tyck;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -143,7 +142,7 @@ public final class ExprTycker extends PropTycker {
           yield fail(neu, classCall, new FieldError.MissingField(neu.sourcePos(), missing.toImmutableSeq()));
         if (conFields.isNotEmpty())
           yield fail(neu, classCall, new FieldError.NoSuchField(neu.sourcePos(), conFields.keysView().toImmutableSeq()));
-        yield new Result.Default(new NewTerm(classCall, ImmutableMap.from(fields)), classCall);
+        yield new Result.Default(new NewTerm(classCall), classCall);
       }
       case Expr.Proj proj -> {
         var struct = proj.tup();

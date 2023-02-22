@@ -55,7 +55,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   public static final @NotNull Style PRIM = AyaStyleKey.Prim.preset();
   public static final @NotNull Style FN = AyaStyleKey.Fn.preset();
   public static final @NotNull Style DATA = AyaStyleKey.Data.preset();
-  public static final @NotNull Style CLASS = AyaStyleKey.Class.preset();
+  public static final @NotNull Style CLAZZ = AyaStyleKey.Clazz.preset();
   public static final @NotNull Style CON = AyaStyleKey.Con.preset();
   public static final @NotNull Style MEMBER = AyaStyleKey.Member.preset();
   public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
@@ -332,7 +332,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       case TeleDecl.FnDecl d -> FN;
       case TeleDecl.DataDecl d -> DATA;
       case TeleDecl.DataCtor d -> CON;
-      case ClassDecl d -> CLASS;
+      case ClassDecl d -> CLAZZ;
       case TeleDecl.ClassMember d -> MEMBER;
       case TeleDecl.PrimDecl d -> PRIM;
       case null, default -> null;

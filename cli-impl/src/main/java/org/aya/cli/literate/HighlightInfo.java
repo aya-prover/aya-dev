@@ -17,7 +17,7 @@ public record HighlightInfo(
   }
 
   public enum DefKind {
-    Data, Con, Struct, Field, Fn, Prim,
+    Data, Con, Clazz, Member, Fn, Prim,
     Generalized, LocalVar, Module,
     Unknown;
 
