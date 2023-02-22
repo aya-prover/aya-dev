@@ -98,10 +98,10 @@ public final class Unifier extends TermComparator {
     var needUnify = true;
     if (preRhs instanceof ErrorTerm) needUnify = false;
     else switch (meta.info) {
-      case MetaInfo.AnyType()when preRhs instanceof Formation -> needUnify = false;
-      case MetaInfo.AnyType()when preRhs instanceof MetaTerm rhsMeta -> {
+      case MetaInfo.AnyType() when preRhs instanceof Formation -> needUnify = false;
+      case MetaInfo.AnyType() when preRhs instanceof MetaTerm rhsMeta -> {
         if (!rhsMeta.ref().info.isType(checker.synthesizer())) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
+          reportIllTyped(lhs, preRhs);
           return null;
         }
         needUnify = false;
@@ -109,7 +109,7 @@ public final class Unifier extends TermComparator {
       case MetaInfo.AnyType() -> {
         var synthesize = checker.synthesizer().tryPress(preRhs);
         if (!(synthesize instanceof SortTerm)) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
+          reportIllTyped(lhs, preRhs);
           return null;
         }
         needUnify = false;
@@ -125,7 +125,7 @@ public final class Unifier extends TermComparator {
       }
       case MetaInfo.PiDom(var sort) -> {
         if (!checker.synthesizer().inheritPiDom(preRhs, sort)) {
-          reporter.report(new HoleProblem.IllTypedError(lhs, state, meta.info, preRhs));
+          reportIllTyped(lhs, preRhs);
         }
       }
     }
@@ -134,7 +134,7 @@ public final class Unifier extends TermComparator {
       if (providedType != null) {
         // resultTy might be an ErrorTerm, what to do?
         if (!checker.inherit(preRhs, providedType))
-          reporter.report(new HoleProblem.IllTypedError(lhs, state, new MetaInfo.Result(providedType), preRhs));
+          reportIllTyped(lhs, preRhs);
       } else {
         providedType = checker.synthesizer().synthesize(preRhs);
         if (providedType == null) {
@@ -200,6 +200,10 @@ public final class Unifier extends TermComparator {
     }
     tracing(builder -> builder.append(new Trace.LabelT(pos, "Hole solved!")));
     return providedType;
+  }
+
+  private void reportIllTyped(@NotNull MetaTerm lhs, @NotNull Term preRhs) {
+    reporter.report(new HoleProblem.IllTypedError(lhs, state, preRhs));
   }
 
   /**

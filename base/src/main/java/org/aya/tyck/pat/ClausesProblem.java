@@ -17,6 +17,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,10 +98,10 @@ public sealed interface ClausesProblem extends Problem {
    */
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<ImmutableSeq<Arg<Term>>> errs
+    @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> errs
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      var cases = Doc.vcat(errs.map(err -> BasePrettier.argsDoc(options, err)));
+      var cases = Doc.vcat(errs.map(err -> BasePrettier.argsDoc(options, err.term())));
       return Doc.vcat(Doc.english("Unhandled case:"),
         Doc.nest(2, cases));
     }

@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.experiments;
 
 import org.aya.core.def.FnDef;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public class NormalizeHugeChurch {
   @Test @Timeout(value = 5000) public void ppBench() {
     var startup = System.currentTimeMillis();
     var res = TyckDeclTest.successTyckDecls("""
-      def Num => Pi (x : Type 0) -> (x -> x) -> (x -> x)
+      def Num => Fn (x : Type 0) -> (x -> x) -> (x -> x)
       def zero : Num => \\ A f x => x
       def suc (a : Num) : Num => \\ A f x => a A f (f x)
       def add (a b : Num) : Num => \\A f x => a A f (b A f x)

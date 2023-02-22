@@ -8,6 +8,7 @@ import kala.tuple.Tuple2;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.backend.string.StringStylist;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,13 +19,36 @@ import java.util.EnumSet;
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    cursor.invisibleContent("\\noindent{}");
+    if (config.withHeader) {
+      // cursor.invisibleContent("\\noindent{}");
+      // This prevents us from using \raggedright followed by a \setlength\parindent.
+      // We should expect users to deal with indentations themselves.
+      renderStyleCommand(cursor);
+    }
+  }
+
+  protected void renderStyleCommand(@NotNull Cursor cursor) {
+    if (!config.withStyleDef) return;
+    // colors are converted to `\definecolor` in package xcolor.
+    var colors = TeXStylist.colorsToTex(config.getStylist().colorScheme);
+    cursor.invisibleContent(colors + "\n");
+    // styles are converted to `\newcommand`.
+    config.getStylist().styleFamily.definedStyles().forEach((name, style) -> {
+      var cmdName = TeXStylist.styleKeyToTex(name);
+      var cmd = TeXStylist.stylesToTexCmd(style, "#1");
+      var line = "\\newcommand\\%s[1]{%s}".formatted(cmdName, cmd);
+      cursor.invisibleContent(line + "\n");
+    });
+  }
+
+  @Override protected @NotNull StringStylist prepareStylist() {
+    return config.supportStyleCommand() ? new TeXStylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
     // TODO: escape according to `outer`
     return content.replace("\\", "")
-      .replace("_", "\\_")
+      .replace("_", "\\textunderscore{}")
       // This is a stupid hack. Maybe we can calculate consecutive spaces
       .replace("  ", makeIndent(2))
       .replace(" ", makeIndent(1));
@@ -36,9 +60,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
-    Tuple.of("Pi", "\\Pi"),
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\lambda"),
+    Tuple.of("\\", "\\textbackslash"),
     Tuple.of("\\/", "\\lor"),
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
@@ -46,16 +69,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("->", "\\to"),
     Tuple.of("_|_", "\\bot"),
     Tuple.of("forall", "\\forall"),
-    Tuple.of("\u03A0", "\\Pi"),
     Tuple.of("\u03A3", "\\Sigma"),
-    Tuple.of("\u03BB", "\\lambda"),
     Tuple.of("\u2228", "\\lor"),
     Tuple.of("\u2227", "\\land"),
     Tuple.of("\u21D2", "\\Rightarrow"),
     Tuple.of("\u2192", "\\to"),
     Tuple.of("\u22A5", "\\bot"),
     Tuple.of("\u2200", "\\forall"),
-    Tuple.of("_", "\\textunderscore"),
+    Tuple.of("_", "\\_"),
     Tuple.of("~", "\\neg"),
     Tuple.of("**", "\\times"),
     id("(|"), id("|)"),
@@ -118,12 +139,22 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    * @author ice1000
    */
   public static class Config extends StringPrinterConfig<TeXStylist> {
-    public Config() {
-      this(TeXStylist.DEFAULT);
+    public final boolean withHeader;
+    public final boolean withStyleDef;
+
+    /** Set doc style with "\newcommand\xxx" and "\xxx" */
+    public boolean supportStyleCommand() {
+      return withHeader;
     }
 
-    public Config(@NotNull TeXStylist stylist) {
+    public Config(boolean withHeader, boolean withStyleDef) {
+      this(TeXStylist.DEFAULT, withHeader, withStyleDef);
+    }
+
+    public Config(@NotNull TeXStylist stylist, boolean withHeader, boolean withStyleDef) {
       super(stylist, INFINITE_SIZE, false);
+      this.withHeader = withHeader;
+      this.withStyleDef = withStyleDef;
     }
   }
 }

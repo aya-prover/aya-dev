@@ -21,8 +21,8 @@ variable A : Type
 
 // Leibniz equality using impredicative universe of propositions
 def Leibniz (x y : A) : Prop
-  => Pi (P : A → Prop) → P x → P y
+  => Fn (P : A → Prop) → P x → P y
 
 def refl (a : A) : Leibniz a a => \p x => x
 def symm {x y : A} (p : Leibniz x y)
-  : Leibniz y x => p (λ y' => Leibniz y' x) (refl _)
+  : Leibniz y x => p (\ y' => Leibniz y' x) (refl _)

@@ -22,6 +22,7 @@ public sealed interface FieldError extends TyckError {
         .map(Doc::code)));
     }
   }
+
   record NoSuchField(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<String> notFound

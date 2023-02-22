@@ -1,5 +1,5 @@
 open data Unit : Type | unit
 
-def y : Pi {a : Unit} -> Unit => \{a} => a
-def x : Pi {a : Unit} -> Unit => y
-def z : Pi {a : Unit} -> Unit => x
+def y : ∀ {a : Unit} -> Unit => \{a} => a
+def x : ∀ {a : Unit} -> Unit => y
+def z : ∀ {a : Unit} -> Unit => x

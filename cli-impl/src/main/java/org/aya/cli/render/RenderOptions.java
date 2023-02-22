@@ -157,7 +157,8 @@ public class RenderOptions {
     var stylist = stylistOrDefault(output);
     return switch (output) {
       case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode));
-      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config((TeXStylist) stylist));
+      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(
+        (TeXStylist) stylist, witHeader, withStyleDef));
       case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(
         (Html5Stylist) stylist, witHeader, withStyleDef));
       case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config(

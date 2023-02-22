@@ -77,9 +77,8 @@ public record YouTrack(
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
       var contents = results.cls()
-        .mapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
-          .map(matching -> IntObjTuple2.of(i, matching)))
-        .flatMap(it -> it);
+        .flatMapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
+          .map(matching -> IntObjTuple2.of(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++)
         unifyClauses(clauses.result(), contents.get(i - 1), contents.get(i), doms);
     });

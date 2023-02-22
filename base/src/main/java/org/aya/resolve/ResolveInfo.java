@@ -46,8 +46,8 @@ public record ResolveInfo(
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
-  @NotNull MutableMap<ModulePath, Tuple2<ResolveInfo, Boolean>> imports,
-  @NotNull MutableMap<ModulePath, UseHide> reExports,
+  @NotNull MutableMap<ModulePath.Qualified, Tuple2<ResolveInfo, Boolean>> imports,
+  @NotNull MutableMap<ModulePath.Qualified, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
   public ResolveInfo(

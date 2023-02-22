@@ -21,7 +21,7 @@ public class SuedeTest {
   }
 
   @Test public void piSig() {
-    suedeAll("def test (y : Type 0) : Type 3 => Pi (x : Type 0 -> Type 2) -> Sig (x y) ** x y");
+    suedeAll("def test (y : Type 0) : Type 3 => Fn (x : Type 0 -> Type 2) -> Sig (x y) ** x y");
   }
 
   @Test public void adjunction() {
@@ -31,7 +31,7 @@ public class SuedeTest {
                  (a : A) (b : B) : C
         => f (a, b)
       def uncurry (A : Type) (B : Type) (C : Type)
-                   (f : Pi A B -> C)
+                   (f : Fn A B -> C)
                    (p : Sig A ** B) : C
         => f (p.1) (p.2)
       def fst {A B : Type} (t : Sig A ** B) : A

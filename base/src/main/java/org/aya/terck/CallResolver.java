@@ -3,6 +3,7 @@
 package org.aya.terck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple;
 import kala.value.MutableValue;
@@ -12,6 +13,7 @@ import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DefVisitor;
+import org.aya.core.visitor.Expander;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.DefVar;
 import org.aya.tyck.tycker.TyckState;
@@ -151,7 +153,7 @@ public record CallResolver(
 
   @Override public @NotNull Term pre(@NotNull Term term) {
     // TODO: Rework error reporting to include the original call
-    // term = whnf(term);
+    term = new Expander.ConservativeWHNFer(new TyckState(factory), ImmutableSet.from(targets.map(Def::ref))).apply(term);
     if (term instanceof Callable call) resolveCall(call);
     return DefVisitor.super.pre(term);
   }

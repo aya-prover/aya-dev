@@ -100,7 +100,8 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       case Fn -> BasePrettier.FN;
       case Prim -> BasePrettier.PRIM;
       case Generalized -> BasePrettier.GENERALIZED;
-      case LocalVar, Unknown, Module -> null;
+      case LocalVar -> BasePrettier.LOCAL_VAR;
+      case Unknown, Module -> null;
     };
     return style != null ? Doc.styled(style, raw) : Doc.plain(raw);
   }

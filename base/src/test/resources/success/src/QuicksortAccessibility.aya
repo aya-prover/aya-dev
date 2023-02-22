@@ -1,0 +1,40 @@
+open data Bool | true | false
+def not Bool : Bool
+| true => false
+| false => true
+open data Nat | zero | suc Nat
+def infix < Nat Nat : Bool
+| 0, 0 => false
+| 0, a => true
+| suc n, 0 => false
+| suc n, suc m => n < m
+def infix ≥ (a : Nat) (b : Nat) : Bool
+=> not (a < b)
+
+open data List (A : Type)
+| nil
+| cons A (List A)
+
+def filter {A : Type} (p : A → Bool) (xs : List A) : List A
+| p, nil => nil
+| p, cons x xs => match p x {
+  | true => cons x (filter p xs)
+  | false => filter p xs
+}
+
+def infixl ++ {A : Type} (List A) (List A) : List A
+| nil, ys => ys
+| cons x xs, ys => cons x (xs ++ ys)
+
+open data qsAcc (List Nat) : Type
+| nil => nilAcc
+| cons x xs =>
+  consAcc (h1 : qsAcc (filter (< x) xs))
+          (h2 : qsAcc (filter (≥ x) xs))
+
+def qsort (xs : List Nat) (qsAcc xs) : List Nat
+| nil, nilAcc => nil
+| cons x xs, consAcc h1 h2 =>
+     qsort (filter (< x) xs) h1
+  ++ [ x ]
+  ++ qsort (filter (≥ x) xs) h2

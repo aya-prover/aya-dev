@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.style;
 
@@ -14,6 +14,7 @@ import org.aya.pretty.doc.Style;
  * For example, we will use `::` to distinguish nested "class" attributes in the HTML backend.
  *
  * @see org.aya.pretty.backend.html.Html5Stylist#styleKeyToCss(String)
+ * @see org.aya.pretty.backend.latex.TeXStylist#styleKeyToTex(String)
  */
 public enum AyaStyleKey {
   Keyword("Aya::Keyword"),
@@ -25,7 +26,8 @@ public enum AyaStyleKey {
   Field("Aya::Field"),
   Generalized("Aya::Generalized"),
   CallTerm("Aya::Call"),
-  Comment("Aya::Comment");
+  Comment("Aya::Comment"),
+  LocalVar("Aya::LocalVar");
 
   private final String key;
 

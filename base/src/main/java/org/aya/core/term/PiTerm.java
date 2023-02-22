@@ -22,6 +22,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   public @NotNull PiTerm update(@NotNull Param param, @NotNull Term body) {
     return param == param() && body == body() ? this : new PiTerm(param, body);
   }
+
   @Override public @NotNull PiTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update(param.descent(f), f.apply(body));
   }
@@ -43,7 +44,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   ) {
     if (limit <= 0) return new Result.Default(term, ty);
     return switch (fmap.apply(ty)) {
-      case PiTerm(var param, var body)when param.explicit() -> {
+      case PiTerm(var param, var body) when param.explicit() -> {
         if (param.type() != IntervalTerm.INSTANCE) yield new Result.Default(term, ty);
         params.append(param.ref());
         yield unpiOrPath(body, AppTerm.make(term, param.toArg()), fmap, params, limit - 1);

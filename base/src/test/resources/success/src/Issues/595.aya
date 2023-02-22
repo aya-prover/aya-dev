@@ -13,7 +13,7 @@ open data ImCtor (A : Type)
 def elimIt {A : Type} (x : ImCtor A) : A
 | imCtor {a} => a
 
-def matchIt {A : Type} (x : ImCtor A) : Pi A -> A
+def matchIt {A : Type} (x : ImCtor A) : Fn A -> A
 | {A} as A', imCtor {a as a'} => \ (x' : A') => a'
 
 def proofIt (A : Type) (x : ImCtor A) (a : A) : matchIt x a = elimIt x

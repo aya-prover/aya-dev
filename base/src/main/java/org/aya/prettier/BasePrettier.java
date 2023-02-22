@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
@@ -58,6 +59,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   public static final @NotNull Style FIELD = AyaStyleKey.Field.preset();
   public static final @NotNull Style GENERALIZED = AyaStyleKey.Generalized.preset();
   public static final @NotNull Style COMMENT = AyaStyleKey.Comment.preset();
+  public static final @NotNull Style LOCAL_VAR = AyaStyleKey.LocalVar.preset();
 
   public final @NotNull PrettierOptions options;
 
@@ -253,7 +255,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
 
   public static @NotNull Link linkIdOf(@NotNull AnyVar ref) {
     if (ref instanceof DefVar<?, ?> defVar)
-      return Link.loc(defVar.qualifiedName().toString());
+      return Link.loc(QualifiedID.join(defVar.qualifiedName()));
     return Link.loc(ref.hashCode());
   }
 
@@ -295,7 +297,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   partial(@NotNull PrettierOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
     return switch (partial) {
       case Partial.Const<T> sad -> Doc.sepNonEmpty(lb, sad.u().toDoc(options), rb);
-      case Partial.Split<T> hap when!showEmpty && hap.clauses().isEmpty() -> Doc.empty();
+      case Partial.Split<T> hap when !showEmpty && hap.clauses().isEmpty() -> Doc.empty();
       case Partial.Split<T> hap -> Doc.sepNonEmpty(lb,
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),
         rb);

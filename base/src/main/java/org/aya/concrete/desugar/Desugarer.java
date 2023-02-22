@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -40,14 +40,14 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Type -> {
+      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg) when kind == SortKind.Type -> {
         try {
           yield new Expr.Type(uPos, levelVar(arg.term()));
         } catch (DesugarInterruption e) {
           yield new Expr.Error(pos, expr);
         }
       }
-      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg)when kind == SortKind.Set -> {
+      case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg) when kind == SortKind.Set -> {
         try {
           yield new Expr.Set(uPos, levelVar(arg.term()));
         } catch (DesugarInterruption e) {

@@ -1,0 +1,6 @@
+open import Paths
+open import Arith::Bool
+
+def id (x : Bool) => x
+
+def Goal => (\ x => not (not x)) = id

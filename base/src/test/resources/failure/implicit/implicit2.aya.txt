@@ -1,13 +1,13 @@
-In file $FILE:4:33 ->
+In file $FILE:4:32 ->
 
   2 │   
-  3 │   def y : Pi {a : Unit} -> Unit => \{a} => a
-  4 │   def x : Pi {a : Unit} -> Unit => y
-    │                                    ╰╯
+  3 │   def y : ∀ {a : Unit} -> Unit => \{a} => a
+  4 │   def x : ∀ {a : Unit} -> Unit => y
+    │                                   ╰╯
 
 Error: Unsolved meta a'
        in `y {a'}`
-       in `λ {_} ⇒ y {a'}`
+       in `\ {_} ⇒ y {a'}`
 
 1 error(s), 0 warning(s).
 What are you doing?

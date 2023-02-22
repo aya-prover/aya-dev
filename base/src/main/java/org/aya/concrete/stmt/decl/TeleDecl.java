@@ -201,6 +201,11 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
   public static final class FnDecl extends TopLevel<Term> {
     public final @NotNull EnumSet<Modifier> modifiers;
     public final @NotNull DefVar<FnDef, FnDecl> ref;
+
+    /**
+     * If a function is anonymous. It only occurs when the personality is example/counterexample, and the {@code ref.name} is generated.
+     */
+    public final boolean isAnonymous;
     public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
 
     public FnDecl(
@@ -210,11 +215,16 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result,
       @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
-      @NotNull DeclInfo.Personality personality
+      @NotNull DeclInfo.Personality personality,
+      boolean isAnonymous
     ) {
       super(info, telescope, result, personality);
+
+      assert (!isAnonymous) || personality != DeclInfo.Personality.NORMAL;
+
       this.modifiers = modifiers;
       this.ref = DefVar.concrete(this, name);
+      this.isAnonymous = isAnonymous;
       this.body = body;
     }
 

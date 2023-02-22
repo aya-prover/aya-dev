@@ -3,10 +3,12 @@
 package org.aya.core.visitor;
 
 import kala.collection.Set;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableSet;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.tyck.tycker.TyckState;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +29,16 @@ public interface Expander extends DeltaExpander, BetaExpander {
     }
   }
 
+  record ConservativeWHNFer(@Override @NotNull TyckState state, ImmutableSet<DefVar<?, ?>> opaqueVars) implements Expander {
+    @Override public @NotNull Term apply(@NotNull Term term) {
+      return switch (term) {
+        case StableWHNF whnf -> whnf;
+        case ConCall con when (con.ref().core == null || con.ref().core.clauses.clauses().isEmpty()) -> con;
+        case FnCall fn when opaqueVars.contains(fn.ref()) -> fn;
+        default -> Expander.super.apply(term);
+      };
+    }
+  }
   record Tracked(
     @NotNull Set<@NotNull AnyVar> unfolding,
     @NotNull MutableSet<@NotNull AnyVar> unfolded,

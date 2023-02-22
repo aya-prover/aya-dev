@@ -16,4 +16,4 @@ def isHAEquiv (f : A -> B) => Sig
 def idFun (a : A) => a
 
 def idHA : isHAEquiv (idFun {A}) =>
-  (idFun, λ a => idp, λ b => idp, λ a i => idp)
+  (idFun, \ a => idp, \ b => idp, \ a i => idp)

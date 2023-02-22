@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.visitor;
 
@@ -35,13 +35,13 @@ public interface ExprFolder<R> extends PatternFolder<R> {
         var type = LazyValue.<Term>ofValue(IntervalTerm.INSTANCE);
         yield path.params().foldLeft(acc, (ac, var) -> foldVarDecl(ac, var, var.definition(), type));
       }
-      // TODO: type for array bind, let bind, and do bind
       case Expr.Array array -> array.arrayBlock().fold(
         left -> left.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos(), noType())),
         right -> acc
       );
       case Expr.Let let -> foldVarDecl(acc, let.bind().bindName(), let.bind().sourcePos(), noType());
-      case Expr.Do du -> du.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos(), noType()));
+      case Expr.Do du ->
+        du.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos(), noType()));
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         foldVarRef(acc, proj.resolvedVar(), proj.ix().getRightValue().sourcePos(), lazyType(proj.resolvedVar()));
       case Expr.Coe coe -> foldVarRef(acc, coe.resolvedVar(), coe.id().sourcePos(), lazyType(coe.resolvedVar()));

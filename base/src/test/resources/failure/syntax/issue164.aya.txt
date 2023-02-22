@@ -1,7 +1,7 @@
 In file $FILE:3:26 ->
 
   1 │   def uncurry (A : Type) (B : Type) (C : Type)
-  2 │                (f : Pi A B -> C)
+  2 │                (f : Fn A B -> C)
   3 │                (p : Sig A  B) : C
     │                             ╰╯
 
@@ -10,7 +10,7 @@ Error: Cannot parse
 In file $FILE:8:29 ->
 
   6 │   def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
-  7 │                 (f : Pi A B C -> D)
+  7 │                 (f : Fn A B C -> D)
   8 │                 (p : Sig A B  C) : D
     │                                ╰╯
 
@@ -20,7 +20,7 @@ In file $FILE:1:4 ->
 
   1 │   def uncurry (A : Type) (B : Type) (C : Type)
     │       ╰─────╯
-  2 │                (f : Pi A B -> C)
+  2 │                (f : Fn A B -> C)
   3 │                (p : Sig A  B) : C
 
 Error: Unsolved meta _
