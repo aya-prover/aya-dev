@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.render.vscode;
 
@@ -94,9 +94,9 @@ public class ColorTheme {
     findAndPut(builder, AyaStyleKey.Fn.key(), VscColorTheme.SCOPE_FN_CALL, fallbackColors);
     findAndPut(builder, AyaStyleKey.Generalized.key(), VscColorTheme.SCOPE_GENERALIZED, fallbackColors);
     findAndPut(builder, AyaStyleKey.Data.key(), VscColorTheme.SCOPE_DATA_CALL, fallbackColors);
-    findAndPut(builder, AyaStyleKey.Struct.key(), VscColorTheme.SCOPE_STRUCT_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Class.key(), VscColorTheme.SCOPE_STRUCT_CALL, fallbackColors);
     findAndPut(builder, AyaStyleKey.Con.key(), VscColorTheme.SCOPE_CON_CALL, fallbackColors);
-    findAndPut(builder, AyaStyleKey.Field.key(), VscColorTheme.SCOPE_FIELD_CALL, fallbackColors);
+    findAndPut(builder, AyaStyleKey.Member.key(), VscColorTheme.SCOPE_FIELD_CALL, fallbackColors);
 
     return new AyaColorScheme(builder);
   }

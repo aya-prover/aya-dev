@@ -127,16 +127,6 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
         factory.factory(primID, decl.ref);
         resolveTopLevelDecl(decl, context);
       }
-      case TeleDecl.DataCtor ctor -> {
-        ctor.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, ctor.ref, ctor.sourcePos());
-        resolveOpInfo(ctor, context);
-      }
-      case TeleDecl.ClassMember field -> {
-        field.ref().module = context.moduleName();
-        context.addGlobalSimple(Stmt.Accessibility.Public, field.ref, field.sourcePos());
-        resolveOpInfo(field, context);
-      }
       default -> throw new InternalException("🪲");
     }
   }

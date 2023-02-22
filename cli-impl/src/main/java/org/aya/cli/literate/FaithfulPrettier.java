@@ -95,8 +95,8 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     var style = switch (defKind) {
       case Data -> BasePrettier.DATA;
       case Con -> BasePrettier.CON;
-      case Struct -> BasePrettier.STRUCT;
-      case Field -> BasePrettier.FIELD;
+      case Struct -> BasePrettier.CLASS;
+      case Field -> BasePrettier.MEMBER;
       case Fn -> BasePrettier.FN;
       case Prim -> BasePrettier.PRIM;
       case Generalized -> BasePrettier.GENERALIZED;

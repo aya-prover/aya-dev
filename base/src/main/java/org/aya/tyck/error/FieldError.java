@@ -59,7 +59,7 @@ public sealed interface FieldError extends TyckError {
         Doc.english("arguments, but found"),
         Doc.plain(String.valueOf(supplied)),
         Doc.english("arguments for field"),
-        BasePrettier.linkRef(memberDef.ref, BasePrettier.FIELD));
+        BasePrettier.linkRef(memberDef.ref, BasePrettier.MEMBER));
     }
   }
 }

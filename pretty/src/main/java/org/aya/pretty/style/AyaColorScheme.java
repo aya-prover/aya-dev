@@ -15,9 +15,9 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Prim.key(), ColorScheme.colorOf(0, 0, 1f)),
     Tuple.of(AyaStyleKey.Generalized.key(), ColorScheme.colorOf(0, 0, 1f)),
     Tuple.of(AyaStyleKey.Data.key(), ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
-    Tuple.of(AyaStyleKey.Struct.key(), ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
+    Tuple.of(AyaStyleKey.Class.key(), ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
     Tuple.of(AyaStyleKey.Con.key(), ColorScheme.colorOf(0.63f, 0.13f, 0.94f)),
-    Tuple.of(AyaStyleKey.Field.key(), ColorScheme.colorOf(0, 0.55f, 0.55f)),
+    Tuple.of(AyaStyleKey.Member.key(), ColorScheme.colorOf(0, 0.55f, 0.55f)),
     Tuple.of(AyaStyleKey.Comment.key(), ColorScheme.colorOf(0.55f, 0.55f, 0.55f))
   ));
 
@@ -28,9 +28,9 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Prim.key(), 0x00627A),
     Tuple.of(AyaStyleKey.Generalized.key(), 0x00627A),
     Tuple.of(AyaStyleKey.Data.key(), 0x000000),
-    Tuple.of(AyaStyleKey.Struct.key(), 0x000000),
+    Tuple.of(AyaStyleKey.Class.key(), 0x000000),
     Tuple.of(AyaStyleKey.Con.key(), 0x067D17),
-    Tuple.of(AyaStyleKey.Field.key(), 0x871094),
+    Tuple.of(AyaStyleKey.Member.key(), 0x871094),
     Tuple.of(AyaStyleKey.Comment.key(), 0x8C8C8C)
   ));
 }
