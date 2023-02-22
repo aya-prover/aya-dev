@@ -70,7 +70,7 @@ public interface Context {
    */
   default @NotNull AnyVar get(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.This aThis -> getUnqualified(name.name(), name.sourcePos());
+      case ModulePath.ThisRef aThis -> getUnqualified(name.name(), name.sourcePos());
       case ModulePath.Qualified qualified -> getQualified(qualified, name.name(), name.sourcePos());
     };
   }
@@ -80,7 +80,7 @@ public interface Context {
    */
   default @Nullable AnyVar getMaybe(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.This aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
+      case ModulePath.ThisRef aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
       case ModulePath.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), name.sourcePos());
     };
   }

@@ -81,7 +81,7 @@ public record ModuleSymbol<T>(
   public @NotNull Result<T, Error> getMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
     return switch (component) {
       case ModulePath.Qualified qualified -> getQualifiedMaybe(component, unqualifiedName).toResult(Error.NotFound);
-      case ModulePath.This aThis -> getUnqualifiedMaybe(unqualifiedName);
+      case ModulePath.ThisRef aThis -> getUnqualifiedMaybe(unqualifiedName);
     };
   }
 
@@ -141,7 +141,7 @@ public record ModuleSymbol<T>(
           yield Result.ok(result.get());
         }
       }
-      case ModulePath.This aThis -> removeDefinitely(unqualifiedName);
+      case ModulePath.ThisRef aThis -> removeDefinitely(unqualifiedName);
     };
   }
 

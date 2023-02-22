@@ -35,7 +35,9 @@ import java.io.Serializable;
 /**
  * The .ayac file representation.
  *
- * @param exports Each name is consisted with {@code This Module Name}, {@code Export Module Name} and {@code Symbol Name}
+ * @param imports   The modules that this ayac imports. Absolute path.
+ * @param exports   Each name consist of {@code This Module Name}, {@code Export Module Name} and {@code Symbol Name}
+ * @param reExports key: a imported module that is in {@param imports}
  * @author kiva
  */
 public record CompiledAya(
@@ -46,7 +48,11 @@ public record CompiledAya(
   @NotNull ImmutableSeq<SerDef.SerOp> serOps,
   @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
 ) implements Serializable {
-  record SerImport(boolean isPublic, @NotNull ImmutableSeq<String> moduleName) implements Serializable {
+  /**
+   * @param rename not empty
+   */
+  record SerImport(@NotNull ModulePath.Qualified moduleName, @NotNull ImmutableSeq<String> rename,
+                   boolean isPublic) implements Serializable {
   }
 
   /**
@@ -103,12 +109,18 @@ public record CompiledAya(
     var exports = ctx.exports().symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::ids))));
 
-    var imports = resolveInfo.imports().valuesView().map(i -> new SerImport(i.component2(), i.component1().thisModule().moduleName())).toImmutableSeq();
+    var imports = resolveInfo.imports().view().map((k, v) ->
+      new SerImport(ModulePath.qualified(v.component1().thisModule().moduleName()),
+        k.ids(), v.component2())).toImmutableSeq();
     return new CompiledAya(imports,
       new SerExport(ImmutableMap.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
         // TODO: maybe incorrect, k.toImmutableSeq() can be a renamed module name
-        .map((k, v) -> Tuple.of(k.ids(), SerUseHide.from(v)))),
+        .map((k, v) -> Tuple.of(
+          resolveInfo.imports()
+            .get(k)   // should not fail
+            .component1().thisModule().moduleName(),
+          SerUseHide.from(v)))),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
       ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
@@ -184,20 +196,20 @@ public record CompiledAya(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var anImport : imports) {
       var modName = anImport.moduleName;
+      var modRename = ModulePath.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
-      var componentName = ModulePath.qualified(modName);
-      var success = loader.load(modName);
+      var success = loader.load(modName.ids());
       if (success == null)
-        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(componentName, SourcePos.SER));
-      thisResolve.imports().put(ModulePath.from(success.thisModule().moduleName()), Tuple.of(success, isPublic));
+        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
+      thisResolve.imports().put(modRename, Tuple.of(success, isPublic));
       var mod = success.thisModule();
-      thisResolve.thisModule().importModule(componentName, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(componentName,
+      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
+      reExports.getOption(modName.ids()).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
-      var acc = this.reExports.containsKey(modName)
+      var acc = this.reExports.containsKey(modName.ids())
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(success, SourcePos.SER, acc);
@@ -267,7 +279,6 @@ public record CompiledAya(
 
   private void de(@NotNull AyaShape.Factory shapeFactory, @NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
     var mod = context.moduleName();
-    var drop = mod.size();
     var def = serDef.de(state);
     assert def.ref().core != null;
     shapeFactory.bonjour(def);

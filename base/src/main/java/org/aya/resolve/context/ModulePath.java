@@ -7,11 +7,12 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface ModulePath {
+import java.io.Serializable;
+
+public sealed interface ModulePath extends Serializable {
   int size();
-  final class This implements ModulePath {
-    private This() {
-    }
+  enum ThisRef implements ModulePath {
+    Obj;
 
     @Override public int size() {
       return 0;
@@ -67,7 +68,7 @@ public sealed interface ModulePath {
 
   /// region static
 
-  @NotNull This This = new This();
+  @NotNull ModulePath.ThisRef This = ThisRef.Obj;
 
   static @NotNull ModulePath from(@NotNull ImmutableSeq<String> ids) {
     if (ids.isEmpty()) return This;
