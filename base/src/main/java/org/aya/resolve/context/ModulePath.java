@@ -9,11 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-public sealed interface ModulePath {
+public sealed interface ModulePath extends Serializable {
   int size();
-  final class This implements ModulePath {
-    private This() {
-    }
+  enum ThisRef implements ModulePath {
+    Obj;
 
     @Override public int size() {
       return 0;
@@ -36,7 +35,7 @@ public sealed interface ModulePath {
     }
   }
 
-  record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath, Serializable {
+  record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
     public Qualified(String @NotNull ... ids) {
       this(ImmutableSeq.of(ids));
     }
@@ -69,7 +68,7 @@ public sealed interface ModulePath {
 
   /// region static
 
-  @NotNull This This = new This();
+  @NotNull ModulePath.ThisRef This = ThisRef.Obj;
 
   static @NotNull ModulePath from(@NotNull ImmutableSeq<String> ids) {
     if (ids.isEmpty()) return This;
