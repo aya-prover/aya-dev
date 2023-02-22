@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed abstract class UserDef<Ret extends Term>
-  extends TopLevelDef<Ret> permits ClassDef.Member, FnDef, DataDef {
+  extends TopLevelDef<Ret> permits MemberDef, FnDef, DataDef {
   /**
    * In case of counterexamples, this field will be assigned.
    *

@@ -15,9 +15,9 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
-import org.aya.core.def.ClassDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
+import org.aya.core.def.MemberDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
@@ -103,7 +103,7 @@ public final class ExprTycker extends PropTycker {
         var structRef = classCall.ref();
         var subst = new Subst();
 
-        var fields = MutableList.<Tuple2<DefVar<ClassDef.Member, TeleDecl.ClassMember>, Term>>create();
+        var fields = MutableList.<Tuple2<DefVar<MemberDef, TeleDecl.ClassMember>, Term>>create();
         var missing = MutableList.<AnyVar>create();
         var conFields = MutableMap.from(neu.fields().view().map(t -> Tuple.of(t.name().data(), t)));
 
@@ -178,7 +178,7 @@ public final class ExprTycker extends PropTycker {
           if (!(projectee.type() instanceof ClassCall classCall))
             return fail(struct, ErrorTerm.unexpected(projectee.type()), BadTypeError.structAcc(state, struct, fieldName, projectee.type()));
           // TODO[ice]: instantiate the type
-          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof ClassDef.Member field))
+          if (!(proj.resolvedVar() instanceof DefVar<?, ?> defVar && defVar.core instanceof MemberDef field))
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref;
 

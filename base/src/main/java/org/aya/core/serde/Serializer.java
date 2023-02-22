@@ -31,7 +31,7 @@ public record Serializer(@NotNull Serializer.State state) {
         fn.modifiers,
         serialize(fn.result)
       );
-      case FieldDef field -> new SerDef.Field(
+      case MemberDef field -> new SerDef.Field(
         state.def(field.structRef),
         state.def(field.ref),
         serializeParams(field.ownerTele),

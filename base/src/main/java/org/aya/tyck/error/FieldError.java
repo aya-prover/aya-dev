@@ -3,7 +3,7 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.def.ClassDef;
+import org.aya.core.def.MemberDef;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -50,16 +50,16 @@ public sealed interface FieldError extends TyckError {
 
   record ArgMismatch(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ClassDef.Member fieldDef,
+    @NotNull MemberDef memberDef,
     int supplied
   ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Expected"),
-        Doc.plain(String.valueOf(fieldDef.ref.core.telescope.size())),
+        Doc.plain(String.valueOf(memberDef.ref.core.telescope.size())),
         Doc.english("arguments, but found"),
         Doc.plain(String.valueOf(supplied)),
         Doc.english("arguments for field"),
-        BasePrettier.linkRef(fieldDef.ref, BasePrettier.FIELD));
+        BasePrettier.linkRef(memberDef.ref, BasePrettier.FIELD));
     }
   }
 }

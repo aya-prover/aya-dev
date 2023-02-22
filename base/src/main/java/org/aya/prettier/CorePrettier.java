@@ -309,13 +309,13 @@ public class CorePrettier extends BasePrettier<Term> {
           term -> Doc.sep(line1sep, Doc.symbol("=>"), term(Outer.Free, term)),
           clauses -> Doc.vcat(line1sep, Doc.nest(2, visitClauses(clauses))));
       }
-      case FieldDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
+      case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         coe(field.coerce),
         linkDef(field.ref(), FIELD),
         visitTele(field.selfTele),
         Doc.symbol(":"),
         term(Outer.Free, field.result));
-      case ClassDef.Member field -> Doc.sepNonEmpty(Doc.symbol("|"),
+      case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         linkDef(field.ref(), FIELD),
         visitTele(field.telescope),
         Doc.symbol(":"),

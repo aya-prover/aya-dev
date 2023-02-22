@@ -169,7 +169,7 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
   }
 
   public static final class ClassMember extends TeleDecl<Term> {
-    public final @NotNull DefVar<FieldDef, ClassMember> ref;
+    public final @NotNull DefVar<MemberDef, ClassMember> ref;
     public DefVar<ClassDef, ClassDecl> classDef;
     public @NotNull Option<Expr> body;
     public final boolean coerce;
@@ -187,7 +187,7 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override public @NotNull DefVar<FieldDef, ClassMember> ref() {
+    @Override public @NotNull DefVar<MemberDef, ClassMember> ref() {
       return ref;
     }
   }

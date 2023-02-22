@@ -90,32 +90,22 @@ public sealed interface SerDef extends Serializable {
     boolean coerce
   ) implements SerDef {
     @Override
-    public @NotNull FieldDef de(SerTerm.@NotNull DeState state) {
-      return new FieldDef(
+    public @NotNull MemberDef de(SerTerm.@NotNull DeState state) {
+      return new MemberDef(
         state.resolve(struct),
         state.def(self),
-        ownerTele.map(tele -> tele.de(state)),
-        selfTele.map(tele -> tele.de(state)),
+        telescope.map(tele -> tele.de(state)),
         result.de(state),
-        body.map(serTerm -> serTerm.de(state)),
-        coerce
-      );
+        coerce);
     }
   }
 
   record Struct(
     @NotNull QName name,
-    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
-    @NotNull SerTerm.Sort resultLift,
     @NotNull ImmutableSeq<Field> fields
   ) implements SerDef {
-    @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
-      return new StructDef(
-        state.def(name),
-        telescope.map(tele -> tele.de(state)),
-        resultLift.de(state),
-        fields.map(field -> field.de(state))
-      );
+    @Override public @NotNull ClassDef de(SerTerm.@NotNull DeState state) {
+      return new ClassDef(state.def(name), fields.map(field -> field.de(state)));
     }
   }
 

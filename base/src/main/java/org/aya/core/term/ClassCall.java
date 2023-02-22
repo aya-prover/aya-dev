@@ -5,6 +5,7 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.core.def.ClassDef;
+import org.aya.core.def.MemberDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.Subst;
 import org.aya.ref.DefVar;
@@ -29,7 +30,7 @@ public record ClassCall(
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
 ) implements StableWHNF, Formation, Callable.Common {
-  public @Nullable Subst fieldSubst(@Nullable ClassDef.Member member) {
+  public @Nullable Subst fieldSubst(@Nullable MemberDef member) {
     var fieldSubst = new Subst();
     if (args.sizeLessThan(ref.core.members)) return null;
     for (var mapping : ref.core.members.zip(args)) {

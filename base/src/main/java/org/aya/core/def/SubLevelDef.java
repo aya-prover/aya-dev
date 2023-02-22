@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author ice1000
  */
-public sealed abstract class SubLevelDef implements Def permits CtorDef, FieldDef {
+public sealed abstract class SubLevelDef implements Def permits CtorDef, MemberDef {
   public final @NotNull ImmutableSeq<Term.Param> ownerTele;
   public final @NotNull ImmutableSeq<Term.Param> selfTele;
   public final @NotNull Term result;
