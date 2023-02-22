@@ -64,7 +64,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\textbackslash"),
+    Tuple.of("\\", "\\backslash"),
     Tuple.of("\\/", "\\lor"),
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
@@ -101,9 +101,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
-        if (!config.katex()) cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\(");
         cursor.visibleContent(commandMapping.get(k));
-        if (!config.katex()) cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\)");
         return;
       }
     }
@@ -122,7 +122,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\fbox{");
+    cursor.invisibleContent("\\texttt{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
   }
