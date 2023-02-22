@@ -151,18 +151,18 @@ public class RenderOptions {
 
   public @NotNull String render(
     @NotNull OutputTarget output, @NotNull Doc doc,
-    boolean witHeader, boolean withStyleDef, boolean unicode,
+    boolean headerCode, boolean styleCode, boolean unicode,
     int pageWidth
   ) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
-      case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode));
+      case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode, headerCode, styleCode));
       case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(
-        (TeXStylist) stylist, witHeader, withStyleDef));
+        (TeXStylist) stylist, headerCode, styleCode));
       case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(
-        (Html5Stylist) stylist, witHeader, withStyleDef));
+        (Html5Stylist) stylist, headerCode, styleCode));
       case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config(
-        (MdStylist) stylist, witHeader, withStyleDef, true));
+        (MdStylist) stylist, headerCode, styleCode, true));
       case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config(
         (UnixTermStylist) stylist, pageWidth, unicode));
     };

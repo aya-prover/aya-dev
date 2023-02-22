@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.printer;
 
+import kala.collection.mutable.MutableMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,10 +42,14 @@ public interface PrinterConfig {
 
   @NotNull Stylist getStylist();
 
+  interface Options<T> {
+  }
+
   /**
    * Basic configure for other configs to easily extend config flags.
    */
   class Basic<S extends Stylist> implements PrinterConfig {
+    protected final @NotNull MutableMap<Options<?>, Object> options = MutableMap.create();
     private final int pageWidth;
     private final int pageHeight;
     private final @NotNull S stylist;
@@ -53,6 +58,14 @@ public interface PrinterConfig {
       this.pageWidth = pageWidth;
       this.pageHeight = pageHeight;
       this.stylist = stylist;
+    }
+
+    @SuppressWarnings("unchecked") public @NotNull <T> T opt(@NotNull Options<T> key, @NotNull T defaultValue) {
+      return (T) options.getOrDefault(key, defaultValue);
+    }
+
+    public <T> void set(@NotNull Options<T> key, @NotNull T value) {
+      options.put(key, value);
     }
 
     @Override public @NotNull S getStylist() {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.md;
 
@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.regex.Pattern;
 
+import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
+
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+;<>\\[\\\\\\]_`|~]");
   public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
@@ -21,11 +23,14 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file
-    if (config.withHeader) {
-      cursor.invisibleContent(HtmlConstants.HOVER_STYLE);
-      cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
-      if (config.ayaFlavored) // TODO: add flag for Vue (server side rendering) and plain HTML
-        cursor.invisibleContent(HtmlConstants.HOVER_HIGHLIGHT_ALL_OCCURS_VUE);
+    if (config.opt(HeaderCode, false)) {
+      if (config.opt(AyaFlavored, false)) {
+        cursor.invisibleContent(HtmlConstants.HOVER_STYLE);
+        cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
+        cursor.invisibleContent(config.opt(ServerSideRendering, false)
+          ? HtmlConstants.HOVER_ALL_OCCURS_SSR
+          : HtmlConstants.HOVER_ALL_OCCURS);
+      }
       renderCssStyle(cursor);
     }
   }
@@ -156,20 +161,18 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {
-    if (config.ayaFlavored) ayaMd.run();
+    if (config.opt(AyaFlavored, false)) ayaMd.run();
     else pureMd.run();
   }
 
   public static class Config extends DocHtmlPrinter.Config {
-    public boolean ayaFlavored;
-
-    public Config(boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
-      this(MdStylist.DEFAULT, withHeader, withStyleDef, ayaFlavored);
+    public Config(boolean ayaFlavored) {
+      this(MdStylist.DEFAULT, ayaFlavored, ayaFlavored, ayaFlavored);
     }
 
     public Config(@NotNull MdStylist stylist, boolean withHeader, boolean withStyleDef, boolean ayaFlavored) {
       super(stylist, withHeader, withStyleDef);
-      this.ayaFlavored = ayaFlavored;
+      set(StyleOptions.AyaFlavored, ayaFlavored);
     }
   }
 }

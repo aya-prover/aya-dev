@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.regex.Pattern;
+
+import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
 
 /**
  * Html backend, which ignores page width.
@@ -41,7 +43,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   );
 
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    if (config.withHeader) {
+    if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
       renderCssStyle(cursor);
       cursor.invisibleContent("</head><body>");
@@ -49,11 +51,11 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
-    if (config.withHeader) cursor.invisibleContent("</body></html>");
+    if (config.opt(HeaderCode, false)) cursor.invisibleContent("</body></html>");
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
-    if (!config.withStyleDef) return;
+    if (!config.opt(StyleCode, false)) return;
     cursor.invisibleContent("<style>");
     // colors are defined in global scope `:root`
     var colors = Html5Stylist.colorsToCss(config.getStylist().colorScheme);
@@ -68,7 +70,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
-    return config.supportsCssStyle() ? new Html5Stylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
+    return config.opt(SeparateStyle, false) ? new Html5Stylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
@@ -151,22 +153,12 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {
-    public final boolean withHeader;
-    public final boolean withStyleDef;
-
-    /** Set doc style with html "class" attribute and css block */
-    public boolean supportsCssStyle() {
-      return withHeader;
+    public Config(boolean withHeader) {
+      this(Html5Stylist.DEFAULT, withHeader, true);
     }
 
-    public Config(boolean withHeader, boolean withStyleDef) {
-      this(Html5Stylist.DEFAULT, withHeader, withStyleDef);
-    }
-
-    public Config(@NotNull Html5Stylist stylist, boolean withHeader, boolean withStyleDef) {
-      super(stylist, INFINITE_SIZE, true);
-      this.withHeader = withHeader;
-      this.withStyleDef = withStyleDef;
+    public Config(@NotNull Html5Stylist stylist, boolean headerCode, boolean styleCode) {
+      super(stylist, INFINITE_SIZE, true, headerCode, styleCode);
     }
   }
 }

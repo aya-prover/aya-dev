@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
+import static org.aya.pretty.backend.string.StringPrinterConfig.TextOptions.Unicode;
+
 /**
  * The class for all string-output printers.
  *
@@ -126,7 +128,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   );
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
-    if (config.unicode) for (var k : unicodeMapping.keysView()) {
+    if (config.opt(Unicode, false)) for (var k : unicodeMapping.keysView()) {
       if (text.trim().equals(k)) {
         cursor.visibleContent(text.replace(k, unicodeMapping.get(k)));
         return;
