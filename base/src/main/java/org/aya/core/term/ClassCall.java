@@ -79,7 +79,6 @@ public record ClassCall(
   }
 
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Tuple2<DefVar<MemberDef, TeleDecl.ClassMember>, Arg<Term>>> args) {
-    assert args.getClass() == args().getClass(); // or toImmutableSeq() may have different behavior.
     return args.sameElements(args().toImmutableSeq(), true) ? this : new ClassCall(ref(), ulift(), ImmutableMap.from(args));
   }
 

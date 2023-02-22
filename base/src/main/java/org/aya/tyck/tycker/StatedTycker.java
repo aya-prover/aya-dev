@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import kala.collection.immutable.ImmutableMap;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
@@ -9,6 +10,7 @@ import org.aya.core.def.*;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
+import org.aya.generic.SortKind;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
@@ -70,9 +72,8 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
-      // return defCall((DefVar<ClassDef, ClassDecl>) var, ClassCall::new);
-
-      throw new UnsupportedOperationException("TODO");
+      var classCall = new ClassCall((DefVar<ClassDef, ClassDecl>) var, 0, ImmutableMap.empty());
+      return new Result.Default(classCall, new SortTerm(SortKind.Type, 0)); // TODO: type of classCall
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
       var tele = Def.defTele(conVar);
