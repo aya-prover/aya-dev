@@ -102,7 +102,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       }
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
+        var innerCtx = resolveChildren(decl, decl, ctx, s -> s.members.view(), (field, mockCtx) -> {
           field.ref().module = mockCtx.moduleName();
           mockCtx.defineSymbol(field.ref, Stmt.Accessibility.Public, field.sourcePos());
           resolveOpInfo(field, mockCtx);

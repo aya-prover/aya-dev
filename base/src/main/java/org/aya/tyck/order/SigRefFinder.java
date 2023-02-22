@@ -25,9 +25,9 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
         if (decl instanceof TeleDecl<?> proof) telescopic(proof);
         // for ctor: partial is a part of header
         if (decl instanceof TeleDecl.DataCtor ctor) accept(ctor.clauses);
-        // constructor and field should always depend on their data/struct header.
+        // constructor and member should always depend on their data/struct header.
         if (decl instanceof TeleDecl.DataCtor ctor) references.append(ctor.dataRef.concrete);
-        if (decl instanceof TeleDecl.ClassMember field) references.append(field.classDef.concrete);
+        if (decl instanceof TeleDecl.ClassMember member) references.append(member.classDef.concrete);
       }
       case Command.Module module -> module.contents().forEach(this::accept);
       case Command cmd -> {}

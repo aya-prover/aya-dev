@@ -81,7 +81,7 @@ public interface StmtResolver {
         assert decl.ctx != null;
         var resolver = new ExprResolver(decl.ctx, ExprResolver.RESTRICTIVE);
         resolver.enterHead();
-        decl.fields.forEach(field -> {
+        decl.members.forEach(field -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
           resolveMemberSignature(field, bodyResolver, mCtx);
@@ -92,7 +92,7 @@ public interface StmtResolver {
           addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
         addReferences(info, new TyckOrder.Head(decl), resolver.reference().view()
-          .concat(decl.fields.map(TyckOrder.Head::new)));
+          .concat(decl.members.map(TyckOrder.Head::new)));
       }
       case TeleDecl.PrimDecl decl -> {
         resolveDeclSignature(decl, ExprResolver.RESTRICTIVE, info);
@@ -185,7 +185,7 @@ public interface StmtResolver {
     switch (stmt) {
       case Command.Module mod -> resolveBind(mod.contents(), info);
       case ClassDecl decl -> {
-        decl.fields.forEach(field -> resolveBind(field, info));
+        decl.members.forEach(field -> resolveBind(field, info));
         visitBind(decl.ref, decl.bindBlock(), info);
       }
       case TeleDecl.DataDecl decl -> {

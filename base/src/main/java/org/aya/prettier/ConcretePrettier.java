@@ -359,8 +359,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var prelude = MutableList.of(Doc.styled(KEYWORD, "class"));
         prelude.append(linkDef(decl.ref, CLAZZ));
         yield Doc.cat(Doc.sepNonEmpty(prelude),
-          Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.fields.view().map(this::decl))))),
+          Doc.emptyIf(decl.members.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
+            decl.members.view().map(this::decl))))),
           visitBindBlock(decl.bindBlock())
         );
       }

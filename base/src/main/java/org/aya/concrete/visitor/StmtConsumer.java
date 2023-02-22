@@ -19,7 +19,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
         if (decl instanceof TeleDecl<?> telescopic) visitTelescopic(telescopic);
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
-          case ClassDecl clazz -> clazz.fields.forEach(this);
+          case ClassDecl clazz -> clazz.members.forEach(this);
           case TeleDecl.FnDecl fn ->
             fn.body = fn.body.map(this, clauses -> clauses.map(cl -> cl.descent(this, this::apply)));
           case TeleDecl.DataCtor ctor -> {

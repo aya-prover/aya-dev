@@ -149,7 +149,7 @@ public final class StmtTycker extends TracedTycker {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope of " + decl.ref().name())));
     switch (decl) {
       case ClassDecl clazz -> {
-        var body = clazz.fields.map(field -> (MemberDef) tyck(field, tycker));
+        var body = clazz.members.map(field -> (MemberDef) tyck(field, tycker));
         // Invoke the constructor, so that `class.ref.core` is set.
         new ClassDef(clazz.ref, body);
       }
