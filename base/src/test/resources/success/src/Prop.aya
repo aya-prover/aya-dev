@@ -1,6 +1,6 @@
 open import Paths
 
-open struct Squash (A: Type): Prop
+open class Squash (A: Type): Prop
   | value: A
 
 open data Squash2 (A: Type): Prop

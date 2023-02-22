@@ -1,6 +1,6 @@
 // #4 in public repo
 
-struct TypeStruct : Type
+class TypeStruct
   | type : Type
 
 def setType (type' : Type) (ts : TypeStruct) : TypeStruct

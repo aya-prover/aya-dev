@@ -1,6 +1,9 @@
 // Some memorial code
 open import Paths
-open struct PseudoPath (A : I -> Type) (a : A 0) (b : A 1) : Type
+open class PseudoPath
+ | A : I -> Type
+ | a : A 0
+ | b : A 1
  | at (i : I) : A i
 
 def path {A : I -> Type} (p : Fn (i : I) -> A i)

@@ -11,7 +11,7 @@ def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
 
 // *** Types
 
-open struct EventT : Type 1
+open class EventT : Type 1
   | AgentT : Type => Unit
 
 def GetterT => EventT -> Type
@@ -26,7 +26,7 @@ def SetAgentT (E : Type) (T : EventT) : EventT
 def AgentT-inv : Invariant GetAgentT SetAgentT
   => \T E => ↑ idp
 
-open struct Event (T : EventT) : Type
+open class Event (T : EventT) : Type
   | agent : T.AgentT
 
 def Getter (GetT : GetterT) => Fn {T : EventT} (Event T) -> GetT T

@@ -1,4 +1,4 @@
-open struct PointedMagma {A : Type} : Type
+open class PointedMagma {A : Type} : Type
   | point : A
   | op : A -> A -> A
 

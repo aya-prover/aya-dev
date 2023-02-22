@@ -1,2 +1,2 @@
 prim I
-struct Test : I
+data Test : I

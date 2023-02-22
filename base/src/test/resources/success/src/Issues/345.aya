@@ -1,6 +1,7 @@
 open data Unit : Type | unit
 
-open struct Wrapped (A : Type) : Type
+open class Wrapped
+  | A : Type
 
 variable B : Type
 

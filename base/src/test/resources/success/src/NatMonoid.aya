@@ -3,11 +3,13 @@ open import Arith::Nat
 
 open data Unit | unit
 
-open struct Monoid { A : Type } ( op : A -> A -> A ): Type
-  | id ( x : Unit ) : A
+open class Monoid
+  | A : Type
+  | op : A -> A -> A
+  | id : A
   | assoc (a b c : A) : op (op a b) c = op a (op b c)
-  | id_r (a: A) : op a (id unit) = a
-  | id_l (a: A) : op (id unit) a = a
+  | id_r (a: A) : op a id = a
+  | id_l (a: A) : op id a = a
 
 def idpath {A : Type} (a : A) => idp {A} {a}
 def +-monoid => new Monoid (+) {

@@ -8,4 +8,3 @@ def f' g' | x => x
 def g' f' | x => x
 
 data D D
-struct S S

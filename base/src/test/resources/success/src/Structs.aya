@@ -1,6 +1,8 @@
 open import Arith::Nat
 
-open struct Pair (A : Type) (B : Type) : Type
+open class Pair
+  | A : Type
+  | B : Type
   | fst : A
   | snd : B
   | we-are-together : Sig A ** B => (fst, snd)
@@ -11,14 +13,16 @@ def test-nat-pair : Pair Nat Nat =>
 def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
   new Pair A B { | fst => a | snd => b }
 
-struct Pos1 (A : Type) : Type
+class Pos1
+  | A : Type
   | x : A
   | y : Nat
 
-struct Pos2 (B : Nat -> Type) : Type
+class Pos2
+  | B : Nat -> Type
   | x : Nat
   | y : B 0
 
-struct EmptyRecord : Type
+class EmptyRecord : Type
 def new-empty1 => new EmptyRecord
 def new-empty2 => new EmptyRecord {}

@@ -4,7 +4,7 @@ open data Data : Type 1
 
 def test-data : ↑ Data => ↑ mkData ↑ Unit
 
-open struct Struct : Type 1 | field : Type
+open class Struct | field : Type
 
 def test-struct : ↑ Struct
   => new ↑ Struct { | field => ↑ Unit }

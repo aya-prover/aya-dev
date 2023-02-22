@@ -1,4 +1,6 @@
-struct Vec2 (X : Type) (Y : Type) : Type
+class Vec2
+  | X : Type
+  | Y : Type
   | x : X
   | y : Y
 

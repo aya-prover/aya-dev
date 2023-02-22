@@ -6,7 +6,7 @@ def mk (a : Unit) : UnitPred a => blah
 def conjecture {a : Unit} Unit : UnitPred a
 | b => mk a
 
-open struct Wrapped (A : Type) : Type
+open class Wrapped | A : Type
 
 def test {B : Type} Unit : Wrapped B -> Unit
   | unit => \(x : Wrapped B) => unit

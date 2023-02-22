@@ -1,6 +1,6 @@
 open data Yes | yes
 
-open struct Test : Type
+open class Test
   | value : Yes
 
 def test => new Test { | value => yes }
