@@ -78,12 +78,10 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
       var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
       var telescopes = new DataDef.CtorTelescopes(conVar.core);
       return new Result.Default(telescopes.toConCall(conVar, 0), type);
-    } else if (var.core instanceof FieldDef || var.concrete instanceof TeleDecl.ClassMember) {
-      // the code runs to here because we are tycking a StructField in a StructDecl
-      // there should be two-stage check for this case:
-      //  - check the definition's correctness: happens here
-      //  - check the field value's correctness: happens in `visitNew` after the body was instantiated
-      var field = (DefVar<FieldDef, TeleDecl.ClassMember>) var;
+    } else if (var.core instanceof ClassDef.Member || var.concrete instanceof TeleDecl.ClassMember) {
+      // the code runs to here because we are checking a StructField within a StructDecl
+      // TODO: this needs to be refactored to make use of instance resolution
+      var field = (DefVar<ClassDef.Member, TeleDecl.ClassMember>) var;
       return new Result.Default(new RefTerm.Field(field), Def.defType(field));
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";

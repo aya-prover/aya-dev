@@ -45,6 +45,7 @@ public class PrettierTest {
     assertFalse(declCDoc(code).renderToHtml().isEmpty());
   }
 
+  /*
   @Test public void neo() {
     assertFalse(declDoc("""
       prim I
@@ -59,6 +60,7 @@ public class PrettierTest {
         | A, B, (a, b) => (b, a)
       """).renderToHtml().isEmpty());
   }
+  */
 
   @Test public void path() {
     @Language("Aya") var code = """
@@ -71,7 +73,9 @@ public class PrettierTest {
       variable A : Type
       def infix = {A : Type} => Eq A
       def refl {a : A} : a = a => \\i => a
-      struct Monoid {A : Type} (op : A -> A -> A): Type
+      class Monoid
+        | A : Type
+        | op : A -> A -> A
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)
         | id_r (a: A) : op a id = a

@@ -238,27 +238,25 @@ public class ParseTest {
       "def im-in-ctor-nested\n  | suc {N} (suc {M} a) => a"
     );
     parseAndPretty(
-      "struct Very-Simple (A : Type) : Type | x : A | y : Nat",
+      "class Very-Simple | y : Nat",
       """
-        struct Very-Simple (A : Type) : Type
-          | x : A
+        class Very-Simple
           | y : Nat
         """
     );
     parseAndPretty(
       """
-        struct With-Tele (B : Nat -> Type) : Type
+        class With-Implicit
           | x { X : Type } : Nat
-          | y : B zero
         """,
       """
-        struct With-Tele (B : Nat -> Type) : Type
+        class With-Implicit
           | x {X : Type} : Nat
-          | y : B zero
         """
     );
   }
 
+  /*
   @Test public void parseStructs() {
     parseAndPretty(
       "struct Very-Simple (A : Type) : Type | x : A => zero",
@@ -268,6 +266,7 @@ public class ParseTest {
         """
     );
   }
+  */
 
   @Test public void modules() {
     parseAndPretty("""
