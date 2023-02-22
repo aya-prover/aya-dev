@@ -83,7 +83,7 @@ public record AyaProducer(
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
+  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -225,7 +225,7 @@ public record AyaProducer(
     if (node.is(FN_DECL)) return fnDecl(node);
     if (node.is(PRIM_DECL)) return primDecl(node);
     if (node.is(DATA_DECL)) return dataDecl(node, additional);
-    if (node.is(STRUCT_DECL)) return classDecl(node, additional);
+    if (node.is(CLASS_DECL)) return classDecl(node, additional);
     return unreachable(node);
   }
 
@@ -352,14 +352,14 @@ public record AyaProducer(
     var info = declInfo(node, ModifierParser.DECL_FILTER);
     var name = info.checkName(this, true);
     if (name == null) return null;
-    var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
+    var members = node.childrenOfType(CLASS_MEMBER).map(this::classMember).toImmutableSeq();
     var personality = info.modifier.personality().data();
-    var decl = new ClassDecl(info.info, info.name, personality, fields);
+    var decl = new ClassDecl(info.info, name, personality, members);
     giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 
-  public @NotNull TeleDecl.ClassMember structField(GenericNode<?> node) {
+  public @NotNull TeleDecl.ClassMember classMember(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
     var name = info.checkName(this, true);
