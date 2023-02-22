@@ -27,7 +27,7 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
         if (decl instanceof TeleDecl.DataCtor ctor) accept(ctor.clauses);
         // constructor and field should always depend on their data/struct header.
         if (decl instanceof TeleDecl.DataCtor ctor) references.append(ctor.dataRef.concrete);
-        if (decl instanceof TeleDecl.StructField field) references.append(field.structRef.concrete);
+        if (decl instanceof TeleDecl.ClassMember field) references.append(field.classDef.concrete);
       }
       case Command.Module module -> module.contents().forEach(this::accept);
       case Command cmd -> {}
