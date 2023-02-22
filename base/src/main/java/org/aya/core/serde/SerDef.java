@@ -5,7 +5,6 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.*;
@@ -86,7 +85,6 @@ public sealed interface SerDef extends Serializable {
     @NotNull QName self,
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull SerTerm result,
-    @NotNull Option<SerTerm> body,
     boolean coerce
   ) implements SerDef {
     @Override

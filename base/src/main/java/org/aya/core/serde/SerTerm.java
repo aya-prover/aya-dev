@@ -3,11 +3,9 @@
 package org.aya.core.serde;
 
 import kala.collection.Seq;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.SortKind;
@@ -108,10 +106,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record New(@NotNull SerTerm.Struct call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
+  record New(@NotNull SerTerm.Class inner) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new NewTerm(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
-        Tuple.of(state.resolve(k), v.de(state)))));
+      return new NewTerm(inner.de(state));
     }
   }
 
@@ -146,7 +143,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Struct(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+  record Class(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull ClassCall de(@NotNull DeState state) {
       return new ClassCall(state.resolve(name), data.ulift, data.de(state));
     }
@@ -191,14 +188,12 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Access(
     @NotNull SerTerm of,
     @NotNull SerDef.QName ref,
-    @NotNull ImmutableSeq<@NotNull SerArg> structArgs,
-    @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
+    @NotNull ImmutableSeq<@NotNull SerArg> args
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new FieldTerm(
         of.de(state), state.resolve(ref),
-        structArgs.map(arg -> arg.de(state)),
-        fieldArgs.map(arg -> arg.de(state)));
+        args.map(arg -> arg.de(state)));
     }
   }
 
