@@ -7,6 +7,8 @@ import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 public sealed interface ModulePath {
   int size();
   final class This implements ModulePath {
@@ -34,7 +36,7 @@ public sealed interface ModulePath {
     }
   }
 
-  record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
+  record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath, Serializable {
     public Qualified(String @NotNull ... ids) {
       this(ImmutableSeq.of(ids));
     }
