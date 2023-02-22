@@ -84,8 +84,7 @@ public sealed interface SerDef extends Serializable {
   record Field(
     @NotNull QName struct,
     @NotNull QName self,
-    @NotNull ImmutableSeq<SerTerm.SerParam> ownerTele,
-    @NotNull ImmutableSeq<SerTerm.SerParam> selfTele,
+    @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull SerTerm result,
     @NotNull Option<SerTerm> body,
     boolean coerce

@@ -3,8 +3,11 @@
 package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Term;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 /**
  * Top-level definitions.
@@ -29,5 +32,10 @@ public sealed abstract class TopLevelDef<Ret extends Term> implements Def permit
 
   @Override public @NotNull Ret result() {
     return result;
+  }
+
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    telescope.forEach(p -> p.descentConsume(f));
+    f.accept(result);
   }
 }
