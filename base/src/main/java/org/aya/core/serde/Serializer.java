@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
@@ -162,8 +164,8 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm.Clazz serializeClassCall(@NotNull ClassCall classCall) {
     return new SerTerm.Clazz(
-      state.def(classCall.ref()),
-      serializeCall(classCall.ulift(), classCall.args()));
+      state.def(classCall.ref()), classCall.ulift(),
+      ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
   }
 
   private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {

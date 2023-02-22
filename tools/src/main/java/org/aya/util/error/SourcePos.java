@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -114,10 +114,11 @@ public record SourcePos(
     return endLine - startLine + 1;
   }
 
-  public @NotNull SourcePos sourcePosForSubExpr(
-    @NotNull SourceFile sourceFile,
-    @NotNull SeqView<SourcePos> params
-  ) {
+  public @NotNull SourcePos sourcePosForSubExpr(@NotNull SeqView<SourcePos> params) {
+    return sourcePosForSubExpr(file, params);
+  }
+
+  public @NotNull SourcePos sourcePosForSubExpr(@NotNull SourceFile sourceFile, @NotNull SeqView<SourcePos> params) {
     var restParamSourcePos = params.fold(SourcePos.NONE, (acc, it) -> {
       if (acc == SourcePos.NONE) return it;
       return new SourcePos(sourceFile, acc.tokenStartIndex(), it.tokenEndIndex(),

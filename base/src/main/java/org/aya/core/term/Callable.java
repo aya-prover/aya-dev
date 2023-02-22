@@ -29,7 +29,7 @@ public sealed interface Callable extends Term permits Callable.Common, FieldTerm
     int ulift();
   }
 
-  sealed interface Common extends Callable permits Tele, ClassCall {
+  sealed interface Common extends Callable permits Tele {
     @Override @NotNull DefVar<? extends GenericDef, ? extends CommonDecl> ref();
     int ulift();
   }

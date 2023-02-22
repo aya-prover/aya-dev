@@ -183,7 +183,7 @@ public class CorePrettier extends BasePrettier<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.args(), outer);
+      case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.orderedArgs(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
         ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)

@@ -109,11 +109,20 @@ public final class StmtTycker extends TracedTycker {
         var body = decl.body.map(clause -> (CtorDef) tyck(clause, tycker));
         yield new DataDef(decl.ref, signature.param(), signature.result(), body);
       }
+      case TeleDecl.ClassMember member -> {
+        if (member.ref.core != null) yield member.ref.core;
+        var signature = member.signature;
+        assert signature != null; // already handled in the entrance of this method
+        var classDef = member.classDef;
+        var result = signature.result();
+        // var body = member.body.map(e -> tycker.inherit(e, result).wellTyped());
+        // ^ TODO: what about this body?
+        yield new MemberDef(member.ref, classDef, signature.param(), result, member.coerce);
+      }
       // Do nothing, these are just header.
       case TeleDecl.PrimDecl decl -> decl.ref.core;
       case ClassDecl decl -> decl.ref.core;
       case TeleDecl.DataCtor ctor -> ctor.ref.core;
-      case TeleDecl.ClassMember field -> field.ref.core;
     };
   }
 
@@ -204,12 +213,12 @@ public final class StmtTycker extends TracedTycker {
         tycker.ctx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> checkCtor(tycker, ctor);
-      case TeleDecl.ClassMember field -> {
-        if (field.signature != null) break;
-        var tele = tele(tycker, field.telescope, null);
-        assert field.result != null;
-        var result = tycker.zonk(tycker.ty(field.result));
-        field.signature = new Def.Signature<>(tele, result);
+      case TeleDecl.ClassMember member -> {
+        if (member.signature != null) break;
+        var tele = tele(tycker, member.telescope, null);
+        assert member.result != null;
+        var result = tycker.zonk(tycker.ty(member.result));
+        member.signature = new Def.Signature<>(tele, result);
       }
     }
     tracing(TreeBuilder::reduce);

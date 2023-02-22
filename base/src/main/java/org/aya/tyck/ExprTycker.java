@@ -6,13 +6,11 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.decl.Decl;
-import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
@@ -29,7 +27,6 @@ import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
-import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
@@ -99,50 +96,13 @@ public final class ExprTycker extends PropTycker {
         var struct = whnf(instImplicits(synthesize(structExpr), structExpr.sourcePos()).wellTyped());
         if (!(struct instanceof ClassCall classCall))
           yield fail(structExpr, struct, BadTypeError.structCon(state, neu, struct));
-        var structRef = classCall.ref();
-        var subst = new Subst();
-
-        var fields = MutableList.<Tuple2<DefVar<MemberDef, TeleDecl.ClassMember>, Term>>create();
-        var missing = MutableList.<AnyVar>create();
-        var conFields = MutableMap.from(neu.fields().view().map(t -> Tuple.of(t.name().data(), t)));
-
-        for (var defField : structRef.core.members) {
-          var fieldRef = defField.ref();
-          var conFieldOpt = conFields.remove(fieldRef.name());
-          if (conFieldOpt.isEmpty()) {
-            // if (defField.body.isEmpty())
-            missing.append(fieldRef); // no value available, skip and prepare error reporting
-            // else {
-            //   // use default value from defField
-            //   var field = defField.body.get().subst(subst, classCall.ulift());
-            //   fields.append(Tuple.of(fieldRef, field));
-            //   subst.add(fieldRef, field);
-            // }
-            continue;
-          }
-          var conField = conFieldOpt.get();
-          conField.resolvedField().set(fieldRef);
-          var type = Def.defType(fieldRef).subst(subst, classCall.ulift());
-          var telescope = Term.Param.subst(fieldRef.core.telescope, subst, classCall.ulift());
-          var bindings = conField.bindings();
-          if (telescope.sizeLessThan(bindings.size())) {
-            // TODO: Maybe it's better for field to have a SourcePos?
-            yield fail(neu, classCall, new FieldError.ArgMismatch(neu.sourcePos(), defField, bindings.size()));
-          }
-          var fieldExpr = bindings.zipView(telescope).foldRight(conField.body(), (pair, lamExpr) ->
-            new Expr.Lambda(conField.body().sourcePos(),
-              new Expr.Param(pair.component1().sourcePos(),
-                pair.component1().data(), pair.component2().explicit()), lamExpr));
-          var field = inherit(fieldExpr, type).wellTyped();
-          fields.append(Tuple.of(fieldRef, field));
-          subst.add(fieldRef, field);
+        var theCall = classCall;
+        for (var member : neu.fields()) {
+          var result = theCall.addMember(member, this);
+          if (result.isErr()) yield fail(neu, result.getErr());
+          theCall = result.get();
         }
-
-        if (missing.isNotEmpty())
-          yield fail(neu, classCall, new FieldError.MissingField(neu.sourcePos(), missing.toImmutableSeq()));
-        if (conFields.isNotEmpty())
-          yield fail(neu, classCall, new FieldError.NoSuchField(neu.sourcePos(), conFields.keysView().toImmutableSeq()));
-        yield new Result.Default(new NewTerm(classCall), classCall);
+        yield new Result.Default(new NewTerm(theCall), theCall);
       }
       case Expr.Proj proj -> {
         var struct = proj.tup();

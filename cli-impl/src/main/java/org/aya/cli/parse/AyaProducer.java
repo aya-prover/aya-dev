@@ -559,7 +559,7 @@ public record AyaProducer(
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
       var newBody = node.peekChild(NEW_BODY);
-      return new Expr.New(pos, false, struct,
+      return new Expr.New(pos, struct,
         newBody == null
           ? ImmutableSeq.empty()
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
@@ -568,7 +568,7 @@ public record AyaProducer(
               .map(b -> b.map($ -> LocalVar.from(b)))
               .toImmutableSeq();
             var body = expr(arg.child(EXPR));
-            return new Expr.Field(id, bindings, body, MutableValue.create());
+            return new Expr.Field<>(sourcePosOf(arg), id, bindings, body, MutableValue.create());
           }).toImmutableSeq());
     }
     if (node.is(PI_EXPR)) return Expr.buildPi(pos,

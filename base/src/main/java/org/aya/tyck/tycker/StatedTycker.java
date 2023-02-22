@@ -70,7 +70,8 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
     } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
       return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
     } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
-      // return defCall((DefVar<ClassDef, ClassDecl>) var, StructCall::new);
+      // return defCall((DefVar<ClassDef, ClassDecl>) var, ClassCall::new);
+
       throw new UnsupportedOperationException("TODO");
     } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;

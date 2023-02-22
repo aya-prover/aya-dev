@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Consumer;
 
 public final class ClassDef implements AyaDocile, GenericDef {
-  public final DefVar<ClassDef, ClassDecl> ref;
-  public final ImmutableSeq<MemberDef> members;
+  public final @NotNull DefVar<ClassDef, ClassDecl> ref;
+  public final @NotNull ImmutableSeq<MemberDef> members;
 
   public ClassDef(@NotNull DefVar<ClassDef, ClassDecl> ref, @NotNull ImmutableSeq<MemberDef> members) {
     ref.core = this;

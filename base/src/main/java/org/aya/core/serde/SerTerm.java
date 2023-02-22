@@ -3,9 +3,11 @@
 package org.aya.core.serde;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.SortKind;
@@ -143,9 +145,12 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Clazz(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
+  record Clazz(@NotNull SerDef.QName name, int ulift,
+               @NotNull ImmutableMap<SerDef.QName, SerArg> members) implements SerTerm {
     @Override public @NotNull ClassCall de(@NotNull DeState state) {
-      return new ClassCall(state.resolve(name), data.ulift, data.de(state));
+      return new ClassCall(state.resolve(name), ulift,
+        ImmutableMap.from(members.view().map((k, v) ->
+          Tuple.of(state.resolve(k), v.de(state)))));
     }
   }
 
