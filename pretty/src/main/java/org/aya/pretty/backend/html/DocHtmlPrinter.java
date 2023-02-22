@@ -55,6 +55,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
+    if (!config.opt(SeparateStyle, false)) return;
     if (!config.opt(StyleCode, false)) return;
     cursor.invisibleContent("<style>");
     // colors are defined in global scope `:root`

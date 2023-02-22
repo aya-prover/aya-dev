@@ -59,10 +59,11 @@ public class Main extends MainArgs implements Callable<Integer> {
     }
     replConfig.close();
     var pretty = prettyStage == null
-      ? (outputPath != null ? CompilerFlags.prettyInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle) : null)
+      ? (outputPath != null ? CompilerFlags.prettyInfoFromOutput(outputPath, renderOptions, prettyNoCodeStyle, prettyInlineCodeStyle) : null)
       : new CompilerFlags.PrettyInfo(
         asciiOnly,
         prettyNoCodeStyle,
+        prettyInlineCodeStyle,
         prettyStage,
         prettyFormat,
         prettierOptions,

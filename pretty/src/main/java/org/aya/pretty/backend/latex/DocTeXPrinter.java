@@ -30,6 +30,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   protected void renderStyleCommand(@NotNull Cursor cursor) {
+    if (!config.opt(SeparateStyle, false)) return;
     if (!config.opt(StyleCode, false)) return;
     // colors are converted to `\definecolor` in package xcolor.
     var colors = TeXStylist.colorsToTex(config.getStylist().colorScheme);

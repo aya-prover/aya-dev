@@ -152,7 +152,7 @@ public class RenderOptions {
       config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
       config.set(StringPrinterConfig.StyleOptions.HeaderCode, headerCode);
       config.set(StringPrinterConfig.StyleOptions.StyleCode, styleCode);
-      config.set(StringPrinterConfig.StyleOptions.SeparateStyle, styleCode);
+      config.set(StringPrinterConfig.StyleOptions.SeparateStyle, separateStyle);
       config.set(StringPrinterConfig.StyleOptions.AyaFlavored, true);
       return config;
     }
