@@ -45,18 +45,18 @@ public interface PrinterConfig {
   interface Options<T> {
   }
 
+  enum PageOptions implements Options<Integer> {
+    PageWidth, PageHeight,
+  }
+
   /**
    * Basic configure for other configs to easily extend config flags.
    */
   class Basic<S extends Stylist> implements PrinterConfig {
     protected final @NotNull MutableMap<Options<?>, Object> options = MutableMap.create();
-    private final int pageWidth;
-    private final int pageHeight;
     private final @NotNull S stylist;
 
-    public Basic(int pageWidth, int pageHeight, @NotNull S stylist) {
-      this.pageWidth = pageWidth;
-      this.pageHeight = pageHeight;
+    public Basic(@NotNull S stylist) {
       this.stylist = stylist;
     }
 
@@ -73,11 +73,11 @@ public interface PrinterConfig {
     }
 
     @Override public int getPageWidth() {
-      return pageWidth;
+      return opt(PageOptions.PageWidth, INFINITE_SIZE);
     }
 
     @Override public int getPageHeight() {
-      return pageHeight;
+      return opt(PageOptions.PageHeight, INFINITE_SIZE);
     }
   }
 }

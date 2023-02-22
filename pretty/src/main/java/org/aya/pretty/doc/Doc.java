@@ -7,8 +7,10 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
+import org.aya.pretty.backend.html.Html5Stylist;
 import org.aya.pretty.backend.latex.DocTeXPrinter;
 import org.aya.pretty.backend.md.DocMdPrinter;
+import org.aya.pretty.backend.md.MdStylist;
 import org.aya.pretty.backend.string.DebugStylist;
 import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.backend.string.StringPrinterConfig;
@@ -52,12 +54,14 @@ public sealed interface Doc extends Docile {
 
   //region Doc APIs
   default @NotNull String renderToString(@NotNull StringPrinterConfig<?> config) {
-    var printer = new StringPrinter<>();
-    return render(printer, config);
+    return render(new StringPrinter<>(), config);
   }
 
   default @NotNull String renderToString(int pageWidth, boolean unicode) {
-    return renderToString(new StringPrinterConfig<>(DebugStylist.DEFAULT, pageWidth, unicode));
+    var config = new StringPrinterConfig<>(DebugStylist.DEFAULT);
+    config.set(PrinterConfig.PageOptions.PageWidth, pageWidth);
+    config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
+    return renderToString(config);
   }
 
   default @NotNull String renderToTerminal() {
@@ -65,7 +69,10 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToTerminal(int pageWidth, boolean unicode) {
-    return render(new DocTermPrinter(), new DocTermPrinter.Config(AdaptiveCliStylist.INSTANCE, pageWidth, unicode));
+    var config = new DocTermPrinter.Config(AdaptiveCliStylist.INSTANCE);
+    config.set(PrinterConfig.PageOptions.PageWidth, pageWidth);
+    config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
+    return render(new DocTermPrinter(), config);
   }
 
   default @NotNull String renderToHtml() {
@@ -73,15 +80,26 @@ public sealed interface Doc extends Docile {
   }
 
   default @NotNull String renderToHtml(boolean withHeader) {
-    return render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(withHeader));
+    var config = new DocHtmlPrinter.Config(Html5Stylist.DEFAULT);
+    config.set(StringPrinterConfig.StyleOptions.HeaderCode, withHeader);
+    config.set(StringPrinterConfig.StyleOptions.StyleCode, withHeader);
+    config.set(StringPrinterConfig.StyleOptions.SeparateStyle, withHeader);
+    config.set(StringPrinterConfig.TextOptions.Unicode, true);
+    return render(new DocHtmlPrinter<>(), config);
   }
 
   default @NotNull String renderToMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(false));
+    return render(new DocMdPrinter(), new DocMdPrinter.Config(MdStylist.DEFAULT));
   }
 
   default @NotNull String renderToAyaMd() {
-    return render(new DocMdPrinter(), new DocMdPrinter.Config(true));
+    var config = new DocMdPrinter.Config(MdStylist.DEFAULT);
+    config.set(StringPrinterConfig.StyleOptions.AyaFlavored, true);
+    config.set(StringPrinterConfig.StyleOptions.HeaderCode, true);
+    config.set(StringPrinterConfig.StyleOptions.StyleCode, true);
+    config.set(StringPrinterConfig.StyleOptions.SeparateStyle, true);
+    config.set(StringPrinterConfig.TextOptions.Unicode, true);
+    return render(new DocMdPrinter(), config);
   }
 
   default @NotNull String renderToTeX() {

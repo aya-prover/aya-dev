@@ -41,7 +41,7 @@ public class ReplConfig implements AutoCloseable {
     if (renderOptions == null) renderOptions = new RenderOptions();
     renderOptions.checkDeserialization();
     try {
-      renderOptions.stylist(RenderOptions.OutputTarget.Terminal);
+      renderOptions.stylist(RenderOptions.OutputTarget.Unix);
     } catch (IOException | JsonParseException e) {
       System.err.println("Failed to load stylist from config file, using default stylist instead.");
     }

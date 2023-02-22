@@ -18,15 +18,7 @@ public class StringPrinterConfig<S extends StringStylist> extends PrinterConfig.
     StyleCode,
   }
 
-  public StringPrinterConfig(@NotNull S stylist, int pageWidth, boolean unicode) {
-    this(stylist, pageWidth, unicode, false, false);
-  }
-
-  public StringPrinterConfig(@NotNull S stylist, int pageWidth, boolean unicode, boolean headerCode, boolean styleCode) {
-    super(pageWidth, INFINITE_SIZE, stylist);
-    set(TextOptions.Unicode, unicode);
-    set(StyleOptions.HeaderCode, headerCode);
-    set(StyleOptions.StyleCode, styleCode);
-    set(StyleOptions.SeparateStyle, styleCode);
+  public StringPrinterConfig(@NotNull S stylist) {
+    super(stylist);
   }
 }

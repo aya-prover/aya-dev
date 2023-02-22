@@ -153,12 +153,8 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {
-    public Config(boolean withHeader) {
-      this(Html5Stylist.DEFAULT, withHeader, true);
-    }
-
-    public Config(@NotNull Html5Stylist stylist, boolean headerCode, boolean styleCode) {
-      super(stylist, INFINITE_SIZE, true, headerCode, styleCode);
+    public Config(@NotNull Html5Stylist stylist) {
+      super(stylist);
     }
   }
 }

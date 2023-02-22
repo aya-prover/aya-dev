@@ -25,8 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertLinesMatch;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AyaMdParserTest {
   public final static @NotNull Path TEST_DIR = Path.of("src", "test", "resources", "literate");
@@ -130,12 +129,12 @@ public class AyaMdParserTest {
       oneCase.outMdFile()
     ), null);
     var actualMd = Files.readString(oneCase.outMdFile());
-    assertLinesMatch(trim(expectedMd).lines(), trim(actualMd).lines());
+    assertEquals(trim(expectedMd), trim(actualMd));
 
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var actualTexWithHeader = new RenderOptions().render(RenderOptions.OutputTarget.LaTeX,
-      doc, true, true, true);
+      doc, new RenderOptions.Opts(true, true, true, true, -1));
     assertFalse(actualTexInlinedStyle.isEmpty());
     assertFalse(actualTexWithHeader.isEmpty());
   }

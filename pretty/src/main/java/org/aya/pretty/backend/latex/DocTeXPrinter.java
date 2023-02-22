@@ -142,11 +142,11 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    */
   public static class Config extends StringPrinterConfig<TeXStylist> {
     public Config() {
-      this(TeXStylist.DEFAULT, false, false);
+      this(TeXStylist.DEFAULT);
     }
 
-    public Config(@NotNull TeXStylist stylist, boolean headerCode, boolean styleCode) {
-      super(stylist, INFINITE_SIZE, false, headerCode, styleCode);
+    public Config(@NotNull TeXStylist stylist) {
+      super(stylist);
     }
   }
 }

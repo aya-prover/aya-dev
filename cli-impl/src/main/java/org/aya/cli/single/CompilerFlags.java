@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,10 @@ public record CompilerFlags(
     @NotNull RenderOptions renderOptions,
     @Nullable String prettyDir
   ) {
+    public @NotNull RenderOptions.Opts renderOpts(boolean headerCode) {
+      return new RenderOptions.Opts(headerCode, !prettyNoCodeStyle,
+        !prettyNoCodeStyle, !ascii, StringPrinterConfig.INFINITE_SIZE);
+    }
   }
 
   public record Message(
