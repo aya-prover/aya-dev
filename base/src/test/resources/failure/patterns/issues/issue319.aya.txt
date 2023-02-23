@@ -8,24 +8,10 @@ In file $FILE:5:4 ->
 Error: Unhandled case:
          suc _, suc _, suc zero, zero
          suc _, suc _, suc zero, suc zero
-         suc _, suc _, suc zero, suc (suc zero)
-         suc _, suc _, suc zero, suc (suc (suc zero))
-         suc _, suc _, suc zero, suc (suc (suc (suc ...)))
-         suc _, suc _, suc (suc zero), zero
-         suc _, suc _, suc (suc zero), suc zero
-         suc _, suc _, suc (suc zero), suc (suc zero)
-         suc _, suc _, suc (suc zero), suc (suc (suc zero))
-         suc _, suc _, suc (suc zero), suc (suc (suc (suc ...)))
-         suc _, suc _, suc (suc (suc zero)), zero
-         suc _, suc _, suc (suc (suc zero)), suc zero
-         suc _, suc _, suc (suc (suc zero)), suc (suc zero)
-         suc _, suc _, suc (suc (suc zero)), suc (suc (suc zero))
-         suc _, suc _, suc (suc (suc zero)), suc (suc (suc (suc ...)))
-         suc _, suc _, suc (suc (suc (suc ...))), zero
-         suc _, suc _, suc (suc (suc (suc ...))), suc zero
-         suc _, suc _, suc (suc (suc (suc ...))), suc (suc zero)
-         suc _, suc _, suc (suc (suc (suc ...))), suc (suc (suc zero))
-         suc _, suc _, suc (suc (suc (suc ...))), suc (suc (suc (suc ...)))
+         suc _, suc _, suc zero, suc (suc ...)
+         suc _, suc _, suc (suc ...), zero
+         suc _, suc _, suc (suc ...), suc zero
+         suc _, suc _, suc (suc ...), suc (suc ...)
 
 1 error(s), 0 warning(s).
 What are you doing?
