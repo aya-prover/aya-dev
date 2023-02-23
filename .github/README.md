@@ -24,6 +24,7 @@ Aya is under active development, so please expect bugs, usability or performance
   similar to a "bounded" cubical subtype. We plan to switch to Cartesian soon.
   + Implementation prototype of De Morgan cubical: [Guest0x0].
   + Demonstration of higher inductive types: [3-torus] (three-dimensional torus!!).
+  + Demonstration of [higher-inductive-inductive-recursive types][hiir].
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
@@ -76,6 +77,7 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/Tree/RedBlack/Direct.aya
 [3-torus]: ../base/src/test/resources/success/common/src/Spaces/Torus/T3.aya
+[hiir]: ../base/src/test/resources/success/common/src/TypeTheory/Thorsten.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
