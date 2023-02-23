@@ -63,7 +63,7 @@ public final class PatClassifier extends StatedTycker {
     var classifier = new PatClassifier(reporter, builder, state, pos);
     var cl = classifier.classifyN(new Subst(), telescope.view(), clauses.view()
       .mapIndexed((i, clause) -> new Indexed<>(clause.patterns().view().map(Arg::term), i))
-      .toImmutableSeq(), 4);
+      .toImmutableSeq(), 2);
     var p = cl.partition(c -> c.cls().isEmpty());
     var missing = p.component1();
     if (missing.isNotEmpty()) reporter.report(new ClausesProblem.MissingCase(pos, missing));

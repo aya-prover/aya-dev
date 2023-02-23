@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000
  */
-public record IgnoringReporter() implements Reporter {
-  public static final @NotNull IgnoringReporter INSTANCE = new IgnoringReporter();
+public enum IgnoringReporter implements Reporter {
+  INSTANCE;
+
   @Override public void report(@NotNull Problem problem) {
   }
 }

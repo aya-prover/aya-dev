@@ -16,12 +16,11 @@ import java.util.regex.Pattern;
 /**
  * <a href="https://github.com/commonmark/commonmark-java/blob/main/commonmark-ext-image-attributes/src/main/java/org/commonmark/ext/image/attributes/internal/ImageAttributesDelimiterProcessor.java">...</a>
  */
-public class CodeAttrProcessor implements DelimiterProcessor {
-  public static final @NotNull CodeAttrProcessor INSTANCE = new CodeAttrProcessor();
+public enum CodeAttrProcessor implements DelimiterProcessor {
+  INSTANCE;
+
   private static final @NotNull Pattern DELIM = Pattern.compile("[\\s,;]+");
   private static final @NotNull Pattern EQ = Pattern.compile("=");
-
-  private CodeAttrProcessor() {}
 
   public static class Attr extends CustomNode implements Delimited {
     public final @NotNull CodeOptions options;
