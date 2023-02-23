@@ -23,6 +23,6 @@ class Pos2
   | x : Nat
   | y : B 0
 
-class EmptyRecord : Type
+class EmptyRecord
 def new-empty1 => new EmptyRecord
 def new-empty2 => new EmptyRecord {}

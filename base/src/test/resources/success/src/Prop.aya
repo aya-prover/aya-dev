@@ -1,9 +1,11 @@
 open import Paths
 
-open class Squash (A: Type): Prop
+open class Squash
+  | A : Type
   | value: A
 
-open data Squash2 (A: Type): Prop
+open data Squash2
+  | A : Type
   | squash A
 
 def squashElim {A: Type} {P: Prop} (f: A -> P) (squash: Squash A): P => f squash.value

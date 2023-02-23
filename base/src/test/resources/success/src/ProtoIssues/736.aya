@@ -1,4 +1,5 @@
-open class PointedMagma {A : Type} : Type
+open class PointedMagma
+  | A : Type
   | point : A
   | op : A -> A -> A
 
