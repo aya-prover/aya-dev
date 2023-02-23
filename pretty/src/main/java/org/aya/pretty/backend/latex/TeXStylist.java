@@ -22,11 +22,11 @@ public class TeXStylist extends ClosingStylist {
   public static final @NotNull TeXStylist DEFAULT = new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT, false);
   public static final @NotNull TeXStylist DEFAULT_KATEX = new TeXStylist(AyaColorScheme.INTELLIJ, AyaStyleFamily.DEFAULT, true);
 
-  public final boolean KaTeX;
+  public final boolean isKaTeX;
 
-  public TeXStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily, boolean KaTeX) {
+  public TeXStylist(@NotNull ColorScheme colorScheme, @NotNull StyleFamily styleFamily, boolean isKaTeX) {
     super(colorScheme, styleFamily);
-    this.KaTeX = KaTeX;
+    this.isKaTeX = isKaTeX;
   }
 
   @Override protected @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer) {
@@ -48,7 +48,7 @@ public class TeXStylist extends ClosingStylist {
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     var cmd = "\\%s%s{%06x}{".formatted(
       background ? "colorbox" : "textcolor",
-      KaTeX ? "" : "[HTML]",
+      isKaTeX ? "" : "[HTML]",
       rgb);
     return new StyleToken(cmd, "}", false);
   }

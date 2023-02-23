@@ -126,8 +126,8 @@ public sealed interface Doc extends Docile {
   //region Doc Variants
 
   /** The empty document; conceptually the unit of 'Cat' */
-  record Empty() implements Doc {
-    static final @NotNull Empty INSTANCE = new Empty();
+  enum Empty implements Doc {
+    INSTANCE;
 
     @Override public @NotNull SeqLike<Doc> asSeq() {
       return Seq.empty();
@@ -187,8 +187,8 @@ public sealed interface Doc extends Docile {
   /**
    * Hard line break
    */
-  record Line() implements Doc {
-    public static final @NotNull Line INSTANCE = new Line();
+  enum Line implements Doc {
+    INSTANCE;
   }
 
   /**

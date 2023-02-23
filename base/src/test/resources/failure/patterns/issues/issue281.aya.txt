@@ -7,9 +7,7 @@ In file $FILE:5:4 ->
 
 Error: Unhandled case:
          {zero}, {suc zero}
-         {zero}, {suc (suc zero)}
-         {zero}, {suc (suc (suc zero))}
-         {zero}, {suc (suc (suc (suc ...)))}
+         {zero}, {suc (suc ...)}
 
 In file $FILE:9:3 ->
 

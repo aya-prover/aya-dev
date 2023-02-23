@@ -64,7 +64,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\textbackslash"),
+    Tuple.of("\\", "\\backslash"),
     Tuple.of("\\/", "\\lor"),
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
@@ -101,9 +101,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
-        if (!config.KaTeX()) cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\(");
         cursor.visibleContent(commandMapping.get(k));
-        if (!config.KaTeX()) cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\)");
         return;
       }
     }
@@ -113,7 +113,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override public @NotNull String makeIndent(int indent) {
     if (indent == 0) return "";
-    return (config.getStylist().KaTeX ? "\\hspace{" : "\\hspace*{") + indent * 0.5 + "em}";
+    return "\\hspace{" + indent * 0.5 + "em}";
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
@@ -122,7 +122,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\fbox{");
+    cursor.invisibleContent("\\texttt{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
   }
@@ -146,12 +146,12 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
       this(TeXStylist.DEFAULT);
     }
 
-    public boolean KaTeX() {
-      return getStylist().KaTeX;
+    public boolean katex() {
+      return getStylist().isKaTeX;
     }
 
     public boolean separateStyle() {
-      return opt(SeparateStyle, false) && !KaTeX();
+      return opt(SeparateStyle, false) && !katex();
     }
 
     public Config(@NotNull TeXStylist stylist) {

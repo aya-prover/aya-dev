@@ -1,0 +1,40 @@
+open import Paths
+open import Logic::HLevels
+open import Sets::Unit
+
+open data Con : Type
+| •
+| infix ▷ (Γ : Con) (Ty Γ)
+
+// Incomplete
+open data Ty (Γ : Con) : Type
+| Γ => U
+| Γ => Π (A : Ty Γ) (B : Ty (Γ ▷ A))
+| Γ => El' (A : Tm Γ U)
+| Γ => Subst {Δ : Con} (Ty Δ) (s : Tms Γ Δ)
+| SubId {A : Ty Γ} : Subst A (id idp) = A
+| SubAss {Δ Θ : Con} {A : Ty Θ} (θ : Tms Γ Δ) (δ : Tms Δ Θ) : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
+| SubU {Δ : Con} {δ : Tms Γ Δ} : Subst U δ = U
+| TyTrunc : isSet (Ty Γ)
+
+// Incomplete
+open data Tms (Γ : Con) (Δ : Con) : Type
+| Γ, • => ε
+| Γ, Δ ▷ A => infixr ∷ (δ : Tms Γ Δ) (Tm Γ (Subst A δ))
+| Γ, Δ => infix ∘ {Θ : Con} (Tms Θ Δ) (Tms Γ Θ) tighter =
+| Γ, Δ => π₁ {A : Ty Δ} (Tms Γ (Δ ▷ A))
+| Γ, Δ => id (Γ = Δ)
+| idl• {s : Tms Γ Δ} : id idp ∘ s = s
+| idr• {s : Tms Γ Δ} : s ∘ id idp = s
+| ass {Θ Ξ : Con} {ν : Tms Γ Ξ} {δ : Tms Ξ Θ} {σ : Tms Θ Δ} : (σ ∘ δ) ∘ ν = σ ∘ (δ ∘ ν)
+| π₁β {δ : Tms Γ Δ} {A : Ty Δ} (t : Tm Γ (Subst A δ)) : π₁ (δ ∷ t) = δ
+| Γ, Δ ▷ A => πη {δ : Tms Γ (Δ ▷ A)} : (π₁ δ ∷ π₂ δ) = δ
+| TmsTrunc : isSet (Tms Γ Δ)
+
+// Incomplete
+open data Tm (Γ : Con) (A : Ty Γ) : Type
+| Γ, Π A B => lam (Tm (Γ ▷ A) B)
+| Γ ▷ A, B => app (Tm Γ (Π A B))
+| Γ, Subst A δ => sub (Tm _ A)
+| Γ, Subst A (π₁ δ) => π₂ (Tms Γ (_ ▷ A))
+| TmTrunc : isSet (Tm Γ A)
