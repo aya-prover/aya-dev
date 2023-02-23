@@ -3,6 +3,7 @@
 package org.aya.cli.literate;
 
 import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -38,6 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
 public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
+  public static final @NotNull TokenSet SPECIAL_SYMBOL = TokenSet.orSet(
+    AyaParserDefinitionBase.UNICODES,
+    AyaParserDefinitionBase.MARKERS,
+    AyaParserDefinitionBase.DELIMITERS
+  );
+
   /**
    * @param sourceFile If not null, provide keyword highlights too
    * @return a list of {@link HighlightInfo}, no order was expected, the elements may be duplicated
@@ -60,8 +67,7 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
             r = new SymLit(LitKind.Keyword);
           else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
             r = new SymLit(LitKind.Comment);
-          else if (AyaParserDefinitionBase.UNICODES.contains(tokenType)
-            || AyaParserDefinitionBase.MARKERS.contains(tokenType))
+          else if (SPECIAL_SYMBOL.contains(tokenType))
             r = new SymLit(LitKind.SpecialSymbol);
           if (tokenType == TokenType.WHITE_SPACE) {
             var text = token.range().substring(file.sourceCode());

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ref;
 
@@ -9,16 +9,12 @@ public sealed interface GenerateKind {
   /**
    * Not generated
    */
-  final class None implements GenerateKind {
-    public static final @NotNull None INSTANCE = new None();
-
-    private None() {}
+  enum None implements GenerateKind {
+    INSTANCE;
   }
 
-  final class Anonymous implements GenerateKind {
-    public static final @NotNull Anonymous INSTANCE = new Anonymous();
-
-    private Anonymous() {}
+  enum Anonymous implements GenerateKind {
+    INSTANCE;
   }
 
   record Generalized(@NotNull GeneralizedVar origin) implements GenerateKind {

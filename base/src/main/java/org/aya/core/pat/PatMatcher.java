@@ -48,7 +48,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
   }
 
   private void match(@NotNull Arg<Pat> pat, @NotNull Arg<Term> term) throws Mismatch {
-    assert pat.explicit() == term.explicit();
+    assert pat.explicit() == term.explicit() : "Explicitness mismatch";
     match(pat.term(), term.term());
   }
 
@@ -125,7 +125,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
   }
 
   private void visitList(@NotNull ImmutableSeq<Arg<Pat>> lpats, @NotNull ImmutableSeq<Arg<Term>> terms) throws Mismatch {
-    assert lpats.sizeEquals(terms);
+    assert lpats.sizeEquals(terms) : "List size mismatch";
     lpats.forEachWithChecked(terms, this::match);
   }
 

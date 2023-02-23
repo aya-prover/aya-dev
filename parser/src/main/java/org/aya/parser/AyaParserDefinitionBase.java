@@ -121,4 +121,11 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
     AyaPsiElementTypes.LPATH,
     AyaPsiElementTypes.RPATH
   );
+
+  public static final @NotNull TokenSet DELIMITERS = TokenSet.create(
+    AyaPsiElementTypes.LPAREN,
+    AyaPsiElementTypes.RPAREN,
+    AyaPsiElementTypes.LBRACE,
+    AyaPsiElementTypes.RBRACE
+  );
 }

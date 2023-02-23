@@ -4,11 +4,13 @@ package org.aya.tyck.order;
 
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.Expr;
+import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Generalize;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.ExprConsumer;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +26,11 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
       case Decl decl -> {
         if (decl instanceof TeleDecl<?> proof) telescopic(proof);
         // for ctor: partial is a part of header
-        if (decl instanceof TeleDecl.DataCtor ctor) accept(ctor.clauses);
-        // constructor and member should always depend on their data/struct header.
+        if (decl instanceof TeleDecl.DataCtor ctor) {
+          ctor.patterns.forEach(p -> accept(p.term()));
+          accept(ctor.clauses);
+        }
+        // constructor and field should always depend on their data/struct header.
         if (decl instanceof TeleDecl.DataCtor ctor) references.append(ctor.dataRef.concrete);
         if (decl instanceof TeleDecl.ClassMember member) references.append(member.classDef.concrete);
       }
@@ -40,11 +45,18 @@ public record SigRefFinder(@NotNull MutableList<TyckUnit> references) implements
     if (proof.result != null) accept(proof.result);
   }
 
-  @Override public void pre(@NotNull Expr expr) {
-    if (expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> def && def.concrete != null) {
+  private void add(@NotNull AnyVar var) {
+    if (var instanceof DefVar<?, ?> def && def.concrete != null)
       references.append(def.concrete);
-    } else {
-      ExprConsumer.super.pre(expr);
-    }
+  }
+
+  @Override public void pre(@NotNull Expr expr) {
+    if (expr instanceof Expr.Ref ref) add(ref.resolvedVar());
+    ExprConsumer.super.pre(expr);
+  }
+
+  @Override public void pre(@NotNull Pattern pat) {
+    if (pat instanceof Pattern.Ctor ctor) add(ctor.resolved().data());
+    ExprConsumer.super.pre(pat);
   }
 }

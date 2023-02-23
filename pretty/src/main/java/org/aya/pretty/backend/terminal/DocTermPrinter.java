@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.terminal;
 
@@ -18,8 +18,8 @@ public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
   }
 
   public static class Config extends StringPrinterConfig<UnixTermStylist> {
-    public Config(@NotNull UnixTermStylist stylist, int pageWidth, boolean unicode) {
-      super(stylist, pageWidth, unicode);
+    public Config(@NotNull UnixTermStylist stylist) {
+      super(stylist);
     }
   }
 }

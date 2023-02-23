@@ -10,7 +10,7 @@ open data Ty (Γ : Con) : Type
   | Γ => U
   | Γ => Pi (A : Ty Γ) (B : Ty (Γ ▷ A))
   | Γ => El (A : Tm Γ U)
-  | Γ => T {∆ : Con} (Ty ∆) (s : Tms Γ ∆)
+  | Γ => T {Δ : Con} (Ty Δ) (s : Tms Γ Δ)
 
 open data Tms (Γ : Con) (Δ : Con) : Type
   | Γ, •     => ε
@@ -22,6 +22,6 @@ open data Tms (Γ : Con) (Δ : Con) : Type
 open data Tm (Γ : Con) (A : Ty Γ) : Type
   | Γ,     Pi A B         => lam (Tm (Γ ▷ A) B)
   | Γ ▷ A, B              => app (Tm Γ (Pi A B))
-  | Γ,     T {∆} A δ      => t (Tm ∆ A)
-  | Γ,     T {∆} A (π₁ δ) => π₂
+  | Γ,     T {Δ} A δ      => t (Tm Δ A)
+  | Γ,     T {Δ} A (π₁ δ) => π₂ (Tms Γ (Δ ▷ A))
 

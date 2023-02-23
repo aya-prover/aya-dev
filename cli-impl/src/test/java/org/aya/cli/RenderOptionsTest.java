@@ -22,9 +22,11 @@ public class RenderOptionsTest {
     var doc = Doc.code("hello");
     var opt = new RenderOptions();
     opt.checkDeserialization();
-    assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Terminal, doc, false, false, true));
-    assertEquals("\\fbox{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, false, false, true));
-    assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, false, false, true));
-    assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, false, false, true));
+    var opts = new RenderOptions.Opts(false, false, false, true, -1, false);
+    assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Unix, doc, opts));
+    assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, opts));
+    assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.KaTeX, doc, opts));
+    assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, opts));
+    assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, opts));
   }
 }

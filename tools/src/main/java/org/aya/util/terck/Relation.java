@@ -18,10 +18,8 @@ import org.jetbrains.annotations.NotNull;
 @Debug.Renderer(text = "toDoc().debugRender()")
 public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** increase or unrelated of callee argument wrt. caller parameter. */
-  final class Unknown implements Relation {
-    public static final @NotNull Unknown INSTANCE = new Unknown();
-
-    private Unknown() {}
+  enum Unknown implements Relation {
+    INSTANCE;
   }
 
   /**
@@ -79,7 +77,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   }
 
   default boolean isUnknown() {
-    return this instanceof Unknown;
+    return this == Unknown.INSTANCE;
   }
 
   default boolean isDecreasing() {

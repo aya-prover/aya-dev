@@ -14,12 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
+import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
+
 /**
  * @author ice1000
  */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
-    if (config.withHeader) {
+    if (config.opt(HeaderCode, false)) {
       // cursor.invisibleContent("\\noindent{}");
       // This prevents us from using \raggedright followed by a \setlength\parindent.
       // We should expect users to deal with indentations themselves.
@@ -28,7 +30,8 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   protected void renderStyleCommand(@NotNull Cursor cursor) {
-    if (!config.withStyleDef) return;
+    if (!config.separateStyle()) return;
+    if (!config.opt(StyleCode, false)) return;
     // colors are converted to `\definecolor` in package xcolor.
     var colors = TeXStylist.colorsToTex(config.getStylist().colorScheme);
     cursor.invisibleContent(colors + "\n");
@@ -42,7 +45,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
-    return config.supportStyleCommand() ? new TeXStylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
+    return config.separateStyle() ? new TeXStylist.ClassedPreset(config.getStylist()) : super.prepareStylist();
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
@@ -61,7 +64,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   /** similar to StringPrinter, but with mappings from source code unicode to LaTeX unicode. */
   private static final @NotNull Map<String, String> commandMapping = Map.ofEntries(
     Tuple.of("Sig", "\\Sigma"),
-    Tuple.of("\\", "\\textbackslash"),
+    Tuple.of("\\", "\\backslash"),
     Tuple.of("\\/", "\\lor"),
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
@@ -98,9 +101,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
     for (var k : commandMapping.keysView()) {
       if (text.equals(k)) {
-        cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\(");
         cursor.visibleContent(commandMapping.get(k));
-        cursor.invisibleContent("$");
+        if (!config.katex()) cursor.invisibleContent("\\)");
         return;
       }
     }
@@ -110,7 +113,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override public @NotNull String makeIndent(int indent) {
     if (indent == 0) return "";
-    return "\\hspace*{" + indent * 0.5 + "em}";
+    return "\\hspace{" + indent * 0.5 + "em}";
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
@@ -119,7 +122,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\fbox{");
+    cursor.invisibleContent("\\texttt{");
     renderDoc(cursor, code.code(), outer);
     cursor.invisibleContent("}");
   }
@@ -139,22 +142,20 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
    * @author ice1000
    */
   public static class Config extends StringPrinterConfig<TeXStylist> {
-    public final boolean withHeader;
-    public final boolean withStyleDef;
-
-    /** Set doc style with "\newcommand\xxx" and "\xxx" */
-    public boolean supportStyleCommand() {
-      return withHeader;
+    public Config() {
+      this(TeXStylist.DEFAULT);
     }
 
-    public Config(boolean withHeader, boolean withStyleDef) {
-      this(TeXStylist.DEFAULT, withHeader, withStyleDef);
+    public boolean katex() {
+      return getStylist().isKaTeX;
     }
 
-    public Config(@NotNull TeXStylist stylist, boolean withHeader, boolean withStyleDef) {
-      super(stylist, INFINITE_SIZE, false);
-      this.withHeader = withHeader;
-      this.withStyleDef = withStyleDef;
+    public boolean separateStyle() {
+      return opt(SeparateStyle, false) && !katex();
+    }
+
+    public Config(@NotNull TeXStylist stylist) {
+      super(stylist);
     }
   }
 }

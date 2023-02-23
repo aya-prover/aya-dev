@@ -19,6 +19,7 @@ import org.aya.pretty.backend.terminal.DocTermPrinter;
 import org.aya.pretty.backend.terminal.UnixTermStylist;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.ColorScheme;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
@@ -34,8 +35,9 @@ import java.util.Objects;
 /** Multi-target {@link org.aya.pretty.printer.Stylist}, usually created from json files. */
 public class RenderOptions {
   public enum OutputTarget {
-    Terminal(".txt"),
+    Unix(".txt"),
     LaTeX(".tex"),
+    KaTeX(".katex"),
     AyaMd(".md"),
     HTML(".html"),
     Plain(".txt");
@@ -115,8 +117,9 @@ public class RenderOptions {
 
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
     return switch (output) {
-      case Terminal -> AdaptiveCliStylist.INSTANCE;
+      case Unix -> AdaptiveCliStylist.INSTANCE;
       case LaTeX -> TeXStylist.DEFAULT;
+      case KaTeX -> TeXStylist.DEFAULT_KATEX;
       case AyaMd -> MdStylist.DEFAULT;
       case HTML -> Html5Stylist.DEFAULT;
       case Plain -> DebugStylist.DEFAULT;
@@ -128,8 +131,9 @@ public class RenderOptions {
     final var c = buildColorScheme();
     final var s = buildStyleFamily();
     return switch (output) {
-      case Terminal -> new UnixTermStylist(c, s);
-      case LaTeX -> new TeXStylist(c, s);
+      case Unix -> new UnixTermStylist(c, s);
+      case LaTeX -> new TeXStylist(c, s, false);
+      case KaTeX -> new TeXStylist(c, s, true);
       case AyaMd -> new MdStylist(c, s);
       case HTML -> new Html5Stylist(c, s);
       case Plain -> new DebugStylist(c, s);
@@ -145,26 +149,27 @@ public class RenderOptions {
     }
   }
 
-  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, boolean witHeader, boolean withStyleDef, boolean unicode) {
-    return render(output, doc, witHeader, withStyleDef, unicode, StringPrinterConfig.INFINITE_SIZE);
+  public record Opts(boolean headerCode, boolean styleCode, boolean separateStyle, boolean unicode, int pageWidth, boolean SSR) {
+    public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
+      config.set(PrinterConfig.PageOptions.PageWidth, pageWidth);
+      config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
+      config.set(StringPrinterConfig.StyleOptions.HeaderCode, headerCode);
+      config.set(StringPrinterConfig.StyleOptions.StyleCode, styleCode);
+      config.set(StringPrinterConfig.StyleOptions.SeparateStyle, separateStyle);
+      config.set(StringPrinterConfig.StyleOptions.AyaFlavored, true);
+      config.set(StringPrinterConfig.StyleOptions.ServerSideRendering, SSR);
+      return config;
+    }
   }
 
-  public @NotNull String render(
-    @NotNull OutputTarget output, @NotNull Doc doc,
-    boolean witHeader, boolean withStyleDef, boolean unicode,
-    int pageWidth
-  ) {
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, @NotNull Opts opts) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
-      case Plain -> doc.renderToString(new StringPrinterConfig<>(stylist, pageWidth, unicode));
-      case LaTeX -> doc.render(new DocTeXPrinter(), new DocTeXPrinter.Config(
-        (TeXStylist) stylist, witHeader, withStyleDef));
-      case HTML -> doc.render(new DocHtmlPrinter<>(), new DocHtmlPrinter.Config(
-        (Html5Stylist) stylist, witHeader, withStyleDef));
-      case AyaMd -> doc.render(new DocMdPrinter(), new DocMdPrinter.Config(
-        (MdStylist) stylist, witHeader, withStyleDef, true));
-      case Terminal -> doc.render(new DocTermPrinter(), new DocTermPrinter.Config(
-        (UnixTermStylist) stylist, pageWidth, unicode));
+      case Plain -> doc.renderToString(opts.setup(new StringPrinterConfig<>(stylist)));
+      case KaTeX, LaTeX -> doc.render(new DocTeXPrinter(), opts.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
+      case HTML -> doc.render(new DocHtmlPrinter<>(), opts.setup(new DocHtmlPrinter.Config((Html5Stylist) stylist)));
+      case AyaMd -> doc.render(new DocMdPrinter(), opts.setup(new DocMdPrinter.Config((MdStylist) stylist)));
+      case Unix -> doc.render(new DocTermPrinter(), opts.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
     };
   }
 
