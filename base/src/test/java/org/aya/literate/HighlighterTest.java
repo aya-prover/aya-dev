@@ -48,9 +48,11 @@ public class HighlighterTest {
       localDef(68, 68, "m", "m'"),
       whatever(), // =>
       ref(73, 73, "S", "suc", HighlightInfo.DefKind.Con),
+      whatever(), // (
       ref(76, 78, "add", HighlightInfo.DefKind.Fn),
       localRef(80, 80, "n", "n''"),
-      localRef(82, 82, "m", "m'")
+      localRef(82, 82, "m", "m'"),
+      whatever() // )
     );
   }
 
@@ -97,6 +99,7 @@ public class HighlighterTest {
     highlightAndTest(code,
       keyword(0, 5, "module"),
       def(7, 7, "X", "x", HighlightInfo.DefKind.Module),
+      whatever(), whatever(), // {}
       keyword(12, 15, "open"),
       ref(17, 17, "X", "x", HighlightInfo.DefKind.Module),
       keyword(19, 22, "open"),
@@ -117,10 +120,12 @@ public class HighlighterTest {
       keyword(0, 3, "open"),
       keyword(5, 8, "data"),
       def(10, 15, "Either", "DefEither", HighlightInfo.DefKind.Data),
+      whatever(), // (
       localDef(18, 18, "A", "LocalA"),
       localDef(20, 20, "B", "LocalB"),
       whatever(), // :
       keyword(24, 27, "Type"),
+      whatever(), // )
       whatever(), // |
       def(32, 35, "Left", HighlightInfo.DefKind.Con),
       localRef(37, 37, "A", "LocalA"),
@@ -130,13 +135,17 @@ public class HighlighterTest {
 
       keyword(50, 52, "def"),
       def(54, 59, "constA", HighlightInfo.DefKind.Fn),
+      whatever(), // {
       localDef(62, 62, "A", "LocalA'"),
       whatever(), // :
       keyword(66, 69, "Type"),
+      whatever(), // }
+      whatever(), // (
       localDef(73, 73, "a", "Locala"),
       localDef(75, 75, "b"),
       whatever(), // :
       localRef(79, 79, "A", "LocalA'"),
+      whatever(), // )
       whatever(), // :
       localRef(84, 84, "A", "LocalA'"),
       whatever(), // =>
@@ -157,9 +166,11 @@ public class HighlighterTest {
       keyword(13, 16, "Type"),
       keyword(19, 21, "def"),
       def(23, 24, "id", HighlightInfo.DefKind.Fn),
+      whatever(), // (
       localDef(27, 27, "a", "a"),
       whatever(), // :
       ref(31, 31, "A", "GA", HighlightInfo.DefKind.Generalized),
+      whatever(), // )
       whatever(), // :
       ref(36, 36, "A", "GA", HighlightInfo.DefKind.Generalized),
       whatever(), // =>
