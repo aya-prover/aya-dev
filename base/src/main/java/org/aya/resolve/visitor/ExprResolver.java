@@ -164,8 +164,8 @@ public record ExprResolver(
         case DefVar<?, ?> def -> {
           // RefExpr is referring to a serialized core which is already tycked.
           // Collecting tyck order for tycked terms is unnecessary, just skip.
-          if (def.concrete == null) assert def.core != null;
-          else if (def.concrete instanceof TyckUnit unit) addReference(unit);
+          assert def.concrete != null || def.core != null;
+          addReference(def);
           if (def.core instanceof PrimDef prim && PrimDef.ID.projSyntax(prim.id))
             ctx.reportAndThrow(new PrimResolveError.BadUsage(name.join(), pos));
           yield new Expr.Ref(pos, def);
@@ -217,20 +217,28 @@ public record ExprResolver(
     }
   }
 
+  private void addReference(@NotNull DefVar<?, ?> defVar) {
+    if (defVar.concrete instanceof TyckUnit unit)
+      addReference(unit);
+  }
+
   public @NotNull Pattern.Clause apply(@NotNull Pattern.Clause clause) {
     var mCtx = MutableValue.create(ctx());
     var pats = clause.patterns.map(pa -> pa.descent(pat -> resolve(pat, mCtx)));
     return clause.update(pats, clause.expr.map(enter(mCtx.get())));
   }
 
-  public static @NotNull Pattern resolve(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
+  public @NotNull Pattern resolve(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
     return new EndoPattern() {
       @Override public @NotNull Pattern post(@NotNull Pattern pattern) {
         return switch (pattern) {
           case Pattern.Bind bind -> {
             var maybe = ctx.get().iterate(c ->
               patternCon(c.getUnqualifiedLocalMaybe(bind.bind().name(), bind.sourcePos())));
-            if (maybe != null) yield new Pattern.Ctor(bind, maybe);
+            if (maybe != null) {
+              addReference(maybe);
+              yield new Pattern.Ctor(bind, maybe);
+            }
             ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
             yield bind;
           }
@@ -239,7 +247,10 @@ public record ExprResolver(
             assert qid.component() instanceof ModulePath.Qualified;
             var maybe = ctx.get().iterate(c ->
               patternCon(c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), qref.sourcePos())));
-            if (maybe != null) yield new Pattern.Ctor(qref, maybe);
+            if (maybe != null) {
+              addReference(maybe);
+              yield new Pattern.Ctor(qref, maybe);
+            }
             yield EndoPattern.super.post(pattern);
           }
           case Pattern.As as -> {
