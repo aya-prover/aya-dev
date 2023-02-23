@@ -51,6 +51,11 @@ public record ClassCall(
     return fieldSubst;
   }
 
+  public boolean instantiated(@NotNull MemberDef member) {
+    return args.containsKey(member.ref);
+  }
+
+  /** @return true if these two calls have same members applied */
   public boolean sameApply(@NotNull ClassCall other) {
     return ref == other.ref && args.keysView().toImmutableSet().sameElements(other.args.keysView().toImmutableSet(), true);
   }
@@ -64,22 +69,24 @@ public record ClassCall(
     var fieldRefOpt = ref.core.members.find(m -> m.ref.name().equals(member.name().data()));
     if (fieldRefOpt.isEmpty())
       return Result.err(new FieldError.NoSuchField(ref, member));
-    var memberRef = fieldRefOpt.get().ref;
-    member.resolvedField().set(memberRef);
-    var subst = fieldSubst(memberRef.core);
-    var type = Def.defType(memberRef).subst(subst, ulift);
-    var telescope = Term.Param.subst(memberRef.core.telescope, subst, ulift);
+    var memberRef = fieldRefOpt.get().ref.core;
+    if (instantiated(memberRef))
+      throw new UnsupportedOperationException("TODO: report duplicate field");
+    member.resolvedField().set(memberRef.ref);
+    var subst = fieldSubst(memberRef);
+    var type = Def.defType(memberRef.ref).subst(subst, ulift);
+    var telescope = Term.Param.subst(Def.defTele(memberRef.ref), subst, ulift);
     var bindings = member.bindings();
     if (telescope.sizeLessThan(bindings.size())) {
       var errPos = member.sourcePos().sourcePosForSubExpr(bindings.view().map(WithPos::sourcePos));
-      return Result.err(new FieldError.ArgMismatch(errPos, memberRef.core, bindings.size()));
+      return Result.err(new FieldError.ArgMismatch(errPos, memberRef, bindings.size()));
     }
     var fieldExpr = bindings.zipView(telescope).foldRight(member.body(), (pair, lamExpr) ->
       new Expr.Lambda(member.body().sourcePos(),
         new Expr.Param(pair.component1().sourcePos(),
           pair.component1().data(), pair.component2().explicit()), lamExpr));
     var field = exprTycker.inherit(fieldExpr, type).wellTyped();
-    var newArgs = args.putted(memberRef, new Arg<>(field, true));
+    var newArgs = args.putted(memberRef.ref, new Arg<>(field, true));
     return Result.ok(new ClassCall(ref, ulift, newArgs));
   }
 

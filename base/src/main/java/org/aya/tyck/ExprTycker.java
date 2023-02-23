@@ -141,10 +141,10 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref;
 
-          var fieldSubst = classCall.fieldSubst(field);
-          if (fieldSubst == null) {
+          if (!classCall.instantiated(field)) {
             throw new InternalException("TODO: missing field(s)");
           }
+          var fieldSubst = classCall.fieldSubst(field);
           var tele = Term.Param.subst(fieldRef.core.telescope, fieldSubst, 0);
           var teleRenamed = tele.map(LamTerm::paramRenamed);
           var access = new FieldTerm(projectee.wellTyped(), fieldRef, teleRenamed.map(UntypedParam::toArg));
