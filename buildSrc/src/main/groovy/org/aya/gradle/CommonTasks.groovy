@@ -3,16 +3,16 @@
 package org.aya.gradle
 
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
-import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.jvm.toolchain.JvmVendorSpec
-import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
 
 import java.text.SimpleDateFormat
 
@@ -54,6 +54,7 @@ final class CommonTasks {
     var task = project.tasks.register('generateNativeImageConfig', GenerateReflectionConfigTask) {
       outputDir = configGenDir
       inputFile = configTemplateFile
+      outputs.upToDateWhen { false }
       doFirst {
         metaInfDir.mkdirs()
       }

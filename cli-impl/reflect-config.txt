@@ -1,0 +1,3 @@
+# Library Compiler, for Gson
+org.aya.cli.library.json.LibraryConfigData
+org.aya.cli.library.json.LibraryDependencyData
