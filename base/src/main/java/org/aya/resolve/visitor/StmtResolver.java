@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSet;
 import kala.value.MutableValue;
 import org.aya.concrete.desugar.AyaBinOpSet;
 import org.aya.concrete.error.OperatorError;
@@ -56,7 +57,15 @@ public interface StmtResolver {
     switch (predecl) {
       case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
       case TeleDecl.FnDecl decl -> {
-        var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
+        // Given `data D` and `def f : X → Y`
+        var fnResolve = resolveFnSignature(decl, ExprResolver.LAX, info);
+        // If D ∈ X, Let `body D` depend on `head f`
+        fnResolve.dataInTele().forEach(d ->
+          addReferences(info, new TyckOrder.Body(d), SeqView.of(new TyckOrder.Head(decl))));
+        // If D ∈ Y, Let `body D` depend on `body f`
+        fnResolve.dataInResult().forEach(d ->
+          addReferences(info, new TyckOrder.Body(d), SeqView.of(new TyckOrder.Body(decl))));
+        var resolver = fnResolve.resolver;
         resolver.enterBody();
         decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
         addReferences(info, new TyckOrder.Body(decl), resolver);
@@ -137,6 +146,38 @@ public interface StmtResolver {
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
     addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
+  }
+
+  record FnResolve(
+    @NotNull ExprResolver resolver,
+    @NotNull ImmutableSet<TyckUnit> dataInTele,
+    @NotNull ImmutableSet<TyckUnit> dataInResult
+  ) {}
+  private static @NotNull FnResolve resolveFnSignature(
+    @NotNull TeleDecl.TopLevel<?> decl,
+    ExprResolver.@NotNull Options options,
+    @NotNull ResolveInfo info
+  ) {
+    assert decl.ctx != null;
+    var resolver = new ExprResolver(decl.ctx, options);
+    resolver.enterHead();
+    var mCtx = MutableValue.create(decl.ctx);
+    var telescope = decl.telescope.map(param -> resolver.resolve(param, mCtx));
+    var dataInTele = resolver.reference().view()
+      .map(TyckOrder::unit)
+      .filter(x -> x instanceof TeleDecl.DataDecl)
+      .toImmutableSet();
+    addReferences(info, new TyckOrder.Head(decl), resolver);
+    resolver.reference().clear();
+    var newResolver = resolver.enter(mCtx.get());
+    decl.modifyResult(newResolver);
+    var dataInResult = newResolver.reference().view()
+      .map(TyckOrder::unit)
+      .filter(x -> x instanceof TeleDecl.DataDecl)
+      .toImmutableSet();
+    decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    addReferences(info, new TyckOrder.Head(decl), newResolver);
+    return new FnResolve(newResolver, dataInTele, dataInResult);
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
