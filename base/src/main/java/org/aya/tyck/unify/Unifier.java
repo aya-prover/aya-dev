@@ -225,6 +225,6 @@ public final class Unifier extends TermComparator {
   }
 
   public void checkEqn(@NotNull TyckState.Eqn eqn) {
-    compareUntyped(eqn.lhs(), eqn.rhs(), eqn.lr(), eqn.rl());
+    compare(eqn.lhs(), eqn.rhs(), eqn.lr(), eqn.rl(), null);
   }
 }
