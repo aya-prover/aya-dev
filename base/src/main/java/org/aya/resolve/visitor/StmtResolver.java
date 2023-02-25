@@ -61,8 +61,8 @@ public interface StmtResolver {
         var fnResolve = resolveFnSignature(decl, info);
         // If D ∈ X, do nothing
         // If D ∈ Y, let `body D` depend on `body f`
-        fnResolve.dataInResult.forEach(d ->
-          addReferences(info, new TyckOrder.Body(d), SeqView.of(new TyckOrder.Body(decl))));
+        // fnResolve.dataInResult.forEach(d ->
+        //   addReferences(info, new TyckOrder.Body(d), SeqView.of(new TyckOrder.Body(decl))));
         var resolver = fnResolve.resolver;
         resolver.enterBody();
         decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
@@ -148,7 +148,7 @@ public interface StmtResolver {
 
   record FnResolve(
     @NotNull ExprResolver resolver,
-    @NotNull ImmutableSet<TyckUnit> dataInResult
+    @NotNull ImmutableSet<TeleDecl.DataDecl> dataInResult
   ) {}
   private static @NotNull FnResolve resolveFnSignature(
     @NotNull TeleDecl.TopLevel<?> decl,
@@ -165,7 +165,7 @@ public interface StmtResolver {
     decl.modifyResult(newResolver);
     var dataInResult = newResolver.reference().view()
       .map(TyckOrder::unit)
-      .filter(x -> x instanceof TeleDecl.DataDecl)
+      .filterIsInstance(TeleDecl.DataDecl.class)
       .toImmutableSet();
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
     addReferences(info, new TyckOrder.Head(decl), newResolver);

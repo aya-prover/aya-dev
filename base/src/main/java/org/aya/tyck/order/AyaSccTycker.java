@@ -4,6 +4,7 @@ package org.aya.tyck.order;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
@@ -68,6 +69,22 @@ public record AyaSccTycker(
     }
   }
 
+  private void bodyOrder(
+    @NotNull ImmutableSet<TyckUnit> searchScope,
+    @NotNull TyckUnit h,
+    @NotNull MutableGraph<TyckUnit> bodyGraph
+  ) {
+    if (bodyGraph.E().containsKey(h)) return;
+    var dependsOn = resolveInfo.depGraph().suc(new TyckOrder.Body(h))
+      .filterIsInstance(TyckOrder.Body.class)
+      .map(TyckOrder::unit)
+      .filter(searchScope::contains)
+      .filter(x -> x != h)
+      .toImmutableSet();
+    bodyGraph.sucMut(h).appendAll(dependsOn);
+    dependsOn.forEach(dep -> bodyOrder(searchScope, dep, bodyGraph));
+  }
+
   private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
     var unit = scc.view().map(TyckOrder::unit).distinct().toImmutableSeq();
     // the flattened dependency graph (FDG) lose information about header order, in other words,
@@ -78,12 +95,14 @@ public record AyaSccTycker(
     if (headerOrder.sizeEquals(1)) {
       checkUnit(new TyckOrder.Body(headerOrder.first()));
     } else {
-      var tyckTasks = headerOrder.view()
-        .<TyckOrder>map(TyckOrder.Head::new)
-        .appendedAll(headerOrder.map(TyckOrder.Body::new))
-        .toImmutableSeq();
-      tyckTasks.forEach(this::check);
-      terck(tyckTasks.view());
+      var bodyGraph = MutableGraph.<TyckUnit>create();
+      var searchScope = headerOrder.toImmutableSet();
+      headerOrder.forEach(h -> bodyOrder(searchScope, h, bodyGraph));
+      var bodyOrder = bodyGraph.topologicalOrder().flatMap(Function.identity());
+      var theOrder = headerOrder.<TyckOrder>map(TyckOrder.Head::new)
+        .concat(bodyOrder.map(TyckOrder.Body::new));
+      theOrder.forEach(this::check);
+      terck(theOrder.view());
     }
   }
 
