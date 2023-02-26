@@ -19,6 +19,10 @@ public record MetaTerm(
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> contextArgs,
   @NotNull ImmutableSeq<@NotNull Arg<@NotNull Term>> args
 ) implements Callable {
+  public MetaTerm {
+
+  }
+
   public @NotNull MetaTerm update(@NotNull ImmutableSeq<Arg<Term>> contextArgs, @NotNull ImmutableSeq<Arg<Term>> args) {
     return contextArgs.sameElements(contextArgs(), true) && args.sameElements(args(), true) ? this
       : new MetaTerm(ref, contextArgs, args);

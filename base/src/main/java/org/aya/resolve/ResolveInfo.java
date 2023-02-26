@@ -16,7 +16,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.core.repr.CodeShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.trace.Trace;
@@ -46,8 +46,8 @@ public record ResolveInfo(
   @NotNull AyaShape.Factory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<DefVar<?, ?>, Tuple3<RenamedOpDecl, BindBlock, Boolean>> opRename,
-  @NotNull MutableMap<ModulePath.Qualified, Tuple2<ResolveInfo, Boolean>> imports,
-  @NotNull MutableMap<ModulePath.Qualified, UseHide> reExports,
+  @NotNull MutableMap<ModuleName.Qualified, Tuple2<ResolveInfo, Boolean>> imports,
+  @NotNull MutableMap<ModuleName.Qualified, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
   public ResolveInfo(
@@ -75,7 +75,7 @@ public record ResolveInfo(
    * @see #open(ResolveInfo, SourcePos, Stmt.Accessibility)
    */
   public void renameOp(@NotNull DefVar<?, ?> defVar, @NotNull RenamedOpDecl renamed, @NotNull BindBlock bind, boolean definedHere) {
-    defVar.opDeclRename.put(thisModule.moduleName(), renamed);
+    defVar.opDeclRename.put(thisModule.modulePath(), renamed);
     opRename.put(defVar, Tuple.of(renamed, bind, definedHere));
   }
 
@@ -91,7 +91,7 @@ public record ResolveInfo(
         // them in my `opRename` bc "my importers" cannot access `other.opRename`.
         // see: https://github.com/aya-prover/aya-dev/issues/519
         renameOp(defVar, tuple.component1(), tuple.component2(), false);
-      } else defVar.opDeclRename.put(thisModule().moduleName(), tuple.component1());
+      } else defVar.opDeclRename.put(thisModule().modulePath(), tuple.component1());
     });
   }
 

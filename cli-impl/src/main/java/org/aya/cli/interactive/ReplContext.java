@@ -7,10 +7,7 @@ import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
-import org.aya.resolve.context.ModulePath;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.*;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +16,14 @@ import org.jetbrains.annotations.Nullable;
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
   private @Nullable ReplContext downstream = null;
 
-  public ReplContext(@NotNull Context parent, @NotNull ImmutableSeq<String> name) {
+  public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
     super(parent, name);
   }
 
   @Override public void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @NotNull String name,
     Stmt.@NotNull Accessibility acc,
     @NotNull SourcePos sourcePos
@@ -36,14 +33,14 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(modName, name, defVar);
   }
 
-  @Override public boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     super.exportSymbol(modName, name, ref);
     // REPL always overwrites symbols.
     return true;
   }
 
   @Override public void importModule(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -53,11 +50,11 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override public @NotNull ReplContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
-    return new ReplContext(this, this.moduleName().concat(extraName));
+    return new ReplContext(this, this.modulePath().derive(extraName));
   }
 
   @Override public @NotNull ReplContext derive(@NotNull String extraName) {
-    return new ReplContext(this, this.moduleName().appended(extraName));
+    return new ReplContext(this, this.modulePath().derive(extraName));
   }
 
   @Override public void setDownstream(@Nullable ReplContext downstream) {

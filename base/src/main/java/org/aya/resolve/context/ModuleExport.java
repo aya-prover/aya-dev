@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  */
 public record ModuleExport(
   @NotNull ModuleSymbol<DefVar<?, ?>> symbols,
-  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
+  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
   public ModuleExport() {
     this(new ModuleSymbol<>(), MutableMap.create());
@@ -96,10 +96,10 @@ public record ModuleExport(
 
     mapper.forEach(pair -> {
       var pos = pair.sourcePos();
-      var fromModule = ModulePath.from(pair.data().fromModule());
+      var fromModule = ModuleName.from(pair.data().fromModule());
       var fromName = pair.data().name();
       var to = pair.data().to();
-      if (fromModule == ModulePath.This && fromName.equals(to)) return;
+      if (fromModule == ModuleName.This && fromName.equals(to)) return;
 
       var thing = newExport.removeMaybe(fromModule, fromName);
       if (thing.isOk()) {
@@ -117,16 +117,16 @@ public record ModuleExport(
             }
 
             // now, {candidates} is empty
-            candidates.put(ModulePath.This, symbol);
+            candidates.put(ModuleName.This, symbol);
           },
           module -> {
-            var isShadow = newExport.modules.containsKey(new ModulePath.Qualified(to));
+            var isShadow = newExport.modules.containsKey(new ModuleName.Qualified(to));
 
             if (isShadow) {
               reportShadow.set(true);
             }
 
-            newExport.modules.put(new ModulePath.Qualified(to), module);
+            newExport.modules.put(new ModuleName.Qualified(to), module);
           }
         );
 
@@ -154,19 +154,19 @@ public record ModuleExport(
   /**
    * @return false if there already exist a symbol with the same name.
    */
-  public boolean export(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  public boolean export(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     var exists = symbols.add(modName, name, ref);
     return exists.isEmpty();
   }
 
-  public boolean export(@NotNull ModulePath.Qualified componentName, @NotNull ModuleExport module) {
+  public boolean export(@NotNull ModuleName.Qualified componentName, @NotNull ModuleExport module) {
     var exists = modules.put(componentName, module);
     return exists.isEmpty();
   }
 
   /// region Helper Methods for Mapping/Filtering
 
-  private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModulePath component, @NotNull String name) {
+  private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModuleName component, @NotNull String name) {
     var symbol = symbols.getMaybe(component, name);
     var module = modules.getOption(component.resolve(name));      // `getOption` for beauty
 
@@ -177,7 +177,7 @@ public record ModuleExport(
     return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
   }
 
-  private Result<ExportUnit, ModuleSymbol.Error> removeMaybe(@NotNull ModulePath component, @NotNull String name) {
+  private Result<ExportUnit, ModuleSymbol.Error> removeMaybe(@NotNull ModuleName component, @NotNull String name) {
     var symbol = symbols.removeDefinitely(component, name);
     if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous) return Result.err(ModuleSymbol.Error.Ambiguous);
 
@@ -219,7 +219,7 @@ public record ModuleExport(
       return shadowNames().isNotEmpty();
     }
 
-    public SeqView<Problem> problems(@NotNull ModulePath modName) {
+    public SeqView<Problem> problems(@NotNull ModuleName modName) {
       SeqView<Problem> invalidNameProblems = invalidNames().view()
         .map(name -> new NameProblem.QualifiedNameNotFoundError(
           modName.concat(name.component()),

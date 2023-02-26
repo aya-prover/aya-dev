@@ -8,6 +8,7 @@ import org.aya.concrete.stmt.decl.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.ModulePath;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.Contract;
@@ -33,7 +34,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
    * Initialized in the resolver or core deserialization.
    * see {@link ResolveInfo#opRename()}
    */
-  public @NotNull MutableMap<ImmutableSeq<String>, OpDecl> opDeclRename = MutableMap.create();
+  public @NotNull MutableMap<ModulePath, OpDecl> opDeclRename = MutableMap.create();
 
   @Contract(pure = true) public @Nullable Assoc assoc() {
     if (opDecl == null) return null;
@@ -63,8 +64,8 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
     return new DefVar<>(null, null, name);
   }
 
-  public @Nullable OpDecl resolveOpDecl(@NotNull ImmutableSeq<String> moduleName) {
-    return opDeclRename.getOrDefault(moduleName, opDecl);
+  public @Nullable OpDecl resolveOpDecl(@NotNull ModulePath modulePath) {
+    return opDeclRename.getOrDefault(modulePath, opDecl);
   }
 
   @Override public boolean equals(Object o) {

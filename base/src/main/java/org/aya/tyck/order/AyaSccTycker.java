@@ -97,7 +97,7 @@ public record AyaSccTycker(
     stmts.forEach(stmt -> {
       var reference = MutableList.<TyckUnit>create();
       new SigRefFinder(reference).accept(stmt);
-      var filter = reference.filter(unit -> unit.needTyck(resolveInfo.thisModule().moduleName()));
+      var filter = reference.filter(unit -> unit.needTyck(resolveInfo.thisModule().modulePath().path()));
       // If your telescope uses yourself, you should reject the function. --- ice1000
       // note: just check direct references, indirect ones will be checked using topological order
       if (filter.contains(stmt)) {
