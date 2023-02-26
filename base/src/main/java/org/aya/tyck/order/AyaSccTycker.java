@@ -128,8 +128,7 @@ public record AyaSccTycker(
   private <T> boolean hasSuc(
     @NotNull MutableGraph<T> G,
     @NotNull MutableSet<T> book,
-    @NotNull T vertex,
-    @NotNull T suc
+    @NotNull T vertex, @NotNull T suc
   ) {
     if (book.contains(vertex)) return false;
     book.add(vertex);

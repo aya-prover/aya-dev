@@ -10,31 +10,40 @@ open data Con : Type
 open data Ty (Γ : Con) : Type
 | Γ => U
 | Γ => Π (A : Ty Γ) (B : Ty (Γ ▷ A))
-| Γ => El' (A : Tm Γ U)
-| Γ => Subst {Δ : Con} (Ty Δ) (s : Tms Γ Δ)
+| Γ => El (A : Tm Γ U)
+| Γ => Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
 | SubId {A : Ty Γ} : Subst A (id idp) = A
-| SubAss {Δ Θ : Con} {A : Ty Θ} (θ : Tms Γ Δ) (δ : Tms Δ Θ) : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
-| SubU {Δ : Con} {δ : Tms Γ Δ} : Subst U δ = U
+| SubAss {Δ Θ : Con} {A : Ty Θ} {θ : Γ << Δ} {δ : Δ << Θ}
+    : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
+| SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
+| SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
+    : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
 | TyTrunc : isSet (Ty Γ)
 
-// Incomplete
-open data Tms (Γ : Con) (Δ : Con) : Type
+// Tms
+open data infix << (Γ : Con) (Δ : Con) : Type
+   tighter = looser ▷
 | Γ, • => ε
-| Γ, Δ ▷ A => infixr ∷ (δ : Tms Γ Δ) (Tm Γ (Subst A δ))
-| Γ, Δ => infix ∘ {Θ : Con} (Tms Θ Δ) (Tms Γ Θ) tighter =
-| Γ, Δ => π₁ {A : Ty Δ} (Tms Γ (Δ ▷ A))
+| Γ, Δ ▷ A => infixr ∷ (δ : Γ << Δ) (Tm Γ (Subst A δ)) tighter =
+| Γ, Δ => infix ∘ {Θ : Con} (Θ << Δ) (Γ << Θ) tighter =
+| Γ, Δ => π₁ {A : Ty Δ} (Γ << Δ ▷ A)
 | Γ, Δ => id (Γ = Δ)
-| idl• {s : Tms Γ Δ} : id idp ∘ s = s
-| idr• {s : Tms Γ Δ} : s ∘ id idp = s
-| ass {Θ Ξ : Con} {ν : Tms Γ Ξ} {δ : Tms Ξ Θ} {σ : Tms Θ Δ} : (σ ∘ δ) ∘ ν = σ ∘ (δ ∘ ν)
-| π₁β {δ : Tms Γ Δ} {A : Ty Δ} (t : Tm Γ (Subst A δ)) : π₁ (δ ∷ t) = δ
-| Γ, Δ ▷ A => πη {δ : Tms Γ (Δ ▷ A)} : (π₁ δ ∷ π₂ δ) = δ
-| TmsTrunc : isSet (Tms Γ Δ)
+| idl• {s : Γ << Δ} : id idp ∘ s = s
+| idr• {s : Γ << Δ} : s ∘ id idp = s
+| ass {Θ Ξ : Con} {ν : Γ << Ξ} {δ : Ξ << Θ} {σ : Θ << Δ}
+    : (σ ∘ δ) ∘ ν = σ ∘ (δ ∘ ν)
+| π₁β {δ : Γ << Δ} {A : Ty Δ} (t : Tm Γ (Subst A δ)) : π₁ (δ ∷ t) = δ
+| Γ, Δ ▷ A => πη {δ : Γ << Δ ▷ A} : (π₁ δ ∷ π₂ δ) = δ
+| Γ, Δ ▷ A => ∷∘ {Θ : Con} {σ : Θ << Δ} {δ : Γ << Θ} {t : Tm Θ (Subst A σ)}
+    : (σ ∷ t) ∘ δ = (σ ∘ δ) ∷ transport (Tm _) SubAss (sub t)
+| TmsTrunc : isSet (Γ << Δ)
 
 // Incomplete
 open data Tm (Γ : Con) (A : Ty Γ) : Type
 | Γ, Π A B => lam (Tm (Γ ▷ A) B)
 | Γ ▷ A, B => app (Tm Γ (Π A B))
 | Γ, Subst A δ => sub (Tm _ A)
-| Γ, Subst A (π₁ δ) => π₂ (Tms Γ (_ ▷ A))
+| Γ, Subst A (π₁ δ) => π₂ (Γ << _ ▷ A)
+| Γ, Subst B δ => π₂β {Δ : Con} (t : Tm Γ A)
+    : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
 | TmTrunc : isSet (Tm Γ A)
