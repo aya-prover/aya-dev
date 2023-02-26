@@ -6,6 +6,10 @@ open data Con : Type
 | •
 | infix ▷ (Γ : Con) (Ty Γ)
 
+// The ↑ operator in the paper
+def ext {Γ Δ : Con} (δ : Γ << Δ) (A : Ty Δ) : Γ ▷ Subst A δ << Δ ▷ A =>
+  δ ∘ π₁ (id idp) ∷ transport (Tm _) SubAss (π₂ (id idp))
+
 // Incomplete
 open data Ty (Γ : Con) : Type
 | U
@@ -18,9 +22,8 @@ open data Ty (Γ : Con) : Type
 | SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
 | SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
     : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
-| SubΠ {Δ : Con} {σ : Γ << Δ} {A : Ty Δ} {B : Ty (Δ ▷ A)}
-    : Subst (Π A B) σ = Π (Subst A σ) (Subst B
-        (σ ∘ π₁ (id idp) ∷ transport (Tm _) SubAss (π₂ (id idp))))
+| SubΠ {Δ : Con} (σ : Γ << Δ) {A : Ty Δ} {B : Ty (Δ ▷ A)}
+    : Subst (Π A B) σ = Π (Subst A σ) (Subst B (ext σ A))
 | TyTrunc : isSet (Ty Γ)
 
 // Tms
@@ -39,6 +42,7 @@ open data infix << (Γ : Con) (Δ : Con) : Type
 | Γ, Δ ▷ A => πη {δ : Γ << Δ ▷ A} : (π₁ δ ∷ π₂ δ) = δ
 | Γ, Δ ▷ A => ∷∘ {Θ : Con} {σ : Θ << Δ} {δ : Γ << Θ} {t : Tm Θ (Subst A σ)}
     : (σ ∷ t) ∘ δ = (σ ∘ δ) ∷ transport (Tm _) SubAss (sub t)
+| Γ, • => εη {δ : Γ << •} : δ = ε
 | TmsTrunc : isSet (Γ << Δ)
 
 // Incomplete
@@ -51,4 +55,5 @@ open data Tm (Γ : Con) (A : Ty Γ) : Type
     : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
 | _ ▷ _, A => Πβ (f : Tm Γ A) : app (λ f) = f
 | _, Π _ _ => Πη (f : Tm Γ A) : λ (app f) = f
+// Subλ is omitted for its overwhleming complexity
 | TmTrunc : isSet (Tm Γ A)
