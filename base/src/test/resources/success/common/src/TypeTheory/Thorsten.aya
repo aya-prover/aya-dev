@@ -8,26 +8,29 @@ open data Con : Type
 
 // Incomplete
 open data Ty (Γ : Con) : Type
-| Γ => U
-| Γ => Π (A : Ty Γ) (B : Ty (Γ ▷ A))
-| Γ => El (A : Tm Γ U)
-| Γ => Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
+| U
+| Π (A : Ty Γ) (B : Ty (Γ ▷ A))
+| El (A : Tm Γ U)
+| Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
 | SubId {A : Ty Γ} : Subst A (id idp) = A
 | SubAss {Δ Θ : Con} {A : Ty Θ} {θ : Γ << Δ} {δ : Δ << Θ}
     : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
 | SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
 | SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
     : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
+| SubΠ {Δ : Con} {σ : Γ << Δ} {A : Ty Δ} {B : Ty (Δ ▷ A)}
+    : Subst (Π A B) σ = Π (Subst A σ) (Subst B
+        (σ ∘ π₁ (id idp) ∷ transport (Tm _) SubAss (π₂ (id idp))))
 | TyTrunc : isSet (Ty Γ)
 
 // Tms
 open data infix << (Γ : Con) (Δ : Con) : Type
    tighter = looser ▷
 | Γ, • => ε
-| Γ, Δ ▷ A => infixr ∷ (δ : Γ << Δ) (Tm Γ (Subst A δ)) tighter =
-| Γ, Δ => infix ∘ {Θ : Con} (Θ << Δ) (Γ << Θ) tighter =
-| Γ, Δ => π₁ {A : Ty Δ} (Γ << Δ ▷ A)
-| Γ, Δ => id (Γ = Δ)
+| _, Δ ▷ A => infixr ∷ (δ : Γ << Δ) (Tm Γ (Subst A δ)) tighter =
+| infix ∘ {Θ : Con} (Θ << Δ) (Γ << Θ) tighter = ∷
+| π₁ {A : Ty Δ} (Γ << Δ ▷ A)
+| id (Γ = Δ)
 | idl• {s : Γ << Δ} : id idp ∘ s = s
 | idr• {s : Γ << Δ} : s ∘ id idp = s
 | ass {Θ Ξ : Con} {ν : Γ << Ξ} {δ : Ξ << Θ} {σ : Θ << Δ}
