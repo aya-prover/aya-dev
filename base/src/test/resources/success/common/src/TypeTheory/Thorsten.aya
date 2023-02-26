@@ -40,10 +40,12 @@ open data infix << (Γ : Con) (Δ : Con) : Type
 
 // Incomplete
 open data Tm (Γ : Con) (A : Ty Γ) : Type
-| Γ, Π A B => lam (Tm (Γ ▷ A) B)
-| Γ ▷ A, B => app (Tm Γ (Π A B))
-| Γ, Subst A δ => sub (Tm _ A)
-| Γ, Subst A (π₁ δ) => π₂ (Γ << _ ▷ A)
-| Γ, Subst B δ => π₂β {Δ : Con} (t : Tm Γ A)
+| _, Π A B => λ (Tm (Γ ▷ A) B)
+| Γ' ▷ A, B => app (Tm Γ' (Π A B))
+| _, Subst A δ => sub (Tm _ A)
+| _, Subst A (π₁ δ) => π₂ (Γ << _ ▷ A)
+| _, Subst B δ => π₂β {Δ : Con} (t : Tm Γ A)
     : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
+| _ ▷ _, A => Πβ (f : Tm Γ A) : app (λ f) = f
+| _, Π _ _ => Πη (f : Tm Γ A) : λ (app f) = f
 | TmTrunc : isSet (Tm Γ A)
