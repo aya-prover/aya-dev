@@ -37,23 +37,23 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     switch (stmt) {
       case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
-        var wholeModeName = context.moduleName().appended(mod.name());
+        var wholeModeName = context.modulePath().derive(mod.name());
         // Is there a file level module with path {context.moduleName}::{mod.name} ?
-        if (loader.existsFileLevelModule(wholeModeName)) {
-          context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+        if (loader.existsFileLevelModule(wholeModeName.path())) {
+          context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName.path(), mod.sourcePos()));
         }
         var newCtx = context.derive(mod.name());
         resolveStmt(mod.contents(), newCtx);
-        context.importModule(ModulePath.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
+        context.importModule(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path();
-        var success = loader.load(modulePath.ids());
+        var success = loader.load(modulePath.path());
         if (success == null)
           context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
         var mod = success.thisModule();
         var as = cmd.asName();
-        var importedName = as != null ? ModulePath.This.resolve(as) : modulePath;
+        var importedName = as != null ? ModuleName.This.resolve(as) : modulePath.asName();
         context.importModule(importedName, mod, cmd.accessibility(), cmd.sourcePos());
         resolveInfo.imports().put(importedName, Tuple.of(success, cmd.accessibility() == Stmt.Accessibility.Public));
       }
@@ -95,7 +95,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case TeleDecl.DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, d -> d.body.view(), (ctor, mCtx) -> {
-          ctor.ref().module = mCtx.moduleName();
+          ctor.ref().module = mCtx.modulePath().path();
           mCtx.defineSymbol(ctor.ref, Stmt.Accessibility.Public, ctor.sourcePos());
           resolveOpInfo(ctor, mCtx);
         });
@@ -104,7 +104,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case TeleDecl.StructDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, decl, ctx, s -> s.fields.view(), (field, mockCtx) -> {
-          field.ref().module = mockCtx.moduleName();
+          field.ref().module = mockCtx.modulePath().path();
           mockCtx.defineSymbol(field.ref, Stmt.Accessibility.Public, field.sourcePos());
           resolveOpInfo(field, mockCtx);
         });
@@ -144,7 +144,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
     context.importModule(
-      ModulePath.This.resolve(module),
+      ModuleName.This.resolve(module),
       innerCtx.exports,
       decl.accessibility(),
       decl.sourcePos()
@@ -170,7 +170,7 @@ public record StmtShallowResolver(@NotNull ModuleLoader loader, @NotNull Resolve
       case COUNTEREXAMPLE -> exampleContext(context).derive(decl.ref().name());
     };
     decl.setCtx(ctx);
-    decl.ref().module = ctx.moduleName();
+    decl.ref().module = ctx.modulePath().path();
     // Do not add anonymous functions to the context, as no one can refer to them
     if (!(decl instanceof TeleDecl.FnDecl fnDecl) || (!fnDecl.isAnonymous)) {
       ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());

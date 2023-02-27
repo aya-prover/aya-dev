@@ -19,6 +19,7 @@ import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.ModulePath;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
@@ -43,7 +44,7 @@ import java.io.Serializable;
 public record CompiledAya(
   @NotNull ImmutableSeq<SerImport> imports,
   @NotNull SerExport exports,
-  @NotNull ImmutableMap<ImmutableSeq<String>, SerUseHide> reExports,
+  @NotNull ImmutableMap<ModulePath, SerUseHide> reExports,
   @NotNull ImmutableSeq<SerDef> serDefs,
   @NotNull ImmutableSeq<SerDef.SerOp> serOps,
   @NotNull ImmutableMap<SerDef.QName, SerDef.SerRenamedOp> opRename
@@ -51,7 +52,7 @@ public record CompiledAya(
   /**
    * @param rename not empty
    */
-  record SerImport(@NotNull ModulePath.Qualified moduleName, @NotNull ImmutableSeq<String> rename,
+  record SerImport(@NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
                    boolean isPublic) implements Serializable {
   }
 
@@ -78,12 +79,11 @@ public record CompiledAya(
   record SerExport(
     @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
   ) implements Serializable {
-    public boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {
-      assert module.isNotEmpty() : "Sanity check";
-      assert qname.mod().sizeGreaterThanOrEquals(module.size());
+    public boolean isExported(@NotNull ModulePath module, @NotNull SerDef.QName qname) {
+      assert qname.mod().sizeGreaterThanOrEquals(module.path().size());
 
       var qmod = qname.mod();
-      var component = ModulePath.from(qmod.drop(module.size()));
+      var component = ModuleName.from(qmod.drop(module.path().size()));
 
       // A QName refers to a def,
       // which means it was defined in {module} if `component == This`;
@@ -107,19 +107,18 @@ public record CompiledAya(
     serialization.ser(defs);
 
     var exports = ctx.exports().symbols().view().map((k, vs) ->
-      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModulePath::ids))));
+      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModuleName::ids))));
 
     var imports = resolveInfo.imports().view().map((k, v) ->
-      new SerImport(ModulePath.qualified(v.component1().thisModule().moduleName()),
+      new SerImport(v.component1().thisModule().modulePath(),
         k.ids(), v.component2())).toImmutableSeq();
     return new CompiledAya(imports,
       new SerExport(ImmutableMap.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
-        // TODO: maybe incorrect, k.toImmutableSeq() can be a renamed module name
         .map((k, v) -> Tuple.of(
           resolveInfo.imports()
             .get(k)   // should not fail
-            .component1().thisModule().moduleName(),
+            .component1().thisModule().modulePath(),
           SerUseHide.from(v)))),
       serialization.serDefs.toImmutableSeq(),
       serialization.serOps.toImmutableSeq(),
@@ -195,21 +194,21 @@ public record CompiledAya(
    */
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var anImport : imports) {
-      var modName = anImport.moduleName;
-      var modRename = ModulePath.qualified(anImport.rename);
+      var modName = anImport.path;
+      var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
-      var success = loader.load(modName.ids());
+      var success = loader.load(modName.path());
       if (success == null)
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(modRename, Tuple.of(success, isPublic));
       var mod = success.thisModule();
       thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
-      reExports.getOption(modName.ids()).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
+      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
-      var acc = this.reExports.containsKey(modName.ids())
+      var acc = this.reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(success, SourcePos.SER, acc);
@@ -278,7 +277,7 @@ public record CompiledAya(
   }
 
   private void de(@NotNull AyaShape.Factory shapeFactory, @NotNull PhysicalModuleContext context, @NotNull SerDef serDef, @NotNull SerTerm.DeState state) {
-    var mod = context.moduleName();
+    var mod = context.modulePath();
     var def = serDef.de(state);
     assert def.ref().core != null;
     shapeFactory.bonjour(def);
@@ -297,7 +296,7 @@ public record CompiledAya(
           innerCtx.defineSymbol(ctorDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModule(
-          ModulePath.This.resolve(def.ref().name()),
+          ModuleName.This.resolve(def.ref().name()),
           innerCtx,
           Stmt.Accessibility.Public,
           SourcePos.SER);
@@ -310,26 +309,26 @@ public record CompiledAya(
           innerCtx.defineSymbol(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModule(
-          ModulePath.This.resolve(def.ref().name()),
+          ModuleName.This.resolve(def.ref().name()),
           innerCtx,
           Stmt.Accessibility.Public,
           SourcePos.SER);
       }
-      case SerDef.Prim prim -> export(context, ModulePath.This, prim.name().id, def.ref());
+      case SerDef.Prim prim -> export(context, ModuleName.This, prim.name().id, def.ref());
       default -> {
       }
     }
   }
 
   private void export(@NotNull PhysicalModuleContext context, @NotNull SerDef.QName qname, @NotNull DefVar<?, ?> ref) {
-    var modName = context.moduleName();
-    var qmodName = ModulePath.from(qname.mod().drop(modName.size()));
+    var modName = context.modulePath();
+    var qmodName = ModuleName.from(qname.mod().drop(modName.path().size()));
     export(context, qmodName, qname.name(), ref);
   }
 
   private void export(
     @NotNull PhysicalModuleContext context,
-    @NotNull ModulePath component,
+    @NotNull ModuleName component,
     @NotNull String name,
     @NotNull DefVar<?, ?> var
   ) {
@@ -337,7 +336,7 @@ public record CompiledAya(
     assert success : "DuplicateExportError should not happen in CompiledAya";
   }
 
-  private boolean isExported(@NotNull ImmutableSeq<String> module, @NotNull SerDef.QName qname) {
+  private boolean isExported(@NotNull ModulePath module, @NotNull SerDef.QName qname) {
     return exports.isExported(module, qname);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -44,7 +44,7 @@ public record LibrarySource(
 
   public @NotNull ImmutableSeq<String> moduleName() {
     var info = resolveInfo.get();
-    if (info != null) return info.thisModule().moduleName();
+    if (info != null) return info.thisModule().modulePath().path();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(AyaFiles.stripAyaSourcePostfix(display.getFileName().toString()));
     return IntStream.range(0, displayNoExt.getNameCount())

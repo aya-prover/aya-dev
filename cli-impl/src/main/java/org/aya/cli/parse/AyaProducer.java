@@ -34,6 +34,7 @@ import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
 import org.aya.ref.LocalVar;
+import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
@@ -137,7 +138,7 @@ public record AyaProducer(
     var open = new Command.Open(
       namePos,
       accessibility,
-      modName,
+      modName.asName(),
       useHide != null ? useHide(useHide) : UseHide.EMPTY,
       false,
       openImport
@@ -316,7 +317,7 @@ public record AyaProducer(
     additional.append(new Command.Open(
       keyword,
       modiSet.accessibility().data(),
-      new ModulePath.Qualified(decl.ref().name()),
+      new ModuleName.Qualified(decl.ref().name()),
       UseHide.EMPTY,
       modiSet.personality().data() == DeclInfo.Personality.EXAMPLE,
       true
@@ -880,8 +881,8 @@ public record AyaProducer(
         .map(WithPos::data).toImmutableSeq());
   }
 
-  public @NotNull ModulePath.Qualified modulePath(@NotNull GenericNode<?> node) {
-    return new ModulePath.Qualified(node.childrenOfType(WEAK_ID)
+  public @NotNull ModulePath modulePath(@NotNull GenericNode<?> node) {
+    return new ModulePath(node.childrenOfType(WEAK_ID)
       .map(this::weakId)
       .map(WithPos::data).toImmutableSeq());
   }

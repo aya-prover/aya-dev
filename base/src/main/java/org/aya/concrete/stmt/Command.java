@@ -3,6 +3,7 @@
 package org.aya.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public sealed interface Command extends Stmt {
    */
   record Import(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ModulePath.Qualified path,
+    @NotNull ModulePath path,
     @Nullable String asName,
     @NotNull Accessibility accessibility
   ) implements Command {
@@ -31,7 +32,7 @@ public sealed interface Command extends Stmt {
   record Open(
     @Override @NotNull SourcePos sourcePos,
     @NotNull Accessibility accessibility,
-    @NotNull ModulePath.Qualified path,
+    @NotNull ModuleName.Qualified path,
     @NotNull UseHide useHide,
     boolean openExample,
     boolean fromSugar

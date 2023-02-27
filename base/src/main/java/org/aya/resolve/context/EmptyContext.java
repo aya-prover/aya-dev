@@ -30,7 +30,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
 
   @Override
   public @Nullable AnyVar getQualifiedLocalMaybe(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
   ) {
@@ -38,15 +38,15 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
   }
 
   @Override public @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
-    return new PhysicalModuleContext(this, extraName);
+    return new PhysicalModuleContext(this, new ModulePath(extraName));
   }
 
-  @Override public @NotNull ImmutableSeq<String> moduleName() {
+  @Override public @NotNull ModulePath modulePath() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
+  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return null;
   }
 }

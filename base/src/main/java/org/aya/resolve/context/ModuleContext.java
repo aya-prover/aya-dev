@@ -46,7 +46,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @apiNote empty list => this module
    * @implNote This module should be automatically imported.
    */
-  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules();
+  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
 
   /**
@@ -54,7 +54,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   @NotNull ModuleExport exports();
 
-  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName) {
+  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return modules().getOrNull(modName);
   }
 
@@ -73,7 +73,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   @Override
-  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModulePath.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = modules().getOrNull(modName);
     if (mod == null) return null;
 
@@ -93,10 +93,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   /**
    * Import the whole module (including itself and its re-exports)
    *
-   * @see ModuleContext#importModule(ModulePath.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
+   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
    */
   default void importModule(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -114,7 +114,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param moduleExport  the module
    */
   default void importModule(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
@@ -134,7 +134,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     modules.set(modName, moduleExport);
   }
   default void openModule(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     @NotNull UseHide useHide
@@ -153,7 +153,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param rename  renaming
    */
   default void openModule(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull ImmutableSeq<QualifiedID> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
@@ -190,14 +190,14 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   default void importSymbol(
     boolean imported,
     @NotNull AnyVar ref,
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
     // `imported == false` implies the `ref` is defined in this module,
     // so `modName` should always be `ModulePath.This`.
-    assert imported || modName == ModulePath.This : "Sanity check";
+    assert imported || modName == ModuleName.This : "Sanity check";
 
     var symbols = symbols();
     var candidates = symbols.resolveUnqualified(name);
@@ -214,21 +214,21 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
         reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
 
-        if (candidates.containsKey(ModulePath.This)) {
+        if (candidates.containsKey(ModuleName.This)) {
           // H : modName instance ModulePath.Qualified
           // H0 : ref !in uniqueCandidates
           assert candidates.size() == 1;
           // ignore importing
           return;
-        } else if (modName == ModulePath.This) {
+        } else if (modName == ModuleName.This) {
           // H : candidates.keys are all Qualified
           // shadow
           candidates.clear();
         }
       } else {
         // H : uniqueCandidates.size == 1 && uniqueCandidates.iterator().next() == ref
-        assert modName != ModulePath.This : "Sanity check";     // already reported
-        assert candidates.keysView().allMatch(x -> x instanceof ModulePath.Qualified);
+        assert modName != ModuleName.This : "Sanity check";     // already reported
+        assert candidates.keysView().allMatch(x -> x instanceof ModuleName.Qualified);
       }
     }
 
@@ -249,11 +249,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull ModulePath modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
     return true;
   }
 
   default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    importSymbol(false, ref, ModulePath.This, ref.name(), accessibility, sourcePos);
+    importSymbol(false, ref, ModuleName.This, ref.name(), accessibility, sourcePos);
   }
 }

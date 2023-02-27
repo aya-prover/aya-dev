@@ -3,87 +3,41 @@
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.Constants;
-import org.aya.generic.util.InternalException;
+import org.aya.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-public sealed interface ModulePath extends Serializable {
-  int size();
-  enum ThisRef implements ModulePath {
-    Obj;
-
-    @Override public int size() {
-      return 0;
-    }
-
-    @Override public @NotNull ImmutableSeq<String> ids() {
-      return ImmutableSeq.empty();
-    }
-
-    @Override public @NotNull Qualified resolve(@NotNull String name) {
-      return new Qualified(ImmutableSeq.of(name));
-    }
-
-    @Override public @NotNull ModulePath concat(@NotNull ModulePath path) {
-      return path;
-    }
-
-    @Override public @NotNull String toString() {
-      return "";
-    }
+/**
+ * An absolute path to a module.
+ * <p/>
+ * This is exactly a {@link ModuleName.Qualified}, but I think you don't want to use a local name as an absolute path by accident.
+ *
+ * @param path not empty path
+ */
+public record ModulePath(@NotNull ImmutableSeq<String> path) implements Serializable {
+  public static @NotNull ModulePath of(@NotNull String... names) {
+    return new ModulePath(ImmutableSeq.from(names));
   }
 
-  record Qualified(@NotNull ImmutableSeq<String> ids) implements ModulePath {
-    public Qualified(String @NotNull ... ids) {
-      this(ImmutableSeq.of(ids));
-    }
-
-    public Qualified {
-      assert ids.isNotEmpty() : "Otherwise please use `This`";
-    }
-
-    @Override public int size() {
-      return ids.size();
-    }
-
-    @Override public @NotNull Qualified resolve(@NotNull String name) {
-      return new Qualified(ids.appended(name));
-    }
-
-    @Override public @NotNull Qualified concat(@NotNull ModulePath path) {
-      return new Qualified(ids.concat(path.ids()));
-    }
-
-    @Override public @NotNull String toString() {
-      return ids.joinToString(Constants.SCOPE_SEPARATOR);
-    }
+  public ModulePath {
+    assert path.isNotEmpty() : "What's this?";
   }
 
-  @NotNull ImmutableSeq<String> ids();
-  @NotNull Qualified resolve(@NotNull String name);
-  @NotNull ModulePath concat(@NotNull ModulePath path);
-  @NotNull String toString();
-
-  /// region static
-
-  @NotNull ModulePath.ThisRef This = ThisRef.Obj;
-
-  static @NotNull ModulePath from(@NotNull ImmutableSeq<String> ids) {
-    if (ids.isEmpty()) return This;
-    return new Qualified(ids);
+  public @NotNull ModuleName.Qualified asName() {
+    return ModuleName.qualified(path);
   }
 
-  /**
-   * Construct a qualified module path from a not empty id sequence.
-   *
-   * @param ids a not empty sequence
-   */
-  static @NotNull ModulePath.Qualified qualified(@NotNull ImmutableSeq<String> ids) {
-    if (ids.isEmpty()) throw new InternalException("A valid module path cannot be empty");
-    return new Qualified(ids);
+  public @NotNull ModulePath derive(@NotNull String... names) {
+    return new ModulePath(path.appendedAll(names));
   }
 
-  /// endregion
+  public @NotNull ModulePath derive(@NotNull ImmutableSeq<String> names) {
+    return new ModulePath(path.appendedAll(names));
+  }
+
+  @Override
+  public String toString() {
+    return QualifiedID.join(path);
+  }
 }

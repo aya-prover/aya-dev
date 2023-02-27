@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.ref.AnyVar;
@@ -17,15 +16,15 @@ import java.nio.file.Path;
 public record NoExportContext(
   @NotNull Context parent,
   @NotNull ModuleSymbol<AnyVar> symbols,
-  @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules,
-  @Override @NotNull ImmutableSeq<String> moduleName
+  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules,
+  @Override @NotNull ModulePath moduleName
 ) implements ModuleContext {
   public NoExportContext(
     @NotNull Context parent,
     @NotNull ModuleSymbol<AnyVar> symbols,
-    @NotNull MutableMap<ModulePath.Qualified, ModuleExport> modules
+    @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
   ) {
-    this(parent, symbols, modules, parent.moduleName().appended(":NoExport"));
+    this(parent, symbols, modules, parent.modulePath().derive(":NoExport"));
   }
 
   public NoExportContext(@NotNull Context parent) {

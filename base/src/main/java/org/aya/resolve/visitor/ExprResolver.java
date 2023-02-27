@@ -22,7 +22,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.resolve.error.PrimResolveError;
@@ -244,9 +244,9 @@ public record ExprResolver(
           }
           case Pattern.QualifiedRef qref -> {
             var qid = qref.qualifiedID();
-            assert qid.component() instanceof ModulePath.Qualified;
+            assert qid.component() instanceof ModuleName.Qualified;
             var maybe = ctx.get().iterate(c ->
-              patternCon(c.getQualifiedLocalMaybe((ModulePath.Qualified) qid.component(), qid.name(), qref.sourcePos())));
+              patternCon(c.getQualifiedLocalMaybe((ModuleName.Qualified) qid.component(), qid.name(), qref.sourcePos())));
             if (maybe != null) {
               addReference(maybe);
               yield new Pattern.Ctor(qref, maybe);
