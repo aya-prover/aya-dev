@@ -244,7 +244,7 @@ structField
 
 dataDecl ::= declModifiers*
  KW_DATA declNameOrInfix?
- tele* type? dataBody* bindBlock? { pin=2 }
+ tele* type? bindBlock? dataBody* { pin=2 }
 
 dataBody ::= BAR (dataCtorClause | dataCtor) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
