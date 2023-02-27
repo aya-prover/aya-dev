@@ -3,7 +3,7 @@
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.Constants;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ public sealed interface ModuleName {
     }
 
     @Override public @NotNull String toString() {
-      return ids.joinToString(Constants.SCOPE_SEPARATOR);
+      return QualifiedID.join(ids);
     }
   }
 

@@ -65,7 +65,6 @@ public record ModuleSymbol<T>(
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
 
-    // TODO: I think this is a kind of evil that we put this here
     var uniqueCandidates = candidates.valuesView().distinct();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
