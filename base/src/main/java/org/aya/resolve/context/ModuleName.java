@@ -7,13 +7,15 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.generic.util.InternalException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * This interface represents a name to some module,
  * which can be a relative `{@link ThisRef}` or a qualified name `{@link Qualified}`.
  * <p/>
  * This name should be used in a local scope instead of a global scope (like a path to a module).
  */
-public sealed interface ModuleName {
+public sealed interface ModuleName extends Serializable {
   int size();
   enum ThisRef implements ModuleName {
     Obj;
