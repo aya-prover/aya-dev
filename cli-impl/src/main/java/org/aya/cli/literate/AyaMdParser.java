@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AyaMdParser {
-  public static final char LINE_SEPARATOR = '\n';
 
   /** For empty line that end with \n, the index points to \n */
   private final @NotNull ImmutableSeq<Integer> linesIndex;
@@ -54,58 +53,34 @@ public class AyaMdParser {
    * Another strategy: create a lexer that can tokenize some pieces of source code
    */
   public @NotNull String extractAya(@NotNull Literate literate) {
-    var codeBlocks = new LiterateConsumer.AyaCodeBlocks(MutableList.create()).extract(literate);
+    var codeBlocks = new LiterateConsumer.AyaCodeBlocks(MutableList.create())
+      .extract(literate)
+      .view()
+      .filter(x -> x.sourcePos != null);
+
     var builder = new StringBuilder(file.sourceCode().length());
-    var index = -1;  // current index (the index of the last character)
-    var line = 1;   // current line (1 based)
+    @Nullable Literate.CodeBlock head = codeBlocks.firstOrNull();
+    codeBlocks = codeBlocks.drop(1);
 
-    for (var block : codeBlocks) {
-      // block.isAya = true
+    for (var idx = 0; idx < file.sourceCode().length(); ++idx) {
+      var theChar = file.sourceCode().charAt(idx);
 
-      var sourcePos = block.sourcePos;
+      if (head != null) {
+        assert head.sourcePos != null : "Physical doesn't exist!!";
+        if (head.sourcePos.tokenEndIndex() < idx) {
+          assert idx - head.sourcePos.tokenEndIndex() == 1;
+          head = codeBlocks.firstOrNull();
+          codeBlocks = codeBlocks.drop(1);
+        }
 
-      // A code block that doesn't matter, skip
-      if (sourcePos == null) continue;
-
-      // reach to the line above the code block
-      var lineTarget = sourcePos.startLine() - 1;
-      while (line < lineTarget) {
-        builder.append(LINE_SEPARATOR);
-        line++;
-        index++;
+        assert head == null || head.sourcePos != null : "Physical doesn't exist!!";
+        if (head != null && head.sourcePos.contains(idx)) {
+          builder.append(theChar);
+          continue;
+        }
       }
 
-      // line = lineTarget
-      // We want to reach the character that before the tokenStartIndex.
-      var indexTarget = sourcePos.tokenStartIndex() - 1;
-      // This case is probably impossible, because a code block always begin with at least '```'
-      assert indexTarget > index : "BUG!";
-
-      // We are at the line above the code block --- The '```' line
-      // reach to indexTarget - 1 (1 is for line separator)
-
-      // It is impossible that we only append one or no '/', because a code block always start with three '`'
-      builder.append("/".repeat(indexTarget - 1 - index));
-      index = indexTarget - 1;
-
-      var content = block.raw;
-      // index = indexTarget - 1
-      builder.append(LINE_SEPARATOR);
-      index++;
-      line++;
-      // index = indexTarget
-      // line = sourcePos.startLine
-      // The cursor is now before the sourcePos.tokenStartIndex
-
-      assert index + 1 == sourcePos.tokenStartIndex();
-      assert line == sourcePos.startLine();
-
-      builder.append(content);
-
-      // update line and index
-      index += content.length();
-      // the cursor is now after the last character
-      line += sourcePos.linesOfCode() - 1;
+      builder.append(theChar == '\n' ? '\n' : ' ');
     }
 
     return builder.toString();

@@ -63,6 +63,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
         //  this workaround solution does not work for whitespace in LaTeX.
         docs.append(Doc.plain(knifeCut.before.toString()));
       }
+      // Umm, I think it doesn't matter, `Doc.empty` is the unit of `Doc.cat`
       // Do not add to result if the highlighted cut contains nothing
       var highlight = highlightOne(knifeCut.current.toString(), current.type());
       if (highlight != Doc.empty())
