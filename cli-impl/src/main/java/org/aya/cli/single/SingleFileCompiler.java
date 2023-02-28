@@ -59,7 +59,7 @@ public record SingleFileCompiler(
         ayaFile.tyckAdditional(moduleResolve);
         ayaFile.pretty(flags, program, CliEnums.PrettyStage.scoped);
         ayaFile.pretty(flags, defs, CliEnums.PrettyStage.typed);
-        if (reporter.noError()) ayaFile.pretty(flags, program, CliEnums.PrettyStage.literate);
+        ayaFile.pretty(flags, program, CliEnums.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });
