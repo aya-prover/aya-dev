@@ -2,6 +2,46 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.28
+
+Internal refactorings:
+
++ Concrete syntax cleanup.
++ Upgraded Gradle to 8.0.
++ The module `cli` is split into `cli-impl` and `cli-console`.
++ We are now using a strongly typed version of module paths/names instead of list of strings.
++ Term visitors now take care of patterns.
++ The generalized `MCT` is now deleted.
++ The modifier parser now takes care of all modifiers.
+
+New features:
+
++ Reimplementation of the pattern classifier. The old one turns out to have some very deeply hidden bugs,
+  and it's uneasy to fix them, and is modified by @imkiva without well-understanding the code.
+  The new one is much simpler and closer to the very old implementation (v0.5).
++ Support projection out of expressions that normalize to a constructor call.
++ Functions are now `Fn` instead of `Pi`, `fn` instead of `λ`. The old keywords are no longer reserved,
+  so you can define functions called `Π` and `λ` now. This imitates Lean4 and Coq.
++ We have added initial support for a predicative termination checker.
+  Right now it only works for path application, but we will support functions in general in the future.
++ Locally opening a module now works, use `let open`.
++ The literate mode now supports `aya-hidden` as a language, and it's hidden in the output.
++ The `inline` keyword is now moved to the front of the definition.
++ Support anonymous examples.
++ Aya now tries to unfold unrelated definitions in the termination checker.
+
+Improvements:
+
++ Overhauled the module system to support diamond imports, `using`, etc.
++ The LaTeX backend is much better: support KaTeX mode, more symbols, fixed some old ones, etc.
++ Fixed some internal errors.
++ The faithful pretty printer now works with error-ed code, and it has better treatment for EOLs.
++ We've recompiled the website with the latest changes on syntax!
++ Type checking order now respects patterns. It's a miracle that the old code worked at all.
++ `data infix` will have precedence written before the constructors instead of after.
+
+By the way, we are now working on a WIP branch that reimplements `record`s as `class`es!
+
 ## 0.27
 
 Happy new year! New features and big changes:
