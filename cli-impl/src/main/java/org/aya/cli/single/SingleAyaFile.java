@@ -76,7 +76,8 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
   @VisibleForTesting default @NotNull Doc toDoc(
     @NotNull ImmutableSeq<Stmt> program,
-    @NotNull PrettierOptions options) throws IOException {
+    @NotNull PrettierOptions options
+  ) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
     var literate = literate();
     new HighlightsCollector(highlights, options).accept(literate);
