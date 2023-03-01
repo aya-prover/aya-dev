@@ -14,6 +14,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.test.EmptyModuleLoader;
+import org.aya.test.TestRunner;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ public class AyaMdParserTest {
     public final static @NotNull String EXTENSION_AYA_MD = Constants.AYA_LITERATE_POSTFIX;
     public final static @NotNull String EXTENSION_AYA = Constants.AYA_POSTFIX;
     public final static @NotNull String EXTENSION_HTML = EXTENSION_AYA_MD + ".html";
+    public final static @NotNull String EXTENSION_TEX = ".tex";
 
     public @NotNull String mdName() {
       return modName + EXTENSION_AYA_MD;
@@ -55,6 +57,10 @@ public class AyaMdParserTest {
 
     public @NotNull String htmlName() {
       return modName + EXTENSION_HTML;
+    }
+
+    public @NotNull String texName() {
+      return modName + EXTENSION_TEX;
     }
 
     public @NotNull Path mdFile() {
@@ -76,10 +82,14 @@ public class AyaMdParserTest {
     public @NotNull Path outMdFile() {
       return TEST_DIR.resolve(htmlName() + ".out.md");
     }
+
+    public @NotNull Path texFile() {
+      return TEST_DIR.resolve(texName());
+    }
   }
 
   public static @NotNull SourceFile file(@NotNull Path path) throws IOException {
-    return new SourceFile(path.toFile().getName(), path, Files.readString(path));
+    return SourceFile.from(TestRunner.LOCATOR, path);
   }
 
   @ParameterizedTest
@@ -118,9 +128,13 @@ public class AyaMdParserTest {
     literate.tyckAdditional(info);
 
     var doc = literate.toDoc(stmts, AyaPrettierOptions.pretty()).toDoc();
+    // save some coverage
+    var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();
+
     Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
     Files.writeString(oneCase.outMdFile(), expectedMd);
+    Files.writeString(oneCase.texFile(), actualTexInlinedStyle);
 
     // test single file compiler
     var compiler = new SingleFileCompiler(AyaThrowingReporter.INSTANCE, null, null);
@@ -131,8 +145,6 @@ public class AyaMdParserTest {
     var actualMd = Files.readString(oneCase.outMdFile());
     assertEquals(trim(expectedMd), trim(actualMd));
 
-    // save some coverage
-    var actualTexInlinedStyle = doc.renderToTeX();
     var actualTexWithHeader = new RenderOptions().render(RenderOptions.OutputTarget.LaTeX,
       doc, new RenderOptions.Opts(true, true, true, true, -1, false));
     var actualTexButKa = new RenderOptions().render(RenderOptions.OutputTarget.KaTeX,
