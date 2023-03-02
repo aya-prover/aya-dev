@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
  * @apiNote the methods that end with `Definitely` will get/remove only one symbol or fail if ambiguous.
  */
 public record ModuleSymbol<T>(
-  @NotNull MutableMap<String, MutableMap<ModulePath, T>> table
+  @NotNull MutableMap<String, MutableMap<ModuleName, T>> table
 ) {
   public ModuleSymbol() {
     this(MutableMap.create());
@@ -40,7 +40,7 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    * @return the candidates, probably empty
    */
-  public @NotNull MutableMap<ModulePath, T> resolveUnqualified(@NotNull String unqualifiedName) {
+  public @NotNull MutableMap<ModuleName, T> resolveUnqualified(@NotNull String unqualifiedName) {
     return table.getOrPut(unqualifiedName, MutableMap::create);
   }
 
@@ -51,7 +51,7 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    * @return none if not found
    */
-  public @NotNull Option<T> getQualifiedMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+  public @NotNull Option<T> getQualifiedMaybe(@NotNull ModuleName component, @NotNull String unqualifiedName) {
     return resolveUnqualified(unqualifiedName).getOption(component);
   }
 
@@ -65,7 +65,6 @@ public record ModuleSymbol<T>(
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
 
-    // TODO: I think this is a kind of evil that we put this here
     var uniqueCandidates = candidates.valuesView().distinct();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
@@ -78,10 +77,10 @@ public record ModuleSymbol<T>(
    * @param component       an optional component, none if `This`
    * @param unqualifiedName the unqualified name
    */
-  public @NotNull Result<T, Error> getMaybe(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+  public @NotNull Result<T, Error> getMaybe(@NotNull ModuleName component, @NotNull String unqualifiedName) {
     return switch (component) {
-      case ModulePath.Qualified qualified -> getQualifiedMaybe(component, unqualifiedName).toResult(Error.NotFound);
-      case ModulePath.ThisRef aThis -> getUnqualifiedMaybe(unqualifiedName);
+      case ModuleName.Qualified qualified -> getQualifiedMaybe(component, unqualifiedName).toResult(Error.NotFound);
+      case ModuleName.ThisRef aThis -> getUnqualifiedMaybe(unqualifiedName);
     };
   }
 
@@ -89,7 +88,7 @@ public record ModuleSymbol<T>(
     return resolveUnqualified(unqualified).isNotEmpty();
   }
 
-  public boolean contains(@NotNull ModulePath component, @NotNull String unqualified) {
+  public boolean contains(@NotNull ModuleName component, @NotNull String unqualified) {
     return resolveUnqualified(unqualified).containsKey(component);
   }
 
@@ -104,7 +103,7 @@ public record ModuleSymbol<T>(
    * @implNote This method always overwrites the symbol that is added in the past.
    */
   public Option<T> add(
-    @NotNull ModulePath componentName,
+    @NotNull ModuleName componentName,
     @NotNull String name,
     @NotNull T ref
   ) {
@@ -112,7 +111,7 @@ public record ModuleSymbol<T>(
     return candidates.put(componentName, ref);
   }
 
-  public Option<T> remove(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+  public Option<T> remove(@NotNull ModuleName component, @NotNull String unqualifiedName) {
     return table().getOption(unqualifiedName).flatMap(x -> x.remove(component));
   }
 
@@ -130,9 +129,9 @@ public record ModuleSymbol<T>(
     return Result.ok(result);
   }
 
-  public Result<T, Error> removeDefinitely(@NotNull ModulePath component, @NotNull String unqualifiedName) {
+  public Result<T, Error> removeDefinitely(@NotNull ModuleName component, @NotNull String unqualifiedName) {
     return switch (component) {
-      case ModulePath.Qualified qualified -> {
+      case ModuleName.Qualified qualified -> {
         var result = remove(component, unqualifiedName);
 
         if (result.isEmpty()) {
@@ -141,7 +140,7 @@ public record ModuleSymbol<T>(
           yield Result.ok(result.get());
         }
       }
-      case ModulePath.ThisRef aThis -> removeDefinitely(unqualifiedName);
+      case ModuleName.ThisRef aThis -> removeDefinitely(unqualifiedName);
     };
   }
 
@@ -149,11 +148,11 @@ public record ModuleSymbol<T>(
     return table().keysView();
   }
 
-  public @NotNull MapView<String, Map<ModulePath, T>> view() {
+  public @NotNull MapView<String, Map<ModuleName, T>> view() {
     return table().view().mapValues((k, v) -> v);
   }
 
-  public void forEach(@NotNull BiConsumer<String, Map<ModulePath, T>> action) {
+  public void forEach(@NotNull BiConsumer<String, Map<ModuleName, T>> action) {
     table().forEach(action);
   }
 }

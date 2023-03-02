@@ -144,7 +144,6 @@ public class RenderOptions {
     try {
       return stylist(output);
     } catch (IOException | JsonParseException e) {
-      // TODO: report error but don't stop
       return defaultStylist(output);
     }
   }

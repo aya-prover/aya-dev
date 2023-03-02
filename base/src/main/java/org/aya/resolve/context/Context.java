@@ -41,12 +41,12 @@ public interface Context {
   }
 
   /**
-   * The qualified module name of this module, should be absolute, not empty for non EmptyContext.
+   * The path of this module
    */
-  default @NotNull ImmutableSeq<String> moduleName() {
+  default @NotNull ModulePath modulePath() {
     var p = parent();
     assert p != null;
-    return p.moduleName();
+    return p.modulePath();
   }
 
   @Contract("_ -> fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
@@ -70,8 +70,8 @@ public interface Context {
    */
   default @NotNull AnyVar get(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.ThisRef aThis -> getUnqualified(name.name(), name.sourcePos());
-      case ModulePath.Qualified qualified -> getQualified(qualified, name.name(), name.sourcePos());
+      case ModuleName.ThisRef aThis -> getUnqualified(name.name(), name.sourcePos());
+      case ModuleName.Qualified qualified -> getQualified(qualified, name.name(), name.sourcePos());
     };
   }
 
@@ -80,8 +80,8 @@ public interface Context {
    */
   default @Nullable AnyVar getMaybe(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModulePath.ThisRef aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
-      case ModulePath.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), name.sourcePos());
+      case ModuleName.ThisRef aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
+      case ModuleName.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), name.sourcePos());
     };
   }
 
@@ -127,10 +127,10 @@ public interface Context {
   /**
    * Trying to get a symbol by qualified id {@code {modName}::{name}} in {@code this} context
    *
-   * @return a symbol in component {@param modName}, even it is {@link ModulePath#This}; null if not found
+   * @return a symbol in component {@param modName}, even it is {@link ModuleName#This}; null if not found
    */
   @Nullable AnyVar getQualifiedLocalMaybe(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
   );
@@ -138,10 +138,10 @@ public interface Context {
   /**
    * Trying to get a symbol by qualified id {@code {modName}::{name}} in the whole context with {@param accessibility}.
    *
-   * @see Context#getQualifiedLocalMaybe(ModulePath.Qualified, String, SourcePos)
+   * @see Context#getQualifiedLocalMaybe(ModuleName.Qualified, String, SourcePos)
    */
   default @Nullable AnyVar getQualifiedMaybe(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
   ) {
@@ -149,10 +149,10 @@ public interface Context {
   }
 
   /**
-   * @see Context#getQualifiedMaybe(ModulePath.Qualified, String, SourcePos)
+   * @see Context#getQualifiedMaybe(ModuleName.Qualified, String, SourcePos)
    */
   default @NotNull AnyVar getQualified(
-    @NotNull ModulePath.Qualified modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
   ) {
@@ -168,7 +168,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModulePath.Qualified modName);
+  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName);
 
   /**
    * Trying to get a {@link ModuleExport} by a module {@param modName} in the whole context.
@@ -176,7 +176,7 @@ public interface Context {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  default @Nullable ModuleExport getModuleMaybe(@NotNull ModulePath.Qualified modName) {
+  default @Nullable ModuleExport getModuleMaybe(@NotNull ModuleName.Qualified modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 
@@ -213,7 +213,7 @@ public interface Context {
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
-    return new PhysicalModuleContext(this, this.moduleName().concat(extraName));
+    return new PhysicalModuleContext(this, this.modulePath().derive(extraName));
   }
 
   class ResolvingInterruptedException extends InterruptException {

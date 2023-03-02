@@ -728,7 +728,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // declModifiers*
   //  KW_DATA declNameOrInfix?
-  //  tele* type? dataBody* bindBlock?
+  //  tele* type? bindBlock? dataBody*
   public static boolean dataDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl")) return false;
     boolean r, p;
@@ -781,21 +781,21 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // dataBody*
+  // bindBlock?
   private static boolean dataDecl_5(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl_5")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!dataBody(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "dataDecl_5", c)) break;
-    }
+    bindBlock(b, l + 1);
     return true;
   }
 
-  // bindBlock?
+  // dataBody*
   private static boolean dataDecl_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl_6")) return false;
-    bindBlock(b, l + 1);
+    while (true) {
+      int c = current_position_(b);
+      if (!dataBody(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "dataDecl_6", c)) break;
+    }
     return true;
   }
 

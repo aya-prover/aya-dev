@@ -3,11 +3,11 @@
 package org.aya.ide.util;
 
 import org.aya.ref.AnyVar;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
 /** Modules are not variables. This is only used in LSP for convenience */
-public record ModuleVar(@NotNull ModulePath path) implements AnyVar {
+public record ModuleVar(@NotNull ModuleName path) implements AnyVar {
   @Override public @NotNull String name() {
     return path.toString();
   }

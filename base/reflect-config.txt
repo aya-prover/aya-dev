@@ -48,7 +48,8 @@ kala.collection.immutable.ImmutableSeqs$Seq{0,5}
 org.aya.core.repr.CodeShape$MomentId
 org.aya.concrete.stmt.UseHide$Rename
 org.aya.generic.SortKind
-org.aya.resolve.context.ModulePath$Qualified
+org.aya.resolve.context.ModuleName
+org.aya.resolve.context.ModulePath
 
 org.aya.guest0x0.cubical.Formula$Conn
 org.aya.guest0x0.cubical.Formula$Inv

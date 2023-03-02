@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -65,7 +65,7 @@ public final class BinPatternParser extends BinOpParser<AyaBinOpSet, Pattern, Ar
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Arg<Pattern> elem) {
     return elem.term() instanceof Pattern.Ctor ref && ref.resolved().data() instanceof DefVar<?, ?> defVar
-      ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
+      ? defVar.resolveOpDecl(resolveInfo.thisModule().modulePath())
       : null;
   }
 

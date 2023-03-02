@@ -8,10 +8,7 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
-import org.aya.resolve.context.BindContext;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.*;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -32,7 +29,7 @@ public interface NameProblem extends Problem {
 
   record AmbiguousNameError(
     @NotNull String name,
-    @NotNull ImmutableSeq<ModulePath> disambiguation,
+    @NotNull ImmutableSeq<ModuleName> disambiguation,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -78,7 +75,7 @@ public interface NameProblem extends Problem {
   }
 
   record DuplicateModNameError(
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -120,7 +117,7 @@ public interface NameProblem extends Problem {
   }
 
   record ModNameNotFoundError(
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -133,20 +130,20 @@ public interface NameProblem extends Problem {
   }
 
   record ModNotFoundError(
-    @NotNull ModulePath modName,
+    @NotNull ModulePath path,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(modName.toString())),
+        Doc.code(Doc.plain(path.toString())),
         Doc.english("is not found")
       );
     }
   }
 
   record ModShadowingWarn(
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -171,7 +168,7 @@ public interface NameProblem extends Problem {
   }
 
   record QualifiedNameNotFoundError(
-    @NotNull ModulePath modName,
+    @NotNull ModuleName modName,
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements NameProblem.Error {

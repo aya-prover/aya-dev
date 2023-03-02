@@ -24,7 +24,7 @@ import org.aya.generic.Modifier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.prettier.PrettierOptions;
@@ -334,7 +334,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         }),
         Doc.parened(Doc.commaList(cmd.useHide().list().view()
           .map(name -> name.asName().isEmpty()
-            || name.id().component() == ModulePath.This && name.asName().get().equals(name.id().name())
+            || name.id().component() == ModuleName.This && name.asName().get().equals(name.id().name())
             ? Doc.plain(name.id().name())
             : Doc.sep(Doc.plain(name.id().join()), Doc.styled(KEYWORD, "as"), Doc.plain(name.asName().get())))))
       );

@@ -112,7 +112,7 @@ public sealed interface Literate extends Docile {
     public @Nullable Doc highlighted;
 
     /**
-     * The source pos of the code block ( without beginning '```', and ending '\n```' )
+     * The source pos of the code block ( without beginning '```\n', and ending '\n```' )
      * null if this code block is empty (length 0)
      */
     public final @Nullable SourcePos sourcePos;

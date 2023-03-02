@@ -25,7 +25,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.Result;
@@ -769,7 +769,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   // I think a new type is better than `Either<LetBind, Open> bind` in `Expr.Let`
   record LetOpen(
     @NotNull SourcePos sourcePos,
-    @NotNull ModulePath.Qualified componentName,
+    @NotNull ModuleName.Qualified componentName,
     @NotNull UseHide useHide,
     @NotNull Expr body
   ) implements Expr {

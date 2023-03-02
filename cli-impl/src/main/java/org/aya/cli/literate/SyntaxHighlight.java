@@ -31,7 +31,7 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
-import org.aya.resolve.context.ModulePath;
+import org.aya.resolve.context.ModuleName;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -125,13 +125,13 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
+  public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
     // TODO: use `LinkId.page` for cross module link
     return add(acc, DefKind.Module.toRef(pos, Link.loc(path.toString()), null));
   }
 
   @Override
-  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModulePath path) {
+  public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
     // TODO: use `LinkId.page` for cross module link
     return add(acc, DefKind.Module.toDef(pos, Link.loc(path.toString()), null));
   }

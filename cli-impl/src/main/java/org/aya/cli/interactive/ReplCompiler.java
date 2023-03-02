@@ -73,7 +73,7 @@ public class ReplCompiler {
     };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(this.reporter);
-    this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ImmutableSeq.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ModulePath.of("REPL"));
     this.fileManager = new SingleAyaFile.Factory(this.reporter);
     var parser = new AyaParserImpl(this.reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
@@ -118,7 +118,7 @@ public class ReplCompiler {
     owner.librarySources()
       .map(src -> src.resolveInfo().get().thisModule())
       .filterIsInstance(PhysicalModuleContext.class)
-      .forEach(mod -> context.importModule(ModulePath.qualified(mod.moduleName()), mod, Stmt.Accessibility.Public, SourcePos.NONE));
+      .forEach(mod -> context.importModule(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE));
     owner.libraryDeps().forEach(this::importModule);
   }
 

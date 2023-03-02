@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -62,7 +62,7 @@ public final class BinExprParser extends BinOpParser<AyaBinOpSet, Expr, Expr.Nam
     var expr = elem.term();
     while (expr instanceof Expr.Lift lift) expr = lift.expr();
     return expr instanceof Expr.Ref ref && ref.resolvedVar() instanceof DefVar<?, ?> defVar
-      ? defVar.resolveOpDecl(resolveInfo.thisModule().moduleName())
+      ? defVar.resolveOpDecl(resolveInfo.thisModule().modulePath())
       : null;
   }
 

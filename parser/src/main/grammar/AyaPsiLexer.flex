@@ -47,7 +47,6 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 %implements FlexLexer
 %function advance
 %type IElementType
-%unicode
 
 %s IN_BLOCK_COMMENT
 

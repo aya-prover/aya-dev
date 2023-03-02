@@ -179,6 +179,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   }
 
   protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
+    makeSureLineStart(cursor, outer);
     renderDoc(cursor, block.code(), outer);
   }
 
@@ -211,5 +212,17 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
       printer.renderHardLineBreak(cursor, outer);
     }
+  }
+
+  /**
+   * renderLineBreak if not line start
+   *
+   * @return true if renderLineBreak
+   */
+  protected boolean makeSureLineStart(@NotNull Cursor cursor, EnumSet<Outer> outers) {
+    if (!cursor.isAtLineStart()) {
+      renderHardLineBreak(cursor, outers);
+      return true;
+    } else return false;
   }
 }
