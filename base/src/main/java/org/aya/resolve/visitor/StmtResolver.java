@@ -113,7 +113,7 @@ public interface StmtResolver {
 
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
     info.depGraph().sucMut(decl).appendAll(refs
-      .filter(unit -> unit.unit().needTyck(info.thisModule().modulePath().path())));
+      .filter(unit -> unit.unit().needTyck(info.thisModule().moduleName().path())));
     if (decl instanceof TyckOrder.Body) info.depGraph().sucMut(decl)
       .append(new TyckOrder.Head(decl.unit()));
   }
@@ -162,7 +162,7 @@ public interface StmtResolver {
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
     if (ctx.get(id) instanceof DefVar<?, ?> defVar) {
-      var opDecl = defVar.resolveOpDecl(ctx.modulePath());
+      var opDecl = defVar.resolveOpDecl(ctx.moduleName());
       if (opDecl != null) {
         opSet.bind(self, pred, opDecl, id.sourcePos());
         return defVar;

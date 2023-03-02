@@ -4,7 +4,7 @@ def infix ∘ { A B C : Type } ( g : B -> C ) ( f : A -> B ) : A -> C
  => \ x => g (f x)
   tighter =
 
-class Isomorphism'
+class Isomorphism
   | A : Type
   | B : Type
   | to : A -> B
