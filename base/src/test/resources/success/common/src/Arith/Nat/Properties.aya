@@ -20,7 +20,7 @@ private def diag Nat : Type
 private def suc-inj (m : Nat) : Nat
 | 0 => 0
 | suc m => m
-overlap def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\ i => suc-inj (p i))
+def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\ i => suc-inj (p i))
 
 def =?-refl (m : Nat) : (m =? m) = true
 | 0 => idp
