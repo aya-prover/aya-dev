@@ -1,0 +1,15 @@
+import Arith::Bool
+import Logic::False
+import Logic::Dec
+
+open Arith::Bool using (Bool, true, false)
+open Logic::False using (¬)
+open Logic::Dec
+
+open data Reflect Type Bool
+| P, true  => reflectT P
+| P, false => reflectF (¬ P)
+
+def downgrade {P : Type} {b : Bool} (Reflect P b) : Dec P
+| reflectT proof => yes proof
+| reflectF proof => no proof

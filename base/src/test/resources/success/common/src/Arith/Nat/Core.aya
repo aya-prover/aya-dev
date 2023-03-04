@@ -1,6 +1,9 @@
 open import Paths
 open import Algebra::Formula
 
+import Arith::Bool::Core
+open   Arith::Bool::Core
+
 open data Nat
 | zero
 | suc Nat
@@ -60,3 +63,10 @@ private overlap def *-assoc-lemma : Associative (*)
 | 0, _, _ => idp
 | suc m, _, _ => <=3=> (+-*-distl _) (pmap (+ _) *-assoc) +-comm
 inline def *-assoc {m n k : Nat} => *-assoc-lemma m n k
+
+overlap def infix =? (m n : Nat) : Bool
+| 0    , 0     => true
+| suc _, 0     => false
+| 0    , suc _ => false
+| suc m, suc n => m =? n
+looser + *
