@@ -18,7 +18,7 @@ private def diag Nat : Type
 | suc a => False
 
 private def suc-inj (m : Nat) : Nat
-| 0 => 0
+| 0 => 114514
 | suc m => m
 def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\ i => suc-inj (p i))
 
