@@ -4,7 +4,7 @@ open import Arith::Nat::Properties
 open import Logic::Dec
 open import Logic::False
 
-def ≐-suc {m n : Nat} (p : Dec (m = n)) : Dec (suc m = suc n)
+def ≐-suc {m n : Nat} (Dec (m = n)) : Dec (suc m = suc n)
 | yes p => yes (pmap suc p)
 | no np => no (\ p =>
   // p  : suc m = suc n

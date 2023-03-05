@@ -1,4 +1,4 @@
-public open import Arith::Nat::Core hiding (=?)
+public open import Arith::Nat::Core
 
 open import Arith::Nat::Order
 
