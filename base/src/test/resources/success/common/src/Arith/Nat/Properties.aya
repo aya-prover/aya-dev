@@ -2,12 +2,6 @@ open import Paths
 open import Logic::False
 open import Arith::Nat::Core
 
-import Logic::Reflect
-import Arith::Bool
-
-open Logic::Reflect
-open Arith::Bool
-
 def *-suc-suc (m n : Nat) : suc (m + n + m * n) = suc m * suc n
   => pmap suc (<=3=> (pmap (+ m * n) +-comm)
     +-assoc (pmap (n +) *-suc))
@@ -21,37 +15,3 @@ private def suc-inj (m : Nat) : Nat
 | 0 => 114514
 | suc m => m
 def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\ i => suc-inj (p i))
-
-def =?-refl (m : Nat) : (m =? m) = true
-| 0 => idp
-| suc m' =>
-  // Goal : (suc m' =? suc m?) = true
-  //      : (m' =? m') = true
-  =?-refl m'
-
-def =?-= {m n : Nat} (p : (m =? n) = true) : m = n
-| {0}, {0}, _ => idp
-| {0}, {suc n'}, p => elim (t≠f (sym p))
-| {suc m'}, {0}, p => elim (t≠f (sym p))
-| {suc m'}, {suc n'}, p =>
-  // p : (suc m' =? suc n') = true
-  //   : (m' =? n') = true            simpl.
-  // Goal : suc m' = suc n'
-  pmap suc (=?-= {m'} {n'} p)
-
-def ≠?-≠ {m n : Nat} (p : (m =? n) = false) : m ≠ n =>
-  \ (h : m = n) =>
-    let
-    | lemma : (n =? n) = false := (transport (\ x => (x =? n) = false) h p)
-    | t=f : true = false := sym (=?-refl n) <==> lemma
-    in t≠f t=f
-
-def =?-reflect {m n : Nat}
-  (eq : Bool)
-  (eqH : eq = (m =? n))
-  : Reflect (m = n) eq
-| true, eqH => reflectT (=?-= (sym eqH))
-| false, eqH => reflectF (≠?-≠ (sym eqH))
-
-def ≠-≠? {m n : Nat} (p : m ≠ n) : (m =? n) = false => notTrue
-  (\ m=?n => p (=?-= m=?n))

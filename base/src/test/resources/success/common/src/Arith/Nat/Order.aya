@@ -31,3 +31,12 @@ def dichotomy (a b : Nat) : Tri (b < a) (a = b) (a < b)
    | yesB p => yesB (pmap suc p)
    | yesC p => yesC (sc p)
    }
+
+def m<sn (p : a < b) : a < suc b
+| zc => zc
+| sc p' =>
+  // p' : a' < b'
+  // Goal : suc a' < suc (suc b')
+  sc
+    // Goal : a' < suc n'
+    (m<sn p')

@@ -1,0 +1,20 @@
+open import Paths
+open import Arith::Nat::Core
+open import Arith::Nat::Properties
+open import Logic::Dec
+open import Logic::False
+
+def ≐-suc {m n : Nat} (p : Dec (m = n)) : Dec (suc m = suc n)
+| yes p => yes (pmap suc p)
+| no np => no (\ p =>
+  // p  : suc m = suc n
+  // np : m = n -> False
+  // Goal : False
+  np (s=s p)
+)
+
+def infix ≐ (m n : Nat) : Dec (m = n)
+| 0, 0 => yes idp
+| 0, suc _ => no z≠s
+| suc _, 0 => no (≠-sym z≠s)
+| suc m', suc n' => ≐-suc (m' ≐ n')

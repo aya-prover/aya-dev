@@ -1,10 +1,6 @@
-import Arith::Bool
-import Logic::False
-import Logic::Dec
-
-open Arith::Bool using (Bool, true, false)
-open Logic::False using (¬)
-open Logic::Dec
+open import Arith::Bool::Core using (Bool, true, false)
+open import Logic::False      using (¬)
+open import Logic::Dec
 
 open data Reflect Type Bool
 | P, true  => reflectT P
