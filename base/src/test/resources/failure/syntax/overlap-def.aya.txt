@@ -5,7 +5,6 @@ In file $FILE:7:0 ->
   7 │   overlap def bad (x : Unit) => x
     │   ╰─────╯
 
-Error: The modifier overlap is not suitable here.
+Warning: The modifier overlap is redundant, ignored.
 
-1 error(s), 0 warning(s).
-What are you doing?
+That looks right!

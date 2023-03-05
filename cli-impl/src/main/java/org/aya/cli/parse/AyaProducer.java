@@ -297,7 +297,7 @@ public record AyaProducer(
       reporter.report(new BadModifierWarn(inline, Modifier.Inline));
     }
     if (dynamite.isLeft() && overlap != null) {
-      reporter.report(new ModifierProblem(overlap, ModifierParser.Modifier.Overlap, ModifierProblem.Reason.Inappropriate));
+      reporter.report(new ModifierProblem(overlap, ModifierParser.Modifier.Overlap, ModifierProblem.Reason.Duplicative));
     }
 
     var fnMods = info.modifier().toFnModifiers();
