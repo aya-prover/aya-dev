@@ -1,8 +1,7 @@
 open import Paths
 open import Algebra::Formula
 
-import Arith::Bool::Core
-open   Arith::Bool::Core
+open import Arith::Bool::Core
 
 open data Nat
 | zero

@@ -1,10 +1,6 @@
-import Paths
-import Logic::False
-import Arith::Bool::Core
-
-open Paths
-open Logic::False
-open Arith::Bool::Core
+open import Paths
+open import Logic::False
+open import Arith::Bool::Core
 
 private def bool-inj Bool : Type
 | true => Bool
