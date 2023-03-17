@@ -293,8 +293,12 @@ public record AyaProducer(
     var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
     var inline = info.modifier.misc(ModifierParser.Modifier.Inline);
+    var overlap = info.modifier.misc(ModifierParser.Modifier.Overlap);
     if (dynamite.isRight() && inline != null) {
       reporter.report(new BadModifierWarn(inline, Modifier.Inline));
+    }
+    if (dynamite.isLeft() && overlap != null) {
+      reporter.report(new ModifierProblem(overlap, ModifierParser.Modifier.Overlap, ModifierProblem.Reason.Duplicative));
     }
 
     var fnMods = info.modifier().toFnModifiers();

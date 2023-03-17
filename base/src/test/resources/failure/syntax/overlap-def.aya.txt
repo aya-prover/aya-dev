@@ -1,0 +1,10 @@
+In file $FILE:7:0 ->
+
+  5 │   | x => x
+  6 │   
+  7 │   overlap def bad (x : Unit) => x
+    │   ╰─────╯
+
+Warning: The modifier overlap is redundant, ignored.
+
+That looks right!

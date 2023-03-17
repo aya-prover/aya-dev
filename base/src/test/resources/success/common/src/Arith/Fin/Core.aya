@@ -1,5 +1,7 @@
 public open import Arith::Nat::Core
 
+open import Arith::Nat::Order
+
 open data Fin (n : Nat)
 | suc n => fzero
 | suc n => fsuc (Fin n)
@@ -7,6 +9,13 @@ open data Fin (n : Nat)
 def finToNat {n : Nat} (att : Fin n) : Nat
  | fzero => 0
  | fsuc a => suc (finToNat a)
+
+def natToFin (m n : Nat) (p : n < m) : Fin m
+| suc m', 0, zc => fzero
+| suc m', suc n', sc p' =>
+  // p : n' < m'
+  // Goal : Fin (suc m')
+  fsuc (natToFin m' n' p')
 
 def addF {m n : Nat} (a : Fin m) (b : Fin n) : Fin (finToNat a + n)
  | fzero, a => a

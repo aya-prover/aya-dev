@@ -1,0 +1,7 @@
+open data Unit | unit
+
+def good1 (x : Unit) => x
+overlap def good2 (x : Unit) : Unit
+| x => x
+
+overlap def bad (x : Unit) => x

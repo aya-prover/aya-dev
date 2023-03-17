@@ -1,0 +1,15 @@
+open import Paths
+
+open data Bool | true | false
+
+def not Bool : Bool
+| true => false
+| false => true
+
+def notNot (b : Bool) : not (not b) = b
+| true => idp
+| false => idp
+
+def ifElse {A : Type} Bool (x y : A) : A
+| true, x, y => x
+| false, x, y => y

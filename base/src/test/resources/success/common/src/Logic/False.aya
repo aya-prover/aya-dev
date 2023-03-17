@@ -1,5 +1,7 @@
-open import Paths using (=)
+open import Paths using (=, sym)
 open import Logic::HLevels
+
+open import Relation::Formula using (Symmetric)
 
 data False
 
@@ -13,5 +15,7 @@ def pointed {A : Type} (a : A) : NonEmpty A => \f => f a
 
 def infix ≠ {A : Type} (a b : A) => ¬ (a = b)
 tighter =
+
+def ≠-sym {A : Type} {a b : A} (p : a ≠ b) : b ≠ a => \ (q : b = a) => p (sym q)
 
 def FalseProp : isProp False => \a b => elim a
