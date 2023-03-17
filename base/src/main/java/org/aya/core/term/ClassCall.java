@@ -51,6 +51,13 @@ public record ClassCall(
     return fieldSubst;
   }
 
+  public @Nullable MemberDef nextMember() {
+    for (var mapping : ref.core.members) {
+      if (!args.containsKey(mapping.ref)) return mapping;
+    }
+    return null;
+  }
+
   public boolean instantiated(@NotNull MemberDef member) {
     return args.containsKey(member.ref);
   }
@@ -73,18 +80,18 @@ public record ClassCall(
     if (instantiated(memberRef))
       throw new UnsupportedOperationException("TODO: report duplicate field");
     member.resolvedField().set(memberRef.ref);
-    var subst = fieldSubst(memberRef);
-    var type = Def.defType(memberRef.ref).subst(subst, ulift);
-    var telescope = Term.Param.subst(Def.defTele(memberRef.ref), subst, ulift);
+    var telescopeExplicit = Def.defTele(memberRef.ref).view().map(Param::explicit);
     var bindings = member.bindings();
-    if (telescope.sizeLessThan(bindings.size())) {
+    if (telescopeExplicit.sizeLessThan(bindings.size())) {
       var errPos = member.sourcePos().sourcePosForSubExpr(bindings.view().map(WithPos::sourcePos));
       return Result.err(new FieldError.ArgMismatch(errPos, memberRef, bindings.size()));
     }
-    var fieldExpr = bindings.zipView(telescope).foldRight(member.body(), (pair, lamExpr) ->
+    var fieldExpr = bindings.zipView(telescopeExplicit).foldRight(member.body(), (pair, lamExpr) ->
       new Expr.Lambda(member.body().sourcePos(),
         new Expr.Param(pair.component1().sourcePos(),
-          pair.component1().data(), pair.component2().explicit()), lamExpr));
+          pair.component1().data(), pair.component2()), lamExpr));
+    var subst = fieldSubst(memberRef);
+    var type = Def.defType(memberRef.ref).subst(subst, ulift);
     var field = exprTycker.inherit(fieldExpr, type).wellTyped();
     var newArgs = args.putted(memberRef.ref, new Arg<>(field, true));
     return Result.ok(new ClassCall(ref, ulift, newArgs));

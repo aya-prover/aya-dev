@@ -141,9 +141,9 @@ public final class ExprTycker extends PropTycker {
             return fail(proj, new FieldError.UnknownField(sp.sourcePos(), fieldName));
           var fieldRef = field.ref;
 
-          if (!classCall.instantiated(field)) {
-            throw new InternalException("TODO: missing field(s)");
-          }
+          // if (!classCall.instantiated(field)) {
+          //   Do we directly project the fields???
+          // }
           var fieldSubst = classCall.fieldSubst(field);
           var tele = Term.Param.subst(fieldRef.core.telescope, fieldSubst, 0);
           var teleRenamed = tele.map(LamTerm::paramRenamed);
@@ -211,6 +211,8 @@ public final class ExprTycker extends PropTycker {
           var pi = fTyHole.asPi(argLicit);
           state.solve(fTyHole.ref(), pi);
           fTy = whnf(fTy);
+        } else if (fTy instanceof ClassCall classCall) {
+          throw new UnsupportedOperationException("TODO");
         }
         PathTerm cube;
         PiTerm pi;
