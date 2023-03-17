@@ -72,7 +72,7 @@ public record ClassCall(
     return ref.core.members.flatMap(m -> args.getOption(m.ref));
   }
 
-  public @NotNull Result<ClassCall, Problem> addMember(@NotNull Expr.Field<Expr> member, @NotNull ExprTycker exprTycker) {
+  public @NotNull Result<ClassCall, Problem> addMember(@NotNull Expr.Field<Expr> member, @NotNull ExprTycker tycker) {
     var fieldRefOpt = ref.core.members.find(m -> m.ref.name().equals(member.name().data()));
     if (fieldRefOpt.isEmpty())
       return Result.err(new FieldError.NoSuchField(ref, member));
@@ -90,11 +90,15 @@ public record ClassCall(
       new Expr.Lambda(member.body().sourcePos(),
         new Expr.Param(pair.component1().sourcePos(),
           pair.component1().data(), pair.component2()), lamExpr));
-    var subst = fieldSubst(memberRef);
-    var type = Def.defType(memberRef.ref).subst(subst, ulift);
-    var field = exprTycker.inherit(fieldExpr, type).wellTyped();
-    var newArgs = args.putted(memberRef.ref, new Arg<>(field, true));
-    return Result.ok(new ClassCall(ref, ulift, newArgs));
+    return Result.ok(addMember(tycker, memberRef, fieldExpr));
+  }
+
+  public @NotNull ClassCall addMember(@NotNull ExprTycker tycker, @NotNull MemberDef member, Expr expr) {
+    var subst = fieldSubst(member);
+    var type = Def.defType(member.ref).subst(subst, ulift);
+    var field = tycker.inherit(expr, type).wellTyped();
+    var newArgs = args.putted(member.ref, new Arg<>(field, true));
+    return new ClassCall(ref, ulift, newArgs);
   }
 
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Tuple2<DefVar<MemberDef, TeleDecl.ClassMember>, Arg<Term>>> args) {

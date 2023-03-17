@@ -212,7 +212,16 @@ public final class ExprTycker extends PropTycker {
           state.solve(fTyHole.ref(), pi);
           fTy = whnf(fTy);
         } else if (fTy instanceof ClassCall classCall) {
-          throw new UnsupportedOperationException("TODO");
+          var member = classCall.nextMember();
+          if (member == null) {
+            throw new InternalException("TODO: too many fields");
+          }
+          if (!argument.explicit()) {
+            throw new InternalException("TODO: implicit fields");
+          }
+          classCall = classCall.addMember(this, member, argument.term());
+          // TODO[ice]: lazily compute the type if possible
+          yield new Result.Default(classCall, classCall.computeType(state, ctx));
         }
         PathTerm cube;
         PiTerm pi;
