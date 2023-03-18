@@ -213,7 +213,7 @@ public final class ExprTycker extends PropTycker {
           fTy = whnf(fTy);
         } else if (fTy instanceof SortTerm) {
           if (whnf(app) instanceof ClassCall classCall) {
-            var member = classCall.nextMember();
+            var member = classCall.missingMembers().firstOrNull();
             if (member == null) {
               throw new InternalException("TODO: too many fields");
             }

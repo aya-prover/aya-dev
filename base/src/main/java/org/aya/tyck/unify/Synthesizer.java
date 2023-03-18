@@ -67,6 +67,17 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case Callable.Tele call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
+      case ClassCall classCall -> {
+        var subst = classCall.fieldSubst(null);
+        var univ = MutableList.<SortTerm>create();
+        for (var mem : classCall.missingMembers()) {
+          var sort = tryPress(Def.defType(mem.ref).subst(subst));
+          if (!(sort instanceof SortTerm sortTerm)) yield null;
+          univ.append(sortTerm);
+          // TODO: append to context
+        }
+        yield univ.reduce(SigmaTerm::lub);
+      }
       case MetaTerm hole -> {
         var result = hole.ref().info.result();
         if (result == null) {

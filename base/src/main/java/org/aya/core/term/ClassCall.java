@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
@@ -45,17 +46,16 @@ public record ClassCall(
     var fieldSubst = new Subst();
     for (var mapping : ref.core.members) {
       if (mapping == member) break;
-      var inst = args.get(mapping.ref);
+      var inst = args.getOrNull(mapping.ref);
+      // It is debatable whether we should stop here or continue.
+      if (inst == null) continue;
       fieldSubst.add(mapping.ref, inst.term());
     }
     return fieldSubst;
   }
 
-  public @Nullable MemberDef nextMember() {
-    for (var mapping : ref.core.members) {
-      if (!args.containsKey(mapping.ref)) return mapping;
-    }
-    return null;
+  public @NotNull SeqView<MemberDef> missingMembers() {
+    return ref.core.members.view().filter(mem -> !args.containsKey(mem.ref));
   }
 
   public boolean instantiated(@NotNull MemberDef member) {
