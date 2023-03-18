@@ -1,9 +1,9 @@
-In file $FILE:6:5 ->
+In file $FILE:9:41 ->
 
-  4 │   
-  5 │   def path {A : I -> Type} (p : ∀ (i : I) -> A i)
-  6 │     => new PseudoPath A (p 0) (p 1) { | at i j => p i }
-    │        ╰──────────────────────────────────────────────╯
+  7 │   
+  8 │   def path {A : I -> Type} (p : ∀ (i : I) -> A i)
+  9 │     => new PseudoPath A (p 0) (p 1) { | at i j => p i }
+    │                                            ╰────────╯
 
 Error: Expected 1 arguments, but found 2 arguments for field at
 
