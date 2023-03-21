@@ -1,9 +1,10 @@
 open data Unit : Type | unit
 
-open class Wrapped
-  | A : Type
+// TODO[class]
+// open class Wrapped
+//   | A : Type
 
 variable B : Type
 
-def test Unit : Wrapped B -> Unit
-  | unit => \(x : Wrapped B) => unit
+// def test Unit : Wrapped B -> Unit
+//   | unit => \(x : Wrapped B) => unit

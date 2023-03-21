@@ -4,6 +4,7 @@ open class PointedMagma
   | op : A -> A -> A
 
 open data Unit | unit
-def test : Fn {x : Type} -> Type => \{x} => PointedMagma {x}
+// TODO[class]
+// def test : Fn {x : Type} -> Type => \{x} => PointedMagma {x}
 
-def unitMagma : PointedMagma {Unit} => new test { | point => unit | op => \ x y => unit }
+// def unitMagma : PointedMagma Unit => new test { | point => unit | op => \ x y => unit }

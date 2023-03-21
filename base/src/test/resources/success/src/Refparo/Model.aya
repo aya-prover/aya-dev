@@ -9,6 +9,7 @@ def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
 def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
   => \ i => (\ j => A).primCoe x freeze (~ i)
 
+// TODO[class]
 // *** Types
 
 // open class EventT

@@ -4,6 +4,7 @@ open data EventT : Type 1
 def GetAgentT (T : EventT) : Type 1
   | CarrierT A => A
 
+// TODO[class]
 // open class Event
 //   | T : EventT
 //   | agent : GetAgentT T

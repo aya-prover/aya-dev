@@ -1,5 +1,6 @@
 open import Paths hiding (coe, coeFill)
 
+// TODO[class]
 // open import Refparo::Model
 
 // module Example-V {
