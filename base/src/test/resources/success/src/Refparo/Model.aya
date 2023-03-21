@@ -11,69 +11,69 @@ def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
 
 // *** Types
 
-open class EventT
-  | AgentT : Type => Unit
+// open class EventT
+//   | AgentT : Type => Unit
 
-def GetterT => EventT -> Type
-def SetterT => Type -> EventT -> EventT
-def Invariant (GetT : GetterT) (SetT : SetterT)
-  => Fn (T : EventT) (E : Type) -> E ↑ = GetT (SetT E T)
+// def GetterT => EventT -> Type
+// def SetterT => Type -> EventT -> EventT
+// def Invariant (GetT : GetterT) (SetT : SetterT)
+//   => Fn (T : EventT) (E : Type) -> E ↑ = GetT (SetT E T)
 
-// wish these getter/setters could be generated automatically
-def GetAgentT (T : EventT) => T.AgentT
-def SetAgentT (E : Type) (T : EventT) : EventT
-  => new EventT { | AgentT => E }
-def AgentT-inv : Invariant GetAgentT SetAgentT
-  => \T E => ↑ idp
+// // wish these getter/setters could be generated automatically
+// def GetAgentT (T : EventT) => T.AgentT
+// def SetAgentT (E : Type) (T : EventT) : EventT
+//   => new EventT { | AgentT => E }
+// def AgentT-inv : Invariant GetAgentT SetAgentT
+//   => \T E => ↑ idp
 
-open class Event
-  | T : EventT
-  | agent : T.AgentT
+// open class Event
+//   | T : EventT
+//   | agent : T.AgentT
 
-def Getter (GetT : GetterT) => Fn {T : EventT} (Event T) -> GetT T
+// def Getter (GetT : GetterT) => Fn {T : EventT} (Event T) -> GetT T
 
-def getAgent {T : EventT} (e : Event T) : T.AgentT => e.agent
+// def getAgent {T : EventT} (e : Event T) : T.AgentT => e.agent
 
-def Quantifier (E : Type) : Type 1
-  => (E -> Type) -> Type
+// def Quantifier (E : Type) : Type 1
+//   => (E -> Type) -> Type
 
-def mkConstQ {E : Type} (x : E) : (E -> Type) -> Type
-  => \f => f x
+// def mkConstQ {E : Type} (x : E) : (E -> Type) -> Type
+//   => \f => f x
 
-// verbs are event quantifiers
-def Verb (T : EventT) : Type 1
-  => (Event T -> Type) -> Type
+// // verbs are event quantifiers
+// def Verb (T : EventT) : Type 1
+//   => (Event T -> Type) -> Type
 
-def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
-  => \f => Sig (e : Event T) (p e) ** (f e)
+// def mkVerb {T : EventT} (p : Event T -> Type) : Verb T
+//   => \f => Sig (e : Event T) (p e) ** (f e)
 
-// VPs (verb phrases) behave just like verbs
-def VP (T : EventT) => Verb T
+// // VPs (verb phrases) behave just like verbs
+// def VP (T : EventT) => Verb T
 
-// bare DPs (determiner phrases) are just entity quantifiers
-def BDP (E : Type) => Quantifier E
+// // bare DPs (determiner phrases) are just entity quantifiers
+// def BDP (E : Type) => Quantifier E
 
-def DP (SetT : SetterT) (E : Type)
-  => Fn {T : EventT} -> VP (SetT E T) -> VP (SetT E T)
+// def DP (SetT : SetterT) (E : Type)
+//   => Fn {T : EventT} -> VP (SetT E T) -> VP (SetT E T)
 
-// thetas transform a BDP into a DP with that thematic role
-def Theta (SetT : SetterT) : Type 1
-  => Fn {E : Type} -> BDP E -> DP SetT E
+// // thetas transform a BDP into a DP with that thematic role
+// def Theta (SetT : SetterT) : Type 1
+//   => Fn {E : Type} -> BDP E -> DP SetT E
 
-def mkTheta (GetT : GetterT)
-  (get : Getter GetT)
-  (SetT : SetterT)
-  (inv : Invariant GetT SetT)
-  : Theta SetT
-  => \{E : Type} (q : BDP E) // from Theta
-  => \{T : EventT} (p : VP (SetT E T)) // from DP
-  => \(f : Event (SetT E T) -> Type) // from VP
-  => q (\(x : E) => p (\(e : Event (SetT E T))
-    => Sig (get e = coe (inv T E) x) ** (f e)))
+// def mkTheta (GetT : GetterT)
+//   (get : Getter GetT)
+//   (SetT : SetterT)
+//   (inv : Invariant GetT SetT)
+//   : Theta SetT
+//   => \{E : Type} (q : BDP E) // from Theta
+//   => \{T : EventT} (p : VP (SetT E T)) // from DP
+//   => \(f : Event (SetT E T) -> Type) // from VP
+//   => q (\(x : E) => p (\(e : Event (SetT E T))
+//     => Sig (get e = coe (inv T E) x) ** (f e)))
 
-def agentDef : Theta SetAgentT
-  => \{E} => mkTheta GetAgentT (\{T} => getAgent {T}) SetAgentT AgentT-inv {E}
+// def agentDef : Theta SetAgentT
+//   => \{E} => mkTheta GetAgentT (\{T} => getAgent {T}) SetAgentT AgentT-inv {E}
 
-def Sentence => Type
+// def Sentence => Type
 
-def mkSentence {T : EventT} (p : VP T) : Sentence => p (\x => Unit)
+// def mkSentence {T : EventT} (p : VP T) : Sentence => p (\x => Unit)

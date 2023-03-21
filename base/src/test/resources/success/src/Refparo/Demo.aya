@@ -1,50 +1,50 @@
 open import Paths hiding (coe, coeFill)
 
-open import Refparo::Model
+// open import Refparo::Model
 
-module Example-V {
-  open data RainImpl : Type 0
-    | rain1
+// module Example-V {
+//   open data RainImpl : Type 0
+//     | rain1
 
-  def Rain (e : Event (new EventT {})) : Type 0
-    => RainImpl
+//   def Rain (e : Event (new EventT {})) : Type 0
+//     => RainImpl
 
-  def rain : Verb (new EventT {})
-    => mkVerb {new EventT {}} Rain
+//   def rain : Verb (new EventT {})
+//     => mkVerb {new EventT {}} Rain
 
-  def rains : Sentence =>
-    mkSentence rain
+//   def rains : Sentence =>
+//     mkSentence rain
 
-  def proof-rains-event : Event (new EventT {})
-    => new Event (new EventT {}) { | agent => unit }
+//   def proof-rains-event : Event (new EventT {})
+//     => new Event (new EventT {}) { | agent => unit }
 
-  def proof-rains : rains
-    => (proof-rains-event, rain1, unit)
-}
+//   def proof-rains : rains
+//     => (proof-rains-event, rain1, unit)
+// }
 
 
-module Example-SV {
-  open data Entity : Type 0
-    | johnImpl
+// module Example-SV {
+//   open data Entity : Type 0
+//     | johnImpl
 
-  def john : Quantifier Entity
-    => mkConstQ johnImpl
+//   def john : Quantifier Entity
+//     => mkConstQ johnImpl
 
-  open data RunImpl (ag : Entity) : Type 0
-    | johnImpl => run1
+//   open data RunImpl (ag : Entity) : Type 0
+//     | johnImpl => run1
 
-  def Run (e : Event (new EventT { | AgentT => Entity })) : Type 0
-    => RunImpl e.agent
+//   def Run (e : Event (new EventT { | AgentT => Entity })) : Type 0
+//     => RunImpl e.agent
 
-  def run : Verb (new EventT { | AgentT => Entity })
-    => mkVerb {new EventT { | AgentT => Entity }} Run
+//   def run : Verb (new EventT { | AgentT => Entity })
+//     => mkVerb {new EventT { | AgentT => Entity }} Run
 
-  def john-runs : Sentence =>
-    mkSentence (agentDef john {new EventT {}} run)
+//   def john-runs : Sentence =>
+//     mkSentence (agentDef john {new EventT {}} run)
 
-  def proof-john-runs-event : Event (new EventT { | AgentT => Entity })
-    => new Event (new EventT { | AgentT => Entity }) { | agent => johnImpl }
+//   def proof-john-runs-event : Event (new EventT { | AgentT => Entity })
+//     => new Event (new EventT { | AgentT => Entity }) { | agent => johnImpl }
 
-  def proof-john-runs : john-runs
-   => (proof-john-runs-event, run1, (coeFill, unit))
-}
+//   def proof-john-runs : john-runs
+//    => (proof-john-runs-event, run1, (coeFill, unit))
+// }

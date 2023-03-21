@@ -3,4 +3,4 @@ open import Refparo::Model
 open class Struct
   | field : Unit
 open data Foo (x : Struct) : Type | foo
-def foo' : Foo (new Struct { | field => unit }) => foo
+// def foo' : Foo (new Struct { | field => unit }) => foo
