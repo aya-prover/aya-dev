@@ -19,17 +19,17 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
   public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules = MutableHashMap.create();
-  private final @NotNull ModulePath moduleName;
+  private final @NotNull ModulePath modulePath;
 
   @Override public @NotNull ModulePath modulePath() {
-    return moduleName;
+    return modulePath;
   }
 
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath moduleName) {
+  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath modulePath) {
     this.parent = parent;
-    this.moduleName = moduleName;
+    this.modulePath = modulePath;
   }
 
   @Override public void importModule(
