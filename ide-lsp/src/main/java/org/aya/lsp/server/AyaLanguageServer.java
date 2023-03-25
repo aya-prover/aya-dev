@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import com.google.gson.Gson;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -19,6 +20,7 @@ import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
@@ -30,10 +32,13 @@ import org.aya.lsp.actions.SymbolMaker;
 import org.aya.lsp.library.WsLibrary;
 import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.models.HighlightResult;
+import org.aya.lsp.models.ServerOptions;
+import org.aya.lsp.models.ServerRenderOptions;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -69,6 +74,12 @@ public class AyaLanguageServer implements LanguageServer {
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
   private final @NotNull PrettierOptions options = AyaPrettierOptions.pretty();
+
+  /**
+   * All properties will be not null after initialization
+   */
+  private ServerOptions serverOptions;
+  private RenderOptions renderOptions;
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
@@ -137,6 +148,8 @@ public class AyaLanguageServer implements LanguageServer {
     cap.workspaceSymbolProvider = true;
     cap.foldingRangeProvider = true;
 
+    initializeOptions(new Gson().fromJson(params.initializationOptions, ServerOptions.class));
+
     var folders = params.workspaceFolders;
     // In case we open a single file, this value will be null, so be careful.
     // Make sure the library to be initialized when loading files.
@@ -144,6 +157,16 @@ public class AyaLanguageServer implements LanguageServer {
       registerLibrary(Path.of(f.uri)));
 
     return new InitializeResult(cap);
+  }
+
+  private void initializeOptions(@Nullable ServerOptions options) {
+    if (options == null) options = new ServerOptions();
+    if (options.renderOptions == null) {
+      options.renderOptions = new ServerRenderOptions();
+    }
+
+    this.serverOptions = options;
+    this.renderOptions = options.renderOptions.buildRenderOptions();
   }
 
   private @Nullable LibraryOwner findOwner(@Nullable Path path) {
@@ -291,7 +314,7 @@ public class AyaLanguageServer implements LanguageServer {
     if (source == null) return Optional.empty();
     var doc = ComputeSignature.invokeHover(options, source, LspRange.pos(params.position));
     if (doc.isEmpty()) return Optional.empty();
-    var marked = new MarkedString(MarkupKind.PlainText, doc.commonRender());
+    var marked = new MarkedString(MarkupKind.PlainText, render(doc));
     return Optional.of(new Hover(List.of(marked)));
   }
 
@@ -395,7 +418,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
     return InlayHints.invoke(options, source, LspRange.range(params.range))
-      .map(h -> new InlayHint(LspRange.toRange(h.sourcePos()).end, h.doc().commonRender()))
+      .map(h -> new InlayHint(LspRange.toRange(h.sourcePos()).end, render(h.doc())))
       .asJava();
   }
 
@@ -414,6 +437,11 @@ public class AyaLanguageServer implements LanguageServer {
     return computeTerm(input, ComputeTerm.Kind.nf());
   }
 
+  @LspRequest("aya/updateServerOptions") @SuppressWarnings("unused")
+  public void updateServerOptions(@NotNull ServerOptions options) {
+    initializeOptions(options);
+  }
+
   public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params params, ComputeTerm.Kind type) {
     var source = find(params.uri);
     if (source == null) return ComputeTermResult.bad(params);
@@ -422,6 +450,20 @@ public class AyaLanguageServer implements LanguageServer {
     var computer = new ComputeTerm(source, type, primFactory(source.owner()), LspRange.pos(params.position));
     program.forEach(computer);
     return computer.result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, computer.result);
+  }
+
+  private @NotNull String render(@NotNull Doc doc) {
+    if (serverOptions == null || renderOptions == null) {
+      throw new IllegalStateException("Not initialized");
+    }
+
+    var target = serverOptions.renderOptions.target();
+    var renderOptions = this.renderOptions;
+
+    return renderOptions.render(target, doc, new RenderOptions.Opts(
+      false, false, false, true,
+      PrinterConfig.INFINITE_SIZE,
+      true));
   }
 
   private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
