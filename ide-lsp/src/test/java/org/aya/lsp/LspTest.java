@@ -2,14 +2,22 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
+import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.render.RenderOptions;
 import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.MetaPatTerm;
 import org.aya.generic.Constants;
+import org.aya.lsp.models.ServerOptions;
+import org.aya.lsp.models.ServerRenderOptions;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
+import org.javacs.lsp.InitializeParams;
+import org.javacs.lsp.Position;
+import org.javacs.lsp.TextDocumentIdentifier;
+import org.javacs.lsp.TextDocumentPositionParams;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +78,31 @@ public class LspTest {
       mutate("PathPrims"),
       compile((a, e) -> assertRemake(a, e, "PathPrims", "Path", "HelloWorld"))
     );
+  }
+
+  @Test
+  public void colorful() {
+    var initParams = new InitializeParams();
+    initParams.initializationOptions = new Gson().toJsonTree(new ServerOptions(new ServerRenderOptions(null, null, RenderOptions.OutputTarget.HTML)));
+
+    var client = new LspTestClient(initParams);
+    client.registerLibrary(TEST_LIB);
+    client.execute(compile((a, e) -> {}));
+
+    var param = new TextDocumentPositionParams(new TextDocumentIdentifier(
+      TEST_LIB.resolve("src").resolve("NatCore.aya").toUri()),
+      new Position(0, 18)
+    );
+
+    var result0 = client.service.hover(param);
+    assertTrue(result0.isPresent());
+    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#218c21;\">Nat</span></a>", result0.get().contents.get(0).value);
+
+    client.service.updateServerOptions(new ServerOptions(new ServerRenderOptions("IntelliJ", null, RenderOptions.OutputTarget.HTML)));
+
+    var result1 = client.service.hover(param);
+    assertTrue(result1.isPresent());
+    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#000000;\">Nat</span></a>", result1.get().contents.get(0).value);
   }
 
   private void logTime(long time) {

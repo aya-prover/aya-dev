@@ -9,6 +9,7 @@ import org.aya.ide.Resolver;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.javacs.lsp.DiagnosticSeverity;
+import org.javacs.lsp.InitializeParams;
 import org.javacs.lsp.PublishDiagnosticsParams;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
@@ -20,7 +21,12 @@ public final class LspTestClient implements AyaLanguageClient {
   public final @NotNull LspTestCompilerAdvisor advisor = new LspTestCompilerAdvisor();
 
   public LspTestClient() {
+    this(new InitializeParams());
+  }
+
+  public LspTestClient(@NotNull InitializeParams param) {
     service = new AyaLanguageServer(advisor, this);
+    service.initialize(param);
   }
 
   public void registerLibrary(@NotNull Path libraryRoot) {

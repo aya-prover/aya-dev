@@ -18,6 +18,15 @@ public class ServerRenderOptions {
   public @Nullable Map<String, String> override;
   public @Nullable RenderOptions.OutputTarget target = RenderOptions.OutputTarget.Plain;
 
+  public ServerRenderOptions() {
+  }
+
+  public ServerRenderOptions(@Nullable String colorScheme, @Nullable Map<String, String> override, @Nullable RenderOptions.OutputTarget target) {
+    this.colorScheme = colorScheme;
+    this.override = override;
+    this.target = target;
+  }
+
   public @NotNull RenderOptions buildRenderOptions() {
     var colorSchemeName = this.colorScheme;
     if (colorSchemeName != null) colorSchemeName = colorSchemeName.toLowerCase();
