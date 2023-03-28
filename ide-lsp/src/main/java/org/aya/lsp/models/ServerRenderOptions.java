@@ -35,12 +35,9 @@ public class ServerRenderOptions {
       case "emacs" -> AyaColorScheme.EMACS;
       case "intellij" -> AyaColorScheme.INTELLIJ;
       // fallback
-      case null -> {
-        Log.w("Property 'colorScheme' is unspecified, 'Emacs' will be used.");
-        yield AyaColorScheme.EMACS;
-      }
-      default -> {
-        Log.w("Value '%s' of property 'colorScheme' is invalid, 'Emacs' will be used.", colorSchemeName);
+      case null, default -> {
+        var cause = colorSchemeName == null ? "unspecified" : "invalid";
+        Log.w("Property 'colorScheme' is %s, 'Emacs' will be used.", cause);
         yield AyaColorScheme.EMACS;
       }
     };

@@ -78,8 +78,10 @@ public class AyaLanguageServer implements LanguageServer {
   /**
    * All properties will be not null after initialization
    */
-  private ServerOptions serverOptions;
-  private RenderOptions renderOptions;
+  @SuppressWarnings("NotNullFieldNotInitialized")
+  private @NotNull ServerOptions serverOptions;
+  @SuppressWarnings("NotNullFieldNotInitialized")
+  private @NotNull RenderOptions renderOptions;
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
@@ -453,10 +455,6 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private @NotNull String render(@NotNull Doc doc) {
-    if (serverOptions == null || renderOptions == null) {
-      throw new IllegalStateException("Not initialized");
-    }
-
     var target = serverOptions.renderOptions.target();
     var renderOptions = this.renderOptions;
 
