@@ -23,6 +23,7 @@ import org.aya.pretty.printer.PrinterConfig;
 import org.aya.pretty.printer.StyleFamily;
 import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleFamily;
+import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,6 +194,14 @@ public class RenderOptions {
       case Default -> AyaStyleFamily.DEFAULT;
     };
     return styleFamilyCache;
+  }
+
+  /**
+   * You know what you are doing.
+   */
+  @ForLSP public void doBadThing(ColorScheme colorSchemeCache, StyleFamily styleFamilyCache) {
+    this.colorSchemeCache = colorSchemeCache;
+    this.styleFamilyCache = styleFamilyCache;
   }
 
   @Override public boolean equals(Object o) {

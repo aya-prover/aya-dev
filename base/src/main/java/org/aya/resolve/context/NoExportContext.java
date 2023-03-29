@@ -17,7 +17,7 @@ public record NoExportContext(
   @NotNull Context parent,
   @NotNull ModuleSymbol<AnyVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules,
-  @Override @NotNull ModulePath moduleName
+  @Override @NotNull ModulePath modulePath
 ) implements ModuleContext {
   public NoExportContext(
     @NotNull Context parent,
