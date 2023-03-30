@@ -68,6 +68,8 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
       case Doc.CodeBlock codeBlock -> predictWidth(cursor, codeBlock.code());
       case Doc.InlineCode inlineCode -> predictWidth(cursor, inlineCode.code());
+      case Doc.InlineMath inlineMath -> predictWidth(cursor, inlineMath.formula());
+      case Doc.MathBlock mathBlock -> predictWidth(cursor, mathBlock.formula());
       case Doc.List list -> list.items().view().map(x -> predictWidth(cursor, x)).reduce(Integer::sum);
     };
   }
@@ -102,9 +104,11 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()), outer);
       case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()), outer);
       case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()), outer);
-      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, EnumSet.of(Outer.Code));
-      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, EnumSet.of(Outer.Code));
+      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, outer);
+      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, outer);
       case Doc.List list -> renderList(cursor, list, outer);
+      case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
+      case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
       case Doc.Empty $ -> {}
     }
   }
@@ -187,6 +191,15 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     cursor.visibleContent("`");
     renderDoc(cursor, code.code(), outer);
     cursor.visibleContent("`");
+  }
+
+  protected void renderMathBlock(@NotNull Cursor cursor, @NotNull Doc.MathBlock block, EnumSet<Outer> outer) {
+    makeSureLineStart(cursor, outer);
+    renderDoc(cursor, block.formula(), outer);
+  }
+
+  protected void renderInlineMath(@NotNull Cursor cursor, @NotNull Doc.InlineMath code, EnumSet<Outer> outer) {
+    renderDoc(cursor, code.formula(), outer);
   }
 
   protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {

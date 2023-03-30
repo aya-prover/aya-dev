@@ -13,7 +13,7 @@ import java.util.EnumSet;
 public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
   @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("`");
-    renderDoc(cursor, code.code(), outer);
+    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
     cursor.invisibleContent("'");
   }
 

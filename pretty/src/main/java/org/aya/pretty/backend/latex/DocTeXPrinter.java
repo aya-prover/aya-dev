@@ -123,14 +123,14 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("\\texttt{");
-    renderDoc(cursor, code.code(), outer);
+    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
     cursor.invisibleContent("}");
   }
 
   @Override
   protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
     cursor.invisibleContent("\\begin{minted}[c]");
-    renderDoc(cursor, code.code(), outer);
+    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
     cursor.invisibleContent("\\end{minted}[c]");
   }
 
