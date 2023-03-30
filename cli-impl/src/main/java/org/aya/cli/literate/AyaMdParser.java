@@ -8,7 +8,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.MutableValue;
-import org.aya.concrete.remark.*;
+import org.aya.concrete.remark.Literate;
+import org.aya.concrete.remark.LiterateConsumer;
+import org.aya.concrete.remark.UnsupportedMarkdown;
+import org.aya.concrete.remark.code.CodeAttrProcessor;
+import org.aya.concrete.remark.code.CodeOptions;
+import org.aya.concrete.remark.math.MathBlock;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.doc.Doc;
@@ -39,6 +44,7 @@ public class AyaMdParser {
 
   public @NotNull Literate parseLiterate() {
     var parser = Parser.builder()
+      .extensions(ImmutableSeq.of(new MathBlock.Extension()))
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
@@ -143,6 +149,11 @@ public class AyaMdParser {
           yield CodeOptions.analyze(inlineCode, sourcePos);
         }
         throw new InternalException("SourceSpans");
+      }
+      case MathBlock math -> {
+        // TODO: improve
+        var fence = Doc.plain("$".repeat(math.fenceLength));
+        yield new Literate.Raw(Doc.cat(fence, Doc.line(), Doc.escaped(math.literal), fence));
       }
       default -> {
         var spans = node.getSourceSpans();

@@ -1,7 +1,8 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.remark;
+package org.aya.concrete.remark.code;
 
+import org.aya.concrete.remark.Literate;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
