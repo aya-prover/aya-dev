@@ -5,6 +5,7 @@ package org.aya.concrete.remark.code;
 import org.aya.concrete.remark.Literate;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.commonmark.node.Code;
@@ -21,7 +22,7 @@ public record CodeOptions(
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
     return switch (code.getFirstChild()) {
       case CodeAttrProcessor.Attr attr -> new Literate.Code(code.getLiteral(), sourcePos, attr.options);
-      case default, null -> new Literate.Raw(Doc.code(code.getLiteral()));
+      case default, null -> new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));
     };
   }
 

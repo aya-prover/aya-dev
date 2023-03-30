@@ -88,11 +88,11 @@ public sealed interface Literate extends Docile {
 
     @Override public @NotNull Doc toDoc() {
       if (tyckResult == null) {
-        if (expr != null) return Doc.code(expr.toDoc(options.options()));
+        if (expr != null) return Doc.code(Language.Builtin.Aya, expr.toDoc(options.options()));
         else return Doc.code("Error");
       }
       assert expr != null;
-      return Doc.code((switch (options.showCode()) {
+      return Doc.code(Language.Builtin.Aya, (switch (options.showCode()) {
         case Concrete -> expr;
         case Core -> tyckResult.wellTyped();
         case Type -> tyckResult.type();

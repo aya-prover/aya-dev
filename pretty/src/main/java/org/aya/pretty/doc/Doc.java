@@ -284,11 +284,11 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc code(@NotNull String code) {
-    return code(Language.Builtin.Plain, plain(code));
+    return code(Language.Builtin.Aya, plain(code));
   }
 
   static @NotNull Doc code(@NotNull Doc code) {
-    return code(Language.Builtin.Plain, code);
+    return code(Language.Builtin.Aya, code);
   }
 
   static @NotNull Doc code(@NotNull Language language, @NotNull Doc code) {
