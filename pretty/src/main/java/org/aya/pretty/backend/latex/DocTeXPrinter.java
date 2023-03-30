@@ -132,7 +132,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
-    if (code.language().isAya() && config.opt(AyaFlavored, false)) {
+    if (code.language().isAya()) {
       super.renderCodeBlock(cursor, code, outer); // `Outer.Code` is only for minted. Do not switch to code mode.
       return;
     }
