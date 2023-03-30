@@ -13,6 +13,7 @@ import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.concrete.remark.UnsupportedMarkdown;
 import org.aya.concrete.remark.code.CodeAttrProcessor;
 import org.aya.concrete.remark.code.CodeOptions;
+import org.aya.concrete.remark.math.InlineMath;
 import org.aya.concrete.remark.math.MathBlock;
 import org.aya.generic.util.InternalException;
 import org.aya.pretty.backend.md.MdStyle;
@@ -44,8 +45,9 @@ public class AyaMdParser {
 
   public @NotNull Literate parseLiterate() {
     var parser = Parser.builder()
-      .extensions(ImmutableSeq.of(new MathBlock.Extension()))
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
+      .customDelimiterProcessor(InlineMath.Processor.INSTANCE)
+      .customBlockParserFactory(MathBlock.Factory.INSTANCE)
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
       .build();
@@ -126,6 +128,8 @@ public class AyaMdParser {
       case Document d -> flatten(mapChildren(d));
       case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
       case ThematicBreak t -> new Literate.Many(MdStyle.GFM.ThematicBreak, mapChildren(t));
+      case MathBlock math -> new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(math.literal))));
+      case InlineMath math -> new Literate.Math(true, mapChildren(math));
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var raw = codeBlock.getLiteral();
@@ -149,11 +153,6 @@ public class AyaMdParser {
           yield CodeOptions.analyze(inlineCode, sourcePos);
         }
         throw new InternalException("SourceSpans");
-      }
-      case MathBlock math -> {
-        // TODO: improve
-        var fence = Doc.plain("$".repeat(math.fenceLength));
-        yield new Literate.Raw(Doc.cat(fence, Doc.line(), Doc.escaped(math.literal), fence));
       }
       default -> {
         var spans = node.getSourceSpans();

@@ -45,6 +45,13 @@ public sealed interface Literate extends Docile {
     }
   }
 
+  record Math(boolean inline, @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return inline ? Doc.math(child) : Doc.mathBlock(child);
+    }
+  }
+
   record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));

@@ -178,6 +178,14 @@ public sealed interface Doc extends Docile {
   record CodeBlock(@NotNull Language language, @NotNull Doc code) implements Doc {
   }
 
+  /** Inline math, with special escape settings compared to {@link PlainText} */
+  record InlineMath(@NotNull Doc formula) implements Doc {
+  }
+
+  /** Math block, with special escape settings compared to {@link PlainText} */
+  record MathBlock(@NotNull Doc formula) implements Doc {
+  }
+
   /**
    * Styled document
    */
@@ -293,6 +301,14 @@ public sealed interface Doc extends Docile {
 
   static @NotNull Doc codeBlock(@NotNull Language language, @NotNull String code) {
     return codeBlock(language, plain(code));
+  }
+
+  static @NotNull Doc math(@NotNull Doc formula) {
+    return new InlineMath(formula);
+  }
+
+  static @NotNull Doc mathBlock(@NotNull Doc formula) {
+    return new MathBlock(formula);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {
