@@ -16,7 +16,8 @@ import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+;<>\\[\\\\\\]_`|~]");
-  public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
+  /** `Doc.plain("1. hello")` should not be rendered as a list, see MdStyleTest */
+  public static final Pattern MD_ESCAPE_FAKE_LIST = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
   @Override protected void renderHeader(@NotNull Cursor cursor) {
   }
@@ -61,10 +62,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
         return "\\\\" + chara;
       });
 
-    // avoiding escape `\`.
-    content = MD_NO_ESCAPE_BACKSLASH
-      .matcher(content)
-      .replaceAll("$1\\\\.$2");
+    // escape fake lists
+    content = MD_ESCAPE_FAKE_LIST.matcher(content).replaceAll("$1\\\\.$2");
 
     return content;
   }
