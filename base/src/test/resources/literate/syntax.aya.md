@@ -21,3 +21,13 @@ For the following `code block`, you'll never see it:
 ```aya-hidden
 example def foo => justId
 ```
+
+This is a math block, and it is saying $\frac{1}{2} = \frac{1}{2}$:
+
+$$
+\begin{align*}
+  \frac{1}{2} &= \frac{1}{2} \\
+  \frac{1}{2} &= \frac{1}{2} \\
+  \frac{1}{2} &= \frac{1}{2} \\
+\end{align*}
+$$
