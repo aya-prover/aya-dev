@@ -6,7 +6,10 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.tuple.primitive.IntObjTuple2;
+import kala.value.LazyValue;
 import kala.value.MutableValue;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.remark.LiterateConsumer;
@@ -107,6 +110,18 @@ public class AyaMdParser {
     return children.toImmutableSeq();
   }
 
+  private @NotNull Tuple2<LazyValue<SourcePos>, String> stripTrailingNewline(@NotNull String literal, @NotNull Block owner) {
+    var spans = owner.getSourceSpans();
+    if (spans != null && spans.size() >= 2) {   // always contains '```aya' and '```'
+      var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
+      // remove the last line break if not empty
+      if (!literal.isEmpty())
+        literal = literal.substring(0, literal.length() - 1);
+      return Tuple.of(LazyValue.of(() -> fromSourceSpans(inner)), literal);
+    }
+    throw new InternalException("SourceSpans");
+  }
+
   private @NotNull Literate mapAST(@NotNull Node node) {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
@@ -128,19 +143,15 @@ public class AyaMdParser {
       case Document d -> flatten(mapChildren(d));
       case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
       case ThematicBreak t -> new Literate.Many(MdStyle.GFM.ThematicBreak, mapChildren(t));
-      case MathBlock math -> new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(math.literal))));
       case InlineMath math -> new Literate.Math(true, mapChildren(math));
+      case MathBlock math -> {
+        var formula = stripTrailingNewline(math.literal, math).component2();
+        yield new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(formula))));
+      }
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
-        var raw = codeBlock.getLiteral();
-        var spans = codeBlock.getSourceSpans();
-        if (spans != null && spans.size() >= 2) {   // always contains '```aya' and '```'
-          var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
-          // remove the last line break if not empty
-          if (!raw.isEmpty()) raw = raw.substring(0, raw.length() - 1);
-          yield new Literate.CodeBlock(fromSourceSpans(inner), language, raw);
-        }
-        throw new InternalException("SourceSpans");
+        var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
+        yield new Literate.CodeBlock(code.component1().get(), language, code.component2());
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
