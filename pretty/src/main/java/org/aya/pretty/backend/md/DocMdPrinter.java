@@ -43,7 +43,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       return super.escapePlainText(content, outer);
     }
     // If we are in Markdown, do not escape text in code block.
-    if (outer.contains(Outer.Code)) return content;
+    if (outer.contains(Outer.Code) || outer.contains(Outer.Math)) return content;
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
     // What we will escape:
@@ -106,12 +106,20 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     StringPrinter.renderList(this, cursor, list, outer);
   }
 
+  @Override protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+    formatInline(cursor, code.formula(), "$", "$", EnumSet.of(Outer.Math));
+  }
+
+  @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
+    formatBlock(cursor, block.formula(), "$$", "$$", EnumSet.of(Outer.Math));
+  }
+
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", EnumSet.of(Outer.Code));
+    Runnable pureMd = () -> formatInline(cursor, code.code(), "`", "`", EnumSet.of(Outer.Code));
     runSwitch(pureMd, () -> {
-      if (code.language().isAya()) formatInlineCode(cursor, code.code(),
+      if (code.language().isAya()) formatInline(cursor, code.code(),
         "<code class=\"Aya\">", "</code>",
         EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
@@ -120,12 +128,12 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> formatCodeBlock(cursor, block.code(),
+    Runnable pureMd = () -> formatBlock(cursor, block.code(),
       "```" + block.language().displayName().toLowerCase(), "```",
       EnumSet.of(Outer.Code));
     runSwitch(pureMd,
       () -> {
-        if (block.language().isAya()) formatCodeBlock(cursor, block.code(),
+        if (block.language().isAya()) formatBlock(cursor, block.code(),
           "<pre class=\"Aya\">", "</pre>",
           "<code>", "</code>",
           EnumSet.of(Outer.EnclosingTag));
@@ -133,11 +141,11 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       });
   }
 
-  public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
-    formatCodeBlock(cursor, code, begin, end, "", "", outer);
+  public void formatBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
+    formatBlock(cursor, code, begin, end, "", "", outer);
   }
 
-  public void formatCodeBlock(
+  public void formatBlock(
     @NotNull Cursor cursor, @NotNull Doc code,
     @NotNull String begin, @NotNull String end,
     @NotNull String begin2, @NotNull String end2,
@@ -153,7 +161,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     cursor.lineBreakWith("\n");
   }
 
-  public void formatInlineCode(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
+  public void formatInline(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
     cursor.invisibleContent(begin);
     renderDoc(cursor, code, outer);
     cursor.invisibleContent(end);

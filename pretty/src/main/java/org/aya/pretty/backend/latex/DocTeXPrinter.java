@@ -49,7 +49,10 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
-    // TODO: escape according to `outer`
+    // `Outer.Code` means we are in the minted environment --- no need to escape
+    if (outer.contains(Outer.Code)) return content;
+    // TODO: math mode escape?
+    if (outer.contains(Outer.Math)) return content;
     return content.replace("\\", "")
       .replace("_", "\\textunderscore{}")
       // This is a stupid hack. Maybe we can calculate consecutive spaces
@@ -123,15 +126,32 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     cursor.invisibleContent("\\texttt{");
-    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
+    renderDoc(cursor, code.code(), outer); // `Outer.Code` is only for minted. Do not switch to code mode.
     cursor.invisibleContent("}");
   }
 
   @Override
   protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\begin{minted}[c]");
+    if (code.language().isAya() && config.opt(AyaFlavored, false)) {
+      super.renderCodeBlock(cursor, code, outer); // `Outer.Code` is only for minted. Do not switch to code mode.
+      return;
+    }
+    cursor.invisibleContent("\\begin{minted}[%s]".formatted(code.language().displayName().toLowerCase()));
     renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
-    cursor.invisibleContent("\\end{minted}[c]");
+    cursor.invisibleContent("\\end{minted}");
+  }
+
+  @Override
+  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+    cursor.invisibleContent("$");
+    renderDoc(cursor, code.formula(), EnumSet.of(Outer.Math));
+    cursor.invisibleContent("$");
+  }
+
+  @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
+    cursor.invisibleContent("\\begin{align*}");
+    renderDoc(cursor, block.formula(), EnumSet.of(Outer.Math));
+    cursor.invisibleContent("\\end{align*}");
   }
 
   @Override
@@ -141,6 +161,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     list.items().forEach(item -> {
       cursor.invisibleContent("\\item ");
       renderDoc(cursor, item, EnumSet.of(Outer.List));
+      cursor.lineBreakWith("\n");
     });
     cursor.invisibleContent("\\end{" + env + "}");
   }

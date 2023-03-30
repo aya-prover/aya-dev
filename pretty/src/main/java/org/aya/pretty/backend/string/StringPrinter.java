@@ -22,6 +22,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   /** renderer: where am I? */
   public enum Outer {
     Code,
+    Math,
     EnclosingTag,
     List,
   }
