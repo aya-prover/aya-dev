@@ -108,8 +108,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
     runSwitch(pureMd, () -> {
-      var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) formatInlineCode(cursor, code.code(),
+      if (code.language().isAya()) formatInlineCode(cursor, code.code(),
         "<code class=\"Aya\">", "</code>",
         EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
@@ -122,11 +121,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer);
+    Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language().displayName().toLowerCase(), "```", outer);
     runSwitch(pureMd,
       () -> {
-        var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(),
+        if (block.language().isAya()) formatCodeBlock(cursor, block.code(),
           "<pre class=\"Aya\">", "</pre>",
           "<code>", "</code>",
           EnumSet.of(Outer.EnclosingTag));

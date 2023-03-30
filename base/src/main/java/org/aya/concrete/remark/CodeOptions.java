@@ -20,7 +20,7 @@ public record CodeOptions(
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
     return switch (code.getFirstChild()) {
       case CodeAttrProcessor.Attr attr -> new Literate.Code(code.getLiteral(), sourcePos, attr.options);
-      default -> new Literate.Raw(Doc.code(code.getLiteral()));
+      case default, null -> new Literate.Raw(Doc.code(code.getLiteral()));
     };
   }
 

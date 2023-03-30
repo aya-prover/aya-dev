@@ -126,6 +126,8 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
+    // `<code class="" />` is valid, see:
+    // https://stackoverflow.com/questions/30748847/is-an-empty-class-attribute-valid-html
     cursor.invisibleContent("<code class=\"" + capitalize(code.language()) + "\">");
     renderDoc(cursor, code.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
@@ -149,8 +151,9 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("</" + tag + ">");
   }
 
-  private @NotNull String capitalize(@NotNull String s) {
-    return s.isEmpty() ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
+  private @NotNull String capitalize(@NotNull org.aya.pretty.doc.Language s) {
+    var name = s.displayName();
+    return name.isEmpty() ? name : name.substring(0, 1).toUpperCase() + name.substring(1);
   }
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {
