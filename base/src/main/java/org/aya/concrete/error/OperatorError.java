@@ -33,10 +33,10 @@ public interface OperatorError extends Problem {
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Cannot figure out computation order because"),
-        Doc.code(Doc.plain(op1)),
+        Doc.code(op1),
         Doc.parened(Doc.plain(assoc1.name())),
         Doc.plain("and"),
-        Doc.code(Doc.plain(op2)),
+        Doc.code(op2),
         Doc.parened(Doc.plain(assoc1.name())),
         reason()
       );
@@ -61,9 +61,9 @@ public interface OperatorError extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Ambiguous operator precedence detected between"),
-        Doc.code(Doc.plain(op1)),
+        Doc.code(op1),
         Doc.plain("and"),
-        Doc.code(Doc.plain(op2))
+        Doc.code(op2)
       );
     }
 

@@ -29,8 +29,7 @@ public sealed interface FieldError extends TyckError {
   ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("No such field(s):"),
-        Doc.commaList(notFound.view()
-          .map(m -> Doc.code(Doc.plain(m))))
+        Doc.commaList(notFound.view().map(Doc::code))
       );
     }
   }
@@ -42,7 +41,7 @@ public sealed interface FieldError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown field"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("projected")
       );
     }

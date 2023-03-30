@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
 import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.pretty.doc.Link;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ public class MdStyleTest {
       Doc.styled(MdStyle.GFM.Paragraph, "I love Java"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya's pretty printer."),
-      Doc.codeBlock("data Nat | zero | suc Nat"),
+      Doc.codeBlock(Language.Builtin.Aya, "data Nat | zero | suc Nat"),
       Doc.styled(MdStyle.GFM.Paragraph, "Look! She is beautiful")
     );
   }
@@ -106,7 +107,7 @@ public class MdStyleTest {
   }
 
   @NotNull private Doc escapeDoc17() {
-    return Doc.code("", Doc.plain("\\[\\`"));
+    return Doc.code("\\[\\`");
   }
 
   @Test

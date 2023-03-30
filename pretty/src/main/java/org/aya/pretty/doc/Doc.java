@@ -171,11 +171,11 @@ public sealed interface Doc extends Docile {
   }
 
   /** Inline code, with special escape settings compared to {@link PlainText} */
-  record InlineCode(@NotNull String language, @NotNull Doc code) implements Doc {
+  record InlineCode(@NotNull Language language, @NotNull Doc code) implements Doc {
   }
 
   /** Code block, with special escape settings compared to {@link PlainText} */
-  record CodeBlock(@NotNull String language, @NotNull Doc code) implements Doc {
+  record CodeBlock(@NotNull Language language, @NotNull Doc code) implements Doc {
   }
 
   /**
@@ -276,23 +276,23 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc code(@NotNull String code) {
-    return code("aya", plain(code));
+    return code(Language.Builtin.Plain, plain(code));
   }
 
   static @NotNull Doc code(@NotNull Doc code) {
-    return code("aya", code);
+    return code(Language.Builtin.Plain, code);
   }
 
-  static @NotNull Doc code(@NotNull String language, @NotNull Doc code) {
+  static @NotNull Doc code(@NotNull Language language, @NotNull Doc code) {
     return new InlineCode(language, code);
   }
 
-  static @NotNull Doc codeBlock(@NotNull String code) {
-    return codeBlock("aya", plain(code));
+  static @NotNull Doc codeBlock(@NotNull Language language, @NotNull Doc code) {
+    return new CodeBlock(language, code);
   }
 
-  static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
-    return new CodeBlock(language, code);
+  static @NotNull Doc codeBlock(@NotNull Language language, @NotNull String code) {
+    return codeBlock(language, plain(code));
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

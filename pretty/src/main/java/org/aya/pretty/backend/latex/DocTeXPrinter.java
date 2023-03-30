@@ -128,6 +128,13 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override
+  protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
+    cursor.invisibleContent("\\begin{minted}[c]");
+    renderDoc(cursor, code.code(), outer);
+    cursor.invisibleContent("\\end{minted}[c]");
+  }
+
+  @Override
   protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
     var env = list.isOrdered() ? "enumerate" : "itemize";
     cursor.invisibleContent("\\begin{" + env + "}");

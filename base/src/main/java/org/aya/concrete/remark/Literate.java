@@ -7,10 +7,7 @@ import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.core.def.UserDef;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
-import org.aya.pretty.doc.Link;
-import org.aya.pretty.doc.Style;
+import org.aya.pretty.doc.*;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
@@ -131,7 +128,7 @@ public sealed interface Literate extends Docile {
     @Override public @NotNull Doc toDoc() {
       if (language.equalsIgnoreCase("aya-hidden")) return Doc.empty();
       var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
-      return Doc.codeBlock(language, doc);
+      return Doc.codeBlock(Language.of(language), doc);
     }
   }
 
