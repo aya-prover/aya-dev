@@ -120,7 +120,10 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
-    cursor.lineBreakWith("~\\\\\n");
+    if (outer.contains(Outer.List))
+      cursor.lineBreakWith("\n"); // list items are separated by source code new line `\n`
+    else
+      cursor.lineBreakWith("~\\\\\n"); // LaTeX uses `\\` for printed line breaks.
   }
 
   @Override
@@ -129,8 +132,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     // ^ `Outer.Code` is only for minted. Do not switch to code mode.
   }
 
-  @Override
-  protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
+  @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
     separateBlockIfNeeded(cursor, outer);
     if (code.language().isAya())
       renderDoc(cursor, code.code(), outer); // `Outer.Code` is only for minted. Do not switch to code mode.
@@ -152,16 +154,11 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     formatBlock(cursor, block.formula(), "\\[", "\\]", EnumSet.of(Outer.Math));
   }
 
-  @Override
-  protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
+  @Override protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
     var env = list.isOrdered() ? "enumerate" : "itemize";
-    cursor.invisibleContent("\\begin{" + env + "}");
-    list.items().forEach(item -> {
-      cursor.invisibleContent("\\item ");
-      renderDoc(cursor, item, EnumSet.of(Outer.List));
-      cursor.lineBreakWith("\n");
-    });
-    cursor.invisibleContent("\\end{" + env + "}");
+    separateBlockIfNeeded(cursor, outer);
+    formatBlock(cursor, "\\begin{" + env + "}", "\\end{" + env + "}", outer, () ->
+      formatList(cursor, list, idx -> "\\item", outer));
   }
 
   /**

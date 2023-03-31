@@ -143,10 +143,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       EnumSet.of(Outer.Code));
     runSwitch(pureMd,
       () -> {
-        if (block.language().isAya()) formatBlock(cursor, block.code(),
-          "<pre class=\"Aya\">", "</pre>",
-          "<code>", "</code>",
-          EnumSet.of(Outer.EnclosingTag));
+        if (block.language().isAya()) formatBlock(cursor, "<pre class=\"Aya\">", "</pre>", outer,
+          () -> formatInline(cursor, block.code(), "<code>", "</code>", EnumSet.of(Outer.EnclosingTag)));
         else pureMd.run();
       });
   }
