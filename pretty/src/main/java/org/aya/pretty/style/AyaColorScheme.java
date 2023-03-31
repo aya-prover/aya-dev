@@ -18,7 +18,9 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Struct.key(), ColorScheme.colorOf(0.13f, 0.55f, 0.13f)),
     Tuple.of(AyaStyleKey.Con.key(), ColorScheme.colorOf(0.63f, 0.13f, 0.94f)),
     Tuple.of(AyaStyleKey.Field.key(), ColorScheme.colorOf(0, 0.55f, 0.55f)),
-    Tuple.of(AyaStyleKey.Comment.key(), ColorScheme.colorOf(0.55f, 0.55f, 0.55f))
+    Tuple.of(AyaStyleKey.Comment.key(), ColorScheme.colorOf(0.55f, 0.55f, 0.55f)),
+    Tuple.of(AyaStyleKey.Error.key(), 0xBC3F3C),
+    Tuple.of(AyaStyleKey.Warning.key(), 0xBE9117)
   ));
 
   /** The colors are from IntelliJ IDEA light theme. */
@@ -31,6 +33,8 @@ public record AyaColorScheme(@NotNull MutableMap<String, Integer> definedColors)
     Tuple.of(AyaStyleKey.Struct.key(), 0x000000),
     Tuple.of(AyaStyleKey.Con.key(), 0x067D17),
     Tuple.of(AyaStyleKey.Field.key(), 0x871094),
-    Tuple.of(AyaStyleKey.Comment.key(), 0x8C8C8C)
+    Tuple.of(AyaStyleKey.Comment.key(), 0x8C8C8C),
+    Tuple.of(AyaStyleKey.Error.key(), 0xBC3F3C),
+    Tuple.of(AyaStyleKey.Warning.key(), 0xBE9117)
   ));
 }

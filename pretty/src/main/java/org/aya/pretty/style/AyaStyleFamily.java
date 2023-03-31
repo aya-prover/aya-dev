@@ -21,6 +21,14 @@ public record AyaStyleFamily(@NotNull MutableMap<String, Styles> definedStyles) 
     Tuple.of(AyaStyleKey.Generalized.key(), Style.color(AyaStyleKey.Generalized.key()).and()),
     Tuple.of(AyaStyleKey.CallTerm.key(), Styles.empty()),
     Tuple.of(AyaStyleKey.Comment.key(), Style.color(AyaStyleKey.Comment.key()).and().italic()),
-    Tuple.of(AyaStyleKey.LocalVar.key(), Style.italic().and())
+    Tuple.of(AyaStyleKey.LocalVar.key(), Style.italic().and()),
+    Tuple.of(AyaStyleKey.Error.key(), new Style.LineThrough(
+      Style.LineThrough.Position.Underline, Style.LineThrough.Shape.Curly,
+      Style.color(AyaStyleKey.Error.key())
+    ).and()),
+    Tuple.of(AyaStyleKey.Warning.key(), new Style.LineThrough(
+      Style.LineThrough.Position.Underline, Style.LineThrough.Shape.Curly,
+      Style.color(AyaStyleKey.Warning.key())
+    ).and())
   ));
 }

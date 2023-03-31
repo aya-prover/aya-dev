@@ -69,23 +69,23 @@ public sealed interface Style extends Serializable {
     return new LineThrough(LineThrough.Position.Underline, LineThrough.Shape.Solid, null);
   }
 
-  static @NotNull Style color(@NotNull String colorName) {
+  static @NotNull Color color(@NotNull String colorName) {
     return new ColorName(colorName, false);
   }
 
-  static @NotNull Style colorBg(@NotNull String colorName) {
+  static @NotNull Color colorBg(@NotNull String colorName) {
     return new ColorName(colorName, true);
   }
 
-  static @NotNull Style color(int color) {
+  static @NotNull Color color(int color) {
     return new ColorHex(color, false);
   }
 
-  static @NotNull Style color(float r, float g, float b) {
+  static @NotNull Color color(float r, float g, float b) {
     return new ColorHex(ColorScheme.colorOf(r, g, b), false);
   }
 
-  static @NotNull Style colorBg(int color) {
+  static @NotNull Color colorBg(int color) {
     return new ColorHex(color, true);
   }
 

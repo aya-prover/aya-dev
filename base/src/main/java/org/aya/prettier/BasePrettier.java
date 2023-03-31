@@ -48,6 +48,8 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   }
 
   public static final @NotNull Style KEYWORD = AyaStyleKey.Keyword.preset();
+  public static final @NotNull Style ERROR = AyaStyleKey.Error.preset();
+  public static final @NotNull Style WARNING = AyaStyleKey.Warning.preset();
   // Annotate the "whole call expr" (not the call head!!) with this.
   public static final @NotNull Style CALL = AyaStyleKey.CallTerm.preset();
   // Annotate the "call head" with styles below.

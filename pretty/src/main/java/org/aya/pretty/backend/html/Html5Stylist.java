@@ -78,7 +78,7 @@ public class Html5Stylist extends ClosingStylist {
         };
         var colorRef = switch (color) {
           case Style.ColorHex(var rgb, var $) -> cssColor(rgb);
-          case Style.ColorName(var name, var $) -> cssVar(name);
+          case Style.ColorName(var name, var $) -> "var(%s)".formatted(cssVar(name));
           case null -> null;
         };
         var decoColor = colorRef != null

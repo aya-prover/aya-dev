@@ -26,6 +26,8 @@ public enum AyaStyleKey {
   Field("Aya::Field"),
   Generalized("Aya::Generalized"),
   CallTerm("Aya::Call"),
+  Error("Aya::Error"),
+  Warning("Aya::Warning"),
   Comment("Aya::Comment"),
   LocalVar("Aya::LocalVar");
 
