@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -14,5 +14,23 @@ public interface CollectingReporter extends CountingReporter {
 
   @Override default void clear() {
     problems().clear();
+  }
+
+  static @NotNull CollectingReporter delegate(@NotNull Reporter delegate) {
+    return new Delegated(delegate);
+  }
+
+  record Delegated(
+    @NotNull Reporter delegated,
+    @NotNull MutableList<Problem> problems
+  ) implements CollectingReporter {
+    public Delegated(@NotNull Reporter delegated) {
+      this(delegated, MutableList.create());
+    }
+
+    @Override public void report(@NotNull Problem problem) {
+      problems.append(problem);
+      delegated.report(problem);
+    }
   }
 }

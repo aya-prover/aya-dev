@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.literate.FaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
@@ -31,7 +32,7 @@ public class FaithfulPrettierTest {
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var doc = new FaithfulPrettier(AyaPrettierOptions.pretty())
+    var doc = new FaithfulPrettier(ImmutableSeq.empty(), AyaPrettierOptions.pretty())
       .highlight(sourceFile.sourceCode(), 0, highlights);
     var output = doc.renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);

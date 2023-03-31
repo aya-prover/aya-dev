@@ -137,7 +137,7 @@ public class HighlighterTester {
         case HighlightInfo.Ref ref
           when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef -> assertRef(sourcePos, ref, expectedRef);
 
-        case HighlightInfo.Err error -> throw new UnsupportedOperationException("TODO");   // TODO
+        case HighlightInfo.Err err -> throw new UnsupportedOperationException("TODO");   // TODO
 
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());

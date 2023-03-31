@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Link;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +55,11 @@ public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
     @Nullable AyaDocile type
   ) implements HighlightInfo {}
 
-  /** An error element */
-  record Err(@NotNull SourcePos sourcePos, @NotNull AyaDocile docile) implements HighlightInfo {}
+  record Err(
+    @NotNull SourcePos sourcePos,
+    @NotNull ImmutableSeq<HighlightInfo> children,
+    @NotNull Problem problem
+  ) implements HighlightInfo {}
 
   /** A literal */
   record Lit(@NotNull SourcePos sourcePos, @NotNull LitKind kind) implements HighlightInfo {}

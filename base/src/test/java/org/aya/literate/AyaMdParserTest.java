@@ -3,6 +3,7 @@
 package org.aya.literate;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
@@ -117,7 +118,7 @@ public class AyaMdParserTest {
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.toDoc(stmts, AyaPrettierOptions.pretty()).toDoc();
+    var doc = literate.toDoc(stmts, ImmutableSeq.empty(), AyaPrettierOptions.pretty()).toDoc();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();

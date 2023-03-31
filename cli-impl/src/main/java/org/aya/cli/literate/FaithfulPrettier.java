@@ -12,10 +12,11 @@ import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record FaithfulPrettier(@NotNull PrettierOptions options) {
+public record FaithfulPrettier(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) {
   private static void checkHighlights(@NotNull ImmutableSeq<HighlightInfo> highlights) {
     highlights.foldLeft(-1, (lastEndIndex, h) -> {
       var sp = h.sourcePos();
@@ -27,6 +28,30 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     });
   }
 
+  private static @NotNull ImmutableSeq<HighlightInfo> merge(
+    @NotNull ImmutableSeq<HighlightInfo> highlights,
+    @NotNull ImmutableSeq<Problem> problems
+  ) {
+    for (var p : problems) {
+      var partition = highlights.partition(
+        h -> p.sourcePos().containsIndex(h.sourcePos()));
+      var inP = partition.component1();
+      if (inP.isNotEmpty()) {
+        var wrap = new HighlightInfo.Err(
+          inP.view()
+            .map(HighlightInfo::sourcePos)
+            .reduce(SourcePos::union),
+          inP.view().sorted().distinct().toImmutableSeq(),
+          p
+        );
+        highlights = partition.component2().appended(wrap);
+      } else {
+        highlights = partition.component2();
+      }
+    }
+    return highlights;
+  }
+
   /**
    * Apply highlights to source code string.
    *
@@ -36,14 +61,19 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
    * @param highlights the highlights for the source code
    */
   public @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    highlights = highlights.sorted().view()
-      .distinct()
+    highlights = highlights.view()
+      .sorted().distinct()
       .filter(h -> h.sourcePos() != SourcePos.NONE)
       .filterNot(h -> h.sourcePos().isEmpty())
       .toImmutableSeq();
     checkHighlights(highlights);
 
-    return doHighlight(StringSlice.of(raw), base, highlights);
+    var merged = merge(highlights, problems).view()
+      .sorted().distinct()
+      .toImmutableSeq();
+    checkHighlights(merged);
+
+    return doHighlight(StringSlice.of(raw), base, merged);
   }
 
   private @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
@@ -53,19 +83,18 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       // Cut the `raw` text at `base` offset into three parts: before, current, and remaining,
       // which needs two split positions: `current.sourcePos().start` and `current.sourcePos().end`, respectively.
       var knifeCut = twoKnifeThreeParts(raw, base, current.sourcePos());
-      // move forward
-      raw = knifeCut.remaining;
-      base = knifeCut.base;
 
       // If there's an orphan text before the highlighted cut, add it to the result as plain text.
       if (!knifeCut.before.isEmpty()) {
         docs.append(Doc.plain(knifeCut.before.toString()));
       }
-      // Umm, I think it doesn't matter, `Doc.empty` is the unit of `Doc.cat`
-      // Do not add to result if the highlighted cut contains nothing
-      var highlight = highlightOne(knifeCut.current.toString(), current);
-      if (highlight != Doc.empty())
-        docs.append(highlight);
+      // `Doc.empty` is the unit of `Doc.cat`, so it is safe to add it to the result.
+      var highlight = highlightOne(knifeCut.current.toString(), base, current);
+      docs.append(highlight);
+
+      // Move forward
+      raw = knifeCut.remaining;
+      base = knifeCut.base;
     }
 
     if (!raw.isEmpty()) docs.append(Doc.plain(raw.toString()));
@@ -73,15 +102,13 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     return Doc.cat(docs);
   }
 
-  private @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo highlight) {
+  private @NotNull Doc highlightOne(@NotNull String raw, int base, @NotNull HighlightInfo highlight) {
     if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
-      case HighlightInfo.Def def ->
-        Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
-      case HighlightInfo.Ref ref ->
-        Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
+      case HighlightInfo.Def def -> Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
+      case HighlightInfo.Ref ref -> Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
       case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
-      case HighlightInfo.Err err -> Doc.plain(raw);   // TODO: any style for error?
+      case HighlightInfo.Err err -> doHighlight(StringSlice.of(raw), base, err.children());
     };
   }
 
