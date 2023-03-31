@@ -199,7 +199,7 @@ public sealed interface Doc extends Docile {
    * Hard line break
    */
   enum Line implements Doc {
-    INSTANCE;
+    INSTANCE
   }
 
   /**

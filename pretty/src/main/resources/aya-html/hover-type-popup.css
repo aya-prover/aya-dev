@@ -44,7 +44,7 @@
   font-size: 0.85em;
   /* spacing */
   padding: 5px 10px;
-  background-color: rgba(18, 26, 44, 1.0);
-  color: #fff;
+  background-color: rgb(153, 153, 153);
+  color: black;
   box-shadow: 1px 1px 14px rgba(0, 0, 0, 0.1)
 }
