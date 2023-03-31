@@ -40,31 +40,17 @@ public class AyaMdParserTest {
     public final static @NotNull String PREFIX_EXPECTED = "expected-";
     public final static @NotNull String EXTENSION_AYA_MD = Constants.AYA_LITERATE_POSTFIX;
     public final static @NotNull String EXTENSION_AYA = Constants.AYA_POSTFIX;
-    public final static @NotNull String EXTENSION_HTML = EXTENSION_AYA_MD + ".html";
+    public final static @NotNull String EXTENSION_HTML = ".html";
     public final static @NotNull String EXTENSION_TEX = ".tex";
-
-    public @NotNull String mdName() {
-      return modName + EXTENSION_AYA_MD;
-    }
+    public final static @NotNull String EXTENSION_PLAIN_TEXT = ".txt";
+    public final static @NotNull String EXTENSION_OUT_MD = ".out.md";
 
     public @NotNull String ayaName() {
       return modName + EXTENSION_AYA;
     }
 
-    public @NotNull String expectedAyaName() {
-      return PREFIX_EXPECTED + ayaName();
-    }
-
-    public @NotNull String htmlName() {
-      return modName + EXTENSION_HTML;
-    }
-
-    public @NotNull String texName() {
-      return modName + EXTENSION_TEX;
-    }
-
     public @NotNull Path mdFile() {
-      return TEST_DIR.resolve(mdName());
+      return TEST_DIR.resolve(modName + EXTENSION_AYA_MD);
     }
 
     public @NotNull Path ayaFile() {
@@ -72,19 +58,23 @@ public class AyaMdParserTest {
     }
 
     public @NotNull Path expectedAyaFile() {
-      return TEST_DIR.resolve(expectedAyaName());
+      return TEST_DIR.resolve(PREFIX_EXPECTED + ayaName());
     }
 
     public @NotNull Path htmlFile() {
-      return TEST_DIR.resolve(htmlName());
+      return TEST_DIR.resolve(modName + EXTENSION_HTML);
     }
 
     public @NotNull Path outMdFile() {
-      return TEST_DIR.resolve(htmlName() + ".out.md");
+      return TEST_DIR.resolve(modName + EXTENSION_OUT_MD);
     }
 
     public @NotNull Path texFile() {
-      return TEST_DIR.resolve(texName());
+      return TEST_DIR.resolve(modName + EXTENSION_TEX);
+    }
+
+    public @NotNull Path plainTextFile() {
+      return TEST_DIR.resolve(modName + EXTENSION_PLAIN_TEXT);
     }
   }
 
@@ -135,6 +125,7 @@ public class AyaMdParserTest {
     Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
     Files.writeString(oneCase.outMdFile(), expectedMd);
     Files.writeString(oneCase.texFile(), actualTexInlinedStyle);
+    Files.writeString(oneCase.plainTextFile(), doc.debugRender());
 
     // test single file compiler
     var compiler = new SingleFileCompiler(AyaThrowingReporter.INSTANCE, null, null);
