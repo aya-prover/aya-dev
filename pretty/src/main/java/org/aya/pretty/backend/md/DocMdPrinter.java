@@ -5,7 +5,6 @@ package org.aya.pretty.backend.md;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,13 +102,19 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   }
 
   @Override protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    StringPrinter.renderList(this, cursor, list, outer);
+    formatList(cursor, list, outer);
   }
 
-  @Override protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+  @Override
+  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
     formatInline(cursor, code.formula(), "$", "$", EnumSet.of(Outer.Math));
   }
 
+  /**
+   * @implNote We don't call {@link #separateBlockIfNeeded}, as Markdown spec says:
+   * any block is surrounded with Paragraphs, which is handled in {@link MdStylist#formatCustom}
+   * by inserting a blank line to generated source code (just like {@link #separateBlockIfNeeded}).
+   */
   @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
     formatBlock(cursor, block.formula(), "$$", "$$", EnumSet.of(Outer.Math));
   }
@@ -126,6 +131,11 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     });
   }
 
+  /**
+   * @implNote We don't call {@link #separateBlockIfNeeded}, as Markdown spec says:
+   * any block is surrounded with Paragraphs, which is handled in {@link MdStylist#formatCustom}
+   * by inserting a blank line to generated source code (just like {@link #separateBlockIfNeeded}).
+   */
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatBlock(cursor, block.code(),
@@ -139,32 +149,6 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
           EnumSet.of(Outer.EnclosingTag));
         else pureMd.run();
       });
-  }
-
-  public void formatBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
-    formatBlock(cursor, code, begin, end, "", "", outer);
-  }
-
-  public void formatBlock(
-    @NotNull Cursor cursor, @NotNull Doc code,
-    @NotNull String begin, @NotNull String end,
-    @NotNull String begin2, @NotNull String end2,
-    EnumSet<Outer> outer
-  ) {
-    cursor.invisibleContent(begin);
-    cursor.lineBreakWith("\n");
-    cursor.invisibleContent(begin2);
-    renderDoc(cursor, code, outer);
-    cursor.invisibleContent(end2);
-    cursor.lineBreakWith("\n");
-    cursor.invisibleContent(end);
-    cursor.lineBreakWith("\n");
-  }
-
-  public void formatInline(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
-    cursor.invisibleContent(begin);
-    renderDoc(cursor, code, outer);
-    cursor.invisibleContent(end);
   }
 
   private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {

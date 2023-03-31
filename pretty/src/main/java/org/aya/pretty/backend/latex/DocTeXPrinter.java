@@ -114,7 +114,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     renderPlainText(cursor, text, outer);
   }
 
-  @Override public @NotNull String makeIndent(int indent) {
+  @Override @NotNull protected String makeIndent(int indent) {
     if (indent == 0) return "";
     return "\\hspace{" + indent * 0.5 + "em}";
   }
@@ -125,33 +125,31 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\texttt{");
-    renderDoc(cursor, code.code(), outer); // `Outer.Code` is only for minted. Do not switch to code mode.
-    cursor.invisibleContent("}");
+    formatInline(cursor, code.code(), "\\texttt{", "}", outer);
+    // ^ `Outer.Code` is only for minted. Do not switch to code mode.
   }
 
   @Override
   protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock code, EnumSet<Outer> outer) {
-    if (code.language().isAya()) {
-      super.renderCodeBlock(cursor, code, outer); // `Outer.Code` is only for minted. Do not switch to code mode.
-      return;
-    }
-    cursor.invisibleContent("\\begin{minted}[%s]".formatted(code.language().displayName().toLowerCase()));
-    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
-    cursor.invisibleContent("\\end{minted}");
+    separateBlockIfNeeded(cursor, outer);
+    if (code.language().isAya())
+      renderDoc(cursor, code.code(), outer); // `Outer.Code` is only for minted. Do not switch to code mode.
+    else
+      formatBlock(cursor, code.code(),
+        "\\begin{minted}[%s]".formatted(code.language().displayName().toLowerCase()),
+        "\\end{minted}",
+        EnumSet.of(Outer.Code)
+      );
   }
 
   @Override
   protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("$");
-    renderDoc(cursor, code.formula(), EnumSet.of(Outer.Math));
-    cursor.invisibleContent("$");
+    formatInline(cursor, code.formula(), "$", "$", EnumSet.of(Outer.Math));
   }
 
   @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\[");
-    renderDoc(cursor, block.formula(), EnumSet.of(Outer.Math));
-    cursor.invisibleContent("\\]");
+    separateBlockIfNeeded(cursor, outer);
+    formatBlock(cursor, block.formula(), "\\[", "\\]", EnumSet.of(Outer.Math));
   }
 
   @Override
