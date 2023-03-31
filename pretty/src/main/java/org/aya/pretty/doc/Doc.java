@@ -192,6 +192,9 @@ public sealed interface Doc extends Docile {
   record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc {
   }
 
+  record Tooltip(@NotNull Doc doc, @NotNull Docile tooltip) implements Doc {
+  }
+
   /**
    * Hard line break
    */

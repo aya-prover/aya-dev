@@ -10,6 +10,8 @@ import kala.text.StringSlice;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Style;
+import org.aya.pretty.error.PrettyError;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -108,7 +110,11 @@ public record FaithfulPrettier(@NotNull ImmutableSeq<Problem> problems, @NotNull
       case HighlightInfo.Def def -> Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
       case HighlightInfo.Ref ref -> Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
       case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
-      case HighlightInfo.Err err -> doHighlight(StringSlice.of(raw), base, err.children());
+      case HighlightInfo.Err err -> {
+        var doc = doHighlight(StringSlice.of(raw), base, err.children());
+        yield new Doc.Tooltip(Doc.styled(Style.underline(), doc),
+          () -> err.problem().toPrettyError(options, PrettyError.FormatConfig.UNICODE).toDoc());
+      }
     };
   }
 

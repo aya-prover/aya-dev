@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
@@ -69,7 +69,7 @@ public class Html5Stylist extends ClosingStylist {
         case Italic -> "font-style: italic;";
         case Bold -> "font-weight: bold;";
         case Strike -> "text-decoration-line: line-through;";
-        case Underline -> "text-decoration: underline;";
+        case Underline -> "text-decoration-line: underline;";
       };
       case Style.ColorHex(var rgb, var background) -> background
         ? "background-color: %s".formatted(cssColor(rgb))

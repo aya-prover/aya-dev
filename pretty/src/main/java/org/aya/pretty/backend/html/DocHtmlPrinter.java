@@ -12,6 +12,8 @@ import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.regex.Pattern;
 
@@ -86,6 +88,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (outer.contains(Outer.Math)) return content;
     return entityPattern.matcher(content).replaceAll(
       result -> entityMapping.get(result.group()));   // fail if bug
+  }
+
+  @Override protected void renderTooltip(@NotNull Cursor cursor, Doc.@NotNull Tooltip tooltip, EnumSet<Outer> outer) {
+    var newCursor = new Cursor(this);
+    renderDoc(newCursor, tooltip.tooltip().toDoc(), FREE);
+    var tip = newCursor.result().toString();
+    // ^ note: the tooltip is shown in a popup, which is a new document.
+    cursor.invisibleContent("<span class=\"aya-tooltip\" ");
+    cursor.invisibleContent("data-tooltip-text=\"");
+    cursor.invisibleContent(Base64.getEncoder().encodeToString(tip.getBytes(StandardCharsets.UTF_8)));
+    cursor.invisibleContent("\">");
+    renderDoc(cursor, tooltip.doc(), EnumSet.of(Outer.EnclosingTag));
+    cursor.invisibleContent("</span>");
   }
 
   @Override
