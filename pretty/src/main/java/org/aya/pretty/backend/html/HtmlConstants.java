@@ -5,71 +5,34 @@ package org.aya.pretty.backend.html;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-public interface HtmlConstants {
-  @Language(value = "HTML")
-  @NotNull String HOVER_TYPE_POPUP_STYLE = """
-    <style>
-    /* for `Doc.HyperLinked`, which is used to show the type of a term on hover. */
-    /* Implemented without JavaScript, so it can be rendered correctly in more places. */
-    .Aya .aya-hover {
-      /* make absolute position available for hover popup */
-      position: relative;
-      cursor: pointer;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
+
+public final class HtmlConstants {
+  public static final @NotNull String HOVER_TYPE_POPUP_STYLE;
+  public static final @NotNull String HOVER_STYLE;
+
+  static {
+    HOVER_TYPE_POPUP_STYLE = tag(readResource("aya-html/hover-type-popup.css"), "style");
+    HOVER_STYLE = tag(readResource("aya-html/hover.css"), "style");
+  }
+
+  private static @NotNull String readResource(String name) {
+    try (var stream = HtmlConstants.class.getResourceAsStream(name)) {
+      assert stream != null;
+      try (var reader = new BufferedReader(new InputStreamReader(stream))) {
+        return reader.lines().collect(Collectors.joining("\n"));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    .Aya [aya-type]:after {
-      /* hover text */
-      content: attr(aya-type);
-      visibility: hidden;
-      /* above the text, aligned to left */
-      position: absolute;
-      top: 0;
-      left: 0; /* 0% for left-aligned, 100% for right-aligned*/
-      transform: translate(0px, -110%);
-      /* spacing */
-      white-space: pre;
-      padding: 5px 10px;
-      background-color: rgba(18, 26, 44, 0.8);
-      color: #fff;
-      box-shadow: 1px 1px 14px rgba(0, 0, 0, 0.1)
-    }
-    .Aya .aya-hover:hover:after {
-      /* show on hover */
-      transform: translate(0px, -110%);
-      visibility: visible;
-      display: block;
-    }
-    /* for `Doc.Tooltip`, which is usually used for error messages. */
-    .AyaTooltipPopup {
-      /* below the text */
-      position: absolute;
-      z-index: 100;
-      /* font style */
-      font-size: 0.85em;
-      /* spacing */
-      padding: 5px 10px;
-      background-color: rgba(18, 26, 44, 1.0);
-      color: #fff;
-      box-shadow: 1px 1px 14px rgba(0, 0, 0, 0.1)
-    }
-    </style>
-    """;
-  @Language(value = "HTML")
-  @NotNull String HOVER_STYLE = """
-    <style>
-    .Aya a {
-      text-decoration-line: none;
-      text-decoration-color: inherit;
-      text-underline-position: inherit;
-    }
-    .Aya a:hover {
-      text-decoration-line: none;
-      text-decoration-color: inherit;
-      text-underline-position: inherit;
-    }
-    .Aya a[href]:hover { background-color: #B4EEB4; }
-    .Aya [href].hover-highlight { background-color: #B4EEB4; }
-    </style>
-    """;
+  }
+
+  private static @NotNull String tag(String tag, String read) {
+    return "<" + tag + ">" + read + "</" + tag + ">";
+  }
 
   @Language(value = "JavaScript")
   @NotNull String HOVER_ALL_OCCURS_JS_HIGHLIGHT_FN = """
@@ -96,7 +59,7 @@ public interface HtmlConstants {
     }
     """;
 
-  /** see: <a href="https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22">1lab</a>*/
+  /** see: <a href="https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22">1lab</a> */
   @Language(value = "JavaScript")
   @NotNull String HOVER_SHOW_TOOLTIP_JS_SHOW_FN = """
     var currentHover = null;
@@ -109,13 +72,13 @@ public interface HtmlConstants {
             currentHover.remove();
             currentHover = null;
           }
-    
+        
           if (on) {
             currentHover = document.createElement("div");
             currentHover.innerHTML = atob(text);
             currentHover.classList.add("AyaTooltipPopup");
             document.body.appendChild(currentHover);
-    
+        
             const selfRect = link.getBoundingClientRect();
             const hoverRect = currentHover.getBoundingClientRect();
             // If we're close to the bottom of the page, push the tooltip above instead.
@@ -189,8 +152,8 @@ public interface HtmlConstants {
   @Language(value = "HTML")
   @NotNull String KATEX_AUTO_RENDER =
     KATEX_AUTO_RENDER_EXTERNAL_RESOURCES + """
-    <script>
-    """ + KATEX_AUTO_RENDER_INIT + """
-    </script>
-    """;
+      <script>
+      """ + KATEX_AUTO_RENDER_INIT + """
+      </script>
+      """;
 }

@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+.Aya a {
+  text-decoration-line: none;
+  text-decoration-color: inherit;
+  text-underline-position: inherit;
+}
+.Aya a:hover {
+  text-decoration-line: none;
+  text-decoration-color: inherit;
+  text-underline-position: inherit;
+}
+.Aya a[href]:hover { background-color: #B4EEB4; }
+.Aya [href].hover-highlight { background-color: #B4EEB4; }

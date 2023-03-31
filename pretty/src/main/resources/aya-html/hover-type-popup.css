@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+/* for `Doc.HyperLinked`, which is used to show the type of a term on hover. */
+/* Implemented without JavaScript, so it can be rendered correctly in more places. */
+.Aya .aya-hover {
+  /* make absolute position available for hover popup */
+  position: relative;
+  cursor: pointer;
+}
+
+.Aya [aya-type]:after {
+  /* hover text */
+  content: attr(aya-type);
+  visibility: hidden;
+  /* above the text, aligned to left */
+  position: absolute;
+  top: 0;
+  left: 0; /* 0% for left-aligned, 100% for right-aligned*/
+  transform: translate(0px, -110%);
+  /* spacing */
+  white-space: pre;
+  padding: 5px 10px;
+  background-color: rgba(18, 26, 44, 0.8);
+  color: #fff;
+  box-shadow: 1px 1px 14px rgba(0, 0, 0, 0.1)
+}
+
+.Aya .aya-hover:hover:after {
+  /* show on hover */
+  transform: translate(0px, -110%);
+  visibility: visible;
+  display: block;
+}
+
+/* for `Doc.Tooltip`, which is usually used for error messages. */
+.AyaTooltipPopup {
+  /* below the text */
+  position: absolute;
+  z-index: 100;
+  /* font style */
+  font-size: 0.85em;
+  /* spacing */
+  padding: 5px 10px;
+  background-color: rgba(18, 26, 44, 1.0);
+  color: #fff;
+  box-shadow: 1px 1px 14px rgba(0, 0, 0, 0.1)
+}
