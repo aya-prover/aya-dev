@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly;
 @TestOnly
 public enum EmptyModuleLoader implements ModuleLoader {
   @TestOnly INSTANCE(AyaThrowingReporter.INSTANCE),
-  @TestOnly INSTANCE_COLLECTING_ERRORS(CollectingReporter.delegate(IgnoringReporter.INSTANCE));
+  @TestOnly COLLECTING_ERRORS(CollectingReporter.delegate(IgnoringReporter.INSTANCE));
 
   private final @NotNull Reporter reporter;
 

@@ -110,11 +110,11 @@ public class AyaMdParserTest {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-    var reporter = ((CollectingReporter) EmptyModuleLoader.INSTANCE_COLLECTING_ERRORS.reporter());
+    var reporter = ((CollectingReporter) EmptyModuleLoader.COLLECTING_ERRORS.reporter());
     var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
     var stmts = literate.parseMe(new AyaParserImpl(reporter));
     var ctx = new EmptyContext(reporter, Path.of(".")).derive(oneCase.modName());
-    var loader = EmptyModuleLoader.INSTANCE_COLLECTING_ERRORS;
+    var loader = EmptyModuleLoader.COLLECTING_ERRORS;
     var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
