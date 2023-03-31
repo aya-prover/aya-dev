@@ -29,7 +29,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     <title>Aya file</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
+    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_TYPE_POPUP_STYLE;
 
   /**
    * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
@@ -48,10 +48,10 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
       if (config.opt(ServerSideRendering, false)) {
-        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS_SSR);
+        cursor.invisibleContent(HtmlConstants.HOVER_SSR);
         // TODO: KaTeX server side rendering
       } else {
-        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS);
+        cursor.invisibleContent(HtmlConstants.HOVER);
         cursor.invisibleContent(HtmlConstants.KATEX_AUTO_RENDER);
       }
       renderCssStyle(cursor);

@@ -10,7 +10,7 @@ import kala.text.StringSlice;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.error.PrettyError;
+import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -116,8 +116,10 @@ public record FaithfulPrettier(@NotNull ImmutableSeq<Problem> problems, @NotNull
           case WARN -> BasePrettier.WARNING;
           case GOAL, INFO -> null;
         };
-        yield style == null ? doc : new Doc.Tooltip(Doc.styled(style, doc), () -> err.problem().toPrettyError(
-          options, PrettyError.FormatConfig.UNICODE).toDoc());
+        yield style == null ? doc : new Doc.Tooltip(Doc.styled(style, doc), () -> Doc.codeBlock(
+          Language.Builtin.Aya,
+          err.problem().brief(options).toDoc()
+        ));
       }
     };
   }
