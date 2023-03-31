@@ -8,55 +8,54 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record HighlightInfo(
-  @NotNull SourcePos sourcePos,
-  @NotNull HighlightSymbol type
-) implements Comparable<HighlightInfo> {
-  @Override public int compareTo(@NotNull HighlightInfo o) {
-    return sourcePos.compareTo(o.sourcePos);
+public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
+  @NotNull SourcePos sourcePos();
+
+  default @Override int compareTo(@NotNull HighlightInfo o) {
+    return sourcePos().compareTo(o.sourcePos());
   }
 
-  public enum DefKind {
+  enum DefKind {
     Data, Con, Struct, Field, Fn, Prim,
     Generalized, LocalVar, Module,
     Unknown;
 
     public @NotNull HighlightInfo toRef(@NotNull SourcePos sourcePos, @NotNull Link target, @Nullable AyaDocile type) {
-      return new HighlightInfo(sourcePos, new SymRef(target, this, type));
+      return new Ref(sourcePos, target, this, type);
     }
 
     public @NotNull HighlightInfo toDef(@NotNull SourcePos sourcePos, @NotNull Link target, @Nullable AyaDocile type) {
-      return new HighlightInfo(sourcePos, new SymDef(target, this, type));
+      return new Def(sourcePos, target, this, type);
     }
   }
 
-  public enum LitKind {
+  enum LitKind {
     Int, String, Keyword, Comment, SpecialSymbol, Eol, Whitespace;
 
     public @NotNull HighlightInfo toLit(@NotNull SourcePos sourcePos) {
-      return new HighlightInfo(sourcePos, new SymLit(this));
-    }
-  }
-
-  public sealed interface HighlightSymbol {
-    default @NotNull HighlightInfo toInfo(@NotNull SourcePos sourcePos) {
-      return new HighlightInfo(sourcePos, this);
+      return new Lit(sourcePos, this);
     }
   }
 
   /** A reference to a symbol */
-  public record SymRef(@NotNull Link target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
-  }
+  record Ref(
+    @NotNull SourcePos sourcePos,
+    @NotNull Link target,
+    @NotNull DefKind kind,
+    @Nullable AyaDocile type
+  ) implements HighlightInfo {}
 
   /** A definition of a symbol */
-  public record SymDef(@NotNull Link target, @NotNull DefKind kind, @Nullable AyaDocile type) implements HighlightSymbol {
-  }
+  record Def(
+    @NotNull SourcePos sourcePos,
+    @NotNull Link target,
+    @NotNull DefKind kind,
+    @Nullable AyaDocile type
+  ) implements HighlightInfo {}
 
   /** An error element */
-  public record SymError(@NotNull AyaDocile docile) implements HighlightSymbol {
-  }
+  record Err(@NotNull SourcePos sourcePos, @NotNull AyaDocile docile) implements HighlightInfo {}
 
   /** A literal */
-  public record SymLit(@NotNull LitKind kind) implements HighlightSymbol {
-  }
+  record Lit(@NotNull SourcePos sourcePos, @NotNull LitKind kind) implements HighlightInfo {}
 }

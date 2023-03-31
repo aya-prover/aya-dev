@@ -15,9 +15,7 @@ import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.PrimDef.Factory;
-import org.aya.literate.HighlighterTester.ExpectedHighlightType.Def;
 import org.aya.literate.HighlighterTester.ExpectedHighlightType.LitInt;
-import org.aya.literate.HighlighterTester.ExpectedHighlightType.Ref;
 import org.aya.pretty.doc.Link;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -94,7 +92,7 @@ public class HighlighterTester {
 
   public void runTest() {
     var sortedActual = actual.view().distinct().sorted().toImmutableSeq().view();
-    if (sortedActual.last().type() instanceof HighlightInfo.SymLit(var kind) && kind == HighlightInfo.LitKind.Eol)
+    if (sortedActual.last() instanceof HighlightInfo.Lit(var $, var kind) && kind == HighlightInfo.LitKind.Eol)
       // Remove the last Eol
       sortedActual = sortedActual.dropLast(1);
     runTest(sortedActual, Seq.of(expected));
@@ -103,9 +101,9 @@ public class HighlighterTester {
   public void runTest(@NotNull SeqView<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
     actuals.forEachWith(expecteds, (actual, expected) -> {
       if (expected == null) {
-        switch (actual.type()) {
-          case HighlightInfo.SymDef def -> checkDef(actual.sourcePos(), def);
-          case HighlightInfo.SymRef ref -> checkRef(actual.sourcePos(), ref);
+        switch (actual) {
+          case HighlightInfo.Def def -> checkDef(actual.sourcePos(), def);
+          case HighlightInfo.Ref ref -> checkRef(actual.sourcePos(), ref);
           default -> {}
         }
 
@@ -122,24 +120,24 @@ public class HighlighterTester {
 
       assertEquals(expectedText, actualText, "at " + sourcePos);
 
-      switch (actual.type()) {
-        case HighlightInfo.SymLit(var ty)
+      switch (actual) {
+        case HighlightInfo.Lit(var $, var ty)
           when ty == HighlightInfo.LitKind.Keyword && expected.expected() instanceof ExpectedHighlightType.Keyword -> {
         }
-        case HighlightInfo.SymLit(var ty)
+        case HighlightInfo.Lit(var $, var ty)
           when ty == HighlightInfo.LitKind.Int && expected.expected() instanceof LitInt -> {
         }
-        case HighlightInfo.SymLit(var ty)
+        case HighlightInfo.Lit(var $, var ty)
           when ty == HighlightInfo.LitKind.String && expected.expected() instanceof ExpectedHighlightType.LitString -> {
         }
 
-        case HighlightInfo.SymDef def
-          when expected.expected() instanceof Def expectedDef -> assertDef(sourcePos, def, expectedDef);
+        case HighlightInfo.Def def
+          when expected.expected() instanceof ExpectedHighlightType.Def expectedDef -> assertDef(sourcePos, def, expectedDef);
 
-        case HighlightInfo.SymRef ref
-          when expected.expected() instanceof Ref expectedRef -> assertRef(sourcePos, ref, expectedRef);
+        case HighlightInfo.Ref ref
+          when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef -> assertRef(sourcePos, ref, expectedRef);
 
-        case HighlightInfo.SymError error -> throw new UnsupportedOperationException("TODO");   // TODO
+        case HighlightInfo.Err error -> throw new UnsupportedOperationException("TODO");   // TODO
 
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
@@ -151,14 +149,14 @@ public class HighlighterTester {
   /**
    * Check no duplicated def.
    */
-  public void checkDef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.SymDef def) {
+  public void checkDef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Def def) {
     var existDef = defSet.containsKey(def.target());
     assertFalse(existDef, "Duplicated def: " + def.target() + " at " + sourcePos);
 
     defSet.put(def.target(), Option.ofNullable(def.kind()));
   }
 
-  public void assertDef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.SymDef actualDef, @NotNull Def expectedDef) {
+  public void assertDef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Def actualDef, @NotNull HighlighterTester.ExpectedHighlightType.Def expectedDef) {
     checkDef(sourcePos, actualDef);
 
     assertEquals(expectedDef.kind(), actualDef.kind());
@@ -176,14 +174,14 @@ public class HighlighterTester {
   /**
    * Check the reference
    */
-  public void checkRef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.SymRef ref) {
+  public void checkRef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Ref ref) {
     var defData = defSet.getOrNull(ref.target());
 
     assertNotNull(defData, "Expected def: " + ref.target() + " at " + sourcePos);
     assertEquals(defData.getOrNull(), ref.kind());
   }
 
-  public void assertRef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.SymRef actualRef, @NotNull Ref expectedRef) {
+  public void assertRef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Ref actualRef, @NotNull HighlighterTester.ExpectedHighlightType.Ref expectedRef) {
     checkRef(sourcePos, actualRef);
 
     var name = expectedRef.name();
@@ -214,7 +212,7 @@ public class HighlighterTester {
     Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
     var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts)
-      .filterNot(it -> it.type() instanceof HighlightInfo.SymLit(var kind)
+      .filterNot(it -> it instanceof HighlightInfo.Lit(var $, var kind)
         && ignored.contains(kind));
     new HighlighterTester(code, result, expected).runTest();
   }
@@ -231,7 +229,7 @@ public class HighlighterTester {
   }
 
   public static @NotNull ExpectedHighlightInfo def(int begin, int end, @NotNull String display, @Nullable String name, @Nullable HighlightInfo.DefKind defKind) {
-    return new ExpectedHighlightInfo(mockPos(begin, end), new Def(display, name, defKind));
+    return new ExpectedHighlightInfo(mockPos(begin, end), new ExpectedHighlightType.Def(display, name, defKind));
   }
 
   public static @NotNull ExpectedHighlightInfo def(int begin, int end, @NotNull String display, @Nullable HighlightInfo.DefKind defKind) {
@@ -247,7 +245,7 @@ public class HighlighterTester {
   }
 
   public static @NotNull ExpectedHighlightInfo ref(int begin, int end, @NotNull String display, @Nullable String name, HighlightInfo.DefKind defKind) {
-    return new ExpectedHighlightInfo(mockPos(begin, end), new Ref(display, name, defKind));
+    return new ExpectedHighlightInfo(mockPos(begin, end), new ExpectedHighlightType.Ref(display, name, defKind));
   }
 
   public static @NotNull ExpectedHighlightInfo ref(int begin, int end, @NotNull String display, HighlightInfo.DefKind defKind) {

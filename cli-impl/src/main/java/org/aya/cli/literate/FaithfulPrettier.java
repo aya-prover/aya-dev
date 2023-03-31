@@ -63,7 +63,7 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       }
       // Umm, I think it doesn't matter, `Doc.empty` is the unit of `Doc.cat`
       // Do not add to result if the highlighted cut contains nothing
-      var highlight = highlightOne(knifeCut.current.toString(), current.type());
+      var highlight = highlightOne(knifeCut.current.toString(), current);
       if (highlight != Doc.empty())
         docs.append(highlight);
     }
@@ -73,15 +73,15 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     return Doc.cat(docs);
   }
 
-  private @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+  private @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo highlight) {
     if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
-      case HighlightInfo.SymDef symDef ->
-        Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target(), hover(symDef.type()));
-      case HighlightInfo.SymRef symRef ->
-        Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target(), hover(symRef.type()));
-      case HighlightInfo.SymLit symLit -> highlightLit(raw, symLit.kind());
-      case HighlightInfo.SymError symError -> Doc.plain(raw);   // TODO: any style for error?
+      case HighlightInfo.Def def ->
+        Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
+      case HighlightInfo.Ref ref ->
+        Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
+      case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
+      case HighlightInfo.Err err -> Doc.plain(raw);   // TODO: any style for error?
     };
   }
 
