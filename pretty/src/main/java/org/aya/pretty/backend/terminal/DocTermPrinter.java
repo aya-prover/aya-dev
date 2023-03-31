@@ -12,9 +12,9 @@ import java.util.EnumSet;
 
 public class DocTermPrinter extends StringPrinter<DocTermPrinter.Config> {
   @Override protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
-    cursor.invisibleContent("`");
+    cursor.visibleContent("`");
     renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
-    cursor.invisibleContent("'");
+    cursor.visibleContent("'");
   }
 
   public static class Config extends StringPrinterConfig<UnixTermStylist> {
