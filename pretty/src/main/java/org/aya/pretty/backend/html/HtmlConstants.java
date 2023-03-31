@@ -53,11 +53,6 @@ public interface HtmlConstants {
     }
     .Aya a[href]:hover { background-color: #B4EEB4; }
     .Aya [href].hover-highlight { background-color: #B4EEB4; }
-    .Aya .aya-tooltip u {
-      text-decoration-style: wavy;
-      text-decoration-color: #BC3F3C;
-      text-underline-position: under;
-    }
     </style>
     """;
   @Language(value = "JavaScript")

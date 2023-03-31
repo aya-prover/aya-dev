@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -51,9 +51,8 @@ public abstract class ClosingStylist extends StringStylist {
       case Style.Attr attr -> switch (attr) {
         case Italic -> formatItalic(outer);
         case Bold -> formatBold(outer);
-        case Strike -> formatStrike(outer);
-        case Underline -> formatUnderline(outer);
       };
+      case Style.LineThrough line -> formatLineThrough(line, outer);
       case Style.ColorName color -> formatPresetColor(color.colorName(), color.background());
       case Style.ColorHex hex -> formatColorHex(hex.color(), hex.background());
       case Style.CustomStyle custom -> formatCustom(custom);
@@ -77,8 +76,7 @@ public abstract class ClosingStylist extends StringStylist {
 
   protected abstract @NotNull StyleToken formatItalic(EnumSet<StringPrinter.Outer> outer);
   protected abstract @NotNull StyleToken formatBold(EnumSet<StringPrinter.Outer> outer);
-  protected abstract @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer);
-  protected abstract @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer);
+  protected abstract @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer);
   protected abstract @NotNull StyleToken formatColorHex(int rgb, boolean background);
 
   public static class Delegate extends ClosingStylist {
@@ -93,7 +91,8 @@ public abstract class ClosingStylist extends StringStylist {
       return delegate.formatCustom(style);
     }
 
-    @Override protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
+    @Override
+    protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
       return delegate.formatPresetStyle(styleName, outer);
     }
 
@@ -109,12 +108,9 @@ public abstract class ClosingStylist extends StringStylist {
       return delegate.formatBold(outer);
     }
 
-    @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
-      return delegate.formatStrike(outer);
-    }
-
-    @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
-      return delegate.formatUnderline(outer);
+    @Override
+    protected @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer) {
+      return delegate.formatLineThrough(line,outer);
     }
 
     @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
