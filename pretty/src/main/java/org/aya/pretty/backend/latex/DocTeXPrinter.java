@@ -149,9 +149,9 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   }
 
   @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
-    cursor.invisibleContent("\\begin{align*}");
+    cursor.invisibleContent("\\[");
     renderDoc(cursor, block.formula(), EnumSet.of(Outer.Math));
-    cursor.invisibleContent("\\end{align*}");
+    cursor.invisibleContent("\\]");
   }
 
   @Override
