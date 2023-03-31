@@ -27,7 +27,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     <title>Aya file</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    """ + HtmlConstants.HOVER_ALL_OCCURS + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
+    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
 
   /**
    * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
@@ -45,6 +45,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
+      if (config.opt(ServerSideRendering, false)) {
+        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS_SSR);
+        // TODO: KaTeX server side rendering
+      } else {
+        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS);
+        cursor.invisibleContent(HtmlConstants.KATEX_AUTO_RENDER);
+      }
       renderCssStyle(cursor);
       cursor.invisibleContent("</head><body>");
     }
@@ -75,7 +82,8 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
-    // note: HTML always needs escaping, regardless of `outer`
+    // HTML always needs escaping, unless we are in KaTeX math mode
+    if (outer.contains(Outer.Math)) return content;
     return entityPattern.matcher(content).replaceAll(
       result -> entityMapping.get(result.group()));   // fail if bug
   }
@@ -137,6 +145,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
     renderDoc(cursor, block.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
+  }
+
+  @Override
+  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+    // https://katex.org/docs/autorender.html
+    formatInline(cursor, code.formula(), "<span class=\"doc-katex-input\">\\(", "\\)</span>", EnumSet.of(Outer.Math));
+  }
+
+  @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
+    cursor.invisibleContent("<pre><div class=\"doc-katex-input\">");
+    // https://katex.org/docs/autorender.html
+    formatBlock(cursor, block.formula(), "\\[", "\\]", EnumSet.of(Outer.Math));
+    cursor.invisibleContent("</div></pre>");
   }
 
   @Override
