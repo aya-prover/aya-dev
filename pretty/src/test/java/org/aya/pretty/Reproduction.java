@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Reproduction {
   @Test public void mock() {
-    var doc = Doc.nest(2, Doc.code(Doc.plain("hey")));
+    var doc = Doc.nest(2, Doc.code("hey"));
     assertEquals("  `hey'", doc.renderToTerminal());
     assertEquals("\\hspace{1.0em}\\texttt{hey}", doc.renderToTeX());
   }

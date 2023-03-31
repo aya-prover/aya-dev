@@ -21,3 +21,24 @@ For the following `code block`, you'll never see it:
 ```aya-hidden
 example def foo => justId
 ```
+
+The following code block will not be highlighted, since Aya
+don't know how to type check a [Java](https://jdk.java.net/) program:
+
+```java
+public class Main {
+  public static void main(String[] args) {
+    System.out.println("hello");
+  }
+}
+```
+
+This is a math block, and it is saying $\frac{1}{2} = \frac{1}{2}$:
+
+$$
+\begin{align*}
+  \frac{1}{2} &= \frac{1}{2} \\
+  \frac{1}{2} &= \frac{1}{2} \\
+  \frac{1}{2} &= \frac{1}{2} \\
+\end{align*}
+$$

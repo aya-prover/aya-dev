@@ -10,6 +10,7 @@ import org.aya.pretty.printer.PrinterConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.function.IntFunction;
 
 import static org.aya.pretty.backend.string.StringPrinterConfig.TextOptions.Unicode;
 
@@ -22,6 +23,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
   /** renderer: where am I? */
   public enum Outer {
     Code,
+    Math,
     EnclosingTag,
     List,
   }
@@ -30,7 +32,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
 
   protected Config config;
 
-  public @NotNull String makeIndent(int indent) {
+  protected @NotNull String makeIndent(int indent) {
     return " ".repeat(indent);
   }
 
@@ -68,6 +70,8 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.PageWidth pageWidth -> predictWidth(cursor, pageWidth.docBuilder().apply(config.getPageWidth()));
       case Doc.CodeBlock codeBlock -> predictWidth(cursor, codeBlock.code());
       case Doc.InlineCode inlineCode -> predictWidth(cursor, inlineCode.code());
+      case Doc.InlineMath inlineMath -> predictWidth(cursor, inlineMath.formula());
+      case Doc.MathBlock mathBlock -> predictWidth(cursor, mathBlock.formula());
       case Doc.List list -> list.items().view().map(x -> predictWidth(cursor, x)).reduce(Integer::sum);
     };
   }
@@ -102,9 +106,11 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()), outer);
       case Doc.Nesting nesting -> renderDoc(cursor, nesting.docBuilder().apply(cursor.getNestLevel()), outer);
       case Doc.PageWidth pageWidth -> renderDoc(cursor, pageWidth.docBuilder().apply(config.getPageWidth()), outer);
-      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, EnumSet.of(Outer.Code));
-      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, EnumSet.of(Outer.Code));
+      case Doc.CodeBlock codeBlock -> renderCodeBlock(cursor, codeBlock, outer);
+      case Doc.InlineCode inlineCode -> renderInlineCode(cursor, inlineCode, outer);
       case Doc.List list -> renderList(cursor, list, outer);
+      case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
+      case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
       case Doc.Empty $ -> {}
     }
   }
@@ -174,55 +180,116 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     return content;
   }
 
-  protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
+  /**
+   * This line break makes target source code beautiful (like .tex or .md generated from Doc).
+   * It is not printed in the resulting document (like .pdf generated from .tex or .md),
+   * since it only separates different block elements (list, code block, etc.) in generated source files.
+   * <p>
+   * The default implementation is to print a single `\n` character and move to new line.
+   *
+   * @apiNote This is called by {@link #renderCodeBlock}, {@link #renderMathBlock}, {@link #formatList},
+   * and other block rendering methods to separate the current block from the previous one.
+   */
+  protected void renderBlockSeparator(@NotNull Cursor cursor, EnumSet<Outer> outer) {
     cursor.lineBreakWith("\n");
   }
 
+  /**
+   * This line break is printed in the resulting document (like .pdf generated from .tex or .md).
+   * The default implementation is same as {@link #renderBlockSeparator}.
+   * Backends may override this method if the source code line break is different from
+   * the printed line break, (like LaTeX use '\\' for new line in the printed document).
+   */
+  protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
+    renderBlockSeparator(cursor, outer);
+  }
+
   protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
-    makeSureLineStart(cursor, outer);
-    renderDoc(cursor, block.code(), outer);
+    separateBlockIfNeeded(cursor, outer);
+    formatBlock(cursor, block.code(), "", "", EnumSet.of(Outer.Code));
   }
 
   protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
+    // do not use `formatInline` here, because the backtick (`) should be visible in plain string,
+    // while `formatInline` treats them as invisible.
     cursor.visibleContent("`");
-    renderDoc(cursor, code.code(), outer);
+    renderDoc(cursor, code.code(), EnumSet.of(Outer.Code));
     cursor.visibleContent("`");
+  }
+
+  protected void renderMathBlock(@NotNull Cursor cursor, @NotNull Doc.MathBlock block, EnumSet<Outer> outer) {
+    separateBlockIfNeeded(cursor, outer);
+    formatBlock(cursor, block.formula(), "", "", EnumSet.of(Outer.Math));
+  }
+
+  protected void renderInlineMath(@NotNull Cursor cursor, @NotNull Doc.InlineMath code, EnumSet<Outer> outer) {
+    renderDoc(cursor, code.formula(), EnumSet.of(Outer.Math));
   }
 
   protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    renderList(this, cursor, list, outer);
+    formatList(cursor, list, outer);
   }
 
-  protected static void renderList(@NotNull StringPrinter<?> printer, @NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    // Move to new line if needed, in case the list begins at the end of previous doc.
-    cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
+  protected void formatList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    formatList(cursor, list, idx -> list.isOrdered() ? (idx + 1) + "." : "-", outer);
+  }
+
+  protected void formatList(@NotNull Cursor cursor, @NotNull Doc.List list, @NotNull IntFunction<String> itemBegin, EnumSet<Outer> outer) {
+    // Move to new line if needed, in case the list begins at the end of the previous doc.
+    separateBlockIfNeeded(cursor, outer);
 
     // The items should be placed one by one, each at the beginning of a line.
     var items = Doc.vcat(list.items().mapIndexed((idx, item) -> {
       // The beginning mark
-      var pre = list.isOrdered() ? (idx + 1) + "." : "-";
+      var pre = itemBegin.apply(idx);
       // The item content
       var content = Doc.align(item);
       return Doc.stickySep(Doc.escaped(pre), content);
     }));
-    printer.renderDoc(cursor, items, EnumSet.of(Outer.List));
+    renderDoc(cursor, items, EnumSet.of(Outer.List));
 
     // Top level list should have a line after it, or the following content will be treated as list item.
     if (!outer.contains(Outer.List)) {
-      cursor.whenLineUsed(() -> printer.renderHardLineBreak(cursor, outer));
-      printer.renderHardLineBreak(cursor, outer);
+      separateBlockIfNeeded(cursor, outer);
+      renderBlockSeparator(cursor, outer);
     }
   }
 
+  /** renderBlockSeparator if not line start */
+  protected void separateBlockIfNeeded(@NotNull Cursor cursor, EnumSet<Outer> outer) {
+    cursor.whenLineUsed(() -> renderBlockSeparator(cursor, outer));
+  }
+
+  protected void formatBlock(@NotNull Cursor cursor, @NotNull Doc doc, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
+    formatBlock(cursor, begin, end, outer, () -> renderDoc(cursor, doc, outer));
+  }
+
   /**
-   * renderLineBreak if not line start
-   *
-   * @return true if renderLineBreak
+   * Render the resulting document as:
+   * <pre>
+   * begin\n
+   * inside()\n
+   * end\n
+   * </pre>
    */
-  protected boolean makeSureLineStart(@NotNull Cursor cursor, EnumSet<Outer> outers) {
-    if (!cursor.isAtLineStart()) {
-      renderHardLineBreak(cursor, outers);
-      return true;
-    } else return false;
+  protected void formatBlock(@NotNull Cursor cursor, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer, @NotNull Runnable inside) {
+    cursor.invisibleContent(begin);
+    renderBlockSeparator(cursor, outer);
+    inside.run();
+    renderBlockSeparator(cursor, outer);
+    cursor.invisibleContent(end);
+    renderBlockSeparator(cursor, outer);
+  }
+
+  /**
+   * Render the resulting document as:
+   * <pre>
+   * begin·doc·end
+   * </pre>
+   */
+  protected void formatInline(@NotNull Cursor cursor, @NotNull Doc doc, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
+    cursor.invisibleContent(begin);
+    renderDoc(cursor, doc, outer);
+    cursor.invisibleContent(end);
   }
 }

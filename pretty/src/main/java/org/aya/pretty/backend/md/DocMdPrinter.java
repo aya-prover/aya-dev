@@ -5,7 +5,6 @@ package org.aya.pretty.backend.md;
 import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
-import org.aya.pretty.backend.string.StringPrinter;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,8 @@ import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
 
 public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   public static final Pattern MD_ESCAPE = Pattern.compile("[#&()*+;<>\\[\\\\\\]_`|~]");
-  public static final Pattern MD_NO_ESCAPE_BACKSLASH = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
+  /** `Doc.plain("1. hello")` should not be rendered as a list, see MdStyleTest */
+  public static final Pattern MD_ESCAPE_FAKE_LIST = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
   @Override protected void renderHeader(@NotNull Cursor cursor) {
   }
@@ -42,7 +42,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
       return super.escapePlainText(content, outer);
     }
     // If we are in Markdown, do not escape text in code block.
-    if (outer.contains(Outer.Code)) return content;
+    if (outer.contains(Outer.Code) || outer.contains(Outer.Math)) return content;
     // We are not need to call `super.escapePlainText`, we will escape them in markdown way.
     // I wish you can understand this genius regexp
     // What we will escape:
@@ -61,10 +61,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
         return "\\\\" + chara;
       });
 
-    // avoiding escape `\`.
-    content = MD_NO_ESCAPE_BACKSLASH
-      .matcher(content)
-      .replaceAll("$1\\\\.$2");
+    // escape fake lists
+    content = MD_ESCAPE_FAKE_LIST.matcher(content).replaceAll("$1\\\\.$2");
 
     return content;
   }
@@ -103,61 +101,52 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     cursor.invisibleContent(")");
   }
 
+  @Override protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
+    formatList(cursor, list, outer);
+  }
+
+  @Override
+  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+    formatInline(cursor, code.formula(), "$", "$", EnumSet.of(Outer.Math));
+  }
+
+  /**
+   * @implNote We don't call {@link #separateBlockIfNeeded}, as Markdown spec says:
+   * any block is surrounded with Paragraphs, which is handled in {@link MdStylist#formatCustom}
+   * by inserting a blank line to generated source code (just like {@link #separateBlockIfNeeded}).
+   */
+  @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
+    formatBlock(cursor, block.formula(), "$$", "$$", EnumSet.of(Outer.Math));
+  }
+
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> formatInlineCode(cursor, code.code(), "`", "`", outer);
+    Runnable pureMd = () -> formatInline(cursor, code.code(), "`", "`", EnumSet.of(Outer.Code));
     runSwitch(pureMd, () -> {
-      var isAya = code.language().equalsIgnoreCase("aya");
-      if (isAya) formatInlineCode(cursor, code.code(),
+      if (code.language().isAya()) formatInline(cursor, code.code(),
         "<code class=\"Aya\">", "</code>",
         EnumSet.of(Outer.EnclosingTag));
       else pureMd.run();
     });
   }
 
-  @Override protected void renderList(@NotNull Cursor cursor, @NotNull Doc.List list, EnumSet<Outer> outer) {
-    StringPrinter.renderList(this, cursor, list, outer);
-  }
-
+  /**
+   * @implNote We don't call {@link #separateBlockIfNeeded}, as Markdown spec says:
+   * any block is surrounded with Paragraphs, which is handled in {@link MdStylist#formatCustom}
+   * by inserting a blank line to generated source code (just like {@link #separateBlockIfNeeded}).
+   */
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
-    Runnable pureMd = () -> formatCodeBlock(cursor, block.code(), "```" + block.language(), "```", outer);
+    Runnable pureMd = () -> formatBlock(cursor, block.code(),
+      "```" + block.language().displayName().toLowerCase(), "```",
+      EnumSet.of(Outer.Code));
     runSwitch(pureMd,
       () -> {
-        var isAya = block.language().equalsIgnoreCase("aya");
-        if (isAya) formatCodeBlock(cursor, block.code(),
-          "<pre class=\"Aya\">", "</pre>",
-          "<code>", "</code>",
-          EnumSet.of(Outer.EnclosingTag));
+        if (block.language().isAya()) formatBlock(cursor, "<pre class=\"Aya\">", "</pre>", outer,
+          () -> formatInline(cursor, block.code(), "<code>", "</code>", EnumSet.of(Outer.EnclosingTag)));
         else pureMd.run();
       });
-  }
-
-  public void formatCodeBlock(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
-    formatCodeBlock(cursor, code, begin, end, "", "", outer);
-  }
-
-  public void formatCodeBlock(
-    @NotNull Cursor cursor, @NotNull Doc code,
-    @NotNull String begin, @NotNull String end,
-    @NotNull String begin2, @NotNull String end2,
-    EnumSet<Outer> outer
-  ) {
-    cursor.invisibleContent(begin);
-    cursor.lineBreakWith("\n");
-    cursor.invisibleContent(begin2);
-    renderDoc(cursor, code, outer);
-    cursor.invisibleContent(end2);
-    cursor.lineBreakWith("\n");
-    cursor.invisibleContent(end);
-    cursor.lineBreakWith("\n");
-  }
-
-  public void formatInlineCode(@NotNull Cursor cursor, @NotNull Doc code, @NotNull String begin, @NotNull String end, EnumSet<Outer> outer) {
-    cursor.invisibleContent(begin);
-    renderDoc(cursor, code, outer);
-    cursor.invisibleContent(end);
   }
 
   private void runSwitch(@NotNull Runnable pureMd, @NotNull Runnable ayaMd) {

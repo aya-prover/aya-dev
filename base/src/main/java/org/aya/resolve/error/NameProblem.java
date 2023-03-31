@@ -35,7 +35,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
           Doc.english("The unqualified name"),
-          Doc.code(Doc.plain(name)),
+          Doc.code(name),
           Doc.english("is ambiguous")),
         Doc.english("Did you mean:"),
         Doc.nest(2, Doc.vcat(didYouMean().map(Doc::code))));
@@ -53,7 +53,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
         Doc.english("The name"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("introduces ambiguity and can only be accessed through a qualified name")));
     }
   }
@@ -65,7 +65,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("being exported clashes with another exported definition with the same name"));
     }
 
@@ -81,7 +81,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(modName.toString())),
+        Doc.code(modName.toString()),
         Doc.english("is already defined elsewhere")
       );
     }
@@ -123,7 +123,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(modName.toString())),
+        Doc.code(modName.toString()),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -136,7 +136,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(path.toString())),
+        Doc.code(path.toString()),
         Doc.english("is not found")
       );
     }
@@ -149,7 +149,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
-        Doc.code(Doc.plain(modName.toString())),
+        Doc.code(modName.toString()),
         Doc.english("shadows a previous definition from outer scope")
       );
     }
@@ -161,7 +161,7 @@ public interface NameProblem extends Problem {
   ) implements NameProblem.Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("The name"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("shadows a previous local definition from outer scope")
       );
     }
@@ -175,7 +175,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
-        Doc.code(Doc.plain(modName.resolve(name).toString())),
+        Doc.code(modName.resolve(name).toString()),
         Doc.english("is not defined in the current scope")
       );
     }
@@ -189,7 +189,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var head = Doc.sep(
         Doc.english("The name"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("is not defined in the current scope"));
       var possible = didYouMean();
       if (possible.isEmpty()) return head;
@@ -221,7 +221,7 @@ public interface NameProblem extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown operator"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("used in bind statement")
       );
     }

@@ -42,6 +42,7 @@ public interface HtmlConstants {
   @NotNull String HOVER_STYLE = """
     <style>
     .Aya a { text-decoration: none; }
+    .Aya a:hover { text-decoration: none; }
     .Aya a[href]:hover { background-color: #B4EEB4; }
     .Aya [href].hover-highlight { background-color: #B4EEB4; }
     </style>
@@ -90,6 +91,34 @@ public interface HtmlConstants {
     """ + HOVER_HIGHLIGHT_ALL_OCCURS_JS_INIT + """
       }
     }
+    </script>
+    """;
+
+  /** <a href="https://katex.org/docs/autorender.html">Auto Render</a> */
+  @Language(value = "HTML")
+  @NotNull String KATEX_AUTO_RENDER_EXTERNAL_RESOURCES = """
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    """;
+  @Language(value = "JavaScript")
+  @NotNull String KATEX_AUTO_RENDER_INIT = """
+    document.addEventListener("DOMContentLoaded", function() {
+        var blocks = document.getElementsByClassName('doc-katex-input');
+        for (var i = 0; i < blocks.length; i++) {
+          var block = blocks[i];
+          renderMathInElement(block, {
+            throwOnError : false
+          });
+        }
+    });
+    """;
+  @SuppressWarnings("LanguageMismatch")
+  @Language(value = "HTML")
+  @NotNull String KATEX_AUTO_RENDER =
+    KATEX_AUTO_RENDER_EXTERNAL_RESOURCES + """
+    <script>
+    """ + KATEX_AUTO_RENDER_INIT + """
     </script>
     """;
 }
