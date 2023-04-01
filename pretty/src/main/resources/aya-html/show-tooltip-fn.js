@@ -27,10 +27,10 @@ function showTooltip(on) {
         // If we're close to the bottom of the page, push the tooltip above instead.
         // The constant here is arbitrary, because trying to convert em to px in JS is a fool's errand.
         if (selfRect.bottom + hoverRect.height + 30 > window.innerHeight) {
-          // 2em from the material mixin. I'm sorry
-          currentHover.style.top = `calc(${link.offsetTop - hoverRect.height + 5}px - 2em)`;
+          // 3em for showing above the type hover
+          currentHover.style.top = `calc(${link.offsetTop - hoverRect.height + 8}px - 3em)`;
         } else {
-          currentHover.style.top = `${link.offsetTop + link.offsetHeight + 5}px`;
+          currentHover.style.top = `${link.offsetTop + link.offsetHeight + 8}px`;
         }
         currentHover.style.left = `${link.offsetLeft}px`;
       }
