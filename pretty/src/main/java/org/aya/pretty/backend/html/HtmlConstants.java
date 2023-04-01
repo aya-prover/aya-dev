@@ -42,7 +42,7 @@ public final class HtmlConstants {
   static {
     HOVER_ALL_OCCURS_JS_HIGHLIGHT_FN = readResource("/aya-html/highlight-fn.js");
     HOVER_SHOW_TOOLTIP_JS_INIT = readResource("/aya-html/show-tooltip.js");
-    HOVER_SHOW_TOOLTIP_JS_SHOW_FN = readResource("/aya-html/show-tooltip-show.js");
+    HOVER_SHOW_TOOLTIP_JS_SHOW_FN = readResource("/aya-html/show-tooltip-fn.js");
     HOVER_ALL_OCCURS_JS_INIT = readResource("/aya-html/highlight-occurrences.js");
   }
 
