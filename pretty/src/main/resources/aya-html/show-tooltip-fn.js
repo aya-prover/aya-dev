@@ -99,26 +99,30 @@ class HoverStack {
     setupHighlight(newHover);
 
     // Auto-dismissal setup
-    newHover.addEventListener("click", ev => {
-      // Clicking on a tooltip disables the auto-dismissal.
-      if (newHover) {
-        newHover.userClicked = true;
-        newHover.markedForDismissal = false;
+    let self = this;
+    newHover.handleEvent = function (event) {
+      if (event.type === 'click') {
+        // Clicking on a tooltip disables the auto-dismissal.
+        this.userClicked = true;
+        this.markedForDismissal = false;
+        // The close button must be the first child
+        let close = this.children[0];
+        if (!close) return; // already closed
+        let closeThis = this;
+        close.style.visibility = "visible";
+        close.addEventListener("click", _ => self.dismiss(closeThis));
       }
-      // Show the close button
-      let close = document.getElementById('AyaTooltipPopupClose');
-      if (!close) return; // already closed
-      console.log("find close button: " + close.innerText);
-      close.style.visibility = "visible";
-      close.addEventListener("click", ev => this.dismiss(newHover));
-    });
-    newHover.addEventListener("mouseover", ev => {
-      if (newHover) newHover.userIsThinking = true
-    });
-    newHover.addEventListener("mouseout", ev => {
-      if (newHover) newHover.userIsThinking = false;
-      this.dismissIfNotUsed(newHover);
-    });
+      if (event.type === 'mouseover') {
+        this.userIsThinking = true;
+      }
+      if (event.type === 'mouseout') {
+        this.userIsThinking = false;
+        self.dismissIfNotUsed(this);
+      }
+    }
+    newHover.addEventListener("click", newHover);
+    newHover.addEventListener("mouseover", newHover);
+    newHover.addEventListener("mouseout", newHover);
 
     // add to the container, so `getBoundingClientRect()` returns something.
     container.appendChild(newHover);
@@ -126,21 +130,17 @@ class HoverStack {
     // calculate the position of the tooltip
     newHover.style.left = `${link.offsetLeft}px`;
     if (nested.length === 0) {
-      console.log("Fresh start");
       const selfRect = link.getBoundingClientRect();
       const hoverRect = newHover.getBoundingClientRect();
       // If we're close to the bottom of the page, push the tooltip above instead.
       // The constant here is arbitrary, because trying to convert em to px in JS is a fool's errand.
       if (selfRect.bottom + hoverRect.height + 30 > window.innerHeight) {
         // 3em for showing above the type hover
-        console.log("Show above");
         newHover.style.top = `calc(${link.offsetTop - hoverRect.height + 8}px - 3em)`;
       } else {
-        console.log("Show below");
         newHover.style.top = `${link.offsetTop + link.offsetHeight + 8}px`;
       }
     } else {
-      console.log("Nested start");
       // If there are other tooltips, put this one below the last one.
       const belowest = Math.max(...nested.map(hover => hover.offsetTop + hover.offsetHeight));
       newHover.style.top = `${belowest + 8}px`;
