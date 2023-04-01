@@ -110,7 +110,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
-      cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
+      cursor.invisibleContent("aya-hover-text=\"" + text.hover() + "\" ");
     }
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(normalizeHref(href));

@@ -28,9 +28,9 @@
   cursor: pointer;
 }
 
-.Aya [aya-type]:after {
+.Aya [aya-hover-text]:after {
   /* hover text */
-  content: attr(aya-type);
+  content: attr(aya-hover-text);
   visibility: hidden;
   /* above the text, aligned to left */
   position: absolute;
