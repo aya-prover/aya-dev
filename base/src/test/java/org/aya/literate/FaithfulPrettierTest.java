@@ -12,6 +12,7 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,8 +33,10 @@ public class FaithfulPrettierTest {
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var doc = new FaithfulPrettier(ImmutableSeq.empty(), AyaPrettierOptions.pretty())
-      .highlight(sourceFile.sourceCode(), 0, highlights);
+    var mockPos = new SourcePos(sourceFile, 0, 0, // <- tokenEndIndex = 0 is only for testing
+      -1, -1, -1, -1);
+    var doc = new FaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())
+      .highlight(sourceFile.sourceCode(), mockPos);
     var output = doc.renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);
   }

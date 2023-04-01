@@ -29,6 +29,7 @@ public record AyaStyleFamily(@NotNull MutableMap<String, Styles> definedStyles) 
     Tuple.of(AyaStyleKey.Warning.key(), new Style.LineThrough(
       Style.LineThrough.Position.Underline, Style.LineThrough.Shape.Curly,
       Style.color(AyaStyleKey.Warning.key())
-    ).and())
+    ).and()),
+    Tuple.of(AyaStyleKey.Goal.key(), Style.colorBg(AyaStyleKey.Goal.key()).and())
   ));
 }

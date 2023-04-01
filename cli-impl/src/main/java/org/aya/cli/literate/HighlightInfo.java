@@ -56,10 +56,13 @@ public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
   ) implements HighlightInfo {}
 
   record Err(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<HighlightInfo> children,
-    @NotNull Problem problem
-  ) implements HighlightInfo {}
+    @NotNull Problem problem,
+    @NotNull ImmutableSeq<HighlightInfo> children
+  ) implements HighlightInfo {
+    @Override public @NotNull SourcePos sourcePos() {
+      return problem.sourcePos();
+    }
+  }
 
   /** A literal */
   record Lit(@NotNull SourcePos sourcePos, @NotNull LitKind kind) implements HighlightInfo {}

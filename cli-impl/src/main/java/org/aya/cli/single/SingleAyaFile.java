@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.FaithfulPrettier;
-import org.aya.cli.literate.HighlightApplier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
@@ -85,8 +84,8 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
     var literate = literate();
-    var prettier = new FaithfulPrettier(problems, options);
-    new HighlightApplier(highlights, prettier).accept(literate);
+    var prettier = new FaithfulPrettier(problems, highlights, options);
+    prettier.accept(literate);
     return literate.toDoc();
   }
 
