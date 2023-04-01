@@ -11,6 +11,18 @@ function b64DecodeUnicode(str) {
   }).join(''));
 }
 
+
+// haha, https://github.com/features/copilot
+const memoize = fn => {
+  const cache = {};
+  return (...args) => {
+    const key = JSON.stringify(args);
+    return (cache[key] = cache[key] || fn(...args));
+  };
+}
+
+const memoizedBase64Decode = memoize(b64DecodeUnicode);
+
 class HoverStack {
   constructor() {
     this.list = [];
@@ -50,6 +62,8 @@ class HoverStack {
     this.dismissIfNotUsed(hover);
   }
 
+  /* Initial implementation comes from https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22 */
+  /* Slightly modified to show multiple tooltips at a time. */
   createHoverFor(link, text, container) {
     // if the tooltip for the error code is already shown, and user once clicked it,
     // do not recreate it again, because `userClicked` may be lost, allowing the tooltip to be
@@ -92,7 +106,7 @@ class HoverStack {
     let newHover = document.createElement("div");
     newHover.userCreatedFrom = link;
     // set the content from base64 encoded attribute data-tooltip-text
-    newHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + b64DecodeUnicode(text);
+    newHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + memoizedBase64Decode(text);
     newHover.classList.add("AyaTooltipPopup");
     // Hover to highlight occurrences is done by adding mouse event listeners to the elements in the tooltip.
     // The inserted tooltip is not a child of `document` when the page was loaded, so a manual setup is needed.
@@ -155,7 +169,6 @@ class HoverStack {
 
 let hoverStack = new HoverStack();
 
-// https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22
 function showTooltip(on) {
   return function () {
     let link = this;
