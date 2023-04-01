@@ -47,20 +47,20 @@ public record FaithfulPrettier(
     @NotNull ImmutableSeq<HighlightInfo> highlights,
     @NotNull ImmutableSeq<Problem> problems
   ) {
-    highlights = highlights.view()
+    var highlightInRange = highlights.view()
       .filter(h -> h.sourcePos() != SourcePos.NONE)
       .filterNot(h -> h.sourcePos().isEmpty())
       .filter(x -> codeRange.containsIndex(x.sourcePos()))
       .sorted().distinct()
       .toImmutableSeq();
-    checkHighlights(highlights);
+    checkHighlights(highlightInRange);
 
     var problemsInRange = problems.view()
       .filter(p -> codeRange.containsIndex(p.sourcePos()))
       .distinct()
       .toImmutableSeq();
 
-    return problemsInRange.foldLeft(highlights, (acc, p) -> {
+    return problemsInRange.foldLeft(highlightInRange, (acc, p) -> {
       var partition = acc.partition(
         h -> p.sourcePos().containsIndex(h.sourcePos()));
       var inP = partition.component1().sorted();
