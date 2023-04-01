@@ -5,9 +5,10 @@ In file $FILE:5:12 ->
   5 │       overlap def addN (a b : Nat) : Nat
     │                   ╰──╯
   6 │        | zero, a => suc a
-    │          ╰──────────────╯ substituted to `suc zero`
+    │          ╰──────────────╯ (confluence check: this clause is substituted 
+                                to) `suc zero`
   7 │        | a, zero => a
-    │          ╰──────────╯ substituted to `zero`
+    │          ╰──────────╯ (confluence check: this clause is substituted to) `zero`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc zero
