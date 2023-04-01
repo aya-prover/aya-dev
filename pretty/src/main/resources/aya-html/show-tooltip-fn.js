@@ -27,6 +27,14 @@ function dismissTooltipIfNotUsed() {
   }, 1000);
 }
 
+// https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+function b64DecodeUnicode(str) {
+  // Going backwards: from bytestream, to percent-encoding, to original string.
+  return decodeURIComponent(atob(str).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
+
 // https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22
 function showTooltip(on) {
   return function () {
@@ -45,7 +53,7 @@ function showTooltip(on) {
 
       // create the tooltip with inner HTML decoded from base64 data
       currentHover = document.createElement("div");
-      currentHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + atob(text);
+      currentHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + b64DecodeUnicode(text);
       currentHover.classList.add("AyaTooltipPopup");
       currentHover.userCreatedFrom = link;
       // Hover to highlight occurrences is done by adding mouse event listeners to the elements in the tooltip.
