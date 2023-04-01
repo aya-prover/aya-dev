@@ -41,6 +41,8 @@ function showTooltip(on) {
     let link = this;
     const text = link.getAttribute("data-tooltip-text");
     if (!text) return;
+    // FIXME: if two problems are overlapping, only the top problem is shown, according to "event bubbling"
+    //  the bottom problem is shown, but quickly get dismissed by the top problem.
     if (on) {
       // If the tooltip for the error code is already shown, and user once clicked it,
       // do not recreate it again, because `userClicked` may be lost, allowing the tooltip to be
