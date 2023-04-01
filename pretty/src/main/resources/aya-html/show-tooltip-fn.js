@@ -39,6 +39,9 @@ class HoverStack {
   }
 
   allowAutoDismissal(hover) {
+    // Clicking on a tooltip anchors the tooltip on the page.
+    // Anchored tooltips can only be dismissed by clicking the close button manually.
+    // This is useful when I want to inspect a long error with the code.
     return hover.markedForDismissal && !hover.userClicked;
   }
 
@@ -47,7 +50,7 @@ class HoverStack {
     this.dismissIfNotUsed(hover);
   }
 
-  createHoverFor(link, text) {
+  createHoverFor(link, text, container) {
     // if the tooltip for the error code is already shown, and user once clicked it,
     // do not recreate it again, because `userClicked` may be lost, allowing the tooltip to be
     // dismissed after a certain time.
@@ -58,6 +61,9 @@ class HoverStack {
     // Find all links that overlap with the current link
     let dismissNow = [];
     const nested = this.list.filter(hover => {
+      // The tooltip is marked as auto dismissal,
+      // and the user is not hovering over it
+      // ----- dismiss now as we need to draw new tooltip.
       if (this.allowAutoDismissal(hover)) {
         dismissNow.push(hover);
         return false;
@@ -77,6 +83,9 @@ class HoverStack {
       }
       return false;
     });
+
+    // elements in `dismissNow` may be dismissed by its `setTimeout`,
+    // but if not, we give it a little help.
     dismissNow.forEach(x => this.dismiss(x));
 
     // this is a new tooltip, create it
@@ -110,26 +119,32 @@ class HoverStack {
       if (newHover) newHover.userIsThinking = false;
       this.dismissIfNotUsed(newHover);
     });
-    newHover.tabIndex = 0;
+
+    // add to the container, so `getBoundingClientRect()` returns something.
+    container.appendChild(newHover);
 
     // calculate the position of the tooltip
+    newHover.style.left = `${link.offsetLeft}px`;
     if (nested.length === 0) {
+      console.log("Fresh start");
       const selfRect = link.getBoundingClientRect();
       const hoverRect = newHover.getBoundingClientRect();
       // If we're close to the bottom of the page, push the tooltip above instead.
       // The constant here is arbitrary, because trying to convert em to px in JS is a fool's errand.
       if (selfRect.bottom + hoverRect.height + 30 > window.innerHeight) {
         // 3em for showing above the type hover
+        console.log("Show above");
         newHover.style.top = `calc(${link.offsetTop - hoverRect.height + 8}px - 3em)`;
       } else {
+        console.log("Show below");
         newHover.style.top = `${link.offsetTop + link.offsetHeight + 8}px`;
       }
-      newHover.style.left = `${link.offsetLeft}px`;
     } else {
+      console.log("Nested start");
       // If there are other tooltips, put this one below the last one.
       const belowest = Math.max(...nested.map(hover => hover.offsetTop + hover.offsetHeight));
       newHover.style.top = `${belowest + 8}px`;
-      newHover.style.left = `${link.offsetLeft}px`;
+      // TODO: if we're close to the bottom?
     }
 
     // THE BIG GAME!
@@ -146,13 +161,8 @@ function showTooltip(on) {
     let link = this;
     const text = link.getAttribute("data-tooltip-text");
     if (!text) return;
-    // FIXME: if two problems are overlapping, only the top problem is shown, according to "event bubbling"
-    //  the bottom problem is shown, but quickly get dismissed by the top problem.
-    console.log("[" + on + "]" + " showing tooltip for " + link.innerText);
     if (on) {
-      let currentHover = hoverStack.createHoverFor(link, text);
-      // THE BIG GAME!
-      document.body.appendChild(currentHover);
+      hoverStack.createHoverFor(link, text, document.body);
     } else {
       // When mouse leaves error code part, fire an auto-dismissal.
       hoverStack.fireAutoDismissalFor(link);
