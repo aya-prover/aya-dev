@@ -58,6 +58,7 @@
   --Doc-Tooltip-BackgroundColor: #f6f6f7;
   --Doc-Tooltip-TextColor: #3c3c43;
   --Doc-Tooltip-BoxShadowColor: rgba(0, 0, 255, .2);
+  --Doc-Tooltip-BorderColor: #333;
 }
 
 .AyaTooltipPopup {
@@ -71,4 +72,5 @@
   background-color: var(--Doc-Tooltip-BackgroundColor);
   color: var(--Doc-Tooltip-TextColor);
   box-shadow: 1px 1px 20px 1px var(--Doc-Tooltip-BoxShadowColor);
+  border: 2px solid var(--Doc-Tooltip-BorderColor);
 }
