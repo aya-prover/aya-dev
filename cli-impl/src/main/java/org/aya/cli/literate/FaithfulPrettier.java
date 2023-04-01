@@ -7,6 +7,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
+import org.aya.cli.utils.InlineHintProblem;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.generic.AyaDocile;
@@ -58,6 +59,7 @@ public record FaithfulPrettier(
   /** find highlights and problems inside the code range, and merge them as new highlights */
   private static @NotNull ImmutableSeq<HighlightInfo> merge(
     @NotNull SourcePos codeRange,
+    @NotNull PrettierOptions options,
     @NotNull ImmutableSeq<HighlightInfo> highlights,
     @NotNull ImmutableSeq<Problem> problems
   ) {
@@ -71,6 +73,7 @@ public record FaithfulPrettier(
 
     var problemsInRange = problems.view()
       .filter(p -> codeRange.containsIndex(p.sourcePos()))
+      .flatMap(p -> InlineHintProblem.withInlineHints(p, options))
       .distinct()
       .toImmutableSeq();
 
@@ -91,7 +94,7 @@ public record FaithfulPrettier(
    *                  so it probably not starts from 0).
    */
   public @NotNull Doc highlight(@NotNull String raw, @NotNull SourcePos codeRange) {
-    var merged = merge(codeRange, highlights, problems).sorted();
+    var merged = merge(codeRange, options, highlights, problems).sorted();
     checkHighlights(merged);
     return doHighlight(StringSlice.of(raw), codeRange.tokenStartIndex(), merged);
   }

@@ -22,6 +22,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.ide.LspPrimFactory;
@@ -40,11 +41,8 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.util.FileUtil;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.BufferReporter;
-import org.aya.util.reporter.Problem;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -466,24 +464,6 @@ public class AyaLanguageServer implements LanguageServer {
 
   private @NotNull LspPrimFactory primFactory(@NotNull LibraryOwner owner) {
     return primFactories.getOrPut(owner.underlyingLibrary(), LspPrimFactory::new);
-  }
-
-  public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos) implements Problem {
-    @Override public @NotNull SourcePos sourcePos() {
-      return docWithPos.sourcePos();
-    }
-
-    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return docWithPos.data();
-    }
-
-    @Override public @NotNull Severity level() {
-      return Severity.INFO;
-    }
-
-    @Override public @NotNull Doc brief(@NotNull PrettierOptions options) {
-      return describe(options);
-    }
   }
 
   private static final class CallbackAdvisor extends DelegateCompilerAdvisor {

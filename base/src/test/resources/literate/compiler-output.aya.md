@@ -36,7 +36,7 @@ overlap def +-comm (a b : Nat) : a + b = b + a
   | 0, a => idp
   | a, 0 => idp
   | suc a, b => pmap suc (+-comm _ {??})
-  | a, suc b => pmap suc (+-comm _ _)
+  | a, suc b => pmap suc (+-comm b a)
 ```
 
 ### Symbol shadow warnings
