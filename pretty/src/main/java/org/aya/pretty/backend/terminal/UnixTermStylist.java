@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.terminal;
 
@@ -24,12 +24,12 @@ public class UnixTermStylist extends ClosingStylist {
     return new StyleToken("\033[1m", "\033[22m", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("\033[9m", "\033[29m", false);
-  }
-
-  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("\033[4m", "\033[24m", false);
+  @Override protected @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer) {
+    return switch (line.position()) {
+      case Underline -> new StyleToken("\033[4m", "\033[24m", false);
+      case Strike -> new StyleToken("\033[9m", "\033[29m", false);
+      case Overline -> StyleToken.NULL;
+    };
   }
 
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {

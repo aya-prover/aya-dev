@@ -10,8 +10,8 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.DefKind;
+import org.aya.cli.literate.HighlightInfo.Lit;
 import org.aya.cli.literate.HighlightInfo.LitKind;
-import org.aya.cli.literate.HighlightInfo.SymLit;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -61,19 +61,17 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
       var addition = lexer.allTheWayDown().view()
         .mapNotNull(token -> {
           var tokenType = token.type();
-          SymLit r = null;
           if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
-            r = new SymLit(LitKind.Keyword);
+            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Keyword);
           else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
-            r = new SymLit(LitKind.Comment);
+            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Comment);
           else if (SPECIAL_SYMBOL.contains(tokenType))
-            r = new SymLit(LitKind.SpecialSymbol);
+            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.SpecialSymbol);
           if (tokenType == TokenType.WHITE_SPACE) {
             var text = token.range().substring(file.sourceCode());
-            r = new SymLit(text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
+            return new Lit(AyaProducer.sourcePosOf(token, file), text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
           }
-          if (r == null) return null;
-          return r.toInfo(AyaProducer.sourcePosOf(token, file));
+          return null;
         }).toImmutableSeq();
       semantics = semantics.concat(addition);
     }

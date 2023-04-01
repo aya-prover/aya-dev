@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
-import org.aya.cli.literate.HighlightsCollector;
+import org.aya.cli.literate.FaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
@@ -28,6 +28,8 @@ import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.CollectingReporter;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   @SuppressWarnings("unchecked") default void pretty(
     @NotNull CompilerFlags compilerFlags,
     @NotNull ImmutableSeq<? extends AyaDocile> doc,
+    @NotNull CollectingReporter reporter,
     @NotNull CliEnums.PrettyStage currentStage
   ) throws IOException {
     var flags = parsePrettyInfo(compilerFlags);
@@ -66,7 +69,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
-      var d = toDoc((ImmutableSeq<Stmt>) doc, flags.prettierOptions());
+      var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(), flags.prettierOptions());
       var text = renderOptions.render(out, d, flags.renderOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
@@ -76,11 +79,13 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   }
   @VisibleForTesting default @NotNull Doc toDoc(
     @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
     var literate = literate();
-    new HighlightsCollector(highlights, options).accept(literate);
+    var prettier = new FaithfulPrettier(problems, highlights, options);
+    prettier.accept(literate);
     return literate.toDoc();
   }
 

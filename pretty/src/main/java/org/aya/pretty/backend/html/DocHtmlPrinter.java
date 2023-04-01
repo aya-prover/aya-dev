@@ -12,6 +12,8 @@ import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.regex.Pattern;
 
@@ -27,7 +29,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     <title>Aya file</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
+    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_TYPE_POPUP_STYLE;
 
   /**
    * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
@@ -45,20 +47,20 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
+      renderCssStyle(cursor);
       if (config.opt(ServerSideRendering, false)) {
-        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS_SSR);
+        cursor.invisibleContent(HtmlConstants.HOVER_SSR);
         // TODO: KaTeX server side rendering
       } else {
-        cursor.invisibleContent(HtmlConstants.HOVER_ALL_OCCURS);
+        cursor.invisibleContent(HtmlConstants.HOVER);
         cursor.invisibleContent(HtmlConstants.KATEX_AUTO_RENDER);
       }
-      renderCssStyle(cursor);
-      cursor.invisibleContent("</head><body>");
+      cursor.invisibleContent("</head><body>\n");
     }
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
-    if (config.opt(HeaderCode, false)) cursor.invisibleContent("</body></html>");
+    if (config.opt(HeaderCode, false)) cursor.invisibleContent("\n</body></html>\n");
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
@@ -74,7 +76,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       var stylesheet = "%s {\n%s\n}\n".formatted(selector, css);
       cursor.invisibleContent(stylesheet);
     });
-    cursor.invisibleContent("</style>");
+    cursor.invisibleContent("</style>\n");
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
@@ -88,6 +90,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       result -> entityMapping.get(result.group()));   // fail if bug
   }
 
+  @Override protected void renderTooltip(@NotNull Cursor cursor, Doc.@NotNull Tooltip tooltip, EnumSet<Outer> outer) {
+    var newCursor = new Cursor(this);
+    renderDoc(newCursor, tooltip.tooltip().toDoc(), FREE);
+    var tip = newCursor.result().toString();
+    // ^ note: the tooltip is shown in a popup, which is a new document.
+    cursor.invisibleContent("<span class=\"aya-tooltip\" ");
+    cursor.invisibleContent("data-tooltip-text=\"");
+    cursor.invisibleContent(Base64.getEncoder().encodeToString(tip.getBytes(StandardCharsets.UTF_8)));
+    cursor.invisibleContent("\">");
+    renderDoc(cursor, tooltip.doc(), EnumSet.of(Outer.EnclosingTag));
+    cursor.invisibleContent("</span>");
+  }
+
   @Override
   protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, EnumSet<Outer> outer) {
     var href = text.href();
@@ -95,7 +110,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
-      cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
+      cursor.invisibleContent("aya-hover-text=\"" + text.hover() + "\" ");
     }
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(normalizeHref(href));

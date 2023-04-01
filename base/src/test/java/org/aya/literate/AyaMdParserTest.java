@@ -17,6 +17,8 @@ import org.aya.test.EmptyModuleLoader;
 import org.aya.test.TestRunner;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
+import org.aya.util.reporter.CollectingReporter;
+import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -103,21 +105,22 @@ public class AyaMdParserTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "syntax"})
+  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "syntax", "compiler-output"})
   public void testHighlight(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-    var literate = SingleAyaFile.createLiterateFile(mdFile, AyaThrowingReporter.INSTANCE);
-
-    var stmts = literate.parseMe(new AyaParserImpl(AyaThrowingReporter.INSTANCE));
-    var ctx = new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
-    var loader = EmptyModuleLoader.INSTANCE;
+    var reporter = ((CollectingReporter) EmptyModuleLoader.COLLECTING_ERRORS.reporter());
+    var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
+    var stmts = literate.parseMe(new AyaParserImpl(reporter));
+    var ctx = new EmptyContext(reporter, Path.of(".")).derive(oneCase.modName());
+    var loader = EmptyModuleLoader.COLLECTING_ERRORS;
     var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.toDoc(stmts, AyaPrettierOptions.pretty()).toDoc();
+    var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(), AyaPrettierOptions.pretty()).toDoc();
+    reporter.problems().clear();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();
@@ -128,7 +131,7 @@ public class AyaMdParserTest {
     Files.writeString(oneCase.plainTextFile(), doc.debugRender());
 
     // test single file compiler
-    var compiler = new SingleFileCompiler(AyaThrowingReporter.INSTANCE, null, null);
+    var compiler = new SingleFileCompiler(IgnoringReporter.INSTANCE, null, null);
     compiler.compile(oneCase.mdFile(), new CompilerFlags(
       CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
       oneCase.outMdFile()
@@ -147,6 +150,7 @@ public class AyaMdParserTest {
 
   private @NotNull String trim(@NotNull String input) {
     return input.replaceAll("id=\"[^\"]+\"", "id=\"\"")
-      .replaceAll("href=\"[^\"]+\"", "href=\"\"");
+      .replaceAll("href=\"[^\"]+\"", "href=\"\"")
+      .replaceAll("data-tooltip-text=\"[^\"]+\"", "data-tooltip-text=\"\"");
   }
 }

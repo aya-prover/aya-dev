@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.md;
 
@@ -39,9 +39,12 @@ public class MdStylist extends Html5Stylist {
     return outer.isEmpty() ? new StyleToken("**", "**", false) : super.formatBold(outer);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
+  @Override
+  protected @NotNull StyleToken formatLineThrough(Style.@NotNull LineThrough line, EnumSet<StringPrinter.Outer> outer) {
     // see comments in `formatItalic`
-    return outer.isEmpty() ? new StyleToken("~~", "~~", false) : super.formatStrike(outer);
+    return outer.isEmpty() && line.position() == Style.LineThrough.Position.Strike
+      ? new StyleToken("~~", "~~", false)
+      : super.formatLineThrough(line, outer);
   }
 
   @Override protected @NotNull StyleToken formatCustom(Style.@NotNull CustomStyle style) {

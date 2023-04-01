@@ -27,7 +27,7 @@ public sealed interface ClausesProblem extends Problem {
   }
 
   private static @NotNull Doc termToHint(@Nullable Term term, @NotNull PrettierOptions options) {
-    return term == null ? Doc.empty() : Doc.sep(Doc.english("substituted to"),
+    return term == null ? Doc.empty() : Doc.sep(Doc.english("(confluence check: this clause is substituted to)"),
       Doc.code(term.toDoc(options)));
   }
 

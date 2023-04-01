@@ -26,10 +26,10 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     if (config.opt(HeaderCode, false)) {
       if (config.opt(AyaFlavored, false)) {
         cursor.invisibleContent(HtmlConstants.HOVER_STYLE);
-        cursor.invisibleContent(HtmlConstants.HOVER_POPUP_STYLE);
+        cursor.invisibleContent(HtmlConstants.HOVER_TYPE_POPUP_STYLE);
         cursor.invisibleContent(config.opt(ServerSideRendering, false)
-          ? HtmlConstants.HOVER_ALL_OCCURS_SSR
-          : HtmlConstants.HOVER_ALL_OCCURS);
+          ? HtmlConstants.HOVER_SSR
+          : HtmlConstants.HOVER);
       }
       renderCssStyle(cursor);
     }

@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+/*
+ * Aya's Doc framework supports two popup kinds:
+ * (1) Hover (used in code: `Doc.HyperLinked`): shows extra information (in code: `String`) on hover. The hover is implemented in pure CSS.
+ *     Pros: it can be rendered correctly in more places, (like some markdown renderers don't support JavaScript).
+ *     Cons: the popup content is not clickable, selectable, or copyable. Users cannot interact with the popup.
+ * (2) Tooltip (used in code: `Doc.Tooltip`): show a separate document (in code: `Doc`) on hover. The tooltip is implemented in JavaScript.
+ *     Pros: support everything that a normal HTML document can do, e.g. clicks, selections, copy-paste.
+ *     Cons: if the renderer doesn't support JavaScript, so the tooltip won't be rendered.
+ */
+
+/* for `Doc.HyperLinked`, which is used to show the type of a term on hover. */
+
+/* Default colors used in `HyperLinked` hover */
+:root {
+  --Doc-Hover-BackgroundColor: rgba(18, 26, 44, 0.8);
+  --Doc-Hover-TextColor: #fff;
+  --Doc-Hover-BoxShadowColor: rgba(0, 0, 0, 0.1);
+}
+
+.Aya .aya-hover {
+  /* make absolute position available for hover popup */
+  position: relative;
+  cursor: pointer;
+}
+
+.Aya [aya-hover-text]:after {
+  /* hover text */
+  content: attr(aya-hover-text);
+  visibility: hidden;
+  /* above the text, aligned to left */
+  position: absolute;
+  top: 0;
+  left: 0; /* 0% for left-aligned, 100% for right-aligned*/
+  transform: translate(0px, -110%);
+  /* spacing */
+  white-space: pre;
+  padding: 5px 10px;
+  background-color: var(--Doc-Hover-BackgroundColor);
+  color: var(--Doc-Hover-TextColor);
+  box-shadow: 1px 1px 14px var(--Doc-Hover-BoxShadowColor);
+}
+
+.Aya .aya-hover:hover:after {
+  /* show on hover */
+  transform: translate(0px, -110%);
+  visibility: visible;
+  display: block;
+}
+
+/* for `Doc.Tooltip`, which is usually used for error messages. */
+/* Default colors used in tooltip */
+:root {
+  --Doc-Tooltip-BackgroundColor: #f6f6f7;
+  --Doc-Tooltip-TextColor: #3c3c43;
+  --Doc-Tooltip-BoxShadowColor: rgba(0, 0, 255, .2);
+  --Doc-Tooltip-BorderColor: #333;
+}
+
+.AyaTooltipPopup {
+  /* floating on the page */
+  position: absolute;
+  z-index: 100;
+  /* font style */
+  font-size: 0.85em;
+  /* spacing */
+  padding: 4px 8px;
+  background-color: var(--Doc-Tooltip-BackgroundColor);
+  color: var(--Doc-Tooltip-TextColor);
+  box-shadow: 1px 1px 20px 1px var(--Doc-Tooltip-BoxShadowColor);
+  border: 2px solid var(--Doc-Tooltip-BorderColor);
+}
+
+.AyaTooltipPopup #AyaTooltipPopupClose {
+  float: right;
+  display: inline-block;
+  padding: 0 5px;
+  margin: -4px -8px; /* ignore the parent padding */
+  visibility: hidden;
+  background-color: var(--Doc-Tooltip-BackgroundColor);
+}
+
+.AyaTooltipPopup #AyaTooltipPopupClose:hover {
+  color: red;
+}

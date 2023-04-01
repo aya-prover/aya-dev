@@ -8,7 +8,8 @@ In file $FILE:18:4 ->
   20 │      | pos zero => suc zero
   21 │      | neg n => zero
   22 │      | posneg n i => zero
-     │        ╰────────────────╯ substituted to `zero`
+     │        ╰────────────────╯ (confluence check: this clause is substituted 
+                                 to) `zero`
 
 Error: The 4th clause matches on a constructor with condition(s). When checking 
        the 1st condition, we failed to unify

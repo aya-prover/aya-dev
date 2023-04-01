@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+
+/*
+ * Styles for links (terms in Aya are compiled to links) inside Aya code block:
+ * no decorations, but uses decorations styles from parent if set
+ * (useful if the term contains error or warning).
+ */
+.Aya a {
+  text-decoration-line: none;
+  text-decoration-color: inherit;
+  text-underline-position: inherit;
+}
+.Aya a:hover {
+  text-decoration-line: none;
+  text-decoration-color: inherit;
+  text-underline-position: inherit;
+}
+
+/*
+ * When hovering over a link (term), highlight the link (term) with a background color.
+ * This is used for highlighting all occurrences of a term.
+ */
+:root {
+  --Doc-Term-Highlight-BackgroundColor: #B4EEB4;
+}
+
+.Aya a[href]:hover {
+  background-color: var(--Doc-Term-Highlight-BackgroundColor);
+}
+.Aya [href].hover-highlight {
+  background-color: var(--Doc-Term-Highlight-BackgroundColor);
+}

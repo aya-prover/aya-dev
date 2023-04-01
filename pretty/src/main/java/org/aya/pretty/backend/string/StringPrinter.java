@@ -36,8 +36,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     return " ".repeat(indent);
   }
 
-  @Override
-  public @NotNull String render(@NotNull Config config, @NotNull Doc doc) {
+  @Override public @NotNull String render(@NotNull Config config, @NotNull Doc doc) {
     this.config = config;
     var cursor = new Cursor(this);
     renderHeader(cursor);
@@ -60,6 +59,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.HyperLinked text -> predictWidth(cursor, text.doc());
       case Doc.Image i -> predictWidth(cursor, i.alt());
       case Doc.Styled styled -> predictWidth(cursor, styled.doc());
+      case Doc.Tooltip tooltip -> predictWidth(cursor, tooltip.doc());
       case Doc.Line d -> 0;
       case Doc.FlatAlt alt -> predictWidth(cursor, alt.defaultDoc());
       case Doc.Cat cat -> cat.inner().view().map(inner -> predictWidth(cursor, inner)).reduce(Integer::sum);
@@ -111,6 +111,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.List list -> renderList(cursor, list, outer);
       case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
       case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
+      case Doc.Tooltip tooltip -> renderTooltip(cursor, tooltip, outer);
       case Doc.Empty $ -> {}
     }
   }
@@ -202,6 +203,10 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
    */
   protected void renderHardLineBreak(@NotNull Cursor cursor, EnumSet<Outer> outer) {
     renderBlockSeparator(cursor, outer);
+  }
+
+  protected void renderTooltip(@NotNull Cursor cursor, @NotNull Doc.Tooltip tooltip, EnumSet<Outer> outer) {
+    renderDoc(cursor, tooltip.doc(), outer);
   }
 
   protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {

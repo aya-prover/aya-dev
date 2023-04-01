@@ -7,15 +7,44 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
+import org.aya.cli.utils.InlineHintProblem;
+import org.aya.concrete.remark.Literate;
+import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record FaithfulPrettier(@NotNull PrettierOptions options) {
+/**
+ * This prettier maintains all highlights created from {@link SyntaxHighlight} and all
+ * problems reported by Aya compiler.
+ * Implementation-wise, this prettier can be seen as a highlight server for a single file.
+ * <p>
+ * When the highlight of a code block is requested, it filters out
+ * all highlights and problems that belong to the code block, and then
+ * build a {@link Doc} containing the highlighted source code mixed with compiler
+ * outputs, as done in {@link #highlight(String, SourcePos)}.
+ *
+ * @param problems   All problems of a single file
+ * @param highlights All highlights of a single file
+ */
+public record FaithfulPrettier(
+  @NotNull ImmutableSeq<Problem> problems,
+  @NotNull ImmutableSeq<HighlightInfo> highlights,
+  @NotNull PrettierOptions options
+) implements LiterateConsumer {
+  @Override public void accept(@NotNull Literate literate) {
+    if (literate instanceof Literate.CodeBlock code && code.isAya() && code.sourcePos != null) {
+      code.highlighted = highlight(code.raw, code.sourcePos);
+    }
+    LiterateConsumer.super.accept(literate);
+  }
+
   private static void checkHighlights(@NotNull ImmutableSeq<HighlightInfo> highlights) {
     highlights.foldLeft(-1, (lastEndIndex, h) -> {
       var sp = h.sourcePos();
@@ -27,23 +56,47 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     });
   }
 
+  /** find highlights and problems inside the code range, and merge them as new highlights */
+  private static @NotNull ImmutableSeq<HighlightInfo> merge(
+    @NotNull SourcePos codeRange,
+    @NotNull PrettierOptions options,
+    @NotNull ImmutableSeq<HighlightInfo> highlights,
+    @NotNull ImmutableSeq<Problem> problems
+  ) {
+    var highlightInRange = highlights.view()
+      .filter(h -> h.sourcePos() != SourcePos.NONE)
+      .filterNot(h -> h.sourcePos().isEmpty())
+      .filter(x -> codeRange.containsIndex(x.sourcePos()))
+      .sorted().distinct()
+      .toImmutableSeq();
+    checkHighlights(highlightInRange);
+
+    var problemsInRange = problems.view()
+      .filter(p -> codeRange.containsIndex(p.sourcePos()))
+      .flatMap(p -> InlineHintProblem.withInlineHints(p, options))
+      .distinct()
+      .toImmutableSeq();
+
+    return problemsInRange.foldLeft(highlightInRange, (acc, p) -> {
+      var partition = acc.partition(
+        h -> p.sourcePos().containsIndex(h.sourcePos()));
+      var inP = partition.component1().sorted();
+      var wrap = new HighlightInfo.Err(p, inP);
+      return partition.component2().appended(wrap);
+    });
+  }
+
   /**
    * Apply highlights to source code string.
    *
-   * @param raw        the source code
-   * @param base       where the raw start from (the 'raw' might be a piece of the source code,
-   *                   so it probably not starts from 0).
-   * @param highlights the highlights for the source code
+   * @param raw       the source code
+   * @param codeRange where the raw start from (the 'raw' might be a piece of the source code,
+   *                  so it probably not starts from 0).
    */
-  public @NotNull Doc highlight(@NotNull String raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
-    highlights = highlights.sorted().view()
-      .distinct()
-      .filter(h -> h.sourcePos() != SourcePos.NONE)
-      .filterNot(h -> h.sourcePos().isEmpty())
-      .toImmutableSeq();
-    checkHighlights(highlights);
-
-    return doHighlight(StringSlice.of(raw), base, highlights);
+  public @NotNull Doc highlight(@NotNull String raw, @NotNull SourcePos codeRange) {
+    var merged = merge(codeRange, options, highlights, problems).sorted();
+    checkHighlights(merged);
+    return doHighlight(StringSlice.of(raw), codeRange.tokenStartIndex(), merged);
   }
 
   private @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
@@ -53,21 +106,18 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
       // Cut the `raw` text at `base` offset into three parts: before, current, and remaining,
       // which needs two split positions: `current.sourcePos().start` and `current.sourcePos().end`, respectively.
       var knifeCut = twoKnifeThreeParts(raw, base, current.sourcePos());
-      // move forward
-      raw = knifeCut.remaining;
-      base = knifeCut.base;
 
-      // If there's orphan text before the highlighted cut, add it to result as plain text.
+      // If there's an orphan text before the highlighted cut, add it to the result as plain text.
       if (!knifeCut.before.isEmpty()) {
-        // TODO: handle whitespaces in the lexer, and use a new highlight type for them.
-        //  this workaround solution does not work for whitespace in LaTeX.
         docs.append(Doc.plain(knifeCut.before.toString()));
       }
-      // Umm, I think it doesn't matter, `Doc.empty` is the unit of `Doc.cat`
-      // Do not add to result if the highlighted cut contains nothing
-      var highlight = highlightOne(knifeCut.current.toString(), current.type());
-      if (highlight != Doc.empty())
-        docs.append(highlight);
+      // `Doc.empty` is the unit of `Doc.cat`, so it is safe to add it to the result.
+      var highlight = highlightOne(knifeCut.current.toString(), base, current);
+      docs.append(highlight);
+
+      // Move forward
+      raw = knifeCut.remaining;
+      base = knifeCut.base;
     }
 
     if (!raw.isEmpty()) docs.append(Doc.plain(raw.toString()));
@@ -75,15 +125,25 @@ public record FaithfulPrettier(@NotNull PrettierOptions options) {
     return Doc.cat(docs);
   }
 
-  private @NotNull Doc highlightOne(@NotNull String raw, @NotNull HighlightInfo.HighlightSymbol highlight) {
+  private @NotNull Doc highlightOne(@NotNull String raw, int base, @NotNull HighlightInfo highlight) {
     if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
-      case HighlightInfo.SymDef symDef ->
-        Doc.linkDef(highlightVar(raw, symDef.kind()), symDef.target(), hover(symDef.type()));
-      case HighlightInfo.SymRef symRef ->
-        Doc.linkRef(highlightVar(raw, symRef.kind()), symRef.target(), hover(symRef.type()));
-      case HighlightInfo.SymLit symLit -> highlightLit(raw, symLit.kind());
-      case HighlightInfo.SymError symError -> Doc.plain(raw);   // TODO: any style for error?
+      case HighlightInfo.Def def -> Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
+      case HighlightInfo.Ref ref -> Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
+      case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
+      case HighlightInfo.Err err -> {
+        var doc = doHighlight(StringSlice.of(raw), base, err.children());
+        var style = switch (err.problem().level()) {
+          case ERROR -> BasePrettier.ERROR;
+          case WARN -> BasePrettier.WARNING;
+          case GOAL -> BasePrettier.GOAL;
+          case INFO -> null;
+        };
+        yield style == null ? doc : new Doc.Tooltip(Doc.styled(style, doc), () -> Doc.codeBlock(
+          Language.Builtin.Aya,
+          err.problem().brief(options).toDoc()
+        ));
+      }
     };
   }
 

@@ -32,16 +32,15 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
     @NotNull TransientVar<SourcePos> sourcePos
   ) {
     public static @NotNull Option<Symbol> from(@NotNull HighlightInfo info) {
-      return kindOf(info.type())
-        .map(k -> {
-          var pos = info.sourcePos();
-          return new Symbol(LspRange.toRange(pos), k, new TransientVar<>(pos));
-        });
+      return kindOf(info).map(k -> {
+        var pos = info.sourcePos();
+        return new Symbol(LspRange.toRange(pos), k, new TransientVar<>(pos));
+      });
     }
 
-    private static @NotNull Option<Kind> kindOf(@NotNull HighlightInfo.HighlightSymbol symbol) {
+    private static @NotNull Option<Kind> kindOf(@NotNull HighlightInfo symbol) {
       return switch (symbol) {
-        case HighlightInfo.SymDef symDef -> switch (symDef.kind()) {
+        case HighlightInfo.Def def -> switch (def.kind()) {
           case LocalVar -> Option.none(); // maybe rainbow local variables
           case Generalized -> Option.some(Kind.GeneralizeDef);
           case Module -> Option.some(Kind.ModuleDef);
@@ -53,7 +52,7 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
           case Prim -> Option.some(Kind.PrimDef);
           case Unknown -> Option.none();
         };
-        case HighlightInfo.SymRef symRef -> switch (symRef.kind()) {
+        case HighlightInfo.Ref ref -> switch (ref.kind()) {
           case LocalVar -> Option.none(); // maybe rainbow local variables
           case Generalized -> Option.some(Kind.GeneralizeRef);
           case Module -> Option.some(Kind.ModuleRef);
@@ -65,8 +64,8 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
           case Prim -> Option.some(Kind.PrimRef);
           case Unknown -> Option.none();
         };
-        case HighlightInfo.SymLit $ -> Option.none();   // handled by client
-        case HighlightInfo.SymError $ -> Option.none(); // handled by client
+        case HighlightInfo.Lit $ -> Option.none();   // handled by client
+        case HighlightInfo.Err $ -> Option.none(); // handled by client
       };
     }
   }

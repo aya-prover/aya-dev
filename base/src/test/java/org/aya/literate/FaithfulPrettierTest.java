@@ -1,16 +1,20 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.literate.FaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,9 +35,11 @@ public class FaithfulPrettierTest {
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var doc = new FaithfulPrettier(AyaPrettierOptions.pretty())
-      .highlight(sourceFile.sourceCode(), 0, highlights);
-    var output = doc.renderToHtml(true);
+    var mockPos = new SourcePos(sourceFile, 0, sourceFile.sourceCode().length() - 1, // <- tokenEndIndex is inclusive
+      -1, -1, -1, -1);
+    var doc = new FaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())
+      .highlight(sourceFile.sourceCode(), mockPos);
+    var output = Doc.codeBlock(Language.Builtin.Aya, doc).renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);
   }
 }

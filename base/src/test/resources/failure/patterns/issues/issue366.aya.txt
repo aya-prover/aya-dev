@@ -5,9 +5,11 @@ In file $FILE:3:12 ->
   3 │       overlap def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
     │                   ╰────────╯
   4 │        | zero, eldath => suc zero
-    │          ╰──────────────────────╯ substituted to `suc zero`
+    │          ╰──────────────────────╯ (confluence check: this clause is 
+                                        substituted to) `suc zero`
   5 │        | zero, eldath => zero
-    │          ╰──────────────────╯ substituted to `zero`
+    │          ╰──────────────────╯ (confluence check: this clause is 
+                                    substituted to) `zero`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc zero
