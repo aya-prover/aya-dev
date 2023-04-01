@@ -68,9 +68,22 @@
   /* font style */
   font-size: 0.85em;
   /* spacing */
-  padding: 2px 8px;
+  padding: 4px 8px;
   background-color: var(--Doc-Tooltip-BackgroundColor);
   color: var(--Doc-Tooltip-TextColor);
   box-shadow: 1px 1px 20px 1px var(--Doc-Tooltip-BoxShadowColor);
   border: 2px solid var(--Doc-Tooltip-BorderColor);
+}
+
+.AyaTooltipPopup #AyaTooltipPopupClose {
+  float: right;
+  display: inline-block;
+  padding: 0 5px;
+  margin: -4px -8px; /* ignore the parent padding */
+  visibility: hidden;
+  background-color: var(--Doc-Tooltip-BackgroundColor);
+}
+
+.AyaTooltipPopup #AyaTooltipPopupClose:hover {
+  color: red;
 }

@@ -45,7 +45,7 @@ function showTooltip(on) {
 
       // create the tooltip with inner HTML decoded from base64 data
       currentHover = document.createElement("div");
-      currentHover.innerHTML = atob(text);
+      currentHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + atob(text);
       currentHover.classList.add("AyaTooltipPopup");
       currentHover.userCreatedFrom = link;
       // Hover to highlight occurrences is done by adding mouse event listeners to the elements in the tooltip.
@@ -53,13 +53,18 @@ function showTooltip(on) {
       setupHighlight(currentHover);
       currentHover.addEventListener("click", ev => {
         // Clicking on a tooltip disables the auto-dismissal.
-        currentHover.userClicked = true;
+        if (currentHover) currentHover.userClicked = true;
+        // Show the close button
+        var close = document.getElementById('AyaTooltipPopupClose');
+        if (!close) return; // already closed
+        close.style.visibility = "visible";
+        close.addEventListener("click", ev => dismissTooltip());
       });
       currentHover.addEventListener("mouseover", ev => {
-        currentHover.userIsThinking = true
+        if (currentHover) currentHover.userIsThinking = true
       });
       currentHover.addEventListener("mouseout", ev => {
-        currentHover.userIsThinking = false;
+        if (currentHover) currentHover.userIsThinking = false;
         dismissTooltipIfNotUsed();
       });
       currentHover.tabIndex = 0;
