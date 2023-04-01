@@ -8,6 +8,8 @@ import org.aya.cli.literate.FaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.tyck.TyckDeclTest;
@@ -33,11 +35,11 @@ public class FaithfulPrettierTest {
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
     var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
-    var mockPos = new SourcePos(sourceFile, 0, 0, // <- tokenEndIndex = 0 is only for testing
+    var mockPos = new SourcePos(sourceFile, 0, sourceFile.sourceCode().length() - 1, // <- tokenEndIndex is inclusive
       -1, -1, -1, -1);
     var doc = new FaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())
       .highlight(sourceFile.sourceCode(), mockPos);
-    var output = doc.renderToHtml(true);
+    var output = Doc.codeBlock(Language.Builtin.Aya, doc).renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);
   }
 }
