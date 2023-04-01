@@ -15,7 +15,7 @@ public final class HtmlConstants {
   public static final @NotNull String HOVER_STYLE;
 
   static {
-    HOVER_TYPE_POPUP_STYLE = tag("style", readResource("/aya-html/hover-type-popup.css"));
+    HOVER_TYPE_POPUP_STYLE = tag("style", readResource("/aya-html/hover-tooltip.css"));
     HOVER_STYLE = tag("style", readResource("/aya-html/hover.css"));
   }
 
