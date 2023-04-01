@@ -47,6 +47,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
+      renderCssStyle(cursor);
       if (config.opt(ServerSideRendering, false)) {
         cursor.invisibleContent(HtmlConstants.HOVER_SSR);
         // TODO: KaTeX server side rendering
@@ -54,13 +55,12 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
         cursor.invisibleContent(HtmlConstants.HOVER);
         cursor.invisibleContent(HtmlConstants.KATEX_AUTO_RENDER);
       }
-      renderCssStyle(cursor);
-      cursor.invisibleContent("</head><body>");
+      cursor.invisibleContent("</head><body>\n");
     }
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
-    if (config.opt(HeaderCode, false)) cursor.invisibleContent("</body></html>");
+    if (config.opt(HeaderCode, false)) cursor.invisibleContent("\n</body></html>\n");
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
@@ -76,7 +76,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       var stylesheet = "%s {\n%s\n}\n".formatted(selector, css);
       cursor.invisibleContent(stylesheet);
     });
-    cursor.invisibleContent("</style>");
+    cursor.invisibleContent("</style>\n");
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {

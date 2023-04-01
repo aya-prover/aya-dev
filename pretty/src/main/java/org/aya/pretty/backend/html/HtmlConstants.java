@@ -31,7 +31,15 @@ public final class HtmlConstants {
   }
 
   private static @NotNull String tag(String tag, String read) {
-    return "<" + tag + ">" + read + "</" + tag + ">";
+    return "<" + tag + ">\n" + read + "\n</" + tag + ">\n";
+  }
+
+  /**
+   * wrap JavaScript code segment in a new scope,
+   * for possible local variable name clashing.
+   */
+  private static @NotNull String scoped(String read) {
+    return "{\n" + read.indent(2) + "\n}\n";
   }
 
   public static final @NotNull String HOVER_ALL_OCCURS_JS_HIGHLIGHT_FN;
@@ -51,7 +59,7 @@ public final class HtmlConstants {
     <script>
     """ + HOVER_ALL_OCCURS_JS_HIGHLIGHT_FN + HOVER_SHOW_TOOLTIP_JS_SHOW_FN + """
     window.onload = function () {
-    """ + HOVER_ALL_OCCURS_JS_INIT + HOVER_SHOW_TOOLTIP_JS_INIT + """
+    """ + scoped(HOVER_ALL_OCCURS_JS_INIT) + scoped(HOVER_SHOW_TOOLTIP_JS_INIT) + """
     };
     </script>
     """;
@@ -61,7 +69,7 @@ public final class HtmlConstants {
     export default {
       mounted() {
     """ + HOVER_ALL_OCCURS_JS_HIGHLIGHT_FN + HOVER_SHOW_TOOLTIP_JS_SHOW_FN + """
-    """ + HOVER_ALL_OCCURS_JS_INIT + HOVER_SHOW_TOOLTIP_JS_INIT + """
+    """ + scoped(HOVER_ALL_OCCURS_JS_INIT) + scoped(HOVER_SHOW_TOOLTIP_JS_INIT) + """
       }
     }
     </script>

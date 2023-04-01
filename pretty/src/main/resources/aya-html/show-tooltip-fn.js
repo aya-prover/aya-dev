@@ -3,7 +3,7 @@
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
-var currentHover = null;
+let currentHover = null;
 
 // https://github.com/plt-amy/1lab/blob/5e5a22abce8a5cfb62b5f815e1231c1e34bb0a12/support/web/js/highlight-hover.ts#L22
 function showTooltip(on) {
