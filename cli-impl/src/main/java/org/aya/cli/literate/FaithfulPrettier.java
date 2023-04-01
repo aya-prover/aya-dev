@@ -19,6 +19,19 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This prettier maintains all highlights created from {@link SyntaxHighlight} and all
+ * problems reported by Aya compiler.
+ * Implementation-wise, this prettier can be seen as a highlight server for a single file.
+ * <p>
+ * When the highlight of a code block is requested, it filters out
+ * all highlights and problems that belong to the code block, and then
+ * build a {@link Doc} containing the highlighted source code mixed with compiler
+ * outputs, as done in {@link #highlight(String, SourcePos)}.
+ *
+ * @param problems   All problems of a single file
+ * @param highlights All highlights of a single file
+ */
 public record FaithfulPrettier(
   @NotNull ImmutableSeq<Problem> problems,
   @NotNull ImmutableSeq<HighlightInfo> highlights,
@@ -42,6 +55,7 @@ public record FaithfulPrettier(
     });
   }
 
+  /** find highlights and problems inside the code range, and merge them as new highlights */
   private static @NotNull ImmutableSeq<HighlightInfo> merge(
     @NotNull SourcePos codeRange,
     @NotNull ImmutableSeq<HighlightInfo> highlights,
@@ -72,9 +86,9 @@ public record FaithfulPrettier(
   /**
    * Apply highlights to source code string.
    *
-   * @param raw        the source code
-   * @param codeRange  where the raw start from (the 'raw' might be a piece of the source code,
-   *                   so it probably not starts from 0).
+   * @param raw       the source code
+   * @param codeRange where the raw start from (the 'raw' might be a piece of the source code,
+   *                  so it probably not starts from 0).
    */
   public @NotNull Doc highlight(@NotNull String raw, @NotNull SourcePos codeRange) {
     var merged = merge(codeRange, highlights, problems).sorted();
