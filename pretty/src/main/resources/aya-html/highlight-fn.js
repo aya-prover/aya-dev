@@ -14,3 +14,13 @@ function highlight(on) {
     }
   }
 }
+
+function setupHighlight(dom) {
+  let links = dom.getElementsByTagName('a');
+  for (let i = 0; i < links.length; i++) {
+    let link = links[i];
+    if (!link.hasAttribute("href")) continue;
+    link.onmouseover = highlight(true);
+    link.onmouseout = highlight(false);
+  }
+}
