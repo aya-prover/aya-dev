@@ -6,6 +6,7 @@ import org.aya.pretty.backend.html.DocHtmlPrinter;
 import org.aya.pretty.backend.html.HtmlConstants;
 import org.aya.pretty.backend.string.Cursor;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -138,8 +139,9 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
    */
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, @NotNull Doc.CodeBlock block, EnumSet<Outer> outer) {
     // assumption: code block cannot be nested in markdown, but don't assert it.
+    var mark = block.language() == Language.Builtin.Markdown ? "~~~" : "```";
     Runnable pureMd = () -> formatBlock(cursor, block.code(),
-      "```" + block.language().displayName().toLowerCase(), "```",
+      mark + block.language().displayName().toLowerCase(), mark,
       EnumSet.of(Outer.Code));
     runSwitch(pureMd,
       () -> {
