@@ -16,6 +16,7 @@ import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.concrete.remark.UnsupportedMarkdown;
 import org.aya.concrete.remark.code.CodeAttrProcessor;
 import org.aya.concrete.remark.code.CodeOptions;
+import org.aya.concrete.remark.frontmatter.YamlFrontMatter;
 import org.aya.concrete.remark.math.InlineMath;
 import org.aya.concrete.remark.math.MathBlock;
 import org.aya.generic.util.InternalException;
@@ -50,7 +51,8 @@ public class AyaMdParser {
     var parser = Parser.builder()
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
       .customDelimiterProcessor(InlineMath.Processor.INSTANCE)
-      .customBlockParserFactory(MathBlock.Factory.INSTANCE)
+      .customBlockParserFactory(MathBlock.FACTORY)
+      .customBlockParserFactory(YamlFrontMatter.FACTORY)
       .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
       .postProcessor(FillCodeBlock.INSTANCE)
       .build();
@@ -147,6 +149,12 @@ public class AyaMdParser {
       case MathBlock math -> {
         var formula = stripTrailingNewline(math.literal, math).component2();
         yield new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(formula))));
+      }
+      case YamlFrontMatter yaml -> {
+        var mark = Doc.plain(String.valueOf(yaml.fenceChar).repeat(yaml.fenceLength));
+        var matter = Doc.vcat(mark, Doc.escaped(yaml.literal), mark, Doc.line());
+        var doc = yaml.fenceIndent > 0 ? Doc.hang(yaml.fenceIndent, matter) : matter;
+        yield new Literate.Raw(doc);
       }
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();

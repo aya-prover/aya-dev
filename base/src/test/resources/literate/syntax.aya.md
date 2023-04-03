@@ -1,3 +1,7 @@
+---
+title: Syntax test for literate programming
+---
+
 ```aya
 open data Nat | O | S Nat
 open data List (A : Type) | nil | infixl :< A (List A)
