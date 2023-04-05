@@ -29,6 +29,7 @@ public interface Language {
 
   enum Builtin implements Language {
     Plain(""),
+    Markdown("markdown"),
     Aya("aya");
 
     final String displayName;
