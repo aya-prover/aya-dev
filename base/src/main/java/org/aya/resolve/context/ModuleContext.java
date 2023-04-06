@@ -64,9 +64,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     switch (symbol.getErr()) {
       case NotFound -> {}
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
-        name,
-        ImmutableSeq.narrow(symbols().resolveUnqualified(name).map().keysView().toImmutableSeq()),
-        sourcePos));
+        name, symbols().resolveUnqualified(name).moduleNames(), sourcePos));
     }
     return null;
   }
@@ -83,7 +81,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).map().keysView().toImmutableSeq()),
+        mod.symbols().resolveUnqualified(name).moduleNames(),
         sourcePos
       ));
     };
@@ -209,7 +207,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     } else if (candidates.map().containsKey(modName)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
-      var uniqueCandidates = candidates.map().valuesView().distinct().toImmutableSeq();
+      var uniqueCandidates = candidates.uniqueCandidates();
       if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
         reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
 
@@ -227,7 +225,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       } else {
         // H : uniqueCandidates.size == 1 && uniqueCandidates.iterator().next() == ref
         assert modName != ModuleName.This : "Sanity check";     // already reported
-        assert candidates.map().keysView().allMatch(x -> x instanceof ModuleName.Qualified);
+        assert candidates.moduleNames().allMatch(x -> x instanceof ModuleName.Qualified);
       }
     }
 

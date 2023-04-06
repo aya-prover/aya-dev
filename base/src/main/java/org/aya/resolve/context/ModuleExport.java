@@ -229,7 +229,7 @@ public record ModuleExport(
       SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
         .map(name -> {
           var old = result();
-          var disambi = old.symbols().resolveUnqualified(name.data()).map().keysView().toImmutableSeq();
+          var disambi = old.symbols().resolveUnqualified(name.data()).moduleNames();
           return new NameProblem.AmbiguousNameError(name.data(), disambi, name.sourcePos());
         });
 

@@ -5,6 +5,7 @@ package org.aya.resolve.context;
 import kala.collection.Map;
 import kala.collection.MapView;
 import kala.collection.SetView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
@@ -38,6 +39,13 @@ public record ModuleSymbol<T>(
   /** @apiNote should not use this after {@link #asMut} is called. */
   public record UnqualifiedResolve<T>(@NotNull MapView<ModuleName, T> map,
                                       @NotNull LazyValue<MutableMap<ModuleName, T>> asMut) {
+    public @NotNull ImmutableSeq<T> uniqueCandidates() {
+      return map.valuesView().distinct().toImmutableSeq();
+    }
+
+    public @NotNull ImmutableSeq<ModuleName> moduleNames() {
+      return map.keysView().toImmutableSeq();
+    }
   }
 
   /**
@@ -69,11 +77,11 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    */
   public @NotNull Result<T, Error> getUnqualifiedMaybe(@NotNull String unqualifiedName) {
-    var candidates = resolveUnqualified(unqualifiedName).map;
+    var candidates = resolveUnqualified(unqualifiedName);
 
-    if (candidates.isEmpty()) return Result.err(Error.NotFound);
+    if (candidates.map.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct().toImmutableSeq();
+    var uniqueCandidates = candidates.uniqueCandidates();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     return Result.ok(uniqueCandidates.iterator().next());
@@ -128,7 +136,7 @@ public record ModuleSymbol<T>(
 
     if (candidates.map.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.map.valuesView().distinct().toImmutableSeq();
+    var uniqueCandidates = candidates.uniqueCandidates();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     var result = uniqueCandidates.iterator().next();
@@ -153,14 +161,14 @@ public record ModuleSymbol<T>(
   }
 
   public @NotNull SetView<String> keysView() {
-    return table().keysView();
+    return table.keysView();
   }
 
   public @NotNull MapView<String, Map<ModuleName, T>> view() {
-    return table().view().mapValues((k, v) -> v);
+    return table.view().mapValues((k, v) -> v);
   }
 
   public void forEach(@NotNull BiConsumer<String, Map<ModuleName, T>> action) {
-    table().forEach(action);
+    table.forEach(action);
   }
 }
