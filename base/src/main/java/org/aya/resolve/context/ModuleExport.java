@@ -107,7 +107,7 @@ public record ModuleExport(
 
         thing.get().forEach(
           symbol -> {
-            var candidates = newExport.symbols.resolveUnqualifiedMut(to);
+            var candidates = newExport.symbols.resolveUnqualified(to).asMut().get();
             var isShadow = candidates.isNotEmpty();
             // If there is an export with name `to`, shadow!
             if (isShadow) {
@@ -229,7 +229,7 @@ public record ModuleExport(
       SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
         .map(name -> {
           var old = result();
-          var disambi = old.symbols().resolveUnqualified(name.data()).keysView().toImmutableSeq();
+          var disambi = old.symbols().resolveUnqualified(name.data()).map().keysView().toImmutableSeq();
           return new NameProblem.AmbiguousNameError(name.data(), disambi, name.sourcePos());
         });
 

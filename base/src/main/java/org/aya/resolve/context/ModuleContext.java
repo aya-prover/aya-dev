@@ -65,7 +65,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> {}
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
+        ImmutableSeq.narrow(symbols().resolveUnqualified(name).map().keysView().toImmutableSeq()),
         sourcePos));
     }
     return null;
@@ -83,7 +83,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       case NotFound -> reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
-        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
+        ImmutableSeq.narrow(mod.symbols().resolveUnqualified(name).map().keysView().toImmutableSeq()),
         sourcePos
       ));
     };
@@ -199,35 +199,35 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     assert imported || modName == ModuleName.This : "Sanity check";
 
     var symbols = symbols();
-    var candidates = symbols.resolveUnqualifiedMut(name);
-    if (candidates.isEmpty()) {
+    var candidates = symbols.resolveUnqualified(name);
+    if (candidates.map().isEmpty()) {
       if (getUnqualifiedMaybe(name, sourcePos) != null
         && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
-    } else if (candidates.containsKey(modName)) {
+    } else if (candidates.map().containsKey(modName)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else {
-      var uniqueCandidates = candidates.valuesView().distinct();
+      var uniqueCandidates = candidates.map().valuesView().distinct().toImmutableSeq();
       if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
         reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
 
-        if (candidates.containsKey(ModuleName.This)) {
+        if (candidates.map().containsKey(ModuleName.This)) {
           // H : modName instance ModulePath.Qualified
           // H0 : ref !in uniqueCandidates
-          assert candidates.size() == 1;
+          assert candidates.map().size() == 1;
           // ignore importing
           return;
         } else if (modName == ModuleName.This) {
           // H : candidates.keys are all Qualified
           // shadow
-          candidates.clear();
+          candidates.asMut().get().clear();
         }
       } else {
         // H : uniqueCandidates.size == 1 && uniqueCandidates.iterator().next() == ref
         assert modName != ModuleName.This : "Sanity check";     // already reported
-        assert candidates.keysView().allMatch(x -> x instanceof ModuleName.Qualified);
+        assert candidates.map().keysView().allMatch(x -> x instanceof ModuleName.Qualified);
       }
     }
 

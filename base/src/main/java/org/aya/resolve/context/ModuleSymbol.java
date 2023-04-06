@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
+import kala.value.LazyValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -34,20 +35,21 @@ public record ModuleSymbol<T>(
     ));
   }
 
+  /** @apiNote should not use this after {@link #asMut} is called. */
+  public record UnqualifiedResolve<T>(@NotNull MapView<ModuleName, T> map,
+                                      @NotNull LazyValue<MutableMap<ModuleName, T>> asMut) {
+  }
+
   /**
    * Getting the candidates of an unqualified name
    *
    * @param unqualifiedName the unqualified name
    * @return the candidates, probably empty
    */
-  public @NotNull MapView<ModuleName, T> resolveUnqualified(@NotNull String unqualifiedName) {
+  public @NotNull UnqualifiedResolve<T> resolveUnqualified(@NotNull String unqualifiedName) {
     var names = table.getOrNull(unqualifiedName);
-    return names != null ? names.view() : MapView.empty();
-  }
-
-  /** @return the mutable version of {@link #resolveUnqualified(String)} */
-  public @NotNull MutableMap<ModuleName, T> resolveUnqualifiedMut(@NotNull String unqualifiedName) {
-    return table.getOrPut(unqualifiedName, MutableMap::create);
+    return new UnqualifiedResolve<>(names != null ? names.view() : MapView.empty(),
+      LazyValue.of(() -> table.getOrPut(unqualifiedName, MutableMap::create)));
   }
 
   /**
@@ -58,7 +60,7 @@ public record ModuleSymbol<T>(
    * @return none if not found
    */
   public @NotNull Option<T> getQualifiedMaybe(@NotNull ModuleName component, @NotNull String unqualifiedName) {
-    return resolveUnqualified(unqualifiedName).getOption(component);
+    return resolveUnqualified(unqualifiedName).map.getOption(component);
   }
 
   /**
@@ -67,11 +69,11 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    */
   public @NotNull Result<T, Error> getUnqualifiedMaybe(@NotNull String unqualifiedName) {
-    var candidates = resolveUnqualified(unqualifiedName);
+    var candidates = resolveUnqualified(unqualifiedName).map;
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct();
+    var uniqueCandidates = candidates.valuesView().distinct().toImmutableSeq();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     return Result.ok(uniqueCandidates.iterator().next());
@@ -91,11 +93,11 @@ public record ModuleSymbol<T>(
   }
 
   public boolean contains(@NotNull String unqualified) {
-    return resolveUnqualified(unqualified).isNotEmpty();
+    return resolveUnqualified(unqualified).map.isNotEmpty();
   }
 
   public boolean contains(@NotNull ModuleName component, @NotNull String unqualified) {
-    return resolveUnqualified(unqualified).containsKey(component);
+    return resolveUnqualified(unqualified).map.containsKey(component);
   }
 
   public enum Error {
@@ -113,7 +115,7 @@ public record ModuleSymbol<T>(
     @NotNull String name,
     @NotNull T ref
   ) {
-    var candidates = resolveUnqualifiedMut(name);
+    var candidates = resolveUnqualified(name).asMut.get();
     return candidates.put(componentName, ref);
   }
 
@@ -122,15 +124,15 @@ public record ModuleSymbol<T>(
   }
 
   public Result<T, Error> removeDefinitely(@NotNull String unqualifiedName) {
-    var candidates = resolveUnqualifiedMut(unqualifiedName);
+    var candidates = resolveUnqualified(unqualifiedName);
 
-    if (candidates.isEmpty()) return Result.err(Error.NotFound);
+    if (candidates.map.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct().toImmutableSeq();
+    var uniqueCandidates = candidates.map.valuesView().distinct().toImmutableSeq();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     var result = uniqueCandidates.iterator().next();
-    candidates.clear();
+    candidates.asMut.get().clear();
 
     return Result.ok(result);
   }
