@@ -52,7 +52,6 @@ public record ModuleSymbol<T>(
    * Getting the candidates of an unqualified name
    *
    * @param unqualifiedName the unqualified name
-   * @return the candidates, probably empty
    */
   public @NotNull UnqualifiedResolve<T> resolveUnqualified(@NotNull String unqualifiedName) {
     var names = table.getOrNull(unqualifiedName);
