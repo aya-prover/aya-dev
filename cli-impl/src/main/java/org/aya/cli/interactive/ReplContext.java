@@ -87,7 +87,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   /**
    * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
-   * so be care about {@param rhs}
+   * so be careful about {@param rhs}
    */
   private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> lhs, @NotNull ModuleSymbol<T> rhs) {
     rhs.table().forEach((uname, candy) -> lhs.resolveUnqualified(uname).putAll(candy));
