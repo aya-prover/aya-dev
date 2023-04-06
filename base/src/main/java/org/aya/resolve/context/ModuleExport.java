@@ -107,7 +107,7 @@ public record ModuleExport(
 
         thing.get().forEach(
           symbol -> {
-            var candidates = newExport.symbols.resolveUnqualified(to);
+            var candidates = newExport.symbols.resolveUnqualifiedMut(to);
             var isShadow = candidates.isNotEmpty();
             // If there is an export with name `to`, shadow!
             if (isShadow) {

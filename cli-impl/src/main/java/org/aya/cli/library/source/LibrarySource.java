@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * @param resolveInfo initialized after resolve
  * @param tycked      initialized after tyck
  */
-@Debug.Renderer(text = "file")
+@Debug.Renderer(text = "displayPath()")
 public record LibrarySource(
   @NotNull LibraryOwner owner,
   @NotNull Path underlyingFile,

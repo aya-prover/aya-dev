@@ -61,15 +61,14 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     var symbol = symbols().getUnqualifiedMaybe(name);
     if (symbol.isOk()) return symbol.get();
-
-    // I am sure that this is not equivalent to null
-    return switch (symbol.getErr()) {
-      case NotFound -> null;
+    switch (symbol.getErr()) {
+      case NotFound -> {}
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name,
         ImmutableSeq.narrow(symbols().resolveUnqualified(name).keysView().toImmutableSeq()),
         sourcePos));
-    };
+    }
+    return null;
   }
 
   @Override
@@ -200,7 +199,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     assert imported || modName == ModuleName.This : "Sanity check";
 
     var symbols = symbols();
-    var candidates = symbols.resolveUnqualified(name);
+    var candidates = symbols.resolveUnqualifiedMut(name);
     if (candidates.isEmpty()) {
       if (getUnqualifiedMaybe(name, sourcePos) != null
         && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {

@@ -40,7 +40,13 @@ public record ModuleSymbol<T>(
    * @param unqualifiedName the unqualified name
    * @return the candidates, probably empty
    */
-  public @NotNull MutableMap<ModuleName, T> resolveUnqualified(@NotNull String unqualifiedName) {
+  public @NotNull MapView<ModuleName, T> resolveUnqualified(@NotNull String unqualifiedName) {
+    var names = table.getOrNull(unqualifiedName);
+    return names != null ? names.view() : MapView.empty();
+  }
+
+  /** @return the mutable version of {@link #resolveUnqualified(String)} */
+  public @NotNull MutableMap<ModuleName, T> resolveUnqualifiedMut(@NotNull String unqualifiedName) {
     return table.getOrPut(unqualifiedName, MutableMap::create);
   }
 
@@ -107,7 +113,7 @@ public record ModuleSymbol<T>(
     @NotNull String name,
     @NotNull T ref
   ) {
-    var candidates = resolveUnqualified(name);
+    var candidates = resolveUnqualifiedMut(name);
     return candidates.put(componentName, ref);
   }
 
@@ -116,11 +122,11 @@ public record ModuleSymbol<T>(
   }
 
   public Result<T, Error> removeDefinitely(@NotNull String unqualifiedName) {
-    var candidates = resolveUnqualified(unqualifiedName);
+    var candidates = resolveUnqualifiedMut(unqualifiedName);
 
     if (candidates.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct();
+    var uniqueCandidates = candidates.valuesView().distinct().toImmutableSeq();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     var result = uniqueCandidates.iterator().next();
