@@ -90,6 +90,6 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
    * so be careful about {@param rhs}
    */
   private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> lhs, @NotNull ModuleSymbol<T> rhs) {
-    rhs.table().forEach((uname, candy) -> lhs.resolveUnqualified(uname).putAll(candy));
+    rhs.table().forEach((uname, candy) -> lhs.resolveUnqualified(uname).asMut().get().putAll(candy));
   }
 }
