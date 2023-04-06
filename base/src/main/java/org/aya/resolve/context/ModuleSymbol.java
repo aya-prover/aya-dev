@@ -5,10 +5,12 @@ package org.aya.resolve.context;
 import kala.collection.Map;
 import kala.collection.MapView;
 import kala.collection.SetView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
+import kala.value.LazyValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -34,14 +36,27 @@ public record ModuleSymbol<T>(
     ));
   }
 
+  /** @apiNote should not use this after {@link #asMut} is called. */
+  public record UnqualifiedResolve<T>(@NotNull MapView<ModuleName, T> map,
+                                      @NotNull LazyValue<MutableMap<ModuleName, T>> asMut) {
+    public @NotNull ImmutableSeq<T> uniqueCandidates() {
+      return map.valuesView().distinct().toImmutableSeq();
+    }
+
+    public @NotNull ImmutableSeq<ModuleName> moduleNames() {
+      return map.keysView().toImmutableSeq();
+    }
+  }
+
   /**
    * Getting the candidates of an unqualified name
    *
    * @param unqualifiedName the unqualified name
-   * @return the candidates, probably empty
    */
-  public @NotNull MutableMap<ModuleName, T> resolveUnqualified(@NotNull String unqualifiedName) {
-    return table.getOrPut(unqualifiedName, MutableMap::create);
+  public @NotNull UnqualifiedResolve<T> resolveUnqualified(@NotNull String unqualifiedName) {
+    var names = table.getOrNull(unqualifiedName);
+    return new UnqualifiedResolve<>(names != null ? names.view() : MapView.empty(),
+      LazyValue.of(() -> table.getOrPut(unqualifiedName, MutableMap::create)));
   }
 
   /**
@@ -52,7 +67,7 @@ public record ModuleSymbol<T>(
    * @return none if not found
    */
   public @NotNull Option<T> getQualifiedMaybe(@NotNull ModuleName component, @NotNull String unqualifiedName) {
-    return resolveUnqualified(unqualifiedName).getOption(component);
+    return resolveUnqualified(unqualifiedName).map.getOption(component);
   }
 
   /**
@@ -63,9 +78,9 @@ public record ModuleSymbol<T>(
   public @NotNull Result<T, Error> getUnqualifiedMaybe(@NotNull String unqualifiedName) {
     var candidates = resolveUnqualified(unqualifiedName);
 
-    if (candidates.isEmpty()) return Result.err(Error.NotFound);
+    if (candidates.map.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct();
+    var uniqueCandidates = candidates.uniqueCandidates();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     return Result.ok(uniqueCandidates.iterator().next());
@@ -85,11 +100,11 @@ public record ModuleSymbol<T>(
   }
 
   public boolean contains(@NotNull String unqualified) {
-    return resolveUnqualified(unqualified).isNotEmpty();
+    return resolveUnqualified(unqualified).map.isNotEmpty();
   }
 
   public boolean contains(@NotNull ModuleName component, @NotNull String unqualified) {
-    return resolveUnqualified(unqualified).containsKey(component);
+    return resolveUnqualified(unqualified).map.containsKey(component);
   }
 
   public enum Error {
@@ -107,7 +122,7 @@ public record ModuleSymbol<T>(
     @NotNull String name,
     @NotNull T ref
   ) {
-    var candidates = resolveUnqualified(name);
+    var candidates = resolveUnqualified(name).asMut.get();
     return candidates.put(componentName, ref);
   }
 
@@ -118,13 +133,13 @@ public record ModuleSymbol<T>(
   public Result<T, Error> removeDefinitely(@NotNull String unqualifiedName) {
     var candidates = resolveUnqualified(unqualifiedName);
 
-    if (candidates.isEmpty()) return Result.err(Error.NotFound);
+    if (candidates.map.isEmpty()) return Result.err(Error.NotFound);
 
-    var uniqueCandidates = candidates.valuesView().distinct();
+    var uniqueCandidates = candidates.uniqueCandidates();
     if (uniqueCandidates.size() != 1) return Result.err(Error.Ambiguous);
 
     var result = uniqueCandidates.iterator().next();
-    candidates.clear();
+    candidates.asMut.get().clear();
 
     return Result.ok(result);
   }
@@ -145,14 +160,14 @@ public record ModuleSymbol<T>(
   }
 
   public @NotNull SetView<String> keysView() {
-    return table().keysView();
+    return table.keysView();
   }
 
   public @NotNull MapView<String, Map<ModuleName, T>> view() {
-    return table().view().mapValues((k, v) -> v);
+    return table.view().mapValues((k, v) -> v);
   }
 
   public void forEach(@NotNull BiConsumer<String, Map<ModuleName, T>> action) {
-    table().forEach(action);
+    table.forEach(action);
   }
 }
