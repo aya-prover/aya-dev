@@ -55,6 +55,16 @@ public class ReplCompilerTest {
     assertNull(findContext("a"));
   }
 
+  /** <a href="https://ice1000.jetbrains.space/im/group/4DLh053zIix6?message=2db0002db&channel=4DLh053zIix6">Bug report</a> */
+  @Test public void reportedInSpace() {
+    // success cases, we can find the definition in the context
+    compile("data Unit | unit");
+    assertNotNull(findContext("Unit"));
+    compile("struct What : Type | what : Unit");
+    assertNotNull(findContext("What"));
+    assertNotNull(findContext("Unit"));
+  }
+
   private @Nullable AnyVar findContext(@NotNull String name) {
     try {
       var ctx = compiler.getContext();
