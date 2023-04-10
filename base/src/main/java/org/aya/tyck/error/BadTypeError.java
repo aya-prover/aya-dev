@@ -67,7 +67,7 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError structAcc(@NotNull TyckState state, @NotNull Expr expr, @NotNull String fieldName, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("access field"), Doc.code(Doc.plain(fieldName)), Doc.plain("of")),
+      Doc.sep(Doc.english("access field"), Doc.code(fieldName), Doc.plain("of")),
       Doc.english("of what you accessed"),
       options -> Doc.english("struct type"),
       state);

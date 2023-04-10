@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
@@ -30,17 +30,14 @@ public class Html5Stylist extends ClosingStylist {
     return new StyleToken("<b>", "</b>", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("<s>", "</s>", false);
-  }
-
-  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("<u>", "</u>", false);
+  @Override
+  protected @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer) {
+    return new StyleToken("<span style=\"%s\">".formatted(styleToCss(line)), "</span>", false);
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
     return new StyleToken(
-      "<span style=\"%s:#%06x;\">".formatted(background ? "background-color" : "color", rgb),
+      "<span style=\"%s:%s;\">".formatted(background ? "background-color" : "color", cssColor(rgb)),
       "</span>",
       false
     );
@@ -68,9 +65,27 @@ public class Html5Stylist extends ClosingStylist {
       case Style.Attr attr -> switch (attr) {
         case Italic -> "font-style: italic;";
         case Bold -> "font-weight: bold;";
-        case Strike -> "text-decoration-line: line-through;";
-        case Underline -> "text-decoration: underline;";
       };
+      case Style.LineThrough(var pos, var shape, var color) -> {
+        var decoLine = switch (pos) {
+          case Overline -> "text-decoration-line: overline;";
+          case Underline -> "text-decoration-line: underline; text-underline-position: under;";
+          case Strike -> "text-decoration-line: line-through;";
+        };
+        var decoStyle = switch (shape) {
+          case Solid -> "text-decoration-style: solid;";
+          case Curly -> "text-decoration-style: wavy;";
+        };
+        var colorRef = switch (color) {
+          case Style.ColorHex(var rgb, var $) -> cssColor(rgb);
+          case Style.ColorName(var name, var $) -> "var(%s)".formatted(cssVar(name));
+          case null -> null;
+        };
+        var decoColor = colorRef != null
+          ? "text-decoration-color: %s;".formatted(colorRef)
+          : "";
+        yield decoLine + decoStyle + decoColor;
+      }
       case Style.ColorHex(var rgb, var background) -> background
         ? "background-color: %s".formatted(cssColor(rgb))
         : "color: %s;".formatted(cssColor(rgb));

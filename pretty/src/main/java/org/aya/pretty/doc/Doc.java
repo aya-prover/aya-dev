@@ -171,11 +171,19 @@ public sealed interface Doc extends Docile {
   }
 
   /** Inline code, with special escape settings compared to {@link PlainText} */
-  record InlineCode(@NotNull String language, @NotNull Doc code) implements Doc {
+  record InlineCode(@NotNull Language language, @NotNull Doc code) implements Doc {
   }
 
   /** Code block, with special escape settings compared to {@link PlainText} */
-  record CodeBlock(@NotNull String language, @NotNull Doc code) implements Doc {
+  record CodeBlock(@NotNull Language language, @NotNull Doc code) implements Doc {
+  }
+
+  /** Inline math, with special escape settings compared to {@link PlainText} */
+  record InlineMath(@NotNull Doc formula) implements Doc {
+  }
+
+  /** Math block, with special escape settings compared to {@link PlainText} */
+  record MathBlock(@NotNull Doc formula) implements Doc {
   }
 
   /**
@@ -184,11 +192,14 @@ public sealed interface Doc extends Docile {
   record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc {
   }
 
+  record Tooltip(@NotNull Doc doc, @NotNull Docile tooltip) implements Doc {
+  }
+
   /**
    * Hard line break
    */
   enum Line implements Doc {
-    INSTANCE;
+    INSTANCE
   }
 
   /**
@@ -276,23 +287,31 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc code(@NotNull String code) {
-    return code("aya", plain(code));
+    return code(Language.Builtin.Aya, plain(code));
   }
 
   static @NotNull Doc code(@NotNull Doc code) {
-    return code("aya", code);
+    return code(Language.Builtin.Aya, code);
   }
 
-  static @NotNull Doc code(@NotNull String language, @NotNull Doc code) {
+  static @NotNull Doc code(@NotNull Language language, @NotNull Doc code) {
     return new InlineCode(language, code);
   }
 
-  static @NotNull Doc codeBlock(@NotNull String code) {
-    return codeBlock("aya", plain(code));
+  static @NotNull Doc codeBlock(@NotNull Language language, @NotNull Doc code) {
+    return new CodeBlock(language, code);
   }
 
-  static @NotNull Doc codeBlock(@NotNull String language, @NotNull Doc code) {
-    return new CodeBlock(language, code);
+  static @NotNull Doc codeBlock(@NotNull Language language, @NotNull String code) {
+    return codeBlock(language, plain(code));
+  }
+
+  static @NotNull Doc math(@NotNull Doc formula) {
+    return new InlineMath(formula);
+  }
+
+  static @NotNull Doc mathBlock(@NotNull Doc formula) {
+    return new MathBlock(formula);
   }
 
   static @NotNull Doc styled(@NotNull Style style, @NotNull Doc doc) {

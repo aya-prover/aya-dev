@@ -12,6 +12,8 @@ import org.aya.pretty.doc.Link;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.regex.Pattern;
 
@@ -27,7 +29,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     <title>Aya file</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    """ + HtmlConstants.HOVER_ALL_OCCURS + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_POPUP_STYLE;
+    """ + HtmlConstants.HOVER_STYLE + HtmlConstants.HOVER_TYPE_POPUP_STYLE;
 
   /**
    * <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">Mozilla doc: entity</a>
@@ -46,12 +48,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (config.opt(HeaderCode, false)) {
       cursor.invisibleContent(HEAD);
       renderCssStyle(cursor);
-      cursor.invisibleContent("</head><body>");
+      if (config.opt(ServerSideRendering, false)) {
+        cursor.invisibleContent(HtmlConstants.HOVER_SSR);
+        // TODO: KaTeX server side rendering
+      } else {
+        cursor.invisibleContent(HtmlConstants.HOVER);
+        cursor.invisibleContent(HtmlConstants.KATEX_AUTO_RENDER);
+      }
+      cursor.invisibleContent("</head><body>\n");
     }
   }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
-    if (config.opt(HeaderCode, false)) cursor.invisibleContent("</body></html>");
+    if (config.opt(HeaderCode, false)) cursor.invisibleContent("\n</body></html>\n");
   }
 
   protected void renderCssStyle(@NotNull Cursor cursor) {
@@ -67,7 +76,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
       var stylesheet = "%s {\n%s\n}\n".formatted(selector, css);
       cursor.invisibleContent(stylesheet);
     });
-    cursor.invisibleContent("</style>");
+    cursor.invisibleContent("</style>\n");
   }
 
   @Override protected @NotNull StringStylist prepareStylist() {
@@ -75,9 +84,23 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   }
 
   @Override protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
-    // note: HTML always needs escaping, regardless of `outer`
+    // HTML always needs escaping, unless we are in KaTeX math mode
+    if (outer.contains(Outer.Math)) return content;
     return entityPattern.matcher(content).replaceAll(
       result -> entityMapping.get(result.group()));   // fail if bug
+  }
+
+  @Override protected void renderTooltip(@NotNull Cursor cursor, Doc.@NotNull Tooltip tooltip, EnumSet<Outer> outer) {
+    var newCursor = new Cursor(this);
+    renderDoc(newCursor, tooltip.tooltip().toDoc(), FREE);
+    var tip = newCursor.result().toString();
+    // ^ note: the tooltip is shown in a popup, which is a new document.
+    cursor.invisibleContent("<span class=\"aya-tooltip\" ");
+    cursor.invisibleContent("data-tooltip-text=\"");
+    cursor.invisibleContent(Base64.getEncoder().encodeToString(tip.getBytes(StandardCharsets.UTF_8)));
+    cursor.invisibleContent("\">");
+    renderDoc(cursor, tooltip.doc(), EnumSet.of(Outer.EnclosingTag));
+    cursor.invisibleContent("</span>");
   }
 
   @Override
@@ -87,7 +110,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
-      cursor.invisibleContent("aya-type=\"" + text.hover() + "\" ");
+      cursor.invisibleContent("aya-hover-text=\"" + text.hover() + "\" ");
     }
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(normalizeHref(href));
@@ -126,6 +149,8 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   @Override
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
+    // `<code class="" />` is valid, see:
+    // https://stackoverflow.com/questions/30748847/is-an-empty-class-attribute-valid-html
     cursor.invisibleContent("<code class=\"" + capitalize(code.language()) + "\">");
     renderDoc(cursor, code.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
@@ -135,6 +160,19 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
     renderDoc(cursor, block.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
+  }
+
+  @Override
+  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+    // https://katex.org/docs/autorender.html
+    formatInline(cursor, code.formula(), "<span class=\"doc-katex-input\">\\(", "\\)</span>", EnumSet.of(Outer.Math));
+  }
+
+  @Override protected void renderMathBlock(@NotNull Cursor cursor, Doc.@NotNull MathBlock block, EnumSet<Outer> outer) {
+    cursor.invisibleContent("<pre><div class=\"doc-katex-input\">");
+    // https://katex.org/docs/autorender.html
+    formatBlock(cursor, block.formula(), "\\[", "\\]", EnumSet.of(Outer.Math));
+    cursor.invisibleContent("</div></pre>");
   }
 
   @Override
@@ -149,8 +187,9 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     cursor.invisibleContent("</" + tag + ">");
   }
 
-  private @NotNull String capitalize(@NotNull String s) {
-    return s.isEmpty() ? s : s.substring(0, 1).toUpperCase() + s.substring(1);
+  private @NotNull String capitalize(@NotNull org.aya.pretty.doc.Language s) {
+    var name = s.displayName();
+    return name.isEmpty() ? name : name.substring(0, 1).toUpperCase() + name.substring(1);
   }
 
   public static class Config extends StringPrinterConfig<Html5Stylist> {

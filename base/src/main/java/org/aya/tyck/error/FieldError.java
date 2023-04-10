@@ -48,7 +48,7 @@ public sealed interface FieldError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown field"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("projected")
       );
     }

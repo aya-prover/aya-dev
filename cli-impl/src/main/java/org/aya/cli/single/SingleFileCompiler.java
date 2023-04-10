@@ -15,7 +15,7 @@ import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleListLoader;
 import org.aya.tyck.trace.Trace;
 import org.aya.util.error.SourceFileLocator;
-import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public record SingleFileCompiler(
     @NotNull CompilerFlags flags,
     @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
-    var reporter = CountingReporter.of(this.reporter);
+    var reporter = CollectingReporter.delegate(this.reporter);
     var locator = this.locator != null ? this.locator : new SourceFileLocator.Module(flags.modulePaths());
     return CompilerUtil.catching(reporter, flags, () -> {
       var ctx = context.apply(reporter);
@@ -52,14 +52,14 @@ public record SingleFileCompiler(
       var primFactory = new PrimDef.Factory();
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
-      ayaFile.pretty(flags, program, CliEnums.PrettyStage.raw);
+      ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
       var loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, flags.modulePaths().view().map(path ->
         new FileModuleLoader(locator, path, reporter, ayaParser, fileManager, primFactory, builder)).toImmutableSeq()));
       loader.tyckModule(primFactory, ctx, program, builder, (moduleResolve, defs) -> {
         ayaFile.tyckAdditional(moduleResolve);
-        ayaFile.pretty(flags, program, CliEnums.PrettyStage.scoped);
-        ayaFile.pretty(flags, defs, CliEnums.PrettyStage.typed);
-        ayaFile.pretty(flags, program, CliEnums.PrettyStage.literate);
+        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
+        ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
+        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
       });
     });

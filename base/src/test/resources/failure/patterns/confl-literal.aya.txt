@@ -6,13 +6,14 @@ In file $FILE:3:12 ->
      │                   ╰──╯
   4  │         | 0 => 0
   5  │         | a => a
-     │           ╰────╯ substituted to `114514`
+     │           ╰────╯ (confluence check: this clause is substituted to) `114514`
   6  │         | suc a => suc a
   7  │         | suc (suc a) => a
   8  │         | 2147483647 => 3
   9  │         | 2147483647 => 4
   10 │         | 114514 => 1919
-     │           ╰────────────╯ substituted to `1919`
+     │           ╰────────────╯ (confluence check: this clause is substituted 
+                                to) `1919`
 
 Error: The 2nd and the 7th clauses are not confluent because we failed to unify
          1919
@@ -28,9 +29,11 @@ In file $FILE:3:12 ->
   4 │         | 0 => 0
   5 │         | a => a
   6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
+    │           ╰────────────╯ (confluence check: this clause is substituted to)
+                               `suc (suc a)`
   7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
+    │           ╰──────────────╯ (confluence check: this clause is substituted 
+                                 to) `a`
 
 Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)
@@ -48,9 +51,11 @@ In file $FILE:3:12 ->
   6 │         | suc a => suc a
   7 │         | suc (suc a) => a
   8 │         | 2147483647 => 3
-    │           ╰─────────────╯ substituted to `3`
+    │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                to) `3`
   9 │         | 2147483647 => 4
-    │           ╰─────────────╯ substituted to `4`
+    │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                to) `4`
 
 Error: The 6th and the 5th clauses are not confluent because we failed to unify
          3
@@ -65,12 +70,13 @@ In file $FILE:3:12 ->
     │                   ╰──╯
   4 │         | 0 => 0
   5 │         | a => a
-    │           ╰────╯ substituted to `2147483647`
+    │           ╰────╯ (confluence check: this clause is substituted to) `2147483647`
   6 │         | suc a => suc a
   7 │         | suc (suc a) => a
   8 │         | 2147483647 => 3
   9 │         | 2147483647 => 4
-    │           ╰─────────────╯ substituted to `4`
+    │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                to) `4`
 
 Error: The 2nd and the 6th clauses are not confluent because we failed to unify
          4
@@ -86,9 +92,11 @@ In file $FILE:3:12 ->
   4 │         | 0 => 0
   5 │         | a => a
   6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
+    │           ╰────────────╯ (confluence check: this clause is substituted to)
+                               `suc (suc a)`
   7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
+    │           ╰──────────────╯ (confluence check: this clause is substituted 
+                                 to) `a`
 
 Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)
@@ -104,9 +112,11 @@ In file $FILE:3:12 ->
   4 │         | 0 => 0
   5 │         | a => a
   6 │         | suc a => suc a
-    │           ╰────────────╯ substituted to `suc (suc a)`
+    │           ╰────────────╯ (confluence check: this clause is substituted to)
+                               `suc (suc a)`
   7 │         | suc (suc a) => a
-    │           ╰──────────────╯ substituted to `a`
+    │           ╰──────────────╯ (confluence check: this clause is substituted 
+                                 to) `a`
 
 Error: The 4th and the 3rd clauses are not confluent because we failed to unify
          suc (suc a)

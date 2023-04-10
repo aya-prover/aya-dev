@@ -37,12 +37,13 @@ public class TeXStylist extends ClosingStylist {
     return new StyleToken("\\textbf{", "}", false);
   }
 
-  @Override protected @NotNull StyleToken formatStrike(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("\\sout{", "}", false);
-  }
-
-  @Override protected @NotNull StyleToken formatUnderline(EnumSet<StringPrinter.Outer> outer) {
-    return new StyleToken("\\underline{", "}", false);
+  @Override
+  protected @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer) {
+    return switch (line.position()) {
+      case Underline -> new StyleToken("\\underline{", "}", false);
+      case Strike -> new StyleToken("\\sout{", "}", false);
+      case Overline -> StyleToken.NULL;
+    };
   }
 
   @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
@@ -85,8 +86,11 @@ public class TeXStylist extends ClosingStylist {
       case Style.Attr attr -> switch (attr) {
         case Italic -> Tuple.of("\\textit{", "}");
         case Bold -> Tuple.of("\\textbf{", "}");
+      };
+      case Style.LineThrough(var pos, var $, var $$) -> switch (pos) {
         case Strike -> Tuple.of("\\sout{", "}");
         case Underline -> Tuple.of("\\underline{", "}");
+        case Overline -> null;
       };
       case Style.ColorHex(var rgb, var background) -> Tuple.of("\\%s[HTML]{%06x}{".formatted(
         background ? "colorbox" : "textcolor", rgb), "}");

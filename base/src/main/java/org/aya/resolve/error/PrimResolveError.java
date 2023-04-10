@@ -21,7 +21,7 @@ public interface PrimResolveError extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown primitive"),
-        Doc.code(Doc.plain(name)));
+        Doc.code(name));
     }
   }
 
@@ -31,7 +31,7 @@ public interface PrimResolveError extends Problem {
   ) implements PrimResolveError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Redefinition of primitive"),
-        Doc.code(Doc.plain(name)));
+        Doc.code(name));
     }
   }
 
@@ -46,9 +46,9 @@ public interface PrimResolveError extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       assert lack.isNotEmpty();
       return Doc.sep(
-        Doc.english("The primitive"), Doc.code(Doc.plain(name)),
+        Doc.english("The primitive"), Doc.code(name),
         Doc.english("depends on undeclared primitive(s):"),
-        Doc.commaList(lack.map(name -> Doc.code(Doc.plain(name.id)))));
+        Doc.commaList(lack.map(name -> Doc.code(name.id))));
     }
   }
 
@@ -58,13 +58,13 @@ public interface PrimResolveError extends Problem {
   ) implements PrimResolveError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("The primitive"),
-        Doc.code(Doc.plain(name)),
+        Doc.code(name),
         Doc.english("is not designed to be used as a function"));
     }
 
     @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Use the projection syntax instead, like:"),
-        Doc.code(Doc.plain("." + name)));
+        Doc.code("." + name));
     }
   }
 }

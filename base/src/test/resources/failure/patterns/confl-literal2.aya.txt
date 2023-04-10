@@ -5,9 +5,10 @@ In file $FILE:3:12 ->
   3 │       overlap def largeInt1 Nat Nat : Nat
     │                   ╰───────╯
   4 │         | a, b => a
-    │           ╰───────╯ substituted to `114514`
+    │           ╰───────╯ (confluence check: this clause is substituted to) `114514`
   5 │         | 114514, 1919810 => 1
-    │           ╰──────────────────╯ substituted to `1`
+    │           ╰──────────────────╯ (confluence check: this clause is 
+                                     substituted to) `1`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1
@@ -31,9 +32,10 @@ In file $FILE:7:12 ->
   7 │       overlap def largeInt2 Nat Nat : Nat
     │                   ╰───────╯
   8 │         | a, b => b
-    │           ╰───────╯ substituted to `1919810`
+    │           ╰───────╯ (confluence check: this clause is substituted to) `1919810`
   9 │         | a, 1919810 => 1
-    │           ╰─────────────╯ substituted to `1`
+    │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                to) `1`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1
@@ -57,10 +59,11 @@ In file $FILE:11:12 ->
   11 │       overlap def largeInt3 Nat Nat : Nat
      │                   ╰───────╯
   12 │         | a, b => b
-     │           ╰───────╯ substituted to `1919810`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `1919810`
   13 │         | a, suc b => b
   14 │         | a, 1919810 => 1
-     │           ╰─────────────╯ substituted to `1`
+     │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                 to) `1`
 
 Error: The 1st and the 3rd clauses are not confluent because we failed to unify
          1
@@ -74,9 +77,10 @@ In file $FILE:11:12 ->
   11 │       overlap def largeInt3 Nat Nat : Nat
      │                   ╰───────╯
   12 │         | a, b => b
-     │           ╰───────╯ substituted to `suc b`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `suc b`
   13 │         | a, suc b => b
-     │           ╰───────────╯ substituted to `b`
+     │           ╰───────────╯ (confluence check: this clause is substituted to)
+                               `b`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc b
@@ -90,9 +94,10 @@ In file $FILE:11:12 ->
   11 │       overlap def largeInt3 Nat Nat : Nat
      │                   ╰───────╯
   12 │         | a, b => b
-     │           ╰───────╯ substituted to `suc b`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `suc b`
   13 │         | a, suc b => b
-     │           ╰───────────╯ substituted to `b`
+     │           ╰───────────╯ (confluence check: this clause is substituted to)
+                               `b`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc b
@@ -126,9 +131,10 @@ In file $FILE:16:12 ->
   16 │       overlap def largeInt1-inv Nat Nat : Nat
      │                   ╰───────────╯
   17 │         | a, b => a
-     │           ╰───────╯ substituted to `114514`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `114514`
   18 │         | 114514, 1919810 => 1
-     │           ╰──────────────────╯ substituted to `1`
+     │           ╰──────────────────╯ (confluence check: this clause is 
+                                      substituted to) `1`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1
@@ -152,9 +158,10 @@ In file $FILE:20:12 ->
   20 │       overlap def largeInt2-inv Nat Nat : Nat
      │                   ╰───────────╯
   21 │         | b, a => b
-     │           ╰───────╯ substituted to `1919810`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `1919810`
   22 │         | 1919810, a => 1
-     │           ╰─────────────╯ substituted to `1`
+     │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                 to) `1`
 
 Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1
@@ -178,10 +185,11 @@ In file $FILE:24:12 ->
   24 │       overlap def largeInt3-inv Nat Nat : Nat
      │                   ╰───────────╯
   25 │         | b, a => b
-     │           ╰───────╯ substituted to `1919810`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `1919810`
   26 │         | suc b, a => b
   27 │         | 1919810, a => 1
-     │           ╰─────────────╯ substituted to `1`
+     │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                 to) `1`
 
 Error: The 1st and the 3rd clauses are not confluent because we failed to unify
          1
@@ -195,9 +203,10 @@ In file $FILE:24:12 ->
   24 │       overlap def largeInt3-inv Nat Nat : Nat
      │                   ╰───────────╯
   25 │         | b, a => b
-     │           ╰───────╯ substituted to `suc b`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `suc b`
   26 │         | suc b, a => b
-     │           ╰───────────╯ substituted to `b`
+     │           ╰───────────╯ (confluence check: this clause is substituted to)
+                               `b`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc b
@@ -211,9 +220,10 @@ In file $FILE:24:12 ->
   24 │       overlap def largeInt3-inv Nat Nat : Nat
      │                   ╰───────────╯
   25 │         | b, a => b
-     │           ╰───────╯ substituted to `suc b`
+     │           ╰───────╯ (confluence check: this clause is substituted to) `suc b`
   26 │         | suc b, a => b
-     │           ╰───────────╯ substituted to `b`
+     │           ╰───────────╯ (confluence check: this clause is substituted to)
+                               `b`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc b
@@ -248,9 +258,11 @@ In file $FILE:29:12 ->
      │                   ╰─────────╯
   30 │         | 114, 0 => 0
   31 │         | 114, suc b => suc b
-     │           ╰─────────────────╯ substituted to `suc 513`
+     │           ╰─────────────────╯ (confluence check: this clause is 
+                                     substituted to) `suc 513`
   32 │         | 114, 514 => 515
-     │           ╰─────────────╯ substituted to `515`
+     │           ╰─────────────╯ (confluence check: this clause is substituted 
+                                 to) `515`
 
 Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
          515

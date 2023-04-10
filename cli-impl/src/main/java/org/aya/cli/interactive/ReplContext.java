@@ -71,8 +71,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var bors = downstream;
     RepoLike.super.merge();
     if (bors == null) return;
-    symbols.table().putAll(bors.symbols.table());
-    exports.symbols().table().putAll(bors.exports.symbols().table());
+    mergeSymbols(symbols, bors.symbols);
+    mergeSymbols(exports.symbols(), bors.exports.symbols());
     exports.modules().putAll(bors.exports.modules());
     modules.putAll(bors.modules);
   }
@@ -82,5 +82,13 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     exports.symbols().table().clear();
     exports.modules().clear();
     symbols.table().clear();
+  }
+
+  /**
+   * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
+   * so be careful about {@param rhs}
+   */
+  private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> lhs, @NotNull ModuleSymbol<T> rhs) {
+    rhs.table().forEach((uname, candy) -> lhs.resolveUnqualified(uname).asMut().get().putAll(candy));
   }
 }

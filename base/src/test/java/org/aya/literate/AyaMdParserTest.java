@@ -17,6 +17,8 @@ import org.aya.test.EmptyModuleLoader;
 import org.aya.test.TestRunner;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
+import org.aya.util.reporter.CollectingReporter;
+import org.aya.util.reporter.IgnoringReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,31 +42,17 @@ public class AyaMdParserTest {
     public final static @NotNull String PREFIX_EXPECTED = "expected-";
     public final static @NotNull String EXTENSION_AYA_MD = Constants.AYA_LITERATE_POSTFIX;
     public final static @NotNull String EXTENSION_AYA = Constants.AYA_POSTFIX;
-    public final static @NotNull String EXTENSION_HTML = EXTENSION_AYA_MD + ".html";
+    public final static @NotNull String EXTENSION_HTML = ".html";
     public final static @NotNull String EXTENSION_TEX = ".tex";
-
-    public @NotNull String mdName() {
-      return modName + EXTENSION_AYA_MD;
-    }
+    public final static @NotNull String EXTENSION_PLAIN_TEXT = ".txt";
+    public final static @NotNull String EXTENSION_OUT_MD = ".out.md";
 
     public @NotNull String ayaName() {
       return modName + EXTENSION_AYA;
     }
 
-    public @NotNull String expectedAyaName() {
-      return PREFIX_EXPECTED + ayaName();
-    }
-
-    public @NotNull String htmlName() {
-      return modName + EXTENSION_HTML;
-    }
-
-    public @NotNull String texName() {
-      return modName + EXTENSION_TEX;
-    }
-
     public @NotNull Path mdFile() {
-      return TEST_DIR.resolve(mdName());
+      return TEST_DIR.resolve(modName + EXTENSION_AYA_MD);
     }
 
     public @NotNull Path ayaFile() {
@@ -72,19 +60,23 @@ public class AyaMdParserTest {
     }
 
     public @NotNull Path expectedAyaFile() {
-      return TEST_DIR.resolve(expectedAyaName());
+      return TEST_DIR.resolve(PREFIX_EXPECTED + ayaName());
     }
 
     public @NotNull Path htmlFile() {
-      return TEST_DIR.resolve(htmlName());
+      return TEST_DIR.resolve(modName + EXTENSION_HTML);
     }
 
     public @NotNull Path outMdFile() {
-      return TEST_DIR.resolve(htmlName() + ".out.md");
+      return TEST_DIR.resolve(modName + EXTENSION_OUT_MD);
     }
 
     public @NotNull Path texFile() {
-      return TEST_DIR.resolve(texName());
+      return TEST_DIR.resolve(modName + EXTENSION_TEX);
+    }
+
+    public @NotNull Path plainTextFile() {
+      return TEST_DIR.resolve(modName + EXTENSION_PLAIN_TEXT);
     }
   }
 
@@ -113,21 +105,22 @@ public class AyaMdParserTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "syntax"})
+  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "syntax", "compiler-output"})
   public void testHighlight(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
-    var literate = SingleAyaFile.createLiterateFile(mdFile, AyaThrowingReporter.INSTANCE);
-
-    var stmts = literate.parseMe(new AyaParserImpl(AyaThrowingReporter.INSTANCE));
-    var ctx = new EmptyContext(AyaThrowingReporter.INSTANCE, Path.of(".")).derive(oneCase.modName());
-    var loader = EmptyModuleLoader.INSTANCE;
+    var reporter = ((CollectingReporter) EmptyModuleLoader.COLLECTING_ERRORS.reporter());
+    var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
+    var stmts = literate.parseMe(new AyaParserImpl(reporter));
+    var ctx = new EmptyContext(reporter, Path.of(".")).derive(oneCase.modName());
+    var loader = EmptyModuleLoader.COLLECTING_ERRORS;
     var info = loader.resolveModule(new PrimDef.Factory(), ctx, stmts, loader);
     loader.tyckModule(null, info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.toDoc(stmts, AyaPrettierOptions.pretty()).toDoc();
+    var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(), AyaPrettierOptions.pretty()).toDoc();
+    reporter.problems().clear();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();
@@ -135,9 +128,10 @@ public class AyaMdParserTest {
     Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
     Files.writeString(oneCase.outMdFile(), expectedMd);
     Files.writeString(oneCase.texFile(), actualTexInlinedStyle);
+    Files.writeString(oneCase.plainTextFile(), doc.debugRender());
 
     // test single file compiler
-    var compiler = new SingleFileCompiler(AyaThrowingReporter.INSTANCE, null, null);
+    var compiler = new SingleFileCompiler(IgnoringReporter.INSTANCE, null, null);
     compiler.compile(oneCase.mdFile(), new CompilerFlags(
       CompilerFlags.Message.ASCII, false, false, null, SeqView.empty(),
       oneCase.outMdFile()
@@ -156,6 +150,7 @@ public class AyaMdParserTest {
 
   private @NotNull String trim(@NotNull String input) {
     return input.replaceAll("id=\"[^\"]+\"", "id=\"\"")
-      .replaceAll("href=\"[^\"]+\"", "href=\"\"");
+      .replaceAll("href=\"[^\"]+\"", "href=\"\"")
+      .replaceAll("data-tooltip-text=\"[^\"]+\"", "data-tooltip-text=\"\"");
   }
 }

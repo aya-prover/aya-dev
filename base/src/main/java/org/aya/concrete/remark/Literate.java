@@ -5,12 +5,10 @@ package org.aya.concrete.remark;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
+import org.aya.concrete.remark.code.CodeOptions;
 import org.aya.core.def.UserDef;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
-import org.aya.pretty.doc.Link;
-import org.aya.pretty.doc.Style;
+import org.aya.pretty.doc.*;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
@@ -44,6 +42,13 @@ public sealed interface Literate extends Docile {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return Doc.image(child, Link.page(src));
+    }
+  }
+
+  record Math(boolean inline, @NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      var child = Doc.cat(this.children().map(Literate::toDoc));
+      return inline ? Doc.math(child) : Doc.mathBlock(child);
     }
   }
 
@@ -83,11 +88,11 @@ public sealed interface Literate extends Docile {
 
     @Override public @NotNull Doc toDoc() {
       if (tyckResult == null) {
-        if (expr != null) return Doc.code(expr.toDoc(options.options()));
+        if (expr != null) return Doc.code(Language.Builtin.Aya, expr.toDoc(options.options()));
         else return Doc.code("Error");
       }
       assert expr != null;
-      return Doc.code((switch (options.showCode()) {
+      return Doc.code(Language.Builtin.Aya, (switch (options.showCode()) {
         case Concrete -> expr;
         case Core -> tyckResult.wellTyped();
         case Type -> tyckResult.type();
@@ -131,7 +136,7 @@ public sealed interface Literate extends Docile {
     @Override public @NotNull Doc toDoc() {
       if (language.equalsIgnoreCase("aya-hidden")) return Doc.empty();
       var doc = isAya() && highlighted != null ? highlighted : Doc.plain(raw);
-      return Doc.codeBlock(language, doc);
+      return Doc.codeBlock(Language.of(language), doc);
     }
   }
 

@@ -1,10 +1,11 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.remark;
+package org.aya.concrete.remark.code;
 
+import org.aya.concrete.remark.Literate;
 import org.aya.generic.util.NormalizeMode;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.commonmark.node.Code;
@@ -18,14 +19,11 @@ public record CodeOptions(
   @NotNull PrettierOptions options,
   @NotNull ShowCode showCode
 ) {
-  public static final @NotNull CodeOptions DEFAULT =
-    new CodeOptions(NormalizeMode.NULL, AyaPrettierOptions.pretty(), ShowCode.Core);
-
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
-    if (code.getFirstChild() instanceof CodeAttrProcessor.Attr attr) {
-      return new Literate.Code(code.getLiteral(), sourcePos, attr.options);
-    } else return new Literate.Raw(Doc.code("", Doc.plain(code.getLiteral())));
-    // ^ should not use `Doc.code()` because it assumes valid aya code.
+    return switch (code.getFirstChild()) {
+      case CodeAttrProcessor.Attr attr -> new Literate.Code(code.getLiteral(), sourcePos, attr.options);
+      case default, null -> new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));
+    };
   }
 
   public enum ShowCode {

@@ -5,9 +5,9 @@ In file $FILE:3:12 ->
   3 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   4 │         | zero => 1
-    │           ╰───────╯ substituted to `1`
+    │           ╰───────╯ (confluence check: this clause is substituted to) `1`
   5 │         | 0 => 0
-    │           ╰────╯ substituted to `0`
+    │           ╰────╯ (confluence check: this clause is substituted to) `0`
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          1
@@ -23,10 +23,10 @@ In file $FILE:3:12 ->
   4 │         | zero => 1
   5 │         | 0 => 0
   6 │         | 1 => 1
-    │           ╰────╯ substituted to `1`
+    │           ╰────╯ (confluence check: this clause is substituted to) `1`
   7 │         | suc 1 => 1
   8 │         | suc n => n
-    │           ╰────────╯ substituted to `0`
+    │           ╰────────╯ (confluence check: this clause is substituted to) `0`
 
 Error: The 5th and the 3rd clauses are not confluent because we failed to unify
          1

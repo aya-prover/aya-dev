@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.printer.ColorScheme;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -21,14 +22,20 @@ public sealed interface Style extends Serializable {
   enum Attr implements Style {
     Italic,
     Bold,
-    Strike,
-    Underline,
   }
 
-  record ColorName(@NotNull String colorName, boolean background) implements Style {
+  sealed interface Color extends Style {
   }
 
-  record ColorHex(int color, boolean background) implements Style {
+  record LineThrough(@NotNull Position position, @NotNull Shape shape, @Nullable Color color) implements Style {
+    public enum Position {Underline, Overline, Strike}
+    public enum Shape {Solid, Curly}
+  }
+
+  record ColorName(@NotNull String colorName, boolean background) implements Color {
+  }
+
+  record ColorHex(int color, boolean background) implements Color {
   }
 
   record Preset(@NotNull String styleName) implements Style {
@@ -55,30 +62,30 @@ public sealed interface Style extends Serializable {
   }
 
   static @NotNull Style strike() {
-    return Attr.Strike;
+    return new LineThrough(LineThrough.Position.Strike, LineThrough.Shape.Solid, null);
   }
 
   static @NotNull Style underline() {
-    return Attr.Underline;
+    return new LineThrough(LineThrough.Position.Underline, LineThrough.Shape.Solid, null);
   }
 
-  static @NotNull Style color(@NotNull String colorName) {
+  static @NotNull Color color(@NotNull String colorName) {
     return new ColorName(colorName, false);
   }
 
-  static @NotNull Style colorBg(@NotNull String colorName) {
+  static @NotNull Color colorBg(@NotNull String colorName) {
     return new ColorName(colorName, true);
   }
 
-  static @NotNull Style color(int color) {
+  static @NotNull Color color(int color) {
     return new ColorHex(color, false);
   }
 
-  static @NotNull Style color(float r, float g, float b) {
+  static @NotNull Color color(float r, float g, float b) {
     return new ColorHex(ColorScheme.colorOf(r, g, b), false);
   }
 
-  static @NotNull Style colorBg(int color) {
+  static @NotNull Color colorBg(int color) {
     return new ColorHex(color, true);
   }
 
