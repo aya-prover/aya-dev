@@ -6,8 +6,6 @@ rootProject.name = "aya-prover"
 dependencyResolutionManagement {
   @Suppress("UnstableApiUsage") repositories {
     mavenCentral()
-    // For jacoco snapshot. Delete once jacoco 0.8.9 is released.
-    maven("https://oss.sonatype.org/content/repositories/snapshots")
   }
 }
 
