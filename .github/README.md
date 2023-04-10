@@ -2,7 +2,6 @@
 [![maven]][maven-repo]
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
-[![tokei]](https://github.com/XAMPPRocky/tokei)
 [![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
 [**Website**](https://www.aya-prover.org) contains:
@@ -29,6 +28,8 @@ Aya is under active development, so please expect bugs, usability or performance
   Checkout the [red-black tree][rbtree] (without deletion yet).
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support, inspired from Agda and [1lab].
+  You may preview the features (in Chinese)
+  [here](https://blog.imkiva.org/2023/04/02/intro-literate-aya/).
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number like in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
@@ -60,7 +61,7 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
   and make sure you understand your responsibilities.
 + Please follow [the Code of Conduct](https://github.com/aya-prover/aya-dev/blob/master/.github/CODE_OF_CONDUCT.md) to
   ensure an inclusive and welcoming community atmosphere.
-+ Ask [@ice1000] to become an organization member.
++ Ask [@ice1000] or simply create a ticket in the discussion to become an organization member.
   + If you want to contribute, ask before doing anything.
     We are reluctant to accept PRs that contradict our design goals.
     We value your time and enthusiasm, so we don't want to close your PRs :)
@@ -69,7 +70,6 @@ of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
-[tokei]: https://img.shields.io/tokei/lines/github/aya-prover/aya-dev?logo=java
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
 [oop]: ../base/src/test/resources/success/common/src/Arith/Nat/Core.aya
 [gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
@@ -104,11 +104,14 @@ and here are some example build configurations:
 implementation group: 'org.aya-prover', name: '[project name]', version: '[latest version]'
 ```
 
-+ `[project name]` specifies the subproject of Aya you want to use, and the options are `pretty`, `base`, `cli-impl`, `cli-console`, `parser`, etc.
++ `[project name]` specifies the subproject of Aya you want to use,
+  and the options are `pretty`, `base`, `cli-impl`, `cli-console`, `parser`, etc.
   + The type checker lives in `base` and `parser`.
   + The generalized pretty printing framework is in `pretty`.
-  + The generalized binary operator parser, generalized tree builder, generalized mutable graph, generalized termination checker,
+  + The library system, literate mode, single-file type checker, and basic REPL are in `cli-impl`.
+  + The generalized binary operator parser, generalized tree builder,
+    generalized mutable graph, generalized termination checker,
     and a bunch of other utilities (files, etc.) are in `tools`.
   + The command and argument parsing framework is in `tools-repl`.
-    It offers an implementation of GrammarKit-based jline3 parser and relevant facilities.
-+ `[latest version]` is what you see on this badge ![maven] .
+    It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
++ `[latest version]` is what you see on this badge ![maven].
