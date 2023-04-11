@@ -511,7 +511,7 @@ public record AyaProducer(
       return unreachable(node);
     }
     if (node.is(LIT_INT_EXPR)) try {
-      return new Expr.LitInt(pos, Integer.parseInt(node.tokenText()));
+      return new Expr.LitInt(pos, node.tokenText().toInt());
     } catch (NumberFormatException ignored) {
       reporter.report(new ParseError(pos, "Unsupported integer literal `" + node.tokenText() + "`"));
       throw new ParsingInterruptedException();
@@ -519,13 +519,13 @@ public record AyaProducer(
     if (node.is(LIT_STRING_EXPR)) {
       var text = node.tokenText();
       var content = text.substring(1, text.length() - 1);
-      return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content));
+      return new Expr.LitString(pos, StringUtil.escapeStringCharacters(content.toString()));
     }
     if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
       var lifts = node.childrenOfType(ULIFT_PREFIX).collect(Collectors.summingInt(kw -> {
         var text = kw.tokenText();
-        if ("ulift".equals(text)) return 1;
+        if ("ulift".contentEquals(text)) return 1;
         else return text.length();
       }));
       return lifts > 0 ? new Expr.Lift(sourcePosOf(node), expr, lifts) : expr;
@@ -706,7 +706,7 @@ public record AyaProducer(
   ) {
     var number = fix.peekChild(NUMBER);
     if (number != null) return new Expr.Proj(sourcePos, projectee, Either.left(
-      Integer.parseInt(number.tokenText())));
+      number.tokenText().toInt()));
     var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
     var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
     var coeLeft = exprs.getOption(0);
@@ -779,7 +779,7 @@ public record AyaProducer(
         }).toImmutableSeq());
     }
     if (node.peekChild(NUMBER) != null)
-      return new Pattern.Number(sourcePos, Integer.parseInt(node.tokenText()));
+      return new Pattern.Number(sourcePos, node.tokenText().toInt());
     if (node.peekChild(LPAREN) != null) return new Pattern.Absurd(sourcePos);
     if (node.peekChild(CALM_FACE) != null) return new Pattern.CalmFace(sourcePos);
     return unreachable(node);
@@ -863,7 +863,7 @@ public record AyaProducer(
   }
 
   public @NotNull WithPos<String> weakId(@NotNull GenericNode<?> node) {
-    return new WithPos<>(sourcePosOf(node), node.tokenText());
+    return new WithPos<>(sourcePosOf(node), node.tokenText().toString());
   }
 
   public @NotNull WithPos<String> generalizeParamName(@NotNull GenericNode<?> node) {
