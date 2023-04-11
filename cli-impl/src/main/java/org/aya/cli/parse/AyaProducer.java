@@ -76,6 +76,7 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  * @see AyaPsiElementTypes
  */
 public record AyaProducer(
+  @NotNull String code,
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
@@ -371,7 +372,7 @@ public record AyaProducer(
     if (name == null) return unreachable(node);
     return new TeleDecl.ClassMember(
       info.info, name, tele,
-      typeOrNull(node.peekChild(TYPE)),
+      typeOrHole(node.peekChild(TYPE), info.info.sourcePos()),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
       node.peekChild(KW_COERCE) != null
     );
