@@ -2,7 +2,7 @@
 
 open data Bool : Type | true | false
 
-struct BoolPair : Type
+class BoolPair
   | fst : Bool
   | snd : Bool
 

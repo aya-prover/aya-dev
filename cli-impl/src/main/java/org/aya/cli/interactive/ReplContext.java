@@ -3,7 +3,6 @@
 package org.aya.cli.interactive;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;

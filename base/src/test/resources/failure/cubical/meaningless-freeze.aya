@@ -1,5 +1,5 @@
 open data Unit | unit
-open struct Test
+open class Test
   | x : Unit -> Unit
 
 def YY (t : Test) : Unit

@@ -168,42 +168,13 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
     }
   }
 
-  /**
-   * Concrete structure definition
-   *
-   * @author vont
-   */
-  public static final class StructDecl extends TopLevel<SortTerm> {
-    public final @NotNull DefVar<StructDef, StructDecl> ref;
-    public final @NotNull ImmutableSeq<StructField> fields;
-
-    public StructDecl(
-      @NotNull DeclInfo info,
-      @NotNull String name,
-      @NotNull ImmutableSeq<Expr.Param> telescope,
-      @NotNull Expr result,
-      // @NotNull ImmutableSeq<String> superClassNames,
-      @NotNull ImmutableSeq<StructField> fields,
-      @NotNull DeclInfo.Personality personality
-    ) {
-      super(info, telescope, result, personality);
-      this.fields = fields;
-      this.ref = DefVar.concrete(this, name);
-      fields.forEach(field -> field.structRef = ref);
-    }
-
-    @Override public @NotNull DefVar<StructDef, StructDecl> ref() {
-      return ref;
-    }
-  }
-
-  public static final class StructField extends TeleDecl<Term> {
-    public final @NotNull DefVar<FieldDef, TeleDecl.StructField> ref;
-    public DefVar<StructDef, StructDecl> structRef;
+  public static final class ClassMember extends TeleDecl<Term> {
+    public final @NotNull DefVar<MemberDef, ClassMember> ref;
+    public DefVar<ClassDef, ClassDecl> classDef;
     public @NotNull Option<Expr> body;
     public final boolean coerce;
 
-    public StructField(
+    public ClassMember(
       @NotNull DeclInfo info, @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @NotNull Expr result,
@@ -216,7 +187,7 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
       this.ref = DefVar.concrete(this, name);
     }
 
-    @Override public @NotNull DefVar<FieldDef, StructField> ref() {
+    @Override public @NotNull DefVar<MemberDef, ClassMember> ref() {
       return ref;
     }
   }

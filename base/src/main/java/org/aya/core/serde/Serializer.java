@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 public record Serializer(@NotNull Serializer.State state) {
   public @NotNull SerDef serialize(@NotNull GenericDef def) {
     return switch (def) {
-      case ClassDef classDef -> throw new UnsupportedOperationException("TODO");
       case FnDef fn -> new SerDef.Fn(
         state.def(fn.ref),
         serializeParams(fn.telescope),
@@ -31,20 +30,16 @@ public record Serializer(@NotNull Serializer.State state) {
         fn.modifiers,
         serialize(fn.result)
       );
-      case FieldDef field -> new SerDef.Field(
-        state.def(field.structRef),
+      case MemberDef field -> new SerDef.Field(
+        state.def(field.classRef),
         state.def(field.ref),
-        serializeParams(field.ownerTele),
-        serializeParams(field.selfTele),
+        serializeParams(field.telescope),
         serialize(field.result),
-        field.body.map(this::serialize),
         field.coerce
       );
-      case StructDef struct -> new SerDef.Struct(
-        state.def(struct.ref()),
-        serializeParams(struct.telescope),
-        serialize(struct.result),
-        struct.fields.map(field -> (SerDef.Field) serialize(field))
+      case ClassDef clazz -> new SerDef.Clazz(
+        state.def(clazz.ref()),
+        clazz.members.map(field -> (SerDef.Field) serialize(field))
       );
       case DataDef data -> new SerDef.Data(
         state.def(data.ref),
@@ -93,7 +88,7 @@ public record Serializer(@NotNull Serializer.State state) {
         state.def(conCall.head().dataRef()), state.def(conCall.head().ref()),
         serializeCall(conCall.head().ulift(), conCall.head().dataArgs()),
         serializeArgs(conCall.conArgs()));
-      case StructCall structCall -> serializeStructCall(structCall);
+      case ClassCall classCall -> serializeClassCall(classCall);
       case DataCall dataCall -> serializeDataCall(dataCall);
       case PrimCall prim -> new SerTerm.Prim(
         state.def(prim.ref()),
@@ -101,8 +96,7 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeCall(prim.ulift(), prim.args()));
       case FieldTerm access -> new SerTerm.Access(
         serialize(access.of()), state.def(access.ref()),
-        serializeArgs(access.structArgs()),
-        serializeArgs(access.fieldArgs()));
+        serializeArgs(access.args()));
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
@@ -112,8 +106,7 @@ public record Serializer(@NotNull Serializer.State state) {
         new SerTerm.Match(disc.map(this::serialize), clauses.map(this::serialize));
       case TupTerm tuple -> new SerTerm.Tup(serializeArgs(tuple.items()));
       case LamTerm(var param, var body) -> new SerTerm.Lam(serialize(param.ref()), param.explicit(), serialize(body));
-      case NewTerm newTerm -> new SerTerm.New(serializeStructCall(newTerm.struct()), ImmutableMap.from(
-        newTerm.params().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
+      case NewTerm newTerm -> new SerTerm.New(serializeClassCall(newTerm.inner()));
 
       case PartialTerm el -> new SerTerm.PartEl(partial(el.partial()), serialize(el.rhsType()));
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
@@ -169,10 +162,10 @@ public record Serializer(@NotNull Serializer.State state) {
       serializeCall(dataCall.ulift(), dataCall.args()));
   }
 
-  private @NotNull SerTerm.Struct serializeStructCall(@NotNull StructCall structCall) {
-    return new SerTerm.Struct(
-      state.def(structCall.ref()),
-      serializeCall(structCall.ulift(), structCall.args()));
+  private @NotNull SerTerm.Clazz serializeClassCall(@NotNull ClassCall classCall) {
+    return new SerTerm.Clazz(
+      state.def(classCall.ref()), classCall.ulift(),
+      ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
   }
 
   private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {

@@ -28,6 +28,8 @@ public interface AyaPsiElementTypes {
   IElementType BARRED_SUB_SYSTEM = new AyaPsiElementType("BARRED_SUB_SYSTEM");
   IElementType BIND_BLOCK = new AyaPsiElementType("BIND_BLOCK");
   IElementType CALM_FACE_EXPR = new AyaPsiElementType("CALM_FACE_EXPR");
+  IElementType CLASS_DECL = new AyaPsiElementType("CLASS_DECL");
+  IElementType CLASS_MEMBER = new AyaPsiElementType("CLASS_MEMBER");
   IElementType CLAUSE = new AyaPsiElementType("CLAUSE");
   IElementType CLAUSES = new AyaPsiElementType("CLAUSES");
   IElementType COMMA_SEP = new AyaPsiElementType("COMMA_SEP");
@@ -87,10 +89,9 @@ public interface AyaPsiElementTypes {
   IElementType PROJ_FIX_ID = new AyaPsiElementType("PROJ_FIX_ID");
   IElementType QUALIFIED_ID = new AyaPsiElementType("QUALIFIED_ID");
   IElementType REF_EXPR = new AyaPsiElementType("REF_EXPR");
+  IElementType SELF_EXPR = new AyaPsiElementType("SELF_EXPR");
   IElementType SIGMA_EXPR = new AyaPsiElementType("SIGMA_EXPR");
   IElementType STMT = new AyaPsiElementType("STMT");
-  IElementType STRUCT_DECL = new AyaPsiElementType("STRUCT_DECL");
-  IElementType STRUCT_FIELD = new AyaPsiElementType("STRUCT_FIELD");
   IElementType SUB_SYSTEM = new AyaPsiElementType("SUB_SYSTEM");
   IElementType TELE = new AyaPsiElementType("TELE");
   IElementType TELE_BINDER = new AyaPsiElementType("TELE_BINDER");
@@ -98,7 +99,6 @@ public interface AyaPsiElementTypes {
   IElementType TELE_BINDER_TYPED = new AyaPsiElementType("TELE_BINDER_TYPED");
   IElementType TELE_BINDER_UNTYPED = new AyaPsiElementType("TELE_BINDER_UNTYPED");
   IElementType TELE_PARAM_NAME = new AyaPsiElementType("TELE_PARAM_NAME");
-  IElementType THIS_EXPR = new AyaPsiElementType("THIS_EXPR");
   IElementType TIGHTERS = new AyaPsiElementType("TIGHTERS");
   IElementType TUPLE_ATOM = new AyaPsiElementType("TUPLE_ATOM");
   IElementType TUPLE_IM_ARGUMENT = new AyaPsiElementType("TUPLE_IM_ARGUMENT");
@@ -126,6 +126,8 @@ public interface AyaPsiElementTypes {
   IElementType ID = new AyaPsiTokenType("ID");
   IElementType IMPLIES = new AyaPsiTokenType("=>");
   IElementType KW_AS = new AyaPsiTokenType("as");
+  IElementType KW_CLASS = new AyaPsiTokenType("class");
+  IElementType KW_CLASSIFIYING = new AyaPsiTokenType("classifying");
   IElementType KW_CODATA = new AyaPsiTokenType("codata");
   IElementType KW_COERCE = new AyaPsiTokenType("coerce");
   IElementType KW_COMPLETED = new AyaPsiTokenType("completed");
@@ -162,10 +164,9 @@ public interface AyaPsiElementTypes {
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");
   IElementType KW_PROP = new AyaPsiTokenType("Prop");
   IElementType KW_PUBLIC = new AyaPsiTokenType("public");
+  IElementType KW_SELF = new AyaPsiTokenType("self");
   IElementType KW_SET = new AyaPsiTokenType("Set");
   IElementType KW_SIGMA = new AyaPsiTokenType("Sig");
-  IElementType KW_STRUCT = new AyaPsiTokenType("struct");
-  IElementType KW_THIS = new AyaPsiTokenType("this");
   IElementType KW_TIGHTER = new AyaPsiTokenType("tighter");
   IElementType KW_TYPE = new AyaPsiTokenType("Type");
   IElementType KW_ULIFT = new AyaPsiTokenType("ulift");

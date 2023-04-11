@@ -1,8 +1,8 @@
-In file $FILE:2:14 ->
+In file $FILE:2:12 ->
 
   1 │   prim I
-  2 │   struct Test : I
-    │                 ╰╯
+  2 │   data Test : I
+    │               ╰╯
 
 Error: Unable to make sense of the expression
          I

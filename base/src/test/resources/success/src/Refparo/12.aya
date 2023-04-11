@@ -4,10 +4,12 @@ open data EventT : Type 1
 def GetAgentT (T : EventT) : Type 1
   | CarrierT A => A
 
-open struct Event (T : EventT) : Type 1
-  | agent : GetAgentT T
+// TODO[class]
+// open class Event
+//   | T : EventT
+//   | agent : GetAgentT T
 
-def Quantifier (A : Type) : Type 1 => (A -> Type) -> Type
+// def Quantifier (A : Type) : Type 1 => (A -> Type) -> Type
 
-def mkVerb (T : EventT) : Type 2 =>
-  ulift Quantifier (Event T)
+// def mkVerb (T : EventT) : Type 2 =>
+//   ulift Quantifier (Event T)

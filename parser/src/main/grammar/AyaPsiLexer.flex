@@ -136,13 +136,14 @@ BLOCK_COMMENT_END   = "*/"
   "match"               { return KW_MATCH; }
   "variable"            { return KW_VARIABLE; }
   "def"                 { return KW_DEF; }
-  "struct"              { return KW_STRUCT; }
+  "class"               { return KW_CLASS; }
+  "classifying"         { return KW_CLASSIFIYING; }
   "data"                { return KW_DATA; }
   "prim"                { return KW_PRIM; }
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }
   "do"                  { return KW_DO; }
-  "this"                { return KW_THIS; }
+  "self"                { return KW_SELF; }
   "override"            { return KW_OVERRIDE; }
   "freeze"              { return KW_FREEZE; }
   "codata"              { return KW_CODATA; }

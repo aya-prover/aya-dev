@@ -23,6 +23,7 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.error.BadModifierWarn;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.*;
+import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -83,7 +84,7 @@ public record AyaProducer(
   public static final @NotNull TokenSet ARGUMENT = AyaPsiParser.EXTENDS_SETS_[2];
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, STRUCT_DECL);
+  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -225,7 +226,7 @@ public record AyaProducer(
     if (node.is(FN_DECL)) return fnDecl(node);
     if (node.is(PRIM_DECL)) return primDecl(node);
     if (node.is(DATA_DECL)) return dataDecl(node, additional);
-    if (node.is(STRUCT_DECL)) return structDecl(node, additional);
+    if (node.is(CLASS_DECL)) return classDecl(node, additional);
     return unreachable(node);
   }
 
@@ -352,25 +353,23 @@ public record AyaProducer(
     return error(node.childrenView().first(), "Expect a data constructor");
   }
 
-  public @Nullable TeleDecl.StructDecl structDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+  public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var info = declInfo(node, ModifierParser.DECL_FILTER);
     var name = info.checkName(this, true);
     if (name == null) return null;
-    var fields = node.childrenOfType(STRUCT_FIELD).map(this::structField).toImmutableSeq();
-    var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-    var ty = typeOrNull(node.peekChild(TYPE));
+    var members = node.childrenOfType(CLASS_MEMBER).map(this::classMember).toImmutableSeq();
     var personality = info.modifier.personality().data();
-    var decl = new TeleDecl.StructDecl(info.info, name, tele, ty, fields, personality);
+    var decl = new ClassDecl(info.info, name, personality, members);
     giveMeOpen(info.modifier, decl, additional);
     return decl;
   }
 
-  public @NotNull TeleDecl.StructField structField(GenericNode<?> node) {
+  public @NotNull TeleDecl.ClassMember classMember(GenericNode<?> node) {
     var tele = telescope(node.childrenOfType(TELE).map(x -> x));
     var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
     var name = info.checkName(this, true);
     if (name == null) return unreachable(node);
-    return new TeleDecl.StructField(
+    return new TeleDecl.ClassMember(
       info.info, name, tele,
       typeOrNull(node.peekChild(TYPE)),
       Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
@@ -574,7 +573,7 @@ public record AyaProducer(
               .map(b -> b.map($ -> LocalVar.from(b)))
               .toImmutableSeq();
             var body = expr(arg.child(EXPR));
-            return new Expr.Field(id, bindings, body, MutableValue.create());
+            return new Expr.Field<>(sourcePosOf(arg), id, bindings, body, MutableValue.create());
           }).toImmutableSeq());
     }
     if (node.is(PI_EXPR)) return Expr.buildPi(pos,

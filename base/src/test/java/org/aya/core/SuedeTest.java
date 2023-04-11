@@ -53,7 +53,9 @@ public class SuedeTest {
       def hcomp2d {a b c d : A}
         (p : a = b) (q : b = d) (r : a = c) : c = d
         => \\i => ((\\ k => r k = q k).coe p) i
-      struct Monoid {A : Type} (op : A -> A -> A): Type
+      class Monoid
+        | A : Type
+        | op : A -> A -> A
         | id : A
         | assoc (a b c : A) : op (op a b) c = op a (op b c)
         | id_r (a: A) : op a id = a

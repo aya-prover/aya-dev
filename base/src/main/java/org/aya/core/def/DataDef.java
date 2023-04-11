@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  *
  * @author kiva
  */
-public final class DataDef extends UserDef.Type {
+public final class DataDef extends UserDef<SortTerm> {
   public final @NotNull DefVar<DataDef, TeleDecl.DataDecl> ref;
   public final @NotNull ImmutableSeq<CtorDef> body;
 
@@ -40,8 +40,7 @@ public final class DataDef extends UserDef.Type {
   }
 
   @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
-    telescope.forEach(p -> p.descentConsume(f));
-    f.accept(result);
+    super.descentConsume(f, g);
     body.forEach(c -> c.descentConsume(f, g));
   }
 

@@ -133,7 +133,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Expr.New expr -> Doc.cblock(
         Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
         2, Doc.vcat(expr.fields().view().map(t ->
-          Doc.sep(Doc.symbol("|"), Doc.styled(FIELD, t.name().data()),
+          Doc.sep(Doc.symbol("|"), Doc.styled(MEMBER, t.name().data()),
             Doc.emptyIf(t.bindings().isEmpty(), () ->
               Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
             Doc.plain("=>"), term(Outer.Free, t.body()))
@@ -355,16 +355,12 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("not implemented yet");
-      case TeleDecl.StructDecl decl -> {
-        var prelude = declPrelude(decl);
-        prelude.append(Doc.styled(KEYWORD, "struct"));
-        prelude.append(linkDef(decl.ref, STRUCT));
-        prelude.append(visitTele(decl.telescope));
-        appendResult(prelude, decl.result);
+      case ClassDecl decl -> {
+        var prelude = MutableList.of(Doc.styled(KEYWORD, "class"));
+        prelude.append(linkDef(decl.ref, CLAZZ));
         yield Doc.cat(Doc.sepNonEmpty(prelude),
-          Doc.emptyIf(decl.fields.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.fields.view().map(this::decl))))),
+          Doc.emptyIf(decl.members.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
+            decl.members.view().map(this::decl))))),
           visitBindBlock(decl.bindBlock())
         );
       }
@@ -384,7 +380,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case TeleDecl.DataDecl decl -> {
         var prelude = declPrelude(decl);
         prelude.append(Doc.styled(KEYWORD, "data"));
-        prelude.append(linkDef(decl.ref, STRUCT));
+        prelude.append(linkDef(decl.ref, CLAZZ));
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
@@ -394,10 +390,10 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         );
       }
       case TeleDecl.PrimDecl decl -> primDoc(decl.ref);
-      case TeleDecl.StructField field -> {
+      case TeleDecl.ClassMember field -> {
         var doc = MutableList.of(Doc.symbol("|"),
           coe(field.coerce),
-          linkDef(field.ref, FIELD),
+          linkDef(field.ref, MEMBER),
           visitTele(field.telescope));
         appendResult(doc, field.result);
         field.body.ifDefined(body -> {

@@ -4,11 +4,8 @@ package org.aya.tyck.unify;
 
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
@@ -263,19 +260,15 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
       default -> compareUntyped(lhs, rhs, lr, rl) != null;
-      case StructCall type1 -> {
-        var fieldSigs = type1.ref().core.fields;
-        var paramSubst = ImmutableMap.from(Def.defTele(type1.ref()).zipView(type1.args()).map(x ->
-          Tuple.of(x.component1().ref(), x.component2().term())));
-        var fieldSubst = new Subst(MutableHashMap.create());
+      case ClassCall type1 -> {
+        var fieldSigs = type1.ref().core.members;
+        var fieldSubst = new Subst();
         for (var fieldSig : fieldSigs) {
-          var dummyVars = fieldSig.selfTele.map(par -> par.ref().rename());
-          var dummy = dummyVars.zip(fieldSig.selfTele).map(vpa ->
-            new Arg<Term>(new RefTerm(vpa.component1()), vpa.component2().explicit()));
-          var l = new FieldTerm(lhs, fieldSig.ref(), type1.args(), dummy);
-          var r = new FieldTerm(rhs, fieldSig.ref(), type1.args(), dummy);
+          var dummy = fieldSig.telescope.map(x -> x.rename().toArg());
+          var l = new FieldTerm(lhs, fieldSig.ref(), type1.orderedArgs()) /* TODO[class]: dummy */;
+          var r = new FieldTerm(rhs, fieldSig.ref(), type1.orderedArgs()) /* TODO[class]: dummy */;
           fieldSubst.add(fieldSig.ref(), l);
-          if (!compare(l, r, lr, rl, fieldSig.result().subst(paramSubst).subst(fieldSubst))) yield false;
+          if (!compare(l, r, lr, rl, fieldSig.result().subst(fieldSubst))) yield false;
         }
         yield true;
       }
@@ -406,9 +399,9 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
       }
-      case Pair(StructCall lhs, StructCall rhs) -> {
-        if (lhs.ref() != rhs.ref()) yield false;
-        yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
+      case Pair(ClassCall lhs, ClassCall rhs) -> {
+        if (!lhs.sameApply(rhs)) yield false; // TODO[class]: correct?
+        yield visitArgs(lhs.orderedArgs(), rhs.orderedArgs(), lr, rl, SeqView.empty());
       }
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) ->
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> false,
@@ -491,7 +484,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof StructCall)) yield null;
+        if (!(preStructType instanceof ClassCall)) yield null;
         if (lhs.ref() != rhs.ref()) yield null;
         yield Def.defResult(lhs.ref());
       }

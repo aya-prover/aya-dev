@@ -43,14 +43,5 @@ In file $FILE:10:5 ->
 
 Error: Self-reference found in the signature of D
 
-In file $FILE:11:7 ->
-
-  9  │   
-  10 │   data D D
-  11 │   struct S S
-     │          ╰╯
-
-Error: Self-reference found in the signature of S
-
-6 error(s), 0 warning(s).
+5 error(s), 0 warning(s).
 What are you doing?

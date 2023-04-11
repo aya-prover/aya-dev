@@ -3,9 +3,11 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.decl.CommonDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.Def;
+import org.aya.core.def.GenericDef;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
@@ -16,11 +18,19 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000
  * @see AppTerm#make(AppTerm)
  */
-public sealed interface Callable extends Term permits Callable.DefCall, FieldTerm, MetaTerm {
+public sealed interface Callable extends Term permits Callable.Common, FieldTerm, MetaTerm {
   @NotNull AnyVar ref();
   @NotNull ImmutableSeq<@NotNull Arg<Term>> args();
-  sealed interface DefCall extends Callable permits ConCall, DataCall, FnCall, PrimCall, StructCall {
-    @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<? extends Term>> ref();
+  /**
+   * Call to a {@link TeleDecl}.
+   */
+  sealed interface Tele extends Common permits ConCall, DataCall, FnCall, PrimCall {
+    @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
+    int ulift();
+  }
+
+  sealed interface Common extends Callable permits Tele {
+    @Override @NotNull DefVar<? extends GenericDef, ? extends CommonDecl> ref();
     int ulift();
   }
 

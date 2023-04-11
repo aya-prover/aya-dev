@@ -46,8 +46,7 @@ public final class FnDef extends UserDef<Term> {
   }
 
   @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
-    telescope.forEach(p -> p.descentConsume(f));
-    f.accept(result);
+    super.descentConsume(f, g);
     body.forEach(f, matchings -> matchings.forEach(m -> m.descentConsume(f, g)));
   }
 }

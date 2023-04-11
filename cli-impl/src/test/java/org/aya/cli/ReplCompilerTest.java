@@ -60,7 +60,7 @@ public class ReplCompilerTest {
     // success cases, we can find the definition in the context
     compile("data Unit | unit");
     assertNotNull(findContext("Unit"));
-    compile("struct What : Type | what : Unit");
+    compile("class What | what : Unit");
     assertNotNull(findContext("What"));
     assertNotNull(findContext("Unit"));
   }

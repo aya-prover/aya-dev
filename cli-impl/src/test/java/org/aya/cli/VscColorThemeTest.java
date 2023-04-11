@@ -23,8 +23,8 @@ public class VscColorThemeTest {
     assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Fn.key()));
     assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Generalized.key()));
     assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Data.key()));
-    assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Struct.key()));
+    assertEquals(0x4EC9B0, colors.get(AyaStyleKey.Clazz.key()));
     assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Con.key()));
-    assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Field.key()));
+    assertEquals(0xDCDCAA, colors.get(AyaStyleKey.Member.key()));
   }
 }

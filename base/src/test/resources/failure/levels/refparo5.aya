@@ -1,7 +1,0 @@
-// #4 in public repo
-
-struct TypeStruct : Type
-  | type : Type
-
-def setType (type' : Type) (ts : TypeStruct) : TypeStruct
-  => new TypeStruct { | type => type' }

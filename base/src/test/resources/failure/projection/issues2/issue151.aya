@@ -2,7 +2,7 @@ open import Paths
 variable A : Type
 open import Arith::Nat::Core
 
-struct Monoid : Type
+class Monoid
   | op (a b : Nat) : Nat
   | r-id (a : Nat) : Eq (op a zero) a
   | assoc (a b c : Nat) : Eq (op (op a b) c) (op a (op b c))

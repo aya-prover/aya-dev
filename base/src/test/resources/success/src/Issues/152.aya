@@ -1,7 +1,7 @@
 open import Arith::Nat
 open import Paths
 
-open struct Monoid : Type
+open class Monoid
 | infix <> (a b : Nat) : Nat tighter =
 | r-id (a : Nat) : a <> 0 = a
 | assoc (a b c : Nat) : (a <> b) <> c = a <> (b <> c)

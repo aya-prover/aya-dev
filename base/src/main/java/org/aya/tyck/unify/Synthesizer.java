@@ -64,9 +64,20 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     return switch (preterm) {
       case RefTerm(var var) -> ctx.get(var);
       case ConCall conCall -> conCall.head().underlyingDataCall();
-      case Callable.DefCall call -> Def.defResult(call.ref())
+      case Callable.Tele call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
+      case ClassCall classCall -> {
+        var subst = classCall.fieldSubst(null);
+        var univ = MutableList.<SortTerm>create();
+        for (var mem : classCall.missingMembers()) {
+          var sort = tryPress(Def.defType(mem.ref).subst(subst));
+          if (!(sort instanceof SortTerm sortTerm)) yield null;
+          univ.append(sortTerm);
+          // TODO: append to context
+        }
+        yield univ.reduce(SigmaTerm::lub);
+      }
       case MetaTerm hole -> {
         var result = hole.ref().info.result();
         if (result == null) {
@@ -77,11 +88,12 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case RefTerm.Field field -> Def.defType(field.ref());
       case FieldTerm access -> {
         var callRaw = tryPress(access.of());
-        if (!(callRaw instanceof StructCall call)) yield unreachable(access);
-        var field = access.ref();
-        var subst = DeltaExpander.buildSubst(Def.defTele(field), access.fieldArgs())
-          .add(DeltaExpander.buildSubst(Def.defTele(call.ref()), access.structArgs()));
-        yield Def.defResult(field).subst(subst);
+        if (!(callRaw instanceof ClassCall call)) yield unreachable(access);
+        var field = access.ref().core;
+        assert call.instantiated(field);
+        var subst = call.fieldSubst(field);
+        subst.add(DeltaExpander.buildSubst(field.telescope, access.args()));
+        yield field.result.subst(subst);
       }
       case SigmaTerm sigma -> {
         var univ = MutableList.<SortTerm>create();
@@ -104,7 +116,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
           } else return null;
         });
       }
-      case NewTerm neu -> neu.struct();
+      case NewTerm neu -> neu.inner();
       case ErrorTerm term -> ErrorTerm.typeOf(term.description());
       case ProjTerm proj -> {
         var sigmaRaw = tryPress(proj.of());

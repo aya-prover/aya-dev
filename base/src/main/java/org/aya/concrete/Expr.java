@@ -479,11 +479,10 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record New(
     @NotNull SourcePos sourcePos,
     @NotNull Expr struct,
-    @NotNull ImmutableSeq<Field> fields
+    @NotNull ImmutableSeq<Field<Expr>> fields
   ) implements Expr {
-    public @NotNull Expr.New update(@NotNull Expr struct, @NotNull ImmutableSeq<Field> fields) {
-      return struct == struct() && fields.sameElements(fields(), true) ? this
-        : new New(sourcePos, struct, fields);
+    public @NotNull Expr.New update(@NotNull Expr struct, @NotNull ImmutableSeq<Field<Expr>> fields) {
+      return struct == struct() && fields.sameElements(fields(), true) ? this : new New(sourcePos, struct, fields);
     }
 
     @Override public @NotNull Expr.New descent(@NotNull UnaryOperator<@NotNull Expr> f) {
@@ -494,17 +493,18 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   /**
    * @param resolvedField will be modified during tycking for LSP to function properly.
    */
-  record Field(
+  record Field<Term extends AyaDocile>(
+    @NotNull SourcePos sourcePos,
     @NotNull WithPos<String> name,
     @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
-    @NotNull Expr body,
+    @NotNull Term body,
     @ForLSP @NotNull MutableValue<AnyVar> resolvedField
   ) {
-    public @NotNull Field update(@NotNull Expr body) {
-      return body == body() ? this : new Field(name, bindings, body, resolvedField);
+    public @NotNull Field<Term> update(@NotNull Term body) {
+      return body == body() ? this : new Field<Term>(sourcePos, name, bindings, body, resolvedField);
     }
 
-    public @NotNull Field descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    public @NotNull Field<Term> descent(@NotNull UnaryOperator<@NotNull Term> f) {
       return update(f.apply(body));
     }
   }

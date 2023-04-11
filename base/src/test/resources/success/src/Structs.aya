@@ -1,24 +1,29 @@
 open import Arith::Nat
 
-open struct Pair (A : Type) (B : Type) : Type
-  | fst : A
-  | snd : B
-  | we-are-together : Sig A ** B => (fst, snd)
+// TODO[class]
+// open class Pair
+//   | A : Type
+//   | B : Type
+//   | fst : A
+//   | snd : B
+//   | we-are-together : Sig A ** B => (fst, snd)
 
-def test-nat-pair : Pair Nat Nat =>
-  new Pair Nat Nat { | fst => 0 | snd => 1 }
+// def test-nat-pair : Pair Nat Nat =>
+//   new Pair Nat Nat { | fst => 0 | snd => 1 }
 
-def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
-  new Pair A B { | fst => a | snd => b }
+// def make-pair (A B : Type) (a : A) (b : B) : Pair A B =>
+//   new Pair A B { | fst => a | snd => b }
 
-struct Pos1 (A : Type) : Type
-  | x : A
-  | y : Nat
+// class Pos1
+//   | A : Type
+//   | x : A
+//   | y : Nat
 
-struct Pos2 (B : Nat -> Type) : Type
-  | x : Nat
-  | y : B 0
+// class Pos2
+//   | B : Nat -> Type
+//   | x : Nat
+//   | y : B 0
 
-struct EmptyRecord : Type
-def new-empty1 => new EmptyRecord
-def new-empty2 => new EmptyRecord {}
+// class EmptyRecord
+// def new-empty1 => new EmptyRecord
+// def new-empty2 => new EmptyRecord {}

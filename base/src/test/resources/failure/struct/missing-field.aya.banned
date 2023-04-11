@@ -1,4 +1,6 @@
-struct Pair (A : Type) (B : Type) : Type
+class Pair
+  | A : Type
+  | B : Type
   | fst : A
   | snd : B
   | we-are-together : Sig A ** B => (fst, snd)

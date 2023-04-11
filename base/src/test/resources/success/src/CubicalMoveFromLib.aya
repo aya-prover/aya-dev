@@ -28,7 +28,7 @@ def heteroSquare {A : ∀ (i j : I) -> Type} (p : ∀ (i j : I) -> A i j)
     (\x => p x 0)
     (\x => p x 1) => \i j => p i j
 
-// open struct ConnectedPaths (A : Type) : Type
+// open class ConnectedPaths (A : Type) : Type
 // | p I : A
 // | q I : A {
 //   | 0 => p 1
@@ -37,7 +37,7 @@ def heteroSquare {A : ∀ (i j : I) -> Type} (p : ∀ (i j : I) -> A i j)
 // def connectPaths (A : Type) (c : ConnectedPaths A) : c.p 0 = c.q 1 =>
 //   path c.p <==> path c.q
 
-// struct ConnectedSquares (A : Type) : Type
+// class ConnectedSquares (A : Type) : Type
 // | p I I : A
 // | q I I : A {
 //   | 0, i => p 1 i

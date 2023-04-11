@@ -68,13 +68,14 @@
     KW_MATCH = 'match'
     KW_VARIABLE = 'variable'
     KW_DEF = 'def'
-    KW_STRUCT = 'struct'
+    KW_CLASS = 'class'
+    KW_CLASSIFIYING = 'classifying'
     KW_DATA = 'data'
     KW_PRIM = 'prim'
     KW_EXTENDS = 'extends'
     KW_NEW = 'new'
     KW_DO = 'do'
-    KW_THIS = 'this'
+    KW_SELF = 'self'
     KW_OVERRIDE = 'override'
     KW_FREEZE = 'freeze'
 
@@ -140,7 +141,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|selfExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -163,7 +164,7 @@ private stmt_with_recover ::= !(<<eof>>) stmt {
 private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
-                     | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+                     | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
                      | KW_OPAQUE | KW_INLINE | KW_OVERLAP
 
 private repl ::= REPL_COMMAND? expr
@@ -190,7 +191,7 @@ generalize ::= KW_VARIABLE generalizeParamName+ type
 
 // declarations
 
-decl ::= fnDecl | primDecl | structDecl | dataDecl {
+decl ::= fnDecl | primDecl | classDecl | dataDecl {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
@@ -230,14 +231,14 @@ declModifiers ::= KW_PRIVATE
                 | KW_OVERLAP
                 | openKw
 
-structDecl
+classDecl
   ::= declModifiers*
-      KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS <<commaSep weakId>>)?
-      (BAR structField)* bindBlock?
+      KW_CLASS declNameOrInfix (KW_EXTENDS <<commaSep weakId>>)?
+      (BAR classMember)* bindBlock?
 
-structField
-  ::= KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
-    | KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock? {
+classMember
+  ::= KW_CLASSIFIYING? KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+    | KW_CLASSIFIYING? KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock? {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
@@ -266,7 +267,7 @@ expr ::= newExpr
        | matchExpr
        | letExpr
        | doExpr
-       | thisExpr
+       | selfExpr
        | pathExpr
        | atomExpr
        // put rules that do not start with `expr` above this line
@@ -300,7 +301,7 @@ sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
-thisExpr ::= KW_THIS (AT qualifiedId)?
+selfExpr ::= KW_SELF (AT qualifiedId)?
 pathExpr ::= LPATH pathTele+ RPATH expr partialBlock?
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"

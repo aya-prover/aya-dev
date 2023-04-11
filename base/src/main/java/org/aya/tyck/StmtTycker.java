@@ -66,7 +66,6 @@ public final class StmtTycker extends TracedTycker {
       else if (predecl.ref().core == null) tyckHeader(predecl, tycker);
     }
     return switch (predecl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
       case TeleDecl.FnDecl decl -> {
         var signature = decl.signature;
         assert signature != null;
@@ -110,28 +109,20 @@ public final class StmtTycker extends TracedTycker {
         var body = decl.body.map(clause -> (CtorDef) tyck(clause, tycker));
         yield new DataDef(decl.ref, signature.param(), signature.result(), body);
       }
-      case TeleDecl.PrimDecl decl -> decl.ref.core;
-      case TeleDecl.StructDecl decl -> {
-        var signature = decl.signature;
-        assert signature != null;
-        var body = decl.fields.map(field -> (FieldDef) tyck(field, tycker));
-        yield new StructDef(decl.ref, signature.param(), signature.result(), body);
-      }
-      // Do nothing, data constructors is just a header.
-      case TeleDecl.DataCtor ctor -> ctor.ref.core;
-      case TeleDecl.StructField field -> {
-        // TODO[ice]: remove this hack
-        if (field.ref.core != null) yield field.ref.core;
-        var signature = field.signature;
+      case TeleDecl.ClassMember member -> {
+        if (member.ref.core != null) yield member.ref.core;
+        var signature = member.signature;
         assert signature != null; // already handled in the entrance of this method
-        var structRef = field.structRef;
-        var structSig = structRef.concrete.signature;
-        assert structSig != null;
-        loadTele(tycker, structSig);
+        var classDef = member.classDef;
         var result = signature.result();
-        var body = field.body.map(e -> tycker.inherit(e, result).wellTyped());
-        yield new FieldDef(structRef, field.ref, structSig.param(), signature.param(), result, body, field.coerce);
+        // var body = member.body.map(e -> tycker.inherit(e, result).wellTyped());
+        // ^ TODO[class]: what about this body?
+        yield new MemberDef(member.ref, classDef, signature.param(), result, member.coerce);
       }
+      // Do nothing, these are just header.
+      case TeleDecl.PrimDecl decl -> decl.ref.core;
+      case ClassDecl decl -> decl.ref.core;
+      case TeleDecl.DataCtor ctor -> ctor.ref.core;
     };
   }
 
@@ -166,7 +157,11 @@ public final class StmtTycker extends TracedTycker {
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
     tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope of " + decl.ref().name())));
     switch (decl) {
-      case ClassDecl classDecl -> throw new UnsupportedOperationException("ClassDecl is not supported yet");
+      case ClassDecl clazz -> {
+        var body = clazz.members.map(field -> (MemberDef) tyck(field, tycker));
+        // Invoke the constructor, so that `class.ref.core` is set.
+        new ClassDef(clazz.ref, body);
+      }
       case TeleDecl.FnDecl fn -> {
         var resultTele = tele(tycker, fn.telescope, null);
         // It might contain unsolved holes, but that's acceptable.
@@ -190,11 +185,6 @@ public final class StmtTycker extends TracedTycker {
         var tele = tele(tycker, data.telescope, null);
         var resultTy = resultTy(tycker, data);
         data.signature = new Def.Signature<>(tele, resultTy);
-      }
-      case TeleDecl.StructDecl struct -> {
-        var tele = tele(tycker, struct.telescope, null);
-        var result = resultTy(tycker, struct);
-        struct.signature = new Def.Signature<>(tele, result);
       }
       case TeleDecl.PrimDecl prim -> {
         // This directly corresponds to the tycker.localCtx = new LocalCtx();
@@ -223,16 +213,12 @@ public final class StmtTycker extends TracedTycker {
         tycker.ctx = new SeqLocalCtx();
       }
       case TeleDecl.DataCtor ctor -> checkCtor(tycker, ctor);
-      case TeleDecl.StructField field -> {
-        if (field.signature != null) break;
-        var structRef = field.structRef;
-        var structSig = structRef.concrete.signature;
-        assert structSig != null;
-        loadTele(tycker, structSig);
-        var structLvl = structSig.result();
-        var tele = tele(tycker, field.telescope, structLvl.isProp() ? null : structLvl);
-        var result = tycker.zonk(structLvl.isProp() ? tycker.ty(field.result) : tycker.inherit(field.result, structLvl).wellTyped());
-        field.signature = new Def.Signature<>(tele, result);
+      case TeleDecl.ClassMember member -> {
+        if (member.signature != null) break;
+        var tele = tele(tycker, member.telescope, null);
+        assert member.result != null;
+        var result = tycker.zonk(tycker.ty(member.result));
+        member.signature = new Def.Signature<>(tele, result);
       }
     }
     tracing(TreeBuilder::reduce);

@@ -9,12 +9,13 @@ import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.stmt.GeneralizedVar;
+import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
+import org.aya.core.def.ClassDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
-import org.aya.core.def.StructDef;
 import org.aya.core.term.Term;
 import org.aya.ide.util.ModuleVar;
 import org.aya.ide.util.XY;
@@ -70,7 +71,7 @@ public interface Resolver {
   private static @NotNull SeqView<GenericDef> withChildren(@NotNull GenericDef def) {
     return switch (def) {
       case DataDef data -> SeqView.<GenericDef>of(data).appendedAll(data.body);
-      case StructDef struct -> SeqView.<GenericDef>of(struct).appendedAll(struct.fields);
+      case ClassDef struct -> SeqView.<GenericDef>of(struct).appendedAll(struct.members);
       default -> SeqView.of(def);
     };
   }
@@ -79,8 +80,8 @@ public interface Resolver {
     return switch (def) {
       case TeleDecl.DataDecl data ->
         SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.map(TeleDecl.DataCtor::ref));
-      case TeleDecl.StructDecl struct ->
-        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.fields.map(TeleDecl.StructField::ref));
+      case ClassDecl struct ->
+        SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.members.map(TeleDecl.ClassMember::ref));
       default -> SeqView.of(def.ref());
     };
   }

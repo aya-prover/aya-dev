@@ -17,7 +17,7 @@ public record PrimCall(
   @NotNull PrimDef.ID id,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<@NotNull Term>> args
-) implements Callable.DefCall {
+) implements Callable.Tele {
   public @NotNull PrimCall update(@NotNull ImmutableSeq<Arg<Term>> args) {
     return args.sameElements(args(), true) ? this : new PrimCall(ref, ulift, args);
   }

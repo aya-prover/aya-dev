@@ -1,8 +1,10 @@
 open data Unit : Type | unit
 
-open struct Wrapped (A : Type) : Type
+// TODO[class]
+// open class Wrapped
+//   | A : Type
 
 variable B : Type
 
-def test Unit : Wrapped B -> Unit
-  | unit => \(x : Wrapped B) => unit
+// def test Unit : Wrapped B -> Unit
+//   | unit => \(x : Wrapped B) => unit

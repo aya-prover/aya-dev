@@ -4,7 +4,6 @@ package org.aya.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.Decl;
-import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.tyck.ExprTycker;
 import org.aya.util.reporter.Problem;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  */
 public sealed abstract class UserDef<Ret extends Term>
-  extends TopLevelDef<Ret> permits FnDef, UserDef.Type {
+  extends TopLevelDef<Ret> permits MemberDef, FnDef, DataDef {
   /**
    * In case of counterexamples, this field will be assigned.
    *
@@ -27,12 +26,5 @@ public sealed abstract class UserDef<Ret extends Term>
 
   protected UserDef(@NotNull ImmutableSeq<Term.Param> telescope, @NotNull Ret result) {
     super(telescope, result);
-  }
-
-  public static abstract sealed class Type extends UserDef<SortTerm> permits DataDef, StructDef {
-
-    protected Type(@NotNull ImmutableSeq<Term.Param> telescope, SortTerm result) {
-      super(telescope, result);
-    }
   }
 }

@@ -12,9 +12,9 @@ import org.aya.concrete.stmt.BindBlock;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
+import org.aya.core.def.ClassDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.GenericDef;
-import org.aya.core.def.StructDef;
 import org.aya.core.repr.AyaShape;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
@@ -149,7 +149,7 @@ public record CompiledAya(
       serOp(serDef, def);
       switch (serDef) {
         case SerDef.Data data -> data.bodies().forEachWith(((DataDef) def).body, this::serOp);
-        case SerDef.Struct struct -> struct.fields().forEachWith(((StructDef) def).fields, this::serOp);
+        case SerDef.Clazz clazz -> clazz.fields().forEachWith(((ClassDef) def).members, this::serOp);
         default -> {
         }
       }
@@ -173,7 +173,7 @@ public record CompiledAya(
   private static SerDef.QName nameOf(@NotNull SerDef def) {
     return switch (def) {
       case SerDef.Fn fn -> fn.name();
-      case SerDef.Struct struct -> struct.name();
+      case SerDef.Clazz clazz -> clazz.name();
       case SerDef.Field field -> field.self();
       case SerDef.Data data -> data.name();
       case SerDef.Ctor ctor -> ctor.self();
@@ -301,12 +301,12 @@ public record CompiledAya(
           Stmt.Accessibility.Public,
           SourcePos.SER);
       }
-      case SerDef.Struct struct -> {
+      case SerDef.Clazz clazz -> {
         var innerCtx = context.derive(def.ref().name());
-        if (isExported(mod, struct.name())) export(context, struct.name(), def.ref());
-        struct.fields().forEachWith(((StructDef) def).fields, (field, fieldDef) -> {
+        if (isExported(mod, clazz.name())) export(context, clazz.name(), def.ref());
+        clazz.fields().forEachWith(((ClassDef) def).members, (field, fieldDef) -> {
           if (isExported(mod, field.self())) export(context, field.self(), fieldDef.ref);
-          innerCtx.defineSymbol(fieldDef.ref(), Stmt.Accessibility.Public, SourcePos.SER);
+          innerCtx.defineSymbol(fieldDef.ref, Stmt.Accessibility.Public, SourcePos.SER);
         });
         context.importModule(
           ModuleName.This.resolve(def.ref().name()),

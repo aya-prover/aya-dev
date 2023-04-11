@@ -2,18 +2,31 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.def;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.ClassDecl;
+import org.aya.core.pat.Pat;
+import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
-import org.aya.prettier.CorePrettier;
-import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
-public non-sealed/*sealed*/ interface ClassDef extends AyaDocile, GenericDef {
-  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return new CorePrettier(options).def(this);
+import java.util.function.Consumer;
+
+public final class ClassDef implements AyaDocile, GenericDef {
+  public final @NotNull DefVar<ClassDef, ClassDecl> ref;
+  public final @NotNull ImmutableSeq<MemberDef> members;
+
+  public ClassDef(@NotNull DefVar<ClassDef, ClassDecl> ref, @NotNull ImmutableSeq<MemberDef> members) {
+    ref.core = this;
+    this.ref = ref;
+    this.members = members;
   }
 
-  @Override @NotNull DefVar<? extends ClassDef, ? extends ClassDecl> ref();
+  @Override public @NotNull DefVar<? extends ClassDef, ? extends ClassDecl> ref() {
+    return ref;
+  }
+
+  @Override public void descentConsume(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
+    members.forEach(m -> m.descentConsume(f, g));
+  }
 }

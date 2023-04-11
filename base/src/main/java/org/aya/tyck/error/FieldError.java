@@ -3,10 +3,12 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.def.FieldDef;
+import org.aya.concrete.Expr;
+import org.aya.core.def.MemberDef;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +26,18 @@ public sealed interface FieldError extends TyckError {
   }
 
   record NoSuchField(
-    @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<String> notFound
+    @NotNull DefVar<?, ?> classRef,
+    @NotNull Expr.Field<Expr> member
   ) implements FieldError {
+    @Override public @NotNull SourcePos sourcePos() {
+      return member.name().sourcePos();
+    }
+
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("No such field(s):"),
-        Doc.commaList(notFound.view().map(Doc::code))
-      );
+      return Doc.sep(Doc.english("The member"),
+        Doc.code(member.name().data()),
+        Doc.english("does not exist in class"),
+        Doc.code(classRef.name()));
     }
   }
 
@@ -49,16 +56,16 @@ public sealed interface FieldError extends TyckError {
 
   record ArgMismatch(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull FieldDef fieldDef,
+    @NotNull MemberDef memberDef,
     int supplied
   ) implements FieldError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Expected"),
-        Doc.plain(String.valueOf(fieldDef.ref.core.selfTele.size())),
+        Doc.plain(String.valueOf(memberDef.ref.core.telescope.size())),
         Doc.english("arguments, but found"),
         Doc.plain(String.valueOf(supplied)),
         Doc.english("arguments for field"),
-        BasePrettier.linkRef(fieldDef.ref, BasePrettier.FIELD));
+        BasePrettier.linkRef(memberDef.ref, BasePrettier.MEMBER));
     }
   }
 }

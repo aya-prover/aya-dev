@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -7,5 +7,5 @@ package org.aya.core.term;
  * after a substitution (this usually happens under face restrictions (aka cofibrations)).
  */
 public sealed interface StableWHNF extends Term
-  permits DataCall, ErrorTerm, IntegerTerm, IntervalTerm, LamTerm, ListTerm, NewTerm, PLamTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, StringTerm, StructCall, TupTerm {
+  permits DataCall, ErrorTerm, IntegerTerm, IntervalTerm, LamTerm, ListTerm, NewTerm, PLamTerm, PartialTyTerm, PathTerm, PiTerm, SigmaTerm, SortTerm, StringTerm, ClassCall, TupTerm {
 }

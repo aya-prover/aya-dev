@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -108,10 +108,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record New(@NotNull SerTerm.Struct call, @NotNull ImmutableMap<SerDef.QName, SerTerm> map) implements SerTerm {
+  record New(@NotNull SerTerm.Clazz inner) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
-      return new NewTerm(call.de(state), ImmutableMap.from(map.view().map((k, v) ->
-        Tuple.of(state.resolve(k), v.de(state)))));
+      return new NewTerm(inner.de(state));
     }
   }
 
@@ -146,9 +145,12 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Struct(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
-    @Override public @NotNull StructCall de(@NotNull DeState state) {
-      return new StructCall(state.resolve(name), data.ulift, data.de(state));
+  record Clazz(@NotNull SerDef.QName name, int ulift,
+               @NotNull ImmutableMap<SerDef.QName, SerArg> members) implements SerTerm {
+    @Override public @NotNull ClassCall de(@NotNull DeState state) {
+      return new ClassCall(state.resolve(name), ulift,
+        ImmutableMap.from(members.view().map((k, v) ->
+          Tuple.of(state.resolve(k), v.de(state)))));
     }
   }
 
@@ -191,14 +193,12 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Access(
     @NotNull SerTerm of,
     @NotNull SerDef.QName ref,
-    @NotNull ImmutableSeq<@NotNull SerArg> structArgs,
-    @NotNull ImmutableSeq<@NotNull SerArg> fieldArgs
+    @NotNull ImmutableSeq<@NotNull SerArg> args
   ) implements SerTerm {
     @Override public @NotNull Term de(@NotNull DeState state) {
       return new FieldTerm(
         of.de(state), state.resolve(ref),
-        structArgs.map(arg -> arg.de(state)),
-        fieldArgs.map(arg -> arg.de(state)));
+        args.map(arg -> arg.de(state)));
     }
   }
 

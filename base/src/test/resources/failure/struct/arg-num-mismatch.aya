@@ -1,5 +1,8 @@
 prim I
-open struct PseudoPath (A : I -> Type) (a : A 0) (b : A 1) : Type
+open class PseudoPath
+ | A : I -> Type
+ | a : A 0
+ | b : A 1
  | at (i : I) : A i
 
 def path {A : I -> Type} (p : ∀ (i : I) -> A i)

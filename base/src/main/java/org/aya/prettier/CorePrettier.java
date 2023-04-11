@@ -124,14 +124,12 @@ public class CorePrettier extends BasePrettier<Term> {
           options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
         );
       }
-      case IntervalTerm term -> Doc.styled(PRIM, "I");
-      case NewTerm newTerm -> Doc.cblock(Doc.styled(KEYWORD, "new"), 2,
-        Doc.vcat(newTerm.params().view()
-          .map((k, v) -> Doc.sep(Doc.symbol("|"),
-            linkRef(k, FIELD),
-            Doc.symbol("=>"), term(Outer.Free, v)))
-          .toImmutableSeq()));
-      case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.fieldArgs().view(), outer,
+      case IntervalTerm $ -> Doc.styled(PRIM, "I");
+      case NewTerm(var inner) -> visitCalls(null, Doc.styled(KEYWORD, "new"), (nest, t) -> t.toDoc(options), outer,
+        SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
+        options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
+      );
+      case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.args().view(), outer,
         options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(ref.fakeBind());
@@ -144,7 +142,7 @@ public class CorePrettier extends BasePrettier<Term> {
       case AppTerm(var of, var arg) -> {
         var args = MutableList.of(arg);
         var head = AppTerm.unapp(of, args);
-        if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), FIELD, args, outer);
+        if (head instanceof RefTerm.Field fieldRef) yield visitArgsCalls(fieldRef.ref(), MEMBER, args, outer);
         var implicits = options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs);
         // Infix def-calls
         if (head instanceof Callable call && call.ref() instanceof DefVar<?, ?> var) {
@@ -154,7 +152,7 @@ public class CorePrettier extends BasePrettier<Term> {
         yield visitCalls(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case PrimCall prim -> visitArgsCalls(prim.ref(), PRIM, prim.args(), outer);
-      case RefTerm.Field term -> linkRef(term.ref(), FIELD);
+      case RefTerm.Field term -> linkRef(term.ref(), MEMBER);
       case ProjTerm(var of, var ix) ->
         Doc.cat(term(Outer.ProjHead, of), Doc.symbol("."), Doc.plain(String.valueOf(ix)));
       case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
@@ -185,7 +183,7 @@ public class CorePrettier extends BasePrettier<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case StructCall structCall -> visitArgsCalls(structCall.ref(), STRUCT, structCall.args(), outer);
+      case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.orderedArgs(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
         ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)
@@ -258,12 +256,12 @@ public class CorePrettier extends BasePrettier<Term> {
   private ImmutableSeq<Arg<Term>> visibleArgsOf(Callable call) {
     return call instanceof ConCall con
       ? con.conArgs() : call instanceof FieldTerm access
-      ? access.fieldArgs() : call.args();
+      ? access.args() : call.args();
   }
 
   private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {
     return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
-      linkRef(term.ref(), FIELD));
+      linkRef(term.ref(), MEMBER));
   }
 
   public @NotNull Doc pat(@NotNull Arg<Pat> pat, @NotNull Outer outer) {
@@ -294,7 +292,6 @@ public class CorePrettier extends BasePrettier<Term> {
 
   public @NotNull Doc def(@NotNull GenericDef predef) {
     return switch (predef) {
-      case ClassDef classDef -> throw new UnsupportedOperationException("not implemented yet");
       case FnDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "def"));
         def.modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
@@ -302,17 +299,17 @@ public class CorePrettier extends BasePrettier<Term> {
           linkDef(def.ref(), FN),
           visitTele(def.telescope()),
           Doc.symbol(":"),
-          term(Outer.Free, def.result())
+          term(Outer.Free, def.result)
         });
         var line1sep = Doc.sepNonEmpty(line1);
         yield def.body.fold(
           term -> Doc.sep(line1sep, Doc.symbol("=>"), term(Outer.Free, term)),
           clauses -> Doc.vcat(line1sep, Doc.nest(2, visitClauses(clauses))));
       }
-      case FieldDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
+      case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         coe(field.coerce),
-        linkDef(field.ref(), FIELD),
-        visitTele(field.selfTele),
+        linkDef(field.ref(), MEMBER),
+        visitTele(field.telescope),
         Doc.symbol(":"),
         term(Outer.Free, field.result));
       case PrimDef def -> primDoc(def.ref());
@@ -327,18 +324,15 @@ public class CorePrettier extends BasePrettier<Term> {
         } else line1 = Doc.sep(Doc.symbol("|"), doc);
         yield Doc.cblock(line1, 2, partial(options, ctor.clauses, false, Doc.empty(), Doc.empty()));
       }
-      case StructDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "struct"),
-        linkDef(def.ref(), STRUCT),
-        visitTele(def.telescope()),
-        Doc.symbol(":"),
-        term(Outer.Free, def.result())
-      ), Doc.nest(2, Doc.vcat(def.fields.view().map(this::def))));
+      case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "class"),
+        linkDef(def.ref(), CLAZZ),
+        Doc.nest(2, Doc.vcat(def.members.view().map(this::def)))));
       case DataDef def -> {
         var line1 = MutableList.of(Doc.styled(KEYWORD, "data"),
           linkDef(def.ref(), DATA),
           visitTele(def.telescope()),
           Doc.symbol(":"),
-          term(Outer.Free, def.result()));
+          term(Outer.Free, def.result));
         yield Doc.vcat(Doc.sepNonEmpty(line1),
           Doc.nest(2, Doc.vcat(def.body.view().map(this::def))));
       }

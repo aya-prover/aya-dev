@@ -33,8 +33,8 @@ public interface SymbolMaker {
     int symbolKind = switch (kind) {
       case Data -> SymbolKind.Enum;
       case Con -> SymbolKind.EnumMember;
-      case Struct -> SymbolKind.Struct;
-      case Field -> SymbolKind.Field;
+      case Clazz -> SymbolKind.Struct;
+      case Member -> SymbolKind.Field;
       case Fn, Prim -> SymbolKind.Function;
       case Generalized -> SymbolKind.TypeParameter;
       case LocalVar -> SymbolKind.Variable;
