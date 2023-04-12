@@ -3,7 +3,7 @@
 package org.aya.cli.parse;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.FleetPsiParser;
+import com.intellij.psi.DefaultPsiParser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.builder.FleetPsiBuilder;
 import com.intellij.psi.builder.MarkerNode;
@@ -13,6 +13,7 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.text.StringSlice;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.error.ParseError;
@@ -28,23 +29,23 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.Objects;
 
 public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
   private static final @NotNull TokenSet ERROR = TokenSet.create(TokenType.ERROR_ELEMENT, TokenType.BAD_CHARACTER);
 
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
-    return new NodeWrapper(parser.parse(code));
+    return new NodeWrapper(code, parser.parse(code));
   }
 
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
     var node = parseNode("prim a : " + code);
     var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
-    return new AyaProducer(Either.right(sourcePos), reporter).type(type);
+    return new AyaProducer(code, Either.right(sourcePos), reporter).type(type);
   }
 
-  @Override public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
+  @Override
+  public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
     var parse = parse(sourceFile.sourceCode(), errorReport);
     if (parse.isRight()) {
       reporter.reportString("Expect statement, got repl expression", Problem.Severity.ERROR);
@@ -55,7 +56,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
 
   private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull String code, @NotNull SourceFile errorReport) {
     var node = reportErrorElements(parseNode(code), errorReport);
-    return new AyaProducer(Either.left(errorReport), reporter).program(node);
+    return new AyaProducer(code, Either.left(errorReport), reporter).program(node);
   }
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {
@@ -78,29 +79,20 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return node;
   }
 
-  private record NodeWrapper(@NotNull MarkerNode node) implements GenericNode<NodeWrapper> {
+  private record NodeWrapper(
+    @NotNull MarkerNode node,
+    @Override @NotNull StringSlice tokenText
+  ) implements GenericNode<NodeWrapper> {
+    public NodeWrapper(@NotNull String code, @NotNull MarkerNode node) {
+      this(node, StringSlice.of(code, node.range().getStartOffset(), node.range().getEndOffset()));
+    }
+
     @Override public @NotNull IElementType elementType() {
       return node.elementType();
     }
 
-    @Override public @NotNull String tokenText() {
-      if (isTerminalNode()) return Objects.requireNonNull(node.text());
-      var sb = new StringBuilder();
-      buildText(sb);
-      return sb.toString();
-    }
-
-    @Override public boolean isTerminalNode() {
-      return node.text() != null;
-    }
-
-    @Override public @NotNull SeqView<NodeWrapper> childrenView() {
-      return node.children().view().map(NodeWrapper::new);
-    }
-
-    private void buildText(@NotNull StringBuilder builder) {
-      if (node.text() != null) builder.append(node.text());
-      else childrenView().forEach(c -> c.buildText(builder));
+    @SuppressWarnings("UnstableApiUsage") @Override public @NotNull SeqView<NodeWrapper> childrenView() {
+      return node.children().view().map(c -> new NodeWrapper(tokenText.source(), c));
     }
 
     @Override public @NotNull TextRange range() {
@@ -112,7 +104,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     }
   }
 
-  private static class AyaFleetParser extends FleetPsiParser.DefaultPsiParser {
+  private static class AyaFleetParser extends DefaultPsiParser {
     public AyaFleetParser() {
       super(new AyaFleetParserDefinition());
     }
