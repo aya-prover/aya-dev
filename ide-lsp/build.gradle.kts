@@ -1,6 +1,9 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
+import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.*
 
 CommonTasks.fatJar(project, Constants.mainClassQName)
 
@@ -39,7 +42,6 @@ object Constants {
   val supportedPlatforms = if (System.getenv("CI") == null)
     listOf(theCurrent)
   else listOf(
-    theCurrent,
     "windows-aarch64",
     "windows-x64",
     "linux-aarch64",
@@ -86,6 +88,7 @@ jlink {
 
 val jlinkTask = tasks.named("jlink")
 val ayaJlinkTask = tasks.register("jlinkAya")
+val ayaJlinkZipTask = tasks.register("jlinkAyaZip")
 val ayaImageDir = buildDir.resolve("image")
 Constants.supportedPlatforms.forEach { platform ->
   val installDir = ayaImageDir.resolve(platform)
@@ -109,10 +112,43 @@ Constants.supportedPlatforms.forEach { platform ->
     into(installDir.resolve("std"))
   }
 
+  val packageAya = tasks.register<Zip>("packageAya_$platform") {
+    val fileName = "aya-prover_jlink_$platform.zip"
+    val sha256FileName = "$fileName.sha256"
+    dependsOn(copyAyaJRE)
+    dependsOn(copyAyaExecutables)
+    dependsOn(copyAyaLibrary)
+    archiveFileName.set(fileName)
+    destinationDirectory.set(ayaImageDir)
+    from(installDir) {
+      exclude("bin/aya")
+      exclude("bin/aya-lsp")
+      exclude("${Constants.jreDirName}/bin/*")
+    }
+    from(installDir) {
+      include("bin/aya")
+      include("bin/aya-lsp")
+      include("${Constants.jreDirName}/bin/*")
+      fileMode = "755".toInt(8)
+    }
+    doLast {
+      val bytes = MessageDigest.getInstance("SHA-256")
+        .digest(archiveFile.get().asFile.readBytes())
+      val sha256 = HexFormat.of().withLowerCase().formatHex(bytes)
+      Files.writeString(
+        destinationDirectory.get().file(sha256FileName).asFile.toPath(),
+        sha256
+      )
+    }
+  }
+
   ayaJlinkTask.configure {
     dependsOn(copyAyaJRE)
     dependsOn(copyAyaExecutables)
     dependsOn(copyAyaLibrary)
+  }
+  ayaJlinkZipTask.configure {
+    dependsOn(packageAya)
   }
 }
 
