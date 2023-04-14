@@ -35,14 +35,30 @@ tasks.named<Test>("test") {
 object Constants {
   const val jreDirName = "jre"
   const val mainClassQName = "org.aya.lsp.LspMain"
+  const val theCurrent = "current"
+  val supportedPlatforms = listOf(
+    theCurrent,
+    "windows-aarch64",
+    "windows-x64",
+    "linux-aarch64",
+    "linux-x64",
+    "macos-x64",
+    "macos-aaarch64",
+  )
 }
 
-val ayaImageDir = buildDir.resolve("image")
-val jlinkImageDir = ayaImageDir.resolve(Constants.jreDirName)
+fun jdkUrl(platform: String): String {
+  val libericaJdkVersion = System.getProperty("java.vm.version")
+  val fixAmd64 = platform.replace("x64", "amd64")
+  val suffix = if (platform.contains("linux")) "tar.gz" else "zip"
+  return "https://download.bell-sw.com/java/${libericaJdkVersion}/bellsoft-jdk${libericaJdkVersion}-${fixAmd64}.$suffix"
+}
+
+val allPlatformImageDir = buildDir.resolve("image-all-platforms")
 jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
-  imageDir.set(jlinkImageDir)
+  imageDir.set(allPlatformImageDir)
   mergedModule {
     uses("org.jline.terminal.impl.jansi.JansiTerminalProvider")
     requires("java.logging")
@@ -59,26 +75,43 @@ jlink {
     mainClass = "org.aya.cli.console.Main"
     moduleName = "aya.cli.console"
   }
-}
-
-val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables") {
-  from(file("src/main/shell")) {
-    // https://ss64.com/bash/chmod.html
-    fileMode = "755".toInt(8)
-    rename { it.removeSuffix(".sh") }
+  Constants.supportedPlatforms.forEach { platform ->
+    targetPlatform(platform) {
+      if (platform != Constants.theCurrent) setJdkHome(jdkDownload(jdkUrl(platform)))
+    }
   }
-  into(ayaImageDir.resolve("bin"))
-}
-
-val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary") {
-  from(rootProject.file("base/src/test/resources/success/common"))
-  into(ayaImageDir.resolve("std"))
 }
 
 val jlinkTask = tasks.named("jlink")
-jlinkTask.configure {
-  dependsOn(copyAyaExecutables)
-  dependsOn(copyAyaLibrary)
+val ayaJlinkTask = tasks.register("jlinkAya")
+val ayaImageDir = buildDir.resolve("image")
+Constants.supportedPlatforms.forEach { platform ->
+  val installDir = ayaImageDir.resolve(platform)
+  val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables_$platform") {
+    from(file("src/main/shell")) {
+      // https://ss64.com/bash/chmod.html
+      fileMode = "755".toInt(8)
+      rename { it.removeSuffix(".sh") }
+    }
+    into(installDir.resolve("bin"))
+  }
+
+  val copyAyaJRE = tasks.register<Copy>("copyAyaJRE_$platform") {
+    from(allPlatformImageDir.resolve("aya-lsp-$platform"))
+    into(installDir.resolve(Constants.jreDirName))
+    dependsOn(jlinkTask)
+  }
+
+  val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary_$platform") {
+    from(rootProject.file("base/src/test/resources/success/common"))
+    into(installDir.resolve("std"))
+  }
+
+  ayaJlinkTask.configure {
+    dependsOn(copyAyaJRE)
+    dependsOn(copyAyaExecutables)
+    dependsOn(copyAyaLibrary)
+  }
 }
 
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
@@ -102,8 +135,8 @@ if (rootProject.hasProperty("installDir")) {
   //   delete(File.listFiles(destDir))
   // }
   tasks.register<Copy>("install") {
-    dependsOn(jlinkTask, copyAyaExecutables, copyAyaLibrary, prepareMergedJarsDirTask)
-    from(ayaImageDir)
+    dependsOn(ayaJlinkTask, prepareMergedJarsDirTask)
+    from(ayaImageDir.resolve(Constants.theCurrent))
     into(destDir)
     doFirst { destDir.resolve(Constants.jreDirName).deleteRecursively() }
   }
