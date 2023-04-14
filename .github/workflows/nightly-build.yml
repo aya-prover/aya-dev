@@ -54,22 +54,20 @@ jobs:
     needs: [move-tag]
     runs-on: ${{ matrix.os }}
     env:
-      jlinkName: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.zip
-      nativeName: aya-native-${{ matrix.os }}_${{ matrix.arch }}${{ matrix.binaryExt }}
-      jlinkSha256: aya-prover-jlink-${{ matrix.os }}_${{ matrix.arch }}.sha256.txt
-      nativeSha256: aya-native-${{ matrix.os }}_${{ matrix.arch }}.sha256.txt
+      nativeName: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}
+      nativeSha256: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}.sha256.txt
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            arch: x86-64
+            platform: 'linux-x64'
             binaryExt: ''
           - os: macos-latest
-            arch: x86-64
+            platform: 'macos-x64'
             binaryExt: ''
           - os: windows-latest
-            arch: x86-64
+            platform: 'windows-x64'
             binaryExt: '.exe'
     steps:
       - uses: actions/checkout@v2
@@ -80,15 +78,17 @@ jobs:
           distribution: 'liberica'
           java-version: '19'
 
-      - name: Run task jlink
+      - name: Run task jlinkAyaZip
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jlink --info --no-daemon --stacktrace --warning-mode all
+          arguments: jlinkAyaZip --info --no-daemon --stacktrace --warning-mode all
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Run task fatJar
         uses: gradle/gradle-build-action@v2
         with:
           arguments: fatJar --no-daemon --stacktrace --warning-mode all
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -101,7 +101,7 @@ jobs:
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-        if: ${{ matrix.os }} == 'windows-latest'
+        if: matrix.os == 'windows-latest'
 
       - name: Tell gradle where's my JDK
         run: |
@@ -132,33 +132,9 @@ jobs:
       - name: Test native image
         run: ./${{ env.nativeName }} --remake base/src/test/resources/success
 
-      - name: Copy fat jar
-        run: |
-          cp ./ide-lsp/build/libs/*-fat.jar ./lsp-fatjar.jar
-          cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
-
-      - name: Zip Artifacts (Windows)
-        uses: papeloto/action-zip@v1
-        with:
-          files: ./ide-lsp/build/image
-          dest: ${{ env.jlinkName }}
-        if: matrix.os == 'windows-latest'
-
-      - name: Checksum (Windows)
-        run: |
-          Get-FileHash ${{ env.jlinkName }} -Algorithm SHA256 > ${{ env.jlinkSha256 }}
-        if: matrix.os == 'windows-latest'
-
-      - name: Zip Artifacts (Unix)
-        run: |
-          root="$(pwd)"
-          cd ./ide-lsp/build/image
-          zip -r "$root/${{ env.jlinkName }}" .
-          shasum -a 256 "$root/${{ env.jlinkName }}" > "$root/${{ env.jlinkSha256 }}"
-        if: matrix.os != 'windows-latest'
-
-      - name: Update Release
+      - name: Update Release (Native images)
         uses: Xotl/cool-github-releases@v1
+        if: matrix.os != 'ubuntu-latest'
         with:
           mode: update
           isPrerelease: false
@@ -167,6 +143,35 @@ jobs:
           body_mrkdwn: |
             _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
             Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
-          assets: ${{ env.jlinkName }};${{ env.jlinkSha256 }};lsp-fatjar.jar;cli-fatjar.jar;${{ env.nativeSha256 }};${{ env.nativeName }}|application/octet-stream
+          assets: ${{ env.nativeSha256 }};${{ env.nativeName }}|application/octet-stream
+          replace_assets: true
+          github_token: ${{ secrets.GH_TOKEN }}
+
+      - name: Collect jlink zip files
+        if: matrix.os == 'ubuntu-latest'
+        id: collect_jlinkAyaZip
+        run: |
+          jlinkFiles="$(find ide-lsp/build/image -maxdepth 1 -type f -exec echo -n '{};' \;)"
+          echo "Found jlinkAyaZip outputs: $jlinkFiles"
+          echo "::set-output name=jlinkFiles::$jlinkFiles"
+
+      - name: Copy fat jar
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cp ./ide-lsp/build/libs/*-fat.jar ./lsp-fatjar.jar
+          cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
+
+      - name: Update Release (jlink zips and jars)
+        uses: Xotl/cool-github-releases@v1
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          mode: update
+          isPrerelease: false
+          tag_name: nightly-build
+          release_name: "Nightly builds"
+          body_mrkdwn: |
+            _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
+            Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
+          assets: ${{ env.nativeSha256 }};${{ env.nativeName }}|application/octet-stream;lsp-fatjar.jar;cli-fatjar.jar;${{ steps.collect_jlinkAyaZip.outputs.jlinkFiles }}
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
