@@ -47,7 +47,7 @@ object Constants {
     "linux-aarch64",
     "linux-x64",
     "macos-x64",
-    "macos-aaarch64",
+    "macos-aarch64",
   )
 }
 
