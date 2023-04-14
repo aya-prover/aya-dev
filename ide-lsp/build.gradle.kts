@@ -36,7 +36,9 @@ object Constants {
   const val jreDirName = "jre"
   const val mainClassQName = "org.aya.lsp.LspMain"
   const val theCurrent = "current"
-  val supportedPlatforms = listOf(
+  val supportedPlatforms = if (System.getenv("CI") == null)
+    listOf(theCurrent)
+  else listOf(
     theCurrent,
     "windows-aarch64",
     "windows-x64",
