@@ -55,7 +55,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       nativeName: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}
-      nativeSha256: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}.sha256
+      nativeSha256: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}.sha256.txt
     strategy:
       fail-fast: false
       matrix:

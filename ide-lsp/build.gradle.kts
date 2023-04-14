@@ -114,7 +114,7 @@ Constants.supportedPlatforms.forEach { platform ->
 
   val packageAya = tasks.register<Zip>("packageAya_$platform") {
     val fileName = "aya-prover_jlink_$platform.zip"
-    val sha256FileName = "$fileName.sha256"
+    val sha256FileName = "$fileName.sha256.txt"
     dependsOn(copyAyaJRE)
     dependsOn(copyAyaExecutables)
     dependsOn(copyAyaLibrary)
