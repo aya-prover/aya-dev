@@ -46,8 +46,8 @@ object Constants {
     "windows-x64",
     "linux-aarch64",
     "linux-x64",
-    "macos-x64",
     "macos-aarch64",
+    "macos-x64",
   )
 }
 
@@ -123,12 +123,12 @@ Constants.supportedPlatforms.forEach { platform ->
     from(installDir) {
       exclude("bin/aya")
       exclude("bin/aya-lsp")
-      exclude("${Constants.jreDirName}/bin/*")
+      exclude("${Constants.jreDirName}/bin/**")
     }
     from(installDir) {
       include("bin/aya")
       include("bin/aya-lsp")
-      include("${Constants.jreDirName}/bin/*")
+      include("${Constants.jreDirName}/bin/**")
       fileMode = "755".toInt(8)
     }
     doLast {
@@ -137,7 +137,7 @@ Constants.supportedPlatforms.forEach { platform ->
       val sha256 = HexFormat.of().withLowerCase().formatHex(bytes)
       Files.writeString(
         destinationDirectory.get().file(sha256FileName).asFile.toPath(),
-        sha256
+        sha256,
       )
     }
   }
