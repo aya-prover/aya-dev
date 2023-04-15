@@ -274,7 +274,7 @@ public record AyaProducer(
     var wholePos = sourcePosOf(node);
     var info = new DeclInfo(
       modifier.accessibility().data(),
-      nameOrInfix.map(x -> x.component1().sourcePos()).getOrDefault(wholePos),
+      nameOrInfix.map(x -> x.component1().sourcePos()).getOrDefault(SourcePos.NONE),
       wholePos,
       nameOrInfix.map(Tuple2::component2).getOrNull(),
       bind == null ? BindBlock.EMPTY : bindBlock(bind)
@@ -434,8 +434,7 @@ public record AyaProducer(
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
     var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
-    return ids.map(i -> new Expr.Param(
-      i.sourcePos(), LocalVar.from(i), type, explicit));
+    return ids.map(i -> new Expr.Param(i.sourcePos(), LocalVar.from(i), type, explicit));
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
@@ -462,8 +461,6 @@ public record AyaProducer(
   }
 
   public @NotNull ImmutableSeq<Expr.Param> lambdaTeleBinder(boolean explicit, @NotNull GenericNode<?> node) {
-    var pos = sourcePosOf(node);
-
     // | teleBinderTyped
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
@@ -472,7 +469,8 @@ public record AyaProducer(
     var ids = node.child(TELE_BINDER_UNTYPED);
     return teleBinderUntyped(ids).view()
       .map(LocalVar::from)
-      .map(bind -> new Expr.Param(pos, bind, typeOrHole(null, pos), explicit)).toImmutableSeq();
+      .map(bind -> new Expr.Param(bind.definition(), bind, typeOrHole(null, bind.definition()), explicit))
+      .toImmutableSeq();
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, boolean explicit, SourcePos pos) {
@@ -607,10 +605,10 @@ public record AyaProducer(
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
       var names = new Expr.IdiomNames(
-        Constants.alternativeEmpty(pos),
-        Constants.alternativeOr(pos),
-        Constants.applicativeApp(pos),
-        Constants.functorPure(pos)
+        Constants.alternativeEmpty(SourcePos.NONE),
+        Constants.alternativeOr(SourcePos.NONE),
+        Constants.applicativeApp(SourcePos.NONE),
+        Constants.functorPure(SourcePos.NONE)
       );
       if (block == null) return new Expr.Idiom(pos, names, ImmutableSeq.empty());
       return new Expr.Idiom(pos, names, block.childrenOfType(BARRED)
@@ -795,10 +793,11 @@ public record AyaProducer(
       .map(this::doBinding)
       .toImmutableSeq();
     // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
-    var bindName = Constants.monadBind(entireSourcePos);
-    var pureName = Constants.functorPure(entireSourcePos);
-
-    return Expr.Array.newGenerator(entireSourcePos, generator, bindings, bindName, pureName);
+    var names = new Expr.Array.ListCompNames(
+      Constants.monadBind(SourcePos.NONE),
+      Constants.functorPure(SourcePos.NONE)
+    );
+    return Expr.Array.newGenerator(entireSourcePos, generator, bindings, names);
   }
 
   private @NotNull Expr.Array arrayElementList(@NotNull GenericNode<?> node, @NotNull SourcePos entireSourcePos) {

@@ -106,19 +106,21 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         Expr head = new Expr.App(pos, pure, new Expr.NamedArg(true, pre));
         return list.foldLeft(head, (e, arg) -> Expr.app(ap, Seq.of(
           new WithPos<>(e.sourcePos(), new Expr.NamedArg(true, e))
-          , new WithPos<>(pos, arg)).view()));
+          , new WithPos<>(e.sourcePos(), arg)).view()));
       }).foldLeft(empty, (e, arg) ->
         Expr.app(or, Seq.of(
           new WithPos<>(e.sourcePos(), new Expr.NamedArg(true, e)),
-          new WithPos<>(pos, new Expr.NamedArg(true, arg))).view()));
+          new WithPos<>(e.sourcePos(), new Expr.NamedArg(true, arg))).view()));
       case Expr.Array arrayExpr -> arrayExpr.arrayBlock().fold(
         left -> {
           // desugar `[ expr | x <- xs, y <- ys ]` to `do; x <- xs; y <- ys; return expr`
 
           // just concat `bindings` and `return expr`
-          var returnApp = new Expr.App(left.pureName().sourcePos(), left.pureName(), new Expr.NamedArg(true, left.generator()));
+          var functorPure = left.names().functorPure();
+          var monadBind = left.names().monadBind();
+          var returnApp = new Expr.App(arrayExpr.sourcePos(), functorPure, new Expr.NamedArg(true, left.generator()));
           var lastBind = new Expr.DoBind(left.generator().sourcePos(), LocalVar.IGNORED, returnApp);
-          var doNotation = new Expr.Do(arrayExpr.sourcePos(), left.bindName(), left.binds().appended(lastBind));
+          var doNotation = new Expr.Do(arrayExpr.sourcePos(), monadBind, left.binds().appended(lastBind));
 
           // desugar do-notation
           return pre(doNotation);
