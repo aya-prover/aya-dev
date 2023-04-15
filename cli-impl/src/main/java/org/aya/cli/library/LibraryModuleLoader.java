@@ -77,7 +77,7 @@ record LibraryModuleLoader(
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
     source.resolveInfo().set(resolveInfo);
     return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
-      source.tycked().set(defs);
+      source.notifyTycked(moduleResolve, defs);
       if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
     });
   }

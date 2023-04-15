@@ -63,6 +63,16 @@ public record LibrarySource(
     return owner.locator().displayName(underlyingFile);
   }
 
+  public void notifyTycked(@NotNull ResolveInfo moduleResolve, @NotNull ImmutableSeq<GenericDef> tycked) {
+    this.resolveInfo.set(moduleResolve);
+    this.tycked.set(tycked);
+    if (isLiterate) {
+      var data = literateData.get();
+      data.resolve(moduleResolve);
+      data.tyck(moduleResolve);
+    }
+  }
+
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
     if (isLiterate) {
       var data = LiterateData.create(originalFile(), parser.reporter());

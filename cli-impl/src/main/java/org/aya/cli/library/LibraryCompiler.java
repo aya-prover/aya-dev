@@ -228,6 +228,7 @@ public class LibraryCompiler {
     if (src.tycked().get() == null) return;
     src.tycked().set(null);
     src.resolveInfo().set(null);
+    src.literateData().set(null);
     clearPrimitives(src.program().get());
     parse(src);
   }
@@ -237,6 +238,7 @@ public class LibraryCompiler {
     src.program().set(null);
     src.tycked().set(null);
     src.resolveInfo().set(null);
+    src.literateData().set(null);
     src.imports().clear();
   }
 
