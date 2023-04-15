@@ -5,8 +5,10 @@ package org.aya.cli.library.source;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
+import org.aya.cli.utils.LiterateData;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
+import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.util.AyaFiles;
@@ -33,13 +35,18 @@ import java.util.stream.IntStream;
 public record LibrarySource(
   @NotNull LibraryOwner owner,
   @NotNull Path underlyingFile,
+  boolean isLiterate,
   @NotNull MutableList<LibrarySource> imports,
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
   @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
-  @NotNull MutableValue<ResolveInfo> resolveInfo
+  @NotNull MutableValue<ResolveInfo> resolveInfo,
+  @NotNull MutableValue<LiterateData> literateData
 ) implements GenericAyaFile {
-  public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path file) {
-    this(owner, FileUtil.canonicalize(file), MutableList.create(), MutableValue.create(), MutableValue.create(), MutableValue.create());
+  public static @NotNull LibrarySource create(@NotNull LibraryOwner owner, @NotNull Path file) {
+    var underlyingFile = FileUtil.canonicalize(file);
+    return new LibrarySource(owner, underlyingFile, AyaFiles.isLiterate(underlyingFile),
+      MutableList.create(), MutableValue.create(),
+      MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ImmutableSeq<String> moduleName() {
@@ -56,18 +63,31 @@ public record LibrarySource(
     return owner.locator().displayName(underlyingFile);
   }
 
-  public @NotNull SourceFile toSourceFile(@NotNull String sourceCode) {
-    return new SourceFile(displayPath().toString(), underlyingFile, sourceCode);
-  }
-
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+    if (isLiterate) {
+      var data = LiterateData.create(originalFile(), parser.reporter());
+      data.parseMe(parser);
+      literateData.set(data);
+    }
     var stmts = GenericAyaFile.super.parseMe(parser);
     program.set(stmts);
     return stmts;
   }
 
+  @Override public @NotNull Literate literate() throws IOException {
+    return isLiterate ? literateData.get().literate() : GenericAyaFile.super.literate();
+  }
+
+  @Override public @NotNull SourceFile codeFile() throws IOException {
+    return isLiterate ? literateData.get().extractedAya() : GenericAyaFile.super.codeFile();
+  }
+
   @Override public @NotNull SourceFile originalFile() throws IOException {
-    return toSourceFile(Files.readString(underlyingFile));
+    return originalFile(Files.readString(underlyingFile));
+  }
+
+  public @NotNull SourceFile originalFile(@NotNull String sourceCode) {
+    return new SourceFile(displayPath().toString(), underlyingFile, sourceCode);
   }
 
   public @NotNull Path compiledCorePath() {

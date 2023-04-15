@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -40,7 +40,7 @@ public interface GotoDefinition {
 
   private static @Nullable SourcePos mockSourcePos(@NotNull SeqView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {
     return Resolver.resolveModule(libraries, moduleVar.path().ids())
-      .map(src -> src.toSourceFile(""))
+      .map(src -> src.originalFile(""))
       .map(src -> new SourcePos(src, 0, 0, 1, 0, 1, 0))
       .getOrNull();
   }

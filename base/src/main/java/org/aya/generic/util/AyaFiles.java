@@ -19,6 +19,10 @@ public interface AyaFiles {
     return Constants.AYA_POSTFIX_PATTERN.matcher(name).replaceAll("");
   }
 
+  static boolean isLiterate(@NotNull Path path) {
+    return path.getFileName().toString().endsWith(Constants.AYA_LITERATE_POSTFIX);
+  }
+
   static @NotNull Path resolveAyaSourceFile(@NotNull Path basePath, @NotNull ImmutableSeq<String> moduleName) {
     var literate = FileUtil.resolveFile(basePath, moduleName, Constants.AYA_LITERATE_POSTFIX);
     if (Files.exists(literate)) return literate;
