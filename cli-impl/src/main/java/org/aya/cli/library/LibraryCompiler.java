@@ -10,12 +10,14 @@ import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.util.AyaFiles;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.context.Context;
@@ -149,6 +151,23 @@ public class LibraryCompiler {
     return CompilerUtil.catching(reporter, flags, this::make);
   }
 
+  private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
+    var prettyInfo = flags.prettyInfo();
+    if (prettyInfo == null || prettyInfo.prettyStage() != CliEnums.PrettyStage.literate) return;
+    reportNest("[Info] Generating literate output");
+    var outputDir = Files.createDirectories(owner.underlyingLibrary().libraryPrettyRoot());
+    var outputTarget = prettyInfo.prettyFormat().target;
+    modified.forEachChecked(src -> {
+      // reportNest("[Pretty] " + QualifiedID.join(src.moduleName()));
+      var doc = src.pretty(ImmutableSeq.empty(), prettyInfo.prettierOptions());
+      var text = prettyInfo.renderOptions().render(outputTarget, doc, prettyInfo.renderOpts(true));
+      var outputFileName = AyaFiles.stripAyaSourcePostfix(src.displayPath().toString()) + outputTarget.fileExt;
+      var outputFile = outputDir.resolve(outputFileName);
+      Files.createDirectories(outputFile.getParent());
+      Files.writeString(outputFile, text);
+    });
+  }
+
   /**
    * Incrementally compiles a library without handling compilation errors.
    *
@@ -184,6 +203,7 @@ public class LibraryCompiler {
     var make = make(modified);
     reporter.reportNest("Library loaded in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
+    pretty(modified);
     return make;
   }
 
