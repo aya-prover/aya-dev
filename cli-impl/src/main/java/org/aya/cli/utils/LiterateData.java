@@ -21,6 +21,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -59,11 +60,12 @@ public record LiterateData(
 
   public static @NotNull Doc toDoc(
     @NotNull GenericAyaFile ayaFile,
+    @Nullable ImmutableSeq<String> currentModule,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options
   ) throws IOException {
-    var highlights = SyntaxHighlight.highlight(Option.some(ayaFile.codeFile()), program);
+    var highlights = SyntaxHighlight.highlight(currentModule, Option.some(ayaFile.codeFile()), program);
     var literate = ayaFile.literate();
     var prettier = new FaithfulPrettier(problems, highlights, options);
     prettier.accept(literate);

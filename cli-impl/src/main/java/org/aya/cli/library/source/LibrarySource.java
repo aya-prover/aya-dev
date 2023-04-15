@@ -77,7 +77,7 @@ public record LibrarySource(
   }
 
   public @NotNull Doc pretty(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) throws IOException {
-    return LiterateData.toDoc(this, program.get(), problems, options);
+    return LiterateData.toDoc(this, moduleName(), program.get(), problems, options);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {

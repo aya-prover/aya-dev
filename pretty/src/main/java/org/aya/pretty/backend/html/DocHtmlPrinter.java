@@ -129,6 +129,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   public static @NotNull String normalizeId(@NotNull Link linkId) {
     return switch (linkId) {
+      case Link.CrossLink(var path, var loc) -> path.joinToString("/") + ".html" + (loc == null ? "" : "#" + normalizeId(loc));
       case Link.DirectLink(var link) -> link;
       case Link.LocalId(var id) -> id.fold(Html5Stylist::normalizeCssId, x -> "v" + x);
       // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
@@ -138,6 +139,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   public static @NotNull String normalizeHref(@NotNull Link linkId) {
     return switch (linkId) {
+      case Link.CrossLink link -> normalizeId(link);
       case Link.DirectLink(var link) -> link;
       case Link.LocalId localId -> "#" + normalizeId(localId);
     };

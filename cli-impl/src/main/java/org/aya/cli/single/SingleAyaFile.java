@@ -76,7 +76,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options
   ) throws IOException {
-    return LiterateData.toDoc(this, program, problems, options);
+    return LiterateData.toDoc(this, null, program, problems, options);
   }
 
   private void doWrite(

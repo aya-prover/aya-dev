@@ -34,7 +34,7 @@ public class FaithfulPrettierTest {
     var stmts = parser.program(sourceFile);
     TyckDeclTest.resolve(stmts, new EmptyContext(reporter, root).derive(modName));
 
-    var highlights = SyntaxHighlight.highlight(Option.some(sourceFile), stmts);
+    var highlights = SyntaxHighlight.highlight(null, Option.some(sourceFile), stmts);
     var mockPos = new SourcePos(sourceFile, 0, sourceFile.sourceCode().length() - 1, // <- tokenEndIndex is inclusive
       -1, -1, -1, -1);
     var doc = new FaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())

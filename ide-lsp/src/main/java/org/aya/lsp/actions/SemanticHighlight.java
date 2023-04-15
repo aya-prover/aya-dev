@@ -29,7 +29,7 @@ public interface SemanticHighlight {
     var program = source.program().get();
     if (program != null) {
       SyntaxHighlight
-        .highlight(Option.none(), program).view()
+        .highlight(null, Option.none(), program).view()
         .flatMap(HighlightResult.Symbol::from)
         .forEach(symbols::append);
     }

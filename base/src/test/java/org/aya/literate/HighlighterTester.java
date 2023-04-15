@@ -211,7 +211,7 @@ public class HighlighterTester {
 
     Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
-    var result = SyntaxHighlight.highlight(Option.some(sourceFile), stmts)
+    var result = SyntaxHighlight.highlight(null, Option.some(sourceFile), stmts)
       .filterNot(it -> it instanceof HighlightInfo.Lit(var $, var kind)
         && ignored.contains(kind));
     new HighlighterTester(code, result, expected).runTest();
