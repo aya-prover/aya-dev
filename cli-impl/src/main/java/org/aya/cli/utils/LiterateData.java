@@ -4,15 +4,25 @@ package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
+import org.aya.cli.literate.FaithfulPrettier;
+import org.aya.cli.literate.SyntaxHighlight;
+import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Literate;
 import org.aya.concrete.remark.LiterateConsumer;
+import org.aya.concrete.stmt.Stmt;
+import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.error.SourceFile;
+import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public record LiterateData(
   @NotNull Literate literate,
@@ -45,5 +55,18 @@ public record LiterateData(
       assert c.expr != null;
       c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
     });
+  }
+
+  public static @NotNull Doc toDoc(
+    @NotNull GenericAyaFile ayaFile,
+    @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ImmutableSeq<Problem> problems,
+    @NotNull PrettierOptions options
+  ) throws IOException {
+    var highlights = SyntaxHighlight.highlight(Option.some(ayaFile.codeFile()), program);
+    var literate = ayaFile.literate();
+    var prettier = new FaithfulPrettier(problems, highlights, options);
+    prettier.accept(literate);
+    return literate.toDoc();
   }
 }

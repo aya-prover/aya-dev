@@ -4,9 +4,6 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Option;
-import org.aya.cli.literate.FaithfulPrettier;
-import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.LiterateData;
@@ -79,11 +76,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options
   ) throws IOException {
-    var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
-    var literate = literate();
-    var prettier = new FaithfulPrettier(problems, highlights, options);
-    prettier.accept(literate);
-    return literate.toDoc();
+    return LiterateData.toDoc(this, program, problems, options);
   }
 
   private void doWrite(
@@ -134,7 +127,8 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     return new MarkdownAyaFile(template.originalFile, LiterateData.create(template.originalFile, reporter));
   }
 
-  record MarkdownAyaFile(@Override @NotNull SourceFile originalFile, @NotNull LiterateData data) implements SingleAyaFile {
+  record MarkdownAyaFile(@Override @NotNull SourceFile originalFile,
+                         @NotNull LiterateData data) implements SingleAyaFile {
     @Override public void resolveAdditional(@NotNull ResolveInfo info) {
       SingleAyaFile.super.resolveAdditional(info);
       data.resolve(info);

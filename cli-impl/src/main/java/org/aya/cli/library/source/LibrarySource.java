@@ -12,9 +12,12 @@ import org.aya.concrete.remark.Literate;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.core.def.GenericDef;
 import org.aya.generic.util.AyaFiles;
+import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
+import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,6 +74,11 @@ public record LibrarySource(
       data.resolve(moduleResolve);
       data.tyck(moduleResolve);
     }
+  }
+
+  public @NotNull Doc pretty(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) throws IOException {
+    this.resolveInfo().get().thisModule().reporter();
+    return LiterateData.toDoc(this, program.get(), problems, options);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
