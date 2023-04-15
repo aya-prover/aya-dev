@@ -28,10 +28,10 @@ final class CommonTasks {
       buildArgs.add("-H:IncludeResources=messages/AnalysisBundle.properties") // ij-parsing-core
       buildArgs.add("--report-unsupported-elements-at-runtime")
 
+      var javaVersion = project.rootProject.property("javaVersion") as int
       javaLauncher.set(
         toolchain.launcherFor {
-          // Remember to update .github/workflows/nightly-build.yml
-          languageVersion.set(JavaLanguageVersion.of(19))
+          languageVersion.set(JavaLanguageVersion.of(javaVersion))
           vendor.set(JvmVendorSpec.matching("GraalVM Community"))
         },
       )
