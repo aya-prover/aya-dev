@@ -177,7 +177,7 @@ public record CompiledAya(
       case SerDef.Field field -> field.self();
       case SerDef.Data data -> data.name();
       case SerDef.Ctor ctor -> ctor.self();
-      case SerDef.Prim prim -> new SerDef.QName(ImmutableSeq.empty(), prim.name().name());
+      case SerDef.Prim prim -> new SerDef.QName(ImmutableSeq.empty(), ImmutableSeq.empty(), prim.name().name());
     };
   }
 

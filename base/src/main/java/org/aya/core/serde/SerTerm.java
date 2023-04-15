@@ -45,6 +45,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
         .getOrPut(name.name(), () -> {
           var empty = DefVar.empty(name.name());
           empty.module = name.mod();
+          empty.fileModule = name.fileMod();
           return empty;
         });
     }
@@ -55,12 +56,14 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
     public void putPrim(
       @NotNull ImmutableSeq<String> mod,
+      @NotNull ImmutableSeq<String> fileMod,
       @NotNull PrimDef.ID id,
       @NotNull DefVar<?, ?> defVar
     ) {
       var old = defCache.getOrPut(mod, MutableHashMap::new).put(id.id, defVar);
       if (old.isDefined()) throw new SerDef.DeserializeException("Same prim deserialized twice: " + id.id);
       defVar.module = mod;
+      defVar.fileModule = fileMod;
     }
   }
 

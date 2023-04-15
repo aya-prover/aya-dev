@@ -49,7 +49,8 @@ public record Serializer(@NotNull Serializer.State state) {
       );
       case PrimDef prim -> {
         assert prim.ref.module != null;
-        yield new SerDef.Prim(prim.ref.module, prim.id);
+        assert prim.ref.fileModule != null;
+        yield new SerDef.Prim(prim.ref.module, prim.ref.fileModule, prim.id);
       }
       case CtorDef ctor -> new SerDef.Ctor(
         state.def(ctor.dataRef),
@@ -187,7 +188,8 @@ public record Serializer(@NotNull Serializer.State state) {
 
     public @NotNull SerDef.QName def(@NotNull DefVar<?, ?> var) {
       assert var.module != null;
-      return new SerDef.QName(var.module, var.name());
+      assert var.fileModule != null;
+      return new SerDef.QName(var.module, var.fileModule, var.name());
     }
   }
 
