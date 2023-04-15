@@ -76,7 +76,6 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  * @see AyaPsiElementTypes
  */
 public record AyaProducer(
-  @NotNull String code,
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
 ) {
