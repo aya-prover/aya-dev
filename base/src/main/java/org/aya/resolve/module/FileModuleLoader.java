@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public record FileModuleLoader(
@@ -43,7 +44,7 @@ public record FileModuleLoader(
   @Override
   public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
-    return sourcePath.toFile().exists();
+    return Files.exists(sourcePath);
   }
 
   public static void handleInternalError(@NotNull InternalException e) {
