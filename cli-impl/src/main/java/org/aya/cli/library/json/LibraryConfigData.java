@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
@@ -42,10 +42,15 @@ public final class LibraryConfigData {
   }
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
-    return asConfig(libraryRoot, config -> libraryRoot.resolve("build"));
+    var buildRoot = libraryRoot.resolve("build");
+    return asConfig(libraryRoot, buildRoot.resolve("pretty"), config -> buildRoot);
   }
 
-  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Function<String, Path> buildRootGen) {
+  private @NotNull LibraryConfig asConfig(
+    @NotNull Path libraryRoot,
+    @NotNull Path libraryPrettyRoot,
+    @NotNull Function<String, Path> buildRootGen
+  ) {
     checkDeserialization(libraryRoot.resolve(Constants.AYA_JSON));
     var buildRoot = FileUtil.canonicalize(buildRootGen.apply(version));
     return new LibraryConfig(
@@ -56,6 +61,7 @@ public final class LibraryConfigData {
       libraryRoot.resolve("src"),
       buildRoot,
       buildRoot.resolve("out"),
+      libraryPrettyRoot,
       ImmutableSeq.from(dependency.entrySet()).view()
         .map(e -> e.getValue().as(libraryRoot, e.getKey()))
         .toImmutableSeq()
@@ -80,9 +86,13 @@ public final class LibraryConfigData {
     return of(canonicalPath).asConfig(canonicalPath);
   }
 
-  public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Function<String, Path> buildRoot) throws IOException, BadConfig {
+  public static @NotNull LibraryConfig fromDependencyRoot(
+    @NotNull Path dependencyRoot,
+    @NotNull Path depPrettyRoot,
+    @NotNull Function<String, Path> buildRoot
+  ) throws IOException, BadConfig {
     var canonicalPath = FileUtil.canonicalize(dependencyRoot);
-    return of(canonicalPath).asConfig(canonicalPath, buildRoot);
+    return of(canonicalPath).asConfig(canonicalPath, depPrettyRoot, buildRoot);
   }
 
   public static class BadConfig extends RuntimeException {

@@ -77,7 +77,6 @@ public record LibrarySource(
   }
 
   public @NotNull Doc pretty(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) throws IOException {
-    this.resolveInfo().get().thisModule().reporter();
     return LiterateData.toDoc(this, program.get(), problems, options);
   }
 

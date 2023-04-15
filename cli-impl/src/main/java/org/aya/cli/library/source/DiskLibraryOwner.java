@@ -30,7 +30,11 @@ public record DiskLibraryOwner(
   private static @Nullable LibraryConfig depConfig(@NotNull LibraryConfig config, @NotNull LibraryDependency dep) throws IOException {
     // TODO: test only: dependency resolving should be done in package manager
     if (dep instanceof LibraryDependency.DepFile file)
-      return LibraryConfigData.fromDependencyRoot(file.depRoot(), version -> depBuildRoot(config, dep.depName(), version));
+      return LibraryConfigData.fromDependencyRoot(
+        file.depRoot(),
+        config.libraryPrettyRoot(),
+        version -> depBuildRoot(config, dep.depName(), version)
+      );
     return null;
   }
 
