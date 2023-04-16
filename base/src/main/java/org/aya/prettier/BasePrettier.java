@@ -262,11 +262,11 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return linkIdOf(null, ref);
   }
 
-  public static @NotNull Link linkIdOf(@Nullable ImmutableSeq<String> currentModule, @NotNull AnyVar ref) {
+  public static @NotNull Link linkIdOf(@Nullable ImmutableSeq<String> currentFileModule, @NotNull AnyVar ref) {
     if (ref instanceof DefVar<?, ?> defVar) {
       var location = Link.loc(QualifiedID.join(defVar.qualifiedName()));
       // referring to the `ref` in its own module
-      if (currentModule == null || defVar.fileModule == null || defVar.isInModule(currentModule))
+      if (currentFileModule == null || defVar.fileModule == null || defVar.fileModule.sameElements(currentFileModule))
         return location;
       // referring to the `ref` in another module
       return Link.cross(defVar.fileModule, location);
