@@ -49,7 +49,7 @@ public interface StmtFolder<R> extends Function<Stmt, R>, ExprFolder<R> {
     return switch (stmt) {
       case Generalize g -> g.variables.foldLeft(acc, (a, v) -> foldVarDecl(a, v, v.sourcePos, noType()));
       case Command.Module m -> foldModuleDecl(acc, m.sourcePos(), new ModuleName.Qualified(m.name()));
-      case Command.Import i -> acc; // we are no need to fold `i.path()`
+      case Command.Import i -> foldModuleRef(acc, i.sourcePos(), i.path().asName());
       case Command.Open o when o.fromSugar() -> acc;  // handled in `case Decl` or `case Command.Import`
       case Command.Open o -> {
         acc = foldModuleRef(acc, o.sourcePos(), o.path());
