@@ -130,10 +130,13 @@ public record ExprResolver(
         var clauses = match.clauses().map(this::apply);
         yield match.update(match.discriminant().map(this), clauses);
       }
-      case Expr.New neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
-        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data()));
-        return field.descent(enter(fieldCtx));
-      }));
+      case Expr.New neu -> {
+        var newCtx = ctx.bind(LocalVar.self(neu.sourcePos()));
+        yield neu.update(enter(newCtx).apply(neu.struct()), neu.fields().map(field -> {
+          var fieldCtx = field.bindings().foldLeft(newCtx, (c, x) -> c.bind(x.data()));
+          return field.descent(enter(fieldCtx));
+        }));
+      }
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(lam.param(), mCtx);
