@@ -109,7 +109,7 @@ public record ExprResolver(
    */
   @Override public @NotNull Expr apply(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Do doExpr -> doExpr.update(apply(doExpr.bindName()), resolve(doExpr.binds(), MutableValue.create(ctx)));
+      case Expr.Do doExpr -> doExpr.update(apply(doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
       case Expr.Match match -> {
         var clauses = match.clauses().map(this::apply);
         yield match.update(match.discriminant().map(this), clauses);
@@ -120,17 +120,17 @@ public record ExprResolver(
       }));
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
-        var param = resolve(lam.param(), mCtx);
+        var param = bind(lam.param(), mCtx);
         yield lam.update(param, enter(mCtx.get()).apply(lam.body()));
       }
       case Expr.Pi pi -> {
         var mCtx = MutableValue.create(ctx);
-        var param = resolve(pi.param(), mCtx);
+        var param = bind(pi.param(), mCtx);
         yield pi.update(param, enter(mCtx.get()).apply(pi.last()));
       }
       case Expr.Sigma sigma -> {
         var mCtx = MutableValue.create(ctx);
-        var params = sigma.params().map(param -> resolve(param, mCtx));
+        var params = sigma.params().map(param -> bind(param, mCtx));
         yield sigma.update(params);
       }
       case Expr.Path path -> {
@@ -140,7 +140,7 @@ public record ExprResolver(
       case Expr.Array array -> array.update(array.arrayBlock().map(
         left -> {
           var mCtx = MutableValue.create(ctx);
-          var binds = resolve(left.binds(), mCtx);
+          var binds = bind(left.binds(), mCtx);
           var generator = enter(mCtx.get()).apply(left.generator());
           return left.update(generator, binds, apply(left.bindName()), apply(left.pureName()));
         },
@@ -177,7 +177,7 @@ public record ExprResolver(
 
         var mCtx = MutableValue.create(ctx);
         // visit telescope
-        var telescope = letBind.telescope().map(param -> resolve(param, mCtx));
+        var telescope = letBind.telescope().map(param -> bind(param, mCtx));
         // for things that can refer the telescope (like result and definedAs)
         var resolver = enter(mCtx.get());
         // visit result
@@ -224,11 +224,11 @@ public record ExprResolver(
 
   public @NotNull Pattern.Clause apply(@NotNull Pattern.Clause clause) {
     var mCtx = MutableValue.create(ctx());
-    var pats = clause.patterns.map(pa -> pa.descent(pat -> resolve(pat, mCtx)));
+    var pats = clause.patterns.map(pa -> pa.descent(pat -> bind(pat, mCtx)));
     return clause.update(pats, clause.expr.map(enter(mCtx.get())));
   }
 
-  public @NotNull Pattern resolve(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
+  public @NotNull Pattern bind(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
     return new EndoPattern() {
       @Override public @NotNull Pattern post(@NotNull Pattern pattern) {
         return switch (pattern) {
@@ -279,14 +279,14 @@ public record ExprResolver(
     return ctx.bind(as, sourcePos);
   }
 
-  public @NotNull Expr.Param resolve(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
+  public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
     ctx.set(ctx.get().bind(param.ref(), param.sourcePos()));
     return p;
   }
 
   public @NotNull ImmutableSeq<Expr.DoBind>
-  resolve(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
+  bind(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
       var b = bind.descent(enter(ctx.get()));
       ctx.set(ctx.get().bind(bind.var(), bind.sourcePos()));

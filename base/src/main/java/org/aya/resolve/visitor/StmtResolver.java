@@ -66,7 +66,7 @@ public interface StmtResolver {
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
-          ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> bodyResolver.resolve(pattern, mCtx)));
+          ctor.patterns = ctor.patterns.map(pat -> pat.descent(pattern -> bodyResolver.bind(pattern, mCtx)));
           resolveMemberSignature(ctor, bodyResolver, mCtx);
           ctor.clauses = bodyResolver.partial(mCtx.get(), ctor.clauses);
           var head = new TyckOrder.Head(ctor);
@@ -105,7 +105,7 @@ public interface StmtResolver {
   }
   private static <T extends TeleDecl<?> & TyckUnit>
   void resolveMemberSignature(T ctor, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
-    ctor.modifyTelescope(t -> t.map(param -> bodyResolver.resolve(param, mCtx)));
+    ctor.modifyTelescope(t -> t.map(param -> bodyResolver.bind(param, mCtx)));
     // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly
     //  so please don't
     ctor.modifyResult(t -> bodyResolver.enter(mCtx.get()).apply(t));
@@ -131,7 +131,7 @@ public interface StmtResolver {
     var resolver = new ExprResolver(decl.ctx, options);
     resolver.enterHead();
     var mCtx = MutableValue.create(decl.ctx);
-    var telescope = decl.telescope.map(param -> resolver.resolve(param, mCtx));
+    var telescope = decl.telescope.map(param -> resolver.bind(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
     decl.modifyResult(newResolver);
     decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
