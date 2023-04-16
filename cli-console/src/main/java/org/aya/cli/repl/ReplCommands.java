@@ -120,7 +120,7 @@ public interface ReplCommands {
   @NotNull Command TOGGLE_PRETTY = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaPrettierOptions.Key key) {
       var builder = new StringBuilder();
-      var map = repl.config.prettierOptions.map;
+      var map = repl.config.literatePrettier.prettierOptions.map;
       if (key == null) {
         builder.append("Current pretty printing options:");
         for (var k : AyaPrettierOptions.Key.values())
@@ -152,7 +152,7 @@ public interface ReplCommands {
 
   @NotNull Command COLOR = new Command(ImmutableSeq.of("color"), "Display the current color scheme or switch to another") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable ColorParam colorParam) {
-      var options = repl.config.renderOptions;
+      var options = repl.config.literatePrettier.renderOptions;
       if (colorParam == null)
         return Result.ok(options.prettyColorScheme(), true);
       var fallback = options.colorScheme;
@@ -171,13 +171,13 @@ public interface ReplCommands {
 
   @NotNull Command STYLE = new Command(ImmutableSeq.of("style"), "Display the current style/Switch to another style") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable StyleParam styleParam) {
-      var options = repl.config.renderOptions;
+      var options = repl.config.literatePrettier.renderOptions;
       if (styleParam == null) return Result.ok(options.prettyStyleFamily(), true);
       var fallback = options.styleFamily;
       try {
         options.updateStyleFamily(styleParam.value);
         options.stylist(RenderOptions.OutputTarget.Unix); // if there's error, report now.
-        return Result.ok(repl.config.renderOptions.prettyStyleFamily(), true);
+        return Result.ok(options.prettyStyleFamily(), true);
       } catch (IllegalArgumentException | IOException e) {
         options.styleFamily = fallback;
         return Result.err((e instanceof IOException ? "Problem reading file: " : "") + e.getMessage(), true);

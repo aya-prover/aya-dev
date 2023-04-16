@@ -44,10 +44,10 @@ public class ReplConfigTest {
       assertEquals(NormalizeMode.NF, c.normalizeMode);
       assertTrue(c.enableUnicode);
       assertFalse(c.silent);
-      assertTrue(c.prettierOptions.map.get(AyaPrettierOptions.Key.InlineMetas));
-      assertTrue(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitPats));
-      assertFalse(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowLambdaTypes));
-      assertFalse(c.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
+      assertTrue(c.literatePrettier.prettierOptions.map.get(AyaPrettierOptions.Key.InlineMetas));
+      assertTrue(c.literatePrettier.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitPats));
+      assertFalse(c.literatePrettier.prettierOptions.map.get(AyaPrettierOptions.Key.ShowLambdaTypes));
+      assertFalse(c.literatePrettier.prettierOptions.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
     }
   }
 }
