@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.utils.LiteratePrettierOptions;
@@ -95,9 +95,10 @@ public final class LibraryConfigData {
 
   @VisibleForTesting public static LibraryConfigData ofAyaJson(Path ayaJson) throws IOException {
     try (var jsonReader = Files.newBufferedReader(ayaJson)) {
-      return new Gson().fromJson(jsonReader, LibraryConfigData.class);
+      var gson = LiteratePrettierOptions.gsonBuilder(new GsonBuilder()).create();
+      return gson.fromJson(jsonReader, LibraryConfigData.class);
     } catch (JsonParseException cause) {
-      throw new BadConfig("Failed to parse " + ayaJson, cause);
+      throw new BadConfig("Failed to parse " + ayaJson + ": " + cause.getMessage());
     }
   }
 
