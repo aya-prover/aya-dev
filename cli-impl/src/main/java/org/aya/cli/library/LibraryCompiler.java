@@ -9,6 +9,7 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
@@ -20,6 +21,8 @@ import org.aya.core.def.PrimDef;
 import org.aya.generic.util.AyaFiles;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.InterruptException;
+import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -152,15 +155,36 @@ public class LibraryCompiler {
   }
 
   private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
-    var prettyInfo = flags.prettyInfo();
-    if (prettyInfo == null || prettyInfo.prettyStage() != CliEnums.PrettyStage.literate) return;
+    var cmdPretty = flags.prettyInfo();
+    if (cmdPretty == null || cmdPretty.prettyStage() != CliEnums.PrettyStage.literate) return;
+
+    // prepare literate output path
     reportNest("[Info] Generating literate output");
-    var outputDir = Files.createDirectories(owner.underlyingLibrary().libraryPrettyRoot());
-    var outputTarget = prettyInfo.prettyFormat().target;
+    var litConfig = owner.underlyingLibrary().literateConfig();
+    var outputDir = Files.createDirectories(litConfig.outputPath());
+
+    // If the library specifies no literate options, use the ones from the command line.
+    var litPretty = litConfig.pretty();
+    var prettierOptions = litPretty != null ? litPretty.prettierOptions : cmdPretty.prettierOptions();
+    var renderOptions = litPretty != null ? litPretty.renderOptions : cmdPretty.renderOptions();
+    // always use the backend options from the command line, like output format, server-side rendering, etc.
+    var outputTarget = cmdPretty.prettyFormat().target;
+    var setup = cmdPretty.backendOpts(true).then(new RenderOptions.BackendSetup() {
+      @Override public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkPrefix, litConfig.linkPrefix());
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkSeparator, "/");
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkPostfix, switch (outputTarget) {
+          case AyaMd, HTML -> ".html";
+          case default -> "";
+        });
+        return config;
+      }
+    });
+    // THE BIG GAME
     modified.forEachChecked(src -> {
       // reportNest("[Pretty] " + QualifiedID.join(src.moduleName()));
-      var doc = src.pretty(ImmutableSeq.empty(), prettyInfo.prettierOptions());
-      var text = prettyInfo.renderOptions().render(outputTarget, doc, prettyInfo.renderOpts(true));
+      var doc = src.pretty(ImmutableSeq.empty(), prettierOptions);
+      var text = renderOptions.render(outputTarget, doc, setup);
       var outputFileName = AyaFiles.stripAyaSourcePostfix(src.displayPath().toString()) + outputTarget.fileExt;
       var outputFile = outputDir.resolve(outputFileName);
       Files.createDirectories(outputFile.getParent());

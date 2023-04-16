@@ -64,11 +64,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
       var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(), flags.prettierOptions());
-      var text = renderOptions.render(out, d, flags.renderOpts(true));
+      var text = renderOptions.render(out, d, flags.backendOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
       doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, flags.renderOpts(hdr)));
+        (d, hdr) -> renderOptions.render(out, d, flags.backendOpts(hdr)));
     }
   }
   @VisibleForTesting default @NotNull Doc toDoc(

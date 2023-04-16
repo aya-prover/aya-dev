@@ -149,7 +149,26 @@ public class RenderOptions {
     }
   }
 
-  public record Opts(boolean headerCode, boolean styleCode, boolean separateStyle, boolean unicode, int pageWidth, boolean SSR) {
+  public interface BackendSetup {
+    <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config);
+    default @NotNull BackendSetup then(@NotNull BackendSetup next) {
+      return new ChainedSetup(this, next);
+    }
+  }
+
+  public record ChainedSetup(
+    @NotNull BackendSetup first,
+    @NotNull BackendSetup second
+  ) implements BackendSetup {
+    @Override public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
+      return second.setup(first.setup(config));
+    }
+  }
+
+  public record DefaultSetup(
+    boolean headerCode, boolean styleCode, boolean separateStyle,
+    boolean unicode, int pageWidth, boolean SSR
+  ) implements BackendSetup {
     public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
       config.set(PrinterConfig.PageOptions.PageWidth, pageWidth);
       config.set(StringPrinterConfig.TextOptions.Unicode, unicode);
@@ -162,14 +181,14 @@ public class RenderOptions {
     }
   }
 
-  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, @NotNull Opts opts) {
+  public @NotNull String render(@NotNull OutputTarget output, @NotNull Doc doc, @NotNull BackendSetup setup) {
     var stylist = stylistOrDefault(output);
     return switch (output) {
-      case Plain -> doc.renderToString(opts.setup(new StringPrinterConfig<>(stylist)));
-      case KaTeX, LaTeX -> doc.render(new DocTeXPrinter(), opts.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
-      case HTML -> doc.render(new DocHtmlPrinter<>(), opts.setup(new DocHtmlPrinter.Config((Html5Stylist) stylist)));
-      case AyaMd -> doc.render(new DocMdPrinter(), opts.setup(new DocMdPrinter.Config((MdStylist) stylist)));
-      case Unix -> doc.render(new DocTermPrinter(), opts.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
+      case Plain -> doc.renderToString(setup.setup(new StringPrinterConfig<>(stylist)));
+      case KaTeX, LaTeX -> doc.render(new DocTeXPrinter(), setup.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
+      case HTML -> doc.render(new DocHtmlPrinter<>(), setup.setup(new DocHtmlPrinter.Config((Html5Stylist) stylist)));
+      case AyaMd -> doc.render(new DocMdPrinter(), setup.setup(new DocMdPrinter.Config((MdStylist) stylist)));
+      case Unix -> doc.render(new DocTermPrinter(), setup.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
     };
   }
 

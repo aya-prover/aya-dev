@@ -456,7 +456,7 @@ public class AyaLanguageServer implements LanguageServer {
     var target = serverOptions.renderOptions.target();
     var renderOptions = this.renderOptions;
 
-    return renderOptions.render(target, doc, new RenderOptions.Opts(
+    return renderOptions.render(target, doc, new RenderOptions.DefaultSetup(
       false, false, false, true,
       PrinterConfig.INFINITE_SIZE,
       true));

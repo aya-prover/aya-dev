@@ -32,7 +32,7 @@ public record DiskLibraryOwner(
     if (dep instanceof LibraryDependency.DepFile file)
       return LibraryConfigData.fromDependencyRoot(
         file.depRoot(),
-        config.libraryPrettyRoot(),
+        config.literateConfig(),
         version -> depBuildRoot(config, dep.depName(), version)
       );
     return null;
