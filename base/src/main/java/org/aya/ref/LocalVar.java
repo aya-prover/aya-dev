@@ -60,4 +60,8 @@ public record LocalVar(
   @Override public int hashCode() {
     return System.identityHashCode(this);
   }
+
+  public static @NotNull LocalVar self(@NotNull SourcePos pos) {
+    return new LocalVar(Constants.SELF_NAME, pos);
+  }
 }

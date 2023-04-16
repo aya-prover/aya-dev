@@ -31,6 +31,7 @@ public interface Constants {
   @NotNull @NonNls String APPLICATIVE_APP = "<*>";
   @NotNull @NonNls String FUNCTOR_PURE = "pure";
   @NotNull @NonNls String MONAD_BIND = ">>=";
+  @NotNull @NonNls String SELF_NAME = "self";
 
   static @NotNull Expr alternativeOr(@NotNull SourcePos pos) {
     return new Expr.Unresolved(pos, ALTERNATIVE_OR);
