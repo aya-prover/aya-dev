@@ -29,7 +29,6 @@ import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +114,7 @@ public record ExprResolver(
         yield match.update(match.discriminant().map(this), clauses);
       }
       case Expr.New neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
-        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data(), x.sourcePos()));
+        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data()));
         return field.descent(enter(fieldCtx));
       }));
       case Expr.Lambda lam -> {
@@ -134,7 +133,7 @@ public record ExprResolver(
         yield sigma.update(params);
       }
       case Expr.Path path -> {
-        var newCtx = path.params().foldLeft(ctx, (c, x) -> c.bind(x, x.definition()));
+        var newCtx = path.params().foldLeft(ctx, Context::bind);
         yield path.descent(enter(newCtx));
       }
       case Expr.Array array -> array.update(array.arrayBlock().map(
@@ -188,7 +187,7 @@ public record ExprResolver(
         // end resolve letBind
 
         // resolve body
-        var newBody = enter(ctx.bind(letBind.bindName(), letBind.bindName().definition()))
+        var newBody = enter(ctx.bind(letBind.bindName()))
           .apply(body);
 
         yield let.update(
@@ -239,7 +238,7 @@ public record ExprResolver(
               addReference(maybe);
               yield new Pattern.Ctor(bind, maybe);
             }
-            ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
+            ctx.set(ctx.get().bind(bind.bind(), var -> false));
             yield bind;
           }
           case Pattern.QualifiedRef qref -> {
@@ -254,7 +253,7 @@ public record ExprResolver(
             yield EndoPattern.super.post(pattern);
           }
           case Pattern.As as -> {
-            ctx.set(bindAs(as.as(), ctx.get(), as.sourcePos()));
+            ctx.set(bindAs(as.as(), ctx.get()));
             yield as;
           }
           default -> EndoPattern.super.post(pattern);
@@ -275,13 +274,13 @@ public record ExprResolver(
     return null;
   }
 
-  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx, @NotNull SourcePos sourcePos) {
-    return ctx.bind(as, sourcePos);
+  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx) {
+    return ctx.bind(as);
   }
 
   public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
-    ctx.set(ctx.get().bind(param.ref(), param.sourcePos()));
+    ctx.set(ctx.get().bind(param.ref()));
     return p;
   }
 
@@ -289,7 +288,7 @@ public record ExprResolver(
   bind(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
       var b = bind.descent(enter(ctx.get()));
-      ctx.set(ctx.get().bind(bind.var(), bind.sourcePos()));
+      ctx.set(ctx.get().bind(bind.var()));
       return b;
     });
   }

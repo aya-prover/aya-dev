@@ -182,28 +182,26 @@ public interface Context {
 
   default @NotNull Context bind(
     @NotNull LocalVar ref,
-    @NotNull SourcePos sourcePos,
     @NotNull Predicate<@Nullable AnyVar> toWarn
   ) {
-    return bind(ref.name(), ref, sourcePos, toWarn);
+    return bind(ref.name(), ref, toWarn);
   }
 
-  default @NotNull Context bind(@NotNull LocalVar ref, @NotNull SourcePos sourcePos) {
-    return bind(ref.name(), ref, sourcePos, var -> var instanceof LocalVar);
+  default @NotNull Context bind(@NotNull LocalVar ref) {
+    return bind(ref.name(), ref, var -> var instanceof LocalVar);
   }
 
   default @NotNull Context bind(
     @NotNull String name,
     @NotNull LocalVar ref,
-    @NotNull SourcePos sourcePos,
     @NotNull Predicate<@Nullable AnyVar> toWarn
   ) {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
-    var exists = getUnqualifiedMaybe(name, sourcePos);
+    var exists = getUnqualifiedMaybe(name, ref.definition());
     if (toWarn.test(exists)
       && (!(ref.generateKind() instanceof GenerateKind.Anonymous))) {
-      reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
+      reporter().report(new NameProblem.ShadowingWarn(name, ref.definition()));
     }
     return new BindContext(this, name, ref);
   }
