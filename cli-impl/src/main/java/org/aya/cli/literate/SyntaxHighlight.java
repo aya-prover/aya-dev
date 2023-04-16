@@ -126,17 +126,18 @@ public record SyntaxHighlight(
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
-    var link = currentFileModule != null && currentFileModule.sameElements(path.ids())
-      ? Link.loc(path.toString())             // referring to a module defined in the current file
-      : Link.cross(path.ids(), null);  // referring to another file-level module
     // TODO: in SimpleModule.aya line 7, `public open Nat::N` is wrongly linked as `Link.cross`
     //  Because `Stmt.Open` does not provide the fully qualified module name (SimpleModule::Nat::N),
     //  instead, it provides `Nat::N` only, which is not enough to determine whether it is a cross-link or not.
+    var link = currentFileModule != null && currentFileModule.sameElements(path.ids())
+      ? Link.loc(path.toString())             // referring to a module defined in the current file
+      : Link.cross(path.ids(), null);  // referring to another file-level module
     return add(acc, DefKind.Module.toRef(pos, link, null));
   }
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
+    // module declaration is always a local link; we have no way to define a file-level module in aya code.
     return add(acc, DefKind.Module.toDef(pos, Link.loc(path.toString()), null));
   }
 
