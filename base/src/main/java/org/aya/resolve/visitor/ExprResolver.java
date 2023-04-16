@@ -29,7 +29,6 @@ import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,38 +108,38 @@ public record ExprResolver(
    */
   @Override public @NotNull Expr apply(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.Do doExpr -> doExpr.update(apply(doExpr.bindName()), resolve(doExpr.binds(), MutableValue.create(ctx)));
+      case Expr.Do doExpr -> doExpr.update(apply(doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
       case Expr.Match match -> {
         var clauses = match.clauses().map(this::apply);
         yield match.update(match.discriminant().map(this), clauses);
       }
       case Expr.New neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
-        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data(), x.sourcePos()));
+        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data()));
         return field.descent(enter(fieldCtx));
       }));
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
-        var param = resolve(lam.param(), mCtx);
+        var param = bind(lam.param(), mCtx);
         yield lam.update(param, enter(mCtx.get()).apply(lam.body()));
       }
       case Expr.Pi pi -> {
         var mCtx = MutableValue.create(ctx);
-        var param = resolve(pi.param(), mCtx);
+        var param = bind(pi.param(), mCtx);
         yield pi.update(param, enter(mCtx.get()).apply(pi.last()));
       }
       case Expr.Sigma sigma -> {
         var mCtx = MutableValue.create(ctx);
-        var params = sigma.params().map(param -> resolve(param, mCtx));
+        var params = sigma.params().map(param -> bind(param, mCtx));
         yield sigma.update(params);
       }
       case Expr.Path path -> {
-        var newCtx = path.params().foldLeft(ctx, (c, x) -> c.bind(x, x.definition()));
+        var newCtx = path.params().foldLeft(ctx, Context::bind);
         yield path.descent(enter(newCtx));
       }
       case Expr.Array array -> array.update(array.arrayBlock().map(
         left -> {
           var mCtx = MutableValue.create(ctx);
-          var binds = resolve(left.binds(), mCtx);
+          var binds = bind(left.binds(), mCtx);
           var generator = enter(mCtx.get()).apply(left.generator());
           return left.update(generator, binds, apply(left.bindName()), apply(left.pureName()));
         },
@@ -177,7 +176,7 @@ public record ExprResolver(
 
         var mCtx = MutableValue.create(ctx);
         // visit telescope
-        var telescope = letBind.telescope().map(param -> resolve(param, mCtx));
+        var telescope = letBind.telescope().map(param -> bind(param, mCtx));
         // for things that can refer the telescope (like result and definedAs)
         var resolver = enter(mCtx.get());
         // visit result
@@ -188,7 +187,7 @@ public record ExprResolver(
         // end resolve letBind
 
         // resolve body
-        var newBody = enter(ctx.bind(letBind.bindName(), letBind.bindName().definition()))
+        var newBody = enter(ctx.bind(letBind.bindName()))
           .apply(body);
 
         yield let.update(
@@ -224,11 +223,11 @@ public record ExprResolver(
 
   public @NotNull Pattern.Clause apply(@NotNull Pattern.Clause clause) {
     var mCtx = MutableValue.create(ctx());
-    var pats = clause.patterns.map(pa -> pa.descent(pat -> resolve(pat, mCtx)));
+    var pats = clause.patterns.map(pa -> pa.descent(pat -> bind(pat, mCtx)));
     return clause.update(pats, clause.expr.map(enter(mCtx.get())));
   }
 
-  public @NotNull Pattern resolve(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
+  public @NotNull Pattern bind(@NotNull Pattern pattern, @NotNull MutableValue<Context> ctx) {
     return new EndoPattern() {
       @Override public @NotNull Pattern post(@NotNull Pattern pattern) {
         return switch (pattern) {
@@ -239,7 +238,7 @@ public record ExprResolver(
               addReference(maybe);
               yield new Pattern.Ctor(bind, maybe);
             }
-            ctx.set(ctx.get().bind(bind.bind(), bind.sourcePos(), var -> false));
+            ctx.set(ctx.get().bind(bind.bind(), var -> false));
             yield bind;
           }
           case Pattern.QualifiedRef qref -> {
@@ -254,7 +253,7 @@ public record ExprResolver(
             yield EndoPattern.super.post(pattern);
           }
           case Pattern.As as -> {
-            ctx.set(bindAs(as.as(), ctx.get(), as.sourcePos()));
+            ctx.set(bindAs(as.as(), ctx.get()));
             yield as;
           }
           default -> EndoPattern.super.post(pattern);
@@ -275,21 +274,21 @@ public record ExprResolver(
     return null;
   }
 
-  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx, @NotNull SourcePos sourcePos) {
-    return ctx.bind(as, sourcePos);
+  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx) {
+    return ctx.bind(as);
   }
 
-  public @NotNull Expr.Param resolve(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
+  public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
-    ctx.set(ctx.get().bind(param.ref(), param.sourcePos()));
+    ctx.set(ctx.get().bind(param.ref()));
     return p;
   }
 
   public @NotNull ImmutableSeq<Expr.DoBind>
-  resolve(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
+  bind(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
       var b = bind.descent(enter(ctx.get()));
-      ctx.set(ctx.get().bind(bind.var(), bind.sourcePos()));
+      ctx.set(ctx.get().bind(bind.var()));
       return b;
     });
   }
