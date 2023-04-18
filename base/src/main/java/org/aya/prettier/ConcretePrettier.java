@@ -116,12 +116,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
               patterns(clause.patterns),
               clause.expr.map(t -> Doc.cat(Doc.symbol("=>"), term(Outer.Free, t))).getOrDefault(Doc.empty())))
             .toImmutableSeq()));
-      case Expr.RawProj expr -> Doc.sepNonEmpty(Doc.cat(term(Outer.ProjHead, expr.tup()), Doc.symbol("."),
-          Doc.plain(expr.id().join())), expr.coeLeft() != null ? term(Outer.AppSpine, expr.coeLeft()) : Doc.empty(),
-        expr.restr() != null ? Doc.sep(Doc.styled(KEYWORD, "freeze"), term(Outer.AppSpine, expr.restr())) : Doc.empty());
-      case Expr.Coe expr -> visitCalls(expr.resolvedVar(), PRIM,
-        ImmutableSeq.of(new Arg<>(expr.type(), true), new Arg<>(expr.restr(), true)),
-        outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case Expr.Unresolved expr -> Doc.plain(expr.name().join());
       case Expr.Ref expr -> {
         var ref = expr.resolvedVar();

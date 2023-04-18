@@ -77,7 +77,6 @@
     KW_DO = 'do'
     KW_SELF = 'self'
     KW_OVERRIDE = 'override'
-    KW_FREEZE = 'freeze'
 
     // Unimplemented but reserved
     KW_CODATA = 'codata'
@@ -330,7 +329,7 @@ atomExArgument ::= atomExpr projFix*
 tupleImArgument ::= <<braced exprList>>
 namedImArgument ::= <<braced (weakId DEFINE_AS expr)>>
 
-projFix ::= DOT NUMBER | DOT projFixId (expr (KW_FREEZE expr)?)?
+projFix ::= DOT (NUMBER | projFixId)
 projFixId ::= qualifiedId
 
 clauses ::= <<braced (bareClause? barredClause*)>>
