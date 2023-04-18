@@ -13,7 +13,6 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
-import org.aya.core.def.PrimDef;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.ParamLike;
 import org.aya.generic.SortKind;
@@ -22,7 +21,6 @@ import org.aya.prettier.BasePrettier;
 import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.ModuleName;
@@ -424,55 +422,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     @Override public @NotNull Expr.Proj descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(tup));
-    }
-  }
-
-  /** Sugared overloaded projection as coercion syntax */
-  record RawProj(
-    @NotNull SourcePos sourcePos,
-    @NotNull Expr tup,
-    @NotNull QualifiedID id,
-    @Nullable AnyVar resolvedVar,
-    @Nullable Expr coeLeft,
-    @Nullable Expr restr
-  ) implements Expr {
-    public @NotNull Expr.RawProj update(@NotNull Expr tup, @Nullable Expr coeLeft, @Nullable Expr restr) {
-      return tup == tup() && coeLeft == coeLeft() && restr == restr() ? this
-        : new RawProj(sourcePos, tup, id, resolvedVar, coeLeft, restr);
-    }
-
-    @Override public @NotNull Expr.RawProj descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(f.apply(tup), coeLeft == null ? null : f.apply(coeLeft), restr == null ? null : f.apply(restr));
-    }
-  }
-
-  /**
-   * calls to
-   * <ul>
-   *   <li>{@link org.aya.core.def.PrimDef.ID#COE}</li>
-   *   <li>{@link org.aya.core.def.PrimDef.ID#COEFILL}</li>
-   *   <li>{@link org.aya.core.def.PrimDef.ID#COEINV}</li>
-   *   <li>{@link org.aya.core.def.PrimDef.ID#COEINVFILL}</li>
-   * </ul>
-   * desugared from {@link RawProj} for simplicity.
-   *
-   * @param resolvedVar will be set to the primitive coe's DefVar during resolving
-   * @param restr       The cofibration under which the type should be constant
-   * @see org.aya.core.def.PrimDef.ID#projSyntax(PrimDef.ID)
-   */
-  record Coe(
-    @Override @NotNull SourcePos sourcePos,
-    @NotNull QualifiedID id,
-    @NotNull DefVar<?, ?> resolvedVar,
-    @NotNull Expr type,
-    @NotNull Expr restr
-  ) implements Expr {
-    public @NotNull Expr.Coe update(@NotNull Expr type, @NotNull Expr restr) {
-      return type == type() && restr == restr() ? this : new Coe(sourcePos, id, resolvedVar, type, restr);
-    }
-
-    @Override public @NotNull Expr.Coe descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-      return update(f.apply(type), f.apply(restr));
     }
   }
 

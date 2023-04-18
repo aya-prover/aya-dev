@@ -4,20 +4,14 @@ package org.aya.concrete.desugar;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableList;
-import kala.control.Either;
-import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
-import org.aya.concrete.error.BadFreezingWarn;
 import org.aya.concrete.error.DoNotationError;
 import org.aya.concrete.error.LevelProblem;
 import org.aya.concrete.visitor.StmtConsumer;
-import org.aya.core.def.PrimDef;
 import org.aya.generic.SortKind;
-import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.ResolveInfo;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,22 +47,6 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         } catch (DesugarInterruption e) {
           yield new Expr.Error(pos, expr);
         }
-      }
-      case Expr.RawProj proj -> {
-        if (proj.resolvedVar() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof PrimDef primDef
-          && PrimDef.ID.projSyntax(primDef.id)) {
-          var restr = proj.restr() != null ? proj.restr() : new Expr.LitInt(SourcePos.NONE, 0);
-          var coe = new Expr.Coe(proj.sourcePos(), proj.id(), defVar, proj.tup(), restr);
-          yield pre(proj.coeLeft() != null
-            ? new Expr.App(proj.sourcePos(), coe, new Expr.NamedArg(true, proj.coeLeft()))
-            : coe);
-        }
-        if (proj.restr() != null) info.opSet().reporter.report(new BadFreezingWarn(proj.restr()));
-        var projExpr = new Expr.Proj(proj.sourcePos(), proj.tup(), Either.right(proj.id()), proj.resolvedVar(), MutableValue.create());
-        yield pre(proj.coeLeft() != null
-          ? new Expr.App(proj.sourcePos(), projExpr, new Expr.NamedArg(true, proj.coeLeft()))
-          : projExpr);
       }
       case Expr.RawSort(var pos, var kind) -> switch (kind) {
         case Type -> new Expr.Type(pos, 0);

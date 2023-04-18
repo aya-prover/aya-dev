@@ -87,12 +87,12 @@ public record ExprResolver(
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RawProj(var pos, var tup, var id, var resolved, var coeLeft, var restr) -> {
-        var resolvedIx = ctx.getMaybe(id);
-        if (resolvedIx == null)
-          ctx.reportAndThrow(new FieldError.UnknownField(id.sourcePos(), id.join()));
-        yield resolvedIx == resolved ? expr
-          : new Expr.RawProj(pos, tup, id, resolvedIx, coeLeft, restr);
+      case Expr.Proj(var pos, var tup, var ix, var resolved, var theCore) -> {
+        if (ix.isLeft()) yield new Expr.Proj(pos, tup, ix, resolved, theCore);
+        var projName = ix.getRightValue();
+        var resolvedIx = ctx.getMaybe(projName);
+        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(pos, projName.join()));
+        yield new Expr.Proj(pos, tup, ix, resolvedIx, theCore);
       }
       case Expr.Hole hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());

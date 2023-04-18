@@ -94,11 +94,6 @@ public final class PrimDef extends TopLevelDef<Term> {
     return new PiTerm(IntervalTerm.param(LocalVar.IGNORED), Type0);
   }
 
-  /** Let A be argument, then <code>A 0 -> A 1</code> */
-  public static @NotNull PiTerm familyLeftToRight(Term term) {
-    return familyI2J(term, FormulaTerm.LEFT, FormulaTerm.RIGHT);
-  }
-
   /** Let A be argument, then <code>A i -> A j</code> */
   public static @NotNull PiTerm familyI2J(Term term, Term i, Term j) {
     return new PiTerm(
