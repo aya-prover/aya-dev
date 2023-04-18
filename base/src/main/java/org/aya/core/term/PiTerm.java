@@ -93,7 +93,7 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
   public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LamTerm.Param varI) {
     var M = new LamTerm.Param(new LocalVar("f"), true);
     var a = new LamTerm.Param(new LocalVar("a"), param.explicit());
-    var arg = coe.inverse(new LamTerm(varI, param.type()).rename());
+    var arg = AppTerm.make(coe.inverse(new LamTerm(varI, param.type()).rename()), new Arg<>(a.toTerm(), true));
     var cover = CoeTerm.cover(varI, param, body, a.toTerm(), coe.s());
     return new LamTerm(M, new LamTerm(a,
       AppTerm.make(coe.recoe(cover),
