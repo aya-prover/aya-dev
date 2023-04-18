@@ -422,7 +422,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, tup, ix, null, MutableValue.create());
     }
 
-    public @NotNull Expr.Proj update(@NotNull Expr tup) {
+    public @NotNull Proj update(@NotNull Expr tup) {
       return tup == tup() ? this : new Proj(sourcePos, tup, ix, resolvedVar, theCore);
     }
 
@@ -433,11 +433,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
   record New(
     @NotNull SourcePos sourcePos,
+    @NotNull LocalVar self,
     @NotNull Expr struct,
     @NotNull ImmutableSeq<Field<Expr>> fields
   ) implements Expr {
     public @NotNull Expr.New update(@NotNull Expr struct, @NotNull ImmutableSeq<Field<Expr>> fields) {
-      return struct == struct() && fields.sameElements(fields(), true) ? this : new New(sourcePos, struct, fields);
+      return struct == struct() && fields.sameElements(fields(), true) ? this :
+        new New(sourcePos, self, struct, fields);
     }
 
     @Override public @NotNull Expr.New descent(@NotNull UnaryOperator<@NotNull Expr> f) {

@@ -562,7 +562,7 @@ public record AyaProducer(
     if (node.is(NEW_EXPR)) {
       var struct = expr(node.child(EXPR));
       var newBody = node.peekChild(NEW_BODY);
-      return new Expr.New(pos, struct,
+      return new Expr.New(pos, LocalVar.self(pos), struct,
         newBody == null
           ? ImmutableSeq.empty()
           : newBody.childrenOfType(NEW_ARG).map(arg -> {

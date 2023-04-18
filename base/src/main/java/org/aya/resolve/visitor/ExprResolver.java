@@ -16,7 +16,9 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.EndoPattern;
 import org.aya.core.def.CtorDef;
+import org.aya.core.def.MemberDef;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.Constants;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -131,7 +133,7 @@ public record ExprResolver(
         yield match.update(match.discriminant().map(this), clauses);
       }
       case Expr.New neu -> {
-        var newCtx = ctx.bind(LocalVar.self(neu.sourcePos()));
+        var newCtx = ctx.bind(neu.self());
         yield neu.update(enter(newCtx).apply(neu.struct()), neu.fields().map(field -> {
           var fieldCtx = field.bindings().foldLeft(newCtx, (c, x) -> c.bind(x.data()));
           return field.descent(enter(fieldCtx));
@@ -185,6 +187,12 @@ public record ExprResolver(
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           assert def.concrete != null || def.core != null;
           addReference(def);
+          if (def.concrete instanceof TeleDecl.ClassMember || def.core instanceof MemberDef) {
+            // TODO[class]: user-renamed `self`
+            // This shall not result in an error
+            var self = ctx.getUnqualifiedMaybe(Constants.SELF_NAME, pos);
+            if (self != null) yield new Expr.RawProj(pos, new Expr.Ref(pos, self), name, def, null, null);
+          }
           yield new Expr.Ref(pos, def);
         }
         case AnyVar var -> new Expr.Ref(pos, var);
