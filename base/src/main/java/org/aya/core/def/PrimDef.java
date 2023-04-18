@@ -204,7 +204,7 @@ public final class PrimDef extends TopLevelDef<Term> {
         var varA = new LocalVar("A");
         var varU = new LocalVar("u");
         var paramA = new Term.Param(varA, Type0, false);
-        var paramPhi = IntervalTerm.param("phi");
+        var paramPhi = IntervalTerm.paramImplicit("phi");
         var phi = paramPhi.toTerm();
         var A = new RefTerm(varA);
         var paramU = new Term.Param(varU, new PartialTyTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi)), false);
@@ -218,11 +218,10 @@ public final class PrimDef extends TopLevelDef<Term> {
       public final @NotNull PrimDef.PrimSeed inS = new PrimSeed(ID.INS, this::inS, ref -> {
         // outS {A} {φ} (u : A) : Sub A φ {|φ ↦ u|}
         var varA = new LocalVar("A");
-        var varPhi = new LocalVar("phi");
         var varU = new LocalVar("u");
         var paramA = new Term.Param(varA, Type0, false);
-        var paramPhi = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
-        var phi = new RefTerm(varPhi);
+        var paramPhi = IntervalTerm.paramImplicit("phi");
+        var phi = paramPhi.toTerm();
         var A = new RefTerm(varA);
         var paramU = new Term.Param(varU, A, true);
         var u = new RefTerm(varU);
@@ -345,20 +344,19 @@ public final class PrimDef extends TopLevelDef<Term> {
       private final @NotNull PrimDef.PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
         var varA = new LocalVar("A");
         var paramA = new Term.Param(varA, Type0, false);
-        var varPhi = new LocalVar("phi");
-        var paramRestr = new Term.Param(varPhi, IntervalTerm.INSTANCE, false);
+        var restr = IntervalTerm.paramImplicit("phi");
         var varU = new LocalVar("u");
         var paramFuncU = new Term.Param(varU,
           new PiTerm(
             IntervalTerm.param(LocalVar.IGNORED),
-            new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(new RefTerm(varPhi)))),
+            new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(restr.toTerm()))),
           true);
         var varU0 = new LocalVar("u0");
         var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
         var result = new RefTerm(varA);
         return new PrimDef(
           ref,
-          ImmutableSeq.of(paramA, paramRestr, paramFuncU, paramU0),
+          ImmutableSeq.of(paramA, restr, paramFuncU, paramU0),
           result,
           ID.HCOMP
         );

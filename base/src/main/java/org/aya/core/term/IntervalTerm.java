@@ -22,4 +22,8 @@ public enum IntervalTerm implements StableWHNF, Formation {
   public static @NotNull Param param(@NotNull LocalVar var) {
     return new Param(var, INSTANCE, true);
   }
+
+  public static @NotNull Param paramImplicit(@NotNull String varName) {
+    return new Param(new LocalVar(varName), INSTANCE, false);
+  }
 }
