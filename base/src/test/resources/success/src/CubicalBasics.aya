@@ -23,7 +23,6 @@ def coeFill0  (A : I -> Type) (u : A 0) : Path A u (coe 0 1 A u) => \i => coe 0 
 def id {A : Type} (a: A) : A => a
 def transportID {A : Type} (a: A) : A => (transp (\ i => A -> A) id) a
 
-// TODO[coe]: need diagonal cof
 def coePi (r s : I) (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
     (f : ∀ (a : A r) -> B r a) : ∀ (a : A s) -> B s a
     => \a => coe r s (\x => B x (coe s x A a))

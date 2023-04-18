@@ -425,7 +425,10 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
         else yield null;
       }
-      case RefTerm(var lhs) -> preRhs instanceof RefTerm(var rhs) && lhs == rhs ? ctx.get(lhs) : null;
+      case RefTerm(var lhs) -> {
+        if (preRhs instanceof RefTerm(var rhs) && lhs == rhs) yield ctx.get(lhs);
+        yield null;
+      }
       case AppTerm(var lOf, var lArg) -> {
         if (!(preRhs instanceof AppTerm(var rOf, var rArg))) yield null;
         var preFnType = compareUntyped(lOf, rOf, lr, rl);

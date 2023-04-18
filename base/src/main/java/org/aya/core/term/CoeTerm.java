@@ -30,7 +30,7 @@ public record CoeTerm(@NotNull Term type, @NotNull Term r, @NotNull Term s) impl
    * </ul>
    */
   public static @NotNull LamTerm cover(LamTerm.Param x, Param A, Term B, Term newArg, Term r) {
-    var innerCover = new LamTerm(x, A.type());
+    var innerCover = new LamTerm(x, A.type()).rename();
     var coeRX = new AppTerm(new CoeTerm(innerCover, r, x.toTerm()), new Arg<>(newArg, true));
     return new LamTerm(x, B.subst(A.ref(), coeRX));
   }
