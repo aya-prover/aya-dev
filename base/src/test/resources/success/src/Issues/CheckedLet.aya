@@ -1,0 +1,11 @@
+def test
+  (A : Type) (B : A -> Type)
+  (f : ∀ (a : A) -> B a)
+  : ∀ (a : A) -> B a
+  => let x := f in \a => f a
+
+def test1
+  (A : Type) (B : A -> Type)
+  (f : ∀ (a : A) -> B a)
+  : ∀ (a : A) -> B a
+  => \a => f a
