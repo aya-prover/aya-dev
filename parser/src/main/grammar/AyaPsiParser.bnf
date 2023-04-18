@@ -330,6 +330,7 @@ tupleImArgument ::= <<braced exprList>>
 namedImArgument ::= <<braced (weakId DEFINE_AS expr)>>
 
 projFix ::= DOT (NUMBER | projFixId)
+// kiva: Used in IntelliJ IDEA
 projFixId ::= qualifiedId
 
 clauses ::= <<braced (bareClause? barredClause*)>>
