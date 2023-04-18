@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -66,7 +66,7 @@ public record PathTerm(
   }
 
   public @NotNull SeqView<Param> computeParams() {
-    return params.view().map(x -> new Param(x, IntervalTerm.INSTANCE, true));
+    return params.view().map(IntervalTerm::param);
   }
 
   public @NotNull Term substType(@NotNull SeqView<Term> dimensions) {
