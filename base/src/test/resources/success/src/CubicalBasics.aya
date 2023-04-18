@@ -34,24 +34,27 @@ example def coePiEq (r s : I) (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
 
 example def coeSigma (r s : I) (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
     (t : Sig (x : A r) ** B r x) : Sig (x : A s) ** B s x =>
-  // TODO[let]: HoshinoTented should make this work
-  // let M s' := coe r s' A t.1
-  // in (M s, coe r s (\x => B x (M x)) t.2)
-  (coe r s A t.1, coe r s (\x => B x (coe r x A t.1)) t.2)
+  let M s' := coe r s' A t.1
+  in (M s, coe r s (\x => B x (M x)) t.2)
 
 // example def coeSigmaEq (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
 //     (t : Sig (x : A 0) ** B 0 x)
 //     : coeSigma A B t = (\i => Sig (x : A i) ** B i x).coe t
 //     => idp
 
-example def coeSigma2 (r s : I) (A : I -> Type)
+example def coeSigma5 (r s : I) (A : I -> Type)
   (B : Fn (i : I) -> A i -> Type)
   (C : Fn (i : I) (a : A i) -> B i a -> Type)
-  (t : Sig (a : A r) (b : B r a) ** C r a b)
-  : Sig (a : A s) (b : B s a) ** C s a b
-  => ( coe r s A t.1
-     , coe r s (\x => B x (coe r x A t.1)) t.2
-     , coe r s (\x => C x (coe r x A t.1) (coe r x (\y => B y (coe r y A t.1)) t.2)) t.3)
+  (D : Fn (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
+  (E : Fn (i : I) (a : A i) (b : B i a) (c : C i a b) -> D i a b c -> Type)
+  (t : Sig (a : A r) (b : B r a) (c : C r a b) (d : D r a b c) ** (E r a b c d))
+  : Sig (a : A s) (b : B s a) (c : C s a b) (d : D s a b c) ** (E s a b c d) =>
+  let | M1 s' := coe r s' A t.1
+      | M2 s' := coe r s' (\x => B x (M1 x)) t.2
+      | M3 s' := coe r s' (\x => C x (M1 x) (M2 x)) t.3
+      | M4 s' := coe r s' (\x => D x (M1 x) (M2 x) (M3 x)) t.4
+      | M5 s' := coe r s' (\x => E x (M1 x) (M2 x) (M3 x) (M4 x)) t.5
+  in (M1 s, M2 s, M3 s, M4 s, M5 s)
 
 example def piFromPath (A : Type) (a b : A) (p : a = b) : ∀ (i : I) -> A => p
 example def piFromPathH (A : I -> Type) (a : A 0) (b : A 1)
