@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 
 /**
@@ -315,43 +316,51 @@ public final class ExprTycker extends PropTycker {
         var results = elements.map(element -> inherit(element, hole.component1()).wellTyped());
         yield new Result.Default(new ListTerm(results, match.component2(), type), type);
       }
-      case Expr.Let let -> {
-        // pushing telescopes into lambda params, for example:
-        // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
-        var letBind = let.bind();
-        var typeExpr = Expr.buildPi(letBind.sourcePos(),
-          letBind.telescope().view(), letBind.result());
-        // as well as the body of the binding, for example:
-        // `let f x := g` is desugared to `let f := \x => g`
-        var definedAsExpr = Expr.buildLam(letBind.sourcePos(),
-          letBind.telescope().view(), letBind.definedAs());
-
-        // Now everything is in the form of `let f : G := g in h`
-
-        // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
-        var type = ty(typeExpr).freezeHoles(state);
-        var definedAsResult = inherit(definedAsExpr, type);
-        var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
-
-        var bodyResult = subscoped(() -> {
-          definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
-          return synthesize(let.body());
-        });
-
-        // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
-
-        // (\ (f : G) => h) : G -> {??}
-        var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
-
-        // then apply a `g`
-        // (\ (f : G) => h) g : {??}
-        var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
-
-        yield new Result.Default(full, bodyResult.type());
-      }
+      case Expr.Let let -> checkLet(let, this::synthesize);
       case Expr.LetOpen(var $, var $$, var $$$, var body) -> doSynthesize(body);
       default -> fail(expr, new NoRuleError(expr, null));
     };
+  }
+
+  /**
+   * tyck a let expr with the given checker
+   * TODO: maybe we should move this to other place
+   *
+   * @param checker check the type of the body of {@param let}
+   */
+  private @NotNull Result checkLet(@NotNull Expr.Let let, @NotNull Function<Expr, Result> checker) {
+    // pushing telescopes into lambda params, for example:
+    // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
+    var letBind = let.bind();
+    var typeExpr = Expr.buildPi(letBind.sourcePos(),
+      letBind.telescope().view(), letBind.result());
+    // as well as the body of the binding, for example:
+    // `let f x := g` is desugared to `let f := \x => g`
+    var definedAsExpr = Expr.buildLam(letBind.sourcePos(),
+      letBind.telescope().view(), letBind.definedAs());
+
+    // Now everything is in the form of `let f : G := g in h`
+
+    // See the TeleDecl.FnDecl case of StmtTycker#tyckHeader
+    var type = ty(typeExpr).freezeHoles(state);
+    var definedAsResult = inherit(definedAsExpr, type);
+    var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
+
+    var bodyResult = subscoped(() -> {
+      definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
+      return checker.apply(let.body());
+    });
+
+    // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
+
+    // (\ (f : G) => h) : G -> {??}
+    var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
+
+    // then apply a `g`
+    // (\ (f : G) => h) g : {??}
+    var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
+
+    return new Result.Default(full, bodyResult.type());
   }
 
   public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {
@@ -496,6 +505,7 @@ public final class ExprTycker extends PropTycker {
         var result = ClauseTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new Result.Default(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
+      case Expr.Let let -> checkLet(let, (body) -> check(body, term));
       default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
