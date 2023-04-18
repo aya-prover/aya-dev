@@ -18,12 +18,23 @@ def sym (p : [| i |] A) : p 1 = p 0 => \i => p (~ i)
 
 def isContr (A : Type) => Sig (a : A) ** (∀ b -> a = b)
 
-def J {a : A} (B : ∀ b -> a = b -> Type)
-      (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
-      coe (\ i => B (p i) (\j => p (j ∧ i))) r
+/// Carlo Angiuli's PhD thesis, Section 3.2
+module Angiuli {
+  def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
+    => coe 0 1 (\y => B (p y)) x
 
-def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
-  => coe 0 1 (\y => B (p y)) x
+  def IdSys (a : A) => Sig (b : A) ** (a = b)
+
+  def uniqueness (a : A) : isContr (IdSys a) =>
+    // a = b.2 i
+    ((a, idp),  \ (b : IdSys a) i => (b.2 i, coe 0 i (\k => a = b.2 k) idp))
+
+  def J {a : A} (B : IdSys a -> Type)
+      (r : B (a, idp)) (b : IdSys a) : B b =>
+      transport B (uniqueness a).2 b
+}
+
+public open Angiuli using (transport, J)
 
 // Bye, regularity!
 // def Jβ {a : A} (B : ∀ b -> a = b -> Type)
@@ -46,7 +57,7 @@ def hcomp2d
   (p : [| i |] A)
   (q : p 1 = d)
   (r : p 0 = c) : c = d
-  => (\ k => r k = q k).coe p
+  => coe 0 1 (\ k => r k = q k) p
 
 def <=3=> {c d : A} (p : [| i |] A) (q : p 1 = c) (r : c = d) : p 0 = d =>
   hcomp2d q r (sym p)

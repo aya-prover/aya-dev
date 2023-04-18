@@ -3,6 +3,7 @@
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
+import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
@@ -52,24 +53,28 @@ public interface BetaExpander extends EndoTerm {
         };
       }
       case PartialTerm partial -> new PartialTerm(partial(partial.partial()), partial.rhsType());
+      // TODO[coe]: temporary hack
+      case CoeTerm(
+        var ty,
+        FormulaTerm(Formula.Lit<Term>(var r)),
+        FormulaTerm(Formula.Lit<Term>(var s))
+      ) when r == s -> {
+        var var = new LocalVar("x");
+        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
+      }
       case CoeTerm coe -> {
-        // if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
-        //   var var = new LocalVar("x");
-        //   yield new LamTerm(coeDom(var), new RefTerm(var));
-        // }
-
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
 
         yield switch (codom) {
-          case PathTerm path -> coe;
+          case PathTerm path -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
           case SortTerm type -> {
             var A = new LocalVar("A");
             yield new LamTerm(new LamTerm.Param(A, true), new RefTerm(A));
           }
-          default -> coe;
+          default -> term;
         };
       }
       default -> term;

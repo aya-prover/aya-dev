@@ -215,9 +215,9 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       @Contract("_, _ -> new")
       private @NotNull Term coe(@NotNull PrimCall prim, @NotNull TyckState state) {
-        var type = prim.args().get(0).term();
-        var r = prim.args().get(1).term();
-        var s = prim.args().get(2).term();
+        var r = prim.args().get(0).term();
+        var s = prim.args().get(1).term();
+        var type = prim.args().get(2).term();
         return new CoeTerm(type, r, s);
       }
 
