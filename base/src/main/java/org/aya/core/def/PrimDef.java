@@ -165,10 +165,9 @@ public final class PrimDef extends TopLevelDef<Term> {
         var r = IntervalTerm.param("r");
         var s = IntervalTerm.param("s");
         var paramA = new Term.Param(new LocalVar("A"), intervalToType(), true);
-        var paramRestr = IntervalTerm.param("i");
         var result = familyI2J(paramA.toTerm(), r.toTerm(), s.toTerm());
 
-        return new PrimDef(ref, ImmutableSeq.of(paramA, paramRestr), result, ID.COE);
+        return new PrimDef(ref, ImmutableSeq.of(r, s, paramA), result, ID.COE);
       }, ImmutableSeq.of(ID.I));
 
       public final @NotNull PrimDef.PrimSeed sub = new PrimSeed(ID.SUB, this::primCall, ref -> {

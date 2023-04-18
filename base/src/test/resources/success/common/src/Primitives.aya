@@ -9,10 +9,7 @@ prim String: Type
 prim strcat (str1 str2: String) : String
 
 // Coercion rules
-prim coe (A : I -> Type) (i : I) : A 0 -> A 1
-prim coeFill
-prim eoc (A : I -> Type) (i : I) : A 1 -> A 0
-prim eocFill
+prim coe (r s : I) (A : I -> Type) : A r -> A s
 
 // Partial and subtypes
 prim Partial (φ : I) (A : Type) : Set
