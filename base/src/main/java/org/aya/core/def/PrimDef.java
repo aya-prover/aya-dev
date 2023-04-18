@@ -130,10 +130,6 @@ public final class PrimDef extends TopLevelDef<Term> {
     ID(@NotNull String id) {
       this.id = id;
     }
-
-    public static boolean projSyntax(@NotNull ID id) {
-      return id == COE;
-    }
   }
 
   public static class Factory {

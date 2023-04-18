@@ -1,9 +1,6 @@
 public open import Primitives using
   ( Partial
   , coe
-  , eoc
-  , coeFill
-  , eocFill
   , Sub
   , inS
   , outS
@@ -23,10 +20,10 @@ def isContr (A : Type) => Sig (a : A) ** (∀ b -> a = b)
 
 def J {a : A} (B : ∀ b -> a = b -> Type)
       (r : B a idp) {b : A} (p : a = b) : B b (\i => p i) =>
-      (\ i => B (p i) (\j => p (j ∧ i))).coe r
+      coe (\ i => B (p i) (\j => p (j ∧ i))) r
 
 def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
-  => J (\b' p' => B b') x p
+  => coe 0 1 (\y => B (p y)) x
 
 // Bye, regularity!
 // def Jβ {a : A} (B : ∀ b -> a = b -> Type)

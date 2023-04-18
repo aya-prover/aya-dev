@@ -25,7 +25,6 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
-import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
@@ -165,8 +164,6 @@ public record ExprResolver(
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           assert def.concrete != null || def.core != null;
           addReference(def);
-          if (def.core instanceof PrimDef prim && PrimDef.ID.projSyntax(prim.id))
-            ctx.reportAndThrow(new PrimResolveError.BadUsage(name.join(), pos));
           yield new Expr.Ref(pos, def);
         }
         case AnyVar var -> new Expr.Ref(pos, var);
