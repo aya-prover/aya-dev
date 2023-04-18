@@ -23,15 +23,14 @@ module Angiuli {
   def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
     => coe 0 1 (\y => B (p y)) x
 
-  def IdSys (a : A) => Sig (b : A) ** (a = b)
+  def IdSys (a : A) => [| i |] A { ~ i := a }
 
-  def uniqueness (a : A) : isContr (IdSys a) =>
-    // a = b.2 i
-    ((a, idp),  \ (b : IdSys a) i => (b.2 i, coe 0 i (\k => a = b.2 k) idp))
+  def uniqueness (a : A) : isContr (IdSys a)
+    => (idp,  \ b i j => coe 0 j (\k => a = b k) idp i)
 
   def J {a : A} (B : IdSys a -> Type)
-      (r : B (a, idp)) (b : IdSys a) : B b =>
-      transport B (uniqueness a).2 b
+      (r : B idp) (b : IdSys a) : B b =>
+      transport B ((uniqueness a).2 b) r
 }
 
 public open Angiuli using (transport, J)

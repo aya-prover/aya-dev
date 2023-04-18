@@ -233,7 +233,7 @@ public class CorePrettier extends BasePrettier<Term> {
         app.args().view(), outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       case CoeTerm(var ty, var r, var s) -> visitCalls(null,
         Doc.styled(KEYWORD, "coe"),
-        Seq.of(ty, r, s).view().map(t -> new Arg<>(t, true)),
+        Seq.of(r, s, ty).view().map(t -> new Arg<>(t, true)),
         outer, true);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");

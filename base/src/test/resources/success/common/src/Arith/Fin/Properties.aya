@@ -7,7 +7,7 @@ open import Logic::False
 private def fin-inj {n : Nat} (Fin (suc n)) : Type
 | fzero  => Fin n
 | fsuc _ => False
-def fz≠fs {n : Nat} {b : Fin n} (p : fzero = fsuc b) : False => (\ i => fin-inj (p i)).coe b
+def fz≠fs {n : Nat} {b : Fin n} (p : fzero = fsuc b) : False => transport fin-inj p b
 
 def finToNat-valid {n : Nat} (x : Fin n) : finToNat x < n
 | fzero =>

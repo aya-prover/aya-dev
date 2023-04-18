@@ -6,7 +6,7 @@ def *-suc-suc (m n : Nat) : suc (m + n + m * n) = suc m * suc n
   => pmap suc (<=3=> (pmap (+ m * n) +-comm)
     +-assoc (pmap (n +) *-suc))
 
-def z≠s {a : Nat} (p : 0 = suc a) : False => (\i => diag (p i)).coe a
+def z≠s {a : Nat} (p : 0 = suc a) : False => coe 0 1 (\i => diag (p i)) a
 private def diag Nat : Type
 | 0 => Nat
 | suc a => False

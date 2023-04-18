@@ -4,10 +4,10 @@ open data Unit | unit
 
 // we cannot eta-contract this, same problem as Cubical Agda
 def coe {A B : Type} (eq : A ↑ = B) (x : A) : B
-  => (\y => eq y).primCoe x
+  => primCoe 0 1 (\i => eq i) x
 
 def coeFill {A : Type} {x : A} : x = coe (↑ idp) x
-  => \ i => (\ j => A).primCoe x freeze (~ i)
+  => \i => primCoe 0 i (\ j => A) x
 
 // TODO[class]
 // *** Types

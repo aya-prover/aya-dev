@@ -15,95 +15,32 @@ def cmp {A : Type} (x : A)
   : [| i j |] (Partial (~ j) A) { ~ i := p1 A x j }
   => \i => \j => p2 A x j
 
-def transport-constant (A : I -> Type) (a : A 0) (i : I) : A i
-  => (\j => A (i ∧ j)).coe a freeze ~ i
-// ^ `A (i ∧ j)` normalizes to `A 0` under cofibration `~ i`, which is a constant.
+def transp  (A : I -> Type) (a : A 0) : A 1 => coe 0 1 A a
+def transpInv  (A : I -> Type) (a : A 1) : A 0 => coe 1 0 A a
 
-def transp  (A : I -> Type) (a : A 0) : A 1 => A.coe a
-def transp' (A : I -> Type) (a : A 0) : A 1 => A.coe a freeze 0
-def transpInv  (A : I -> Type) (a : A 1) : A 0 => A.eoc a
-def transpInv' (A : I -> Type) (a : A 1) : A 0 => A.eoc a freeze 0
-
-def coeFill0  (A : I -> Type) (u : A 0) : Path A u (A.coe u) => A.coeFill u
-def eocFill0  (A : I -> Type) (u : A 1) : Path A (A.eoc u) u => A.eocFill u
-
-example def coeFillLeft (A : I -> Type) (u : A 0) : (A.coeFill u) 0 = u => idp
-example def coeFillRight (A : I -> Type) (u : A 0) : (A.coeFill u) 1 = transp A u => idp
+def coeFill0  (A : I -> Type) (u : A 0) : Path A u (coe 0 1 A u) => \i => coe 0 i A u
 
 def id {A : Type} (a: A) : A => a
 def transportID {A : Type} (a: A) : A => (transp (\ i => A -> A) id) a
 
-def coePi (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
-    (f : ∀ (a : A 0) -> B 0 a) : ∀ (a : A 1) -> B 1 a
-    => \a => (\i => B i ((\j => A ((~ j) ∨ i)).coe a freeze i)).coe f
-      ((\i => A (~ i)).coe a)
+// TODO[coe]: need diagonal cof
+def coePi (r s : I) (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
+    (f : ∀ (a : A r) -> B r a) : ∀ (a : A s) -> B s a
+    => \a => coe r s (\x => B x (coe s x A a))
+      (f (coe s r A a))
+// example def coePiEq (r s : I) (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
+//     (f : ∀ (a : A r) -> B r a)
+//     : coePi r s A B f = coe r s (\i => ∀ (x : A i) -> B i x) f
+//     => idp
 
-example def coePiEq (A : I -> Type) (B : ∀ (i : I) -> A i -> Type)
-    (f : ∀ (a : A 0) -> B 0 a)
-    : coePi A B f = (\i => ∀ (x : A i) -> B i x).coe f
-    => idp
-
-example def coeSigma (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (t : Sig (x : A 0) ** B 0 x) : Sig (x : A 1) ** B 1 x =>
-  (A.coe t.1,
-     (\i => B i ((A.coeFill t.1) i)).coe t.2)
-example def coeSigmaEq (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (t : Sig (x : A 0) ** B 0 x)
-    : coeSigma A B t = (\i => Sig (x : A i) ** B i x).coe t
-    => idp
-
-example def coeSigma3 (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (C : Fn (i : I) (a : A i) -> B i a -> Type)
-    (t : Sig (a : A 0) (b : B 0 a) ** C 0 a b) : Sig (a : A 1) (b : B 1 a) ** C 1 a b =>
-  (A.coe t.1
-  , (\i => B i ((A.coeFill t.1) i)).coe t.2
-  , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3)
-example def coeSigma3Eq (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (C : Fn (i : I) (a : A i) -> B i a -> Type)
-    (t : Sig (a : A 0) (b : B 0 a) ** C 0 a b) : coeSigma3 A B C t = (\i => Sig (a : A i) (b : B i a) ** C i a b).coe t => idp
-
-example def coeSigma4 (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (C : Fn (i : I) (a : A i) -> B i a -> Type)
-    (D : Fn (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
-    (t : Sig (a : A 0) (b : B 0 a) (c : C 0 a b) ** D 0 a b c) : Sig (a : A 1) (b : B 1 a) (c : C 1 a b) ** D 1 a b c =>
-  (A.coe t.1
-  , (\i => B i ((A.coeFill t.1) i)).coe t.2
-  , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3
-  , (\i => D i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
-      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4)
-example def coeSigma4Eq (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (C : Fn (i : I) (a : A i) -> B i a -> Type)
-    (D : Fn (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
-    (t : Sig (a : A 0) (b : B 0 a) (c : C 0 a b) ** D 0 a b c)
-     : coeSigma4 A B C D t = (\i => Sig (a : A i) (b : B i a) (c : C i a b) ** D i a b c).coe t => idp
-
-example def coeSigma5 (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
-    (C : Fn (i : I) (a : A i) -> B i a -> Type)
-    (D : Fn (i : I) (a : A i) (b : B i a) -> C i a b -> Type)
-    (E : Fn (i : I) (a : A i) (b : B i a) (c : C i a b) -> D i a b c -> Type)
-    (t : Sig (a : A 0) (b : B 0 a) (c : C 0 a b) (d : D 0 a b c) ** E 0 a b c d)
-     : Sig (a : A 1) (b : B 1 a) (c : C 1 a b) (d : D 1 a b c) ** E 1 a b c d =>
-  (A.coe t.1
-  , (\i => B i ((A.coeFill t.1) i)).coe t.2
-  , (\i => C i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)).coe t.3
-  , (\i => D i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
-      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)).coe t.4
-  , (\i => E i ((A.coeFill t.1) i) (((\j => B j ((A.coeFill t.1) j)).coeFill t.2) i)
-      (((\j => C j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)).coeFill t.3) i)
-      (((\j => D j ((A.coeFill t.1) j) (((\k => B k ((A.coeFill t.1) k)).coeFill t.2) j)
-        (((\k => C k ((A.coeFill t.1) k) (((\l => B l ((A.coeFill t.1) l)).coeFill t.2) k)).coeFill t.3) j)).coeFill t.4) i)).coe t.5)
-
-// is my coeFill primitive elaborated correctly?
-example def coeFillAlt (A : I -> Type) (u : A 0)
-  : [| i |] A i { ~ i := u | i := A.coe u freeze 0 }
-  => \i => (\j => A (i ∧ j)).coe u freeze (0 ∨ ~ i)
-
-example def coeFillAltLeft (A : I -> Type) (u : A 0) : (coeFillAlt A u) 0 = u => idp
-example def coeFillAltRight (A : I -> Type) (u : A 0) : (coeFillAlt A u) 1 = A.coe u => idp
-
-example def coeFillAlt=coeFillPrim (A : I -> Type) (u : A 0)
-  : coeFillAlt A u = A.coeFill u
-  => idp
+// example def coeSigma (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+//     (t : Sig (x : A 0) ** B 0 x) : Sig (x : A 1) ** B 1 x =>
+//   (A.coe t.1,
+//      (\i => B i ((A t.1) i)).coe t.2)
+// example def coeSigmaEq (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+//     (t : Sig (x : A 0) ** B 0 x)
+//     : coeSigma A B t = (\i => Sig (x : A i) ** B i x).coe t
+//     => idp
 
 example def piFromPath (A : Type) (a b : A) (p : a = b) : ∀ (i : I) -> A => p
 example def piFromPathH (A : I -> Type) (a : A 0) (b : A 1)
