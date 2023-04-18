@@ -140,7 +140,6 @@ public interface AyaPsiElementTypes {
   IElementType KW_FIXL = new AyaPsiTokenType("fixl");
   IElementType KW_FIXR = new AyaPsiTokenType("fixr");
   IElementType KW_FORALL = new AyaPsiTokenType("forall");
-  IElementType KW_FREEZE = new AyaPsiTokenType("freeze");
   IElementType KW_HIDING = new AyaPsiTokenType("hiding");
   IElementType KW_IMPORT = new AyaPsiTokenType("import");
   IElementType KW_IN = new AyaPsiTokenType("in");

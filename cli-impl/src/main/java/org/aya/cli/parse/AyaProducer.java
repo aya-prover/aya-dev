@@ -705,12 +705,7 @@ public record AyaProducer(
     if (number != null) return new Expr.Proj(sourcePos, projectee, Either.left(
       number.tokenText().toInt()));
     var qid = qualifiedId(fix.child(PROJ_FIX_ID).child(QUALIFIED_ID));
-    var exprs = fix.childrenOfType(EXPR).toImmutableSeq();
-    var coeLeft = exprs.getOption(0);
-    var restr = exprs.getOption(1);
-    return new Expr.RawProj(sourcePos, projectee, qid, null,
-      coeLeft.map(this::expr).getOrNull(),
-      restr.map(this::expr).getOrNull());
+    return new Expr.Proj(sourcePos, projectee, Either.right(qid));
   }
 
   public @NotNull Arg<Pattern> pattern(@NotNull GenericNode<?> node) {
