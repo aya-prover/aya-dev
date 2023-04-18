@@ -141,7 +141,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var term = match.tryMatch();
         yield term.isDefined() ? synthesize(term.get()) : ErrorTerm.typeOf(match);
       }
-      case CoeTerm coe -> PrimDef.familyLeftToRight(coe.type());
+      case CoeTerm(var ty, var r, var s) -> PrimDef.familyI2J(ty, r, s);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> {
         var ty = press(u);
