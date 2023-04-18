@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import org.aya.core.pat.Pat;
+import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -12,5 +13,17 @@ public enum IntervalTerm implements StableWHNF, Formation {
 
   @Override public @NotNull IntervalTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return this;
+  }
+
+  public static @NotNull Param param(@NotNull String varName) {
+    return param(new LocalVar(varName));
+  }
+
+  public static @NotNull Param param(@NotNull LocalVar var) {
+    return new Param(var, INSTANCE, true);
+  }
+
+  public static @NotNull Param paramImplicit(@NotNull String varName) {
+    return new Param(new LocalVar(varName), INSTANCE, false);
   }
 }

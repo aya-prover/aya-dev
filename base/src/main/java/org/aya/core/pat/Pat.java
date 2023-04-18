@@ -143,7 +143,9 @@ public sealed interface Pat extends AyaDocile {
     }
   }
 
-  record Absurd() implements Pat {
+  enum Absurd implements Pat {
+    INSTANCE;
+
     @Override public @NotNull Absurd descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
       return this;
     }

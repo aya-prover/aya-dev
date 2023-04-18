@@ -37,7 +37,9 @@ public sealed interface MetaInfo extends AyaDocile {
    * The meta variable is a type.
    * It should be able to appear on the RHS of a judgment.
    */
-  record AnyType() implements MetaInfo {
+  enum AnyType implements MetaInfo {
+    INSTANCE;
+
     @Override public @Nullable Term result() {
       return null;
     }

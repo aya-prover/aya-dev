@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.serde;
 
@@ -25,7 +25,7 @@ public sealed interface SerPat extends Serializable {
 
   record Absurd(boolean explicit) implements SerPat {
     @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
-      return new Arg<>(new Pat.Absurd(), explicit);
+      return new Arg<>(Pat.Absurd.INSTANCE, explicit);
     }
   }
 
