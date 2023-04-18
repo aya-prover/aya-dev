@@ -1,10 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
 import org.aya.core.term.*;
 import org.aya.guest0x0.cubical.Partial;
-import org.aya.guest0x0.cubical.Restr;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -54,13 +53,13 @@ public interface BetaExpander extends EndoTerm {
       }
       case PartialTerm partial -> new PartialTerm(partial(partial.partial()), partial.rhsType());
       case CoeTerm coe -> {
-        if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
-          var var = new LocalVar("x");
-          yield new LamTerm(coeDom(var), new RefTerm(var));
-        }
+        // if (coe.restr() instanceof Restr.Const<Term> c && c.isOne()) {
+        //   var var = new LocalVar("x");
+        //   yield new LamTerm(coeDom(var), new RefTerm(var));
+        // }
 
-        var varI = new LocalVar("i");
-        var codom = apply(AppTerm.make(coe.type(), new Arg<>(new RefTerm(varI), true)));
+        var varI = new LamTerm.Param(new LocalVar("i"), true);
+        var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
 
         yield switch (codom) {
           case PathTerm path -> coe;
@@ -75,8 +74,5 @@ public interface BetaExpander extends EndoTerm {
       }
       default -> term;
     };
-  }
-  @NotNull static LamTerm.Param coeDom(LocalVar u0Var) {
-    return new LamTerm.Param(u0Var, true);
   }
 }

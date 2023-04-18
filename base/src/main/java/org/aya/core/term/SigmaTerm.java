@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.core.pat.Pat;
-import org.aya.core.visitor.BetaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
@@ -45,13 +44,13 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     throw new AssertionError("unreachable");
   }
 
-  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar i) {
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LamTerm.Param i) {
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
     var items = MutableArrayList.<Arg<Term>>create(params.size());
     record Item(@NotNull CoeTerm coe, @NotNull Arg<Term> arg) {
       public @NotNull Term fill(@NotNull LocalVar i) {
-        return AppTerm.make(CoeTerm.coeFill(coe.type(), coe.restr(), new RefTerm(i)), arg);
+        return AppTerm.make(CoeTerm.cover(coe.type(), coe.restr(), new RefTerm(i)), arg);
       }
 
       public @NotNull Term app() {
@@ -72,7 +71,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       subst.add(param.ref(), item.fill(i));
       items.append(new Arg<>(item.app(), param.explicit()));
     }
-    return new LamTerm(BetaExpander.coeDom(t.var()),
+    return new LamTerm(new LamTerm.Param(t.var(), true),
       new TupTerm(items.toImmutableArray()));
   }
 

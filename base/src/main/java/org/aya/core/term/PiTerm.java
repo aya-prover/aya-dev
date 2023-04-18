@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.mutable.MutableList;
 import org.aya.core.pat.Pat;
-import org.aya.core.visitor.BetaExpander;
 import org.aya.generic.SortKind;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
@@ -91,18 +90,14 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
     return make(list.view().map(IntervalTerm::param), type);
   }
 
-  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LocalVar varI) {
-    var u0Var = new LocalVar("u0");
-    var vVar = new LocalVar("v");
-    var A = new LamTerm(new LamTerm.Param(varI, true), param.type());
-    var B = new LamTerm(new LamTerm.Param(varI, true), body);
-    var w = AppTerm.make(CoeTerm.coeFillInv(A, coe.restr(), new RefTerm(varI)), new Arg<>(new RefTerm(vVar), true));
-    var BSubsted = B.subst(param.ref(), w.rename());
-    var wSubsted = w.subst(varI, FormulaTerm.LEFT).rename();
-    return new LamTerm(BetaExpander.coeDom(u0Var),
-      new LamTerm(new LamTerm.Param(vVar, true),
-        AppTerm.make(new CoeTerm(BSubsted, coe.restr()),
-          new Arg<>(AppTerm.make(new RefTerm(u0Var), new Arg<>(wSubsted, true)), true))));
+  public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LamTerm.Param varI) {
+    var M = new LamTerm.Param(new LocalVar("f"), true);
+    var a = new LamTerm.Param(new LocalVar("a"), param.explicit());
+    var arg = coe.inverse(new LamTerm(varI, param.type()).rename());
+    var cover = CoeTerm.cover(varI, param, body, a.toTerm(), coe.s());
+    return new LamTerm(M, new LamTerm(a,
+      AppTerm.make(coe.recoe(cover),
+        new Arg<>(AppTerm.make(M.toTerm(), new Arg<>(arg, param.explicit())), true))));
   }
 
   public @NotNull Term substBody(@NotNull Term term) {
