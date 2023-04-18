@@ -62,6 +62,10 @@ public interface BetaExpander extends EndoTerm {
         var var = new LocalVar("x");
         yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
       }
+      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> {
+        var var = new LocalVar("x");
+        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
+      }
       case CoeTerm coe -> {
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
