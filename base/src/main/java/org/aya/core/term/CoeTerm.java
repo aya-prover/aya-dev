@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import org.aya.core.def.PrimDef;
 import org.aya.core.pat.Pat;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
@@ -36,5 +37,9 @@ public record CoeTerm(@NotNull Term type, @NotNull Term r, @NotNull Term s) impl
 
   public @NotNull CoeTerm recoe(Term cover) {
     return new CoeTerm(cover, r, s);
+  }
+
+  public @NotNull Term family() {
+    return PrimDef.familyI2J(type, r, s);
   }
 }

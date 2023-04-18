@@ -465,11 +465,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       }
       // See compareApprox for why we don't compare these
       case FnCall lhs -> null;
-      case CoeTerm lhs -> {
-        if (!(preRhs instanceof CoeTerm rhs)) yield null;
-        if (!compareRestr(lhs.restr(), rhs.restr())) yield null;
-        yield compare(lhs.type(), rhs.type(), lr, rl, PrimDef.intervalToType()) ?
-          PrimDef.familyLeftToRight(lhs.type()) : null;
+      case CoeTerm(var lType, var lR, var lS) coe -> {
+        if (!(preRhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
+        if (!compare(lR, rR, lr, rl, IntervalTerm.INSTANCE)) yield null;
+        if (!compare(lS, rS, lr, rl, IntervalTerm.INSTANCE)) yield null;
+        yield compare(lType, rType, lr, rl, PrimDef.intervalToType()) ?
+          coe.family() : null;
       }
       case ConCall lhs -> switch (preRhs) {
         case ConCall rhs -> {
