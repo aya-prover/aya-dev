@@ -81,7 +81,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case StringTerm str -> new SerTerm.Str(str.string());
       case RefTerm ref -> new SerTerm.Ref(state.local(ref.var()));
       case RefTerm.Field ref -> new SerTerm.FieldRef(state.def(ref.ref()));
-      case IntervalTerm interval -> new SerTerm.Interval();
+      case IntervalTerm interval -> SerTerm.Interval.INSTANCE;
       case PiTerm pi -> new SerTerm.Pi(serialize(pi.param()), serialize(pi.body()));
       case SigmaTerm sigma -> new SerTerm.Sigma(serializeParams(sigma.params()));
       case ConCall conCall -> new SerTerm.Con(

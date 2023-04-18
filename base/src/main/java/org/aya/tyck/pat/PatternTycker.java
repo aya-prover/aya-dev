@@ -76,7 +76,7 @@ public final class PatternTycker {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
         if (selection != null) foundError(new PatternProblem.PossiblePat(absurd, selection.component3()));
-        yield new Pat.Absurd();
+        yield Pat.Absurd.INSTANCE;
       }
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))

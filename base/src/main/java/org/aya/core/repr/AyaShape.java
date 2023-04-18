@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -21,11 +21,13 @@ import static org.aya.core.repr.CodeShape.DataShape;
 public sealed interface AyaShape {
   @NotNull CodeShape codeShape();
 
-  @NotNull AyaShape NAT_SHAPE = new AyaIntShape();
-  @NotNull AyaShape LIST_SHAPE = new AyaListShape();
+  @NotNull AyaShape NAT_SHAPE = AyaIntShape.INSTANCE;
+  @NotNull AyaShape LIST_SHAPE = AyaListShape.INSTANCE;
   @NotNull ImmutableSeq<AyaShape> LITERAL_SHAPES = ImmutableSeq.of(NAT_SHAPE, LIST_SHAPE);
 
-  record AyaIntShape() implements AyaShape {
+  enum AyaIntShape implements AyaShape {
+    INSTANCE;
+
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
       new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
       new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
@@ -36,7 +38,9 @@ public sealed interface AyaShape {
     }
   }
 
-  record AyaListShape() implements AyaShape {
+  enum AyaListShape implements AyaShape {
+    INSTANCE;
+
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
       ImmutableSeq.of(CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Sort(null, 0))),
       ImmutableSeq.of(

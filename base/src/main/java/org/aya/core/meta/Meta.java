@@ -51,7 +51,7 @@ public final class Meta implements AnyVar {
     @NotNull ImmutableSeq<Term.Param> contextTele, @NotNull String name,
     @NotNull SourcePos sourcePos
   ) {
-    return new Meta(contextTele, ImmutableSeq.empty(), name, new MetaInfo.AnyType(), sourcePos);
+    return new Meta(contextTele, ImmutableSeq.empty(), name, MetaInfo.AnyType.INSTANCE, sourcePos);
   }
 
   public static @NotNull Meta from(

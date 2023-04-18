@@ -208,7 +208,9 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record Interval() implements SerTerm {
+  enum Interval implements SerTerm {
+    INSTANCE;
+
     @Override public @NotNull Term de(@NotNull DeState state) {
       return IntervalTerm.INSTANCE;
     }

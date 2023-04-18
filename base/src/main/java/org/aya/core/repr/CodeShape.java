@@ -53,7 +53,9 @@ public sealed interface CodeShape {
    * @author kiva
    */
   sealed interface TermShape {
-    record Any() implements TermShape {}
+    enum Any implements TermShape {
+      INSTANCE;
+    }
 
     /**
      * @param superLevel the data def reference
@@ -81,14 +83,18 @@ public sealed interface CodeShape {
    * @author kiva
    */
   sealed interface PatShape {
-    record Any() implements PatShape {}
+    enum Any implements PatShape {
+      INSTANCE;
+    }
   }
 
   /**
    * @author kiva
    */
   sealed interface ParamShape {
-    record Any() implements ParamShape {}
+    enum Any implements ParamShape {
+      INSTANCE;
+    }
 
     record Licit(@NotNull CodeShape.TermShape type, Kind kind) implements ParamShape {
       enum Kind {
@@ -111,11 +117,11 @@ public sealed interface CodeShape {
     }
 
     static @NotNull CodeShape.ParamShape anyEx() {
-      return explicit(new TermShape.Any());
+      return explicit(TermShape.Any.INSTANCE);
     }
 
     static @NotNull CodeShape.ParamShape anyIm() {
-      return implicit(new TermShape.Any());
+      return implicit(TermShape.Any.INSTANCE);
     }
 
     // anyLicit(TermShape.Any) would be equivalent to ParamShape.Any
