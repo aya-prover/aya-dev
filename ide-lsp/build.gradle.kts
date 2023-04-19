@@ -38,18 +38,10 @@ tasks.named<Test>("test") {
 object Constants {
   const val jreDirName = "jre"
   const val mainClassQName = "org.aya.lsp.LspMain"
-  const val theCurrent = "current"
-  val supportedPlatforms = if (System.getenv("CI") == null)
-    listOf(theCurrent)
-  else listOf(
-    "windows-aarch64",
-    "windows-x64",
-    "linux-aarch64",
-    "linux-x64",
-    "macos-aarch64",
-    "macos-x64",
-  )
 }
+
+val supportedPlatforms: List<String> by rootProject.ext
+val currentPlatform: String by rootProject.ext
 
 fun jdkUrl(platform: String): String {
   val libericaJdkVersion = System.getProperty("java.vm.version")
@@ -79,9 +71,9 @@ jlink {
     mainClass = "org.aya.cli.console.Main"
     moduleName = "aya.cli.console"
   }
-  Constants.supportedPlatforms.forEach { platform ->
+  supportedPlatforms.forEach { platform ->
     targetPlatform(platform) {
-      if (platform != Constants.theCurrent) setJdkHome(jdkDownload(jdkUrl(platform)))
+      if (platform != currentPlatform) setJdkHome(jdkDownload(jdkUrl(platform)))
     }
   }
 }
@@ -90,7 +82,7 @@ val jlinkTask = tasks.named("jlink")
 val ayaJlinkTask = tasks.register("jlinkAya")
 val ayaJlinkZipTask = tasks.register("jlinkAyaZip")
 val ayaImageDir = buildDir.resolve("image")
-Constants.supportedPlatforms.forEach { platform ->
+supportedPlatforms.forEach { platform ->
   val installDir = ayaImageDir.resolve(platform)
   val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables_$platform") {
     from(file("src/main/shell")) {
@@ -174,7 +166,7 @@ if (rootProject.hasProperty("installDir")) {
   // }
   tasks.register<Copy>("install") {
     dependsOn(ayaJlinkTask, prepareMergedJarsDirTask)
-    from(ayaImageDir.resolve(Constants.theCurrent))
+    from(ayaImageDir.resolve(currentPlatform))
     into(destDir)
     doFirst { destDir.resolve(Constants.jreDirName).deleteRecursively() }
   }

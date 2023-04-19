@@ -11,8 +11,12 @@ import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
+import org.aya.cli.render.RenderOptions;
+import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.utils.CliEnums;
 import org.aya.core.def.PrimDef;
 import org.aya.ide.LspPrimFactory;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -37,6 +41,17 @@ public class LibraryTest {
     assertEquals(0, compile());
     // The third time should do nothing.
     assertEquals(0, compile());
+  }
+
+  @Test public void testLiterate() throws IOException {
+    FileUtil.deleteRecursively(DIR.resolve("build"));
+    // Full rebuild
+    var prettyInfo = new CompilerFlags.PrettyInfo(
+      true, false, false, false, CliEnums.PrettyStage.literate,
+      CliEnums.PrettyFormat.html, new AyaPrettierOptions(), new RenderOptions(), null
+    );
+    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, ImmutableSeq.empty(), null);
+    assertEquals(0, compile(flags));
   }
 
   @Test public void testInMemoryAndPrim() throws IOException {
@@ -106,7 +121,11 @@ public class LibraryTest {
   public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
 
   private static int compile() throws IOException {
-    return LibraryCompiler.compile(new PrimDef.Factory(), AyaThrowingReporter.INSTANCE, TestRunner.flags(), CompilerAdvisor.onDisk(), DIR);
+    return compile(TestRunner.flags());
+  }
+
+  private static int compile(@NotNull CompilerFlags flags) throws IOException {
+    return LibraryCompiler.compile(new PrimDef.Factory(), AyaThrowingReporter.INSTANCE, flags, CompilerAdvisor.onDisk(), DIR);
   }
 
   private static int compile(@NotNull PrimDef.Factory factory, @NotNull CompilerAdvisor advisor, @NotNull LibraryOwner owner) throws IOException {

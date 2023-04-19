@@ -41,7 +41,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
     var node = parseNode("prim a : " + code);
     var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
-    return new AyaProducer(code, Either.right(sourcePos), reporter).type(type);
+    return new AyaProducer(Either.right(sourcePos), reporter).type(type);
   }
 
   @Override
@@ -56,7 +56,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
 
   private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull String code, @NotNull SourceFile errorReport) {
     var node = reportErrorElements(parseNode(code), errorReport);
-    return new AyaProducer(code, Either.left(errorReport), reporter).program(node);
+    return new AyaProducer(Either.left(errorReport), reporter).program(node);
   }
 
   public @NotNull Either<ImmutableSeq<Stmt>, Expr> repl(@NotNull String code) {

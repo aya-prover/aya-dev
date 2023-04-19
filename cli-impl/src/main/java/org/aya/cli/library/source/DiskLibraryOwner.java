@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -30,7 +30,11 @@ public record DiskLibraryOwner(
   private static @Nullable LibraryConfig depConfig(@NotNull LibraryConfig config, @NotNull LibraryDependency dep) throws IOException {
     // TODO: test only: dependency resolving should be done in package manager
     if (dep instanceof LibraryDependency.DepFile file)
-      return LibraryConfigData.fromDependencyRoot(file.depRoot(), version -> depBuildRoot(config, dep.depName(), version));
+      return LibraryConfigData.fromDependencyRoot(
+        file.depRoot(),
+        config.literateConfig(),
+        version -> depBuildRoot(config, dep.depName(), version)
+      );
     return null;
   }
 
@@ -44,7 +48,7 @@ public record DiskLibraryOwner(
     var owner = new DiskLibraryOwner(locator, MutableList.create(),
       MutableList.create(), MutableList.create(), config);
     owner.librarySourcesMut.appendAll(AyaFiles.collectAyaSourceFiles(srcRoot)
-      .map(p -> new LibrarySource(owner, p)));
+      .map(p -> LibrarySource.create(owner, p)));
     for (var dep : config.deps()) {
       var depConfig = depConfig(config, dep);
       // TODO[kiva]: should not be null if we have a proper package manager

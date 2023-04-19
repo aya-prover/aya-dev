@@ -5,6 +5,7 @@ package org.aya.prettier;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.decl.ClassDecl;
@@ -258,8 +259,18 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   }
 
   public static @NotNull Link linkIdOf(@NotNull AnyVar ref) {
-    if (ref instanceof DefVar<?, ?> defVar)
-      return Link.loc(QualifiedID.join(defVar.qualifiedName()));
+    return linkIdOf(null, ref);
+  }
+
+  public static @NotNull Link linkIdOf(@Nullable ImmutableSeq<String> currentFileModule, @NotNull AnyVar ref) {
+    if (ref instanceof DefVar<?, ?> defVar) {
+      var location = Link.loc(QualifiedID.join(defVar.qualifiedName()));
+      // referring to the `ref` in its own module
+      if (currentFileModule == null || defVar.fileModule == null || defVar.fileModule.sameElements(currentFileModule))
+        return location;
+      // referring to the `ref` in another module
+      return Link.cross(defVar.fileModule, location);
+    }
     return Link.loc(ref.hashCode());
   }
 

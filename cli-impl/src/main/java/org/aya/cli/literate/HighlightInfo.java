@@ -10,6 +10,8 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
   @NotNull SourcePos sourcePos();
 
@@ -45,7 +47,18 @@ public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
     @NotNull Link target,
     @NotNull DefKind kind,
     @Nullable AyaDocile type
-  ) implements HighlightInfo {}
+  ) implements HighlightInfo {
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Ref ref = (Ref) o;
+      return Objects.equals(sourcePos, ref.sourcePos) && Objects.equals(target, ref.target) && kind == ref.kind;
+    }
+
+    @Override public int hashCode() {
+      return Objects.hash(sourcePos, target, kind);
+    }
+  }
 
   /** A definition of a symbol */
   record Def(
@@ -53,7 +66,18 @@ public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
     @NotNull Link target,
     @NotNull DefKind kind,
     @Nullable AyaDocile type
-  ) implements HighlightInfo {}
+  ) implements HighlightInfo {
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Def def = (Def) o;
+      return Objects.equals(sourcePos, def.sourcePos) && Objects.equals(target, def.target) && kind == def.kind;
+    }
+
+    @Override public int hashCode() {
+      return Objects.hash(sourcePos, target, kind);
+    }
+  }
 
   record Err(
     @NotNull Problem problem,

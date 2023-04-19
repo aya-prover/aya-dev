@@ -1,15 +1,18 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.utils.LiteratePrettierOptions;
 import org.aya.generic.Constants;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.util.FileUtil;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
@@ -27,10 +30,25 @@ import java.util.function.Function;
  * @see LibraryConfig
  */
 public final class LibraryConfigData {
+  public static final class LibraryLiterateConfigData {
+    public @Nullable LiteratePrettierOptions pretty;
+    public @UnknownNullability String linkPrefix;
+
+    public void checkDeserialization() {
+      if (linkPrefix == null) linkPrefix = "/";
+    }
+
+    public @NotNull LibraryConfig.LibraryLiterateConfig asConfig(@NotNull Path outputPath) {
+      checkDeserialization();
+      return new LibraryConfig.LibraryLiterateConfig(pretty, linkPrefix, outputPath);
+    }
+  }
+
   public String ayaVersion;
   public String name;
   public String group;
   public String version;
+  public LibraryLiterateConfigData literate;
   public Map<String, LibraryDependencyData> dependency;
 
   @VisibleForTesting public void checkDeserialization(@NotNull Path libraryRoot) {
@@ -39,15 +57,22 @@ public final class LibraryConfigData {
     if (group == null) throw new BadConfig("Missing `group` in " + libraryRoot);
     if (version == null) throw new BadConfig("Missing `version in " + libraryRoot);
     if (dependency == null) dependency = Map.of();
+    if (literate == null) literate = new LibraryLiterateConfigData();
   }
 
   private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot) throws JsonParseException {
-    return asConfig(libraryRoot, config -> libraryRoot.resolve("build"));
+    var buildRoot = libraryRoot.resolve("build");
+    return asConfig(libraryRoot, null, config -> buildRoot);
   }
 
-  private @NotNull LibraryConfig asConfig(@NotNull Path libraryRoot, @NotNull Function<String, Path> buildRootGen) {
+  private @NotNull LibraryConfig asConfig(
+    @NotNull Path libraryRoot,
+    @Nullable LibraryConfig.LibraryLiterateConfig literateConfig,
+    @NotNull Function<String, Path> buildRootGen
+  ) {
     checkDeserialization(libraryRoot.resolve(Constants.AYA_JSON));
     var buildRoot = FileUtil.canonicalize(buildRootGen.apply(version));
+    if (literateConfig == null) literateConfig = literate.asConfig(buildRoot.resolve("pretty"));
     return new LibraryConfig(
       Version.create(ayaVersion),
       name,
@@ -56,6 +81,7 @@ public final class LibraryConfigData {
       libraryRoot.resolve("src"),
       buildRoot,
       buildRoot.resolve("out"),
+      literateConfig,
       ImmutableSeq.from(dependency.entrySet()).view()
         .map(e -> e.getValue().as(libraryRoot, e.getKey()))
         .toImmutableSeq()
@@ -69,9 +95,10 @@ public final class LibraryConfigData {
 
   @VisibleForTesting public static LibraryConfigData ofAyaJson(Path ayaJson) throws IOException {
     try (var jsonReader = Files.newBufferedReader(ayaJson)) {
-      return new Gson().fromJson(jsonReader, LibraryConfigData.class);
+      var gson = LiteratePrettierOptions.gsonBuilder(new GsonBuilder()).create();
+      return gson.fromJson(jsonReader, LibraryConfigData.class);
     } catch (JsonParseException cause) {
-      throw new BadConfig("Failed to parse " + ayaJson, cause);
+      throw new BadConfig("Failed to parse " + ayaJson + ": " + cause.getMessage());
     }
   }
 
@@ -80,9 +107,13 @@ public final class LibraryConfigData {
     return of(canonicalPath).asConfig(canonicalPath);
   }
 
-  public static @NotNull LibraryConfig fromDependencyRoot(@NotNull Path dependencyRoot, @NotNull Function<String, Path> buildRoot) throws IOException, BadConfig {
+  public static @NotNull LibraryConfig fromDependencyRoot(
+    @NotNull Path dependencyRoot,
+    @Nullable LibraryConfig.LibraryLiterateConfig literateConfig,
+    @NotNull Function<String, Path> buildRoot
+  ) throws IOException, BadConfig {
     var canonicalPath = FileUtil.canonicalize(dependencyRoot);
-    return of(canonicalPath).asConfig(canonicalPath, buildRoot);
+    return of(canonicalPath).asConfig(canonicalPath, literateConfig, buildRoot);
   }
 
   public static class BadConfig extends RuntimeException {

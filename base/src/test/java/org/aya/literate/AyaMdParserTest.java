@@ -140,9 +140,9 @@ public class AyaMdParserTest {
     assertEquals(trim(expectedMd), trim(actualMd));
 
     var actualTexWithHeader = new RenderOptions().render(RenderOptions.OutputTarget.LaTeX,
-      doc, new RenderOptions.Opts(true, true, true, true, -1, false));
+      doc, new RenderOptions.DefaultSetup(true, true, true, true, -1, false));
     var actualTexButKa = new RenderOptions().render(RenderOptions.OutputTarget.KaTeX,
-      doc, new RenderOptions.Opts(true, true, true, true, -1, false));
+      doc, new RenderOptions.DefaultSetup(true, true, true, true, -1, false));
     assertFalse(actualTexInlinedStyle.isEmpty());
     assertFalse(actualTexWithHeader.isEmpty());
     assertFalse(actualTexButKa.isEmpty());

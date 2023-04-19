@@ -29,7 +29,7 @@ import java.util.EnumSet;
 public sealed interface SerDef extends Serializable {
   @NotNull GenericDef de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull String name) implements Serializable {
+  record QName(@NotNull ImmutableSeq<String> mod, @NotNull ImmutableSeq<String> fileMod, @NotNull String name) implements Serializable {
     @Override public String toString() {
       return mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR + name);
     }
@@ -109,13 +109,14 @@ public sealed interface SerDef extends Serializable {
 
   record Prim(
     @NotNull ImmutableSeq<String> module,
+    @NotNull ImmutableSeq<String> fileModule,
     @NotNull PrimDef.ID name
   ) implements SerDef {
     @Override
     public @NotNull Def de(SerTerm.@NotNull DeState state) {
       var defVar = DefVar.<PrimDef, TeleDecl.PrimDecl>empty(name.id);
       var def = state.primFactory().getOrCreate(name, defVar);
-      state.putPrim(module, name, def.ref);
+      state.putPrim(module, fileModule, name, def.ref);
       return def;
     }
   }

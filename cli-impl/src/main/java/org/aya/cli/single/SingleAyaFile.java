@@ -4,23 +4,17 @@ package org.aya.cli.single;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Option;
-import org.aya.cli.literate.AyaMdParser;
-import org.aya.cli.literate.FaithfulPrettier;
-import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
+import org.aya.cli.utils.LiterateData;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.desugar.Desugarer;
 import org.aya.concrete.remark.Literate;
-import org.aya.concrete.remark.LiterateConsumer;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
 import org.aya.generic.util.AyaFiles;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
@@ -70,11 +64,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
       var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(), flags.prettierOptions());
-      var text = renderOptions.render(out, d, flags.renderOpts(true));
+      var text = renderOptions.render(out, d, flags.backendOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
       doWrite(doc, prettyDir, flags.prettierOptions(), fileName, out.fileExt,
-        (d, hdr) -> renderOptions.render(out, d, flags.renderOpts(hdr)));
+        (d, hdr) -> renderOptions.render(out, d, flags.backendOpts(hdr)));
     }
   }
   @VisibleForTesting default @NotNull Doc toDoc(
@@ -82,11 +76,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options
   ) throws IOException {
-    var highlights = SyntaxHighlight.highlight(Option.some(codeFile()), program);
-    var literate = literate();
-    var prettier = new FaithfulPrettier(problems, highlights, options);
-    prettier.accept(literate);
-    return literate.toDoc();
+    return LiterateData.toDoc(this, null, program, problems, options);
   }
 
   private void doWrite(
@@ -124,67 +114,42 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   record Factory(@NotNull Reporter reporter) implements GenericAyaFile.Factory {
     @Override public @NotNull SingleAyaFile
     createAyaFile(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
-      var fileName = path.getFileName().toString();
       var codeFile = new CodeAyaFile(SourceFile.from(locator, path));
-      return fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)
-        ? createLiterateFile(codeFile, reporter) : codeFile;
+      return AyaFiles.isLiterate(path) ? createLiterateFile(codeFile, reporter) : codeFile;
     }
   }
 
   record CodeAyaFile(@NotNull SourceFile originalFile) implements SingleAyaFile {
   }
 
-  private static @NotNull MarkdownAyaFile.Data
-  createData(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
-    var mdFile = template.originalFile;
-    var mdParser = new AyaMdParser(mdFile, reporter);
-    var lit = mdParser.parseLiterate();
-    var ayaCode = mdParser.extractAya(lit);
-    var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
-    var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
-    return new MarkdownAyaFile.Data(lit, exprs, code);
-  }
-
   @VisibleForTesting static @NotNull MarkdownAyaFile
   createLiterateFile(@NotNull CodeAyaFile template, @NotNull Reporter reporter) {
-    return new MarkdownAyaFile(template.originalFile, createData(template, reporter));
+    return new MarkdownAyaFile(template.originalFile, LiterateData.create(template.originalFile, reporter));
   }
 
-  record MarkdownAyaFile(@Override @NotNull SourceFile originalFile, @NotNull Data data) implements SingleAyaFile {
-    record Data(
-      @NotNull Literate literate,
-      @NotNull ImmutableSeq<Literate.Code> extractedExprs,
-      @NotNull SourceFile extractedAya
-    ) {}
-
+  record MarkdownAyaFile(@Override @NotNull SourceFile originalFile,
+                         @NotNull LiterateData data) implements SingleAyaFile {
     @Override public void resolveAdditional(@NotNull ResolveInfo info) {
       SingleAyaFile.super.resolveAdditional(info);
-      data.extractedExprs.forEach(c -> {
-        assert c.expr != null;
-        c.expr = new Desugarer(info).apply(c.expr.resolveLax(info.thisModule()));
-      });
+      data.resolve(info);
     }
 
     @Override public void tyckAdditional(@NotNull ResolveInfo info) {
       SingleAyaFile.super.tyckAdditional(info);
-      var tycker = info.newTycker(info.thisModule().reporter(), null);
-      data.extractedExprs.forEach(c -> {
-        assert c.expr != null;
-        c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
-      });
+      data.tyck(info);
     }
 
     @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
-      data.extractedExprs.forEach(code -> code.expr = parser.expr(code.code, code.sourcePos));
+      data.parseMe(parser);
       return SingleAyaFile.super.parseMe(parser);
     }
 
     @Override public @NotNull SourceFile codeFile() {
-      return data.extractedAya;
+      return data.extractedAya();
     }
 
     @Override public @NotNull Literate literate() throws IOException {
-      return data.literate;
+      return data.literate();
     }
   }
 }

@@ -652,6 +652,19 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       }
     }
 
+    public record ListCompNames(
+      @NotNull Expr monadBind,
+      @NotNull Expr functorPure
+    ) {
+      public ListCompNames fmap(@NotNull Function<Expr, Expr> f) {
+        return new ListCompNames(f.apply(monadBind), f.apply(functorPure));
+      }
+
+      public boolean identical(@NotNull ListCompNames names) {
+        return monadBind == names.monadBind && functorPure == names.functorPure;
+      }
+    }
+
     /**
      * <h1>Array Comp(?)</h1>
      * <p>
@@ -660,8 +673,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      *
      * @param generator <code>x * y</code> part above
      * @param binds     <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
-     * @param bindName  the bind (>>=) function, it is {@link org.aya.generic.Constants}.monadBind in default
-     * @param pureName  the pure (return) function, it is {@link org.aya.generic.Constants}.functorPure in default
+     * @param names     the bind (>>=) function, it is {@link org.aya.generic.Constants#monadBind} in default,
+     *                  the pure (return) function, it is {@link org.aya.generic.Constants#functorPure} in default
      * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
      * <pre>
      *     do
@@ -673,16 +686,16 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     public record CompBlock(
       @NotNull Expr generator,
       @NotNull ImmutableSeq<DoBind> binds,
-      @NotNull Expr bindName,
-      @NotNull Expr pureName
+      @NotNull ListCompNames names
     ) {
-      public @NotNull CompBlock update(@NotNull Expr generator, @NotNull ImmutableSeq<DoBind> binds, @NotNull Expr bindName, @NotNull Expr pureName) {
-        return generator == generator() && binds.sameElements(binds(), true) && bindName == bindName() && pureName == pureName() ? this
-          : new CompBlock(generator, binds, bindName, pureName);
+      public @NotNull CompBlock update(@NotNull Expr generator, @NotNull ImmutableSeq<DoBind> binds, @NotNull ListCompNames names) {
+        return generator == generator() && binds.sameElements(binds(), true) && names.identical(names())
+          ? this
+          : new CompBlock(generator, binds, names);
       }
 
       public @NotNull CompBlock descent(@NotNull UnaryOperator<@NotNull Expr> f) {
-        return update(f.apply(generator), binds.map(bind -> bind.descent(f)), f.apply(bindName), f.apply(pureName));
+        return update(f.apply(generator), binds.map(bind -> bind.descent(f)), names.fmap(f));
       }
     }
 
@@ -691,7 +704,8 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      */
     public static Expr.Array newList(
       @NotNull SourcePos sourcePos,
-      @NotNull ImmutableSeq<Expr> exprs) {
+      @NotNull ImmutableSeq<Expr> exprs
+    ) {
       return new Expr.Array(
         sourcePos,
         Either.right(new ElementList(exprs))
@@ -702,13 +716,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       @NotNull SourcePos sourcePos,
       @NotNull Expr generator,
       @NotNull ImmutableSeq<DoBind> bindings,
-      @NotNull Expr bindName,
-      @NotNull Expr pureName) {
+      @NotNull ListCompNames names
+    ) {
       return new Expr.Array(
         sourcePos,
-        Either.left(new CompBlock(
-          generator, bindings, bindName, pureName
-        ))
+        Either.left(new CompBlock(generator, bindings, names))
       );
     }
   }

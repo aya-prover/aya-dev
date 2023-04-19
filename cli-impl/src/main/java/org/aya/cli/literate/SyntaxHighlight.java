@@ -38,7 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** @implNote Use {@link MutableList} instead of {@link SeqView} for performance consideration. */
-public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
+public record SyntaxHighlight(
+  @Nullable ImmutableSeq<String> currentFileModule) implements StmtFolder<MutableList<HighlightInfo>> {
   public static final @NotNull TokenSet SPECIAL_SYMBOL = TokenSet.orSet(
     AyaParserDefinitionBase.UNICODES,
     AyaParserDefinitionBase.MARKERS,
@@ -50,10 +51,11 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
    * @return a list of {@link HighlightInfo}, no order was expected, the elements may be duplicated
    */
   public static @NotNull ImmutableSeq<HighlightInfo> highlight(
+    @Nullable ImmutableSeq<String> currentFileModule,
     @NotNull Option<SourceFile> sourceFile,
     @NotNull ImmutableSeq<Stmt> program
   ) {
-    var prettier = new SyntaxHighlight();
+    var prettier = new SyntaxHighlight(currentFileModule);
     var semantics = program.flatMap(prettier);
     if (sourceFile.isDefined()) {
       var file = sourceFile.get();
@@ -124,24 +126,29 @@ public class SyntaxHighlight implements StmtFolder<MutableList<HighlightInfo>> {
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleRef(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
-    // TODO: use `LinkId.page` for cross module link
-    return add(acc, DefKind.Module.toRef(pos, Link.loc(path.toString()), null));
+    // TODO: in SimpleModule.aya line 7, `public open Nat::N` is wrongly linked as `Link.cross`
+    //  Because `Stmt.Open` does not provide the fully qualified module name (SimpleModule::Nat::N),
+    //  instead, it provides `Nat::N` only, which is not enough to determine whether it is a cross-link or not.
+    var link = currentFileModule != null && currentFileModule.sameElements(path.ids())
+      ? Link.loc(path.toString())             // referring to a module defined in the current file
+      : Link.cross(path.ids(), null);  // referring to another file-level module
+    return add(acc, DefKind.Module.toRef(pos, link, null));
   }
 
   @Override
   public @NotNull MutableList<HighlightInfo> foldModuleDecl(@NotNull MutableList<HighlightInfo> acc, @NotNull SourcePos pos, @NotNull ModuleName path) {
-    // TODO: use `LinkId.page` for cross module link
+    // module declaration is always a local link; we have no way to define a file-level module in aya code.
     return add(acc, DefKind.Module.toDef(pos, Link.loc(path.toString()), null));
   }
 
   private @NotNull HighlightInfo linkDef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
-    return kindOf(var).toDef(sourcePos, BasePrettier.linkIdOf(var), type);
+    return kindOf(var).toDef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
     if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
-    return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(var), type);
+    return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
   }
 
   @SuppressWarnings("unused")

@@ -141,7 +141,7 @@ public record ExprResolver(
           var mCtx = MutableValue.create(ctx);
           var binds = bind(left.binds(), mCtx);
           var generator = enter(mCtx.get()).apply(left.generator());
-          return left.update(generator, binds, apply(left.bindName()), apply(left.pureName()));
+          return left.update(generator, binds, left.names().fmap(this));
         },
         right -> right.descent(this)
       ));

@@ -9,15 +9,20 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
+import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
+import org.aya.generic.util.AyaFiles;
 import org.aya.generic.util.InternalException;
 import org.aya.generic.util.InterruptException;
+import org.aya.pretty.backend.string.StringPrinterConfig;
+import org.aya.pretty.printer.PrinterConfig;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -149,6 +154,44 @@ public class LibraryCompiler {
     return CompilerUtil.catching(reporter, flags, this::make);
   }
 
+  private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
+    var cmdPretty = flags.prettyInfo();
+    if (cmdPretty == null || cmdPretty.prettyStage() != CliEnums.PrettyStage.literate) return;
+
+    // prepare literate output path
+    reportNest("[Info] Generating literate output");
+    var litConfig = owner.underlyingLibrary().literateConfig();
+    var outputDir = Files.createDirectories(litConfig.outputPath());
+
+    // If the library specifies no literate options, use the ones from the command line.
+    var litPretty = litConfig.pretty();
+    var prettierOptions = litPretty != null ? litPretty.prettierOptions : cmdPretty.prettierOptions();
+    var renderOptions = litPretty != null ? litPretty.renderOptions : cmdPretty.renderOptions();
+    // always use the backend options from the command line, like output format, server-side rendering, etc.
+    var outputTarget = cmdPretty.prettyFormat().target;
+    var setup = cmdPretty.backendOpts(true).then(new RenderOptions.BackendSetup() {
+      @Override public <T extends PrinterConfig.Basic<?>> @NotNull T setup(@NotNull T config) {
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkPrefix, litConfig.linkPrefix());
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkSeparator, "/");
+        config.set(StringPrinterConfig.LinkOptions.CrossLinkPostfix, switch (outputTarget) {
+          case AyaMd, HTML -> ".html";
+          case default -> "";
+        });
+        return config;
+      }
+    });
+    // THE BIG GAME
+    modified.forEachChecked(src -> {
+      // reportNest("[Pretty] " + QualifiedID.join(src.moduleName()));
+      var doc = src.pretty(ImmutableSeq.empty(), prettierOptions);
+      var text = renderOptions.render(outputTarget, doc, setup);
+      var outputFileName = AyaFiles.stripAyaSourcePostfix(src.displayPath().toString()) + outputTarget.fileExt;
+      var outputFile = outputDir.resolve(outputFileName);
+      Files.createDirectories(outputFile.getParent());
+      Files.writeString(outputFile, text);
+    });
+  }
+
   /**
    * Incrementally compiles a library without handling compilation errors.
    *
@@ -184,6 +227,7 @@ public class LibraryCompiler {
     var make = make(modified);
     reporter.reportNest("Library loaded in " + StringUtil.timeToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
+    pretty(modified);
     return make;
   }
 
@@ -228,6 +272,7 @@ public class LibraryCompiler {
     if (src.tycked().get() == null) return;
     src.tycked().set(null);
     src.resolveInfo().set(null);
+    src.literateData().set(null);
     clearPrimitives(src.program().get());
     parse(src);
   }
@@ -237,6 +282,7 @@ public class LibraryCompiler {
     src.program().set(null);
     src.tycked().set(null);
     src.resolveInfo().set(null);
+    src.literateData().set(null);
     src.imports().clear();
   }
 

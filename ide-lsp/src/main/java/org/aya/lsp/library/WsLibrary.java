@@ -32,7 +32,7 @@ public record WsLibrary(
     var mockConfig = mockConfig(parent);
     var locator = new SourceFileLocator.Module(SeqView.of(parent));
     var owner = new WsLibrary(locator, MutableList.create(), mockConfig, parent);
-    owner.sources.append(new LibrarySource(owner, canonicalPath));
+    owner.sources.append(LibrarySource.create(owner, canonicalPath));
     return owner;
   }
 
@@ -45,6 +45,7 @@ public record WsLibrary(
       folder,
       folder.resolve("build"),
       folder.resolve("build"),
+      new LibraryConfig.LibraryLiterateConfig(null, "/", folder.resolve("build")),
       ImmutableSeq.empty()
     );
   }

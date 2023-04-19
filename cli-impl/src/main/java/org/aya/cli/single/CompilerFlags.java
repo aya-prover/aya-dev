@@ -47,8 +47,8 @@ public record CompilerFlags(
     @NotNull RenderOptions renderOptions,
     @Nullable String prettyDir
   ) {
-    public @NotNull RenderOptions.Opts renderOpts(boolean headerCode) {
-      return new RenderOptions.Opts(headerCode, !prettyNoCodeStyle, !prettyInlineCodeStyle,
+    public @NotNull RenderOptions.DefaultSetup backendOpts(boolean headerCode) {
+      return new RenderOptions.DefaultSetup(headerCode, !prettyNoCodeStyle, !prettyInlineCodeStyle,
         !ascii, StringPrinterConfig.INFINITE_SIZE, prettySSR);
     }
   }

@@ -18,6 +18,12 @@ public class StringPrinterConfig<S extends StringStylist> extends PrinterConfig.
     StyleCode,
   }
 
+  public enum LinkOptions implements PrinterConfig.Options<String> {
+    CrossLinkPrefix,
+    CrossLinkPostfix,
+    CrossLinkSeparator,
+  }
+
   public StringPrinterConfig(@NotNull S stylist) {
     super(stylist);
   }

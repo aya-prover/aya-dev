@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic.util;
 
@@ -9,19 +9,28 @@ import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface AyaFiles {
+  @NotNull ImmutableSeq<String> AYA_SOURCE_POSTFIXES = ImmutableSeq.of(Constants.AYA_POSTFIX, Constants.AYA_LITERATE_POSTFIX);
+
   static @NotNull String stripAyaSourcePostfix(@NotNull String name) {
     return Constants.AYA_POSTFIX_PATTERN.matcher(name).replaceAll("");
   }
 
+  static boolean isLiterate(@NotNull Path path) {
+    return path.getFileName().toString().endsWith(Constants.AYA_LITERATE_POSTFIX);
+  }
+
   static @NotNull Path resolveAyaSourceFile(@NotNull Path basePath, @NotNull ImmutableSeq<String> moduleName) {
-    // TODO: resolve literate aya file
+    var literate = FileUtil.resolveFile(basePath, moduleName, Constants.AYA_LITERATE_POSTFIX);
+    if (Files.exists(literate)) return literate;
     return FileUtil.resolveFile(basePath, moduleName, Constants.AYA_POSTFIX);
   }
   static @Nullable Path resolveAyaSourceFile(@NotNull SeqView<Path> basePaths, @NotNull ImmutableSeq<String> moduleName) {
-    // TODO: resolve literate aya file
+    var literate = FileUtil.resolveFile(basePaths, moduleName, Constants.AYA_LITERATE_POSTFIX);
+    if (literate != null) return literate;
     return FileUtil.resolveFile(basePaths, moduleName, Constants.AYA_POSTFIX);
   }
   static @NotNull Path resolveAyaCompiledFile(@NotNull Path basePath, @NotNull ImmutableSeq<String> moduleName) {
@@ -35,7 +44,6 @@ public interface AyaFiles {
     return collectAyaSourceFiles(basePath, Integer.MAX_VALUE);
   }
   static @NotNull ImmutableSeq<Path> collectAyaSourceFiles(@NotNull Path basePath, int maxDepth) {
-    // TODO: collect literate aya file
-    return FileUtil.collectSource(basePath, Constants.AYA_POSTFIX, maxDepth);
+    return FileUtil.collectSource(basePath, AYA_SOURCE_POSTFIXES, maxDepth);
   }
 }

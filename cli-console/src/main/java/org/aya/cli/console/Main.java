@@ -49,9 +49,9 @@ public class Main extends MainArgs implements Callable<Integer> {
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var replConfig = ReplConfig.loadFromDefault();
-    var prettierOptions = replConfig.prettierOptions;
+    var prettierOptions = replConfig.literatePrettier.prettierOptions;
     var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
-    var renderOptions = replConfig.renderOptions;
+    var renderOptions = replConfig.literatePrettier.renderOptions;
     switch (prettyColor) {
       case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
       case intellij -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.IntelliJ;

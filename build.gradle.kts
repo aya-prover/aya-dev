@@ -14,7 +14,24 @@ plugins {
   id("org.beryx.jlink") version "2.26.0" apply false
 }
 
+var currentPlatform: String by rootProject.ext
+var supportedPlatforms: List<String> by rootProject.ext
+var javaVersion: Int by rootProject.ext
 var deps: Properties by rootProject.ext
+
+// Remember to update .github/workflows/{nightly-build.yml, gradle-check.yml}
+javaVersion = 19
+
+// Platforms we build jlink-ed aya for
+currentPlatform = "current"
+supportedPlatforms = if (System.getenv("CI") == null) listOf(currentPlatform) else listOf(
+  "windows-aarch64",
+  "windows-x64",
+  "linux-aarch64",
+  "linux-x64",
+  "macos-aarch64",
+  "macos-x64",
+)
 
 deps = Properties()
 file("gradle/deps.properties").reader().use(deps::load)
@@ -45,7 +62,6 @@ subprojects {
     plugin("signing")
   }
 
-  val javaVersion = 19
   java {
     withSourcesJar()
     if (isRelease) withJavadocJar()

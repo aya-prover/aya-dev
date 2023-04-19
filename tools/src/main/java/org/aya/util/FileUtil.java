@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -43,14 +43,14 @@ public interface FileUtil {
     }
   }
 
-  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix) {
-    return collectSource(srcRoot, postfix, Integer.MAX_VALUE);
-  }
-
-  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull String postfix, int maxDepth) {
+  static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull ImmutableSeq<String> postfix, int maxDepth) {
     try (var walk = Files.walk(srcRoot, maxDepth)) {
-      return walk.filter(Files::isRegularFile)
-        .filter(path -> path.getFileName().toString().endsWith(postfix))
+      return walk
+        .filter(Files::isRegularFile)
+        .filter(path -> {
+          var name = path.getFileName().toString();
+          return postfix.anyMatch(name::endsWith);
+        })
         .collect(ImmutableSeq.factory());
     } catch (IOException e) {
       return ImmutableSeq.empty();

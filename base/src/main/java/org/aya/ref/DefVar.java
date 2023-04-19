@@ -27,6 +27,7 @@ public final class DefVar<Core extends GenericDef, Concrete extends Decl> implem
   public @UnknownNullability Core core;
   /** Initialized in the resolver or core deserialization */
   public @Nullable ImmutableSeq<String> module;
+  public @Nullable ImmutableSeq<String> fileModule; // TODO: unify `module` and `fileModule`
   /** Initialized in the resolver or core deserialization */
   public @Nullable OpDecl opDecl;
   /**

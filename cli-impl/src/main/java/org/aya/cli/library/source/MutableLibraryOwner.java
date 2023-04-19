@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -35,7 +35,7 @@ public interface MutableLibraryOwner extends LibraryOwner {
   }
 
   default @NotNull LibrarySource addLibrarySource(@NotNull Path source) {
-    var src = new LibrarySource(this, FileUtil.canonicalize(source));
+    var src = LibrarySource.create(this, FileUtil.canonicalize(source));
     this.librarySourcesMut().append(src);
     return src;
   }

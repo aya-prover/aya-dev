@@ -92,7 +92,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public AyaRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) {
     this.config = config;
     replCompiler = new ReplCompiler(modulePaths, new AnsiReporter(true,
-      () -> config.enableUnicode, () -> config.prettierOptions,
+      () -> config.enableUnicode, () -> config.literatePrettier.prettierOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
   }
 
@@ -127,13 +127,13 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
       program -> config.silent ? Doc.empty() :
-        Doc.vcat(program.view().map(def -> def.toDoc(config.prettierOptions))),
+        Doc.vcat(program.view().map(def -> def.toDoc(config.literatePrettier.prettierOptions))),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(config.prettierOptions);
+    return ayaDocile.toDoc(config.literatePrettier.prettierOptions);
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {
