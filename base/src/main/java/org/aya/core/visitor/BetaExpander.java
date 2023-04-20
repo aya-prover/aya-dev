@@ -58,14 +58,8 @@ public interface BetaExpander extends EndoTerm {
         var ty,
         FormulaTerm(Formula.Lit<Term>(var r)),
         FormulaTerm(Formula.Lit<Term>(var s))
-      ) when r == s -> {
-        var var = new LocalVar("x");
-        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
-      }
-      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> {
-        var var = new LocalVar("x");
-        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
-      }
+      ) when r == s -> identity("x");
+      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
       case CoeTerm coe -> {
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
@@ -74,6 +68,7 @@ public interface BetaExpander extends EndoTerm {
           case PathTerm path -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
+          case DataCall data when data.args().isEmpty() -> identity("x");
           case SortTerm type -> {
             var A = new LocalVar("A");
             yield new LamTerm(new LamTerm.Param(A, true), new RefTerm(A));
@@ -83,5 +78,9 @@ public interface BetaExpander extends EndoTerm {
       }
       default -> term;
     };
+  }
+  static @NotNull Term identity(@NotNull String x) {
+    var param = new LamTerm.Param(new LocalVar(x), true);
+    return new LamTerm(param, param.toTerm());
   }
 }
