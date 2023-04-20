@@ -9,6 +9,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.function.UnaryOperator;
 
 /**
@@ -52,20 +53,14 @@ public interface BetaExpander extends EndoTerm {
           case Partial.Const<Term> sad -> sad.u();
         };
       }
-      case PartialTerm partial -> new PartialTerm(partial(partial.partial()), partial.rhsType());
+      case PartialTerm(var partial, var rhsTy) -> new PartialTerm(partial(partial), rhsTy);
       // TODO[coe]: temporary hack
       case CoeTerm(
         var ty,
         FormulaTerm(Formula.Lit<Term>(var r)),
         FormulaTerm(Formula.Lit<Term>(var s))
-      ) when r == s -> {
-        var var = new LocalVar("x");
-        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
-      }
-      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> {
-        var var = new LocalVar("x");
-        yield new LamTerm(new LamTerm.Param(var, true), new RefTerm(var));
-      }
+      ) when r == s -> identity("x");
+      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
       case CoeTerm coe -> {
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
@@ -74,14 +69,19 @@ public interface BetaExpander extends EndoTerm {
           case PathTerm path -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
-          case SortTerm type -> {
-            var A = new LocalVar("A");
-            yield new LamTerm(new LamTerm.Param(A, true), new RefTerm(A));
-          }
+          case DataCall data when data.args().isEmpty() -> identity(String.valueOf(data.ref()
+            .name().chars()
+            .filter(Character::isAlphabetic)
+            .findFirst()).toLowerCase(Locale.ROOT));
+          case SortTerm type -> identity("A");
           default -> term;
         };
       }
       default -> term;
     };
+  }
+  static @NotNull Term identity(@NotNull String x) {
+    var param = new LamTerm.Param(new LocalVar(x), true);
+    return new LamTerm(param, param.toTerm());
   }
 }
