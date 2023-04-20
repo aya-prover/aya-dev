@@ -168,7 +168,6 @@ public class PrettierTest {
 
   @Test public void lambdaApp() {
     var a = new LocalVar("a");
-    var A = new LocalVar("A");
     var x = new LocalVar("x");
     var t = new AppTerm(new LamTerm(new LamTerm.Param(a, true), new RefTerm(a)), new Arg<>(new RefTerm(x), true));
     assertEquals("(\\ a => a) x", t.toDoc(AyaPrettierOptions.informative()).debugRender());
@@ -213,22 +212,22 @@ public class PrettierTest {
     assertEquals("""
         prim I
         prim coe
-        def YY (A : I -> Type 0) (a : A 0) (i : I) : A i => coe (\\ (j : _) => A j) i a
-        def XX (A : I -> Type 0) (a : A 0) : A 0 -> A 1 => coe (\\ (j : _) => A j) 0
-        def ZZ (A : I -> Type 0) (a : A 0) : A 1 => coe (\\ (j : _) => A j) 0 a""",
+        def YY (A : I -> Type 0) (a : A 0) (i : I) : A i => coe 0 1 (\\ (j : _) => A j) a
+        def XX (A : I -> Type 0) (a : A 0) : A 0 -> A 1 => coe 0 1 (\\ (j : _) => A j)
+        def ZZ (A : I -> Type 0) (a : A 0) : A 1 => coe 0 1 (\\ (j : _) => A j) a""",
       declCDoc("""
         prim I
         prim coe
-        def YY (A : I -> Type) (a : A 0) (i : I) : A i => (\\j => A j).coe a freeze i
-        def XX (A : I -> Type) (a : A 0) : A 0 -> A 1 => (\\j => A j).coe
-        def ZZ (A : I -> Type) (a : A 0) : A 1 => (\\j => A j).coe a
+        def YY (A : I -> Type) (a : A 0) (i : I) : A i => coe 0 1 (\\j => A j) a
+        def XX (A : I -> Type) (a : A 0) : A 0 -> A 1 => coe 0 1 (\\j => A j)
+        def ZZ (A : I -> Type) (a : A 0) : A 1 => coe 0 1 (\\j => A j) a
         """).debugRender());
   }
 
+  // The test name is outdated but the test is kept to avoid regression
   @Test public void rawProjExpr() {
-    ParseTest.parseAndPretty("def a => E.coe u freeze F", "def a => E.coe u freeze F");
-    ParseTest.parseAndPretty("def a => E.coe u", "def a => E.coe u");
-    ParseTest.parseAndPretty("def a => E.coe", "def a => E.coe");
+    ParseTest.parseAndPretty("def a => coe 0 1 E u", "def a => coe 0 1 E u");
+    ParseTest.parseAndPretty("def a => coe 0 1 E", "def a => coe 0 1 E");
   }
 
   private @NotNull Doc declDoc(@Language("Aya") String text) {

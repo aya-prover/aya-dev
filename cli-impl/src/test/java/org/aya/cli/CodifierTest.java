@@ -12,7 +12,7 @@ public class CodifierTest extends ReplTestBase {
       prim I prim coe prim intervalInv prim intervalMax
       inline def ~ => intervalInv
       inline def infix ∨ => intervalMax
-      def coePi (A : I -> Type) (B : Fn (i : I) -> A i -> Type) (f : Fn (a : A 0) -> B 0 a) : Fn (a : A 1) -> B 1 a => \\a => (\\i => B i ((\\j => A ((~ j) ∨ i)).coe a freeze i)).coe f ((\\i => A (~ i)).coe a)
+      def coePi (r s : I) (A : I -> Type) (B : ∀ (i : I) -> A i -> Type) (f : ∀ (a : A r) -> B r a) : ∀ (a : A s) -> B s a => \\a => coe r s (\\x => B x (coe s x A a)) (f (coe s r A a))
       :codify coePi
       """).component1().trim();
     assertNotNull(out);
