@@ -1,4 +1,4 @@
 prim I
 prim intervalMin (i : I) (j : I) : I
-prim coe (A : I -> Type) (phi : I) : A 0 -> A 1
+prim coe (r s : I) (A : I -> Type) : A r -> A s
 prim intervalInv (i : I) : I
