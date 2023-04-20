@@ -9,6 +9,7 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.function.UnaryOperator;
 
 /**
@@ -52,7 +53,7 @@ public interface BetaExpander extends EndoTerm {
           case Partial.Const<Term> sad -> sad.u();
         };
       }
-      case PartialTerm partial -> new PartialTerm(partial(partial.partial()), partial.rhsType());
+      case PartialTerm(var partial, var rhsTy) -> new PartialTerm(partial(partial), rhsTy);
       // TODO[coe]: temporary hack
       case CoeTerm(
         var ty,
@@ -68,11 +69,11 @@ public interface BetaExpander extends EndoTerm {
           case PathTerm path -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
-          case DataCall data when data.args().isEmpty() -> identity("x");
-          case SortTerm type -> {
-            var A = new LocalVar("A");
-            yield new LamTerm(new LamTerm.Param(A, true), new RefTerm(A));
-          }
+          case DataCall data when data.args().isEmpty() -> identity(String.valueOf(data.ref()
+            .name().chars()
+            .filter(Character::isAlphabetic)
+            .findFirst()).toLowerCase(Locale.ROOT));
+          case SortTerm type -> identity("A");
           default -> term;
         };
       }
