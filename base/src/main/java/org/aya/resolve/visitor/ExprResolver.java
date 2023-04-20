@@ -90,7 +90,7 @@ public record ExprResolver(
         if (ix.isLeft()) yield new Expr.Proj(pos, tup, ix, resolved, theCore);
         var projName = ix.getRightValue();
         var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(pos, projName.join()));
+        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(projName.sourcePos(), projName.join()));
         yield new Expr.Proj(pos, tup, ix, resolvedIx, theCore);
       }
       case Expr.Hole hole -> {

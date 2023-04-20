@@ -1,4 +1,0 @@
-prim I
-prim coe
-
-def test {A : I -> Type} (restr : I) : A 0 -> A 1 => coe A restr

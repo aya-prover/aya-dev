@@ -1,5 +1,5 @@
 ```aya-hidden
-prim I prim coe prim coeFill
+prim I prim coe
 prim intervalInv
 prim intervalMax
 prim intervalMin
