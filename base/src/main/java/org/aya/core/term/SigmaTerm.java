@@ -48,15 +48,6 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
     var t = new RefTerm(new LocalVar("t"));
     assert params.sizeGreaterThanOrEquals(2);
     var items = MutableArrayList.<Arg<Term>>create(params.size());
-    record Item(@NotNull CoeTerm coe, @NotNull Arg<Term> arg) {
-      public @NotNull Term fill(@NotNull LocalVar i) {
-        return AppTerm.make(CoeTerm.cover(coe.type(), coe.restr(), new RefTerm(i)), arg);
-      }
-
-      public @NotNull Term app() {
-        return AppTerm.make(coe, arg);
-      }
-    }
     var subst = new Subst();
 
     var ix = 1;
@@ -64,12 +55,13 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
       // Item: t.ix
       var tn = new ProjTerm(t, ix++);
       // Because i : I |- params, so is i : I |- param, now bound An := \i. param
-      var An = new LamTerm(new LamTerm.Param(i, true), param.type().subst(subst));
-      // An.coe(Fill) t.ix
-      var item = new Item(new CoeTerm(An, coe.restr()), new Arg<>(tn, true));
-      // Substitution will take care of renaming
-      subst.add(param.ref(), item.fill(i));
-      items.append(new Arg<>(item.app(), param.explicit()));
+      var An = new LamTerm(i, param.type().subst(subst)).rename();
+      // coe r s' (\i => A_n) t.ix
+      UnaryOperator<Term> fill = s -> AppTerm.make(new CoeTerm(An, coe.r(), s),
+        new Arg<>(tn, true));
+
+      subst.add(param.ref(), fill.apply(i.toTerm()));
+      items.append(new Arg<>(fill.apply(coe.s()), param.explicit()));
     }
     return new LamTerm(new LamTerm.Param(t.var(), true),
       new TupTerm(items.toImmutableArray()));

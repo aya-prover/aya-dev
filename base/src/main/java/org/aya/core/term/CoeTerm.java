@@ -28,10 +28,11 @@ public record CoeTerm(@NotNull Term type, @NotNull Term r, @NotNull Term s) impl
    *   <li>x ∈ FV(A.type()), x ∈ FV(B)</li>
    *   <li>A.ref() ∈ FV(B)</li>
    * </ul>
+   * @return {@code \x : A.type() => B[coe(r, x, A, arg) / A.ref()]}
    */
-  public static @NotNull LamTerm cover(LamTerm.Param x, Param A, Term B, Term newArg, Term r) {
+  public static @NotNull LamTerm cover(LamTerm.Param x, Param A, Term B, Term arg, Term r) {
     var innerCover = new LamTerm(x, A.type()).rename();
-    var coeRX = new AppTerm(new CoeTerm(innerCover, r, x.toTerm()), new Arg<>(newArg, true));
+    var coeRX = new AppTerm(new CoeTerm(innerCover, r, x.toTerm()), new Arg<>(arg, true));
     return new LamTerm(x, B.subst(A.ref(), coeRX));
   }
 
