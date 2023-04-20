@@ -1,6 +1,0 @@
-open data Unit | unit
-open class Test
-  | x : Unit -> Unit
-
-def YY (t : Test) : Unit
-  => t.x unit freeze t

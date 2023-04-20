@@ -3,6 +3,7 @@
 package org.aya.prettier;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -230,8 +231,10 @@ public class CorePrettier extends BasePrettier<Term> {
         Outer.BinOp);
       case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.of()),
         app.args().view(), outer, options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
-      case CoeTerm coe -> checkParen(outer, Doc.sep(Doc.styled(KEYWORD, "coe"),
-        term(Outer.AppSpine, coe.type()), Doc.parened(restr(options, coe.restr()))), Outer.AppSpine);
+      case CoeTerm(var ty, var r, var s) -> visitCalls(null,
+        Doc.styled(KEYWORD, "coe"),
+        Seq.of(r, s, ty).view().map(t -> new Arg<>(t, true)),
+        outer, true);
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
       case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");

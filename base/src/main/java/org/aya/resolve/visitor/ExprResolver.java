@@ -25,7 +25,6 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
-import org.aya.resolve.error.PrimResolveError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
@@ -87,12 +86,12 @@ public record ExprResolver(
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.RawProj(var pos, var tup, var id, var resolved, var coeLeft, var restr) -> {
-        var resolvedIx = ctx.getMaybe(id);
-        if (resolvedIx == null)
-          ctx.reportAndThrow(new FieldError.UnknownField(id.sourcePos(), id.join()));
-        yield resolvedIx == resolved ? expr
-          : new Expr.RawProj(pos, tup, id, resolvedIx, coeLeft, restr);
+      case Expr.Proj(var pos, var tup, var ix, var resolved, var theCore) -> {
+        if (ix.isLeft()) yield new Expr.Proj(pos, tup, ix, resolved, theCore);
+        var projName = ix.getRightValue();
+        var resolvedIx = ctx.getMaybe(projName);
+        if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(projName.sourcePos(), projName.join()));
+        yield new Expr.Proj(pos, tup, ix, resolvedIx, theCore);
       }
       case Expr.Hole hole -> {
         hole.accessibleLocal().set(ctx.collect(MutableList.create()).toImmutableSeq());
@@ -165,8 +164,6 @@ public record ExprResolver(
           // Collecting tyck order for tycked terms is unnecessary, just skip.
           assert def.concrete != null || def.core != null;
           addReference(def);
-          if (def.core instanceof PrimDef prim && PrimDef.ID.projSyntax(prim.id))
-            ctx.reportAndThrow(new PrimResolveError.BadUsage(name.join(), pos));
           yield new Expr.Ref(pos, def);
         }
         case AnyVar var -> new Expr.Ref(pos, var);

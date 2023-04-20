@@ -112,10 +112,10 @@ public record Serializer(@NotNull Serializer.State state) {
       case PartialTerm el -> new SerTerm.PartEl(partial(el.partial()), serialize(el.rhsType()));
       case PartialTyTerm ty -> new SerTerm.PartTy(serialize(ty.type()), ty.restr().fmap(this::serialize));
       case PathTerm path -> serialize(path);
-      case PLamTerm path -> new SerTerm.PathLam(serializeIntervals(path.params()), serialize(path.body()));
-      case PAppTerm app -> new SerTerm.PathApp(serialize(app.of()),
-        serializeArgs(app.args()), serialize(app.cube()));
-      case CoeTerm coe -> new SerTerm.Coe(serialize(coe.type()), coe.restr().fmap(this::serialize));
+      case PLamTerm(var params, var body) -> new SerTerm.PathLam(serializeIntervals(params), serialize(body));
+      case PAppTerm(var of, var args, var cube) -> new SerTerm.PathApp(serialize(of),
+        serializeArgs(args), serialize(cube));
+      case CoeTerm(var ty, var r, var s) -> new SerTerm.Coe(serialize(ty), serialize(r), serialize(s));
       case SortTerm sort -> serialize(sort);
 
       case MetaTerm hole -> throw new InternalException("Shall not have holes serialized.");

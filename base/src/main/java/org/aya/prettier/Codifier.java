@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -46,7 +46,13 @@ public record Codifier(
         term(of);
         builder.append(",").append(ix).append(")");
       }
-      case PartialTyTerm(var ty, var restr) -> coePar(ty, restr, "PartialTyTerm");
+      case PartialTyTerm(var ty, var restr) -> {
+        name("PartialTyTerm");
+        term(ty);
+        builder.append(",");
+        restr(restr);
+        builder.append(")");
+      }
       case PathTerm cube -> cube(cube);
       case PiTerm(var param, var body) -> {
         name("PiTerm");
@@ -81,7 +87,15 @@ public record Codifier(
         builder.append(")");
       }
       case TupTerm(var items) -> tupSigma(items, this::arg, "TupTerm");
-      case CoeTerm(var ty, var restr) -> coePar(ty, restr, "CoeTerm");
+      case CoeTerm(var ty, var r, var s) -> {
+        name("CoeTerm");
+        term(ty);
+        builder.append(",");
+        term(r);
+        builder.append(",");
+        term(s);
+        builder.append(")");
+      }
       case FormulaTerm(var mula) -> {
         builder.append("new FormulaTerm(");
         formula(mula);
@@ -119,14 +133,6 @@ public record Codifier(
 
   private void name(String name) {
     builder.append("new ").append(name).append("(");
-  }
-
-  private void coePar(@NotNull Term ty, @NotNull Restr<Term> restr, String name) {
-    name(name);
-    term(ty);
-    builder.append(",");
-    restr(restr);
-    builder.append(")");
   }
 
   private <T> void tupSigma(@NotNull ImmutableSeq<T> items, Consumer<T> f, String name) {

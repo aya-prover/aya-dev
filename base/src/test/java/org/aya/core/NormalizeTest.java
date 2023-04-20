@@ -6,8 +6,8 @@ import org.aya.core.def.FnDef;
 import org.aya.core.term.ConCall;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.Term;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.generic.util.NormalizeMode;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.TyckDeclTest;
 import org.aya.tyck.tycker.TyckState;
 import org.junit.jupiter.api.Test;
@@ -49,8 +49,8 @@ public class NormalizeTest {
       prim I
       open data Nat : Type | zero | suc Nat
       prim coe
-      def xyr : Nat => (\\ i => Nat).coe zero freeze 1
-      def kiva : Nat => (\\ i => Nat).coe (suc zero) freeze 1""");
+      def xyr : Nat => coe 0 0 (\\ i => Nat) zero
+      def kiva : Nat => coe 1 1 (\\ i => Nat) (suc zero)""");
     var state = new TyckState(res.component1());
     var defs = res.component2();
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);

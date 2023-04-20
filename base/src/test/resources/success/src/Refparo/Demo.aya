@@ -1,4 +1,4 @@
-open import Paths hiding (coe, coeFill)
+open import Paths hiding (coe)
 
 // TODO[class]
 // open import Refparo::Model

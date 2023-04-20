@@ -44,7 +44,6 @@ public interface ExprFolder<R> extends PatternFolder<R> {
         du.binds().foldLeft(acc, (ac, bind) -> foldVarDecl(ac, bind.var(), bind.sourcePos(), noType()));
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         foldVarRef(acc, proj.resolvedVar(), proj.ix().getRightValue().sourcePos(), lazyType(proj.resolvedVar()));
-      case Expr.Coe coe -> foldVarRef(acc, coe.resolvedVar(), coe.id().sourcePos(), lazyType(coe.resolvedVar()));
       case Expr.New neu -> neu.fields().view().foldLeft(acc, (ac, field) -> {
         // TODO: type for `field.bindings()`
         var acc1 = field.bindings().foldLeft(ac, (a, binding) -> foldVarDecl(a, binding.data(), binding.sourcePos(), noType()));

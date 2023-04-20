@@ -27,12 +27,12 @@ public class SuedeTest {
   @Test public void adjunction() {
     suedeAll("""
       def curry (A B C : Type)
-                 (f : (Sig A ** B) -> C)
-                 (a : A) (b : B) : C
+                (f : (Sig A ** B) -> C)
+                (a : A) (b : B) : C
         => f (a, b)
       def uncurry (A : Type) (B : Type) (C : Type)
-                   (f : Fn A B -> C)
-                   (p : Sig A ** B) : C
+                  (f : Fn A B -> C)
+                  (p : Sig A ** B) : C
         => f (p.1) (p.2)
       def fst {A B : Type} (t : Sig A ** B) : A
         | (a, b) => a
@@ -52,7 +52,7 @@ public class SuedeTest {
       prim coe
       def hcomp2d {a b c d : A}
         (p : a = b) (q : b = d) (r : a = c) : c = d
-        => \\i => ((\\ k => r k = q k).coe p) i
+        => \\i => (coe 0 1 (\\ k => r k = q k) p) i
       class Monoid
         | A : Type
         | op : A -> A -> A

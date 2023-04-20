@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -23,7 +22,6 @@ import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
 import org.aya.generic.util.InternalException;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
@@ -35,7 +33,6 @@ import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
-import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,48 +154,6 @@ public final class ExprTycker extends PropTycker {
         var items = tuple.items().map(this::synthesize);
         yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
           new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
-      }
-      case Expr.Coe coe -> {
-        var defVar = coe.resolvedVar();
-        assert defVar instanceof DefVar<?, ?> res
-          && res.core instanceof PrimDef def && PrimDef.ID.projSyntax(def.id) : "desugar bug";
-        var mockApp = Expr.app(
-          new Expr.Ref(coe.id().sourcePos(), defVar), Seq.of(
-            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.type())),
-            new WithPos<>(coe.sourcePos(), new Expr.NamedArg(true, coe.restr()))
-          ).view());
-        var res = synthesize(mockApp);
-        if (whnf(res.wellTyped()) instanceof CoeTerm(var type, var restr) && !(type instanceof ErrorTerm)) {
-          var bad = new Object() {
-            Term typeSubst;
-            boolean stuck = false;
-          };
-          var freezes = CofThy.conv(restr, new Subst(), subst -> {
-            // normalizes to NF in case the `type` was eta-expanded from a definition.
-            // This type decl can be inferred by javac (say, if we use `var` instead of `Term`).
-            // However, IntelliJ IDEA is not always able to infer it, and reports error on the usages.
-            // So I decided to explicitly specify the type here.
-            Term typeSubst = type.subst(subst).normalize(state, NormalizeMode.NF);
-            // ^ `typeSubst` should now be instantiated under cofibration `restr`, and
-            // it must be the form of `(i : I) -> A`. We need to ensure the `i` does not occur in `A` at all.
-            // See also: https://github.com/ice1000/guest0x0/blob/main/base/src/main/java/org/aya/guest0x0/tyck/Elaborator.java#L293-L310
-            IntPredicate post = usages -> {
-              if (usages != 0) bad.typeSubst = typeSubst;
-              return usages == 0;
-            };
-            return switch (typeSubst) {
-              case LamTerm(var param, var body) -> post.test(body.findUsages(param.ref()));
-              case PLamTerm(var params, var body) -> post.test(body.findUsages(params.first()));
-              default -> {
-                bad.stuck = true;
-                yield false;
-              }
-            };
-          });
-          if (!freezes) yield fail(coe, new CubicalError.CoeVaryingType(
-            coe.type(), type, bad.typeSubst, restr, bad.stuck));
-        }
-        yield res;
       }
       case Expr.App(var sourcePos, var appF, var argument) -> {
         var f = synthesize(appF);

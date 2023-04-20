@@ -145,7 +145,6 @@ BLOCK_COMMENT_END   = "*/"
   "do"                  { return KW_DO; }
   "self"                { return KW_SELF; }
   "override"            { return KW_OVERRIDE; }
-  "freeze"              { return KW_FREEZE; }
   "codata"              { return KW_CODATA; }
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
