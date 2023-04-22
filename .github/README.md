@@ -19,8 +19,8 @@ Aya is under active development, so please expect bugs, usability or performance
 
 + Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
-+ Cubical type theory with generalized path types
-  similar to a "bounded" cubical subtype. We plan to switch to Cartesian soon.
++ Cartesian cubical type theory with generalized path types
+  similar to a "bounded" cubical subtype.
   + Implementation prototype of De Morgan cubical: [Guest0x0].
   + Demonstration of higher inductive types: [3-torus] (three-dimensional torus!!).
   + Demonstration of [higher-inductive-inductive-recursive types][hiir].

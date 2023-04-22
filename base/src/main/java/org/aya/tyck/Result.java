@@ -1,13 +1,15 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.value.LazyValue;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.tyck.tycker.TyckState;
+import org.aya.tyck.unify.Synthesizer;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface Result {
@@ -29,6 +31,24 @@ public sealed interface Result {
 
     @Override public @NotNull Default freezeHoles(@NotNull TyckState state) {
       return new Default(wellTyped.freezeHoles(state), type.freezeHoles(state));
+    }
+  }
+
+  record Lazy(
+    @Override @NotNull Term wellTyped,
+    @NotNull Synthesizer synthesizer,
+    @NotNull LazyValue<Term> tyCache
+  ) implements Result {
+    public Lazy(@NotNull Term wellTyped, @NotNull Synthesizer synthesizer) {
+      this(wellTyped, synthesizer, LazyValue.of(() -> synthesizer.press(wellTyped)));
+    }
+
+    @Override public @NotNull Term type() {
+      return tyCache.get();
+    }
+
+    @Override public @NotNull Lazy freezeHoles(@NotNull TyckState state) {
+      return new Lazy(wellTyped.freezeHoles(state), synthesizer);
     }
   }
 
