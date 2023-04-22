@@ -151,8 +151,8 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new Result.Lazy(TupTerm.explicits(items.map(Result::wellTyped)),
-          synthesizer());
+        yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
+          new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
       case Expr.App(var sourcePos, var appF, var argument) -> {
         var f = synthesize(appF);
