@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.IntPredicate;
 
 /**
  * @apiNote make sure to instantiate this class once for each {@link Decl.TopLevel}.
@@ -78,11 +77,11 @@ public final class ExprTycker extends PropTycker {
       };
       case Expr.Pi pi -> {
         var corePi = ty(pi);
-        yield new Result.Default(corePi, corePi.computeType(state, ctx));
+        yield new Result.Lazy(corePi, synthesizer());
       }
       case Expr.Sigma sigma -> {
         var coreSigma = ty(sigma);
-        yield new Result.Default(coreSigma, coreSigma.computeType(state, ctx));
+        yield new Result.Lazy(coreSigma, synthesizer());
       }
       case Expr.Lift lift -> {
         var result = synthesize(lift.expr());
@@ -152,8 +151,8 @@ public final class ExprTycker extends PropTycker {
       }
       case Expr.Tuple tuple -> {
         var items = tuple.items().map(this::synthesize);
-        yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
-          new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
+        yield new Result.Lazy(TupTerm.explicits(items.map(Result::wellTyped)),
+          synthesizer());
       }
       case Expr.App(var sourcePos, var appF, var argument) -> {
         var f = synthesize(appF);
@@ -177,8 +176,7 @@ public final class ExprTycker extends PropTycker {
               throw new InternalException("TODO: implicit fields");
             }
             classCall = classCall.addMember(this, member, argument.term());
-            // TODO[ice]: lazily compute the type if possible
-            yield new Result.Default(classCall, classCall.computeType(state, ctx));
+            yield new Result.Lazy(classCall, synthesizer());
           }
         }
         PathTerm cube;
@@ -426,8 +424,8 @@ public final class ExprTycker extends PropTycker {
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
             yield ctx.with(resultParam, () -> {
-              var rec = check(lam.body(), body);
-              return new Result.Default(new LamTerm(LamTerm.param(resultParam), rec.wellTyped()), dt);
+              var rec = check(lam.body(), body).wellTyped();
+              return new Result.Default(new LamTerm(LamTerm.param(resultParam), rec), dt);
             });
           }
           // Path lambda!
