@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
+import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -191,7 +192,8 @@ public record ExprResolver(
             // TODO[class]: user-renamed `self`
             // This shall not result in an error
             var self = ctx.getUnqualifiedMaybe(Constants.SELF_NAME, pos);
-            if (self != null) yield new Expr.RawProj(pos, new Expr.Ref(pos, self), name, def, null, null);
+            if (self != null) yield new Expr.Proj(pos, new Expr.Ref(pos, self),
+              Either.right(name), def);
           }
           yield new Expr.Ref(pos, def);
         }

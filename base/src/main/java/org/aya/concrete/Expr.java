@@ -417,9 +417,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   ) implements Expr, WithTerm {
     public Proj(
       @NotNull SourcePos sourcePos, @NotNull Expr tup,
-      @NotNull Either<Integer, QualifiedID> ix
+      @NotNull Either<Integer, QualifiedID> ix, @Nullable AnyVar resolvedVar
     ) {
-      this(sourcePos, tup, ix, null, MutableValue.create());
+      this(sourcePos, tup, ix, resolvedVar, MutableValue.create());
+    }
+
+    public Proj(@NotNull SourcePos sourcePos, @NotNull Expr tup, @NotNull Either<Integer, QualifiedID> ix) {
+      this(sourcePos, tup, ix, null);
     }
 
     public @NotNull Proj update(@NotNull Expr tup) {
