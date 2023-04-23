@@ -17,6 +17,7 @@ import org.aya.core.def.MemberDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.visitor.Subst;
 import org.aya.ref.DefVar;
+import org.aya.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.FieldError;
 import org.aya.util.Arg;
@@ -38,6 +39,7 @@ import java.util.function.UnaryOperator;
  * @author kiva
  */
 public record ClassCall(
+  @NotNull LocalVar self,
   @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
   @Override int ulift,
   @NotNull ImmutableMap<DefVar<MemberDef, TeleDecl.ClassMember>, Arg<Term>> args
@@ -98,11 +100,11 @@ public record ClassCall(
     var type = Def.defType(member.ref).subst(subst, ulift);
     var field = tycker.inherit(expr, type).wellTyped();
     var newArgs = args.putted(member.ref, new Arg<>(field, true));
-    return new ClassCall(ref, ulift, newArgs);
+    return new ClassCall(self, ref, ulift, newArgs);
   }
 
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Tuple2<DefVar<MemberDef, TeleDecl.ClassMember>, Arg<Term>>> args) {
-    return args.sameElements(args().toImmutableSeq(), true) ? this : new ClassCall(ref(), ulift(), ImmutableMap.from(args));
+    return args.sameElements(args().toImmutableSeq(), true) ? this : new ClassCall(self, ref(), ulift(), ImmutableMap.from(args));
   }
 
   @Override public @NotNull ClassCall descent(@NotNull UnaryOperator<@NotNull Term> f, @NotNull UnaryOperator<Pat> g) {
