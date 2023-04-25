@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.remark.Literate;
+import org.aya.concrete.remark.AyaLiterate;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.literate.Literate;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
@@ -45,6 +46,6 @@ public interface GenericAyaFile {
     var code = originalFile().sourceCode();
     var mockPos = new SourcePos(originalFile(), 0, code.length(), -1, -1, -1, -1);
     // ^ we only need index, so it's fine to use a mocked line/column
-    return new Literate.CodeBlock(mockPos, "aya", code);
+    return new AyaLiterate.AyaCodeBlock(mockPos, code, false);
   }
 }

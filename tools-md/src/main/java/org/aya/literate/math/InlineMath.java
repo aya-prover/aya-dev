@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.remark.math;
+package org.aya.literate.math;
 
 import org.commonmark.node.CustomNode;
 import org.commonmark.node.Delimited;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -29,17 +29,10 @@ public interface StringUtil {
     var lines = ImmutableSeq.from(str.lines());
     var results = MutableList.<IntObjTuple2<String>>create();
 
-    var lastLineIndex = -1;
-    var lastLineLength = -1;
-
+    var index = 0;
     for (var line : lines) {
-      var index = lastLineIndex == -1
-        ? 0
-        : lastLineIndex + lastLineLength + 1;
-
       results.append(IntObjTuple2.of(index, line));
-      lastLineIndex = index;
-      lastLineLength = line.length();
+      index = index + line.length() + 1;    // 1 for the line separator
     }
 
     return results.toImmutableSeq();

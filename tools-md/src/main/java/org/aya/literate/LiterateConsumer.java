@@ -1,6 +1,6 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.concrete.remark;
+package org.aya.literate;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -29,25 +29,26 @@ public interface LiterateConsumer extends Consumer<Literate> {
     }
   }
 
+  class InstanceExtractinator<T extends Literate> implements LiterateExtractinator<T> {
+    private final @NotNull MutableList<T> result;
+    private final @NotNull Class<T> clazz;
 
-  record AyaCodeBlocks(@NotNull MutableList<Literate.CodeBlock> result)
-    implements LiterateExtractinator<Literate.CodeBlock> {
-    @Override public void accept(@NotNull Literate literate) {
-      if (literate instanceof Literate.CodeBlock codeBlock && codeBlock.isAya()) {
-        result.append(codeBlock);
+    public InstanceExtractinator(@NotNull Class<T> clazz) {
+      this.clazz = clazz;
+      this.result = MutableList.create();
+    }
+
+    @Override
+    public @NotNull MutableList<T> result() {
+      return result;
+    }
+
+    @Override
+    public void accept(@NotNull Literate literate) {
+      if (clazz.isInstance(literate)) {
+        result.append((T) literate);
       }
       LiterateExtractinator.super.accept(literate);
     }
   }
-
-  record Codes(@NotNull MutableList<Literate.Code> result)
-    implements LiterateExtractinator<Literate.Code> {
-    @Override public void accept(@NotNull Literate literate) {
-      if (literate instanceof Literate.Code code) {
-        result.append(code);
-      }
-      LiterateExtractinator.super.accept(literate);
-    }
-  }
-
 }

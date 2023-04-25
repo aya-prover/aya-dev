@@ -3,7 +3,6 @@
 package org.aya.cli.utils;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.FaithfulPrettier;
@@ -11,9 +10,10 @@ import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.remark.Literate;
-import org.aya.concrete.remark.LiterateConsumer;
+import org.aya.concrete.remark.AyaLiterate;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.literate.Literate;
+import org.aya.literate.LiterateConsumer;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.error.SourceFile;
@@ -27,14 +27,14 @@ import java.io.IOException;
 
 public record LiterateData(
   @NotNull Literate literate,
-  @NotNull ImmutableSeq<Literate.Code> extractedExprs,
+  @NotNull ImmutableSeq<AyaLiterate.AyaCode> extractedExprs,
   @NotNull SourceFile extractedAya
 ) {
   public static @NotNull LiterateData create(@NotNull SourceFile mdFile, @NotNull Reporter reporter) {
     var mdParser = new AyaMdParser(mdFile, reporter);
     var lit = mdParser.parseLiterate();
     var ayaCode = mdParser.extractAya(lit);
-    var exprs = new LiterateConsumer.Codes(MutableList.create()).extract(lit);
+    var exprs = new LiterateConsumer.InstanceExtractinator<>(AyaLiterate.AyaCode.class).extract(lit);
     var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
     return new LiterateData(lit, exprs, code);
   }

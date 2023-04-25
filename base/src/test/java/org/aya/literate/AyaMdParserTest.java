@@ -105,7 +105,7 @@ public class AyaMdParserTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "syntax", "compiler-output"})
+  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "compiler-output"})
   public void testHighlight(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));

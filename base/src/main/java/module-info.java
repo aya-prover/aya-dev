@@ -1,4 +1,5 @@
 module aya.base {
+  requires transitive aya.md;
   requires transitive aya.pretty;
   requires transitive aya.util;
   requires transitive aya.guest.cubical;
@@ -14,8 +15,6 @@ module aya.base {
   exports org.aya.concrete.error;
   exports org.aya.concrete.remark;
   exports org.aya.concrete.remark.code;
-  exports org.aya.concrete.remark.math;
-  exports org.aya.concrete.remark.frontmatter;
   exports org.aya.concrete.stmt.decl;
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
