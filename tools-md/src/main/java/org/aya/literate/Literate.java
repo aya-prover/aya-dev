@@ -55,19 +55,7 @@ public interface Literate extends Docile {
     }
   }
 
-  interface AnyCode extends Literate {
-    /**
-     * The content of this inline code
-     */
-    @NotNull String code();
-
-    /**
-     * The source pos of this inline code
-     */
-    @NotNull SourcePos sourcePos();
-  }
-
-  class CommonCode implements AnyCode {
+  class CommonCode implements Literate {
     public final @NotNull String code;
     public final @NotNull SourcePos sourcePos;
 
@@ -76,12 +64,16 @@ public interface Literate extends Docile {
       this.sourcePos = sourcePos;
     }
 
-    @Override
+    /**
+     * The content of this inline code
+     */
     public @NotNull String code() {
       return code;
     }
 
-    @Override
+    /**
+     * The source pos of this inline code
+     */
     public @NotNull SourcePos sourcePos() {
       return sourcePos;
     }
