@@ -28,17 +28,6 @@ public interface AyaLiterate {
     return language.equalsIgnoreCase(LANGUAGE_AYA) || language.equalsIgnoreCase(LANGUAGE_AYA_HIDDEN);
   }
 
-  record AyaError(@NotNull MutableValue<AnyVar> def, @Override @NotNull SourcePos sourcePos) implements Literate {
-    @Override public @NotNull Doc toDoc() {
-      if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
-        var problems = userDef.problems;
-        if (problems == null) return Doc.styled(Style.bold(), Doc.english("No error message."));
-        return Doc.vcat(problems.map(problem -> problem.brief(AyaPrettierOptions.informative())));
-      }
-      return Doc.styled(Style.bold(), Doc.english("Not a definition that can obtain error message."));
-    }
-  }
-
   /**
    * A code snippet. For code blocks, see {@link CommonCodeBlock}
    */
