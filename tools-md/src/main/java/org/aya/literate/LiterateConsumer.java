@@ -29,25 +29,16 @@ public interface LiterateConsumer extends Consumer<Literate> {
     }
   }
 
-  class InstanceExtractinator<T extends Literate> implements LiterateExtractinator<T> {
-    private final @NotNull MutableList<T> result;
-    private final @NotNull Class<T> clazz;
+  record InstanceExtractinator<T extends Literate>(
+    @NotNull MutableList<T> result, @NotNull Class<T> clazz
+  ) implements LiterateExtractinator<T> {
 
     public InstanceExtractinator(@NotNull Class<T> clazz) {
-      this.clazz = clazz;
-      this.result = MutableList.create();
+      this(MutableList.create(), clazz);
     }
 
-    @Override
-    public @NotNull MutableList<T> result() {
-      return result;
-    }
-
-    @Override
-    public void accept(@NotNull Literate literate) {
-      if (clazz.isInstance(literate)) {
-        result.append((T) literate);
-      }
+    @Override public void accept(@NotNull Literate literate) {
+      if (clazz.isInstance(literate)) result.append((T) literate);
       LiterateExtractinator.super.accept(literate);
     }
   }

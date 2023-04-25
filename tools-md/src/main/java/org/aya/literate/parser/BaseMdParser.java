@@ -5,6 +5,7 @@ package org.aya.literate.parser;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -30,12 +31,13 @@ import org.jetbrains.annotations.Nullable;
 // TODO: Replace IllegalStateException with InternalException
 public abstract class BaseMdParser {
   /** For empty line that end with \n, the index points to \n */
-  protected final @NotNull ImmutableSeq<Integer> linesIndex;
+  protected final @NotNull ImmutableIntSeq linesIndex;
   protected final @NotNull SourceFile file;
   protected final @NotNull Reporter reporter;
 
   public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
-    this.linesIndex = StringUtil.indexedLines(file.sourceCode()).map(IntObjTuple2::component1);
+    this.linesIndex = StringUtil.indexedLines(file.sourceCode())
+      .mapToInt(ImmutableIntSeq.factory(), IntObjTuple2::component1);
     this.file = file;
     this.reporter = reporter;
   }
