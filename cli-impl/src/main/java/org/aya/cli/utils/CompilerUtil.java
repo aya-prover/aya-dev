@@ -8,7 +8,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.CompiledAya;
 import org.aya.core.serde.Serializer;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.generic.util.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.FileModuleLoader;

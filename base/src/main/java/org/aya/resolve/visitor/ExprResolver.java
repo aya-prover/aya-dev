@@ -17,7 +17,7 @@ import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.EndoPattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;

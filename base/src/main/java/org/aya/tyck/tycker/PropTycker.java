@@ -5,7 +5,7 @@ package org.aya.tyck.tycker;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.trace.Trace;

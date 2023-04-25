@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -10,7 +10,7 @@ import org.aya.concrete.GenericAyaParser;
 import org.aya.core.def.GenericDef;
 import org.aya.core.serde.SerTerm;
 import org.aya.core.serde.Serializer;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;

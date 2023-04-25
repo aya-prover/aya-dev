@@ -13,7 +13,7 @@ import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.util.binop.Assoc;

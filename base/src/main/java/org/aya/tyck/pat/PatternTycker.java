@@ -21,7 +21,7 @@ import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.intellij.lang.annotations.PrintFormat;
 import org.javacs.lsp.ShowMessageParams;

@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.remark.AyaLiterate;
 import org.aya.concrete.remark.code.CodeAttrProcessor;
 import org.aya.concrete.remark.code.CodeOptions;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
 import org.aya.literate.frontmatter.YamlFrontMatter;
