@@ -73,7 +73,7 @@ public abstract class BaseMdParser {
 
   protected @NotNull Tuple2<LazyValue<SourcePos>, String> stripTrailingNewline(@NotNull String literal, @NotNull Block owner) {
     var spans = owner.getSourceSpans();
-    if (spans != null && spans.size() >= 2) {   // always contains '```aya' and '```'
+    if (spans != null && spans.size() >= 2) {   // always contains '```' and '```'
       var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
       // remove the last line break if not empty
       if (!literal.isEmpty())
@@ -107,7 +107,7 @@ public abstract class BaseMdParser {
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-        yield new Literate.UnknownCodeBlock(language, code.component2(), code.component1().get());
+        yield new Literate.CommonCodeBlock(language, code.component2(), code.component1().get());
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
@@ -152,26 +152,26 @@ public abstract class BaseMdParser {
   /**
    * Replacing non-code content with whitespaces, keep the source pos of code parts.
    */
-  public @NotNull String etching(@NotNull SeqView<Literate.AnyCodeBlock> codeBlocks) {
-    codeBlocks = codeBlocks.filter(x -> x.sourcePos() != null);
+  public @NotNull String etching(@NotNull SeqView<Literate.CommonCodeBlock> codeBlocks) {
+    codeBlocks = codeBlocks.filter(x -> x.sourcePos != null);
 
     var builder = new StringBuilder(file.sourceCode().length());
-    @Nullable Literate.AnyCodeBlock next = codeBlocks.firstOrNull();
+    @Nullable Literate.CommonCodeBlock next = codeBlocks.firstOrNull();
     codeBlocks = codeBlocks.drop(1);
 
     for (var idx = 0; idx < file.sourceCode().length(); ++idx) {
       var theChar = file.sourceCode().charAt(idx);
 
       if (next != null) {
-        assert next.sourcePos() != null : "Physical doesn't exist!!";
-        if (next.sourcePos().tokenEndIndex() < idx) {
-          assert idx - next.sourcePos().tokenEndIndex() == 1;
+        assert next.sourcePos != null : "Physical doesn't exist!!";
+        if (next.sourcePos.tokenEndIndex() < idx) {
+          assert idx - next.sourcePos.tokenEndIndex() == 1;
           next = codeBlocks.firstOrNull();
           codeBlocks = codeBlocks.drop(1);
         }
 
-        assert next == null || next.sourcePos() != null : "Physical doesn't exist!!";
-        if (next != null && next.sourcePos().contains(idx)) {
+        assert next == null || next.sourcePos != null : "Physical doesn't exist!!";
+        if (next != null && next.sourcePos.contains(idx)) {
           builder.append(theChar);
           continue;
         }

@@ -3,12 +3,8 @@
 package org.aya.literate;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
-import org.aya.pretty.doc.Link;
-import org.aya.pretty.doc.Style;
+import org.aya.pretty.doc.*;
 import org.aya.util.error.SourcePos;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,26 +52,18 @@ public interface Literate extends Docile {
   }
 
   class CommonCode implements Literate {
+    /**
+     * The content of this inline code
+     */
     public final @NotNull String code;
+    /**
+     * The source pos of this inline code
+     */
     public final @NotNull SourcePos sourcePos;
 
     public CommonCode(@NotNull String code, @NotNull SourcePos sourcePos) {
       this.code = code;
       this.sourcePos = sourcePos;
-    }
-
-    /**
-     * The content of this inline code
-     */
-    public @NotNull String code() {
-      return code;
-    }
-
-    /**
-     * The source pos of this inline code
-     */
-    public @NotNull SourcePos sourcePos() {
-      return sourcePos;
     }
 
     @Override
@@ -84,36 +72,29 @@ public interface Literate extends Docile {
     }
   }
 
-  interface AnyCodeBlock extends Literate {
-    /**
-     * The language of this code block
-     */
-    @Contract(pure = true)
-    @NotNull String language();
+  final class CommonCodeBlock implements Literate {
+    public final @NotNull String language;
+    public final @NotNull String code;
 
     /**
-     * The code of this code block
+     * The source pos of this code block, without '```\n' and '\n```'<br/>
+     * It is null if the code block is empty, because we are unable to construct an empty {@link SourcePos}
      */
-    @Contract(pure = true)
-    @NotNull String code();
+    public final @Nullable SourcePos sourcePos;
+    public @Nullable Doc highlighted = null;
 
-    /**
-     * The source pos of this code block, without '```\n' and '\n```'
-     *
-     * @return null if the code block is empty, because the empty source pos doesn't exist.
-     */
-    @Contract(pure = true)
-    @Nullable SourcePos sourcePos();
-  }
+    public CommonCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      this.language = language;
+      this.code = code;
+      this.sourcePos = sourcePos;
+    }
 
-  record UnknownCodeBlock(
-    @Override @NotNull String language,
-    @Override @NotNull String code,
-    @Override @Nullable SourcePos sourcePos
-  ) implements AnyCodeBlock {
     @Override
     public @NotNull Doc toDoc() {
-      return Doc.plain(code);
+      return Doc.codeBlock(Language.of(language),
+        this.highlighted == null
+          ? Doc.plain(code)
+          : this.highlighted);
     }
   }
 

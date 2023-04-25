@@ -46,6 +46,6 @@ public interface GenericAyaFile {
     var code = originalFile().sourceCode();
     var mockPos = new SourcePos(originalFile(), 0, code.length(), -1, -1, -1, -1);
     // ^ we only need index, so it's fine to use a mocked line/column
-    return new AyaLiterate.AyaCodeBlock(mockPos, code, false);
+    return new Literate.CommonCodeBlock(AyaLiterate.LANGUAGE_AYA, code, mockPos);
   }
 }

@@ -4,6 +4,7 @@ package org.aya.cli.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.remark.AyaLiterate;
 import org.aya.concrete.remark.code.CodeAttrProcessor;
 import org.aya.concrete.remark.code.CodeOptions;
 import org.aya.generic.util.InternalException;
@@ -17,14 +18,11 @@ import org.aya.pretty.doc.Doc;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.Reporter;
 import org.commonmark.node.Code;
-import org.commonmark.node.FencedCodeBlock;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
-
-import static org.aya.concrete.remark.AyaLiterate.AyaCodeBlock;
 
 public class AyaMdParser extends BaseMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
@@ -47,8 +45,9 @@ public class AyaMdParser extends BaseMdParser {
    * Another strategy: create a lexer that can tokenize some pieces of source code
    */
   public @NotNull String extractAya(@NotNull Literate literate) {
-    return etching(new LiterateConsumer.InstanceExtractinator<>(AyaCodeBlock.class)
+    return etching(new LiterateConsumer.InstanceExtractinator<>(Literate.CommonCodeBlock.class)
       .extract(literate).view()
+      .filter(x -> AyaLiterate.isAya(x.language))
       .map(Function.identity())
     );
   }
@@ -65,11 +64,6 @@ public class AyaMdParser extends BaseMdParser {
         var matter = Doc.vcat(mark, Doc.escaped(yaml.literal), mark, Doc.line());
         var doc = yaml.fenceIndent > 0 ? Doc.hang(yaml.fenceIndent, matter) : matter;
         yield new Literate.Raw(doc);
-      }
-      case FencedCodeBlock codeBlock when AyaCodeBlock.isAya(codeBlock.getInfo()) -> {
-        var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-        yield new AyaCodeBlock(code.component1().get(), code.component2(),
-          codeBlock.getInfo().equalsIgnoreCase(AyaCodeBlock.LANGUAGE_AYA_HIDDEN));
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();

@@ -22,6 +22,12 @@ import org.jetbrains.annotations.Nullable;
  * @author hoshino
  */
 public interface AyaLiterate {
+  String LANGUAGE_AYA = "aya";
+  String LANGUAGE_AYA_HIDDEN = "aya-hidden";
+  static boolean isAya(@NotNull String language) {
+    return language.equalsIgnoreCase(LANGUAGE_AYA) || language.equalsIgnoreCase(LANGUAGE_AYA_HIDDEN);
+  }
+
   record AyaError(@NotNull MutableValue<AnyVar> def, @Override @NotNull SourcePos sourcePos) implements Literate {
     @Override public @NotNull Doc toDoc() {
       if (def.get() instanceof DefVar<?, ?> defVar && defVar.core instanceof UserDef<?> userDef) {
@@ -34,7 +40,7 @@ public interface AyaLiterate {
   }
 
   /**
-   * A code snippet. For code blocks, see {@link AyaCodeBlock}
+   * A code snippet. For code blocks, see {@link CommonCodeBlock}
    */
   final class AyaCode extends Literate.CommonCode {
     public @Nullable Expr expr;
@@ -58,59 +64,6 @@ public interface AyaLiterate {
         case Core -> tyckResult.wellTyped();
         case Type -> tyckResult.type();
       }).toDoc(options.options()));
-    }
-  }
-
-  /**
-   * A code block.
-   *
-   * @implNote the content which this code block hold can be illegal, like
-   * <pre>
-   * ```aya<br/>
-   * def foo : Nat =><br/>
-   * ```<br/>
-   * </pre>
-   * Note that the language has to be <code>aya</code> or <code>aya-hidden</code>
-   */
-  final class AyaCodeBlock implements Literate.AnyCodeBlock {
-    public final static String LANGUAGE_AYA = "aya";
-    public final static String LANGUAGE_AYA_HIDDEN = "aya-hidden";
-
-    public static boolean isAya(@NotNull String language) {
-      return language.equalsIgnoreCase(LANGUAGE_AYA) || language.equalsIgnoreCase(LANGUAGE_AYA_HIDDEN);
-    }
-
-    public final @Nullable SourcePos sourcePos;
-    public final @NotNull String raw;
-    public final boolean isHidden;
-
-    public @Nullable Doc highlighted;
-
-    public AyaCodeBlock(@Nullable SourcePos sourcePos, @NotNull String raw, boolean isHidden) {
-      this.sourcePos = sourcePos;
-      this.raw = raw;
-      this.isHidden = isHidden;
-    }
-
-    @Override
-    public @NotNull String language() {
-      return isHidden ? LANGUAGE_AYA_HIDDEN : LANGUAGE_AYA;
-    }
-
-    @Override
-    public @NotNull String code() {
-      return raw;
-    }
-
-    @Override
-    public @Nullable SourcePos sourcePos() {
-      return sourcePos;
-    }
-
-    @Override public @NotNull Doc toDoc() {
-      if (isHidden) return Doc.empty();
-      var doc = highlighted != null ? highlighted : Doc.plain(raw);
-      return Doc.codeBlock(Language.of(language()), doc);
     }
   }
 }
