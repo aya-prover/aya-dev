@@ -1,6 +1,6 @@
 module aya.md {
-  requires aya.pretty;
   requires aya.util;
+  requires transitive aya.pretty;
 
   requires org.commonmark;
   requires static org.jetbrains.annotations;

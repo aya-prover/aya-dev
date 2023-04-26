@@ -32,11 +32,9 @@ module aya.base {
   exports org.aya.generic.util;
   exports org.aya.generic;
   exports org.aya.tyck.tycker;
-  // Needed by AyaProducer for reporting NotAnIntervalError
   exports org.aya.prelude;
   exports org.aya.ref;
   exports org.aya.resolve.context;
-  exports org.aya.resolve.error;
   exports org.aya.resolve.module;
   exports org.aya.resolve;
   exports org.aya.tyck.env;
