@@ -14,7 +14,6 @@ module aya.base {
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.error;
   exports org.aya.concrete.remark;
-  exports org.aya.concrete.remark.code;
   exports org.aya.concrete.stmt.decl;
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;

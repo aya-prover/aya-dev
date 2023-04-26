@@ -2,17 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
-import kala.value.MutableValue;
 import org.aya.concrete.Expr;
-import org.aya.concrete.remark.code.CodeOptions;
-import org.aya.core.def.UserDef;
 import org.aya.literate.Literate;
-import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
-import org.aya.pretty.doc.Style;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
 import org.aya.tyck.Result;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
