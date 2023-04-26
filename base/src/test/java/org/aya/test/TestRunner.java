@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
+import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.generic.util.AyaFiles;
 import org.aya.prelude.GeneratedVersion;
-import org.aya.util.StringUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.CountingReporter;
@@ -144,8 +144,9 @@ public class TestRunner {
 
   private void checkOutput(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     try {
-      var output = StringUtil.trimCRLF(hookOut);
-      var expected = instantiateVars(testFile, StringUtil.trimCRLF(Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
+      var output = StringUtil.convertLineSeparators(hookOut);
+      var expected = instantiateVars(testFile, StringUtil.convertLineSeparators(
+        Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());

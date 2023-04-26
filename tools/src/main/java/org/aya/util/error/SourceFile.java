@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
+import com.intellij.openapi.util.text.StringUtil;
 import kala.control.Option;
-import org.aya.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ public record SourceFile(
   }
 
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
-    this(display, Option.some(underlying), StringUtil.trimCRLF(sourceCode));
+    this(display, Option.some(underlying), StringUtil.convertLineSeparators(sourceCode));
   }
 
   public static final SourceFile NONE = new SourceFile("<unknown-file>", Option.none(), "");

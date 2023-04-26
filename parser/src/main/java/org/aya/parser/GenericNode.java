@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.parser;
 
-import com.intellij.AyaModified;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /** Generalized {@link com.intellij.psi.builder.MarkerNode} for reusing psi interfaces in Producer */
-@AyaModified
 public interface GenericNode<N extends GenericNode<N>> {
   @NotNull IElementType elementType();
   @NotNull StringSlice tokenText();

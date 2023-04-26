@@ -1,6 +1,6 @@
 module aya.repl {
-  requires aya.pretty;
   requires aya.util;
+  requires transitive aya.pretty;
 
   requires static org.jetbrains.annotations;
   requires transitive kala.base;

@@ -14,7 +14,6 @@ module aya.base {
   exports org.aya.concrete.desugar;
   exports org.aya.concrete.error;
   exports org.aya.concrete.remark;
-  exports org.aya.concrete.remark.code;
   exports org.aya.concrete.stmt.decl;
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
@@ -32,7 +31,6 @@ module aya.base {
   exports org.aya.generic.util;
   exports org.aya.generic;
   exports org.aya.tyck.tycker;
-  // Needed by AyaProducer for reporting NotAnIntervalError
   exports org.aya.prelude;
   exports org.aya.ref;
   exports org.aya.resolve.context;
