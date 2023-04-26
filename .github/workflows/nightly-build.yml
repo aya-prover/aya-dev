@@ -93,7 +93,8 @@ jobs:
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          version: 'latest'
+          # Switch back when Java 20
+          version: '22.3.1'
           java-version: '19'
           components: 'native-image'
           set-java-home: 'false'
