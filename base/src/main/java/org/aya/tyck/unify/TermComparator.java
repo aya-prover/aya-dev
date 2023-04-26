@@ -14,7 +14,7 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.prettier.AyaPrettierOptions;

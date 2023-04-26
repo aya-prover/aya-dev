@@ -30,7 +30,7 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;

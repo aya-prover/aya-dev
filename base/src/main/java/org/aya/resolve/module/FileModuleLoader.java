@@ -7,7 +7,7 @@ import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.AyaFiles;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.tyck.trace.Trace;

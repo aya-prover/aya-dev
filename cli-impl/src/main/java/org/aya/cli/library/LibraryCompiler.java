@@ -19,7 +19,7 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.AyaFiles;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.generic.util.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;

@@ -8,9 +8,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
 import org.aya.cli.utils.InlineHintProblem;
-import org.aya.concrete.remark.Literate;
-import org.aya.concrete.remark.LiterateConsumer;
+import org.aya.concrete.remark.AyaLiterate;
 import org.aya.generic.AyaDocile;
+import org.aya.literate.Literate;
+import org.aya.literate.LiterateConsumer;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
@@ -38,9 +39,19 @@ public record FaithfulPrettier(
   @NotNull ImmutableSeq<HighlightInfo> highlights,
   @NotNull PrettierOptions options
 ) implements LiterateConsumer {
+
+  /**
+   * Highlight all aya code blocks
+   */
   @Override public void accept(@NotNull Literate literate) {
-    if (literate instanceof Literate.CodeBlock code && code.isAya() && code.sourcePos != null) {
-      code.highlighted = highlight(code.raw, code.sourcePos);
+    if (literate instanceof Literate.CommonCodeBlock code
+      && code.sourcePos != null
+      && AyaLiterate.isAya(code.language)) {
+      if (code.language.equalsIgnoreCase(AyaLiterate.LANGUAGE_AYA_HIDDEN)) {
+        code.highlighted = Doc.empty();
+      } else {
+        code.highlighted = highlight(code.code, code.sourcePos);
+      }
     }
     LiterateConsumer.super.accept(literate);
   }

@@ -11,7 +11,7 @@ import org.aya.core.ops.Eta;
 import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;

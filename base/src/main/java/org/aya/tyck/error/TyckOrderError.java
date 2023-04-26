@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.Decl;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;

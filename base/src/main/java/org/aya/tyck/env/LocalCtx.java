@@ -17,7 +17,7 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.tycker.TyckState;

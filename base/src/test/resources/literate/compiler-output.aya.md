@@ -68,3 +68,7 @@ open data FMSetRaw (A : Type)
   tighter =
 | comm (x y : A) (xs : FMSet A) : x :< inj (y :< xs) = y :< inj (x :< xs)
 ```
+
+$$
+\cfrac{114}{514}
+$$

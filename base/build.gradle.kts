@@ -5,6 +5,7 @@ CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":tools"))
+  api(project(":tools-md"))
   api(project(":pretty"))
   val deps: java.util.Properties by rootProject.ext
   api("org.aya-prover.guest0x0", "cubical", version = deps.getProperty("version.guest0x0"))

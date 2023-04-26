@@ -10,7 +10,7 @@ import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;

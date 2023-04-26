@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -21,7 +21,7 @@ public record SourceFile(
   @NotNull String sourceCode
 ) {
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
-    return from(locator, path, StringUtil.trimCRLF(Files.readString(path)));
+    return from(locator, path, Files.readString(path));
   }
 
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path, @NotNull String sourceCode) {
@@ -29,7 +29,7 @@ public record SourceFile(
   }
 
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
-    this(display, Option.some(underlying), sourceCode);
+    this(display, Option.some(underlying), StringUtil.trimCRLF(sourceCode));
   }
 
   public static final SourceFile NONE = new SourceFile("<unknown-file>", Option.none(), "");

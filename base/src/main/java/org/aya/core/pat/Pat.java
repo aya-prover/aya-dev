@@ -16,7 +16,7 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;

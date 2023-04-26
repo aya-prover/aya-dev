@@ -13,6 +13,7 @@ include(
   "cli-impl",
   "cli-console",
   "tools",
+  "tools-md",
   "tools-repl",
   "base",
   "pretty",

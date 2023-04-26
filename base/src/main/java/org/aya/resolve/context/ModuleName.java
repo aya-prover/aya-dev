@@ -4,7 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.generic.util.InternalException;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
