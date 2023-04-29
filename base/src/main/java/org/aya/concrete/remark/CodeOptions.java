@@ -21,7 +21,7 @@ public record CodeOptions(
 ) {
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
     return switch (code.getFirstChild()) {
-      case CodeAttrProcessor.Attr attr -> new AyaLiterate.AyaCode(code.getLiteral(), sourcePos, attr.options);
+      case CodeAttrProcessor.Attr attr -> new AyaLiterate.AyaInlineCode(code.getLiteral(), sourcePos, attr.options);
       case default, null -> new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));
     };
   }

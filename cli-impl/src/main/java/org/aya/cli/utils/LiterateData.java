@@ -27,14 +27,14 @@ import java.io.IOException;
 
 public record LiterateData(
   @NotNull Literate literate,
-  @NotNull ImmutableSeq<AyaLiterate.AyaCode> extractedExprs,
+  @NotNull ImmutableSeq<AyaLiterate.AyaInlineCode> extractedExprs,
   @NotNull SourceFile extractedAya
 ) {
   public static @NotNull LiterateData create(@NotNull SourceFile mdFile, @NotNull Reporter reporter) {
     var mdParser = new AyaMdParser(mdFile, reporter);
     var lit = mdParser.parseLiterate();
     var ayaCode = mdParser.extractAya(lit);
-    var exprs = new LiterateConsumer.InstanceExtractinator<>(AyaLiterate.AyaCode.class).extract(lit);
+    var exprs = new LiterateConsumer.InstanceExtractinator<>(AyaLiterate.AyaInlineCode.class).extract(lit);
     var code = new SourceFile(mdFile.display(), mdFile.underlying(), ayaCode);
     return new LiterateData(lit, exprs, code);
   }

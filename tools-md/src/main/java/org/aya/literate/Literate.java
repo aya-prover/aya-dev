@@ -51,7 +51,7 @@ public interface Literate extends Docile {
     }
   }
 
-  class CommonCode implements Literate {
+  class InlineCode implements Literate {
     /**
      * The content of this inline code
      */
@@ -61,7 +61,7 @@ public interface Literate extends Docile {
      */
     public final @NotNull SourcePos sourcePos;
 
-    public CommonCode(@NotNull String code, @NotNull SourcePos sourcePos) {
+    public InlineCode(@NotNull String code, @NotNull SourcePos sourcePos) {
       this.code = code;
       this.sourcePos = sourcePos;
     }
@@ -72,7 +72,7 @@ public interface Literate extends Docile {
     }
   }
 
-  final class CommonCodeBlock implements Literate {
+  final class CodeBlock implements Literate {
     public final @NotNull String language;
     public final @NotNull String code;
 
@@ -82,15 +82,16 @@ public interface Literate extends Docile {
      */
     public final @Nullable SourcePos sourcePos;
     public @Nullable Doc highlighted = null;
+    public boolean dontCare = false; // TODO[kiva]: "interesting language" feature, but I am busy now
 
-    public CommonCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+    public CodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
       this.language = language;
       this.code = code;
       this.sourcePos = sourcePos;
     }
 
-    @Override
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
+      if (dontCare) return Doc.empty();
       return Doc.codeBlock(Language.of(language),
         this.highlighted == null
           ? Doc.plain(code)

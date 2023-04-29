@@ -22,14 +22,14 @@ public interface AyaLiterate {
   }
 
   /**
-   * A code snippet. For code blocks, see {@link CommonCodeBlock}
+   * Aya inline code. For code blocks, see {@link CodeBlock}
    */
-  final class AyaCode extends Literate.CommonCode {
+  final class AyaInlineCode extends Literate.InlineCode {
     public @Nullable Expr expr;
     public @Nullable Result tyckResult;
     public final @NotNull CodeOptions options;
 
-    public AyaCode(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {
+    public AyaInlineCode(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {
       super(code, sourcePos);
 
       this.options = options;
