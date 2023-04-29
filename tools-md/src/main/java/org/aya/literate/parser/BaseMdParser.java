@@ -107,7 +107,7 @@ public abstract class BaseMdParser {
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-        yield new Literate.CommonCodeBlock(language, code.component2(), code.component1().get());
+        yield new Literate.CodeBlock(language, code.component2(), code.component1().get());
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
@@ -118,7 +118,7 @@ public abstract class BaseMdParser {
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
           assert sourcePos != null;
           // FIXME[hoshino]: The sourcePos here contains the beginning and trailing '`'
-          yield new Literate.CommonCode(inlineCode.getLiteral(), sourcePos);
+          yield new Literate.InlineCode(inlineCode.getLiteral(), sourcePos);
         }
         throw new InternalException("SourceSpans");
       }
@@ -152,11 +152,11 @@ public abstract class BaseMdParser {
   /**
    * Replacing non-code content with whitespaces, keep the source pos of code parts.
    */
-  public @NotNull String etching(@NotNull SeqView<Literate.CommonCodeBlock> codeBlocks) {
+  public @NotNull String etching(@NotNull SeqView<Literate.CodeBlock> codeBlocks) {
     codeBlocks = codeBlocks.filter(x -> x.sourcePos != null);
 
     var builder = new StringBuilder(file.sourceCode().length());
-    @Nullable Literate.CommonCodeBlock next = codeBlocks.firstOrNull();
+    @Nullable Literate.CodeBlock next = codeBlocks.firstOrNull();
     codeBlocks = codeBlocks.drop(1);
 
     for (var idx = 0; idx < file.sourceCode().length(); ++idx) {
