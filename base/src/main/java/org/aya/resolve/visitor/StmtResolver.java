@@ -56,10 +56,13 @@ public interface StmtResolver {
   private static void resolveDecl(@NotNull Decl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
       case TeleDecl.FnDecl decl -> {
+        // Generalized works for simple bodies and signatures
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
+        var simpleBody = decl.body.isLeft();
+        if (!simpleBody) insertGeneralizedVars(decl, resolver);
         resolver.enterBody();
         decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
-        insertGeneralizedVars(decl, resolver);
+        if (simpleBody) insertGeneralizedVars(decl, resolver);
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
@@ -121,6 +124,7 @@ public interface StmtResolver {
       .append(new TyckOrder.Head(decl.unit()));
   }
 
+  /** @param decl is unmodified */
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, ExprResolver resolver) {
     addReferences(info, decl, resolver.reference().view());
   }
@@ -137,7 +141,7 @@ public interface StmtResolver {
     var telescope = decl.telescope.map(param -> resolver.bind(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
     decl.modifyResult(newResolver);
-    decl.telescope = telescope;   // TODO[hoshino]: I don't know if the order does matter.
+    decl.telescope = telescope;
     addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
   }
