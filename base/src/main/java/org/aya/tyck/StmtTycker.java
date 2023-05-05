@@ -129,21 +129,20 @@ public final class StmtTycker extends TracedTycker {
   }
 
   // Apply a simple checking strategy for maximal metavar inference.
-  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
-    return traced(fn, tycker, this::doSimpleFn);
+  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn, Expr expr) {
+    return traced(fn, tycker, (f, t) -> doSimpleFn(f, t, expr));
   }
 
-  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
+  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker, Expr expr) {
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var bodyExpr = ((TeleDecl.ExprBody) fn.body).expr();
       Term preresult, prebody;
       if (fn.result != null) {
         preresult = tycker.ty(fn.result);
-        prebody = tycker.check(bodyExpr, preresult).wellTyped();
+        prebody = tycker.check(expr, preresult).wellTyped();
       } else {
-        var synthesize = tycker.synthesize(bodyExpr);
+        var synthesize = tycker.synthesize(expr);
         prebody = synthesize.wellTyped();
         preresult = synthesize.type();
       }
