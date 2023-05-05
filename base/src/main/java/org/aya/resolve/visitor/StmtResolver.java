@@ -58,11 +58,19 @@ public interface StmtResolver {
       case TeleDecl.FnDecl decl -> {
         // Generalized works for simple bodies and signatures
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
-        var simpleBody = decl.body.isLeft();
-        if (!simpleBody) insertGeneralizedVars(decl, resolver);
-        resolver.enterBody();
-        decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
-        if (simpleBody) insertGeneralizedVars(decl, resolver);
+        decl.body = switch (decl.body) {
+          case TeleDecl.BlockBody(var cls) -> {
+            insertGeneralizedVars(decl, resolver);
+            resolver.enterBody();
+            yield new TeleDecl.BlockBody(cls.map(resolver::apply));
+          }
+          case TeleDecl.ExprBody(var expr) -> {
+            resolver.enterBody();
+            var body = resolver.apply(expr);
+            insertGeneralizedVars(decl, resolver);
+            yield new TeleDecl.ExprBody(body);
+          }
+        };
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {

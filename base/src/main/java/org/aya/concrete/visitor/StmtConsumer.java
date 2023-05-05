@@ -20,8 +20,7 @@ public interface StmtConsumer extends Consumer<Stmt>, EndoExpr {
         switch (decl) {
           case TeleDecl.DataDecl data -> data.body.forEach(this);
           case ClassDecl clazz -> clazz.members.forEach(this);
-          case TeleDecl.FnDecl fn ->
-            fn.body = fn.body.map(this, clauses -> clauses.map(cl -> cl.descent(this, this::apply)));
+          case TeleDecl.FnDecl fn -> fn.body = fn.body.map(this, cl -> cl.descent(this, this::apply));
           case TeleDecl.DataCtor ctor -> {
             ctor.patterns = ctor.patterns.map(cl -> cl.descent(this::apply));
             ctor.clauses = ctor.clauses.descent(this);

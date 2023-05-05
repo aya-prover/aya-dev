@@ -4,7 +4,6 @@ package org.aya.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Either;
 import kala.control.Option;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -192,6 +191,22 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
     }
   }
 
+  public sealed interface FnBody {
+    FnBody map(@NotNull UnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g);
+  }
+
+  public record ExprBody(Expr expr) implements FnBody {
+    @Override public ExprBody map(@NotNull UnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g) {
+      return new ExprBody(f.apply(expr));
+    }
+  }
+
+  public record BlockBody(ImmutableSeq<Pattern.Clause> clauses) implements FnBody {
+    @Override public BlockBody map(@NotNull UnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g) {
+      return new BlockBody(clauses.map(g));
+    }
+  }
+
   /**
    * Concrete function definition
    *
@@ -206,7 +221,7 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
      * If a function is anonymous. It only occurs when the personality is example/counterexample, and the {@code ref.name} is generated.
      */
     public final boolean isAnonymous;
-    public @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body;
+    public @NotNull FnBody body;
 
     public FnDecl(
       @NotNull DeclInfo info,
@@ -214,7 +229,7 @@ public sealed abstract class TeleDecl<RetTy extends Term> extends CommonDecl {
       @NotNull String name,
       @NotNull ImmutableSeq<Expr.Param> telescope,
       @Nullable Expr result,
-      @NotNull Either<Expr, ImmutableSeq<Pattern.Clause>> body,
+      @NotNull FnBody body,
       @NotNull DeclInfo.Personality personality,
       boolean isAnonymous
     ) {

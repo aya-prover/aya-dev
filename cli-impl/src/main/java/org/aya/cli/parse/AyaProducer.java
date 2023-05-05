@@ -30,7 +30,6 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
-import org.aya.util.error.InternalException;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.GenericNode;
@@ -40,6 +39,7 @@ import org.aya.resolve.context.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -294,10 +294,10 @@ public record AyaProducer(
     if (dynamite == null) return null;
     var inline = info.modifier.misc(ModifierParser.Modifier.Inline);
     var overlap = info.modifier.misc(ModifierParser.Modifier.Overlap);
-    if (dynamite.isRight() && inline != null) {
+    if (dynamite instanceof TeleDecl.BlockBody && inline != null) {
       reporter.report(new BadModifierWarn(inline, Modifier.Inline));
     }
-    if (dynamite.isLeft() && overlap != null) {
+    if (dynamite instanceof TeleDecl.ExprBody && overlap != null) {
       reporter.report(new ModifierProblem(overlap, ModifierParser.Modifier.Overlap, ModifierProblem.Reason.Duplicative));
     }
 
@@ -307,12 +307,12 @@ public record AyaProducer(
     return new TeleDecl.FnDecl(info.info, fnMods, name, tele, ty, dynamite, sample, info.name == null);
   }
 
-  public @Nullable Either<Expr, ImmutableSeq<Pattern.Clause>> fnBody(@NotNull GenericNode<?> node) {
+  public @Nullable TeleDecl.FnBody fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
     var implies = node.peekChild(IMPLIES);
     if (expr == null && implies != null) return error(implies, "Expect function body");
-    if (expr != null) return Either.left(expr(expr));
-    return Either.right(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
+    if (expr != null) return new TeleDecl.ExprBody(expr(expr));
+    return new TeleDecl.BlockBody(node.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause).toImmutableSeq());
   }
 
   private void giveMeOpen(@NotNull ModifierParser.Modifiers modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
