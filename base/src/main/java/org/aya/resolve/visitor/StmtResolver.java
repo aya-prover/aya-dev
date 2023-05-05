@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
@@ -58,10 +59,12 @@ public interface StmtResolver {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
         resolver.enterBody();
         decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
+        insertGeneralizedVars(decl, resolver);
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
+        insertGeneralizedVars(decl, resolver);
         resolver.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
@@ -134,9 +137,16 @@ public interface StmtResolver {
     var telescope = decl.telescope.map(param -> resolver.bind(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
     decl.modifyResult(newResolver);
-    decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    decl.telescope = telescope;   // TODO[hoshino]: I don't know if the order does matter.
     addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
+  }
+
+  private static <RetTy extends Term> void insertGeneralizedVars(
+    @NotNull TeleDecl<RetTy> decl,
+    @NotNull ExprResolver resolver
+  ) {
+    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
