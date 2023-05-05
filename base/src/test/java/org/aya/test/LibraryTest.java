@@ -20,6 +20,8 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
@@ -32,15 +34,23 @@ import java.nio.file.attribute.FileTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LibraryTest {
-  @Test public void testOnDisk() throws IOException {
-    FileUtil.deleteRecursively(DIR.resolve("build"));
+  @ParameterizedTest
+  @ValueSource(strings = {"success"})
+  public void testOnDisk(@NotNull String libName) throws IOException {
+    var libRoot = TestRunner.DEFAULT_TEST_DIR.resolve(libName);
+
+    FileUtil.deleteRecursively(libRoot.resolve("build"));
     // Full rebuild
-    assertEquals(0, compile());
+    assertEquals(0, compile(libRoot));
     // The second time should load the cache of 'common'.
-    FileUtil.deleteRecursively(DIR.resolve("build").resolve("out"));
-    assertEquals(0, compile());
+    FileUtil.deleteRecursively(libRoot.resolve("build").resolve("out"));
+    assertEquals(0, compile(libRoot));
     // The third time should do nothing.
-    assertEquals(0, compile());
+    assertEquals(0, compile(libRoot));
+  }
+
+  @Test public void fastTestOnDisk() throws IOException {
+    compile(DIR);
   }
 
   @Test public void testLiterate() throws IOException {
@@ -120,12 +130,22 @@ public class LibraryTest {
 
   public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
 
+  @Deprecated
   private static int compile() throws IOException {
     return compile(TestRunner.flags());
   }
 
+  private static int compile(@NotNull Path root) throws IOException {
+    return compile(TestRunner.flags(), root);
+  }
+
+  @Deprecated
   private static int compile(@NotNull CompilerFlags flags) throws IOException {
-    return LibraryCompiler.compile(new PrimDef.Factory(), AyaThrowingReporter.INSTANCE, flags, CompilerAdvisor.onDisk(), DIR);
+    return compile(flags, DIR);
+  }
+
+  private static int compile(@NotNull CompilerFlags flags, @NotNull Path root) throws IOException {
+    return LibraryCompiler.compile(new PrimDef.Factory(), AyaThrowingReporter.INSTANCE, flags, CompilerAdvisor.onDisk(), root);
   }
 
   private static int compile(@NotNull PrimDef.Factory factory, @NotNull CompilerAdvisor advisor, @NotNull LibraryOwner owner) throws IOException {

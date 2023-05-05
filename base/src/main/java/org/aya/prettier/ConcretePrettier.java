@@ -366,8 +366,10 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
-          decl.body.fold(expr -> Doc.cat(Doc.spaced(Doc.symbol("=>")), term(Outer.Free, expr)),
-            clauses -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)))),
+          switch (decl.body) {
+            case TeleDecl.ExprBody(var expr) -> Doc.cat(Doc.spaced(Doc.symbol("=>")), term(Outer.Free, expr));
+            case TeleDecl.BlockBody(var clauses) -> Doc.cat(Doc.line(), Doc.nest(2, visitClauses(clauses)));
+          },
           visitBindBlock(decl.bindBlock())
         );
       }

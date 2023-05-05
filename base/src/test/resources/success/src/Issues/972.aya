@@ -1,0 +1,4 @@
+variable A : Type
+
+def foo A => A -> Type
+def bar => A -> Type

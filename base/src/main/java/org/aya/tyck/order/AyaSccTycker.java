@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.DeclInfo;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -116,8 +117,10 @@ public record AyaSccTycker(
   }
 
   private void checkUnit(@NotNull TyckOrder order) {
-    if (order instanceof TyckOrder.Body && order.unit() instanceof TeleDecl.FnDecl fn && fn.body.isLeft()) {
-      checkSimpleFn(order, fn);
+    if (order instanceof TyckOrder.Body
+      && order.unit() instanceof TeleDecl.FnDecl fn
+      && fn.body instanceof TeleDecl.ExprBody(var expr)) {
+      checkSimpleFn(order, fn, expr);
     } else {
       check(order);
       if (order instanceof TyckOrder.Body body)
@@ -143,12 +146,12 @@ public record AyaSccTycker(
     return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
-  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn) {
+  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn, Expr expr) {
     if (selfReferencing(resolveInfo.depGraph(), order)) {
       reporter.report(new BadRecursion(fn.sourcePos(), fn.ref, null));
       throw new SCCTyckingFailed(ImmutableSeq.of(order));
     }
-    decideTyckResult(fn, fn, tycker.simpleFn(reuseTopLevel(fn), fn));
+    decideTyckResult(fn, fn, tycker.simpleFn(reuseTopLevel(fn), fn, expr));
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 

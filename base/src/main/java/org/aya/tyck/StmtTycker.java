@@ -71,12 +71,14 @@ public final class StmtTycker extends TracedTycker {
         assert signature != null;
         var factory = FnDef.factory((resultTy, body) ->
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
-        yield decl.body.fold(body -> {
+        yield switch (decl.body) {
+          case TeleDecl.ExprBody(var body) -> {
             var nobody = tycker.check(body, signature.result()).wellTyped();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
-            return factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
-          }, clauses -> {
+            yield factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
+          }
+          case TeleDecl.BlockBody(var clauses) -> {
             var exprTycker = newTycker(tycker.state.primFactory(), tycker.shapeFactory);
             FnDef def;
             var pos = decl.sourcePos();
@@ -99,9 +101,9 @@ public final class StmtTycker extends TracedTycker {
               def = factory.apply(result.result(), Either.right(result.matchings()));
             }
             if (!result.hasLhsError()) Conquer.against(def, orderIndependent, tycker, pos);
-            return def;
+            yield def;
           }
-        );
+        };
       }
       case TeleDecl.DataDecl decl -> {
         var signature = decl.signature;
@@ -127,21 +129,20 @@ public final class StmtTycker extends TracedTycker {
   }
 
   // Apply a simple checking strategy for maximal metavar inference.
-  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn) {
-    return traced(fn, tycker, this::doSimpleFn);
+  public @NotNull FnDef simpleFn(@NotNull ExprTycker tycker, TeleDecl.FnDecl fn, Expr expr) {
+    return traced(fn, tycker, (f, t) -> doSimpleFn(f, t, expr));
   }
 
-  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker) {
+  private @NotNull FnDef doSimpleFn(TeleDecl.FnDecl fn, @NotNull ExprTycker tycker, Expr expr) {
     record Tmp(ImmutableSeq<TeleResult> okTele, Term preresult, Term prebody) {}
     var tmp = tycker.subscoped(() -> {
       var okTele = checkTele(tycker, fn.telescope, null);
-      var bodyExpr = fn.body.getLeftValue();
       Term preresult, prebody;
       if (fn.result != null) {
         preresult = tycker.ty(fn.result);
-        prebody = tycker.check(bodyExpr, preresult).wellTyped();
+        prebody = tycker.check(expr, preresult).wellTyped();
       } else {
-        var synthesize = tycker.synthesize(bodyExpr);
+        var synthesize = tycker.synthesize(expr);
         prebody = synthesize.wellTyped();
         preresult = synthesize.type();
       }
@@ -172,13 +173,13 @@ public final class StmtTycker extends TracedTycker {
         //  and it doesn't make sense to solve a "substituted meta"
         // In the future, we may generate a "constant" meta and try to solve it
         //  if the result type is a pure meta.
-        if (fn.body.isRight()) {
+        if (fn.body instanceof TeleDecl.BlockBody) {
           var tele = MutableArrayList.from(resultTele);
           resultRes = PiTerm.unpi(tycker.zonk(resultRes), tycker::whnf, tele);
           resultTele = tele.toImmutableArray();
         }
         fn.signature = new Def.Signature<>(resultTele, resultRes);
-        if (resultTele.isEmpty() && fn.body.isRight() && fn.body.getRightValue().isEmpty())
+        if (resultTele.isEmpty() && fn.body instanceof TeleDecl.BlockBody(var cls) && cls.isEmpty())
           reporter.report(new NobodyError(decl.sourcePos(), fn.ref));
       }
       case TeleDecl.DataDecl data -> {

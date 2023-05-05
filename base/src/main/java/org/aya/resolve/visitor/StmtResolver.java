@@ -11,6 +11,7 @@ import org.aya.concrete.stmt.*;
 import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
@@ -55,13 +56,26 @@ public interface StmtResolver {
   private static void resolveDecl(@NotNull Decl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
       case TeleDecl.FnDecl decl -> {
+        // Generalized works for simple bodies and signatures
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
-        resolver.enterBody();
-        decl.body = decl.body.map(resolver, pats -> pats.map(resolver::apply));
+        decl.body = switch (decl.body) {
+          case TeleDecl.BlockBody(var cls) -> {
+            insertGeneralizedVars(decl, resolver);
+            resolver.enterBody();
+            yield new TeleDecl.BlockBody(cls.map(resolver::apply));
+          }
+          case TeleDecl.ExprBody(var expr) -> {
+            resolver.enterBody();
+            var body = resolver.apply(expr);
+            insertGeneralizedVars(decl, resolver);
+            yield new TeleDecl.ExprBody(body);
+          }
+        };
         addReferences(info, new TyckOrder.Body(decl), resolver);
       }
       case TeleDecl.DataDecl decl -> {
         var resolver = resolveDeclSignature(decl, ExprResolver.LAX, info);
+        insertGeneralizedVars(decl, resolver);
         resolver.enterBody();
         decl.body.forEach(ctor -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
@@ -118,6 +132,7 @@ public interface StmtResolver {
       .append(new TyckOrder.Head(decl.unit()));
   }
 
+  /** @param decl is unmodified */
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, ExprResolver resolver) {
     addReferences(info, decl, resolver.reference().view());
   }
@@ -134,9 +149,16 @@ public interface StmtResolver {
     var telescope = decl.telescope.map(param -> resolver.bind(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
     decl.modifyResult(newResolver);
-    decl.telescope = telescope.prependedAll(newResolver.allowedGeneralizes().valuesView());
+    decl.telescope = telescope;
     addReferences(info, new TyckOrder.Head(decl), resolver);
     return newResolver;
+  }
+
+  private static <RetTy extends Term> void insertGeneralizedVars(
+    @NotNull TeleDecl<RetTy> decl,
+    @NotNull ExprResolver resolver
+  ) {
+    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
   }
 
   static void visitBind(@NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind, @NotNull ResolveInfo info) {
