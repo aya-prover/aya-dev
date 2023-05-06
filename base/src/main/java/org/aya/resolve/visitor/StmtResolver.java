@@ -63,7 +63,10 @@ public interface StmtResolver {
             // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
             insertGeneralizedVars(decl, resolver);
             var clausesResolver = resolver.enterClauses();
-            yield new TeleDecl.BlockBody(cls.map(clausesResolver::apply));
+            var body = new TeleDecl.BlockBody(cls.map(clausesResolver::apply));
+            // TODO[hoshino]: How about sharing {resolver#reference} between resolver and clausesResolver?
+            resolver.reference().appendAll(clausesResolver.reference());
+            yield body;
           }
           case TeleDecl.ExprBody(var expr) -> {
             resolver.enterBody();
