@@ -50,7 +50,7 @@ public class LibraryTest {
   }
 
   @Test public void fastTestOnDisk() throws IOException {
-    compile(DIR);
+    assertEquals(0, compile(DIR));
   }
 
   @Test public void testLiterate() throws IOException {
