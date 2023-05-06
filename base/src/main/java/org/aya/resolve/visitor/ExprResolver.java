@@ -3,10 +3,7 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
+import kala.collection.mutable.*;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -36,7 +33,7 @@ import java.util.function.Consumer;
 /**
  * Resolves bindings.
  *
- * @param allowedGeneralizes will be filled with generalized vars if allowGeneralized,
+ * @param allowedGeneralizes will be filled with generalized vars if {@link Options#allowIntroduceGeneralized},
  *                           and represents the allowed generalized level vars otherwise
  * @author re-xyr, ice1000
  * @implSpec allowedGeneralizes must be linked map
@@ -82,6 +79,18 @@ public record ExprResolver(
       MutableStack.create(), this::addReference);
     resolver.where.push(initial);
     return resolver;
+  }
+
+  /**
+   * Getting an {@link ExprResolver} that resolves the rhs of clause<b>s</b>.
+   */
+  public @NotNull ExprResolver clauses(@NotNull TyckUnit decl) {
+    return new ExprResolver(ctx, RESTRICTIVE,
+      MutableMap.from(allowedGeneralizes),      // TODO: we needn't copy {allowedGeneralizes} cause this resolver is RESTRICTIVE
+      MutableList.from(reference),
+      MutableSinglyLinkedList.from(where),      // TODO: kala
+      this::addReference
+    );
   }
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
@@ -147,7 +156,7 @@ public record ExprResolver(
       case Expr.Unresolved(var pos, var name) -> switch (ctx.get(name)) {
         case GeneralizedVar generalized -> {
           if (!allowedGeneralizes.containsKey(generalized)) {
-            if (options.allowGeneralized) {
+            if (options.allowIntroduceGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sanity check";
@@ -205,11 +214,12 @@ public record ExprResolver(
   private void addReference(@NotNull TyckUnit unit) {
     if (parentAdd != null) parentAdd.accept(unit);
     if (where.isEmpty()) throw new InternalException("where am I?");
-    if (where.peek() == Where.Head) {
-      reference.append(new TyckOrder.Head(unit));
-      reference.append(new TyckOrder.Body(unit));
-    } else {
-      reference.append(new TyckOrder.Body(unit));
+    switch (where.peek()) {
+      case Head -> {
+        reference.append(new TyckOrder.Head(unit));
+        reference.append(new TyckOrder.Body(unit));
+      }
+      case Body -> reference.append(new TyckOrder.Body(unit));
     }
   }
 
@@ -295,6 +305,6 @@ public record ExprResolver(
     Body
   }
 
-  public record Options(boolean allowGeneralized) {
+  public record Options(boolean allowIntroduceGeneralized) {
   }
 }
