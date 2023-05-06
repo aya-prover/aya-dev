@@ -25,6 +25,7 @@ import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,13 +85,17 @@ public record ExprResolver(
   /**
    * Getting an {@link ExprResolver} that resolves the rhs of clause<b>s</b>.
    */
-  public @NotNull ExprResolver clauses(@NotNull TyckUnit decl) {
-    return new ExprResolver(ctx, RESTRICTIVE,
+  @Contract(mutates = "this")
+  public @NotNull ExprResolver enterClauses() {
+    enterBody();
+
+    var resolver = new ExprResolver(ctx, RESTRICTIVE,
       MutableMap.from(allowedGeneralizes),      // TODO: we needn't copy {allowedGeneralizes} cause this resolver is RESTRICTIVE
-      MutableList.from(reference),
-      MutableSinglyLinkedList.from(where),      // TODO: kala
-      this::addReference
-    );
+      MutableList.create(),
+      MutableStack.create(),
+      this::addReference);
+    resolver.where.push(Where.Body);
+    return resolver;
   }
 
   @Override public @NotNull Expr pre(@NotNull Expr expr) {

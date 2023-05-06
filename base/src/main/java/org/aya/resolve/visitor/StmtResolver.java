@@ -62,8 +62,7 @@ public interface StmtResolver {
           case TeleDecl.BlockBody(var cls) -> {
             // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
             insertGeneralizedVars(decl, resolver);
-            resolver.enterBody();
-            var clausesResolver = resolver.clauses(decl);
+            var clausesResolver = resolver.enterClauses();
             yield new TeleDecl.BlockBody(cls.map(clausesResolver::apply));
           }
           case TeleDecl.ExprBody(var expr) -> {
