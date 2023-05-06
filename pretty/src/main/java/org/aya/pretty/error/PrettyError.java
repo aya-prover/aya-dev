@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.error;
 
@@ -91,7 +91,7 @@ public record PrettyError(
       .map(kv -> Tuple.of(kv.component1().normalize(config), kv.component2()))
       .filter(kv -> kv.component1().startLine() == kv.component1().endLine())
       .toImmutableSeq(); // TODO: multiline inline hints?
-    var allRange = hints.map(kv -> kv.component1()).foldLeft(primary, Span.Data::union);
+    var allRange = hints.map(Tuple2::component1).foldLeft(primary, Span.Data::union);
     return Doc.vcat(
       Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
       Doc.empty(),
