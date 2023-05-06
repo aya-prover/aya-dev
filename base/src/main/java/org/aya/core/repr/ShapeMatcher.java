@@ -3,6 +3,7 @@
 package org.aya.core.repr;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
@@ -39,7 +40,7 @@ public record ShapeMatcher(
   public static Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
     var matcher = new ShapeMatcher();
     if (shape.codeShape() instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
-      return matcher.matchData(dataShape, data) ? Option.some(new ShapeRecognition(shape, matcher.captures.toImmutableMap())) : Option.none();
+      return matcher.matchData(dataShape, data) ? Option.some(new ShapeRecognition(shape, ImmutableMap.from(matcher.captures))) : Option.none();
     return Option.none();
   }
 

@@ -119,7 +119,8 @@ public class Html5Stylist extends ClosingStylist {
    * plus the hyphen (-) and the underscore (_);
    * they cannot start with a digit, two hyphens, or a hyphen followed by a digit.
    * Identifiers can also contain escaped characters and any ISO 10646 character as a numeric code (see next item).
-   * For instance, the identifier "B&W?" may be written as "B\&W\?" or "B\26 W\3F".
+   * For instance, the identifier {@code B&W?} may be written as
+   * {@code B\&W\?} or {@code B\26 W\3F}.
    */
   public static @NotNull String normalizeCssId(@NotNull String selector) {
     selector = selector.replaceAll("::", "-"); // note: scope::name -> scope-name

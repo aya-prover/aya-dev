@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck;
 
@@ -22,8 +22,7 @@ public interface OrgaTycker<T, E extends Exception> {
     // I'm not sure whether it's necessary to optimize on our own.
     var sccTycker = sccTycker();
     var skipped = skippedSet();
-    if (skipped.isEmpty()) skip(sccTycker.tyckSCC(scc));
-    else skip(sccTycker.tyckSCC(scc.filterNot(skipped::contains)));
+    skip(sccTycker.tyckSCC(skipped.isEmpty() ? scc : scc.filterNot(skipped::contains)));
   }
 
   private void skip(@NotNull ImmutableSeq<T> failed) {

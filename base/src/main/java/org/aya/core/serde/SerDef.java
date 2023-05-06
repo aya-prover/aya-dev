@@ -13,11 +13,11 @@ import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -29,7 +29,8 @@ import java.util.EnumSet;
 public sealed interface SerDef extends Serializable {
   @NotNull GenericDef de(@NotNull SerTerm.DeState state);
 
-  record QName(@NotNull ImmutableSeq<String> mod, @NotNull ImmutableSeq<String> fileMod, @NotNull String name) implements Serializable {
+  record QName(@NotNull ImmutableSeq<String> mod, @NotNull ImmutableSeq<String> fileMod,
+               @NotNull String name) implements Serializable {
     @Override public String toString() {
       return mod.joinToString(Constants.SCOPE_SEPARATOR, "", Constants.SCOPE_SEPARATOR + name);
     }
@@ -144,13 +145,13 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableMap<CodeShape.MomentId, QName> captures
   ) implements Serializable {
     public @NotNull ShapeRecognition de(@NotNull SerTerm.DeState state) {
-      return new ShapeRecognition(shape.de(), captures.view()
-        .map((m, q) -> Tuple.of(m, state.resolve(q))).toImmutableMap());
+      return new ShapeRecognition(shape.de(), ImmutableMap.from(captures.view()
+        .map((m, q) -> Tuple.of(m, state.resolve(q)))));
     }
 
     public static @NotNull SerShapeResult serialize(@NotNull Serializer.State state, @NotNull ShapeRecognition result) {
-      return new SerShapeResult(SerAyaShape.serialize(result.shape()), result.captures().view()
-        .map((m, q) -> Tuple.of(m, state.def(q))).toImmutableMap());
+      return new SerShapeResult(SerAyaShape.serialize(result.shape()), ImmutableMap.from(result.captures().view()
+        .map((m, q) -> Tuple.of(m, state.def(q)))));
     }
   }
 

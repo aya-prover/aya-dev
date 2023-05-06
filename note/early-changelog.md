@@ -2,6 +2,36 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.29
+
+Major changes:
+
++ `struct` is replaced with a new, WIP `class` system (@ice1000).
++ `coe` is replaced with a hacked implementation of the Cartesian version (@ice1000).
++ Add literate mode support for library modules (@imkiva).
++ Literate-related code is now moved to a separate subproject (@HoshinoTented).
+
+New features:
+
++ LSP now supports configurable rendering options.
++ Literate mode now handles math and tikz better.
++ Error messages & warnings are now available in literate output.
++ In literate mode, inline expressions can now refer to generalized variables.
++ Add aarch64 prebuilt binaries.
+
+Major bug fixes:
+
++ A couple of bugs related to generating literate output.
++ REPL now merges contexts correctly.
+
+Improvements:
+
++ Library updates (Coq style reflect).
++ Improve `let` expressions type checking.
++ Certain types are now computed lazily during type checking.
++ Parser no longer stores a list of token strings (and we compute the node string on-demand by using the ranges).
++ Our repackage of `ij-parsing-core` has an extracted `ij-util-text` module, which contains some simple utilities and string manipulation functions.
+
 ## 0.28
 
 Internal refactorings:

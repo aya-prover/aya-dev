@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -18,12 +18,14 @@ public record CmdCompleter(
 ) implements Completer {
   public CmdCompleter(@NotNull CommandManager cmd, @NotNull Completer outerMost) {
     this(cmd, outerMost,
-      cmd.cmd.view().flatMap(c -> c.owner().names()).map(c -> Command.PREFIX + c)
-        .map(Candidate::new).toImmutableSeq());
+      cmd.cmd.view()
+        .flatMap(c -> c.owner().names())
+        .map(c -> Command.PREFIX + c)
+        .map(Candidate::new)
+        .toImmutableSeq());
   }
 
-  @Override
-  public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+  @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
     if (line.wordIndex() == 0) {
       var word = line.word();
       if (word.startsWith(Command.PREFIX) || word.isEmpty())

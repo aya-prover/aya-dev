@@ -70,6 +70,6 @@ public class VscColorTheme {
       }
     }
 
-    return builder.toImmutableMap();
+    return ImmutableMap.from(builder);
   }
 }

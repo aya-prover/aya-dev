@@ -48,7 +48,6 @@ public sealed interface Command extends Stmt {
     @NotNull String name,
     @NotNull ImmutableSeq<@NotNull Stmt> contents
   ) implements Command {
-
     @Override public @NotNull Accessibility accessibility() {
       return Accessibility.Public;
     }

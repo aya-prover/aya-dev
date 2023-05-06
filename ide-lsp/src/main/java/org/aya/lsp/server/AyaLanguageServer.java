@@ -11,6 +11,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
@@ -245,8 +246,8 @@ public class AyaLanguageServer implements LanguageServer {
       .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
       .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
-        t -> t.component1(),
-        Collectors.mapping(t -> t.component2(), ImmutableSeq.factory())
+        Tuple2::component1,
+        Collectors.mapping(Tuple2::component2, ImmutableSeq.factory())
       ));
     var from = ImmutableMap.from(diags);
     client.publishAyaProblems(from, options);

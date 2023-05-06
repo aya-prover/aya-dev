@@ -3,7 +3,6 @@
 package org.aya.literate;
 
 import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
@@ -95,10 +94,10 @@ public class HighlighterTester {
     if (sortedActual.last() instanceof HighlightInfo.Lit(var $, var kind) && kind == HighlightInfo.LitKind.Eol)
       // Remove the last Eol
       sortedActual = sortedActual.dropLast(1);
-    runTest(sortedActual, Seq.of(expected));
+    runTest(sortedActual.toImmutableSeq(), Seq.of(expected));
   }
 
-  public void runTest(@NotNull SeqView<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
+  public void runTest(@NotNull ImmutableSeq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
     actuals.forEachWith(expecteds, (actual, expected) -> {
       if (expected == null) {
         switch (actual) {
@@ -132,10 +131,12 @@ public class HighlighterTester {
         }
 
         case HighlightInfo.Def def
-          when expected.expected() instanceof ExpectedHighlightType.Def expectedDef -> assertDef(sourcePos, def, expectedDef);
+          when expected.expected() instanceof ExpectedHighlightType.Def expectedDef ->
+          assertDef(sourcePos, def, expectedDef);
 
         case HighlightInfo.Ref ref
-          when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef -> assertRef(sourcePos, ref, expectedRef);
+          when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef ->
+          assertRef(sourcePos, ref, expectedRef);
 
         case HighlightInfo.Err err -> throw new UnsupportedOperationException("TODO");   // TODO
 
@@ -216,6 +217,7 @@ public class HighlighterTester {
         && ignored.contains(kind));
     new HighlighterTester(code, result, expected).runTest();
   }
+
   static Seq<HighlightInfo.LitKind> ignored = Seq.of(HighlightInfo.LitKind.Eol, HighlightInfo.LitKind.Whitespace);
 
   /// region Helper
