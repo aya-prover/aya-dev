@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -36,7 +36,7 @@ public class CommandManager {
     @NotNull ImmutableSeq<Command> commands
   ) {
     this.replClass = replClass;
-    this.argFactory = argFactory.view().map(c -> Tuple.of(c.type(), c)).toImmutableMap();
+    this.argFactory = ImmutableMap.from(argFactory.view().map(c -> Tuple.of(c.type(), c)));
     this.cmd = commands.map(this::genCommand);
   }
 

@@ -3,7 +3,10 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.*;
+import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableStack;
 import kala.value.MutableValue;
 import org.aya.concrete.Expr;
 import org.aya.concrete.Pattern;
@@ -14,7 +17,6 @@ import org.aya.concrete.visitor.EndoExpr;
 import org.aya.concrete.visitor.EndoPattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
-import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -25,6 +27,7 @@ import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.tyck.error.FieldError;
 import org.aya.tyck.order.TyckOrder;
 import org.aya.tyck.order.TyckUnit;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +93,8 @@ public record ExprResolver(
     enterBody();
 
     var resolver = new ExprResolver(ctx, RESTRICTIVE,
-      MutableMap.from(allowedGeneralizes),      // TODO: we needn't copy {allowedGeneralizes} cause this resolver is RESTRICTIVE
+      // TODO[hoshino]: we needn't copy {allowedGeneralizes} cause this resolver is RESTRICTIVE
+      MutableMap.from(allowedGeneralizes),
       MutableList.create(),
       MutableStack.create(),
       this::addReference);

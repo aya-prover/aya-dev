@@ -3,6 +3,7 @@
 package org.aya.core.term;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.core.pat.Pat;
@@ -70,7 +71,7 @@ public record PathTerm(
   }
 
   public @NotNull Term substType(@NotNull SeqView<Term> dimensions) {
-    return type.subst(params.zipView(dimensions).toImmutableMap());
+    return type.subst(ImmutableMap.from(params.zipView(dimensions)));
   }
 
   /**
