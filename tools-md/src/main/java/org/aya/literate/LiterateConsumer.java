@@ -38,7 +38,7 @@ public interface LiterateConsumer extends Consumer<Literate> {
     }
 
     @Override public void accept(@NotNull Literate literate) {
-      if (clazz.isInstance(literate)) result.append((T) literate);
+      if (clazz.isInstance(literate)) result.append(clazz.cast(literate));
       LiterateExtractinator.super.accept(literate);
     }
   }

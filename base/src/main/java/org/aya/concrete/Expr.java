@@ -618,19 +618,14 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
      * <h1>Array Comp(?)</h1>
      * <p>
      * The (half?) primary part of {@link Array}<br/>
-     * For example: <code>[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]</code>
+     * For example: {@code [x * y | x <- [1, 2, 3], y <- [4, 5, 6]]}
      *
-     * @param generator <code>x * y</code> part above
-     * @param binds     <code>x <- [1, 2, 3], y <- [4, 5, 6]</code> part above
-     * @param names     the bind (>>=) function, it is {@link org.aya.generic.Constants#monadBind} in default,
-     *                  the pure (return) function, it is {@link org.aya.generic.Constants#functorPure} in default
-     * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above, it will be desugared to
-     * <pre>
-     *     do
-     *       x <- [1, 2, 3]
-     *       y <- [4, 5, 6]
-     *       return x * y
-     *   </pre>
+     * @param generator {@code x * y} part above
+     * @param binds     {@code x <- [1, 2, 3], y <- [4, 5, 6]} part above
+     * @param names     the bind ({@code >>=}) function, it is {@link org.aya.generic.Constants#monadBind} in default,
+     *                  the pure ({@code return}) function, it is {@link org.aya.generic.Constants#functorPure} in default
+     * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
+     * it will be desugared to {@code do x <- [1, 2, 3], y <- [4, 5, 6], return x * y}
      */
     public record CompBlock(
       @NotNull Expr generator,
