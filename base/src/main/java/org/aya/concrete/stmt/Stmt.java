@@ -26,12 +26,12 @@ public sealed interface Stmt extends AyaDocile, TyckUnit permits Decl, Command, 
 
   @Contract(mutates = "param1")
   static void resolve(@NotNull ImmutableSeq<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
-    resolveWithoutDesugar(statements, resolveInfo, loader);
+    doResolve(statements, resolveInfo, loader);
     statements.forEach(s -> s.desugar(resolveInfo));
   }
 
   @Contract(mutates = "param1")
-  static void resolveWithoutDesugar(@NotNull ImmutableSeq<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
+  static void doResolve(@NotNull ImmutableSeq<Stmt> statements, @NotNull ResolveInfo resolveInfo, @NotNull ModuleLoader loader) {
     var shallowResolver = new StmtShallowResolver(loader, resolveInfo);
     shallowResolver.resolveStmt(statements, resolveInfo.thisModule());
     StmtResolver.resolveStmt(statements, resolveInfo);

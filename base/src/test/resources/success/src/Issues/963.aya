@@ -1,11 +1,19 @@
-def test
+import Paths
+
+def in-let
   (A : Type) (B : A -> Type)
   (f : ∀ (a : A) -> B a)
   : ∀ (a : A) -> B a
   => let x := f in \a => f a
 
-def test1
+def normal
   (A : Type) (B : A -> Type)
   (f : ∀ (a : A) -> B a)
   : ∀ (a : A) -> B a
   => \a => f a
+
+def in-let-open
+  (A : Type) (B : A -> Type)
+  (f : ∀ (a : A) -> B a)
+  : ∀ (a : A) -> B a
+  => let open Paths in \a => f a

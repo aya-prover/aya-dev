@@ -723,6 +723,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   // I think a new type is better than `Either<LetBind, Open> bind` in `Expr.Let`
+  // Being desugared after resolving.
   record LetOpen(
     @NotNull SourcePos sourcePos,
     @NotNull ModuleName.Qualified componentName,

@@ -32,6 +32,9 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
 
   public static class DesugarInterruption extends Exception {}
 
+  /**
+   * !!REMEMBER TO `pre` YOUR RESULT!! (unless you know you needn't)
+   */
   @Override public @NotNull Expr pre(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.App(var pos, Expr.RawSort(var uPos, var kind), var arg) when kind == SortKind.Type -> {
@@ -105,6 +108,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         },
         // do not desugar
         right -> arrayExpr);
+      case Expr.LetOpen(var $, var $$, var $$$, var body) -> pre(body);
       case Expr misc -> StmtConsumer.super.pre(misc);
     };
   }
