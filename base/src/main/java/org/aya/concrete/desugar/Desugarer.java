@@ -105,6 +105,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         },
         // do not desugar
         right -> arrayExpr);
+      case Expr.LetOpen(var $, var $$, var $$$, var body) -> body;
       case Expr misc -> StmtConsumer.super.pre(misc);
     };
   }

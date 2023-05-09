@@ -270,7 +270,6 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(new ListTerm(results, match.component2(), type), type);
       }
       case Expr.Let let -> checkLet(let, this::synthesize);
-      case Expr.LetOpen(var $, var $$, var $$$, var body) -> doSynthesize(body);
       default -> fail(expr, new NoRuleError(expr, null));
     };
   }
@@ -459,7 +458,6 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
       case Expr.Let let -> checkLet(let, (body) -> check(body, term));
-      case Expr.LetOpen letOpen -> doInherit(letOpen.body(), term);
       default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
