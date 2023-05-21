@@ -1,11 +1,19 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
+import kala.collection.SetView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableSet;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableQueue;
+import kala.collection.mutable.MutableSet;
+import kala.tuple.Tuple;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.util.error.SourceFileLocator;
+import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,5 +59,29 @@ public interface LibraryOwner {
       var checkMod = s.moduleName();
       return checkMod.equals(mod);
     }).getOrNull();
+  }
+
+  static ImmutableSet<LibraryOwner> collectDependencies(@NotNull LibraryOwner owner) {
+    var libs = MutableSet.<LibraryOwner>create();
+    var queue = MutableQueue.<LibraryOwner>create();
+    queue.enqueue(owner);
+
+    while (queue.isNotEmpty()) {
+      var thisOwner = queue.dequeue();
+      if (libs.contains(thisOwner)) continue;
+      libs.add(thisOwner);
+      thisOwner.libraryDeps().forEach(queue::enqueue);
+    }
+
+    return libs.toImmutableSet();
+  }
+
+  static MutableGraph<LibraryOwner> buildDependencyGraph(@NotNull LibraryOwner owner) {
+    return buildDependencyGraph(collectDependencies(owner).view());
+  }
+
+  static MutableGraph<LibraryOwner> buildDependencyGraph(@NotNull SetView<LibraryOwner> owners) {
+    var edges = owners.map(owner -> Tuple.of(owner, MutableList.from(owner.libraryDeps())));
+    return new MutableGraph<>(MutableMap.from(edges));
   }
 }
