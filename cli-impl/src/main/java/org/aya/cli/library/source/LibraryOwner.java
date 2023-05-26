@@ -61,7 +61,13 @@ public interface LibraryOwner {
     }).getOrNull();
   }
 
-  static ImmutableSet<LibraryOwner> collectDependencies(@NotNull LibraryOwner owner) {
+  /**
+   * Collect all dependencies of {@param owner}
+   *
+   * @return All dependencies of {@param owner}, including {@param owner}.
+   * The result may contain more than one {@link LibraryOwner}s for one {@link LibraryConfig}.
+   */
+  static @NotNull ImmutableSet<LibraryOwner> collectDependencies(@NotNull LibraryOwner owner) {
     var libs = MutableSet.<LibraryOwner>create();
     var queue = MutableQueue.<LibraryOwner>create();
     queue.enqueue(owner);
@@ -76,12 +82,15 @@ public interface LibraryOwner {
     return libs.toImmutableSet();
   }
 
-  static MutableGraph<LibraryOwner> buildDependencyGraph(@NotNull LibraryOwner owner) {
+  static @NotNull MutableGraph<LibraryConfig> buildDependencyGraph(@NotNull LibraryOwner owner) {
     return buildDependencyGraph(collectDependencies(owner).view());
   }
 
-  static MutableGraph<LibraryOwner> buildDependencyGraph(@NotNull SetView<LibraryOwner> owners) {
-    var edges = owners.map(owner -> Tuple.of(owner, MutableList.from(owner.libraryDeps())));
+  static @NotNull MutableGraph<LibraryConfig> buildDependencyGraph(@NotNull SetView<LibraryOwner> owners) {
+    var edges = owners.map(owner -> Tuple.of(
+      owner.underlyingLibrary(),
+      MutableList.from(owner.libraryDeps().map(LibraryOwner::underlyingLibrary)))
+    );
     return new MutableGraph<>(MutableMap.from(edges));
   }
 }
