@@ -22,7 +22,7 @@ public interface LetPrettier<Bind, Term, LetTerm extends Expr.Nested<Bind, Term,
     var oneLine = binds.sizeEquals(1);
     var docBinds = visitBinds(binds);
     var docs = ImmutableSeq.of(kwLet(), docBinds, kwIn());
-    var head = oneLine ? Doc.cat(docs) : Doc.vcat(docs);
+    var head = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
 
     return Doc.sep(head, term(body));
   }
