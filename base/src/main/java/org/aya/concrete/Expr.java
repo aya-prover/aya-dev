@@ -44,6 +44,43 @@ import java.util.function.UnaryOperator;
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
+
+  /**
+   * A Nested structure is something consists of a head and a body, for example:
+   * <ul>
+   *   <li>{@link Lambda} is a nested structure, it has a {@link Expr.Param} as a head and a {@link Expr} as a body</li>
+   *   <li>{@link Let} is a nested structure, it has a {@link LetBind} as a head and a {@link Expr} as a body</li>
+   *   <li>If you wish, {@link App} is also a nested structure in some way</li>
+   * </ul>
+   * <p>
+   * A Nested class is supposed to also be a {@link Term}
+   * <p>
+   * TODO: This interface is too generic, move to outside
+   */
+  sealed interface Nested<Param, Term, This extends Nested<Param, Term, This>>
+    permits Lambda, Let, Pi, org.aya.core.term.LetTerm {
+    @NotNull Param param();
+
+    /**
+     * The body of a nested structure
+     */
+    @NotNull Term body();
+
+    /**
+     * The nested body of a nested structure
+     *
+     * @return null if the body is not {@link This}
+     * @implSpec {@code tryNested == null || tryNested == body}
+     */
+    @SuppressWarnings("unchecked")
+    default @Nullable This tryNested() {
+      var body = body();
+      var clazz = getClass();
+
+      return clazz.isInstance(body) ? (This) body : null;
+    }
+  }
+
   @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f);
   /**
    * Do !!!NOT!!! use in the type checker.
@@ -190,7 +227,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr last
-  ) implements Expr {
+  ) implements Expr, Nested<Param, Expr, Pi> {
+    @Override
+    public @NotNull Expr body() {
+      return last;
+    }
+
     public @NotNull Expr.Pi update(@NotNull Param param, @NotNull Expr last) {
       return param == param() && last == last() ? this : new Pi(sourcePos, param, last);
     }
@@ -273,7 +315,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr body
-  ) implements Expr {
+  ) implements Expr, Nested<Param, Expr, Lambda> {
     public @NotNull Expr.Lambda update(@NotNull Param param, @NotNull Expr body) {
       return param == param() && body == body() ? this : new Lambda(sourcePos, param, body);
     }
@@ -691,7 +733,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Expr.LetBind bind,
     @NotNull Expr body
-  ) implements Expr {
+  ) implements Expr, Nested<Expr.LetBind, Expr, Let> {
+    @Override
+    public @NotNull Expr.LetBind param() {
+      return bind;
+    }
+
     public @NotNull Let update(@NotNull Expr.LetBind bind, @NotNull Expr body) {
       return bind() == bind && body() == body
         ? this
@@ -777,5 +824,22 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       drop.map(SourceNode::sourcePos));
     return constructor.apply(sourcePos, params.first(),
       buildNested(subPos, drop, body, constructor));
+  }
+
+  @SuppressWarnings("unchecked")
+  static <Param, Term, This extends Nested<Param, Term, This>>
+  @NotNull Tuple2<ImmutableSeq<Param>, Term>
+  destructNested(@NotNull This nested) {
+    var telescope = MutableList.<Param>create();
+    This nestedBody = nested;
+    Term body = (Term) nested;
+
+    while (nestedBody != null) {
+      telescope.append(nestedBody.param());
+      body = nestedBody.body();
+      nestedBody = nestedBody.tryNested();
+    }
+
+    return kala.tuple.Tuple.of(telescope.toImmutableSeq(), body);
   }
 }

@@ -11,10 +11,20 @@ public sealed interface GenerateKind {
    */
   enum None implements GenerateKind {
     INSTANCE;
+
+    @Override
+    public String toString() {
+      return "None";
+    }
   }
 
   enum Anonymous implements GenerateKind {
     INSTANCE;
+
+    @Override
+    public String toString() {
+      return "Anonymous";
+    }
   }
 
   record Generalized(@NotNull GeneralizedVar origin) implements GenerateKind {

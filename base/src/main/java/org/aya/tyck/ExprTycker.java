@@ -276,8 +276,6 @@ public final class ExprTycker extends PropTycker {
 
   /**
    * tyck a let expr with the given checker
-   * TODO: maybe we should move this to other place
-   *
    * @param checker check the type of the body of {@param let}
    */
   private @NotNull Result checkLet(@NotNull Expr.Let let, @NotNull Function<Expr, Result> checker) {
@@ -303,16 +301,9 @@ public final class ExprTycker extends PropTycker {
       return checker.apply(let.body());
     });
 
-    // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
+    var letTerm = new LetTerm(nameAndType.ref(), definedAsResult.wellTyped(), bodyResult.wellTyped());
 
-    // (\ (f : G) => h) : G -> {??}
-    var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
-
-    // then apply a `g`
-    // (\ (f : G) => h) g : {??}
-    var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
-
-    return new Result.Default(full, bodyResult.type());
+    return new Result.Default(letTerm, bodyResult.type());
   }
 
   public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {

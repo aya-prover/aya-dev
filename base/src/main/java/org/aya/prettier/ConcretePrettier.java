@@ -191,40 +191,12 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           Doc.symbol("]")
         )
       );
-      case Expr.Let let -> {
-        var letsAndBody = sugarLet(let);
-        var lets = letsAndBody.component1();
-        var body = letsAndBody.component2();
-        var oneLine = lets.sizeEquals(1);
-        var letSeq = oneLine
-          ? visitLetBind(lets.first())
-          : Doc.vcat(lets.view()
-            .map(this::visitLetBind)
-            // | f := g
-            .map(x -> Doc.sep(Doc.symbol("|"), x)));
-
-        var docs = ImmutableSeq.of(
-          Doc.styled(KEYWORD, "let"),
-          letSeq,
-          Doc.styled(KEYWORD, "in")
-        );
-
-        // ```
-        // let a := b in
-        // ```
-        //
-        // or
-        //
-        // ```
-        // let
-        // | a := b
-        // | c := d
-        // in
-        // ```
-        var halfLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
-
-        yield Doc.sep(halfLet, term(Outer.Free, body));
-      }
+      case Expr.Let let -> new AbstractLetPrettier<>(this, let) {
+        @Override
+        public @NotNull Doc visitBind(Expr.@NotNull LetBind letBind) {
+          return visitLetBind(letBind);
+        }
+      }.visitLet(let);
       // let open Foo using (bar) in
       //   body
       case Expr.LetOpen letOpen -> Doc.vcat(

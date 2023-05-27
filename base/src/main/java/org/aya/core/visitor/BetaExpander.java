@@ -77,6 +77,7 @@ public interface BetaExpander extends EndoTerm {
           default -> term;
         };
       }
+      case LetTerm let -> apply(let.inline());
       default -> term;
     };
   }
