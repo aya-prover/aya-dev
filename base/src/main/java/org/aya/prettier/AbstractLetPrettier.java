@@ -2,18 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
-import org.aya.concrete.Expr;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Nested;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractLetPrettier<Bind, Term extends AyaDocile, LetTerm extends Expr.Nested<Bind, Term, LetTerm>>
+public abstract class AbstractLetPrettier<Bind, Term extends AyaDocile, LetTerm extends Nested<Bind, Term, LetTerm>>
   implements LetPrettier<Bind, Term, LetTerm> {
   private final @NotNull BasePrettier<Term> basePrettier;
-
-  public AbstractLetPrettier(@NotNull BasePrettier<Term> basePrettier) {
-    this.basePrettier = basePrettier;
-  }
 
   public AbstractLetPrettier(@NotNull BasePrettier<Term> basePrettier, LetTerm helper) {
     this.basePrettier = basePrettier;

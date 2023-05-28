@@ -4,8 +4,8 @@ package org.aya.core.term;
 
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.concrete.Expr;
 import org.aya.core.pat.Pat;
+import org.aya.generic.Nested;
 import org.aya.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ public record LetTerm(
   @NotNull LocalVar bind,
   @NotNull Term definedAs,
   @NotNull Term body
-) implements Term, Expr.Nested<Tuple2<LocalVar, Term>, Term, LetTerm> {
+) implements Term, Nested<Tuple2<LocalVar, Term>, Term, LetTerm> {
   /**
    * Substitute {@link LetTerm#bind} in {@link LetTerm#body} with {@link LetTerm#definedAs}
    */

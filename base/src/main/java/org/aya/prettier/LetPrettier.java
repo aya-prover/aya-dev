@@ -4,10 +4,11 @@ package org.aya.prettier;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
+import org.aya.generic.Nested;
 import org.aya.pretty.doc.Doc;
 import org.jetbrains.annotations.NotNull;
 
-public interface LetPrettier<Bind, Term, LetTerm extends Expr.Nested<Bind, Term, LetTerm>> {
+public interface LetPrettier<Bind, Term, LetTerm extends Nested<Bind, Term, LetTerm>> {
   @NotNull Doc bar();
   @NotNull Doc kwLet();
   @NotNull Doc kwIn();

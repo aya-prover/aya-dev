@@ -14,6 +14,7 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Nested;
 import org.aya.generic.ParamLike;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
@@ -44,42 +45,6 @@ import java.util.function.UnaryOperator;
  * @author re-xyr
  */
 public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr> {
-
-  /**
-   * A Nested structure is something consists of a head and a body, for example:
-   * <ul>
-   *   <li>{@link Lambda} is a nested structure, it has a {@link Expr.Param} as a head and a {@link Expr} as a body</li>
-   *   <li>{@link Let} is a nested structure, it has a {@link LetBind} as a head and a {@link Expr} as a body</li>
-   *   <li>If you wish, {@link App} is also a nested structure in some way</li>
-   * </ul>
-   * <p>
-   * A Nested class is supposed to also be a {@link Term}
-   * <p>
-   * TODO: This interface is too generic, move to outside
-   */
-  sealed interface Nested<Param, Term, This extends Nested<Param, Term, This>>
-    permits Lambda, Let, Pi, org.aya.core.term.LetTerm {
-    @NotNull Param param();
-
-    /**
-     * The body of a nested structure
-     */
-    @NotNull Term body();
-
-    /**
-     * The nested body of a nested structure
-     *
-     * @return null if the body is not {@link This}
-     * @implSpec {@code tryNested == null || tryNested == body}
-     */
-    @SuppressWarnings("unchecked")
-    default @Nullable This tryNested() {
-      var body = body();
-      var clazz = getClass();
-
-      return clazz.isInstance(body) ? (This) body : null;
-    }
-  }
 
   @NotNull Expr descent(@NotNull UnaryOperator<@NotNull Expr> f);
   /**
