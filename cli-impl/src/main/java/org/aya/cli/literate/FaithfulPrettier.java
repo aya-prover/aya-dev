@@ -41,18 +41,11 @@ public record FaithfulPrettier(
 ) implements LiterateConsumer {
 
   /**
-   * Highlight all aya code blocks
+   * Highlight all visible aya code blocks
    */
   @Override public void accept(@NotNull Literate literate) {
-    if (literate instanceof Literate.CodeBlock code
-      && code.sourcePos != null
-      && AyaLiterate.isAya(code.language)) {
-      if (code.language.equalsIgnoreCase(AyaLiterate.LANGUAGE_AYA_HIDDEN)) {
-        code.highlighted = Doc.empty();
-        code.dontCare = true;
-      } else {
-        code.highlighted = highlight(code.code, code.sourcePos);
-      }
+    if (literate instanceof AyaLiterate.AyaVisibleCodeBlock code && code.sourcePos != null) {
+      code.highlighted = highlight(code.code, code.sourcePos);
     }
     LiterateConsumer.super.accept(literate);
   }

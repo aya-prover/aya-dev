@@ -6,4 +6,6 @@ dependencies {
   api(project(":tools"))
   api("org.jetbrains", "annotations", version = deps.getProperty("version.annotations"))
   implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
+  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
+  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
 }

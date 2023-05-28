@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.literate.Literate;
+import org.aya.literate.parser.InterestingLanguage;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
 import org.aya.tyck.Result;
@@ -15,14 +17,40 @@ import org.jetbrains.annotations.Nullable;
  * @author hoshino
  */
 public interface AyaLiterate {
-  String LANGUAGE_AYA = "aya";
-  String LANGUAGE_AYA_HIDDEN = "aya-hidden";
-  static boolean isAya(@NotNull String language) {
-    return language.equalsIgnoreCase(LANGUAGE_AYA) || language.equalsIgnoreCase(LANGUAGE_AYA_HIDDEN);
+  @NotNull InterestingLanguage<AyaVisibleCodeBlock> VISIBLE_AYA = InterestingLanguage.of("aya"::equalsIgnoreCase,
+    AyaVisibleCodeBlock::new);
+  @NotNull InterestingLanguage<AyaHiddenCodeBlock> HIDDEN_AYA = InterestingLanguage.of("aya-hidden"::equalsIgnoreCase,
+    AyaHiddenCodeBlock::new);
+  @NotNull ImmutableSeq<InterestingLanguage<?>> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
+
+  static @NotNull Literate.CodeBlock visibleAyaCodeBlock(@NotNull String code, @NotNull SourcePos sourcePos) {
+    return new Literate.CodeBlock("aya", code, sourcePos);
+  }
+
+  class AyaCodeBlock extends Literate.CodeBlock {
+    public AyaCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+  }
+
+  final class AyaVisibleCodeBlock extends AyaCodeBlock {
+    public AyaVisibleCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+  }
+
+  final class AyaHiddenCodeBlock extends AyaCodeBlock {
+    public AyaHiddenCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.empty();
+    }
   }
 
   /**
-   * Aya inline code. For code blocks, see {@link CodeBlock}
+   * Aya inline code. For code blocks, see {@link AyaVisibleCodeBlock} and {@link AyaHiddenCodeBlock}
    */
   final class AyaInlineCode extends Literate.InlineCode {
     public @Nullable Expr expr;

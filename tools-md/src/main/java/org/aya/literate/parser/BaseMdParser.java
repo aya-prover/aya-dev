@@ -29,17 +29,19 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseMdParser {
+public class BaseMdParser {
   /** For empty line that end with \n, the index points to \n */
   protected final @NotNull ImmutableIntSeq linesIndex;
   protected final @NotNull SourceFile file;
   protected final @NotNull Reporter reporter;
+  protected final @NotNull ImmutableSeq<InterestingLanguage<?>> languages;
 
-  public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
+  public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage<?>> lang) {
     this.linesIndex = StringUtil.indexedLines(file.sourceCode())
       .mapToInt(ImmutableIntSeq.factory(), IntObjTuple2::component1);
     this.file = file;
     this.reporter = reporter;
+    this.languages = lang;
   }
 
   /// region Entry
@@ -107,7 +109,18 @@ public abstract class BaseMdParser {
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
         var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-        yield new Literate.CodeBlock(language, code.component2(), code.component1().get());
+        yield languages.find(p -> p.test(language))
+          .map(factory -> (Literate) factory.create(language, code.component2(), code.component1().get()))
+          .getOrElse(() -> {
+            var fence = String.valueOf(codeBlock.getFenceChar()).repeat(codeBlock.getFenceLength());
+            var raw = Doc.nest(codeBlock.getFenceIndent(), Doc.vcat(
+              Doc.escaped(fence + language),
+              Doc.escaped(code.component2()),
+              Doc.escaped(fence),
+              Doc.empty()
+            ));
+            return new Literate.Raw(raw);
+          });
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
