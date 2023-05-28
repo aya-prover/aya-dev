@@ -4,6 +4,8 @@ on:
     branches: [staging, trying]
   pull_request:
     branches: [main]
+  merge_group:
+    types: [checks_requested]
 jobs:
   commit-check:
     runs-on: ubuntu-20.04
