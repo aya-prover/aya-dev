@@ -340,7 +340,7 @@ public class AyaLanguageServer implements LanguageServer {
       .view()
       .flatMap(t -> t.sourcePos().file().underlying().map(f -> Tuple.of(f.toUri(), t)))
       .collect(Collectors.groupingBy(
-        t -> t.component1(),
+        Tuple2::component1,
         Collectors.mapping(
           t -> new TextEdit(LspRange.toRange(t.component2().sourcePos()), t.component2().newText()),
           Collectors.toList()
