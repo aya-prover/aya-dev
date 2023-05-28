@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.remark;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.Expr;
 import org.aya.literate.Literate;
+import org.aya.literate.parser.InterestingLanguage;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
 import org.aya.tyck.Result;
@@ -15,10 +17,20 @@ import org.jetbrains.annotations.Nullable;
  * @author hoshino
  */
 public interface AyaLiterate {
-  String LANGUAGE_AYA = "aya";
-  String LANGUAGE_AYA_HIDDEN = "aya-hidden";
+  @NotNull InterestingLanguage VISIBLE_AYA = "aya"::equalsIgnoreCase;
+  @NotNull InterestingLanguage HIDDEN_AYA = "aya-hidden"::equalsIgnoreCase;
+  @NotNull ImmutableSeq<InterestingLanguage> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
+
   static boolean isAya(@NotNull String language) {
-    return language.equalsIgnoreCase(LANGUAGE_AYA) || language.equalsIgnoreCase(LANGUAGE_AYA_HIDDEN);
+    return AYA.anyMatch(s -> s.test(language));
+  }
+
+  static boolean isVisibleAya(@NotNull String language) {
+    return VISIBLE_AYA.test(language);
+  }
+
+  static @NotNull Literate.CodeBlock visibleAyaCodeBlock(@NotNull String code, @NotNull SourcePos sourcePos) {
+    return new Literate.CodeBlock("aya", code, sourcePos);
   }
 
   /**

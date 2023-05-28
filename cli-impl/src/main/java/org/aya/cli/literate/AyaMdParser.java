@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 public class AyaMdParser extends BaseMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
-    super(file, reporter);
+    super(file, reporter, AyaLiterate.AYA);
   }
 
   @Override

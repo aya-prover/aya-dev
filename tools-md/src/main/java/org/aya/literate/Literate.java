@@ -82,7 +82,6 @@ public interface Literate extends Docile {
      */
     public final @Nullable SourcePos sourcePos;
     public @Nullable Doc highlighted = null;
-    public boolean dontCare = false; // TODO[kiva]: "interesting language" feature, but I am busy now
 
     public CodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
       this.language = language;
@@ -91,11 +90,8 @@ public interface Literate extends Docile {
     }
 
     @Override public @NotNull Doc toDoc() {
-      if (dontCare) return Doc.empty();
-      return Doc.codeBlock(Language.of(language),
-        this.highlighted == null
-          ? Doc.plain(code)
-          : this.highlighted);
+      var content = highlighted != null ? highlighted : Doc.plain(code);
+      return Doc.codeBlock(Language.of(language), content);
     }
   }
 
