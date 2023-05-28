@@ -28,6 +28,8 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * This is the second base-base class of a tycker.
  * It has the zonking stuffs and basic def-call related functions.
@@ -40,7 +42,10 @@ import org.jetbrains.annotations.Nullable;
  * @see #conOwnerSubst(ConCall)
  */
 public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier, MockTycker {
-  public final @NotNull TyckState state;
+  /**
+   * Never set state directly, use {@link StatedTycker#subscoped} instead
+   */
+  public @NotNull TyckState state;
 
   protected StatedTycker(@NotNull Reporter reporter, @Nullable Trace.Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder);
@@ -110,5 +115,13 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
    */
   protected @NotNull Subst conOwnerSubst(@NotNull ConCall conCall) {
     return PatternTycker.mischa(conCall.head().underlyingDataCall(), conCall.ref().core, state).get();
+  }
+
+  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var parentState = this.state;
+    this.state = parentState.derive();
+    var result = action.get();
+    this.state = parentState;
+    return result;
   }
 }

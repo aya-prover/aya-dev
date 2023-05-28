@@ -17,10 +17,11 @@ public record LetTerm(
   @NotNull Term body
 ) implements Term, Nested<Tuple2<LocalVar, Term>, Term, LetTerm> {
   /**
-   * Substitute {@link LetTerm#bind} in {@link LetTerm#body} with {@link LetTerm#definedAs}
+   * Substitute {@link LetTerm#bind} in {@link LetTerm#body} with {@link LetTerm#definedAs}.
+   * In order to avoid normalizing {@code big} multiple times in {@code (\ x => (x, ..., x)) big}
    */
-  public @NotNull Term inline() {
-    return body.subst(bind, definedAs);
+  public @NotNull Term inline(@NotNull UnaryOperator<Term> inliner) {
+    return body.subst(bind, inliner.apply(definedAs));
   }
 
   public @NotNull LetTerm update(@NotNull Term definedAs, @NotNull Term body) {

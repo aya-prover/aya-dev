@@ -2,10 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import kala.collection.Map;
 import org.aya.concrete.Expr;
 import org.aya.core.term.AppTerm;
 import org.aya.core.term.PiTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.Result;
@@ -21,6 +23,8 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * This is the 2.25-th base class of a tycker.
  *
@@ -31,6 +35,11 @@ import org.jetbrains.annotations.Nullable;
  * @see #mockTerm
  */
 public abstract sealed class MockTycker extends StatedTycker permits ConcreteAwareTycker, TermComparator {
+  /**
+   * Never set ctx directly, use {@link MockTycker#subscoped} instead.
+   *
+   * @see StatedTycker#subscoped(Supplier)
+   */
   public @NotNull LocalCtx ctx;
 
   protected MockTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state, @NotNull LocalCtx ctx) {
@@ -79,5 +88,24 @@ public abstract sealed class MockTycker extends StatedTycker permits ConcreteAwa
       type = whnf(pi.substBody(holeApp.term()));
     }
     return new Result.Default(term, type);
+  }
+
+  public void addDefEq(@NotNull LocalVar x, @NotNull Term y, @NotNull Term A) {
+    ctx.put(x, A);
+    state.defEq().addDirectly(x, y);
+  }
+
+  public void addDefEqs(@NotNull Subst subst, @NotNull Map<LocalVar, Term> types) {
+    types.forEach((var, type) -> ctx.put(var, type));
+    state.defEq().addAllDirectly(subst);
+  }
+
+  @Override
+  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var parentCtx = this.ctx;
+    this.ctx = parentCtx.deriveMap();
+    var result = super.subscoped(action);
+    this.ctx = parentCtx;
+    return result;
   }
 }

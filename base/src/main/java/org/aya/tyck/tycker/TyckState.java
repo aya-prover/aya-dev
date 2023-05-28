@@ -11,6 +11,7 @@ import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.MetaTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
+import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.TermConsumer;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
@@ -30,16 +31,18 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Currently we only deal with ambiguous equations (so no 'stuck' equations).
+ * And now, we deal with defEq.
  */
 public record TyckState(
   @NotNull MutableList<Eqn> eqns,
   @NotNull MutableList<WithPos<Meta>> activeMetas,
   @NotNull MutableMap<@NotNull Meta, @NotNull Term> metas,
   @NotNull MutableSet<@NotNull Meta> notInPropMetas,
+  @NotNull Subst defEq,
   @NotNull PrimDef.Factory primFactory
 ) {
   public TyckState(@NotNull PrimDef.Factory primFactory) {
-    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableSet.create(), primFactory);
+    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableSet.create(), new Subst(), primFactory);
   }
 
   /**
@@ -112,6 +115,17 @@ public record TyckState(
     }
     metas().put(meta, t);
     return true;
+  }
+
+  public @NotNull TyckState derive() {
+    return new TyckState(
+      this.eqns,
+      this.activeMetas,
+      this.metas,
+      this.notInPropMetas,
+      this.defEq.derive(),
+      this.primFactory
+    );
   }
 
   public record Eqn(
