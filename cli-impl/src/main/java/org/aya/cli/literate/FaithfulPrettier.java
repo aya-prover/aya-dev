@@ -44,14 +44,8 @@ public record FaithfulPrettier(
    * Highlight all visible aya code blocks
    */
   @Override public void accept(@NotNull Literate literate) {
-    if (literate instanceof Literate.CodeBlock code
-      && code.sourcePos != null
-      && AyaLiterate.isAya(code.language)) {
-      // If the code block is hidden, use `Doc.empty()` instead of null.
-      // Otherwise, the `toDoc` of `Literate` returns the plain code.
-      code.highlighted = AyaLiterate.isVisibleAya(code.language)
-        ? highlight(code.code, code.sourcePos)
-        : Doc.empty();
+    if (literate instanceof AyaLiterate.AyaVisibleCodeBlock code && code.sourcePos != null) {
+      code.highlighted = highlight(code.code, code.sourcePos);
     }
     LiterateConsumer.super.accept(literate);
   }

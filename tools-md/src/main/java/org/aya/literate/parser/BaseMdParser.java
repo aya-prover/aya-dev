@@ -34,9 +34,9 @@ public abstract class BaseMdParser {
   protected final @NotNull ImmutableIntSeq linesIndex;
   protected final @NotNull SourceFile file;
   protected final @NotNull Reporter reporter;
-  protected final @NotNull ImmutableSeq<InterestingLanguage> languages;
+  protected final @NotNull ImmutableSeq<InterestingLanguage<?>> languages;
 
-  public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage> lang) {
+  public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage<?>> lang) {
     this.linesIndex = StringUtil.indexedLines(file.sourceCode())
       .mapToInt(ImmutableIntSeq.factory(), IntObjTuple2::component1);
     this.file = file;
@@ -108,14 +108,17 @@ public abstract class BaseMdParser {
       case ThematicBreak t -> new Literate.Many(MdStyle.GFM.ThematicBreak, mapChildren(t));
       case FencedCodeBlock codeBlock -> {
         var language = codeBlock.getInfo();
-        if (languages.anyMatch(p -> p.test(language))) {
-          var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-          yield new Literate.CodeBlock(language, code.component2(), code.component1().get());
-        }
-        var fence = String.valueOf(codeBlock.getFenceChar()).repeat(codeBlock.getFenceLength());
-        var code = Doc.hang(codeBlock.getFenceIndent(),
-          Doc.escaped(fence + "\n" + codeBlock.getLiteral() + fence + "\n"));
-        yield new Literate.Raw(code);
+        yield languages.find(p -> p.test(language))
+          .map(factory -> {
+            var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
+            return (Literate) factory.create(language, code.component2(), code.component1().get());
+          })
+          .getOrElse(() -> {
+            var fence = String.valueOf(codeBlock.getFenceChar()).repeat(codeBlock.getFenceLength());
+            var code = Doc.hang(codeBlock.getFenceIndent(),
+              Doc.escaped(fence + "\n" + codeBlock.getLiteral() + fence + "\n"));
+            return new Literate.Raw(code);
+          });
       }
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();

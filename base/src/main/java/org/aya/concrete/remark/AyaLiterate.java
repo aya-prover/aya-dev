@@ -17,24 +17,40 @@ import org.jetbrains.annotations.Nullable;
  * @author hoshino
  */
 public interface AyaLiterate {
-  @NotNull InterestingLanguage VISIBLE_AYA = "aya"::equalsIgnoreCase;
-  @NotNull InterestingLanguage HIDDEN_AYA = "aya-hidden"::equalsIgnoreCase;
-  @NotNull ImmutableSeq<InterestingLanguage> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
-
-  static boolean isAya(@NotNull String language) {
-    return AYA.anyMatch(s -> s.test(language));
-  }
-
-  static boolean isVisibleAya(@NotNull String language) {
-    return VISIBLE_AYA.test(language);
-  }
+  @NotNull InterestingLanguage<AyaVisibleCodeBlock> VISIBLE_AYA = InterestingLanguage.of("aya"::equalsIgnoreCase,
+    AyaVisibleCodeBlock::new);
+  @NotNull InterestingLanguage<AyaHiddenCodeBlock> HIDDEN_AYA = InterestingLanguage.of("aya-hidden"::equalsIgnoreCase,
+    AyaHiddenCodeBlock::new);
+  @NotNull ImmutableSeq<InterestingLanguage<?>> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
 
   static @NotNull Literate.CodeBlock visibleAyaCodeBlock(@NotNull String code, @NotNull SourcePos sourcePos) {
     return new Literate.CodeBlock("aya", code, sourcePos);
   }
 
+  class AyaCodeBlock extends Literate.CodeBlock {
+    public AyaCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+  }
+
+  final class AyaVisibleCodeBlock extends AyaCodeBlock {
+    public AyaVisibleCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+  }
+
+  final class AyaHiddenCodeBlock extends AyaCodeBlock {
+    public AyaHiddenCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.empty();
+    }
+  }
+
   /**
-   * Aya inline code. For code blocks, see {@link CodeBlock}
+   * Aya inline code. For code blocks, see {@link AyaVisibleCodeBlock} and {@link AyaHiddenCodeBlock}
    */
   final class AyaInlineCode extends Literate.InlineCode {
     public @Nullable Expr expr;

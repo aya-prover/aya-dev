@@ -72,7 +72,7 @@ public interface Literate extends Docile {
     }
   }
 
-  final class CodeBlock implements Literate {
+  class CodeBlock implements Literate {
     public final @NotNull String language;
     public final @NotNull String code;
 

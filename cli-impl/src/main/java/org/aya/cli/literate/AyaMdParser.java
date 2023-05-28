@@ -45,9 +45,8 @@ public class AyaMdParser extends BaseMdParser {
    * Another strategy: create a lexer that can tokenize some pieces of source code
    */
   public @NotNull String extractAya(@NotNull Literate literate) {
-    return etching(new LiterateConsumer.InstanceExtractinator<>(Literate.CodeBlock.class)
+    return etching(new LiterateConsumer.InstanceExtractinator<>(AyaLiterate.AyaCodeBlock.class)
       .extract(literate).view()
-      .filter(x -> AyaLiterate.isAya(x.language))
       .map(Function.identity())
     );
   }
