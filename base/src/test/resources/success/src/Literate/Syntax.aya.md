@@ -2,6 +2,22 @@
 title: Syntax test for literate programming
 ---
 
+To use literate Aya, use the following code block in Markdown:
+
+~~~markdown
+```aya
+// some aya code
+```
+~~~
+
+or equivalently:
+
+```markdown
+~~~aya
+// some aya code
+~~~
+```
+
 ```aya
 open data Nat | O | S Nat
 open data List (A : Type) | nil | infixl :< A (List A)

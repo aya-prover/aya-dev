@@ -14,7 +14,15 @@ public interface InterestingLanguage<T extends Literate.CodeBlock> {
   boolean test(@NotNull String language);
   @NotNull T create(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos);
 
-  @NotNull InterestingLanguage<Literate.CodeBlock> ALL = of(s -> true, Literate.CodeBlock::new);
+  @NotNull InterestingLanguage<Literate.CodeBlock> ALL = of(s -> true);
+
+  static @NotNull InterestingLanguage<Literate.CodeBlock> of(@NotNull String language) {
+    return of(language::equalsIgnoreCase);
+  }
+
+  static @NotNull InterestingLanguage<Literate.CodeBlock> of(@NotNull Predicate<String> test) {
+    return of(test, Literate.CodeBlock::new);
+  }
 
   static <T extends Literate.CodeBlock> @NotNull InterestingLanguage<T> of(
     @NotNull Predicate<String> test,
