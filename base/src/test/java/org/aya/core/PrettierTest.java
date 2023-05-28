@@ -224,6 +224,19 @@ public class PrettierTest {
         """).debugRender());
   }
 
+  @Test public void letTermAndSaveSomeCoverage() {
+    assertEquals("""
+        def what : Type 1 => let
+        | a := Type 0
+        | b := a
+        in b""",
+      declDoc("""
+        def what => let | a := Type 0
+        | b := a in
+        b
+        """).debugRender());
+  }
+
   // The test name is outdated but the test is kept to avoid regression
   @Test public void rawProjExpr() {
     ParseTest.parseAndPretty("def a => coe 0 1 E u", "def a => coe 0 1 E u");

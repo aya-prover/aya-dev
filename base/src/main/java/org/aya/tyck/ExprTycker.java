@@ -297,7 +297,7 @@ public final class ExprTycker extends PropTycker {
     var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
     var bodyResult = subscoped(() -> {
-      definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
+      ctx.put(nameAndType.ref(), definedAsResult.type());
       return checker.apply(let.body());
     });
 
