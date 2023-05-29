@@ -125,6 +125,8 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
       case OutTerm(var phi, var par, var u) -> new SerTerm.OutS(serialize(phi), serialize(par), serialize(u));
+      case LetTerm(var bind, var definedAs, var body) ->
+        new SerTerm.Let(serialize(bind), serialize(definedAs), serialize(body));
     };
   }
 

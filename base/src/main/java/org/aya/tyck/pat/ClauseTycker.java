@@ -21,6 +21,8 @@ import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * @author ice1000
  * TODO: interface?
@@ -114,15 +116,12 @@ public final class ClauseTycker {
   public record LhsResult(
     @NotNull LocalCtx gamma,
     @NotNull Term type,
-    @NotNull TypedSubst bodySubst,
+    @NotNull DefEq bodySubst,
     boolean hasError,
     @NotNull Pat.Preclause<Expr> preclause
   ) {
   }
 
-  /**
-   * @param isElim whether this checking is used for elimination (rather than data declaration)
-   */
   public static @NotNull LhsResult checkLhs(
     @NotNull ExprTycker exprTycker,
     @NotNull Pattern.Clause match,
@@ -130,8 +129,23 @@ public final class ClauseTycker {
     boolean inProp,
     boolean isElim
   ) {
+    return checkLhs(exprTycker, match, signature, inProp, isElim, true);
+  }
+
+  /**
+   * @param isElim      whether this checking is used for elimination (rather than data declaration)
+   * @param isSubscoped whether reset the state of {@param exprTycker} after checking
+   */
+  public static @NotNull LhsResult checkLhs(
+    @NotNull ExprTycker exprTycker,
+    @NotNull Pattern.Clause match,
+    @NotNull Def.Signature<?> signature,
+    boolean inProp,
+    boolean isElim,
+    boolean isSubscoped
+  ) {
     var patTycker = new PatternTycker(exprTycker, signature, match.patterns.view());
-    return exprTycker.subscoped(() -> {
+    Supplier<LhsResult> action = () -> {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
       if (isElim && !match.patterns.anyMatch(p -> hasAbsurdity(p.term())) && match.expr.isEmpty()) {
@@ -164,16 +178,17 @@ public final class ClauseTycker {
 
       return new LhsResult(exprTycker.ctx, type, patTycker.bodySubst, patTycker.hasError(),
         new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody())));
-    });
+    };
+
+    return isSubscoped ? exprTycker.subscoped(action) : action.get();
   }
 
   private static Pat.Preclause<Term> checkRhs(@NotNull ExprTycker exprTycker, @NotNull LhsResult lhsResult) {
     return exprTycker.subscoped(() -> {
       exprTycker.ctx = lhsResult.gamma;
       var term = exprTycker.subscoped(() -> {
-        // We `addDirectly` to `definitionEqualities`.
-        // This means terms in `definitionEqualities` won't be substituted by `lhsResult.bodySubst`
-        exprTycker.definitionEqualities.addDirectly(lhsResult.bodySubst());
+        var bodySubst = lhsResult.bodySubst;
+        exprTycker.addDefEqs(bodySubst.subst(), bodySubst.type());
         return lhsResult.preclause.expr().map(e -> lhsResult.hasError
           // In case the patterns are malformed, do not check the body
           // as we bind local variables in the pattern checker,
@@ -208,7 +223,7 @@ public final class ClauseTycker {
     return META_PAT_INLINER.apply(term);
   }
 
-  public static @NotNull TypedSubst inlineTypedSubst(@NotNull TypedSubst tySubst) {
+  public static @NotNull DefEq inlineTypedSubst(@NotNull DefEq tySubst) {
     tySubst.subst().map().replaceAll((var, term) -> inlineTerm(term));
     tySubst.type().replaceAll((var, term) -> inlineTerm(term));
 

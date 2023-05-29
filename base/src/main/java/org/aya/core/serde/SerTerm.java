@@ -320,4 +320,11 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new OutTerm(phi.de(state), par.de(state), u.de(state));
     }
   }
+
+  record Let(@NotNull SimpVar bind, @NotNull SerTerm definedAs, @NotNull SerTerm body) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new LetTerm(bind.de(state), definedAs.de(state), body.de(state));
+    }
+  }
 }

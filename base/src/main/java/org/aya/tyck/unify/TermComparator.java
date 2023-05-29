@@ -132,7 +132,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     // ^ Beware of the order!!
     if (lhs instanceof MetaTerm lMeta) {
       return solveMeta(lMeta, rhs, lr, rl, type) != null;
-    } else if (type == null) {
+    }
+    if (type == null) {
       return compareUntyped(lhs, rhs, lr, rl) != null;
     }
     if (lhs instanceof ErrorTerm || rhs instanceof ErrorTerm) return true;
@@ -144,12 +145,20 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   @Nullable protected Term compareUntyped(@NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state),
       rhs.freezeHoles(state), pos));
+    if (rhs instanceof RefTerm && !(lhs instanceof RefTerm)) {
+      // a, b = b, a
+      var tmp = lhs;
+      lhs = rhs;
+      rhs = tmp;
+    }
+
     // lhs & rhs will both be WHNF if either is not a potentially reducible call
     if (isCall(lhs) || isCall(rhs)) {
       var ty = compareApprox(lhs, rhs, lr, rl);
       if (ty == null) ty = doCompareUntyped(lhs, rhs, lr, rl);
       if (ty != null) return whnf(ty);
     }
+
     lhs = whnf(lhs);
     rhs = whnf(rhs);
     Term x;
@@ -426,7 +435,20 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         else yield null;
       }
       case RefTerm(var lhs) -> {
-        if (preRhs instanceof RefTerm(var rhs) && lhs == rhs) yield ctx.get(lhs);
+        var lTerm = state.defEq().map().getOption(lhs);
+        if (preRhs instanceof RefTerm(var rhs)) {
+          if (lhs == rhs) {
+            yield ctx.get(lhs);
+          } else {
+            var rTerm = state.defEq().map().getOption(rhs);
+
+            // nothing change :(
+            if (lTerm.isEmpty() && rTerm.isEmpty()) yield null;
+            yield compareUntyped(lTerm.getOrDefault(preLhs), rTerm.getOrDefault(preRhs), lr, rl);
+          }
+        }
+
+        if (lTerm.isNotEmpty()) yield compareUntyped(lTerm.get(), preRhs, lr, rl);
         yield null;
       }
       case AppTerm(var lOf, var lArg) -> {

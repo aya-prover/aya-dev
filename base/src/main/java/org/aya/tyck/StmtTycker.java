@@ -240,11 +240,12 @@ public final class StmtTycker extends TracedTycker {
     if (ctor.patterns.isNotEmpty()) {
       var sig = new Def.Signature<>(dataSig.param(), predataCall);
       var lhs = ClauseTycker.checkLhs(tycker,
-        new Pattern.Clause(ctor.sourcePos(), ctor.patterns, Option.none()), sig, false, false);
+        new Pattern.Clause(ctor.sourcePos(), ctor.patterns, Option.none()),
+        sig, false, false, false);
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
-      tycker.ctx = lhs.gamma();
-      tycker.definitionEqualities = lhs.bodySubst();
+      // TODO: PatternTycker can `ExprTycker#addDefEq` directly
+      tycker.addDefEqs(lhs.bodySubst().subst(), lhs.bodySubst().type());
       predataCall = (DataCall) predataCall.subst(new Subst(
         dataSig.param().view().map(Term.Param::ref),
         pat.view().map(Arg::term).map(Pat::toTerm)));

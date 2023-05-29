@@ -65,13 +65,10 @@ public final class ExprTycker extends PropTycker {
         yield new Result.Default(ty, ty.lift(1));
       }
       case Expr.Ref ref -> switch (ref.resolvedVar()) {
-        case LocalVar loc -> definitionEqualities
-          .getOption(loc)     // automatically unfold
-          .getOrElse(() -> {
-            // not defined in definitionEqualities, search localCtx
-            var ty = ctx.get(loc);
-            return new Result.Default(new RefTerm(loc), ty);
-          });
+        case LocalVar loc -> {
+          var ty = ctx.get(loc);
+          yield new Result.Default(new RefTerm(loc), ty);
+        }
         case DefVar<?, ?> defVar -> inferRef(defVar);
         default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
       };
@@ -276,7 +273,6 @@ public final class ExprTycker extends PropTycker {
 
   /**
    * tyck a let expr with the given checker
-   * TODO: maybe we should move this to other place
    *
    * @param checker check the type of the body of {@param let}
    */
@@ -299,20 +295,13 @@ public final class ExprTycker extends PropTycker {
     var nameAndType = new Term.Param(let.bind().bindName(), definedAsResult.type(), true);
 
     var bodyResult = subscoped(() -> {
-      definitionEqualities.addDirectly(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
+      addDefEq(nameAndType.ref(), definedAsResult.wellTyped(), definedAsResult.type());
       return checker.apply(let.body());
     });
 
-    // `let f : G := g in h` is desugared to `(\ (f : G) => h) g`
+    var letTerm = new LetTerm(nameAndType.ref(), definedAsResult.wellTyped(), bodyResult.wellTyped());
 
-    // (\ (f : G) => h) : G -> {??}
-    var lam = new LamTerm(LamTerm.param(nameAndType), bodyResult.wellTyped());
-
-    // then apply a `g`
-    // (\ (f : G) => h) g : {??}
-    var full = AppTerm.make(lam, new Arg<>(definedAsResult.wellTyped(), true));
-
-    return new Result.Default(full, bodyResult.type());
+    return new Result.Default(letTerm, bodyResult.type());
   }
 
   public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {

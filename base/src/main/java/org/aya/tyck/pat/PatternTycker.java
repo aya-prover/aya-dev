@@ -42,8 +42,8 @@ import org.jetbrains.annotations.UnknownNullability;
  */
 public final class PatternTycker {
   public final @NotNull ExprTycker exprTycker;
-  public final @NotNull TypedSubst bodySubst;
-  private final @NotNull TypedSubst sigSubst = new TypedSubst();
+  public final @NotNull DefEq bodySubst;
+  private final @NotNull DefEq sigSubst = new DefEq();
   private @NotNull Def.Signature<?> signature;
   private @NotNull SeqView<Arg<Pattern>> patterns;
   private final @NotNull MutableList<Arg<Pat>> wellTyped = MutableList.create();
@@ -51,7 +51,7 @@ public final class PatternTycker {
   private boolean hasError = false;
 
   private PatternTycker(@NotNull ExprTycker exprTycker,
-                        @NotNull TypedSubst bodySubst,
+                        @NotNull DefEq bodySubst,
                         @NotNull Def.Signature<?> signature,
                         @NotNull SeqView<Arg<Pattern>> patterns) {
     this.exprTycker = exprTycker;
@@ -63,7 +63,7 @@ public final class PatternTycker {
   public PatternTycker(@NotNull ExprTycker exprTycker,
                        @NotNull Def.Signature<?> signature,
                        @NotNull SeqView<Arg<Pattern>> patterns) {
-    this(exprTycker, new TypedSubst(), signature, patterns);
+    this(exprTycker, new DefEq(), signature, patterns);
   }
 
   /**
@@ -107,7 +107,7 @@ public final class PatternTycker {
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.ctx.put(bind, term);
         if (tyExpr != null) exprTycker.subscoped(() -> {
-          exprTycker.definitionEqualities.addDirectly(bodySubst);
+          exprTycker.addDefEqs(bodySubst.subst(), bodySubst.type());
           var syn = exprTycker.synthesize(tyExpr);
           exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
           return null;
@@ -298,7 +298,7 @@ public final class PatternTycker {
   /**
    * Adding a subst for body (rhs)
    */
-  private void addPatSubst(@NotNull AnyVar var, @NotNull Pat pat, @NotNull Term type) {
+  private void addPatSubst(@NotNull LocalVar var, @NotNull Pat pat, @NotNull Term type) {
     bodySubst.addDirectly(var, pat.toTerm(), type);
   }
 

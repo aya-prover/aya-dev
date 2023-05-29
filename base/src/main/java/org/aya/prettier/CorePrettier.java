@@ -7,19 +7,20 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple2;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,6 +239,15 @@ public class CorePrettier extends BasePrettier<Term> {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
       case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");
+      case LetTerm let -> new AbstractLetPrettier<>(this, let) {
+        @Override
+        public @NotNull Doc visitBind(@NotNull Tuple2<LocalVar, Term> letBind) {
+          var bind = letBind.component1();
+          Doc type = null;      // TODO: type
+          var definedAs = letBind.component2();
+          return Doc.sep(varDoc(bind), Doc.symbol(":="), term(definedAs));
+        }
+      }.visitLet(let);
     };
   }
 
