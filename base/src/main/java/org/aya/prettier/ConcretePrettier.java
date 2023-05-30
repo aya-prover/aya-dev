@@ -21,6 +21,7 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.ExprConsumer;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.Nested;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
@@ -90,14 +91,24 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
       }
       case Expr.Lambda expr -> {
-        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats) && !expr.param().explicit()) {
-          yield term(outer, expr.body());
+        var pair = Nested.destructNested(expr);
+        var telescope = pair.component1();
+        var body = pair.component2();
+
+        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats)) {
+          var exTele = telescope.filter(Expr.Param::explicit);
+          if (exTele.isEmpty()) yield term(outer, body);
+
+          telescope = exTele;
         }
-        var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")),
-          lambdaParam(expr.param()));
-        if (!(expr.body() instanceof Expr.Hole)) {
+
+        var prelude = MutableList.of(Doc.styled(KEYWORD, Doc.symbol("\\")));
+        var docTele = telescope.map(this::lambdaParam);
+
+        prelude.appendAll(docTele);
+        if (!(body instanceof Expr.Hole)) {
           prelude.append(Doc.symbol("=>"));
-          prelude.append(term(Outer.Free, expr.body()));
+          prelude.append(term(Outer.Free, body));
         }
         yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
       }
@@ -192,7 +203,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         )
       );
       case Expr.Let let -> {
-        var letsAndBody = sugarLet(let);
+        var letsAndBody = Nested.destructNested(let);
         var lets = letsAndBody.component1();
         var body = letsAndBody.component2();
         var oneLine = lets.sizeEquals(1);
@@ -469,19 +480,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       Doc.styled(KEYWORD, "tighter"), Doc.commaList(tighters.view().map(BasePrettier::defVar)),
       Doc.styled(KEYWORD, "looser"), Doc.commaList(loosers.view().map(BasePrettier::defVar))
     )))));
-  }
-
-  // Convert a parsing-time-desguared let to a sugared let
-  private @NotNull Tuple2<ImmutableSeq<Expr.LetBind>, Expr> sugarLet(@NotNull Expr.Let let) {
-    var letBinds = MutableList.<Expr.LetBind>create();
-
-    Expr letOrExpr = let;
-    while (letOrExpr instanceof Expr.Let mLet) {
-      letBinds.append(mLet.bind());
-      letOrExpr = mLet.body();
-    }
-
-    return Tuple.of(letBinds.toImmutableSeq(), letOrExpr);
   }
 
   private @NotNull Doc visitLetBind(@NotNull Expr.LetBind letBind) {
