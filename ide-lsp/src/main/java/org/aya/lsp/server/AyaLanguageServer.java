@@ -328,7 +328,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     return Optional.of(FindReferences
-      .findRefs(source, libraries.view(), LspRange.pos(params.position))
+      .findRefsOutsideDefs(source, libraries.view(), LspRange.pos(params.position))
       .map(LspRange::toLoc)
       .collect(Collectors.toList()));
   }

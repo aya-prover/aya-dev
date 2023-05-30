@@ -40,7 +40,7 @@ public record LensMaker(
   @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Decl maybe) {
       Resolver.withChildren(maybe).filter(dv -> dv.concrete != null).forEach(dv -> {
-        var refs = FindReferences.findRefs(SeqView.of(dv), libraries).toImmutableSeq();
+        var refs = FindReferences.findRefsOutsideDefs(SeqView.of(dv), libraries).toImmutableSeq();
         if (refs.size() > 0) {
           var sourcePos = dv.concrete.sourcePos();
           var uri = LspRange.toFileUri(sourcePos);

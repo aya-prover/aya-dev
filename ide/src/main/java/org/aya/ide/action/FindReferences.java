@@ -8,6 +8,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
 import org.aya.ref.AnyVar;
+import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,22 @@ public interface FindReferences {
       var resolver = new Resolver.UsageResolver(var);
       return libraries.flatMap(lib -> resolve(resolver, lib));
     });
+  }
+
+  static @NotNull SeqView<SourcePos> findRefsOutsideDefs(
+    @NotNull LibrarySource source,
+    @NotNull SeqView<LibraryOwner> libraries, XY xy
+  ) {
+    var vars = Resolver.resolveVar(source, xy);
+    return findRefsOutsideDefs(vars.map(WithPos::data), libraries);
+  }
+
+  static @NotNull SeqView<SourcePos> findRefsOutsideDefs(
+    @NotNull SeqView<AnyVar> vars,
+    @NotNull SeqView<LibraryOwner> libraries
+  ) {
+    var defPos = vars.filterIsInstance(DefVar.class).map(def -> def.concrete.entireSourcePos());
+    return findRefs(vars, libraries).filter(ref -> !defPos.map(pos -> pos.containsIndex(ref)).contains(true));
   }
 
   static @NotNull SeqView<SourcePos> findOccurrences(
