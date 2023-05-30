@@ -45,7 +45,7 @@ public interface FindReferences {
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     var defPos = vars.filterIsInstance(DefVar.class).map(def -> def.concrete.entireSourcePos());
-    return findRefs(vars, libraries).filter(ref -> !defPos.map(pos -> pos.containsIndex(ref)).contains(true));
+    return findRefs(vars, libraries).filter(ref -> defPos.noneMatch(pos -> pos.containsIndex(ref)));
   }
 
   static @NotNull SeqView<SourcePos> findOccurrences(
