@@ -24,18 +24,12 @@ public abstract sealed class LetListTycker extends ConcreteAwareTycker permits U
     super(reporter, traceBuilder, state);
   }
 
+  @Override
   public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parentCtx = this.ctx;
     var parentSubst = this.definitionEqualities;
-
-    this.ctx = parentCtx.deriveMap();
     this.definitionEqualities = parentSubst.derive();
-
-    var result = action.get();
-
+    var result = super.subscoped(action);
     this.definitionEqualities = parentSubst;
-    this.ctx = parentCtx;
-
     return result;
   }
 }

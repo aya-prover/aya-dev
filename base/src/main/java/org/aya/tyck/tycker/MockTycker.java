@@ -21,6 +21,8 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * This is the 2.25-th base class of a tycker.
  *
@@ -79,5 +81,13 @@ public abstract sealed class MockTycker extends StatedTycker permits ConcreteAwa
       type = whnf(pi.substBody(holeApp.term()));
     }
     return new Result.Default(term, type);
+  }
+
+  public <R> R subscoped(@NotNull Supplier<R> action) {
+    var parentCtx = this.ctx;
+    this.ctx = parentCtx.deriveMap();
+    var result = action.get();
+    this.ctx = parentCtx;
+    return result;
   }
 }
