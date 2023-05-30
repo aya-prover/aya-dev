@@ -14,6 +14,7 @@ import org.aya.concrete.stmt.QualifiedID;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.UseHide;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Nested;
 import org.aya.generic.ParamLike;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Restr;
@@ -190,7 +191,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr last
-  ) implements Expr {
+  ) implements Expr, Nested<Param, Expr, Pi> {
+    @Override
+    public @NotNull Expr body() {
+      return last;
+    }
+
     public @NotNull Expr.Pi update(@NotNull Param param, @NotNull Expr last) {
       return param == param() && last == last() ? this : new Pi(sourcePos, param, last);
     }
@@ -273,7 +279,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Param param,
     @NotNull Expr body
-  ) implements Expr {
+  ) implements Expr, Nested<Param, Expr, Lambda> {
     public @NotNull Expr.Lambda update(@NotNull Param param, @NotNull Expr body) {
       return param == param() && body == body() ? this : new Lambda(sourcePos, param, body);
     }
@@ -691,7 +697,12 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull Expr.LetBind bind,
     @NotNull Expr body
-  ) implements Expr {
+  ) implements Expr, Nested<LetBind, Expr, Let> {
+    @Override
+    public @NotNull LetBind param() {
+      return bind;
+    }
+
     public @NotNull Let update(@NotNull Expr.LetBind bind, @NotNull Expr body) {
       return bind() == bind && body() == body
         ? this
