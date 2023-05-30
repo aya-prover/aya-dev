@@ -4,6 +4,7 @@ package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.concrete.Expr;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,6 @@ public interface Nested<Param, Term, This extends Nested<Param, Term, This>> {
       nestedBody = nestedBody.tryNested();
     }
 
-    return kala.tuple.Tuple.of(telescope.toImmutableSeq(), body);
+    return Tuple.of(telescope.toImmutableSeq(), body);
   }
 }
