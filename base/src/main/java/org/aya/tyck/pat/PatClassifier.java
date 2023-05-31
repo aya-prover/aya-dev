@@ -200,15 +200,8 @@ public final class PatClassifier extends StatedTycker
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
     @NotNull Reporter reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
   ) {
-    // StackOverflow says they're initialized to zero
-    var numbers = new int[clauses.size()];
-    classes.forEach(results ->
-      numbers[results.cls().min()]++);
-    // ^ The minimum is not always the first one
-    for (int i = 0; i < numbers.length; i++)
-      if (0 == numbers[i]) reporter.report(
-        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos()));
-    return numbers;
+    return ClassifierUtil.firstMatchDomination(clauses, (pos, i) -> reporter.report(
+      new ClausesProblem.FMDomination(i, pos)), classes);
   }
 
   private @Nullable SeqView<Term.Param>
