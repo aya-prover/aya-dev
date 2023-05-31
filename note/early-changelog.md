@@ -2,6 +2,15 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+## 0.29.1
+
+Released for the Anqur project.
+
++ Find usage in LSP now discards recursive references.
++ Some literate mode improvements.
++ Correctly desugar `let open`.
++ Extract classifier utilities into `tools`.
+
 ## 0.29
 
 Major changes:
