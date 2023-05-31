@@ -182,7 +182,7 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
   /**
    * @author kiva, ice1000
    */
-  final class Clause {
+  final class Clause implements SourceNode {
     public final @NotNull SourcePos sourcePos;
     public final @NotNull ImmutableSeq<Arg<Pattern>> patterns;
     public final @NotNull Option<Expr> expr;
@@ -205,6 +205,10 @@ public sealed interface Pattern extends AyaDocile, SourceNode {
 
     public @NotNull Clause descent(@NotNull UnaryOperator<@NotNull Expr> f, @NotNull UnaryOperator<@NotNull Pattern> g) {
       return update(patterns.map(p -> p.descent(g)), expr.map(f));
+    }
+
+    @Override public @NotNull SourcePos sourcePos() {
+      return sourcePos;
     }
   }
 

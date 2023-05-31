@@ -9,7 +9,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.Pattern;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
@@ -17,13 +16,16 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
 import org.aya.pretty.doc.Doc;
+import org.aya.ref.AnyVar;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.StatedTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.tyck.pat.ClassifierUtil;
 import org.aya.util.tyck.pat.Indexed;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,8 @@ import java.util.stream.Collectors;
 /**
  * @author ice1000
  */
-public final class PatClassifier extends StatedTycker {
+public final class PatClassifier extends StatedTycker
+  implements ClassifierUtil<Subst, Term, Term.Param, Pat, AnyVar> {
   public final @NotNull SourcePos pos;
 
   public PatClassifier(
@@ -70,28 +73,26 @@ public final class PatClassifier extends StatedTycker {
     return p.component2();
   }
 
-  public @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> classifyN(
-    @NotNull Subst subst, @NotNull SeqView<Term.Param> params,
-    @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
-  ) {
-    if (params.isEmpty()) return ImmutableSeq.of(new PatClass<>(
-      ImmutableSeq.empty(), Indexed.indices(clauses)));
-    var first = params.first();
-    var cls = classify1(subst, first.subst(subst),
-      clauses.mapIndexed((ix, it) -> new Indexed<>(it.pat().first().inline(null), ix)), fuel);
-    return cls.flatMap(subclauses ->
-      classifyN(subst.add(first.ref(), subclauses.term().term()),
-        // Drop heads of both
-        params.drop(1),
-        subclauses.extract(clauses.map(it ->
-          new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
-        .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
+  @Override public Term.Param subst(Subst subst, Term.Param param) {
+    return param.subst(subst);
+  }
+
+  @Override public Pat normalize(Pat pat) {
+    return pat.inline(null);
+  }
+
+  @Override public Subst add(Subst subst, AnyVar anyVar, Term term) {
+    return subst.add(anyVar, term);
+  }
+
+  @Override public AnyVar ref(Term.Param param) {
+    return param.ref();
   }
 
   /**
    * @return Possibilities
    */
-  @NotNull ImmutableSeq<PatClass<Arg<Term>>> classify1(
+  @Override public @NotNull ImmutableSeq<PatClass<Arg<Term>>> classify1(
     @NotNull Subst subst, @NotNull Term.Param param,
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   ) {
@@ -196,7 +197,7 @@ public final class PatClassifier extends StatedTycker {
   }
 
   public static int[] firstMatchDomination(
-    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull ImmutableSeq<? extends SourceNode> clauses,
     @NotNull Reporter reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
   ) {
     // StackOverflow says they're initialized to zero
@@ -206,7 +207,7 @@ public final class PatClassifier extends StatedTycker {
     // ^ The minimum is not always the first one
     for (int i = 0; i < numbers.length; i++)
       if (0 == numbers[i]) reporter.report(
-        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos));
+        new ClausesProblem.FMDomination(i + 1, clauses.get(i).sourcePos()));
     return numbers;
   }
 
