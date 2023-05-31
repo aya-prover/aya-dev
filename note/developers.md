@@ -35,3 +35,4 @@ Names are listed in random order.
 + Luna Xin <luna.xin@outlook.com>
 + ㄗㄠˋ ㄑㄧˊ <tsao-chi@the-lingo.org>
 + Dark-flames <dark_flames@outlook.com>
++ Alias Qli <2576814881@qq.com>
