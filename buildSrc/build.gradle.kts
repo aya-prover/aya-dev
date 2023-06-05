@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import java.util.*
 
 plugins {
   java
   groovy
-  antlr
 }
 
 repositories {
@@ -31,8 +30,7 @@ dependencies {
   val deps = Properties()
   deps.load(rootDir.resolve("gradle/deps.properties").reader())
   api("org.aya-prover.upstream", "build-util", deps.getProperty("version.aya-upstream"))
-
-  implementation("de.jflex", "jflex", deps.getProperty("version.jflex"))
+  api("org.aya-prover.upstream", "build-util-jflex", deps.getProperty("version.aya-upstream"))
 
   // The following is required for
   // - extracting common parts inside `graalvmNative` block
