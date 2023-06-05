@@ -16,9 +16,7 @@ dependencies {
 
 val lexer = tasks.register<org.aya.gradle.JFlexTask>("lexer") {
   outputDir = genDir.resolve("org/aya/parser")
-  val grammar = file("src/main/grammar")
-  jflex = grammar.resolve("AyaPsiLexer.flex")
-  skel = grammar.resolve("aya-flex.skeleton")
+  jflex = file("src/main/grammar/AyaPsiLexer.flex")
 }
 
 listOf(tasks.compileJava, tasks.sourcesJar).forEach {
