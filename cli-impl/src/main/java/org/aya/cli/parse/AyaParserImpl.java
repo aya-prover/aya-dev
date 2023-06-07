@@ -2,26 +2,22 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.DefaultPsiParser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.builder.FleetPsiBuilder;
-import com.intellij.psi.builder.MarkerNode;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.text.StringSlice;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.intellij.GenericNode;
+import org.aya.intellij.MarkerGenericNode;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.parser.AyaPsiElementTypes;
-import org.aya.parser.GenericNode;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
@@ -35,7 +31,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
 
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
-    return new NodeWrapper(code, parser.parse(code));
+    return new MarkerGenericNode(code, parser.parse(code));
   }
 
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
@@ -77,31 +73,6 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
           "Cannot parse")
         ));
     return node;
-  }
-
-  private record NodeWrapper(
-    @NotNull MarkerNode node,
-    @Override @NotNull StringSlice tokenText
-  ) implements GenericNode<NodeWrapper> {
-    public NodeWrapper(@NotNull String code, @NotNull MarkerNode node) {
-      this(node, StringSlice.of(code, node.range().getStartOffset(), node.range().getEndOffset()));
-    }
-
-    @Override public @NotNull IElementType elementType() {
-      return node.elementType();
-    }
-
-    @SuppressWarnings("UnstableApiUsage") @Override public @NotNull SeqView<NodeWrapper> childrenView() {
-      return node.children().view().map(c -> new NodeWrapper(tokenText.source(), c));
-    }
-
-    @Override public @NotNull TextRange range() {
-      return node.range();
-    }
-
-    @Override public @NotNull String toDebugString() {
-      return node.toDebugString("  ");
-    }
   }
 
   private static class AyaFleetParser extends DefaultPsiParser {
