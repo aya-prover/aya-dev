@@ -10,6 +10,7 @@ dependencies {
   val deps: java.util.Properties by rootProject.ext
   api("org.jetbrains", "annotations", version = deps.getProperty("version.annotations"))
   api("org.aya-prover.upstream", "ij-parsing-core", version = deps.getProperty("version.aya-upstream"))
+  api("org.aya-prover.upstream", "ij-parsing-wrapper", version = deps.getProperty("version.aya-upstream"))
   testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
   testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
 }

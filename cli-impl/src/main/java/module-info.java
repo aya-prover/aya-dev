@@ -5,6 +5,7 @@ module aya.cli.impl {
   requires static org.jetbrains.annotations;
 
   requires aya.ij.parsing.core;
+  requires aya.ij.parsing.wrapper;
   requires com.google.gson;
   requires org.commonmark;
 

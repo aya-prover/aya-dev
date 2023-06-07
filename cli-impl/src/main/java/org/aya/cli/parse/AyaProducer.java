@@ -30,9 +30,10 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.SortKind;
+import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
-import org.aya.parser.GenericNode;
+import org.aya.parser.AyaPsiTokenType;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.context.ModulePath;
@@ -915,7 +916,11 @@ public record AyaProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    return sourcePosOf(node.range(), file, node.isTerminalNode());
+    return sourcePosOf(node.range(), file, isTerminalNode(node));
+  }
+
+  public static boolean isTerminalNode(@NotNull GenericNode<?> node) {
+    return node.elementType() instanceof AyaPsiTokenType;
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull FlexLexer.Token token, @NotNull SourceFile file) {
