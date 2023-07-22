@@ -338,8 +338,20 @@ public sealed interface Doc extends Docile {
     return Doc.cat(Doc.ONE_WS, symbol, Doc.ONE_WS);
   }
 
+  static @NotNull Doc wrap(@NotNull Doc left, @NotNull Doc right, @NotNull Doc doc) {
+    return cat(left, doc, right);
+  }
+
   static @NotNull Doc wrap(String leftSymbol, String rightSymbol, Doc doc) {
-    return cat(symbol(leftSymbol), doc, symbol(rightSymbol));
+    return wrap(symbol(leftSymbol), symbol(rightSymbol), doc);
+  }
+
+  static @NotNull Doc spacedWrap(@NotNull Doc left, @NotNull Doc right, @NotNull Doc doc) {
+    return wrap(left, right, wrap(ONE_WS, ONE_WS, doc));
+  }
+
+  static @NotNull Doc spacedWrap(@NotNull String leftSymbol, @NotNull String rightSymbol, @NotNull Doc doc) {
+    return spacedWrap(symbol(leftSymbol), symbol(rightSymbol), doc);
   }
 
   /** @param falsification when false, add braces */
