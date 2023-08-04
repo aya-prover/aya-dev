@@ -16,7 +16,7 @@ public interface LiterateConsumer extends Consumer<Literate> {
       case Literate.Many many -> many.children().forEach(this);
       case Literate.List items -> items.items().forEach(this);
       case Literate.Unsupported(var children) -> children.forEach(this);
-      case default -> {}
+      default -> {}
     }
   }
 

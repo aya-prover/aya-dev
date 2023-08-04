@@ -11,13 +11,13 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
-import org.aya.util.error.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +169,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var piRaw = tryPress(of);
         yield piRaw instanceof PiTerm pi ? pi.substBody(arg.term()) : null;
       }
-      case default -> null;
+      default -> null;
     };
   }
 
