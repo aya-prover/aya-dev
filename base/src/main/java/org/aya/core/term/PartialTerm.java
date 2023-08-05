@@ -55,7 +55,7 @@ public record PartialTerm(@NotNull Partial<Term> partial, @NotNull Term rhsType)
     return switch (p) {
       case Partial.Split<Term> s -> new Split<>(s.clauses().map(c ->
         new Restr.Side<>(c.cof(), applyDimsTo.apply(c.u()))));
-      case Partial.Const<Term> c -> new Const<>(applyDimsTo.apply(c.u()));
+      case Partial.Const(var c) -> new Const<>(applyDimsTo.apply(c));
     };
   }
 

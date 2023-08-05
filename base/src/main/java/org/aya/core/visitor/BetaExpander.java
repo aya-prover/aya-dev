@@ -50,15 +50,15 @@ public interface BetaExpander extends EndoTerm {
         }
         yield switch (partial(partial)) {
           case Partial.Split<Term> hap -> new PAppTerm(of, args, new PathTerm(xi, type, hap));
-          case Partial.Const<Term> sad -> sad.u();
+          case Partial.Const(var sad) -> sad;
         };
       }
       case PartialTerm(var partial, var rhsTy) -> new PartialTerm(partial(partial), rhsTy);
       // TODO[coe]: temporary hack
       case CoeTerm(
         var ty,
-        FormulaTerm(Formula.Lit<Term>(var r)),
-        FormulaTerm(Formula.Lit<Term>(var s))
+        FormulaTerm(Formula.Lit(var r)),
+        FormulaTerm(Formula.Lit(var s))
       ) when r == s -> identity("x");
       case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
       case CoeTerm coe -> {

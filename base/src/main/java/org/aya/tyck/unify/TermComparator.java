@@ -27,6 +27,7 @@ import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
+import org.aya.util.Pair;
 import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -247,9 +248,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     else return null;
   }
 
-  /** TODO: Revise when JDK 21 is released. */
-  private record Pair(Term lhs, Term rhs) {}
-
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // Skip tracing, because too easy.
     // Note that it looks tempting to apply some unification here, but it is not correct:
@@ -290,7 +288,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       }
       // https://stackoverflow.com/q/75971020/7083401
       case PiTerm pi -> ctx.with(pi.param(), () -> {
-        var pair = new Pair(lhs, rhs);
+        var pair = new Pair<>(lhs, rhs);
         if (pair instanceof Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb))) {
           var ref = pi.param().ref();
           if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
@@ -335,7 +333,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       case PrimCall prim when prim.id() == PrimDef.ID.SUB -> {
         // See PrimDef.Factory.Initializer.sub
         var A = prim.args().get(0).term();
-        if (new Pair(lhs, rhs) instanceof Pair(InTerm(var lPhi, var lU), InTerm(var rPhi, var rU))) {
+        if (new Pair<>(lhs, rhs) instanceof Pair(InTerm(var lPhi, var lU), InTerm(var rPhi, var rU))) {
           if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield false;
           yield compare(lU, rU, lr, rl, A);
         } else yield compare(lhs, rhs, lr, rl, A);
@@ -367,10 +365,9 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     @NotNull PartialTerm lhs, @NotNull PartialTerm rhs,
     @NotNull PartialTyTerm type, Sub lr, Sub rl
   ) {
-    record P(Partial<Term> l, Partial<Term> r) {}
-    return switch (new P(lhs.partial(), rhs.partial())) {
-      case P(Partial.Const<Term>(var ll), Partial.Const<Term>(var rr)) -> compare(ll, rr, lr, rl, type.type());
-      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) -> CofThy.conv(type.restr(), new Subst(),
+    return switch (new Pair<>(lhs.partial(), rhs.partial())) {
+      case Pair(Partial.Const(var ll), Partial.Const(var rr)) -> compare(ll, rr, lr, rl, type.type());
+      case Pair(Partial.Split<?> ll, Partial.Split<?> rr) -> CofThy.conv(type.restr(), new Subst(),
         subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type.subst(subst)));
       default -> false;
     };
@@ -395,9 +392,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    */
   private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     if (preLhs.getClass() != preRhs.getClass()) return false;
-    record Pair(Formation lhs, Formation rhs) {
-    }
-    return switch (new Pair(preLhs, (Formation) preRhs)) {
+    return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> {
         if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));

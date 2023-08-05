@@ -154,7 +154,7 @@ public sealed abstract class UnifiedTycker extends LetListTycker permits PropTyc
     var applied = path.applyDimsTo(lambda);
     return ctx.withIntervals(path.params().view(), () -> {
       var happy = switch (path.partial()) {
-        case Partial.Const<Term> sad -> boundary(expr, applied, sad.u(), path.type(), subst);
+        case Partial.Const(var sad) -> boundary(expr, applied, sad, path.type(), subst);
         case Partial.Split<Term> hap -> hap.clauses().allMatch(c ->
           CofThy.conv(c.cof(), subst, s -> boundary(expr, applied, c.u(), path.type(), s)));
       };

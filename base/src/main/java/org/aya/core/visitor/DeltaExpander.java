@@ -10,10 +10,10 @@ import kala.tuple.Tuple;
 import org.aya.core.pat.PatMatcher;
 import org.aya.core.term.*;
 import org.aya.generic.Modifier;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +36,7 @@ public interface DeltaExpander extends EndoTerm {
         if (def == null) yield con;
         var sat = AyaRestrSimplifier.INSTANCE.mapSplit(def.clauses, t ->
           t.subst(buildSubst(def.fullTelescope(), con.args())));
-        if (sat instanceof Partial.Const<Term> c) yield apply(c.u());
+        if (sat instanceof Partial.Const(var c)) yield apply(c);
         yield con;
       }
       case FnCall fn -> {
