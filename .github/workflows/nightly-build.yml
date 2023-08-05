@@ -93,8 +93,8 @@ jobs:
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          version: 'latest'
           java-version: '20'
+          distribution: 'graalvm-community'
           components: 'native-image'
           set-java-home: 'false'
           github-token: ${{ secrets.GH_TOKEN }}
