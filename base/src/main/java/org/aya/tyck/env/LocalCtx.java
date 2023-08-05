@@ -17,10 +17,10 @@ import org.aya.core.term.MetaTerm;
 import org.aya.core.term.Term;
 import org.aya.core.visitor.VarConsumer;
 import org.aya.generic.Constants;
-import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.tycker.TyckState;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
@@ -84,7 +84,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
             var sol = state.metas().getOrNull(meta);
             if (sol != null) forward(dest, sol, state);
           }
-          case default -> {}
+          default -> {}
         }
       }
     }.accept(term);

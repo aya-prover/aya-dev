@@ -111,7 +111,7 @@ public record Codifier(
         builder.append(sort.lift());
         builder.append(")");
       }
-      case default -> throw new UnsupportedOperationException("TODO: " + term.getClass().getCanonicalName());
+      default -> throw new UnsupportedOperationException("TODO: " + term.getClass().getCanonicalName());
     }
   }
 

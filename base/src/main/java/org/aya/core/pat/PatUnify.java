@@ -6,12 +6,12 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.RefTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.util.error.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.env.LocalCtx;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNull LocalCtx ctx) {
   private void unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     switch (lhs) {
-      default -> throw new InternalException();
       case Pat.Bind bind -> visitAs(bind.bind(), rhs);
       case Pat.Meta meta -> visitAs(meta.fakeBind(), rhs);
       case Pat.Tuple tuple -> {
@@ -52,6 +51,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
           default -> unify(lhsInt.constructorForm(), rhs);
         }
       }
+      default -> throw new InternalException();
     }
   }
 

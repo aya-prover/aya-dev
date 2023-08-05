@@ -20,10 +20,9 @@ public record CodeOptions(
   @NotNull ShowCode showCode
 ) {
   public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
-    return switch (code.getFirstChild()) {
-      case CodeAttrProcessor.Attr attr -> new AyaLiterate.AyaInlineCode(code.getLiteral(), sourcePos, attr.options);
-      case default, null -> new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));
-    };
+    return code.getFirstChild() instanceof CodeAttrProcessor.Attr attr
+      ? new AyaLiterate.AyaInlineCode(code.getLiteral(), sourcePos, attr.options)
+      : new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));
   }
 
   public enum ShowCode {

@@ -99,8 +99,6 @@ public final class PatClassifier extends StatedTycker
     var whnfTy = whnf(param.type());
     final var explicit = param.explicit();
     switch (whnfTy) {
-      default -> {
-      }
       // Note that we cannot have ill-typed patterns such as constructor patterns,
       // since patterns here are already well-typed
       case SigmaTerm(var params) -> {
@@ -179,6 +177,8 @@ public final class PatClassifier extends StatedTycker
             args.cls())));
         }
         return buffer.toImmutableSeq();
+      }
+      default -> {
       }
     }
     return ImmutableSeq.of(new PatClass<>(param.toArg(), Indexed.indices(clauses)));

@@ -85,9 +85,6 @@ public record PathTerm(
     while (true) {
       if (args.isEmpty()) return pLam;
       switch (pLam) {
-        case default -> {
-          break loop;
-        }
         case PLamTerm lam -> {
           assert lam.params().sizeLessThanOrEquals(args);
           pLam = lam.body().subst(new Subst(lam.params(), args.take(lam.params().size())));
@@ -98,6 +95,9 @@ public record PathTerm(
           assert lam.param().explicit();
           pLam = AppTerm.make(lam, new Arg<>(args.first(), true));
           args = args.drop(1);
+        }
+        default -> {
+          break loop;
         }
       }
     }

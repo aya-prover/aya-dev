@@ -19,7 +19,6 @@ import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
 import org.aya.generic.util.AyaFiles;
-import org.aya.util.error.InternalException;
 import org.aya.generic.util.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
@@ -28,6 +27,7 @@ import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.StringUtil;
+import org.aya.util.error.InternalException;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.MutableGraph;
@@ -175,7 +175,7 @@ public class LibraryCompiler {
         config.set(StringPrinterConfig.LinkOptions.CrossLinkSeparator, "/");
         config.set(StringPrinterConfig.LinkOptions.CrossLinkPostfix, switch (outputTarget) {
           case AyaMd, HTML -> ".html";
-          case default -> "";
+          default -> "";
         });
         return config;
       }

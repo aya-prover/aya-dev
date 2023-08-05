@@ -21,7 +21,7 @@ jobs:
     outputs:
       isSnapshot: ${{ steps.check.outputs.isSnapshot }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Check snapshot version
         id: check
         run: |
@@ -39,12 +39,12 @@ jobs:
       ossrhUsername: ${{ secrets.OSSRHUSERNAME }}
       ossrhPassword: ${{ secrets.OSSRHPASSWORD }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Java 19
+      - uses: actions/checkout@v3
+      - name: Setup Java 20
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
-          java-version: '19'
+          java-version: '20'
       - name: gradle publish
         uses: gradle/gradle-build-action@v2
         with:
@@ -70,13 +70,13 @@ jobs:
             platform: 'windows-x64'
             binaryExt: '.exe'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Setup Java 19
+      - name: Setup Java 20
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
-          java-version: '19'
+          java-version: '20'
 
       - name: Run task jlinkAyaZip
         uses: gradle/gradle-build-action@v2
@@ -93,9 +93,8 @@ jobs:
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          # Switch back when Java 20
-          version: '22.3.1'
-          java-version: '19'
+          version: 'latest'
+          java-version: '20'
           components: 'native-image'
           set-java-home: 'false'
           github-token: ${{ secrets.GH_TOKEN }}

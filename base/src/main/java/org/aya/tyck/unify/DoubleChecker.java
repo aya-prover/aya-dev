@@ -78,7 +78,7 @@ public record DoubleChecker(
         unifier.solveMeta(meta, new MetaTerm(newMeta, meta.contextArgs(), meta.args()), lr, rl, expected);
         yield true;
       }
-      case default -> compare(synthesizer.press(preterm), expected);
+      default -> compare(synthesizer.press(preterm), expected);
     };
   }
 

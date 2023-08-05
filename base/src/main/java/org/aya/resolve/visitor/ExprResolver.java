@@ -186,8 +186,9 @@ public record ExprResolver(
         }
         case AnyVar var -> new Expr.Ref(pos, var);
       };
-      case Expr.Let(var $, var letBind, var body) let -> {
+      case Expr.Let let -> {
         // resolve letBind
+        var letBind = let.bind();
 
         var mCtx = MutableValue.create(ctx);
         // visit telescope
@@ -203,18 +204,19 @@ public record ExprResolver(
 
         // resolve body
         var newBody = enter(ctx.bind(letBind.bindName()))
-          .apply(body);
+          .apply(let.body());
 
         yield let.update(
           letBind.update(telescope, result, definedAs),
           newBody
         );
       }
-      case Expr.LetOpen(var pos, var component, var useHide, var body) letOpen -> {
+      case Expr.LetOpen letOpen -> {
         var innerCtx = new NoExportContext(ctx);
         // open module
-        innerCtx.openModule(component, Stmt.Accessibility.Private, pos, useHide);
-        yield letOpen.update(enter(innerCtx).apply(body));
+        innerCtx.openModule(letOpen.componentName(), Stmt.Accessibility.Private,
+          letOpen.sourcePos(), letOpen.useHide());
+        yield letOpen.update(enter(innerCtx).apply(letOpen.body()));
       }
       default -> EndoExpr.super.apply(expr);
     };

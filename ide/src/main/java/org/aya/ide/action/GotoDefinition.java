@@ -31,7 +31,7 @@ public interface GotoDefinition {
         case LocalVar localVar -> localVar.definition();
         case ModuleVar moduleVar -> mockSourcePos(libraries, moduleVar);
         case GeneralizedVar gVar -> gVar.sourcePos;
-        case default -> null;
+        default -> null;
       };
       if (target == null) return null;
       return new WithPos<>(from, target);

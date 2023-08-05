@@ -14,7 +14,6 @@ import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.SortKind;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.prettier.AyaPrettierOptions;
@@ -28,6 +27,7 @@ import org.aya.tyck.tycker.MockTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.Ordering;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Debug;
@@ -88,11 +88,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     return switch (l.kind()) {
       case Type -> switch (r.kind()) {
         case Type, Set -> lift <= rift;
-        case default -> false;
+        default -> false;
       };
       case ISet -> switch (r.kind()) {
         case ISet, Set -> true;
-        case default -> false;
+        default -> false;
       };
       case Prop -> r.kind() == SortKind.Prop;
       case Set -> r.kind() == SortKind.Set && lift <= rift;
@@ -247,7 +247,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     else return null;
   }
 
-  /** TODO: Revise when JDK 20 is released. */
+  /** TODO: Revise when JDK 21 is released. */
   private record Pair(Term lhs, Term rhs) {}
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
@@ -259,7 +259,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
-      default -> compareUntyped(lhs, rhs, lr, rl) != null;
       case ClassCall type1 -> {
         var fieldSigs = type1.ref().core.members;
         var fieldSubst = new Subst();
@@ -289,8 +288,10 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         ctx.remove(paramsSeq.view().map(Term.Param::ref));
         yield true;
       }
-      case PiTerm pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
-        case Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb)) -> {
+      // https://stackoverflow.com/q/75971020/7083401
+      case PiTerm pi -> ctx.with(pi.param(), () -> {
+        var pair = new Pair(lhs, rhs);
+        if (pair instanceof Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb))) {
           var ref = pi.param().ref();
           if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
           lr.map.put(ref, rp.toTerm());
@@ -299,12 +300,14 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
           var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
           lr.map.remove(ref);
           rl.map.remove(ref);
-          yield res;
+          return res;
+        } else if (pair instanceof Pair(var $, LamTerm rambda)) {
+          return compareLambdaBody(rambda, lhs, rl, lr, pi);
+        } else if (pair instanceof Pair(LamTerm lambda, var $)) {
+          return compareLambdaBody(lambda, rhs, lr, rl, pi);
+        } else {
+          return compare(lhs, rhs, lr, rl, null);
         }
-        case Pair(var $, LamTerm rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
-        case Pair(LamTerm lambda, var $) -> compareLambdaBody(lambda, rhs, lr, rl, pi);
-        // Question: do we need a unification for Pi.body?
-        case default -> compare(lhs, rhs, lr, rl, null);
       });
       // In this case, both sides have the same type (I hope)
       case PathTerm cube -> ctx.withIntervals(cube.params().view(), () -> {
@@ -337,6 +340,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
           yield compare(lU, rU, lr, rl, A);
         } else yield compare(lhs, rhs, lr, rl, A);
       }
+      default -> compareUntyped(lhs, rhs, lr, rl) != null;
     };
     traceExit();
     return ret;
@@ -394,7 +398,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     record Pair(Formation lhs, Formation rhs) {
     }
     return switch (new Pair(preLhs, (Formation) preRhs)) {
-      default -> throw noRules(preLhs);
       case Pair(DataCall lhs, DataCall rhs) -> {
         if (lhs.ref() != rhs.ref()) yield false;
         yield visitArgs(lhs.args(), rhs.args(), lr, rl, Term.Param.subst(Def.defTele(lhs.ref()), lhs.ulift()));
@@ -413,13 +416,13 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
       case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
       case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
+      default -> throw noRules(preLhs);
     };
   }
 
   private Term doCompareUntyped(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     if (preLhs instanceof Formation lhs) return doCompareType(lhs, preRhs, lr, rl) ? SortTerm.Type0 : null;
     return switch (preLhs) {
-      default -> throw noRules(preLhs);
       case ErrorTerm term -> ErrorTerm.typeOf(term);
       case MetaPatTerm(var lhsRef) -> {
         if (preRhs instanceof MetaPatTerm(var rRef) && lhsRef == rRef) yield lhsRef.type();
@@ -468,11 +471,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       }
       // See compareApprox for why we don't compare these
       case FnCall lhs -> null;
-      case CoeTerm(var lType, var lR, var lS) coe -> {
+      case CoeTerm coe -> {
         if (!(preRhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
-        if (!compare(lR, rR, lr, rl, IntervalTerm.INSTANCE)) yield null;
-        if (!compare(lS, rS, lr, rl, IntervalTerm.INSTANCE)) yield null;
-        yield compare(lType, rType, lr, rl, PrimDef.intervalToType()) ?
+        if (!compare(coe.r(), rR, lr, rl, IntervalTerm.INSTANCE)) yield null;
+        if (!compare(coe.s(), rS, lr, rl, IntervalTerm.INSTANCE)) yield null;
+        yield compare(coe.type(), rType, lr, rl, PrimDef.intervalToType()) ?
           coe.family() : null;
       }
       case ConCall lhs -> switch (preRhs) {
@@ -532,6 +535,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         yield null;
       }
       case MetaTerm lhs -> solveMeta(lhs, preRhs, lr, rl, null);
+      default -> throw noRules(preLhs);
     };
   }
 
