@@ -289,26 +289,25 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         yield true;
       }
       // https://stackoverflow.com/q/75971020/7083401
-      case PiTerm pi -> ctx.with(pi.param(), () -> switch (lhs) {
-        case LamTerm(var lp, var lb) -> switch (rhs) {
-          case LamTerm(var rp, var rb) -> {
-            var ref = pi.param().ref();
-            if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
-            lr.map.put(ref, rp.toTerm());
-            rl.map.put(ref, lp.toTerm());
-            var piParam = new RefTerm(ref);
-            var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
-            lr.map.remove(ref);
-            rl.map.remove(ref);
-            yield res;
-          }
-          default -> compareLambdaBody(new LamTerm(lp, lb), rhs, lr, rl, pi);
-        };
-        default -> switch (rhs) {
-          case LamTerm rambda -> compareLambdaBody(rambda, lhs, rl, lr, pi);
-          // Question: do we need a unification for Pi.body?
-          default -> compare(lhs, rhs, lr, rl, null);
-        };
+      case PiTerm pi -> ctx.with(pi.param(), () -> {
+        var pair = new Pair(lhs, rhs);
+        if (pair instanceof Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb))) {
+          var ref = pi.param().ref();
+          if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
+          lr.map.put(ref, rp.toTerm());
+          rl.map.put(ref, lp.toTerm());
+          var piParam = new RefTerm(ref);
+          var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
+          lr.map.remove(ref);
+          rl.map.remove(ref);
+          return res;
+        } else if (pair instanceof Pair(var $, LamTerm rambda)) {
+          return compareLambdaBody(rambda, lhs, rl, lr, pi);
+        } else if (pair instanceof Pair(LamTerm lambda, var $)) {
+          return compareLambdaBody(lambda, rhs, lr, rl, pi);
+        } else {
+          return compare(lhs, rhs, lr, rl, null);
+        }
       });
       // In this case, both sides have the same type (I hope)
       case PathTerm cube -> ctx.withIntervals(cube.params().view(), () -> {
