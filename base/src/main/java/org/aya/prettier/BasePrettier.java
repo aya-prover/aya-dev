@@ -293,25 +293,25 @@ public abstract class BasePrettier<Term extends AyaDocile> {
 
   public @NotNull Doc formula(@NotNull Outer outer, @NotNull Formula<Term> formula) {
     return switch (formula) {
-      case Formula.Conn<Term> cnn -> {
-        var here = cnn.isAnd() ? Outer.IMin : Outer.IMax;
+      case Formula.Conn(var isAnd, var l, var r) -> {
+        var here = isAnd ? Outer.IMin : Outer.IMax;
         yield checkParen(outer, Doc.sep(
-            term(here, cnn.l()),
-            cnn.isAnd() ? Doc.symbol("/\\") : Doc.symbol("\\/"),
-            term(here, cnn.r())),
-          cnn.isAnd() ? Outer.AppHead : Outer.IMin);
+            term(here, l),
+            isAnd ? Doc.symbol("/\\") : Doc.symbol("\\/"),
+            term(here, r)),
+          isAnd ? Outer.AppHead : Outer.IMin);
       }
-      case Formula.Inv<Term> inv -> checkParen(outer,
-        Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, inv.i())),
+      case Formula.Inv(var i) -> checkParen(outer,
+        Doc.sep(Doc.symbol("~"), term(Outer.AppSpine, i)),
         Outer.AppSpine);
-      case Formula.Lit<Term>(var one) -> Doc.plain(one ? "1" : "0");
+      case Formula.Lit(var one) -> Doc.plain(one ? "1" : "0");
     };
   }
 
   public static <T extends Restr.TermLike<T> & AyaDocile> @NotNull Doc
   partial(@NotNull PrettierOptions options, @NotNull Partial<T> partial, boolean showEmpty, @NotNull Doc lb, @NotNull Doc rb) {
     return switch (partial) {
-      case Partial.Const<T> sad -> Doc.sepNonEmpty(lb, sad.u().toDoc(options), rb);
+      case Partial.Const(var sad) -> Doc.sepNonEmpty(lb, sad.toDoc(options), rb);
       case Partial.Split<T> hap when !showEmpty && hap.clauses().isEmpty() -> Doc.empty();
       case Partial.Split<T> hap -> Doc.sepNonEmpty(lb,
         Doc.join(Doc.spaced(Doc.symbol("|")), hap.clauses().map(s -> side(options, s))),

@@ -174,9 +174,9 @@ public record Codifier(
         });
         builder.append("))");
       }
-      case Partial.Const<Term> c -> {
+      case Partial.Const(var c) -> {
         builder.append("new Partial.Const<>(");
-        term(c.u());
+        term(c);
         builder.append(")");
       }
     }
@@ -207,19 +207,19 @@ public record Codifier(
 
   private void formula(Formula<Term> mula) {
     switch (mula) {
-      case Formula.Conn<Term> conn -> {
-        builder.append("new Formula.Conn<>(").append(conn.isAnd()).append(",");
-        term(conn.l());
+      case Formula.Conn(var isAnd, var l, var r) -> {
+        builder.append("new Formula.Conn<>(").append(isAnd).append(",");
+        term(l);
         builder.append(",");
-        term(conn.r());
+        term(r);
         builder.append(")");
       }
-      case Formula.Inv<Term> inv -> {
+      case Formula.Inv(var i) -> {
         builder.append("new Formula.Inv<>(");
-        term(inv.i());
+        term(i);
         builder.append(")");
       }
-      case Formula.Lit<Term>(var one) -> builder.append("new Formula.Lit<>(").append(one).append(")");
+      case Formula.Lit(var one) -> builder.append("new Formula.Lit<>(").append(one).append(")");
     }
   }
 

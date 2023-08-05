@@ -369,8 +369,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   ) {
     record P(Partial<Term> l, Partial<Term> r) {}
     return switch (new P(lhs.partial(), rhs.partial())) {
-      case P(Partial.Const<Term>(var ll), Partial.Const<Term>(var rr)) -> compare(ll, rr, lr, rl, type.type());
-      case P(Partial.Split<Term> ll, Partial.Split<Term> rr) -> CofThy.conv(type.restr(), new Subst(),
+      case P(Partial.Const(var ll), Partial.Const(var rr)) -> compare(ll, rr, lr, rl, type.type());
+      case P(Partial.Split<?> ll, Partial.Split<?> rr) -> CofThy.conv(type.restr(), new Subst(),
         subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type.subst(subst)));
       default -> false;
     };

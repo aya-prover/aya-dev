@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import org.aya.core.pat.Pat;
 import org.aya.guest0x0.cubical.Formula;
@@ -44,9 +45,9 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
 
   public @NotNull SeqView<Term> view() {
     return switch (asFormula) {
-      case Formula.Conn<Term> cnn -> SeqView.of(cnn.l()).appended(cnn.r());
-      case Formula.Inv<Term> inv -> SeqView.of(inv.i());
-      case Formula.Lit<Term> lit -> SeqView.empty();
+      case Formula.Conn(var $, var l, var r) -> Seq.of(l, r).view();
+      case Formula.Inv(var i) -> SeqView.of(i);
+      case Formula.Lit<?> $ -> SeqView.empty();
     };
   }
 }

@@ -101,7 +101,7 @@ public record Subst(
     // In an and-only cofibration, every variable appears uniquely in a cond.
     if (!map.containsKey(i)) return false;
     // check whether if the cond is self-contradictory
-    if (!(map.get(i).asFormula() instanceof Formula.Lit<Term> end)) return false;
+    if (!(map.get(i).asFormula() instanceof Formula.Lit<?> end)) return false;
     return end.isOne() != newIsOne;
   }
 
