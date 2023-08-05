@@ -247,7 +247,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     else return null;
   }
 
-  /** TODO: Revise when JDK 20 is released. */
+  /** TODO: Revise when JDK 21 is released. */
   private record Pair(Term lhs, Term rhs) {}
 
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
@@ -288,22 +288,27 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         ctx.remove(paramsSeq.view().map(Term.Param::ref));
         yield true;
       }
-      case PiTerm pi -> ctx.with(pi.param(), () -> switch (new Pair(lhs, rhs)) {
-        case Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb)) -> {
-          var ref = pi.param().ref();
-          if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
-          lr.map.put(ref, rp.toTerm());
-          rl.map.put(ref, lp.toTerm());
-          var piParam = new RefTerm(ref);
-          var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
-          lr.map.remove(ref);
-          rl.map.remove(ref);
-          yield res;
-        }
-        case Pair(var $, LamTerm rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
-        case Pair(LamTerm lambda, var $) -> compareLambdaBody(lambda, rhs, lr, rl, pi);
-        // Question: do we need a unification for Pi.body?
-        default -> compare(lhs, rhs, lr, rl, null);
+      // https://stackoverflow.com/q/75971020/7083401
+      case PiTerm pi -> ctx.with(pi.param(), () -> switch (lhs) {
+        case LamTerm(var lp, var lb) -> switch (rhs) {
+          case LamTerm(var rp, var rb) -> {
+            var ref = pi.param().ref();
+            if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
+            lr.map.put(ref, rp.toTerm());
+            rl.map.put(ref, lp.toTerm());
+            var piParam = new RefTerm(ref);
+            var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
+            lr.map.remove(ref);
+            rl.map.remove(ref);
+            yield res;
+          }
+          default -> compareLambdaBody(new LamTerm(lp, lb), rhs, lr, rl, pi);
+        };
+        default -> switch (rhs) {
+          case LamTerm rambda -> compareLambdaBody(rambda, lhs, rl, lr, pi);
+          // Question: do we need a unification for Pi.body?
+          default -> compare(lhs, rhs, lr, rl, null);
+        };
       });
       // In this case, both sides have the same type (I hope)
       case PathTerm cube -> ctx.withIntervals(cube.params().view(), () -> {
