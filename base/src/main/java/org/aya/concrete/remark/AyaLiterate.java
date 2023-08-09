@@ -23,10 +23,6 @@ public interface AyaLiterate {
     AyaHiddenCodeBlock::new);
   @NotNull ImmutableSeq<InterestingLanguage<?>> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
 
-  static @NotNull Literate.CodeBlock visibleAyaCodeBlock(@NotNull String code, @NotNull SourcePos sourcePos) {
-    return new Literate.CodeBlock("aya", code, sourcePos);
-  }
-
   class AyaCodeBlock extends Literate.CodeBlock {
     public AyaCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
       super(language, code, sourcePos);
