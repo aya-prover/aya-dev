@@ -148,20 +148,26 @@ public class LibraryCompiler {
 
   public int start() throws IOException {
     if (flags.modulePaths().isNotEmpty()) reporter.reportString(
-      "Warning: command-line specified module path is ignored when compiling libraries.");
-    if (flags.prettyInfo() != null) reporter.reportString(
-      "Warning: command-line specified pretty info is ignored when compiling libraries.");
+      "Warning: command-line specified module path (--module-path) is ignored when compiling libraries.");
+    if (flags.outputFile() != null) reporter.reportString(
+      "Warning: command-line specified output file (-o, --output) is ignored when compiling libraries.");
     return CompilerUtil.catching(reporter, flags, this::make);
   }
 
   private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
     var cmdPretty = flags.prettyInfo();
-    if (cmdPretty == null || cmdPretty.prettyStage() != CliEnums.PrettyStage.literate) return;
+    if (cmdPretty == null) return;
+    if (cmdPretty.prettyStage() != CliEnums.PrettyStage.literate) {
+      reporter.reportString("Warning: only 'literate' pretty stage is supported when compiling libraries.");
+      return;
+    }
 
     // prepare literate output path
     reportNest("[Info] Generating literate output");
     var litConfig = owner.underlyingLibrary().literateConfig();
-    var outputDir = Files.createDirectories(litConfig.outputPath());
+    var outputDir = cmdPretty.prettyDir() != null
+      ? Files.createDirectories(Path.of(cmdPretty.prettyDir()))
+      : Files.createDirectories(litConfig.outputPath());
 
     // If the library specifies no literate options, use the ones from the command line.
     var litPretty = litConfig.pretty();

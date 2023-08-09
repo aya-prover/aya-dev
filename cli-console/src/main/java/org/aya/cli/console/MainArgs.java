@@ -83,7 +83,7 @@ public class MainArgs {
   public PrettyStage prettyStage;
   @Option(names = {"--pretty-format"}, description = "Pretty print format." + CANDIDATES, defaultValue = "markdown")
   public PrettyFormat prettyFormat;
-  @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.", defaultValue = ".")
+  @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
   public String prettyDir;
   @Option(names = {"--pretty-color"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
   public PredefinedStyle prettyColor;
