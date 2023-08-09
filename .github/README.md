@@ -29,7 +29,7 @@ Aya is under active development, so please expect bugs, usability or performance
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support, inspired from Agda and [1lab].
   You may preview the features (in Chinese)
-  [here](https://blog.imkiva.org/2023/04/02/intro-literate-aya/).
+  [here](https://blog.imkiva.org/posts/intro-literate-aya.html).
 + Binary operators, with precedence specified by a partial ordering
   (instead of a number like in Haskell or Agda)
   which is useful for [equation reasoning][assoc].
