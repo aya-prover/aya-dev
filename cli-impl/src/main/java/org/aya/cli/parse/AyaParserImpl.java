@@ -14,7 +14,7 @@ import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.intellij.GenericNode;
-import org.aya.intellij.MarkerGenericNode;
+import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.parser.AyaPsiElementTypes;
@@ -31,7 +31,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
 
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
-    return new MarkerGenericNode(code, parser.parse(code));
+    return new MarkerNodeWrapper(code, parser.parse(code));
   }
 
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos sourcePos) {
