@@ -2,6 +2,10 @@
 
 This file contains the changelog of the Aya language 0.x.
 
+Upgraded from Java 19 to Java 20.
+
+Welcome [AliasQli](https://github.com/AliasQli)!
+
 ## 0.29.1
 
 Released for the Anqur project.
