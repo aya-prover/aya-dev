@@ -5,6 +5,7 @@ package org.aya.core.repr;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.CtorShape;
 import static org.aya.core.repr.CodeShape.DataShape;
+import static org.aya.core.repr.CodeShape.ParamShape.anyLicit;
 
 /**
  * @author kiva
@@ -42,18 +44,34 @@ public sealed interface AyaShape {
     INSTANCE;
 
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
-      ImmutableSeq.of(CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Sort(null, 0))),
+      ImmutableSeq.of(anyLicit(new CodeShape.TermShape.Sort(null, 0))),
       ImmutableSeq.of(
         new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
         new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
-          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          CodeShape.ParamShape.anyLicit(new CodeShape.TermShape.Call(0, ImmutableSeq.of(    // List A
+          anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
+          anyLicit(new CodeShape.TermShape.Call(0, ImmutableSeq.of(    // List A
             new CodeShape.TermShape.TeleRef(0, 0))))))
       ));
 
     @Override public @NotNull CodeShape codeShape() {
       return DATA_LIST;
     }
+  }
+
+  enum AyaPlusFnShape implements AyaShape {
+    INSTANCE;
+
+    public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
+      // _ : Nat -> Nat -> Nat
+      ImmutableSeq.of(
+        anyLicit(CodeShape.TermShape.Any.INSTANCE.named("Nat")),
+        anyLicit(new CodeShape.TermShape.NameRef("Nat"))
+      ),
+      new CodeShape.TermShape.NameRef("Nat"),
+      Either.right(ImmutableSeq.of(
+
+      ))
+    );
   }
 
   class Factory {

@@ -3,6 +3,7 @@
 package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.generic.SortKind;
@@ -27,8 +28,13 @@ public sealed interface CodeShape {
   }
 
   record FnShape(
-    @NotNull ImmutableSeq<ParamShape> tele
+    @NotNull ImmutableSeq<ParamShape> tele,
+    @NotNull TermShape result,
+    @NotNull Either<TermShape, ImmutableSeq<ClauseShape>> body
   ) implements CodeShape {}
+
+  record ClauseShape(@NotNull ImmutableSeq<ImmutableSeq<PatShape>> pats, @NotNull TermShape body) implements CodeShape {
+  }
 
   record DataShape(
     @NotNull ImmutableSeq<ParamShape> tele,
@@ -48,6 +54,13 @@ public sealed interface CodeShape {
   record FieldShape(
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape {}
+
+  record Named(@NotNull String name, @NotNull CodeShape shape) implements CodeShape {
+  }
+
+  default @NotNull CodeShape.TermShape.Named named(@NotNull String name) {
+    return new TermShape.Named(name, this);
+  }
 
   /**
    * @author kiva
@@ -77,14 +90,40 @@ public sealed interface CodeShape {
      * @author hoshino
      */
     record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
+
+    record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
+
+    record NameRef(@NotNull String name) implements TermShape {}
+
+    default @NotNull Named named(@NotNull String name) {
+      return new Named(name, this);
+    }
   }
 
+  // TODO[h]: Licit, we can use generalized ParamShape
   /**
    * @author kiva
    */
   sealed interface PatShape {
     enum Any implements PatShape {
       INSTANCE;
+    }
+
+    enum Bind implements PatShape {
+      INSTANCE;
+    }
+
+    enum Ctor implements PatShape {
+      INSTANCE;
+    }
+
+    record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
+
+    // TODO[h]: should we allow pat ref in pat? like:
+    //          | somePat a, somePat d => ...
+
+    default @NotNull Named named(@NotNull String name) {
+      return new Named(name, this);
     }
   }
 
