@@ -61,15 +61,20 @@ public sealed interface AyaShape {
   enum AyaPlusFnShape implements AyaShape {
     INSTANCE;
 
+    private static final @NotNull String NAT = "Nat";
+    private static final @NotNull String ZERO = "zero";
+    private static final @NotNull String SUCC = "succ";
+
     public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(CodeShape.TermShape.Any.INSTANCE.named("Nat")),
-        anyLicit(new CodeShape.TermShape.NameRef("Nat"))
+        anyLicit(new CodeShape.TermShape.Shape(AyaIntShape.DATA_NAT).named(NAT)),
+        anyLicit(new CodeShape.TermShape.NameRef(NAT))
       ),
-      new CodeShape.TermShape.NameRef("Nat"),
+      new CodeShape.TermShape.NameRef(NAT),
       Either.right(ImmutableSeq.of(
-
+        // | a, 0 => a
+        new CodeShape.ClauseShape(ImmutableSeq.of(ImmutableSeq.of(CodeShape.PatShape.Bind, )), )
       ))
     );
   }

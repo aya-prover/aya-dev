@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -13,13 +14,17 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.DataDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
+import org.aya.core.pat.Pat;
 import org.aya.core.term.Callable;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
+import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -31,10 +36,14 @@ import java.util.function.Function;
 public record ShapeMatcher(
   @NotNull MutableLinkedList<DefVar<? extends Def, ? extends TeleDecl<?>>> def,
   @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
-  @NotNull MutableMap<AnyVar, AnyVar> teleSubst
+  @NotNull MutableMap<AnyVar, AnyVar> teleSubst,
+  // --------
+  @NotNull ImmutableMap<GenericDef, ShapeRecognition> discovered,
+  @NotNull MutableList<String> names,
+  @NotNull MutableMap<String, AnyVar> resolved
 ) {
   public ShapeMatcher() {
-    this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create());
+    this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
   }
 
   public static Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
@@ -42,6 +51,52 @@ public record ShapeMatcher(
     if (shape.codeShape() instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
       return matcher.matchData(dataShape, data) ? Option.some(new ShapeRecognition(shape, ImmutableMap.from(matcher.captures))) : Option.none();
     return Option.none();
+  }
+
+  private boolean matchPat(@NotNull CodeShape.PatShape shape, @NotNull Pat pat) {
+    if (shape == CodeShape.PatShape.Any.INSTANCE) return true;
+    if (shape instanceof CodeShape.PatShape.Named named) {
+      names.append(named.name());
+      return matchPat(named.pat(), pat);
+    }
+
+    if (shape instanceof CodeShape.PatShape.ShapedCtor shapedCtor && pat instanceof Pat.Ctor ctor) {
+      var data = resolved.getOrNull(shapedCtor.name());
+      if (!(data instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
+        throw new InternalException("Invalid name: " + shapedCtor.name());
+      }
+
+      var recognition = discovered.getOrNull(dataDef);
+      if (recognition == null) {
+        throw new InternalException("Not a shaped data");
+      }
+
+      var realShapedCtor = recognition.captures().getOrNull(shapedCtor.id());
+      if (realShapedCtor == null) {
+        throw new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition);
+      }
+
+      if (realShapedCtor == ctor.ref()) {
+        // resolve inner
+        return matchInside(ctor.ref(), () ->
+          // TODO: licit
+          matchMany(true, shapedCtor.innerPats(), ctor.params().view().map(Arg::term), this::matchPat));
+      }
+    }
+
+    if (shape instanceof CodeShape.PatShape.Ctor shapedCtor && pat instanceof Pat.Ctor ctor) {
+      // TODO: fix duplicated
+      return matchInside(ctor.ref(), () ->
+        // TODO: licit
+        matchMany(true, shapedCtor.innerPats(), ctor.params().view().map(Arg::term), this::matchPat));
+    }
+
+    if (shape == CodeShape.PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
+      resolve(bind.bind());
+      return true;
+    }
+
+    return false;
   }
 
   private boolean matchData(@NotNull CodeShape.DataShape shape, @NotNull DataDef data) {
@@ -58,6 +113,11 @@ public record ShapeMatcher(
 
   private boolean matchTerm(@NotNull CodeShape.TermShape shape, @NotNull Term term) {
     if (shape instanceof CodeShape.TermShape.Any) return true;
+    if (shape instanceof CodeShape.TermShape.Named named) {
+      names.append(named.name());
+      return matchTerm(named.shape(), term);
+    }
+
     // TODO[hoshino]: For now, we are unable to match `| Ctor (Data {Im} Ex)` and `| Ctor (Data Ex)`
     //                by only one `Shape`, I think the solution is
     //                constructing a Term by Shape and unify them.
@@ -119,9 +179,16 @@ public record ShapeMatcher(
   }
 
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull BooleanSupplier matcher) {
+    var snapshot = resolved.toImmutableMap();
+
+    resolve(defVar);
     def.push(defVar);
     var result = matcher.getAsBoolean();
     def.pop();
+
+    resolved.clear();
+    resolved.putAll(snapshot);
+
     return result;
   }
 
@@ -149,5 +216,9 @@ public record ShapeMatcher(
     var matched = matcher.apply(shape, core);
     if (matched) captures.put(shape.name(), extract.apply(core));
     return matched;
+  }
+
+  private void resolve(@NotNull AnyVar someVar) {
+    names.forEach(name -> resolved.put(name, someVar));
   }
 }

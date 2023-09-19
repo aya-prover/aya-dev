@@ -95,6 +95,8 @@ public sealed interface CodeShape {
 
     record NameRef(@NotNull String name) implements TermShape {}
 
+    record Shape(@NotNull CodeShape shape) implements TermShape {}
+
     default @NotNull Named named(@NotNull String name) {
       return new Named(name, this);
     }
@@ -113,14 +115,19 @@ public sealed interface CodeShape {
       INSTANCE;
     }
 
-    enum Ctor implements PatShape {
-      INSTANCE;
+    record Ctor(@NotNull ImmutableSeq<PatShape> innerPats) implements PatShape {
     }
 
-    record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
+    /**
+     * Expecting a certain ctor, {@link ShapeMatcher} will crash if the {@param name} is invalid (such as undefined or not a DataShape)
+     *
+     * @param name a reference to a {@link DataShape}d term
+     * @param id   the {@link MomentId} to the ctor
+     */
+    record ShapedCtor(@NotNull String name, @NotNull MomentId id,
+                      @NotNull ImmutableSeq<PatShape> innerPats) implements PatShape {}
 
-    // TODO[h]: should we allow pat ref in pat? like:
-    //          | somePat a, somePat d => ...
+    record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
 
     default @NotNull Named named(@NotNull String name) {
       return new Named(name, this);
