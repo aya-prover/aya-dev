@@ -24,7 +24,6 @@ import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -92,7 +91,7 @@ public record ShapeMatcher(
     }
 
     if (shape == CodeShape.PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
-      resolve(bind.bind());
+      bind(bind.bind());
       return true;
     }
 
@@ -128,6 +127,19 @@ public record ShapeMatcher(
       return matchMany(true, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
     }
+    if (shape instanceof CodeShape.TermShape.SomeCall call && term instanceof Callable callable) {
+      var success = call.head().fold(
+        name -> resolve(name) == callable.ref(),
+        mShape -> callable.ref() instanceof DefVar<?, ?> defVar
+          && defVar.core instanceof GenericDef def
+          && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == mShape
+      );
+
+      if (!success) return false;
+
+      return matchMany(true, call.args(), callable.args(),
+        (l, r) -> matchTerm(l, r.term()));
+    }
     if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
       if (superLevel == null) return false;
@@ -135,6 +147,9 @@ public record ShapeMatcher(
       if (tele == null) return false;
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
+    }
+    if (shape instanceof CodeShape.TermShape.NameRef ref && term instanceof RefTerm refTerm) {
+      return resolve(ref.name()) == refTerm.var();
     }
     if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
@@ -181,7 +196,7 @@ public record ShapeMatcher(
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull BooleanSupplier matcher) {
     var snapshot = resolved.toImmutableMap();
 
-    resolve(defVar);
+    bind(defVar);
     def.push(defVar);
     var result = matcher.getAsBoolean();
     def.pop();
@@ -218,7 +233,16 @@ public record ShapeMatcher(
     return matched;
   }
 
-  private void resolve(@NotNull AnyVar someVar) {
+  private void bind(@NotNull AnyVar someVar) {
     names.forEach(name -> resolved.put(name, someVar));
+  }
+
+  private @NotNull AnyVar resolve(@NotNull String name) {
+    var resolved = this.resolved.getOrNull(name);
+    if (resolved == null) {
+      throw new InternalException("Invalid name: " + name);
+    }
+
+    return resolved;
   }
 }

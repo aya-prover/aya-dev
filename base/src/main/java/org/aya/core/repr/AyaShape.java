@@ -64,17 +64,24 @@ public sealed interface AyaShape {
     private static final @NotNull String NAT = "Nat";
     private static final @NotNull String ZERO = "zero";
     private static final @NotNull String SUCC = "succ";
+    private static final @NotNull String A = "a";
 
     public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new CodeShape.TermShape.Shape(AyaIntShape.DATA_NAT).named(NAT)),
+        anyLicit(new CodeShape.TermShape.SomeCall(Either.right(AyaIntShape.DATA_NAT), ImmutableSeq.empty()).named(NAT)),
         anyLicit(new CodeShape.TermShape.NameRef(NAT))
       ),
       new CodeShape.TermShape.NameRef(NAT),
       Either.right(ImmutableSeq.of(
         // | a, 0 => a
-        new CodeShape.ClauseShape(ImmutableSeq.of(ImmutableSeq.of(CodeShape.PatShape.Bind, )), )
+        new CodeShape.ClauseShape(ImmutableSeq.of(
+          CodeShape.PatShape.Bind.INSTANCE.named(A), new CodeShape.PatShape.ShapedCtor(NAT, CodeShape.MomentId.ZERO, ImmutableSeq.empty())
+        ), new CodeShape.TermShape.NameRef(A)),
+        // | a, suc b => _ (suc a) b
+        new CodeShape.ClauseShape(ImmutableSeq.of(
+
+        ))
       ))
     );
   }

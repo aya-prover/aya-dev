@@ -33,7 +33,7 @@ public sealed interface CodeShape {
     @NotNull Either<TermShape, ImmutableSeq<ClauseShape>> body
   ) implements CodeShape {}
 
-  record ClauseShape(@NotNull ImmutableSeq<ImmutableSeq<PatShape>> pats, @NotNull TermShape body) implements CodeShape {
+  record ClauseShape(@NotNull ImmutableSeq<PatShape> pats, @NotNull TermShape body) implements CodeShape {
   }
 
   record DataShape(
@@ -56,10 +56,6 @@ public sealed interface CodeShape {
   ) implements CodeShape {}
 
   record Named(@NotNull String name, @NotNull CodeShape shape) implements CodeShape {
-  }
-
-  default @NotNull CodeShape.TermShape.Named named(@NotNull String name) {
-    return new TermShape.Named(name, this);
   }
 
   /**
@@ -93,9 +89,20 @@ public sealed interface CodeShape {
 
     record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
 
+    /**
+     * only works on LocalVar
+     */
     record NameRef(@NotNull String name) implements TermShape {}
 
-    record Shape(@NotNull CodeShape shape) implements TermShape {}
+    /**
+     * Expecting a call.
+     *
+     * @param head the name to the call head or something shaped
+     * @param args arguments, may we use {@link ParamShape}?
+     */
+    record SomeCall(@NotNull Either<String, CodeShape> head,
+                    @NotNull ImmutableSeq<TermShape> args) implements TermShape {
+    }
 
     default @NotNull Named named(@NotNull String name) {
       return new Named(name, this);
