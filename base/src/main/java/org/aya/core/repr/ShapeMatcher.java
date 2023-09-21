@@ -10,10 +10,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.CtorDef;
-import org.aya.core.def.DataDef;
-import org.aya.core.def.Def;
-import org.aya.core.def.GenericDef;
+import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.Callable;
 import org.aya.core.term.RefTerm;
@@ -24,6 +21,7 @@ import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
@@ -47,9 +45,61 @@ public record ShapeMatcher(
 
   public static Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
     var matcher = new ShapeMatcher();
-    if (shape.codeShape() instanceof CodeShape.DataShape dataShape && def instanceof DataDef data)
-      return matcher.matchData(dataShape, data) ? Option.some(new ShapeRecognition(shape, ImmutableMap.from(matcher.captures))) : Option.none();
+    var success = matcher.matchDecl(shape.codeShape(), def);
+
+    if (success) {
+      return Option.some(new ShapeRecognition(shape, matcher.captures.toImmutableMap()));
+    }
+
     return Option.none();
+  }
+
+  private boolean matchDecl(@NotNull CodeShape shape, @NotNull GenericDef def) {
+    if (shape instanceof CodeShape.Named named) {
+      names.append(named.name());
+      return matchDecl(shape, def);
+    }
+
+    if (shape instanceof CodeShape.DataShape dataShape && def instanceof DataDef data) {
+      return matchData(dataShape, data);
+    }
+
+    if (shape instanceof CodeShape.FnShape fnShape && def instanceof FnDef fn) {
+      return matchFn(fnShape, fn);
+    }
+
+    return false;
+  }
+
+  private boolean matchFn(@NotNull CodeShape.FnShape shape, @NotNull FnDef def) {
+    // match signature
+    var teleResult = matchTele(shape.tele(), def.telescope)
+      && matchTerm(shape.result(), def.result);
+    if (!teleResult) return false;
+
+    // match body
+    return shape.body().fold(
+      termShape -> {
+        if (!def.body.isLeft()) return false;
+        var term = def.body.getLeftValue();
+        return matchTerm(termShape, term);
+      },
+      clauseShapes -> {
+        if (!def.body.isRight()) return false;
+        var clauses = def.body.getRightValue();
+        return matchMany(false, clauseShapes, clauses, (cs, m) ->
+          // inside multiple times in order to reset the state
+          matchInside(def.ref, () -> matchClause(cs, m))
+        );
+      }
+    );
+  }
+
+  private boolean matchClause(@NotNull CodeShape.ClauseShape shape, @NotNull Term.Matching clause) {
+    // match pats
+    var patsResult = matchMany(true, shape.pats(), clause.patterns(), (ps, ap) -> matchPat(ps, ap.term()));
+    if (!patsResult) return false;
+    return matchTerm(shape.body(), clause.body());
   }
 
   private boolean matchPat(@NotNull CodeShape.PatShape shape, @NotNull Pat pat) {
@@ -127,13 +177,15 @@ public record ShapeMatcher(
       return matchMany(true, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
     }
-    if (shape instanceof CodeShape.TermShape.SomeCall call && term instanceof Callable callable) {
-      var success = call.head().fold(
-        name -> resolve(name) == callable.ref(),
-        mShape -> callable.ref() instanceof DefVar<?, ?> defVar
+    if (shape instanceof CodeShape.TermShape.Callable call && term instanceof Callable callable) {
+      boolean success = switch (call) {
+        case CodeShape.TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
+        case CodeShape.TermShape.ShapeCall shapeCall -> callable.ref() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof GenericDef def
-          && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == mShape
-      );
+          && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
+        case CodeShape.TermShape.CtorCall ctorCall ->
+          resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
+      };
 
       if (!success) return false;
 
@@ -244,5 +296,24 @@ public record ShapeMatcher(
     }
 
     return resolved;
+  }
+
+  private @NotNull DefVar<?, ?> resolveCtor(@NotNull String data, @NotNull CodeShape.MomentId ctorId) {
+    var someVar = resolve(data);
+    if (!(someVar instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
+      throw new InternalException("Not a data");
+    }
+
+    var recog = discovered.getOrNull(dataDef);
+    if (recog == null) {
+      throw new InternalException("Not a recognized data");
+    }
+
+    var ctor = recog.captures().getOrNull(ctorId);
+    if (ctor == null) {
+      throw new InternalException("No such ctor");
+    }
+
+    return ctor;
   }
 }

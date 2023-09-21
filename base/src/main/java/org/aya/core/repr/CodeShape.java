@@ -58,6 +58,10 @@ public sealed interface CodeShape {
   record Named(@NotNull String name, @NotNull CodeShape shape) implements CodeShape {
   }
 
+  default @NotNull Named named(@NotNull String name) {
+    return new Named(name, this);
+  }
+
   /**
    * @author kiva
    */
@@ -94,15 +98,16 @@ public sealed interface CodeShape {
      */
     record NameRef(@NotNull String name) implements TermShape {}
 
-    /**
-     * Expecting a call.
-     *
-     * @param head the name to the call head or something shaped
-     * @param args arguments, may we use {@link ParamShape}?
-     */
-    record SomeCall(@NotNull Either<String, CodeShape> head,
-                    @NotNull ImmutableSeq<TermShape> args) implements TermShape {
+    sealed interface Callable extends TermShape {
+      @NotNull ImmutableSeq<TermShape> args();
     }
+
+    record NameCall(@NotNull String name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+
+    record ShapeCall(@NotNull CodeShape shape, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+
+    record CtorCall(@NotNull String dataRef, @NotNull MomentId ctorId,
+                    @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
 
     default @NotNull Named named(@NotNull String name) {
       return new Named(name, this);

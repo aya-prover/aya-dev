@@ -11,6 +11,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
+import org.aya.core.repr.CodeShape.*;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.CtorShape;
@@ -62,14 +63,14 @@ public sealed interface AyaShape {
     INSTANCE;
 
     private static final @NotNull String NAT = "Nat";
-    private static final @NotNull String ZERO = "zero";
-    private static final @NotNull String SUCC = "succ";
     private static final @NotNull String A = "a";
+    private static final @NotNull String B = "b";
+    private static final @NotNull String PLUS = "plus";
 
     public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new CodeShape.TermShape.SomeCall(Either.right(AyaIntShape.DATA_NAT), ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new CodeShape.TermShape.ShapeCall(AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
         anyLicit(new CodeShape.TermShape.NameRef(NAT))
       ),
       new CodeShape.TermShape.NameRef(NAT),
@@ -80,10 +81,15 @@ public sealed interface AyaShape {
         ), new CodeShape.TermShape.NameRef(A)),
         // | a, suc b => _ (suc a) b
         new CodeShape.ClauseShape(ImmutableSeq.of(
-
-        ))
+          PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, MomentId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))
+        ), new TermShape.NameCall(PLUS, ImmutableSeq.of(new TermShape.CtorCall(NAT, MomentId.SUC, ImmutableSeq.of(new TermShape.NameRef(A))), new TermShape.NameRef(B))))
       ))
-    );
+    ).named(PLUS);
+
+    @Override
+    public @NotNull CodeShape codeShape() {
+      return FN_PLUS;
+    }
   }
 
   class Factory {
