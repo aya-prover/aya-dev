@@ -49,7 +49,7 @@ fun jdkUrl(platform: String): String {
   return "https://download.bell-sw.com/java/${libericaJdkVersion}/bellsoft-jdk${libericaJdkVersion}-${fixAmd64}.$suffix"
 }
 
-val allPlatformImageDir = buildDir.resolve("image-all-platforms")
+val allPlatformImageDir = layout.buildDirectory.asFile.get().resolve("image-all-platforms")
 jlink {
   addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
   addExtraDependencies("jline-terminal-jansi")
@@ -80,7 +80,7 @@ jlink {
 val jlinkTask = tasks.named("jlink")
 val ayaJlinkTask = tasks.register("jlinkAya")
 val ayaJlinkZipTask = tasks.register("jlinkAyaZip")
-val ayaImageDir = buildDir.resolve("image")
+val ayaImageDir = layout.buildDirectory.asFile.get().resolve("image")
 supportedPlatforms.forEach { platform ->
   val installDir = ayaImageDir.resolve(platform)
   val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables_$platform") {
