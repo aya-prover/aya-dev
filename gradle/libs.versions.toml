@@ -12,8 +12,6 @@ jline = "3.23.0"
 # https://github.com/commonmark/commonmark-java
 commonmark = "0.21.1"
 jimgui = "v0.21.0"
-# https://github.com/jacoco/jacoco
-jacoco = "0.8.10"
 junit = "5.10.0"
 hamcrest = "2.2"
 # https://github.com/google/gson
