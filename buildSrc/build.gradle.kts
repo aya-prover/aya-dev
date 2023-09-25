@@ -27,13 +27,11 @@ tasks.named("build").configure {
 }
 
 dependencies {
-  val deps = Properties()
-  deps.load(rootDir.resolve("gradle/deps.properties").reader())
-  api("org.aya-prover.upstream", "build-util", deps.getProperty("version.aya-upstream"))
-  api("org.aya-prover.upstream", "build-util-jflex", deps.getProperty("version.aya-upstream"))
+  api(libs.aya.build.util)
+  api(libs.aya.build.jflex)
 
   // The following is required for
   // - extracting common parts inside `graalvmNative` block
-  // - specifying the plugin version from deps.properties
-  implementation("org.graalvm.buildtools.native", "org.graalvm.buildtools.native.gradle.plugin", deps.getProperty("version.graalBuildTools"))
+  // - specifying the plugin version from libs.versions.toml
+  implementation(libs.graal.nitools)
 }

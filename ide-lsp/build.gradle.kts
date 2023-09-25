@@ -8,15 +8,14 @@ import java.util.*
 CommonTasks.fatJar(project, Constants.mainClassQName)
 
 dependencies {
-  val deps: java.util.Properties by rootProject.ext
   // NOTE: use `api`. IntelliJ plugin needs it temporarily (should depend on ide instead of lsp).
   api(project(":ide"))
-  api("org.aya-prover.upstream", "javacs-protocol", version = deps.getProperty("version.aya-upstream"))
+  api(libs.aya.lsp)
   implementation(project(":cli-console"))
-  implementation("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
-  annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
-  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
-  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
+  implementation(libs.picocli.runtime)
+  annotationProcessor(libs.picocli.codegen)
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest)
 }
 
 plugins {

@@ -6,10 +6,9 @@ CommonTasks.nativeImageConfig(project)
 dependencies {
   api(project(":base"))
   api(project(":parser"))
-  val deps: java.util.Properties by rootProject.ext
-  api("com.google.code.gson", "gson", version = deps.getProperty("version.gson"))
-  implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
-  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
-  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
+  api(libs.gson)
+  implementation(libs.aya.commonmark)
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest)
   testImplementation(project(":cli-console"))
 }

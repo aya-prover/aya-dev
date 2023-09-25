@@ -1,19 +1,18 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-import org.aya.gradle.CommonTasks
+import org.aya.gradle.*
 CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":tools"))
   api(project(":tools-md"))
   api(project(":pretty"))
-  val deps: java.util.Properties by rootProject.ext
-  api("org.aya-prover.guest0x0", "cubical", version = deps.getProperty("version.guest0x0"))
-  implementation("org.aya-prover", "commonmark", version = deps.getProperty("version.commonmark"))
-  implementation("org.aya-prover.upstream", "ij-parsing-core", version = deps.getProperty("version.aya-upstream"))
-  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
-  testImplementation("org.junit.jupiter", "junit-jupiter-params", version = deps.getProperty("version.junit"))
-  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
+  api(libs.aya.guest0x0)
+  implementation(libs.aya.commonmark)
+  implementation(libs.aya.ij.core)
+  testImplementation(libs.junit.params)
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest)
   testImplementation(project(":cli-impl"))
   testImplementation(project(":ide"))
 }
@@ -23,7 +22,7 @@ plugins {
 }
 
 val genDir = file("src/main/gen")
-val generateVersion = tasks.register<org.aya.gradle.GenerateVersionTask>("generateVersion") {
+val generateVersion = tasks.register<GenerateVersionTask>("generateVersion") {
   basePackage = "org.aya"
   outputDir = genDir.resolve("org/aya/prelude")
 }
@@ -35,7 +34,7 @@ sourceSets.main {
 
 tasks.compileJava { dependsOn(generateVersion) }
 tasks.sourcesJar { dependsOn(generateVersion) }
-tasks.withType<org.aya.gradle.GenerateReflectionConfigTask>().configureEach {
+tasks.withType<GenerateReflectionConfigTask>().configureEach {
   extraDir = file("src/main/java/org/aya/core/serde")
   classPrefixes = listOf("SerTerm", "SerPat", "SerDef", "CompiledAya")
   excludeNamesSuffix = listOf("SerTerm\$DeState", "CompiledAya\$CompiledAya", "CompiledAya\$Serialization")

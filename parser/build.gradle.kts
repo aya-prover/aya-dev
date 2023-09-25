@@ -7,13 +7,11 @@ sourceSets.main {
 }
 
 dependencies {
-  val deps: java.util.Properties by rootProject.ext
-  api("org.jetbrains", "annotations", version = deps.getProperty("version.annotations"))
-  api("org.aya-prover.upstream", "ij-parsing-core", version = deps.getProperty("version.aya-upstream"))
-  api("org.aya-prover.upstream", "ij-parsing-wrapper", version = deps.getProperty("version.aya-upstream"))
-  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
-  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
-}
+  api(libs.annotations)
+  api(libs.aya.ij.core)
+  api(libs.aya.ij.wrapper)
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest) }
 
 val lexer = tasks.register<org.aya.gradle.JFlexTask>("lexer") {
   outputDir = genDir.resolve("org/aya/parser")
