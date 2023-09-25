@@ -3,10 +3,8 @@
 
 rootProject.name = "aya-prover"
 
-dependencyResolutionManagement {
-  @Suppress("UnstableApiUsage") repositories {
-    mavenCentral()
-  }
+@Suppress("UnstableApiUsage") dependencyResolutionManagement.repositories {
+  mavenCentral()
 }
 
 include(

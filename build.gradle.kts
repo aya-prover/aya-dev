@@ -11,7 +11,7 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "2.26.0" apply false
+  id("org.beryx.jlink") version "3.0.0" apply false
 }
 
 var currentPlatform: String by rootProject.ext
@@ -153,16 +153,14 @@ subprojects {
   val ossrhUsername = propOrEnv("ossrhUsername")
   val ossrhPassword = propOrEnv("ossrhPassword")
 
-  if (ossrhUsername.isNotEmpty()) publishing.repositories {
-    maven {
-      val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
-      val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-      url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
-      name = "MavenCentral"
-      credentials {
-        username = ossrhUsername
-        password = ossrhPassword
-      }
+  if (ossrhUsername.isNotEmpty()) publishing.repositories.maven {
+    val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+    val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+    url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
+    name = "MavenCentral"
+    credentials {
+      username = ossrhUsername
+      password = ossrhPassword
     }
   }
 
@@ -171,42 +169,40 @@ subprojects {
     enabled = false
   }
 
-  publishing.publications {
-    create<MavenPublication>("maven") {
-      val githubUrl = "https://github.com/aya-prover/aya-dev"
-      groupId = proj.group.toString()
-      version = proj.version.toString()
-      artifactId = proj.name
-      from(components["java"])
-      pom {
-        description.set("The Aya proof assistant")
-        name.set(proj.name)
-        url.set("https://www.aya-prover.org")
-        licenses {
-          license {
-            name.set("MIT")
-            url.set("$githubUrl/blob/master/LICENSE")
-          }
+  publishing.publications.create<MavenPublication>("maven") {
+    val githubUrl = "https://github.com/aya-prover/aya-dev"
+    groupId = proj.group.toString()
+    version = proj.version.toString()
+    artifactId = proj.name
+    from(components["java"])
+    pom {
+      description.set("The Aya proof assistant")
+      name.set(proj.name)
+      url.set("https://www.aya-prover.org")
+      licenses {
+        license {
+          name.set("MIT")
+          url.set("$githubUrl/blob/master/LICENSE")
         }
-        developers {
-          fun dev(i: String, n: String, u: String) = developer {
-            id.set(i)
-            name.set(n)
-            email.set(u)
-          }
-          dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
-          dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
-          dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
-          dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
-          dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
-          dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
-          dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
-          dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+      }
+      developers {
+        fun dev(i: String, n: String, u: String) = developer {
+          id.set(i)
+          name.set(n)
+          email.set(u)
         }
-        scm {
-          connection.set("scm:git:$githubUrl")
-          url.set(githubUrl)
-        }
+        dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
+        dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
+        dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
+        dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
+        dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
+        dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
+        dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
+        dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+      }
+      scm {
+        connection.set("scm:git:$githubUrl")
+        url.set(githubUrl)
       }
     }
   }
