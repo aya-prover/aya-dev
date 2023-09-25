@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.CtorShape;
 import static org.aya.core.repr.CodeShape.DataShape;
-import static org.aya.core.repr.CodeShape.ParamShape.anyLicit;
+import static org.aya.core.repr.ParamShape.anyLicit;
 
 /**
  * @author kiva
@@ -33,7 +33,7 @@ public sealed interface AyaShape {
 
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
       new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
-      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(CodeShape.ParamShape.explicit(CodeShape.TermShape.Call.justCall(0))))
+      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.Call.justCall(0))))
     ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -45,13 +45,13 @@ public sealed interface AyaShape {
     INSTANCE;
 
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
-      ImmutableSeq.of(anyLicit(new CodeShape.TermShape.Sort(null, 0))),
+      ImmutableSeq.of(anyLicit(new TermShape.Sort(null, 0))),
       ImmutableSeq.of(
         new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
         new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
-          anyLicit(new CodeShape.TermShape.TeleRef(0, 0)),   // A
-          anyLicit(new CodeShape.TermShape.Call(0, ImmutableSeq.of(    // List A
-            new CodeShape.TermShape.TeleRef(0, 0))))))
+          anyLicit(new TermShape.TeleRef(0, 0)),   // A
+          anyLicit(new TermShape.Call(0, ImmutableSeq.of(    // List A
+            new TermShape.TeleRef(0, 0))))))
       ));
 
     @Override public @NotNull CodeShape codeShape() {
@@ -70,15 +70,15 @@ public sealed interface AyaShape {
     public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new CodeShape.TermShape.ShapeCall(AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
-        anyLicit(new CodeShape.TermShape.NameCall(NAT, ImmutableSeq.empty()))
+        anyLicit(new TermShape.ShapeCall(AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.NameCall(NAT, ImmutableSeq.empty()))
       ),
-      new CodeShape.TermShape.NameCall(NAT, ImmutableSeq.empty()),
+      new TermShape.NameCall(NAT, ImmutableSeq.empty()),
       Either.right(ImmutableSeq.of(
         // | a, 0 => a
         new CodeShape.ClauseShape(ImmutableSeq.of(
-          CodeShape.PatShape.Bind.INSTANCE.named(A), new CodeShape.PatShape.ShapedCtor(NAT, CodeShape.MomentId.ZERO, ImmutableSeq.empty())
-        ), new CodeShape.TermShape.NameRef(A)),
+          PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, CodeShape.MomentId.ZERO, ImmutableSeq.empty())
+        ), new TermShape.NameRef(A)),
         // | a, suc b => _ (suc a) b
         new CodeShape.ClauseShape(ImmutableSeq.of(
           PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, MomentId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))

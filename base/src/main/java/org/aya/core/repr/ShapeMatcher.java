@@ -113,20 +113,20 @@ public record ShapeMatcher(
     return matchTerm(shape.body(), clause.body());
   }
 
-  private boolean matchPat(@NotNull CodeShape.PatShape shape, @NotNull Pat pat) {
-    if (shape instanceof CodeShape.PatShape.Named named) {
+  private boolean matchPat(@NotNull PatShape shape, @NotNull Pat pat) {
+    if (shape instanceof PatShape.Named named) {
       names.append(named.name());
       return matchPat(named.pat(), pat);
     }
 
     return doMatch(names -> {
-      if (shape == CodeShape.PatShape.Any.INSTANCE) return MatchResult.MatchedAny.INSTANCE;
+      if (shape == PatShape.Any.INSTANCE) return MatchResult.MatchedAny.INSTANCE;
 
       if (pat instanceof Pat.Ctor ctor) {
         boolean matched = false;
-        @Nullable ImmutableSeq<CodeShape.PatShape> inside = null;
+        @Nullable ImmutableSeq<PatShape> inside = null;
 
-        if (shape instanceof CodeShape.PatShape.ShapedCtor shapedCtor) {
+        if (shape instanceof PatShape.ShapedCtor shapedCtor) {
           inside = shapedCtor.innerPats();
 
           var data = resolved.getOrNull(shapedCtor.name());
@@ -145,7 +145,7 @@ public record ShapeMatcher(
           }
 
           matched = realShapedCtor == ctor.ref();
-        } else if (shape instanceof CodeShape.PatShape.Ctor shapedCtor) {
+        } else if (shape instanceof PatShape.Ctor shapedCtor) {
           inside = shapedCtor.innerPats();
           matched = true;
         }
@@ -161,7 +161,7 @@ public record ShapeMatcher(
         }
       }
 
-      if (shape == CodeShape.PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
+      if (shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
         return new MatchResult.Matched(bind.bind());
       }
 
@@ -183,9 +183,9 @@ public record ShapeMatcher(
     return matchTele(shape.tele(), ctor.selfTele);
   }
 
-  private boolean matchTerm(@NotNull CodeShape.TermShape shape, @NotNull Term term) {
-    if (shape instanceof CodeShape.TermShape.Any) return true;
-    if (shape instanceof CodeShape.TermShape.Named named) {
+  private boolean matchTerm(@NotNull TermShape shape, @NotNull Term term) {
+    if (shape instanceof TermShape.Any) return true;
+    if (shape instanceof TermShape.Named named) {
       names.append(named.name());
       return matchTerm(named.shape(), term);
     }
@@ -196,20 +196,20 @@ public record ShapeMatcher(
     // TODO[hoshino]: For now, we are unable to match `| Ctor (Data {Im} Ex)` and `| Ctor (Data Ex)`
     //                by only one `Shape`, I think the solution is
     //                constructing a Term by Shape and unify them.
-    if (shape instanceof CodeShape.TermShape.Call call && term instanceof Callable callable) {
+    if (shape instanceof TermShape.Call call && term instanceof Callable callable) {
       var superLevel = def.getOrNull(call.superLevel());
       if (superLevel != callable.ref()) return false;                      // implies null check
       // TODO[hoshino]: do we also match implicit arguments when size mismatch?
       return matchMany(MatchMode.Ordered, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
     }
-    if (shape instanceof CodeShape.TermShape.Callable call && term instanceof Callable callable) {
+    if (shape instanceof TermShape.Callable call && term instanceof Callable callable) {
       boolean success = switch (call) {
-        case CodeShape.TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
-        case CodeShape.TermShape.ShapeCall shapeCall -> callable.ref() instanceof DefVar<?, ?> defVar
+        case TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
+        case TermShape.ShapeCall shapeCall -> callable.ref() instanceof DefVar<?, ?> defVar
           && defVar.core instanceof GenericDef def
           && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
-        case CodeShape.TermShape.CtorCall ctorCall ->
+        case TermShape.CtorCall ctorCall ->
           resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
       };
 
@@ -221,7 +221,7 @@ public record ShapeMatcher(
       if (!success) return false;
       result = callable.ref();
     }
-    if (shape instanceof CodeShape.TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
+    if (shape instanceof TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
       if (superLevel == null) return false;
       var tele = Def.defTele(superLevel).getOrNull(ref.nth());
@@ -229,12 +229,12 @@ public record ShapeMatcher(
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
     }
-    if (shape instanceof CodeShape.TermShape.NameRef ref && term instanceof RefTerm refTerm) {
+    if (shape instanceof TermShape.NameRef ref && term instanceof RefTerm refTerm) {
       var success = resolve(ref.name()) == refTerm.var();
       if (!success) return false;
       result = refTerm.var();
     }
-    if (shape instanceof CodeShape.TermShape.Sort sort && term instanceof SortTerm sortTerm) {
+    if (shape instanceof TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
       if (sort.kind() == null) return true;
 
@@ -250,7 +250,7 @@ public record ShapeMatcher(
     return false;
   }
 
-  private boolean matchTele(@NotNull ImmutableSeq<CodeShape.ParamShape> shape, @NotNull ImmutableSeq<Term.Param> tele) {
+  private boolean matchTele(@NotNull ImmutableSeq<ParamShape> shape, @NotNull ImmutableSeq<Term.Param> tele) {
     var shapes = shape.view();
     var params = tele.view();
     while (shapes.isNotEmpty() && params.isNotEmpty()) {
@@ -262,24 +262,24 @@ public record ShapeMatcher(
     }
     if (shapes.isNotEmpty()) {
       // implies params.isEmpty(), matching all optional shapes
-      shapes = shapes.filterNot(CodeShape.ParamShape.Optional.class::isInstance);
+      shapes = shapes.filterNot(ParamShape.Optional.class::isInstance);
     }
     return shapes.sizeEquals(params);
   }
 
-  private boolean matchParam(@NotNull CodeShape.ParamShape shape, @NotNull Term.Param param) {
-    if (shape instanceof CodeShape.ParamShape.Any) return true;
-    if (shape instanceof CodeShape.ParamShape.Optional opt) return matchParam(opt.param(), param);
-    if (shape instanceof CodeShape.ParamShape.Licit licit) {
+  private boolean matchParam(@NotNull ParamShape shape, @NotNull Term.Param param) {
+    if (shape instanceof ParamShape.Any) return true;
+    if (shape instanceof ParamShape.Optional opt) return matchParam(opt.param(), param);
+    if (shape instanceof ParamShape.Licit licit) {
       if (!matchLicit(licit.kind(), param.explicit())) return false;
       return matchTerm(licit.type(), param.type());
     }
     return false;
   }
 
-  private boolean matchLicit(@NotNull CodeShape.ParamShape.Licit.Kind xlicit, boolean isExplicit) {
-    return xlicit == CodeShape.ParamShape.Licit.Kind.Any
-      || (xlicit == CodeShape.ParamShape.Licit.Kind.Ex) == isExplicit;
+  private boolean matchLicit(@NotNull ParamShape.Licit.Kind xlicit, boolean isExplicit) {
+    return xlicit == ParamShape.Licit.Kind.Any
+      || (xlicit == ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
   private <T> T subscoped(@NotNull Supplier<T> block) {
