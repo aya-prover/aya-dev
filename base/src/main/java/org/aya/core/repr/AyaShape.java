@@ -71,9 +71,9 @@ public sealed interface AyaShape {
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
         anyLicit(new CodeShape.TermShape.ShapeCall(AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
-        anyLicit(new CodeShape.TermShape.NameRef(NAT))
+        anyLicit(new CodeShape.TermShape.NameCall(NAT, ImmutableSeq.empty()))
       ),
-      new CodeShape.TermShape.NameRef(NAT),
+      new CodeShape.TermShape.NameCall(NAT, ImmutableSeq.empty()),
       Either.right(ImmutableSeq.of(
         // | a, 0 => a
         new CodeShape.ClauseShape(ImmutableSeq.of(
