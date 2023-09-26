@@ -105,6 +105,11 @@ supportedPlatforms.forEach { platform ->
     into(installDir.resolve("std"))
   }
 
+  val copyAyaLicense = tasks.register<Copy>("copyAyaLicense_$platform") {
+    from(rootProject.file("LICENSE"))
+    into(installDir.resolve("licenses"))
+  }
+
   val packageAya = tasks.register<Zip>("packageAya_$platform") {
     val fileName = "aya-prover_jlink_$platform.zip"
     val sha256FileName = "$fileName.sha256.txt"
@@ -136,9 +141,7 @@ supportedPlatforms.forEach { platform ->
   }
 
   ayaJlinkTask.configure {
-    dependsOn(copyAyaJRE)
-    dependsOn(copyAyaExecutables)
-    dependsOn(copyAyaLibrary)
+    dependsOn(copyAyaJRE, copyAyaExecutables, copyAyaLibrary, copyAyaLicense)
   }
   ayaJlinkZipTask.configure {
     dependsOn(packageAya)

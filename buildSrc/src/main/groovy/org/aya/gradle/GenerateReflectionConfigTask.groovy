@@ -24,7 +24,7 @@ class GenerateReflectionConfigTask extends DefaultTask {
   @Input List<String> excludeNamesSuffix = []
   @Optional @Input String packageName
 
-  private static var pattern = Pattern.compile("\\{(\\d+)\\,\\s*(\\d+)\\}")
+  private static var pattern = Pattern.compile("\\{(\\d+),\\s*(\\d+)}")
   private static var serializable = Pattern.compile("(record|enum)\\s*([a-zA-Z0-9_]+)")
 
   @TaskAction def run() {
