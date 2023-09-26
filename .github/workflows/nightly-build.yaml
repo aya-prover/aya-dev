@@ -84,7 +84,8 @@ jobs:
           java-version: ${{ needs.check-aya-version.outputs.javaVersion }}
           distribution: 'graalvm-community'
           components: 'native-image'
-          set-java-home: 'false'
+          set-java-home: 'true'
+          cache: 'gradle'
           github-token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup MSVC
