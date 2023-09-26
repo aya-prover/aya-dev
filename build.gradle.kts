@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.BuildUtil
-import java.util.*
 
 plugins {
   java
@@ -14,12 +13,15 @@ plugins {
   alias(libs.plugins.jlink) apply false
 }
 
+var projectVersion: String by rootProject.ext
 var currentPlatform: String by rootProject.ext
 var supportedPlatforms: List<String> by rootProject.ext
 var javaVersion: Int by rootProject.ext
-var deps: Properties by rootProject.ext
 
+projectVersion = libs.versions.project.get()
 javaVersion = libs.versions.java.get().toInt()
+
+// Workaround that `libs` is not available in `jacoco {}` block
 var jacocoVersion = libs.versions.jacoco.get()
 
 // Platforms we build jlink-ed aya for
@@ -33,12 +35,9 @@ supportedPlatforms = if (System.getenv("CI") == null) listOf(currentPlatform) el
   "macos-x64",
 )
 
-deps = Properties()
-file("gradle/deps.properties").reader().use(deps::load)
-
 allprojects {
   group = "org.aya-prover"
-  version = deps.getProperty("version.project")
+  version = projectVersion
 }
 
 val useJacoco = listOf("base", "pretty", "cli-impl")

@@ -1,11 +1,15 @@
 [versions]
+# The Version of this project, aka, The Aya Theorem Prover.
+# Remove "-SNAPSHOT" suffix and run gradle publish to release a new version.
+# After that, increase the version number and add "-SNAPSHOT" suffix back for next cycle.
+project = "0.30-SNAPSHOT"
+
 # Remember to update .github/workflows/{nightly-build.yml, gradle-check.yml}
 # https://openjdk.org/
 java = "20"
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
 kala = "0.67.0"
-aya = "0.29.1"
 picocli = "4.7.4"
 build-util = "0.0.18"
 # https://github.com/graalvm/native-build-tools
@@ -31,7 +35,6 @@ jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
 [libraries]
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 
-aya-tools = { group = "org.aya-prover", name = "tools", version.ref = "aya" }
 aya-ij-core = { group = "org.aya-prover.upstream", name = "ij-parsing-core", version.ref = "build-util" }
 aya-ij-text = { group = "org.aya-prover.upstream", name = "ij-util-text", version.ref = "build-util" }
 aya-ij-wrapper = { group = "org.aya-prover.upstream", name = "ij-parsing-wrapper", version.ref = "build-util" }
