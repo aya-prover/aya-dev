@@ -24,13 +24,24 @@ javaVersion = libs.versions.java.get().toInt()
 // Workaround that `libs` is not available in `jacoco {}` block
 var jacocoVersion = libs.versions.jacoco.get()
 
-// Platforms we build jlink-ed aya for
+// Platforms we build jlink-ed aya for:
+// The "current" means the "current platform", as it is unnecessary to detect what the current system is,
+// as calling jlink with default arguments will build for the current platform.
 currentPlatform = "current"
-supportedPlatforms = if (System.getenv("CI") == null) listOf(currentPlatform) else listOf(
+
+// In case we are in CI, or we are debugging CI locally, we build for all platforms
+fun buildAllPlatforms(): Boolean {
+  if (System.getenv("CI") != null) return true
+  if (System.getProperty("user.name").contains("kiva")
+    && project.rootDir.resolve(".git/HEAD").readLines().joinToString().contains("refs/heads/ci")) return true
+  return false
+}
+supportedPlatforms = if (!buildAllPlatforms()) listOf(currentPlatform) else listOf(
   "windows-aarch64",
   "windows-x64",
   "linux-aarch64",
   "linux-x64",
+  "linux-riscv64",
   "macos-aarch64",
   "macos-x64",
 )

@@ -41,12 +41,23 @@ object Constants {
 
 val supportedPlatforms: List<String> by rootProject.ext
 val currentPlatform: String by rootProject.ext
+var javaVersion: Int by rootProject.ext
 
-fun jdkUrl(platform: String): String {
+fun libericaJDK(platform: String): String {
   val libericaJdkVersion = System.getProperty("java.vm.version")
+  // ^ In CI, we always use Liberica JDK, so we can use the version string to get the download URL.
   val fixAmd64 = platform.replace("x64", "amd64")
   val suffix = if (platform.contains("linux")) "tar.gz" else "zip"
   return "https://download.bell-sw.com/java/${libericaJdkVersion}/bellsoft-jdk${libericaJdkVersion}-${fixAmd64}.$suffix"
+}
+
+fun riscv64JDK(platform: String): String {
+  return "https://github.com/imkiva/openjdk-riscv-build/releases/download/bootstrap/openjdk-jdk$javaVersion-$platform.tar.gz"
+}
+
+fun jdkUrl(platform: String): String = when {
+  platform.contains("linux") && platform.contains("riscv") -> riscv64JDK(platform)
+  else -> libericaJDK(platform)
 }
 
 val allPlatformImageDir = layout.buildDirectory.asFile.get().resolve("image-all-platforms")
@@ -87,7 +98,12 @@ supportedPlatforms.forEach { platform ->
     from(file("src/main/shell")) {
       // https://ss64.com/bash/chmod.html
       fileMode = "755".toInt(8)
-      rename { it.removeSuffix(".sh") }
+      if (platform.contains("windows")) {
+        include("*.bat")
+      } else {
+        include("*.sh")
+        rename { it.removeSuffix(".sh") }
+      }
     }
     into(installDir.resolve("bin"))
   }
