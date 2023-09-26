@@ -41,7 +41,7 @@ supportedPlatforms = if (!buildAllPlatforms()) listOf(currentPlatform) else list
   "windows-x64",
   "linux-aarch64",
   "linux-x64",
-//  "linux-riscv64",
+  "linux-riscv64",
   "macos-aarch64",
   "macos-x64",
 )

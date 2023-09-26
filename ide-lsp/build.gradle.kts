@@ -52,7 +52,7 @@ fun libericaJDK(platform: String): String {
 }
 
 fun riscv64JDK(platform: String): String {
-  return "https://builds.shipilev.net/openjdk-jdk$javaVersion/openjdk-jdk$javaVersion-$platform-server-release-gcc12-glibc2.36.tar.gz"
+  return "https://github.com/imkiva/openjdk-riscv-build/releases/download/bootstrap/openjdk-jdk$javaVersion-$platform.tar.gz"
 }
 
 fun jdkUrl(platform: String): String = when {
