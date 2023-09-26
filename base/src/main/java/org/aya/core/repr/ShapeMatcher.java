@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * @author kiva
@@ -119,54 +118,46 @@ public record ShapeMatcher(
       return matchPat(named.pat(), pat);
     }
 
-    return doMatch(names -> {
-      if (shape == PatShape.Any.INSTANCE) return MatchResult.MatchedAny.INSTANCE;
+    var names = acquireName();
 
-      if (pat instanceof Pat.Ctor ctor) {
-        boolean matched = false;
-        @Nullable ImmutableSeq<PatShape> inside = null;
+    if (shape == PatShape.Any.INSTANCE) return true;
+    if (shape instanceof PatShape.CtorLike ctorLike && pat instanceof Pat.Ctor ctor) {
+      boolean matched = true;
 
-        if (shape instanceof PatShape.ShapedCtor shapedCtor) {
-          inside = shapedCtor.innerPats();
-
-          var data = resolved.getOrNull(shapedCtor.name());
-          if (!(data instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
-            throw new InternalException("Invalid name: " + shapedCtor.name());
-          }
-
-          var recognition = discovered.getOrNull(dataDef);
-          if (recognition == null) {
-            throw new InternalException("Not a shaped data");
-          }
-
-          var realShapedCtor = recognition.captures().getOrNull(shapedCtor.id());
-          if (realShapedCtor == null) {
-            throw new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition);
-          }
-
-          matched = realShapedCtor == ctor.ref();
-        } else if (shape instanceof PatShape.Ctor shapedCtor) {
-          inside = shapedCtor.innerPats();
-          matched = true;
+      if (ctorLike instanceof PatShape.ShapedCtor shapedCtor) {
+        var data = resolved.getOrNull(shapedCtor.name());
+        if (!(data instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
+          throw new InternalException("Invalid name: " + shapedCtor.name());
         }
 
-        if (matched) {
-          // TODO: licit
-          // We don't use `matchInside` here, because the context doesn't need to reset.
-          // TODO: But `outCtor (outCtor xxx)` is unsupported now, since we doesn't bind `names` to `ctor.ref`
-          var success = matchMany(MatchMode.Ordered, inside, ctor.params().view().map(Arg::term), this::matchPat);
-          if (success) {
-            return new MatchResult.Matched(ctor.ref());
-          }
+        var recognition = discovered.getOrNull(dataDef);
+        if (recognition == null) {
+          throw new InternalException("Not a shaped data");
         }
+
+        var realShapedCtor = recognition.captures().getOrNull(shapedCtor.id());
+        if (realShapedCtor == null) {
+          throw new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition);
+        }
+
+        matched = realShapedCtor == ctor.ref();
       }
 
-      if (shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
-        return new MatchResult.Matched(bind.bind());
-      }
+      if (!matched) return false;
 
-      return MatchResult.Failed.INSTANCE;
-    });
+      bind(names, ctor.ref());
+
+      // TODO: licit
+      // We don't use `matchInside` here, because the context doesn't need to reset.
+      return matchMany(MatchMode.Ordered, ctorLike.innerPats(), ctor.params().view().map(Arg::term), this::matchPat);
+    }
+
+    if (shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
+      bind(names, bind.bind());
+      return true;
+    }
+
+    return false;
   }
 
   private boolean matchData(@NotNull CodeShape.DataShape shape, @NotNull DataDef data) {
@@ -184,7 +175,6 @@ public record ShapeMatcher(
   }
 
   private boolean matchTerm(@NotNull TermShape shape, @NotNull Term term) {
-    if (shape instanceof TermShape.Any) return true;
     if (shape instanceof TermShape.Named named) {
       names.append(named.name());
       return matchTerm(named.shape(), term);
@@ -193,17 +183,7 @@ public record ShapeMatcher(
     var names = acquireName();
     @Nullable AnyVar result = null;
 
-    // TODO[hoshino]: For now, we are unable to match `| Ctor (Data {Im} Ex)` and `| Ctor (Data Ex)`
-    //                by only one `Shape`, I think the solution is
-    //                constructing a Term by Shape and unify them.
-    if (shape instanceof TermShape.Call call && term instanceof Callable callable) {
-      var superLevel = def.getOrNull(call.superLevel());
-      if (superLevel != callable.ref()) return false;                      // implies null check
-      // TODO[hoshino]: do we also match implicit arguments when size mismatch?
-      return matchMany(MatchMode.Ordered, call.args(), callable.args(),
-        (l, r) -> matchTerm(l, r.term()));
-    }
-
+    if (shape instanceof TermShape.Any) return true;
     if (shape instanceof TermShape.NameCall call && call.args().isEmpty() && term instanceof RefTerm ref) {
       var success = resolve(call.name()) == ref.var();
       if (!success) return false;
@@ -292,17 +272,6 @@ public record ShapeMatcher(
       || (xlicit == ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
-  private <T> T subscoped(@NotNull Supplier<T> block) {
-    var snapshot = resolved.toImmutableMap();
-
-    var result = block.get();
-
-    resolved.clear();
-    resolved.putAll(snapshot);
-
-    return result;
-  }
-
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull ImmutableSeq<String> names, @NotNull BooleanSupplier matcher) {
     var snapshot = resolved.toImmutableMap();
 
@@ -333,20 +302,6 @@ public record ShapeMatcher(
       remainingShapes.removeAt(index);
     }
     return remainingShapes.isEmpty() || mode == MatchMode.Sub;
-  }
-
-  private boolean doMatch(@NotNull Function<ImmutableSeq<String>, MatchResult> block) {
-    var names = acquireName();
-    var result = block.apply(names);
-
-    return switch (result) {
-      case MatchResult.Failed failed -> false;
-      case MatchResult.MatchedAny matchedAny -> true;
-      case MatchResult.Matched matched -> {
-        bind(names, matched.capture);
-        yield true;
-      }
-    };
   }
 
   private <S extends CodeShape.Moment, C> boolean captured(
@@ -400,18 +355,5 @@ public record ShapeMatcher(
   public enum MatchMode {
     Ordered,
     Sub, Eq, Sup
-  }
-
-  private sealed interface MatchResult {
-
-    enum Failed implements MatchResult {
-      INSTANCE
-    }
-
-    enum MatchedAny implements MatchResult {
-      INSTANCE
-    }
-
-    record Matched(@NotNull AnyVar capture) implements MatchResult {}
   }
 }

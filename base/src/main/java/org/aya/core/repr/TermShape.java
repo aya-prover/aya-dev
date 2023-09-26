@@ -18,16 +18,6 @@ sealed public interface TermShape {
     INSTANCE;
   }
 
-  /**
-   * @param superLevel the data def reference
-   * @param args       corresponds to {@link DataCall#args()}
-   */
-  record Call(int superLevel, @NotNull ImmutableSeq<TermShape> args) implements TermShape {
-    @Contract("_ -> new") public static @NotNull Call justCall(int superLevel) {
-      return new Call(superLevel, ImmutableSeq.empty());
-    }
-  }
-
   record TeleRef(int superLevel, int nth) implements TermShape {}
 
   /**
@@ -39,6 +29,9 @@ sealed public interface TermShape {
    */
   record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
 
+  /**
+   * Binding {@param name} to {@param shape}.
+   */
   record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
 
   sealed interface Callable extends TermShape {

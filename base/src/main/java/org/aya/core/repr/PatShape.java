@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-sealed public interface PatShape {
+public sealed interface PatShape {
   enum Any implements PatShape {
     INSTANCE;
   }
@@ -19,7 +19,11 @@ sealed public interface PatShape {
     INSTANCE;
   }
 
-  record Ctor(@NotNull ImmutableSeq<PatShape> innerPats) implements PatShape {
+  sealed interface CtorLike extends PatShape permits Ctor, ShapedCtor {
+    @NotNull ImmutableSeq<PatShape> innerPats();
+  }
+
+  record Ctor(@NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {
   }
 
   /**
@@ -29,7 +33,7 @@ sealed public interface PatShape {
    * @param id   the {@link CodeShape.MomentId} to the ctor
    */
   record ShapedCtor(@NotNull String name, @NotNull CodeShape.MomentId id,
-                    @NotNull ImmutableSeq<PatShape> innerPats) implements PatShape {}
+                    @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {}
 
   record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
 
