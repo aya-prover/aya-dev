@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Java 20
+      - name: Setup Java ${{ needs.check-aya-version.outputs.javaVersion }}
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'

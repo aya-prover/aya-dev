@@ -28,7 +28,7 @@ jobs:
       ossrhPassword: ${{ secrets.OSSRHPASSWORD }}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Java 20
+      - name: Setup Java ${{ needs.check-aya-version.outputs.javaVersion }}
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Java 20
+      - name: Setup Java ${{ needs.check-aya-version.outputs.javaVersion }}
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
@@ -78,7 +78,7 @@ jobs:
           arguments: fatJar --no-daemon --stacktrace --warning-mode all
         if: matrix.os == 'ubuntu-latest'
 
-      - name: Setup GraalVM
+      - name: Setup GraalVM for Java ${{ needs.check-aya-version.outputs.javaVersion }}
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: ${{ needs.check-aya-version.outputs.javaVersion }}

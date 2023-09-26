@@ -30,8 +30,9 @@ jobs:
           javaVersion=$(cat ./gradle/libs.versions.toml | grep -Po 'java(\s*)=(\s*)"\K.*?(?=")' | head -n1)
           
           isSnapshot="$(echo "$projectVersion" | grep -q "SNAPSHOT" && echo true || echo false)"
-          echo "Detected Project Version: $projectVersion, is snapshot: $isSnapshot"
-          echo "::set-output name=projectVersion::${projectVersion}"
-          echo "::set-output name=isSnapshot::${isSnapshot}"
-          echo "::set-output name=javaVersion::${javaVersion}"
+          echo "Detected Project version: $projectVersion, is snapshot: $isSnapshot, Java version: $javaVersion"
+          
+          echo "projectVersion=${projectVersion}" >> $GITHUB_OUTPUT
+          echo "isSnapshot=${isSnapshot}" >> $GITHUB_OUTPUT
+          echo "javaVersion=${javaVersion}" >> $GITHUB_OUTPUT
 
