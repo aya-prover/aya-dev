@@ -1,6 +1,7 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
+import org.aya.gradle.JdkUrls
 import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.*
@@ -41,24 +42,9 @@ object Constants {
 
 val supportedPlatforms: List<String> by rootProject.ext
 val currentPlatform: String by rootProject.ext
-var javaVersion: Int by rootProject.ext
+val javaVersion: Int by rootProject.ext
 
-fun libericaJDK(platform: String): String {
-  val libericaJdkVersion = System.getProperty("java.vm.version")
-  // ^ In CI, we always use Liberica JDK, so we can use the version string to get the download URL.
-  val fixAmd64 = platform.replace("x64", "amd64")
-  val suffix = if (platform.contains("linux")) "tar.gz" else "zip"
-  return "https://download.bell-sw.com/java/${libericaJdkVersion}/bellsoft-jdk${libericaJdkVersion}-${fixAmd64}.$suffix"
-}
-
-fun riscv64JDK(platform: String): String {
-  return "https://github.com/imkiva/openjdk-riscv-build/releases/download/bootstrap/openjdk-jdk$javaVersion-$platform.tar.gz"
-}
-
-fun jdkUrl(platform: String): String = when {
-  platform.contains("linux") && platform.contains("riscv") -> riscv64JDK(platform)
-  else -> libericaJDK(platform)
-}
+fun jdkUrl(platform: String): String = JdkUrls(javaVersion, platform).jdk()
 
 val allPlatformImageDir = layout.buildDirectory.asFile.get().resolve("image-all-platforms")
 jlink {
