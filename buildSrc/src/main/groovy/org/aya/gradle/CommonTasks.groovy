@@ -32,7 +32,7 @@ final class CommonTasks {
       javaLauncher.set(
         toolchain.launcherFor {
           languageVersion.set(JavaLanguageVersion.of(javaVersion))
-          vendor.set(JvmVendorSpec.matching("GraalVM Community"))
+          vendor.set(JvmVendorSpec.GRAAL_VM)
         },
       )
     }
