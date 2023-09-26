@@ -41,16 +41,15 @@ sealed public interface TermShape {
 
   record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
 
-  /**
-   * only works on LocalVar
-   */
-  record NameRef(@NotNull String name) implements TermShape {}
-
   sealed interface Callable extends TermShape {
     @NotNull ImmutableSeq<TermShape> args();
   }
 
-  record NameCall(@NotNull String name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+  record NameCall(@NotNull String name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {
+    public static @NotNull NameCall just(@NotNull String name) {
+      return new NameCall(name, ImmutableSeq.empty());
+    }
+  }
 
   record ShapeCall(@NotNull CodeShape shape, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
 

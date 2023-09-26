@@ -31,10 +31,12 @@ public sealed interface AyaShape {
   enum AyaIntShape implements AyaShape {
     INSTANCE;
 
+    private static final @NotNull String NAT = "Nat";
+
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
       new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
-      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.Call.justCall(0))))
-    ));
+      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.NameCall.just(NAT))))
+    )).named(NAT);
 
     @Override public @NotNull CodeShape codeShape() {
       return DATA_NAT;
@@ -44,15 +46,17 @@ public sealed interface AyaShape {
   enum AyaListShape implements AyaShape {
     INSTANCE;
 
+    private static final @NotNull String LIST = "List";
+    private static final @NotNull String A = "A";
+
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
-      ImmutableSeq.of(anyLicit(new TermShape.Sort(null, 0))),
+      ImmutableSeq.of(anyLicit(new TermShape.Sort(null, 0)).named(A)),
       ImmutableSeq.of(
         new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
         new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
-          anyLicit(new TermShape.TeleRef(0, 0)),   // A
-          anyLicit(new TermShape.Call(0, ImmutableSeq.of(    // List A
-            new TermShape.TeleRef(0, 0))))))
-      ));
+          anyLicit(TermShape.NameCall.just(A)),   // A
+          anyLicit(new TermShape.NameCall(LIST, ImmutableSeq.of(TermShape.NameCall.just(A)))))) // List A
+      )).named(LIST);
 
     @Override public @NotNull CodeShape codeShape() {
       return DATA_LIST;
@@ -78,11 +82,11 @@ public sealed interface AyaShape {
         // | a, 0 => a
         new CodeShape.ClauseShape(ImmutableSeq.of(
           PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, CodeShape.MomentId.ZERO, ImmutableSeq.empty())
-        ), new TermShape.NameRef(A)),
+        ), TermShape.NameCall.just(A)),
         // | a, suc b => _ (suc a) b
         new CodeShape.ClauseShape(ImmutableSeq.of(
           PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, MomentId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))
-        ), new TermShape.NameCall(PLUS, ImmutableSeq.of(new TermShape.CtorCall(NAT, MomentId.SUC, ImmutableSeq.of(new TermShape.NameRef(A))), new TermShape.NameRef(B))))
+        ), new TermShape.NameCall(PLUS, ImmutableSeq.of(new TermShape.CtorCall(NAT, MomentId.SUC, ImmutableSeq.of(TermShape.NameCall.just(A))), TermShape.NameCall.just(B))))
       ))
     ).named(PLUS);
 

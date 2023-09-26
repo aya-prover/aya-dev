@@ -203,6 +203,13 @@ public record ShapeMatcher(
       return matchMany(MatchMode.Ordered, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
     }
+
+    if (shape instanceof TermShape.NameCall call && call.args().isEmpty() && term instanceof RefTerm ref) {
+      var success = resolve(call.name()) == ref.var();
+      if (!success) return false;
+      result = ref.var();
+    }
+
     if (shape instanceof TermShape.Callable call && term instanceof Callable callable) {
       boolean success = switch (call) {
         case TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
@@ -228,11 +235,6 @@ public record ShapeMatcher(
       if (tele == null) return false;
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
-    }
-    if (shape instanceof TermShape.NameRef ref && term instanceof RefTerm refTerm) {
-      var success = resolve(ref.name()) == refTerm.var();
-      if (!success) return false;
-      result = refTerm.var();
     }
     if (shape instanceof TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
@@ -268,6 +270,14 @@ public record ShapeMatcher(
   }
 
   private boolean matchParam(@NotNull ParamShape shape, @NotNull Term.Param param) {
+    if (shape instanceof ParamShape.Named named) {
+      names.append(named.name());
+      return matchParam(named.shape(), param);
+    }
+
+    var names = acquireName();
+    bind(names, param.ref());
+
     if (shape instanceof ParamShape.Any) return true;
     if (shape instanceof ParamShape.Optional opt) return matchParam(opt.param(), param);
     if (shape instanceof ParamShape.Licit licit) {
