@@ -52,7 +52,7 @@ fun libericaJDK(platform: String): String {
 }
 
 fun riscv64JDK(platform: String): String {
-  return "https://builds.shipilev.net/openjdk-jdk$javaVersion/openjdk-jdk$javaVersion-$platform-server-release-gcc12-glibc2.36.tar.xz"
+  return "https://builds.shipilev.net/openjdk-jdk$javaVersion/openjdk-jdk$javaVersion-$platform-server-release-gcc12-glibc2.36.tar.gz"
 }
 
 fun jdkUrl(platform: String): String = when {
@@ -98,7 +98,12 @@ supportedPlatforms.forEach { platform ->
     from(file("src/main/shell")) {
       // https://ss64.com/bash/chmod.html
       fileMode = "755".toInt(8)
-      rename { it.removeSuffix(".sh") }
+      if (platform.contains("windows")) {
+        include("*.bat")
+      } else {
+        include("*.sh")
+        rename { it.removeSuffix(".sh") }
+      }
     }
     into(installDir.resolve("bin"))
   }
