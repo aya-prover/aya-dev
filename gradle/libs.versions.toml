@@ -4,9 +4,9 @@
 # After that, increase the version number and add "-SNAPSHOT" suffix back for next cycle.
 project = "0.30-SNAPSHOT"
 
-# Remember to update .github/workflows/{nightly-build.yml, gradle-check.yml}
 # https://openjdk.org/
 java = "20"
+
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
 kala = "0.67.0"

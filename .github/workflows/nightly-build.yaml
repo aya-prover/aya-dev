@@ -17,19 +17,7 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
   check-aya-version:
-    runs-on: ubuntu-latest
-    outputs:
-      isSnapshot: ${{ steps.check.outputs.isSnapshot }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check snapshot version
-        id: check
-        run: |
-          ver="$(cat ./gradle/deps.properties | grep "version.project" | cut -d'=' -f2)"
-          isSnapshot="$(echo "$ver" | grep -q "SNAPSHOT" && echo true || echo false)"
-          echo "Detected Project Version: $ver"
-          echo "Detected Project Version is a SNAPSHOT: $isSnapshot"
-          echo "::set-output name=isSnapshot::${isSnapshot}"
+    uses: aya-prover/aya-dev/.github/workflows/extract-version.yaml@main
 
   publish-snapshot:
     needs: [check-aya-version]
@@ -44,14 +32,14 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
-          java-version: '20'
+          java-version: ${{ needs.check-aya-version.outputs.javaVersion }}
       - name: gradle publish
         uses: gradle/gradle-build-action@v2
         with:
           arguments: publish --info --no-daemon --stacktrace --warning-mode all
 
   nightly-build:
-    needs: [move-tag]
+    needs: [move-tag, check-aya-version]
     runs-on: ${{ matrix.os }}
     env:
       nativeName: aya-prover_native_${{ matrix.platform }}${{ matrix.binaryExt }}
@@ -76,7 +64,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'liberica'
-          java-version: '20'
+          java-version: ${{ needs.check-aya-version.outputs.javaVersion }}
 
       - name: Run task jlinkAyaZip
         uses: gradle/gradle-build-action@v2
@@ -93,7 +81,7 @@ jobs:
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '20'
+          java-version: ${{ needs.check-aya-version.outputs.javaVersion }}
           distribution: 'graalvm-community'
           components: 'native-image'
           set-java-home: 'false'
