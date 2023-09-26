@@ -22,6 +22,8 @@ gson = "2.10.1"
 guest0x0 = "0.18.0"
 # https://github.com/beryx/badass-jlink-plugin
 jlink = "3.0.0"
+# https://github.com/jacoco/jacoco
+jacoco = "0.8.10"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }

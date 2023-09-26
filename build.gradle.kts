@@ -20,6 +20,7 @@ var javaVersion: Int by rootProject.ext
 var deps: Properties by rootProject.ext
 
 javaVersion = libs.versions.java.get().toInt()
+var jacocoVersion = libs.versions.jacoco.get()
 
 // Platforms we build jlink-ed aya for
 currentPlatform = "current"
@@ -74,8 +75,7 @@ subprojects {
   }
 
   if (name in useJacoco) jacoco {
-    // https://github.com/jacoco/jacoco
-    toolVersion = "0.8.10"
+    toolVersion = jacocoVersion
   }
 
   idea.module {
