@@ -19,8 +19,7 @@ var supportedPlatforms: List<String> by rootProject.ext
 var javaVersion: Int by rootProject.ext
 var deps: Properties by rootProject.ext
 
-// Remember to update .github/workflows/{nightly-build.yml, gradle-check.yml}
-javaVersion = 20
+javaVersion = libs.versions.java.get().toInt()
 
 // Platforms we build jlink-ed aya for
 currentPlatform = "current"
