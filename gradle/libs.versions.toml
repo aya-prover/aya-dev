@@ -39,7 +39,7 @@ aya-ij-core = { group = "org.aya-prover.upstream", name = "ij-parsing-core", ver
 aya-ij-text = { group = "org.aya-prover.upstream", name = "ij-util-text", version.ref = "build-util" }
 aya-ij-wrapper = { group = "org.aya-prover.upstream", name = "ij-parsing-wrapper", version.ref = "build-util" }
 aya-commonmark = { group = "org.aya-prover", name = "commonmark", version.ref = "commonmark" }
-aya-lsp = { group = "org.aya-prover.upstream", name = "javacs-protocol", version.ref = "build-util" }
+aya-lsp-protocol = { group = "org.aya-prover.upstream", name = "javacs-protocol", version.ref = "build-util" }
 aya-build-util = { group = "org.aya-prover.upstream", name = "build-util", version.ref = "build-util" }
 aya-build-jflex = { group = "org.aya-prover.upstream", name = "build-util-jflex", version.ref = "build-util" }
 aya-guest0x0 = { group = "org.aya-prover.guest0x0", name = "cubical", version.ref = "guest0x0" }
