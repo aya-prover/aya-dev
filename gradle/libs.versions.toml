@@ -17,6 +17,11 @@ hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.10.1"
 guest0x0 = "0.18.0"
+# https://github.com/beryx/badass-jlink-plugin
+jlink = "3.0.0"
+
+[plugins]
+jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
 
 [libraries]
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }

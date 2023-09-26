@@ -11,7 +11,7 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "3.0.0" apply false
+  alias(libs.plugins.jlink) apply false
 }
 
 var currentPlatform: String by rootProject.ext
