@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.BuildUtil
-import java.util.*
 
 plugins {
   java
@@ -11,16 +10,19 @@ plugins {
   `java-library`
   `maven-publish`
   signing
-  id("org.beryx.jlink") version "2.26.0" apply false
+  alias(libs.plugins.jlink) apply false
 }
 
+var projectVersion: String by rootProject.ext
 var currentPlatform: String by rootProject.ext
 var supportedPlatforms: List<String> by rootProject.ext
 var javaVersion: Int by rootProject.ext
-var deps: Properties by rootProject.ext
 
-// Remember to update .github/workflows/{nightly-build.yml, gradle-check.yml}
-javaVersion = 20
+projectVersion = libs.versions.project.get()
+javaVersion = libs.versions.java.get().toInt()
+
+// Workaround that `libs` is not available in `jacoco {}` block
+var jacocoVersion = libs.versions.jacoco.get()
 
 // Platforms we build jlink-ed aya for
 currentPlatform = "current"
@@ -33,12 +35,9 @@ supportedPlatforms = if (System.getenv("CI") == null) listOf(currentPlatform) el
   "macos-x64",
 )
 
-deps = Properties()
-file("gradle/deps.properties").reader().use(deps::load)
-
 allprojects {
   group = "org.aya-prover"
-  version = deps.getProperty("version.project")
+  version = projectVersion
 }
 
 val useJacoco = listOf("base", "pretty", "cli-impl")
@@ -75,7 +74,7 @@ subprojects {
   }
 
   if (name in useJacoco) jacoco {
-    toolVersion = deps.getProperty("version.jacoco")
+    toolVersion = jacocoVersion
   }
 
   idea.module {
@@ -153,16 +152,14 @@ subprojects {
   val ossrhUsername = propOrEnv("ossrhUsername")
   val ossrhPassword = propOrEnv("ossrhPassword")
 
-  if (ossrhUsername.isNotEmpty()) publishing.repositories {
-    maven {
-      val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
-      val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-      url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
-      name = "MavenCentral"
-      credentials {
-        username = ossrhUsername
-        password = ossrhPassword
-      }
+  if (ossrhUsername.isNotEmpty()) publishing.repositories.maven {
+    val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+    val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+    url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
+    name = "MavenCentral"
+    credentials {
+      username = ossrhUsername
+      password = ossrhPassword
     }
   }
 
@@ -171,42 +168,40 @@ subprojects {
     enabled = false
   }
 
-  publishing.publications {
-    create<MavenPublication>("maven") {
-      val githubUrl = "https://github.com/aya-prover/aya-dev"
-      groupId = proj.group.toString()
-      version = proj.version.toString()
-      artifactId = proj.name
-      from(components["java"])
-      pom {
-        description.set("The Aya proof assistant")
-        name.set(proj.name)
-        url.set("https://www.aya-prover.org")
-        licenses {
-          license {
-            name.set("MIT")
-            url.set("$githubUrl/blob/master/LICENSE")
-          }
+  publishing.publications.create<MavenPublication>("maven") {
+    val githubUrl = "https://github.com/aya-prover/aya-dev"
+    groupId = proj.group.toString()
+    version = proj.version.toString()
+    artifactId = proj.name
+    from(components["java"])
+    pom {
+      description.set("The Aya proof assistant")
+      name.set(proj.name)
+      url.set("https://www.aya-prover.org")
+      licenses {
+        license {
+          name.set("MIT")
+          url.set("$githubUrl/blob/master/LICENSE")
         }
-        developers {
-          fun dev(i: String, n: String, u: String) = developer {
-            id.set(i)
-            name.set(n)
-            email.set(u)
-          }
-          dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
-          dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
-          dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
-          dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
-          dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
-          dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
-          dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
-          dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+      }
+      developers {
+        fun dev(i: String, n: String, u: String) = developer {
+          id.set(i)
+          name.set(n)
+          email.set(u)
         }
-        scm {
-          connection.set("scm:git:$githubUrl")
-          url.set(githubUrl)
-        }
+        dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
+        dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
+        dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
+        dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
+        dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
+        dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
+        dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
+        dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+      }
+      scm {
+        connection.set("scm:git:$githubUrl")
+        url.set(githubUrl)
       }
     }
   }

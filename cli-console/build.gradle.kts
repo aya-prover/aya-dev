@@ -9,17 +9,14 @@ CommonTasks.nativeImageConfig(project)
 
 dependencies {
   api(project(":tools-repl"))
-  val deps: java.util.Properties by rootProject.ext
   implementation(project(":cli-impl"))
-  implementation("info.picocli", "picocli", version = deps.getProperty("version.picocli"))
-  annotationProcessor("info.picocli", "picocli-codegen", version = deps.getProperty("version.picocli"))
-  val jlineVersion = deps.getProperty("version.jline")
-  implementation("org.jline", "jline-terminal-jansi", version = jlineVersion)
-  implementation("org.jline", "jline-builtins", version = jlineVersion)
-  testImplementation("org.junit.jupiter", "junit-jupiter", version = deps.getProperty("version.junit"))
-  testImplementation("org.hamcrest", "hamcrest", version = deps.getProperty("version.hamcrest"))
-  testImplementation("org.ice1000.jimgui", "core", version = deps.getProperty("version.jimgui"))
-  // testImplementation("org.ice1000.jimgui", "fun", version = deps.getProperty("version.jimgui"))
+  implementation(libs.picocli.runtime)
+  annotationProcessor(libs.picocli.codegen)
+  implementation(libs.jline.terminal.jansi)
+  implementation(libs.jline.builtins)
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest)
+  testImplementation(libs.jimgui.core)
 }
 
 plugins {
