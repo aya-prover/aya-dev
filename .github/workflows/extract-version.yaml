@@ -1,0 +1,37 @@
+on:
+  workflow_call:
+    outputs:
+      projectVersion:
+        description: "The version of this project"
+        value: ${{ jobs.extract-version.outputs.projectVersion }}
+      isSnapshot:
+        description: "Whether this is a snapshot build"
+        value: ${{ jobs.extract-version.outputs.isSnapshot }}
+      javaVersion:
+        description: "The Java version required to build this project"
+        value: ${{ jobs.extract-version.outputs.javaVersion }}
+
+jobs:
+  extract-version:
+    runs-on: ubuntu-latest
+    outputs:
+      projectVersion: ${{ steps.check.outputs.ayaVersion }}
+      isSnapshot: ${{ steps.check.outputs.isSnapshot }}
+      javaVersion: ${{ steps.check.outputs.javaVersion }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Extract versions from Gradle's libs.versions.toml
+        id: check
+        shell: bash
+        run: |
+          # We use `head -n1` to select the first line matching the regex, 
+          # so be sure to put these versions in the very beginning of the file.
+          projectVersion=$(cat ./gradle/libs.versions.toml | grep -Po 'project(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+          javaVersion=$(cat ./gradle/libs.versions.toml | grep -Po 'java(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+          
+          isSnapshot="$(echo "$projectVersion" | grep -q "SNAPSHOT" && echo true || echo false)"
+          echo "Detected Project Version: $projectVersion, is snapshot: $isSnapshot"
+          echo "::set-output name=projectVersion::${projectVersion}"
+          echo "::set-output name=isSnapshot::${isSnapshot}"
+          echo "::set-output name=javaVersion::${javaVersion}"
+
