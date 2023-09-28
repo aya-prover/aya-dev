@@ -193,9 +193,19 @@ public record ShapeMatcher(
     if (shape instanceof TermShape.Callable call && term instanceof Callable callable) {
       boolean success = switch (call) {
         case TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
-        case TermShape.ShapeCall shapeCall -> callable.ref() instanceof DefVar<?, ?> defVar
-          && defVar.core instanceof GenericDef def
-          && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
+        case TermShape.ShapeCall shapeCall -> {
+          if (callable.ref() instanceof DefVar<?, ?> defVar) {
+            var success0 = defVar.core instanceof GenericDef def
+              && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
+            if (success0) {
+              captures.put(shapeCall.id(), defVar);
+            }
+
+            yield success0;
+          }
+
+          yield false;
+        }
         case TermShape.CtorCall ctorCall ->
           resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
       };
@@ -208,6 +218,7 @@ public record ShapeMatcher(
       if (!success) return false;
       result = callable.ref();
     }
+
     if (shape instanceof TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
       var superLevel = def.getOrNull(ref.superLevel());
       if (superLevel == null) return false;
@@ -216,6 +227,7 @@ public record ShapeMatcher(
       var teleVar = teleSubst.getOrNull(tele.ref());
       return teleVar == refTerm.var() || tele.ref() == refTerm.var();
     }
+
     if (shape instanceof TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
       if (sort.kind() == null) return true;

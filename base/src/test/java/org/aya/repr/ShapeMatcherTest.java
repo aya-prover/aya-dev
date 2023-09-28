@@ -74,6 +74,16 @@ public class ShapeMatcherTest {
     assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(CodeShape.MomentId.CONS)));
     assertNull(match.captures().getOrNull(CodeShape.MomentId.ZERO));
     assertNull(match.captures().getOrNull(CodeShape.MomentId.SUC));
+
+    match = match(ImmutableSeq.of(Tuple.of(true, AyaShape.NAT_SHAPE), Tuple.of(true, AyaShape.PLUS_RIGHT_SHAPE)), """
+      open data Nat | O | S Nat
+      def plus Nat Nat : Nat
+      | a, O => a
+      | a, S b => plus (S a) b
+      """).getOrNull(1);
+    assertNotNull(match);
+    assertEquals(AyaShape.PLUS_RIGHT_SHAPE, match.shape());
+    assertEquals("Nat", match.captures().get(CodeShape.MomentId.NAT).name());
   }
 
   private @NotNull String pp(@NotNull DefVar<?, ?> def) {
@@ -109,9 +119,9 @@ public class ShapeMatcherTest {
     return check(ImmutableSeq.fill(def.size(), Tuple.of(should, shape)), def).firstOrNull();
   }
 
-  public void match(@NotNull ImmutableSeq<Tuple2<Boolean, AyaShape>> shouldBe, @Language("Aya") @NonNls @NotNull String code) {
+  public @NotNull ImmutableSeq<ShapeRecognition> match(@NotNull ImmutableSeq<Tuple2<Boolean, AyaShape>> shouldBe, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code).component2();
-    check(shouldBe, def);
+    return check(shouldBe, def);
   }
 
   private static ImmutableSeq<ShapeRecognition> check(@NotNull ImmutableSeq<Tuple2<Boolean, AyaShape>> shouldBe, @NotNull ImmutableSeq<GenericDef> def) {

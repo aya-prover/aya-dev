@@ -19,7 +19,7 @@ public sealed interface CodeShape {
 
   /** Typed capture name, rather than plain strings */
   enum MomentId implements Serializable {
-    ZERO, SUC, NIL, CONS,
+    ZERO, SUC, NIL, CONS, NAT,
   }
 
   record FnShape(

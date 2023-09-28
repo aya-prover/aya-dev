@@ -44,7 +44,8 @@ sealed public interface TermShape {
     }
   }
 
-  record ShapeCall(@NotNull CodeShape shape, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+  record ShapeCall(@NotNull CodeShape.MomentId id, @NotNull CodeShape shape,
+                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
 
   record CtorCall(@NotNull String dataRef, @NotNull CodeShape.MomentId ctorId,
                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}

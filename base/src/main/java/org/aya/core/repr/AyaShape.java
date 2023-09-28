@@ -74,7 +74,7 @@ public sealed interface AyaShape {
     public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.ShapeCall(MomentId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
         anyLicit(new TermShape.NameCall(NAT, ImmutableSeq.empty()))
       ),
       new TermShape.NameCall(NAT, ImmutableSeq.empty()),
