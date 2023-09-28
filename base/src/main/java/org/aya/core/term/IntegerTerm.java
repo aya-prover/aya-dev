@@ -5,10 +5,14 @@ package org.aya.core.term;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
+import org.aya.core.repr.TermShape;
 import org.aya.generic.Shaped;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -36,5 +40,25 @@ public record IntegerTerm(
 
   @Override public @NotNull Term destruct(int repr) {
     return new IntegerTerm(repr, this.recognition, this.type);
+  }
+
+  public int construct(@NotNull Term term) {
+    if (term instanceof IntegerTerm intTerm) {
+      return intTerm.repr;
+    }
+
+    if (term instanceof ConCall kon) {
+      if (kon.ref() == recognition.captures().get(CodeShape.MomentId.ZERO)) {
+        return 0;
+      }
+
+      if (kon.ref() == recognition.captures().get(CodeShape.MomentId.SUC)) {
+        var inner = kon.conArgs().get(0).term();
+        var innerRepr = construct(inner);
+        return innerRepr + 1;
+      }
+    }
+
+    throw new InternalException("Unable to construct an IntegerTerm from " + term);
   }
 }

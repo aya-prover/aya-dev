@@ -66,6 +66,8 @@ public interface Shaped<T> {
       if (repr == 0) return makeZero(zero.core);
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
+
+    // int construct(@NotNull T term);
   }
 
   non-sealed interface List<T extends AyaDocile> extends Inductive<T> {
@@ -101,5 +103,12 @@ public interface Shaped<T> {
       return makeCons(cons, dataArg, new Arg<>(elements.getFirst(), xLicit),
         new Arg<>(destruct(elements.drop(1)), xsLicit));
     }
+  }
+
+  interface Fn<T extends AyaDocile> extends Shaped<T> {
+    /**
+     * Called when normalizing, make sure the {@param args} are normal form.
+     */
+    @NotNull T apply(@NotNull ImmutableSeq<Arg<T>> args);
   }
 }
