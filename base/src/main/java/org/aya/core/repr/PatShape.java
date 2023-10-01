@@ -33,7 +33,11 @@ public sealed interface PatShape {
    * @param id   the {@link CodeShape.MomentId} to the ctor
    */
   record ShapedCtor(@NotNull String name, @NotNull CodeShape.MomentId id,
-                    @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {}
+                    @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {
+    public static @NotNull ShapedCtor of(@NotNull String name, @NotNull CodeShape.MomentId id) {
+      return new ShapedCtor(name, id, ImmutableSeq.empty());
+    }
+  }
 
   record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
 

@@ -107,7 +107,7 @@ public record ShapeMatcher(
 
   private boolean matchClause(@NotNull CodeShape.ClauseShape shape, @NotNull Term.Matching clause) {
     // match pats
-    var patsResult = matchMany(MatchMode.Ordered, shape.pats(), clause.patterns(), (ps, ap) -> matchPat(ps, ap.term()));
+    var patsResult = matchMany(MatchMode.OrderedEq, shape.pats(), clause.patterns(), (ps, ap) -> matchPat(ps, ap.term()));
     if (!patsResult) return false;
     return matchTerm(shape.body(), clause.body());
   }
@@ -149,7 +149,7 @@ public record ShapeMatcher(
 
       // TODO: licit
       // We don't use `matchInside` here, because the context doesn't need to reset.
-      return matchMany(MatchMode.Ordered, ctorLike.innerPats(), ctor.params().view().map(Arg::term), this::matchPat);
+      return matchMany(MatchMode.OrderedEq, ctorLike.innerPats(), ctor.params().view().map(Arg::term), this::matchPat);
     }
 
     if (shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
@@ -212,7 +212,7 @@ public record ShapeMatcher(
 
       if (!success) return false;
 
-      success = matchMany(MatchMode.Ordered, call.args(), callable.args(),
+      success = matchMany(MatchMode.OrderedEq, call.args(), callable.args(),
         (l, r) -> matchTerm(l, r.term()));
 
       if (!success) return false;
@@ -304,16 +304,19 @@ public record ShapeMatcher(
     @NotNull SeqLike<S> shapes,
     @NotNull SeqLike<C> cores,
     @NotNull BiFunction<S, C, Boolean> matcher) {
-    if (!shapes.sizeEquals(cores)) return false;
-    if (mode == MatchMode.Ordered) return shapes.allMatchWith(cores, matcher::apply);
+    if (mode == MatchMode.Eq && !shapes.sizeEquals(cores)) return false;
+    if (mode == MatchMode.OrderedEq) return shapes.allMatchWith(cores, matcher::apply);
     var remainingShapes = MutableLinkedList.from(shapes);
     for (var core : cores) {
-      if (remainingShapes.isEmpty()) return mode == MatchMode.Sup;
+      if (remainingShapes.isEmpty()) return mode == MatchMode.Sub;
       var index = remainingShapes.indexWhere(shape -> matcher.apply(shape, core));
-      if (index == -1) return false;
-      remainingShapes.removeAt(index);
+      if (index == -1) {
+        if (mode != MatchMode.Sub) return false;
+      } else {
+        remainingShapes.removeAt(index);
+      }
     }
-    return remainingShapes.isEmpty() || mode == MatchMode.Sub;
+    return remainingShapes.isEmpty() || mode == MatchMode.Sup;
   }
 
   private <S extends CodeShape.Moment, C> boolean captured(
@@ -365,7 +368,12 @@ public record ShapeMatcher(
   }
 
   public enum MatchMode {
-    Ordered,
-    Sub, Eq, Sup
+    OrderedEq,
+    // less shapes match more cores
+    Sub,
+    // shapes match cores
+    Eq,
+    // more shapes match less cores
+    Sup
   }
 }

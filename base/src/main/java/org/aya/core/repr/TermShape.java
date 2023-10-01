@@ -3,10 +3,8 @@
 package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.DataCall;
 import org.aya.core.term.Term;
 import org.aya.generic.SortKind;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +37,7 @@ sealed public interface TermShape {
   }
 
   record NameCall(@NotNull String name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {
-    public static @NotNull NameCall just(@NotNull String name) {
+    public static @NotNull NameCall of(@NotNull String name) {
       return new NameCall(name, ImmutableSeq.empty());
     }
   }

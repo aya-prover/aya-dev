@@ -79,7 +79,7 @@ public class ShapeMatcherTest {
       open data Nat | O | S Nat
       def plus Nat Nat : Nat
       | a, O => a
-      | a, S b => plus (S a) b
+      | a, S b => S (plus a b)
       """).getOrNull(1);
     assertNotNull(match);
     assertEquals(AyaShape.PLUS_RIGHT_SHAPE, match.shape());
@@ -105,12 +105,28 @@ public class ShapeMatcherTest {
   public void matchPlus() {
     match(ImmutableSeq.of(
       Tuple.of(true, AyaShape.NAT_SHAPE),
-      Tuple.of(true, AyaShape.AyaPlusFnShape.INSTANCE)
+      Tuple.of(true, AyaShape.PLUS_RIGHT_SHAPE),
+      Tuple.of(true, AyaShape.PLUS_LEFT_SHAPE),
+      Tuple.of(true, AyaShape.PLUS_LEFT_SHAPE),
+      Tuple.of(true, AyaShape.PLUS_RIGHT_SHAPE)
     ), """
       open data Nat | zero | suc Nat
       def plus Nat Nat : Nat
       | left, zero => left
-      | left, suc right => plus (suc left) right
+      | left, suc right => suc (plus left right)
+      def plusLeft Nat Nat : Nat
+      | zero, right => right
+      | suc left, right => suc (plusLeft left right)
+      overlap def plusOverlap0 Nat Nat : Nat
+      | a, zero => a
+      | zero, b => b
+      | a, suc b => suc (plusOverlap0 a b)
+      | suc a, b => suc (plusOverlap0 a b)
+      overlap def plusOverlap1 Nat Nat : Nat
+      | a, zero => a
+      | zero, b => b
+      | a, suc b => suc (plusOverlap1 a b)
+      | suc a, b => suc (plusOverlap1 a b)
       """);
   }
 
