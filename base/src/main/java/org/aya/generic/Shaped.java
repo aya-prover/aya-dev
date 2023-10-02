@@ -14,6 +14,7 @@ import org.aya.ref.DefVar;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
 
@@ -106,9 +107,6 @@ public interface Shaped<T> {
   }
 
   interface Fn<T extends AyaDocile> extends Shaped<T> {
-    /**
-     * Called when normalizing, make sure the {@param args} are normal form.
-     */
     @NotNull T apply(@NotNull ImmutableSeq<Arg<T>> args);
   }
 }
