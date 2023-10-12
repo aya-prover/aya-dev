@@ -16,6 +16,7 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
@@ -525,22 +526,33 @@ public final class ExprTycker extends UnifiedTycker {
   /// region Helpful Utils
 
   @SuppressWarnings("unchecked") private @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
-    if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
+    var core = var.core;
+    var concrete = var.concrete;
+    if (core instanceof FnDef || concrete instanceof TeleDecl.FnDecl) {
+      var fnVar = (DefVar<FnDef, TeleDecl.FnDecl>) var;
+      var shaped = inferShapedFn(fnVar);
+
+      if (shaped != null) return shaped;
+
       return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
-    } else if (var.core instanceof PrimDef) {
+    } else if (core instanceof PrimDef) {
       return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
-    } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
+    } else if (core instanceof DataDef || concrete instanceof TeleDecl.DataDecl) {
       return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
-    } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
+    } else if (core instanceof ClassDef || concrete instanceof ClassDecl) {
       var classCall = new ClassCall((DefVar<ClassDef, ClassDecl>) var, 0, ImmutableMap.empty());
       return new Result.Default(classCall, new SortTerm(SortKind.Type, 0)); // TODO[class]: type of classCall
-    } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
+    } else if (core instanceof CtorDef || concrete instanceof TeleDecl.DataDecl.DataCtor) {
       var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
+
+      var shaped = inferShapedCtor(conVar);
+      if (shaped != null) return shaped;
+
       var tele = Def.defTele(conVar);
       var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
       var telescopes = new DataDef.CtorTelescopes(conVar.core);
       return new Result.Default(telescopes.toConCall(conVar, 0), type);
-    } else if (var.core instanceof MemberDef || var.concrete instanceof TeleDecl.ClassMember) {
+    } else if (core instanceof MemberDef || concrete instanceof TeleDecl.ClassMember) {
       // the code runs to here because we are checking a StructField within a StructDecl
       // TODO[class]: this needs to be refactored to make use of instance resolution
       var field = (DefVar<MemberDef, TeleDecl.ClassMember>) var;
@@ -570,6 +582,51 @@ public final class ExprTycker extends UnifiedTycker {
 
   private static boolean needImplicitParamIns(@NotNull Expr expr) {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
+  }
+
+  @SuppressWarnings("unchecked")
+  private @Nullable Result inferShapedFn(@NotNull DefVar<FnDef, TeleDecl.FnDecl> var) {
+    var recog = shapeFactory.find(var.core);
+
+    if (recog.isDefined()) {
+      if (recog.get().shape() == AyaShape.PLUS_LEFT_SHAPE || recog.get().shape() == AyaShape.PLUS_RIGHT_SHAPE) {
+        var paramType = recog.get().captures().get(CodeShape.MomentId.NAT);
+        var paramTypeDef = (DataDef) paramType.core;
+        var paramRecog = shapeFactory.find(paramTypeDef).get();
+
+        return defCall(var, (defVar, ulift, args) -> {
+          var head = new IntegerOpsTerm(var, IntegerOpsTerm.Kind.Add, paramRecog,
+            new DataCall((DefVar<DataDef, TeleDecl.DataDecl>) paramType, 0, ImmutableSeq.empty())
+          );
+
+          return new ShapedFnCall(head, ulift, args);
+        });
+      }
+    }
+
+    return null;
+  }
+
+  private @Nullable Result inferShapedCtor(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> var) {
+    var dataVar = var.core.dataRef;
+
+    return shapeFactory.find(dataVar.core)
+      .mapNotNull(recog -> {
+        if (recog.shape() == AyaShape.NAT_SHAPE) {
+          var kind = recog.captures().get(CodeShape.MomentId.ZERO) == var
+            ? IntegerOpsTerm.Kind.Zero
+            : recog.captures().get(CodeShape.MomentId.SUC) == var
+              ? IntegerOpsTerm.Kind.Succ
+              : null;
+          if (kind == null) throw new InternalException("I need DT");
+          var head = new IntegerOpsTerm(var,
+            kind, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
+          return defCall(var, (mVar, ulift, args) -> new ShapedFnCall(head, ulift, args));
+        }
+
+        return null;
+      })
+      .getOrNull();
   }
 
   /// endregion Helpful Utils

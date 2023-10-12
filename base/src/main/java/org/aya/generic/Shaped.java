@@ -3,7 +3,9 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
+import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
@@ -107,6 +109,7 @@ public interface Shaped<T> {
   }
 
   interface Fn<T extends AyaDocile> extends Shaped<T> {
-    @NotNull T apply(@NotNull ImmutableSeq<Arg<T>> args);
+    @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
+    @Nullable T apply(@NotNull ImmutableSeq<Arg<T>> args);
   }
 }

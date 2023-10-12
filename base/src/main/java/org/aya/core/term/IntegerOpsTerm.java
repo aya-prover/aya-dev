@@ -3,23 +3,57 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
+import org.aya.core.pat.Pat;
+import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Shaped;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 public record IntegerOpsTerm(
-  @NotNull DefVar<? extends FnDef, ? extends TeleDecl.FnDecl> defFn,
+  @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref,
   @NotNull Kind kind,
   @NotNull ShapeRecognition paramRecog,
   @NotNull DataCall paramType
-) implements Shaped.Fn<Term> {
+) implements Shaped.Fn<Term>, Term {
+  public IntegerOpsTerm {
+    assert paramRecog.shape() == AyaShape.NAT_SHAPE;
+
+    switch (kind) {
+      case Zero, Succ -> {
+        assert ref.core instanceof CtorDef || ref.concrete instanceof TeleDecl.DataCtor;
+      }
+      case Add, SubTrunc -> {
+        assert ref.core instanceof FnDef || ref.concrete instanceof TeleDecl.FnDecl;
+      }
+    }
+  }
+
   @Override public @NotNull Term type() {
-    assert defFn.core != null;
-    return PiTerm.make(defFn.core.telescope, defFn.core.result);
+    assert ref.core != null;
+    return PiTerm.make(ref.core.telescope(), ref.core.result());
+  }
+
+  private @NotNull IntegerOpsTerm update(@NotNull DataCall paramType) {
+    return paramType == this.paramType ? this : new IntegerOpsTerm(
+      ref, kind, paramRecog, paramType
+    );
+  }
+
+  @Override
+  public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+    return update((DataCall) f.apply(paramType));
   }
 
   public enum Kind {
@@ -27,40 +61,62 @@ public record IntegerOpsTerm(
     Add, SubTrunc
   }
 
-  @Override public @NotNull Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
+  private @NotNull IntegerTerm from(int repr) {
+    return new IntegerTerm(repr, paramRecog, paramType);
+  }
+
+  private @NotNull Term zeroHcomp(int level, @NotNull Term floor) {
+    assert level >= 0;
+    if (level == 0) return floor;
+
+    var suc = new IntegerOpsTerm(
+      (DefVar<? extends Def, ? extends TeleDecl<?>>) paramRecog.captures().get(CodeShape.MomentId.SUC),
+      Kind.Succ,
+      paramRecog, paramType
+    );
+
+    var term = floor;
+    for (int i = 0; i < level; ++i) {
+      term = new ShapedFnCall(suc, 0, ImmutableSeq.of(new Arg<>(term, true)));
+    }
+
+    return term;
+  }
+
+  @Override public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
     return switch (kind) {
       case Zero -> {
         assert args.isEmpty();
-        yield new IntegerTerm(0, paramRecog, paramType);
+        yield from(0);
       }
       case Succ -> {
         assert args.sizeEquals(1);
         var arg = args.get(0).term();
         if (arg instanceof IntegerTerm it) {
-          yield new IntegerTerm(it.repr() + 1, paramRecog, paramType);
-        } else {
-          throw new UnsupportedOperationException("TODO: implement succ");
+          yield from(it.repr() + 1);
         }
+
+        yield null;
       }
       case Add -> {
         assert args.sizeEquals(2);
         var a = args.get(0).term();
         var b = args.get(1).term();
         if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-          yield new IntegerTerm(ita.repr() + itb.repr(), paramRecog, paramType);
-        } else {
-          throw new UnsupportedOperationException("TODO: implement add");
+          yield from(ita.repr() + itb.repr());
         }
+
+        yield null;
       }
       case SubTrunc -> {
         assert args.sizeEquals(2);
         var a = args.get(0).term();
         var b = args.get(1).term();
         if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-          yield new IntegerTerm(Math.max(ita.repr() - itb.repr(), 0), paramRecog, paramType);
-        } else {
-          throw new UnsupportedOperationException("TODO: implement subtrunc");
+          yield from(Math.max(ita.repr() - itb.repr(), 0));
         }
+
+        yield null;
       }
     };
   }
