@@ -3,19 +3,16 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Shaped;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
-import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,24 +62,6 @@ public record IntegerOpsTerm(
     return new IntegerTerm(repr, paramRecog, paramType);
   }
 
-  private @NotNull Term zeroHcomp(int level, @NotNull Term floor) {
-    assert level >= 0;
-    if (level == 0) return floor;
-
-    var suc = new IntegerOpsTerm(
-      (DefVar<? extends Def, ? extends TeleDecl<?>>) paramRecog.captures().get(CodeShape.MomentId.SUC),
-      Kind.Succ,
-      paramRecog, paramType
-    );
-
-    var term = floor;
-    for (int i = 0; i < level; ++i) {
-      term = new ShapedFnCall(suc, 0, ImmutableSeq.of(new Arg<>(term, true)));
-    }
-
-    return term;
-  }
-
   @Override public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
     return switch (kind) {
       case Zero -> {
@@ -119,5 +98,14 @@ public record IntegerOpsTerm(
         yield null;
       }
     };
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof IntegerOpsTerm term) {
+      return this.ref == term.ref && this.kind == term.kind;
+    }
+
+    return false;
   }
 }

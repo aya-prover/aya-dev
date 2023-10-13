@@ -24,6 +24,7 @@ import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
 import org.aya.tyck.tycker.UnifiedTycker;
 import org.aya.generic.SortKind;
+import org.aya.tyck.repr.ShapeFactory;
 import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
@@ -589,19 +590,8 @@ public final class ExprTycker extends UnifiedTycker {
     var recog = shapeFactory.find(var.core);
 
     if (recog.isDefined()) {
-      if (recog.get().shape() == AyaShape.PLUS_LEFT_SHAPE || recog.get().shape() == AyaShape.PLUS_RIGHT_SHAPE) {
-        var paramType = recog.get().captures().get(CodeShape.MomentId.NAT);
-        var paramTypeDef = (DataDef) paramType.core;
-        var paramRecog = shapeFactory.find(paramTypeDef).get();
-
-        return defCall(var, (defVar, ulift, args) -> {
-          var head = new IntegerOpsTerm(var, IntegerOpsTerm.Kind.Add, paramRecog,
-            new DataCall((DefVar<DataDef, TeleDecl.DataDecl>) paramType, 0, ImmutableSeq.empty())
-          );
-
-          return new ShapedFnCall(head, ulift, args);
-        });
-      }
+      var head = ShapeFactory.ofFn(var, recog.get(), shapeFactory);
+      return defCall(var, (defVar, ulift, args) -> new ShapedFnCall(head, ulift, args));
     }
 
     return null;
@@ -610,17 +600,9 @@ public final class ExprTycker extends UnifiedTycker {
   private @Nullable Result inferShapedCtor(@NotNull DefVar<CtorDef, TeleDecl.DataCtor> var) {
     var dataVar = var.core.dataRef;
 
-    return shapeFactory.find(dataVar.core)
-      .mapNotNull(recog -> {
+    return shapeFactory.find(dataVar.core).mapNotNull(recog -> {
         if (recog.shape() == AyaShape.NAT_SHAPE) {
-          var kind = recog.captures().get(CodeShape.MomentId.ZERO) == var
-            ? IntegerOpsTerm.Kind.Zero
-            : recog.captures().get(CodeShape.MomentId.SUC) == var
-              ? IntegerOpsTerm.Kind.Succ
-              : null;
-          if (kind == null) throw new InternalException("I need DT");
-          var head = new IntegerOpsTerm(var,
-            kind, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
+          var head = ShapeFactory.ofCtor(var, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
           return defCall(var, (mVar, ulift, args) -> new ShapedFnCall(head, ulift, args));
         }
 

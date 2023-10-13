@@ -50,8 +50,11 @@ public interface DeltaExpander extends EndoTerm {
       case ShapedFnCall fn -> {
         var result = fn.head().apply(fn.args());
         if (result != null) yield apply(result);
-        // TODO[h]: what should we do?
-        yield fn;
+        // We can't handle it, delegate to FnCall
+        var fnCallMaybe = fn.toFnCall();
+        yield fnCallMaybe != null
+          ? post(fnCallMaybe)
+          : fn;
       }
       case PrimCall prim -> state().primFactory().unfold(prim.id(), prim, state());
       case MetaTerm hole -> {

@@ -111,5 +111,6 @@ public interface Shaped<T> {
   interface Fn<T extends AyaDocile> extends Shaped<T> {
     @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
     @Nullable T apply(@NotNull ImmutableSeq<Arg<T>> args);
+    @Override boolean equals(Object obj);
   }
 }
