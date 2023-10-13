@@ -177,6 +177,9 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
       case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+      // TODO[h]: This also involves Con situations, is it bad?
+      case ShapedFnCall lhs when preRhs instanceof ShapedFnCall rhs ->
+        lhs.equals(rhs) ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
   }
@@ -477,7 +480,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
           var lef = lhs.ref();
           yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
         }
-        case IntegerTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
       };
@@ -495,7 +497,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
           if (!lhs.compareUntyped(rhs)) yield null;
           yield lhs.type(); // compareShape implies lhs.type() = rhs.type()
         }
-        case ConCall rhs -> compareUntyped(lhs.constructorForm(), rhs, lr, rl);
         default -> null;
       };
       // We expect to only compare the elimination "outS" here
