@@ -54,7 +54,7 @@ public sealed interface Pat extends AyaDocile {
 
   @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker);
   /**
-   * Make sure you are inline all patterns in order
+   * Make sure you inline all patterns in order
    *
    * @param ctx when null, the solutions will not be inlined
    * @return inlined patterns
@@ -188,10 +188,11 @@ public sealed interface Pat extends AyaDocile {
   record Ctor(
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ImmutableSeq<Arg<Pat>> params,
+    @Nullable ShapeRecognition typeRecog,
     @NotNull DataCall type
   ) implements Pat {
     public @NotNull Ctor update(@NotNull ImmutableSeq<Arg<Pat>> params, @NotNull DataCall type) {
-      return type == type() && params.sameElements(params(), true) ? this : new Ctor(ref, params, type);
+      return type == type() && params.sameElements(params(), true) ? this : new Ctor(ref, params, typeRecog, type);
     }
 
     @Override public @NotNull Ctor descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
@@ -205,13 +206,14 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat zonk(@NotNull ConcreteAwareTycker tycker) {
       return new Ctor(ref,
         params.map(pat -> pat.descent(x -> x.zonk(tycker))),
+        typeRecog,
         // The cast must succeed
         (DataCall) tycker.zonk(type));
     }
 
     @Override public @NotNull Pat inline(@Nullable LocalCtx ctx) {
       var params = this.params.map(p -> p.descent(x -> x.inline(ctx)));
-      return new Ctor(ref, params, (DataCall) ClauseTycker.inlineTerm(type));
+      return new Ctor(ref, params, typeRecog, (DataCall) ClauseTycker.inlineTerm(type));
     }
   }
 
@@ -243,11 +245,11 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public @NotNull Pat makeZero(@NotNull CtorDef zero) {
-      return new Pat.Ctor(zero.ref, ImmutableSeq.empty(), type);
+      return new Pat.Ctor(zero.ref, ImmutableSeq.empty(), recognition, type);
     }
 
     @Override public @NotNull Pat makeSuc(@NotNull CtorDef suc, @NotNull Arg<Pat> pat) {
-      return new Pat.Ctor(suc.ref, ImmutableSeq.of(pat), type);
+      return new Pat.Ctor(suc.ref, ImmutableSeq.of(pat), recognition, type);
     }
 
     @Override public @NotNull Pat destruct(int repr) {

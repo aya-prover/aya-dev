@@ -67,6 +67,10 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
           // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
           case IntegerTerm litTerm -> match(ctor, litTerm.constructorForm());
           case ListTerm litTerm -> match(ctor, litTerm.constructorForm());
+          case ShapedFnCall shapedConCall -> {
+            if (ctor.ref() != shapedConCall.ref()) throw new Mismatch(false);
+            visitList(ctor.params(), shapedConCall.args());
+          }
           default -> throw new Mismatch(true);
         }
       }
@@ -81,15 +85,10 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       case Pat.Meta ignored -> throw new InternalException("Pat.Meta is not allowed");
       case Pat.ShapedInt lit -> {
         term = pre.apply(term);
-        switch (term) {
-          case IntegerTerm litTerm -> {
-            if (!lit.compareUntyped(litTerm)) throw new Mismatch(false);
-          }
-          // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-          case ConCall con -> match(lit.constructorForm(), con);
-          // we only need to handle matching both literals, otherwise we just rematch it
-          // with constructor form to reuse the code as much as possible (like solving MetaPats).
-          default -> match(lit.constructorForm(), term);
+        if (term instanceof IntegerTerm intTerm) {
+          if (!lit.compareUntyped(intTerm)) throw new Mismatch(false);
+        } else {
+          throw new Mismatch(false);
         }
       }
     }

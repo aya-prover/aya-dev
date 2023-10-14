@@ -4,7 +4,9 @@ package org.aya.core.pat;
 
 import org.aya.core.term.*;
 import org.aya.ref.LocalVar;
+import org.aya.tyck.repr.ShapeFactory;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,8 +32,15 @@ public class PatToTerm {
   }
 
   protected @NotNull Term visitCtor(Pat.@NotNull Ctor ctor) {
-    var data = (DataCall) ctor.type();
+    var data = ctor.type();
     var args = Arg.mapSeq(ctor.params(), this::visit);
+
+    if (ctor.typeRecog() != null) {
+      var head = ShapeFactory.ofCtor(ctor.ref(), ctor.typeRecog(), data);
+      if (head == null) throw new InternalException("bad ShapeFactory");
+      return new ShapedFnCall(head, data.ulift(), args);
+    }
+
     return new ConCall(data.ref(), ctor.ref(), data.args(), data.ulift(), args);
   }
 }
