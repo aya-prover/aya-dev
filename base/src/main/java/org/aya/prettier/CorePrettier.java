@@ -72,6 +72,8 @@ public class CorePrettier extends BasePrettier<Term> {
       case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
       case ConCall conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
+      // TODo[h]: determine style by fnCall
+      case ShapedFnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
         var last = params.getLast();
         var doc = Doc.sep(
@@ -238,6 +240,7 @@ public class CorePrettier extends BasePrettier<Term> {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
       case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");
+      case IntegerOpsTerm iot -> throw new UnsupportedOperationException("TODO"); // TODO
     };
   }
 

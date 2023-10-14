@@ -165,6 +165,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var piRaw = tryPress(of);
         yield piRaw instanceof PiTerm pi ? pi.substBody(arg.term()) : null;
       }
+      case IntegerOpsTerm iot -> iot.type();
       default -> null;
     };
   }
