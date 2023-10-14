@@ -33,7 +33,16 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 /**
- * A well-typed and terminating term.
+ * A well-typed and terminating term. Once you add a new Term, you should:
+ *
+ * <ul>
+ *   <li>impl {@link org.aya.tyck.ExprTycker}</li>
+ *   <li>impl {@link Synthesizer}</li>
+ *   <li>impl {@link org.aya.tyck.unify.TermComparator}</li>
+ *   <li>impl {@link org.aya.core.pat.PatMatcher}</li>
+ *   <li>impl {@link CorePrettier}</li>
+ *   <li>impl the corresponding {@link Expander} if your Term is not {@link StableWHNF}</li>
+ * </ul>
  *
  * @author ice1000
  */
