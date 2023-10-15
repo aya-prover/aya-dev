@@ -159,18 +159,22 @@ public sealed interface SerDef extends Serializable {
 
   /** serialized {@link AyaShape} */
   enum SerAyaShape implements Serializable {
-    NAT, LIST;
+    NAT, LIST, PLUSL, PLUSR;
 
     public @NotNull AyaShape de() {
       return switch (this) {
         case NAT -> AyaShape.NAT_SHAPE;
         case LIST -> AyaShape.LIST_SHAPE;
+        case PLUSL -> AyaShape.PLUS_LEFT_SHAPE;
+        case PLUSR -> AyaShape.PLUS_RIGHT_SHAPE;
       };
     }
 
     public static @NotNull SerAyaShape serialize(@NotNull AyaShape shape) {
       if (shape == AyaShape.NAT_SHAPE) return NAT;
       if (shape == AyaShape.LIST_SHAPE) return LIST;
+      if (shape == AyaShape.PLUS_LEFT_SHAPE) return PLUSL;
+      if (shape == AyaShape.PLUS_RIGHT_SHAPE) return PLUSR;
       throw new InternalException("unexpected shape: " + shape.getClass());
     }
   }

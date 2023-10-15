@@ -142,12 +142,15 @@ public record Serializer(@NotNull Serializer.State state) {
   private @NotNull SerPat serialize(@NotNull Pat pat, boolean explicit) {
     return switch (pat) {
       case Pat.Absurd absurd -> new SerPat.Absurd(explicit);
-      case Pat.Ctor ctor -> new SerPat.Ctor(
-        explicit,
-        state.def(ctor.ref()),
-        serializePats(ctor.params()),
-        null,      // TODO: fixme
-        serializeDataCall(ctor.type()));
+      case Pat.Ctor(var ref, var params, var typeRecog, var dataCall) -> {
+        var shapeResult = typeRecog == null ? null : SerDef.SerShapeResult.serialize(state, typeRecog);
+        yield new SerPat.Ctor(
+          explicit,
+          state.def(ref),
+          serializePats(params),
+          shapeResult,
+          serializeDataCall(dataCall));
+      }
       case Pat.Tuple tuple -> new SerPat.Tuple(explicit, serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(explicit, state.local(bind.bind()), serialize(bind.type()));
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
