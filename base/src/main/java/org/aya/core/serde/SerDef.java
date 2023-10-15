@@ -19,6 +19,7 @@ import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.EnumSet;
@@ -41,8 +42,9 @@ public sealed interface SerDef extends Serializable {
     @NotNull ImmutableSeq<SerTerm.SerParam> telescope,
     @NotNull Either<SerTerm, ImmutableSeq<SerPat.Clause>> body,
     @NotNull EnumSet<Modifier> modifiers,
-    @NotNull SerTerm result
-  ) implements SerDef {
+    @NotNull SerTerm result,
+    @Override @Nullable SerShapeResult shapeResult
+  ) implements SerDef, SerShapable {
     @Override public @NotNull Def de(SerTerm.@NotNull DeState state) {
       return new FnDef(
         state.def(name), telescope.map(tele -> tele.de(state)),

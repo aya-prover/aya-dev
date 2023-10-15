@@ -8,6 +8,7 @@ import org.aya.core.term.Term;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -45,11 +46,14 @@ public sealed interface SerPat extends Serializable {
     boolean explicit,
     @NotNull SerDef.QName name,
     @NotNull ImmutableSeq<SerPat> params,
+    @Nullable SerDef.SerShapeResult shapeResult,
     @NotNull SerTerm.Data ty
   ) implements SerPat {
     @Override public @NotNull Arg<Pat> de(SerTerm.@NotNull DeState state) {
+      var shapeRecog = this.shapeResult != null ? this.shapeResult.de(state) : null;
       return new Arg<>(new Pat.Ctor(state.resolve(name),
         params.map(param -> param.de(state)),
+        shapeRecog,
         ty.de(state)), explicit);
     }
   }

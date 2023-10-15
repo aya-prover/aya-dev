@@ -60,7 +60,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   }
 
   private static boolean isCall(@NotNull Term term) {
-    return term instanceof FnCall || term instanceof ConCall || term instanceof PrimCall;
+    return term instanceof FnCall || term instanceof ConCall || term instanceof PrimCall || term instanceof ShapedFnCall;
   }
 
   public static <E> E withIntervals(
@@ -179,7 +179,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       // TODO[h]: This also involves Con situations, is it bad?
       case ShapedFnCall lhs when preRhs instanceof ShapedFnCall rhs ->
-        lhs.equals(rhs) ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+        (!lhs.head().equals(rhs.head())) ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
   }

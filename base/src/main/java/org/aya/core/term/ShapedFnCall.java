@@ -31,7 +31,7 @@ public record ShapedFnCall(
   }
 
   private @NotNull ShapedFnCall update(@NotNull Shaped.Fn<Term> head, @NotNull ImmutableSeq<Arg<Term>> args) {
-    return head == this.head && args.sameElements(args, true)
+    return head == this.head && args.sameElements(this.args, true)
       ? this
       : new ShapedFnCall(head, ulift, args);
   }

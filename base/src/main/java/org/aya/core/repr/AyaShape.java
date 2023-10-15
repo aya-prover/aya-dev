@@ -140,7 +140,7 @@ public sealed interface AyaShape {
         .toImmutableSeq();
     }
 
-    public @NotNull Option<ShapeRecognition> find(@NotNull Def def) {
+    public @NotNull Option<ShapeRecognition> find(@NotNull GenericDef def) {
       return discovered.getOption(def);
     }
 

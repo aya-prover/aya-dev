@@ -16,6 +16,7 @@ import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.function.UnaryOperator;
 
 public record IntegerOpsTerm(
@@ -53,7 +54,7 @@ public record IntegerOpsTerm(
     return update((DataCall) f.apply(paramType));
   }
 
-  public enum Kind {
+  public enum Kind implements Serializable {
     Zero, Succ,
     Add, SubTrunc
   }

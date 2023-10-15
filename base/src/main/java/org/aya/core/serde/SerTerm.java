@@ -8,8 +8,11 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.def.Def;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
+import org.aya.generic.Shaped;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
@@ -160,6 +163,16 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Fn(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull FnCall de(@NotNull DeState state) {
       return new FnCall(state.resolve(name), data.ulift, data.de(state));
+    }
+  }
+
+  record ShapedFn(@NotNull SerTerm.SerShapedFn head, @NotNull CallData data) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new ShapedFnCall(
+        head.deShape(state),
+        data.ulift, data.de(state)
+      );
     }
   }
 
@@ -320,4 +333,32 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new OutTerm(phi.de(state), par.de(state), u.de(state));
     }
   }
+
+  /// region Term + ShapedFn
+
+  sealed interface SerShapedFn extends SerTerm permits SerTerm.IntegerOps {
+    @Override
+    default @NotNull Term de(@NotNull DeState state) {
+      return (Term) deShape(state);
+    }
+
+    @NotNull Shaped.Fn<Term> deShape(@NotNull DeState state);
+  }
+
+  record IntegerOps(
+    @NotNull SerDef.QName ref,
+    @NotNull IntegerOpsTerm.Kind kind,
+    @NotNull SerDef.SerShapeResult shapeResult,
+    @NotNull SerTerm.Data dataCall) implements SerShapedFn {
+    @Override
+    public @NotNull Shaped.Fn<Term> deShape(@NotNull DeState state) {
+      DefVar<? extends Def, ? extends TeleDecl<?>> ref = state.resolve(this.ref);
+      // ref can be empty for now, perhaps it hasn't been de.
+      var shapeRecog = shapeResult.de(state);
+      var dataCall = this.dataCall.de(state);
+      return new IntegerOpsTerm(ref, kind, shapeRecog, dataCall);
+    }
+  }
+
+  /// endregion Term + ShapedFn
 }

@@ -9,6 +9,7 @@ import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
+import org.aya.generic.Shaped;
 import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
@@ -16,19 +17,21 @@ import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
 public record Serializer(@NotNull Serializer.State state) {
-  public @NotNull SerDef serialize(@NotNull GenericDef def) {
+  public @NotNull SerDef serialize(@NotNull GenericDef def, @Nullable SerDef.SerShapeResult shapeResult) {
     return switch (def) {
       case FnDef fn -> new SerDef.Fn(
         state.def(fn.ref),
         serializeParams(fn.telescope),
         fn.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
         fn.modifiers,
-        serialize(fn.result)
+        serialize(fn.result),
+        shapeResult
       );
       case MemberDef field -> new SerDef.Field(
         state.def(field.classRef),
@@ -39,13 +42,13 @@ public record Serializer(@NotNull Serializer.State state) {
       );
       case ClassDef clazz -> new SerDef.Clazz(
         state.def(clazz.ref()),
-        clazz.members.map(field -> (SerDef.Field) serialize(field))
+        clazz.members.map(field -> (SerDef.Field) serialize(field, null))
       );
       case DataDef data -> new SerDef.Data(
         state.def(data.ref),
         serializeParams(data.telescope),
         serialize(data.result),
-        data.body.map(ctor -> (SerDef.Ctor) serialize(ctor))
+        data.body.map(ctor -> (SerDef.Ctor) serialize(ctor, null))
       );
       case PrimDef prim -> {
         assert prim.ref.module != null;
@@ -101,6 +104,9 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
+      case ShapedFnCall(Shaped.Fn<Term> head, int ulift, ImmutableSeq<Arg<Term>> args) -> new SerTerm.ShapedFn(
+        serializeShapedFn(head), serializeCall(ulift, args)
+      );
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
       case MatchTerm(var disc, var clauses) ->
@@ -125,6 +131,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
       case OutTerm(var phi, var par, var u) -> new SerTerm.OutS(serialize(phi), serialize(par), serialize(u));
+      case IntegerOpsTerm iot -> serializeShapedFn(iot);
     };
   }
 
@@ -139,6 +146,7 @@ public record Serializer(@NotNull Serializer.State state) {
         explicit,
         state.def(ctor.ref()),
         serializePats(ctor.params()),
+        null,      // TODO: fixme
         serializeDataCall(ctor.type()));
       case Pat.Tuple tuple -> new SerPat.Tuple(explicit, serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(explicit, state.local(bind.bind()), serialize(bind.type()));
@@ -167,6 +175,15 @@ public record Serializer(@NotNull Serializer.State state) {
     return new SerTerm.Clazz(
       state.def(classCall.ref()), classCall.ulift(),
       ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
+  }
+
+  private @NotNull SerTerm.SerShapedFn serializeShapedFn(@NotNull Shaped.Fn<Term> shapedFn) {
+    return switch (shapedFn) {
+      case IntegerOpsTerm(var ref, var kind, var recog, var dataCall) -> new SerTerm.IntegerOps(
+        state.def(ref), kind, SerDef.SerShapeResult.serialize(state, recog), (SerTerm.Data) serialize(dataCall)
+      );
+      default -> throw new IllegalStateException("Unexpected value: " + shapedFn);
+    };
   }
 
   private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {
