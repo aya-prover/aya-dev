@@ -37,8 +37,10 @@ public class PatToTerm {
 
     if (ctor.typeRecog() != null) {
       var head = ShapeFactory.ofCtor(ctor.ref(), ctor.typeRecog(), data);
-      if (head == null) throw new InternalException("bad ShapeFactory");
-      return new ShapedFnCall(head, data.ulift(), args);
+      // Not a ShapedCtor, even it's data is a ShapedData
+      if (head != null) {
+        return new ShapedFnCall(head, data.ulift(), args);
+      }
     }
 
     return new ConCall(data.ref(), ctor.ref(), data.args(), data.ulift(), args);
