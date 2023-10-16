@@ -108,9 +108,22 @@ public interface Shaped<T> {
     }
   }
 
-  interface Fn<T extends AyaDocile> extends Shaped<T> {
+  /**
+   * Something Shaped which is appliable, like
+   * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
+   */
+  interface Appliable<T extends AyaDocile> extends Shaped<T> {
+    /**
+     * The underlying ref
+     */
     @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
+
+    /**
+     * Applying arguments.
+     *
+     * @param args arguments
+     * @return null if failed
+     */
     @Nullable T apply(@NotNull ImmutableSeq<Arg<T>> args);
-    @Override boolean equals(Object obj);
   }
 }

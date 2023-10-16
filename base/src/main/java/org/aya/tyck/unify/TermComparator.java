@@ -169,6 +169,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     return compare(whnf, rhsWhnf, lr, rl, type);
   }
 
+  /**
+   * Short path of comparing {@link Callable}
+   *
+   * @see #isCall(Term)
+   */
   private @Nullable Term compareApprox(@NotNull Term preLhs, @NotNull Term preRhs, Sub lr, Sub rl) {
     return switch (preLhs) {
       case FnCall lhs when preRhs instanceof FnCall rhs ->
@@ -179,7 +184,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       // TODO[h]: This also involves Con situations, is it bad?
       case ShapedFnCall lhs when preRhs instanceof ShapedFnCall rhs ->
-        (!lhs.head().equals(rhs.head())) ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
+        lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
   }

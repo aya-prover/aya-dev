@@ -123,7 +123,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       // solve as pat
       metaPat.ref().solution().set(metalized);
     } else {
-      // a MetaPat that has solution <==> the solution
+      // a MetaPat that has a solution <==> the solution
       match(pat, todo.toTerm());
     }
   }

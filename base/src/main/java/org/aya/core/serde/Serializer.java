@@ -104,7 +104,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
-      case ShapedFnCall(Shaped.Fn<Term> head, int ulift, ImmutableSeq<Arg<Term>> args) -> new SerTerm.ShapedFn(
+      case ShapedFnCall(Shaped.Appliable<Term> head, int ulift, ImmutableSeq<Arg<Term>> args) -> new SerTerm.ShapedFn(
         serializeShapedFn(head), serializeCall(ulift, args)
       );
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
@@ -180,12 +180,12 @@ public record Serializer(@NotNull Serializer.State state) {
       ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
   }
 
-  private @NotNull SerTerm.SerShapedFn serializeShapedFn(@NotNull Shaped.Fn<Term> shapedFn) {
-    return switch (shapedFn) {
+  private @NotNull SerTerm.SerShapedFn serializeShapedFn(@NotNull Shaped.Appliable<Term> shapedAppliable) {
+    return switch (shapedAppliable) {
       case IntegerOpsTerm(var ref, var kind, var recog, var dataCall) -> new SerTerm.IntegerOps(
         state.def(ref), kind, SerDef.SerShapeResult.serialize(state, recog), (SerTerm.Data) serialize(dataCall)
       );
-      default -> throw new IllegalStateException("Unexpected value: " + shapedFn);
+      default -> throw new IllegalStateException("Unexpected value: " + shapedAppliable);
     };
   }
 

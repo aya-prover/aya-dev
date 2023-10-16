@@ -21,7 +21,7 @@ import java.util.function.UnaryOperator;
  * @param args
  */
 public record ShapedFnCall(
-  @NotNull Shaped.Fn<Term> head,
+  @NotNull Shaped.Appliable<Term> head,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<Arg<Term>> args
 ) implements Callable.Tele {
@@ -30,7 +30,7 @@ public record ShapedFnCall(
     return head.ref();
   }
 
-  private @NotNull ShapedFnCall update(@NotNull Shaped.Fn<Term> head, @NotNull ImmutableSeq<Arg<Term>> args) {
+  private @NotNull ShapedFnCall update(@NotNull Shaped.Appliable<Term> head, @NotNull ImmutableSeq<Arg<Term>> args) {
     return head == this.head && args.sameElements(this.args, true)
       ? this
       : new ShapedFnCall(head, ulift, args);
@@ -38,7 +38,7 @@ public record ShapedFnCall(
 
   @Override
   public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update((Shaped.Fn<Term>) f.apply((Term) head), args.map(x -> x.descent(f)));
+    return update((Shaped.Appliable<Term>) f.apply((Term) head), args.map(x -> x.descent(f)));
   }
 
   /**

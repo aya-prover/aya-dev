@@ -24,7 +24,7 @@ public record IntegerOpsTerm(
   @NotNull Kind kind,
   @NotNull ShapeRecognition paramRecog,
   @NotNull DataCall paramType
-) implements Shaped.Fn<Term>, Term {
+) implements Shaped.Appliable<Term>, Term {
   public IntegerOpsTerm {
     assert paramRecog.shape() == AyaShape.NAT_SHAPE;
 
@@ -99,14 +99,5 @@ public record IntegerOpsTerm(
         yield null;
       }
     };
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof IntegerOpsTerm term) {
-      return this.ref == term.ref && this.kind == term.kind;
-    }
-
-    return false;
   }
 }

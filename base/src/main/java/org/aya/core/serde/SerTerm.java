@@ -342,7 +342,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return (Term) deShape(state);
     }
 
-    @NotNull Shaped.Fn<Term> deShape(@NotNull DeState state);
+    @NotNull Shaped.Appliable<Term> deShape(@NotNull DeState state);
   }
 
   record IntegerOps(
@@ -351,7 +351,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @NotNull SerDef.SerShapeResult shapeResult,
     @NotNull SerTerm.Data dataCall) implements SerShapedFn {
     @Override
-    public @NotNull Shaped.Fn<Term> deShape(@NotNull DeState state) {
+    public @NotNull Shaped.Appliable<Term> deShape(@NotNull DeState state) {
       DefVar<? extends Def, ? extends TeleDecl<?>> ref = state.resolve(this.ref);
       // ref can be empty for now, perhaps it hasn't been de.
       var shapeRecog = shapeResult.de(state);
