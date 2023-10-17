@@ -80,14 +80,8 @@ public record CallResolver(
   private @NotNull Relation compare(@NotNull Term term, @NotNull Pat pat) {
     return switch (pat) {
       case Pat.Ctor ctor -> switch (term) {
-        case ConCall con -> {
-          if (con.ref() != ctor.ref() || !con.conArgs().sizeEquals(ctor.params())) yield Relation.unk();
-          var attempt = compareConArgs(con.conArgs(), ctor);
-          // Reduce arguments and compare again. This may cause performance issues (but not observed yet [2022-11-07]),
-          // see https://github.com/agda/agda/issues/2403 for more information.
-          if (attempt == Relation.unk()) attempt = compareConArgs(con.conArgs().map(a -> a.descent(this::whnf)), ctor);
-          yield attempt;
-        }
+        case ConCall con -> compareConLike(con.ref(), con.conArgs(), ctor);
+        case ShapedFnCall probablyCon -> compareConLike(probablyCon.ref(), probablyCon.args(), ctor);
         // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
         case IntegerTerm lit -> compare(lit.constructorForm(), ctor);
         default -> {
@@ -96,6 +90,7 @@ public record CallResolver(
           if (attempt == Relation.unk()) {
             yield switch (whnf(term)) {
               case ConCall con -> compare(con, ctor);
+              // TODO[h]: do we need a ShapedFnCall case here? @ice1000
               case IntegerTerm lit -> compare(lit, ctor);
               // This is related to the predicativity issue mentioned in #907
               case PAppTerm papp -> {
@@ -128,6 +123,19 @@ public record CallResolver(
       };
       default -> Relation.unk();
     };
+  }
+
+  private @NotNull Relation compareConLike(
+    @NotNull DefVar<?, ?> ref,
+    @NotNull ImmutableSeq<Arg<Term>> conArgs,
+    @NotNull Pat.Ctor ctor
+  ) {
+    if (ref != ctor.ref() || !conArgs.sizeEquals(ctor.params())) return Relation.unk();
+    var attempt = compareConArgs(conArgs, ctor);
+    // Reduce arguments and compare again. This may cause performance issues (but not observed yet [2022-11-07]),
+    // see https://github.com/agda/agda/issues/2403 for more information.
+    if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(this::whnf)), ctor);
+    return attempt;
   }
 
   private Relation compareConArgs(@NotNull ImmutableSeq<Arg<Term>> conArgs, @NotNull Pat.Ctor ctor) {

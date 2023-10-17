@@ -111,6 +111,8 @@ public interface Shaped<T> {
   /**
    * Something Shaped which is appliable, like
    * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
+   *
+   * @see org.aya.core.term.ShapedFnCall
    */
   interface Appliable<T extends AyaDocile> extends Shaped<T> {
     /**

@@ -19,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.function.UnaryOperator;
 
+/**
+ * @implNote It is <b>enough</b> to decide whether two IntegerOpsTerms are equal by comparing their {@link IntegerOpsTerm#ref}s.
+ */
 public record IntegerOpsTerm(
   @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref,
   @NotNull Kind kind,

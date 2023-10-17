@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 /**
+ * A {@link Callable} for {@link Shaped.Appliable}.
+ *
  * @param head  should be also a {@link Term}
  * @param ulift
  * @param args

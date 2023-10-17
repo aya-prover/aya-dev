@@ -485,9 +485,13 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
           var lef = lhs.ref();
           yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
         }
+        case IntegerTerm $ -> throw new InternalException("unreachable");
         case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
         default -> null;
       };
+      case ShapedFnCall lhs -> preRhs instanceof IntegerTerm intTerm
+        ? compareUntyped(lhs, intTerm.constructorForm(), lr, rl)
+        : null;
       case PrimCall lhs -> null;
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;

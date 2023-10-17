@@ -31,12 +31,12 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-    return new ConCall(zero.dataRef, zero.ref, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
+    return new IntegerOpsTerm(zero.ref, IntegerOpsTerm.Kind.Zero, recognition, type);
   }
 
   @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
-    return new ConCall(suc.dataRef, suc.ref, ImmutableSeq.empty(), 0,
-      ImmutableSeq.of(term));
+    return new ShapedFnCall(new IntegerOpsTerm(suc.ref, IntegerOpsTerm.Kind.Succ, recognition, type),
+      0, ImmutableSeq.of(term));
   }
 
   @Override public @NotNull Term destruct(int repr) {

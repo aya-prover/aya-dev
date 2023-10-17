@@ -48,8 +48,10 @@ import java.util.function.UnaryOperator;
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, IntegerOpsTerm, StableWHNF {
-  // Descending an operation to the term AST
-  // NOTE: Currently we require the operation `f` to preserve StructCall, DataCall, and SortTerm.
+  /**
+   * Descending an operation to the term AST. NOTE: Currently we require the operation `f` to preserve:
+   * {@link StructCall}, {@link DataCall}, {@link SortTerm}, {@link org.aya.generic.Shaped.Appliable}.
+   */
   @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g);
 
   default @NotNull Term subst(@NotNull AnyVar var, @NotNull Term term) {
