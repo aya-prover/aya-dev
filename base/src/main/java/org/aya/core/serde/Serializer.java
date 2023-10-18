@@ -104,8 +104,11 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
-      case ShapedFnCall(Shaped.Appliable<Term> head, int ulift, ImmutableSeq<Arg<Term>> args) -> new SerTerm.ShapedFn(
-        serializeShapedFn(head), serializeCall(ulift, args)
+      case ReduceRule.Fn(var head, var ulift, var args) -> new SerTerm.FnReduceRule(
+        serializeShapedAppliable(head), serializeCall(ulift, args)
+      );
+      case ReduceRule.Con(var head, var ulift, var dataArgs, var conArgs) -> new SerTerm.ConReduceRule(
+        serializeShapedAppliable(head), serializeCall(ulift, dataArgs), conArgs.map(this::serialize)
       );
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
@@ -131,7 +134,7 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
       case OutTerm(var phi, var par, var u) -> new SerTerm.OutS(serialize(phi), serialize(par), serialize(u));
-      case IntegerOpsTerm iot -> serializeShapedFn(iot);
+      case IntegerOpsTerm iot -> serializeShapedAppliable(iot);
     };
   }
 
@@ -180,11 +183,16 @@ public record Serializer(@NotNull Serializer.State state) {
       ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
   }
 
-  private @NotNull SerTerm.SerShapedFn serializeShapedFn(@NotNull Shaped.Appliable<Term> shapedAppliable) {
+  private @NotNull SerTerm.SerShapedAppliable serializeShapedAppliable(@NotNull Shaped.Appliable<Term, ?, ?> shapedAppliable) {
     return switch (shapedAppliable) {
-      case IntegerOpsTerm(var ref, var kind, var recog, var dataCall) -> new SerTerm.IntegerOps(
-        state.def(ref), kind, SerDef.SerShapeResult.serialize(state, recog), (SerTerm.Data) serialize(dataCall)
-      );
+      case IntegerOpsTerm<?, ?> ops -> {
+        var ref = ops.ref();
+        var kind = ops instanceof IntegerOpsTerm.FnRule fnOps ? fnOps.kind() : null;
+        var recog = ops.paramRecognition();
+        var type = ops.paramType();
+
+        yield new SerTerm.IntegerOps(state.def(ref), kind, SerDef.SerShapeResult.serialize(state, recog), (SerTerm.Data) serialize(type));
+      }
       default -> throw new IllegalStateException("Unexpected value: " + shapedAppliable);
     };
   }

@@ -9,7 +9,8 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.Def;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.generic.Shaped;
@@ -21,6 +22,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -166,12 +168,26 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record ShapedFn(@NotNull SerTerm.SerShapedFn head, @NotNull CallData data) implements SerTerm {
+  record FnReduceRule(@NotNull SerTerm.SerShapedAppliable head, @NotNull CallData data) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new ShapedFnCall(
-        head.deShape(state),
+      return new ReduceRule.Fn(
+        (Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl>) head.deShape(state),
         data.ulift, data.de(state)
+      );
+    }
+  }
+
+  record ConReduceRule(
+    @NotNull SerTerm.SerShapedAppliable head,
+    @NotNull CallData dataArgs,
+    @NotNull ImmutableSeq<SerArg> conArgs
+  ) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new ReduceRule.Con(
+        (Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
+        dataArgs().ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
       );
     }
   }
@@ -334,31 +350,35 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  /// region Term + ShapedFn
+  /// region Term + ShapedAppliable
 
-  sealed interface SerShapedFn extends SerTerm permits SerTerm.IntegerOps {
+  sealed interface SerShapedAppliable extends SerTerm permits SerTerm.IntegerOps {
     @Override
     default @NotNull Term de(@NotNull DeState state) {
       return (Term) deShape(state);
     }
 
-    @NotNull Shaped.Appliable<Term> deShape(@NotNull DeState state);
+    @NotNull Shaped.Appliable<Term, ?, ?> deShape(@NotNull DeState state);
   }
 
   record IntegerOps(
     @NotNull SerDef.QName ref,
-    @NotNull IntegerOpsTerm.Kind kind,
+    @Nullable IntegerOpsTerm.FnRule.Kind kind,
     @NotNull SerDef.SerShapeResult shapeResult,
-    @NotNull SerTerm.Data dataCall) implements SerShapedFn {
+    @NotNull SerTerm.Data dataCall) implements SerShapedAppliable {
     @Override
-    public @NotNull Shaped.Appliable<Term> deShape(@NotNull DeState state) {
-      DefVar<? extends Def, ? extends TeleDecl<?>> ref = state.resolve(this.ref);
+    public @NotNull Shaped.Appliable<Term, ?, ?> deShape(@NotNull DeState state) {
       // ref can be empty for now, perhaps it hasn't been de.
       var shapeRecog = shapeResult.de(state);
       var dataCall = this.dataCall.de(state);
-      return new IntegerOpsTerm(ref, kind, shapeRecog, dataCall);
+
+      if (kind != null) {
+        return new IntegerOpsTerm.FnRule(state.resolve(this.ref), shapeRecog, dataCall, kind);
+      }
+
+      return new IntegerOpsTerm.ConRule(state.resolve(this.ref), shapeRecog, dataCall);
     }
   }
 
-  /// endregion Term + ShapedFn
+  /// endregion Term + ShapedAppliable
 }
