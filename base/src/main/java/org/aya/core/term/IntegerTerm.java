@@ -3,17 +3,13 @@
 package org.aya.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.primitive.IntOption;
 import org.aya.core.def.CtorDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
-import org.aya.core.repr.TermShape;
 import org.aya.generic.Shaped;
 import org.aya.util.Arg;
-import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -21,7 +17,30 @@ public record IntegerTerm(
   @Override int repr,
   @Override @NotNull ShapeRecognition recognition,
   @Override @NotNull DataCall type
-) implements StableWHNF, Shaped.Nat<Term> {
+) implements StableWHNF, Shaped.Nat<Term>, ConCallLike {
+  public IntegerTerm {
+    assert repr >= 0;
+  }
+
+  @Override
+  public @NotNull ConCall.Head head() {
+    var ref = repr == 0
+      ? ctorRef(CodeShape.MomentId.ZERO)
+      : ctorRef(CodeShape.MomentId.SUC);
+
+    return new ConCallLike.Head(type.ref(), ref.core.ref, 0, ImmutableSeq.empty());
+  }
+
+  @Override
+  public @NotNull ImmutableSeq<Arg<Term>> conArgs() {
+    if (repr == 0) {
+      return ImmutableSeq.empty();
+    }
+
+    // FIXME: explicit
+    return ImmutableSeq.of(Arg.ofExplicitly(new IntegerTerm(repr - 1, recognition, type)));
+  }
+
   public IntegerTerm update(DataCall type) {
     return type == type() ? this : new IntegerTerm(repr, recognition, type);
   }
@@ -31,12 +50,12 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-    return new IntegerOpsTerm(zero.ref, IntegerOpsTerm.Kind.Zero, recognition, type);
+    return new IntegerOpsTerm.ConRule(zero.ref, recognition, type);
   }
 
   @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
-    return new ShapedFnCall(new IntegerOpsTerm(suc.ref, IntegerOpsTerm.Kind.Succ, recognition, type),
-      0, ImmutableSeq.of(term));
+    return new ReduceRule.Con(new IntegerOpsTerm.ConRule(suc.ref, recognition, type),
+      0, ImmutableSeq.empty(), ImmutableSeq.of(term));
   }
 
   @Override public @NotNull Term destruct(int repr) {

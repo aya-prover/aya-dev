@@ -9,9 +9,7 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.IntegerTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.DefVar;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
@@ -112,13 +110,13 @@ public interface Shaped<T> {
    * Something Shaped which is appliable, like
    * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
    *
-   * @see org.aya.core.term.ShapedFnCall
+   * @see ReduceRule.Fn
    */
-  interface Appliable<T extends AyaDocile> extends Shaped<T> {
+  interface Appliable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
     /**
      * The underlying ref
      */
-    @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref();
+    @NotNull DefVar<Core, Concrete> ref();
 
     /**
      * Applying arguments.
