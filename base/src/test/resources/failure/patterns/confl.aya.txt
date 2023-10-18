@@ -12,8 +12,10 @@ In file $FILE:5:12 ->
 
 Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc zero
+         (Normalized: 1)
        and
          zero
+         (Normalized: 0)
 
 1 error(s), 0 warning(s).
 What are you doing?

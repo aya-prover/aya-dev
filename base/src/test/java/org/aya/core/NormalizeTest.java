@@ -3,9 +3,7 @@
 package org.aya.core;
 
 import org.aya.core.def.FnDef;
-import org.aya.core.term.ConCall;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.tyck.TyckDeclTest;
@@ -34,9 +32,9 @@ public class NormalizeTest {
     var defs = res.component2();
     var state = new TyckState(res.component1());
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(2) instanceof ConCall conCall
+    assertTrue(normalizer.apply(2) instanceof IntegerTerm conCall
       && Objects.equals(conCall.ref().name(), "suc"));
-    assertTrue(normalizer.apply(3) instanceof ConCall conCall
+    assertTrue(normalizer.apply(3) instanceof IntegerTerm conCall
       && Objects.equals(conCall.ref().name(), "suc"));
     assertTrue(normalizer.apply(4) instanceof RefTerm ref
       && Objects.equals(ref.var().name(), "a"));
@@ -54,10 +52,10 @@ public class NormalizeTest {
     var state = new TyckState(res.component1());
     var defs = res.component2();
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertTrue(normalizer.apply(3) instanceof ConCall conCall
+    assertTrue(normalizer.apply(3) instanceof IntegerTerm conCall
       && Objects.equals(conCall.ref().name(), "zero")
       && conCall.conArgs().isEmpty());
-    assertTrue(normalizer.apply(4) instanceof ConCall conCall
+    assertTrue(normalizer.apply(4) instanceof IntegerTerm conCall
       && Objects.equals(conCall.ref().name(), "suc"));
   }
 
@@ -95,7 +93,7 @@ public class NormalizeTest {
     var state = new TyckState(res.component1());
     var defs = res.component2();
     IntFunction<Term> normalizer = i -> ((FnDef) defs.get(i)).body.getLeftValue().normalize(state, NormalizeMode.NF);
-    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 2).toDoc(AyaPrettierOptions.debug()).debugRender());
-    assertEquals("suc zero :< nil", normalizer.apply(defs.size() - 1).toDoc(AyaPrettierOptions.debug()).debugRender());
+    assertEquals("1 :< nil", normalizer.apply(defs.size() - 2).toDoc(AyaPrettierOptions.debug()).debugRender());
+    assertEquals("1 :< nil", normalizer.apply(defs.size() - 1).toDoc(AyaPrettierOptions.debug()).debugRender());
   }
 }
