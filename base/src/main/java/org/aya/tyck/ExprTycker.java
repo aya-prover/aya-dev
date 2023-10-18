@@ -16,7 +16,6 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
@@ -591,7 +590,8 @@ public final class ExprTycker extends UnifiedTycker {
 
     if (recog.isDefined()) {
       var head = ShapeFactory.ofFn(var, recog.get(), shapeFactory);
-      return defCall(var, (defVar, ulift, args) -> new ShapedFnCall(head, ulift, args));
+      assert head != null : "bad ShapeFactory";
+      return defCall(var, (defVar, ulift, args) -> new ReduceRule.Fn(head, ulift, args));
     }
 
     return null;
@@ -603,7 +603,8 @@ public final class ExprTycker extends UnifiedTycker {
     return shapeFactory.find(dataVar.core).mapNotNull(recog -> {
         if (recog.shape() == AyaShape.NAT_SHAPE) {
           var head = ShapeFactory.ofCtor(var, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
-          return defCall(var, (mVar, ulift, args) -> new ShapedFnCall(head, ulift, args));
+          assert head != null : "bad ShapeFactory";
+          return defCall(var, (mVar, ulift, args) -> new ReduceRule.Con(head, ulift, ImmutableSeq.empty(), args));
         }
 
         return null;

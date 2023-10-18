@@ -60,7 +60,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   }
 
   private static boolean isCall(@NotNull Term term) {
-    return term instanceof FnCall || term instanceof ConCall || term instanceof PrimCall || term instanceof ShapedFnCall;
+    return term instanceof FnCall || term instanceof ConCall || term instanceof ReduceRule.Con || term instanceof PrimCall || term instanceof ReduceRule.Fn;
   }
 
   public static <E> E withIntervals(
@@ -180,10 +180,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case ConCall lhs when preRhs instanceof ConCall rhs ->
         lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
+      case ReduceRule.Con lhs when preRhs instanceof ReduceRule.Con rhs ->
+        lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
       case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       // TODO[h]: This also involves Con situations, is it bad?
-      case ShapedFnCall lhs when preRhs instanceof ShapedFnCall rhs ->
+      case ReduceRule.Fn lhs when preRhs instanceof ReduceRule.Fn rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };
@@ -480,26 +482,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         yield compare(coe.type(), rType, lr, rl, PrimDef.intervalToType()) ?
           coe.family() : null;
       }
-      case ConCall lhs -> switch (preRhs) {
-        case ConCall rhs -> {
-          var lef = lhs.ref();
-          yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
-        }
-        case IntegerTerm $ -> throw new InternalException("unreachable");
-        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
-        default -> null;
-      };
-      case ShapedFnCall lhs -> preRhs instanceof IntegerTerm intTerm
-        ? compareUntyped(lhs, intTerm.constructorForm(), lr, rl)
-        : null;
-      case PrimCall lhs -> null;
-      case FieldTerm lhs -> {
-        if (!(preRhs instanceof FieldTerm rhs)) yield null;
-        var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
-        if (!(preStructType instanceof ClassCall)) yield null;
-        if (lhs.ref() != rhs.ref()) yield null;
-        yield Def.defResult(lhs.ref());
-      }
+      // ConCallLike
       case IntegerTerm lhs -> switch (preRhs) {
         case IntegerTerm rhs -> {
           if (!lhs.compareShape(this, rhs)) yield null;
@@ -508,6 +491,24 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         }
         default -> null;
       };
+      // fallback case
+      case ConCallLike lhs -> switch (preRhs) {
+        case ConCallLike rhs -> {
+          var lef = lhs.ref();
+          yield lef != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
+        }
+        case ListTerm rhs -> compareUntyped(lhs, rhs.constructorForm(), lr, rl);
+        default -> null;
+      };
+      // end ConCallLike
+      case PrimCall lhs -> null;
+      case FieldTerm lhs -> {
+        if (!(preRhs instanceof FieldTerm rhs)) yield null;
+        var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
+        if (!(preStructType instanceof ClassCall)) yield null;
+        if (lhs.ref() != rhs.ref()) yield null;
+        yield Def.defResult(lhs.ref());
+      }
       // We expect to only compare the elimination "outS" here
       case OutTerm(var lPhi, var pal, var lU) -> {
         if (!(preRhs instanceof OutTerm(var rPhi, var par, var rU))) yield null;
@@ -560,7 +561,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
    * {@link ConCall} may reduce according to conditions, so this comparison is a lossy one.
    * If called from {@link #doCompareUntyped} then probably not so lossy.
    */
-  private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl) {
+  private @Nullable Term lossyUnifyCon(ConCallLike lhs, ConCallLike rhs, Sub lr, Sub rl) {
     var retType = synthesizer().press(lhs);
     var dataRef = lhs.ref().core.dataRef;
     var dataAlgs = lhs.head().dataArgs();

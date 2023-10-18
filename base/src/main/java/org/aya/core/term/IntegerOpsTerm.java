@@ -8,7 +8,7 @@ import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
 import org.aya.core.pat.Pat;
-import org.aya.core.repr.AyaShape;
+import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Shaped;
 import org.aya.ref.DefVar;
@@ -19,88 +19,104 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 import java.util.function.UnaryOperator;
 
-/**
- * @implNote It is <b>enough</b> to decide whether two IntegerOpsTerms are equal by comparing their {@link IntegerOpsTerm#ref}s.
- */
-public record IntegerOpsTerm(
-  @Override @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref,
-  @NotNull Kind kind,
-  @NotNull ShapeRecognition paramRecog,
-  @NotNull DataCall paramType
-) implements Shaped.Appliable<Term>, Term {
-  public IntegerOpsTerm {
-    assert paramRecog.shape() == AyaShape.NAT_SHAPE;
+public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDecl<?>>
+  extends Shaped.Appliable<Term, Core, Concrete>, Term {
+  @NotNull ShapeRecognition paramRecognition();
+  @NotNull DataCall paramType();
 
-    switch (kind) {
-      case Zero, Succ -> {
-        assert ref.core instanceof CtorDef || ref.concrete instanceof TeleDecl.DataCtor;
+  default @NotNull IntegerTerm from(int repr) {
+    return new IntegerTerm(repr, paramRecognition(), paramType());
+  }
+
+  @Override default @NotNull Term type() {
+    var core = ref().core;
+    assert core != null;
+    return PiTerm.make(core.telescope(), core.result());
+  }
+
+  record ConRule(
+    @Override @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
+    @Override @NotNull ShapeRecognition paramRecognition,
+    @Override @NotNull DataCall paramType
+  ) implements IntegerOpsTerm<CtorDef, TeleDecl.DataCtor> {
+    public boolean isZero() {
+      return paramRecognition.captures().get(CodeShape.MomentId.ZERO) == ref;
+    }
+
+    @Override
+    public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
+      if (isZero()) {
+        assert args.isEmpty();
+        return from(0);
       }
-      case Add, SubTrunc -> {
-        assert ref.core instanceof FnDef || ref.concrete instanceof TeleDecl.FnDecl;
+
+      // suc
+      assert args.sizeEquals(1);
+      var arg = args.get(0).term();
+      if (arg instanceof IntegerTerm intTerm) {
+        return from(intTerm.repr() + 1);
       }
+
+      return null;
+    }
+
+    public @NotNull ConRule update(@NotNull DataCall paramType) {
+      return paramType == this.paramType
+        ? this
+        : new ConRule(ref, paramRecognition, paramType);
+    }
+
+    @Override
+    public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+      return update((DataCall) f.apply(this.paramType));
     }
   }
 
-  @Override public @NotNull Term type() {
-    assert ref.core != null;
-    return PiTerm.make(ref.core.telescope(), ref.core.result());
-  }
+  record FnRule(
+    @Override @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
+    @Override @NotNull ShapeRecognition paramRecognition,
+    @Override @NotNull DataCall paramType,
+    @NotNull Kind kind
+  ) implements IntegerOpsTerm<FnDef, TeleDecl.FnDecl> {
+    public enum Kind implements Serializable {
+      Add, SubTrunc
+    }
 
-  private @NotNull IntegerOpsTerm update(@NotNull DataCall paramType) {
-    return paramType == this.paramType ? this : new IntegerOpsTerm(
-      ref, kind, paramRecog, paramType
-    );
-  }
+    @Override
+    public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
+      return switch (kind) {
+        case Add -> {
+          assert args.sizeEquals(2);
+          var a = args.get(0).term();
+          var b = args.get(1).term();
+          if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
+            yield from(ita.repr() + itb.repr());
+          }
 
-  @Override
-  public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update((DataCall) f.apply(paramType));
-  }
-
-  public enum Kind implements Serializable {
-    Zero, Succ,
-    Add, SubTrunc
-  }
-
-  private @NotNull IntegerTerm from(int repr) {
-    return new IntegerTerm(repr, paramRecog, paramType);
-  }
-
-  @Override public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
-    return switch (kind) {
-      case Zero -> {
-        assert args.isEmpty();
-        yield from(0);
-      }
-      case Succ -> {
-        assert args.sizeEquals(1);
-        var arg = args.get(0).term();
-        if (arg instanceof IntegerTerm it) {
-          yield from(it.repr() + 1);
+          yield null;
         }
+        case SubTrunc -> {
+          assert args.sizeEquals(2);
+          var a = args.get(0).term();
+          var b = args.get(1).term();
+          if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
+            yield from(Math.max(ita.repr() - itb.repr(), 0));
+          }
 
-        yield null;
-      }
-      case Add -> {
-        assert args.sizeEquals(2);
-        var a = args.get(0).term();
-        var b = args.get(1).term();
-        if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-          yield from(ita.repr() + itb.repr());
+          yield null;
         }
+      };
+    }
 
-        yield null;
-      }
-      case SubTrunc -> {
-        assert args.sizeEquals(2);
-        var a = args.get(0).term();
-        var b = args.get(1).term();
-        if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-          yield from(Math.max(ita.repr() - itb.repr(), 0));
-        }
+    public @NotNull FnRule update(@NotNull DataCall paramType) {
+      return paramType == this.paramType
+        ? this
+        : new FnRule(ref, paramRecognition, paramType, kind);
+    }
 
-        yield null;
-      }
-    };
+    @Override
+    public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
+      return update((DataCall) f.apply(paramType));
+    }
   }
 }

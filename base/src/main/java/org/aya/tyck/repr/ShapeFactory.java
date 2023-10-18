@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ShapeFactory {
-  public static @Nullable Shaped.Appliable<Term> ofCtor(
+  public static @Nullable Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull AyaShape.Factory factory,
     @NotNull DataCall paramType
@@ -34,27 +34,19 @@ public final class ShapeFactory {
     return ofCtor(ref, paramRecog, paramType);
   }
 
-  public static @Nullable Shaped.Appliable<Term> ofCtor(
+  public static @Nullable Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ShapeRecognition paramRecog,
     @NotNull DataCall paramType
   ) {
     if (paramRecog.shape() == AyaShape.NAT_SHAPE) {
-      var kind = ref == paramRecog.captures().get(CodeShape.MomentId.ZERO)
-        ? IntegerOpsTerm.Kind.Zero
-        : ref == paramRecog.captures().get(CodeShape.MomentId.SUC)
-          ? IntegerOpsTerm.Kind.Succ
-          : null;
-
-      if (kind == null) throw new InternalException("I need DT");
-
-      return new IntegerOpsTerm(ref, kind, paramRecog, paramType);
+      return new IntegerOpsTerm.ConRule(ref, paramRecog, paramType);
     }
 
     return null;
   }
 
-  public static @Nullable Shaped.Appliable<Term> ofFn(
+  public static @Nullable Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl> ofFn(
     @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
     @NotNull ShapeRecognition recog,
     @NotNull AyaShape.Factory factory
@@ -70,7 +62,7 @@ public final class ShapeFactory {
       // TODO[h]: Can I use ref.core.result directly?
       var paramType = new DataCall(dataRef, 0, ImmutableSeq.empty());
 
-      return new IntegerOpsTerm(ref, IntegerOpsTerm.Kind.Add, paramRecog, paramType);
+      return new IntegerOpsTerm.FnRule(ref, paramRecog, paramType, IntegerOpsTerm.FnRule.Kind.Add);
     }
 
     return null;

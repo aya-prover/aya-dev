@@ -47,14 +47,13 @@ public interface DeltaExpander extends EndoTerm {
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(this).getOrDefault(fn));
       }
-      case ShapedFnCall fn -> {
-        var result = fn.head().apply(fn.args());
+      case ReduceRule reduceRule -> {
+        var result = reduceRule.rule().apply(reduceRule.args());
         if (result != null) yield apply(result);
-        // We can't handle it, delegate to FnCall
-        var fnCallMaybe = fn.toFnCall();
-        yield fnCallMaybe != null
-          ? post(fnCallMaybe)
-          : fn;
+        // We can't handle it, try to delegate to FnCall
+        yield reduceRule instanceof ReduceRule.Fn fnRule
+          ? post(fnRule.toFnCall())
+          : reduceRule;
       }
       case PrimCall prim -> state().primFactory().unfold(prim.id(), prim, state());
       case MetaTerm hole -> {

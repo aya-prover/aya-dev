@@ -137,7 +137,8 @@ public interface EndoTerm extends UnaryOperator<Term> {
           yield new ConCall(head, con.conArgs());
         }
         case FnCall fn -> new FnCall(fn.ref(), fn.ulift() + lift, fn.args());
-        case ShapedFnCall fn -> new ShapedFnCall(fn.head(), fn.ulift() + lift, fn.args());
+        case ReduceRule.Con con -> new ReduceRule.Con(con.rule(), con.ulift() + lift, con.dataArgs(), con.conArgs());
+        case ReduceRule.Fn fn -> new ReduceRule.Fn(fn.rule(), fn.ulift() + lift, fn.args());
         case PrimCall prim -> new PrimCall(prim.ref(), prim.ulift() + lift, prim.args());
         case Term misc -> misc;
       };

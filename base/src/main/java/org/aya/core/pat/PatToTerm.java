@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.pat;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.*;
 import org.aya.ref.LocalVar;
 import org.aya.tyck.repr.ShapeFactory;
 import org.aya.util.Arg;
-import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +39,7 @@ public class PatToTerm {
       var head = ShapeFactory.ofCtor(ctor.ref(), ctor.typeRecog(), data);
       // Not a ShapedCtor, even it's data is a ShapedData
       if (head != null) {
-        return new ShapedFnCall(head, data.ulift(), args);
+        return new ReduceRule.Con(head, data.ulift(), ImmutableSeq.empty(), args);
       }
     }
 

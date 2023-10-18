@@ -80,7 +80,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
    * Used for getting the subst for an inductive type's constructor's types.
    * This method handles both indexed and non-indexed constructors.
    */
-  protected @NotNull Subst conOwnerSubst(@NotNull ConCall conCall) {
+  protected @NotNull Subst conOwnerSubst(@NotNull ConCallLike conCall) {
     return PatternTycker.mischa(conCall.head().underlyingDataCall(), conCall.ref().core, state).get();
   }
 }
