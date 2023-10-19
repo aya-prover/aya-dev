@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
+/**
+ * An efficient represent for Nat
+ */
 public record IntegerTerm(
   @Override int repr,
   @Override @NotNull ShapeRecognition recognition,
@@ -37,8 +40,10 @@ public record IntegerTerm(
       return ImmutableSeq.empty();
     }
 
-    // FIXME: explicit
-    return ImmutableSeq.of(Arg.ofExplicitly(new IntegerTerm(repr - 1, recognition, type)));
+    var ctorTele = head().ref().core.selfTele;
+    assert ctorTele.sizeEquals(1);
+
+    return ImmutableSeq.of(new Arg<>(new IntegerTerm(repr - 1, recognition, type), ctorTele.first().explicit()));
   }
 
   public IntegerTerm update(DataCall type) {
@@ -47,6 +52,12 @@ public record IntegerTerm(
 
   @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
     return update((DataCall) f.apply(type));
+  }
+
+  @Override
+  public @NotNull Term constructorForm() {
+    // I AM the constructor form.
+    return this;
   }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {

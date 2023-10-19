@@ -168,25 +168,25 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  record FnReduceRule(@NotNull SerTerm.SerShapedAppliable head, @NotNull CallData data) implements SerTerm {
+  record FnReduceRule(@NotNull SerTerm.SerShapedApplicable head, @NotNull CallData data) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
       return new ReduceRule.Fn(
-        (Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl>) head.deShape(state),
+        (Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl>) head.deShape(state),
         data.ulift, data.de(state)
       );
     }
   }
 
   record ConReduceRule(
-    @NotNull SerTerm.SerShapedAppliable head,
+    @NotNull SerTerm.SerShapedApplicable head,
     @NotNull CallData dataArgs,
     @NotNull ImmutableSeq<SerArg> conArgs
   ) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
       return new ReduceRule.Con(
-        (Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
+        (Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
         dataArgs().ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
       );
     }
@@ -350,24 +350,24 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  /// region Term + ShapedAppliable
+  /// region Term + ShapedApplicable
 
-  sealed interface SerShapedAppliable extends SerTerm permits SerTerm.IntegerOps {
+  sealed interface SerShapedApplicable extends SerTerm permits SerTerm.IntegerOps {
     @Override
     default @NotNull Term de(@NotNull DeState state) {
       return (Term) deShape(state);
     }
 
-    @NotNull Shaped.Appliable<Term, ?, ?> deShape(@NotNull DeState state);
+    @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state);
   }
 
   record IntegerOps(
     @NotNull SerDef.QName ref,
     @Nullable IntegerOpsTerm.FnRule.Kind kind,
     @NotNull SerDef.SerShapeResult shapeResult,
-    @NotNull SerTerm.Data dataCall) implements SerShapedAppliable {
+    @NotNull SerTerm.Data dataCall) implements SerShapedApplicable {
     @Override
-    public @NotNull Shaped.Appliable<Term, ?, ?> deShape(@NotNull DeState state) {
+    public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
       // ref can be empty for now, perhaps it hasn't been de.
       var shapeRecog = shapeResult.de(state);
       var dataCall = this.dataCall.de(state);
@@ -380,5 +380,5 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  /// endregion Term + ShapedAppliable
+  /// endregion Term + ShapedApplicable
 }

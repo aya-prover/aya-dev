@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ShapeFactory {
-  public static @Nullable Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
+  public static @Nullable Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull AyaShape.Factory factory,
     @NotNull DataCall paramType
@@ -34,7 +34,7 @@ public final class ShapeFactory {
     return ofCtor(ref, paramRecog, paramType);
   }
 
-  public static @Nullable Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
+  public static @Nullable Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor> ofCtor(
     @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @NotNull ShapeRecognition paramRecog,
     @NotNull DataCall paramType
@@ -46,7 +46,7 @@ public final class ShapeFactory {
     return null;
   }
 
-  public static @Nullable Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl> ofFn(
+  public static @Nullable Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> ofFn(
     @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
     @NotNull ShapeRecognition recog,
     @NotNull AyaShape.Factory factory

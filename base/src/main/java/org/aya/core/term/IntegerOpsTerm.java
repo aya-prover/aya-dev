@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.function.UnaryOperator;
 
 public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDecl<?>>
-  extends Shaped.Appliable<Term, Core, Concrete>, Term {
+  extends Shaped.Applicable<Term, Core, Concrete>, Term {
   @NotNull ShapeRecognition paramRecognition();
   @NotNull DataCall paramType();
 

@@ -112,7 +112,7 @@ public interface Shaped<T> {
    *
    * @see ReduceRule.Fn
    */
-  interface Appliable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
+  interface Applicable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
     /**
      * The underlying ref
      */

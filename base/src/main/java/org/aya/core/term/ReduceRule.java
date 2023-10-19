@@ -15,18 +15,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
+/**
+ * Maybe we should call this a RuleReducer.
+ */
 public sealed interface ReduceRule extends Callable.Tele {
-  @NotNull Shaped.Appliable<Term, ?, ?> rule();
+  @NotNull Shaped.Applicable<Term, ?, ?> rule();
 
   /**
-   * A {@link Callable} for {@link Shaped.Appliable}.
+   * A {@link Callable} for {@link Shaped.Applicable}.
    *
    * @param rule  should be also a {@link Term}
    * @param ulift
    * @param args
    */
   record Fn(
-    @Override @NotNull Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl> rule,
+    @Override @NotNull Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> rule,
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<Term>> args
   ) implements ReduceRule {
@@ -39,7 +42,7 @@ public sealed interface ReduceRule extends Callable.Tele {
       return rule.ref();
     }
 
-    private @NotNull ReduceRule.Fn update(@NotNull Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl> head, @NotNull ImmutableSeq<Arg<Term>> args) {
+    private @NotNull ReduceRule.Fn update(@NotNull Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> head, @NotNull ImmutableSeq<Arg<Term>> args) {
       return head == this.rule && args.sameElements(this.args, true)
         ? this
         : new Fn(head, ulift, args);
@@ -47,7 +50,7 @@ public sealed interface ReduceRule extends Callable.Tele {
 
     @Override
     public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-      return update((Shaped.Appliable<Term, FnDef, TeleDecl.FnDecl>) f.apply((Term) rule), args.map(x -> x.descent(f)));
+      return update((Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl>) f.apply((Term) rule), args.map(x -> x.descent(f)));
     }
 
     /**
@@ -62,7 +65,7 @@ public sealed interface ReduceRule extends Callable.Tele {
    * A special {@link ConCall} which can be reduced to something interesting.
    */
   record Con(
-    @NotNull Shaped.Appliable<Term, CtorDef, TeleDecl.DataCtor> rule,
+    @NotNull Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor> rule,
     int ulift,
     @NotNull ImmutableSeq<Arg<Term>> dataArgs,
     @Override @NotNull ImmutableSeq<Arg<Term>> conArgs
