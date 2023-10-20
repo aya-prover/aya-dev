@@ -18,8 +18,6 @@ sealed public interface ParamShape {
     }
   }
 
-  record Optional(@NotNull ParamShape param) implements ParamShape {}
-
   record Named(@NotNull String name, @NotNull ParamShape shape) implements ParamShape {}
 
   default @NotNull Named named(@NotNull String name) {

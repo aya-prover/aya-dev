@@ -12,6 +12,7 @@ import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.CodeShape.*;
 import org.aya.core.term.Callable;
 import org.aya.core.term.RefTerm;
 import org.aya.core.term.SortTerm;
@@ -39,7 +40,6 @@ public record ShapeMatcher(
   @NotNull MutableList<String> names,
   @NotNull MutableMap<String, AnyVar> resolved
 ) {
-
   public ShapeMatcher() {
     this(MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
   }
@@ -61,17 +61,17 @@ public record ShapeMatcher(
 
   private boolean matchDecl(@NotNull MatchDecl params) {
     return switch (params) {
-      case MatchDecl(CodeShape.Named named, var def) -> {
+      case MatchDecl(Named named, var def) -> {
         names.append(named.name());
         yield matchDecl(new MatchDecl(named.shape(), def));
       }
-      case MatchDecl(CodeShape.DataShape dataShape, DataDef data) -> matchData(dataShape, data);
-      case MatchDecl(CodeShape.FnShape fnShape, FnDef fn) -> matchFn(fnShape, fn);
+      case MatchDecl(DataShape dataShape, DataDef data) -> matchData(dataShape, data);
+      case MatchDecl(FnShape fnShape, FnDef fn) -> matchFn(fnShape, fn);
       default -> false;
     };
   }
 
-  private boolean matchFn(@NotNull CodeShape.FnShape shape, @NotNull FnDef def) {
+  private boolean matchFn(@NotNull FnShape shape, @NotNull FnDef def) {
     var names = acquireName();
 
     // match signature
@@ -81,20 +81,19 @@ public record ShapeMatcher(
 
     // match body
     return shape.body().fold(termShape -> {
-        if (!def.body.isLeft()) return false;
-        var term = def.body.getLeftValue();
-        return matchInside(def.ref, names, () -> matchTerm(termShape, term));
-      }, clauseShapes -> {
-        if (!def.body.isRight()) return false;
-        var clauses = def.body.getRightValue();
-        var mode = def.modifiers.contains(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
-        return matchMany(mode, clauseShapes, clauses,
-          (cs, m) -> matchInside(def.ref, names, () -> matchClause(cs, m)));
-      }
-    );
+      if (!def.body.isLeft()) return false;
+      var term = def.body.getLeftValue();
+      return matchInside(def.ref, names, () -> matchTerm(termShape, term));
+    }, clauseShapes -> {
+      if (!def.body.isRight()) return false;
+      var clauses = def.body.getRightValue();
+      var mode = def.modifiers.contains(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
+      return matchMany(mode, clauseShapes, clauses,
+        (cs, m) -> matchInside(def.ref, names, () -> matchClause(cs, m)));
+    });
   }
 
-  private boolean matchClause(@NotNull CodeShape.ClauseShape shape, @NotNull Term.Matching clause) {
+  private boolean matchClause(@NotNull ClauseShape shape, @NotNull Term.Matching clause) {
     // match pats
     var patsResult = matchMany(MatchMode.OrderedEq, shape.pats(), clause.patterns(), (ps, ap) -> matchPat(ps, ap.term()));
     if (!patsResult) return false;
@@ -143,7 +142,7 @@ public record ShapeMatcher(
     return false;
   }
 
-  private boolean matchData(@NotNull CodeShape.DataShape shape, @NotNull DataDef data) {
+  private boolean matchData(@NotNull DataShape shape, @NotNull DataDef data) {
     var names = acquireName();
 
     return matchTele(shape.tele(), data.telescope)
@@ -151,9 +150,8 @@ public record ShapeMatcher(
       (s, c) -> captured(s, c, this::matchCtor, CtorDef::ref)));
   }
 
-  private boolean matchCtor(@NotNull CodeShape.CtorShape shape, @NotNull CtorDef ctor) {
-    if (ctor.pats.isNotEmpty()) ctor.dataRef.core.telescope.forEachWith(ctor.ownerTele,
-      (t1, t2) -> teleSubst.put(t1.ref(), t2.ref()));
+  private boolean matchCtor(@NotNull CtorShape shape, @NotNull CtorDef ctor) {
+    if (ctor.pats.isNotEmpty()) throw new InternalException("Don't try to do this, ask @ice1000 why");
     return matchTele(shape.tele(), ctor.selfTele);
   }
 
@@ -217,20 +215,7 @@ public record ShapeMatcher(
   }
 
   private boolean matchTele(@NotNull ImmutableSeq<ParamShape> shape, @NotNull ImmutableSeq<Term.Param> tele) {
-    var shapes = shape.view();
-    var params = tele.view();
-    while (shapes.isNotEmpty() && params.isNotEmpty()) {
-      var s = shapes.first();
-      var c = params.first();
-      if (!matchParam(s, c)) return false;
-      shapes = shapes.drop(1);
-      params = params.drop(1);
-    }
-    if (shapes.isNotEmpty()) {
-      // implies params.isEmpty(), matching all optional shapes
-      shapes = shapes.filterNot(ParamShape.Optional.class::isInstance);
-    }
-    return shapes.sizeEquals(params);
+    return shape.sizeEquals(tele) && shape.allMatchWith(tele, this::matchParam);
   }
 
   private boolean matchParam(@NotNull ParamShape shape, @NotNull Term.Param param) {
@@ -244,7 +229,6 @@ public record ShapeMatcher(
 
     return switch (shape) {
       case ParamShape.Any any -> true;
-      case ParamShape.Optional opt -> matchParam(opt.param(), param);
       case ParamShape.Licit licit -> {
         if (!matchLicit(licit.kind(), param.explicit())) yield false;
         yield matchTerm(licit.type(), param.type());
