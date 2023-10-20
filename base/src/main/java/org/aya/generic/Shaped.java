@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -61,8 +61,8 @@ public interface Shaped<T> {
 
     default @Override @NotNull T constructorForm() {
       int repr = repr();
-      var zero = ctorRef(CodeShape.MomentId.ZERO);
-      var suc = ctorRef(CodeShape.MomentId.SUC);
+      var zero = ctorRef(CodeShape.GlobalId.ZERO);
+      var suc = ctorRef(CodeShape.GlobalId.SUC);
       if (repr == 0) return makeZero(zero.core);
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
@@ -91,8 +91,8 @@ public interface Shaped<T> {
     }
 
     @Override default @NotNull T constructorForm() {
-      var nil = ctorRef(CodeShape.MomentId.NIL).core;
-      var cons = ctorRef(CodeShape.MomentId.CONS).core;
+      var nil = ctorRef(CodeShape.GlobalId.NIL).core;
+      var cons = ctorRef(CodeShape.GlobalId.CONS).core;
       var dataArg = type().args().first(); // Check?
       var xLicit = cons.selfTele.get(0).explicit();
       var xsLicit = cons.selfTele.get(1).explicit();

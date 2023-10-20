@@ -64,17 +64,17 @@ public class ShapeMatcherTest {
   public void capture() {
     var match = match(true, AyaShape.NAT_SHAPE, "open data Nat | zero | suc (pred : Nat)");
     assertNotNull(match);
-    assertEquals("| zero", pp(match.captures().get(CodeShape.MomentId.ZERO)));
-    assertEquals("| suc (pred : Nat)", pp(match.captures().get(CodeShape.MomentId.SUC)));
-    assertNull(match.captures().getOrNull(CodeShape.MomentId.NIL));
-    assertNull(match.captures().getOrNull(CodeShape.MomentId.CONS));
+    assertEquals("| zero", pp(match.captures().get(CodeShape.GlobalId.ZERO)));
+    assertEquals("| suc (pred : Nat)", pp(match.captures().get(CodeShape.GlobalId.SUC)));
+    assertNull(match.captures().getOrNull(CodeShape.GlobalId.NIL));
+    assertNull(match.captures().getOrNull(CodeShape.GlobalId.CONS));
 
     match = match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | infixr :< (a : A) (tail : List A)");
     assertNotNull(match);
-    assertEquals("| nil", pp(match.captures().get(CodeShape.MomentId.NIL)));
-    assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(CodeShape.MomentId.CONS)));
-    assertNull(match.captures().getOrNull(CodeShape.MomentId.ZERO));
-    assertNull(match.captures().getOrNull(CodeShape.MomentId.SUC));
+    assertEquals("| nil", pp(match.captures().get(CodeShape.GlobalId.NIL)));
+    assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(CodeShape.GlobalId.CONS)));
+    assertNull(match.captures().getOrNull(CodeShape.GlobalId.ZERO));
+    assertNull(match.captures().getOrNull(CodeShape.GlobalId.SUC));
 
     match = match(ImmutableSeq.of(Tuple.of(true, AyaShape.NAT_SHAPE), Tuple.of(true, AyaShape.PLUS_RIGHT_SHAPE)), """
       open data Nat | O | S Nat
@@ -84,7 +84,7 @@ public class ShapeMatcherTest {
       """).getOrNull(1);
     assertNotNull(match);
     assertEquals(AyaShape.PLUS_RIGHT_SHAPE, match.shape());
-    assertEquals("Nat", match.captures().get(CodeShape.MomentId.NAT).name());
+    assertEquals("Nat", match.captures().get(CodeShape.GlobalId.NAT).name());
   }
 
   private @NotNull String pp(@NotNull DefVar<?, ?> def) {

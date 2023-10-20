@@ -18,9 +18,14 @@ public sealed interface CodeShape {
   }
 
   /** Typed capture name, rather than plain strings */
-  enum MomentId implements Serializable {
+  sealed interface MomentId {
+  }
+
+  enum GlobalId implements MomentId, Serializable {
     ZERO, SUC, NIL, CONS, NAT,
   }
+
+  record LocalId(String name) implements MomentId {}
 
   record FnShape(
     @NotNull ImmutableSeq<ParamShape> tele,

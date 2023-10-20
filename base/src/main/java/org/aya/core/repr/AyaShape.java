@@ -11,11 +11,9 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.repr.CodeShape.MomentId;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.core.repr.CodeShape.CtorShape;
-import static org.aya.core.repr.CodeShape.DataShape;
+import static org.aya.core.repr.CodeShape.*;
 import static org.aya.core.repr.ParamShape.anyLicit;
 
 /**
@@ -36,8 +34,8 @@ public sealed interface AyaShape {
     private static final @NotNull String NAT = "Nat";
 
     public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
-      new CtorShape(CodeShape.MomentId.ZERO, ImmutableSeq.empty()),
-      new CtorShape(CodeShape.MomentId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.NameCall.of(NAT))))
+      new CtorShape(GlobalId.ZERO, ImmutableSeq.empty()),
+      new CtorShape(GlobalId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.NameCall.of(NAT))))
     )).named(NAT);
 
     @Override public @NotNull CodeShape codeShape() {
@@ -54,8 +52,8 @@ public sealed interface AyaShape {
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
       ImmutableSeq.of(anyLicit(new TermShape.Sort(null, 0)).named(A)),
       ImmutableSeq.of(
-        new CtorShape(CodeShape.MomentId.NIL, ImmutableSeq.empty()),
-        new CtorShape(CodeShape.MomentId.CONS, ImmutableSeq.of(
+        new CtorShape(GlobalId.NIL, ImmutableSeq.empty()),
+        new CtorShape(GlobalId.CONS, ImmutableSeq.of(
           anyLicit(TermShape.NameCall.of(A)),   // A
           anyLicit(new TermShape.NameCall(LIST, ImmutableSeq.of(TermShape.NameCall.of(A)))))) // List A
       )).named(LIST);
@@ -73,22 +71,22 @@ public sealed interface AyaShape {
     private static final @NotNull String B = "b";
     private static final @NotNull String PLUS = "plus";
 
-    public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
+    public static final @NotNull CodeShape FN_PLUS = new FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(MomentId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
         anyLicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
         // | a, 0 => a
-        new CodeShape.ClauseShape(ImmutableSeq.of(
-          PatShape.Bind.INSTANCE.named(A), PatShape.ShapedCtor.of(NAT, CodeShape.MomentId.ZERO)
+        new ClauseShape(ImmutableSeq.of(
+          PatShape.Bind.INSTANCE.named(A), PatShape.ShapedCtor.of(NAT, GlobalId.ZERO)
         ), TermShape.NameCall.of(A)),
         // | a, suc b => suc (_ a b)
-        new CodeShape.ClauseShape(ImmutableSeq.of(
-          PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, MomentId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))
-        ), new TermShape.CtorCall(NAT, MomentId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
+        new ClauseShape(ImmutableSeq.of(
+          PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, GlobalId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))
+        ), new TermShape.CtorCall(NAT, GlobalId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
           TermShape.NameCall.of(A),
           TermShape.NameCall.of(B)
         )))))
@@ -109,22 +107,22 @@ public sealed interface AyaShape {
     private static final @NotNull String B = "b";
     private static final @NotNull String PLUS = "plus";
 
-    public static final @NotNull CodeShape FN_PLUS = new CodeShape.FnShape(
+    public static final @NotNull CodeShape FN_PLUS = new FnShape(
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(MomentId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
         anyLicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
         // | 0, b => b
-        new CodeShape.ClauseShape(ImmutableSeq.of(
-          PatShape.ShapedCtor.of(NAT, CodeShape.MomentId.ZERO), PatShape.Bind.INSTANCE.named(B)
+        new ClauseShape(ImmutableSeq.of(
+          PatShape.ShapedCtor.of(NAT, GlobalId.ZERO), PatShape.Bind.INSTANCE.named(B)
         ), TermShape.NameCall.of(B)),
         // | suc a, b => _ a (suc b)
-        new CodeShape.ClauseShape(ImmutableSeq.of(
-          new PatShape.ShapedCtor(NAT, MomentId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(A))), PatShape.Bind.INSTANCE.named(B)
-        ), new TermShape.CtorCall(NAT, MomentId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
+        new ClauseShape(ImmutableSeq.of(
+          new PatShape.ShapedCtor(NAT, GlobalId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(A))), PatShape.Bind.INSTANCE.named(B)
+        ), new TermShape.CtorCall(NAT, GlobalId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
           TermShape.NameCall.of(A),
           TermShape.NameCall.of(B)
         )))))

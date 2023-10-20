@@ -13,13 +13,13 @@ import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.TermFolder;
 import org.aya.generic.AyaDocile;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.guest0x0.cubical.Restr;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,12 +187,12 @@ public class CorePrettier extends BasePrettier<Term> {
       case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.orderedArgs(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
       case IntegerTerm shaped -> shaped.repr() == 0
-        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)
-        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON);
+        ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
       case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
-        var nil = shaped.ctorRef(CodeShape.MomentId.NIL);
-        var cons = shaped.ctorRef(CodeShape.MomentId.CONS);
+        var nil = shaped.ctorRef(CodeShape.GlobalId.NIL);
+        var cons = shaped.ctorRef(CodeShape.GlobalId.CONS);
         yield Doc.sep(
           linkListLit(Doc.symbol("["), nil, CON),
           Doc.join(linkListLit(Doc.COMMA, cons, CON), subterms),
@@ -287,8 +287,8 @@ public class CorePrettier extends BasePrettier<Term> {
       case Pat.Tuple tuple -> Doc.licit(licit,
         Doc.commaList(tuple.pats().view().map(sub -> pat(sub.term(), sub.explicit(), Outer.Free))));
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
-          ? linkLit(0, lit.ctorRef(CodeShape.MomentId.ZERO), CON)
-          : linkLit(lit.repr(), lit.ctorRef(CodeShape.MomentId.SUC), CON),
+          ? linkLit(0, lit.ctorRef(CodeShape.GlobalId.ZERO), CON)
+          : linkLit(lit.repr(), lit.ctorRef(CodeShape.GlobalId.SUC), CON),
         licit);
     };
   }
