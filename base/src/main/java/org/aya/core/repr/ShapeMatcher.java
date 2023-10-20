@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
@@ -197,47 +198,37 @@ public record ShapeMatcher(
   }
 
   private boolean matchTerm(@NotNull TermShape shape, @NotNull Term term) {
-    @Nullable AnyVar result = null;
+    return switch (shape) {
+      case TermShape.Any any -> true;
+      case TermShape.NameCall call when call.args().isEmpty() && term instanceof RefTerm ref ->
+        captures.resolve(call.name()) == ref.var();
+      case TermShape.Callable call when term instanceof Callable callable -> {
+        boolean success = switch (call) {
+          case TermShape.NameCall nameCall -> captures.resolve(nameCall.name()) == callable.ref();
+          case TermShape.ShapeCall shapeCall -> {
+            if (callable.ref() instanceof DefVar<?, ?> defVar) {
+              yield captureIfMatches(shapeCall.name(), defVar, () ->
+                discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape());
+            }
 
-    if (shape instanceof TermShape.Any) return true;
-    if (shape instanceof TermShape.NameCall call && call.args().isEmpty() && term instanceof RefTerm ref) {
-      var success = captures.resolve(call.name()) == ref.var();
-      if (!success) return false;
-      result = ref.var();
-    }
-
-    if (shape instanceof TermShape.Callable call && term instanceof Callable callable) {
-      boolean success = switch (call) {
-        case TermShape.NameCall nameCall -> captures.resolve(nameCall.name()) == callable.ref();
-        case TermShape.ShapeCall shapeCall -> {
-          if (callable.ref() instanceof DefVar<?, ?> defVar) {
-            yield captureIfMatches(shapeCall.name(), defVar, () ->
-              discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape());
+            yield false;
           }
+          case TermShape.CtorCall ctorCall -> resolveCtor(ctorCall.dataId(), ctorCall.ctorId()) == callable.ref();
+        };
 
-          yield false;
-        }
-        case TermShape.CtorCall ctorCall -> resolveCtor(ctorCall.dataId(), ctorCall.ctorId()) == callable.ref();
-      };
+        if (!success) yield false;
+        yield matchMany(MatchMode.OrderedEq, call.args(), callable.args(),
+          (l, r) -> matchTerm(l, r.term()));
+      }
+      case TermShape.Sort sort when term instanceof SortTerm sortTerm -> {
+        // kind is null -> any sort
+        if (sort.kind() == null) yield true;
 
-      if (!success) return false;
-
-      success = matchMany(MatchMode.OrderedEq, call.args(), callable.args(),
-        (l, r) -> matchTerm(l, r.term()));
-
-      if (!success) return false;
-      result = callable.ref();
-    }
-
-    if (shape instanceof TermShape.Sort sort && term instanceof SortTerm sortTerm) {
-      // kind is null -> any sort
-      if (sort.kind() == null) return true;
-
-      // TODO[hoshino]: match kind, but I don't know how to do.
-      throw new UnsupportedOperationException("TODO");
-    }
-
-    return result != null;
+        // TODO[hoshino]: match kind, but I don't know how to do.
+        throw new UnsupportedOperationException("TODO");
+      }
+      default -> false;
+    };
   }
 
   private boolean matchTele(@NotNull ImmutableSeq<ParamShape> shape, @NotNull ImmutableSeq<Term.Param> tele) {
@@ -279,7 +270,7 @@ public record ShapeMatcher(
   /**
    * Captures the given {@code var} if the provided {@code matcher} returns true.
    *
-   * @see #captureIfMatches(Moment, Object, BiFunction, Function)
+   * @see #captureIfMatches(Moment, Object, BiPredicate, Function)
    */
   private boolean captureIfMatches(@NotNull MomentId name, @NotNull AnyVar var,
                                    @NotNull BooleanSupplier matcher) {
@@ -296,18 +287,19 @@ public record ShapeMatcher(
    */
   private <S extends CodeShape.Moment, C> boolean captureIfMatches(
     @NotNull S shape, @NotNull C core,
-    @NotNull BiFunction<S, C, Boolean> matcher,
+    @NotNull BiPredicate<S, C> matcher,
     @NotNull Function<C, DefVar<?, ?>> extract
   ) {
     return captureIfMatches(shape.name(), extract.apply(core),
-      () -> matcher.apply(shape, core));
+      () -> matcher.test(shape, core));
   }
 
   private static <S, C> boolean matchMany(
     @NotNull MatchMode mode,
     @NotNull SeqLike<S> shapes,
     @NotNull SeqLike<C> cores,
-    @NotNull BiFunction<S, C, Boolean> matcher) {
+    @NotNull BiFunction<S, C, Boolean> matcher
+  ) {
     if (mode == MatchMode.Eq && !shapes.sizeEquals(cores)) return false;
     if (mode == MatchMode.OrderedEq) return shapes.allMatchWith(cores, matcher::apply);
     var remainingShapes = MutableLinkedList.from(shapes);
@@ -324,8 +316,7 @@ public record ShapeMatcher(
   }
 
   private @NotNull DefVar<?, ?> resolveCtor(@NotNull MomentId data, @NotNull CodeShape.MomentId ctorId) {
-    var someVar = captures.resolve(data);
-    if (!(someVar instanceof DefVar<?, ?> defVar)) {
+    if (!(captures.resolve(data) instanceof DefVar<?, ?> defVar)) {
       throw new InternalException("Not a data");
     }
 
@@ -338,7 +329,7 @@ public record ShapeMatcher(
 
   public enum MatchMode {
     OrderedEq,
-    // less shapes match more cores
+    // fewer shapes match more cores
     Sub,
     // shapes match cores
     Eq,
