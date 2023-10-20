@@ -206,9 +206,8 @@ public record ShapeMatcher(
         case TermShape.NameCall nameCall -> captures.resolve(nameCall.name()) == callable.ref();
         case TermShape.ShapeCall shapeCall -> {
           if (callable.ref() instanceof DefVar<?, ?> defVar) {
-            var ok = discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
-            if (ok) captures.put(shapeCall.name(), defVar);
-            yield ok;
+            yield captureIfMatches(shapeCall.name(), defVar, () ->
+              discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape());
           }
 
           yield false;
@@ -245,11 +244,9 @@ public record ShapeMatcher(
       case ParamShape.Any any -> true;
       case ParamShape.Licit licit -> {
         if (!matchLicit(licit.kind(), param.explicit())) yield false;
-        var ok = matchTerm(licit.type(), param.type());
-        if (ok) captures.put(licit.name(), param.ref());
-        yield ok;
+        yield captureIfMatches(licit.name(), param.ref(),
+          () -> matchTerm(licit.type(), param.type()));
       }
-      default -> false;
     };
   }
 
@@ -260,7 +257,7 @@ public record ShapeMatcher(
 
   /**
    * Do `prepare` before matcher, like add the Data to context before matching its ctors.
-   * This function can be viewed as {@link #captureIfMatches(Moment, Object, BiFunction, Function)}
+   * This function can be viewed as {@link #captureIfMatches}
    * with a "rollback" feature.
    *
    * @implNote DO NOT call me inside myself.
@@ -273,19 +270,31 @@ public record ShapeMatcher(
     return ok;
   }
 
+  /**
+   * Captures the given {@code var} if the provided {@code matcher} returns true.
+   *
+   * @see #captureIfMatches(Moment, Object, BiFunction, Function)
+   */
+  private boolean captureIfMatches(@NotNull MomentId name, @NotNull AnyVar var,
+                                   @NotNull BooleanSupplier matcher) {
+    var ok = matcher.getAsBoolean();
+    if (ok) captures.put(name, var);
+    return ok;
+  }
+
   /***
    * Only add the matched shape to the captures if the matcher returns true.
    * Unlike {@link #matchInside(Runnable, BooleanSupplier)},
    * which may add something to the captures before the match.
+   * @see #captureIfMatches(MomentId, AnyVar, BooleanSupplier)
    */
   private <S extends CodeShape.Moment, C> boolean captureIfMatches(
     @NotNull S shape, @NotNull C core,
     @NotNull BiFunction<S, C, Boolean> matcher,
     @NotNull Function<C, DefVar<?, ?>> extract
   ) {
-    var matched = matcher.apply(shape, core);
-    if (matched) captures.put(shape.name(), extract.apply(core));
-    return matched;
+    return captureIfMatches(shape.name(), extract.apply(core),
+      () -> matcher.apply(shape, core));
   }
 
   private static <S, C> boolean matchMany(
