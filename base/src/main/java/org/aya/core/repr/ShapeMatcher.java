@@ -206,8 +206,7 @@ public record ShapeMatcher(
 
           yield false;
         }
-        case TermShape.CtorCall ctorCall ->
-          resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
+        case TermShape.CtorCall ctorCall -> resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
       };
 
       if (!success) return false;
@@ -270,13 +269,15 @@ public record ShapeMatcher(
     var names = acquireName();
     bind(names, param.ref());
 
-    if (shape instanceof ParamShape.Any) return true;
-    if (shape instanceof ParamShape.Optional opt) return matchParam(opt.param(), param);
-    if (shape instanceof ParamShape.Licit licit) {
-      if (!matchLicit(licit.kind(), param.explicit())) return false;
-      return matchTerm(licit.type(), param.type());
-    }
-    return false;
+    return switch (shape) {
+      case ParamShape.Any any -> true;
+      case ParamShape.Optional opt -> matchParam(opt.param(), param);
+      case ParamShape.Licit licit -> {
+        if (!matchLicit(licit.kind(), param.explicit())) yield false;
+        yield matchTerm(licit.type(), param.type());
+      }
+      default -> false;
+    };
   }
 
   private boolean matchLicit(@NotNull ParamShape.Licit.Kind xlicit, boolean isExplicit) {
@@ -285,7 +286,7 @@ public record ShapeMatcher(
   }
 
   private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull ImmutableSeq<String> names, @NotNull BooleanSupplier matcher) {
-    var snapshot = resolved.toImmutableMap();
+    var snapshot = ImmutableMap.from(resolved);
 
     bind(names, defVar);
 
