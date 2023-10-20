@@ -158,7 +158,7 @@ public sealed interface AyaShape {
     /** Discovery of shaped literals */
     public void bonjour(@NotNull GenericDef def) {
       AyaShape.LITERAL_SHAPES.view()
-        .flatMap(shape -> shape.match(def))
+        .flatMap(shape -> new ShapeMatcher().match(shape, def))
         .forEach(shape -> bonjour(def, shape));
     }
 

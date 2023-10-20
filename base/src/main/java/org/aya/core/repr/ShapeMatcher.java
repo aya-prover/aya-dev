@@ -49,28 +49,26 @@ public record ShapeMatcher(
   }
 
   public Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
-    if (matchDecl(shape.codeShape(), def)) {
+    if (matchDecl(new MatchDecl(shape.codeShape(), def))) {
       return Option.some(new ShapeRecognition(shape, ImmutableMap.from(captures)));
     }
 
     return Option.none();
   }
 
-  private boolean matchDecl(@NotNull CodeShape shape, @NotNull GenericDef def) {
-    if (shape instanceof CodeShape.Named named) {
-      names.append(named.name());
-      return matchDecl(named.shape(), def);
-    }
+  record MatchDecl(@NotNull CodeShape shape, @NotNull GenericDef def) {
+  }
 
-    if (shape instanceof CodeShape.DataShape dataShape && def instanceof DataDef data) {
-      return matchData(dataShape, data);
-    }
-
-    if (shape instanceof CodeShape.FnShape fnShape && def instanceof FnDef fn) {
-      return matchFn(fnShape, fn);
-    }
-
-    return false;
+  private boolean matchDecl(@NotNull MatchDecl params) {
+    return switch (params) {
+      case MatchDecl(CodeShape.Named named, var def) -> {
+        names.append(named.name());
+        yield matchDecl(new MatchDecl(named.shape(), def));
+      }
+      case MatchDecl(CodeShape.DataShape dataShape, DataDef data) -> matchData(dataShape, data);
+      case MatchDecl(CodeShape.FnShape fnShape, FnDef fn) -> matchFn(fnShape, fn);
+      default -> false;
+    };
   }
 
   private boolean matchFn(@NotNull CodeShape.FnShape shape, @NotNull FnDef def) {
@@ -82,13 +80,11 @@ public record ShapeMatcher(
     if (!teleResult) return false;
 
     // match body
-    return shape.body().fold(
-      termShape -> {
+    return shape.body().fold(termShape -> {
         if (!def.body.isLeft()) return false;
         var term = def.body.getLeftValue();
         return matchInside(def.ref, names, () -> matchTerm(termShape, term));
-      },
-      clauseShapes -> {
+      }, clauseShapes -> {
         if (!def.body.isRight()) return false;
         var clauses = def.body.getRightValue();
         var mode = def.modifiers.contains(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
@@ -123,15 +119,9 @@ public record ShapeMatcher(
           throw new InternalException("Invalid name: " + shapedCtor.name());
         }
 
-        var recognition = discovered.getOrNull(defVar);
-        if (recognition == null) {
-          throw new InternalException("Not a shaped data");
-        }
-
-        var realShapedCtor = recognition.captures().getOrNull(shapedCtor.id());
-        if (realShapedCtor == null) {
-          throw new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition);
-        }
+        var recognition = discovered.getOrThrow(defVar, () -> new InternalException("Not a shaped data"));
+        var realShapedCtor = recognition.captures().getOrThrow(shapedCtor.id(), () ->
+          new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition));
 
         matched = realShapedCtor == ctor.ref();
       }
