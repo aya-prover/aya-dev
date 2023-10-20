@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -33,19 +32,18 @@ import java.util.function.Function;
  * @author kiva
  */
 public record ShapeMatcher(
-  @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
+  @NotNull MutableMap<MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst,
   // --------
   @NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered,
-  @NotNull MutableList<String> names,
-  @NotNull MutableMap<String, AnyVar> resolved
+  @NotNull MutableMap<LocalId, AnyVar> localCaptures
 ) {
   public ShapeMatcher() {
-    this(MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
+    this(MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableMap.create());
   }
 
   public ShapeMatcher(@NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered) {
-    this(MutableMap.create(), MutableMap.create(), discovered, MutableList.create(), MutableMap.create());
+    this(MutableMap.create(), MutableMap.create(), discovered, MutableMap.create());
   }
 
   public Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
@@ -62,7 +60,6 @@ public record ShapeMatcher(
   private boolean matchDecl(@NotNull MatchDecl params) {
     return switch (params) {
       case MatchDecl(Named named, var def) -> {
-        names.append(named.name());
         yield matchDecl(new MatchDecl(named.shape(), def));
       }
       case MatchDecl(DataShape dataShape, DataDef data) -> matchData(dataShape, data);
@@ -72,8 +69,6 @@ public record ShapeMatcher(
   }
 
   private boolean matchFn(@NotNull FnShape shape, @NotNull FnDef def) {
-    var names = acquireName();
-
     // match signature
     var teleResult = matchTele(shape.tele(), def.telescope)
       && matchTerm(shape.result(), def.result);
@@ -83,13 +78,13 @@ public record ShapeMatcher(
     return shape.body().fold(termShape -> {
       if (!def.body.isLeft()) return false;
       var term = def.body.getLeftValue();
-      return matchInside(def.ref, names, () -> matchTerm(termShape, term));
+      return matchInside(def.ref, () -> matchTerm(termShape, term));
     }, clauseShapes -> {
       if (!def.body.isRight()) return false;
       var clauses = def.body.getRightValue();
       var mode = def.modifiers.contains(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
       return matchMany(mode, clauseShapes, clauses,
-        (cs, m) -> matchInside(def.ref, names, () -> matchClause(cs, m)));
+        (cs, m) -> matchInside(def.ref, () -> matchClause(cs, m)));
     });
   }
 
@@ -102,18 +97,15 @@ public record ShapeMatcher(
 
   private boolean matchPat(@NotNull PatShape shape, @NotNull Pat pat) {
     if (shape instanceof PatShape.Named named) {
-      names.append(named.name());
       return matchPat(named.pat(), pat);
     }
-
-    var names = acquireName();
 
     if (shape == PatShape.Any.INSTANCE) return true;
     if (shape instanceof PatShape.CtorLike ctorLike && pat instanceof Pat.Ctor ctor) {
       boolean matched = true;
 
       if (ctorLike instanceof PatShape.ShapedCtor shapedCtor) {
-        var data = resolved.getOrNull(shapedCtor.name());
+        var data = localCaptures.getOrNull(new LocalId(shapedCtor.name()));
         if (!(data instanceof DefVar<?, ?> defVar)) {
           throw new InternalException("Invalid name: " + shapedCtor.name());
         }
@@ -127,26 +119,16 @@ public record ShapeMatcher(
 
       if (!matched) return false;
 
-      bind(names, ctor.ref());
-
       // TODO: licit
       // We don't use `matchInside` here, because the context doesn't need to reset.
       return matchMany(MatchMode.OrderedEq, ctorLike.innerPats(), ctor.params().view().map(Arg::term), this::matchPat);
     }
-
-    if (shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind bind) {
-      bind(names, bind.bind());
-      return true;
-    }
-
-    return false;
+    return shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind;
   }
 
   private boolean matchData(@NotNull DataShape shape, @NotNull DataDef data) {
-    var names = acquireName();
-
     return matchTele(shape.tele(), data.telescope)
-      && matchInside(data.ref, names, () -> matchMany(MatchMode.Eq, shape.ctors(), data.body,
+      && matchInside(data.ref, () -> matchMany(MatchMode.Eq, shape.ctors(), data.body,
       (s, c) -> captured(s, c, this::matchCtor, CtorDef::ref)));
   }
 
@@ -157,11 +139,9 @@ public record ShapeMatcher(
 
   private boolean matchTerm(@NotNull TermShape shape, @NotNull Term term) {
     if (shape instanceof TermShape.Named named) {
-      names.append(named.name());
       return matchTerm(named.shape(), term);
     }
 
-    var names = acquireName();
     @Nullable AnyVar result = null;
 
     if (shape instanceof TermShape.Any) return true;
@@ -206,12 +186,7 @@ public record ShapeMatcher(
       throw new UnsupportedOperationException("TODO");
     }
 
-    if (result != null) {
-      bind(names, result);
-      return true;
-    }
-
-    return false;
+    return result != null;
   }
 
   private boolean matchTele(@NotNull ImmutableSeq<ParamShape> shape, @NotNull ImmutableSeq<Term.Param> tele) {
@@ -220,12 +195,8 @@ public record ShapeMatcher(
 
   private boolean matchParam(@NotNull ParamShape shape, @NotNull Term.Param param) {
     if (shape instanceof ParamShape.Named named) {
-      names.append(named.name());
       return matchParam(named.shape(), param);
     }
-
-    var names = acquireName();
-    bind(names, param.ref());
 
     return switch (shape) {
       case ParamShape.Any any -> true;
@@ -242,15 +213,13 @@ public record ShapeMatcher(
       || (xlicit == ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
-  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull ImmutableSeq<String> names, @NotNull BooleanSupplier matcher) {
-    var snapshot = ImmutableMap.from(resolved);
-
-    bind(names, defVar);
+  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull BooleanSupplier matcher) {
+    var snapshot = ImmutableMap.from(localCaptures);
 
     var result = matcher.getAsBoolean();
 
-    resolved.clear();
-    resolved.putAll(snapshot);
+    localCaptures.clear();
+    localCaptures.putAll(snapshot);
 
     return result;
   }
@@ -285,18 +254,8 @@ public record ShapeMatcher(
     return matched;
   }
 
-  private void bind(@NotNull ImmutableSeq<String> names, @NotNull AnyVar someVar) {
-    names.forEach(name -> resolved.put(name, someVar));
-  }
-
-  private @NotNull ImmutableSeq<String> acquireName() {
-    var result = names.toImmutableSeq();
-    names.clear();
-    return result;
-  }
-
   private @NotNull AnyVar resolve(@NotNull String name) {
-    var resolved = this.resolved.getOrNull(name);
+    var resolved = this.localCaptures.getOrNull(new LocalId(name));
     if (resolved == null) {
       throw new InternalException("Invalid name: " + name);
     }
