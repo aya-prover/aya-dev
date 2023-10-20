@@ -8,8 +8,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.*;
+import kala.tuple.Tuple;
+import kala.value.MutableValue;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.DataDef;
+import org.aya.core.def.FnDef;
+import org.aya.core.def.GenericDef;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape.*;
 import org.aya.core.term.Callable;
@@ -20,6 +24,8 @@ import org.aya.generic.Modifier;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
+import org.aya.util.Pair;
+import org.aya.util.RepoLike;
 import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,23 +38,67 @@ import java.util.function.Function;
  * @author kiva
  */
 public record ShapeMatcher(
-  @NotNull MutableMap<MomentId, DefVar<?, ?>> captures,
+  @NotNull Captures captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst,
   // --------
-  @NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered,
-  @NotNull MutableMap<LocalId, AnyVar> localCaptures
+  @NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered
 ) {
+
+  public record Captures(
+    @NotNull MutableMap<MomentId, AnyVar> map,
+    @NotNull MutableValue<Captures> future
+  ) implements RepoLike<Captures> {
+    public static @NotNull Captures create() {
+      return new Captures(MutableMap.create(), MutableValue.create());
+    }
+
+    public @NotNull ImmutableMap<MomentId, DefVar<?, ?>> extractGlobal() {
+      return ImmutableMap.from(map.toImmutableSeq().view()
+        .mapNotNull(x -> switch (new Pair<>(x.component1(), x.component2())) {
+          case Pair(GlobalId gid, DefVar<?, ?> dv) -> Tuple.of(gid, dv);
+          default -> null;
+        }));
+    }
+
+    @Override public void setDownstream(@Nullable Captures downstream) {
+      future.set(downstream);
+    }
+
+    public void fork() {
+      RepoLike.super.fork(new Captures(MutableMap.from(map), MutableValue.create()));
+    }
+
+    @Override public void merge() {
+      var f = this.future.get();
+      if (f != null) map.putAll(f.map);
+      RepoLike.super.merge();
+    }
+
+    private @NotNull MutableMap<MomentId, AnyVar> choose() {
+      var f = this.future.get();
+      return f != null ? f.map : this.map;
+    }
+
+    public @NotNull AnyVar resolve(@NotNull MomentId id) {
+      return choose().getOrThrow(id, () -> new InternalException("Invalid moment id " + id));
+    }
+
+    public void put(@NotNull MomentId id, @NotNull AnyVar var) {
+      choose().put(id, var);
+    }
+  }
+
   public ShapeMatcher() {
-    this(MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableMap.create());
+    this(Captures.create(), MutableMap.create(), ImmutableMap.empty());
   }
 
   public ShapeMatcher(@NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered) {
-    this(MutableMap.create(), MutableMap.create(), discovered, MutableMap.create());
+    this(Captures.create(), MutableMap.create(), discovered);
   }
 
   public Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
     if (matchDecl(new MatchDecl(shape.codeShape(), def))) {
-      return Option.some(new ShapeRecognition(shape, ImmutableMap.from(captures)));
+      return Option.some(new ShapeRecognition(shape, captures.extractGlobal()));
     }
 
     return Option.none();
@@ -59,9 +109,6 @@ public record ShapeMatcher(
 
   private boolean matchDecl(@NotNull MatchDecl params) {
     return switch (params) {
-      case MatchDecl(Named named, var def) -> {
-        yield matchDecl(new MatchDecl(named.shape(), def));
-      }
       case MatchDecl(DataShape dataShape, DataDef data) -> matchData(dataShape, data);
       case MatchDecl(FnShape fnShape, FnDef fn) -> matchFn(fnShape, fn);
       default -> false;
@@ -78,58 +125,65 @@ public record ShapeMatcher(
     return shape.body().fold(termShape -> {
       if (!def.body.isLeft()) return false;
       var term = def.body.getLeftValue();
-      return matchInside(def.ref, () -> matchTerm(termShape, term));
+      return matchInside(() -> captures.put(shape.name(), def.ref), () -> matchTerm(termShape, term));
     }, clauseShapes -> {
       if (!def.body.isRight()) return false;
       var clauses = def.body.getRightValue();
       var mode = def.modifiers.contains(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
-      return matchMany(mode, clauseShapes, clauses,
-        (cs, m) -> matchInside(def.ref, () -> matchClause(cs, m)));
+      return matchInside(() -> captures.put(shape.name(), def.ref), () ->
+        matchMany(mode, clauseShapes, clauses, this::matchClause));
     });
   }
 
   private boolean matchClause(@NotNull ClauseShape shape, @NotNull Term.Matching clause) {
     // match pats
-    var patsResult = matchMany(MatchMode.OrderedEq, shape.pats(), clause.patterns(), (ps, ap) -> matchPat(ps, ap.term()));
+    var patsResult = matchMany(MatchMode.OrderedEq, shape.pats(), clause.patterns(),
+      (ps, ap) -> matchPat(new MatchPat(ps, ap.term())));
     if (!patsResult) return false;
     return matchTerm(shape.body(), clause.body());
   }
 
-  private boolean matchPat(@NotNull PatShape shape, @NotNull Pat pat) {
-    if (shape instanceof PatShape.Named named) {
-      return matchPat(named.pat(), pat);
-    }
+  record MatchPat(@NotNull PatShape shape, @NotNull Pat pat) {}
 
-    if (shape == PatShape.Any.INSTANCE) return true;
-    if (shape instanceof PatShape.CtorLike ctorLike && pat instanceof Pat.Ctor ctor) {
-      boolean matched = true;
+  private boolean matchPat(@NotNull MatchPat matchPat) {
+    if (matchPat.shape == PatShape.Any.INSTANCE) return true;
+    return switch (matchPat) {
+      case MatchPat(PatShape.Bind(var name), Pat.Bind ignored) -> {
+        captures.put(name, ignored.bind());
+        yield true;
+      }
+      case MatchPat(PatShape.CtorLike ctorLike, Pat.Ctor ctor) -> {
+        boolean matched = true;
 
-      if (ctorLike instanceof PatShape.ShapedCtor shapedCtor) {
-        var data = localCaptures.getOrNull(new LocalId(shapedCtor.name()));
-        if (!(data instanceof DefVar<?, ?> defVar)) {
-          throw new InternalException("Invalid name: " + shapedCtor.name());
+        if (ctorLike instanceof PatShape.ShapedCtor shapedCtor) {
+          var data = captures.resolve(shapedCtor.dataId());
+          if (!(data instanceof DefVar<?, ?> defVar)) {
+            throw new InternalException("Invalid name: " + shapedCtor.dataId());
+          }
+
+          var recognition = discovered.getOrThrow(defVar, () -> new InternalException("Not a shaped data"));
+          var realShapedCtor = recognition.captures().getOrThrow(shapedCtor.ctorId(), () ->
+            new InternalException("Invalid moment id: " + shapedCtor.ctorId() + " in recognition" + recognition));
+
+          matched = realShapedCtor == ctor.ref();
         }
 
-        var recognition = discovered.getOrThrow(defVar, () -> new InternalException("Not a shaped data"));
-        var realShapedCtor = recognition.captures().getOrThrow(shapedCtor.id(), () ->
-          new InternalException("Invalid moment id: " + shapedCtor.id() + " in recognition" + recognition));
+        if (!matched) yield false;
 
-        matched = realShapedCtor == ctor.ref();
+        // TODO: licit
+        // We don't use `matchInside` here, because the context doesn't need to reset.
+        yield matchMany(MatchMode.OrderedEq, ctorLike.innerPats(), ctor.params().view().map(Arg::term),
+          (ps, pt) -> matchPat(new MatchPat(ps, pt)));
       }
-
-      if (!matched) return false;
-
-      // TODO: licit
-      // We don't use `matchInside` here, because the context doesn't need to reset.
-      return matchMany(MatchMode.OrderedEq, ctorLike.innerPats(), ctor.params().view().map(Arg::term), this::matchPat);
-    }
-    return shape == PatShape.Bind.INSTANCE && pat instanceof Pat.Bind;
+      default -> false;
+    };
   }
 
   private boolean matchData(@NotNull DataShape shape, @NotNull DataDef data) {
-    return matchTele(shape.tele(), data.telescope)
-      && matchInside(data.ref, () -> matchMany(MatchMode.Eq, shape.ctors(), data.body,
-      (s, c) -> captured(s, c, this::matchCtor, CtorDef::ref)));
+    if (!matchTele(shape.tele(), data.telescope)) return false;
+    return matchInside(() -> captures.put(shape.name(), data.ref),
+      () -> matchMany(MatchMode.Eq, shape.ctors(), data.body,
+        (s, c) -> captureIfMatches(s, c, this::matchCtor, CtorDef::ref)));
   }
 
   private boolean matchCtor(@NotNull CtorShape shape, @NotNull CtorDef ctor) {
@@ -138,35 +192,28 @@ public record ShapeMatcher(
   }
 
   private boolean matchTerm(@NotNull TermShape shape, @NotNull Term term) {
-    if (shape instanceof TermShape.Named named) {
-      return matchTerm(named.shape(), term);
-    }
-
     @Nullable AnyVar result = null;
 
     if (shape instanceof TermShape.Any) return true;
     if (shape instanceof TermShape.NameCall call && call.args().isEmpty() && term instanceof RefTerm ref) {
-      var success = resolve(call.name()) == ref.var();
+      var success = captures.resolve(call.name()) == ref.var();
       if (!success) return false;
       result = ref.var();
     }
 
     if (shape instanceof TermShape.Callable call && term instanceof Callable callable) {
       boolean success = switch (call) {
-        case TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
+        case TermShape.NameCall nameCall -> captures.resolve(nameCall.name()) == callable.ref();
         case TermShape.ShapeCall shapeCall -> {
           if (callable.ref() instanceof DefVar<?, ?> defVar) {
-            var success0 = discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
-            if (success0) {
-              captures.put(shapeCall.id(), defVar);
-            }
-
-            yield success0;
+            var ok = discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
+            if (ok) captures.put(shapeCall.name(), defVar);
+            yield ok;
           }
 
           yield false;
         }
-        case TermShape.CtorCall ctorCall -> resolveCtor(ctorCall.dataRef(), ctorCall.ctorId()) == callable.ref();
+        case TermShape.CtorCall ctorCall -> resolveCtor(ctorCall.dataId(), ctorCall.ctorId()) == callable.ref();
       };
 
       if (!success) return false;
@@ -194,15 +241,13 @@ public record ShapeMatcher(
   }
 
   private boolean matchParam(@NotNull ParamShape shape, @NotNull Term.Param param) {
-    if (shape instanceof ParamShape.Named named) {
-      return matchParam(named.shape(), param);
-    }
-
     return switch (shape) {
       case ParamShape.Any any -> true;
       case ParamShape.Licit licit -> {
         if (!matchLicit(licit.kind(), param.explicit())) yield false;
-        yield matchTerm(licit.type(), param.type());
+        var ok = matchTerm(licit.type(), param.type());
+        if (ok) captures.put(licit.name(), param.ref());
+        yield ok;
       }
       default -> false;
     };
@@ -213,15 +258,34 @@ public record ShapeMatcher(
       || (xlicit == ParamShape.Licit.Kind.Ex) == isExplicit;
   }
 
-  private boolean matchInside(@NotNull DefVar<? extends Def, ? extends TeleDecl<?>> defVar, @NotNull BooleanSupplier matcher) {
-    var snapshot = ImmutableMap.from(localCaptures);
+  /**
+   * Do `prepare` before matcher, like add the Data to context before matching its ctors.
+   * This function can be viewed as {@link #captureIfMatches(Moment, Object, BiFunction, Function)}
+   * with a "rollback" feature.
+   *
+   * @implNote DO NOT call me inside myself.
+   */
+  private boolean matchInside(@NotNull Runnable prepare, @NotNull BooleanSupplier matcher) {
+    captures.fork();
+    prepare.run();
+    var ok = matcher.getAsBoolean();
+    if (ok) captures.merge();
+    return ok;
+  }
 
-    var result = matcher.getAsBoolean();
-
-    localCaptures.clear();
-    localCaptures.putAll(snapshot);
-
-    return result;
+  /***
+   * Only add the matched shape to the captures if the matcher returns true.
+   * Unlike {@link #matchInside(Runnable, BooleanSupplier)},
+   * which may add something to the captures before the match.
+   */
+  private <S extends CodeShape.Moment, C> boolean captureIfMatches(
+    @NotNull S shape, @NotNull C core,
+    @NotNull BiFunction<S, C, Boolean> matcher,
+    @NotNull Function<C, DefVar<?, ?>> extract
+  ) {
+    var matched = matcher.apply(shape, core);
+    if (matched) captures.put(shape.name(), extract.apply(core));
+    return matched;
   }
 
   private static <S, C> boolean matchMany(
@@ -244,42 +308,17 @@ public record ShapeMatcher(
     return remainingShapes.isEmpty() || mode == MatchMode.Sup;
   }
 
-  private <S extends CodeShape.Moment, C> boolean captured(
-    @NotNull S shape, @NotNull C core,
-    @NotNull BiFunction<S, C, Boolean> matcher,
-    @NotNull Function<C, DefVar<?, ?>> extract
-  ) {
-    var matched = matcher.apply(shape, core);
-    if (matched) captures.put(shape.name(), extract.apply(core));
-    return matched;
-  }
-
-  private @NotNull AnyVar resolve(@NotNull String name) {
-    var resolved = this.localCaptures.getOrNull(new LocalId(name));
-    if (resolved == null) {
-      throw new InternalException("Invalid name: " + name);
-    }
-
-    return resolved;
-  }
-
-  private @NotNull DefVar<?, ?> resolveCtor(@NotNull String data, @NotNull CodeShape.MomentId ctorId) {
-    var someVar = resolve(data);
+  private @NotNull DefVar<?, ?> resolveCtor(@NotNull MomentId data, @NotNull CodeShape.MomentId ctorId) {
+    var someVar = captures.resolve(data);
     if (!(someVar instanceof DefVar<?, ?> defVar)) {
       throw new InternalException("Not a data");
     }
 
-    var recog = discovered.getOrNull(defVar);
-    if (recog == null) {
-      throw new InternalException("Not a recognized data");
-    }
+    var recog = discovered.getOrThrow(defVar,
+      () -> new InternalException("Not a recognized data"));
 
-    var ctor = recog.captures().getOrNull(ctorId);
-    if (ctor == null) {
-      throw new InternalException("No such ctor");
-    }
-
-    return ctor;
+    return recog.captures().getOrThrow(ctorId,
+      () -> new InternalException("No such ctor"));
   }
 
   public enum MatchMode {

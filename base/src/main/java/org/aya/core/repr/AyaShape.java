@@ -14,6 +14,9 @@ import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.*;
+import static org.aya.core.repr.CodeShape.GlobalId.*;
+import static org.aya.core.repr.CodeShape.LocalId.LHS;
+import static org.aya.core.repr.CodeShape.LocalId.RHS;
 import static org.aya.core.repr.ParamShape.anyLicit;
 
 /**
@@ -31,12 +34,12 @@ public sealed interface AyaShape {
   enum AyaIntShape implements AyaShape {
     INSTANCE;
 
-    private static final @NotNull String NAT = "Nat";
-
-    public static final @NotNull CodeShape DATA_NAT = new DataShape(ImmutableSeq.empty(), ImmutableSeq.of(
-      new CtorShape(GlobalId.ZERO, ImmutableSeq.empty()),
-      new CtorShape(GlobalId.SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.NameCall.of(NAT))))
-    )).named(NAT);
+    public static final @NotNull CodeShape DATA_NAT = new DataShape(
+      NAT,
+      ImmutableSeq.empty(), ImmutableSeq.of(
+      new CtorShape(ZERO, ImmutableSeq.empty()),
+      new CtorShape(SUC, ImmutableSeq.of(ParamShape.explicit(TermShape.NameCall.of(NAT))))
+    ));
 
     @Override public @NotNull CodeShape codeShape() {
       return DATA_NAT;
@@ -46,17 +49,18 @@ public sealed interface AyaShape {
   enum AyaListShape implements AyaShape {
     INSTANCE;
 
-    private static final @NotNull String LIST = "List";
-    private static final @NotNull String A = "A";
+    public static final @NotNull LocalId A = new LocalId("A");
 
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
-      ImmutableSeq.of(anyLicit(new TermShape.Sort(null, 0)).named(A)),
+      LIST,
+      ImmutableSeq.of(anyLicit(A, new TermShape.Sort(null, 0))),
       ImmutableSeq.of(
         new CtorShape(GlobalId.NIL, ImmutableSeq.empty()),
         new CtorShape(GlobalId.CONS, ImmutableSeq.of(
-          anyLicit(TermShape.NameCall.of(A)),   // A
-          anyLicit(new TermShape.NameCall(LIST, ImmutableSeq.of(TermShape.NameCall.of(A)))))) // List A
-      )).named(LIST);
+          anyLicit(TermShape.NameCall.of(A)),
+          anyLicit(new TermShape.NameCall(LIST, ImmutableSeq.of(TermShape.NameCall.of(A))))
+        )) // List A
+      ));
 
     @Override public @NotNull CodeShape codeShape() {
       return DATA_LIST;
@@ -66,32 +70,28 @@ public sealed interface AyaShape {
   enum AyaPlusFnShape implements AyaShape {
     INSTANCE;
 
-    private static final @NotNull String NAT = "Nat";
-    private static final @NotNull String A = "a";
-    private static final @NotNull String B = "b";
-    private static final @NotNull String PLUS = "plus";
-
     public static final @NotNull CodeShape FN_PLUS = new FnShape(
+      NAT_ADD,
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.ShapeCall(NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
         anyLicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
         // | a, 0 => a
         new ClauseShape(ImmutableSeq.of(
-          PatShape.Bind.INSTANCE.named(A), PatShape.ShapedCtor.of(NAT, GlobalId.ZERO)
-        ), TermShape.NameCall.of(A)),
+          new PatShape.Bind(LHS), PatShape.ShapedCtor.of(NAT, ZERO)
+        ), TermShape.NameCall.of(LHS)),
         // | a, suc b => suc (_ a b)
         new ClauseShape(ImmutableSeq.of(
-          PatShape.Bind.INSTANCE.named(A), new PatShape.ShapedCtor(NAT, GlobalId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(B)))
-        ), new TermShape.CtorCall(NAT, GlobalId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
-          TermShape.NameCall.of(A),
-          TermShape.NameCall.of(B)
+          new PatShape.Bind(LHS), new PatShape.ShapedCtor(NAT, SUC, ImmutableSeq.of(new PatShape.Bind(RHS)))
+        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
+          TermShape.NameCall.of(LHS),
+          TermShape.NameCall.of(RHS)
         )))))
       ))
-    ).named(PLUS);
+    );
 
     @Override
     public @NotNull CodeShape codeShape() {
@@ -102,32 +102,28 @@ public sealed interface AyaShape {
   enum AyaPlusFnLeftShape implements AyaShape {
     INSTANCE;
 
-    private static final @NotNull String NAT = "Nat";
-    private static final @NotNull String A = "a";
-    private static final @NotNull String B = "b";
-    private static final @NotNull String PLUS = "plus";
-
     public static final @NotNull CodeShape FN_PLUS = new FnShape(
+      NAT_ADD,
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty()).named(NAT)),
+        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
         anyLicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
         // | 0, b => b
         new ClauseShape(ImmutableSeq.of(
-          PatShape.ShapedCtor.of(NAT, GlobalId.ZERO), PatShape.Bind.INSTANCE.named(B)
-        ), TermShape.NameCall.of(B)),
+          PatShape.ShapedCtor.of(NAT, ZERO), new PatShape.Bind(RHS)
+        ), TermShape.NameCall.of(RHS)),
         // | suc a, b => _ a (suc b)
         new ClauseShape(ImmutableSeq.of(
-          new PatShape.ShapedCtor(NAT, GlobalId.SUC, ImmutableSeq.of(PatShape.Bind.INSTANCE.named(A))), PatShape.Bind.INSTANCE.named(B)
-        ), new TermShape.CtorCall(NAT, GlobalId.SUC, ImmutableSeq.of(new TermShape.NameCall(PLUS, ImmutableSeq.of(
-          TermShape.NameCall.of(A),
-          TermShape.NameCall.of(B)
+          new PatShape.ShapedCtor(NAT, SUC, ImmutableSeq.of(new PatShape.Bind(LHS))), new PatShape.Bind(RHS)
+        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
+          TermShape.NameCall.of(LHS),
+          TermShape.NameCall.of(RHS)
         )))))
       ))
-    ).named(PLUS);
+    );
 
     @Override
     public @NotNull CodeShape codeShape() {

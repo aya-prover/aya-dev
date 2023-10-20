@@ -12,28 +12,30 @@ sealed public interface ParamShape {
     INSTANCE;
   }
 
-  record Licit(@NotNull TermShape type, Licit.Kind kind) implements ParamShape {
+  record Licit(
+    @NotNull CodeShape.MomentId name,
+    @NotNull TermShape type,
+    Licit.Kind kind
+  ) implements ParamShape, CodeShape.Moment {
     enum Kind {
       Any, Ex, Im
     }
   }
 
-  record Named(@NotNull String name, @NotNull ParamShape shape) implements ParamShape {}
-
-  default @NotNull Named named(@NotNull String name) {
-    return new Named(name, this);
-  }
-
   static @NotNull ParamShape explicit(@NotNull TermShape type) {
-    return new Licit(type, Licit.Kind.Ex);
+    return new Licit(CodeShape.LocalId.IGNORED, type, Licit.Kind.Ex);
   }
 
   static @NotNull ParamShape implicit(@NotNull TermShape type) {
-    return new Licit(type, Licit.Kind.Im);
+    return new Licit(CodeShape.LocalId.IGNORED, type, Licit.Kind.Im);
+  }
+
+  static @NotNull ParamShape anyLicit(@NotNull CodeShape.MomentId name, @NotNull TermShape type) {
+    return new Licit(name, type, Licit.Kind.Any);
   }
 
   static @NotNull ParamShape anyLicit(@NotNull TermShape type) {
-    return new Licit(type, Licit.Kind.Any);
+    return anyLicit(CodeShape.LocalId.IGNORED, type);
   }
 
   static @NotNull ParamShape anyEx() {

@@ -25,30 +25,19 @@ sealed public interface TermShape {
    */
   record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
 
-  /**
-   * Binding {@param name} to {@param shape}.
-   *
-   * @see org.aya.core.repr.CodeShape.Named
-   */
-  record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
-
   sealed interface Callable extends TermShape {
     @NotNull ImmutableSeq<TermShape> args();
   }
 
-  record NameCall(@NotNull String name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {
-    public static @NotNull NameCall of(@NotNull String name) {
+  record NameCall(@NotNull CodeShape.MomentId name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {
+    public static @NotNull NameCall of(@NotNull CodeShape.MomentId name) {
       return new NameCall(name, ImmutableSeq.empty());
     }
   }
 
-  record ShapeCall(@NotNull CodeShape.MomentId id, @NotNull CodeShape shape,
-                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+  record ShapeCall(@NotNull CodeShape.MomentId name, @NotNull CodeShape shape,
+                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable, CodeShape.Moment {}
 
-  record CtorCall(@NotNull String dataRef, @NotNull CodeShape.MomentId ctorId,
+  record CtorCall(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.MomentId ctorId,
                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
-
-  default @NotNull Named named(@NotNull String name) {
-    return new Named(name, this);
-  }
 }

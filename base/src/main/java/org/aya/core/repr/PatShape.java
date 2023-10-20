@@ -15,8 +15,7 @@ public sealed interface PatShape {
     INSTANCE;
   }
 
-  enum Bind implements PatShape {
-    INSTANCE;
+  record Bind(@NotNull CodeShape.MomentId name) implements PatShape, CodeShape.Moment {
   }
 
   sealed interface CtorLike extends PatShape permits Ctor, ShapedCtor {
@@ -29,20 +28,13 @@ public sealed interface PatShape {
   /**
    * Expecting a certain ctor, {@link ShapeMatcher} will crash if the {@param name} is invalid (such as undefined or not a DataShape)
    *
-   * @param name a reference to a {@link CodeShape.DataShape}d term
-   * @param id   the {@link CodeShape.MomentId} to the ctor
+   * @param dataId a reference to a {@link CodeShape.DataShape}d term
+   * @param ctorId the {@link CodeShape.MomentId} to the ctor
    */
-  record ShapedCtor(@NotNull String name, @NotNull CodeShape.MomentId id,
+  record ShapedCtor(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.MomentId ctorId,
                     @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {
-    public static @NotNull ShapedCtor of(@NotNull String name, @NotNull CodeShape.MomentId id) {
+    public static @NotNull ShapedCtor of(@NotNull CodeShape.MomentId name, @NotNull CodeShape.MomentId id) {
       return new ShapedCtor(name, id, ImmutableSeq.empty());
     }
-  }
-
-  /** @see org.aya.core.repr.CodeShape.Named */
-  record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
-
-  default @NotNull Named named(@NotNull String name) {
-    return new Named(name, this);
   }
 }

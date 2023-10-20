@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 public sealed interface CodeShape {
   /** A capture group, see {@link CodeShape.CtorShape} and {@link ShapeMatcher#captures()} */
-  sealed interface Moment {
+  sealed interface Moment permits CtorShape, DataShape, FnShape, ParamShape.Licit, PatShape.Bind, TermShape.ShapeCall {
     @NotNull MomentId name();
   }
 
@@ -22,49 +22,35 @@ public sealed interface CodeShape {
   }
 
   enum GlobalId implements MomentId, Serializable {
-    ZERO, SUC, NIL, CONS, NAT,
+    ZERO, SUC, NIL, CONS,
+    NAT, LIST,
+    NAT_ADD,
   }
 
-  record LocalId(String name) implements MomentId {}
+  record LocalId(@NotNull String name) implements MomentId {
+    public static final @NotNull LocalId IGNORED = new LocalId("_");
+    public static final @NotNull LocalId LHS = new LocalId("lhs");
+    public static final @NotNull LocalId RHS = new LocalId("rhs");
+  }
 
   record FnShape(
+    @NotNull MomentId name,
     @NotNull ImmutableSeq<ParamShape> tele,
     @NotNull TermShape result,
     @NotNull Either<TermShape, ImmutableSeq<ClauseShape>> body
-  ) implements CodeShape {}
+  ) implements CodeShape, Moment {}
 
   record ClauseShape(@NotNull ImmutableSeq<PatShape> pats, @NotNull TermShape body) implements CodeShape {
   }
 
   record DataShape(
+    @NotNull MomentId name,
     @NotNull ImmutableSeq<ParamShape> tele,
     @NotNull ImmutableSeq<CtorShape> ctors
-  ) implements CodeShape {}
-
-  record StructShape(
-    @NotNull ImmutableSeq<ParamShape> tele,
-    @NotNull ImmutableSeq<FieldShape> fields
-  ) implements CodeShape {}
+  ) implements CodeShape, Moment {}
 
   record CtorShape(
     @NotNull MomentId name,
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape, Moment {}
-
-  record FieldShape(
-    @NotNull ImmutableSeq<ParamShape> tele
-  ) implements CodeShape {}
-
-  /**
-   * @see org.aya.core.repr.TermShape.Named
-   * @see org.aya.core.repr.TermShape.NameCall
-   * @see org.aya.core.repr.ParamShape.Named
-   * @see org.aya.core.repr.PatShape.Named
-   */
-  record Named(@NotNull String name, @NotNull CodeShape shape) implements CodeShape {
-  }
-
-  default @NotNull Named named(@NotNull String name) {
-    return new Named(name, this);
-  }
 }
