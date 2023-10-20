@@ -11,7 +11,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
-import org.aya.core.repr.CodeShape.*;
+import org.aya.core.repr.CodeShape.MomentId;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.CtorShape;
@@ -158,7 +158,7 @@ public sealed interface AyaShape {
     /** Discovery of shaped literals */
     public void bonjour(@NotNull GenericDef def) {
       AyaShape.LITERAL_SHAPES.view()
-        .flatMap(shape -> ShapeMatcher.match(shape, def))
+        .flatMap(shape -> shape.match(def))
         .forEach(shape -> bonjour(def, shape));
     }
 

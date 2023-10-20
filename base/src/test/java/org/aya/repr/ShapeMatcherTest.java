@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repr;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
@@ -141,15 +142,15 @@ public class ShapeMatcherTest {
   }
 
   private static ImmutableSeq<ShapeRecognition> check(@NotNull ImmutableSeq<Tuple2<Boolean, AyaShape>> shouldBe, @NotNull ImmutableSeq<GenericDef> def) {
-    var discovered = MutableMap.<GenericDef, ShapeRecognition>create();
+    var discovered = MutableMap.<DefVar<?, ?>, ShapeRecognition>create();
 
     return def.zipView(shouldBe).flatMap(tup -> {
       var should = tup.component2().component1();
       var shape = tup.component2().component2();
-      var match = ShapeMatcher.match(new ShapeMatcher(discovered.toImmutableMap()), shape, tup.component1());
+      var match = new ShapeMatcher(ImmutableMap.from(discovered)).match(shape, tup.component1());
       assertEquals(should, match.isDefined());
       if (should) {
-        discovered.put(tup.component1(), match.get());
+        discovered.put(tup.component1().ref(), match.get());
       }
       return match;
     }).toImmutableSeq();

@@ -36,7 +36,7 @@ public record ShapeMatcher(
   @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst,
   // --------
-  @NotNull ImmutableMap<GenericDef, ShapeRecognition> discovered,
+  @NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered,
   @NotNull MutableList<String> names,
   @NotNull MutableMap<String, AnyVar> resolved
 ) {
@@ -45,22 +45,16 @@ public record ShapeMatcher(
     this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
   }
 
-  public ShapeMatcher(@NotNull ImmutableMap<GenericDef, ShapeRecognition> discovered) {
+  public ShapeMatcher(@NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered) {
     this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create(), discovered, MutableList.create(), MutableMap.create());
   }
 
-  public static Option<ShapeRecognition> match(@NotNull ShapeMatcher matcher, @NotNull AyaShape shape, @NotNull GenericDef def) {
-    var success = matcher.matchDecl(shape.codeShape(), def);
-
-    if (success) {
-      return Option.some(new ShapeRecognition(shape, matcher.captures.toImmutableMap()));
+  public Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
+    if (matchDecl(shape.codeShape(), def)) {
+      return Option.some(new ShapeRecognition(shape, ImmutableMap.from(captures)));
     }
 
     return Option.none();
-  }
-
-  public static Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
-    return match(new ShapeMatcher(), shape, def);
   }
 
   private boolean matchDecl(@NotNull CodeShape shape, @NotNull GenericDef def) {
@@ -126,11 +120,11 @@ public record ShapeMatcher(
 
       if (ctorLike instanceof PatShape.ShapedCtor shapedCtor) {
         var data = resolved.getOrNull(shapedCtor.name());
-        if (!(data instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
+        if (!(data instanceof DefVar<?, ?> defVar)) {
           throw new InternalException("Invalid name: " + shapedCtor.name());
         }
 
-        var recognition = discovered.getOrNull(dataDef);
+        var recognition = discovered.getOrNull(defVar);
         if (recognition == null) {
           throw new InternalException("Not a shaped data");
         }
@@ -195,8 +189,7 @@ public record ShapeMatcher(
         case TermShape.NameCall nameCall -> resolve(nameCall.name()) == callable.ref();
         case TermShape.ShapeCall shapeCall -> {
           if (callable.ref() instanceof DefVar<?, ?> defVar) {
-            var success0 = defVar.core instanceof GenericDef def
-              && discovered.getOption(def).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
+            var success0 = discovered.getOption(defVar).map(x -> x.shape().codeShape()).getOrNull() == shapeCall.shape();
             if (success0) {
               captures.put(shapeCall.id(), defVar);
             }
@@ -351,11 +344,11 @@ public record ShapeMatcher(
 
   private @NotNull DefVar<?, ?> resolveCtor(@NotNull String data, @NotNull CodeShape.MomentId ctorId) {
     var someVar = resolve(data);
-    if (!(someVar instanceof DefVar<?, ?> defVar && defVar.core instanceof DataDef dataDef)) {
+    if (!(someVar instanceof DefVar<?, ?> defVar)) {
       throw new InternalException("Not a data");
     }
 
-    var recog = discovered.getOrNull(dataDef);
+    var recog = discovered.getOrNull(defVar);
     if (recog == null) {
       throw new InternalException("Not a recognized data");
     }
