@@ -52,7 +52,7 @@ public final class ShapeFactory {
     @NotNull AyaShape.Factory factory
   ) {
     if (recog.shape() == AyaShape.PLUS_LEFT_SHAPE || recog.shape() == AyaShape.PLUS_RIGHT_SHAPE) {
-      var dataRef = (DefVar<DataDef, TeleDecl.DataDecl>) recog.captures().get(CodeShape.MomentId.NAT);
+      var dataRef = (DefVar<DataDef, TeleDecl.DataDecl>) recog.captures().get(CodeShape.GlobalId.NAT);
       var dataDef = dataRef.core;
       assert dataDef != null : "How?";
 

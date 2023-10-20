@@ -40,7 +40,7 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
     @Override @NotNull DataCall paramType
   ) implements IntegerOpsTerm<CtorDef, TeleDecl.DataCtor> {
     public boolean isZero() {
-      return paramRecognition.captures().get(CodeShape.MomentId.ZERO) == ref;
+      return paramRecognition.captures().get(CodeShape.GlobalId.ZERO) == ref;
     }
 
     @Override

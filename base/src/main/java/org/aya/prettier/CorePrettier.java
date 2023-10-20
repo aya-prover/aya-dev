@@ -71,8 +71,8 @@ public class CorePrettier extends BasePrettier<Term> {
         lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
       case IntegerTerm shaped -> shaped.repr() == 0
-        ? linkLit(0, shaped.ctorRef(CodeShape.MomentId.ZERO), CON)
-        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.MomentId.SUC), CON);
+        ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
       case ConCallLike conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case ReduceRule.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
