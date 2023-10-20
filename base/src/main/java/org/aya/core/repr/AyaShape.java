@@ -11,6 +11,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.core.repr.CodeShape.*;
@@ -18,6 +19,7 @@ import static org.aya.core.repr.CodeShape.GlobalId.*;
 import static org.aya.core.repr.CodeShape.LocalId.LHS;
 import static org.aya.core.repr.CodeShape.LocalId.RHS;
 import static org.aya.core.repr.ParamShape.anyLicit;
+import static org.aya.core.repr.ParamShape.explicit;
 
 /**
  * @author kiva
@@ -53,12 +55,12 @@ public sealed interface AyaShape {
 
     public static final @NotNull CodeShape DATA_LIST = new DataShape(
       LIST,
-      ImmutableSeq.of(anyLicit(A, new TermShape.Sort(null, 0))),
+      ImmutableSeq.of(explicit(A, new TermShape.Sort(null, 0))),
       ImmutableSeq.of(
         new CtorShape(GlobalId.NIL, ImmutableSeq.empty()),
         new CtorShape(GlobalId.CONS, ImmutableSeq.of(
-          anyLicit(TermShape.NameCall.of(A)),
-          anyLicit(new TermShape.NameCall(LIST, ImmutableSeq.of(TermShape.NameCall.of(A))))
+          explicit(TermShape.NameCall.of(A)),
+          explicit(new TermShape.NameCall(LIST, ImmutableSeq.of(new Arg<>(TermShape.NameCall.of(A), true))))
         )) // List A
       ));
 
@@ -74,8 +76,8 @@ public sealed interface AyaShape {
       NAT_ADD,
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
-        anyLicit(TermShape.NameCall.of(NAT))
+        explicit(new TermShape.ShapeCall(NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
+        explicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
@@ -86,10 +88,10 @@ public sealed interface AyaShape {
         // | a, suc b => suc (_ a b)
         new ClauseShape(ImmutableSeq.of(
           new PatShape.Bind(LHS), new PatShape.ShapedCtor(NAT, SUC, ImmutableSeq.of(new PatShape.Bind(RHS)))
-        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
-          TermShape.NameCall.of(LHS),
-          TermShape.NameCall.of(RHS)
-        )))))
+        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new Arg<>(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
+          new Arg<>(TermShape.NameCall.of(LHS), true),    // TODO: licit
+          new Arg<>(TermShape.NameCall.of(RHS), true)
+        )), true))))
       ))
     );
 
@@ -106,8 +108,8 @@ public sealed interface AyaShape {
       NAT_ADD,
       // _ : Nat -> Nat -> Nat
       ImmutableSeq.of(
-        anyLicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
-        anyLicit(TermShape.NameCall.of(NAT))
+        explicit(new TermShape.ShapeCall(GlobalId.NAT, AyaIntShape.DATA_NAT, ImmutableSeq.empty())),
+        explicit(TermShape.NameCall.of(NAT))
       ),
       TermShape.NameCall.of(NAT),
       Either.right(ImmutableSeq.of(
@@ -118,10 +120,10 @@ public sealed interface AyaShape {
         // | suc a, b => _ a (suc b)
         new ClauseShape(ImmutableSeq.of(
           new PatShape.ShapedCtor(NAT, SUC, ImmutableSeq.of(new PatShape.Bind(LHS))), new PatShape.Bind(RHS)
-        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
-          TermShape.NameCall.of(LHS),
-          TermShape.NameCall.of(RHS)
-        )))))
+        ), new TermShape.CtorCall(NAT, SUC, ImmutableSeq.of(new Arg<>(new TermShape.NameCall(NAT_ADD, ImmutableSeq.of(
+          new Arg<>(TermShape.NameCall.of(LHS), true),
+          new Arg<>(TermShape.NameCall.of(RHS), true)
+        )), true))))
       ))
     );
 

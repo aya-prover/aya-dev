@@ -31,9 +31,9 @@ public sealed interface PatShape {
    * @param dataId a reference to a {@link CodeShape.DataShape}d term
    * @param ctorId the {@link CodeShape.MomentId} to the ctor
    */
-  record ShapedCtor(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.MomentId ctorId,
+  record ShapedCtor(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.GlobalId ctorId,
                     @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {
-    public static @NotNull ShapedCtor of(@NotNull CodeShape.MomentId name, @NotNull CodeShape.MomentId id) {
+    public static @NotNull ShapedCtor of(@NotNull CodeShape.MomentId name, @NotNull CodeShape.GlobalId id) {
       return new ShapedCtor(name, id, ImmutableSeq.empty());
     }
   }

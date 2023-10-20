@@ -53,7 +53,7 @@ public record ShapeMatcher(
       return new Captures(MutableMap.create(), MutableValue.create());
     }
 
-    public @NotNull ImmutableMap<MomentId, DefVar<?, ?>> extractGlobal() {
+    public @NotNull ImmutableMap<GlobalId, DefVar<?, ?>> extractGlobal() {
       return ImmutableMap.from(map.toImmutableSeq().view()
         .mapNotNull(x -> switch (new Pair<>(x.component1(), x.component2())) {
           case Pair(GlobalId gid, DefVar<?, ?> dv) -> Tuple.of(gid, dv);
@@ -217,8 +217,8 @@ public record ShapeMatcher(
         };
 
         if (!success) yield false;
-        yield matchMany(MatchMode.OrderedEq, call.args(), callable.args(),
-          (l, r) -> matchTerm(l, r.term()));
+        yield matchMany(MatchMode.OrderedEq, call.args(), callable.args(), (s, c) ->
+          s.explicit() == c.explicit() && matchTerm(s.term(), c.term()));
       }
       case TermShape.Sort sort when term instanceof SortTerm sortTerm -> {
         // kind is null -> any sort
@@ -315,7 +315,7 @@ public record ShapeMatcher(
     return remainingShapes.isEmpty() || mode == MatchMode.Sup;
   }
 
-  private @NotNull DefVar<?, ?> resolveCtor(@NotNull MomentId data, @NotNull CodeShape.MomentId ctorId) {
+  private @NotNull DefVar<?, ?> resolveCtor(@NotNull MomentId data, @NotNull CodeShape.GlobalId ctorId) {
     if (!(captures.resolve(data) instanceof DefVar<?, ?> defVar)) {
       throw new InternalException("Not a data");
     }

@@ -5,6 +5,7 @@ package org.aya.core.repr;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.core.term.Term;
 import org.aya.generic.SortKind;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,18 +27,19 @@ sealed public interface TermShape {
   record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
 
   sealed interface Callable extends TermShape {
-    @NotNull ImmutableSeq<TermShape> args();
+    @NotNull ImmutableSeq<Arg<TermShape>> args();
   }
 
-  record NameCall(@NotNull CodeShape.MomentId name, @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {
+  record NameCall(@NotNull CodeShape.MomentId name,
+                  @Override @NotNull ImmutableSeq<Arg<TermShape>> args) implements Callable {
     public static @NotNull NameCall of(@NotNull CodeShape.MomentId name) {
       return new NameCall(name, ImmutableSeq.empty());
     }
   }
 
   record ShapeCall(@NotNull CodeShape.MomentId name, @NotNull CodeShape shape,
-                   @Override @NotNull ImmutableSeq<TermShape> args) implements Callable, CodeShape.Moment {}
+                   @Override @NotNull ImmutableSeq<Arg<TermShape>> args) implements Callable, CodeShape.Moment {}
 
-  record CtorCall(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.MomentId ctorId,
-                  @Override @NotNull ImmutableSeq<TermShape> args) implements Callable {}
+  record CtorCall(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.GlobalId ctorId,
+                  @Override @NotNull ImmutableSeq<Arg<TermShape>> args) implements Callable {}
 }

@@ -92,17 +92,6 @@ public class ShapeMatcherTest {
   }
 
   @Test
-  public void matchWeirdList() {
-    match(true, AyaShape.LIST_SHAPE, "data List {A : Type} | nil | cons A (List {A})");
-    match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | cons {A} (List A)");
-    match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | cons A {List A}");
-    match(true, AyaShape.LIST_SHAPE, "data List {A : Type} | nil | cons {A} (List {A})");
-    match(true, AyaShape.LIST_SHAPE, "data List {A : Type} | nil | cons A {List {A}}");
-    match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | cons {A} {List A}");
-    match(true, AyaShape.LIST_SHAPE, "data List {A : Type} | nil | cons {A} {List {A}}");
-  }
-
-  @Test
   public void matchPlus() {
     match(ImmutableSeq.of(
       Tuple.of(true, AyaShape.NAT_SHAPE),

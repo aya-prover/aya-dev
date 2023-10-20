@@ -23,7 +23,11 @@ sealed public interface ParamShape {
   }
 
   static @NotNull ParamShape explicit(@NotNull TermShape type) {
-    return new Licit(CodeShape.LocalId.IGNORED, type, Licit.Kind.Ex);
+    return explicit(CodeShape.LocalId.IGNORED, type);
+  }
+
+  static @NotNull ParamShape explicit(@NotNull CodeShape.LocalId name, @NotNull TermShape type) {
+    return new Licit(name, type, Licit.Kind.Ex);
   }
 
   static @NotNull ParamShape implicit(@NotNull TermShape type) {

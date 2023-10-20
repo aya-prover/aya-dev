@@ -37,7 +37,7 @@ public interface Shaped<T> {
     @NotNull ShapeRecognition recognition();
     @NotNull T constructorForm();
 
-    @SuppressWarnings("unchecked") default @NotNull DefVar<CtorDef, ?> ctorRef(@NotNull CodeShape.MomentId id) {
+    @SuppressWarnings("unchecked") default @NotNull DefVar<CtorDef, ?> ctorRef(@NotNull CodeShape.GlobalId id) {
       return (DefVar<CtorDef, ?>) recognition().captures().get(id);
     }
 

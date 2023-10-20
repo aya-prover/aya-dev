@@ -50,7 +50,7 @@ public sealed interface CodeShape {
   ) implements CodeShape, Moment {}
 
   record CtorShape(
-    @NotNull MomentId name,
+    @NotNull GlobalId name,
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape, Moment {}
 }
