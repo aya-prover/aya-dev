@@ -16,8 +16,6 @@ sealed public interface TermShape {
     INSTANCE;
   }
 
-  record TeleRef(int superLevel, int nth) implements TermShape {}
-
   /**
    * The shape to Sort term, I am not very work well at type theory, so improve this feel free!
    *

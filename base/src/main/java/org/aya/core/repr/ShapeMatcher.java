@@ -32,7 +32,6 @@ import java.util.function.Function;
  * @author kiva
  */
 public record ShapeMatcher(
-  @NotNull MutableLinkedList<DefVar<? extends Def, ? extends TeleDecl<?>>> def,
   @NotNull MutableMap<CodeShape.MomentId, DefVar<?, ?>> captures,
   @NotNull MutableMap<AnyVar, AnyVar> teleSubst,
   // --------
@@ -42,11 +41,11 @@ public record ShapeMatcher(
 ) {
 
   public ShapeMatcher() {
-    this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
+    this(MutableMap.create(), MutableMap.create(), ImmutableMap.empty(), MutableList.create(), MutableMap.create());
   }
 
   public ShapeMatcher(@NotNull ImmutableMap<DefVar<?, ?>, ShapeRecognition> discovered) {
-    this(MutableLinkedList.create(), MutableMap.create(), MutableMap.create(), discovered, MutableList.create(), MutableMap.create());
+    this(MutableMap.create(), MutableMap.create(), discovered, MutableList.create(), MutableMap.create());
   }
 
   public Option<ShapeRecognition> match(@NotNull AyaShape shape, @NotNull GenericDef def) {
@@ -211,15 +210,6 @@ public record ShapeMatcher(
       result = callable.ref();
     }
 
-    if (shape instanceof TermShape.TeleRef ref && term instanceof RefTerm refTerm) {
-      var superLevel = def.getOrNull(ref.superLevel());
-      if (superLevel == null) return false;
-      var tele = Def.defTele(superLevel).getOrNull(ref.nth());
-      if (tele == null) return false;
-      var teleVar = teleSubst.getOrNull(tele.ref());
-      return teleVar == refTerm.var() || tele.ref() == refTerm.var();
-    }
-
     if (shape instanceof TermShape.Sort sort && term instanceof SortTerm sortTerm) {
       // kind is null -> any sort
       if (sort.kind() == null) return true;
@@ -283,9 +273,7 @@ public record ShapeMatcher(
 
     bind(names, defVar);
 
-    def.push(defVar);
     var result = matcher.getAsBoolean();
-    def.pop();
 
     resolved.clear();
     resolved.putAll(snapshot);
