@@ -223,9 +223,7 @@ public record ShapeMatcher(
       case TermShape.Sort sort when term instanceof SortTerm sortTerm -> {
         // kind is null -> any sort
         if (sort.kind() == null) yield true;
-
-        // TODO[hoshino]: match kind, but I don't know how to do.
-        throw new UnsupportedOperationException("TODO");
+        yield sortTerm.kind() == sort.kind();
       }
       default -> false;
     };
