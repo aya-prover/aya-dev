@@ -68,6 +68,11 @@ public record ShapeMatcher(
       RepoLike.super.fork(new Captures(MutableMap.from(map), MutableValue.create()));
     }
 
+    public void discard() {
+      // closed with unmerged changes
+      RepoLike.super.merge();
+    }
+
     @Override public void merge() {
       var f = this.future.get();
       if (f != null) map.putAll(f.map);
@@ -267,6 +272,7 @@ public record ShapeMatcher(
     prepare.run();
     var ok = matcher.getAsBoolean();
     if (ok) captures.merge();
+    else captures.discard();
     return ok;
   }
 
