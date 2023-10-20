@@ -27,6 +27,8 @@ sealed public interface TermShape {
 
   /**
    * Binding {@param name} to {@param shape}.
+   *
+   * @see org.aya.core.repr.CodeShape.Named
    */
   record Named(@NotNull String name, @NotNull TermShape shape) implements TermShape {}
 

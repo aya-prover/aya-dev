@@ -50,6 +50,12 @@ public sealed interface CodeShape {
     @NotNull ImmutableSeq<ParamShape> tele
   ) implements CodeShape {}
 
+  /**
+   * @see org.aya.core.repr.TermShape.Named
+   * @see org.aya.core.repr.TermShape.NameCall
+   * @see org.aya.core.repr.ParamShape.Named
+   * @see org.aya.core.repr.PatShape.Named
+   */
   record Named(@NotNull String name, @NotNull CodeShape shape) implements CodeShape {
   }
 

@@ -39,6 +39,7 @@ public sealed interface PatShape {
     }
   }
 
+  /** @see org.aya.core.repr.CodeShape.Named */
   record Named(@NotNull String name, @NotNull PatShape pat) implements PatShape {}
 
   default @NotNull Named named(@NotNull String name) {
