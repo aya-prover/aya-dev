@@ -3,11 +3,11 @@
 package org.aya.cli.interactive;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.utils.RepoLike;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.resolve.context.*;
+import org.aya.util.RepoLike;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
-import org.aya.cli.utils.RepoLike;
 import org.aya.core.repr.AyaShape;
+import org.aya.util.RepoLike;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
