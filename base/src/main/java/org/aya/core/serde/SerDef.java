@@ -142,7 +142,7 @@ public sealed interface SerDef extends Serializable {
   /** serialized {@link ShapeRecognition} */
   record SerShapeResult(
     @NotNull SerAyaShape shape,
-    @NotNull ImmutableMap<CodeShape.MomentId, QName> captures
+    @NotNull ImmutableMap<CodeShape.GlobalId, QName> captures
   ) implements Serializable {
     public @NotNull ShapeRecognition de(@NotNull SerTerm.DeState state) {
       return new ShapeRecognition(shape.de(), ImmutableMap.from(captures.view()

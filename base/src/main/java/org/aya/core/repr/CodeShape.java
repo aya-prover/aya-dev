@@ -3,12 +3,8 @@
 package org.aya.core.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.Term;
-import org.aya.generic.SortKind;
-import org.jetbrains.annotations.Contract;
+import kala.control.Either;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -17,113 +13,44 @@ import java.io.Serializable;
  */
 public sealed interface CodeShape {
   /** A capture group, see {@link CodeShape.CtorShape} and {@link ShapeMatcher#captures()} */
-  sealed interface Moment {
+  sealed interface Moment permits CtorShape, DataShape, FnShape, ParamShape.Licit, PatShape.Bind, TermShape.ShapeCall {
     @NotNull MomentId name();
   }
 
   /** Typed capture name, rather than plain strings */
-  enum MomentId implements Serializable {
+  sealed interface MomentId {
+  }
+
+  enum GlobalId implements MomentId, Serializable {
     ZERO, SUC, NIL, CONS,
+    NAT, LIST,
+    NAT_ADD,
+  }
+
+  record LocalId(@NotNull String name) implements MomentId {
+    public static final @NotNull LocalId IGNORED = new LocalId("_");
+    public static final @NotNull LocalId LHS = new LocalId("lhs");
+    public static final @NotNull LocalId RHS = new LocalId("rhs");
   }
 
   record FnShape(
-    @NotNull ImmutableSeq<ParamShape> tele
-  ) implements CodeShape {}
-
-  record DataShape(
-    @NotNull ImmutableSeq<ParamShape> tele,
-    @NotNull ImmutableSeq<CtorShape> ctors
-  ) implements CodeShape {}
-
-  record StructShape(
-    @NotNull ImmutableSeq<ParamShape> tele,
-    @NotNull ImmutableSeq<FieldShape> fields
-  ) implements CodeShape {}
-
-  record CtorShape(
     @NotNull MomentId name,
-    @NotNull ImmutableSeq<ParamShape> tele
+    @NotNull ImmutableSeq<ParamShape> tele,
+    @NotNull TermShape result,
+    @NotNull Either<TermShape, ImmutableSeq<ClauseShape>> body
   ) implements CodeShape, Moment {}
 
-  record FieldShape(
+  record ClauseShape(@NotNull ImmutableSeq<PatShape> pats, @NotNull TermShape body) implements CodeShape {
+  }
+
+  record DataShape(
+    @NotNull MomentId name,
+    @NotNull ImmutableSeq<ParamShape> tele,
+    @NotNull ImmutableSeq<CtorShape> ctors
+  ) implements CodeShape, Moment {}
+
+  record CtorShape(
+    @NotNull GlobalId name,
     @NotNull ImmutableSeq<ParamShape> tele
-  ) implements CodeShape {}
-
-  /**
-   * @author kiva
-   */
-  sealed interface TermShape {
-    enum Any implements TermShape {
-      INSTANCE;
-    }
-
-    /**
-     * @param superLevel the data def reference
-     * @param args       corresponds to {@link DataCall#args()}
-     */
-    record Call(int superLevel, @NotNull ImmutableSeq<TermShape> args) implements TermShape {
-      @Contract("_ -> new") public static @NotNull Call justCall(int superLevel) {
-        return new Call(superLevel, ImmutableSeq.empty());
-      }
-    }
-
-    record TeleRef(int superLevel, int nth) implements TermShape {}
-
-    /**
-     * The shape to Sort term, I am not very work well at type theory, so improve this feel free!
-     *
-     * @param kind  the SortKind, null if accept any kind of sort. see {@link ShapeMatcher#matchTerm(TermShape, Term)}
-     * @param ulift the lower bound of the type level.
-     * @author hoshino
-     */
-    record Sort(@Nullable SortKind kind, int ulift) implements TermShape {}
-  }
-
-  /**
-   * @author kiva
-   */
-  sealed interface PatShape {
-    enum Any implements PatShape {
-      INSTANCE;
-    }
-  }
-
-  /**
-   * @author kiva
-   */
-  sealed interface ParamShape {
-    enum Any implements ParamShape {
-      INSTANCE;
-    }
-
-    record Licit(@NotNull CodeShape.TermShape type, Kind kind) implements ParamShape {
-      enum Kind {
-        Any, Ex, Im
-      }
-    }
-
-    record Optional(@NotNull CodeShape.ParamShape param) implements ParamShape {}
-
-    static @NotNull CodeShape.ParamShape explicit(@NotNull CodeShape.TermShape type) {
-      return new Licit(type, Licit.Kind.Ex);
-    }
-
-    static @NotNull CodeShape.ParamShape implicit(@NotNull CodeShape.TermShape type) {
-      return new Licit(type, Licit.Kind.Im);
-    }
-
-    static @NotNull CodeShape.ParamShape anyLicit(@NotNull CodeShape.TermShape type) {
-      return new Licit(type, Licit.Kind.Any);
-    }
-
-    static @NotNull CodeShape.ParamShape anyEx() {
-      return explicit(TermShape.Any.INSTANCE);
-    }
-
-    static @NotNull CodeShape.ParamShape anyIm() {
-      return implicit(TermShape.Any.INSTANCE);
-    }
-
-    // anyLicit(TermShape.Any) would be equivalent to ParamShape.Any
-  }
+  ) implements CodeShape, Moment {}
 }

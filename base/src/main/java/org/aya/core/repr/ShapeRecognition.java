@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.repr;
 
@@ -8,5 +8,5 @@ import org.jetbrains.annotations.NotNull;
 
 public record ShapeRecognition(
   @NotNull AyaShape shape,
-  @NotNull ImmutableMap<CodeShape.MomentId, DefVar<?, ?>> captures
+  @NotNull ImmutableMap<CodeShape.GlobalId, DefVar<?, ?>> captures
 ) {}
