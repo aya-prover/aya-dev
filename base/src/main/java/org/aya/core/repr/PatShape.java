@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public sealed interface PatShape {
   enum Any implements PatShape {
-    INSTANCE;
+    INSTANCE
   }
 
-  record Bind(@NotNull CodeShape.MomentId name) implements PatShape, CodeShape.Moment {
+  record Bind(@NotNull CodeShape.LocalId name) implements PatShape, CodeShape.Moment {
   }
 
   sealed interface CtorLike extends PatShape permits Ctor, ShapedCtor {
@@ -26,10 +26,11 @@ public sealed interface PatShape {
   }
 
   /**
-   * Expecting a certain ctor, {@link ShapeMatcher} will crash if the {@param name} is invalid (such as undefined or not a DataShape)
+   * Expecting a certain ctor, {@link ShapeMatcher} will crash
+   * if the {@param dataId} is invalid (such as undefined or not a DataShaped thing)
    *
    * @param dataId a reference to a {@link CodeShape.DataShape}d term
-   * @param ctorId the {@link CodeShape.MomentId} to the ctor
+   * @param ctorId the {@link CodeShape.GlobalId} to the ctor
    */
   record ShapedCtor(@NotNull CodeShape.MomentId dataId, @NotNull CodeShape.GlobalId ctorId,
                     @NotNull ImmutableSeq<PatShape> innerPats) implements CtorLike {

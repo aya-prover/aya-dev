@@ -13,7 +13,7 @@ sealed public interface ParamShape {
   }
 
   record Licit(
-    @NotNull CodeShape.MomentId name,
+    @NotNull CodeShape.LocalId name,
     @NotNull TermShape type,
     Licit.Kind kind
   ) implements ParamShape, CodeShape.Moment {
@@ -34,7 +34,7 @@ sealed public interface ParamShape {
     return new Licit(CodeShape.LocalId.IGNORED, type, Licit.Kind.Im);
   }
 
-  static @NotNull ParamShape anyLicit(@NotNull CodeShape.MomentId name, @NotNull TermShape type) {
+  static @NotNull ParamShape anyLicit(@NotNull CodeShape.LocalId name, @NotNull TermShape type) {
     return new Licit(name, type, Licit.Kind.Any);
   }
 

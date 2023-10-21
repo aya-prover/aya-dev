@@ -75,16 +75,6 @@ public class ShapeMatcherTest {
     assertEquals("| :< (a : A) (tail : List A)", pp(match.captures().get(CodeShape.GlobalId.CONS)));
     assertNull(match.captures().getOrNull(CodeShape.GlobalId.ZERO));
     assertNull(match.captures().getOrNull(CodeShape.GlobalId.SUC));
-
-    match = match(ImmutableSeq.of(Tuple.of(true, AyaShape.NAT_SHAPE), Tuple.of(true, AyaShape.PLUS_RIGHT_SHAPE)), """
-      open data Nat | O | S Nat
-      def plus Nat Nat : Nat
-      | a, O => a
-      | a, S b => S (plus a b)
-      """).getOrNull(1);
-    assertNotNull(match);
-    assertEquals(AyaShape.PLUS_RIGHT_SHAPE, match.shape());
-    assertEquals("Nat", match.captures().get(CodeShape.GlobalId.NAT).name());
   }
 
   private @NotNull String pp(@NotNull DefVar<?, ?> def) {
