@@ -51,16 +51,16 @@ public final class ShapeFactory {
     @NotNull ShapeRecognition recog,
     @NotNull AyaShape.Factory factory
   ) {
+    var core = ref.core;
+    if (core == null) return null;
+
     if (recog.shape() == AyaShape.PLUS_LEFT_SHAPE || recog.shape() == AyaShape.PLUS_RIGHT_SHAPE) {
-      var dataRef = (DefVar<DataDef, TeleDecl.DataDecl>) recog.captures().get(CodeShape.GlobalId.NAT);
-      var dataDef = dataRef.core;
+      if (!(core.result instanceof DataCall paramType)) return null;
+      var dataDef = paramType.ref().core;
       assert dataDef != null : "How?";
 
       var paramRecog = factory.find(dataDef).getOrNull();
       if (paramRecog == null) throw new InternalException("How?");
-
-      // TODO[h]: Can I use ref.core.result directly?
-      var paramType = new DataCall(dataRef, 0, ImmutableSeq.empty());
 
       return new IntegerOpsTerm.FnRule(ref, paramRecog, paramType, IntegerOpsTerm.FnRule.Kind.Add);
     }
