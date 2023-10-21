@@ -23,14 +23,15 @@ public sealed interface CodeShape {
 
   enum GlobalId implements MomentId, Serializable {
     ZERO, SUC, NIL, CONS,
-    NAT, LIST,
-    NAT_ADD,
   }
 
   record LocalId(@NotNull String name) implements MomentId {
     public static final @NotNull LocalId IGNORED = new LocalId("_");
     public static final @NotNull LocalId LHS = new LocalId("lhs");
     public static final @NotNull LocalId RHS = new LocalId("rhs");
+    public static final @NotNull LocalId DATA = new LocalId("Data");
+    public static final @NotNull LocalId FUNC = new LocalId("Func");
+    public static final @NotNull LocalId TYPE = new LocalId("Type0");
   }
 
   record FnShape(
