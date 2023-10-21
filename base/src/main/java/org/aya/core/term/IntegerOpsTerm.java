@@ -7,7 +7,6 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.Def;
 import org.aya.core.def.FnDef;
-import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.generic.Shaped;
@@ -17,17 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.function.UnaryOperator;
 
 public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDecl<?>>
-  extends Shaped.Applicable<Term, Core, Concrete>, Term {
-  @NotNull ShapeRecognition paramRecognition();
-  @NotNull DataCall paramType();
-
-  default @NotNull IntegerTerm from(int repr) {
-    return new IntegerTerm(repr, paramRecognition(), paramType());
-  }
-
+  extends Shaped.Applicable<Term, Core, Concrete> {
   @Override default @NotNull Term type() {
     var core = ref().core;
     assert core != null;
@@ -47,35 +38,22 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
     public @Nullable Term apply(@NotNull ImmutableSeq<Arg<Term>> args) {
       if (isZero()) {
         assert args.isEmpty();
-        return from(0);
+        return new IntegerTerm(0, paramRecognition, paramType);
       }
 
       // suc
       assert args.sizeEquals(1);
       var arg = args.get(0).term();
       if (arg instanceof IntegerTerm intTerm) {
-        return from(intTerm.repr() + 1);
+        return intTerm.map(x -> x + 1);
       }
 
       return null;
-    }
-
-    public @NotNull ConRule update(@NotNull DataCall paramType) {
-      return paramType == this.paramType
-        ? this
-        : new ConRule(ref, paramRecognition, paramType);
-    }
-
-    @Override
-    public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-      return update((DataCall) f.apply(this.paramType));
     }
   }
 
   record FnRule(
     @Override @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
-    @Override @NotNull ShapeRecognition paramRecognition,
-    @Override @NotNull DataCall paramType,
     @NotNull Kind kind
   ) implements IntegerOpsTerm<FnDef, TeleDecl.FnDecl> {
     public enum Kind implements Serializable {
@@ -90,7 +68,7 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
           var a = args.get(0).term();
           var b = args.get(1).term();
           if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-            yield from(ita.repr() + itb.repr());
+            yield ita.map(x -> x + itb.repr());
           }
 
           yield null;
@@ -100,23 +78,12 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
           var a = args.get(0).term();
           var b = args.get(1).term();
           if (a instanceof IntegerTerm ita && b instanceof IntegerTerm itb) {
-            yield from(Math.max(ita.repr() - itb.repr(), 0));
+            yield ita.map(x -> Math.max(x - itb.repr(), 0));
           }
 
           yield null;
         }
       };
-    }
-
-    public @NotNull FnRule update(@NotNull DataCall paramType) {
-      return paramType == this.paramType
-        ? this
-        : new FnRule(ref, paramRecognition, paramType, kind);
-    }
-
-    @Override
-    public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-      return update((DataCall) f.apply(paramType));
     }
   }
 }

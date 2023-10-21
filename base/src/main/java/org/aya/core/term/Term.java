@@ -47,7 +47,7 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
-  permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, IntegerOpsTerm, StableWHNF {
+  permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   /**
    * Descending an operation to the term AST. NOTE: Currently we require the operation `f` to preserve:
    * {@link StructCall}, {@link DataCall}, {@link SortTerm}, {@link org.aya.generic.Shaped.Applicable}.

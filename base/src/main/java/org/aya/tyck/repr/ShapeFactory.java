@@ -48,8 +48,7 @@ public final class ShapeFactory {
 
   public static @Nullable Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> ofFn(
     @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
-    @NotNull ShapeRecognition recog,
-    @NotNull AyaShape.Factory factory
+    @NotNull ShapeRecognition recog
   ) {
     var core = ref.core;
     if (core == null) return null;
@@ -59,10 +58,7 @@ public final class ShapeFactory {
       var dataDef = paramType.ref().core;
       assert dataDef != null : "How?";
 
-      var paramRecog = factory.find(dataDef).getOrNull();
-      if (paramRecog == null) throw new InternalException("How?");
-
-      return new IntegerOpsTerm.FnRule(ref, paramRecog, paramType, IntegerOpsTerm.FnRule.Kind.Add);
+      return new IntegerOpsTerm.FnRule(ref, IntegerOpsTerm.FnRule.Kind.Add);
     }
 
     return null;

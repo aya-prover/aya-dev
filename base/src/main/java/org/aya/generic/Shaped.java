@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
+import java.util.function.IntFunction;
 
 /**
  * <h2> What should I do after I creating a new Shape? </h2>
@@ -68,6 +69,8 @@ public interface Shaped<T> {
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
 
+    @NotNull Shaped.Nat<T> map(@NotNull IntFunction<Integer> f);
+
     // int construct(@NotNull T term);
   }
 
@@ -107,10 +110,10 @@ public interface Shaped<T> {
   }
 
   /**
-   * Something Shaped which is appliable, like
+   * Something Shaped which is applicable, like
    * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
    *
-   * @see ReduceRule.Fn
+   * @see ReduceRule
    */
   interface Applicable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
     /**

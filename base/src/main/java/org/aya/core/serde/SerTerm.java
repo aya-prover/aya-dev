@@ -7,7 +7,9 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.FnDef;
@@ -350,35 +352,24 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     }
   }
 
-  /// region Term + ShapedApplicable
+  /// region ShapedApplicable
 
-  sealed interface SerShapedApplicable extends SerTerm permits SerTerm.IntegerOps {
-    @Override
-    default @NotNull Term de(@NotNull DeState state) {
-      return (Term) deShape(state);
-    }
-
+  sealed interface SerShapedApplicable extends Serializable permits SerTerm.IntegerOps {
     @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state);
   }
 
   record IntegerOps(
     @NotNull SerDef.QName ref,
-    @Nullable IntegerOpsTerm.FnRule.Kind kind,
-    @NotNull SerDef.SerShapeResult shapeResult,
-    @NotNull SerTerm.Data dataCall) implements SerShapedApplicable {
+    @NotNull Either<Tuple2<SerDef.SerShapeResult, SerTerm.Data>, IntegerOpsTerm.FnRule.Kind> data
+  ) implements SerShapedApplicable {
     @Override
     public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
-      // ref can be empty for now, perhaps it hasn't been de.
-      var shapeRecog = shapeResult.de(state);
-      var dataCall = this.dataCall.de(state);
-
-      if (kind != null) {
-        return new IntegerOpsTerm.FnRule(state.resolve(this.ref), shapeRecog, dataCall, kind);
-      }
-
-      return new IntegerOpsTerm.ConRule(state.resolve(this.ref), shapeRecog, dataCall);
+      return data.fold(
+        left -> new IntegerOpsTerm.ConRule(state.resolve(this.ref), left.component1().de(state), left.component2().de(state)),
+        right -> new IntegerOpsTerm.FnRule(state.resolve(this.ref), right)
+      );
     }
   }
 
-  /// endregion Term + ShapedApplicable
+  /// endregion ShapedApplicable
 }

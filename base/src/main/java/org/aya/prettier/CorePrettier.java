@@ -74,6 +74,7 @@ public class CorePrettier extends BasePrettier<Term> {
         ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
         : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
       case ConCallLike conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
+      // TODO[h]: How about FnCallLike?
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case ReduceRule.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
@@ -239,7 +240,6 @@ public class CorePrettier extends BasePrettier<Term> {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> insideOut(outer, phi, u, "inS");
       case OutTerm(var phi, var par, var u) -> insideOut(outer, phi, u, "outS");
-      case IntegerOpsTerm iot -> throw new UnsupportedOperationException("TODO"); // TODO
     };
   }
 

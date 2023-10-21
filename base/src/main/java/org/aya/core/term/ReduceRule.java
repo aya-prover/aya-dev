@@ -24,7 +24,6 @@ public sealed interface ReduceRule extends Callable.Tele {
   /**
    * A {@link Callable} for {@link Shaped.Applicable}.
    *
-   * @param rule  should be also a {@link Term}
    * @param ulift
    * @param args
    */
@@ -33,29 +32,22 @@ public sealed interface ReduceRule extends Callable.Tele {
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<Term>> args
   ) implements ReduceRule {
-    public Fn {
-      assert rule instanceof Term;
-    }
-
     @Override
     public @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref() {
       return rule.ref();
     }
 
-    private @NotNull ReduceRule.Fn update(@NotNull Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> head, @NotNull ImmutableSeq<Arg<Term>> args) {
-      return head == this.rule && args.sameElements(this.args, true)
+    private @NotNull ReduceRule.Fn update(@NotNull ImmutableSeq<Arg<Term>> args) {
+      return args.sameElements(this.args, true)
         ? this
-        : new Fn(head, ulift, args);
+        : new Fn(rule, ulift, args);
     }
 
     @Override
     public @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-      return update((Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl>) f.apply((Term) rule), args.map(x -> x.descent(f)));
+      return update(args.map(x -> x.descent(f)));
     }
 
-    /**
-     * @return null if this is not a fn call
-     */
     public @NotNull FnCall toFnCall() {
       return new FnCall(rule.ref(), ulift, args);
     }

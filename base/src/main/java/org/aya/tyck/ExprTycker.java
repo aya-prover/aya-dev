@@ -589,7 +589,7 @@ public final class ExprTycker extends UnifiedTycker {
     var recog = shapeFactory.find(var.core);
 
     if (recog.isDefined()) {
-      var head = ShapeFactory.ofFn(var, recog.get(), shapeFactory);
+      var head = ShapeFactory.ofFn(var, recog.get());
       assert head != null : "bad ShapeFactory";
       return defCall(var, (defVar, ulift, args) -> new ReduceRule.Fn(head, ulift, args));
     }

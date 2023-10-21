@@ -59,8 +59,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
   public @Nullable Term synthesize(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm(var var) -> ctx.get(var);
-      case ConCall conCall -> conCall.head().underlyingDataCall();
-      case IntegerTerm shaped -> shaped.type();
+      case ConCallLike conCall -> conCall.head().underlyingDataCall();
       case Callable.Tele call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
@@ -165,7 +164,6 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
         var piRaw = tryPress(of);
         yield piRaw instanceof PiTerm pi ? pi.substBody(arg.term()) : null;
       }
-      case IntegerOpsTerm iot -> iot.type();
       default -> null;
     };
   }

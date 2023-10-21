@@ -5,6 +5,7 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
@@ -134,7 +135,6 @@ public record Serializer(@NotNull Serializer.State state) {
       case HCompTerm hComp -> throw new InternalException("TODO");
       case InTerm(var phi, var u) -> new SerTerm.InS(serialize(phi), serialize(u));
       case OutTerm(var phi, var par, var u) -> new SerTerm.OutS(serialize(phi), serialize(par), serialize(u));
-      case IntegerOpsTerm iot -> serializeShapedApplicable(iot);
     };
   }
 
@@ -185,14 +185,10 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm.SerShapedApplicable serializeShapedApplicable(@NotNull Shaped.Applicable<Term, ?, ?> shapedApplicable) {
     return switch (shapedApplicable) {
-      case IntegerOpsTerm<?, ?> ops -> {
-        var ref = ops.ref();
-        var kind = ops instanceof IntegerOpsTerm.FnRule fnOps ? fnOps.kind() : null;
-        var recog = ops.paramRecognition();
-        var type = ops.paramType();
-
-        yield new SerTerm.IntegerOps(state.def(ref), kind, SerDef.SerShapeResult.serialize(state, recog), (SerTerm.Data) serialize(type));
-      }
+      case IntegerOpsTerm.ConRule conRule -> new SerTerm.IntegerOps(state.def(conRule.ref()), Either.left(Tuple.of(
+        SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
+      )));
+      case IntegerOpsTerm.FnRule fnRule -> new SerTerm.IntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
       default -> throw new IllegalStateException("Unexpected value: " + shapedApplicable);
     };
   }
