@@ -218,7 +218,7 @@ public record ShapeMatcher(
 
         if (!success) yield false;
         yield matchMany(MatchMode.OrderedEq, call.args(), callable.args(), (s, c) ->
-          s.explicit() == c.explicit() && matchTerm(s.term(), c.term()));
+          matchTerm(s, c.term()));
       }
       case TermShape.Sort sort when term instanceof SortTerm sortTerm -> {
         // kind is null -> any sort
