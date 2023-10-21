@@ -76,7 +76,7 @@ public class CorePrettier extends BasePrettier<Term> {
       case ConCallLike conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
       // TODO[h]: How about FnCallLike?
       case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
-      case ReduceRule.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
+      case RuleReducer.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
         var last = params.getLast();
         var doc = Doc.sep(

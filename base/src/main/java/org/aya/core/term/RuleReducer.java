@@ -15,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-/**
- * Maybe we should call this a RuleReducer.
- */
-public sealed interface ReduceRule extends Callable.Tele {
+public sealed interface RuleReducer extends Callable.Tele {
   @NotNull Shaped.Applicable<Term, ?, ?> rule();
 
   /**
@@ -31,13 +28,13 @@ public sealed interface ReduceRule extends Callable.Tele {
     @Override @NotNull Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> rule,
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<Term>> args
-  ) implements ReduceRule {
+  ) implements RuleReducer {
     @Override
     public @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref() {
       return rule.ref();
     }
 
-    private @NotNull ReduceRule.Fn update(@NotNull ImmutableSeq<Arg<Term>> args) {
+    private @NotNull RuleReducer.Fn update(@NotNull ImmutableSeq<Arg<Term>> args) {
       return args.sameElements(this.args, true)
         ? this
         : new Fn(rule, ulift, args);
@@ -62,7 +59,7 @@ public sealed interface ReduceRule extends Callable.Tele {
     @NotNull ImmutableSeq<Arg<Term>> dataArgs,
     @Override @NotNull ImmutableSeq<Arg<Term>> conArgs
 
-  ) implements ReduceRule, ConCallLike {
+  ) implements RuleReducer, ConCallLike {
     @Override
     public @NotNull ConCallLike.Head head() {
       return new Head(
@@ -73,7 +70,7 @@ public sealed interface ReduceRule extends Callable.Tele {
       );
     }
 
-    public @NotNull ReduceRule.Con update(
+    public @NotNull RuleReducer.Con update(
       @NotNull ImmutableSeq<Arg<Term>> dataArgs,
       @NotNull ImmutableSeq<Arg<Term>> conArgs
     ) {

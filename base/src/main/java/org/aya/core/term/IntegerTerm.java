@@ -11,7 +11,6 @@ import org.aya.generic.Shaped;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 
@@ -63,12 +62,12 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-    return new ReduceRule.Con(new IntegerOpsTerm.ConRule(zero.ref, recognition, type),
+    return new RuleReducer.Con(new IntegerOps.ConRule(zero.ref, recognition, type),
       0, ImmutableSeq.empty(), ImmutableSeq.empty());
   }
 
   @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {
-    return new ReduceRule.Con(new IntegerOpsTerm.ConRule(suc.ref, recognition, type),
+    return new RuleReducer.Con(new IntegerOps.ConRule(suc.ref, recognition, type),
       0, ImmutableSeq.empty(), ImmutableSeq.of(term));
   }
 

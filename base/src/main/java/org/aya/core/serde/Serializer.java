@@ -105,10 +105,10 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
-      case ReduceRule.Fn(var head, var ulift, var args) -> new SerTerm.FnReduceRule(
+      case RuleReducer.Fn(var head, var ulift, var args) -> new SerTerm.FnReduceRule(
         serializeShapedApplicable(head), serializeCall(ulift, args)
       );
-      case ReduceRule.Con(var head, var ulift, var dataArgs, var conArgs) -> new SerTerm.ConReduceRule(
+      case RuleReducer.Con(var head, var ulift, var dataArgs, var conArgs) -> new SerTerm.ConReduceRule(
         serializeShapedApplicable(head), serializeCall(ulift, dataArgs), conArgs.map(this::serialize)
       );
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
@@ -185,10 +185,10 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm.SerShapedApplicable serializeShapedApplicable(@NotNull Shaped.Applicable<Term, ?, ?> shapedApplicable) {
     return switch (shapedApplicable) {
-      case IntegerOpsTerm.ConRule conRule -> new SerTerm.IntegerOps(state.def(conRule.ref()), Either.left(Tuple.of(
+      case IntegerOps.ConRule conRule -> new SerTerm.IntegerOps(state.def(conRule.ref()), Either.left(Tuple.of(
         SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
       )));
-      case IntegerOpsTerm.FnRule fnRule -> new SerTerm.IntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
+      case IntegerOps.FnRule fnRule -> new SerTerm.IntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
       default -> throw new IllegalStateException("Unexpected value: " + shapedApplicable);
     };
   }

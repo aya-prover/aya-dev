@@ -60,7 +60,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   }
 
   private static boolean isCall(@NotNull Term term) {
-    return term instanceof FnCall || term instanceof ConCall || term instanceof ReduceRule.Con || term instanceof PrimCall || term instanceof ReduceRule.Fn;
+    return term instanceof FnCall || term instanceof ConCall || term instanceof RuleReducer.Con || term instanceof PrimCall || term instanceof RuleReducer.Fn;
   }
 
   public static <E> E withIntervals(
@@ -180,12 +180,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       case ConCall lhs when preRhs instanceof ConCall rhs ->
         lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
-      case ReduceRule.Con lhs when preRhs instanceof ReduceRule.Con rhs ->
+      case RuleReducer.Con lhs when preRhs instanceof RuleReducer.Con rhs ->
         lhs.ref() != rhs.ref() ? null : lossyUnifyCon(lhs, rhs, lr, rl);
       case PrimCall lhs when preRhs instanceof PrimCall rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       // TODO[h]: This also involves Con situations, is it bad?
-      case ReduceRule.Fn lhs when preRhs instanceof ReduceRule.Fn rhs ->
+      case RuleReducer.Fn lhs when preRhs instanceof RuleReducer.Fn rhs ->
         lhs.ref() != rhs.ref() ? null : visitCall(lhs, rhs, lr, rl, lhs.ref(), lhs.ulift());
       default -> null;
     };

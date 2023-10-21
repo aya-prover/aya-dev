@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
-import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 
 /**
@@ -114,7 +113,7 @@ public interface Shaped<T> {
    * Something Shaped which is applicable, like
    * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
    *
-   * @see ReduceRule
+   * @see RuleReducer
    */
   interface Applicable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
     /**

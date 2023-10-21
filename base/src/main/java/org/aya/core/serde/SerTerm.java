@@ -24,7 +24,6 @@ import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -173,7 +172,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record FnReduceRule(@NotNull SerTerm.SerShapedApplicable head, @NotNull CallData data) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new ReduceRule.Fn(
+      return new RuleReducer.Fn(
         (Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl>) head.deShape(state),
         data.ulift, data.de(state)
       );
@@ -187,7 +186,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   ) implements SerTerm {
     @Override
     public @NotNull Term de(@NotNull DeState state) {
-      return new ReduceRule.Con(
+      return new RuleReducer.Con(
         (Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
         dataArgs().ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
       );
@@ -360,13 +359,13 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   record IntegerOps(
     @NotNull SerDef.QName ref,
-    @NotNull Either<Tuple2<SerDef.SerShapeResult, SerTerm.Data>, IntegerOpsTerm.FnRule.Kind> data
+    @NotNull Either<Tuple2<SerDef.SerShapeResult, SerTerm.Data>, org.aya.core.term.IntegerOps.FnRule.Kind> data
   ) implements SerShapedApplicable {
     @Override
     public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
       return data.fold(
-        left -> new IntegerOpsTerm.ConRule(state.resolve(this.ref), left.component1().de(state), left.component2().de(state)),
-        right -> new IntegerOpsTerm.FnRule(state.resolve(this.ref), right)
+        left -> new org.aya.core.term.IntegerOps.ConRule(state.resolve(this.ref), left.component1().de(state), left.component2().de(state)),
+        right -> new org.aya.core.term.IntegerOps.FnRule(state.resolve(this.ref), right)
       );
     }
   }

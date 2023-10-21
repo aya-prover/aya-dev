@@ -16,11 +16,11 @@ import java.util.function.UnaryOperator;
  * Terms that behave like a {@link ConCall}, for example:
  * <ul>
  *   <li>{@link IntegerTerm} behaves like a {@link ConCall}, in a efficient way</li>
- *   <li>{@link ReduceRule.Con} behaves like a {@link ConCall}, but it produce a special term</li>
+ *   <li>{@link RuleReducer.Con} behaves like a {@link ConCall}, but it produce a special term</li>
  *   <li>Of course, {@link ConCall} haves like a {@link ConCall}</li>
  * </ul>
  */
-public sealed interface ConCallLike extends Callable.Tele permits ConCall, IntegerTerm, ReduceRule.Con {
+public sealed interface ConCallLike extends Callable.Tele permits ConCall, IntegerTerm, RuleReducer.Con {
   /**
    * @param dataArgs the arguments to the data type, NOT the constructor patterns!!
    *                 They need to be turned implicit when used as arguments.

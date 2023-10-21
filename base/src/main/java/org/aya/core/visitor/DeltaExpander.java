@@ -47,11 +47,11 @@ public interface DeltaExpander extends EndoTerm {
           clauses -> tryUnfoldClauses(def.modifiers.contains(Modifier.Overlap), fn.args(), fn.ulift(), clauses)
             .map(this).getOrDefault(fn));
       }
-      case ReduceRule reduceRule -> {
+      case RuleReducer reduceRule -> {
         var result = reduceRule.rule().apply(reduceRule.args());
         if (result != null) yield apply(result);
         // We can't handle it, try to delegate to FnCall
-        yield reduceRule instanceof ReduceRule.Fn fnRule
+        yield reduceRule instanceof RuleReducer.Fn fnRule
           ? post(fnRule.toFnCall())
           : reduceRule;
       }

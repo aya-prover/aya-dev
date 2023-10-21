@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDecl<?>>
+public sealed interface IntegerOps<Core extends Def, Concrete extends TeleDecl<?>>
   extends Shaped.Applicable<Term, Core, Concrete> {
   @Override default @NotNull Term type() {
     var core = ref().core;
@@ -29,7 +29,7 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
     @Override @NotNull DefVar<CtorDef, TeleDecl.DataCtor> ref,
     @Override @NotNull ShapeRecognition paramRecognition,
     @Override @NotNull DataCall paramType
-  ) implements IntegerOpsTerm<CtorDef, TeleDecl.DataCtor> {
+  ) implements IntegerOps<CtorDef, TeleDecl.DataCtor> {
     public boolean isZero() {
       return paramRecognition.captures().get(CodeShape.GlobalId.ZERO) == ref;
     }
@@ -55,7 +55,7 @@ public sealed interface IntegerOpsTerm<Core extends Def, Concrete extends TeleDe
   record FnRule(
     @Override @NotNull DefVar<FnDef, TeleDecl.FnDecl> ref,
     @NotNull Kind kind
-  ) implements IntegerOpsTerm<FnDef, TeleDecl.FnDecl> {
+  ) implements IntegerOps<FnDef, TeleDecl.FnDecl> {
     public enum Kind implements Serializable {
       Add, SubTrunc
     }

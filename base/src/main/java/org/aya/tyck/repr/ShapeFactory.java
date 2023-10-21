@@ -2,20 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.repr;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
-import org.aya.core.def.DataDef;
 import org.aya.core.def.FnDef;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
 import org.aya.core.term.DataCall;
-import org.aya.core.term.IntegerOpsTerm;
+import org.aya.core.term.IntegerOps;
 import org.aya.core.term.Term;
 import org.aya.generic.Shaped;
 import org.aya.ref.DefVar;
-import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +36,7 @@ public final class ShapeFactory {
     @NotNull DataCall paramType
   ) {
     if (paramRecog.shape() == AyaShape.NAT_SHAPE) {
-      return new IntegerOpsTerm.ConRule(ref, paramRecog, paramType);
+      return new IntegerOps.ConRule(ref, paramRecog, paramType);
     }
 
     return null;
@@ -58,7 +54,7 @@ public final class ShapeFactory {
       var dataDef = paramType.ref().core;
       assert dataDef != null : "How?";
 
-      return new IntegerOpsTerm.FnRule(ref, IntegerOpsTerm.FnRule.Kind.Add);
+      return new IntegerOps.FnRule(ref, IntegerOps.FnRule.Kind.Add);
     }
 
     return null;

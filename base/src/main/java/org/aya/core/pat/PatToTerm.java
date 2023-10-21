@@ -39,7 +39,7 @@ public class PatToTerm {
       var head = ShapeFactory.ofCtor(ctor.ref(), ctor.typeRecog(), data);
       // Not a ShapedCtor, even it's data is a ShapedData
       if (head != null) {
-        return new ReduceRule.Con(head, data.ulift(), ImmutableSeq.empty(), args);
+        return new RuleReducer.Con(head, data.ulift(), ImmutableSeq.empty(), args);
       }
     }
 

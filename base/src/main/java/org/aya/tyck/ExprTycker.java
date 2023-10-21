@@ -591,7 +591,7 @@ public final class ExprTycker extends UnifiedTycker {
     if (recog.isDefined()) {
       var head = ShapeFactory.ofFn(var, recog.get());
       assert head != null : "bad ShapeFactory";
-      return defCall(var, (defVar, ulift, args) -> new ReduceRule.Fn(head, ulift, args));
+      return defCall(var, (defVar, ulift, args) -> new RuleReducer.Fn(head, ulift, args));
     }
 
     return null;
@@ -604,7 +604,7 @@ public final class ExprTycker extends UnifiedTycker {
         if (recog.shape() == AyaShape.NAT_SHAPE) {
           var head = ShapeFactory.ofCtor(var, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
           assert head != null : "bad ShapeFactory";
-          return defCall(var, (mVar, ulift, args) -> new ReduceRule.Con(head, ulift, ImmutableSeq.empty(), args));
+          return defCall(var, (mVar, ulift, args) -> new RuleReducer.Con(head, ulift, ImmutableSeq.empty(), args));
         }
 
         return null;
