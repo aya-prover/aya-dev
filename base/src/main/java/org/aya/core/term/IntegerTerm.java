@@ -12,6 +12,7 @@ import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 
 /**
@@ -76,7 +77,7 @@ public record IntegerTerm(
   }
 
   @Override
-  public @NotNull IntegerTerm map(@NotNull IntFunction<Integer> f) {
-    return new IntegerTerm(f.apply(repr), recognition, type);
+  public @NotNull IntegerTerm map(@NotNull IntUnaryOperator f) {
+    return new IntegerTerm(f.applyAsInt(repr), recognition, type);
   }
 }

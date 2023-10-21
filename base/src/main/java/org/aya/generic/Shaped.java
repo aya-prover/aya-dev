@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 
 /**
  * <h2> What should I do after I creating a new Shape? </h2>
@@ -69,7 +70,7 @@ public interface Shaped<T> {
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
 
-    @NotNull Shaped.Nat<T> map(@NotNull IntFunction<Integer> f);
+    @NotNull Shaped.Nat<T> map(@NotNull IntUnaryOperator f);
 
     // int construct(@NotNull T term);
   }

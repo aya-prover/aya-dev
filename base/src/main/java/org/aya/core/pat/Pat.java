@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 
 /**
@@ -258,8 +259,8 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override
-    public @NotNull ShapedInt map(@NotNull IntFunction<Integer> f) {
-      return new ShapedInt(f.apply(repr), recognition, type);
+    public @NotNull ShapedInt map(@NotNull IntUnaryOperator f) {
+      return new ShapedInt(f.applyAsInt(repr), recognition, type);
     }
   }
 
