@@ -47,12 +47,8 @@ public record IntegerTerm(
     return ImmutableSeq.of(new Arg<>(new IntegerTerm(repr - 1, recognition, type), ctorTele.first().explicit()));
   }
 
-  public IntegerTerm update(DataCall type) {
-    return type == type() ? this : new IntegerTerm(repr, recognition, type);
-  }
-
   @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-    return update((DataCall) f.apply(type));
+    return this;
   }
 
   @Override
@@ -62,8 +58,7 @@ public record IntegerTerm(
   }
 
   @Override public @NotNull Term makeZero(@NotNull CtorDef zero) {
-    return new RuleReducer.Con(new IntegerOps.ConRule(zero.ref, recognition, type),
-      0, ImmutableSeq.empty(), ImmutableSeq.empty());
+    return map(x -> 0);
   }
 
   @Override public @NotNull Term makeSuc(@NotNull CtorDef suc, @NotNull Arg<Term> term) {

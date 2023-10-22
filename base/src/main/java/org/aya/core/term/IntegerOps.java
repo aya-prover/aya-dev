@@ -17,6 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
+/**
+ * IntegerOps acts like a DefVar with special reduce rule. So it is not a {@link Term}.
+ *
+ * @see RuleReducer
+ */
 public sealed interface IntegerOps<Core extends Def, Concrete extends TeleDecl<?>>
   extends Shaped.Applicable<Term, Core, Concrete> {
   @Override default @NotNull Term type() {
