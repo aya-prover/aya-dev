@@ -79,6 +79,8 @@ BLOCK_COMMENT_END   = "*/"
   {BLOCK_COMMENT_START} { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 
   "-----"-+             { return SEPARATOR; }
+  ":"                   { return COLON; }
+  ";"                   { return SEMI; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }
