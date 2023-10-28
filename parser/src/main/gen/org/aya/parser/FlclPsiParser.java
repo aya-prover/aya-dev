@@ -39,7 +39,7 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // rule* SEPARATOR ID*
+  // rule* SEPARATOR token*
   static boolean program(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program")) return false;
     if (!nextTokenIs(b, "", ID, SEPARATOR)) return false;
@@ -63,12 +63,12 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ID*
+  // token*
   private static boolean program_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, ID)) break;
+      if (!token(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "program_2", c)) break;
     }
     return true;
@@ -97,6 +97,19 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "rule_2", c)) break;
     }
     return true;
+  }
+
+  /* ********************************************************** */
+  // ID | NUMBER
+  public static boolean token(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "token")) return false;
+    if (!nextTokenIs(b, "<token>", ID, NUMBER)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, TOKEN, "<token>");
+    r = consumeToken(b, ID);
+    if (!r) r = consumeToken(b, NUMBER);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
 }

@@ -20,5 +20,6 @@
   tokenTypeClass='org.aya.parser.AyaPsiTokenType'
 }
 
-program ::= rule* SEPARATOR ID*
+program ::= rule* SEPARATOR token*
 rule ::= ID COLON ID* SEMI
+token ::= ID | NUMBER

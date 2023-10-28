@@ -4,20 +4,39 @@ package org.aya.cli.parse;
 
 import com.intellij.psi.DefaultPsiParser;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableArrayList;
 import org.aya.cli.literate.FlclToken;
+import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.FlclLanguage;
 import org.aya.parser.FlclParserDefinition;
-import org.aya.util.error.SourceFile;
+import org.aya.parser.FlclPsiElementTypes;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.EnumMap;
 
 public record FlclParser(
   @NotNull Reporter reporter,
-  @NotNull MutableMap<String, ImmutableSeq<String>> decls
+  @NotNull EnumMap<FlclToken.Type, ImmutableSeq<String>> decls
 ) {
-  public @NotNull ImmutableSeq<FlclToken> program(@NotNull SourceFile file) {
-    throw new UnsupportedOperationException("TODO");
+  public @NotNull ImmutableSeq<FlclToken> program(@NotNull String file) {
+    var node = new MarkerNodeWrapper(file, new FlclFleetParser().parse(file));
+    var ids = node.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
+    var nums = node.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
+    var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size());
+    ids.mapNotNullTo(tokens, this::computeType);
+    nums.mapTo(tokens, n -> new FlclToken(n.range(), FlclToken.Type.Number));
+    return tokens.toImmutableSeq();
+  }
+
+  private @Nullable FlclToken computeType(@NotNull MarkerNodeWrapper text) {
+    for (var entry : decls.entrySet()) {
+      if (entry.getValue().contains(text.tokenText().toString())) {
+        return new FlclToken(text.range(), entry.getKey());
+      }
+    }
+    return null;
   }
 
   private static class FlclFleetParser extends DefaultPsiParser {
