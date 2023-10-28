@@ -4,6 +4,7 @@ package org.aya.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,22 @@ public interface ParserDefBase extends ParserDefinition {
   @NotNull TokenSet COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT);
 
   @Override default @NotNull TokenSet getCommentTokens() {
-    // Remark needs DOC_COMMENT, do not skip it.
     return ParserDefBase.COMMENTS;
+  }
+
+  @Override default @NotNull TokenSet getStringLiteralElements() {
+    return TokenSet.EMPTY;
+  }
+
+  abstract class WithFile implements ParserDefBase {
+    public final @NotNull IFileElementType file;
+
+    public WithFile(@NotNull IFileElementType file) {
+      this.file = file;
+    }
+
+    @Override public @NotNull IFileElementType getFileNodeType() {
+      return file;
+    }
   }
 }

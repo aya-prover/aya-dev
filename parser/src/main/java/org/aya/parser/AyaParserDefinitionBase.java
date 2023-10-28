@@ -7,10 +7,15 @@ import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AyaParserDefinitionBase implements ParserDefBase {
+public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
+  public AyaParserDefinitionBase(@NotNull IFileElementType file) {
+    super(file);
+  }
+
   public static @NotNull FlexLexer createLexer(boolean isRepl) {
     return new _AyaPsiLexer(isRepl);
   }
