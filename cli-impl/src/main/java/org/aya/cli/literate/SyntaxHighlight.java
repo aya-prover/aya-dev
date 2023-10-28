@@ -25,6 +25,7 @@ import org.aya.core.def.*;
 import org.aya.core.term.Term;
 import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.parser.ParserDefBase;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Link;
 import org.aya.ref.AnyVar;
@@ -66,7 +67,7 @@ public record SyntaxHighlight(
           var tokenType = token.type();
           if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
             return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Keyword);
-          else if (AyaParserDefinitionBase.SKIP_COMMENTS.contains(tokenType))
+          else if (ParserDefBase.COMMENTS.contains(tokenType))
             return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Comment);
           else if (SPECIAL_SYMBOL.contains(tokenType))
             return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.SpecialSymbol);

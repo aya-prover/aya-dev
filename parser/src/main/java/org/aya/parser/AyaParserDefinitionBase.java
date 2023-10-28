@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.parser;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.FlexLexer;
@@ -12,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AyaParserDefinitionBase implements ParserDefinition {
+public abstract class AyaParserDefinitionBase implements ParserDefBase {
   public static @NotNull FlexLexer createLexer(boolean isRepl) {
     return new _AyaPsiLexer(isRepl);
   }
@@ -25,24 +23,11 @@ public abstract class AyaParserDefinitionBase implements ParserDefinition {
     return new AyaPsiParser();
   }
 
-  @Override public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    return SpaceRequirements.MAY;
-  }
-
-  @Override public @NotNull TokenSet getCommentTokens() {
-    // Remark needs DOC_COMMENT, do not skip it.
-    return SKIP_COMMENTS;
-  }
-
   @Override public @NotNull TokenSet getStringLiteralElements() {
     return STRINGS;
   }
 
-  public static final @NotNull AyaPsiTokenType LINE_COMMENT = new AyaPsiTokenType("LINE_COMMENT");
-  public static final @NotNull AyaPsiTokenType BLOCK_COMMENT = new AyaPsiTokenType("BLOCK_COMMENT");
   public static final @NotNull TokenSet IDENTIFIERS = TokenSet.create(AyaPsiElementTypes.ID, AyaPsiElementTypes.REPL_COMMAND);
-  public static final @NotNull TokenSet COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT);
-  public static final @NotNull TokenSet SKIP_COMMENTS = COMMENTS;
   public static final @NotNull TokenSet STRINGS = TokenSet.create(AyaPsiElementTypes.STRING);
   /** non-text symbols that should be highlighted like keywords */
   public static final @NotNull TokenSet MARKERS = TokenSet.create(
