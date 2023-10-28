@@ -22,4 +22,4 @@
 
 program ::= rule* SEPARATOR token*
 rule ::= ID COLON ID* SEMI
-token ::= ID | NUMBER
+private token ::= ID | NUMBER

@@ -9,7 +9,6 @@ import com.intellij.psi.tree.IElementType;
 public interface FlclPsiElementTypes {
 
   IElementType RULE = new AyaPsiElementType("RULE");
-  IElementType TOKEN = new AyaPsiElementType("TOKEN");
 
   IElementType COLON = new AyaPsiTokenType("COLON");
   IElementType ID = new AyaPsiTokenType("ID");

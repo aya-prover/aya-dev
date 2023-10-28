@@ -101,14 +101,12 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ID | NUMBER
-  public static boolean token(PsiBuilder b, int l) {
+  static boolean token(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "token")) return false;
-    if (!nextTokenIs(b, "<token>", ID, NUMBER)) return false;
+    if (!nextTokenIs(b, "", ID, NUMBER)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, TOKEN, "<token>");
     r = consumeToken(b, ID);
     if (!r) r = consumeToken(b, NUMBER);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

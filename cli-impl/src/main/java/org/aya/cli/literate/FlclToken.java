@@ -10,6 +10,6 @@ public record FlclToken(
   @NotNull Type type
 ) {
   public enum Type {
-    Keyword, Fn, Data, Number
+    Keyword, Fn, Data, Number, Local
   }
 }

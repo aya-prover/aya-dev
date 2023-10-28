@@ -10,6 +10,7 @@ import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.FlclLanguage;
 import org.aya.parser.FlclParserDefinition;
 import org.aya.parser.FlclPsiElementTypes;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,21 @@ public record FlclParser(
 ) {
   public @NotNull ImmutableSeq<FlclToken> program(@NotNull String file) {
     var node = new MarkerNodeWrapper(file, new FlclFleetParser().parse(file));
+    node.childrenOfType(FlclPsiElementTypes.RULE).forEach(rule -> {
+      var idChildren = rule.childrenOfType(FlclPsiElementTypes.ID)
+        .map(MarkerNodeWrapper::tokenText)
+        .map(CharSequence::toString);
+      var title = idChildren.first();
+      var ids = idChildren.drop(1).toImmutableSeq();
+      // Replace with a loop?
+      switch (title) {
+        case "keyword" -> decls.put(FlclToken.Type.Keyword, ids);
+        case "fn" -> decls.put(FlclToken.Type.Fn, ids);
+        case "data" -> decls.put(FlclToken.Type.Data, ids);
+        case "local" -> decls.put(FlclToken.Type.Local, ids);
+        default -> reporter.reportString("Unknown rule: " + title, Problem.Severity.WARN);
+      }
+    });
     var ids = node.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
     var nums = node.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
     var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size());
