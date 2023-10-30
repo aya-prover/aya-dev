@@ -22,7 +22,8 @@ public record FlclToken(
   ) {}
 
   public enum Type {
-    Keyword, Fn, Data, Number, Local, Comment, WhiteSpace, Eol, Symbol
+    Keyword, Fn, Data, Constructor, Primitive,
+    Number, Local, Comment, WhiteSpace, Eol, Symbol
   }
 
   public @NotNull HighlightInfo toInfo() {
@@ -35,6 +36,8 @@ public record FlclToken(
       case Eol -> new HighlightInfo.Lit(range, LitKind.Eol);
       case Fn -> createRef(HighlightInfo.DefKind.Fn);
       case Data -> createRef(HighlightInfo.DefKind.Data);
+      case Constructor -> createRef(HighlightInfo.DefKind.Con);
+      case Primitive -> createRef(HighlightInfo.DefKind.Prim);
       case Local -> createRef(HighlightInfo.DefKind.LocalVar);
     };
   }
