@@ -72,6 +72,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("/\\", "\\land"),
     Tuple.of("|", "\\mid"),
     Tuple.of("=>", "\\Rightarrow"),
+    Tuple.of("\u2191", "\\uparrow"),
     Tuple.of("->", "\\to"),
     Tuple.of("_|_", "\\bot"),
     Tuple.of("forall", "\\forall"),
@@ -95,7 +96,7 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
     Tuple.of("|}", "|\\}"),
     Tuple.of("\u2983", "\\{|"),
     Tuple.of("\u2984", "|\\}"),
-    id(":"), id("."), id(":="),
+    id(":"), id("."), id(":="), id("="),
     id("("), id(")"),
     Tuple.of("{", "\\{"),
     Tuple.of("}", "\\}")

@@ -45,27 +45,27 @@ public class Main extends MainArgs implements Callable<Integer> {
       return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
     if (action.plct != null)
       return new PLCTReport().run(action.plct);
-    if (action.fileIO == null) {
-      System.err.println("Missing <input-files> arguments");
+    if (inputFile == null) {
+      System.err.println("No input file specified");
       return 1;
     }
-    if (fakeLiterate) return doFakeLiterate(action.fileIO);
+    if (fakeLiterate) return doFakeLiterate();
     if (action.compile == null) action.compile = new CompileAction();
-    return doCompile(action.compile, action.fileIO);
+    return doCompile(action.compile);
   }
 
-  private int doFakeLiterate(@NotNull FileIO filePath) throws IOException {
+  private int doFakeLiterate() throws IOException {
     var replConfig = ReplConfig.loadFromDefault();
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
     var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
     var renderOptions = createRenderOptions(replConfig);
-    var outputPath = filePath.outputFile != null ? Paths.get(filePath.outputFile) : null;
+    var outputPath = outputFile != null ? Paths.get(outputFile) : null;
     // Force it to have a pretty stage so info != null
     prettyStage = CliEnums.PrettyStage.literate;
     var info = computePrettyInfo(outputPath, renderOptions, prettierOptions);
     assert info != null;
     replConfig.close();
-    var path = Paths.get(filePath.inputFile);
+    var path = Paths.get(inputFile);
     var file = SourceFile.from(SourceFileLocator.EMPTY, path);
     var doc = new FlclFaithfulPrettier(prettierOptions).highlight(
       new FlclParser(reporter, file).computeAst());
@@ -77,12 +77,10 @@ public class Main extends MainArgs implements Callable<Integer> {
     return 0;
   }
 
-  private int doCompile(@NotNull CompileAction compile, @NotNull FileIO files) throws IOException {
+  private int doCompile(@NotNull CompileAction compile) throws IOException {
     var message = asciiOnly
       ? CompilerFlags.Message.ASCII
       : CompilerFlags.Message.EMOJI;
-    var inputFile = files.inputFile;
-    var outputFile = files.outputFile;
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var replConfig = ReplConfig.loadFromDefault();

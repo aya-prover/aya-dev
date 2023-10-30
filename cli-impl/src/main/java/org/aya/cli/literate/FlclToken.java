@@ -4,6 +4,7 @@ package org.aya.cli.literate;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.text.StringSlice;
+import org.aya.cli.literate.HighlightInfo.LitKind;
 import org.aya.pretty.doc.Link;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -21,17 +22,22 @@ public record FlclToken(
   ) {}
 
   public enum Type {
-    Keyword, Fn, Data, Number, Local, Comment, Symbol
+    Keyword, Fn, Data, Constructor, Primitive,
+    Number, Local, Comment, WhiteSpace, Eol, Symbol
   }
 
   public @NotNull HighlightInfo toInfo() {
     return switch (type) {
-      case Keyword -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Keyword);
-      case Number -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Int);
-      case Comment -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Comment);
-      case Symbol -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.SpecialSymbol);
+      case Keyword -> new HighlightInfo.Lit(range, LitKind.Keyword);
+      case Number -> new HighlightInfo.Lit(range, LitKind.Int);
+      case Comment -> new HighlightInfo.Lit(range, LitKind.Comment);
+      case Symbol -> new HighlightInfo.Lit(range, LitKind.SpecialSymbol);
+      case WhiteSpace -> new HighlightInfo.Lit(range, LitKind.Whitespace);
+      case Eol -> new HighlightInfo.Lit(range, LitKind.Eol);
       case Fn -> createRef(HighlightInfo.DefKind.Fn);
       case Data -> createRef(HighlightInfo.DefKind.Data);
+      case Constructor -> createRef(HighlightInfo.DefKind.Con);
+      case Primitive -> createRef(HighlightInfo.DefKind.Prim);
       case Local -> createRef(HighlightInfo.DefKind.LocalVar);
     };
   }

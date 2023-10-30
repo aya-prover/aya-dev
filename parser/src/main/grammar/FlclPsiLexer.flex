@@ -83,6 +83,7 @@ BLOCK_COMMENT_END   = "*/"
   "-----"-+             { inHeader = false; return SEPARATOR; }
   ":"                   { return inHeader ? COLON : ID; }
   ";"                   { return inHeader ? SEMI : ID; }
+  [(){}|]               { return ID; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }

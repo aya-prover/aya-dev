@@ -66,9 +66,6 @@ public class MainArgs {
 
     @CommandLine.ArgGroup(heading = "PLCT report arguments:%n", exclusive = false)
     public @Nullable PlctAction plct;
-
-    @CommandLine.ArgGroup(heading = "Files:%n", exclusive = false)
-    public @Nullable FileIO fileIO;
   }
 
   @Option(names = {"--interrupted-trace"}, hidden = true)
@@ -103,12 +100,10 @@ public class MainArgs {
   @Option(names = {"--fake-literate"}, description = "Generate literate output without compiling.")
   public boolean fakeLiterate;
 
-  public static class FileIO {
-    @Parameters(paramLabel = "<input-file>", description = "File to compile")
-    public String inputFile;
-    @Option(names = {"-o", "--output"}, description = "Set literate output file")
-    public String outputFile;
-  }
+  @Parameters(paramLabel = "<input-file>", defaultValue = "null", description = "File to compile")
+  public String inputFile;
+  @Option(names = {"-o", "--output"}, description = "Set literate output file")
+  public String outputFile;
 
   @CommandLine.ArgGroup
   public Action action;
