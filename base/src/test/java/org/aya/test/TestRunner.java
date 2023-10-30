@@ -8,6 +8,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.generic.util.AyaFiles;
 import org.aya.prelude.GeneratedVersion;
+import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.CountingReporter;
@@ -124,7 +125,7 @@ public class TestRunner {
     hookOut = instantiateHoles(testFile, hookOut);
     var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt");
     try {
-      Files.writeString(workflowFile, hookOut, StandardCharsets.UTF_8);
+      FileUtil.writeString(workflowFile, hookOut);
     } catch (IOException e) {
       fail("error generating todo file " + workflowFile.toAbsolutePath());
     }

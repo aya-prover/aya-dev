@@ -15,6 +15,7 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.test.AyaThrowingReporter;
 import org.aya.test.EmptyModuleLoader;
 import org.aya.test.TestRunner;
+import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.CollectingReporter;
@@ -91,7 +92,7 @@ public class AyaMdParserTest {
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
     var literate = SingleAyaFile.createLiterateFile(mdFile, AyaThrowingReporter.INSTANCE);
     var actualCode = literate.codeFile().sourceCode();
-    Files.writeString(oneCase.ayaFile(), actualCode);
+    FileUtil.writeString(oneCase.ayaFile(), actualCode);
 
     var expPath = oneCase.expectedAyaFile();
 
@@ -125,10 +126,10 @@ public class AyaMdParserTest {
     var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();
 
-    Files.writeString(oneCase.htmlFile(), doc.renderToHtml());
-    Files.writeString(oneCase.outMdFile(), expectedMd);
-    Files.writeString(oneCase.texFile(), actualTexInlinedStyle);
-    Files.writeString(oneCase.plainTextFile(), doc.debugRender());
+    FileUtil.writeString(oneCase.htmlFile(), doc.renderToHtml());
+    FileUtil.writeString(oneCase.outMdFile(), expectedMd);
+    FileUtil.writeString(oneCase.texFile(), actualTexInlinedStyle);
+    FileUtil.writeString(oneCase.plainTextFile(), doc.debugRender());
 
     // test single file compiler
     var compiler = new SingleFileCompiler(IgnoringReporter.INSTANCE, null, null);
