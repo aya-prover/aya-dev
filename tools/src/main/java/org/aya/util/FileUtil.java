@@ -18,6 +18,7 @@ public interface FileUtil {
   static void writeString(@NotNull Path path, @NotNull String content) throws IOException {
     var parent = path.toAbsolutePath().getParent();
     if (parent != null && Files.notExists(parent)) Files.createDirectories(parent);
+    // No need to set UTF_8 since Java 17
     Files.writeString(path, content);
   }
 

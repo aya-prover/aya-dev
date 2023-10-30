@@ -18,6 +18,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,7 +72,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     // Garbage code
     var setup = info.backendOpts(false);
     var output = renderOptions.render(RenderOptions.OutputTarget.LaTeX, doc, setup);
-    if (outputPath != null) Files.writeString(outputPath, output, StandardCharsets.UTF_8);
+    if (outputPath != null) FileUtil.writeString(outputPath, output);
     else System.out.println(output);
     return 0;
   }
