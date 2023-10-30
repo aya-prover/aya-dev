@@ -13,11 +13,15 @@ dependencies {
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest) }
 
-val lexer = tasks.register<org.aya.gradle.JFlexTask>("lexer") {
+val lexerAya = tasks.register<org.aya.gradle.JFlexTask>("lexerAya") {
   outputDir = genDir.resolve("org/aya/parser")
   jflex = file("src/main/grammar/AyaPsiLexer.flex")
 }
+val lexerFlcl = tasks.register<org.aya.gradle.JFlexTask>("lexerFlcl") {
+  outputDir = genDir.resolve("org/aya/parser")
+  jflex = file("src/main/grammar/FlclPsiLexer.flex")
+}
 
 listOf(tasks.compileJava, tasks.sourcesJar).forEach {
-  it.configure { dependsOn(lexer) }
+  it.configure { dependsOn(lexerAya, lexerFlcl) }
 }

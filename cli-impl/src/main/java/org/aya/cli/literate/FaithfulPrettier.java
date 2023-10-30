@@ -7,50 +7,19 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.text.StringSlice;
-import org.aya.cli.utils.InlineHintProblem;
-import org.aya.concrete.remark.AyaLiterate;
 import org.aya.generic.AyaDocile;
-import org.aya.literate.Literate;
-import org.aya.literate.LiterateConsumer;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
-import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * This prettier maintains all highlights created from {@link SyntaxHighlight} and all
- * problems reported by Aya compiler.
- * Implementation-wise, this prettier can be seen as a highlight server for a single file.
- * <p>
- * When the highlight of a code block is requested, it filters out
- * all highlights and problems that belong to the code block, and then
- * build a {@link Doc} containing the highlighted source code mixed with compiler
- * outputs, as done in {@link #highlight(String, SourcePos)}.
- *
- * @param problems   All problems of a single file
- * @param highlights All highlights of a single file
- */
-public record FaithfulPrettier(
-  @NotNull ImmutableSeq<Problem> problems,
-  @NotNull ImmutableSeq<HighlightInfo> highlights,
-  @NotNull PrettierOptions options
-) implements LiterateConsumer {
+public interface FaithfulPrettier {
+  @NotNull PrettierOptions options();
 
-  /**
-   * Highlight all visible aya code blocks
-   */
-  @Override public void accept(@NotNull Literate literate) {
-    if (literate instanceof AyaLiterate.AyaVisibleCodeBlock code && code.sourcePos != null) {
-      code.highlighted = highlight(code.code, code.sourcePos);
-    }
-    LiterateConsumer.super.accept(literate);
-  }
-
-  private static void checkHighlights(@NotNull ImmutableSeq<HighlightInfo> highlights) {
+  static void checkHighlights(@NotNull ImmutableSeq<HighlightInfo> highlights) {
     highlights.foldLeft(-1, (lastEndIndex, h) -> {
       var sp = h.sourcePos();
       if (!(sp.tokenStartIndex() <= sp.tokenEndIndex()))
@@ -61,13 +30,8 @@ public record FaithfulPrettier(
     });
   }
 
-  /** find highlights and problems inside the code range, and merge them as new highlights */
-  private static @NotNull ImmutableSeq<HighlightInfo> merge(
-    @NotNull SourcePos codeRange,
-    @NotNull PrettierOptions options,
-    @NotNull ImmutableSeq<HighlightInfo> highlights,
-    @NotNull ImmutableSeq<Problem> problems
-  ) {
+  static @NotNull ImmutableSeq<HighlightInfo>
+  highlightsInRange(@NotNull SourcePos codeRange, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var highlightInRange = highlights.view()
       .filter(h -> h.sourcePos() != SourcePos.NONE)
       .filterNot(h -> h.sourcePos().isEmpty())
@@ -75,36 +39,10 @@ public record FaithfulPrettier(
       .sorted().distinct()
       .toImmutableSeq();
     checkHighlights(highlightInRange);
-
-    var problemsInRange = problems.view()
-      .filter(p -> codeRange.containsIndex(p.sourcePos()))
-      .flatMap(p -> InlineHintProblem.withInlineHints(p, options))
-      .distinct()
-      .toImmutableSeq();
-
-    return problemsInRange.foldLeft(highlightInRange, (acc, p) -> {
-      var partition = acc.partition(
-        h -> p.sourcePos().containsIndex(h.sourcePos()));
-      var inP = partition.component1().sorted();
-      var wrap = new HighlightInfo.Err(p, inP);
-      return partition.component2().appended(wrap);
-    });
+    return highlightInRange;
   }
 
-  /**
-   * Apply highlights to source code string.
-   *
-   * @param raw       the source code
-   * @param codeRange where the raw start from (the 'raw' might be a piece of the source code,
-   *                  so it probably not starts from 0).
-   */
-  public @NotNull Doc highlight(@NotNull String raw, @NotNull SourcePos codeRange) {
-    var merged = merge(codeRange, options, highlights, problems).sorted();
-    checkHighlights(merged);
-    return doHighlight(StringSlice.of(raw), codeRange.tokenStartIndex(), merged);
-  }
-
-  private @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  default @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
@@ -146,7 +84,7 @@ public record FaithfulPrettier(
         };
         yield style == null ? doc : new Doc.Tooltip(Doc.styled(style, doc), () -> Doc.codeBlock(
           Language.Builtin.Aya,
-          err.problem().brief(options).toDoc()
+          err.problem().brief(options()).toDoc()
         ));
       }
     };
@@ -157,7 +95,7 @@ public record FaithfulPrettier(
     return term.toDoc(options()).commonRender();
   }
 
-  private @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
+  private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {
     var style = switch (defKind) {
       case Data -> BasePrettier.DATA;
       case Con -> BasePrettier.CON;
@@ -172,7 +110,7 @@ public record FaithfulPrettier(
     return style != null ? Doc.styled(style, raw) : Doc.plain(raw);
   }
 
-  private @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
+  private static @NotNull Doc highlightLit(@NotNull String raw, @NotNull HighlightInfo.LitKind litKind) {
     return switch (litKind) {
       case Int, Whitespace -> Doc.plain(raw);
       case String -> Doc.plain(StringUtil.escapeStringCharacters(raw));

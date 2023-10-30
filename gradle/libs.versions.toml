@@ -10,7 +10,7 @@ java = "20"
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
 kala = "0.67.0"
-picocli = "4.7.4"
+picocli = "4.7.5"
 build-util = "0.0.18"
 # https://github.com/graalvm/native-build-tools
 graal-tools = "0.9.27"

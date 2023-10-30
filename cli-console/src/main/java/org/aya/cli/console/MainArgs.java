@@ -60,6 +60,12 @@ public class MainArgs {
     public String repoName;
   }
 
+  public static class LiterateAction {
+    @Option(names = {"--fake-literate"}, paramLabel = "<input-file>",
+      description = "Generate fake language literate output from this file")
+    public String fakeLiterate;
+  }
+
   /** Either `repl` or `compile` is not null */
   public static class Action {
     @CommandLine.ArgGroup(heading = "REPL arguments:%n", exclusive = false)
@@ -70,6 +76,9 @@ public class MainArgs {
 
     @CommandLine.ArgGroup(heading = "PLCT report arguments:%n", exclusive = false)
     public @Nullable PlctAction plct;
+
+    @CommandLine.ArgGroup(heading = "Aya-quality highlighting tools:%n", exclusive = false)
+    public @Nullable LiterateAction flcl;
   }
 
   @Option(names = {"--interrupted-trace"}, hidden = true)

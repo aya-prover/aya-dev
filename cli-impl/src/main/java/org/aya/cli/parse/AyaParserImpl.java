@@ -3,15 +3,10 @@
 package org.aya.cli.parse;
 
 import com.intellij.psi.DefaultPsiParser;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.builder.FleetPsiBuilder;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.error.ParseError;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.intellij.GenericNode;
 import org.aya.intellij.MarkerNodeWrapper;
@@ -27,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
-  private static final @NotNull TokenSet ERROR = TokenSet.create(TokenType.ERROR_ELEMENT, TokenType.BAD_CHARACTER);
-
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
     return new MarkerNodeWrapper(code, parser.parse(code));
@@ -51,7 +44,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
   }
 
   private @NotNull Either<ImmutableSeq<Stmt>, Expr> parse(@NotNull String code, @NotNull SourceFile errorReport) {
-    var node = reportErrorElements(parseNode(code), errorReport);
+    var node = ParserUtil.reportErrorElements(parseNode(code), errorReport, reporter);
     return new AyaProducer(Either.left(errorReport), reporter).program(node);
   }
 
@@ -63,32 +56,9 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     return new SourceFile("<stdin>", Path.of("stdin"), text);
   }
 
-  private @NotNull GenericNode<?> reportErrorElements(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    // note: report syntax error here (instead of in Producer) bc
-    // IJ plugin directly reports them through PsiErrorElements.
-    node.childrenView()
-      .filter(i -> ERROR.contains(i.elementType()))
-      .forEach(e ->
-        reporter.report(new ParseError(AyaProducer.sourcePosOf(e, file),
-          "Cannot parse")
-        ));
-    return node;
-  }
-
   private static class AyaFleetParser extends DefaultPsiParser {
     public AyaFleetParser() {
-      super(new AyaFleetParserDefinition());
-    }
-
-    private static final class AyaFleetParserDefinition extends AyaParserDefinitionBase {
-      private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE) {
-        @Override public void parse(@NotNull FleetPsiBuilder<?> builder) {
-        }
-      };
-
-      @Override public @NotNull IFileElementType getFileNodeType() {
-        return FILE;
-      }
+      super(new AyaParserDefinitionBase(ParserUtil.forLanguage(AyaLanguage.INSTANCE)));
     }
   }
 }

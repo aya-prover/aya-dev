@@ -53,9 +53,10 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     String fileName;
     Path prettyDir;
 
-    if (compilerFlags.outputFile() != null) {
-      prettyDir = compilerFlags.outputFile().toAbsolutePath().getParent();
-      fileName = compilerFlags.outputFile().getFileName().toString();
+    var outputFile = compilerFlags.outputFile();
+    if (outputFile != null) {
+      prettyDir = outputFile.toAbsolutePath().getParent();
+      fileName = outputFile.getFileName().toString();
     } else {
       prettyDir = flags.prettyDir() != null ? Path.of(flags.prettyDir()) : Path.of(".");
       fileName = AyaFiles.stripAyaSourcePostfix(originalFile().display()) + out.fileExt;

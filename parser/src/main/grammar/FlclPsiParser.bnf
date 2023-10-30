@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
+{
+  // only for the compiler, not the IDE
+  generate=[
+    java='11'
+    psi-factory='no'
+    visitor='no'
+  ]
+  generatePsi=false
+  generateTokenAccessors=true
+
+  // we only need the parser and element types.
+  parserClass='org.aya.parser.FlclPsiParser'
+  elementTypeHolderClass='org.aya.parser.FlclPsiElementTypes'
+  elementTypeClass='org.aya.parser.AyaPsiElementType'
+  tokenTypeClass='org.aya.parser.AyaPsiTokenType'
+}
+
+program ::= rule* SEPARATOR body
+body ::= token*
+rule ::= ID COLON ID* SEMI
+private token ::= ID | NUMBER

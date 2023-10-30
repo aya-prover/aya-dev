@@ -5,6 +5,8 @@ package org.aya.cli.console;
 import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.literate.FlclFaithfulPrettier;
+import org.aya.cli.parse.FlclParser;
 import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
@@ -14,10 +16,13 @@ import org.aya.core.def.PrimDef;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.tyck.trace.MarkdownTrace;
 import org.aya.tyck.trace.Trace;
+import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
@@ -36,8 +41,27 @@ public class Main extends MainArgs implements Callable<Integer> {
       return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
     if (action.plct != null)
       return new PLCTReport().run(action.plct);
+    if (action.flcl != null)
+      return doFakeLiterate(action.flcl.fakeLiterate);
     assert action.compile != null;
     return doCompile(action.compile);
+  }
+
+  private int doFakeLiterate(String filePath) throws IOException {
+    var replConfig = ReplConfig.loadFromDefault();
+    var prettierOptions = replConfig.literatePrettier.prettierOptions;
+    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    var renderOptions = createRenderOptions(replConfig);
+    replConfig.close();
+    var path = Paths.get(filePath);
+    var file = SourceFile.from(SourceFileLocator.EMPTY, path);
+    var doc = new FlclFaithfulPrettier(prettierOptions).highlight(
+      new FlclParser(reporter, file).computeAst());
+    // Garbage code
+    var setup = new RenderOptions.DefaultSetup(false, false, true, true, -1, false);
+    var output = renderOptions.render(RenderOptions.OutputTarget.LaTeX, doc, setup);
+    Files.writeString(Paths.get("a.out"), output, StandardCharsets.UTF_8);
+    return 0;
   }
 
   private int doCompile(@NotNull CompileAction compile) throws IOException {
@@ -51,12 +75,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
     var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
-    var renderOptions = replConfig.literatePrettier.renderOptions;
-    switch (prettyColor) {
-      case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
-      case intellij -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.IntelliJ;
-      case null -> {}
-    }
+    var renderOptions = createRenderOptions(replConfig);
     replConfig.close();
     var pretty = prettyStage == null
       ? (outputPath != null ? CompilerFlags.prettyInfoFromOutput(
@@ -93,5 +112,15 @@ public class Main extends MainArgs implements Callable<Integer> {
       System.err.println(new MarkdownTrace(2, prettierOptions, asciiOnly)
         .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
     return status;
+  }
+
+  private @NotNull RenderOptions createRenderOptions(@NotNull ReplConfig replConfig) {
+    var renderOptions = replConfig.literatePrettier.renderOptions;
+    switch (prettyColor) {
+      case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
+      case intellij -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.IntelliJ;
+      case null -> {}
+    }
+    return renderOptions;
   }
 }
