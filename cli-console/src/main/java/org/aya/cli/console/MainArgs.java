@@ -41,10 +41,6 @@ public class MainArgs {
     @Option(names = {"--no-code"}, description =
       "Treat input file as a library root (no outputs will be saved to disk)")
     public boolean isNoCode;
-    @Parameters(paramLabel = "<input-file>", description = "File to compile")
-    public String inputFile;
-    @Option(names = {"-o", "--output"}, description = "Set literate output file")
-    public String outputFile;
   }
 
   public static class PlctAction {
@@ -60,12 +56,6 @@ public class MainArgs {
     public String repoName;
   }
 
-  public static class LiterateAction {
-    @Option(names = {"--fake-literate"}, paramLabel = "<input-file>",
-      description = "Generate fake language literate output from this file")
-    public String fakeLiterate;
-  }
-
   /** Either `repl` or `compile` is not null */
   public static class Action {
     @CommandLine.ArgGroup(heading = "REPL arguments:%n", exclusive = false)
@@ -77,8 +67,8 @@ public class MainArgs {
     @CommandLine.ArgGroup(heading = "PLCT report arguments:%n", exclusive = false)
     public @Nullable PlctAction plct;
 
-    @CommandLine.ArgGroup(heading = "Aya-quality highlighting tools:%n", exclusive = false)
-    public @Nullable LiterateAction flcl;
+    @CommandLine.ArgGroup(heading = "Files:%n", exclusive = false)
+    public @Nullable FileIO fileIO;
   }
 
   @Option(names = {"--interrupted-trace"}, hidden = true)
@@ -110,6 +100,15 @@ public class MainArgs {
   public List<String> modulePaths;
   @Option(names = {"--verbosity", "-v"}, description = "Minimum severity of error reported." + CANDIDATES, defaultValue = "WARN")
   public Problem.Severity verbosity;
+  @Option(names = {"--fake-literate"}, description = "Generate literate output without compiling.")
+  public boolean fakeLiterate;
+
+  public static class FileIO {
+    @Parameters(paramLabel = "<input-file>", description = "File to compile")
+    public String inputFile;
+    @Option(names = {"-o", "--output"}, description = "Set literate output file")
+    public String outputFile;
+  }
 
   @CommandLine.ArgGroup
   public Action action;
