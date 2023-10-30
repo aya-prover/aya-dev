@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class HighlighterTester {
-  record ExpectedHighlightInfo(
+  public record ExpectedHighlightInfo(
     @NotNull SourcePos sourcePos,
     @NotNull ExpectedHighlightType expected
   ) implements Comparable<ExpectedHighlightInfo> {

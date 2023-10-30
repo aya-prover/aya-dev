@@ -1,0 +1,10 @@
+keyword: data where;
+data: Int Nat;
+symbol: ->;
+---------------------
+data Int where
+  zero : Int
+  succ : Int ≃ Int
+data Nat where
+  zero : Int
+  succ : Int -> Int
