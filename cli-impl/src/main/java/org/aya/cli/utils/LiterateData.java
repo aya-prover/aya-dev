@@ -5,7 +5,7 @@ package org.aya.cli.utils;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
-import org.aya.cli.literate.FaithfulPrettier;
+import org.aya.cli.literate.LiterateFaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.concrete.GenericAyaFile;
 import org.aya.concrete.GenericAyaParser;
@@ -67,7 +67,7 @@ public record LiterateData(
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(currentFileModule, Option.some(ayaFile.codeFile()), program);
     var literate = ayaFile.literate();
-    var prettier = new FaithfulPrettier(problems, highlights, options);
+    var prettier = new LiterateFaithfulPrettier(problems, highlights, options);
     prettier.accept(literate);
     return literate.toDoc();
   }

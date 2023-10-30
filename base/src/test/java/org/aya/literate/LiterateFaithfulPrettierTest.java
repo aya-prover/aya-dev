@@ -4,7 +4,7 @@ package org.aya.literate;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
-import org.aya.cli.literate.FaithfulPrettier;
+import org.aya.cli.literate.LiterateFaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.cli.parse.AyaParserImpl;
 import org.aya.prettier.AyaPrettierOptions;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class FaithfulPrettierTest {
+public class LiterateFaithfulPrettierTest {
   @Test public void test() throws IOException {
     var reporter = AyaThrowingReporter.INSTANCE;
 
@@ -37,7 +37,7 @@ public class FaithfulPrettierTest {
     var highlights = SyntaxHighlight.highlight(null, Option.some(sourceFile), stmts);
     var mockPos = new SourcePos(sourceFile, 0, sourceFile.sourceCode().length() - 1, // <- tokenEndIndex is inclusive
       -1, -1, -1, -1);
-    var doc = new FaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())
+    var doc = new LiterateFaithfulPrettier(ImmutableSeq.empty(), highlights, AyaPrettierOptions.pretty())
       .highlight(sourceFile.sourceCode(), mockPos);
     var output = Doc.codeBlock(Language.Builtin.Aya, doc).renderToHtml(true);
     Files.writeString(root.resolve(outputFileName), output);
