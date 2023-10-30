@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
 import kala.collection.SeqLike;
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -21,6 +22,8 @@ public interface SourceFileLocator {
   default @NotNull Path displayName(@NotNull Path path) {
     return path;
   }
+
+  @NotNull SourceFileLocator EMPTY = new Module(ImmutableSeq.empty());
 
   record Module(@NotNull SeqLike<Path> modulePath) implements SourceFileLocator {
     @Override public @NotNull Path displayName(@NotNull Path path) {

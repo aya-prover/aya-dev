@@ -23,8 +23,13 @@ public record FlclParser(
   @NotNull Reporter reporter, @NotNull SourceFile file,
   @NotNull EnumMap<FlclToken.Type, ImmutableSeq<String>> decls
 ) {
-  public @NotNull FlclToken.File program(@NotNull String file) {
-    var node = new MarkerNodeWrapper(file, new FlclFleetParser().parse(file));
+  public FlclParser(@NotNull Reporter reporter, @NotNull SourceFile file) {
+    this(reporter, file, new EnumMap<>(FlclToken.Type.class));
+  }
+
+  public @NotNull FlclToken.File computeAst() {
+    var text = file.sourceCode();
+    var node = new MarkerNodeWrapper(text, new FlclFleetParser().parse(text));
     node.childrenOfType(FlclPsiElementTypes.RULE).forEach(rule -> {
       var idChildren = rule.childrenOfType(FlclPsiElementTypes.ID)
         .map(MarkerNodeWrapper::tokenText)
