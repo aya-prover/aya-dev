@@ -23,7 +23,7 @@ public record FlclParser(
   @NotNull Reporter reporter, @NotNull SourceFile file,
   @NotNull EnumMap<FlclToken.Type, ImmutableSeq<String>> decls
 ) {
-  public @NotNull ImmutableSeq<FlclToken> program(@NotNull String file) {
+  public @NotNull FlclToken.File program(@NotNull String file) {
     var node = new MarkerNodeWrapper(file, new FlclFleetParser().parse(file));
     node.childrenOfType(FlclPsiElementTypes.RULE).forEach(rule -> {
       var idChildren = rule.childrenOfType(FlclPsiElementTypes.ID)
@@ -45,7 +45,8 @@ public record FlclParser(
     var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size());
     ids.mapNotNullTo(tokens, this::computeType);
     nums.mapTo(tokens, n -> computeToken(n.range(), FlclToken.Type.Number));
-    return tokens.toImmutableSeq();
+    int startIndex = node.child(FlclPsiElementTypes.SEPARATOR).range().getEndOffset() + 1;
+    return new FlclToken.File(tokens.toImmutableSeq(), startIndex);
   }
 
   private @Nullable FlclToken computeType(@NotNull MarkerNodeWrapper text) {

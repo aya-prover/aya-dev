@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Link;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,11 @@ public record FlclToken(
   @NotNull Type type
 ) {
   public static final @NotNull Link EMPTY_LINK = Link.page("");
+
+  public record File(
+    @NotNull ImmutableSeq<FlclToken> tokens,
+    int startIndex
+  ) {}
 
   public enum Type {
     Keyword, Fn, Data, Number, Local, Comment

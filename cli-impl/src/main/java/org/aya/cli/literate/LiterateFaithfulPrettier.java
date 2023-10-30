@@ -32,7 +32,6 @@ public record LiterateFaithfulPrettier(
   @NotNull ImmutableSeq<HighlightInfo> highlights,
   @Override @NotNull PrettierOptions options
 ) implements LiterateConsumer, FaithfulPrettier {
-
   /**
    * Highlight all visible aya code blocks
    */
