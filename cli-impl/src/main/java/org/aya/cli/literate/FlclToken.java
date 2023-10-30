@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
-import com.intellij.openapi.util.TextRange;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record FlclToken(
-  @NotNull TextRange range,
+  @NotNull SourcePos range,
   @NotNull Type type
 ) {
   public enum Type {
