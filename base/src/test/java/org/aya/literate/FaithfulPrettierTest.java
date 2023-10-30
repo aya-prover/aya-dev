@@ -53,6 +53,6 @@ public class FaithfulPrettierTest {
     var parser = new FlclParser(AyaThrowingReporter.INSTANCE, file);
     var prettier = new FlclFaithfulPrettier(AyaPrettierOptions.pretty());
     var doc = prettier.highlight(parser.computeAst());
-    FileUtil.writeString(root.resolve("test.latex"), doc.renderToTeX());
+    FileUtil.writeString(root.resolve("test.tex"), doc.renderToTeX());
   }
 }
