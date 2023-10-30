@@ -36,22 +36,26 @@ public record FlclParser(
         .map(CharSequence::toString);
       var title = idChildren.first();
       var ids = idChildren.drop(1).toImmutableSeq();
-      // Replace with a loop?
-      switch (title) {
-        case "keyword" -> decls.put(FlclToken.Type.Keyword, ids);
-        case "fn" -> decls.put(FlclToken.Type.Fn, ids);
-        case "data" -> decls.put(FlclToken.Type.Data, ids);
-        case "local" -> decls.put(FlclToken.Type.Local, ids);
-        default -> reporter.reportString("Unknown rule: " + title, Problem.Severity.WARN);
-      }
+      insert(title, ids);
     });
-    var ids = node.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
-    var nums = node.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
+    var body = node.child(FlclPsiElementTypes.BODY);
+    var ids = body.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
+    var nums = body.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
     var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size());
     ids.mapNotNullTo(tokens, this::computeType);
     nums.mapTo(tokens, n -> computeToken(n.range(), FlclToken.Type.Number));
     int startIndex = node.child(FlclPsiElementTypes.SEPARATOR).range().getEndOffset() + 1;
-    return new FlclToken.File(tokens.toImmutableSeq(), startIndex);
+    return new FlclToken.File(tokens.toImmutableSeq(), body.tokenText(), startIndex);
+  }
+
+  private void insert(String title, @NotNull ImmutableSeq<String> ids) {
+    for (var tokenType : FlclToken.Type.values()) {
+      if (tokenType.name().equalsIgnoreCase(title)) {
+        decls.put(tokenType, ids);
+        return;
+      }
+    }
+    reporter.reportString("Unknown rule: " + title, Problem.Severity.WARN);
   }
 
   private @Nullable FlclToken computeType(@NotNull MarkerNodeWrapper text) {

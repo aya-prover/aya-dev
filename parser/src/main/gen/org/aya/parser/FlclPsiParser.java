@@ -39,7 +39,21 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // rule* SEPARATOR token*
+  // token*
+  public static boolean body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "body")) return false;
+    Marker m = enter_section_(b, l, _NONE_, BODY, "<body>");
+    while (true) {
+      int c = current_position_(b);
+      if (!token(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "body", c)) break;
+    }
+    exit_section_(b, l, m, true, false, null);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // rule* SEPARATOR body
   static boolean program(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "program")) return false;
     if (!nextTokenIs(b, "", ID, SEPARATOR)) return false;
@@ -47,7 +61,7 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = program_0(b, l + 1);
     r = r && consumeToken(b, SEPARATOR);
-    r = r && program_2(b, l + 1);
+    r = r && body(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -59,17 +73,6 @@ public class FlclPsiParser implements PsiParser, LightPsiParser {
       int c = current_position_(b);
       if (!rule(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "program_0", c)) break;
-    }
-    return true;
-  }
-
-  // token*
-  private static boolean program_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "program_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!token(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "program_2", c)) break;
     }
     return true;
   }

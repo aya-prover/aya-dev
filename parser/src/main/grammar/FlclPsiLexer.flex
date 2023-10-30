@@ -24,6 +24,8 @@ import static org.aya.parser.FlclPsiElementTypes.*;
     */
   private int zzPostponedMarkedPos = -1;
 
+  private boolean inHeader = true;
+
   /**
     * Dedicated nested-comment level counter
     */
@@ -78,9 +80,9 @@ BLOCK_COMMENT_END   = "*/"
   {LINE_COMMENT}        { return AyaParserDefinitionBase.LINE_COMMENT; }
   {BLOCK_COMMENT_START} { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 
-  "-----"-+             { return SEPARATOR; }
-  ":"                   { return COLON; }
-  ";"                   { return SEMI; }
+  "-----"-+             { inHeader = false; return SEPARATOR; }
+  ":"                   { return inHeader ? COLON : ID; }
+  ";"                   { return inHeader ? SEMI : ID; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }

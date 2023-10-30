@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
@@ -54,12 +55,12 @@ public class Main extends MainArgs implements Callable<Integer> {
     replConfig.close();
     var path = Paths.get(filePath);
     var file = SourceFile.from(SourceFileLocator.EMPTY, path);
-    var parsed = new FlclParser(reporter, file).computeAst();
-    var doc = new FlclFaithfulPrettier(prettierOptions).highlight(file.sourceCode(), parsed);
+    var doc = new FlclFaithfulPrettier(prettierOptions).highlight(
+      new FlclParser(reporter, file).computeAst());
     // Garbage code
     var setup = new RenderOptions.DefaultSetup(false, false, true, true, -1, false);
     var output = renderOptions.render(RenderOptions.OutputTarget.LaTeX, doc, setup);
-    System.out.println(output);
+    Files.writeString(Paths.get("a.out"), output, StandardCharsets.UTF_8);
     return 0;
   }
 

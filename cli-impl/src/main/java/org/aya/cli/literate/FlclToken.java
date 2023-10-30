@@ -3,6 +3,7 @@
 package org.aya.cli.literate;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.text.StringSlice;
 import org.aya.pretty.doc.Link;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -15,11 +16,12 @@ public record FlclToken(
 
   public record File(
     @NotNull ImmutableSeq<FlclToken> tokens,
+    @NotNull StringSlice sourceCode,
     int startIndex
   ) {}
 
   public enum Type {
-    Keyword, Fn, Data, Number, Local, Comment
+    Keyword, Fn, Data, Number, Local, Comment, Symbol
   }
 
   public @NotNull HighlightInfo toInfo() {
@@ -27,6 +29,7 @@ public record FlclToken(
       case Keyword -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Keyword);
       case Number -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Int);
       case Comment -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.Comment);
+      case Symbol -> new HighlightInfo.Lit(range, HighlightInfo.LitKind.SpecialSymbol);
       case Fn -> createRef(HighlightInfo.DefKind.Fn);
       case Data -> createRef(HighlightInfo.DefKind.Data);
       case Local -> createRef(HighlightInfo.DefKind.LocalVar);
