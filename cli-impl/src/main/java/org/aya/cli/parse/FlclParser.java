@@ -4,6 +4,7 @@ package org.aya.cli.parse;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.DefaultPsiParser;
+import com.intellij.psi.TokenType;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import org.aya.cli.literate.FlclToken;
@@ -41,9 +42,12 @@ public record FlclParser(
     var body = node.child(FlclPsiElementTypes.BODY);
     var ids = body.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
     var nums = body.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
-    var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size());
+    var ws = body.childrenOfType(TokenType.WHITE_SPACE).toImmutableSeq();
+    var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size() + ws.size());
     ids.mapNotNullTo(tokens, this::computeType);
     nums.mapTo(tokens, n -> computeToken(n.range(), FlclToken.Type.Number));
+    ws.mapTo(tokens, n -> computeToken(n.range(),
+      n.tokenText().indexOf('\n') > 0 ? FlclToken.Type.Eol : FlclToken.Type.WhiteSpace));
     int startIndex = node.child(FlclPsiElementTypes.SEPARATOR).range().getEndOffset() + 1;
     return new FlclToken.File(tokens.toImmutableSeq(), body.tokenText(), startIndex);
   }
