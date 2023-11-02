@@ -37,21 +37,21 @@ public class Main extends MainArgs implements Callable<Integer> {
   }
 
   @Override public Integer call() throws Exception {
-    if (action == null) {
-      System.err.println("Try `aya --help` to see available commands");
-      return 1;
+    if (action != null) {
+      if (action.repl != null)
+        return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
+      if (action.plct != null)
+        return new PLCTReport().run(action.plct);
     }
-    if (action.repl != null)
-      return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
-    if (action.plct != null)
-      return new PLCTReport().run(action.plct);
     if (inputFile == null) {
       System.err.println("No input file specified");
       return 1;
     }
     if (fakeLiterate) return doFakeLiterate();
-    if (action.compile == null) action.compile = new CompileAction();
-    return doCompile(action.compile);
+    CompileAction compileAction;
+    if (action == null || action.compile == null) compileAction = new CompileAction();
+    else compileAction = action.compile;
+    return doCompile(compileAction);
   }
 
   private int doFakeLiterate() throws IOException {
