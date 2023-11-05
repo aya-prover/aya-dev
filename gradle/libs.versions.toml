@@ -9,13 +9,13 @@ java = "20"
 
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
-kala = "0.67.0"
+kala = "0.69.0"
 picocli = "4.7.5"
-build-util = "0.0.18"
+build-util = "0.0.20"
 # https://github.com/graalvm/native-build-tools
 graal-tools = "0.9.28"
 # https://github.com/jline/jline3
-jline = "3.23.0"
+jline = "3.24.1"
 # https://github.com/commonmark/commonmark-java
 commonmark = "0.21.1"
 jimgui = "v0.21.0"
