@@ -171,7 +171,7 @@ public final class PatternTycker {
     // last pattern which user given (not aya generated)
     @Nullable Arg<Pattern> lastPat = null;
     while (signature.param().isNotEmpty()) {
-      currParam = signature.param().first();
+      currParam = signature.param().getFirst();
       Arg<Pattern> pat;
       // Type explicit, does not have pattern
       if (patterns.isEmpty()) {
@@ -200,7 +200,7 @@ public final class PatternTycker {
         }
       } else if (currParam.explicit()) {
         // Type explicit, does have pattern
-        pat = patterns.first();
+        pat = patterns.getFirst();
         lastPat = pat;
         patterns = patterns.drop(1);
         if (!pat.explicit()) {
@@ -209,7 +209,7 @@ public final class PatternTycker {
         }
       } else {
         // Type is implicit, does have pattern
-        pat = patterns.first();
+        pat = patterns.getFirst();
         if (pat.explicit()) {
           // Pattern is explicit, so we leave it to the next type, do not "consume" it
           generatePat();
@@ -224,7 +224,7 @@ public final class PatternTycker {
     }
     if (patterns.isNotEmpty()) {
       foundError(new PatternProblem
-        .TooManyPattern(patterns.first().term(), signature.result().freezeHoles(exprTycker.state)));
+        .TooManyPattern(patterns.getFirst().term(), signature.result().freezeHoles(exprTycker.state)));
     }
     return done(body);
   }

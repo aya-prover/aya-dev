@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Rename {
   static @NotNull Option<WithPos<String>> prepare(@NotNull LibrarySource source, XY xy) {
     var vars = Resolver.resolveVar(source, xy);
-    return vars.firstOption().map(t -> t.map(AnyVar::name));
+    return vars.getFirstOption().map(t -> t.map(AnyVar::name));
   }
 
   static @NotNull ImmutableSeq<RenameEdit> rename(

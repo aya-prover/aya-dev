@@ -56,7 +56,7 @@ import static org.aya.parser.FlclPsiElementTypes.*;
 // Identifier, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AYA_SIMPLE_LETTER = [,~!@#$%\^&*+=<>?/\[\]a-zA-Z_\u2200-\u22FF]
+AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/\[\]a-zA-Z_\u2200-\u22FF]
 AYA_UNICODE = [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]
 AYA_LETTER = {AYA_SIMPLE_LETTER} | {AYA_UNICODE}
 AYA_LETTER_FOLLOW = {AYA_LETTER} | [0-9'|-]
@@ -83,7 +83,7 @@ BLOCK_COMMENT_END   = "*/"
   "-----"-+             { inHeader = false; return SEPARATOR; }
   ":"                   { return inHeader ? COLON : ID; }
   ";"                   { return inHeader ? SEMI : ID; }
-  [(){}|]               { return ID; }
+  [(){}|,]              { return ID; }
   {ID}                  { return ID; }
 
   {NUMBER}              { return NUMBER; }
