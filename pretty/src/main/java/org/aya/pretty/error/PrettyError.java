@@ -153,7 +153,7 @@ public record PrettyError(
   private @NotNull HintGroup splitHints(@NotNull ImmutableSeq<HintLine> others) {
     var group = new HintGroup();
     if (others.isNotEmpty()) {
-      var first = others.first();
+      var first = others.getFirst();
       group.add(first.startCol, first, formatConfig);
       int left = first.startCol;
       int right = first.endCol;

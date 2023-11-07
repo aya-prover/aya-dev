@@ -37,7 +37,7 @@ public abstract class ClosingStylist extends StringStylist {
       return;
     }
 
-    var style = styles.first();
+    var style = styles.getFirst();
     var formats = style instanceof Style.Preset preset
       ? formatPresetStyle(preset.styleName(), outer)
       : ImmutableSeq.of(formatOne(style, outer));
