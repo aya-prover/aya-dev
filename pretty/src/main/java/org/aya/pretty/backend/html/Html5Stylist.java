@@ -50,7 +50,7 @@ public class Html5Stylist extends ClosingStylist {
 
     @Override
     protected @NotNull ImmutableSeq<StyleToken> formatPresetStyle(@NotNull String styleName, EnumSet<StringPrinter.Outer> outer) {
-      var className = styleKeyToCss(styleName).last();
+      var className = styleKeyToCss(styleName).getLast();
       return ImmutableSeq.of(new StyleToken("<span class=\"%s\">".formatted(className), "</span>", false));
     }
   }

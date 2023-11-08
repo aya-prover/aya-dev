@@ -24,7 +24,7 @@ public interface ComputeSignature {
     @NotNull PrettierOptions options,
     @NotNull LibrarySource source, XY xy
   ) {
-    var target = Resolver.resolveVar(source, xy).firstOrNull();
+    var target = Resolver.resolveVar(source, xy).getFirstOrNull();
     if (target == null) return Doc.empty();
     return computeSignature(options, target.data(), true);
   }
