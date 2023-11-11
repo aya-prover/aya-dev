@@ -95,7 +95,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         case ISet, Set -> true;
         default -> false;
       };
-      case Prop -> r.kind() == SortKind.Prop;
       case Set -> r.kind() == SortKind.Set && lift <= rift;
     };
   }
@@ -253,6 +252,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     // Note that it looks tempting to apply some unification here, but it is not correct:
     // If ?x =_A y where A : Prop, then it may not be the case that ?x is y!
     // I think Arend has probably made such a mistake before, but they removed this feature anyway.
+    // TODO: revise the above, because `Prop` is now removed
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
     var ret = switch (type) {

@@ -26,7 +26,6 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
   public static final @NotNull SortTerm Set0 = new SortTerm(SortKind.Set, 0);
   public static final @NotNull SortTerm Set1 = new SortTerm(SortKind.Set, 1);
   public static final @NotNull SortTerm ISet = new SortTerm(SortKind.ISet, 0);
-  public static final @NotNull SortTerm Prop = new SortTerm(SortKind.Prop, 0);
 
   /**
    * <a href="https://github.com/agda/agda/blob/6a92d584c70a615fdc3f364975814d75a0e31bf7/src/full/Agda/TypeChecking/Substitute.hs#L1541-L1558">Agda</a>
@@ -34,7 +33,6 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
   public @NotNull SortTerm succ() {
     return switch (kind) {
       case Type, Set -> new SortTerm(kind, lift + 1);
-      case Prop -> Type0;
       case ISet -> Set1;
     };
   }

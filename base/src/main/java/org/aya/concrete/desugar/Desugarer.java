@@ -54,7 +54,6 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
       case Expr.RawSort(var pos, var kind) -> switch (kind) {
         case Type -> new Expr.Type(pos, 0);
         case Set -> new Expr.Set(pos, 0);
-        case Prop -> new Expr.Prop(pos);
         case ISet -> new Expr.ISet(pos);
       };
       case Expr.BinOpSeq(var pos, var seq) -> {

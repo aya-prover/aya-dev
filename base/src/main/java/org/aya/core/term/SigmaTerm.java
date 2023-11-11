@@ -30,9 +30,7 @@ public record SigmaTerm(@NotNull ImmutableSeq<@NotNull Param> params) implements
 
   public static @NotNull SortTerm lub(@NotNull SortTerm x, @NotNull SortTerm y) {
     int lift = Math.max(x.lift(), y.lift());
-    if (x.kind() == SortKind.Prop || y.kind() == SortKind.Prop) {
-      return SortTerm.Prop;
-    } else if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
+    if (x.kind() == SortKind.Set || y.kind() == SortKind.Set) {
       return new SortTerm(SortKind.Set, lift);
     } else if (x.kind() == SortKind.Type || y.kind() == SortKind.Type) {
       return new SortTerm(SortKind.Type, lift);

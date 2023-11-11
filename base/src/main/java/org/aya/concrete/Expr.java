@@ -332,7 +332,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return expr == expr() ? this : new Lift(sourcePos, expr, lift);
     }
 
-    @Override public @NotNull Expr.Lift descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Lift descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(expr));
     }
   }
@@ -341,7 +341,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * @author tsao-chi
    */
   record RawSort(@NotNull SourcePos sourcePos, @NotNull SortKind kind) implements Expr {
-    @Override public @NotNull Expr.RawSort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull RawSort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
@@ -351,7 +351,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
 
     SortKind kind();
 
-    @Override default @NotNull Expr.Sort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override default @NotNull Sort descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
@@ -365,16 +365,6 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   record Set(@NotNull SourcePos sourcePos, @Override int lift) implements Sort {
     @Override public SortKind kind() {
       return SortKind.Set;
-    }
-  }
-
-  record Prop(@NotNull SourcePos sourcePos) implements Sort {
-    @Override public int lift() {
-      return 0;
-    }
-
-    @Override public SortKind kind() {
-      return SortKind.Prop;
     }
   }
 
@@ -487,13 +477,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * @author kiva
    */
   record LitInt(@NotNull SourcePos sourcePos, int integer) implements Expr {
-    @Override public @NotNull Expr.LitInt descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull LitInt descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
   record LitString(@NotNull SourcePos sourcePos, @NotNull String string) implements Expr {
-    @Override public @NotNull Expr.LitString descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull LitString descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }

@@ -46,10 +46,6 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
     }
     if (!(tryPress(type) instanceof SortTerm actual)) return false;
     return switch (expected.kind()) {
-      case Prop -> switch (actual.kind()) {
-        case Prop, Type -> true;
-        case Set, ISet -> false;
-      };
       case Type -> actual.kind() != SortKind.Set && actual.lift() <= expected.lift();
       case Set -> actual.lift() <= expected.lift();
       case ISet -> unreachable(type);
