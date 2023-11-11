@@ -2126,14 +2126,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_TYPE | KW_SET | KW_PROP | KW_ISET
+  // KW_TYPE | KW_SET | KW_ISET
   public static boolean univExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "univExpr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, UNIV_EXPR, "<univ expr>");
     r = consumeToken(b, KW_TYPE);
     if (!r) r = consumeToken(b, KW_SET);
-    if (!r) r = consumeToken(b, KW_PROP);
     if (!r) r = consumeToken(b, KW_ISET);
     exit_section_(b, l, m, r, false, null);
     return r;

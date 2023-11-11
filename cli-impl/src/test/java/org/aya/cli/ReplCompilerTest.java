@@ -37,7 +37,7 @@ public class ReplCompilerTest {
   }
 
   @Test public void simpleExpr() {
-    compile("Prop");
+    compile("Set");
   }
 
   @Test public void issue382() {

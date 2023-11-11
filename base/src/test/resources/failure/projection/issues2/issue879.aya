@@ -1,5 +1,0 @@
-open import Arith::Nat::Core
-open data Ok Nat : Prop | zero => zo
-def Sigma => Sig (n : Nat) ** Ok n
-def good (n : Sigma) => n.2
-def bad (n : Sigma) => n.1

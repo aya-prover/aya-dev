@@ -95,7 +95,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         case ISet, Set -> true;
         default -> false;
       };
-      case Prop -> r.kind() == SortKind.Prop;
       case Set -> r.kind() == SortKind.Set && lift <= rift;
     };
   }
@@ -240,7 +239,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> lhsRef, int ulift
   ) {
     var retType = synthesizer().press(lhs);
-    if (synthesizer().tryPress(retType) instanceof SortTerm sort && sort.isProp()) return retType;
     // Lossy comparison
     if (visitArgs(lhs.args(), rhs.args(), lr, rl,
       Term.Param.subst(Def.defTele(lhsRef), ulift))) return retType;
@@ -248,12 +246,13 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     else return null;
   }
 
+  @SuppressWarnings("unused")
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // Skip tracing, because too easy.
     // Note that it looks tempting to apply some unification here, but it is not correct:
     // If ?x =_A y where A : Prop, then it may not be the case that ?x is y!
     // I think Arend has probably made such a mistake before, but they removed this feature anyway.
-    if (synthesizer().tryPress(type) instanceof SortTerm sort && sort.isProp()) return true;
+    // TODO: revise the above, because `Prop` is now removed
     traceEntrance(new Trace.UnifyT(lhs.freezeHoles(state), rhs.freezeHoles(state),
       pos, type.freezeHoles(state)));
     var ret = switch (type) {
@@ -554,7 +553,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   private @Nullable Term lossyUnifyCon(ConCall lhs, ConCall rhs, Sub lr, Sub rl) {
     var retType = synthesizer().press(lhs);
     var dataRef = lhs.ref().core.dataRef;
-    if (Def.defResult(dataRef).isProp()) return retType;
     var dataAlgs = lhs.head().dataArgs();
     if (!visitArgs(dataAlgs, rhs.head().dataArgs(), lr, rl,
       Term.Param.subst(Def.defTele(dataRef), lhs.ulift()))) return null;

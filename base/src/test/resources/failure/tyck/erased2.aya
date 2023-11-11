@@ -1,6 +1,0 @@
-open data Squash2 (A: Type): Prop
-  | squash A
-
-def badElim2 {A: Type} {P: Type} (f: A -> P) (squash: Squash2 A): P
-  | f, (squash a) => f a
-

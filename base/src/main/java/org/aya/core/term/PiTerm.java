@@ -69,19 +69,14 @@ public record PiTerm(@NotNull Param param, @NotNull Term body) implements Stable
       case Type -> switch (codomain.kind()) {
         case Type, Set -> new SortTerm(SortKind.Type, Math.max(alift, blift));
         case ISet -> new SortTerm(SortKind.Set, alift);
-        case Prop -> codomain;
       };
       case ISet -> switch (codomain.kind()) {
-        case ISet, Prop -> SortTerm.Set0;
+        case ISet -> SortTerm.Set0;
         case Set, Type -> codomain;
       };
       case Set -> switch (codomain.kind()) {
         case Set, Type -> new SortTerm(SortKind.Set, Math.max(alift, blift));
-        case ISet, Prop -> new SortTerm(SortKind.Set, alift);
-      };
-      case Prop -> switch (codomain.kind()) {
-        case Prop, Type -> codomain;
-        default -> new SortTerm(SortKind.Set, blift);
+        case ISet -> new SortTerm(SortKind.Set, alift);
       };
     };
   }

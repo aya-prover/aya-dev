@@ -41,7 +41,6 @@ public class ShapeMatcherTest {
 
   @Test
   public void matchList() {
-    match(true, AyaShape.LIST_SHAPE, "data List (A : Prop) | nil | cons A (List A)");
     match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | cons A (List A)");
     match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | cons A (List A) | nil");
     match(true, AyaShape.LIST_SHAPE, "data List (A : Type) | nil | infixr :< A (List A)");

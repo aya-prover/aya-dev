@@ -72,13 +72,9 @@ public final class ClauseTycker {
     @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
     @NotNull Def.Signature<?> signature
   ) {
-    // TODO[isType]: revise this
-    // https://github.com/agda/agda/blob/66d22577abe9ac67649c6e662c91d8593d1bf86c/src/full/Agda/TypeChecking/Rules/LHS.hs#L2099-L2136
-    var inProp = exprTycker.ctx.with(() ->
-      exprTycker.inProp(signature.result()), signature.param().view());
     return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
       () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(exprTycker, clause, signature, inProp, true))));
+      () -> checkLhs(exprTycker, clause, signature, true))));
   }
 
   private static @NotNull PatResult checkAllRhs(
@@ -127,7 +123,6 @@ public final class ClauseTycker {
     @NotNull ExprTycker exprTycker,
     @NotNull Pattern.Clause match,
     @NotNull Def.Signature<?> signature,
-    boolean inProp,
     boolean isElim
   ) {
     var patTycker = new PatternTycker(exprTycker, signature, match.patterns.view());
@@ -138,7 +133,7 @@ public final class ClauseTycker {
         match.hasError = true;
         exprTycker.reporter.report(new PatternProblem.InvalidEmptyBody(match));
       }
-      var step0 = patTycker.tyck(null, match.expr.getOrNull(), inProp);
+      var step0 = patTycker.tyck(null, match.expr.getOrNull());
 
       match.hasError |= patTycker.hasError();
 

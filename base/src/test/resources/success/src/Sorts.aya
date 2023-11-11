@@ -6,23 +6,7 @@ def c: Set 1 => ISet
 def e: Set 2 => Unit -> Set 1
 def d: e => \u => ISet
 
-def f: Prop => Sig (A : Prop) ** A
-
 open data Rua : Set | rua
 open import Paths
 def II : ISet => Sig I ** I
 def test : II => (0 , 0)
-
-open data Disj (A B : Prop) : Prop
-| inl (a : A)
-| inr (b : B)
-
-variable A : Type
-
-// Leibniz equality using impredicative universe of propositions
-def Leibniz (x y : A) : Prop
-  => Fn (P : A → Prop) → P x → P y
-
-def refl (a : A) : Leibniz a a => \p x => x
-def symm {x y : A} (p : Leibniz x y)
-  : Leibniz y x => p (\ y' => Leibniz y' x) (refl _)
