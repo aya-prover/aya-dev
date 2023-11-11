@@ -2,7 +2,6 @@
 [![maven]][maven-repo]
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
-[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
 [**Website**](https://www.aya-prover.org) contains:
 
