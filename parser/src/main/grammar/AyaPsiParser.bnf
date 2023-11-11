@@ -375,7 +375,7 @@ goalExpr ::= LGOAL expr? RGOAL
 refExpr ::= qualifiedId
 litIntExpr ::= NUMBER
 litStringExpr ::= STRING
-univExpr ::= KW_TYPE | KW_SET | KW_PROP | KW_ISET
+univExpr ::= KW_TYPE | KW_SET | KW_ISET
 
 // tele is always typed
 tele ::= literal | <<licit teleBinder>>

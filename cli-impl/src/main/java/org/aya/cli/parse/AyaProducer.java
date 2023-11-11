@@ -504,7 +504,6 @@ public record AyaProducer(
     if (node.is(UNIV_EXPR)) {
       if (node.peekChild(KW_TYPE) != null) return new Expr.RawSort(pos, SortKind.Type);
       if (node.peekChild(KW_SET) != null) return new Expr.RawSort(pos, SortKind.Set);
-      if (node.peekChild(KW_PROP) != null) return new Expr.RawSort(pos, SortKind.Prop);
       if (node.peekChild(KW_ISET) != null) return new Expr.RawSort(pos, SortKind.ISet);
       return unreachable(node);
     }

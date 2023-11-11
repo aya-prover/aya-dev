@@ -43,8 +43,4 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
     if (kind.hasLevel()) return new SortTerm(kind, this.lift + lift);
     else return this;
   }
-
-  public boolean isProp() {
-    return kind == SortKind.Prop;
-  }
 }

@@ -119,7 +119,6 @@ BLOCK_COMMENT_END   = "*/"
   "counterexample"      { return KW_COUNTEREXAMPLE; }
   "Type"                { return KW_TYPE; }
   "Set"                 { return KW_SET; }
-  "Prop"                { return KW_PROP; }
   "ISet"                { return KW_ISET; }
   "as"                  { return KW_AS; }
   "open"                { return KW_OPEN; }
