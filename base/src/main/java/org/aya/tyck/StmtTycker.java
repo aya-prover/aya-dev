@@ -240,7 +240,7 @@ public final class StmtTycker extends TracedTycker {
     if (ctor.patterns.isNotEmpty()) {
       var sig = new Def.Signature<>(dataSig.param(), predataCall);
       var lhs = ClauseTycker.checkLhs(tycker,
-        new Pattern.Clause(ctor.sourcePos(), ctor.patterns, Option.none()), sig, false, false);
+        new Pattern.Clause(ctor.sourcePos(), ctor.patterns, Option.none()), sig, false);
       pat = lhs.preclause().patterns();
       // Revert to the "after patterns" state
       tycker.ctx = lhs.gamma();
