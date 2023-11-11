@@ -19,7 +19,7 @@ public record QualifiedID(
    * @param ids not empty
    */
   public QualifiedID(@NotNull SourcePos sourcePos, @NotNull ImmutableSeq<String> ids) {
-    this(sourcePos, ModuleName.from(ids.dropLast(1)), ids.last());
+    this(sourcePos, ModuleName.from(ids.dropLast(1)), ids.getLast());
   }
 
   public QualifiedID(@NotNull SourcePos sourcePos, @NotNull String id) {

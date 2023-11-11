@@ -261,16 +261,16 @@ public final class PrimDef extends TopLevelDef<Term> {
       /** /\ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMin = formula(ID.IMIN, prim -> {
         var args = prim.args();
-        return FormulaTerm.and(args.first().term(), args.last().term());
+        return FormulaTerm.and(args.getFirst().term(), args.getLast().term());
       }, "i", "j");
       /** \/ in Cubical Agda, should elaborate to {@link Formula.Conn} */
       public final @NotNull PrimDef.PrimSeed intervalMax = formula(ID.IMAX, prim -> {
         var args = prim.args();
-        return FormulaTerm.or(args.first().term(), args.last().term());
+        return FormulaTerm.or(args.getFirst().term(), args.getLast().term());
       }, "i", "j");
       /** ~ in Cubical Agda, should elaborate to {@link Formula.Inv} */
       public final @NotNull PrimDef.PrimSeed intervalInv = formula(ID.INVOL, prim ->
-        FormulaTerm.inv(prim.args().first().term()), "i");
+        FormulaTerm.inv(prim.args().getFirst().term()), "i");
 
       private @NotNull PrimSeed formula(ID id, Function<PrimCall, Term> unfold, String... tele) {
         return new PrimSeed(id, (prim, state) -> unfold.apply(prim), ref -> new PrimDef(
@@ -283,14 +283,14 @@ public final class PrimDef extends TopLevelDef<Term> {
 
       private Term inS(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
         var phi = prim.args().get(1).term();
-        var u = prim.args().last().term();
+        var u = prim.args().getLast().term();
         return InTerm.make(phi, u);
       }
 
       private Term outS(@NotNull PrimCall prim, @NotNull TyckState tyckState) {
         var phi = prim.args().get(1).term();
         var par = prim.args().get(2).term();
-        var u = prim.args().last().term();
+        var u = prim.args().getLast().term();
         return OutTerm.make(phi, par, u);
       }
 

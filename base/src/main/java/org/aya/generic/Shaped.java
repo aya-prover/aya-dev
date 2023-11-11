@@ -93,12 +93,12 @@ public interface Shaped<T> {
     @Override default @NotNull T constructorForm() {
       var nil = ctorRef(CodeShape.GlobalId.NIL).core;
       var cons = ctorRef(CodeShape.GlobalId.CONS).core;
-      var dataArg = type().args().first(); // Check?
+      var dataArg = type().args().getFirst(); // Check?
       var xLicit = cons.selfTele.get(0).explicit();
       var xsLicit = cons.selfTele.get(1).explicit();
       var elements = repr();
       if (elements.isEmpty()) return makeNil(nil, dataArg);
-      return makeCons(cons, dataArg, new Arg<>(elements.first(), xLicit),
+      return makeCons(cons, dataArg, new Arg<>(elements.getFirst(), xLicit),
         new Arg<>(destruct(elements.drop(1)), xsLicit));
     }
   }

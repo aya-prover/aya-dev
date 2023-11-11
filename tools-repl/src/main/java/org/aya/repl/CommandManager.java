@@ -70,7 +70,7 @@ public class CommandManager {
   ) {
     public Command.Result run(@NotNull Object repl) throws Throwable {
       return switch (command.size()) {
-        case 1 -> command.first().invoke(repl, argument);
+        case 1 -> command.getFirst().invoke(repl, argument);
         case 0 -> Command.Result.err("Command `" + name + "` not found", true);
         default -> Command.Result.err(command.view()
             .flatMap(s -> s.owner.names())

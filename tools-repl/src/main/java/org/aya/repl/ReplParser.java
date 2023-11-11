@@ -62,11 +62,11 @@ public record ReplParser<T>(
       .view()
       .filterNot(lexer::isWhitespace)
       .toImmutableSeq();
-    var wordOpt = tokens.firstOption(token ->
+    var wordOpt = tokens.findFirst(token ->
       lexer.containsOffset(token, cursor));
     // In case we're in a whitespace or at the end
     if (wordOpt.isEmpty()) {
-      var tokenOpt = tokens.firstOption(tok -> lexer.startOffset(tok) >= cursor);
+      var tokenOpt = tokens.findFirst(tok -> lexer.startOffset(tok) >= cursor);
       if (tokenOpt.isEmpty())
         return simplest(line, cursor, tokens.size(), tokens
           .map(tok -> textOf(line, tok)).asJava());

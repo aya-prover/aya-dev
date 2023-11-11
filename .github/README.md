@@ -2,7 +2,6 @@
 [![maven]][maven-repo]
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
-[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/37715)
 
 [**Website**](https://www.aya-prover.org) contains:
 
@@ -44,13 +43,13 @@ Aya is under active development, so please expect bugs, usability or performance
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
-[Java 19]: https://jdk.java.net/19
+[Java 20]: https://jdk.java.net/20
 [1lab]: https://1lab.dev
 
 ## Contributing to Aya
 
-Since you need [Java 19] to set this project up, in case your choice
-of IDE is IntelliJ IDEA, version 2022.3 or higher is required.
+Since you need [Java 20] to set this project up, in case your choice
+of IDE is IntelliJ IDEA, version 2023.2 or higher is required.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
@@ -114,4 +113,6 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
     and a bunch of other utilities (files, etc.) are in `tools`.
   + The command and argument parsing framework is in `tools-repl`.
     It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
+  + The literate-markdown related infrastructure is in `tools-md`.
+    It offers commonmark extensions for literate mode of any language with a highlighter.
 + `[latest version]` is what you see on this badge ![maven].

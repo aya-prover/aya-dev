@@ -102,7 +102,7 @@ public class ColorTheme {
   }
 
   public void findAndPut(@NotNull MutableMap<String, Integer> putTo, @NotNull String key, @NotNull Seq<String> scope, @NotNull Map<String, Integer> fallback) {
-    var result = scope.view().map(this::find).firstOption(Option::isDefined);
+    var result = scope.view().map(this::find).findFirst(Option::isDefined);
 
     if (result.isDefined()) {
       var settings = result.get().get();

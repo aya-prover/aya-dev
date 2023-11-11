@@ -96,7 +96,7 @@ public sealed interface HoleProblem extends Problem {
     @NotNull ImmutableSeq<TyckState.Eqn> eqns
   ) implements Problem {
     @Override public @NotNull SourcePos sourcePos() {
-      return eqns.last().pos();
+      return eqns.getLast().pos();
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {

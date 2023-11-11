@@ -69,6 +69,6 @@ public interface FileUtil {
 
   static @Nullable Path resolveFile(@NotNull SeqView<Path> basePaths, @NotNull Seq<String> moduleName, String postfix) {
     return basePaths.map(basePath -> resolveFile(basePath, moduleName, postfix))
-      .firstOrNull(Files::exists);
+      .findFirst(Files::exists).getOrNull();
   }
 }

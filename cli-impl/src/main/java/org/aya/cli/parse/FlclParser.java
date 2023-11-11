@@ -35,7 +35,7 @@ public record FlclParser(
       var idChildren = rule.childrenOfType(FlclPsiElementTypes.ID)
         .map(MarkerNodeWrapper::tokenText)
         .map(CharSequence::toString);
-      var title = idChildren.first();
+      var title = idChildren.getFirst();
       var ids = idChildren.drop(1).toImmutableSeq();
       insert(title, ids);
     });

@@ -220,7 +220,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
         && !exists.containsKey(modifier)) {
         // one (not None) group one modifier
         assert exists.size() == 1;
-        var contradict = Seq.from(exists.entrySet()).first();
+        var contradict = Seq.from(exists.entrySet()).getFirst();
         reportContradictModifier(data, new WithPos<>(contradict.getValue(), contradict.getKey()));
         continue;
       }

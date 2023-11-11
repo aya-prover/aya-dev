@@ -1,3 +1,0 @@
-status = ["gradle-check", "commit-check"]
-commit_title = "merge: ${PR_REFS}"
-delete_merged_branches = true
