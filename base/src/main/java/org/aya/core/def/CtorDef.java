@@ -5,14 +5,12 @@ package org.aya.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.pat.Pat;
-import org.aya.core.term.SortTerm;
 import org.aya.core.term.Term;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -58,14 +56,5 @@ public final class CtorDef extends SubLevelDef {
 
   @Override public @NotNull ImmutableSeq<Term.Param> telescope() {
     return fullTelescope().toImmutableSeq();
-  }
-
-  private @NotNull SortTerm dataResult() {
-    return dataRef.concrete == null ? dataRef.core.result
-      : Objects.requireNonNull(dataRef.concrete.signature).result();
-  }
-
-  public boolean inProp() {
-    return dataResult().isProp();
   }
 }

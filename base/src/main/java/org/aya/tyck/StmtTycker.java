@@ -252,7 +252,7 @@ public final class StmtTycker extends TracedTycker {
     // Because we need to use in a lambda expression later
     var dataCall = predataCall;
     var ulift = dataConcrete.signature.result();
-    var tele = tele(tycker, ctor.telescope, ulift.isProp() ? null : ulift);
+    var tele = tele(tycker, ctor.telescope, ulift);
 
     var elabClauses = tycker.zonk(tycker.elaboratePartial(ctor.clauses, dataCall));
 
