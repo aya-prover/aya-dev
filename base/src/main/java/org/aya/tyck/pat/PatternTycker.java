@@ -71,7 +71,7 @@ public final class PatternTycker {
    *
    * @return well typed pattern
    */
-  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term, boolean resultIsProp) {
+  private @NotNull Pat doTyck(@NotNull Pattern pattern, @NotNull Term term) {
     return switch (pattern) {
       case Pattern.Absurd absurd -> {
         var selection = selectCtor(term, null, absurd);
@@ -81,12 +81,11 @@ public final class PatternTycker {
       case Pattern.Tuple tuple -> {
         if (!(term.normalize(exprTycker.state, NormalizeMode.WHNF) instanceof SigmaTerm sigma))
           yield withError(new PatternProblem.TupleNonSig(tuple, term), term);
-        if (!resultIsProp && exprTycker.inProp(sigma)) foundError(new PatternProblem.IllegalPropPat(tuple));
         // sig.result is a dummy term
         var sig = new Def.Signature<>(sigma.params(),
           new ErrorTerm(Doc.plain("Rua"), false));
         yield new Pat.Tuple(
-          tyckInner(sig, tuple.patterns().view(), tuple, resultIsProp)
+          tyckInner(sig, tuple.patterns().view(), tuple)
             .wellTyped());
       }
       case Pattern.Ctor ctor -> {
@@ -94,14 +93,12 @@ public final class PatternTycker {
         var realCtor = selectCtor(term, var, ctor);
         if (realCtor == null) yield randomPat(term);
         var ctorRef = realCtor.component3().ref();
-        var dataIsProp = ctorRef.core.inProp();
-        if (!resultIsProp && dataIsProp) foundError(new PatternProblem.IllegalPropPat(ctor));
         var ctorCore = ctorRef.core;
 
         final var dataCall = realCtor.component1();
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor.component2(), 0), dataCall);
         // It is possible that `ctor.params()` is empty.
-        var patterns = tyckInner(sig, ctor.params().view(), ctor, resultIsProp).wellTyped;
+        var patterns = tyckInner(sig, ctor.params().view(), ctor).wellTyped;
         yield new Pat.Ctor(realCtor.component3().ref(), patterns, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
@@ -137,12 +134,12 @@ public final class PatternTycker {
           var shape = exprTycker.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
             yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
-              .constructorForm(), term, resultIsProp);
+              .constructorForm(), term);
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, term), term);
       }
       case Pattern.As(var pos, var inner, var as, var type) -> {
-        var innerPat = doTyck(inner, term, resultIsProp);
+        var innerPat = doTyck(inner, term);
 
         type.set(term);
         addPatSubst(as, innerPat, term);
@@ -164,8 +161,7 @@ public final class PatternTycker {
    */
   public @NotNull PatternTycker.TyckResult tyck(
     @Nullable Pattern outerPattern,
-    @Nullable Expr body,
-    boolean resultIsProp
+    @Nullable Expr body
   ) {
     assert currParam == null;
     // last pattern which user given (not aya generated)
@@ -220,7 +216,7 @@ public final class PatternTycker {
         }
         // ^ Pattern is implicit, so we "consume" it (stream.drop(1))
       }
-      updateSig(pat, resultIsProp);
+      updateSig(pat);
     }
     if (patterns.isNotEmpty()) {
       foundError(new PatternProblem
@@ -239,11 +235,10 @@ public final class PatternTycker {
   private @NotNull PatternTycker.TyckResult tyckInner(
     @NotNull Def.Signature<?> signature,
     @NotNull SeqView<Arg<Pattern>> patterns,
-    @NotNull Pattern outerPattern,
-    boolean resultIsProp
+    @NotNull Pattern outerPattern
   ) {
     var sub = new PatternTycker(this.exprTycker, this.bodySubst, signature, patterns);
-    var result = sub.tyck(outerPattern, null, resultIsProp);
+    var result = sub.tyck(outerPattern, null);
 
     this.hasError = hasError || sub.hasError;
 
@@ -261,12 +256,12 @@ public final class PatternTycker {
    *
    * @apiNote {@code data.param.explicit = arg.explicit} or the world explode.
    */
-  private void updateSig(Arg<Pattern> arg, boolean resultIsProp) {
+  private void updateSig(Arg<Pattern> arg) {
     onTyck(() -> {
       var type = currParam.type();
       var pat = arg.term();
       var res = exprTycker.traced(() -> new Trace.PatT(type, pat, pat.sourcePos()),
-        () -> doTyck(pat, type, resultIsProp));
+        () -> doTyck(pat, type));
       addSigSubst(currParam, res);
       wellTyped.append(new Arg<>(res, arg.explicit()));
     });
@@ -275,7 +270,7 @@ public final class PatternTycker {
   /**
    * For every implicit parameter that not explicitly (no user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link ClauseTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean, boolean)}
+   * so that they can be inferred during {@link ClauseTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
    *
    * @apiNote {@code daat.param.explicit = false} or the world explode.
    */

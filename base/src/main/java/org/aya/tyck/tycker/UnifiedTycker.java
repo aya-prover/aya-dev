@@ -44,7 +44,7 @@ import java.util.function.Function;
  * @see #checkBoundaries
  * @see #inheritFallbackUnify
  */
-public sealed abstract class UnifiedTycker extends LetListTycker permits PropTycker {
+public sealed abstract class UnifiedTycker extends LetListTycker permits ExprTycker {
   protected UnifiedTycker(@NotNull Reporter reporter, Trace.@Nullable Builder traceBuilder, @NotNull TyckState state) {
     super(reporter, traceBuilder, state);
   }

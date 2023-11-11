@@ -21,6 +21,7 @@ import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
 import org.aya.core.visitor.Zonker;
 import org.aya.generic.Constants;
+import org.aya.tyck.tycker.UnifiedTycker;
 import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Partial;
@@ -30,7 +31,6 @@ import org.aya.ref.LocalVar;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.trace.Trace;
-import org.aya.tyck.tycker.PropTycker;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
 import org.aya.util.reporter.Reporter;
@@ -45,7 +45,7 @@ import java.util.function.Function;
  * Do <em>not</em> use multiple instances in the tycking of one {@link Decl.TopLevel}
  * and do <em>not</em> reuse instances of this class in the tycking of multiple {@link Decl.TopLevel}s.
  */
-public final class ExprTycker extends PropTycker {
+public final class ExprTycker extends UnifiedTycker {
   public final @NotNull AyaShape.Factory shapeFactory;
 
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
@@ -126,8 +126,6 @@ public final class ExprTycker extends PropTycker {
           var type = telescope.get(index).type();
           var subst = ProjTerm.projSubst(projecteeWHNF, index, telescope, new Subst());
           var resultTy = type.subst(subst).freezeHoles(state);
-          if (inProp(pseudoSigma) && !inProp(resultTy))
-            return fail(proj, resultTy, new IrrElimProblem.Proj(proj, projecteeWHNF, pseudoSigma, resultTy, state));
           return new Result.Default(ProjTerm.proj(projecteeWHNF, ix), resultTy);
         }, sp -> {
           var fieldName = sp.name();
@@ -528,6 +526,6 @@ public final class ExprTycker extends PropTycker {
   }
 
   public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return withInProp(inProp(type), () -> inherit(expr, type));
+    return inherit(expr, type);
   }
 }
