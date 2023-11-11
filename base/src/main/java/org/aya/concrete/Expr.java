@@ -59,7 +59,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     resolver.enterBody();
     var inner = resolver.apply(this);
     var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq().view();
-    return Expr.buildLam(sourcePos(), view, inner);
+    return buildLam(sourcePos(), view, inner);
   }
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -85,7 +85,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, new QualifiedID(sourcePos, name));
     }
 
-    @Override public @NotNull Expr.Unresolved descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Unresolved descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
@@ -115,11 +115,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, explicit, filling, MutableValue.create());
     }
 
-    public @NotNull Expr.Hole update(@Nullable Expr filling) {
+    public @NotNull Hole update(@Nullable Expr filling) {
       return filling == filling() ? this : new Hole(sourcePos, explicit, filling);
     }
 
-    @Override public @NotNull Expr.Hole descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Hole descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(filling == null ? null : f.apply(filling));
     }
   }
@@ -132,11 +132,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr function,
     @NotNull NamedArg argument
   ) implements Expr {
-    public @NotNull Expr.App update(@NotNull Expr function, @NotNull NamedArg argument) {
+    public @NotNull App update(@NotNull Expr function, @NotNull NamedArg argument) {
       return function == function() && argument == argument() ? this : new App(sourcePos, function, argument);
     }
 
-    @Override public @NotNull Expr.App descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull App descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(f.apply(function), argument.descent(f));
     }
   }
@@ -197,11 +197,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return last;
     }
 
-    public @NotNull Expr.Pi update(@NotNull Param param, @NotNull Expr last) {
+    public @NotNull Pi update(@NotNull Param param, @NotNull Expr last) {
       return param == param() && last == last() ? this : new Pi(sourcePos, param, last);
     }
 
-    @Override public @NotNull Expr.Pi descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Pi descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(last));
     }
   }
@@ -280,11 +280,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Param param,
     @NotNull Expr body
   ) implements Expr, Nested<Param, Expr, Lambda> {
-    public @NotNull Expr.Lambda update(@NotNull Param param, @NotNull Expr body) {
+    public @NotNull Lambda update(@NotNull Param param, @NotNull Expr body) {
       return param == param() && body == body() ? this : new Lambda(sourcePos, param, body);
     }
 
-    @Override public @NotNull Expr.Lambda descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Lambda descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), f.apply(body));
     }
   }
@@ -296,11 +296,11 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<@NotNull Param> params
   ) implements Expr {
-    public @NotNull Expr.Sigma update(@NotNull ImmutableSeq<@NotNull Param> params) {
+    public @NotNull Sigma update(@NotNull ImmutableSeq<@NotNull Param> params) {
       return params.sameElements(params(), true) ? this : new Sigma(sourcePos, params);
     }
 
-    @Override public @NotNull Expr.Sigma descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Sigma descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(params.map(param -> param.descent(f)));
     }
   }
@@ -322,13 +322,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       this(sourcePos, resolvedVar, MutableValue.create());
     }
 
-    @Override public @NotNull Expr.Ref descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Ref descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return this;
     }
   }
 
   record Lift(@NotNull SourcePos sourcePos, @NotNull Expr expr, int lift) implements Expr {
-    public @NotNull Expr.Lift update(@NotNull Expr expr) {
+    public @NotNull Lift update(@NotNull Expr expr) {
       return expr == expr() ? this : new Lift(sourcePos, expr, lift);
     }
 
@@ -685,7 +685,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    */
   record Let(
     @NotNull SourcePos sourcePos,
-    @NotNull Expr.LetBind bind,
+    @NotNull LetBind bind,
     @NotNull Expr body
   ) implements Expr, Nested<LetBind, Expr, Let> {
     @Override
@@ -693,7 +693,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
       return bind;
     }
 
-    public @NotNull Let update(@NotNull Expr.LetBind bind, @NotNull Expr body) {
+    public @NotNull Let update(@NotNull LetBind bind, @NotNull Expr body) {
       return bind() == bind && body() == body
         ? this
         : new Let(sourcePos(), bind, body);
@@ -712,13 +712,13 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
     @NotNull Expr result,
     @NotNull Expr definedAs
   ) implements SourceNode {
-    public @NotNull Expr.LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
+    public @NotNull LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull Expr result, @NotNull Expr definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this
         : new LetBind(sourcePos, bindName, telescope, result, definedAs);
     }
 
-    public @NotNull Expr.LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
+    public @NotNull LetBind descent(@NotNull UnaryOperator<@NotNull Expr> f) {
       return update(telescope().map(x -> x.descent(f)), f.apply(result()), f.apply(definedAs()));
     }
   }
@@ -754,15 +754,15 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
   }
 
   static @NotNull Expr buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
-    return buildNested(sourcePos, params, body, Expr.Pi::new);
+    return buildNested(sourcePos, params, body, Pi::new);
   }
 
   static @NotNull Expr buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull Expr body) {
-    return buildNested(sourcePos, params, body, Expr.Lambda::new);
+    return buildNested(sourcePos, params, body, Lambda::new);
   }
 
   static @NotNull Expr buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull Expr body) {
-    return buildNested(sourcePos, binds, body, Expr.Let::new);
+    return buildNested(sourcePos, binds, body, Let::new);
   }
 
   /** convert flattened terms into nested right-associate terms */
