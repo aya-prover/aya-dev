@@ -1,7 +1,7 @@
 name: test
 on:
   push:
-    branches: [main, staging, trying]
+    branches: [main]
   pull_request:
     branches: [main]
   merge_group:
