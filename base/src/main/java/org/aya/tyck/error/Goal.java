@@ -15,11 +15,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record Goal(
-  @NotNull TyckState state,
-  @NotNull MetaTerm hole,
-  @NotNull ImmutableSeq<LocalVar> scope
-) implements Problem {
+public record Goal(@NotNull TyckState state, @NotNull MetaTerm hole, @NotNull ImmutableSeq<LocalVar> scope) implements Problem {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
     var nullableResult = meta.info.result();
@@ -41,7 +37,7 @@ public record Goal(
             Doc.plain("Given "),
             Doc.parened(tup.component1().toDoc(options)),
             Doc.plain(", we should have: "),
-            tup.component2().toDoc(options)
+            tup.component2().freezeHoles(state).toDoc(options)
           )))))
         : Doc.empty()
     );
