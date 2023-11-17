@@ -147,7 +147,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       }
       case OutTerm outS -> {
         var ty = tryPress(outS.of());
-        if (ty instanceof PrimCall sub) yield sub.args().first().term();
+        if (ty instanceof PrimCall sub) yield sub.args().getFirst().term();
         yield null;
       }
       case PAppTerm app -> {

@@ -211,7 +211,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   ) {
     if (!l.sizeEquals(r)) return fail.get();
     if (l.isEmpty()) return success.apply(lsub, rsub);
-    return checkParam(l.first(), r.first(), lsub, rsub, lr, rl, fail, (ls, rs) ->
+    return checkParam(l.getFirst(), r.getFirst(), lsub, rsub, lr, rl, fail, (ls, rs) ->
       checkParams(l.drop(1), r.drop(1), ls, rs, lr, rl, fail, success));
   }
 
@@ -227,7 +227,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     var ru = r.toImmutableSeq();
     for (int i = 0; lu.sizeGreaterThan(i); i++) {
       var li = lu.get(i);
-      var head = typesSubst.first();
+      var head = typesSubst.getFirst();
       if (!compare(li, ru.get(i), lr, rl, head.type())) return false;
       typesSubst = typesSubst.drop(1).map(type -> type.subst(head.ref(), li));
     }
@@ -277,7 +277,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         var params = paramsSeq.view();
         for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
           var l = ProjTerm.proj(lhs, i);
-          var currentParam = params.first();
+          var currentParam = params.getFirst();
           ctx.put(currentParam);
           if (!compare(l, ProjTerm.proj(rhs, i), lr, rl, currentParam.type())) yield false;
           params = params.drop(1).map(x -> x.subst(currentParam.ref(), l));
@@ -450,12 +450,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         var subst = new Subst(MutableMap.create());
         for (int i = 1; i < lhs.ix(); i++) {
           var l = ProjTerm.proj(lhs, i);
-          var currentParam = params.first();
+          var currentParam = params.getFirst();
           subst.add(currentParam.ref(), l);
           params = params.drop(1);
         }
-        if (params.isNotEmpty()) yield params.first().subst(subst).type();
-        yield params.last().subst(subst).type();
+        if (params.isNotEmpty()) yield params.getFirst().subst(subst).type();
+        yield params.getLast().subst(subst).type();
       }
       case FormulaTerm lhs -> {
         if (!(preRhs instanceof FormulaTerm rhs)) yield null;

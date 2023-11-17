@@ -89,6 +89,10 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       }
     }.accept(term);
   }
+
+  /**
+   * Perform {@param action} under this context + ({@param var} : {@param type})
+   */
   default <T> T with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<T> action) {
     put(var, type);
     try {
@@ -97,9 +101,17 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       remove(SeqView.of(var));
     }
   }
+
+  /**
+   * Perform {@param action} under this context + {@param param}
+   */
   default <T> T with(@NotNull Supplier<T> action, @NotNull Term.Param... param) {
     return with(action, Seq.of(param).view());
   }
+
+  /**
+   * Perform {@param action} under this context + {@param param}
+   */
   default <T> T with(@NotNull Supplier<T> action, @NotNull SeqView<Term.Param> param) {
     for (var p : param) put(p);
     try {
@@ -108,6 +120,10 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
       remove(param.map(Term.Param::ref));
     }
   }
+
+  /**
+   * @return this context in telescope style
+   */
   default @NotNull ImmutableSeq<Term.Param> extract() {
     var ctx = MutableList.<Term.Param>create();
     var map = this;
@@ -117,6 +133,7 @@ public sealed interface LocalCtx permits MapLocalCtx, SeqLocalCtx {
     }
     return ctx.toImmutableSeq();
   }
+
   @Contract(mutates = "param1") void extractToLocal(@NotNull MutableList<Term.Param> dest);
   @Contract(pure = true) default @NotNull Term get(@NotNull LocalVar var) {
     var res = getUnchecked(var);

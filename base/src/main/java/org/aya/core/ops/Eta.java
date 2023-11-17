@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.ops;
 
@@ -29,7 +29,7 @@ public record Eta(@NotNull LocalCtx ctx) {
         var etaItems = items.map(x -> x.descent(this::uneta));
         var defaultRes = new TupTerm(etaItems);
         // Get first item's Proj.of Term to compare with other items'
-        var firstItem = etaItems.first().term();
+        var firstItem = etaItems.getFirst().term();
         if (!(firstItem instanceof ProjTerm proj
           && proj.of() instanceof RefTerm ref
           && ctx.get(ref.var()) instanceof SigmaTerm sigmaTerm)) yield defaultRes;

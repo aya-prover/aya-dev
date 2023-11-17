@@ -31,7 +31,7 @@ public record SeqLocalCtx(
   }
 
   @Override public @Nullable Term getLocal(@NotNull LocalVar var) {
-    return localSeq.firstOption(p -> p.var.equals(var)).map(p -> p.type).getOrNull();
+    return localSeq.findFirst(p -> p.var.equals(var)).map(p -> p.type).getOrNull();
   }
 
   @Override public void putUnchecked(@NotNull LocalVar var, @NotNull Term term) {

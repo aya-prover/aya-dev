@@ -44,7 +44,7 @@ public class ModifierParserTest {
     assertEquals(1, reporter.problems().size());
     assertEquals(1, reporter.problemSize(Problem.Severity.WARN));
 
-    var warn = reporter.problems().first();
+    var warn = reporter.problems().getFirst();
     assertInstanceOf(ModifierProblem.class, warn);
     assertEquals(Private, ((ModifierProblem) warn).modifier());
 
