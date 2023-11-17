@@ -21,7 +21,6 @@ import org.aya.core.visitor.DeltaExpander;
 import org.aya.core.visitor.Expander;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Constants;
-import org.aya.util.error.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
@@ -32,6 +31,7 @@ import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.trace.Trace;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +103,9 @@ public final class PatternTycker {
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.ctx.put(bind, term);
-        if (tyExpr != null) exprTycker.subscoped(() -> {
+        // In case of errors, never touch anything related to Term
+        //  because there will be ill-scoped terms and they trigger internal errors (e.g. #1016)
+        if (tyExpr != null && !hasError) exprTycker.subscoped(() -> {
           exprTycker.definitionEqualities.addDirectly(bodySubst);
           var syn = exprTycker.synthesize(tyExpr);
           exprTycker.unifyTyReported(term, syn.wellTyped(), tyExpr);
@@ -240,7 +242,7 @@ public final class PatternTycker {
     var sub = new PatternTycker(this.exprTycker, this.bodySubst, signature, patterns);
     var result = sub.tyck(outerPattern, null);
 
-    this.hasError = hasError || sub.hasError;
+    hasError = hasError || sub.hasError;
 
     return result;
   }
