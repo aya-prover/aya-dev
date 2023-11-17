@@ -166,7 +166,7 @@ public final class ExprTycker extends UnifiedTycker {
           fTy = whnf(fTy);
         } else if (fTy instanceof SortTerm) {
           if (whnf(app) instanceof ClassCall classCall) {
-            var member = classCall.missingMembers().firstOrNull();
+            var member = classCall.missingMembers().getFirstOrNull();
             if (member == null) {
               throw new InternalException("TODO: too many fields");
             }
@@ -226,7 +226,7 @@ public final class ExprTycker extends UnifiedTycker {
           var type = ctx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
           yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type.component1()), type.component1());
         }
-        var match = defs.first();
+        var match = defs.getFirst();
         var type = new DataCall(((DataDef) match.component1()).ref, 0, ImmutableSeq.empty());
         yield new Result.Default(new IntegerTerm(integer, match.component2(), type), type);
       }
@@ -253,11 +253,11 @@ public final class ExprTycker extends UnifiedTycker {
         if (defs.sizeGreaterThan(1)) yield fail(expr, new Zonker.UnsolvedLit(new MetaLitTerm(
           arr.sourcePos(), arr, defs, ErrorTerm.typeOf(arr))));
 
-        var match = defs.first();
+        var match = defs.getFirst();
         var def = (DataDef) match.component1();
 
         // preparing
-        var dataParam = Def.defTele(def.ref).first();
+        var dataParam = Def.defTele(def.ref).getFirst();
         var sort = dataParam.type();    // the sort of type below.
         var hole = ctx.freshHole(sort, arr.sourcePos());
         var type = new DataCall(def.ref(), 0, ImmutableSeq.of(

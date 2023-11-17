@@ -61,7 +61,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         yield pre(new BinExprParser(info, seq.view()).build(pos));
       }
       case Expr.Do(var sourcePos, var monadBind, var binds) -> {
-        var last = binds.last();
+        var last = binds.getLast();
         if (last.var() != LocalVar.IGNORED) {
           info.opSet().reporter.report(new DoNotationError(last.sourcePos(), expr));
           yield new Expr.Error(sourcePos, expr);

@@ -114,7 +114,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return assoc != null ? Doc.parened(fn) : fn;
     if (assoc != null) {
-      var firstArg = visibleArgs.first();
+      var firstArg = visibleArgs.getFirst();
       if (!firstArg.explicit()) return prefix(Doc.parened(fn), fmt, outer, visibleArgs.view());
       var first = fmt.apply(Outer.BinOp, firstArg.term());
       if (assoc.isBinary()) {
@@ -196,14 +196,14 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     @Nullable Term body, @NotNull ToIntBiFunction<Term, AnyVar> altF7
   ) {
     if (telescope.isEmpty()) return Doc.empty();
-    var last = telescope.first();
+    var last = telescope.getFirst();
     var buf = MutableList.<Doc>create();
     var names = MutableList.of(last.ref());
     for (int i = 1; i < telescope.size(); i++) {
       var param = telescope.get(i);
       if (!Objects.equals(param.type(), last.type())) {
         if (body != null && names.sizeEquals(1)) {
-          var ref = names.first();
+          var ref = names.getFirst();
           var used = telescope.sliceView(i, telescope.size())
             .map(ParamLike::type).appended(body)
             .anyMatch(p -> altF7.applyAsInt(p, ref) > 0);
@@ -216,7 +216,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       names.append(param.ref());
     }
     if (body != null && names.sizeEquals(1)
-      && altF7.applyAsInt(body, names.first()) == 0) {
+      && altF7.applyAsInt(body, names.getFirst()) == 0) {
       buf.append(justType(last, Outer.ProjHead));
     } else buf.append(mutableListNames(names, last));
     return Doc.sep(buf);

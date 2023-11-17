@@ -172,7 +172,7 @@ public class ParseTest {
   }
 
   private void parseImport(@Language("Aya") String code) {
-    assertTrue(parseStmt(code).first() instanceof Command.Import s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseStmt(code).getFirst() instanceof Command.Import s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseOpen(@Language("Aya") String code) {
@@ -180,11 +180,11 @@ public class ParseTest {
   }
 
   private void parseFn(@Language("Aya") String code) {
-    assertTrue(parseDecl(code).first() instanceof TeleDecl.FnDecl s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseDecl(code).getFirst() instanceof TeleDecl.FnDecl s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseData(@Language("Aya") String code) {
-    assertTrue(parseDecl(code).first() instanceof TeleDecl.DataDecl);
+    assertTrue(parseDecl(code).getFirst() instanceof TeleDecl.DataDecl);
   }
 
   @Test
