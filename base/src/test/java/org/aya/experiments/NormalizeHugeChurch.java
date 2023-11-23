@@ -31,7 +31,7 @@ public class NormalizeHugeChurch {
       """);
     var state = new TyckState(res.component1());
     var decls = res.component2();
-    var last = ((FnDef) decls.last()).body.getLeftValue();
+    var last = ((FnDef) decls.getLast()).body.getLeftValue();
     println("Tyck: " + (System.currentTimeMillis() - startup));
     startup = System.currentTimeMillis();
     var nf = last.normalize(state, NormalizeMode.NF);
