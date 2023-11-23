@@ -121,7 +121,7 @@ public record PrettyError(
     }
 
     void add(@NotNull Doc code) {
-      lineDocs.append(Doc.plain(" ")); // cannot use `empty()` or `plain("")`
+      lineDocs.append(Doc.ONE_WS); // cannot use `empty()` or `plain("")`
       codeDocs.append(code);
     }
   }
