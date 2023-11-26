@@ -110,7 +110,7 @@ class HoverStack {
     newHover.classList.add("AyaTooltipPopup");
     // Hover to highlight occurrences is done by adding mouse event listeners to the elements in the tooltip.
     // The inserted tooltip is not a child of `document` when the page was loaded, so a manual setup is needed.
-    setupHighlight(newHover);
+    highlightFn(newHover);
 
     // Auto-dismissal setup
     let self = this;
