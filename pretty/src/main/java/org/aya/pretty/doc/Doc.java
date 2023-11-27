@@ -785,6 +785,9 @@ public sealed interface Doc extends Docile {
 
   //endregion
   private static @NotNull Doc simpleCat(@NotNull SeqLike<@NotNull Doc> xs) {
-    return new Cat(xs.toImmutableSeq());
+    var seq = xs.toImmutableSeq();
+    if (seq.isEmpty()) return empty();
+    if (seq.sizeEquals(1)) return seq.getFirst();
+    return new Cat(seq);
   }
 }

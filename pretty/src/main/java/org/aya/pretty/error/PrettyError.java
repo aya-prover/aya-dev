@@ -260,7 +260,7 @@ public record PrettyError(
       .skip(Math.max(startLine - 1 - showMore, 0))
       .limit(endLine - startLine + 1 + showMore)
       .map(line -> visualizeLine(config, line))
-      .collect(MutableList.factory());
+      .toList();
 
     final int minLineNo = Math.max(startLine - showMore, 1);
     final int maxLineNo = minLineNo + lines.size();
