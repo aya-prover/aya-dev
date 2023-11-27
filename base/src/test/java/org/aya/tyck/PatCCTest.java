@@ -63,7 +63,7 @@ public class PatCCTest {
          nm (if u (nm (if v y z) h1) (nm (if w y z) h2)) h3
       """);
     var decls = res.component2();
-    var classified = testClassify(res.component1(), (FnDef) decls.last());
+    var classified = testClassify(res.component1(), (FnDef) decls.getLast());
     assertEquals(3, classified.size());
     classified.forEach(cls ->
       assertEquals(1, cls.cls().size()));

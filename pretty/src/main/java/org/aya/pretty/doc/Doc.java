@@ -47,10 +47,6 @@ public sealed interface Doc extends Docile {
   @Override default @NotNull Doc toDoc() {
     return this;
   }
-  /** @return a seq with cats flattened */
-  default @NotNull SeqLike<Doc> asSeq() {
-    return Seq.of(this);
-  }
 
   //region Doc APIs
   default @NotNull String renderToString(@NotNull StringPrinterConfig<?> config) {
@@ -127,11 +123,7 @@ public sealed interface Doc extends Docile {
 
   /** The empty document; conceptually the unit of 'Cat' */
   enum Empty implements Doc {
-    INSTANCE;
-
-    @Override public @NotNull SeqLike<Doc> asSeq() {
-      return Seq.empty();
-    }
+    INSTANCE
   }
 
   /**
@@ -215,9 +207,6 @@ public sealed interface Doc extends Docile {
    * Concatenation of two documents
    */
   record Cat(@NotNull ImmutableSeq<Doc> inner) implements Doc {
-    @Override public @NotNull SeqLike<Doc> asSeq() {
-      return inner.view().flatMap(Doc::asSeq);
-    }
   }
 
   record List(boolean isOrdered, @NotNull ImmutableSeq<Doc> items) implements Doc {
@@ -796,6 +785,9 @@ public sealed interface Doc extends Docile {
 
   //endregion
   private static @NotNull Doc simpleCat(@NotNull SeqLike<@NotNull Doc> xs) {
-    return new Cat(xs.view().flatMap(Doc::asSeq).toImmutableArray());
+    var seq = xs.toImmutableSeq();
+    if (seq.isEmpty()) return empty();
+    if (seq.sizeEquals(1)) return seq.getFirst();
+    return new Cat(seq);
   }
 }

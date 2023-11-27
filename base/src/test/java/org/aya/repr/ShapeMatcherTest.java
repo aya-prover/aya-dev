@@ -111,7 +111,7 @@ public class ShapeMatcherTest {
 
   public @Nullable ShapeRecognition match(boolean should, @NotNull AyaShape shape, @Language("Aya") @NonNls @NotNull String code) {
     var def = TyckDeclTest.successTyckDecls(code).component2();
-    return check(ImmutableSeq.fill(def.size(), Tuple.of(should, shape)), def).firstOrNull();
+    return check(ImmutableSeq.fill(def.size(), Tuple.of(should, shape)), def).getFirstOrNull();
   }
 
   public @NotNull ImmutableSeq<ShapeRecognition> match(@NotNull ImmutableSeq<Tuple2<Boolean, AyaShape>> shouldBe, @Language("Aya") @NonNls @NotNull String code) {

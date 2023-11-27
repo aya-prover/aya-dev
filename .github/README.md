@@ -1,4 +1,4 @@
-[![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml)
+[![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yaml)
 [![maven]][maven-repo]
 [![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
@@ -66,7 +66,7 @@ of IDE is IntelliJ IDEA, version 2023.2 or higher is required.
     We value your time and enthusiasm, so we don't want to close your PRs :)
 
 [@ice1000]: https://github.com/ice1000
-[actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yml/badge.svg
+[actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yaml/badge.svg
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle

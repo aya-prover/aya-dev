@@ -121,7 +121,7 @@ public record PrettyError(
     }
 
     void add(@NotNull Doc code) {
-      lineDocs.append(Doc.plain(" ")); // cannot use `empty()` or `plain("")`
+      lineDocs.append(Doc.ONE_WS); // cannot use `empty()` or `plain("")`
       codeDocs.append(code);
     }
   }
@@ -260,7 +260,7 @@ public record PrettyError(
       .skip(Math.max(startLine - 1 - showMore, 0))
       .limit(endLine - startLine + 1 + showMore)
       .map(line -> visualizeLine(config, line))
-      .collect(MutableList.factory());
+      .toList();
 
     final int minLineNo = Math.max(startLine - showMore, 1);
     final int maxLineNo = minLineNo + lines.size();

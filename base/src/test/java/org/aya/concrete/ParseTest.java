@@ -24,8 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("UnknownLanguage")
 public class ParseTest {
@@ -176,7 +175,7 @@ public class ParseTest {
   }
 
   private void parseOpen(@Language("Aya") String code) {
-    assertTrue(parseStmt(code).last() instanceof Command.Open s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
+    assertTrue(parseStmt(code).getLast() instanceof Command.Open s && !s.toDoc(AyaPrettierOptions.debug()).debugRender().isEmpty());
   }
 
   private void parseFn(@Language("Aya") String code) {
@@ -184,7 +183,7 @@ public class ParseTest {
   }
 
   private void parseData(@Language("Aya") String code) {
-    assertTrue(parseDecl(code).getFirst() instanceof TeleDecl.DataDecl);
+    assertInstanceOf(TeleDecl.DataDecl.class, parseDecl(code).getFirst());
   }
 
   @Test

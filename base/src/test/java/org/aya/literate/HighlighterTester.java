@@ -91,7 +91,7 @@ public class HighlighterTester {
 
   public void runTest() {
     var sortedActual = actual.view().distinct().sorted().toImmutableSeq().view();
-    if (sortedActual.last() instanceof HighlightInfo.Lit(var $, var kind) && kind == HighlightInfo.LitKind.Eol)
+    if (sortedActual.getLast() instanceof HighlightInfo.Lit(var $, var kind) && kind == HighlightInfo.LitKind.Eol)
       // Remove the last Eol
       sortedActual = sortedActual.dropLast(1);
     runTest(sortedActual.toImmutableSeq(), Seq.of(expected));
