@@ -55,71 +55,12 @@ public final class ExprTycker extends UnifiedTycker {
     this.shapeFactory = shapeFactory;
   }
 
-  private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
-    // forall i. (c_i is valid)
-    return new Restr.Cond<>(inherit(c.inst(), IntervalTerm.INSTANCE).wellTyped(), c.isOne());
-    // ^ note: `inst` may be ErrorTerm!
-  }
-
-  public @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
-    var s = new ClauseTyckState();
-    var sides = partial.clauses().flatMap(sys -> clause(sys.component1(), sys.component2(), type, s));
-    confluence(sides, partial, type);
-    if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
-    if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
-    return new Partial.Split<>(sides);
-  }
-
-  private static class ClauseTyckState {
-    public boolean isConstantFalse = false;
-    public @Nullable Term truthValue;
-  }
-
-  private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
-    return switch (AyaRestrSimplifier.INSTANCE.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
-      case Restr.Disj<Term> restr -> {
-        var list = MutableList.<Restr.Side<Term>>create();
-        for (var cof : restr.orz()) {
-          var u = CofThy.vdash(cof, new Subst(), subst -> inherit(rhs, whnf(rhsType.subst(subst))).wellTyped());
-          if (u.isDefined()) {
-            if (u.get() == null) {
-              // ^ some `inst` in `cofib.ands()` are ErrorTerms, or we have bugs.
-              // Q: report error again?
-              yield SeqView.empty();
-            } else {
-              list.append(new Restr.Side<>(cof, u.get()));
-            }
-          }
-        }
-        yield list.view();
-      }
-      case Restr.Const<Term> c -> {
-        if (c.isOne()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
-        else clauseState.isConstantFalse = true;
-        yield SeqView.empty();
-      }
-    };
-  }
-
   private static final class NotPi extends Exception {
     private final @NotNull Term what;
 
     public NotPi(@NotNull Term what) {
       this.what = what;
     }
-  }
-
-  private Tuple2<PiTerm, @Nullable PathTerm>
-  ensurePiOrPath(@NotNull Term term) throws NotPi {
-    term = whnf(term);
-    if (term instanceof PiTerm pi) return Tuple.of(pi, null);
-    if (term instanceof PathTerm cube)
-      return Tuple.of(cube.computePi(), cube);
-    else throw new NotPi(term);
-  }
-
-  private static boolean needImplicitParamIns(@NotNull Expr expr) {
-    return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
   /// region Primary Functions
@@ -538,11 +479,58 @@ public final class ExprTycker extends UnifiedTycker {
     });
   }
 
-  // Restr:
+  // Cubical:
 
   public @NotNull Restr<Term> restr(@NotNull Restr<Expr> restr) {
     return restr.mapCond(this::condition);
   }
+
+  private @NotNull Restr.Cond<Term> condition(@NotNull Restr.Cond<Expr> c) {
+    // forall i. (c_i is valid)
+    return new Restr.Cond<>(inherit(c.inst(), IntervalTerm.INSTANCE).wellTyped(), c.isOne());
+    // ^ note: `inst` may be ErrorTerm!
+  }
+
+  private static class ClauseTyckState {
+    public boolean isConstantFalse = false;
+    public @Nullable Term truthValue;
+  }
+
+  public @NotNull Partial<Term> elaboratePartial(@NotNull Expr.PartEl partial, @NotNull Term type) {
+    var s = new ClauseTyckState();
+    var sides = partial.clauses().flatMap(sys -> clause(sys.component1(), sys.component2(), type, s));
+    confluence(sides, partial, type);
+    if (s.isConstantFalse) return new Partial.Split<>(ImmutableSeq.empty());
+    if (s.truthValue != null) return new Partial.Const<>(s.truthValue);
+    return new Partial.Split<>(sides);
+  }
+
+  private @NotNull SeqView<Restr.Side<Term>> clause(@NotNull Expr lhs, @NotNull Expr rhs, @NotNull Term rhsType, @NotNull ClauseTyckState clauseState) {
+    return switch (AyaRestrSimplifier.INSTANCE.isOne(whnf(inherit(lhs, IntervalTerm.INSTANCE).wellTyped()))) {
+      case Restr.Disj<Term> restr -> {
+        var list = MutableList.<Restr.Side<Term>>create();
+        for (var cof : restr.orz()) {
+          var u = CofThy.vdash(cof, new Subst(), subst -> inherit(rhs, whnf(rhsType.subst(subst))).wellTyped());
+          if (u.isDefined()) {
+            if (u.get() == null) {
+              // ^ some `inst` in `cofib.ands()` are ErrorTerms, or we have bugs.
+              // Q: report error again?
+              yield SeqView.empty();
+            } else {
+              list.append(new Restr.Side<>(cof, u.get()));
+            }
+          }
+        }
+        yield list.view();
+      }
+      case Restr.Const<Term> c -> {
+        if (c.isOne()) clauseState.truthValue = inherit(rhs, rhsType).wellTyped();
+        else clauseState.isConstantFalse = true;
+        yield SeqView.empty();
+      }
+    };
+  }
+
 
   /// endregion Particular Type Checking
 
@@ -573,6 +561,19 @@ public final class ExprTycker extends UnifiedTycker {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new InternalException(msg);
     }
+  }
+
+  private Tuple2<PiTerm, @Nullable PathTerm>
+  ensurePiOrPath(@NotNull Term term) throws NotPi {
+    term = whnf(term);
+    if (term instanceof PiTerm pi) return Tuple.of(pi, null);
+    if (term instanceof PathTerm cube)
+      return Tuple.of(cube.computePi(), cube);
+    else throw new NotPi(term);
+  }
+
+  private static boolean needImplicitParamIns(@NotNull Expr expr) {
+    return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
   /// endregion Helpful Utils
