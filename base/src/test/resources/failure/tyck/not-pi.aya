@@ -1,0 +1,1 @@
+def foo {A : Type} (a : A) : A => a a
