@@ -73,7 +73,8 @@ public final class StmtTycker extends TracedTycker {
           new FnDef(decl.ref, signature.param(), resultTy, decl.modifiers, body));
         yield switch (decl.body) {
           case TeleDecl.ExprBody(var body) -> {
-            var nobody = tycker.check(body, signature.result()).wellTyped();
+
+            var nobody = tycker.inherit(body, signature.result()).wellTyped();
             // It may contain unsolved metas. See `checkTele`.
             var resultTy = tycker.zonk(signature.result());
             yield factory.apply(resultTy, Either.left(tycker.zonk(nobody)));
@@ -140,7 +141,8 @@ public final class StmtTycker extends TracedTycker {
       Term preresult, prebody;
       if (fn.result != null) {
         preresult = tycker.ty(fn.result);
-        prebody = tycker.check(expr, preresult).wellTyped();
+
+        prebody = tycker.inherit(expr, preresult).wellTyped();
       } else {
         var synthesize = tycker.synthesize(expr);
         prebody = synthesize.wellTyped();

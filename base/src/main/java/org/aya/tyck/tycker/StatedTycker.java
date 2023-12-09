@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000
  * @see #whnf(Term)
  * @see #defCall
- * @see #inferRef(DefVar)
  * @see #conOwnerSubst(ConCall)
  */
 public abstract sealed class StatedTycker extends TracedTycker permits PatClassifier, MockTycker {
@@ -62,33 +61,6 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
       body = whnf(body);
     }
     return new Result.Default(LamTerm.make(teleRenamed, body), type);
-  }
-
-  @SuppressWarnings("unchecked") protected final @NotNull Result inferRef(@NotNull DefVar<?, ?> var) {
-    if (var.core instanceof FnDef || var.concrete instanceof TeleDecl.FnDecl) {
-      return defCall((DefVar<FnDef, TeleDecl.FnDecl>) var, FnCall::new);
-    } else if (var.core instanceof PrimDef) {
-      return defCall((DefVar<PrimDef, TeleDecl.PrimDecl>) var, PrimCall::new);
-    } else if (var.core instanceof DataDef || var.concrete instanceof TeleDecl.DataDecl) {
-      return defCall((DefVar<DataDef, TeleDecl.DataDecl>) var, DataCall::new);
-    } else if (var.core instanceof ClassDef || var.concrete instanceof ClassDecl) {
-      var classCall = new ClassCall((DefVar<ClassDef, ClassDecl>) var, 0, ImmutableMap.empty());
-      return new Result.Default(classCall, new SortTerm(SortKind.Type, 0)); // TODO[class]: type of classCall
-    } else if (var.core instanceof CtorDef || var.concrete instanceof TeleDecl.DataDecl.DataCtor) {
-      var conVar = (DefVar<CtorDef, TeleDecl.DataDecl.DataCtor>) var;
-      var tele = Def.defTele(conVar);
-      var type = PiTerm.make(tele, Def.defResult(conVar)).rename();
-      var telescopes = new DataDef.CtorTelescopes(conVar.core);
-      return new Result.Default(telescopes.toConCall(conVar, 0), type);
-    } else if (var.core instanceof MemberDef || var.concrete instanceof TeleDecl.ClassMember) {
-      // the code runs to here because we are checking a StructField within a StructDecl
-      // TODO[class]: this needs to be refactored to make use of instance resolution
-      var field = (DefVar<MemberDef, TeleDecl.ClassMember>) var;
-      return new Result.Default(new RefTerm.Field(field), Def.defType(field));
-    } else {
-      final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
-      throw new InternalException(msg);
-    }
   }
 
   public @NotNull Unifier unifier(@NotNull SourcePos pos, @NotNull Ordering ord, @NotNull LocalCtx ctx) {
