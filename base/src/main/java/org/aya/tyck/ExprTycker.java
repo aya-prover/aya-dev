@@ -54,14 +54,6 @@ public final class ExprTycker extends UnifiedTycker {
     this.shapeFactory = shapeFactory;
   }
 
-  private static final class NotPi extends Exception {
-    private final @NotNull Term what;
-
-    public NotPi(@NotNull Term what) {
-      this.what = what;
-    }
-  }
-
   /// region Primary Functions
 
   private @NotNull Result doInherit(@NotNull Expr expr, @NotNull Term term) {
@@ -556,6 +548,14 @@ public final class ExprTycker extends UnifiedTycker {
     } else {
       final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
       throw new InternalException(msg);
+    }
+  }
+
+  private static final class NotPi extends Exception {
+    private final @NotNull Term what;
+
+    public NotPi(@NotNull Term what) {
+      this.what = what;
     }
   }
 
