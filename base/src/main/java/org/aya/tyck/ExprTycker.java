@@ -16,7 +16,6 @@ import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
 import org.aya.core.def.*;
 import org.aya.core.repr.AyaShape;
-import org.aya.core.repr.CodeShape;
 import org.aya.core.term.*;
 import org.aya.core.visitor.AyaRestrSimplifier;
 import org.aya.core.visitor.Subst;
@@ -107,7 +106,8 @@ public final class ExprTycker extends UnifiedTycker {
             var resultParam = new Term.Param(var, type, param.explicit());
             var body = dt.substBody(resultParam.toTerm());
             yield ctx.with(resultParam, () -> {
-              var rec = check(lam.body(), body).wellTyped();
+
+              var rec = inherit(lam.body(), body).wellTyped();
               return new Result.Default(new LamTerm(LamTerm.param(resultParam), rec), dt);
             });
           }
@@ -141,7 +141,7 @@ public final class ExprTycker extends UnifiedTycker {
         var result = ClauseTycker.elabClausesClassified(this, match.clauses(), sig, match.sourcePos());
         yield new Result.Default(new MatchTerm(discriminant.map(Result::wellTyped), result.matchings()), term);
       }
-      case Expr.Let let -> checkLet(let, (body) -> check(body, term));
+      case Expr.Let let -> checkLet(let, (body) -> inherit(body, term));
       default -> inheritFallbackUnify(term, synthesize(expr), expr);
     };
   }
@@ -156,10 +156,6 @@ public final class ExprTycker extends UnifiedTycker {
     });
   }
 
-  public @NotNull Result check(@NotNull Expr expr, @NotNull Term type) {
-    return inherit(expr, type);
-
-  }
   private @NotNull Result doSynthesize(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.Lambda lam when lam.param().type() instanceof Expr.Hole -> inherit(lam, generatePi(lam));

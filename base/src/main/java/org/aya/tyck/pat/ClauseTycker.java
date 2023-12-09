@@ -169,13 +169,12 @@ public final class ClauseTycker {
         // We `addDirectly` to `definitionEqualities`.
         // This means terms in `definitionEqualities` won't be substituted by `lhsResult.bodySubst`
         exprTycker.definitionEqualities.addDirectly(lhsResult.bodySubst());
-        return lhsResult.preclause.expr().map(e -> lhsResult.hasError
-          // In case the patterns are malformed, do not check the body
-          // as we bind local variables in the pattern checker,
-          // and in case the patterns are malformed, some bindings may
-          // not be added to the localCtx of tycker, causing assertion errors
-          ? new ErrorTerm(e, false)
-          : exprTycker.check(e, lhsResult.type).wellTyped());
+        return lhsResult.preclause.expr().map(e -> {// In case the patterns are malformed, do not check the body
+// as we bind local variables in the pattern checker,
+// and in case the patterns are malformed, some bindings may
+// not be added to the localCtx of tycker, causing assertion errors
+          return lhsResult.hasError ? new ErrorTerm(e, false) : exprTycker.inherit(e, lhsResult.type).wellTyped();
+        });
       });
 
       return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
