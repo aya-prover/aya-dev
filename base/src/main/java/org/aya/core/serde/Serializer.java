@@ -9,6 +9,7 @@ import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
 import org.aya.generic.Shaped;
 import org.aya.guest0x0.cubical.Partial;
@@ -18,13 +19,15 @@ import org.aya.util.Arg;
 import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ice1000
  */
-public record Serializer(@NotNull Serializer.State state) {
-  public @NotNull SerDef serialize(@NotNull GenericDef def, @Nullable SerDef.SerShapeResult shapeResult) {
+public record Serializer(
+  @NotNull Serializer.State state,
+  @NotNull AyaShape.Factory factory
+) {
+  public @NotNull SerDef serialize(@NotNull GenericDef def) {
     return switch (def) {
       case FnDef fn -> new SerDef.Fn(
         state.def(fn.ref),
@@ -32,7 +35,9 @@ public record Serializer(@NotNull Serializer.State state) {
         fn.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
         fn.modifiers,
         serialize(fn.result),
-        shapeResult
+        factory.find(def)
+          .map(x -> SerDef.SerShapeResult.serialize(state, x))
+          .getOrNull()
       );
       case MemberDef field -> new SerDef.Field(
         state.def(field.classRef),
@@ -43,13 +48,13 @@ public record Serializer(@NotNull Serializer.State state) {
       );
       case ClassDef clazz -> new SerDef.Clazz(
         state.def(clazz.ref()),
-        clazz.members.map(field -> (SerDef.Field) serialize(field, null))
+        clazz.members.map(field -> (SerDef.Field) serialize(field))
       );
       case DataDef data -> new SerDef.Data(
         state.def(data.ref),
         serializeParams(data.telescope),
         serialize(data.result),
-        data.body.map(ctor -> (SerDef.Ctor) serialize(ctor, null))
+        data.body.map(ctor -> (SerDef.Ctor) serialize(ctor))
       );
       case PrimDef prim -> {
         assert prim.ref.module != null;
@@ -185,9 +190,10 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm.SerShapedApplicable serializeShapedApplicable(@NotNull Shaped.Applicable<Term, ?, ?> shapedApplicable) {
     return switch (shapedApplicable) {
-      case IntegerOps.ConRule conRule -> new SerTerm.SerIntegerOps(state.def(conRule.ref()), Either.left(new SerTerm.ConInfo(
-        SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
-      )));
+      case IntegerOps.ConRule conRule ->
+        new SerTerm.SerIntegerOps(state.def(conRule.ref()), Either.left(new SerTerm.ConInfo(
+          SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
+        )));
       case IntegerOps.FnRule fnRule -> new SerTerm.SerIntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
       default -> throw new IllegalStateException("Unexpected value: " + shapedApplicable);
     };

@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
 import org.aya.concrete.ParseTest;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.TeleDecl;
@@ -54,13 +55,13 @@ public class TyckDeclTest {
     return primFactory;
   }
 
-  public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>>
+  public static @NotNull Tuple3<PrimDef.Factory, ImmutableSeq<GenericDef>, AyaShape.Factory>
   successTyckDecls(@Language("Aya") @NonNls @NotNull String text) {
     var res = successDesugarDecls(text);
     var shapes = new AyaShape.Factory();
     return Tuple.of(res.component1(), res.component2().view()
       .map(i -> i instanceof TeleDecl<?> s ? tyck(res.component1(), s, null, shapes) : null)
-      .filter(Objects::nonNull).toImmutableSeq());
+      .filter(Objects::nonNull).toImmutableSeq(), shapes);
   }
 
   public static @NotNull Tuple2<PrimDef.Factory, ImmutableSeq<GenericDef>>

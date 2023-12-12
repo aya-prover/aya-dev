@@ -74,9 +74,9 @@ public class SuedeTest {
   private void suedeAll(@Language("Aya") @NotNull String code) {
     var res = TyckDeclTest.successTyckDecls(code);
     var state = new SerTerm.DeState(res.component1());
-    var serializer = new Serializer(new Serializer.State());
+    var serializer = new Serializer(new Serializer.State(), res.component3());
     res.component2().view()
-      .map(x -> serializer.serialize(x, null))
+      .map(serializer::serialize)
       .map(ser -> ser.de(state))
       .forEach(Assertions::assertNotNull);
   }

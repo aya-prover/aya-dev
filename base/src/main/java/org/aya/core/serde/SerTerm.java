@@ -359,7 +359,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record ConInfo(
     SerDef.SerShapeResult result,
     SerTerm.Data data
-  ) {}
+  ) implements Serializable {}
 
   record SerIntegerOps(
     @NotNull SerDef.QName ref,

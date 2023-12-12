@@ -145,10 +145,7 @@ public record CompiledAya(
     }
 
     private void serDef(@NotNull AyaShape.Factory factory, @NotNull GenericDef def) {
-      var shapeResultMaybe = factory.find(def)
-        .map(x -> SerDef.SerShapeResult.serialize(state, x))
-        .getOrNull();
-      var serDef = new Serializer(state).serialize(def, shapeResultMaybe);
+      var serDef = new Serializer(state, factory).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {
