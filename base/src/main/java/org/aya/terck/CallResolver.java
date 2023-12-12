@@ -98,7 +98,7 @@ public record CallResolver(
         if (attempt == Relation.unk()) {
           yield switch (whnf(term)) {
             case ConCall con -> compare(con, ctor);
-            // TODO[h]: do we need a ShapedFnCall case here? @ice1000
+            // TODO[h]: do we need a RuleReducer.Con case here? @ice1000
             case IntegerTerm lit -> compare(lit, ctor);
             // This is related to the predicativity issue mentioned in #907
             case PAppTerm papp -> {
