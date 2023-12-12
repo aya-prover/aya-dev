@@ -28,7 +28,7 @@ public sealed interface RuleReducer extends Callable.Tele {
     @Override @NotNull Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl> rule,
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Arg<Term>> args
-  ) implements RuleReducer {
+  ) implements RuleReducer, FnCallLike {
     @Override
     public @NotNull DefVar<? extends Def, ? extends TeleDecl<?>> ref() {
       return rule.ref();

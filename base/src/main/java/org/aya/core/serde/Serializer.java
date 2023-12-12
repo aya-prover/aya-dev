@@ -11,11 +11,11 @@ import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
 import org.aya.generic.Shaped;
-import org.aya.util.error.InternalException;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,10 +185,10 @@ public record Serializer(@NotNull Serializer.State state) {
 
   private @NotNull SerTerm.SerShapedApplicable serializeShapedApplicable(@NotNull Shaped.Applicable<Term, ?, ?> shapedApplicable) {
     return switch (shapedApplicable) {
-      case IntegerOps.ConRule conRule -> new SerTerm.IntegerOps(state.def(conRule.ref()), Either.left(Tuple.of(
+      case IntegerOps.ConRule conRule -> new SerTerm.SerIntegerOps(state.def(conRule.ref()), Either.left(new SerTerm.ConInfo(
         SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
       )));
-      case IntegerOps.FnRule fnRule -> new SerTerm.IntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
+      case IntegerOps.FnRule fnRule -> new SerTerm.SerIntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
       default -> throw new IllegalStateException("Unexpected value: " + shapedApplicable);
     };
   }

@@ -7,9 +7,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

@@ -16,7 +16,6 @@ import org.aya.core.term.Term;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Shaped;
-import org.aya.util.error.InternalException;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
@@ -29,13 +28,13 @@ import org.aya.tyck.env.SeqLocalCtx;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.tycker.ConcreteAwareTycker;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 

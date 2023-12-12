@@ -5,7 +5,6 @@ package org.aya.core.visitor;
 import kala.collection.Set;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableSet;
-import org.aya.core.def.CtorDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.ref.AnyVar;

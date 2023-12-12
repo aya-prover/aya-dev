@@ -74,9 +74,7 @@ public class CorePrettier extends BasePrettier<Term> {
         ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
         : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
       case ConCallLike conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
-      // TODO[h]: How about FnCallLike?
-      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
-      case RuleReducer.Fn fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
+      case FnCallLike fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
         var last = params.getLast();
         var doc = Doc.sep(

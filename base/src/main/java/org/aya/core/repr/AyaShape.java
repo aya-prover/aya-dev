@@ -9,7 +9,6 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
 

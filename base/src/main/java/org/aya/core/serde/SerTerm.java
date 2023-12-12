@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
 import org.aya.core.def.FnDef;
@@ -353,19 +352,24 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
 
   /// region ShapedApplicable
 
-  sealed interface SerShapedApplicable extends Serializable permits SerTerm.IntegerOps {
+  sealed interface SerShapedApplicable extends Serializable permits SerIntegerOps {
     @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state);
   }
 
-  record IntegerOps(
+  record ConInfo(
+    SerDef.SerShapeResult result,
+    SerTerm.Data data
+  ) {}
+
+  record SerIntegerOps(
     @NotNull SerDef.QName ref,
-    @NotNull Either<Tuple2<SerDef.SerShapeResult, SerTerm.Data>, org.aya.core.term.IntegerOps.FnRule.Kind> data
+    @NotNull Either<ConInfo, IntegerOps.FnRule.Kind> data
   ) implements SerShapedApplicable {
     @Override
     public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
       return data.fold(
-        left -> new org.aya.core.term.IntegerOps.ConRule(state.resolve(this.ref), left.component1().de(state), left.component2().de(state)),
-        right -> new org.aya.core.term.IntegerOps.FnRule(state.resolve(this.ref), right)
+        left -> new IntegerOps.ConRule(state.resolve(this.ref), left.result.de(state), left.data.de(state)),
+        right -> new IntegerOps.FnRule(state.resolve(this.ref), right)
       );
     }
   }

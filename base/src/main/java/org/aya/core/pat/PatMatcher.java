@@ -8,8 +8,8 @@ import kala.control.Result;
 import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.util.error.InternalException;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;

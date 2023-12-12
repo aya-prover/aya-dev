@@ -60,7 +60,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   }
 
   private static boolean isCall(@NotNull Term term) {
-    return term instanceof FnCall || term instanceof ConCall || term instanceof RuleReducer.Con || term instanceof PrimCall || term instanceof RuleReducer.Fn;
+    return term instanceof FnCallLike || term instanceof ConCallLike || term instanceof PrimCall;
   }
 
   public static <E> E withIntervals(
