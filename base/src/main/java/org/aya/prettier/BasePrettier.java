@@ -23,8 +23,8 @@ import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.BinOpElem;
 import org.aya.util.binop.Assoc;
-import org.aya.util.binop.BinOpParser;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +76,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
 
   public @NotNull Doc visitCalls(
     @Nullable Assoc assoc, @NotNull Doc fn,
-    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<Term>> args,
+    @NotNull SeqView<? extends @NotNull BinOpElem<Term>> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
     return visitCalls(assoc, fn, this::term, outer, args, showImplicits);
@@ -109,9 +109,9 @@ public abstract class BasePrettier<Term extends AyaDocile> {
    */
   <T extends AyaDocile> @NotNull Doc visitCalls(
     @Nullable Assoc assoc, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
-    @NotNull SeqView<? extends BinOpParser.@NotNull Elem<@NotNull T>> args, boolean showImplicits
+    @NotNull SeqView<? extends @NotNull BinOpElem<@NotNull T>> args, boolean showImplicits
   ) {
-    var visibleArgs = (showImplicits ? args : args.filter(BinOpParser.Elem::explicit)).toImmutableSeq();
+    var visibleArgs = (showImplicits ? args : args.filter(BinOpElem::explicit)).toImmutableSeq();
     if (visibleArgs.isEmpty()) return assoc != null ? Doc.parened(fn) : fn;
     if (assoc != null) {
       var firstArg = visibleArgs.getFirst();
@@ -137,14 +137,14 @@ public abstract class BasePrettier<Term extends AyaDocile> {
    * @see #visitCalls(Assoc, Doc, Fmt, Outer, SeqView, boolean)
    */
   private <T extends AyaDocile> @NotNull Doc
-  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends BinOpParser.@NotNull Elem<T>> args) {
+  prefix(@NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer, SeqView<? extends @NotNull BinOpElem<T>> args) {
     var call = Doc.sep(fn, Doc.sep(args.map(arg ->
       arg(fmt, arg, Outer.AppSpine))));
     // If we're in a spine, add parentheses
     return checkParen(outer, call, Outer.AppSpine);
   }
 
-  public static <T extends AyaDocile> Doc arg(@NotNull Fmt<T> fmt, @NotNull BinOpParser.Elem<T> arg, @NotNull Outer outer) {
+  public static <T extends AyaDocile> Doc arg(@NotNull Fmt<T> fmt, @NotNull BinOpElem<T> arg, @NotNull Outer outer) {
     if (arg.explicit()) return fmt.apply(outer, arg.term());
     return Doc.braced(fmt.apply(Outer.Free, arg.term()));
   }

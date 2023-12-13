@@ -3,9 +3,8 @@ module aya.util {
   requires aya.pretty;
 
   requires static org.jetbrains.annotations;
-  requires transitive kala.collection.primitive;
+  requires transitive kala.collection;
 
-  exports org.aya.util.binop;
   exports org.aya.util.error;
   exports org.aya.util.prettier;
   exports org.aya.util.reporter;

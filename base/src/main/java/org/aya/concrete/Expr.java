@@ -28,8 +28,8 @@ import org.aya.resolve.context.ModuleName;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.resolve.visitor.StmtShallowResolver;
 import org.aya.tyck.Result;
+import org.aya.util.BinOpElem;
 import org.aya.util.ForLSP;
-import org.aya.util.binop.BinOpParser;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -158,7 +158,7 @@ public sealed interface Expr extends AyaDocile, SourceNode, Restr.TermLike<Expr>
    * @author AustinZhu
    */
   record NamedArg(@Override boolean explicit, @Nullable String name, @Override @NotNull Expr term)
-    implements AyaDocile, SourceNode, BinOpParser.Elem<Expr> {
+    implements AyaDocile, SourceNode, BinOpElem<Expr> {
 
     public NamedArg(boolean explicit, @NotNull Expr expr) {
       this(explicit, null, expr);
