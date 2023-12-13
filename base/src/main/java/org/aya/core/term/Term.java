@@ -19,7 +19,6 @@ import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
-import org.aya.tyck.env.LocalCtx;
 import org.aya.tyck.tycker.TyckState;
 import org.aya.tyck.unify.Synthesizer;
 import org.aya.util.Arg;
@@ -50,7 +49,7 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   permits Callable, CoeTerm, Elimination, Formation, FormulaTerm, HCompTerm, InTerm, MatchTerm, MetaLitTerm, MetaPatTerm, PartialTerm, RefTerm, RefTerm.Field, StableWHNF {
   /**
    * Descending an operation to the term AST. NOTE: Currently we require the operation `f` to preserve:
-   * {@link StructCall}, {@link DataCall}, {@link SortTerm}, {@link org.aya.generic.Shaped.Applicable}.
+   * {@link ClassCall}, {@link DataCall}, {@link SortTerm}, {@link org.aya.generic.Shaped.Applicable}.
    */
   @NotNull Term descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g);
 
@@ -113,13 +112,6 @@ public sealed interface Term extends AyaDocile, Restr.TermLike<Term>
   }
   default @NotNull Term lift(int ulift) {
     return new EndoTerm.Elevator(ulift).apply(this);
-  }
-  /**
-   * @return WHNF
-   * @throws NullPointerException if the term is an introduction rule
-   */
-  default @NotNull Term computeType(@NotNull TyckState state, @NotNull LocalCtx ctx) {
-    return new Synthesizer(state, ctx).press(this);
   }
 
   /**

@@ -256,7 +256,7 @@ public record ExprResolver(
               addReference(maybe);
               yield new Pattern.Ctor(bind, maybe);
             }
-            ctx.set(ctx.get().bind(bind.bind(), var -> false));
+            ctx.set(ctx.get().bind(bind.bind(), _ -> false));
             yield bind;
           }
           case Pattern.QualifiedRef qref -> {

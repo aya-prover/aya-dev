@@ -84,7 +84,7 @@ public record PatUnify(@NotNull Subst lhsSubst, @NotNull Subst rhsSubst, @NotNul
 
   private void reportError(@NotNull Pat lhs, @NotNull Pat pat) {
     var doc = Doc.sep(lhs.toDoc(AyaPrettierOptions.debug()), Doc.plain("and"), pat.toDoc(AyaPrettierOptions.debug()));
-    throw new InternalException(doc.debugRender() + " are patterns of different types!");
+    throw new InternalException(STR."\{doc.debugRender()} are patterns of different types!");
   }
 
   private static void unifyPat(Pat lhs, Pat rhs, Subst lhsSubst, Subst rhsSubst, LocalCtx ctx) {

@@ -56,24 +56,24 @@ public interface BetaExpander extends EndoTerm {
       case PartialTerm(var partial, var rhsTy) -> new PartialTerm(partial(partial), rhsTy);
       // TODO[coe]: temporary hack
       case CoeTerm(
-        var ty,
+        _,
         FormulaTerm(Formula.Lit(var r)),
         FormulaTerm(Formula.Lit(var s))
       ) when r == s -> identity("x");
-      case CoeTerm(var ty, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
+      case CoeTerm(_, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
       case CoeTerm coe -> {
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
 
         yield switch (codom) {
-          case PathTerm path -> term;
+          case PathTerm _ -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
           case DataCall data when data.args().isEmpty() -> identity(String.valueOf(data.ref()
             .name().chars()
             .filter(Character::isAlphabetic)
             .findFirst()).toLowerCase(Locale.ROOT));
-          case SortTerm type -> identity("A");
+          case SortTerm _ -> identity("A");
           default -> term;
         };
       }
