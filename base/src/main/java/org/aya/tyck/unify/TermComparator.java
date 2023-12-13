@@ -256,7 +256,6 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
     else return null;
   }
 
-  @SuppressWarnings("unused")
   private boolean doCompareTyped(@NotNull Term type, @NotNull Term lhs, @NotNull Term rhs, Sub lr, Sub rl) {
     // Skip tracing, because too easy.
     // Note that it looks tempting to apply some unification here, but it is not correct:
