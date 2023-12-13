@@ -1,6 +1,6 @@
 module aya.md {
   requires aya.util;
-  requires aya.util.kala;
+  requires aya.util.more;
   requires transitive aya.pretty;
 
   requires org.commonmark;

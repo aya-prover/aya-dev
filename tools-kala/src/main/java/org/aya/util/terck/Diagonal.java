@@ -15,7 +15,7 @@ public record Diagonal<C, T, P>(
 ) implements Docile {
   public static <C, T, P> @NotNull Diagonal<C, T, P> create(@NotNull CallMatrix<C, T, P> matrix) {
     assert matrix.rows() == matrix.cols();
-    var diag = IntRange.openClosed(0, matrix.rows())
+    var diag = IntRange.closedOpen(0, matrix.rows())
       .mapToObjTo(MutableList.create(), i -> matrix.matrix()[i][i])
       .toImmutableSeq();
     return new Diagonal<>(matrix, diag);

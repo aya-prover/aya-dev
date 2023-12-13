@@ -1,4 +1,4 @@
-module aya.util.kala {
+module aya.util.more {
   requires aya.pretty;
   requires transitive aya.util;
 

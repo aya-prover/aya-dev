@@ -104,13 +104,14 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
 ```
 
 + `[project name]` specifies the subproject of Aya you want to use,
-  and the options are `pretty`, `base`, `cli-impl`, `cli-console`, `parser`, etc.
+  and the options are `pretty`, `base`, `cli-impl`, `parser`, etc.
   + The type checker lives in `base` and `parser`.
   + The generalized pretty printing framework is in `pretty`.
   + The library system, literate mode, single-file type checker, and basic REPL are in `cli-impl`.
-  + The generalized binary operator parser, generalized tree builder,
-    generalized mutable graph, generalized termination checker,
+  + The generalized tree builder, generalized termination checker,
     and a bunch of other utilities (files, etc.) are in `tools`.
+  + The generalized binary operator parser, generalized mutable graph are
+    in `tools-kala` because they depend on a larger subset of the kala library.
   + The command and argument parsing framework is in `tools-repl`.
     It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
   + The literate-markdown related infrastructure is in `tools-md`.
