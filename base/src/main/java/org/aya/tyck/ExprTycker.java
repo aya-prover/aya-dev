@@ -174,7 +174,7 @@ public final class ExprTycker extends UnifiedTycker {
             return new Result.Default(new RefTerm(loc), ty);
           });
         case DefVar<?, ?> defVar -> inferRef(defVar);
-        default -> throw new InternalException("Unknown var: " + ref.resolvedVar().getClass());
+        default -> throw new InternalException(STR."Unknown var: \{ref.resolvedVar().getClass()}");
       };
       case Expr.Pi pi -> {
         var corePi = ty(pi);
@@ -253,7 +253,7 @@ public final class ExprTycker extends UnifiedTycker {
         yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
           new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
-      case Expr.App(var sourcePos, var appF, var argument) -> {
+      case Expr.App(_, var appF, var argument) -> {
         var f = synthesize(appF);
         var app = f.wellTyped();
         if (app instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
@@ -324,7 +324,7 @@ public final class ExprTycker extends UnifiedTycker {
         var defs = shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var type = ctx.freshTyHole("_ty" + lit.integer() + "'", lit.sourcePos());
+          var type = ctx.freshTyHole(STR."_ty\{lit.integer()}'", lit.sourcePos());
           yield new Result.Default(new MetaLitTerm(lit.sourcePos(), lit.integer(), defs, type.component1()), type.component1());
         }
         var match = defs.getFirst();
@@ -558,7 +558,7 @@ public final class ExprTycker extends UnifiedTycker {
       var field = (DefVar<MemberDef, TeleDecl.ClassMember>) var;
       return new Result.Default(new RefTerm.Field(field), Def.defType(field));
     } else {
-      final var msg = "Def var `" + var.name() + "` has core `" + var.core + "` which we don't know.";
+      final var msg = STR."Def var `\{var.name()}` has core `\{var.core}` which we don't know.";
       throw new InternalException(msg);
     }
   }
@@ -584,14 +584,13 @@ public final class ExprTycker extends UnifiedTycker {
     return expr instanceof Expr.Lambda ex && ex.param().explicit() || !(expr instanceof Expr.Lambda);
   }
 
-  @SuppressWarnings("unchecked")
   private @Nullable Result inferShapedFn(@NotNull DefVar<FnDef, TeleDecl.FnDecl> var) {
     var recog = shapeFactory.find(var.core);
 
     if (recog.isDefined()) {
       var head = ShapeFactory.ofFn(var, recog.get());
       assert head != null : "bad ShapeFactory";
-      return defCall(var, (defVar, ulift, args) -> new RuleReducer.Fn(head, ulift, args));
+      return defCall(var, (_, ulift, args) -> new RuleReducer.Fn(head, ulift, args));
     }
 
     return null;
@@ -604,7 +603,7 @@ public final class ExprTycker extends UnifiedTycker {
         if (recog.shape() == AyaShape.NAT_SHAPE) {
           var head = ShapeFactory.ofCtor(var, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
           assert head != null : "bad ShapeFactory";
-          return defCall(var, (mVar, ulift, args) -> new RuleReducer.Con(head, ulift, ImmutableSeq.empty(), args));
+          return defCall(var, (_, ulift, args) -> new RuleReducer.Con(head, ulift, ImmutableSeq.empty(), args));
         }
 
         return null;

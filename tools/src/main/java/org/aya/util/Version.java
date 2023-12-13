@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -24,7 +24,7 @@ public record Version(
     if (version.endsWith("-SNAPSHOT")) version = version.substring(0, version.length() - "-SNAPSHOT".length());
     var split = DOT.split(version.trim());
     return switch (split.length) {
-      case 0 -> throw new IllegalArgumentException("Invalid version: " + version);
+      case 0 -> throw new IllegalArgumentException(STR."Invalid version: \{version}");
       case 1 -> new Version(new BigInteger(split[0]), BigInteger.ZERO, BigInteger.ZERO);
       case 2 -> new Version(new BigInteger(split[0]), new BigInteger(split[1]), BigInteger.ZERO);
       default -> new Version(new BigInteger(split[0]), new BigInteger(split[1]), new BigInteger(split[2]));
@@ -41,15 +41,15 @@ public record Version(
 
   @Contract(pure = true)
   public @NotNull String getLongString() {
-    return major + "." + minor + "." + patch;
+    return STR."\{major}.\{minor}.\{patch}";
   }
 
   @Override public String toString() {
     return BigInteger.ZERO.equals(patch)
       ? BigInteger.ZERO.equals(minor)
       ? major.toString()
-      : major + "." + minor
-      : major + "." + minor + "." + patch;
+      : STR."\{major}.\{minor}"
+      : STR."\{major}.\{minor}.\{patch}";
   }
 
   @Override public int compareTo(Version o) {

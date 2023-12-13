@@ -298,23 +298,22 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
       // https://stackoverflow.com/q/75971020/7083401
       case PiTerm pi -> ctx.with(pi.param(), () -> {
         var pair = new Pair<>(lhs, rhs);
-        if (pair instanceof Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb))) {
-          var ref = pi.param().ref();
-          if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
-          lr.map.put(ref, rp.toTerm());
-          rl.map.put(ref, lp.toTerm());
-          var piParam = new RefTerm(ref);
-          var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
-          lr.map.remove(ref);
-          rl.map.remove(ref);
-          return res;
-        } else if (pair instanceof Pair(var $, LamTerm rambda)) {
-          return compareLambdaBody(rambda, lhs, rl, lr, pi);
-        } else if (pair instanceof Pair(LamTerm lambda, var $)) {
-          return compareLambdaBody(lambda, rhs, lr, rl, pi);
-        } else {
-          return compare(lhs, rhs, lr, rl, null);
-        }
+        return switch (pair) {
+          case Pair(LamTerm(var lp, var lb), LamTerm(var rp, var rb)) -> {
+            var ref = pi.param().ref();
+            if (ref == LocalVar.IGNORED) ref = new LocalVar(lp.ref().name() + rp.ref().name());
+            lr.map.put(ref, rp.toTerm());
+            rl.map.put(ref, lp.toTerm());
+            var piParam = new RefTerm(ref);
+            var res = compare(lb.subst(lp.ref(), piParam), rb.subst(rp.ref(), piParam), lr, rl, pi.body());
+            lr.map.remove(ref);
+            rl.map.remove(ref);
+            yield res;
+          }
+          case Pair(_, LamTerm rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
+          case Pair(LamTerm lambda, _) -> compareLambdaBody(lambda, rhs, lr, rl, pi);
+          default -> compare(lhs, rhs, lr, rl, null);
+        };
       });
       // In this case, both sides have the same type (I hope)
       case PathTerm cube -> ctx.withIntervals(cube.params().view(), () -> {
@@ -376,7 +375,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
   ) {
     return switch (new Pair<>(lhs.partial(), rhs.partial())) {
       case Pair(Partial.Const(var ll), Partial.Const(var rr)) -> compare(ll, rr, lr, rl, type.type());
-      case Pair(Partial.Split<?> ll, Partial.Split<?> rr) -> CofThy.conv(type.restr(), new Subst(),
+      case Pair(Partial.Split<?> _, Partial.Split<?> _) -> CofThy.conv(type.restr(), new Subst(),
         subst -> compare(lhs.subst(subst), rhs.subst(subst), lr, rl, type.subst(subst)));
       default -> false;
     };
@@ -414,12 +413,12 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> false,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
       case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) -> checkParams(lParams.view(), rParams.view(),
-        new Subst(), new Subst(), lr, rl, () -> false, (lsub, rsub) -> true);
+        new Subst(), new Subst(), lr, rl, () -> false, (_, _) -> true);
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);
       case Pair(PathTerm lCube, PathTerm rCube) -> compareCube(lCube, rCube, lr, rl);
-      case Pair(IntervalTerm lhs, IntervalTerm rhs) -> true;
+      case Pair(IntervalTerm _, IntervalTerm _) -> true;
       default -> throw noRules(preLhs);
     };
   }
@@ -474,7 +473,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         else yield null;
       }
       // See compareApprox for why we don't compare these
-      case FnCall lhs -> null;
+      case FnCall _ -> null;
       case CoeTerm coe -> {
         if (!(preRhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
         if (!compare(coe.r(), rR, lr, rl, IntervalTerm.INSTANCE)) yield null;
@@ -501,7 +500,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         default -> null;
       };
       // end ConCallLike
-      case PrimCall lhs -> null;
+      case PrimCall _ -> null;
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);
@@ -510,8 +509,8 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         yield Def.defResult(lhs.ref());
       }
       // We expect to only compare the elimination "outS" here
-      case OutTerm(var lPhi, var pal, var lU) -> {
-        if (!(preRhs instanceof OutTerm(var rPhi, var par, var rU))) yield null;
+      case OutTerm(var lPhi, _, var lU) -> {
+        if (!(preRhs instanceof OutTerm(var rPhi, _, var rU))) yield null;
         if (!compare(lPhi, rPhi, lr, rl, IntervalTerm.INSTANCE)) yield null;
         var innerTy = compareUntyped(lU, rU, lr, rl);
         if (innerTy == null) yield null;
