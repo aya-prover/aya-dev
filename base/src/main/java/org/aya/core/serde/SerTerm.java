@@ -187,7 +187,7 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     public @NotNull Term de(@NotNull DeState state) {
       return new RuleReducer.Con(
         (Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
-        dataArgs().ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
+        dataArgs.ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
       );
     }
   }

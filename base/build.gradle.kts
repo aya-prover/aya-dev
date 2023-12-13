@@ -1,10 +1,13 @@
 // Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-import org.aya.gradle.*
+import org.aya.gradle.CommonTasks
+import org.aya.gradle.GenerateReflectionConfigTask
+import org.aya.gradle.GenerateVersionTask
+
 CommonTasks.nativeImageConfig(project)
 
 dependencies {
-  api(project(":tools"))
+  api(project(":tools-kala"))
   api(project(":tools-md"))
   api(project(":pretty"))
   api(libs.aya.guest0x0)

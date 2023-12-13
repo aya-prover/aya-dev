@@ -568,7 +568,7 @@ public record AyaProducer(
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
             var id = newArgField(arg.child(NEW_ARG_FIELD));
             var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
-              .map(b -> b.map($ -> LocalVar.from(b)))
+              .map(b -> b.map(_ -> LocalVar.from(b)))
               .toImmutableSeq();
             var body = expr(arg.child(EXPR));
             return new Expr.Field<>(sourcePosOf(arg), id, bindings, body, MutableValue.create());

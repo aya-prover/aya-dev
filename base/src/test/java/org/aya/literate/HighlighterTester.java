@@ -91,7 +91,7 @@ public class HighlighterTester {
 
   public void runTest() {
     var sortedActual = actual.view().distinct().sorted().toImmutableSeq().view();
-    if (sortedActual.getLast() instanceof HighlightInfo.Lit(var $, var kind) && kind == HighlightInfo.LitKind.Eol)
+    if (sortedActual.getLast() instanceof HighlightInfo.Lit(_, var kind) && kind == HighlightInfo.LitKind.Eol)
       // Remove the last Eol
       sortedActual = sortedActual.dropLast(1);
     runTest(sortedActual.toImmutableSeq(), Seq.of(expected));
@@ -120,13 +120,13 @@ public class HighlighterTester {
       assertEquals(expectedText, actualText, "at " + sourcePos);
 
       switch (actual) {
-        case HighlightInfo.Lit(var $, var ty)
+        case HighlightInfo.Lit(_, var ty)
           when ty == HighlightInfo.LitKind.Keyword && expected.expected() instanceof ExpectedHighlightType.Keyword -> {
         }
-        case HighlightInfo.Lit(var $, var ty)
+        case HighlightInfo.Lit(_, var ty)
           when ty == HighlightInfo.LitKind.Int && expected.expected() instanceof LitInt -> {
         }
-        case HighlightInfo.Lit(var $, var ty)
+        case HighlightInfo.Lit(_, var ty)
           when ty == HighlightInfo.LitKind.String && expected.expected() instanceof ExpectedHighlightType.LitString -> {
         }
 
@@ -138,7 +138,7 @@ public class HighlighterTester {
           when expected.expected() instanceof ExpectedHighlightType.Ref expectedRef ->
           assertRef(sourcePos, ref, expectedRef);
 
-        case HighlightInfo.Err err -> throw new UnsupportedOperationException("TODO");   // TODO
+        case HighlightInfo.Err _ -> throw new UnsupportedOperationException("TODO");   // TODO
 
         default ->
           fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
@@ -213,7 +213,7 @@ public class HighlighterTester {
     Stmt.resolve(stmts, resolveInfo, EmptyModuleLoader.INSTANCE);
 
     var result = SyntaxHighlight.highlight(null, Option.some(sourceFile), stmts)
-      .filterNot(it -> it instanceof HighlightInfo.Lit(var $, var kind)
+      .filterNot(it -> it instanceof HighlightInfo.Lit(_, var kind)
         && ignored.contains(kind));
     new HighlighterTester(code, result, expected).runTest();
   }

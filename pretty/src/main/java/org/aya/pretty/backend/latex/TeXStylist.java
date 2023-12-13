@@ -87,7 +87,7 @@ public class TeXStylist extends ClosingStylist {
         case Italic -> Tuple.of("\\textit{", "}");
         case Bold -> Tuple.of("\\textbf{", "}");
       };
-      case Style.LineThrough(var pos, var $, var $$) -> switch (pos) {
+      case Style.LineThrough(var pos, _, _) -> switch (pos) {
         case Strike -> Tuple.of("\\sout{", "}");
         case Underline -> Tuple.of("\\underline{", "}");
         case Overline -> null;

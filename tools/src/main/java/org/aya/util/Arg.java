@@ -4,7 +4,6 @@ package org.aya.util;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.binop.BinOpParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -16,7 +15,7 @@ import java.util.function.UnaryOperator;
  *            In Aya, it is either core term, core pattern, concrete term, or concrete pattern.
  * @author ice1000
  */
-public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpParser.Elem<T> {
+public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpElem<T> {
   public static <T> @NotNull Arg<T> ofExplicitly(@NotNull T term) {
     return new Arg<>(term, true);
   }

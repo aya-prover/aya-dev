@@ -128,7 +128,7 @@ public class CorePrettier extends BasePrettier<Term> {
           options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
         );
       }
-      case IntervalTerm $ -> Doc.styled(PRIM, "I");
+      case IntervalTerm _ -> Doc.styled(PRIM, "I");
       case NewTerm(var inner) -> visitCalls(null, Doc.styled(KEYWORD, "new"), (nest, t) -> t.toDoc(options), outer,
         SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
         options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)

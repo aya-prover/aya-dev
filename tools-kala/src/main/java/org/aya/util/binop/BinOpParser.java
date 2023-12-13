@@ -8,6 +8,7 @@ import kala.collection.Set;
 import kala.collection.mutable.*;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.util.BinOpElem;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.function.Function;
 public abstract class BinOpParser<
   OpSet extends BinOpSet,
   Expr extends SourceNode,
-  Elm extends BinOpParser.Elem<Expr>> {
+  Elm extends BinOpElem<Expr>> {
   protected final @NotNull OpSet opSet;
   private final @NotNull SeqView<@NotNull Elm> seq;
 
@@ -214,8 +215,4 @@ public abstract class BinOpParser<
     return a.term().sourcePos();
   }
 
-  public interface Elem<Expr> {
-    @NotNull Expr term();
-    boolean explicit();
-  }
 }

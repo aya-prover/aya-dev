@@ -112,7 +112,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
       case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
       case Doc.Tooltip tooltip -> renderTooltip(cursor, tooltip, outer);
-      case Doc.Empty $ -> {}
+      case Doc.Empty _ -> {}
     }
   }
 

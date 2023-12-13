@@ -45,9 +45,9 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
 
   public @NotNull SeqView<Term> view() {
     return switch (asFormula) {
-      case Formula.Conn(var $, var l, var r) -> Seq.of(l, r).view();
+      case Formula.Conn(_, var l, var r) -> Seq.of(l, r).view();
       case Formula.Inv(var i) -> SeqView.of(i);
-      case Formula.Lit<?> $ -> SeqView.empty();
+      case Formula.Lit<?> _ -> SeqView.empty();
     };
   }
 }

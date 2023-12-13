@@ -2,16 +2,16 @@
 # The Version of this project, aka, The Aya Theorem Prover.
 # Remove "-SNAPSHOT" suffix and run gradle publish to release a new version.
 # After that, increase the version number and add "-SNAPSHOT" suffix back for next cycle.
-project = "0.30-SNAPSHOT"
+project = "0.30"
 
 # https://openjdk.org/
-java = "20"
+java = "21"
 
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
 kala = "0.69.0"
 picocli = "4.7.5"
-build-util = "0.0.20"
+build-util = "0.0.21"
 # https://github.com/graalvm/native-build-tools
 graal-tools = "0.9.28"
 # https://github.com/jline/jline3
@@ -44,6 +44,8 @@ aya-build-util = { group = "org.aya-prover.upstream", name = "build-util", versi
 aya-build-jflex = { group = "org.aya-prover.upstream", name = "build-util-jflex", version.ref = "build-util" }
 aya-guest0x0 = { group = "org.aya-prover.guest0x0", name = "cubical", version.ref = "guest0x0" }
 
+kala-base = { group = "org.glavo.kala", name = "kala-base", version.ref = "kala" }
+kala-collection = { group = "org.glavo.kala", name = "kala-collection", version.ref = "kala" }
 kala-common = { group = "org.glavo.kala", name = "kala-common", version.ref = "kala" }
 
 picocli-runtime = { group = "info.picocli", name = "picocli", version.ref = "picocli" }

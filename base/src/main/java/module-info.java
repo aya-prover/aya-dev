@@ -2,6 +2,7 @@ module aya.base {
   requires transitive aya.md;
   requires transitive aya.pretty;
   requires transitive aya.util;
+  requires transitive aya.util.more;
   requires transitive aya.guest.cubical;
   requires transitive kala.base;
   requires transitive kala.collection;
@@ -15,6 +16,7 @@ module aya.base {
   exports org.aya.concrete.error;
   exports org.aya.concrete.remark;
   exports org.aya.concrete.stmt.decl;
+
   exports org.aya.concrete.stmt;
   exports org.aya.concrete.visitor;
   exports org.aya.concrete;
