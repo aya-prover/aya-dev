@@ -368,8 +368,8 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
     @Override
     public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
       return data.fold(
-        left -> new IntegerOps.ConRule(state.resolve(this.ref), left.result.de(state), left.data.de(state)),
-        right -> new IntegerOps.FnRule(state.resolve(this.ref), right)
+        left -> new IntegerOps.ConRule(state.resolve(ref), left.result.de(state), left.data.de(state)),
+        right -> new IntegerOps.FnRule(state.resolve(ref), right)
       );
     }
   }

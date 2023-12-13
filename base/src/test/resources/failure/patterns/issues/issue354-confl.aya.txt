@@ -16,11 +16,7 @@ Error: The 3rd clause matches on a constructor with condition(s). When checking
          posneg 1
        Normalized:
          pos 0
-         suc 0
-       In particular, we failed to unify
-         zero
-       with
-         suc 0
+         1
 
 1 error(s), 0 warning(s).
 What are you doing?

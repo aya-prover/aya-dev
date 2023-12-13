@@ -51,19 +51,19 @@ public class LspTest {
   @Test public void test541() {
     launch(TEST_LIB).execute(compile((a, e) -> {
       var testOpt = a.lastCompiled()
-        .filter(x -> x.moduleName().last().equals("Vec"))
+        .filter(x -> x.moduleName().getLast().equals("Vec"))
         .flatMap(x -> x.program().get())
         .filterIsInstance(TeleDecl.FnDecl.class)
         .filter(x -> x.ref.name().equals("test"))
-        .firstOption();
+        .getFirstOption();
       assertFalse(testOpt.isEmpty(), "Do not delete the function called test in Vec");
       var testClause = ((TeleDecl.BlockBody) testOpt.get().body).clauses().getFirst();
       // vnil, ys => 0
-      var testPat = (Pattern.Bind) testClause.patterns.last().term();
+      var testPat = (Pattern.Bind) testClause.patterns.getLast().term();
       var testTy = assertInstanceOf(DataCall.class, testPat.type().get());
       assertNotNull(testTy);
       // ys : Vec A m
-      var lastArg = testTy.args().last().term();
+      var lastArg = testTy.args().getLast().term();
       assertFalse(lastArg instanceof MetaPatTerm);
     }));
   }
