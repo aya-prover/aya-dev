@@ -44,7 +44,7 @@ public record IntegerTerm(
     var ctorTele = head().ref().core.selfTele;
     assert ctorTele.sizeEquals(1);
 
-    return ImmutableSeq.of(new Arg<>(new IntegerTerm(repr - 1, recognition, type), ctorTele.first().explicit()));
+    return ImmutableSeq.of(new Arg<>(new IntegerTerm(repr - 1, recognition, type), ctorTele.getFirst().explicit()));
   }
 
   @Override public @NotNull IntegerTerm descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {

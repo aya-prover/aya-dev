@@ -9,7 +9,10 @@ import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
-import org.aya.core.term.*;
+import org.aya.core.term.DataCall;
+import org.aya.core.term.IntegerTerm;
+import org.aya.core.term.RuleReducer;
+import org.aya.core.term.Term;
 import org.aya.ref.DefVar;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
@@ -70,8 +73,6 @@ public interface Shaped<T> {
     }
 
     @NotNull Shaped.Nat<T> map(@NotNull IntUnaryOperator f);
-
-    // int construct(@NotNull T term);
   }
 
   non-sealed interface List<T extends AyaDocile> extends Inductive<T> {
