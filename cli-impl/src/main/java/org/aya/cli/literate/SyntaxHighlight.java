@@ -18,7 +18,6 @@ import org.aya.concrete.Pattern;
 import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.concrete.stmt.decl.ClassDecl;
-import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.concrete.visitor.StmtFolder;
 import org.aya.core.def.*;
@@ -33,6 +32,7 @@ import org.aya.ref.DefVar;
 import org.aya.ref.GenerateKind;
 import org.aya.ref.LocalVar;
 import org.aya.resolve.context.ModuleName;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -154,23 +154,23 @@ public record SyntaxHighlight(
 
   @SuppressWarnings("unused")
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
-    record P(Decl decl, GenericDef def) {}
     return switch (var) {
       case GeneralizedVar ignored -> DefKind.Generalized;
-      case DefVar<?, ?> defVar -> switch (new P(defVar.concrete, defVar.core)) {
-        case P(TeleDecl.FnDecl $, var $$) -> DefKind.Fn;
-        case P(ClassDecl $, var $$) -> DefKind.Clazz;
-        case P(TeleDecl.ClassMember $, var $$) -> DefKind.Member;
-        case P(TeleDecl.DataDecl $, var $$) -> DefKind.Data;
-        case P(TeleDecl.DataCtor $, var $$) -> DefKind.Con;
-        case P(TeleDecl.PrimDecl $, var $$) -> DefKind.Prim;
-        case P(var $, FnDef $$) -> DefKind.Fn;
-        case P(var $, ClassDef $$) -> DefKind.Clazz;
-        case P(var $, MemberDef $$) -> DefKind.Member;
-        case P(var $, DataDef $$) -> DefKind.Data;
-        case P(var $, CtorDef $$) -> DefKind.Con;
-        case P(var $, PrimDef $$) -> DefKind.Prim;
-      };
+      case DefVar<?, ?> defVar -> {
+        if (defVar.concrete instanceof TeleDecl.FnDecl || defVar.core instanceof FnDef)
+          yield DefKind.Fn;
+        else if (defVar.concrete instanceof TeleDecl.ClassMember || defVar.core instanceof MemberDef)
+          yield DefKind.Member;
+        else if (defVar.concrete instanceof TeleDecl.DataDecl || defVar.core instanceof DataDef)
+          yield DefKind.Data;
+        else if (defVar.concrete instanceof TeleDecl.DataCtor || defVar.core instanceof CtorDef)
+          yield DefKind.Con;
+        else if (defVar.concrete instanceof TeleDecl.PrimDecl || defVar.core instanceof PrimDef)
+          yield DefKind.Prim;
+        else if (defVar.concrete instanceof ClassDecl || defVar.core instanceof ClassDef)
+          yield DefKind.Clazz;
+        else throw new InternalException(STR."unknown def type: \{defVar}");
+      }
       case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> DefKind.Generalized;
       case LocalVar ignored -> DefKind.LocalVar;
       default -> DefKind.Unknown;
