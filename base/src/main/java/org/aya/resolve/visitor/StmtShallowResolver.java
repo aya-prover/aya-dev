@@ -10,7 +10,6 @@ import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.Decl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.PrimDef;
-import org.aya.util.error.InternalException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;
@@ -18,6 +17,7 @@ import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;

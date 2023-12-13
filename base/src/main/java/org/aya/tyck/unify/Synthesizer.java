@@ -59,7 +59,7 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
   public @Nullable Term synthesize(@NotNull Term preterm) {
     return switch (preterm) {
       case RefTerm(var var) -> ctx.get(var);
-      case ConCall conCall -> conCall.head().underlyingDataCall();
+      case ConCallLike conCall -> conCall.head().underlyingDataCall();
       case Callable.Tele call -> Def.defResult(call.ref())
         .subst(DeltaExpander.buildSubst(Def.defTele(call.ref()), call.args()))
         .lift(call.ulift());
@@ -127,7 +127,6 @@ public record Synthesizer(@NotNull TyckState state, @NotNull LocalCtx ctx) {
       case IntervalTerm interval -> SortTerm.ISet;
       case FormulaTerm end -> IntervalTerm.INSTANCE;
       case StringTerm str -> state.primFactory().getCall(PrimDef.ID.STRING);
-      case IntegerTerm shaped -> shaped.type();
       case ListTerm shaped -> shaped.type();
       case PartialTyTerm ty -> synthesize(ty.type());
       case PartialTerm(var rhs, var par) -> new PartialTyTerm(par, rhs.restr());

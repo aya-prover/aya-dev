@@ -99,7 +99,11 @@ public final class PatternTycker {
         var sig = new Def.Signature<>(Term.Param.subst(ctorCore.selfTele, realCtor.component2(), 0), dataCall);
         // It is possible that `ctor.params()` is empty.
         var patterns = tyckInner(sig, ctor.params().view(), ctor).wellTyped;
-        yield new Pat.Ctor(realCtor.component3().ref(), patterns, dataCall);
+
+        // check if this Ctor is a ShapedCtor
+        var typeRecog = exprTycker.shapeFactory.find(ctorRef.core.dataRef.core).getOrNull();
+
+        yield new Pat.Ctor(realCtor.component3().ref(), patterns, typeRecog, dataCall);
       }
       case Pattern.Bind(var pos, var bind, var tyExpr, var tyRef) -> {
         exprTycker.ctx.put(bind, term);
@@ -270,11 +274,11 @@ public final class PatternTycker {
   }
 
   /**
-   * For every implicit parameter that not explicitly (no user given pattern) matched,
+   * For every implicit parameter that not explicitly (not user given pattern) matched,
    * we generate a MetaPat for each,
    * so that they can be inferred during {@link ClauseTycker#checkLhs(ExprTycker, Pattern.Clause, Def.Signature, boolean)}
    *
-   * @apiNote {@code daat.param.explicit = false} or the world explode.
+   * @apiNote {@code data.param.explicit = false} or the world explode.
    */
   private void generatePat() {
     onTyck(() -> {

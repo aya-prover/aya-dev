@@ -8,8 +8,8 @@ import kala.control.Result;
 import org.aya.core.term.*;
 import org.aya.core.visitor.EndoTerm;
 import org.aya.core.visitor.Subst;
-import org.aya.util.error.InternalException;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -59,13 +59,11 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       case Pat.Ctor ctor -> {
         term = pre.apply(term);
         switch (term) {
-          case ConCall conCall -> {
+          case ConCallLike conCall -> {
             if (ctor.ref() != conCall.ref()) throw new Mismatch(false);
             visitList(ctor.params(), conCall.conArgs());
           }
           case MetaPatTerm metaPat -> solve(pat, metaPat);
-          // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-          case IntegerTerm litTerm -> match(ctor, litTerm.constructorForm());
           case ListTerm litTerm -> match(ctor, litTerm.constructorForm());
           default -> throw new Mismatch(true);
         }
@@ -119,7 +117,7 @@ public record PatMatcher(@NotNull Subst subst, boolean inferMeta, @NotNull Unary
       // solve as pat
       metaPat.ref().solution().set(metalized);
     } else {
-      // a MetaPat that has solution <==> the solution
+      // a MetaPat that has a solution <==> the solution
       match(pat, todo.toTerm());
     }
   }

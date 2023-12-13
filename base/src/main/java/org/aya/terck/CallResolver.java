@@ -79,36 +79,39 @@ public record CallResolver(
   /** foetus dependencies */
   private @NotNull Relation compare(@NotNull Term term, @NotNull Pat pat) {
     return switch (pat) {
-      case Pat.Ctor ctor -> switch (term) {
-        case ConCall con -> {
-          if (con.ref() != ctor.ref() || !con.conArgs().sizeEquals(ctor.params())) yield Relation.unk();
-          var attempt = compareConArgs(con.conArgs(), ctor);
+      case Pat.Ctor ctor -> {
+        if (term instanceof ConCallLike con) {
+          var ref = con.ref();
+          var conArgs = con.conArgs();
+
+          if (ref != ctor.ref() || !conArgs.sizeEquals(ctor.params())) yield Relation.unk();
+          var attempt = compareConArgs(conArgs, ctor);
           // Reduce arguments and compare again. This may cause performance issues (but not observed yet [2022-11-07]),
           // see https://github.com/agda/agda/issues/2403 for more information.
-          if (attempt == Relation.unk()) attempt = compareConArgs(con.conArgs().map(a -> a.descent(this::whnf)), ctor);
+          if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(this::whnf)), ctor);
+
           yield attempt;
         }
-        // TODO[literal]: We may convert constructor call to literals to avoid possible stack overflow?
-        case IntegerTerm lit -> compare(lit.constructorForm(), ctor);
-        default -> {
-          var subCompare = ctor.params().view().map(sub -> compare(term, sub.term()));
-          var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
-          if (attempt == Relation.unk()) {
-            yield switch (whnf(term)) {
-              case ConCall con -> compare(con, ctor);
-              case IntegerTerm lit -> compare(lit, ctor);
-              // This is related to the predicativity issue mentioned in #907
-              case PAppTerm papp -> {
-                var head = papp.of();
-                while (head instanceof PAppTerm papp2) head = papp2.of();
-                yield compare(head, ctor);
-              }
-              default -> attempt;
-            };
-          }
-          yield attempt;
+
+        var subCompare = ctor.params().view().map(sub -> compare(term, sub.term()));
+        var attempt = subCompare.anyMatch(r -> r != Relation.unk()) ? Relation.lt() : Relation.unk();
+        if (attempt == Relation.unk()) {
+          yield switch (whnf(term)) {
+            case ConCall con -> compare(con, ctor);
+            // TODO[h]: do we need a RuleReducer.Con case here? @ice1000
+            case IntegerTerm lit -> compare(lit, ctor);
+            // This is related to the predicativity issue mentioned in #907
+            case PAppTerm papp -> {
+              var head = papp.of();
+              while (head instanceof PAppTerm papp2) head = papp2.of();
+              yield compare(head, ctor);
+            }
+            default -> attempt;
+          };
         }
-      };
+
+        yield attempt;
+      }
       case Pat.Bind bind -> {
         if (term instanceof RefTerm ref)
           yield ref.var() == bind.bind() ? Relation.eq() : Relation.unk();

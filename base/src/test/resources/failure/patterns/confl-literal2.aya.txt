@@ -268,10 +268,7 @@ Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
          515
        and
          suc 513
-       In particular, we failed to unify
-         514
-       with
-         513
+         (Normalized: 514)
 
 In file $FILE:30:4 ->
 

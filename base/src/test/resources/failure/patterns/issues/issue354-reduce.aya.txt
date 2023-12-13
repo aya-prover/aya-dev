@@ -14,6 +14,7 @@ In file $FILE:18:4 ->
 Error: The 4th clause matches on a constructor with condition(s). When checking 
        the 1st condition, we failed to unify
          zero
+         (Normalized: 0)
        for the arguments:
          posneg n 1
        Normalized:

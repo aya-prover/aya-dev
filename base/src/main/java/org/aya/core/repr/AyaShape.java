@@ -9,7 +9,6 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.core.def.Def;
 import org.aya.core.def.GenericDef;
 import org.jetbrains.annotations.NotNull;
 
@@ -140,7 +139,7 @@ public sealed interface AyaShape {
         .toImmutableSeq();
     }
 
-    public @NotNull Option<ShapeRecognition> find(@NotNull Def def) {
+    public @NotNull Option<ShapeRecognition> find(@NotNull GenericDef def) {
       return discovered.getOption(def);
     }
 

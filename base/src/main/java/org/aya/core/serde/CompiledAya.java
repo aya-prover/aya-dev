@@ -140,11 +140,12 @@ public record CompiledAya(
     @NotNull MutableList<SerDef.SerOp> serOps
   ) {
     private void ser(@NotNull ImmutableSeq<GenericDef> defs) {
-      defs.forEach(this::serDef);
+      var factory = resolveInfo.shapeFactory();
+      defs.forEach(x -> serDef(factory, x));
     }
 
-    private void serDef(@NotNull GenericDef def) {
-      var serDef = new Serializer(state).serialize(def);
+    private void serDef(@NotNull AyaShape.Factory factory, @NotNull GenericDef def) {
+      var serDef = new Serializer(state, factory).serialize(def);
       serDefs.append(serDef);
       serOp(serDef, def);
       switch (serDef) {
@@ -280,6 +281,9 @@ public record CompiledAya(
     var mod = context.modulePath();
     var def = serDef.de(state);
     assert def.ref().core != null;
+    if (serDef instanceof SerShapable serShapeDef && serShapeDef.shapeResult() != null) {
+      shapeFactory.discovered.put(def, serShapeDef.shapeResult().de(state));
+    }
     shapeFactory.bonjour(def);
     switch (serDef) {
       case SerDef.Fn fn -> {

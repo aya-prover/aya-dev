@@ -3,19 +3,21 @@
 package org.aya.generic;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.def.CtorDef;
+import org.aya.core.def.Def;
 import org.aya.core.pat.Pat;
 import org.aya.core.repr.CodeShape;
 import org.aya.core.repr.ShapeRecognition;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.IntegerTerm;
-import org.aya.core.term.Term;
+import org.aya.core.term.*;
 import org.aya.ref.DefVar;
 import org.aya.tyck.unify.TermComparator;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
+import java.util.function.IntUnaryOperator;
 
 /**
  * <h2> What should I do after I creating a new Shape? </h2>
@@ -66,6 +68,10 @@ public interface Shaped<T> {
       if (repr == 0) return makeZero(zero.core);
       return makeSuc(suc.core, new Arg<>(destruct(repr - 1), true));
     }
+
+    @NotNull Shaped.Nat<T> map(@NotNull IntUnaryOperator f);
+
+    // int construct(@NotNull T term);
   }
 
   non-sealed interface List<T extends AyaDocile> extends Inductive<T> {
@@ -101,5 +107,26 @@ public interface Shaped<T> {
       return makeCons(cons, dataArg, new Arg<>(elements.getFirst(), xLicit),
         new Arg<>(destruct(elements.drop(1)), xsLicit));
     }
+  }
+
+  /**
+   * Something Shaped which is applicable, like
+   * {@link org.aya.core.def.FnDef}, {@link CtorDef}, and probably {@link org.aya.core.def.DataDef}
+   *
+   * @see RuleReducer
+   */
+  interface Applicable<T extends AyaDocile, Core extends Def, Concrete extends TeleDecl<?>> extends Shaped<T> {
+    /**
+     * The underlying ref
+     */
+    @NotNull DefVar<Core, Concrete> ref();
+
+    /**
+     * Applying arguments.
+     *
+     * @param args arguments
+     * @return null if failed
+     */
+    @Nullable T apply(@NotNull ImmutableSeq<Arg<T>> args);
   }
 }

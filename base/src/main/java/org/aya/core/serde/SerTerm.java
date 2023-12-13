@@ -7,9 +7,14 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.tuple.Tuple;
+import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.def.CtorDef;
+import org.aya.core.def.FnDef;
 import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
+import org.aya.generic.Shaped;
 import org.aya.generic.SortKind;
 import org.aya.guest0x0.cubical.Formula;
 import org.aya.guest0x0.cubical.Partial;
@@ -160,6 +165,30 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
   record Fn(@NotNull SerDef.QName name, @NotNull CallData data) implements SerTerm {
     @Override public @NotNull FnCall de(@NotNull DeState state) {
       return new FnCall(state.resolve(name), data.ulift, data.de(state));
+    }
+  }
+
+  record FnReduceRule(@NotNull SerTerm.SerShapedApplicable head, @NotNull CallData data) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new RuleReducer.Fn(
+        (Shaped.Applicable<Term, FnDef, TeleDecl.FnDecl>) head.deShape(state),
+        data.ulift, data.de(state)
+      );
+    }
+  }
+
+  record ConReduceRule(
+    @NotNull SerTerm.SerShapedApplicable head,
+    @NotNull CallData dataArgs,
+    @NotNull ImmutableSeq<SerArg> conArgs
+  ) implements SerTerm {
+    @Override
+    public @NotNull Term de(@NotNull DeState state) {
+      return new RuleReducer.Con(
+        (Shaped.Applicable<Term, CtorDef, TeleDecl.DataCtor>) head.deShape(state),
+        dataArgs().ulift, dataArgs.de(state), conArgs.map(x -> x.de(state))
+      );
     }
   }
 
@@ -320,4 +349,30 @@ public sealed interface SerTerm extends Serializable, Restr.TermLike<SerTerm> {
       return new OutTerm(phi.de(state), par.de(state), u.de(state));
     }
   }
+
+  /// region ShapedApplicable
+
+  sealed interface SerShapedApplicable extends Serializable permits SerIntegerOps {
+    @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state);
+  }
+
+  record ConInfo(
+    SerDef.SerShapeResult result,
+    SerTerm.Data data
+  ) implements Serializable {}
+
+  record SerIntegerOps(
+    @NotNull SerDef.QName ref,
+    @NotNull Either<ConInfo, IntegerOps.FnRule.Kind> data
+  ) implements SerShapedApplicable {
+    @Override
+    public @NotNull Shaped.Applicable<Term, ?, ?> deShape(@NotNull DeState state) {
+      return data.fold(
+        left -> new IntegerOps.ConRule(state.resolve(ref), left.result.de(state), left.data.de(state)),
+        right -> new IntegerOps.FnRule(state.resolve(ref), right)
+      );
+    }
+  }
+
+  /// endregion ShapedApplicable
 }

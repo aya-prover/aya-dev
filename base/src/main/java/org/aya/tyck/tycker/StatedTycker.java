@@ -2,16 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import kala.collection.immutable.ImmutableMap;
-import org.aya.concrete.stmt.decl.ClassDecl;
 import org.aya.concrete.stmt.decl.TeleDecl;
 import org.aya.core.UntypedParam;
-import org.aya.core.def.*;
+import org.aya.core.def.Def;
+import org.aya.core.def.FnDef;
+import org.aya.core.def.PrimDef;
 import org.aya.core.term.*;
 import org.aya.core.visitor.Subst;
 import org.aya.generic.Modifier;
-import org.aya.generic.SortKind;
-import org.aya.util.error.InternalException;
 import org.aya.generic.util.NormalizeMode;
 import org.aya.guest0x0.cubical.CofThy;
 import org.aya.guest0x0.cubical.Restr;
@@ -80,7 +78,7 @@ public abstract sealed class StatedTycker extends TracedTycker permits PatClassi
    * Used for getting the subst for an inductive type's constructor's types.
    * This method handles both indexed and non-indexed constructors.
    */
-  protected @NotNull Subst conOwnerSubst(@NotNull ConCall conCall) {
+  protected @NotNull Subst conOwnerSubst(@NotNull ConCallLike conCall) {
     return PatternTycker.mischa(conCall.head().underlyingDataCall(), conCall.ref().core, state).get();
   }
 }

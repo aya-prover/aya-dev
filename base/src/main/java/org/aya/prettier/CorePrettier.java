@@ -70,8 +70,11 @@ public class CorePrettier extends BasePrettier<Term> {
       case MetaLitTerm lit ->
         lit.repr() instanceof AyaDocile docile ? docile.toDoc(options) : Doc.plain(lit.repr().toString());
       case TupTerm(var items) -> Doc.parened(argsDoc(options, items));
-      case ConCall conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
-      case FnCall fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
+      case IntegerTerm shaped -> shaped.repr() == 0
+        ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
+        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
+      case ConCallLike conCall -> visitArgsCalls(conCall.ref(), CON, conCall.conArgs(), outer);
+      case FnCallLike fnCall -> visitArgsCalls(fnCall.ref(), FN, fnCall.args(), outer);
       case SigmaTerm(var params) -> {
         var last = params.getLast();
         var doc = Doc.sep(
@@ -186,9 +189,6 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.orderedArgs(), outer);
       case DataCall dataCall -> visitArgsCalls(dataCall.ref(), DATA, dataCall.args(), outer);
-      case IntegerTerm shaped -> shaped.repr() == 0
-        ? linkLit(0, shaped.ctorRef(CodeShape.GlobalId.ZERO), CON)
-        : linkLit(shaped.repr(), shaped.ctorRef(CodeShape.GlobalId.SUC), CON);
       case ListTerm shaped -> {
         var subterms = shaped.repr().map(x -> term(Outer.Free, x));
         var nil = shaped.ctorRef(CodeShape.GlobalId.NIL);

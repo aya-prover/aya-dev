@@ -5,22 +5,28 @@ package org.aya.core.serde;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import kala.tuple.Tuple;
 import org.aya.core.def.*;
 import org.aya.core.pat.Pat;
+import org.aya.core.repr.AyaShape;
 import org.aya.core.term.*;
-import org.aya.util.error.InternalException;
+import org.aya.generic.Shaped;
 import org.aya.guest0x0.cubical.Partial;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.error.InternalException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ice1000
  */
-public record Serializer(@NotNull Serializer.State state) {
+public record Serializer(
+  @NotNull Serializer.State state,
+  @NotNull AyaShape.Factory factory
+) {
   public @NotNull SerDef serialize(@NotNull GenericDef def) {
     return switch (def) {
       case FnDef fn -> new SerDef.Fn(
@@ -28,7 +34,10 @@ public record Serializer(@NotNull Serializer.State state) {
         serializeParams(fn.telescope),
         fn.body.map(this::serialize, matchings -> matchings.map(this::serialize)),
         fn.modifiers,
-        serialize(fn.result)
+        serialize(fn.result),
+        factory.find(def)
+          .map(x -> SerDef.SerShapeResult.serialize(state, x))
+          .getOrNull()
       );
       case MemberDef field -> new SerDef.Field(
         state.def(field.classRef),
@@ -101,6 +110,12 @@ public record Serializer(@NotNull Serializer.State state) {
       case FnCall fnCall -> new SerTerm.Fn(
         state.def(fnCall.ref()),
         serializeCall(fnCall.ulift(), fnCall.args()));
+      case RuleReducer.Fn(var head, var ulift, var args) -> new SerTerm.FnReduceRule(
+        serializeShapedApplicable(head), serializeCall(ulift, args)
+      );
+      case RuleReducer.Con(var head, var ulift, var dataArgs, var conArgs) -> new SerTerm.ConReduceRule(
+        serializeShapedApplicable(head), serializeCall(ulift, dataArgs), conArgs.map(this::serialize)
+      );
       case ProjTerm proj -> new SerTerm.Proj(serialize(proj.of()), proj.ix());
       case AppTerm app -> new SerTerm.App(serialize(app.of()), serialize(app.arg()));
       case MatchTerm(var disc, var clauses) ->
@@ -135,11 +150,15 @@ public record Serializer(@NotNull Serializer.State state) {
   private @NotNull SerPat serialize(@NotNull Pat pat, boolean explicit) {
     return switch (pat) {
       case Pat.Absurd absurd -> new SerPat.Absurd(explicit);
-      case Pat.Ctor ctor -> new SerPat.Ctor(
-        explicit,
-        state.def(ctor.ref()),
-        serializePats(ctor.params()),
-        serializeDataCall(ctor.type()));
+      case Pat.Ctor(var ref, var params, var typeRecog, var dataCall) -> {
+        var shapeResult = typeRecog == null ? null : SerDef.SerShapeResult.serialize(state, typeRecog);
+        yield new SerPat.Ctor(
+          explicit,
+          state.def(ref),
+          serializePats(params),
+          shapeResult,
+          serializeDataCall(dataCall));
+      }
       case Pat.Tuple tuple -> new SerPat.Tuple(explicit, serializePats(tuple.pats()));
       case Pat.Bind bind -> new SerPat.Bind(explicit, state.local(bind.bind()), serialize(bind.type()));
       case Pat.Meta meta -> throw new InternalException(meta + " is illegal here");
@@ -167,6 +186,17 @@ public record Serializer(@NotNull Serializer.State state) {
     return new SerTerm.Clazz(
       state.def(classCall.ref()), classCall.ulift(),
       ImmutableMap.from(classCall.args().view().map((k, v) -> Tuple.of(state.def(k), serialize(v)))));
+  }
+
+  private @NotNull SerTerm.SerShapedApplicable serializeShapedApplicable(@NotNull Shaped.Applicable<Term, ?, ?> shapedApplicable) {
+    return switch (shapedApplicable) {
+      case IntegerOps.ConRule conRule ->
+        new SerTerm.SerIntegerOps(state.def(conRule.ref()), Either.left(new SerTerm.ConInfo(
+          SerDef.SerShapeResult.serialize(state, conRule.paramRecognition()), (SerTerm.Data) serialize(conRule.paramType())
+        )));
+      case IntegerOps.FnRule fnRule -> new SerTerm.SerIntegerOps(state.def(fnRule.ref()), Either.right(fnRule.kind()));
+      default -> throw new IllegalStateException("Unexpected value: " + shapedApplicable);
+    };
   }
 
   private @NotNull SerPat.Clause serialize(@NotNull Term.Matching matchy) {

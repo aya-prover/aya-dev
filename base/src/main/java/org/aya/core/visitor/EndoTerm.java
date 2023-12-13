@@ -7,9 +7,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.core.pat.Pat;
 import org.aya.core.term.*;
-import org.aya.util.error.InternalException;
 import org.aya.ref.AnyVar;
 import org.aya.ref.LocalVar;
+import org.aya.util.error.InternalException;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,6 +137,8 @@ public interface EndoTerm extends UnaryOperator<Term> {
           yield new ConCall(head, con.conArgs());
         }
         case FnCall fn -> new FnCall(fn.ref(), fn.ulift() + lift, fn.args());
+        case RuleReducer.Con con -> new RuleReducer.Con(con.rule(), con.ulift() + lift, con.dataArgs(), con.conArgs());
+        case RuleReducer.Fn fn -> new RuleReducer.Fn(fn.rule(), fn.ulift() + lift, fn.args());
         case PrimCall prim -> new PrimCall(prim.ref(), prim.ulift() + lift, prim.args());
         case Term misc -> misc;
       };

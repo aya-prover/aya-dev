@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -17,6 +17,14 @@ import java.util.function.UnaryOperator;
  * @author ice1000
  */
 public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpParser.Elem<T> {
+  public static <T> @NotNull Arg<T> ofExplicitly(@NotNull T term) {
+    return new Arg<>(term, true);
+  }
+
+  public static <T> @NotNull Arg<T> ofImplicitly(@NotNull T term) {
+    return new Arg<>(term, false);
+  }
+
   public @NotNull Arg<T> implicitify() {
     return new Arg<>(term, false);
   }
