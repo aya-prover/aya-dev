@@ -5,7 +5,7 @@
 project = "0.30-SNAPSHOT"
 
 # https://openjdk.org/
-java = "20"
+java = "21"
 
 # https://github.com/JetBrains/java-annotations
 annotations = "24.0.1"
@@ -44,6 +44,8 @@ aya-build-util = { group = "org.aya-prover.upstream", name = "build-util", versi
 aya-build-jflex = { group = "org.aya-prover.upstream", name = "build-util-jflex", version.ref = "build-util" }
 aya-guest0x0 = { group = "org.aya-prover.guest0x0", name = "cubical", version.ref = "guest0x0" }
 
+kala-base = { group = "org.glavo.kala", name = "kala-base", version.ref = "kala" }
+kala-collection = { group = "org.glavo.kala", name = "kala-collection", version.ref = "kala" }
 kala-common = { group = "org.glavo.kala", name = "kala-common", version.ref = "kala" }
 
 picocli-runtime = { group = "info.picocli", name = "picocli", version.ref = "picocli" }

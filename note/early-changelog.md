@@ -2,7 +2,23 @@
 
 This file contains the changelog of the Aya language 0.x.
 
-Upgraded from Java 19 to Java 20.
+## 0.30
+
+Upgraded from Java 19 to Java 21.
+
+New features:
+
++ Improve `Doc` implementation to account for the nested structure for real
++ Improve stability in pattern matching conversion check, pretty print (thanks @dannypsnl)
++ Clean up something related to `Prop`
++ Introduce the "fake literate" language, which allows one to generate beautifully annotated code using Aya's literate backend with custom, naïve syntax highlighting
++ Literate now works with library system
++ Use Gradle version catalog to replace `deps.properties`
++ Introduce `ij-parsing-wrapper` and use it in the parsing code
++ Improve `let` handling
++ Improve "count usages" in language server
++ The new classifier is in `tools` now
++ Loads of build system improvements
 
 Welcome [AliasQli](https://github.com/AliasQli)!
 

@@ -11,6 +11,8 @@ include(
   "cli-impl",
   "cli-console",
   "tools",
+  // Uses kala-primitives
+  "tools-kala",
   "tools-md",
   "tools-repl",
   "base",
