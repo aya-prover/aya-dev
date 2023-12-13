@@ -17,7 +17,6 @@ import java.util.Objects;
  * @param tokenStartIndex The index of first character (inclusive)
  * @author kiva
  */
-@SuppressWarnings("unused")
 public record SourcePos(
   @NotNull SourceFile file,
   int tokenStartIndex,
@@ -136,8 +135,7 @@ public record SourcePos(
   }
 
   @Override public String toString() {
-    return "(" + tokenStartIndex + "-" + tokenEndIndex + ") ["
-      + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';
+    return STR."(\{tokenStartIndex}-\{tokenEndIndex}) [\{startLine},\{startColumn}-\{endLine},\{endColumn}\{']'}";
   }
 
   @Override

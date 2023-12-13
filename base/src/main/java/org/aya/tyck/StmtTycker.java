@@ -158,7 +158,7 @@ public final class StmtTycker extends TracedTycker {
   }
 
   public void tyckHeader(@NotNull Decl decl, @NotNull ExprTycker tycker) {
-    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), "telescope of " + decl.ref().name())));
+    tracing(builder -> builder.shift(new Trace.LabelT(decl.sourcePos(), STR."telescope of \{decl.ref().name()}")));
     switch (decl) {
       case ClassDecl clazz -> {
         var body = clazz.members.map(field -> (MemberDef) tyck(field, tycker));

@@ -101,9 +101,9 @@ public record Codifier(
         formula(mula);
         builder.append(")");
       }
-      case ErrorTerm error -> throw new UnsupportedOperationException("Cannot generate error");
-      case Callable call -> throw new UnsupportedOperationException("Cannot generate calls");
-      case IntervalTerm interval -> builder.append("IntervalTerm.INSTANCE");
+      case ErrorTerm _ -> throw new UnsupportedOperationException("Cannot generate error");
+      case Callable _ -> throw new UnsupportedOperationException("Cannot generate calls");
+      case IntervalTerm _ -> builder.append("IntervalTerm.INSTANCE");
       case SortTerm sort -> {
         builder.append("new SortTerm(SortKind.");
         builder.append(sort.kind().name());
@@ -111,7 +111,7 @@ public record Codifier(
         builder.append(sort.lift());
         builder.append(")");
       }
-      default -> throw new UnsupportedOperationException("TODO: " + term.getClass().getCanonicalName());
+      default -> throw new UnsupportedOperationException(STR."TODO: \{term.getClass().getCanonicalName()}");
     }
   }
 

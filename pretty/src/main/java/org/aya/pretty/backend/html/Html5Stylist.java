@@ -103,7 +103,7 @@ public class Html5Stylist extends ClosingStylist {
   }
 
   public static @NotNull String cssVar(@NotNull String name) {
-    return "--" + normalizeCssId(name);
+    return STR."--\{normalizeCssId(name)}";
   }
 
   public static @NotNull String cssColor(int rgb) {

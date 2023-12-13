@@ -152,7 +152,6 @@ public record SyntaxHighlight(
     return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
   }
 
-  @SuppressWarnings("unused")
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
     return switch (var) {
       case GeneralizedVar _ -> DefKind.Generalized;

@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli;
 
-import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -71,7 +69,7 @@ public class LibraryGraphTest {
    * Create a {@link LibraryConfig} for identifying.
    */
   private @NotNull LibraryConfig config(@NotNull String name) {
-    var libRoot = Path.of("/home/senpai/" + name);
+    var libRoot = Path.of(STR."/home/senpai/\{name}");
 
     return new LibraryConfig(
       Version.create("11.4.514"),

@@ -47,7 +47,7 @@ public class TestRunner {
    * For running single test, use the main() function below.
    */
   @Test void runAllAyaTests() {
-    System.out.println("Aya Test Runner: Running for commit " + GeneratedVersion.COMMIT_HASH);
+    System.out.println(STR."Aya Test Runner: Running for commit \{GeneratedVersion.COMMIT_HASH}");
     runDir(DEFAULT_TEST_DIR.resolve("failure"), false);
   }
 
@@ -57,14 +57,14 @@ public class TestRunner {
     Arrays.stream(args).map(Paths::get).forEach(path -> {
       if (Files.isRegularFile(path)) runner.runFile(path, true);
       else if (Files.isDirectory(path)) runner.runDir(path, true);
-      else if (Files.notExists(path)) fail("Test target not found: " + path.toAbsolutePath());
-      else fail("Unsupported test target: " + path.toAbsolutePath());
+      else if (Files.notExists(path)) fail(STR."Test target not found: \{path.toAbsolutePath()}");
+      else fail(STR."Unsupported test target: \{path.toAbsolutePath()}");
     });
     TestRunner.exit();
   }
 
   private void runDir(@NotNull Path path, boolean expectSuccess) {
-    System.out.println(":: Running tests under " + path.toAbsolutePath());
+    System.out.println(STR.":: Running tests under \{path.toAbsolutePath()}");
     assertTrue(path.toFile().isDirectory(), "should be a directory");
 
     var source = AyaFiles.collectAyaSourceFiles(path);
@@ -78,13 +78,13 @@ public class TestRunner {
       var reporter = CountingReporter.delegate(new StreamReporter(new PrintStream(
         hookOut, true, StandardCharsets.UTF_8)));
 
-      System.out.print(file.getFileName() + " ---> ");
+      System.out.print(STR."\{file.getFileName()} ---> ");
       new SingleFileCompiler(reporter, LOCATOR, null)
         .compile(file, flags(), null);
 
       postRun(file, expectSuccess, hookOut.toString(StandardCharsets.UTF_8), reporter);
     } catch (IOException e) {
-      fail("error reading file " + file.toAbsolutePath());
+      fail(STR."error reading file \{file.toAbsolutePath()}");
     }
   }
 
@@ -95,7 +95,7 @@ public class TestRunner {
   }
 
   private void postRun(@NotNull Path file, boolean expectSuccess, String output, CountingReporter reporter) {
-    var expectedOutFile = file.resolveSibling(file.getFileName() + ".txt");
+    var expectedOutFile = file.resolveSibling(STR."\{file.getFileName()}.txt");
     if (Files.exists(expectedOutFile)) {
       checkOutput(file, expectedOutFile, output);
       System.out.println("success");
@@ -112,7 +112,7 @@ public class TestRunner {
               ----------------------------------------
               """,
             output);
-          fail("The test case <" + file.getFileName() + "> should pass, but it fails.");
+          fail(STR."The test case <\{file.getFileName()}> should pass, but it fails.");
         }
       } else {
         System.out.println(); // add line break after `--->`
@@ -123,11 +123,11 @@ public class TestRunner {
 
   private void generateWorkflow(@NotNull Path testFile, Path expectedOutFile, String hookOut) {
     hookOut = instantiateHoles(testFile, hookOut);
-    var workflowFile = testFile.resolveSibling(testFile.getFileName() + ".txt");
+    var workflowFile = testFile.resolveSibling(STR."\{testFile.getFileName()}.txt");
     try {
       FileUtil.writeString(workflowFile, hookOut);
     } catch (IOException e) {
-      fail("error generating todo file " + workflowFile.toAbsolutePath());
+      fail(STR."error generating todo file \{workflowFile.toAbsolutePath()}");
     }
     System.out.printf(Locale.getDefault(),
       """
@@ -150,7 +150,7 @@ public class TestRunner {
         Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, testFile.getFileName().toString());
     } catch (IOException e) {
-      fail("error reading file " + expectedOutFile.toAbsolutePath());
+      fail(STR."error reading file \{expectedOutFile.toAbsolutePath()}");
     }
   }
 

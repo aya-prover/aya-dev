@@ -71,7 +71,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     var colors = Html5Stylist.colorsToCss(config.getStylist().colorScheme);
     cursor.invisibleContent("\n:root {\n%s\n}\n".formatted(colors));
     config.getStylist().styleFamily.definedStyles().forEach((name, style) -> {
-      var selector = Html5Stylist.styleKeyToCss(name).map(x -> "." + x).joinToString(" ");
+      var selector = Html5Stylist.styleKeyToCss(name).map(x -> STR.".\{x}").joinToString(" ");
       var css = style.styles().mapNotNull(Html5Stylist::styleToCss).joinToString("\n", "  %s"::formatted);
       var stylesheet = "%s {\n%s\n}\n".formatted(selector, css);
       cursor.invisibleContent(stylesheet);
@@ -107,10 +107,10 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   protected void renderHyperLinked(@NotNull Cursor cursor, Doc.@NotNull HyperLinked text, EnumSet<Outer> outer) {
     var href = text.href();
     cursor.invisibleContent("<a ");
-    if (text.id() != null) cursor.invisibleContent("id=\"" + normalizeId(text.id()) + "\" ");
+    if (text.id() != null) cursor.invisibleContent(STR."id=\"\{normalizeId(text.id())}\" ");
     if (text.hover() != null) {
       cursor.invisibleContent("class=\"aya-hover\" ");
-      cursor.invisibleContent("aya-hover-text=\"" + text.hover() + "\" ");
+      cursor.invisibleContent(STR."aya-hover-text=\"\{text.hover()}\" ");
     }
     cursor.invisibleContent("href=\"");
     cursor.invisibleContent(normalizeHref(href));
@@ -121,7 +121,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
 
   @Override protected void renderImage(@NotNull Cursor cursor, Doc.@NotNull Image image, EnumSet<Outer> outer) {
     cursor.invisibleContent("<img ");
-    cursor.invisibleContent("src=\"" + normalizeHref(image.src()) + "\" ");
+    cursor.invisibleContent(STR."src=\"\{normalizeHref(image.src())}\" ");
     cursor.invisibleContent("alt=\"");
     renderDoc(cursor, image.alt(), outer);
     cursor.invisibleContent("\"/>");
@@ -134,10 +134,10 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
         var prefix = config.opt(StringPrinterConfig.LinkOptions.CrossLinkPrefix, "/");
         var postfix = config.opt(StringPrinterConfig.LinkOptions.CrossLinkPostfix, ".html");
         var sep = config.opt(StringPrinterConfig.LinkOptions.CrossLinkSeparator, "/");
-        yield path.joinToString(sep, prefix, postfix) + (loc == null ? "" : "#" + normalizeId(loc));
+        yield path.joinToString(sep, prefix, postfix) + (loc == null ? "" : STR."#\{normalizeId(loc)}");
       }
       case Link.DirectLink(var link) -> link;
-      case Link.LocalId(var id) -> id.fold(Html5Stylist::normalizeCssId, x -> "v" + x);
+      case Link.LocalId(var id) -> id.fold(Html5Stylist::normalizeCssId, x -> STR."v\{x}");
       // ^ CSS3 selector does not support IDs starting with a digit, so we prefix them with "v".
       // See https://stackoverflow.com/a/37271406/9506898 for more details.
     };
@@ -147,7 +147,7 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
     return switch (linkId) {
       case Link.CrossLink link -> normalizeId(link);
       case Link.DirectLink(var link) -> link;
-      case Link.LocalId localId -> "#" + normalizeId(localId);
+      case Link.LocalId localId -> STR."#\{normalizeId(localId)}";
     };
   }
 
@@ -159,13 +159,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   protected void renderInlineCode(@NotNull Cursor cursor, Doc.@NotNull InlineCode code, EnumSet<Outer> outer) {
     // `<code class="" />` is valid, see:
     // https://stackoverflow.com/questions/30748847/is-an-empty-class-attribute-valid-html
-    cursor.invisibleContent("<code class=\"" + capitalize(code.language()) + "\">");
+    cursor.invisibleContent(STR."<code class=\"\{capitalize(code.language())}\">");
     renderDoc(cursor, code.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</code>");
   }
 
   @Override protected void renderCodeBlock(@NotNull Cursor cursor, Doc.@NotNull CodeBlock block, EnumSet<Outer> outer) {
-    cursor.invisibleContent("<pre class=\"" + capitalize(block.language()) + "\">");
+    cursor.invisibleContent(STR."<pre class=\"\{capitalize(block.language())}\">");
     renderDoc(cursor, block.code(), EnumSet.of(Outer.EnclosingTag)); // Even in code mode, we still need to escape
     cursor.invisibleContent("</pre>");
   }
@@ -186,13 +186,13 @@ public class DocHtmlPrinter<Config extends DocHtmlPrinter.Config> extends String
   @Override
   protected void renderList(@NotNull Cursor cursor, Doc.@NotNull List list, EnumSet<Outer> outer) {
     var tag = list.isOrdered() ? "ol" : "ul";
-    cursor.invisibleContent("<" + tag + ">");
+    cursor.invisibleContent(STR."<\{tag}>");
     list.items().forEach(item -> {
       cursor.invisibleContent("<li>");
       renderDoc(cursor, item, EnumSet.of(Outer.List, Outer.EnclosingTag));
       cursor.invisibleContent("</li>");
     });
-    cursor.invisibleContent("</" + tag + ">");
+    cursor.invisibleContent(STR."</\{tag}>");
   }
 
   private @NotNull String capitalize(@NotNull org.aya.pretty.doc.Language s) {

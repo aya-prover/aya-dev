@@ -37,19 +37,19 @@ public class LspTest {
   }
 
   @Test public void testJustLoad() {
-    launch(TEST_LIB).execute(compile((a, e) -> {}));
+    launch(TEST_LIB).execute(compile((_, _) -> {}));
   }
 
   @Test public void testIncremental() {
     launch(TEST_LIB).execute(
-      compile((a, e) -> {}),
+      compile((_, _) -> {}),
       mutate("StringPrims"),
       compile((a, e) -> assertRemake(a, e, "StringPrims", "HelloWorld"))
     );
   }
 
   @Test public void test541() {
-    launch(TEST_LIB).execute(compile((a, e) -> {
+    launch(TEST_LIB).execute(compile((a, _) -> {
       var testOpt = a.lastCompiled()
         .filter(x -> x.moduleName().getLast().equals("Vec"))
         .flatMap(x -> x.program().get())
@@ -70,7 +70,7 @@ public class LspTest {
 
   @Test public void testRealWorldLike() {
     launch(TEST_LIB).execute(
-      compile((a, e) -> {}),
+      compile((_, _) -> {}),
       mutate("HelloWorld"),
       compile((a, e) -> assertRemake(a, e, "HelloWorld")),
       mutate("NatCore"),
@@ -87,7 +87,7 @@ public class LspTest {
 
     var client = new LspTestClient(initParams);
     client.registerLibrary(TEST_LIB);
-    client.execute(compile((a, e) -> {}));
+    client.execute(compile((_, _) -> {}));
 
     var param = new TextDocumentPositionParams(new TextDocumentIdentifier(
       TEST_LIB.resolve("src").resolve("NatCore.aya").toUri()),
@@ -96,17 +96,17 @@ public class LspTest {
 
     var result0 = client.service.hover(param);
     assertTrue(result0.isPresent());
-    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#218c21;\">Nat</span></a>", result0.get().contents.get(0).value);
+    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#218c21;\">Nat</span></a>", result0.get().contents.getFirst().value);
 
     client.service.updateServerOptions(new ServerOptions(new ServerRenderOptions("IntelliJ", null, RenderOptions.OutputTarget.HTML)));
 
     var result1 = client.service.hover(param);
     assertTrue(result1.isPresent());
-    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#000000;\">Nat</span></a>", result1.get().contents.get(0).value);
+    assertEquals("<a href=\"#NatCore-Nat\"><span style=\"color:#000000;\">Nat</span></a>", result1.get().contents.getFirst().value);
   }
 
   private void logTime(long time) {
-    System.out.println("Remake changed modules took: " + time + "ms");
+    System.out.println(STR."Remake changed modules took: \{time}ms");
   }
 
   private void assertRemake(@NotNull LspTestCompilerAdvisor advisor, long time, @NotNull String... modules) {
