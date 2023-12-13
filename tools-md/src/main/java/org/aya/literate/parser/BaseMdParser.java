@@ -89,8 +89,8 @@ public class BaseMdParser {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
       case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis));
-      case HardLineBreak $ -> new Literate.Raw(Doc.line());
-      case SoftLineBreak $ -> new Literate.Raw(Doc.line());
+      case HardLineBreak _ -> new Literate.Raw(Doc.line());
+      case SoftLineBreak _ -> new Literate.Raw(Doc.line());
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
       case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
@@ -125,7 +125,7 @@ public class BaseMdParser {
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
         if (spans != null && spans.size() == 1) {
-          var sourceSpan = spans.get(0);
+          var sourceSpan = spans.getFirst();
           var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
           var startFrom = lineIndex + sourceSpan.getColumnIndex();
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));

@@ -120,7 +120,7 @@ public record SyntaxHighlight(
   @Override
   public @NotNull MutableList<HighlightInfo> fold(@NotNull MutableList<HighlightInfo> acc, @NotNull Pattern pat) {
     return switch (pat) {
-      case Pattern.Number(var pos, var $) -> add(acc, LitKind.Int.toLit(pos));
+      case Pattern.Number(var pos, _) -> add(acc, LitKind.Int.toLit(pos));
       default -> StmtFolder.super.fold(acc, pat);
     };
   }
@@ -147,7 +147,7 @@ public record SyntaxHighlight(
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
-    if (var instanceof LocalVar(var $, var $$, GenerateKind.Generalized(var origin)))
+    if (var instanceof LocalVar(var _, var _, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
     return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
   }
@@ -155,7 +155,7 @@ public record SyntaxHighlight(
   @SuppressWarnings("unused")
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
     return switch (var) {
-      case GeneralizedVar ignored -> DefKind.Generalized;
+      case GeneralizedVar _ -> DefKind.Generalized;
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete instanceof TeleDecl.FnDecl || defVar.core instanceof FnDef)
           yield DefKind.Fn;
@@ -171,8 +171,8 @@ public record SyntaxHighlight(
           yield DefKind.Clazz;
         else throw new InternalException(STR."unknown def type: \{defVar}");
       }
-      case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> DefKind.Generalized;
-      case LocalVar ignored -> DefKind.LocalVar;
+      case LocalVar(_, _, GenerateKind.Generalized(_)) -> DefKind.Generalized;
+      case LocalVar _ -> DefKind.LocalVar;
       default -> DefKind.Unknown;
     };
   }

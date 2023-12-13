@@ -77,8 +77,8 @@ public class Html5Stylist extends ClosingStylist {
           case Curly -> "text-decoration-style: wavy;";
         };
         var colorRef = switch (color) {
-          case Style.ColorHex(var rgb, var $) -> cssColor(rgb);
-          case Style.ColorName(var name, var $) -> "var(%s)".formatted(cssVar(name));
+          case Style.ColorHex(var rgb, _) -> cssColor(rgb);
+          case Style.ColorName(var name, _) -> "var(%s)".formatted(cssVar(name));
           case null -> null;
         };
         var decoColor = colorRef != null

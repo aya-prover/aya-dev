@@ -278,11 +278,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         }
         yield true;
       }
-      case LamTerm $ -> throw new InternalException("LamTerm is never type");
-      case ConCall $ -> throw new InternalException("ConCall is never type");
-      case TupTerm $ -> throw new InternalException("TupTerm is never type");
-      case NewTerm $ -> throw new InternalException("NewTerm is never type");
-      case ErrorTerm $ -> true;
+      case LamTerm _ -> throw new InternalException("LamTerm is never type");
+      case ConCall _ -> throw new InternalException("ConCall is never type");
+      case TupTerm _ -> throw new InternalException("TupTerm is never type");
+      case NewTerm _ -> throw new InternalException("NewTerm is never type");
+      case ErrorTerm _ -> true;
       case SigmaTerm(var paramsSeq) -> {
         var params = paramsSeq.view();
         for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
