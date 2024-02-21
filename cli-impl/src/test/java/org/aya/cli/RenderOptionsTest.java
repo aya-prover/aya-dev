@@ -25,6 +25,7 @@ public class RenderOptionsTest {
     opt.checkDeserialization();
     var opts = new RenderOptions.DefaultSetup(false, false, false, true, -1, false);
     assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.Unix, doc, opts));
+    assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.ANSI16, doc, opts));
     assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, opts));
     assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.KaTeX, doc, opts));
     assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, opts));

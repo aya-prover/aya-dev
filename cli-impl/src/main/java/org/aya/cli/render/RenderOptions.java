@@ -37,6 +37,7 @@ import java.util.Objects;
 public class RenderOptions {
   public enum OutputTarget {
     Unix(".txt"),
+    ANSI16(".txt"),
     LaTeX(".tex"),
     KaTeX(".katex"),
     AyaMd(".md"),
@@ -119,6 +120,7 @@ public class RenderOptions {
   public static @NotNull StringStylist defaultStylist(@NotNull OutputTarget output) {
     return switch (output) {
       case Unix -> AdaptiveCliStylist.INSTANCE;
+      case ANSI16 -> AdaptiveCliStylist.INSTANCE_16;
       case LaTeX -> TeXStylist.DEFAULT;
       case KaTeX -> TeXStylist.DEFAULT_KATEX;
       case AyaMd -> MdStylist.DEFAULT;
@@ -132,7 +134,7 @@ public class RenderOptions {
     final var c = buildColorScheme();
     final var s = buildStyleFamily();
     return switch (output) {
-      case Unix -> new UnixTermStylist(c, s);
+      case Unix, ANSI16 -> new UnixTermStylist(c, s);
       case LaTeX -> new TeXStylist(c, s, false);
       case KaTeX -> new TeXStylist(c, s, true);
       case AyaMd -> new MdStylist(c, s);
@@ -188,7 +190,8 @@ public class RenderOptions {
       case KaTeX, LaTeX -> doc.render(new DocTeXPrinter(), setup.setup(new DocTeXPrinter.Config((TeXStylist) stylist)));
       case HTML -> doc.render(new DocHtmlPrinter<>(), setup.setup(new DocHtmlPrinter.Config((Html5Stylist) stylist)));
       case AyaMd -> doc.render(new DocMdPrinter(), setup.setup(new DocMdPrinter.Config((MdStylist) stylist)));
-      case Unix -> doc.render(new DocTermPrinter(), setup.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
+      case Unix, ANSI16 ->
+        doc.render(new DocTermPrinter(), setup.setup(new DocTermPrinter.Config((UnixTermStylist) stylist)));
     };
   }
 
