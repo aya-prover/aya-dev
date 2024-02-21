@@ -29,7 +29,8 @@ public interface CliEnums {
     latex(RenderOptions.OutputTarget.LaTeX),
     katex(RenderOptions.OutputTarget.KaTeX),
     markdown(RenderOptions.OutputTarget.AyaMd),
-    unix(RenderOptions.OutputTarget.Unix);
+    unix(RenderOptions.OutputTarget.Unix),
+    ansi16(RenderOptions.OutputTarget.ANSI16);
 
     public final @NotNull RenderOptions.OutputTarget target;
 

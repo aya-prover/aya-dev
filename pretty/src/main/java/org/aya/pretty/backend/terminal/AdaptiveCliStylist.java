@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 /** use colors from terminal instead of absolute colors to protect eyes */
 public class AdaptiveCliStylist extends UnixTermStylist {
-  public static final @NotNull AdaptiveCliStylist INSTANCE = new AdaptiveCliStylist();
+  public static final @NotNull AdaptiveCliStylist INSTANCE = new AdaptiveCliStylist(true);
+  public static final @NotNull AdaptiveCliStylist INSTANCE_16 = new AdaptiveCliStylist(false);
 
-  private AdaptiveCliStylist() {
+  private AdaptiveCliStylist(boolean use256Colors) {
     super(MutableMap::create, new AyaStyleFamily(MutableMap.ofEntries(
-      Tuple.of(AyaStyleKey.Keyword.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
-      Tuple.of(AyaStyleKey.Prim.key(), Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)).and()),
+      Tuple.of(AyaStyleKey.Keyword.key(), (use256Colors ? Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)) : UnixTermStyle.TerminalRed).and()),
+      Tuple.of(AyaStyleKey.Prim.key(), (use256Colors ? Style.color(ColorScheme.colorOf(1.0f, 0.43f, 0)) : UnixTermStyle.TerminalRed).and()),
       Tuple.of(AyaStyleKey.Fn.key(), UnixTermStyle.TerminalYellow.and()),
       Tuple.of(AyaStyleKey.Data.key(), UnixTermStyle.TerminalGreen.and()),
       Tuple.of(AyaStyleKey.Clazz.key(), UnixTermStyle.TerminalGreen.and()),
