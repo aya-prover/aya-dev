@@ -20,7 +20,7 @@ import java.util.Deque;
  * @author ice1000
  */
 public sealed interface Trace extends TreeBuilder.Tree<Trace> {
-  final class Builder extends TreeBuilder<Trace> {
+  class Builder extends TreeBuilder<Trace> {
     @VisibleForTesting public @NotNull Deque<MutableList<Trace>> getTops() {
       return tops;
     }
