@@ -60,7 +60,7 @@ public interface BetaExpander extends EndoTerm {
         FormulaTerm(Formula.Lit(var r)),
         FormulaTerm(Formula.Lit(var s))
       ) when r == s -> identity("x");
-      case CoeTerm(_, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
+      case CoeTerm(var $, RefTerm(var r), RefTerm(var s)) when r == s -> identity("x");
       case CoeTerm coe -> {
         var varI = new LamTerm.Param(new LocalVar("i"), true);
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));

@@ -170,7 +170,7 @@ public record SyntaxHighlight(
           yield DefKind.Clazz;
         else throw new InternalException(STR."unknown def type: \{defVar}");
       }
-      case LocalVar(_, _, GenerateKind.Generalized(_)) -> DefKind.Generalized;
+      case LocalVar(var $, var $$, GenerateKind.Generalized(var $$$)) -> DefKind.Generalized;
       case LocalVar $ -> DefKind.LocalVar;
       default -> DefKind.Unknown;
     };

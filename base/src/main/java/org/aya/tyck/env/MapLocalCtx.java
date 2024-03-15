@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.env;
 
@@ -41,7 +41,7 @@ public record MapLocalCtx(
   }
 
   @Override public void modifyMyTerms(@NotNull UnaryOperator<Term> u) {
-    localMap.edit().replaceAll((__, term) -> u.apply(term));
+    localMap.edit().replaceAll(($, term) -> u.apply(term));
   }
 
   @Override public void extractToLocal(@NotNull MutableList<Term.Param> dest) {

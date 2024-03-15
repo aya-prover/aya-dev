@@ -309,7 +309,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
             rl.map.remove(ref);
             yield res;
           }
-          case Pair(_, LamTerm rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
+          case Pair(var $, LamTerm rambda) -> compareLambdaBody(rambda, lhs, rl, lr, pi);
           case Pair(LamTerm lambda, _) -> compareLambdaBody(lambda, rhs, lr, rl, pi);
           default -> compare(lhs, rhs, lr, rl, null);
         };
@@ -412,7 +412,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         checkParam(lParam, rParam, new Subst(), new Subst(), lr, rl, () -> false,
           (lsub, rsub) -> compare(lBody.subst(lsub), rBody.subst(rsub), lr, rl, null));
       case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) -> checkParams(lParams.view(), rParams.view(),
-        new Subst(), new Subst(), lr, rl, () -> false, (_, _) -> true);
+        new Subst(), new Subst(), lr, rl, () -> false, ($, $$) -> true);
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(PartialTyTerm(var lTy, var lR), PartialTyTerm(var rTy, var rR)) ->
         compare(lTy, rTy, lr, rl, null) && compareRestr(lR, rR);

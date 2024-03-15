@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.concrete.desugar;
 
@@ -107,7 +107,7 @@ public record Desugarer(@NotNull ResolveInfo info) implements StmtConsumer {
         },
         // do not desugar
         right -> arrayExpr);
-      case Expr.LetOpen(_, _, _, var body) -> pre(body);
+      case Expr.LetOpen(var $, var $$, var $$$, var body) -> pre(body);
       case Expr misc -> StmtConsumer.super.pre(misc);
     };
   }

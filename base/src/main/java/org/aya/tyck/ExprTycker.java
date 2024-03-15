@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -253,7 +253,7 @@ public final class ExprTycker extends UnifiedTycker {
         yield new Result.Default(TupTerm.explicits(items.map(Result::wellTyped)),
           new SigmaTerm(items.map(item -> new Term.Param(LocalVar.IGNORED, item.type(), true))));
       }
-      case Expr.App(_, var appF, var argument) -> {
+      case Expr.App(var $, var appF, var argument) -> {
         var f = synthesize(appF);
         var app = f.wellTyped();
         if (app instanceof ErrorTerm || f.type() instanceof ErrorTerm) yield f;
@@ -590,7 +590,7 @@ public final class ExprTycker extends UnifiedTycker {
     if (recog.isDefined()) {
       var head = ShapeFactory.ofFn(var, recog.get());
       assert head != null : "bad ShapeFactory";
-      return defCall(var, (_, ulift, args) -> new RuleReducer.Fn(head, ulift, args));
+      return defCall(var, ($, ulift, args) -> new RuleReducer.Fn(head, ulift, args));
     }
 
     return null;
@@ -603,7 +603,7 @@ public final class ExprTycker extends UnifiedTycker {
         if (recog.shape() == AyaShape.NAT_SHAPE) {
           var head = ShapeFactory.ofCtor(var, recog, new DataCall(dataVar, 0, ImmutableSeq.empty()));
           assert head != null : "bad ShapeFactory";
-          return defCall(var, (_, ulift, args) -> new RuleReducer.Con(head, ulift, ImmutableSeq.empty(), args));
+          return defCall(var, ($, ulift, args) -> new RuleReducer.Con(head, ulift, ImmutableSeq.empty(), args));
         }
 
         return null;

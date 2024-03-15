@@ -270,7 +270,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         yield ctorDoc(outer, licit, ctorDoc, ctor.params().isEmpty());
       }
       case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
-      case Pattern.BinOpSeq(_, var param) -> {
+      case Pattern.BinOpSeq(var $, var param) -> {
         if (param.sizeEquals(1)) {
           yield pattern(param.getFirst(), outer);
         }
