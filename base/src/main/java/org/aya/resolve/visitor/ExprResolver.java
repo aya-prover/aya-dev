@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -256,7 +256,7 @@ public record ExprResolver(
               addReference(maybe);
               yield new Pattern.Ctor(bind, maybe);
             }
-            ctx.set(ctx.get().bind(bind.bind(), _ -> false));
+            ctx.set(ctx.get().bind(bind.bind(), $ -> false));
             yield bind;
           }
           case Pattern.QualifiedRef qref -> {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -101,9 +101,9 @@ public record Codifier(
         formula(mula);
         builder.append(")");
       }
-      case ErrorTerm _ -> throw new UnsupportedOperationException("Cannot generate error");
-      case Callable _ -> throw new UnsupportedOperationException("Cannot generate calls");
-      case IntervalTerm _ -> builder.append("IntervalTerm.INSTANCE");
+      case ErrorTerm $ -> throw new UnsupportedOperationException("Cannot generate error");
+      case Callable $ -> throw new UnsupportedOperationException("Cannot generate calls");
+      case IntervalTerm $ -> builder.append("IntervalTerm.INSTANCE");
       case SortTerm sort -> {
         builder.append("new SortTerm(SortKind.");
         builder.append(sort.kind().name());

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -112,7 +112,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
       case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
       case Doc.Tooltip tooltip -> renderTooltip(cursor, tooltip, outer);
-      case Doc.Empty _ -> {}
+      case Doc.Empty $ -> {}
     }
   }
 

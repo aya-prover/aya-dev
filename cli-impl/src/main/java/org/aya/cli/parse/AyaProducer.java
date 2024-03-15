@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.parse;
 
@@ -568,7 +568,7 @@ public record AyaProducer(
           : newBody.childrenOfType(NEW_ARG).map(arg -> {
             var id = newArgField(arg.child(NEW_ARG_FIELD));
             var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
-              .map(b -> b.map(_ -> LocalVar.from(b)))
+              .map(b -> b.map($ -> LocalVar.from(b)))
               .toImmutableSeq();
             var body = expr(arg.child(EXPR));
             return new Expr.Field<>(sourcePosOf(arg), id, bindings, body, MutableValue.create());

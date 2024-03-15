@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -154,7 +154,7 @@ public record SyntaxHighlight(
 
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
     return switch (var) {
-      case GeneralizedVar _ -> DefKind.Generalized;
+      case GeneralizedVar $ -> DefKind.Generalized;
       case DefVar<?, ?> defVar -> {
         if (defVar.concrete instanceof TeleDecl.FnDecl || defVar.core instanceof FnDef)
           yield DefKind.Fn;
@@ -171,7 +171,7 @@ public record SyntaxHighlight(
         else throw new InternalException(STR."unknown def type: \{defVar}");
       }
       case LocalVar(_, _, GenerateKind.Generalized(_)) -> DefKind.Generalized;
-      case LocalVar _ -> DefKind.LocalVar;
+      case LocalVar $ -> DefKind.LocalVar;
       default -> DefKind.Unknown;
     };
   }

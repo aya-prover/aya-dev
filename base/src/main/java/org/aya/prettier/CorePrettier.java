@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -128,7 +128,7 @@ public class CorePrettier extends BasePrettier<Term> {
           options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
         );
       }
-      case IntervalTerm _ -> Doc.styled(PRIM, "I");
+      case IntervalTerm $ -> Doc.styled(PRIM, "I");
       case NewTerm(var inner) -> visitCalls(null, Doc.styled(KEYWORD, "new"), (nest, t) -> t.toDoc(options), outer,
         SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
         options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)

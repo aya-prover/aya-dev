@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.visitor;
 
@@ -66,14 +66,14 @@ public interface BetaExpander extends EndoTerm {
         var codom = apply(AppTerm.make(coe.type(), varI.toArg()));
 
         yield switch (codom) {
-          case PathTerm _ -> term;
+          case PathTerm $ -> term;
           case PiTerm pi -> pi.coe(coe, varI);
           case SigmaTerm sigma -> sigma.coe(coe, varI);
           case DataCall data when data.args().isEmpty() -> identity(String.valueOf(data.ref()
             .name().chars()
             .filter(Character::isAlphabetic)
             .findFirst()).toLowerCase(Locale.ROOT));
-          case SortTerm _ -> identity("A");
+          case SortTerm $ -> identity("A");
           default -> term;
         };
       }

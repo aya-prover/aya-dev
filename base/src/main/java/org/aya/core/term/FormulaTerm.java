@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.core.term;
 
@@ -47,7 +47,7 @@ public record FormulaTerm(@NotNull Formula<Term> asFormula) implements Term {
     return switch (asFormula) {
       case Formula.Conn(_, var l, var r) -> Seq.of(l, r).view();
       case Formula.Inv(var i) -> SeqView.of(i);
-      case Formula.Lit<?> _ -> SeqView.empty();
+      case Formula.Lit<?> $ -> SeqView.empty();
     };
   }
 }

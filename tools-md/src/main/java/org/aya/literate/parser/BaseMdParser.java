@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate.parser;
 
@@ -89,8 +89,8 @@ public class BaseMdParser {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
       case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis));
-      case HardLineBreak _ -> new Literate.Raw(Doc.line());
-      case SoftLineBreak _ -> new Literate.Raw(Doc.line());
+      case HardLineBreak $ -> new Literate.Raw(Doc.line());
+      case SoftLineBreak $ -> new Literate.Raw(Doc.line());
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
       case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));

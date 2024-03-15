@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.unify;
 
@@ -277,11 +277,11 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         }
         yield true;
       }
-      case LamTerm _ -> throw new InternalException("LamTerm is never type");
-      case ConCall _ -> throw new InternalException("ConCall is never type");
-      case TupTerm _ -> throw new InternalException("TupTerm is never type");
-      case NewTerm _ -> throw new InternalException("NewTerm is never type");
-      case ErrorTerm _ -> true;
+      case LamTerm $ -> throw new InternalException("LamTerm is never type");
+      case ConCall $ -> throw new InternalException("ConCall is never type");
+      case TupTerm $ -> throw new InternalException("TupTerm is never type");
+      case NewTerm $ -> throw new InternalException("NewTerm is never type");
+      case ErrorTerm $ -> true;
       case SigmaTerm(var paramsSeq) -> {
         var params = paramsSeq.view();
         for (int i = 1, size = paramsSeq.size(); i <= size; i++) {
@@ -472,7 +472,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         else yield null;
       }
       // See compareApprox for why we don't compare these
-      case FnCall _ -> null;
+      case FnCall $ -> null;
       case CoeTerm coe -> {
         if (!(preRhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
         if (!compare(coe.r(), rR, lr, rl, IntervalTerm.INSTANCE)) yield null;
@@ -499,7 +499,7 @@ public sealed abstract class TermComparator extends MockTycker permits Unifier {
         default -> null;
       };
       // end ConCallLike
-      case PrimCall _ -> null;
+      case PrimCall $ -> null;
       case FieldTerm lhs -> {
         if (!(preRhs instanceof FieldTerm rhs)) yield null;
         var preStructType = compareUntyped(lhs.of(), rhs.of(), lr, rl);

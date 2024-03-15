@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -155,7 +155,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.Lift expr -> Doc.sep(Seq
         .from(IntRange.closed(1, expr.lift()).iterator()).view()
-        .map(_ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
+        .map($ -> Doc.styled(KEYWORD, Doc.symbol("ulift")))
         .appended(term(Outer.Lifted, expr.expr())));
       case Expr.PartEl el -> Doc.sep(Doc.symbol("{|"),
         partial(el),
@@ -260,9 +260,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   public @NotNull Doc pattern(@NotNull Pattern pattern, boolean licit, Outer outer) {
     return switch (pattern) {
       case Pattern.Tuple tuple -> Doc.licit(licit, patterns(tuple.patterns()));
-      case Pattern.Absurd _ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
+      case Pattern.Absurd $ -> Doc.bracedUnless(Doc.styled(KEYWORD, "()"), licit);
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
-      case Pattern.CalmFace _ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
+      case Pattern.CalmFace $ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Ctor ctor -> {
         var name = linkRef(ctor.resolved().data(), CON);
