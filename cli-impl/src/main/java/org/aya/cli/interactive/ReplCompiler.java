@@ -6,6 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.function.CheckedFunction;
 import kala.value.MutableValue;
+import org.aya.cli.library.LibraryCompiler;
+import org.aya.cli.library.incremental.CompilerAdvisor;
+import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
@@ -100,15 +103,14 @@ public class ReplCompiler {
 
   private void loadLibrary(@NotNull Path libraryRoot) throws IOException {
     var flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null, modulePaths.view(), null);
-    throw new UnsupportedOperationException("TODO");
-    // try {
-    //   var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
-    //   compiler.start();
-    //   var owner = compiler.libraryOwner();
-    //   importModule(owner);
-    // } catch (LibraryConfigData.BadConfig bad) {
-    //   reporter.reportString("Cannot load malformed library: " + bad.getMessage(), Problem.Severity.ERROR);
-    // }
+    try {
+      var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
+      compiler.start();
+      var owner = compiler.libraryOwner();
+      importModule(owner);
+    } catch (LibraryConfigData.BadConfig bad) {
+      reporter.reportString("Cannot load malformed library: " + bad.getMessage(), Problem.Severity.ERROR);
+    }
   }
 
   private void importModule(@NotNull LibraryOwner owner) {
@@ -119,7 +121,7 @@ public class ReplCompiler {
     owner.libraryDeps().forEach(this::importModule);
   }
 
-  /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, Function, CompilerFlags, ModuleCallback) */
+  /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, ModuleCallback) */
   private void loadFile(@NotNull Path file) {
     compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser)), NormalizeMode.HEAD);
   }

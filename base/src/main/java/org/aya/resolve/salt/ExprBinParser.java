@@ -33,9 +33,7 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
     new WithPos<>(SourcePos.NONE, new Expr.Error(Doc.english("fakeApp escaped from BinOpParser")))
   );
 
-  @Override protected @NotNull Expr.NamedArg appOp() {
-    return OP_APP;
-  }
+  @Override protected @NotNull Expr.NamedArg appOp() { return OP_APP; }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.NamedArg>
   replicate(@NotNull SeqView<Expr.@NotNull NamedArg> seq) {
@@ -43,7 +41,7 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
-    opSet.reporter.report(new OperatorError.Precedence(op1, op2, pos));
+    opSet.fail(new OperatorError.Precedence(op1, op2, pos));
   }
 
   @Override protected @NotNull WithPos<Expr> createErrorExpr(@NotNull SourcePos sourcePos) {
@@ -51,11 +49,11 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
   }
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
-    opSet.reporter.report(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
+    opSet.fail(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
   }
 
   @Override protected void reportMissingOperand(String op, SourcePos pos) {
-    opSet.reporter.report(new OperatorError.MissingOperand(pos, op));
+    opSet.fail(new OperatorError.MissingOperand(pos, op));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {
