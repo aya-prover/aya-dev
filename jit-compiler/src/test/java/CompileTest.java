@@ -97,9 +97,7 @@ public class CompileTest {
     System.out.println(out);
   }
 
-  public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {
-
-  }
+  public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }
 
   private static final @NotNull Path FILE = Path.of("/home/senpai/1919810.aya");
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());

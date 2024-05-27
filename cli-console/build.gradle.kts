@@ -17,3 +17,11 @@ dependencies {
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
 }
+
+plugins { application }
+
+tasks.withType<AbstractCopyTask>().configureEach {
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
