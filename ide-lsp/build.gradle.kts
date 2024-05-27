@@ -127,7 +127,7 @@ supportedPlatforms.forEach { platform ->
       include("bin/aya")
       include("bin/aya-lsp")
       include("${Constants.jreDirName}/bin/**")
-      fileMode = "755".toInt(8)
+      filePermissions { unix("755") }
     }
     doLast {
       val bytes = MessageDigest.getInstance("SHA-256")
