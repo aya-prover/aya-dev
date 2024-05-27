@@ -83,11 +83,9 @@ public sealed interface HighlightInfo extends Comparable<HighlightInfo> {
     @NotNull Problem problem,
     @NotNull ImmutableSeq<HighlightInfo> children
   ) implements HighlightInfo {
-    @Override public @NotNull SourcePos sourcePos() {
-      return problem.sourcePos();
-    }
+    @Override public @NotNull SourcePos sourcePos() { return problem.sourcePos(); }
   }
 
   /** A literal */
-  record Lit(@NotNull SourcePos sourcePos, @NotNull LitKind kind) implements HighlightInfo {}
+  record Lit(@NotNull SourcePos sourcePos, @NotNull LitKind kind) implements HighlightInfo { }
 }

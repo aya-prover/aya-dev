@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -13,20 +13,19 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.PrimDef;
-import org.aya.generic.util.AyaFiles;
-import org.aya.generic.util.InterruptException;
+import org.aya.generic.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.util.error.InternalException;
+import org.aya.syntax.AyaFiles;
+import org.aya.syntax.concrete.stmt.Command;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.util.error.Panic;
 import org.aya.util.more.StringUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
@@ -60,7 +59,7 @@ public class LibraryCompiler {
   }
 
   public static @NotNull LibraryCompiler newCompiler(
-    @NotNull PrimDef.Factory primFactory,
+    @NotNull PrimFactory primFactory,
     @NotNull Reporter reporter,
     @NotNull CompilerFlags flags,
     @NotNull CompilerAdvisor advisor,
@@ -70,7 +69,7 @@ public class LibraryCompiler {
   }
 
   public static @NotNull LibraryCompiler newCompiler(
-    @NotNull PrimDef.Factory primFactory,
+    @NotNull PrimFactory primFactory,
     @NotNull Reporter reporter,
     @NotNull CompilerFlags flags,
     @NotNull CompilerAdvisor advisor,
@@ -82,7 +81,7 @@ public class LibraryCompiler {
   }
 
   public static int compile(
-    @NotNull PrimDef.Factory primFactory,
+    @NotNull PrimFactory primFactory,
     @NotNull Reporter reporter,
     @NotNull CompilerFlags flags,
     @NotNull CompilerAdvisor advisor,
@@ -119,8 +118,7 @@ public class LibraryCompiler {
   private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
-      // TODO: use ModulePath
-      var recurse = owner.findModule(mod.path());
+      var recurse = owner.findModule(mod);
       if (recurse == null) {
         reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
         throw new Context.ResolvingInterruptedException();
@@ -142,7 +140,7 @@ public class LibraryCompiler {
       known.appendAll(dedup);
     });
     reporter.reportNest(STR."Done in \{StringUtil.timeToString(
-        System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
+      System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
     return depGraph;
   }
 
@@ -232,7 +230,7 @@ public class LibraryCompiler {
 
     var make = make(modified);
     reporter.reportNest(STR."Library loaded in \{StringUtil.timeToString(
-        System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
+      System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
     pretty(modified);
     return make;
   }
@@ -265,7 +263,7 @@ public class LibraryCompiler {
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
       tycker.skippedSet.forEach(f ->
-        reportNest(String.format("%s (%s)", QualifiedID.join(f.moduleName()), f.displayPath())));
+        reportNest(String.format("%s (%s)", f.moduleName(), f.displayPath())));
       // Stop the whole compilation in case downstream libraries depend on skipped modules.
       throw new LibraryTyckingFailed();
     } else {
@@ -325,15 +323,15 @@ public class LibraryCompiler {
   }
 
   interface PrimitiveCleaner {
-    static void clear(@NotNull PrimDef.Factory factory, @NotNull ImmutableSeq<Stmt> stmts) {
+    static void clear(@NotNull PrimFactory factory, @NotNull ImmutableSeq<Stmt> stmts) {
       stmts.forEach(s -> clear(factory, s));
     }
 
-    static void clear(@NotNull PrimDef.Factory factory, @NotNull Stmt stmt) {
+    static void clear(@NotNull PrimFactory factory, @NotNull Stmt stmt) {
       switch (stmt) {
         case Command.Module mod -> clear(factory, mod.contents());
-        case TeleDecl.PrimDecl decl when decl.ref.core != null -> factory.clear(decl.ref.core.id);
-        default -> {}
+        case PrimDecl decl when decl.ref.core != null -> factory.clear(decl.ref.core.id);
+        default -> { }
       }
     }
   }
@@ -373,10 +371,10 @@ public class LibraryCompiler {
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
       reporter.reportNest("[Tyck] %s (%s)".formatted(
-        QualifiedID.join(moduleName), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
+        moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
-        throw new InternalException(STR."Unable to load module: \{moduleName}");
+        throw new Panic(STR."Unable to load module: \{moduleName}");
     }
   }
 
@@ -386,11 +384,6 @@ public class LibraryCompiler {
     }
   }
 
-  private void reportNest(@NotNull String text) {
-    reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT);
-  }
-
-  public @NotNull LibraryOwner libraryOwner() {
-    return owner;
-  }
+  private void reportNest(@NotNull String text) { reporter.reportNest(text, LibraryOwner.DEFAULT_INDENT); }
+  public @NotNull LibraryOwner libraryOwner() { return owner; }
 }

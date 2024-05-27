@@ -1,0 +1,81 @@
+Ambiguous:
+In file $FILE:5:20 ->
+
+  3 │   def infix + (a b: Nat) : Nat => 0
+  4 │   def infix == (a b: Nat) : Nat => 0
+  5 │   def fail : Nat => 1 + 1 == 2
+    │                       ╰╯
+
+Error: Ambiguous operator precedence detected between `==` and `+`
+note: Use `tighter/looser` clause or insert parentheses to make it clear.
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+Cyclic:
+In file $FILE:3:28 ->
+
+  1 │   def infix a => Type tighter b
+  2 │   def infix b => Type tighter c
+  3 │   def infix c => Type tighter d
+    │                               ╰╯
+
+Error: Circular precedence found between b, c, d
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+Issue677:
+In file $FILE:3:27 ->
+
+  1 │   data False
+  2 │   def fixl ¬ (A : Type) => A -> False
+  3 │   def NonEmpty (A : Type) => ¬ ¬ A
+    │                              ╰╯
+
+Error: There is no operand for this operator `¬`
+
+In file $FILE:3:4 ->
+
+  1 │   data False
+  2 │   def fixl ¬ (A : Type) => A -> False
+  3 │   def NonEmpty (A : Type) => ¬ ¬ A
+    │       ╰──────╯
+
+Error: Unsolved meta _
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+NoAssoc:
+In file $FILE:9:21 ->
+
+  7 │   def test1 : Nat => 1 + 2 + 3
+  8 │   def test2 : Nat => 1 ^ 2 ^ 3
+  9 │   def test3 : Nat => 1 = 2 = 3
+    │                        ╰╯
+
+Error: Cannot figure out computation order because `=` (Infix) and `=` (Infix) 
+       share the same precedence but no associativity was specified.
+note: Make them both left/right-associative to resolve this problem.
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+SelfBind:
+In file $FILE:2:9 ->
+
+  1 │   def infix + : Type => +
+  2 │     looser +
+    │            ╰╯
+
+Error: Self bind is not allowed
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+ModuleImportRename:
+That looks right!
+

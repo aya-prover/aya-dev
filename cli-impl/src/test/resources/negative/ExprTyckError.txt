@@ -1,0 +1,154 @@
+TypeMismatch:
+In file $FILE:2:16 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test => 1 + Type
+    │                   ╰──╯
+
+Error: Cannot check the expression
+         Type 0
+       of type
+         Type 1
+       against the type
+         Nat
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+IllTypedApp:
+In file $FILE:2:22 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test (a : Nat) => a 1
+    │                         ╰─╯
+
+Error: Unable to apply the expression
+         a 1
+       because the type of what you applied is not a Pi type, but instead:
+         Nat
+
+In file $FILE:2:4 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test (a : Nat) => a 1
+    │       ╰──╯
+
+Error: Unsolved meta _
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+WantButNo:
+In file $FILE:2:19 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test : Type => \ x => x
+    │                      ╰──────╯
+
+Error: Unable to apply the expression
+         \ x ⇒ x
+       because the type of what you applied is not a Pi type, but instead:
+         Type 0
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+BadInterval:
+In file $FILE:2:16 ->
+
+  1 │   prim I
+  2 │   def test : I => 2
+    │                   ╰╯
+
+Error: The point `2` does not live in interval
+note: Did you mean:  `0` or `1`
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+BadPrim:
+In file $FILE:1:0 ->
+
+  1 │   prim I : Type
+    │   ╰───────────╯
+
+Error: The level here is expected to be ISet but it is actually Type 0
+
+In file $FILE:1:5 ->
+
+  1 │   prim I : Type
+    │        ╰╯
+
+Error: The prim declaration
+         prim I
+       should have type
+         ISet
+       but you gave
+         Type 0
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+PrimNoResult:
+In file $FILE:2:5 ->
+
+  1 │   prim I
+  2 │   prim Path (A : I -> Type) (a b : A)
+    │        ╰──╯
+
+Error: `prim Path` is expected to have a return type
+
+In file $FILE:2:5 ->
+
+  1 │   prim I
+  2 │   prim Path (A : I -> Type) (a b : A)
+    │        ╰──╯
+
+Error: `prim Path` is expected to have a return type
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+PiDom:
+In file $FILE:2:23 ->
+
+  1 │   data X : Set
+  2 │   data Test : Type | con X
+    │                          ╰╯
+
+Error: The type
+         X
+       is in the domain of a function whose type is
+         Type 0
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+PiDomMeta:
+In file $FILE:4:19 ->
+
+  2 │   data infix = (a b : X) : Type
+  3 │   data Test : Type
+  4 │   | con (x : _) (y : X) (x = y)
+    │                      ╰╯
+
+Error: The type
+         X
+       is in the domain of a function whose type is
+         Type 0
+
+In file $FILE:4:11 ->
+
+  2 │   data infix = (a b : X) : Type
+  3 │   data Test : Type
+  4 │   | con (x : _) (y : X) (x = y)
+    │              ╰╯
+
+Error: The meta (denoted ? below) is supposed to satisfy:
+         ? → _ : Type 0
+       However, the solution below does not seem so:
+         X
+
+2 error(s), 0 warning(s).
+What are you doing?
+

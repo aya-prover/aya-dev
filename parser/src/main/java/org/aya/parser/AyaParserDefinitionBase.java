@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.parser;
 
@@ -51,7 +51,6 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
     AyaPsiElementTypes.KW_CODATA,
     AyaPsiElementTypes.KW_COERCE,
     AyaPsiElementTypes.KW_COMPLETED,
-    AyaPsiElementTypes.KW_COUNTEREXAMPLE,
     AyaPsiElementTypes.KW_DATA,
     AyaPsiElementTypes.KW_DEF,
     AyaPsiElementTypes.KW_DO,
@@ -105,11 +104,7 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
     AyaPsiElementTypes.LARROW,
     AyaPsiElementTypes.IMPLIES,
     AyaPsiElementTypes.LIDIOM,
-    AyaPsiElementTypes.RIDIOM,
-    AyaPsiElementTypes.LPARTIAL,
-    AyaPsiElementTypes.RPARTIAL,
-    AyaPsiElementTypes.LPATH,
-    AyaPsiElementTypes.RPATH
+    AyaPsiElementTypes.RIDIOM
   );
 
   public static final @NotNull TokenSet DELIMITERS = TokenSet.create(

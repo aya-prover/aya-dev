@@ -1,5 +1,0 @@
-open data Unit | unit
-variable A : Type
-
-def boom Unit : Type
-| unit => A

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -12,13 +12,11 @@ public record ThrowingReporter(@NotNull PrettierOptions options) implements Coun
       System.err.println(render);
       return;
     }
-    throw new AssertionError("Failed with `" + problem.getClass() + "`: " + render + "\nat " + problem.sourcePos());
+    throw new AssertionError(STR."""
+Failed with `\{problem.getClass()}`: \{render}
+at \{problem.sourcePos()}""");
   }
 
-  @Override public int problemSize(Problem.@NotNull Severity severity) {
-    return 0;
-  }
-
-  @Override public void clear() {
-  }
+  @Override public int problemSize(Problem.@NotNull Severity severity) { return 0; }
+  @Override public void clear() { }
 }

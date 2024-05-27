@@ -1,1 +1,0 @@
-def id2 {A : Type} {B : Type} : B -> A => \ (a : A) => a

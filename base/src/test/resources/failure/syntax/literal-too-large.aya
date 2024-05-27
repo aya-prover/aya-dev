@@ -1,3 +1,0 @@
-open data Nat | zero | suc Nat
-
-def too-large => 2147483648

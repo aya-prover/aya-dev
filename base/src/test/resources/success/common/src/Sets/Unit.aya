@@ -1,7 +1,0 @@
-open import Paths
-open data Unit | unit
-
-def unit-eta (u : Unit) : unit = u
-| unit => idp
-
-def isContrUnit : isContr Unit => (unit, unit-eta)

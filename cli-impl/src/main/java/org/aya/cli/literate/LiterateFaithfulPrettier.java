@@ -1,14 +1,14 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.text.StringSlice;
 import org.aya.cli.utils.InlineHintProblem;
-import org.aya.concrete.remark.AyaLiterate;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.literate.AyaLiterate;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;

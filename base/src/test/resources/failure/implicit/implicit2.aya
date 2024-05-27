@@ -1,5 +1,0 @@
-open data Unit : Type | unit
-
-def y : ∀ {a : Unit} -> Unit => \{a} => a
-def x : ∀ {a : Unit} -> Unit => y
-def z : ∀ {a : Unit} -> Unit => x

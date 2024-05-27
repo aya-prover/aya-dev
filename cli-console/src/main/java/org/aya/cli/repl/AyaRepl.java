@@ -12,11 +12,11 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.jline.AyaCompleters;
 import org.aya.cli.repl.jline.JlineRepl;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.prelude.GeneratedVersion;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.*;
+import org.aya.syntax.literate.CodeOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       CommandArg.from(ReplUtil.HelpItem.class, new ReplCompleters.Help(() -> commandManager), ReplUtil.HelpItem::new),
       CommandArg.from(ReplCommands.Prompt.class, null, ReplCommands.Prompt::new),
       CommandArg.fromEnum(AyaPrettierOptions.Key.class),
-      CommandArg.fromEnum(NormalizeMode.class),
+      CommandArg.fromEnum(CodeOptions.NormalizeMode.class),
       CommandArg.fromEither(ReplCommands.ColorParam.class,
         CommandArg.fromEnum(RenderOptions.ColorSchemeName.class),
         pathArg,
@@ -71,7 +71,6 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.CHANGE_NORM_MODE,
       ReplCommands.TOGGLE_PRETTY,
       ReplCommands.SHOW_TYPE,
-      ReplCommands.CODIFY,
       ReplCommands.SHOW_PARSE_TREE,
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,

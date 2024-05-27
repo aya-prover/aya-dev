@@ -1,9 +1,0 @@
-open import Arith::Nat
-
-open data Foo Nat
-| zero => foo0
-| suc _ => foo1
-
-def justMatch {n : Nat} (Foo n) : Nat
-| foo0 => 0
-| foo1 => 1

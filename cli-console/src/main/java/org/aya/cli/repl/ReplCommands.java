@@ -4,15 +4,13 @@ package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.cli.parse.AyaParserImpl;
 import org.aya.cli.render.RenderOptions;
-import org.aya.generic.util.NormalizeMode;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.prettier.Codifier;
-import org.aya.pretty.doc.Doc;
+import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
+import org.aya.syntax.literate.CodeOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +20,6 @@ import java.nio.file.Path;
 
 public interface ReplCommands {
   record Code(@NotNull String code) {}
-
   record Prompt(@NotNull String prompt) {}
 
   record ColorParam(@NotNull Either<RenderOptions.ColorSchemeName, Path> value)
@@ -48,15 +45,6 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command CODIFY = new Command(ImmutableSeq.of("codify"), "Generate Java code that builds certain function's body") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
-      var fn = repl.replCompiler.codificationObject(code.code());
-      return fn != null ? new Result(Output.stdout(Doc.plain(
-        Codifier.sweet(fn).toString())), true)
-        : Result.err("Expect just a simple function's (no clauses) name!", true);
-    }
-  };
-
   @NotNull Command SHOW_PARSE_TREE = new Command(ImmutableSeq.of("parse-tree"), "Show the parse tree of the given expression") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
       var parseTree = new AyaParserImpl(repl.replCompiler.reporter).parseNode(code.code());
@@ -69,7 +57,7 @@ public interface ReplCommands {
       try {
         repl.replCompiler.loadToContext(path);
       } catch (IOException e) {
-        return Result.err("Unable to load file or library: " + e.getLocalizedMessage(), true);
+        return Result.err(STR."Unable to load file or library: \{e.getLocalizedMessage()}", true);
       }
       // SingleFileCompiler would print result to REPL.
       return new Result(Output.empty(), true);
@@ -78,7 +66,7 @@ public interface ReplCommands {
 
   @NotNull Command CHANGE_CWD = new Command(ImmutableSeq.of("cd"), "Change current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Path path) {
-      if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + path, true);
+      if (!Files.isDirectory(path)) return Result.err(STR."cd: no such file or directory: \{path}", true);
       repl.cwd = path;
       // for jline completer to work properly, but it does not have any effect actually
       System.setProperty("user.dir", path.toAbsolutePath().toString());
@@ -108,11 +96,11 @@ public interface ReplCommands {
   };
 
   @NotNull Command CHANGE_NORM_MODE = new Command(ImmutableSeq.of("normalize"), "Set or display the normalization mode") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable NormalizeMode normalizeMode) {
-      if (normalizeMode == null) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable CodeOptions.NormalizeMode normalizeMode) {
+      if (normalizeMode == null) return Result.ok(STR."Normalization mode: \{repl.config.normalizeMode}", true);
       else {
         repl.config.normalizeMode = normalizeMode;
-        return Result.ok("Normalization mode set to " + normalizeMode, true);
+        return Result.ok(STR."Normalization mode set to \{normalizeMode}", true);
       }
     }
   };

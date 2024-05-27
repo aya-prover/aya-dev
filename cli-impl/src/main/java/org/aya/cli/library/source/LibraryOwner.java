@@ -1,10 +1,9 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
 import kala.collection.SeqView;
 import kala.collection.SetView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
@@ -12,6 +11,7 @@ import kala.collection.mutable.MutableQueue;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple;
 import org.aya.cli.library.json.LibraryConfig;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.Debug;
@@ -25,8 +25,8 @@ import java.nio.file.Path;
  * library in file system and library in memory.
  *
  * @author ice1000, kiva
- * @see DiskLibraryOwner
  * @apiNote DO NOT USE this class as Map key, use {@link #underlyingLibrary()} instead.
+ * @see DiskLibraryOwner
  */
 @Debug.Renderer(text = "underlyingLibrary().name()")
 public interface LibraryOwner {
@@ -45,7 +45,7 @@ public interface LibraryOwner {
     return underlyingLibrary().libraryOutRoot();
   }
 
-  default @Nullable LibrarySource findModule(@NotNull ImmutableSeq<String> mod) {
+  default @Nullable LibrarySource findModule(@NotNull ModulePath mod) {
     var file = findModuleHere(mod);
     if (file == null) for (var dep : libraryDeps()) {
       file = dep.findModule(mod);
@@ -54,11 +54,8 @@ public interface LibraryOwner {
     return file;
   }
 
-  private @Nullable LibrarySource findModuleHere(@NotNull ImmutableSeq<String> mod) {
-    return librarySources().find(s -> {
-      var checkMod = s.moduleName();
-      return checkMod.equals(mod);
-    }).getOrNull();
+  private @Nullable LibrarySource findModuleHere(@NotNull ModulePath mod) {
+    return librarySources().find(s -> s.moduleName().equals(mod)).getOrNull();
   }
 
   /**

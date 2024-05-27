@@ -1,8 +1,0 @@
-open data Yes | yes
-
-open class Test
-  | value : Yes
-
-def test => new Test { | value => yes }
-def use1 => test.value
-def use2 => value test test

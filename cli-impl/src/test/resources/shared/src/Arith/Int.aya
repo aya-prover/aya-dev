@@ -1,0 +1,19 @@
+open import Arith::Nat
+open import Arith::Bool
+open import Paths
+open data Int
+| signed Bool Nat
+| posneg : neg 0 = pos 0
+
+def pos (a : Nat) => signed true a
+def neg (a : Nat) => signed false a
+
+//def negate Int : Int
+//| signed b n => signed (not b) n
+//| posneg i => pinv posneg i
+
+def succInt Int : Int
+| signed true n => pos (suc n)
+| signed false (suc n) => neg n
+| signed false zero => pos 1
+| posneg i => pos 1

@@ -1,4 +1,0 @@
-open import Paths
-variable A : Type
-
-def symm {A : Type} {a b : A} (p : a = b) : b = a => hcomp2d (idp a) idp p

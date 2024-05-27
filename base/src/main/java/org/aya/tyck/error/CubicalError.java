@@ -1,33 +1,30 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import kala.collection.mutable.MutableList;
-import org.aya.concrete.Expr;
-import org.aya.core.term.Term;
-import org.aya.generic.ExprProblem;
-import org.aya.guest0x0.cubical.Restr;
-import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.Expr;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public sealed interface CubicalError extends ExprProblem, TyckError {
+public sealed interface CubicalError extends TyckError {
   record BoundaryDisagree(
-    @NotNull Expr expr,
+    @Override @NotNull WithPos<Expr> expr,
     @NotNull UnifyInfo.Comparison comparison,
     @NotNull UnifyInfo info
-  ) implements CubicalError {
+  ) implements CubicalError, SourceNodeProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return info.describeUnify(options, comparison, Doc.english("The boundary"),
         Doc.english("disagrees with"));
     }
   }
 
+/*
   record FaceMismatch(
     @NotNull Expr expr,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull Restr<Term> face,
     @NotNull Restr<Term> cof
   ) implements CubicalError {
@@ -63,6 +60,7 @@ public sealed interface CubicalError extends ExprProblem, TyckError {
       return Doc.vcat(buf);
     }
   }
+*/
 
   record PathConDominateError(@NotNull SourcePos sourcePos) implements TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {

@@ -1,9 +1,0 @@
-prim I
-open class PseudoPath
- | A : I -> Type
- | a : A 0
- | b : A 1
- | at (i : I) : A i
-
-def path {A : I -> Type} (p : ∀ (i : I) -> A i)
-  => new PseudoPath A (p 0) (p 1) { | at i j => p i }

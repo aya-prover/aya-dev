@@ -1,9 +1,0 @@
-open data Nat | zero | suc Nat
-
-overlap def not-conf Nat : Nat
-  | zero => 1
-  | 0 => 0
-  | 1 => 1
-  | suc 1 => 1
-  | suc n => n
-

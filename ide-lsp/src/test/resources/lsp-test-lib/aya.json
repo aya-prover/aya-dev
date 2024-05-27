@@ -1,5 +1,5 @@
 {
-  "ayaVersion": "0.25",
+  "ayaVersion": "0.31",
   "name": "lsp-test-lib",
   "group": "org.aya-prover",
   "version": "0.1.0"

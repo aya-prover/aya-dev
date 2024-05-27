@@ -1,5 +1,0 @@
-def shadow-let {A : Type} (x : A) : A =>
-  let
-  | a := x
-  | a := x
-  in a

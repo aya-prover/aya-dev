@@ -1,5 +1,0 @@
-data False
-open data Truth | rua
-def f Truth : False
-| rua
-def inconsistency : False => f rua

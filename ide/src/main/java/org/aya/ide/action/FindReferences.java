@@ -1,14 +1,15 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
 import kala.collection.SeqView;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public interface FindReferences {
     @NotNull SeqView<LibraryOwner> libraries
   ) {
     return vars.flatMap(var -> {
-      var resolver = new Resolver.UsageResolver(var);
+      var resolver = new Resolver.UsageResolver(var, MutableList.create());
       return libraries.flatMap(lib -> resolve(resolver, lib));
     });
   }
@@ -58,8 +59,8 @@ public interface FindReferences {
   }
 
   private static @NotNull SeqView<SourcePos> resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner) {
-    return owner.librarySources().map(src -> src.program().get()).filterNotNull()
-      .flatMap(prog -> prog.view().flatMap(resolver))
-      .concat(owner.libraryDeps().flatMap(dep -> resolve(resolver, dep)));
+    owner.librarySources().map(src -> src.program().get()).filterNotNull()
+      .forEach(prog -> prog.forEach(resolver));
+    return resolver.collect().view().concat(owner.libraryDeps().flatMap(dep -> resolve(resolver, dep)));
   }
 }

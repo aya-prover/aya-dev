@@ -1,16 +1,17 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.decl.Decl;
+import org.aya.generic.stmt.TyckUnit;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.AnyVar;
-import org.aya.tyck.order.TyckUnit;
-import org.aya.util.error.InternalException;
+import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.ref.DefVar;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -19,7 +20,7 @@ public interface TyckOrderError extends TyckError {
   default @NotNull String nameOf(@NotNull TyckUnit stmt) {
     return switch (stmt) {
       case Decl decl -> decl.ref().name();
-      default -> throw new InternalException("Unexpected stmt seen in SCCTycker: " + stmt);
+      default -> throw new Panic("Unexpected stmt seen in SCCTycker: " + stmt);
     };
   }
 
@@ -49,11 +50,11 @@ public interface TyckOrderError extends TyckError {
     }
   }
 
-  record NotYetTyckedError(@Override @NotNull SourcePos sourcePos, @NotNull AnyVar var) implements TyckOrderError {
-    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Attempting to use a definition"),
-        Doc.code(BasePrettier.varDoc(var)),
-        Doc.english("which is not yet typechecked"));
-    }
+  @Contract(pure = true)
+  static @NotNull Panic notYetTycked(@NotNull DefVar<?, ?> var) {
+    var msg = Doc.sep(Doc.english("Attempting to use a definition"),
+      Doc.code(BasePrettier.refVar(var)),
+      Doc.english("which is not yet typechecked"));
+    return new Panic(msg.debugRender());
   }
 }

@@ -1,8 +1,9 @@
 /*
- * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
+//noinspection BnfResolveForFile
 {
   // only for the compiler, not the IDE
   generate=[
@@ -43,7 +44,6 @@
 
     // samples
     KW_EXAMPLE = 'example'
-    KW_COUNTEREXAMPLE = 'counterexample'
 
     // universe
     // KW_ULIFT = 'regexp:ulift|\u2191'
@@ -77,6 +77,7 @@
     KW_DO = 'do'
     KW_SELF = 'self'
     KW_OVERRIDE = 'override'
+    KW_ELIM = 'elim'
 
     // Unimplemented but reserved
     KW_CODATA = 'codata'
@@ -121,14 +122,6 @@
     RARRAY = ']'
     LGOAL = '{?'
     RGOAL = '?}'
-    // LPARTIAL = 'regexp:\{\||\u2983'
-    LPARTIAL = '{|'
-    // RPARTIAL = 'regexp:\|}|\u2984'
-    RPARTIAL = '|}'
-    // LPATH = 'regexp:\[\||\u27E6'
-    LPATH = '[|'
-    // RPATH = 'regexp:\|]|\u27E7'
-    RPATH = '|]'
     AT = '@'
 
     CALM_FACE = '_'
@@ -162,7 +155,7 @@ private stmt_with_recover ::= !(<<eof>>) stmt {
 }
 private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
-                     | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
+                     | KW_EXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
                      | KW_OPAQUE | KW_INLINE | KW_OVERLAP
 
@@ -206,14 +199,11 @@ loosers ::= KW_LOOSER qualifiedId+
 fnDecl ::= declModifiers*
  KW_DEF declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
-
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
-         | barredClause*
+         | elims? barredClause*
 
-// turn the keyword into a psi node, so quick fix can easily delete it
-// see: BadCounterexampleInspection
-openKw ::= KW_OPEN
+private elims ::= KW_ELIM weakId+ { pin=1 }
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
@@ -224,16 +214,16 @@ primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 // IMPORTANT NOTE: Adding all of these to stmt_first or you will get parser errors!
 declModifiers ::= KW_PRIVATE
                 | KW_EXAMPLE
-                | KW_COUNTEREXAMPLE
                 | KW_OPAQUE
                 | KW_INLINE
                 | KW_OVERLAP
-                | openKw
+                | KW_OPEN
 
 classDecl
   ::= declModifiers*
       KW_CLASS declNameOrInfix (KW_EXTENDS <<commaSep weakId>>)?
-      (BAR classMember)* bindBlock?
+      bindBlock?
+      (BAR classMember)*
 
 classMember
   ::= KW_CLASSIFIYING? KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
@@ -246,16 +236,15 @@ dataDecl ::= declModifiers*
  KW_DATA declNameOrInfix?
  tele* type? bindBlock? dataBody* { pin=2 }
 
-dataBody ::= BAR (dataCtorClause | dataCtor) {
+dataBody ::= BAR (dataConClause | dataCon) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
   pin=1
 }
 
-dataCtor ::= KW_COERCE? declNameOrInfix tele* type? partialBlock? bindBlock?
-partialBlock ::= <<braced partialInner>>
+dataCon ::= KW_COERCE? declNameOrInfix tele* type? bindBlock?
 
-dataCtorClause ::= patterns IMPLIES dataCtor
+dataConClause ::= patterns IMPLIES dataCon
 
 // expressions
 expr ::= newExpr
@@ -267,9 +256,7 @@ expr ::= newExpr
        | letExpr
        | doExpr
        | selfExpr
-       | pathExpr
        | atomExpr
-       // put rules that do not start with `expr` above this line
        | arrowExpr
        | appExpr
        | projExpr
@@ -279,7 +266,6 @@ atomExpr ::= uliftAtom
            | tupleAtom
            | idiomAtom
            | arrayAtom
-           | partialAtom
 uliftAtom ::= uliftPrefix* literal
 tupleAtom ::= LPAREN exprList RPAREN
 uliftPrefix ::= KW_ULIFT
@@ -297,23 +283,16 @@ projExpr ::= expr projFix
 piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
-lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
+lambdaExpr ::= KW_LAMBDA teleBinderUntyped (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 selfExpr ::= KW_SELF (AT qualifiedId)?
-pathExpr ::= LPATH pathTele+ RPATH expr partialBlock?
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 letBindBlock ::= letBind | (BAR letBind)+
 letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
-
-partialAtom ::= LPARTIAL partialInner? RPARTIAL
-private partialInner ::= bareSubSystem? barredSubSystem*
-subSystem ::= expr DEFINE_AS expr
-bareSubSystem ::= subSystem
-barredSubSystem ::= BAR subSystem
 
 doBlockContent ::= doBinding | expr
 
@@ -397,9 +376,6 @@ lambdaTele ::= teleParamName | <<licit lambdaTeleBinder>>
 
 lambdaTeleBinder ::= teleBinderTyped
                    | teleBinderUntyped
-
-// path type tele
-pathTele ::= teleParamName
 
 // utilities
 private exprList ::= <<commaSep expr>>

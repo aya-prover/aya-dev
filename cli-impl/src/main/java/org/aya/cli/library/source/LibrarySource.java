@@ -1,19 +1,21 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.range.primitive.IntRange;
 import kala.value.MutableValue;
 import org.aya.cli.utils.LiterateData;
-import org.aya.concrete.GenericAyaFile;
-import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.core.def.GenericDef;
-import org.aya.generic.util.AyaFiles;
 import org.aya.literate.Literate;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
+import org.aya.syntax.AyaFiles;
+import org.aya.syntax.GenericAyaFile;
+import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
@@ -25,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 /**
  * A source file may or may not be tycked.
@@ -41,7 +42,7 @@ public record LibrarySource(
   boolean isLiterate,
   @NotNull MutableList<LibrarySource> imports,
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
-  @NotNull MutableValue<ImmutableSeq<GenericDef>> tycked,
+  @NotNull MutableValue<ImmutableSeq<TyckDef>> tycked,
   @NotNull MutableValue<ResolveInfo> resolveInfo,
   @NotNull MutableValue<LiterateData> literateData
 ) implements GenericAyaFile {
@@ -52,21 +53,21 @@ public record LibrarySource(
       MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
-  public @NotNull ImmutableSeq<String> moduleName() {
+  public @NotNull ModulePath moduleName() {
     var info = resolveInfo.get();
-    if (info != null) return info.thisModule().modulePath().path();
+    if (info != null) return info.thisModule().modulePath();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(AyaFiles.stripAyaSourcePostfix(display.getFileName().toString()));
-    return IntStream.range(0, displayNoExt.getNameCount())
-      .mapToObj(i -> displayNoExt.getName(i).toString())
-      .collect(ImmutableSeq.factory());
+    return new ModulePath(IntRange.closedOpen(0, displayNoExt.getNameCount())
+      .mapToObjTo(MutableList.create(), i -> displayNoExt.getName(i).toString())
+      .toImmutableSeq());
   }
 
   public @NotNull Path displayPath() {
     return owner.locator().displayName(underlyingFile);
   }
 
-  public void notifyTycked(@NotNull ResolveInfo moduleResolve, @NotNull ImmutableSeq<GenericDef> tycked) {
+  public void notifyTycked(@NotNull ResolveInfo moduleResolve, @NotNull ImmutableSeq<TyckDef> tycked) {
     this.resolveInfo.set(moduleResolve);
     this.tycked.set(tycked);
     if (isLiterate) {
@@ -108,7 +109,7 @@ public record LibrarySource(
   }
 
   public @NotNull Path compiledCorePath() {
-    var mod = moduleName();
+    var mod = moduleName().module();
     return AyaFiles.resolveAyaCompiledFile(owner.outDir(), mod);
   }
 

@@ -1,2 +1,0 @@
-public open import Arith::Nat::Core
-// public open import Arith::Nat::Properties

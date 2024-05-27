@@ -1,1 +1,0 @@
-def why {A : Type} : A -> A => \ {x} => x

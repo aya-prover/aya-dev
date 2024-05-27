@@ -9,9 +9,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ice1000
- */
 public abstract class PrettierOptions {
   public final Map<Key, Boolean> map;
 
@@ -23,7 +20,5 @@ public abstract class PrettierOptions {
   }
 
   public abstract void reset();
-
-  public interface Key {
-  }
+  public interface Key { }
 }

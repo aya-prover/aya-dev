@@ -1,4 +1,3 @@
 prim I
-prim intervalMin (i : I) (j : I) : I
 prim coe (r s : I) (A : I -> Type) : A r -> A s
-prim intervalInv (i : I) : I
+prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type

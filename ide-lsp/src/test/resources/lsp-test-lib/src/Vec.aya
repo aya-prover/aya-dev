@@ -1,6 +1,6 @@
 open import NatCore
 
-open data Vec (A : Type) (n : Nat) : Type
+open data Vec Type Nat : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
 
@@ -9,6 +9,10 @@ variable n m : Nat
 
 // This definition is explicitly tested in the test suite
 // Do not change
-def test (xs : Vec A n) (ys : Vec A m) : Nat
+def test (xs' : Vec A n) (ys' : Vec A m) : Nat
 | vnil, ys => 0
 | x :> xs, ys => 0
+
+def testBetter (xs : Vec A n) (ys : Vec A m) : Nat elim xs
+| vnil => 0
+| x :> xs' => 0

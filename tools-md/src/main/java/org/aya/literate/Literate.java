@@ -22,8 +22,10 @@ public interface Literate extends Docile {
     }
   }
 
-  record HyperLink(@NotNull String href, @Nullable String hover,
-                   @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record HyperLink(
+    @NotNull String href, @Nullable String hover,
+    @NotNull ImmutableSeq<Literate> children
+  ) implements Literate {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return Doc.hyperLink(child, Link.page(href), hover);
@@ -66,10 +68,7 @@ public interface Literate extends Docile {
       this.sourcePos = sourcePos;
     }
 
-    @Override
-    public @NotNull Doc toDoc() {
-      return Doc.code(code);
-    }
+    @Override public @NotNull Doc toDoc() { return Doc.code(code); }
   }
 
   class CodeBlock implements Literate {
@@ -96,8 +95,7 @@ public interface Literate extends Docile {
   }
 
   record Unsupported(@NotNull ImmutableSeq<Literate> children) implements Literate {
-    @Override
-    public @NotNull Doc toDoc() {
+    @Override public @NotNull Doc toDoc() {
       return Doc.vcat(children.map(Literate::toDoc));
     }
   }

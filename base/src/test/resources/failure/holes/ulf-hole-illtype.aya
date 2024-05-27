@@ -1,6 +1,0 @@
-open data Nat | zero | suc Nat
-data Empty
-def Neg (T : Type) => T -> Empty
-def test
- (F : Type -> Type)
- (g : ∀ (X : F _) -> F (Neg X)) : Nat => g zero

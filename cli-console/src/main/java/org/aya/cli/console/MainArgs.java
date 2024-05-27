@@ -89,8 +89,6 @@ public class MainArgs {
   public boolean prettyInlineCodeStyle;
   @Option(names = {"--pretty-ssr"}, description = "Generate Server-Side-Rendering code for literate output.")
   public boolean prettySSR;
-  @Option(names = {"--trace"}, description = "Enable tracing.")
-  public boolean enableTrace;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")
   public boolean asciiOnly;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")

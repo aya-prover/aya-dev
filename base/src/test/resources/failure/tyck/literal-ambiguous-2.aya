@@ -1,6 +1,0 @@
-open data Nat1 | z1 | s1 Nat1
-open data Nat2 | z2 | s2 Nat2
-open data Empty
-
-def take Empty => Empty
-def test => take 0

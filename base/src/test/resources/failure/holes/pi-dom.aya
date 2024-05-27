@@ -1,4 +1,0 @@
-data X : Set
-
-data Test : Type
-| con X

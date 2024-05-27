@@ -1,5 +1,0 @@
-example def bua (A : Type)
-  (B : A -> Type)
-  (C : Fn (a : A) -> B a -> Type)
-  (t : Sig (a : A) (b : B a) ** C a b)
-  : C t.1 t.2 => t.3

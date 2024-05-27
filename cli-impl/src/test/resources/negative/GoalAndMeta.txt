@@ -1,0 +1,184 @@
+Unsolved:
+In file $FILE:2:18 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test : Nat => _
+    │                     ╰╯
+
+Error: Unsolved meta _
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+Goal:
+In file $FILE:2:28 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test (a : Nat) : Nat => {? a ?}
+    │                               ╰─────╯
+
+Goal: Goal of type
+        Nat
+        (WHNF: Nat)
+      Context:
+        a
+
+In file $FILE:2:28 ->
+
+  1 │   open import Arith::Nat
+  2 │   def test (a : Nat) : Nat => {? a ?}
+    │                               ╰─────╯
+
+Error: Unsolved meta _
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+UnsolvedMetaLit:
+In file $FILE:5:17 ->
+
+  3 │   open data Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
+Error: Unsolved meta A
+       in `Option ?A`
+
+In file $FILE:5:17 ->
+
+  3 │   open data Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
+Error: Unsolved meta A
+       in `some 114514`
+
+In file $FILE:5:17 ->
+
+  3 │   open data Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
+Error: Unable to solve the type of this literal:
+         114514
+       I'm confused about the following candidates:
+         `Nat`, `Nat2`
+
+3 error(s), 0 warning(s).
+What are you doing?
+
+Daylily:
+In file $FILE:5:12 ->
+
+  3 │       def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => 0
+  4 │       example def test1 (A B : Type) (x : A) (y : B) =>
+  5 │         wow A B x y
+    │                 ╰╯  ╰╯ ?B A B x y A >= A
+    │                   ╰╯ ?B A B x y B >= B
+
+Info: Solving equation(s) with not very general solution(s)
+
+That looks right!
+
+Norell:
+In file $FILE:7:28 ->
+
+  5 │   def test
+  6 │    (F : Type -> Type)
+  7 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g 0
+    │                               ╰╯
+
+Error: Cannot check the expression
+         X
+       of type
+         F (?_ F)
+       against the type
+         Type 0
+
+In file $FILE:7:43 ->
+
+  5 │   def test
+  6 │    (F : Type -> Type)
+  7 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g 0
+    │                                              ╰╯
+
+Error: Cannot check the expression
+         0
+       of type
+         Nat
+       against the type
+         F (?_ F)
+
+In file $FILE:7:41 ->
+
+  5 │   def test
+  6 │    (F : Type -> Type)
+  7 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g 0
+    │                                            ╰─╯
+
+Error: Cannot check the expression
+         g 0
+       of type
+         F (Neg 0)
+         (Normalized: F (0 → Empty))
+       against the type
+         Nat
+
+In file $FILE:7:15 ->
+
+  5 │   def test
+  6 │    (F : Type -> Type)
+  7 │    (g : ∀ (X : F _) -> F (Neg X)) : Nat => g 0
+    │                  ╰╯
+
+Error: Unsolved meta _
+       in `^0 (?_ ^0)`
+       in `Fn (_0 : ^0 (?_ ^0)) → ^1 (Neg _0)`
+
+4 error(s), 0 warning(s).
+What are you doing?
+
+ScopeCheck:
+In file $FILE:5:14 ->
+
+  3 │   
+  4 │   // https://cstheory.stackexchange.com/a/49160/50892
+  5 │   def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    │                 ╰╯
+
+Error: The solution
+         B
+       is not well-scoped
+       Only the variables below are allowed: 
+
+In file $FILE:5:14 ->
+
+  3 │   
+  4 │   // https://cstheory.stackexchange.com/a/49160/50892
+  5 │   def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    │                 ╰╯
+
+Error: Unsolved meta _
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+LiteralAmbiguous3:
+In file $FILE:6:11 ->
+
+  4 │   
+  5 │   def good : List Unit => [ ]
+  6 │   def bad => [ unit ]
+    │              ╰──────╯
+
+Error: Unable to solve the type of this literal:
+         [unit]
+       I'm confused about the following candidates:
+         `List`, `List2`
+
+1 error(s), 0 warning(s).
+What are you doing?
+

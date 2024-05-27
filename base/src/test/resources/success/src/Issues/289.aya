@@ -1,8 +1,0 @@
-open import Paths
-import Arith::Nat as N
-open N using (+ as add, zero as Z, suc as S)
-
-def two => S Z add S Z
-def two-is-two : two = S (S Z) => idp
-
-// See also 519.aya

@@ -9,11 +9,11 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
-public record Diagonal<C, T, P>(
-  @NotNull CallMatrix<C, T, P> matrix,
+public record Diagonal<C, T>(
+  @NotNull CallMatrix<C, T> matrix,
   @NotNull ImmutableSeq<Relation> diagonal
 ) implements Docile {
-  public static <C, T, P> @NotNull Diagonal<C, T, P> create(@NotNull CallMatrix<C, T, P> matrix) {
+  public static <C, T> @NotNull Diagonal<C, T> create(@NotNull CallMatrix<C, T> matrix) {
     assert matrix.rows() == matrix.cols();
     var diag = IntRange.closedOpen(0, matrix.rows())
       .mapToObjTo(MutableList.create(), i -> matrix.matrix()[i][i])

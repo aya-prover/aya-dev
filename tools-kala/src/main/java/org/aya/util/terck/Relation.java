@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   /** increase or unrelated of callee argument wrt. caller parameter. */
   enum Unknown implements Relation {
-    INSTANCE;
+    INSTANCE
   }
 
   /**

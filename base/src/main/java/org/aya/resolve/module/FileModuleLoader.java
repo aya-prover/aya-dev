@@ -1,16 +1,15 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
-import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.GenericAyaFile;
-import org.aya.concrete.GenericAyaParser;
-import org.aya.core.def.PrimDef;
-import org.aya.generic.util.AyaFiles;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.tyck.trace.Trace;
-import org.aya.util.error.InternalException;
+import org.aya.syntax.AyaFiles;
+import org.aya.syntax.GenericAyaFile;
+import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.ref.ModulePath;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -26,28 +25,32 @@ public record FileModuleLoader(
   @Override @NotNull Reporter reporter,
   @NotNull GenericAyaParser parser,
   @NotNull GenericAyaFile.Factory fileManager,
-  @NotNull PrimDef.Factory primFactory,
-  Trace.@Nullable Builder builder
+  @NotNull PrimFactory primFactory
 ) implements ModuleLoader {
+  public FileModuleLoader(
+    @NotNull SourceFileLocator locator, @NotNull Path basePath, @NotNull Reporter reporter,
+    @NotNull GenericAyaParser parser, @NotNull GenericAyaFile.Factory fileManager
+  ) {
+    this(locator, basePath, reporter, parser, fileManager, new PrimFactory());
+  }
   @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
-    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
+  public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
+    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
     try {
       var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(builder, resolveModule(primFactory, context, program, recurseLoader), null);
+      return tyckModule(resolveModule(primFactory, context, program, recurseLoader), null);
     } catch (IOException e) {
       return null;
     }
   }
 
-  @Override
-  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
-    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path);
+  @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {
+    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
     return Files.exists(sourcePath);
   }
 
-  public static void handleInternalError(@NotNull InternalException e) {
+  public static void handleInternalError(@NotNull Panic e) {
     e.printStackTrace();
     e.printHint();
     System.err.println("""

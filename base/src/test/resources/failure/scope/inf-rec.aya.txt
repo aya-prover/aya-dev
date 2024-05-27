@@ -1,9 +1,0 @@
-In file $FILE:1:4 ->
-
-  1 │   def undefined => undefined
-    │       ╰───────╯
-
-Error: The recursive definition `undefined` is not structurally recursive
-
-1 error(s), 0 warning(s).
-What are you doing?

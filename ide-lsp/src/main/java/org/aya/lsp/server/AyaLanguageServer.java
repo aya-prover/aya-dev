@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -25,14 +25,13 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
-import org.aya.generic.util.AyaFiles;
 import org.aya.ide.LspPrimFactory;
 import org.aya.ide.action.*;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
 import org.aya.lsp.library.WsLibrary;
-import org.aya.lsp.models.ComputeTermResult;
+import org.aya.lsp.models.ComputeTypeResult;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
@@ -41,6 +40,7 @@ import org.aya.lsp.utils.LspRange;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.syntax.AyaFiles;
 import org.aya.util.FileUtil;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.BufferReporter;
@@ -123,7 +123,7 @@ public class AyaLanguageServer implements LanguageServer {
 
   @Override public void initialized() {
     // Imitate the javacs lsp
-    // client.registerCapability("workspace/didChangeWatchedFiles");
+    // client.registerCapability(new RegistrationParams("workspace/didChangeWatchedFiles", null));
   }
 
   @Override public List<TextEdit> willSaveWaitUntilTextDocument(WillSaveTextDocumentParams params) {
@@ -429,13 +429,13 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   @LspRequest("aya/computeType") @SuppressWarnings("unused")
-  public @NotNull ComputeTermResult computeType(ComputeTermResult.Params input) {
-    return computeTerm(input, ComputeTerm.Kind.type());
+  public @NotNull ComputeTypeResult computeType(ComputeTypeResult.Params input) {
+    return computeTerm(input, ComputeType.Kind.type());
   }
 
-  @LspRequest("aya/computeNF") @SuppressWarnings("unused")
-  public @NotNull ComputeTermResult computeNF(ComputeTermResult.Params input) {
-    return computeTerm(input, ComputeTerm.Kind.nf());
+  @LspRequest("aya/computeTypeNF") @SuppressWarnings("unused")
+  public @NotNull ComputeTypeResult computeTypeNF(ComputeTypeResult.Params input) {
+    return computeTerm(input, ComputeType.Kind.nf());
   }
 
   @LspRequest("aya/updateServerOptions") @SuppressWarnings("unused")
@@ -443,14 +443,14 @@ public class AyaLanguageServer implements LanguageServer {
     initializeOptions(options);
   }
 
-  public ComputeTermResult computeTerm(@NotNull ComputeTermResult.Params params, ComputeTerm.Kind type) {
+  public ComputeTypeResult computeTerm(@NotNull ComputeTypeResult.Params params, ComputeType.Kind type) {
     var source = find(params.uri);
-    if (source == null) return ComputeTermResult.bad(params);
+    if (source == null) return ComputeTypeResult.bad(params);
     var program = source.program().get();
-    if (program == null) return ComputeTermResult.bad(params);
-    var computer = new ComputeTerm(source, type, primFactory(source.owner()), LspRange.pos(params.position));
+    if (program == null) return ComputeTypeResult.bad(params);
+    var computer = new ComputeType(source, type, source.resolveInfo().get().makeTyckState(), LspRange.pos(params.position));
     program.forEach(computer);
-    return computer.result == null ? ComputeTermResult.bad(params) : ComputeTermResult.good(params, computer.result);
+    return computer.result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, computer.result);
   }
 
   private @NotNull String render(@NotNull Doc doc) {

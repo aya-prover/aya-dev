@@ -1,19 +1,20 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
 import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.render.RenderOptions;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.term.DataCall;
-import org.aya.core.term.MetaPatTerm;
 import org.aya.generic.Constants;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
+import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.concrete.stmt.decl.FnBody;
+import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.core.term.MetaPatTerm;
+import org.aya.syntax.core.term.call.DataCall;
 import org.javacs.lsp.InitializeParams;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.TextDocumentIdentifier;
@@ -51,19 +52,19 @@ public class LspTest {
   @Test public void test541() {
     launch(TEST_LIB).execute(compile((a, _) -> {
       var testOpt = a.lastCompiled()
-        .filter(x -> x.moduleName().getLast().equals("Vec"))
+        .filter(x -> x.moduleName().module().getLast().equals("Vec"))
         .flatMap(x -> x.program().get())
-        .filterIsInstance(TeleDecl.FnDecl.class)
+        .filterIsInstance(FnDecl.class)
         .filter(x -> x.ref.name().equals("test"))
         .getFirstOption();
       assertFalse(testOpt.isEmpty(), "Do not delete the function called test in Vec");
-      var testClause = ((TeleDecl.BlockBody) testOpt.get().body).clauses().getFirst();
+      var testClause = ((FnBody.BlockBody) testOpt.get().body).clauses().getFirst();
       // vnil, ys => 0
-      var testPat = (Pattern.Bind) testClause.patterns.getLast().term();
+      var testPat = (Pattern.Bind) testClause.patterns.getLast().term().data();
       var testTy = assertInstanceOf(DataCall.class, testPat.type().get());
       assertNotNull(testTy);
       // ys : Vec A m
-      var lastArg = testTy.args().getLast().term();
+      var lastArg = testTy.args().getLast();
       assertFalse(lastArg instanceof MetaPatTerm);
     }));
   }
@@ -80,8 +81,7 @@ public class LspTest {
     );
   }
 
-  @Test
-  public void colorful() {
+  @Test public void colorful() {
     var initParams = new InitializeParams();
     initParams.initializationOptions = new Gson().toJsonTree(new ServerOptions(new ServerRenderOptions(null, null, RenderOptions.OutputTarget.HTML)));
 
@@ -116,7 +116,7 @@ public class LspTest {
       .map(r -> r.thisModule().modulePath().toString())
       .toImmutableSeq();
     var actual = advisor.lastCompiled()
-      .map(s -> s.moduleName().joinToString(Constants.SCOPE_SEPARATOR))
+      .map(s -> s.moduleName().module().joinToString(Constants.SCOPE_SEPARATOR))
       .concat(actualInDep)
       .distinct()
       .toImmutableSeq();

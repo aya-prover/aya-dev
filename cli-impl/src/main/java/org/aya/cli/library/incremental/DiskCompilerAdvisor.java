@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -6,13 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.core.def.GenericDef;
-import org.aya.core.serde.CompiledAya;
-import org.aya.core.serde.SerTerm;
-import org.aya.core.serde.Serializer;
+import org.aya.compiler.CompiledModule;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +52,9 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public void clearModuleOutput(@NotNull LibrarySource source) throws IOException {
     Files.deleteIfExists(source.compiledCorePath());
   }
-
   @Override public @Nullable ResolveInfo doLoadCompiledCore(
-    @NotNull SerTerm.DeState deState,
     @NotNull Reporter reporter,
-    @NotNull ImmutableSeq<String> mod,
+    @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
@@ -66,19 +63,20 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     if (!Files.exists(corePath)) return null;
 
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    // TODO: load defs
     try (var inputStream = FileUtil.ois(corePath)) {
-      var compiledAya = (CompiledAya) inputStream.readObject();
-      return compiledAya.toResolveInfo(recurseLoader, context, deState);
+      var compiledAya = (CompiledModule) inputStream.readObject();
+      return compiledAya.toResolveInfo(recurseLoader, context);
     }
   }
 
   @Override public void doSaveCompiledCore(
-    @NotNull Serializer.State serState,
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<GenericDef> defs
+    @NotNull ImmutableSeq<TyckDef> defs
   ) throws IOException {
+    // TODO: compile defs
     var coreFile = file.compiledCorePath();
-    CompilerUtil.saveCompiledCore(coreFile, resolveInfo, defs, serState);
+    CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
   }
 }

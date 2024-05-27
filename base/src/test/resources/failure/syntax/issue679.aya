@@ -1,5 +1,0 @@
-data False
-open import Arith::Nat::Core
-private def diag (a : Nat) : Type
-| 0 => Nat
-| suc a => False

@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide;
 
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.PrimDef;
-import org.aya.ref.DefVar;
+import org.aya.primitive.PrimFactory;
+import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.syntax.core.def.PrimDef;
+import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,14 +31,11 @@ import org.jetbrains.annotations.NotNull;
  * When Primitives.aya is changed, the {@link org.aya.cli.library.LibraryCompiler} will recompile it together with
  * its importers, which is a full remake of all primitive-related source files and the
  * {@link org.aya.cli.library.incremental.InMemoryCompilerAdvisor} will be updated to the newest compilation result.
- *
  */
-public class LspPrimFactory extends PrimDef.Factory {
-  @Override public boolean suppressRedefinition() {
-    return true;
-  }
+public class LspPrimFactory extends PrimFactory {
+  @Override public boolean suppressRedefinition() { return true; }
 
-  @Override public @NotNull PrimDef factory(PrimDef.@NotNull ID name, @NotNull DefVar<PrimDef, TeleDecl.PrimDecl> ref) {
+  @Override public @NotNull PrimDef factory(PrimDef.@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
     return getOption(name).getOrElse(() -> super.factory(name, ref));
   }
 }

@@ -1,7 +1,0 @@
-open import Paths
-open import Arith::Nat
-
-def infixl =? (a b : Nat) => a = b
-
-def trivial : forall {a b} (h : a =? b) -> a =? b =>
-  \{a b} h => h

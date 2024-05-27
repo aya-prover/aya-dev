@@ -1,17 +1,18 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.UseHide;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
-import org.aya.ref.GenerateKind;
-import org.aya.ref.LocalVar;
 import org.aya.resolve.error.NameProblem;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.UseHide;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -26,13 +27,8 @@ import java.nio.file.Path;
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
   @Override @NotNull Context parent();
 
-  @Override default @NotNull Reporter reporter() {
-    return parent().reporter();
-  }
-
-  @Override default @NotNull Path underlyingFile() {
-    return parent().underlyingFile();
-  }
+  @Override default @NotNull Reporter reporter() { return parent().reporter(); }
+  @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
   /**
    * All available symbols in this context
@@ -48,7 +44,6 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
-
   /**
    * Things (symbol or module) that are exported by this module.
    */
@@ -62,7 +57,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var symbol = symbols().getUnqualifiedMaybe(name);
     if (symbol.isOk()) return symbol.get();
     switch (symbol.getErr()) {
-      case NotFound -> {}
+      case NotFound -> { }
       case Ambiguous -> reportAndThrow(new NameProblem.AmbiguousNameError(
         name, symbols().resolveUnqualified(name).moduleNames(), sourcePos));
     }
@@ -121,9 +116,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (exists != null) {
       if (exists != moduleExport) {
         reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
-      } else {
-        return;
-      }
+      } else return;
     } else if (getModuleMaybe(modName) != null) {
       reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
@@ -200,7 +193,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var candidates = symbols.resolveUnqualified(name);
     if (candidates.map().isEmpty()) {
       if (getUnqualifiedMaybe(name, sourcePos) != null
-        && (!(ref instanceof LocalVar localVar) || !(localVar.generateKind() instanceof GenerateKind.Anonymous))) {
+        && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
       }

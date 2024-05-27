@@ -1,5 +1,0 @@
-prim String
-
-open data Unit : Type | unit
-
-def test : Unit => "123"

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.console;
 
@@ -6,18 +6,15 @@ import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.literate.FlclFaithfulPrettier;
-import org.aya.cli.parse.FlclParser;
 import org.aya.cli.plct.PLCTReport;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.CliEnums;
-import org.aya.core.def.PrimDef;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.pretty.printer.PrinterConfig;
-import org.aya.tyck.trace.MarkdownTrace;
-import org.aya.tyck.trace.Trace;
+import org.aya.primitive.PrimFactory;
+import org.aya.producer.flcl.FlclParser;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
@@ -95,21 +92,15 @@ public class Main extends MainArgs implements Callable<Integer> {
       outputPath);
 
     if (compile.isLibrary || compile.isRemake || compile.isNoCode) {
-      // TODO: move to a new tool
       var advisor = compile.isNoCode ? CompilerAdvisor.inMemory() : CompilerAdvisor.onDisk();
-      return LibraryCompiler.compile(new PrimDef.Factory(), reporter, flags, advisor, filePath);
+      return LibraryCompiler.compile(new PrimFactory(), reporter, flags, advisor, filePath);
     }
-    var traceBuilder = enableTrace ? new Trace.Builder() : null;
-    var compiler = new SingleFileCompiler(reporter, null, traceBuilder);
+    var compiler = new SingleFileCompiler(reporter, flags, null);
     if (Files.notExists(filePath)) {
       System.err.println("File not found: " + filePath);
       return -1;
     }
-    var status = compiler.compile(filePath, flags, null);
-    if (traceBuilder != null)
-      System.err.println(new MarkdownTrace(2, prettierOptions, asciiOnly)
-        .docify(traceBuilder).renderToString(PrinterConfig.INFINITE_SIZE, !asciiOnly));
-    return status;
+    return compiler.compile(filePath, null);
   }
 
   private @Nullable CompilerFlags.PrettyInfo

@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
-import org.commonmark.internal.util.Parsing;
 import org.commonmark.node.Block;
 import org.commonmark.node.CustomBlock;
 import org.commonmark.parser.SourceLine;
 import org.commonmark.parser.block.*;
+import org.commonmark.text.Characters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +19,8 @@ public class FencedBlock extends CustomBlock {
   public char fenceChar;
   public int fenceLength;
   public int fenceIndent;
+  /** @see org.commonmark.internal.util.Parsing.CODE_BLOCK_INDENT */
+  public static final int CODE_BLOCK_INDENT = 4;
 
   public String literal;
 
@@ -43,7 +45,7 @@ public class FencedBlock extends CustomBlock {
       int nextNonSpace = state.getNextNonSpaceIndex();
       int newIndex = state.getIndex();
       var line = state.getLine().getContent();
-      if (state.getIndent() < Parsing.CODE_BLOCK_INDENT && nextNonSpace < line.length() && line.charAt(nextNonSpace) == block.fenceChar && isClosing(line, nextNonSpace)) {
+      if (state.getIndent() < CODE_BLOCK_INDENT && nextNonSpace < line.length() && line.charAt(nextNonSpace) == block.fenceChar && isClosing(line, nextNonSpace)) {
         // closing fence - we're at the end of line, so we can finalize now
         return BlockContinue.finished();
       } else {
@@ -77,12 +79,12 @@ public class FencedBlock extends CustomBlock {
     private boolean isClosing(CharSequence line, int index) {
       char fenceChar = block.fenceChar;
       int fenceLength = block.fenceLength;
-      int fences = Parsing.skip(fenceChar, line, index, line.length()) - index;
+      int fences = Characters.skip(fenceChar, line, index, line.length()) - index;
       if (fences < fenceLength) {
         return false;
       }
       // spec: The closing code fence [...] may be followed only by spaces, which are ignored.
-      int after = Parsing.skipSpaceTab(line, index + fences, line.length());
+      int after = Characters.skipSpaceTab(line, index + fences, line.length());
       return after == line.length();
     }
   }
@@ -100,7 +102,7 @@ public class FencedBlock extends CustomBlock {
 
     @Override public @Nullable BlockStart tryStart(ParserState state, MatchedBlockParser matchedBlockParser) {
       int indent = state.getIndent();
-      if (indent >= Parsing.CODE_BLOCK_INDENT) {
+      if (indent >= CODE_BLOCK_INDENT) {
         return BlockStart.none();
       }
 

@@ -1,4 +1,0 @@
-// https://github.com/aya-prover/aya-dev/issues/10
-open class Unit
-open data Foo (x : Unit) : Type | foo
-def foo' : Foo (new Unit {}) => foo

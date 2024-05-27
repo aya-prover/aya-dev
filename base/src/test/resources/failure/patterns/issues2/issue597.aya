@@ -1,2 +1,0 @@
-open data Nat | O | S Nat
-def bad Nat : Nat | S S O => O | _ => O

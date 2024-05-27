@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate.parser;
 
@@ -7,8 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import kala.tuple.primitive.IntObjTuple2;
 import kala.value.LazyValue;
 import kala.value.MutableValue;
@@ -17,7 +15,7 @@ import org.aya.literate.UnsupportedMarkdown;
 import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.error.InternalException;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.more.StringUtil;
@@ -73,24 +71,24 @@ public class BaseMdParser {
     return children.toImmutableSeq();
   }
 
-  protected @NotNull Tuple2<LazyValue<SourcePos>, String> stripTrailingNewline(@NotNull String literal, @NotNull Block owner) {
+  protected record StripTrailing(LazyValue<SourcePos> pos, String literal) {}
+  protected @NotNull StripTrailing stripTrailingNewline(@NotNull String literal, @NotNull Block owner) {
     var spans = owner.getSourceSpans();
     if (spans != null && spans.size() >= 2) {   // always contains '```' and '```'
       var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
       // remove the last line break if not empty
       if (!literal.isEmpty())
         literal = literal.substring(0, literal.length() - 1);
-      return Tuple.of(LazyValue.of(() -> fromSourceSpans(inner)), literal);
+      return new StripTrailing(LazyValue.of(() -> fromSourceSpans(inner)), literal);
     }
-    throw new InternalException("SourceSpans");
+    throw new Panic("SourceSpans");
   }
 
   protected @NotNull Literate mapNode(@NotNull Node node) {
     return switch (node) {
       case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
       case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis));
-      case HardLineBreak _ -> new Literate.Raw(Doc.line());
-      case SoftLineBreak _ -> new Literate.Raw(Doc.line());
+      case HardLineBreak _, SoftLineBreak _ -> new Literate.Raw(Doc.line());
       case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
       case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
       case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
@@ -110,13 +108,13 @@ public class BaseMdParser {
         var language = codeBlock.getInfo();
         var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
         yield languages.find(p -> p.test(language))
-          .map(factory -> (Literate) factory.create(language, code.component2(), code.component1().get()))
+          .map(factory -> (Literate) factory.create(language, code.literal, code.pos.get()))
           .getOrElse(() -> {
-            var fence = String.valueOf(codeBlock.getFenceChar()).repeat(codeBlock.getFenceLength());
+            var fence = codeBlock.getFenceCharacter();
             var raw = Doc.nest(codeBlock.getFenceIndent(), Doc.vcat(
-              Doc.escaped(fence + language),
-              Doc.escaped(code.component2()),
-              Doc.escaped(fence),
+              Doc.escaped(fence.repeat(codeBlock.getOpeningFenceLength()) + language),
+              Doc.escaped(code.literal),
+              Doc.escaped(fence.repeat(codeBlock.getClosingFenceLength())),
               Doc.empty()
             ));
             return new Literate.Raw(raw);
@@ -133,11 +131,11 @@ public class BaseMdParser {
           // FIXME[hoshino]: The sourcePos here contains the beginning and trailing '`'
           yield new Literate.InlineCode(inlineCode.getLiteral(), sourcePos);
         }
-        throw new InternalException("SourceSpans");
+        throw new Panic("SourceSpans");
       }
       default -> {
         var spans = node.getSourceSpans();
-        if (spans == null) throw new InternalException("SourceSpans");
+        if (spans == null) throw new Panic("SourceSpans");
         var pos = fromSourceSpans(Seq.from(spans));
         if (pos == null) throw new UnsupportedOperationException("TODO: Which do the nodes have not source spans?");
         reporter.report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));

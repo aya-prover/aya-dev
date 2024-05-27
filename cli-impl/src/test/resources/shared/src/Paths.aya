@@ -1,0 +1,9 @@
+prim I
+prim Path
+prim coe
+
+variable A B : Type
+def infix = (a b : A) : Type => Path (\i => A) a b
+def refl {a : A} : a = a => \i => a
+def pmap (f : A -> B) {a b : A} (p : a = b) : f a = f b => \i => f (p i)
+def pinv {a b : A} (p : a = b) : b = a => coe 0 1 (\i => p i = a) refl

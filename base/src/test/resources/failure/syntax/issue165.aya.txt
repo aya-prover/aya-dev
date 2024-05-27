@@ -1,9 +1,0 @@
-In file $FILE:1:0 ->
-
-  1 │   def
-    │   ╰─╯
-
-Error: Expect a name
-
-1 error(s), 0 warning(s).
-What are you doing?

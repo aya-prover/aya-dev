@@ -1,4 +1,0 @@
-public open import Arith::Bool
-
-open data Color | red | black
-def Decider (A : Type) => Fn (x y : A) -> Bool

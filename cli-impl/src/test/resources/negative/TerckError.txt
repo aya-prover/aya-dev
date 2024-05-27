@@ -1,0 +1,37 @@
+DirectNonTermination:
+In file $FILE:2:4 ->
+
+  1 │   open import Arith::Nat
+  2 │   def g Nat : Nat
+    │       ╰╯
+  3 │   | 0 => 0
+
+Error: The recursive definition `g` is not structurally recursive
+note: In particular, the problematic call is:
+        g (suc n)
+      whose call matrix is:
+        =
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+UnfoldNonTermination:
+In file $FILE:3:4 ->
+
+  1 │   open import Arith::Nat
+  2 │   def f Nat : Nat | n => g (suc n)
+  3 │   def g Nat : Nat
+    │       ╰╯
+
+Error: The recursive definition `g` is not structurally recursive
+note: In particular, the problematic call is:
+        g (suc n)
+      whose call matrix is:
+        =
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+SwapAddition:
+That looks right!
+

@@ -1,3 +1,0 @@
-data List (A : Type 1) : Type 0
- | nil
- | cons A (List A)

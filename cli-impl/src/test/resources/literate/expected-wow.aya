@@ -1,0 +1,41 @@
+                         
+
+      
+open data Nat | zero | suc Nat
+open data Unit | unit
+   
+
+                                                                                     
+                                                                      
+
+      
+def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => zero
+   
+
+                                                                               
+
+      
+open data Wow : Type 2
+| wow {U : Type 1} {T : U -> Type} (A B : U) (x : T A) (y : T B)
+   
+
+                                        
+                                                                         
+                               
+
+      
+def test1 {A B : Type 0} {a : A} {b : B} => wow A B a b
+   
+
+                                                                    
+                         
+
+      
+def test2 {A B : Type 0} {a : A} {b : B} => wow A B a a
+   
+
+                                                                    
+                                                                              
+                                                                             
+                                                                                          
+                                    

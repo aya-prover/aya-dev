@@ -1,8 +1,0 @@
-open data Nat : Type 0
- | zero
- | suc Nat
-
-def cov (a b c d : Nat) : Nat
- | zero, a, b, c => zero
- | a, zero, b, c => zero
- | a, b, zero, c => zero

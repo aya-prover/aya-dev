@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -6,81 +6,65 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.core.term.MetaTerm;
-import org.aya.core.term.Term;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.LocalVar;
-import org.aya.tyck.tycker.TyckState;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.ref.LocalVar;
+import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-/** @author ice1000 */
 public sealed interface HoleProblem extends Problem {
-  @NotNull MetaTerm term();
+  @NotNull MetaCall term();
+  @Override default @NotNull Severity level() { return Severity.ERROR; }
+  @Override default @NotNull SourcePos sourcePos() { return term().ref().pos(); }
 
-  @Override default @NotNull Severity level() {
-    return Severity.ERROR;
-  }
-
-  @Override default @NotNull SourcePos sourcePos() {
-    return term().ref().sourcePos;
-  }
-
-  /** @author ice1000 */
-  record BadSpineError(
-    @Override @NotNull MetaTerm term
-  ) implements HoleProblem {
+  record BadSpineError(@Override @NotNull MetaCall term) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
-        Doc.english("Can't perform pattern unification on hole with the following spine:"),
-        BasePrettier.argsDoc(options, term.args())
+        Doc.english("The following spine is not in pattern fragment:"),
+        BasePrettier.coreArgsDoc(options, term.args().view())
       );
     }
   }
 
   record IllTypedError(
-    @Override @NotNull MetaTerm term,
-    @NotNull TyckState state,
+    @Override @NotNull MetaCall term,
+    @Override @NotNull TyckState state,
     @Override @NotNull Term solution
-  ) implements HoleProblem {
+  ) implements HoleProblem, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
-        Doc.par(1, term.ref().info.toDoc(options)),
+        Doc.par(1, term.ref().req().toDoc(options)),
         Doc.english("However, the solution below does not seem so:"));
-      UnifyInfo.exprInfo(solution, options, state, list);
+      UnifyInfo.exprInfo(solution, options, this, list);
       return Doc.vcat(list);
     }
   }
 
   record BadlyScopedError(
-    @Override @NotNull MetaTerm term,
+    @Override @NotNull MetaCall term,
     @NotNull Term solved,
-    @NotNull Seq<LocalVar> scopeCheck
+    @NotNull Seq<LocalVar> allowed
   ) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The solution"),
         Doc.par(1, solved.toDoc(options)),
         Doc.plain("is not well-scoped"),
-        Doc.cat(Doc.english("In particular, these variables are not in scope:"),
-          Doc.ONE_WS,
-          Doc.commaList(scopeCheck.view()
+        Doc.sep(Doc.english("Only the variables below are allowed:"),
+          Doc.commaList(allowed.view()
             .map(BasePrettier::varDoc)
             .map(Doc::code))));
     }
   }
 
-  /**
-   * @author ice1000
-   */
-  record RecursionError(
-    @Override @NotNull MetaTerm term,
-    @NotNull Term sol
-  ) implements HoleProblem {
+  record RecursionError(@Override @NotNull MetaCall term, @NotNull Term sol) implements HoleProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.sep(
@@ -95,9 +79,7 @@ public sealed interface HoleProblem extends Problem {
   record CannotFindGeneralSolution(
     @NotNull ImmutableSeq<TyckState.Eqn> eqns
   ) implements Problem {
-    @Override public @NotNull SourcePos sourcePos() {
-      return eqns.getLast().pos();
-    }
+    @Override public @NotNull SourcePos sourcePos() { return eqns.getLast().pos(); }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
       return eqns.view().map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
@@ -107,8 +89,6 @@ public sealed interface HoleProblem extends Problem {
       return Doc.english("Solving equation(s) with not very general solution(s)");
     }
 
-    @Override public @NotNull Severity level() {
-      return Severity.INFO;
-    }
+    @Override public @NotNull Severity level() { return Severity.INFO; }
   }
 }

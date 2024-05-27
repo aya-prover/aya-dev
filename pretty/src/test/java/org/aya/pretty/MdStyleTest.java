@@ -36,7 +36,7 @@ public class MdStyleTest {
       data Nat | zero | suc Nat
       ```
       Look! She is beautiful
-            
+      
       """.stripIndent(), doc().renderToMd());
   }
 
@@ -114,12 +114,12 @@ public class MdStyleTest {
   public void testList() {
     assertEquals("""
       - first
-        
+      
         third
       - fourth
         - 4.1
         - 4.2
-            
+      
       """.stripIndent(), bulletList().renderToMd().stripIndent());
     assertEquals("""
       1. first

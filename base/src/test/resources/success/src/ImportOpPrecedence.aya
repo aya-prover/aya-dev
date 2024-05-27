@@ -1,5 +1,0 @@
-open import Primitives using (
-  intervalMin as infix ∧        ,
-  intervalMax as infix ∨        ,
-  intervalInv as fixl ~ tighter ∨ ∧
-)

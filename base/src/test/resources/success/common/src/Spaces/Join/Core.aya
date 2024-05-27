@@ -1,9 +1,0 @@
-open import Paths
-
-// redtt version: https://github.com/RedPRL/redtt/blob/master/library/cool/s3-to-join.red
-// cagda version: https://github.com/agda/cubical/blob/master/Cubical/HITs/Join/Base.agda
-
-open data join (A B : Type)
-| inl A
-| inr B
-| push (a : A) (b : B) : inl a = inr b 

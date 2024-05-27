@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
 import kala.collection.mutable.MutableList;
-import org.aya.ref.AnyVar;
-import org.aya.ref.LocalVar;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -46,7 +46,7 @@ public interface FaithfulPrettier {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {
-      // Cut the `raw` text at `base` offset into three parts: before, current, and remaining,
+      // Cut the `raw` text (which starts at `base` in the origin string) into three parts: before, current, and remaining,
       // which needs two split positions: `current.sourcePos().start` and `current.sourcePos().end`, respectively.
       var knifeCut = twoKnifeThreeParts(raw, base, current.sourcePos());
 

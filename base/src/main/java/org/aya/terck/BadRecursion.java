@@ -1,14 +1,13 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
 import kala.collection.mutable.MutableList;
-import org.aya.core.def.Def;
-import org.aya.core.term.Callable;
-import org.aya.core.term.Term;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.DefVar;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -18,11 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 public record BadRecursion(
   @Override @NotNull SourcePos sourcePos, @NotNull DefVar<?, ?> name,
-  @Nullable Diagonal<Callable, Def, Term.Param> diag
+  @Nullable Diagonal<? extends Term, TyckDef> diag
 ) implements Problem {
-  @Override public @NotNull Severity level() {return Severity.ERROR;}
-
-  @Override public @NotNull Stage stage() {return Stage.TERCK;}
+  @Override public @NotNull Severity level() { return Severity.ERROR; }
+  @Override public @NotNull Stage stage() { return Stage.TERCK; }
 
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.sep(Doc.english("The recursive definition"),

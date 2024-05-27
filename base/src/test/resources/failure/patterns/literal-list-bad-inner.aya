@@ -1,8 +1,0 @@
-open data List (A : Type) | nil | cons A (List A)
-open data Nat | O | S Nat
-open data Unit | unit
-
-def bad (xs : List Nat) : Nat
-  | [ ] => O
-  | [ [ ] ] => S O
-  | _ => S (S O)

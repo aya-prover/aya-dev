@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate.parser;
 
@@ -28,7 +28,7 @@ public interface InterestingLanguage<T extends Literate.CodeBlock> {
     @NotNull Predicate<String> test,
     @NotNull TriFunction<String, String, SourcePos, T> factory
   ) {
-    return new InterestingLanguage<T>() {
+    return new InterestingLanguage<>() {
       @Override public boolean test(@NotNull String language) {
         return test.test(language);
       }

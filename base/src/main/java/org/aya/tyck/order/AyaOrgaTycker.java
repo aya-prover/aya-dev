@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
 import kala.collection.mutable.MutableSet;
+import org.aya.generic.stmt.TyckOrder;
 import org.aya.resolve.ResolveInfo;
 import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
@@ -21,7 +22,7 @@ public record AyaOrgaTycker(
   @NotNull MutableSet<TyckOrder> skippedSet
 ) implements OrgaTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
   public AyaOrgaTycker(@NotNull AyaSccTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
-    this(sccTycker, resolveInfo.depGraph().transpose(), MutableSet.of());
+    this(sccTycker, resolveInfo.depGraph().transpose(), MutableSet.create());
   }
 
   @Override public @NotNull Iterable<TyckOrder> collectUsageOf(@NotNull TyckOrder failed) {

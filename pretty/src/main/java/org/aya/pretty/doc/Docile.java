@@ -7,10 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Should be called <code>Prettiable</code>.
- *
- * @author ice1000
  */
 @Debug.Renderer(text = "toDoc().debugRender()")
-public interface Docile {
-  @NotNull Doc toDoc();
-}
+public interface Docile { @NotNull Doc toDoc();}
