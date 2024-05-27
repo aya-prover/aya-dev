@@ -1,87 +1,87 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableSet;
-import kala.tuple.Tuple;
-import kala.tuple.primitive.IntObjTuple2;
-import org.aya.core.pat.Pat;
-import org.aya.core.pat.PatUnify;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.MetaTerm;
-import org.aya.core.term.RefTerm;
-import org.aya.core.term.Term;
-import org.aya.core.visitor.DeltaExpander;
-import org.aya.core.visitor.Subst;
+import kala.control.Option;
+import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.pat.PatToTerm;
+import org.aya.syntax.core.term.Param;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.LocalCtx;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.env.LocalCtx;
+import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
-import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * YouTrack checks confluence.
  *
- * @author ice1000
  * @see PatClassifier#classify
  */
 public record YouTrack(
-  @NotNull ImmutableSeq<Term.Param> telescope,
+  @NotNull ImmutableSeq<Param> telescope,
   @NotNull ExprTycker tycker, @NotNull SourcePos pos
 ) {
+  private record Info(int ix, @NotNull Term.Matching matching) { }
   private void unifyClauses(
-    Term result,
-    IntObjTuple2<Term.Matching> lhsInfo,
-    IntObjTuple2<Term.Matching> rhsInfo,
+    Term result, PatMatcher prebuiltMatcher,
+    Info lhsInfo, Info rhsInfo,
     MutableSet<ClausesProblem.Domination> doms
   ) {
-    var lhsSubst = new Subst();
-    var rhsSubst = new Subst();
-    var ctx = PatUnify.unifyPat(
-      lhsInfo.component2().patterns().view().map(Arg::term),
-      rhsInfo.component2().patterns().view().map(Arg::term),
-      lhsSubst, rhsSubst, tycker.ctx.deriveMap());
-    domination(ctx, rhsSubst, lhsInfo.component1(), rhsInfo.component1(), rhsInfo.component2(), doms);
-    domination(ctx, lhsSubst, rhsInfo.component1(), lhsInfo.component1(), lhsInfo.component2(), doms);
-    var lhsTerm = lhsInfo.component2().body().subst(lhsSubst);
-    var rhsTerm = rhsInfo.component2().body().subst(rhsSubst);
-    // TODO: Currently all holes at this point are in an ErrorTerm
-    if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-      hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
-    } else if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaTerm hole) {
-      hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
-    }
-    var resultSubst = DeltaExpander.buildSubst(telescope, Arg.mapSeq(lhsInfo.component2().patterns(), Pat::toTerm));
-    resultSubst.add(lhsSubst);
-    tycker.unifyReported(lhsTerm, rhsTerm, result.subst(resultSubst), pos, ctx, comparison ->
-      new ClausesProblem.Confluence(pos, rhsInfo.component1() + 1, lhsInfo.component1() + 1,
-        comparison, new UnifyInfo(tycker.state), rhsInfo.component2().sourcePos(), lhsInfo.component2().sourcePos()));
+    var ctx = tycker.localCtx().derive();
+    var args = new PatToTerm.Binary(ctx).list(
+      lhsInfo.matching.patterns(), rhsInfo.matching.patterns());
+    domination(ctx, args, lhsInfo.ix, rhsInfo.ix, rhsInfo.matching, doms);
+    domination(ctx, args, rhsInfo.ix, lhsInfo.ix, lhsInfo.matching, doms);
+    var lhsTerm = prebuiltMatcher.apply(lhsInfo.matching, args).get();
+    var rhsTerm = prebuiltMatcher.apply(rhsInfo.matching, args).get();
+    // // TODO: Currently all holes at this point are in an ErrorTerm
+    // if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaCall hole) {
+    //   hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
+    // }
+    // if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaCall hole) {
+    //   hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
+    // }
+    result = tycker.whnf(result.instantiateTele(args.view()));
+    var old = tycker.setLocalCtx(ctx);
+    tycker.unifyTermReported(lhsTerm, rhsTerm, result, pos, comparison ->
+      new ClausesProblem.Confluence(pos, rhsInfo.ix + 1, lhsInfo.ix + 1,
+        comparison, new UnifyInfo(tycker.state), rhsInfo.matching.sourcePos(), lhsInfo.matching.sourcePos()));
+    tycker.setLocalCtx(old);
   }
 
+  // TODO: this implementation is incorrect. To do it correctly, we will need to do another unification,
+  //  and I am unsure if it is worth the effort.
   private void domination(
-    LocalCtx ctx, Subst rhsSubst,
+    LocalCtx ctx, ImmutableSeq<Term> subst,
     int lhsIx, int rhsIx, Term.Matching matching,
     MutableSet<ClausesProblem.Domination> doms
   ) {
-    if (rhsSubst.map().valuesView().allMatch(dom ->
-      dom instanceof RefTerm(var ref) && ctx.contains(ref))
-    ) doms.add(new ClausesProblem.Domination(
-      lhsIx + 1, rhsIx + 1, matching.sourcePos()));
+    // if (subst.allMatch(dom -> dom instanceof FreeTerm(var ref) && ctx.contains(ref)))
+    //   doms.add(new ClausesProblem.Domination(lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(@NotNull ClauseTycker.PatResult clauses, @NotNull ImmutableSeq<PatClass<ImmutableSeq<Arg<Term>>>> mct) {
+  public void check(
+    @NotNull ClauseTycker.TyckResult clauses, @NotNull Term type,
+    @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> mct
+  ) {
+    var prebuildMatcher = new PatMatcher(false, UnaryOperator.identity());
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
       var contents = results.cls()
-        .flatMapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
-          .map(matching -> IntObjTuple2.of(i, matching)));
+        .flatMapToObj(i -> Option.ofNullable(Pat.Preclause.lift(clauses.clauses().get(i)))
+          .map(matching -> new Info(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++)
-        unifyClauses(clauses.result(), contents.get(i - 1), contents.get(i), doms);
+        unifyClauses(type, prebuildMatcher, contents.get(i - 1), contents.get(i), doms);
     });
-    doms.forEach(tycker.reporter::report);
+    doms.forEach(tycker::fail);
   }
 }

@@ -1,5 +1,0 @@
-open import Paths
-def isProp (A : Type) : Type => ∀ (a b : A) -> a = b
-data PropTrunc (A : Type)
-| emb A
-| trunc : isProp A

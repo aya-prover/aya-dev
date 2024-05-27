@@ -1,4 +1,0 @@
-open data Test | t
-def not-conf Test : Test
-  | 1 => t
-

@@ -1,14 +1,17 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.AnyVar;
-import org.aya.resolve.context.*;
+import org.aya.resolve.context.BindContext;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleContext;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -18,20 +21,20 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public interface NameProblem extends Problem {
-  @Override default @NotNull Stage stage() {return Stage.RESOLVE;}
+  @Override default @NotNull Stage stage() { return Stage.RESOLVE; }
   interface Error extends NameProblem {
-    @Override default @NotNull Severity level() {return Severity.ERROR;}
+    @Override default @NotNull Severity level() { return Severity.ERROR; }
   }
 
   interface Warn extends NameProblem {
-    @Override default @NotNull Severity level() {return Severity.WARN;}
+    @Override default @NotNull Severity level() { return Severity.WARN; }
   }
 
   record AmbiguousNameError(
     @NotNull String name,
     @NotNull ImmutableSeq<ModuleName> disambiguation,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
           Doc.english("The unqualified name"),
@@ -49,7 +52,7 @@ public interface NameProblem extends Problem {
   record AmbiguousNameWarn(
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Warn {
+  ) implements Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(Doc.sep(
         Doc.english("The name"),
@@ -69,15 +72,13 @@ public interface NameProblem extends Problem {
         Doc.english("being exported clashes with another exported definition with the same name"));
     }
 
-    @Override @NotNull public Severity level() {
-      return Severity.ERROR;
-    }
+    @Override @NotNull public Severity level() { return Severity.ERROR; }
   }
 
   record DuplicateModNameError(
     @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
@@ -88,16 +89,16 @@ public interface NameProblem extends Problem {
   }
 
   record ClashModNameError(
-    @NotNull ImmutableSeq<String> modulePath,
+    @NotNull ModulePath modulePath,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The inner module"),
-        Doc.code(QualifiedID.join(modulePath)),
+        Doc.code(modulePath.toString()),
         Doc.english("clashes with a file level module"),
-        Doc.code(modulePath.joinToString("/") + ".aya")
+        Doc.code(STR."\{modulePath.module().joinToString("/")}.aya")
       );
     }
   }
@@ -105,7 +106,7 @@ public interface NameProblem extends Problem {
   record DuplicateNameError(
     @NotNull String name, @NotNull AnyVar ref,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
@@ -119,7 +120,7 @@ public interface NameProblem extends Problem {
   record ModNameNotFoundError(
     @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
@@ -129,10 +130,7 @@ public interface NameProblem extends Problem {
     }
   }
 
-  record ModNotFoundError(
-    @NotNull ModulePath path,
-    @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  record ModNotFoundError(@NotNull ModulePath path, @Override @NotNull SourcePos sourcePos) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
@@ -145,7 +143,7 @@ public interface NameProblem extends Problem {
   record ModShadowingWarn(
     @NotNull ModuleName modName,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Warn {
+  ) implements Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The module name"),
@@ -158,7 +156,7 @@ public interface NameProblem extends Problem {
   record ShadowingWarn(
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Warn {
+  ) implements Warn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("The name"),
         Doc.code(name),
@@ -171,7 +169,7 @@ public interface NameProblem extends Problem {
     @NotNull ModuleName modName,
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The qualified name"),
@@ -185,7 +183,7 @@ public interface NameProblem extends Problem {
     @NotNull Context context,
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var head = Doc.sep(
         Doc.english("The name"),
@@ -217,7 +215,7 @@ public interface NameProblem extends Problem {
   record OperatorNameNotFound(
     @Override @NotNull SourcePos sourcePos,
     @NotNull String name
-  ) implements NameProblem.Error {
+  ) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Unknown operator"),

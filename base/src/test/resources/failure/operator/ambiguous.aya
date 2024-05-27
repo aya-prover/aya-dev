@@ -1,8 +1,0 @@
-open data Nat
-| zero
-| suc Nat
-
-def infix + (a b: Nat) : Nat => zero
-def infix = (a b: Nat) : Nat => zero
-
-def fail: Nat => (suc zero) + (suc zero) = (suc (suc zero))

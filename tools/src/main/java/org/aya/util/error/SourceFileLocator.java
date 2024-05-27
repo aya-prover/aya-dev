@@ -19,10 +19,7 @@ public interface SourceFileLocator {
    * @param path Path to source file
    * @return relativized file path if it belongs to a module, otherwise the original path is returned
    */
-  default @NotNull Path displayName(@NotNull Path path) {
-    return path;
-  }
-
+  default @NotNull Path displayName(@NotNull Path path) { return path; }
   @NotNull SourceFileLocator EMPTY = new Module(ImmutableSeq.empty());
 
   record Module(@NotNull SeqLike<Path> modulePath) implements SourceFileLocator {

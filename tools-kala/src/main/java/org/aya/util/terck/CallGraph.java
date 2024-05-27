@@ -21,14 +21,14 @@ import java.util.function.Consumer;
  * @author kiva
  * @see CallMatrix
  */
-public record CallGraph<C, T, P>(
-  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableList<@NotNull CallMatrix<C, T, P>>>> graph
+public record CallGraph<C, T>(
+  @NotNull MutableMap<T, @NotNull MutableMap<T, MutableList<@NotNull CallMatrix<C, T>>>> graph
 ) {
-  public static <C, T, P> @NotNull CallGraph<C, T, P> create() {
+  public static <C, T> @NotNull CallGraph<C, T> create() {
     return new CallGraph<>(MutableLinkedHashMap.of());
   }
 
-  public void put(@NotNull CallMatrix<C, T, P> matrix) {
+  public void put(@NotNull CallMatrix<C, T> matrix) {
     var caller = matrix.domain();
     var callee = matrix.codomain();
     var calls = graph.getOrPut(caller, MutableLinkedHashMap::of)
@@ -38,11 +38,11 @@ public record CallGraph<C, T, P>(
 
   /** @return true if there's no edge */
   public boolean isEmpty() {
-    return graph.allMatch((k, ts) -> ts.allMatch((x, t) -> t.isEmpty()));
+    return graph.allMatch((_, ts) -> ts.allMatch((_, t) -> t.isEmpty()));
   }
 
   /** completing a call graph is just finding its transitive closure */
-  private static <C, T, P> @NotNull CallGraph<C, T, P> complete(@NotNull CallGraph<C, T, P> initial) {
+  private static <C, T> @NotNull CallGraph<C, T> complete(@NotNull CallGraph<C, T> initial) {
     var step = initial;
     while (true) {
       var comb = indirect(initial, step);
@@ -53,11 +53,11 @@ public record CallGraph<C, T, P>(
   }
 
   /** find all indirect calls and combine them together */
-  private static <C, T, P> @NotNull CallGraph<C, T, P> indirect(@NotNull CallGraph<C, T, P> initial, @NotNull CallGraph<C, T, P> step) {
-    var comb = CallGraph.<C, T, P>create();
-    initial.graph.forEach((domain, codomains) -> codomains.forEach((codomain, mats) -> mats.forEach(mat -> {
+  private static <C, T> @NotNull CallGraph<C, T> indirect(@NotNull CallGraph<C, T> initial, @NotNull CallGraph<C, T> step) {
+    var comb = CallGraph.<C, T>create();
+    initial.graph.forEach((_, codomains) -> codomains.forEach((_, mats) -> mats.forEach(mat -> {
       var indirect = step.graph.getOrNull(mat.codomain());
-      if (indirect != null) indirect.forEach((indCodomain, indMats) -> indMats.forEach(ind -> {
+      if (indirect != null) indirect.forEach((_, indMats) -> indMats.forEach(ind -> {
         var combine = CallMatrix.combine(mat, ind);
         comb.put(combine);
       }));
@@ -69,11 +69,11 @@ public record CallGraph<C, T, P>(
    * merge newly discovered indirect matrices with old ones.
    * <a href="https://github.com/agda/agda/blob/e3bf58d8b2e95bc0481035756f44ddd9fe19b40d/src/full/Agda/Termination/CallGraph.hs#L155">CallGraph.hs</a>
    */
-  private static <C, T, P> @NotNull Tuple2<CallGraph<C, T, P>, CallGraph<C, T, P>> merge(
-    @NotNull CallGraph<C, T, P> comb, @NotNull CallGraph<C, T, P> cs
+  private static <C, T> @NotNull Tuple2<CallGraph<C, T>, CallGraph<C, T>> merge(
+    @NotNull CallGraph<C, T> comb, @NotNull CallGraph<C, T> cs
   ) {
-    var newG = CallGraph.<C, T, P>create(); // all accepted new matrices go here, used for indicating whether we are done.
-    var oldG = CallGraph.<C, T, P>create(); // all old matrices and accepted new matrices go here
+    var newG = CallGraph.<C, T>create(); // all accepted new matrices go here, used for indicating whether we are done.
+    var oldG = CallGraph.<C, T>create(); // all old matrices and accepted new matrices go here
     forEachGraph(comb.graph, cs.graph,
       // If the matrix is really new (no old matrices describing the same call -- we find a new call path), accept it
       n -> {
@@ -102,8 +102,8 @@ public record CallGraph<C, T, P>(
     @NotNull BiConsumer<V, V> both
   ) {
     forEachMap(a, b,
-      v1 -> v1.forEach((k, v) -> inA.accept(v)),
-      v2 -> v2.forEach((k, v) -> inB.accept(v)),
+      v1 -> v1.forEach((_, v) -> inA.accept(v)),
+      v2 -> v2.forEach((_, v) -> inB.accept(v)),
       (v1, v2) -> forEachMap(v1, v2, inA, inB, both));
   }
 
@@ -121,13 +121,13 @@ public record CallGraph<C, T, P>(
       if (av.isEmpty()) inB.accept(bv);
       else both.accept(av.get(), bv);
     });
-    union.forEach((k, av) -> inA.accept(av));
+    union.forEach((_, av) -> inA.accept(av));
   }
 
   /** find bad recursive calls in current SCC */
-  public @NotNull ImmutableSeq<Diagonal<C, T, P>> findBadRecursion() {
+  public @NotNull ImmutableSeq<Diagonal<C, T>> findBadRecursion() {
     var complete = complete(this);
-    var bads = MutableList.<Diagonal<C, T, P>>create();
+    var bads = MutableList.<Diagonal<C, T>>create();
     for (var key : complete.graph.keysView()) {
       var matrix = complete.graph.getOption(key)
         .flatMap(g -> g.getOption(key));

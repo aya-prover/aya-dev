@@ -1,5 +1,0 @@
-open data Nat : Type 0 | zero | suc Nat
-open data Ray (a : Nat) : Type | zero => eldath
-overlap def ray-eldath (a : Nat) (ed40 : Ray a) : Nat
- | zero, eldath => suc zero
- | zero, eldath => zero

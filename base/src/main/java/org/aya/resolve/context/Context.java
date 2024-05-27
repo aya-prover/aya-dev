@@ -1,16 +1,18 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import org.aya.concrete.stmt.QualifiedID;
-import org.aya.generic.util.InterruptException;
-import org.aya.ref.AnyVar;
-import org.aya.ref.GenerateKind;
-import org.aya.ref.LocalVar;
+import org.aya.generic.InterruptException;
 import org.aya.resolve.error.NameProblem;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -70,7 +72,7 @@ public interface Context {
    */
   default @NotNull AnyVar get(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModuleName.ThisRef aThis -> getUnqualified(name.name(), name.sourcePos());
+      case ModuleName.ThisRef _ -> getUnqualified(name.name(), name.sourcePos());
       case ModuleName.Qualified qualified -> getQualified(qualified, name.name(), name.sourcePos());
     };
   }
@@ -80,7 +82,7 @@ public interface Context {
    */
   default @Nullable AnyVar getMaybe(@NotNull QualifiedID name) {
     return switch (name.component()) {
-      case ModuleName.ThisRef aThis -> getUnqualifiedMaybe(name.name(), name.sourcePos());
+      case ModuleName.ThisRef _ -> getUnqualifiedMaybe(name.name(), name.sourcePos());
       case ModuleName.Qualified qualified -> getQualifiedMaybe(qualified, name.name(), name.sourcePos());
     };
   }
@@ -106,8 +108,7 @@ public interface Context {
    * @see Context#getUnqualifiedLocalMaybe(String, SourcePos)
    */
   default @Nullable AnyVar getUnqualifiedMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
+    @NotNull String name, @NotNull SourcePos sourcePos
   ) {
     return iterate(c -> c.getUnqualifiedLocalMaybe(name, sourcePos));
   }
@@ -116,8 +117,7 @@ public interface Context {
    * @see Context#getUnqualified(String, SourcePos)
    */
   default @NotNull AnyVar getUnqualified(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
+    @NotNull String name, @NotNull SourcePos sourcePos
   ) {
     var result = getUnqualifiedMaybe(name, sourcePos);
     if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(this, name, sourcePos));
@@ -192,25 +192,24 @@ public interface Context {
   }
 
   default @NotNull Context bind(
-    @NotNull String name,
-    @NotNull LocalVar ref,
+    @NotNull String name, @NotNull LocalVar ref,
     @NotNull Predicate<@Nullable AnyVar> toWarn
   ) {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
     var exists = getUnqualifiedMaybe(name, ref.definition());
     if (toWarn.test(exists)
-      && (!(ref.generateKind() instanceof GenerateKind.Anonymous))) {
+      && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
       reporter().report(new NameProblem.ShadowingWarn(name, ref.definition()));
     }
     return new BindContext(this, name, ref);
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
-    return derive(ImmutableSeq.of(extraName));
+    return derive(new ModulePath(ImmutableSeq.of(extraName)));
   }
 
-  default @NotNull PhysicalModuleContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
+  default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
     return new PhysicalModuleContext(this, this.modulePath().derive(extraName));
   }
 

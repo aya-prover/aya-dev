@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -6,15 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.core.def.GenericDef;
-import org.aya.core.def.PrimDef;
-import org.aya.core.serde.SerTerm;
-import org.aya.core.serde.Serializer;
-import org.aya.generic.util.AyaFiles;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.syntax.AyaFiles;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,14 +43,14 @@ record LibraryModuleLoader(
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
   @Override public @NotNull ResolveInfo
-  load(@NotNull ImmutableSeq<@NotNull String> mod, @NotNull ModuleLoader recurseLoader) {
+  load(@NotNull ModulePath mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
-    var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod);
+    var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod.module());
     if (sourcePath == null) {
       // We are loading a module belonging to dependencies, find the compiled core.
       // The compiled core should always exist, otherwise the dependency is not built.
       // TODO: what if module name clashes?
-      var depCorePath = AyaFiles.resolveAyaCompiledFile(basePaths, mod);
+      var depCorePath = AyaFiles.resolveAyaCompiledFile(basePaths, mod.module());
       var core = loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
       assert core != null : "dependencies not built?";
       return core;
@@ -76,35 +75,32 @@ record LibraryModuleLoader(
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
     source.resolveInfo().set(resolveInfo);
-    return tyckModule(null, resolveInfo, (moduleResolve, defs) -> {
+    return tyckModule(resolveInfo, (moduleResolve, defs) -> {
       source.notifyTycked(moduleResolve, defs);
       if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
     });
   }
 
   @Override
-  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+  public boolean existsFileLevelModule(@NotNull ModulePath path) {
     return owner.findModule(path) != null;
   }
 
   private @Nullable ResolveInfo loadCompiledCore(
-    @NotNull ImmutableSeq<String> mod, @Nullable Path sourcePath,
+    @NotNull ModulePath mod, @Nullable Path sourcePath,
     @Nullable Path corePath, @NotNull ModuleLoader recurseLoader
   ) {
-    return advisor.loadCompiledCore(states.de, reporter, mod, sourcePath, corePath, recurseLoader);
+    return advisor.loadCompiledCore(reporter, mod, sourcePath, corePath, recurseLoader);
   }
 
   private void saveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<GenericDef> defs
+    @NotNull ImmutableSeq<TyckDef> defs
   ) {
-    advisor.saveCompiledCore(states.ser, file, resolveInfo, defs);
+    advisor.saveCompiledCore(file, resolveInfo, defs);
   }
 
-  record United(@NotNull SerTerm.DeState de, @NotNull Serializer.State ser, @NotNull PrimDef.Factory primFactory) {
-    public United(@NotNull PrimDef.Factory primFactory) {
-      this(new SerTerm.DeState(primFactory), new Serializer.State(), primFactory);
-    }
+  record United(@NotNull PrimFactory primFactory) {
   }
 }

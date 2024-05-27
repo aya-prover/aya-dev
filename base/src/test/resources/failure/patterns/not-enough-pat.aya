@@ -1,5 +1,0 @@
-open data Bool : Type 0 | true | false
-
-def ifElse {A : Type} (b : Bool) (x y : A) : A
- | true, x => x
- | false, x, y => y

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -39,6 +39,8 @@ public abstract class BinOpSet {
     return ensureHasElem(opDecl).assoc;
   }
 
+  public abstract boolean equals(@NotNull OpDecl lhs, @NotNull OpDecl rhs);
+
   public final boolean isOperand(@Nullable OpDecl opDecl) {
     return opDecl == null || opDecl.opInfo() == null;
   }
@@ -48,7 +50,7 @@ public abstract class BinOpSet {
   }
 
   public BinOP ensureHasElem(@NotNull OpDecl opDecl, @NotNull SourcePos sourcePos) {
-    var elem = ops.find(e -> e.op == opDecl);
+    var elem = ops.find(e -> equals(e.op, opDecl));
     if (elem.isDefined()) return elem.get();
     var newElem = BinOP.from(sourcePos, opDecl);
     ops.add(newElem);
@@ -97,9 +99,7 @@ public abstract class BinOpSet {
       return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc());
     }
 
-    @Override public String toString() {
-      return name;
-    }
+    @Override public String toString() { return name; }
   }
 
   public enum PredCmp {

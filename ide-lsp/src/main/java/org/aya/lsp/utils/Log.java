@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
-import org.aya.util.error.InternalException;
 import org.aya.lsp.server.AyaLanguageClient;
+import org.aya.util.error.Panic;
 import org.intellij.lang.annotations.PrintFormat;
 import org.javacs.lsp.ShowMessageParams;
 import org.javacs.lsp.ShowMessageType;
@@ -25,26 +25,15 @@ public class Log {
     if (CLIENT == null) synchronized (Log.class) {
       if (CLIENT == null) CLIENT = client;
         // if the code was right, this should never happen
-      else throw new InternalException("double initialization occurred");
+      else throw new Panic("double initialization occurred");
     }
     i("Log file: %s", LOG_FILE);
   }
 
-  public static void i(@NotNull @PrintFormat String fmt, Object... args) {
-    log(ShowMessageType.Info, fmt, args);
-  }
-
-  public static void e(@NotNull @PrintFormat String fmt, Object... args) {
-    log(ShowMessageType.Error, fmt, args);
-  }
-
-  public static void w(@NotNull @PrintFormat String fmt, Object... args) {
-    log(ShowMessageType.Warning, fmt, args);
-  }
-
-  public static void d(@NotNull @PrintFormat String fmt, Object... args) {
-    log(ShowMessageType.Log, fmt, args);
-  }
+  public static void i(@NotNull @PrintFormat String fmt, Object... args) { log(ShowMessageType.Info, fmt, args); }
+  public static void e(@NotNull @PrintFormat String fmt, Object... args) { log(ShowMessageType.Error, fmt, args); }
+  public static void w(@NotNull @PrintFormat String fmt, Object... args) { log(ShowMessageType.Warning, fmt, args); }
+  public static void d(@NotNull @PrintFormat String fmt, Object... args) { log(ShowMessageType.Log, fmt, args); }
 
   public static void log(@NotNull ShowMessageType type, @NotNull String fmt, Object... args) {
     var format = fmt.formatted(args);

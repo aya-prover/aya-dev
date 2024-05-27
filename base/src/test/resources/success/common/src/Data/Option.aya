@@ -1,5 +1,0 @@
-import Data::Option::Core as Core
-import Data::Option::Syntax as Syntax
-
-public open Core
-public open Syntax

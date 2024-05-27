@@ -1,2 +1,0 @@
-public open import Data::List::Core
-public open import Data::List::Operations

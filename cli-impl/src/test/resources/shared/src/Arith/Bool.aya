@@ -1,0 +1,4 @@
+open data Bool | true | false
+def not Bool : Bool
+| true => false
+| false => true

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -6,11 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.core.def.GenericDef;
-import org.aya.core.serde.SerTerm;
-import org.aya.core.serde.Serializer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,7 @@ import java.nio.file.attribute.FileTime;
 
 public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   protected final @NotNull MutableMap<Path, FileTime> coreTimestamp = MutableMap.create();
-  protected final @NotNull MutableMap<ImmutableSeq<String>, ResolveInfo> compiledCore = MutableMap.create();
+  protected final @NotNull MutableMap<ModulePath, ResolveInfo> compiledCore = MutableMap.create();
   
   protected @NotNull Path timestampKey(@NotNull LibrarySource source) {
     return source.underlyingFile();
@@ -63,9 +62,8 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
 
   @Override
   public @Nullable ResolveInfo doLoadCompiledCore(
-    SerTerm.@NotNull DeState deState,
     @NotNull Reporter reporter,
-    @NotNull ImmutableSeq<String> mod,
+    @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
@@ -75,10 +73,9 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   }
 
   @Override public void doSaveCompiledCore(
-    Serializer.@NotNull State serState,
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<GenericDef> defs
+    @NotNull ImmutableSeq<TyckDef> defs
   ) {
     // TODO: what if module name clashes?
     compiledCore.put(file.moduleName(), resolveInfo);

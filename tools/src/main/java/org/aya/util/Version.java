@@ -9,9 +9,6 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.regex.Pattern;
 
-/**
- * @author ice1000
- */
 public record Version(
   @NotNull BigInteger major,
   @NotNull BigInteger minor,

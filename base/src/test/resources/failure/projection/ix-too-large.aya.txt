@@ -1,9 +1,0 @@
-In file $FILE:1:42 ->
-
-  1 │   def test (A B : Type) (p : Sig A ** B) => p.3
-    │                                             ╰─╯
-
-Error: Cannot project the 3rd element because the type has index range [1, 2]
-
-1 error(s), 0 warning(s).
-What are you doing?

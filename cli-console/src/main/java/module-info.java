@@ -13,6 +13,7 @@ module aya.cli.console {
   requires org.jline.terminal;
   requires java.net.http;
   requires jdk.crypto.ec;
+  requires aya.producer;
 
   exports org.aya.cli.plct;
   exports org.aya.cli.repl;

@@ -1,0 +1,169 @@
+DidYouMeanDisamb:
+In file $FILE:2:17 ->
+
+  1 │   open data Nat1 | zero
+  2 │   open data Nat2 | zero
+    │                    ╰──╯
+  3 │   def one => zero
+
+Warning: The name `zero` shadows a previous local definition from outer scope
+
+In file $FILE:2:0 ->
+
+  1 │   open data Nat1 | zero
+  2 │   open data Nat2 | zero
+    │   ╰──╯
+  3 │   def one => zero
+
+Warning: The name `zero` introduces ambiguity and can only be accessed through a
+         qualified name
+
+In file $FILE:3:11 ->
+
+  1 │   open data Nat1 | zero
+  2 │   open data Nat2 | zero
+  3 │   def one => zero
+    │              ╰──╯
+
+Error: The unqualified name `zero` is ambiguous
+       Did you mean:
+         `Nat1::zero`
+         `Nat2::zero`
+
+Resolving interrupted due to:
+1 error(s), 2 warning(s).
+What are you doing?
+
+DidYouMean:
+In file $FILE:2:11 ->
+
+  1 │   data Nat | zero | suc Nat
+  2 │   def one => suc zero
+    │              ╰─╯
+
+Error: The name `suc` is not defined in the current scope
+       Did you mean: `Nat::suc`
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+ImportDefineShadow:
+In file $FILE:4:4 ->
+
+  2 │   module A { def foo => true }
+  3 │   open A
+  4 │   def foo => false
+    │       ╰─╯
+
+Warning: The name `foo` introduces ambiguity and can only be accessed through a 
+         qualified name
+
+That looks right!
+
+ImportUsing:
+In file $FILE:4:14 ->
+
+  2 │   module A { def foo => true }
+  3 │   open A using (foo as bruh)
+  4 │   open A using (bar)
+    │                 ╰─╯
+
+Error: The qualified name `A::bar` is not defined in the current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+ImportHiding:
+In file $FILE:4:15 ->
+
+  2 │   module A { def foo => true }
+  3 │   open A hiding (foo)
+  4 │   open A hiding (bar)
+    │                  ╰─╯
+
+Error: The qualified name `A::bar` is not defined in the current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+ImportDefineShadow2:
+In file $FILE:4:5 ->
+
+  2 │   module A { def foo => true }
+  3 │   def foo => false
+  4 │   open A
+    │        ╰╯
+
+Warning: The name `foo` introduces ambiguity and can only be accessed through a 
+         qualified name
+
+That looks right!
+
+InfRec:
+In file $FILE:1:4 ->
+
+  1 │   def undefined => undefined
+    │       ╰───────╯
+
+Error: The recursive definition `undefined` is not structurally recursive
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+Issue247:
+In file $FILE:3:2 ->
+
+  1 │   data Z : Type
+  2 │   | zero
+  3 │   | zero
+    │     ╰──╯
+
+Error: The name zero (`zero`) is already defined elsewhere
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+RedefPrim:
+In file $FILE:1:12 ->
+
+  1 │   prim I prim I
+    │               ╰╯
+
+Error: Redefinition of primitive `I`
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+UnknownPrim:
+In file $FILE:1:5 ->
+
+  1 │   prim senpaiSuki
+    │        ╰────────╯
+
+Error: Unknown primitive `senpaiSuki`
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+UnknownVar:
+In file $FILE:2:9 ->
+
+  1 │   open data Nat : Type | zero
+  2 │   def p => Nat::suc Nat::zero
+    │            ╰──────╯
+
+Error: The qualified name `Nat::suc` is not defined in the current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+LetOpen:
+That looks right!
+

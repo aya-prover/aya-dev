@@ -1,9 +1,0 @@
-open import Paths
-
-open data Single (A : Type) | single {A}
-open data Unit | unit
-
-def bad (s : Single Unit) : Unit
-  | single => unit
-
-def test : bad (single {Unit} {unit}) = unit => idp

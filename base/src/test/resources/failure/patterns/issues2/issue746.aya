@@ -1,5 +1,0 @@
-open data Test1 | test1
-open data Test2 | test2
-
-def test Test1 : Test1
-| test2 => test1

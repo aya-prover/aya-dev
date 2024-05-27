@@ -1,8 +1,0 @@
-open data Nat : Type
- | zero | suc Nat
-
-def add {a b : Nat} : Nat
- | {zero}, {suc b} => zero
- | {suc a}, {zero} => zero
- | {suc a}, {b} => zero
- | {a}, {suc b} => zero

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
-import org.aya.util.error.InternalException;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +21,6 @@ public class LibraryDependencyData {
     if (version != null) return new LibraryDependency.DepVersion(depName, version);
     if (github != null) return new LibraryDependency.DepGithub(depName, github);
     if (file != null) return new LibraryDependency.DepFile(depName, libraryRoot.resolve(file));
-    throw new InternalException("Unsupported dependency type for " + depName);
+    throw new Panic("Unsupported dependency type for " + depName);
   }
 }

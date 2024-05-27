@@ -1,16 +1,17 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
 import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.GeneralizedVar;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.ModuleVar;
 import org.aya.ide.util.XY;
-import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public interface GotoDefinition {
   }
 
   private static @Nullable SourcePos mockSourcePos(@NotNull SeqView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {
-    return Resolver.resolveModule(libraries, moduleVar.path().ids())
+    return Resolver.resolveModule(libraries, new ModulePath(moduleVar.path().ids()))
       .map(src -> src.originalFile(""))
       .map(src -> new SourcePos(src, 0, 0, 1, 0, 1, 0))
       .getOrNull();

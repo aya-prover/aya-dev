@@ -1,18 +1,18 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.core.def.PrimDef;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 public interface PrimResolveError extends Problem {
-  @Override default @NotNull Stage stage() {return Stage.RESOLVE;}
-  @Override default @NotNull Severity level() {return Severity.ERROR;}
+  @Override default @NotNull Stage stage() { return Stage.RESOLVE; }
+  @Override default @NotNull Severity level() { return Severity.ERROR; }
 
   record UnknownPrim(
     @Override @NotNull SourcePos sourcePos,
@@ -49,22 +49,6 @@ public interface PrimResolveError extends Problem {
         Doc.english("The primitive"), Doc.code(name),
         Doc.english("depends on undeclared primitive(s):"),
         Doc.commaList(lack.map(name -> Doc.code(name.id))));
-    }
-  }
-
-  record BadUsage(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  ) implements PrimResolveError {
-    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("The primitive"),
-        Doc.code(name),
-        Doc.english("is not designed to be used as a function"));
-    }
-
-    @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Use the projection syntax instead, like:"),
-        Doc.code("." + name));
     }
   }
 }

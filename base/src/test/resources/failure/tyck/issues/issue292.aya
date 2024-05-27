@@ -1,3 +1,0 @@
-open import Arith::Nat::Core
-open import Arith::Bool
-def u : Nat => true

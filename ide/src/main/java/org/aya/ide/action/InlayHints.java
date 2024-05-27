@@ -1,15 +1,15 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.Pattern;
-import org.aya.core.term.Term;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XYXY;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.core.term.Term;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -26,18 +26,17 @@ public record InlayHints(
     program.forEach(maker);
     return maker.hints.toImmutableSeq();
   }
-
-  @Override public @NotNull Pattern pre(@NotNull Pattern pattern) {
-    if (pattern instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
+  @Override public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
+    if (pat instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
       var type = Doc.sep(Doc.symbol(":"), term.toDoc(options));
-      hints.append(new Hint(bind.sourcePos(), type, true));
+      hints.append(new Hint(pos, type, true));
     }
-    return Ranged.super.pre(pattern);
+    Ranged.super.visitPattern(pos, pat);
   }
 
   public record Hint(
     @NotNull SourcePos sourcePos,
     @NotNull Doc doc,
     boolean isType
-  ) {}
+  ) { }
 }

@@ -1,3 +1,0 @@
-open import Paths
-
-def test => \ (A : I -> Type) x => coe 0 1 A x

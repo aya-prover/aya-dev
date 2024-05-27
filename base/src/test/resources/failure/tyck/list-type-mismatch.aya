@@ -1,5 +1,0 @@
-open import Data::List::Core
-open data Nat | O | S Nat
-open data Mat | zero | suc Mat
-
-def bad => [ O, S O, zero, suc zero ]

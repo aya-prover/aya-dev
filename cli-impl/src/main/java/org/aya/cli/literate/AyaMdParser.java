@@ -4,9 +4,6 @@ package org.aya.cli.literate;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.remark.AyaLiterate;
-import org.aya.concrete.remark.CodeAttrProcessor;
-import org.aya.concrete.remark.CodeOptions;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
 import org.aya.literate.frontmatter.YamlFrontMatter;
@@ -14,7 +11,10 @@ import org.aya.literate.math.InlineMath;
 import org.aya.literate.math.MathBlock;
 import org.aya.literate.parser.BaseMdParser;
 import org.aya.pretty.doc.Doc;
-import org.aya.util.error.InternalException;
+import org.aya.syntax.literate.AyaLiterate;
+import org.aya.syntax.literate.CodeAttrProcessor;
+import org.aya.syntax.literate.CodeOptions;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.Reporter;
 import org.commonmark.node.Code;
@@ -55,7 +55,7 @@ public class AyaMdParser extends BaseMdParser {
     return switch (node) {
       case InlineMath math -> new Literate.Math(true, mapChildren(math));
       case MathBlock math -> {
-        var formula = stripTrailingNewline(math.literal, math).component2();
+        var formula = stripTrailingNewline(math.literal, math).literal();
         yield new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(formula))));
       }
       case YamlFrontMatter yaml -> {
@@ -67,7 +67,7 @@ public class AyaMdParser extends BaseMdParser {
       case Code inlineCode -> {
         var spans = inlineCode.getSourceSpans();
         if (spans != null && spans.size() == 1) {
-          var sourceSpan = spans.get(0);
+          var sourceSpan = spans.getFirst();
           var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
           var startFrom = lineIndex + sourceSpan.getColumnIndex();
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
@@ -75,7 +75,7 @@ public class AyaMdParser extends BaseMdParser {
           // FIXME[hoshino]: The sourcePos here contains the beginning and trailing '`'
           yield CodeOptions.analyze(inlineCode, sourcePos);
         }
-        throw new InternalException("SourceSpans");
+        throw new Panic("SourceSpans");
       }
       default -> super.mapNode(node);
     };

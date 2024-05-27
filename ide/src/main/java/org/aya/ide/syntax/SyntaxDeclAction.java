@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.syntax;
 
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.visitor.StmtConsumer;
+import org.aya.syntax.concrete.stmt.Command;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  * @implNote This does not modify the AST.
  */
-public interface SyntaxDeclAction extends StmtConsumer {
+public interface SyntaxDeclAction extends StmtVisitor {
   @Override default void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Command.Module module)
-      StmtConsumer.super.accept(module);
+      StmtVisitor.super.accept(module);
     // should not call super on other cases
   }
 }

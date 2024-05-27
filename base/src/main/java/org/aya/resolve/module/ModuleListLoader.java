@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.ResolveInfo;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ public record ModuleListLoader(
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
   @Override
-  public @Nullable ResolveInfo load(@NotNull ImmutableSeq<@NotNull String> path, @NotNull ModuleLoader recurseLoader) {
+  public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
       var mod = loader.load(path, recurseLoader);
       if (mod != null) return mod;
@@ -24,8 +25,7 @@ public record ModuleListLoader(
     return null;
   }
 
-  @Override
-  public boolean existsFileLevelModule(@NotNull ImmutableSeq<@NotNull String> path) {
+  @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {
     return loaders.anyMatch(loader -> loader.existsFileLevelModule(path));
   }
 }

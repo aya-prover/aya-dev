@@ -1,9 +1,0 @@
-module A {
-  data False
-  data True | truth
-}
-
-open A using (True, False as True)
-
-def truth-is-true : A::True => A::True::truth
-def truth-is-not-true : True => A::True::truth

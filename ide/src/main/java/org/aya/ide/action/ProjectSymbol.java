@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -9,19 +9,21 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.literate.HighlightInfo;
 import org.aya.cli.literate.SyntaxHighlight;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.decl.Decl;
 import org.aya.ide.Resolver;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.DefVar;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record ProjectSymbol(@NotNull PrettierOptions options,
-                            @NotNull MutableList<Symbol> symbols) implements SyntaxDeclAction {
+public record ProjectSymbol(
+  @NotNull PrettierOptions options,
+  @NotNull MutableList<Symbol> symbols
+) implements SyntaxDeclAction {
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     symbol.collectSource(source);
@@ -48,7 +50,7 @@ public record ProjectSymbol(@NotNull PrettierOptions options,
     if (stmt instanceof Decl decl) {
       var children = new ProjectSymbol(options, MutableList.create());
       Resolver.withChildren(decl)
-        .filter(dv -> dv.concrete != decl && dv.concrete != null)
+        .filter(dv -> dv.concrete != decl)
         .forEach(dv -> children.collect(dv, null));
       collect(decl.ref(), children);
     }
@@ -60,7 +62,7 @@ public record ProjectSymbol(@NotNull PrettierOptions options,
     var entireLoc = dv.concrete.entireSourcePos();
     var symbol = new Symbol(
       dv.name(),
-      ComputeSignature.computeSignature(options, dv, true),
+      ComputeSignature.computeSignature(options, dv),
       SyntaxHighlight.kindOf(dv),
       nameLoc, entireLoc,
       children == null ? ImmutableSeq.empty() : children.symbols.toImmutableSeq());

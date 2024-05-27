@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * @author ice1000
- */
 public interface Problem {
   enum Severity {
     ERROR,

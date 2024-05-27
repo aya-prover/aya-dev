@@ -1,2 +1,0 @@
-prim I
-def path {A : I -> Type} (p : ∀ (i : I) -> A i) => p 3

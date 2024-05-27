@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -8,12 +8,12 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.decl.Decl;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.FindReferences;
 import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.lsp.utils.LspRange;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.javacs.lsp.CodeLens;
 import org.javacs.lsp.Command;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +39,9 @@ public record LensMaker(
 
   @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Decl maybe) {
-      Resolver.withChildren(maybe).filter(dv -> dv.concrete != null).forEach(dv -> {
+      Resolver.withChildren(maybe).forEach(dv -> {
         var refs = FindReferences.findRefsOutsideDefs(SeqView.of(dv), libraries).toImmutableSeq();
-        if (refs.size() > 0) {
+        if (!refs.isEmpty()) {
           var sourcePos = dv.concrete.sourcePos();
           var uri = LspRange.toFileUri(sourcePos);
           var range = LspRange.toRange(sourcePos);

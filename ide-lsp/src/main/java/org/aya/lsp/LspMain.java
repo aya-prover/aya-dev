@@ -1,13 +1,9 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
-import org.aya.cli.library.incremental.CompilerAdvisor;
-import org.aya.lsp.server.AyaLanguageClient;
-import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspArgs;
-import org.javacs.lsp.LSP;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
@@ -32,13 +28,14 @@ public class LspMain extends LspArgs implements Callable<Integer> {
       case debug -> runDebug();
     };
 
-    LSP.connect(
-      AyaLanguageClient.class,
-      client -> new AyaLanguageServer(CompilerAdvisor.inMemory(), client),
-      startup.in,
-      startup.out
-    );
-    return 0;
+    throw new UnsupportedOperationException("TODO");
+    // LSP.connect(
+    //   AyaLanguageClient.class,
+    //   client -> new AyaLanguageServer(CompilerAdvisor.inMemory(), client),
+    //   startup.in,
+    //   startup.out
+    // );
+    // return 0;
   }
 
   private static @NotNull Startup runDebug() {

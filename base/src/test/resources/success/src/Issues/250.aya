@@ -1,7 +1,0 @@
-open import Arith::Nat
-open import Paths
-
-open data Crash
-| ready
-| go Crash
-| goReady (i : I) { i := go ready | ~ i := ready }

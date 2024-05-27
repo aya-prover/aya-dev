@@ -1,5 +1,0 @@
-open data Unit | unit
-
-overlap def test (a : Unit) : Unit
- | a => a
- | unit => unit

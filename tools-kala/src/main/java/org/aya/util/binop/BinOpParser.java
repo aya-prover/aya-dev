@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -6,8 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.Set;
 import kala.collection.mutable.*;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.util.BinOpElem;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -28,7 +26,8 @@ public abstract class BinOpParser<
     this.seq = seq;
   }
 
-  private final MutableSinglyLinkedList<Tuple2<Elm, BinOpSet.BinOP>> opStack = MutableSinglyLinkedList.create();
+  private record StackElem<Elm>(Elm op, BinOpSet.BinOP binOp) {}
+  private final MutableSinglyLinkedList<StackElem<Elm>> opStack = MutableSinglyLinkedList.create();
   private final MutableLinkedList<Elm> prefixes = MutableLinkedList.create();
   private final MutableMap<Elm, MutableSet<AppliedSide>> appliedOperands = MutableMap.create();
 
@@ -72,17 +71,17 @@ public abstract class BinOpParser<
         var currentOp = toSetElem(expr, opSet);
         while (opStack.isNotEmpty()) {
           var top = opStack.peek();
-          var cmp = opSet.compare(top.component2(), currentOp);
+          var cmp = opSet.compare(top.binOp, currentOp);
           if (cmp == BinOpSet.PredCmp.Tighter) {
             if (!foldLhsFor(expr))
               return createErrorExpr(sourcePos);
           } else if (cmp == BinOpSet.PredCmp.Equal) {
             // associativity should be specified to both left/right when their share
             // the same precedence. Or a parse error should be reported.
-            var topAssoc = top.component2().assoc();
+            var topAssoc = top.binOp.assoc();
             var currentAssoc = currentOp.assoc();
             if (Assoc.assocAmbiguous(topAssoc, currentAssoc)) {
-              reportFixityError(topAssoc, currentAssoc, top.component2().name(), currentOp.name(), of(top.component1()));
+              reportFixityError(topAssoc, currentAssoc, top.binOp.name(), currentOp.name(), of(top.op));
               return createErrorExpr(sourcePos);
             }
             if (topAssoc.leftAssoc()) {
@@ -91,17 +90,17 @@ public abstract class BinOpParser<
           } else if (cmp == BinOpSet.PredCmp.Looser) {
             break;
           } else {
-            reportAmbiguousPred(currentOp.name(), top.component2().name(), of(top.component1()));
+            reportAmbiguousPred(currentOp.name(), top.binOp.name(), of(top.op));
             return createErrorExpr(sourcePos);
           }
         }
-        opStack.push(Tuple.of(expr, currentOp));
+        opStack.push(new StackElem<>(expr, currentOp));
       }
     }
 
     while (opStack.isNotEmpty()) {
       foldTop();
-      if (opStack.isNotEmpty()) markAppliedOperand(opStack.peek().component1(), AppliedSide.Rhs);
+      if (opStack.isNotEmpty()) markAppliedOperand(opStack.peek().op, AppliedSide.Rhs);
     }
 
     assert prefixes.sizeEquals(1);
@@ -141,13 +140,13 @@ public abstract class BinOpParser<
 
   private boolean foldTop() {
     var opDef = opStack.pop();
-    if (opDef.component2().assoc().isBinary()) {
-      prefixes.append(foldTopBinary(opDef.component1()));
+    if (opDef.binOp.assoc().isBinary()) {
+      prefixes.append(foldTopBinary(opDef.op));
     } else { // implies isUnary()
-      var op = opDef.component1();
+      var op = opDef.op;
       if (prefixes.isEmpty()) {
         // we don't support unary section -- just raise an error.
-        reportMissingOperand(opDef.component2().name(), op.term().sourcePos());
+        reportMissingOperand(opDef.binOp.name(), op.term().sourcePos());
         return false;
       }
       var operand = prefixes.dequeue();

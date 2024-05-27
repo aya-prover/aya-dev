@@ -1,8 +1,0 @@
-open import Paths
-
-// Alternative definition of torus from the HoTT book
-open data T²
-| point
-| line1 : point = point
-| line2 : point = point
-| face : line1 <==> line2 = line2 <==> line1

@@ -1,4 +1,0 @@
-open data Nat1 | zero | suc Nat1
-open data Nat2 | zero | suc Nat2
-
-def one => zero

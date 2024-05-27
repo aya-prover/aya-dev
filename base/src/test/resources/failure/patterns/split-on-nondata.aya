@@ -1,3 +1,0 @@
-open data Unit | unit
-def test (a : Type) : Type
- | unit y => a

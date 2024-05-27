@@ -1,8 +1,0 @@
-open import Paths using (=, idp)
-
-data Nat | O | S Nat
-
-def zero : Nat => let open Nat using (O) in O
-def suc (n : Nat) : Nat => let open Nat hiding (O) in S n
-
-def they-are : suc zero = Nat::S Nat::O => idp

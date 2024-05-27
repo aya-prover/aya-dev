@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
@@ -7,9 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.core.def.GenericDef;
-import org.aya.core.serde.Serializer;
 import org.aya.resolve.ResolveInfo;
+import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +39,8 @@ public class LspTestCompilerAdvisor extends InMemoryCompilerAdvisor {
   }
 
   @Override
-  public void doSaveCompiledCore(Serializer.@NotNull State serState, @NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<GenericDef> defs) {
-    super.doSaveCompiledCore(serState, file, resolveInfo, defs);
+  public void doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
+    super.doSaveCompiledCore(file, resolveInfo, defs);
     newlyCompiled.append(resolveInfo);
   }
 }

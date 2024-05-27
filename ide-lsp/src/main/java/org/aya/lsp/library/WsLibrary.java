@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.library;
 
@@ -49,23 +49,10 @@ public record WsLibrary(
       ImmutableSeq.empty()
     );
   }
-
-  @Override public @NotNull SeqView<Path> modulePath() {
-    return SeqView.of(workspace);
-  }
-
-  @Override public @NotNull SeqView<LibrarySource> librarySources() {
-    return sources.view();
-  }
-
-  @Override public @NotNull SeqView<LibraryOwner> libraryDeps() {
-    return SeqView.empty();
-  }
-
-  @Override public @NotNull LibraryConfig underlyingLibrary() {
-    return mockConfig;
-  }
-
+  @Override public @NotNull SeqView<Path> modulePath() { return SeqView.of(workspace); }
+  @Override public @NotNull SeqView<LibrarySource> librarySources() { return sources.view(); }
+  @Override public @NotNull SeqView<LibraryOwner> libraryDeps() { return SeqView.empty(); }
+  @Override public @NotNull LibraryConfig underlyingLibrary() { return mockConfig; }
   @Override public void addModulePath(@NotNull Path newPath) {
     // do nothing
   }

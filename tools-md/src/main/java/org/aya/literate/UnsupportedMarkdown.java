@@ -8,9 +8,6 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ice1000
- */
 public record UnsupportedMarkdown(
   @Override @NotNull SourcePos sourcePos,
   @NotNull String nodeName

@@ -1,9 +1,0 @@
-def uncurry (A : Type) (B : Type) (C : Type)
-             (f : Fn A B -> C)
-             (p : Sig A  B) : C
-  => f (p.1) (p.2)
-
-def uncurry3 (A : Type) (B : Type) (C : Type) (D : Type)
-              (f : Fn A B C -> D)
-              (p : Sig A B  C) : D
-  => f (p.1) (p.2) (p.3)

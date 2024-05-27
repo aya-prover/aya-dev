@@ -1,63 +1,56 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.decl.Decl;
-import org.aya.concrete.stmt.decl.DeclInfo;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.Def;
-import org.aya.core.def.FnDef;
-import org.aya.core.def.GenericDef;
-import org.aya.core.def.UserDef;
-import org.aya.core.term.Callable;
-import org.aya.core.term.Term;
-import org.aya.generic.util.InterruptException;
+import org.aya.generic.InterruptException;
+import org.aya.generic.stmt.TyckOrder;
+import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.ResolveInfo;
+import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.concrete.stmt.decl.FnBody;
+import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.term.call.Callable;
+import org.aya.syntax.ref.DefVar;
 import org.aya.terck.BadRecursion;
 import org.aya.terck.CallResolver;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.StmtTycker;
-import org.aya.tyck.error.CounterexampleError;
 import org.aya.tyck.error.TyckOrderError;
-import org.aya.tyck.trace.Trace;
-import org.aya.util.reporter.BufferReporter;
-import org.aya.util.reporter.CollectingReporter;
+import org.aya.tyck.tycker.Problematic;
+import org.aya.util.error.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.CallGraph;
+import org.aya.util.terck.Diagonal;
 import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.SCCTycker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.function.Function;
 
 /**
  * Tyck statements in SCC.
  *
- * @author kiva
- * @see ExprTycker
+ * @see org.aya.tyck.ExprTycker
  */
 public record AyaSccTycker(
   @NotNull StmtTycker tycker,
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
-  @NotNull MutableList<@NotNull GenericDef> wellTyped,
-  @NotNull MutableMap<Decl.TopLevel, CollectingReporter> sampleReporters
-) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
-  public static @NotNull AyaSccTycker create(ResolveInfo resolveInfo, @Nullable Trace.Builder builder, @NotNull Reporter outReporter) {
+  @NotNull MutableList<@NotNull TyckDef> wellTyped
+) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed>, Problematic {
+  public static @NotNull AyaSccTycker create(ResolveInfo info, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    return new AyaSccTycker(new StmtTycker(counting, builder), counting, resolveInfo, MutableList.create(), MutableMap.create());
+    var stmt = new StmtTycker(counting, info.shapeFactory(), info.primFactory());
+    return new AyaSccTycker(stmt, counting, info, MutableList.create());
   }
 
-  public @NotNull ImmutableSeq<TyckOrder> tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) {
+  @Override public @NotNull ImmutableSeq<TyckOrder>
+  tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) throws SCCTyckingFailed {
     try {
       if (scc.isEmpty()) return ImmutableSeq.empty();
       if (scc.sizeEquals(1)) checkUnit(scc.getFirst());
@@ -70,89 +63,24 @@ public record AyaSccTycker(
   }
 
   private void checkMutual(@NotNull ImmutableSeq<TyckOrder> scc) {
-    var unit = scc.view().map(TyckOrder::unit).distinct().toImmutableSeq();
-    // the flattened dependency graph (FDG) lose information about header order, in other words,
-    // FDG treats all order as body order, so it allows all kinds of mutual recursion to be generated.
-    // To detect circular dependency in signatures which we forbid, we have to apply the old way,
-    // that is, what we did before https://github.com/aya-prover/aya-dev/pull/326
-    var headerOrder = headerOrder(scc, unit);
-    if (headerOrder.sizeEquals(1)) {
-      checkUnit(new TyckOrder.Body(headerOrder.getFirst()));
-    } else {
-      var tyckTasks = headerOrder.view()
-        .<TyckOrder>map(TyckOrder.Head::new)
-        .appendedAll(headerOrder.map(TyckOrder.Body::new))
-        .toImmutableSeq();
-      tyckTasks.forEach(this::check);
-      terck(tyckTasks.view());
+    var heads = scc.filterIsInstance(TyckOrder.Head.class);
+    if (heads.sizeGreaterThanOrEquals(2)) {
+      fail(new TyckOrderError.CircularSignature(heads.map(TyckOrder.Head::unit)));
+      throw new SCCTyckingFailed(scc);
     }
-  }
-
-  /**
-   * Generate the order of dependency of headers, fail if a cycle occurs.
-   *
-   * @author re-xyr, kiva
-   */
-  public @NotNull ImmutableSeq<TyckUnit> headerOrder(@NotNull ImmutableSeq<TyckOrder> forError, @NotNull ImmutableSeq<TyckUnit> stmts) {
-    var graph = MutableGraph.<TyckUnit>create();
-    stmts.forEach(stmt -> {
-      var reference = MutableList.<TyckUnit>create();
-      new SigRefFinder(reference).accept(stmt);
-      var filter = reference.filter(unit -> unit.needTyck(resolveInfo.thisModule().modulePath().path()));
-      // If your telescope uses yourself, you should reject the function. --- ice1000
-      // note: just check direct references, indirect ones will be checked using topological order
-      if (filter.contains(stmt)) {
-        reporter.report(new TyckOrderError.SelfReference(stmt));
-        throw new SCCTyckingFailed(forError);
-      }
-      graph.sucMut(stmt).appendAll(filter);
-    });
-    var order = graph.topologicalOrder();
-    var cycle = order.filter(s -> s.sizeGreaterThan(1));
-    if (cycle.isNotEmpty()) {
-      cycle.forEach(c -> reporter.report(new TyckOrderError.CircularSignature(c)));
-      throw new SCCTyckingFailed(forError);
+    throw new Panic("This place is in theory unreachable, we need to investigate if it is reached");
+    /*
+    var unit = scc.view().map(TyckOrder::unit)
+      .distinct()
+      .sorted(Comparator.comparing(SourceNode::sourcePos))
+      .toImmutableSeq();
+    if (unit.sizeEquals(1)) checkUnit(new TyckOrder.Body(unit.getFirst()));
+    else {
+      unit.forEach(u -> check(new TyckOrder.Head(u)));
+      unit.forEach(u -> check(new TyckOrder.Body(u)));
+      // terck(scc.view());
     }
-    return order.flatMap(Function.identity());
-  }
-
-  private void checkUnit(@NotNull TyckOrder order) {
-    if (order instanceof TyckOrder.Body
-      && order.unit() instanceof TeleDecl.FnDecl fn
-      && fn.body instanceof TeleDecl.ExprBody(var expr)) {
-      checkSimpleFn(order, fn, expr);
-    } else {
-      check(order);
-      if (order instanceof TyckOrder.Body body)
-        terck(SeqView.of(body));
-    }
-  }
-
-  private <T> boolean hasSuc(
-    @NotNull MutableGraph<T> G,
-    @NotNull MutableSet<T> book,
-    @NotNull T vertex, @NotNull T suc
-  ) {
-    if (book.contains(vertex)) return false;
-    book.add(vertex);
-    for (var test : G.suc(vertex)) {
-      if (test.equals(suc)) return true;
-      if (hasSuc(G, book, test, suc)) return true;
-    }
-    return false;
-  }
-
-  private <T> boolean selfReferencing(@NotNull MutableGraph<T> graph, @NotNull T unit) {
-    return hasSuc(graph, MutableSet.create(), unit, unit);
-  }
-
-  private void checkSimpleFn(@NotNull TyckOrder order, @NotNull TeleDecl.FnDecl fn, Expr expr) {
-    if (selfReferencing(resolveInfo.depGraph(), order)) {
-      reporter.report(new BadRecursion(fn.sourcePos(), fn.ref, null));
-      throw new SCCTyckingFailed(ImmutableSeq.of(order));
-    }
-    decideTyckResult(fn, fn, tycker.simpleFn(reuseTopLevel(fn), fn, expr));
-    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
+    */
   }
 
   private void check(@NotNull TyckOrder tyckOrder) {
@@ -162,87 +90,95 @@ public record AyaSccTycker(
     }
   }
 
+  private void checkUnit(@NotNull TyckOrder order) {
+    if (order.unit() instanceof FnDecl fn && fn.body instanceof FnBody.ExprBody) {
+      if (selfReferencing(resolveInfo.depGraph(), order)) {
+        fail(new BadRecursion(fn.sourcePos(), fn.ref, null));
+        throw new SCCTyckingFailed(ImmutableSeq.of(order));
+      }
+      check(new TyckOrder.Body(fn));
+    } else {
+      check(order);
+      if (order instanceof TyckOrder.Body body) terck(ImmutableSeq.of(body));
+    }
+  }
+  private void terck(@NotNull ImmutableSeq<TyckOrder.Body> units) {
+    var recDefs = units.view()
+      .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
+      .map(TyckOrder::unit)
+      .toImmutableSeq();
+    if (recDefs.isEmpty()) return;
+    // TODO: positivity check for data/record definitions
+    var fn = recDefs.view()
+      .filterIsInstance(FnDecl.class)
+      .map(f -> f.ref.core)
+      .toImmutableSeq();
+    terckRecursiveFn(fn);
+  }
+
+  private void terckRecursiveFn(@NotNull ImmutableSeq<FnDef> fn) {
+    var targets = MutableSet.<TyckDef>from(fn);
+    if (targets.isEmpty()) return;
+    var graph = CallGraph.<Callable.Tele, TyckDef>create();
+    fn.forEach(def -> new CallResolver(resolveInfo.makeTyckState(), def, targets, graph).check());
+    graph.findBadRecursion().view()
+      .sorted(Comparator.comparing(a -> domRef(a).concrete.sourcePos()))
+      .forEach(f -> {
+        var ref = domRef(f);
+        fail(new BadRecursion(ref.concrete.sourcePos(), ref, f));
+      });
+  }
+
+  private static @NotNull DefVar<?, ?> domRef(Diagonal<?, TyckDef> f) {
+    return f.matrix().domain().ref();
+  }
+
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
-    if (stmt instanceof Decl decl) tycker.tyckHeader(decl, reuse(decl));
+    if (stmt instanceof Decl decl) tycker.checkHeader(decl);
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     if (stmt instanceof Decl decl) {
-      var def = tycker.tyck(decl, reuse(decl));
-      if (decl instanceof Decl.TopLevel topLevel) decideTyckResult(decl, topLevel, def);
+      var def = tycker.check(decl);
+      if (!decl.isExample) {
+        // In case I'm not an example, remember me and recognize my shape
+        wellTyped.append(def);
+        tycker.shapeFactory().bonjour(def);
+      }
     }
     if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
   }
 
-  private void decideTyckResult(@NotNull Decl decl, @NotNull Decl.TopLevel proof, @NotNull GenericDef def) {
-    assert decl == proof;
-    switch (proof.personality()) {
-      case NORMAL -> {
-        wellTyped.append(def);
-        resolveInfo.shapeFactory().bonjour(def);
-      }
-      case COUNTEREXAMPLE -> {
-        var sampleReporter = sampleReporters.getOrPut(proof, BufferReporter::new);
-        var problems = sampleReporter.problems().toImmutableSeq();
-        if (problems.isEmpty()) reporter.report(new CounterexampleError(decl.sourcePos(), decl.ref()));
-        if (def instanceof UserDef<?> userDef) userDef.problems = problems;
-      }
+  /**
+   * For self-reference check only, and this is nontrivial, as when it sees a dependency on a head,
+   * it checks the upstream of the body too.
+   *
+   * @see #selfReferencing
+   */
+  private boolean hasSuc(
+    @NotNull MutableGraph<TyckOrder> G,
+    @NotNull MutableSet<TyckUnit> book,
+    @NotNull TyckOrder vertex, @NotNull TyckOrder suc
+  ) {
+    if (book.contains(vertex.unit())) return false;
+    book.add(vertex.unit());
+    for (var test : G.suc(vertex)) {
+      if (test.unit() == suc.unit()) return true;
+      if (hasSuc(G, book, test, suc)) return true;
     }
+    if (vertex instanceof TyckOrder.Head head)
+      return hasSuc(G, book, head.toBody(), suc);
+    return false;
   }
 
-  private @NotNull ExprTycker reuse(@NotNull Decl decl) {
-    // IDEA says the match is not exhaustive, but it is.
-    return switch (decl) {
-      case Decl.TopLevel topLevel -> reuseTopLevel(topLevel);
-      case TeleDecl.DataCtor ctor -> reuseTopLevel(ctor.dataRef.concrete);
-      case TeleDecl.ClassMember field -> reuseTopLevel(field.classDef.concrete);
-    };
-  }
-
-  private @NotNull ExprTycker reuseTopLevel(@NotNull Decl.TopLevel decl) {
-    // prevent counterexample errors from being reported to the user reporter
-    if (decl.personality() == DeclInfo.Personality.COUNTEREXAMPLE) {
-      var reporter = sampleReporters.getOrPut(decl, BufferReporter::new);
-      return new ExprTycker(resolveInfo.primFactory(), resolveInfo.shapeFactory(), reporter, tycker.traceBuilder);
-    }
-    return resolveInfo.newTycker(reporter, tycker.traceBuilder);
-  }
-
-  private void terck(@NotNull SeqView<TyckOrder> units) {
-    var recDefs = units.filterIsInstance(TyckOrder.Body.class)
-      .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
-      .map(TyckOrder::unit);
-    if (recDefs.isEmpty()) return;
-    // TODO: positivity check for data/record definitions
-    var fn = recDefs.filterIsInstance(TeleDecl.FnDecl.class)
-      .map(f -> f.ref.core);
-    terckRecursiveFn(fn);
-  }
-
-  private void terckRecursiveFn(@NotNull SeqView<FnDef> fn) {
-    var targets = MutableSet.<Def>from(fn);
-    if (targets.isEmpty()) return;
-    var graph = CallGraph.<Callable, Def, Term.Param>create();
-    fn.forEach(def -> new CallResolver(resolveInfo.primFactory(), def, targets, graph).accept(def));
-    var bads = graph.findBadRecursion();
-    bads.view()
-      .sorted(Comparator.comparing(a -> a.matrix().domain().ref().concrete.sourcePos()))
-      .forEach(f -> {
-        var ref = f.matrix().domain().ref();
-        reporter.report(new BadRecursion(ref.concrete.sourcePos(), ref, f));
-      });
+  private boolean selfReferencing(@NotNull MutableGraph<TyckOrder> graph, @NotNull TyckOrder unit) {
+    return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
   public static class SCCTyckingFailed extends InterruptException {
     public final @NotNull ImmutableSeq<TyckOrder> what;
-
-    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckOrder> what) {
-      this.what = what;
-    }
-
-    @Override public InterruptStage stage() {
-      return InterruptStage.Tycking;
-    }
+    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckOrder> what) { this.what = what; }
+    @Override public InterruptStage stage() { return InterruptStage.Tycking; }
   }
 }

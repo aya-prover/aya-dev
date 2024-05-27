@@ -1,5 +1,0 @@
-open data Unit
-  | unit
-
-def bad (u : Unit) : Unit
-  | _ => u

@@ -1,13 +1,12 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
-import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.term.SortTerm;
-import org.aya.core.term.Term;
-import org.aya.generic.ExprProblem;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.stmt.decl.DataCon;
+import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface UnifyError extends TyckError {
   record Type(
     @Override @NotNull Expr expr,
+    @Override @NotNull SourcePos sourcePos,
     @NotNull UnifyInfo.Comparison comparison,
     @NotNull UnifyInfo info
-  ) implements ExprProblem, UnifyError {
+  ) implements UnifyError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var prologue = Doc.vcat(
         Doc.english("Cannot check the expression"),
@@ -27,19 +27,20 @@ public sealed interface UnifyError extends TyckError {
     }
   }
 
+
   record ConReturn(
-    @NotNull TeleDecl.DataCtor ctor,
+    @NotNull DataCon con,
     @NotNull UnifyInfo.Comparison comparison,
     @NotNull UnifyInfo info
   ) implements UnifyError {
     @Override public @NotNull SourcePos sourcePos() {
-      return ctor.sourcePos();
+      return con.sourcePos();
     }
 
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var prologue = Doc.vcat(
         Doc.english("Cannot make sense of the return type of the constructor"),
-        Doc.par(1, ctor.toDoc(options)),
+        Doc.par(1, con.toDoc(options)),
         Doc.english("which eventually returns"));
       return info.describeUnify(options, comparison, prologue, Doc.english("while it should return"));
     }
@@ -47,8 +48,9 @@ public sealed interface UnifyError extends TyckError {
 
   record PiDom(
     @Override @NotNull Expr expr,
+    @Override @NotNull SourcePos sourcePos,
     Term result, SortTerm sort
-  ) implements UnifyError, ExprProblem {
+  ) implements UnifyError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The type"),

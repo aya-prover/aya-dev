@@ -236,8 +236,10 @@ public record PrettyError(
     @NotNull CodeBuilder builder,
     @NotNull ImmutableSeq<HintLine> hintLines
   ) {
-    var between = hintLines.filter(h -> h.loc == Span.NowLoc.Between)
-      .sorted(Comparator.comparingInt(a -> a.allocIndent));
+    var between = hintLines.view()
+      .filter(h -> h.loc == Span.NowLoc.Between)
+      .sorted(Comparator.comparingInt(a -> a.allocIndent))
+      .toImmutableSeq();
     var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
     var vbar = computeMultilineVBar(between);
     renderHints(false, false, currentLine, codeIndent, vbar.component1(), vbar.component2(), currentCode, builder, others);

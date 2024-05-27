@@ -2,11 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
-import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
-import org.aya.resolve.context.*;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleExport;
+import org.aya.resolve.context.ModuleSymbol;
+import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.RepoLike;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.Contract;
@@ -25,7 +29,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull AnyVar ref,
     @NotNull ModuleName modName,
     @NotNull String name,
-    Stmt.@NotNull Accessibility acc,
+    @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
     // REPL always overwrites symbols.
@@ -49,7 +53,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull ImmutableSeq<@NotNull String> extraName) {
+  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName) {
     return new ReplContext(this, this.modulePath().derive(extraName));
   }
 

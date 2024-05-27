@@ -1,8 +1,0 @@
-open import Arith::Nat::Core
-
-def f Nat : Nat
-  | n => g (suc n)
-
-def g Nat : Nat
-  | zero => zero
-  | suc n => f n

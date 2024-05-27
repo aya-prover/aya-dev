@@ -7,15 +7,18 @@ import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateFaithfulPrettier;
 import org.aya.cli.literate.SyntaxHighlight;
-import org.aya.concrete.GenericAyaFile;
-import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.desugar.Desugarer;
-import org.aya.concrete.remark.AyaLiterate;
-import org.aya.concrete.stmt.Stmt;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
+import org.aya.normalize.Normalizer;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.salt.Desalt;
+import org.aya.resolve.visitor.ExprResolver;
+import org.aya.syntax.GenericAyaFile;
+import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.literate.AyaLiterate;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -46,21 +49,26 @@ public record LiterateData(
   public void resolve(@NotNull ResolveInfo info) {
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      c.expr = new Desugarer(info).apply(c.expr.resolveLax(info.thisModule()));
+      c.expr = ExprResolver.resolveLax(info.thisModule(), c.expr).descent(new Desalt(info));
     });
   }
 
   public void tyck(@NotNull ResolveInfo info) {
-    var tycker = info.newTycker(info.thisModule().reporter(), null);
+    var tycker = info.newTycker();
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      c.tyckResult = tycker.zonk(tycker.synthesize(c.expr)).normalize(c.options.mode(), tycker.state);
+      var result = tycker.zonk(tycker.synthesize(c.expr));
+      var normalizer = new Normalizer(tycker.state);
+      c.tyckResult = new AyaLiterate.TyckResult(
+        normalizer.normalize(result.wellTyped(), c.options.mode()),
+        normalizer.normalize(result.type(), c.options.mode())
+      );
     });
   }
 
   public static @NotNull Doc toDoc(
     @NotNull GenericAyaFile ayaFile,
-    @Nullable ImmutableSeq<String> currentFileModule,
+    @Nullable ModulePath currentFileModule,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
     @NotNull PrettierOptions options

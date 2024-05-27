@@ -1,5 +1,0 @@
-data X : Set
-data infix = (a b : X) : Set
-
-data Test : Type
-| con (x : _) (y : X) (x = y)

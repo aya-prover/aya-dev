@@ -9,12 +9,7 @@ import java.nio.file.Path;
 public sealed interface LibraryDependency {
   @NotNull String depName();
 
-  record DepVersion(@NotNull String depName, @NotNull String version) implements LibraryDependency {
-  }
-
-  record DepGithub(@NotNull String depName, @NotNull String repo) implements LibraryDependency {
-  }
-
-  record DepFile(@NotNull String depName, @NotNull Path depRoot) implements LibraryDependency {
-  }
+  record DepVersion(@NotNull String depName, @NotNull String version) implements LibraryDependency { }
+  record DepGithub(@NotNull String depName, @NotNull String repo) implements LibraryDependency { }
+  record DepFile(@NotNull String depName, @NotNull Path depRoot) implements LibraryDependency { }
 }

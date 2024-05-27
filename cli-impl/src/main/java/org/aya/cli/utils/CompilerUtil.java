@@ -1,17 +1,14 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
 import org.aya.cli.single.CompilerFlags;
-import org.aya.core.def.GenericDef;
-import org.aya.core.serde.CompiledAya;
-import org.aya.core.serde.Serializer;
-import org.aya.util.error.InternalException;
-import org.aya.generic.util.InterruptException;
+import org.aya.compiler.CompiledModule;
+import org.aya.generic.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.FileModuleLoader;
+import org.aya.util.error.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +25,7 @@ public class CompilerUtil {
   ) throws IOException {
     try {
       block.runChecked();
-    } catch (InternalException e) {
+    } catch (Panic e) {
       FileModuleLoader.handleInternalError(e);
       reporter.reportString("Internal error");
       return e.exitCode();
@@ -46,13 +43,8 @@ public class CompilerUtil {
     }
   }
 
-  public static void saveCompiledCore(
-    @NotNull Path coreFile,
-    @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<GenericDef> defs,
-    @NotNull Serializer.State state
-  ) throws IOException {
-    var compiledAya = CompiledAya.from(resolveInfo, defs, state);
+  public static void saveCompiledCore(@NotNull Path coreFile, @NotNull ResolveInfo resolveInfo) throws IOException {
+    var compiledAya = CompiledModule.from(resolveInfo);
     try (var outputStream = coreWriter(coreFile)) {
       outputStream.writeObject(compiledAya);
     }

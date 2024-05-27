@@ -1,21 +1,17 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.Def;
-import org.aya.core.term.PiTerm;
-import org.aya.core.term.Term;
 import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
 import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
+import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,34 +22,18 @@ public interface ComputeSignature {
   ) {
     var target = Resolver.resolveVar(source, xy).getFirstOrNull();
     if (target == null) return Doc.empty();
-    return computeSignature(options, target.data(), true);
+    return computeSignature(options, target.data());
   }
 
-  @SuppressWarnings("unchecked")
-  static @NotNull Doc computeSignature(@NotNull PrettierOptions options, @NotNull AnyVar target, boolean withResult) {
+  static @NotNull Doc computeSignature(@NotNull PrettierOptions options, @NotNull AnyVar target) {
     return switch (target) {
       case LocalVar localVar -> BasePrettier.varDoc(localVar); // TODO: compute type of local vars
       case DefVar<?, ?> ref -> {
         // #299: hovering a mouse on a definition whose header is failed to tyck
-        if (!(ref.concrete instanceof TeleDecl<?> concrete)
-          || (concrete.signature == null && ref.core == null)) yield Doc.empty();
-        var defVar = (DefVar<? extends Def, ? extends TeleDecl<?>>) ref;
-        yield computeSignature(options, Def.defTele(defVar), Def.defResult(defVar), withResult);
+        if (ref.signature == null && ref.core == null) yield Doc.empty();
+        yield TyckDef.defType(new TyckAnyDef<>(ref)).toDoc(options);
       }
       default -> Doc.empty();
     };
-  }
-
-  static @NotNull Doc computeSignature(
-    @NotNull PrettierOptions options,
-    @NotNull ImmutableSeq<Term.Param> defTele, @NotNull Term defResult,
-    boolean withResult
-  ) {
-    if (withResult) {
-      var type = PiTerm.make(defTele, defResult);
-      return type.toDoc(options);
-    }
-    var prettier = new CorePrettier(options);
-    return prettier.visitTele(defTele, defResult, Term::findUsages);
   }
 }

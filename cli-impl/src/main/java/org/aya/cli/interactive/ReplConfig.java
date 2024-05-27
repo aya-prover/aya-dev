@@ -7,8 +7,8 @@ import com.google.gson.InstanceCreator;
 import com.google.gson.JsonParseException;
 import kala.control.Option;
 import org.aya.cli.utils.LiteratePrettierOptions;
-import org.aya.generic.util.AyaHome;
-import org.aya.generic.util.NormalizeMode;
+import org.aya.generic.AyaHome;
+import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 public class ReplConfig implements AutoCloseable {
   public transient final Option<Path> configFile;
   public @NotNull String prompt = "> ";
-  public @NotNull NormalizeMode normalizeMode = NormalizeMode.NF;
+  public @NotNull NormalizeMode normalizeMode = NormalizeMode.FULL;
   public @NotNull LiteratePrettierOptions literatePrettier = new LiteratePrettierOptions();
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */

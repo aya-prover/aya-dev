@@ -250,7 +250,7 @@ public class DocStringPrinterTest {
       - second
         - second.1
       - third
-            
+      
       """, list.commonRender());
   }
 }

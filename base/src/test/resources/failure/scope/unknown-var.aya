@@ -1,2 +1,0 @@
-open data Nat : Type | zero
-def p => Nat::suc Nat::zero

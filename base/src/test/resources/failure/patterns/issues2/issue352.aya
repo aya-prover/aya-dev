@@ -1,4 +1,0 @@
-open import Paths
-
-variable A B : Type
-def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g

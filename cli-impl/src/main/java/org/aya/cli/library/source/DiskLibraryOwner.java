@@ -7,7 +7,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.json.LibraryDependency;
-import org.aya.generic.util.AyaFiles;
+import org.aya.syntax.AyaFiles;
 import org.aya.util.error.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

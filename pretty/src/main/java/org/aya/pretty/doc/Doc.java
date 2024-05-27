@@ -122,30 +122,23 @@ public sealed interface Doc extends Docile {
   //region Doc Variants
 
   /** The empty document; conceptually the unit of 'Cat' */
-  enum Empty implements Doc {
-    INSTANCE
-  }
+  enum Empty implements Doc { INSTANCE }
 
   /**
    * A plain text line without '\n'. which may be escaped by backend.
    */
-  record PlainText(@NotNull String text) implements Doc {
-  }
+  record PlainText(@NotNull String text) implements Doc { }
 
   /**
    * Already escaped text, which will not be escaped by backend.
    * Callers should be responsible for escaping the text (like '\n').
    */
-  record EscapedText(@NotNull String text) implements Doc {
-  }
+  record EscapedText(@NotNull String text) implements Doc { }
 
   /**
    * A special symbol that may get rendered in a special way
-   *
-   * @author ice1000
    */
-  record SpecialSymbol(@NotNull String text) implements Doc {
-  }
+  record SpecialSymbol(@NotNull String text) implements Doc { }
 
   /**
    * A clickable text line without '\n'.
@@ -156,36 +149,27 @@ public sealed interface Doc extends Docile {
   record HyperLinked(
     @NotNull Doc doc, @NotNull Link href,
     @Nullable Link id, @Nullable String hover
-  ) implements Doc {
-  }
+  ) implements Doc { }
 
-  record Image(@NotNull Doc alt, @NotNull Link src) implements Doc {
-  }
+  record Image(@NotNull Doc alt, @NotNull Link src) implements Doc { }
 
   /** Inline code, with special escape settings compared to {@link PlainText} */
-  record InlineCode(@NotNull Language language, @NotNull Doc code) implements Doc {
-  }
+  record InlineCode(@NotNull Language language, @NotNull Doc code) implements Doc { }
 
   /** Code block, with special escape settings compared to {@link PlainText} */
-  record CodeBlock(@NotNull Language language, @NotNull Doc code) implements Doc {
-  }
+  record CodeBlock(@NotNull Language language, @NotNull Doc code) implements Doc { }
 
   /** Inline math, with special escape settings compared to {@link PlainText} */
-  record InlineMath(@NotNull Doc formula) implements Doc {
-  }
+  record InlineMath(@NotNull Doc formula) implements Doc { }
 
   /** Math block, with special escape settings compared to {@link PlainText} */
-  record MathBlock(@NotNull Doc formula) implements Doc {
-  }
+  record MathBlock(@NotNull Doc formula) implements Doc { }
 
   /**
    * Styled document
    */
-  record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc {
-  }
-
-  record Tooltip(@NotNull Doc doc, @NotNull Docile tooltip) implements Doc {
-  }
+  record Styled(@NotNull Seq<Style> styles, @NotNull Doc doc) implements Doc { }
+  record Tooltip(@NotNull Doc doc, @NotNull Docile tooltip) implements Doc { }
 
   /**
    * Hard line break

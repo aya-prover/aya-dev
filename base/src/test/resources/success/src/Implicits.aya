@@ -1,6 +1,0 @@
-open import Arith::Int
-open import Data::List
-
-def simple : List Nat => 0 :< 1 :< nil
-def length1: Nat => length {A := Nat} simple
-def length2: Nat => length (map {B := Int} pos simple)

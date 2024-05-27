@@ -1,5 +1,0 @@
-open import Paths
-
-def BinOp (A : Type) : Type => A → A → A
-def Commutative {A : Type} (op : BinOp A) => ∀ (a b : A) -> op a b = op b a
-def Associative {A : Type} (op : BinOp A) => ∀ (a b c : A) -> op (op a b) c = op a (op b c)

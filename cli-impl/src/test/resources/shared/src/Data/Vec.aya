@@ -1,0 +1,5 @@
+open import Arith::Nat
+
+open data Vec Nat Type
+| 0, A => []
+| suc n, A => infixr :> A (Vec n A)

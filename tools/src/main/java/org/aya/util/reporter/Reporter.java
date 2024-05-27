@@ -9,9 +9,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ice1000
- */
 public interface Reporter {
   /**
    * Report a problem

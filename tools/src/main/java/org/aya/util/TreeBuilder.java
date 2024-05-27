@@ -9,10 +9,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
-/**
- * @param <T> the tree
- * @author ice1000
- */
+/** @param <T> the tree, no longer used in Aya. */
 public abstract class TreeBuilder<T extends TreeBuilder.Tree<T>> {
   public interface Tree<T extends Tree<T>> {
     @NotNull MutableList<T> children();
@@ -42,11 +39,7 @@ public abstract class TreeBuilder<T extends TreeBuilder.Tree<T>> {
     var buffer = Objects.requireNonNull(tops.getLast());
     buffer.removeAt(buffer.size() - 1);
   }
-
-  public void reduce() {
-    tops.removeLast();
-  }
-
+  public void reduce() { tops.removeLast(); }
   public void reduceAndUnshift() {
     tops.removeLast();
   }

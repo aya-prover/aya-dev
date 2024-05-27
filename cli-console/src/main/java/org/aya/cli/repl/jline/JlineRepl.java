@@ -8,7 +8,7 @@ import org.aya.cli.interactive.ReplConfig;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.repl.AyaRepl;
 import org.aya.cli.repl.gk.GKReplLexer;
-import org.aya.generic.util.AyaHome;
+import org.aya.generic.AyaHome;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.backend.string.StringPrinterConfig;

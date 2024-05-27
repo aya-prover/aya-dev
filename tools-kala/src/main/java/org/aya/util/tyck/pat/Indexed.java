@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Used in pattern classifier.
- *
- * @author ice1000
  */
 public record Indexed<Pat>(@NotNull Pat pat, int ix) {
   public static @NotNull ImmutableIntSeq indices(@NotNull Seq<? extends Indexed<?>> cls) {

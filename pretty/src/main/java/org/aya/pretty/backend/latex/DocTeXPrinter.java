@@ -16,9 +16,6 @@ import java.util.EnumSet;
 
 import static org.aya.pretty.backend.string.StringPrinterConfig.StyleOptions.*;
 
-/**
- * @author ice1000
- */
 public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
   @Override protected void renderHeader(@NotNull Cursor cursor) {
     if (config.opt(HeaderCode, false)) {
@@ -162,9 +159,6 @@ public class DocTeXPrinter extends StringPrinter<DocTeXPrinter.Config> {
       formatList(cursor, list, idx -> "\\item", outer));
   }
 
-  /**
-   * @author ice1000
-   */
   public static class Config extends StringPrinterConfig<TeXStylist> {
     public Config() {
       this(TeXStylist.DEFAULT);

@@ -1,0 +1,236 @@
+UnknownCon:
+In file $FILE:5:2 ->
+
+  3 │   
+  4 │   def test Test1 : Test1
+  5 │   | test2 => test1
+    │     ╰───╯
+
+Error: Unknown constructor
+         test2
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+SelectionFailed:
+In file $FILE:4:2 ->
+
+  2 │   open import Data::Vec
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+  4 │   | [] => []
+    │     ╰╯
+
+Error: I'm unsure if there should be a case for
+         []
+       as index unification is blocked for type
+         Vec (<n> + <n>) A
+
+In file $FILE:5:2 ->
+
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+  4 │   | [] => []
+  5 │   | _ :> _ => _
+    │     ╰────╯
+
+Error: I'm unsure if there should be a case for
+         :> _ _
+       as index unification is blocked for type
+         Vec (<n> + <n>) A
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+SelectionBlocked:
+In file $FILE:4:2 ->
+
+  2 │   open import Data::Vec
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+  4 │   | () => []
+    │     ╰╯
+
+Error: Unsure if this pattern is actually impossible, as constructor selection 
+       is blocked on:
+         Vec (<n> + <n>) A
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+SplitOnNonData:
+In file $FILE:3:3 ->
+
+  1 │   open data Unit | unit
+  2 │   def test (a : Type) : Type
+  3 │    | unit y => a
+    │      ╰────╯
+
+Error: Cannot split on a non-inductive type
+         Type 0
+       with a constructor pattern
+         unit y
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+BadLiteral:
+In file $FILE:3:2 ->
+
+  1 │   open data Test | t
+  2 │   def not-conf Test : Test
+  3 │   | 1 => t
+    │     ╰╯
+
+Error: The literal
+         1
+       cannot be encoded as a term of type:
+         Test
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+NotEnoughPattern:
+In file $FILE:3:8 ->
+
+  1 │   open import Arith::Bool
+  2 │   def ifElse {A : Type} (b : Bool) A A : A
+  3 │   | true, x => x
+    │           ╰╯
+
+Error: There is no pattern for the parameter
+         ^2
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+TooManyPattern:
+In file $FILE:3:11 ->
+
+  1 │   open import Arith::Bool
+  2 │   def ifElse {A : Type} (b : Bool) A A : A
+  3 │   | true, x, {y} => x
+    │              ╰─╯
+
+Error: There are too many implicit patterns:
+         y
+       should be an explicit pattern matched against
+         ^2
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+TooManyPattern2:
+In file $FILE:3:14 ->
+
+  1 │   open import Arith::Bool
+  2 │   def ifElse {A : Type} (b : Bool) A A : A
+  3 │   | true, x, y, z => x
+    │                 ╰╯
+
+Error: There is no parameter for the pattern
+         z
+       to match against.
+       (and in case it's a function type, you may want to move its parameters 
+       before the `:` in the signature)
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+InvalidEmptyBody:
+In file $FILE:3:2 ->
+
+  1 │   open import Arith::Bool
+  2 │   def test Bool : Bool
+  3 │   | true
+    │     ╰──╯
+
+Error: This match arm does not contain any absurd pattern but it has an empty 
+       body
+
+In file $FILE:4:2 ->
+
+  2 │   def test Bool : Bool
+  3 │   | true
+  4 │   | false
+    │     ╰───╯
+
+Error: This match arm does not contain any absurd pattern but it has an empty 
+       body
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+InvalidAbsurdPattern:
+In file $FILE:2:23 ->
+
+  1 │   open import Arith::Bool
+  2 │   def test Bool : Bool | ()
+    │                          ╰╯
+
+Error: Absurd pattern does not fit here because `true` is still available
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+NoPattern:
+In file $FILE:4:0 ->
+
+  2 │   
+  3 │   variable A B : Type
+  4 │   def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g
+    │   ╰────────────────────────────────────────────────────────────╯
+
+Error: Unhandled case:
+         A, B, f, g, p
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+NewRepoIssue597:
+In file $FILE:2:22 ->
+
+  1 │   open data Nat | O | S Nat
+  2 │   def bad Nat : Nat | S S O => O | _ => O
+    │                         ╰╯
+
+Error: There is no pattern for the parameter
+         Nat
+
+In file $FILE:2:24 ->
+
+  1 │   open data Nat | O | S Nat
+  2 │   def bad Nat : Nat | S S O => O | _ => O
+    │                           ╰╯
+
+Error: There is no parameter for the pattern
+         O
+       to match against.
+       (and in case it's a function type, you may want to move its parameters 
+       before the `:` in the signature)
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+NewRepoIssue746:
+In file $FILE:4:2 ->
+
+  2 │   open data Test2 | test2
+  3 │   def test Test1 : Test1
+  4 │   | test2 => test1
+    │     ╰───╯
+
+Error: Unknown constructor
+         test2
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+NewRepoIssue384:
+In file $FILE:1:4 ->
+
+  1 │   def test : Type
+    │       ╰──╯
+
+Error: The empty pattern-matching function test does not have a telescope
+
+1 error(s), 0 warning(s).
+What are you doing?
+

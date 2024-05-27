@@ -4,9 +4,9 @@ package org.aya.cli.library;
 
 import kala.collection.SeqLike;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.resolve.context.ModulePath;
+import org.aya.syntax.concrete.stmt.Command;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 

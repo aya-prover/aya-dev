@@ -1,213 +1,266 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
-import kala.value.MutableValue;
-import org.aya.concrete.Expr;
-import org.aya.concrete.Pattern;
-import org.aya.concrete.visitor.PatternConsumer;
-import org.aya.core.def.Def;
-import org.aya.core.pat.Pat;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.MetaPatTerm;
-import org.aya.core.term.Term;
-import org.aya.core.visitor.EndoTerm;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.value.primitive.MutableBooleanValue;
+import org.aya.generic.NameGenerator;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.core.def.Signature;
+import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.term.ErrorTerm;
+import org.aya.syntax.core.term.MetaPatTerm;
+import org.aya.syntax.core.term.Param;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.env.LocalCtx;
-import org.aya.tyck.trace.Trace;
-import org.aya.util.Arg;
+import org.aya.tyck.Jdg;
+import org.aya.tyck.TyckState;
+import org.aya.tyck.ctx.LocalLet;
+import org.aya.tyck.error.PatternProblem;
+import org.aya.tyck.tycker.Problematic;
+import org.aya.tyck.tycker.Stateful;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
+import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ice1000
- * TODO: interface?
- */
-public final class ClauseTycker {
-  public static final EndoTerm META_PAT_INLINER = new EndoTerm() {
-    @Override public @NotNull Term post(@NotNull Term term) {
-      return term instanceof MetaPatTerm metaPat ? metaPat.inline(this) : term;
-    }
-  };
+import java.util.function.UnaryOperator;
 
-  public record PatResult(
-    @NotNull Term result,
+public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problematic, Stateful {
+  public record TyckResult(
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<Term.Matching> matchings,
+    @NotNull ImmutableSeq<Term.Matching> wellTyped,
     boolean hasLhsError
-  ) {
-  }
+  ) { }
 
-  public static @NotNull PatResult elabClausesDirectly(
-    @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature<?> signature
-  ) {
-    return checkAllRhs(exprTycker, checkAllLhs(exprTycker, clauses, signature), signature.result());
-  }
-
-  public static @NotNull PatResult elabClausesClassified(
-    @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature<?> signature,
-    @NotNull SourcePos overallPos
-  ) {
-    var lhsResults = checkAllLhs(exprTycker, clauses, signature);
-    if (!lhsResults.hasError()) {
-      var classes = PatClassifier.classify(lhsResults.lhsResult().view().map(LhsResult::preclause),
-        signature.param(), exprTycker, overallPos);
-      if (clauses.isNotEmpty()) {
-        var usages = PatClassifier.firstMatchDomination(clauses, exprTycker.reporter, classes);
-        // refinePatterns(lhsResults, usages, classes);
-      }
-    }
-
-    return checkAllRhs(exprTycker, lhsResults, signature.result());
-  }
-
-  private static @NotNull ClauseTycker.AllLhsResult checkAllLhs(
-    @NotNull ExprTycker exprTycker,
-    @NotNull ImmutableSeq<Pattern.@NotNull Clause> clauses,
-    @NotNull Def.Signature<?> signature
-  ) {
-    return new AllLhsResult(clauses.mapIndexed((index, clause) -> exprTycker.traced(
-      () -> new Trace.LabelT(clause.sourcePos, "lhs of clause " + (1 + index)),
-      () -> checkLhs(exprTycker, clause, signature, true))));
-  }
-
-  private static @NotNull PatResult checkAllRhs(
-    @NotNull ExprTycker exprTycker,
-    @NotNull AllLhsResult lhsResult,
-    @NotNull Term result
-  ) {
-    var clauses = lhsResult.lhsResult();
-    var res = clauses.mapIndexed((index, lhs) -> exprTycker.traced(
-      () -> new Trace.LabelT(lhs.preclause.sourcePos(), "rhs of clause " + (1 + index)),
-      () -> checkRhs(exprTycker, lhs)));
-    var preclauses = res.map(c -> new Pat.Preclause<>(
-      c.sourcePos(), c.patterns().map(p -> p.descent(x -> x.zonk(exprTycker))),
-      c.expr().map(exprTycker::zonk)));
-    return new PatResult(exprTycker.zonk(result), preclauses,
-      preclauses.flatMap(Pat.Preclause::lift), lhsResult.hasError());
-  }
-
-  public record AllLhsResult(
-    @NotNull ImmutableSeq<LhsResult> lhsResult,
+  public record LhsResult(
+    @NotNull LocalCtx localCtx,
+    @NotNull Term type,
+    @NotNull ImmutableSeq<Jdg> paramSubst,
+    @NotNull LocalLet asSubst,
+    @NotNull Pat.Preclause<Expr> clause,
     boolean hasError
   ) {
-    public AllLhsResult(@NotNull ImmutableSeq<LhsResult> lhsResults) {
-      this(lhsResults, lhsResults.anyMatch(LhsResult::hasError));
+    @Contract(mutates = "param2")
+    public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+      teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
+      exprTycker.setLocalLet(new LocalLet(exprTycker.localLet(), asSubst.subst()));
     }
   }
 
-  /**
-   * @param bodySubst we do need to replace them with the corresponding patterns,
-   *                  but patterns are terms (they are already well-typed if not {@param hasError})
-   * @param hasError  if there is an error in the patterns
-   */
-  public record LhsResult(
-    @NotNull LocalCtx gamma,
-    @NotNull Term type,
-    @NotNull TypedSubst bodySubst,
-    boolean hasError,
-    @NotNull Pat.Preclause<Expr> preclause
+  public record Worker(
+    @NotNull ClauseTycker parent,
+    @NotNull ImmutableSeq<LocalVar> vars,
+    @NotNull Signature signature,
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull ImmutableSeq<WithPos<LocalVar>> elims,
+    boolean isFn
   ) {
+    public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
+      var lhsResult = parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn);
+
+      if (lhsResult.noneMatch(r -> r.hasError)) {
+        var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
+          signature.param().view().map(WithPos::data), parent.exprTycker, overallPos);
+        if (clauses.isNotEmpty()) {
+          var usages = PatClassifier.firstMatchDomination(clauses, parent.reporter(), classes);
+          // refinePatterns(lhsResults, usages, classes);
+        }
+      }
+
+      return parent.checkAllRhs(vars, lhsResult);
+    }
+    private @Nullable ImmutableIntSeq computeIndices() {
+      return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
+        i -> vars.indexOf(i.data()));
+    }
+    public @NotNull TyckResult checkNoClassify() {
+      return parent.checkAllRhs(vars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
+    }
   }
 
-  /**
-   * @param isElim whether this checking is used for elimination (rather than data declaration)
-   */
-  public static @NotNull LhsResult checkLhs(
-    @NotNull ExprTycker exprTycker,
-    @NotNull Pattern.Clause match,
-    @NotNull Def.Signature<?> signature,
-    boolean isElim
+  public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
+    @Nullable ImmutableIntSeq indices, @NotNull Signature signature,
+    @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
   ) {
-    var patTycker = new PatternTycker(exprTycker, signature, match.patterns.view());
+    return clauses.map(c -> checkLhs(signature, indices, c, isFn)).toImmutableSeq();
+  }
+
+  public @NotNull TyckResult checkAllRhs(
+    @NotNull ImmutableSeq<LocalVar> vars,
+    @NotNull ImmutableSeq<LhsResult> lhsResults
+  ) {
+    var lhsError = lhsResults.anyMatch(LhsResult::hasError);
+    var rhsResult = lhsResults.map(x -> checkRhs(vars, x));
+
+    // inline terms in rhsResult
+    rhsResult = rhsResult.map(x -> new Pat.Preclause<>(
+      x.sourcePos(),
+      x.pats().map(p -> p.descent(UnaryOperator.identity(), this::freezeHoles)),
+      x.expr() == null ? null : x.expr().descent((_, t) -> freezeHoles(t))
+    ));
+
+    return new TyckResult(
+      rhsResult,
+      rhsResult.mapNotNull(Pat.Preclause::lift),
+      lhsError
+    );
+  }
+
+  @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }
+  @Override public @NotNull TyckState state() { return exprTycker.state; }
+  private @NotNull PatternTycker newPatternTycker(
+    @Nullable ImmutableIntSeq indices,
+    @NotNull SeqView<Param> telescope
+  ) {
+    telescope = indices != null
+      ? telescope.mapIndexed((idx, p) -> indices.contains(idx) ? p.explicitize() : p.implicitize())
+      : telescope;
+
+    return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
+      new NameGenerator());
+  }
+
+  public @NotNull LhsResult checkLhs(
+    @NotNull Signature signature,
+    @Nullable ImmutableIntSeq indices,
+    @NotNull Pattern.Clause clause,
+    boolean isFn
+  ) {
+    var tycker = newPatternTycker(indices, signature.rawParams().view());
     return exprTycker.subscoped(() -> {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
-      if (isElim && !match.patterns.anyMatch(p -> hasAbsurdity(p.term())) && match.expr.isEmpty()) {
-        match.hasError = true;
-        exprTycker.reporter.report(new PatternProblem.InvalidEmptyBody(match));
+      if (isFn && !clause.patterns.anyMatch(p -> hasAbsurdity(p.term().data())) && clause.expr.isEmpty()) {
+        clause.hasError = true;
+        exprTycker.reporter.report(new PatternProblem.InvalidEmptyBody(clause));
       }
-      var step0 = patTycker.tyck(null, match.expr.getOrNull());
 
-      match.hasError |= patTycker.hasError();
+      var patResult = tycker.tyck(clause.patterns.view(), null, clause.expr.getOrNull());
+      var ctx = exprTycker.localCtx();   // No need to copy the context here
 
-      var patterns = step0.wellTyped().map(p -> p.descent(x -> x.inline(exprTycker.ctx)));
-      // inline after inline patterns
-      inlineTypedSubst(patTycker.bodySubst);
-      var type = inlineTerm(step0.codomain());
-      exprTycker.ctx.modifyMyTerms(META_PAT_INLINER);
-      var consumer = new PatternConsumer() {
-        @Override public void pre(@NotNull Pattern pat) {
-          var typeRef = switch (pat) {
-            case Pattern.Bind bind -> bind.type();
-            case Pattern.As as -> as.type();
-            default -> MutableValue.<Term>create();
-          };
+      clause.hasError |= patResult.hasError();
+      patResult = inline(patResult, ctx);
+      var resultTerm = inlineTerm(signature.result().instantiateTele(patResult.paramSubstObj()));
+      clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
-          typeRef.update(t -> t == null ? null : inlineTerm(t));
+      // It is safe to replace ctx:
+      // * telescope are well-typed and no Meta
+      // * PatternTycker doesn't introduce any Meta term
+      ctx = ctx.map(ClauseTycker::inlineTerm);
 
-          PatternConsumer.super.pre(pat);
-        }
-      };
-      match.patterns.view().map(Arg::term).forEach(consumer::accept);
-
-      return new LhsResult(exprTycker.ctx, type, patTycker.bodySubst, patTycker.hasError(),
-        new Pat.Preclause<>(match.sourcePos, patterns, Option.ofNullable(step0.newBody())));
+      var newClause = new Pat.Preclause<>(clause.sourcePos, patResult.wellTyped(), patResult.newBody());
+      return new LhsResult(ctx, resultTerm, patResult.paramSubst(),
+        patResult.asSubst(), newClause, patResult.hasError());
     });
   }
-
-  private static Pat.Preclause<Term> checkRhs(@NotNull ExprTycker exprTycker, @NotNull LhsResult lhsResult) {
-    return exprTycker.subscoped(() -> {
-      exprTycker.ctx = lhsResult.gamma;
-      var term = exprTycker.subscoped(() -> {
-        // We `addDirectly` to `definitionEqualities`.
-        // This means terms in `definitionEqualities` won't be substituted by `lhsResult.bodySubst`
-        exprTycker.definitionEqualities.addDirectly(lhsResult.bodySubst());
-        return lhsResult.preclause.expr().map(e -> {// In case the patterns are malformed, do not check the body
-// as we bind local variables in the pattern checker,
-// and in case the patterns are malformed, some bindings may
-// not be added to the localCtx of tycker, causing assertion errors
-          return lhsResult.hasError ? new ErrorTerm(e, false) : exprTycker.inherit(e, lhsResult.type).wellTyped();
-        });
-      });
-
-      return new Pat.Preclause<>(lhsResult.preclause.sourcePos(), lhsResult.preclause.patterns(), term);
-    });
-  }
-
-  /// region Helper
 
   /**
-   * check if absurdity is contained in pattern
+   * Tyck the rhs of some clause.
+   *
+   * @param result the tyck result of the corresponding patterns
    */
-  private static boolean hasAbsurdity(@NotNull Pattern pattern) {
-    return switch (pattern) {
-      case Pattern.Absurd ignored -> true;
-      case Pattern.As as -> hasAbsurdity(as.pattern());
-      case Pattern.BinOpSeq binOpSeq -> binOpSeq.seq().anyMatch(p -> hasAbsurdity(p.term()));
-      case Pattern.Ctor ctor -> ctor.params().anyMatch(p -> hasAbsurdity(p.term()));
-      case Pattern.List list -> list.elements().anyMatch(ClauseTycker::hasAbsurdity);
-      case Pattern.Tuple tuple -> tuple.patterns().anyMatch(p -> hasAbsurdity(p.term()));
-      default -> false;
-    };
+  private @NotNull Pat.Preclause<Term> checkRhs(
+    @NotNull ImmutableSeq<LocalVar> teleBinds,
+    @NotNull LhsResult result
+  ) {
+    return exprTycker.subscoped(() -> {
+      var clause = result.clause;
+      var bodyExpr = clause.expr();
+      Term wellBody;
+      if (bodyExpr == null) wellBody = null;
+      else if (result.hasError) {
+        // In case the patterns are malformed, do not check the body
+        // as we bind local variables in the pattern checker,
+        // and in case the patterns are malformed, some bindings may
+        // not be added to the localCtx of tycker, causing assertion errors
+        wellBody = new ErrorTerm(result.clause.expr().data());
+      } else {
+        // the localCtx will be restored after exiting [subscoped]e
+        exprTycker.setLocalCtx(result.localCtx);
+        result.addLocalLet(teleBinds, exprTycker);
+        // now exprTycker has all substitutions that PatternTycker introduced.
+        wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
+
+        // bind all pat bindings
+        var patBindTele = Pat.collectBindings(result.clause.pats().view()).view().map(Pat.CollectBind::var);
+        wellBody = wellBody.bindTele(patBindTele);
+      }
+
+      return new Pat.Preclause<>(clause.sourcePos(), clause.pats(), wellBody == null ? null : WithPos.dummy(wellBody));
+    });
   }
 
-  public static @NotNull Term inlineTerm(@NotNull Term term) {
-    return META_PAT_INLINER.apply(term);
+  private static final class TermInline {
+    public static @NotNull Term apply(@NotNull Term term) {
+      if (term instanceof MetaPatTerm metaPat) {
+        var isEmpty = metaPat.meta().solution().isEmpty();
+        if (isEmpty) throw new Panic(STR."Unable to inline \{metaPat.toDoc(AyaPrettierOptions.debug())}");
+        // the solution may contain other MetaPatTerm
+        return metaPat.inline(TermInline::apply);
+      } else {
+        return term.descent(TermInline::apply);
+      }
+    }
   }
 
-  public static @NotNull TypedSubst inlineTypedSubst(@NotNull TypedSubst tySubst) {
-    tySubst.subst().map().replaceAll((var, term) -> inlineTerm(term));
-    tySubst.type().replaceAll((var, term) -> inlineTerm(term));
-
-    return tySubst;
+  private static boolean hasAbsurdity(@NotNull Pattern term) {
+    return hasAbsurdity(term, MutableBooleanValue.create());
+  }
+  private static boolean hasAbsurdity(@NotNull Pattern term, @NotNull MutableBooleanValue b) {
+    if (term == Pattern.Absurd.INSTANCE) b.set(true);
+    else term.forEach((_, p) -> b.set(b.get() || hasAbsurdity(p, b)));
+    return b.get();
   }
 
-  /// endregion
+  /**
+   * Inline terms which in pattern
+   */
+  private static final class TermInPatInline {
+    public static void apply(@NotNull Pattern pat) {
+      var typeRef = switch (pat) {
+        case Pattern.Bind bind -> bind.type();
+        case Pattern.As as -> as.type();
+        default -> null;
+      };
+
+      if (typeRef != null) typeRef.update(it -> it == null ? null : inlineTerm(it));
+
+      pat.descent((_, p) -> {
+        apply(p);
+        return p;
+      });
+    }
+  }
+
+  private static @NotNull Term inlineTerm(@NotNull Term term) {
+    return TermInline.apply(term);
+  }
+  private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
+    return r.map(ClauseTycker::inlineTerm);
+  }
+
+  /**
+   * Inline terms in {@param result}, please do this after inline all patterns
+   */
+  private static @NotNull PatternTycker.TyckResult inline(@NotNull PatternTycker.TyckResult result, @NotNull LocalCtx ctx) {
+    // inline {Pat.Meta} before inline {MetaPatTerm}s
+    var wellTyped = result.wellTyped().map(x -> x.inline(ctx::put));
+    // so that {MetaPatTerm}s can be inlined safely
+    var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
+
+    // map in place 😱😱😱😱
+    result.asSubst().subst().replaceAll((_, t) -> inlineTerm(t));
+
+    return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.newBody(), result.hasError());
+  }
 }

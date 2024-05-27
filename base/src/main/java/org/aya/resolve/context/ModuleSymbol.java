@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
@@ -11,6 +11,7 @@ import kala.control.Option;
 import kala.control.Result;
 import kala.tuple.Tuple2;
 import kala.value.LazyValue;
+import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;

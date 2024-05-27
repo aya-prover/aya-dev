@@ -1,8 +1,0 @@
-open import Paths
-open import Arith::Nat
-
-def flip (m n : Nat) : Nat =>
-  hcomp2d idp idp
-    (\i => +-comm {a := m} {b := n} i) 0
-
-def err_eq (m n : Nat) : flip m n = n + m => idp

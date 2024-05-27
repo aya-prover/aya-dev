@@ -2,12 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
-import org.aya.core.repr.AyaShape;
+import org.aya.primitive.ShapeFactory;
 import org.aya.util.RepoLike;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplShapeFactory extends AyaShape.Factory implements RepoLike<ReplShapeFactory> {
+public class ReplShapeFactory extends ShapeFactory implements RepoLike<ReplShapeFactory> {
   private @Nullable ReplShapeFactory downstream = null;
 
   @Override public void setDownstream(@Nullable ReplShapeFactory downstream) {

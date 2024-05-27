@@ -1,4 +1,0 @@
-// https://github.com/aya-prover/aya-dev/issues/13
-open data Unit | unit
-def foo : Sig Unit ** Unit => (unit, unit)
-def bar : Sig Unit ** Unit => foo
