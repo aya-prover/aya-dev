@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.CommonTasks
 
+val mainClassQName = "org.aya.cli.console.Main"
+CommonTasks.fatJar(project, mainClassQName)
+application.mainClass.set(mainClassQName)
+
 dependencies {
   api(project(":tools-repl"))
   api(project(":cli-impl"))
