@@ -7,6 +7,7 @@ import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public abstract non-sealed class JitPrim extends JitDef implements PrimDefLike, Reducible {
@@ -17,8 +18,7 @@ public abstract non-sealed class JitPrim extends JitDef implements PrimDefLike, 
     this.id = id;
   }
 
-  /**
-   * Unfold this function
-   */
-  @Override public abstract Term invoke(Term stuck, @NotNull Seq<Term> args);
+  @Override public Term invoke(Term stuck, @NotNull Seq<Term> args) {
+    throw new Panic("Should not be called");
+  }
 }

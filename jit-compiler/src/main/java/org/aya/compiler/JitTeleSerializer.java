@@ -123,7 +123,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
     buildSuperCall(ImmutableSeq.of(
       Integer.toString(size),
       makeArrayFrom("boolean", licit.toImmutableSeq()),
-      makeArrayFrom("String", names.toImmutableArray())
+      makeArrayFrom("java.lang.String", names.toImmutableArray())
     ).appendedAll(ext));
   }
 

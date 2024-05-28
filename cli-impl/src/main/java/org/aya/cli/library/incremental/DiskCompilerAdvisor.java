@@ -95,6 +95,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
     var task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
     task.call();
+    Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
     CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
   }
