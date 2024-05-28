@@ -12,6 +12,7 @@ dependencies {
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
   testImplementation(project(":cli-console"))
+  testImplementation(project(":ide"))
 }
 
 tasks.named<Test>("test") {

@@ -1,0 +1,10 @@
+{
+  "ayaVersion": "0.31",
+  "group": "org.aya-prover",
+  "name": "tests",
+  "version": "0.1.0",
+
+  "dependency": {
+    "shared": { "file": "../shared" }
+  }
+}

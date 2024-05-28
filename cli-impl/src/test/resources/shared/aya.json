@@ -5,7 +5,7 @@
   "version": "0.1.0",
 
   "literate": {
-    "linkPrefix": "/aya-prover/base/src/test/resources/success/build/pretty/",
+    "linkPrefix": "/aya-prover/cli-impl/src/test/resources/shared/build/pretty/",
     "pretty": {
       "prettierOptions": {
         "map": {
