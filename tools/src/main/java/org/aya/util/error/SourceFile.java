@@ -1,8 +1,8 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import kala.control.Option;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public record SourceFile(
   }
 
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
-    this(display, Option.some(underlying), StringUtil.convertLineSeparators(sourceCode));
+    this(display, Option.some(underlying), Strings.convertLineSeparators(sourceCode));
   }
 
   public static final SourceFile NONE = new SourceFile("<unknown-file>", Option.none(), "");
