@@ -3,3 +3,16 @@ open import Arith::Nat
 open data Vec Nat Type
 | 0, A => []
 | suc n, A => infixr :> A (Vec n A)
+
+variable A B : Type
+variable n m o : Nat
+
+def vmap (f : A -> B) (xs : Vec n A) : Vec n B elim xs
+| [] => []
+| x :> xs' => f x :> vmap f xs'
+
+def head (Vec (suc n) A) : A
+| x :> _ => x
+
+def tail (Vec (suc n) A) : Vec n A
+| _ :> xs => xs
