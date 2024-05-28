@@ -7,7 +7,9 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
 
-public record ModulePath(@NotNull ImmutableSeq<String> module) {
+import java.io.Serializable;
+
+public record ModulePath(@NotNull ImmutableSeq<String> module) implements Serializable {
   public static @NotNull ModulePath of(@NotNull String... names) {
     return new ModulePath(ImmutableSeq.from(names));
   }
@@ -41,4 +43,5 @@ public record ModulePath(@NotNull ImmutableSeq<String> module) {
   @Override public String toString() { return QualifiedID.join(module); }
   public boolean isEmpty() { return module.isEmpty(); }
   public int size() { return module.size(); }
+  public @NotNull String last() { return module.getLast(); }
 }

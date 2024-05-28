@@ -5,9 +5,10 @@ package org.aya.syntax.ref;
 import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public record QName(@NotNull QPath module, @NotNull String name) {
+public record QName(@NotNull QPath module, @NotNull String name) implements Serializable {
   public QName(@NotNull DefVar<?, ?> ref) {
     this(Objects.requireNonNull(ref.module), ref.name());
   }

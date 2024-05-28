@@ -90,7 +90,7 @@ record LibraryModuleLoader(
     @NotNull ModulePath mod, @Nullable Path sourcePath,
     @Nullable Path corePath, @NotNull ModuleLoader recurseLoader
   ) {
-    return advisor.loadCompiledCore(reporter, mod, sourcePath, corePath, recurseLoader);
+    return advisor.loadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
   }
 
   private void saveCompiledCore(

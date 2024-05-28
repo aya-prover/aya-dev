@@ -6,7 +6,6 @@ dependencies {
   api(project(":base"))
   api(project(":parser"))
   api(libs.gson)
-  implementation(libs.sourcebuddy)
   implementation(project(":producer"))
   implementation(project(":jit-compiler"))
   implementation(libs.commonmark)

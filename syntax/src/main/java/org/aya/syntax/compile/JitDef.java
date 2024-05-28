@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @implNote every definition should be annotated by {@link CompiledAya}
  */
-public abstract sealed class JitDef extends JitTele implements AnyDef permits JitCon, JitData, JitFn {
+public abstract sealed class JitDef extends JitTele implements AnyDef permits JitCon, JitData, JitFn, JitPrim {
   private CompiledAya metadata;
 
   protected JitDef(int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames) {

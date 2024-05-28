@@ -63,7 +63,7 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
   @Override
   public @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull Reporter reporter,
-    @NotNull ModulePath mod,
+    @NotNull LibraryOwner owner, @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader

@@ -18,10 +18,7 @@ Aya is under active development, so please expect bugs, usability or performance
 
 + Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [type-safe interpreter][gadt].
-+ Cartesian cubical type theory with generalized path types
-  similar to a "bounded" cubical subtype.
-  + Implementation prototype of De Morgan cubical: [Guest0x0].
-  + Demonstration of higher inductive types: [3-torus] (three-dimensional torus!!).
++ Set-level cubical type theory (XTT).
   + Demonstration of [higher-inductive-inductive-recursive types][hiir].
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
@@ -75,13 +72,11 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 [regularity]: ../base/src/test/resources/success/common/src/Paths.aya
 [funExt]: ../base/src/test/resources/success/common/src/Paths.aya
 [rbtree]: ../base/src/test/resources/success/common/src/Data/Tree/RedBlack/Direct.aya
-[3-torus]: ../base/src/test/resources/success/common/src/Spaces/Torus/T3.aya
 [hiir]: ../base/src/test/resources/success/common/src/TypeTheory/Thorsten.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
-[Guest0x0]: https://github.com/ice1000/Guest0x0
 [stdlib-style]: ../base/src/test/resources/success/common
 
 ## Use as a library
@@ -105,7 +100,10 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
 
 + `[project name]` specifies the subproject of Aya you want to use,
   and the options are `pretty`, `base`, `cli-impl`, `parser`, etc.
-  + The type checker lives in `base` and `parser`.
+  + The syntax definitions live in `syntax`.
+  + The parser lives in `parser` and `producer`.
+  + The type checker lives in `base`.
+  + The JIT compiler lives in `jit-compiler`.
   + The generalized pretty printing framework is in `pretty`.
   + The library system, literate mode, single-file type checker, and basic REPL are in `cli-impl`.
   + The generalized tree builder, generalized termination checker,

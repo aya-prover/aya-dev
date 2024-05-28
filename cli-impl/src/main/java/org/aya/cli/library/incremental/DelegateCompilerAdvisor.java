@@ -52,8 +52,8 @@ public class DelegateCompilerAdvisor implements CompilerAdvisor {
   }
 
   @Override public @Nullable ResolveInfo
-  doLoadCompiledCore(@NotNull Reporter reporter, @NotNull ModulePath mod, @Nullable Path sourcePath, @Nullable Path corePath, @NotNull ModuleLoader recurseLoader) throws IOException, ClassNotFoundException {
-    return delegate.doLoadCompiledCore(reporter, mod, sourcePath, corePath, recurseLoader);
+  doLoadCompiledCore(@NotNull Reporter reporter, @NotNull LibraryOwner owner, @NotNull ModulePath mod, @Nullable Path sourcePath, @Nullable Path corePath, @NotNull ModuleLoader recurseLoader) throws IOException, ClassNotFoundException {
+    return delegate.doLoadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
   }
 
   @Override public void
