@@ -10,15 +10,11 @@ import org.aya.syntax.core.term.Term;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
-public abstract non-sealed class JitPrim extends JitDef implements PrimDefLike, Reducible {
+public abstract non-sealed class JitPrim extends JitDef implements PrimDefLike {
   public final PrimDef.ID id;
   @Override public PrimDef.@NotNull ID id() { return id; }
   protected JitPrim(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, PrimDef.ID id) {
     super(telescopeSize, telescopeLicit, telescopeName);
     this.id = id;
-  }
-
-  @Override public Term invoke(Term stuck, @NotNull Seq<Term> args) {
-    throw new Panic("Should not be called");
   }
 }
