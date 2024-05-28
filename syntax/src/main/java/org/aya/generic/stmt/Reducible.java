@@ -4,8 +4,14 @@ package org.aya.generic.stmt;
 
 import kala.collection.Seq;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.Callable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A marker that indicates something can be reduced/has a corresponding {@link Callable}.
+ * This is used for making serialization safer,
+ * therefore {@link org.aya.syntax.core.def.FnDef} doesn't implement this marker but {@link org.aya.syntax.compile.JitFn} does.
+ */
 public interface Reducible {
   /**
    * @param fallback return this when unable to reduce, it is acceptable that fallback is null.
