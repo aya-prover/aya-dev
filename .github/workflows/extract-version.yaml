@@ -19,7 +19,7 @@ jobs:
       isSnapshot: ${{ steps.check.outputs.isSnapshot }}
       javaVersion: ${{ steps.check.outputs.javaVersion }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Extract versions from Gradle's libs.versions.toml
         id: check
         shell: bash

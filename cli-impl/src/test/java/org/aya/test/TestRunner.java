@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.single.CompilerFlags;
@@ -66,8 +66,8 @@ public class TestRunner {
 
   private static void checkOutput(Path expectedOutFile, String hookOut) {
     try {
-      var output = StringUtil.convertLineSeparators(hookOut);
-      var expected = instantiateVars(StringUtil.convertLineSeparators(
+      var output = Strings.convertLineSeparators(hookOut);
+      var expected = instantiateVars(Strings.convertLineSeparators(
         Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, TMP_FILE.getFileName().toString());
     } catch (IOException e) {

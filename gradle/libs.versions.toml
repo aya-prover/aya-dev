@@ -9,10 +9,10 @@ java = "21"
 
 # https://github.com/JetBrains/java-annotations
 annotations = "24.1.0"
-kala = "0.72.0"
+kala = "0.73.0"
 # https://picocli.info
 picocli = "4.7.6"
-build-util = "0.0.22"
+build-util = "0.0.24"
 # https://github.com/jline/jline3
 jline = "3.26.1"
 # https://github.com/commonmark/commonmark-java

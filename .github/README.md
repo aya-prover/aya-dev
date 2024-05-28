@@ -19,9 +19,14 @@ Aya is under active development, so please expect bugs, usability or performance
 + Dependent types, including pi-types, sigma types, indexed families, etc.
   You could write a [sized-vector type][gadt].
 + Set-level cubical type theory (XTT).
-  + Demonstration of [higher-inductive-inductive-recursive types][hiir].
+  + Demonstration of [quotient-inductive-inductive types][hiir],
+    no forward declaration or mutual block needed!
+    We infer the type checking order by how definitions use each other.
+  + Proof of `funExt` in [Paths.aya][funExt].
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
++ A JIT-compiler that translates Aya code to higher-order abstract syntax in Java.
+  This makes the interpreter to run tree-sort 10x faster! See [benchmark code][tbtree-bench].
 + Overlapping and order-independent patterns. Very [useful][oop] in theorem proving.
 + A literate programming mode with inline code fragment support, inspired from Agda and [1lab].
   You may preview the features (in Chinese)
@@ -32,10 +37,6 @@ Aya is under active development, so please expect bugs, usability or performance
 + A fairly good termination checker.
   We adapted some code from Agda's implementation to accept
   [more definitions][foetus] (which are rejected by, e.g. Arend).
-+ Inference of type checking order. That is to say,
-  no syntax for forward-declarations is needed for [mutual recursions][mutual],
-  induction-recursion, or induction-induction.
-+ See also stdlib candidates [style guide][stdlib-style]. We have a grand plan!
 
 See also [use as a library](#use-as-a-library).
 
@@ -71,13 +72,12 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 [gadt]: ../cli-impl/src/test/resources/shared/src/Data/Vec.aya
 [regularity]: ../cli-impl/src/test/resources/shared/src/Paths.aya
 [funExt]: ../cli-impl/src/test/resources/shared/src/Paths.aya
-[rbtree]: ../cli-impl/src/test/resources/shared/src/Data/Tree/RedBlack/Direct.aya
+[rbtree]: ../jit-compiler/src/test/resources/TreeSort.aya
+[tbtree-bench]: ../jit-compiler/src/test/java/RedBlackTreeTest.java
 [hiir]: ../cli-impl/src/test/resources/shared/src/TypeTheory/Thorsten.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
-[mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
-[stdlib-style]: ../cli-impl/src/test/resources/shared
 
 ## Use as a library
 
