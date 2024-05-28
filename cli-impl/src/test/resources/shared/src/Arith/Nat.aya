@@ -1,3 +1,5 @@
+open import Paths
+
 open data Nat | zero | suc Nat
 
 overlap def infix + Nat Nat : Nat
@@ -5,3 +7,18 @@ overlap def infix + Nat Nat : Nat
 | a, 0 => a
 | suc a, b => suc (a + b)
 | a, suc b => suc (a + b)
+tighter =
+
+overlap def +-comm (a b : Nat) : a + b = b + a
+| 0, _ => refl
+| suc _, _ => pmap suc (+-comm _ _)
+| _, 0 => refl
+| _, suc _ => pmap suc (+-comm _ _)
+
+overlap def +-assoc (a b c : Nat) : a + (b + c) = (a + b) + c
+| 0, _, _ => refl
+| suc _, _, _ => pmap suc (+-assoc _ _ _)
+| _, 0, _ => refl
+| _, suc _, _ => pmap suc (+-assoc _ _ _)
+| _, _, 0 => refl
+| _, _, suc _ => pmap suc (+-assoc _ _ _)

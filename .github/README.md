@@ -17,7 +17,7 @@ Aya is under active development, so please expect bugs, usability or performance
 ## What to expect?
 
 + Dependent types, including pi-types, sigma types, indexed families, etc.
-  You could write a [type-safe interpreter][gadt].
+  You could write a [sized-vector type][gadt].
 + Set-level cubical type theory (XTT).
   + Demonstration of [higher-inductive-inductive-recursive types][hiir].
 + Pattern matching with first-match semantics.
@@ -67,17 +67,17 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../base/src/test/resources/success/common/src/Arith/Nat/Core.aya
-[gadt]: ../base/src/test/resources/success/src/TypeSafeNorm.aya
-[regularity]: ../base/src/test/resources/success/common/src/Paths.aya
-[funExt]: ../base/src/test/resources/success/common/src/Paths.aya
-[rbtree]: ../base/src/test/resources/success/common/src/Data/Tree/RedBlack/Direct.aya
-[hiir]: ../base/src/test/resources/success/common/src/TypeTheory/Thorsten.aya
+[oop]: ../cli-impl/src/test/resources/shared/src/Arith/Nat.aya
+[gadt]: ../cli-impl/src/test/resources/shared/src/Data/Vec.aya
+[regularity]: ../cli-impl/src/test/resources/shared/src/Paths.aya
+[funExt]: ../cli-impl/src/test/resources/shared/src/Paths.aya
+[rbtree]: ../cli-impl/src/test/resources/shared/src/Data/Tree/RedBlack/Direct.aya
+[hiir]: ../cli-impl/src/test/resources/shared/src/TypeTheory/Thorsten.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [mutual]: ../base/src/test/resources/success/src/Order.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
-[stdlib-style]: ../base/src/test/resources/success/common
+[stdlib-style]: ../cli-impl/src/test/resources/shared
 
 ## Use as a library
 
