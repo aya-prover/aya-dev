@@ -4,7 +4,9 @@ package org.aya.syntax.ref;
 
 import org.jetbrains.annotations.NotNull;
 
-public record QPath(@NotNull ModulePath module, int fileModuleSize) {
+import java.io.Serializable;
+
+public record QPath(@NotNull ModulePath module, int fileModuleSize) implements Serializable {
   public QPath {
     assert 0 < fileModuleSize && fileModuleSize <= module.module().size();
   }

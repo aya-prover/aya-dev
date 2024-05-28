@@ -5,7 +5,6 @@ package org.aya.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import kala.text.StringUtils;
 import org.aya.generic.NameGenerator;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
@@ -122,12 +121,12 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case AppTerm appTerm -> makeNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ -> throw new Panic("LocalTerm");
       case LamTerm lamTerm -> makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
-      case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_JITDATACALL,
+      case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_DATACALL,
         getInstance(getReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
-      case ConCall(var head, var args) -> makeNew(CLASS_JITCONCALL,
+      case ConCall(var head, var args) -> makeNew(CLASS_CONCALL,
         getInstance(getReference(head.ref())),
         serializeToImmutableSeq(CLASS_TERM, head.ownerArgs()),
         Integer.toString(head.ulift()),
@@ -141,7 +140,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
 
         var ulift = call.ulift();
         var args = call.args();
-        yield buildReducibleCall(ref, CLASS_JITFNCALL, ulift, ImmutableSeq.of(args), true);
+        yield buildReducibleCall(ref, CLASS_FNCALL, ulift, ImmutableSeq.of(args), true);
       }
       case RuleReducer.Con conRuler -> buildReducibleCall(
         serializeApplicable(conRuler.rule()),
@@ -184,7 +183,11 @@ public class TermExprializer extends AbstractExprializer<Term> {
         serializeToImmutableSeq(CLASS_TERM, items)
       );
       case SigmaTerm sigmaTerm -> throw new UnsupportedOperationException("TODO");
-      case PrimCall primCall -> throw new UnsupportedOperationException("TODO");
+      case PrimCall(var ref, var ulift, var args) -> makeNew(CLASS_PRIMCALL,
+        getInstance(getReference(ref)),
+        Integer.toString(ulift),
+        serializeToImmutableSeq(CLASS_TERM, args)
+      );
       case IntegerTerm(var repr, var zero, var suc, var type) -> makeNew(CLASS_INTEGER,
         Integer.toString(repr),
         getInstance(getReference(zero)),

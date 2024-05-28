@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * Note that {@link ConDef.Delegate} <b>contains</b> a {@link ConDef} rather than a super class of.
  */
-public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDefLike, FnDefLike, TyckAnyDef {
+public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDefLike, FnDefLike, PrimDefLike, TyckAnyDef {
   /**
    * Returns which file level module this def lives in.
    */

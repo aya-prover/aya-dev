@@ -9,13 +9,9 @@ import kala.control.Result;
 import org.aya.compiler.util.SerializeUtils;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
-import org.aya.syntax.core.term.call.ConCall;
-import org.aya.syntax.core.term.call.ConCallLike;
-import org.aya.syntax.core.term.call.DataCall;
-import org.aya.syntax.core.term.call.FnCall;
+import org.aya.syntax.core.term.call.*;
 import org.aya.util.error.Panic;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AbstractSerializer.getJavaReference;
 
@@ -36,11 +32,12 @@ public interface AyaSerializer<T> {
   String PACKAGE_BASE = "AYA";
   String STATIC_FIELD_INSTANCE = "INSTANCE";
   String FIELD_INSTANCE = "ref";
-  String CLASS_JITCONCALL = getJavaReference(ConCall.class);
+  String CLASS_CONCALL = getJavaReference(ConCall.class);
   String CLASS_CONCALLLIKE = getJavaReference(ConCallLike.class);
   String CLASS_TUPLE = getJavaReference(TupTerm.class);
-  String CLASS_JITFNCALL = getJavaReference(FnCall.class);
-  String CLASS_JITDATACALL = getJavaReference(DataCall.class);
+  String CLASS_FNCALL = getJavaReference(FnCall.class);
+  String CLASS_DATACALL = getJavaReference(DataCall.class);
+  String CLASS_PRIMCALL = getJavaReference(PrimCall.class);
   String CLASS_IMMSEQ = getJavaReference(ImmutableSeq.class);
   String CLASS_MUTSEQ = getJavaReference(MutableSeq.class);
   String CLASS_SEQ = getJavaReference(Seq.class);
