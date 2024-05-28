@@ -7,7 +7,6 @@ import org.aya.gradle.GenerateVersionTask
 
 dependencies {
   api(project(":base"))
-  implementation(libs.sourcebuddy)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
   testImplementation(project(":producer"))

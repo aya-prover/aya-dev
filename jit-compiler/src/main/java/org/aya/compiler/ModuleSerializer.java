@@ -44,7 +44,8 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
         .serialize(dataDef);
       case ConDef conDef -> new ConSerializer(builder, indent, nameGen)
         .serialize(conDef);
-      case PrimDef primDef -> throw new UnsupportedOperationException("TODO");
+      case PrimDef primDef -> new PrimSerializer(this)
+        .serialize(primDef);
     }
   }
 

@@ -11,7 +11,6 @@ import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
-import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -79,12 +78,18 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs
   ) throws IOException {
+    var name = file.moduleName().last();
     var javaCode = new FileSerializer(resolveInfo.shapeFactory())
       .serialize(new FileSerializer.FileResult(file.moduleName().dropLast(1), new ModuleSerializer.ModuleResult(
-        file.moduleName().last(), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
+        name, defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
       .result();
-    // TODO: compile defs
     var coreFile = file.compiledCorePath();
+    // try {
+    //   var compiled = Compiler.java().from(STR."\{AyaSerializer.PACKAGE_BASE}.\{name}", javaCode).compile();
+    //   compiled.saveTo(coreFile.resolveSibling(STR."\{name}.compiled"));
+    // } catch (Compiler.CompileException e) {
+    //   throw new Panic(e);
+    // }
     CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
   }
 }
