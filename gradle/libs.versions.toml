@@ -28,8 +28,6 @@ jlink = "3.0.1"
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
 manifold = "2024.1.14"
-# https://github.com/sourcebuddy/sourcebuddy
-sourcebuddy = "2.5.0"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
@@ -62,7 +60,6 @@ hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest"
 
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }
-sourcebuddy = { group = "com.javax0.sourcebuddy", name = "SourceBuddy", version.ref = "sourcebuddy" }
 
 manifold-delegate-runtime = { group = "systems.manifold", name = "manifold-delegation-rt", version.ref = "manifold" }
 manifold-delegate-codegen = { group = "systems.manifold", name = "manifold-delegation", version.ref = "manifold" }

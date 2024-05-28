@@ -17,17 +17,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class CompileTester {
-  public final @NotNull String code;
   private final Path baka;
   public final ClassLoader cl;
 
   public CompileTester(@NotNull String code) throws IOException {
-    this.code = code;
-
-    var genDir = Paths.get("src/test/gen");
+    var root = Paths.get("build/tmp/testGenerated");
+    var genDir = root.resolve(AyaSerializer.PACKAGE_BASE);
     Files.createDirectories(genDir);
     Files.writeString(baka = genDir.resolve("baka.java"), code);
-    cl = new URLClassLoader(new URL[]{baka.toUri().toURL()});
+    cl = new URLClassLoader(new URL[]{root.toUri().toURL()});
   }
 
   public void compile() {
