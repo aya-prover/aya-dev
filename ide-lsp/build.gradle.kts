@@ -102,7 +102,7 @@ supportedPlatforms.forEach { platform ->
   }
 
   val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary_$platform") {
-    from(rootProject.file("base/src/test/resources/success/common"))
+    from(rootProject.file("cli-impl/src/test/resources/shared"))
     into(installDir.resolve("std"))
   }
 
