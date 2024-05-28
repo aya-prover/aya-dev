@@ -1,5 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
 import org.aya.gradle.JdkUrls
 import java.nio.file.Files
@@ -84,7 +85,7 @@ supportedPlatforms.forEach { platform ->
     from(file("src/main/shell")) {
       // https://ss64.com/bash/chmod.html
       filePermissions { unix("755") }
-      if (platform.contains("windows")) {
+      if (platform.contains("windows") || platform == "current" && Os.isFamily(Os.FAMILY_WINDOWS)) {
         include("*.bat")
       } else {
         include("*.sh")
