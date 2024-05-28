@@ -74,7 +74,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       var compiledAya = (CompiledModule) inputStream.readObject();
       var baseDir = computeBaseDir(owner);
       try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
-        cl.loadClass(AbstractSerializer.getModuleReference(null /*TODO*/));
+        cl.loadClass(AbstractSerializer.getModuleReference(QPath.fileLevel(mod)));
         return compiledAya.toResolveInfo(recurseLoader, context, cl);
       }
     }
