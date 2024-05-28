@@ -21,7 +21,6 @@ import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.call.ConCall;
-import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -51,9 +50,9 @@ public class CompileTest {
       tester.compile();
       var loader = tester.cl;
 
-      var fieldO = loader.loadClass("AYA.baka$Nat$O").getField("INSTANCE");
-      var fieldS = loader.loadClass("AYA.baka$Nat$S").getField("INSTANCE");
-      var fieldPlus = loader.loadClass("AYA.baka$plus").getField("INSTANCE");
+      var fieldO = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$O").getField("INSTANCE");
+      var fieldS = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$S").getField("INSTANCE");
+      var fieldPlus = loader.loadClass("AYA.$baka$$baka$plus").getField("INSTANCE");
       fieldO.setAccessible(true);
       fieldS.setAccessible(true);
       fieldPlus.setAccessible(true);
