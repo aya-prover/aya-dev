@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * A qualified name to some definition
+ */
 public record QName(@NotNull QPath module, @NotNull String name) implements Serializable {
   public QName(@NotNull DefVar<?, ?> ref) {
     this(Objects.requireNonNull(ref.module), ref.name());

@@ -50,9 +50,9 @@ public class CompileTest {
       tester.compile();
       var loader = tester.cl;
 
-      var fieldO = loader.loadClass("AYA.baka$Nat$O").getField("INSTANCE");
-      var fieldS = loader.loadClass("AYA.baka$Nat$S").getField("INSTANCE");
-      var fieldPlus = loader.loadClass("AYA.baka$plus").getField("INSTANCE");
+      var fieldO = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$O").getField("INSTANCE");
+      var fieldS = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$S").getField("INSTANCE");
+      var fieldPlus = loader.loadClass("AYA.$baka$$baka$plus").getField("INSTANCE");
       fieldO.setAccessible(true);
       fieldS.setAccessible(true);
       fieldPlus.setAccessible(true);
@@ -103,8 +103,8 @@ public class CompileTest {
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
     return new FileSerializer(result.info.shapeFactory())
-      .serialize(new FileSerializer.FileResult(null, new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
+      .serialize(new ModuleSerializer.ModuleResult(
+        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
   }
 

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
+import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +55,9 @@ public sealed interface ModuleName extends Serializable {
 
   @NotNull ModuleName.ThisRef This = ThisRef.Obj;
 
-  static @NotNull ModuleName from(@NotNull ImmutableSeq<String> ids) {
+  static @NotNull ModuleName from(@NotNull SeqLike<String> ids) {
     if (ids.isEmpty()) return This;
-    return new Qualified(ids);
+    return new Qualified(ids.toImmutableSeq());
   }
 
   /**

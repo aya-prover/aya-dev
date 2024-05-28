@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.NameGenerator;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.def.*;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.ModuleResult> {
   public record ModuleResult(
-    @NotNull String name,
+    @NotNull QPath name,
     @NotNull ImmutableSeq<TopLevelDef> defs,
     @NotNull ImmutableSeq<ModuleResult> submodules
   ) { }
@@ -50,7 +51,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
   }
 
   private void doSerialize(ModuleResult unit, boolean isTopLevel) {
-    var moduleName = javify(unit.name);
+    var moduleName = javifyClassName(unit.name, null);
 
     buildClass(moduleName, null, !isTopLevel, () -> {
       IterableUtil.forEach(unit.defs, this::appendLine, this::doSerialize);

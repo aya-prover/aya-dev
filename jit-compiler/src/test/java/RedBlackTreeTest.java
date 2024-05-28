@@ -12,6 +12,8 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.literate.CodeOptions;
+import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,7 +21,8 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import static org.aya.compiler.AbstractSerializer.javify;
+import static org.aya.compiler.AbstractSerializer.getClassName;
+import static org.aya.compiler.AbstractSerializer.getReference;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class RedBlackTreeTest {
@@ -33,13 +36,15 @@ public class RedBlackTreeTest {
     var tester = new CompileTester(CompileTest.serializeFrom(result));
     tester.compile();
 
-    JitData List = tester.loadInstance("baka", "List");
-    JitCon nil = tester.loadInstance("baka", "List", javify("[]"));
-    JitCon cons = tester.loadInstance("baka", "List", javify(":>"));
-    JitData Nat = tester.loadInstance("baka", "Nat");
-    JitCon O = tester.loadInstance("baka", "Nat", "O");
-    JitCon S = tester.loadInstance("baka", "Nat", "S");
-    JitFn tree_sortNat = tester.loadInstance("baka", "tree_sortNat");
+    var baka = QPath.fileLevel(ModulePath.of("baka"));
+
+    JitData List = tester.loadInstance(getClassName(baka, "List"));
+    JitCon nil = tester.loadInstance(getClassName(baka.derive("List"), "[]"));
+    JitCon cons = tester.loadInstance(getClassName(baka.derive("List"), ":>"));
+    JitData Nat = tester.loadInstance(getClassName(baka, "Nat"));
+    JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "O"));
+    JitCon S = tester.loadInstance(getClassName(baka.derive("Nat"), "S"));
+    JitFn tree_sortNat = tester.loadInstance(getClassName(baka, "tree_sortNat"));
 
     var NatCall = new DataCall(Nat, 0, ImmutableSeq.empty());
     var ListNatCall = new DataCall(List, 0, ImmutableSeq.of(NatCall));

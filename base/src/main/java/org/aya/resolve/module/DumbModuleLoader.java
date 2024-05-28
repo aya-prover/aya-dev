@@ -8,12 +8,13 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DumbModuleLoader implements ModuleLoader {
-  public static final @NotNull String DUMB_MODULE_NAME = "baka";
+  public static final @NotNull QPath DUMB_MODULE_NAME = new QPath(ModulePath.of("baka"), 1);
 
   public final @NotNull PrimFactory primFactory = new PrimFactory();
   public final @NotNull Context baseContext;
@@ -22,7 +23,7 @@ public class DumbModuleLoader implements ModuleLoader {
   }
 
   public @NotNull ResolveInfo resolve(@NotNull ImmutableSeq<Stmt> stmts) {
-    return resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME), stmts, this);
+    return resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME.module()), stmts, this);
   }
 
   @Override public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
