@@ -29,9 +29,9 @@ public class ReplCompilerTest {
 
   @Test public void library() throws IOException {
     compiler.loadToContext(Paths.get("../ide-lsp", "src", "test", "resources", "lsp-test-lib"));
-    assertNotNull(findContext("NatCore::zero"));
-    assertNotNull(findContext("Vec::vnil"));
-    assertNotNull(findContext("Vec:::>"));
+    assertNotNull(findContext("Nat::Core::zero"));
+    assertNotNull(findContext("VecCore::vnil"));
+    assertNotNull(findContext("VecCore:::>"));
   }
 
   @Test public void simpleExpr() { compile("Set"); }
@@ -51,15 +51,15 @@ public class ReplCompilerTest {
     assertNull(findContext("a"));
   }
 
-  // /** <a href="https://ice1000.jetbrains.space/im/group/4DLh053zIix6?message=2db0002db&channel=4DLh053zIix6">Bug report</a> */
-  // @Test public void reportedInSpace() {
-  //   // success cases, we can find the definition in the context
-  //   compile("data Unit | unit");
-  //   assertNotNull(findContext("Unit"));
-  //   compile("data What | what : Unit");
-  //   assertNotNull(findContext("What"));
-  //   assertNotNull(findContext("Unit"));
-  // }
+  /** <a href="https://ice1000.jetbrains.space/im/group/4DLh053zIix6?message=2db0002db&channel=4DLh053zIix6">Bug report</a> */
+  @Test public void reportedInSpace() {
+    // success cases, we can find the definition in the context
+    compile("data Unit | unit");
+    assertNotNull(findContext("Unit"));
+    compile("data What | what");
+    assertNotNull(findContext("What"));
+    assertNotNull(findContext("Unit"));
+  }
 
   private @Nullable AnyVar findContext(@NotNull String name) {
     try {
