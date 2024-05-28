@@ -136,7 +136,8 @@ public class AyaLanguageServer implements LanguageServer {
     var workOps = new ServerCapabilities.WorkspaceFoldersOptions(true, true);
     var workCap = new ServerCapabilities.WorkspaceServerCapabilities(workOps);
     cap.completionProvider = new ServerCapabilities.CompletionOptions(
-      true, Collections.singletonList("QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:"));
+      true, Collections.singletonList("QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:"),
+      Collections.emptyList());
     cap.workspace = workCap;
     cap.definitionProvider = true;
     cap.referencesProvider = true;
