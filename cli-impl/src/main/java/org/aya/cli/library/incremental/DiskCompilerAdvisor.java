@@ -13,6 +13,7 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       var compiledAya = (CompiledModule) inputStream.readObject();
       var baseDir = computeBaseDir(owner);
       try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
-        cl.loadClass(AbstractSerializer.getModuleReference(mod));
+        cl.loadClass(AbstractSerializer.getModuleReference(null /*TODO*/));
         return compiledAya.toResolveInfo(recurseLoader, context, cl);
       }
     }
@@ -84,10 +85,9 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs
   ) throws IOException {
-    var name = file.moduleName().last();
     var javaCode = new FileSerializer(resolveInfo.shapeFactory())
       .serialize(new FileSerializer.FileResult(file.moduleName().dropLast(1), new ModuleSerializer.ModuleResult(
-        name, defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
+        QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
       .result();
     var baseDir = computeBaseDir(file.owner()).toAbsolutePath();
     var javaSrcPath = FileUtil.resolveFile(baseDir.resolve(AyaSerializer.PACKAGE_BASE),

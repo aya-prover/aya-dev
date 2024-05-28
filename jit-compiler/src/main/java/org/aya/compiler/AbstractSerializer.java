@@ -7,14 +7,15 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.NameGenerator;
-import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QName;
+import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -242,26 +243,41 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     return STR."\{term} == null";
   }
 
-  public static @NotNull String getModuleReference(@Nullable ModulePath module) {
-    return (module == null ? SeqView.<String>empty() : module.module().view())
-      .prepended(PACKAGE_BASE).joinToString(".");
+  /**
+   * Compute the package reference of certain <b>file level</b> {@link ModulePath}.
+   */
+  public static @NotNull String getModulePackageReference(@NotNull ModulePath module) {
+    return module.module().view().dropLast(1)
+      .prepended(PACKAGE_BASE)
+      .joinToString(".");
+  }
+
+  public static @NotNull String getModuleReference(@NotNull QPath module) {
+    return getReference(module, null);
+  }
+
+  public static @NotNull String getReference(@NotNull QName name) {
+    return getReference(name.module(), name.name());
+  }
+
+  /**
+   * Compute the reference of certain {@link QPath module}/symbol in {@link QPath module}.
+   */
+  public static @NotNull String getReference(@NotNull QPath module, @Nullable String name) {
+    // get package name of file level module
+    var packageName = getModulePackageReference(module.fileModule());
+    // get javify class name of each component
+    var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
+    if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
+    return STR."\{packageName}.\{javifyComponent.joinToString(".")}";
   }
 
   protected static @NotNull String getCoreReference(@NotNull DefVar<?, ?> ref) {
-    return STR."\{getModuleReference(Objects.requireNonNull(ref.module).module())}.\{javify(ref)}";
-  }
-
-  // TODO: produce name like "AYA_Data_Vec_Vec" rather than just "Vec", so that they won't conflict with our import
-  // then we can make all `CLASS_*` thing become unqualified.
-  protected static @NotNull String getJitReference(@NotNull JitTele ref) {
-    return ref.getClass().getName();
+    return getReference(TyckAnyDef.make(ref.core));
   }
 
   protected static @NotNull String getReference(@NotNull AnyDef def) {
-    return switch (def) {
-      case JitDef jitDef -> getJitReference(jitDef);
-      case TyckAnyDef<?> tyckDef -> getCoreReference(tyckDef.ref);
-    };
+    return getReference(def.qualifiedName());
   }
 
   protected static @NotNull String getInstance(@NotNull String defName) {
@@ -273,9 +289,31 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   }
 
   /** Mangle an aya symbol name to a java symbol name */
-  public static @NotNull String javify(@NotNull DefVar<?, ?> ayaName) {
-    return javify(ayaName.name());
+  public static @NotNull String javifyClassName(@NotNull DefVar<?, ?> ayaName) {
+    return javifyClassName(Objects.requireNonNull(ayaName.module), ayaName.name());
   }
+
+  public static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {
+    var ids = path.module().module()
+      .view().drop(path.fileModuleSize() - 1);
+    if (name != null) ids = ids.appended(name);
+    return javifyClassName(ids);
+  }
+
+  /**
+   * Generate a java friendly class name of {@param ids}, this function should be one-to-one
+   *
+   * @param ids the ids that has form {@code [ FILE_MODULE , VIRTUAL_MODULE* , NAME? ]}
+   */
+  public static @NotNull String javifyClassName(@NotNull SeqView<String> ids) {
+    return ids.map(AbstractSerializer::javify)
+      .joinToString("$", "$", "");
+  }
+
+  /**
+   * Generate a java friendly name of {@param name}, this function should be one-to-one.
+   * Note that the result may not be used for class name, see {@link #javifyClassName}
+   */
   public static @NotNull String javify(String name) {
     return name.codePoints().flatMap(x ->
         x == '$' ? "$$".chars()
@@ -285,6 +323,9 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
       .toString();
   }
 
+  /**
+   * Get the reference to {@param clazz}, it should be imported to current file.
+   */
   public static @NotNull String getJavaReference(@NotNull Class<?> clazz) {
     return clazz.getSimpleName().replace('$', '.');
   }

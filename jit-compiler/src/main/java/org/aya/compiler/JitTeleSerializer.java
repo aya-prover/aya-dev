@@ -71,7 +71,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
   }
 
   private @NotNull String getClassName(@NotNull T unit) {
-    return javify(unit.ref());
+    return javifyClassName(unit.ref());
   }
 
   public void buildInstance(@NotNull String className) {
