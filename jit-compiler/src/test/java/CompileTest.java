@@ -1,7 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
-import com.javax0.sourcebuddy.Compiler;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
@@ -28,6 +27,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class CompileTest {
@@ -37,7 +37,7 @@ public class CompileTest {
       open data Vec (n : Nat) Type
       | O, A   => vnil
       | S n, A => vcons A (Vec n A)
-
+      
       def plus (a b : Nat) : Nat elim a
       | O => b
       | S n => S (plus n b)
@@ -45,11 +45,10 @@ public class CompileTest {
 
     var code = serializeFrom(result);
 
-    System.out.println(code);
-
     try {
-      var clazz = Compiler.java().from("AYA.baka", code).compile().load().get();
-      var loader = clazz.getClassLoader();
+      var tester = new CompileTester(code);
+      tester.compile();
+      var loader = tester.cl;
 
       var fieldO = loader.loadClass("AYA.baka$Nat$O").getField("INSTANCE");
       var fieldS = loader.loadClass("AYA.baka$Nat$S").getField("INSTANCE");
@@ -67,7 +66,7 @@ public class CompileTest {
 
       var mResult = plus.invoke(zero, ImmutableSeq.of(two, three));
       System.out.println(mResult.debuggerOnlyToString());
-    } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException | Compiler.CompileException e) {
+    } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException | IOException e) {
       throw new RuntimeException(e);
     }
 

@@ -15,8 +15,6 @@ import org.aya.syntax.literate.CodeOptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Random;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -33,9 +31,6 @@ public class RedBlackTreeTest {
     var result = CompileTest.tyck(code);
 
     var tester = new CompileTester(CompileTest.serializeFrom(result));
-    var genDir = Paths.get("src/test/gen");
-    Files.createDirectories(genDir);
-    Files.writeString(genDir.resolve("baka.java"), tester.code);
     tester.compile();
 
     JitData List = tester.loadInstance("baka", "List");
