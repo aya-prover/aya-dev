@@ -5,6 +5,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.AyaSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
+import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.tools.ToolProvider;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -23,8 +23,7 @@ public class CompileTester {
   public CompileTester(@NotNull String code) throws IOException {
     var root = Paths.get("build/tmp/testGenerated");
     var genDir = root.resolve(AyaSerializer.PACKAGE_BASE);
-    Files.createDirectories(genDir);
-    Files.writeString(baka = genDir.resolve("baka.java"), code);
+    FileUtil.writeString(baka = genDir.resolve("baka.java"), code);
     cl = new URLClassLoader(new URL[]{root.toUri().toURL()});
   }
 

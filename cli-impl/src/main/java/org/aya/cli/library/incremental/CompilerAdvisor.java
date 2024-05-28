@@ -63,7 +63,7 @@ public interface CompilerAdvisor {
    */
   @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull Reporter reporter,
-    @NotNull ModulePath mod,
+    @NotNull LibraryOwner owner, @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
@@ -78,14 +78,14 @@ public interface CompilerAdvisor {
   @ApiStatus.NonExtendable
   default @Nullable ResolveInfo loadCompiledCore(
     @NotNull Reporter reporter,
-    @NotNull ModulePath mod,
+    @NotNull LibraryOwner owner, @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
   ) {
     assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
-      return doLoadCompiledCore(reporter, mod, sourcePath, corePath, recurseLoader);
+      return doLoadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
     } catch (IOException | ClassNotFoundException e) {
       throw new Panic("Compiled aya found but cannot be loaded", e);
     }

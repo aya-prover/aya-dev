@@ -6,9 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.compiler.CompiledModule;
-import org.aya.compiler.FileSerializer;
-import org.aya.compiler.ModuleSerializer;
+import org.aya.compiler.*;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
@@ -20,7 +18,10 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -57,7 +58,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   }
   @Override public @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull Reporter reporter,
-    @NotNull ModulePath mod,
+    @NotNull LibraryOwner owner, @NotNull ModulePath mod,
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
@@ -66,10 +67,13 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     if (!Files.exists(corePath)) return null;
 
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
-    // TODO: load defs
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledModule) inputStream.readObject();
-      return compiledAya.toResolveInfo(recurseLoader, context);
+      var baseDir = computeBaseDir(owner);
+      try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
+        cl.loadClass(AbstractSerializer.getModuleReference(mod));
+        return compiledAya.toResolveInfo(recurseLoader, context, cl);
+      }
     }
   }
 
@@ -83,13 +87,19 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       .serialize(new FileSerializer.FileResult(file.moduleName().dropLast(1), new ModuleSerializer.ModuleResult(
         name, defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
       .result();
+    var javaSrcPath = FileUtil.resolveFile(computeBaseDir(file.owner()).resolve(AyaSerializer.PACKAGE_BASE),
+      file.moduleName().module(), ".java");
+    FileUtil.writeString(javaSrcPath, javaCode);
+    var compiler = ToolProvider.getSystemJavaCompiler();
+    var fileManager = compiler.getStandardFileManager(null, null, null);
+    var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
+    var task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
+    task.call();
     var coreFile = file.compiledCorePath();
-    // try {
-    //   var compiled = Compiler.java().from(STR."\{AyaSerializer.PACKAGE_BASE}.\{name}", javaCode).compile();
-    //   compiled.saveTo(coreFile.resolveSibling(STR."\{name}.compiled"));
-    // } catch (Compiler.CompileException e) {
-    //   throw new Panic(e);
-    // }
     CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
+  }
+
+  private static @NotNull Path computeBaseDir(@NotNull LibraryOwner owner) {
+    return owner.outDir().resolve("compiled");
   }
 }
