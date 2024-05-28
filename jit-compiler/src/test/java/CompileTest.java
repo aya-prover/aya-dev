@@ -21,6 +21,7 @@ import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.call.ConCall;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -103,8 +104,8 @@ public class CompileTest {
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
     return new FileSerializer(result.info.shapeFactory())
-      .serialize(new FileSerializer.FileResult(null, new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
+      .serialize(new ModuleSerializer.ModuleResult(
+        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
   }
 

@@ -86,8 +86,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ImmutableSeq<TyckDef> defs
   ) throws IOException {
     var javaCode = new FileSerializer(resolveInfo.shapeFactory())
-      .serialize(new FileSerializer.FileResult(file.moduleName().dropLast(1), new ModuleSerializer.ModuleResult(
-        QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty())))
+      .serialize(new ModuleSerializer.ModuleResult(
+        QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
     var baseDir = computeBaseDir(file.owner()).toAbsolutePath();
     var javaSrcPath = FileUtil.resolveFile(baseDir.resolve(AyaSerializer.PACKAGE_BASE),

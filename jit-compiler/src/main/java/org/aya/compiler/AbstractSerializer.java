@@ -260,22 +260,36 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     return getReference(name.module(), name.name());
   }
 
-  /**
-   * Compute the reference of certain {@link QPath module}/symbol in {@link QPath module}.
-   */
+  public static @NotNull String getClassName(@NotNull QPath module, @Nullable String name) {
+    return getReference(module, name, "$");
+  }
+
   public static @NotNull String getReference(@NotNull QPath module, @Nullable String name) {
+    return getReference(module, name, ".");
+  }
+
+  /**
+   * Compute the qualified name for certain {@link QPath module}/symbol in {@link QPath module}.
+   * You may want to specify {@param separator} for different use.
+   */
+  public static @NotNull String getReference(@NotNull QPath module, @Nullable String name, @NotNull String separator) {
     // get package name of file level module
     var packageName = getModulePackageReference(module.fileModule());
     // get javify class name of each component
     var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
     if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
-    return STR."\{packageName}.\{javifyComponent.joinToString(".")}";
+    return STR."\{packageName}.\{javifyComponent.joinToString(separator)}";
   }
 
   protected static @NotNull String getCoreReference(@NotNull DefVar<?, ?> ref) {
     return getReference(TyckAnyDef.make(ref.core));
   }
 
+  /**
+   * Obtain the java qualified name of certain {@link AnyDef def}
+   *
+   * @see #getReference(QPath, String, String)
+   */
   protected static @NotNull String getReference(@NotNull AnyDef def) {
     return getReference(def.qualifiedName());
   }
@@ -311,7 +325,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   }
 
   /**
-   * Generate a java friendly name of {@param name}, this function should be one-to-one.
+   * Generate a java friendly name for {@param name}, this function should be one-to-one.
    * Note that the result may not be used for class name, see {@link #javifyClassName}
    */
   public static @NotNull String javify(String name) {

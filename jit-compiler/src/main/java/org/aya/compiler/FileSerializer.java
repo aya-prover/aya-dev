@@ -7,12 +7,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.ref.ModulePath;
 import org.jetbrains.annotations.NotNull;
 
-public class FileSerializer extends AbstractSerializer<FileSerializer.FileResult> {
-  public record FileResult(
-    @NotNull ModulePath modulePath,
-    @NotNull ModuleSerializer.ModuleResult moduleResult
-  ) { }
-
+public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleResult> {
   private final @NotNull ShapeFactory shapeFactory;
 
   public FileSerializer(@NotNull ShapeFactory factory) {
@@ -25,14 +20,15 @@ public class FileSerializer extends AbstractSerializer<FileSerializer.FileResult
   }
 
   @Override
-  public AyaSerializer<FileResult> serialize(FileResult unit) {
-    buildPackage(unit.modulePath);
+  public AyaSerializer<ModuleSerializer.ModuleResult> serialize(ModuleSerializer.ModuleResult unit) {
+    assert unit.name().isFileModule();
+    buildPackage(unit.name().module());
     appendLine();
     appendLine(AyaSerializer.IMPORT_BLOCK);
     appendLine();
 
     new ModuleSerializer(this, shapeFactory)
-      .serialize(unit.moduleResult);
+      .serialize(unit);
 
     return this;
   }
