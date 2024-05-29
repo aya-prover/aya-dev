@@ -68,6 +68,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private @UnknownNullability Param currentParam = null;
   private boolean hasError = false;
+  private final boolean isFn;
   private final @NotNull NameGenerator nameGen;
 
   /**
@@ -77,9 +78,10 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ExprTycker tycker,
     @NotNull SeqView<Param> tele,
     @NotNull LocalLet sub,
-    @NotNull NameGenerator nameGen
+    @NotNull NameGenerator nameGen,
+    boolean isFn
   ) {
-    this(tycker, tele, sub, true, nameGen);
+    this(tycker, tele, sub, true, nameGen, isFn);
   }
 
   public PatternTycker(
@@ -87,7 +89,8 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull SeqView<Param> telescope,
     @NotNull LocalLet asSubst,
     boolean allowImplicit,
-    @NotNull NameGenerator nameGen
+    @NotNull NameGenerator nameGen,
+    boolean isFn
   ) {
     this.exprTycker = exprTycker;
     this.telescope = telescope;
@@ -95,6 +98,7 @@ public class PatternTycker implements Problematic, Stateful {
     this.asSubst = asSubst;
     this.allowImplicit = allowImplicit;
     this.nameGen = nameGen;
+    this.isFn = isFn;
   }
 
   public record TyckResult(
@@ -395,7 +399,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull SeqView<Arg<WithPos<Pattern>>> patterns,
     @NotNull WithPos<Pattern> outerPattern
   ) {
-    var sub = new PatternTycker(exprTycker, telescope, asSubst, nameGen);
+    var sub = new PatternTycker(exprTycker, telescope, asSubst, nameGen, isFn);
     var tyckResult = sub.tyck(patterns, outerPattern, null);
 
     hasError = hasError || sub.hasError;
