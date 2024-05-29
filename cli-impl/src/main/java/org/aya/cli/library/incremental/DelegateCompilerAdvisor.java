@@ -60,4 +60,7 @@ public class DelegateCompilerAdvisor implements CompilerAdvisor {
   doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) throws IOException {
     delegate.doSaveCompiledCore(file, resolveInfo, defs);
   }
+  @Override public void close() throws Exception {
+    delegate.close();
+  }
 }

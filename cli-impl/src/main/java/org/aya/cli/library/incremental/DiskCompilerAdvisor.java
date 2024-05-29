@@ -32,6 +32,17 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
+  private static class AyaClassLoader extends URLClassLoader {
+    public AyaClassLoader() {
+      super(new URL[0], DiskCompilerAdvisor.class.getClassLoader());
+    }
+    @Override public void addURL(URL url) {
+      super.addURL(url);
+    }
+  }
+  private final AyaClassLoader cl = new AyaClassLoader();
+  @Override public void close() throws Exception { cl.close(); }
+
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {
     try {
       var core = source.compiledCorePath();
@@ -79,10 +90,9 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       var baseDir = corePath;
       for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
       baseDir = computeBaseDir(baseDir);
-      try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
-        cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
-        return compiledAya.toResolveInfo(recurseLoader, context, cl);
-      }
+      cl.addURL(baseDir.toUri().toURL());
+      cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
+      return compiledAya.toResolveInfo(recurseLoader, context, cl);
     }
   }
 

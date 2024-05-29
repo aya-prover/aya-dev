@@ -212,6 +212,9 @@ public record CompiledModule(
           for (var constructor : data.constructors()) {
             innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
           }
+          context.importModule(
+            ModuleName.This.resolve(data.name()),
+            innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
         }
         default -> { }
       }

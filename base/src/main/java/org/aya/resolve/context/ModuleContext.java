@@ -115,7 +115,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
       } else return;
     } else if (getModuleMaybe(modName) != null) {
-      reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
 
     modules.set(modName, moduleExport);
@@ -192,7 +192,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       if (getUnqualifiedMaybe(name, sourcePos) != null
         && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
-        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
+        fail(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (candidates.map().containsKey(modName)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
