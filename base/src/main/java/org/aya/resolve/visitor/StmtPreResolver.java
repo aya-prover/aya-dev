@@ -17,8 +17,8 @@ import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
-import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.binop.Assoc;
@@ -90,7 +90,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
           var asName = use.asName().getOrDefault(use.id().name());
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
           var bind = use.asBind();
-          resolveInfo.renameOp(ctx, new TyckAnyDef<>(symbol.get()), renamedOpDecl, bind, true);
+          resolveInfo.renameOp(ctx, AnyDef.fromVar(symbol.get()), renamedOpDecl, bind, true);
         });
         yield null;
       }

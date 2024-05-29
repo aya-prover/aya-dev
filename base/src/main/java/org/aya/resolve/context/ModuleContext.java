@@ -9,10 +9,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.*;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -239,7 +236,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
     return true;
   }
 

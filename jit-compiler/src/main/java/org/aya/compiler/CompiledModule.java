@@ -18,10 +18,7 @@ import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.ModulePath;
-import org.aya.syntax.ref.QName;
-import org.aya.syntax.ref.QPath;
+import org.aya.syntax.ref.*;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
@@ -199,7 +196,7 @@ public record CompiledModule(
         case JitData data -> { }
         case JitFn fn -> {
           if (isExported(context.modulePath(), qname)) {
-            export(context, qname, null); // TODO
+            export(context, qname, new CompiledVar(fn));
           }
         }
         case JitPrim prim -> { }
@@ -271,7 +268,7 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull DefVar<?, ?> ref) {
+  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull AnyDefVar ref) {
     var modName = context.modulePath();
     var qmodName = ModuleName.from(qname.asStringSeq().drop(modName.module().size()));
     export(context, qmodName, qname.name(), ref);
@@ -281,7 +278,7 @@ public record CompiledModule(
     @NotNull PhysicalModuleContext context,
     @NotNull ModuleName component,
     @NotNull String name,
-    @NotNull DefVar<?, ?> var
+    @NotNull AnyDefVar var
   ) {
     var success = context.exportSymbol(component, name, var);
     assert success : "DuplicateExportError should not happen in CompiledModule";
