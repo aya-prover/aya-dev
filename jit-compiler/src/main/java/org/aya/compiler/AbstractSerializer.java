@@ -228,8 +228,6 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   }
 
   protected static @NotNull String makeString(@NotNull String raw) {
-    // TODO: kala bug
-    // assert StringView.of(raw).anyMatch(c -> c == '\\' || c == '"');
     return STR."\"\{StringUtil.escapeStringCharacters(raw)}\"";
   }
 
