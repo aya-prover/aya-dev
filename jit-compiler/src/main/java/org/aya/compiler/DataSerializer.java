@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-import static org.aya.compiler.NameSerializer.getCoreReference;
+import static org.aya.compiler.NameSerializer.getClassReference;
 
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
@@ -88,7 +88,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
     buildIf(isNull(STR."\{cRef}[0]"), () ->
       unit.body.forEachIndexed((idx, con) ->
-        buildUpdate(STR."\{cRef}[\{idx}]", getInstance(getCoreReference(con.ref)))));
+        buildUpdate(STR."\{cRef}[\{idx}]", getInstance(getClassReference(con.ref)))));
 
     buildReturn(cRef);
   }

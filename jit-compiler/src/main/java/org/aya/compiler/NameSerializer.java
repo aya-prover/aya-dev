@@ -50,22 +50,6 @@ public interface NameSerializer {
       .joinToString(separator, NameSerializer::javify);
   }
 
-  static @NotNull String getModuleReference(@NotNull QPath module) {
-    return getClassReference(module, null);
-  }
-
-  static @NotNull String getClassReference(@NotNull QName name) {
-    return getClassReference(name.module(), name.name());
-  }
-
-  static @NotNull String getClassName(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, NameType.ClassName);
-  }
-
-  static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, NameType.ClassReference);
-  }
-
   /**
    * Compute the qualified name for certain {@link QPath module}/symbol in {@link QPath module}.
    * You may want to specify {@param separator} for different use.
@@ -79,8 +63,24 @@ public interface NameSerializer {
     return STR."\{packageName}\{type.packageSeparator}\{javifyComponent.joinToString(type.classNameSeparactor)}";
   }
 
-  static @NotNull String getCoreReference(@NotNull DefVar<?, ?> ref) {
-    return getReference(TyckAnyDef.make(ref.core));
+  static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {
+    return getReference(module, name, NameType.ClassReference);
+  }
+
+  static @NotNull String getClassName(@NotNull QPath module, @Nullable String name) {
+    return getReference(module, name, NameType.ClassName);
+  }
+
+  static @NotNull String getModuleReference(@NotNull QPath module) {
+    return getClassReference(module, null);
+  }
+
+  static @NotNull String getClassReference(@NotNull QName name) {
+    return getClassReference(name.module(), name.name());
+  }
+
+  static @NotNull String getClassReference(@NotNull DefVar<?, ?> ref) {
+    return getClassReference(TyckAnyDef.make(ref.core));
   }
 
   /**
@@ -88,13 +88,8 @@ public interface NameSerializer {
    *
    * @see #getReference(QPath, String, NameType)
    */
-  static @NotNull String getReference(@NotNull AnyDef def) {
+  static @NotNull String getClassReference(@NotNull AnyDef def) {
     return getClassReference(def.qualifiedName());
-  }
-
-  /** Mangle an aya symbol name to a java symbol name */
-  static @NotNull String javifyClassName(@NotNull DefVar<?, ?> ayaName) {
-    return javifyClassName(Objects.requireNonNull(ayaName.module), ayaName.name());
   }
 
   static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {
@@ -102,6 +97,11 @@ public interface NameSerializer {
       .view().drop(path.fileModuleSize() - 1);
     if (name != null) ids = ids.appended(name);
     return javifyClassName(ids);
+  }
+
+  /** Mangle an aya symbol name to a java symbol name */
+  static @NotNull String javifyClassName(@NotNull DefVar<?, ?> ayaName) {
+    return javifyClassName(Objects.requireNonNull(ayaName.module), ayaName.name());
   }
 
   /**

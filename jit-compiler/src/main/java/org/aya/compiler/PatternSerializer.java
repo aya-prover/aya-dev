@@ -18,8 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static org.aya.compiler.NameSerializer.getReference;
-
 public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<PatternSerializer.Matching>> {
   @FunctionalInterface
   public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
@@ -70,7 +68,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> multiStage(con, term, ImmutableSeq.of(
         mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(getReference(con.ref()))}",
+          buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(NameSerializer.getClassReference(con.ref()))}",
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
                 nameGen.nextName(null), STR."\{mmTerm}.conArgs()");
