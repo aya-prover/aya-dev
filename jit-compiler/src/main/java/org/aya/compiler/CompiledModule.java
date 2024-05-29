@@ -16,11 +16,15 @@ import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.repr.AyaShape;
+import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.ref.*;
+import org.aya.util.ArrayUtil;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
@@ -197,12 +201,7 @@ public record CompiledModule(
     for (Class<?> jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
       var qname = jitDef.qualifiedName();
-      // var metadata = jitDef.metadata();
-      // if (metadata.shape() != -1) {
-      //   var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
-      //     ImmutableMap.from(metadata.recognition()));
-      //   shapeFactory.bonjour(jitDef, recognition);
-      // }
+      var metadata = jitDef.metadata();
       if (jitDef instanceof JitPrim || isExported(context.modulePath(), qname))
         export(context, qname, new CompiledVar(jitDef));
       switch (jitDef) {
@@ -215,6 +214,19 @@ public record CompiledModule(
           context.importModule(
             ModuleName.This.resolve(data.name()),
             innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
+          if (metadata.shape() != -1) {
+            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+              ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
+                data.constructors())));
+            shapeFactory.bonjour(jitDef, recognition);
+          }
+        }
+        case JitFn fn -> {
+          if (metadata.shape() != -1) {
+            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+              ImmutableMap.empty());
+            shapeFactory.bonjour(jitDef, recognition);
+          }
         }
         default -> { }
       }
