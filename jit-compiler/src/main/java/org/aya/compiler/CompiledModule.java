@@ -58,7 +58,7 @@ public record CompiledModule(
         throw new Panic(e);
       }
     }
-    private static JitDef getJitDef(Class<?> clazz)  {
+    private static JitDef getJitDef(Class<?> clazz) {
       try {
         var fieldInstance = clazz.getField(AyaSerializer.STATIC_FIELD_INSTANCE);
         fieldInstance.setAccessible(true);
@@ -159,7 +159,8 @@ public record CompiledModule(
   ) {
     private void serOp(@NotNull TyckDef def) {
       var concrete = def.ref().concrete;
-      serOps.put(new QName(def.ref()), serBind(concrete.bindBlock()));
+      if (concrete.opInfo() != null)
+        serOps.put(new QName(def.ref()), serBind(concrete.bindBlock()));
     }
 
     private @NotNull SerBind serBind(@NotNull BindBlock bindBlock) {
@@ -182,15 +183,24 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
-    loadModule(context, state.topLevelClass(context.modulePath()));
+    loadModule(context, shapeFactory, state.topLevelClass(context.modulePath()));
     deOp(state, resolveInfo);
     return resolveInfo;
   }
 
-  private void loadModule(@NotNull PhysicalModuleContext context, Class<?> rootClass) {
+  private void loadModule(
+    @NotNull PhysicalModuleContext context, @NotNull ShapeFactory shapeFactory,
+    @NotNull Class<?> rootClass
+  ) {
     for (Class<?> jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
       var qname = jitDef.qualifiedName();
+      // var metadata = jitDef.metadata();
+      // if (metadata.shape() != -1) {
+      //   var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+      //     ImmutableMap.from(metadata.recognition()));
+      //   shapeFactory.bonjour(jitDef, recognition);
+      // }
       switch (jitDef) {
         case JitCon con -> { }
         case JitData data -> { }

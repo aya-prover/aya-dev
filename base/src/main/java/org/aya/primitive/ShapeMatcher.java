@@ -189,7 +189,8 @@ public record ShapeMatcher(
         captures.resolve(call.name()) == ref;
       case TermShape.DeBruijn(var index) -> term instanceof LocalTerm(var jndex) && index == jndex;
       case TermShape.Callable call when term instanceof Callable.Tele callable -> {
-        var ref = (TyckAnyDef<?>) callable.ref();
+        // TODO: they should be matchable as well
+        if (!(callable.ref() instanceof TyckAnyDef<?> ref)) yield false;
         boolean success = switch (call) {
           case TermShape.NameCall nameCall -> captures.resolve(nameCall.name()) == ref.ref;
           case TermShape.ShapeCall shapeCall -> {

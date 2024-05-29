@@ -4,6 +4,7 @@ package org.aya.util.binop;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public abstract class BinOpSet {
   ) {
     private static @NotNull OpDecl.OpInfo ensureOperator(@NotNull OpDecl opDecl) {
       var op = opDecl.opInfo();
-      if (op == null) throw new IllegalArgumentException("not an operator");
+      if (op == null) throw new Panic("Not an operator" + opDecl);
       return op;
     }
 
