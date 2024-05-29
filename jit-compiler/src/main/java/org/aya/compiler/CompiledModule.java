@@ -14,7 +14,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -46,10 +46,6 @@ public record CompiledModule(
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
 ) implements Serializable {
   public record DeState(@NotNull ClassLoader loader) {
-    public @NotNull String classNameBy(@NotNull QName name) {
-      return NameSerializer.getClassName(name.module(), name.name());
-    }
-
     public @NotNull Class<?> topLevelClass(@NotNull ModulePath name) {
       try {
         return loader.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(name)));
@@ -60,11 +56,17 @@ public record CompiledModule(
 
     public @NotNull JitDef resolve(@NotNull QName name) {
       try {
-        var clazz = loader.loadClass(classNameBy(name));
+        return getJitDef(loader.loadClass(NameSerializer.getClassName(name)));
+      } catch (ClassNotFoundException e) {
+        throw new Panic(e);
+      }
+    }
+    private static JitDef getJitDef(Class<?> clazz)  {
+      try {
         var fieldInstance = clazz.getField(AyaSerializer.STATIC_FIELD_INSTANCE);
         fieldInstance.setAccessible(true);
         return (JitDef) fieldInstance.get(null);
-      } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+      } catch (NoSuchFieldException | IllegalAccessException e) {
         throw new Panic(e);
       }
     }
@@ -183,9 +185,26 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
-    var rootClass = state.topLevelClass(context.modulePath());
+    loadModule(context, state.topLevelClass(context.modulePath()));
     deOp(state, resolveInfo);
     return resolveInfo;
+  }
+
+  private void loadModule(@NotNull PhysicalModuleContext context, Class<?> rootClass) {
+    for (Class<?> jitClass : rootClass.getDeclaredClasses()) {
+      var jitDef = DeState.getJitDef(jitClass);
+      var qname = jitDef.qualifiedName();
+      switch (jitDef) {
+        case JitCon con -> { }
+        case JitData data -> { }
+        case JitFn fn -> {
+          if (isExported(context.modulePath(), qname)) {
+            export(context, qname, null); // TODO
+          }
+        }
+        case JitPrim prim -> { }
+      }
+    }
   }
 
   /**
