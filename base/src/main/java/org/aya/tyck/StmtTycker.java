@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
@@ -155,6 +156,7 @@ public record StmtTycker(
     var dataRef = dataCon.dataRef;
     var dataSig = dataRef.signature;
     assert dataSig != null : "the header of data should be tycked";
+    // Intended to be indexed, not free
     var ownerTele = dataSig.param().map(x -> x.descent((_, p) -> p.implicitize()));
     var ownerBinds = dataRef.concrete.telescope.map(Expr.Param::ref);
     // dataTele already in localCtx
@@ -173,10 +175,13 @@ public record StmtTycker(
       freeDataCall = new DataCall(dataRef, 0, wellPats.map(PatToTerm::visit));
 
       var allBinds = Pat.collectBindings(wellPats.view());
-      ownerTele = allBinds
-        .map(x -> new WithPos<>(x.var().definition(),
-          new Param(x.var().name(), x.type(), false)));
       ownerBinds = allBinds.map(Pat.CollectBind::var);
+      var preOwnerTele = MutableSeq.from(allBinds.view()
+        .map(x -> new Param(x.var().name(), x.type(), false)));
+      TeleTycker.bindTele(ownerBinds, preOwnerTele);
+      ownerTele = allBinds
+        .zip(preOwnerTele, (bind, param) -> new WithPos<>(bind.var().definition(), param))
+        .toImmutableSeq();
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {

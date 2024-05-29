@@ -248,7 +248,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   public static @NotNull String getModulePackageReference(@NotNull ModulePath module, @NotNull String separator) {
     return module.module().view().dropLast(1)
       .prepended(PACKAGE_BASE)
-      .joinToString(separator);
+      .joinToString(separator, AbstractSerializer::javify);
   }
 
   public static @NotNull String getModuleReference(@NotNull QPath module) {

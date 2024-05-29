@@ -47,11 +47,11 @@ public sealed interface Pat extends AyaDocile {
 
   record CollectBind(LocalVar var, Term type) { }
 
-  static @NotNull ImmutableSeq<CollectBind> collectBindings(@NotNull SeqView<Pat> pats) {
+  static @NotNull MutableList<CollectBind> collectBindings(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<CollectBind>create();
     pats.forEach(p -> p.consumeBindings((var, type) ->
       buffer.append(new CollectBind(var, type))));
-    return buffer.toImmutableSeq();
+    return buffer;
   }
 
   /**

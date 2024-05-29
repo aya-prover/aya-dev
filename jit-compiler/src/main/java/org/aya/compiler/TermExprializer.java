@@ -107,12 +107,12 @@ public class TermExprializer extends AbstractExprializer<Term> {
   @Override
   protected @NotNull String doSerialize(@NotNull Term term) {
     return switch (term) {
-      case FreeTerm bind -> {
+      case FreeTerm(var bind) -> {
         // It is possible that we meet bind here,
         // the serializer will instantiate some variable while serializing LamTerm
-        var subst = binds.getOrNull(bind.name());
+        var subst = binds.getOrNull(bind);
         if (subst == null) {
-          throw new Panic(STR."No substitution for \{bind.name()} during serialization");
+          throw new Panic(STR."No substitution for \{bind} during serialization");
         }
 
         yield subst;
@@ -200,7 +200,8 @@ public class TermExprializer extends AbstractExprializer<Term> {
         getInstance(getReference(cons)),
         doSerialize(type)
       );
-      case StringTerm stringTerm -> makeNew(CLASS_STRING, makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
+      case StringTerm stringTerm ->
+        makeNew(CLASS_STRING, makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
     };
   }
 
