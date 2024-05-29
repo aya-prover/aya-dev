@@ -104,9 +104,9 @@ public record CompiledModule(
     @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
   ) implements Serializable {
     public boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-      var qmod = qname.asStringSeq();
-      assert qmod.sizeGreaterThanOrEquals(module.module().size());
-      var component = ModuleName.from(qmod.drop(module.module().size()));
+      var qmod = qname.module().module().module();
+      assert qmod.sizeGreaterThanOrEquals(module.size());
+      var component = ModuleName.from(qmod.drop(module.size()));
 
       // A QName refers to a def,
       // which means it was defined in {module} if `component == This`;
@@ -199,7 +199,7 @@ public record CompiledModule(
             export(context, qname, new CompiledVar(fn));
           }
         }
-        case JitPrim prim -> { }
+        case JitPrim prim -> export(context, qname, new CompiledVar(prim));
       }
     }
   }
