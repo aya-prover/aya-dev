@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static org.aya.compiler.AyaSerializer.*;
+import static org.aya.compiler.AyaSerializer.PACKAGE_BASE;
 
 public interface NameSerializer {
   String PATH_SEPARATOR = File.separator;
@@ -65,6 +65,10 @@ public interface NameSerializer {
 
   static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {
     return getReference(module, name, NameType.ClassReference);
+  }
+
+  static @NotNull String getClassName(@NotNull QName name) {
+    return getClassName(name.module(), name.name());
   }
 
   static @NotNull String getClassName(@NotNull QPath module, @Nullable String name) {

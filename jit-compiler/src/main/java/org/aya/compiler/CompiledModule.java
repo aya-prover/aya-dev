@@ -14,13 +14,17 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.ModulePath;
-import org.aya.syntax.ref.QName;
+import org.aya.syntax.core.repr.AyaShape;
+import org.aya.syntax.core.repr.ShapeRecognition;
+import org.aya.syntax.ref.*;
+import org.aya.util.ArrayUtil;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
@@ -45,21 +49,27 @@ public record CompiledModule(
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
 ) implements Serializable {
   public record DeState(@NotNull ClassLoader loader) {
-    public @NotNull String classNameBy(@NotNull QName name) {
-      var module = name.module().module().module();
-      var virtualModulePath = module.drop(name.module().fileModuleSize());
-      var moduleClassReference = module.view().prepended(AyaSerializer.PACKAGE_BASE).joinToString(".");
-      var defClassName = virtualModulePath.view().appended(name.name()).joinToString("$");
-      return STR."\{moduleClassReference}$\{defClassName}";
+    public @NotNull Class<?> topLevelClass(@NotNull ModulePath name) {
+      try {
+        return loader.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(name)));
+      } catch (ClassNotFoundException e) {
+        throw new Panic(e);
+      }
     }
 
     public @NotNull JitDef resolve(@NotNull QName name) {
       try {
-        var clazz = loader.loadClass(classNameBy(name));
+        return getJitDef(loader.loadClass(NameSerializer.getClassName(name)));
+      } catch (ClassNotFoundException e) {
+        throw new Panic(e);
+      }
+    }
+    private static JitDef getJitDef(Class<?> clazz) {
+      try {
         var fieldInstance = clazz.getField(AyaSerializer.STATIC_FIELD_INSTANCE);
         fieldInstance.setAccessible(true);
         return (JitDef) fieldInstance.get(null);
-      } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+      } catch (NoSuchFieldException | IllegalAccessException e) {
         throw new Panic(e);
       }
     }
@@ -100,9 +110,9 @@ public record CompiledModule(
     @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
   ) implements Serializable {
     public boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-      var qmod = qname.asStringSeq();
-      assert qmod.sizeGreaterThanOrEquals(module.module().size());
-      var component = ModuleName.from(qmod.drop(module.module().size()));
+      var qmod = qname.module().module().module();
+      assert qmod.sizeGreaterThanOrEquals(module.size());
+      var component = ModuleName.from(qmod.drop(module.size()));
 
       // A QName refers to a def,
       // which means it was defined in {module} if `component == This`;
@@ -113,13 +123,14 @@ public record CompiledModule(
     }
   }
 
-  public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo) {
+  public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
 
     var serialization = new Serialization(resolveInfo, MutableMap.create());
+    defs.forEach(serialization::serOp);
 
     var exports = ctx.exports().symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModuleName::ids))));
@@ -154,7 +165,8 @@ public record CompiledModule(
   ) {
     private void serOp(@NotNull TyckDef def) {
       var concrete = def.ref().concrete;
-      serOps.put(new QName(def.ref()), serBind(concrete.bindBlock()));
+      if (concrete.opInfo() != null)
+        serOps.put(new QName(def.ref()), serBind(concrete.bindBlock()));
     }
 
     private @NotNull SerBind serBind(@NotNull BindBlock bindBlock) {
@@ -177,8 +189,48 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
+    loadModule(context, shapeFactory, state.topLevelClass(context.modulePath()));
     deOp(state, resolveInfo);
     return resolveInfo;
+  }
+
+  private void loadModule(
+    @NotNull PhysicalModuleContext context, @NotNull ShapeFactory shapeFactory,
+    @NotNull Class<?> rootClass
+  ) {
+    for (Class<?> jitClass : rootClass.getDeclaredClasses()) {
+      var jitDef = DeState.getJitDef(jitClass);
+      var qname = jitDef.qualifiedName();
+      var metadata = jitDef.metadata();
+      if (jitDef instanceof JitPrim || isExported(context.modulePath(), qname))
+        export(context, qname, new CompiledVar(jitDef));
+      switch (jitDef) {
+        case JitData data -> {
+          // The accessibility doesn't matter, this context is readonly
+          var innerCtx = context.derive(data.name());
+          for (var constructor : data.constructors()) {
+            innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
+          }
+          context.importModule(
+            ModuleName.This.resolve(data.name()),
+            innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
+          if (metadata.shape() != -1) {
+            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+              ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
+                data.constructors())));
+            shapeFactory.bonjour(jitDef, recognition);
+          }
+        }
+        case JitFn fn -> {
+          if (metadata.shape() != -1) {
+            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+              ImmutableMap.empty());
+            shapeFactory.bonjour(fn, recognition);
+          }
+        }
+        default -> { }
+      }
+    }
   }
 
   /**
@@ -200,7 +252,7 @@ public record CompiledModule(
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
-      var acc = this.reExports.containsKey(modName)
+      var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(success, SourcePos.SER, acc);
@@ -245,7 +297,7 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull DefVar<?, ?> ref) {
+  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull AnyDefVar ref) {
     var modName = context.modulePath();
     var qmodName = ModuleName.from(qname.asStringSeq().drop(modName.module().size()));
     export(context, qmodName, qname.name(), ref);
@@ -255,7 +307,7 @@ public record CompiledModule(
     @NotNull PhysicalModuleContext context,
     @NotNull ModuleName component,
     @NotNull String name,
-    @NotNull DefVar<?, ?> var
+    @NotNull AnyDefVar var
   ) {
     var success = context.exportSymbol(component, name, var);
     assert success : "DuplicateExportError should not happen in CompiledModule";

@@ -45,8 +45,7 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
     }
   }
 
-  @Override public void prepareLibraryOutput(@NotNull LibraryOwner owner) {
-  }
+  @Override public void prepareLibraryOutput(@NotNull LibraryOwner owner) { }
 
   @Override public void clearLibraryOutput(@NotNull LibraryOwner owner) {
     owner.librarySources().forEach(src -> {

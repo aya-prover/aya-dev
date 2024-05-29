@@ -5,6 +5,6 @@ package org.aya.syntax.ref;
 import org.aya.syntax.compile.JitDef;
 import org.jetbrains.annotations.NotNull;
 
-public record CompiledVar(@NotNull JitDef core) implements AnyVar {
+public record CompiledVar(@NotNull JitDef core) implements AnyDefVar {
   @Override public @NotNull String name() { return core.name(); }
 }

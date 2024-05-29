@@ -13,6 +13,7 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.tyck.tycker.Problematic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -27,7 +28,7 @@ import java.util.function.Predicate;
 /**
  * @author re-xyr
  */
-public interface Context {
+public interface Context extends Problematic {
   @Nullable Context parent();
   @NotNull Reporter reporter();
   @NotNull Path underlyingFile();
@@ -52,7 +53,7 @@ public interface Context {
   }
 
   @Contract("_ -> fail") default <T> @NotNull T reportAndThrow(@NotNull Problem problem) {
-    reporter().report(problem);
+    fail(problem);
     throw new ResolvingInterruptedException();
   }
 
@@ -200,7 +201,7 @@ public interface Context {
     var exists = getUnqualifiedMaybe(name, ref.definition());
     if (toWarn.test(exists)
       && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
-      reporter().report(new NameProblem.ShadowingWarn(name, ref.definition()));
+      fail(new NameProblem.ShadowingWarn(name, ref.definition()));
     }
     return new BindContext(this, name, ref);
   }

@@ -13,7 +13,7 @@ import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.UseHide;
-import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Contract;
@@ -26,7 +26,7 @@ import java.util.function.Consumer;
  * A data class that contains all public definitions/re-exports of some module.
  */
 public record ModuleExport(
-  @NotNull ModuleSymbol<DefVar<?, ?>> symbols,
+  @NotNull ModuleSymbol<AnyDefVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
   public ModuleExport() {
@@ -150,7 +150,7 @@ public record ModuleExport(
   /**
    * @return false if there already exist a symbol with the same name.
    */
-  public boolean export(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  public boolean export(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
     var exists = symbols.add(modName, name, ref);
     return exists.isEmpty();
   }
@@ -184,12 +184,12 @@ public record ModuleExport(
     return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
   }
 
-  private record ExportUnit(@Nullable DefVar<?, ?> symbol, @Nullable ModuleExport module) {
+  private record ExportUnit(@Nullable AnyDefVar symbol, @Nullable ModuleExport module) {
     public ExportUnit {
       assert symbol != null || module != null : "Sanity check";
     }
 
-    public void forEach(Consumer<DefVar<?, ?>> symbolConsumer, Consumer<ModuleExport> moduleConsumer) {
+    public void forEach(Consumer<AnyDefVar> symbolConsumer, Consumer<ModuleExport> moduleConsumer) {
       if (symbol != null) symbolConsumer.accept(symbol);
       if (module != null) moduleConsumer.accept(module);
     }

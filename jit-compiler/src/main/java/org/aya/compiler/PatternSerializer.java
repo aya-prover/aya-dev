@@ -58,6 +58,8 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   /// region Serializing
 
   private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Runnable continuation) {
+    buildComment(pat.debuggerOnlyToString());
+
     switch (pat) {
       case Pat.Absurd _ -> buildIfElse("Panic.unreachable()", State.Stuck, continuation);
       case Pat.Bind _ -> {
@@ -65,7 +67,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         continuation.run();
       }
       // TODO: match IntegerTerm / ListTerm first
-      case Pat.Con con -> multiStage(con, term, ImmutableSeq.of(
+      case Pat.Con con -> multiStage(term, ImmutableSeq.of(
         mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
           buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(NameSerializer.getClassReference(con.ref()))}",
@@ -77,16 +79,17 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
             }))
       ), continuation);
       case Pat.Meta _ -> Panic.unreachable();
-      case Pat.ShapedInt shapedInt -> multiStage(pat, term, ImmutableSeq.of(
+      case Pat.ShapedInt shapedInt -> multiStage(term, ImmutableSeq.of(
         mTerm -> solveMeta(shapedInt, mTerm),
         mTerm -> matchInt(shapedInt, mTerm),
-        mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, continuation)
+        // do nothing on success, [doSerialize] sets subMatchState, and we will invoke [continuation] when [subMatchState = true]
+        mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, () -> {})
       ), continuation);
-      case Pat.Tuple tuple -> multiStage(tuple, term, ImmutableSeq.of(
+      case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
         mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
           doSerialize(tuple.elements().view(), fromSeq(STR."\{mmTerm}.items()",
-            tuple.elements().size()).view(), continuation))
+            tuple.elements().size()).view(), () -> {}))
       ), continuation);
     }
   }
@@ -100,12 +103,13 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
    *   </li>
    * </ul>
    *
+   * Note that {@param preContinuation}s should not invoke {@param continuation}!
+   *
    * @param term            the expression be matched, not always a variable reference
-   * @param preContinuation fast path case matching
+   * @param preContinuation matching cases
    * @param continuation    on match success
    */
   private void multiStage(
-    @NotNull Pat pat,
     @NotNull String term,
     @NotNull ImmutableSeq<Consumer<String>> preContinuation,
     @NotNull Runnable continuation
@@ -147,6 +151,8 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private void matchInt(@NotNull Pat.ShapedInt pat, @NotNull String term) {
     buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm -> {
       buildIf(STR."\{pat.repr()} == \{intTerm}.repr()", () -> {
+        // remember to set result
+
         // Pat.ShapedInt provides no binds
         buildUpdate(VARIABLE_SUBSTATE, "true");
       });

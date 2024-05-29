@@ -32,7 +32,11 @@ public class ShapeFactory {
 
   /** @implNote assumption: defs can have only one shape */
   public void bonjour(@NotNull TyckDef def, @NotNull ShapeRecognition shape) {
-    discovered.put(TyckAnyDef.make(def), shape);
+    bonjour(TyckAnyDef.make(def), shape);
+  }
+
+  public void bonjour(@NotNull AnyDef def, @NotNull ShapeRecognition shape) {
+    discovered.put(def, shape);
   }
 
   /** Discovery of shaped literals */

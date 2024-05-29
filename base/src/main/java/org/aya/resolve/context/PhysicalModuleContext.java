@@ -6,8 +6,8 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     }
   }
 
-  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
     return exports.export(modName, name, ref);
   }
 

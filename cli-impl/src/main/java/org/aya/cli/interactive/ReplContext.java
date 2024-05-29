@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
@@ -8,6 +8,7 @@ import org.aya.resolve.context.ModuleSymbol;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
@@ -37,7 +38,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(modName, name, defVar);
   }
 
-  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
     super.exportSymbol(modName, name, ref);
     // REPL always overwrites symbols.
     return true;

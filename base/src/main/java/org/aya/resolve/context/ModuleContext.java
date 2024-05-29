@@ -9,10 +9,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.*;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -118,7 +115,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
       } else return;
     } else if (getModuleMaybe(modName) != null) {
-      reporter().report(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
 
     modules.set(modName, moduleExport);
@@ -195,7 +192,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       if (getUnqualifiedMaybe(name, sourcePos) != null
         && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
-        reporter().report(new NameProblem.ShadowingWarn(name, sourcePos));
+        fail(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (candidates.map().containsKey(modName)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
@@ -239,7 +236,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull DefVar<?, ?> ref) {
+  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
     return true;
   }
 

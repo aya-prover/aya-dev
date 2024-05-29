@@ -4,23 +4,14 @@ package org.aya.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.NameGenerator;
-import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.ModulePath;
-import org.aya.syntax.ref.QName;
-import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   public record JitParam(@NotNull String name, @NotNull String type) { }
@@ -116,6 +107,10 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
 
   public void buildReturn(@NotNull String retWith) {
     appendLine(STR."return \{retWith};");
+  }
+
+  public void buildComment(@NotNull String comment) {
+    appendLine("// " + comment);
   }
 
   public void buildPanic(@Nullable String message) {

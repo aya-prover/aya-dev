@@ -27,7 +27,7 @@ import java.nio.file.Path;
  *
  * @author kiva
  */
-public interface CompilerAdvisor {
+public interface CompilerAdvisor extends AutoCloseable {
   static @NotNull CompilerAdvisor onDisk() { return new DiskCompilerAdvisor(); }
   static @NotNull CompilerAdvisor inMemory() { return new InMemoryCompilerAdvisor(); }
 
@@ -104,4 +104,6 @@ public interface CompilerAdvisor {
       e.printStackTrace();
     }
   }
+
+  @Override default void close() throws Exception { }
 }

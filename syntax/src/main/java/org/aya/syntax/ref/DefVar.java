@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
-public final class DefVar<Core extends TyckDef, Concrete extends Decl> implements AnyVar {
+public final class DefVar<Core extends TyckDef, Concrete extends Decl> implements AnyDefVar {
   private final @NotNull String name;
   /** Initialized in parsing. */
   public @NotNull Concrete concrete;

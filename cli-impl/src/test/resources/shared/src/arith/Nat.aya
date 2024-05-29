@@ -2,7 +2,7 @@ open import Paths
 
 open data Nat | zero | suc Nat
 
-overlap def infix + Nat Nat : Nat
+overlap def infixl + Nat Nat : Nat
 | 0, b => b
 | a, 0 => a
 | suc a, b => suc (a + b)

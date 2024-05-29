@@ -3,10 +3,14 @@
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.compiler.*;
+import org.aya.compiler.CompiledModule;
+import org.aya.compiler.FileSerializer;
+import org.aya.compiler.ModuleSerializer;
+import org.aya.compiler.NameSerializer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
@@ -22,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -29,6 +34,19 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
+  private static class AyaClassLoader extends URLClassLoader {
+    public MutableList<Path> urls = MutableList.create();
+    public AyaClassLoader() {
+      super(new URL[0], DiskCompilerAdvisor.class.getClassLoader());
+    }
+    public void addURL(Path url) throws MalformedURLException {
+      addURL(url.toUri().toURL());
+      urls.append(url);
+    }
+  }
+  private final AyaClassLoader cl = new AyaClassLoader();
+  @Override public void close() throws Exception { cl.close(); }
+
   @Override public boolean isSourceModified(@NotNull LibrarySource source) {
     try {
       var core = source.compiledCorePath();
@@ -72,11 +90,13 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledModule) inputStream.readObject();
-      var baseDir = computeBaseDir(owner);
-      try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
-        cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
-        return compiledAya.toResolveInfo(recurseLoader, context, cl);
-      }
+      var parentCount = mod.size();
+      var baseDir = corePath;
+      for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
+      baseDir = computeBaseDir(baseDir);
+      cl.addURL(baseDir);
+      cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
+      return compiledAya.toResolveInfo(recurseLoader, context, cl);
     }
   }
 
@@ -89,7 +109,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       .serialize(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
-    var baseDir = computeBaseDir(file.owner()).toAbsolutePath();
+    var baseDir = computeBaseDir(file.owner().outDir()).toAbsolutePath();
     var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,
       NameSerializer.NameType.ClassPath) + ".java";
     var javaSrcPath = baseDir.resolve(relativePath);
@@ -97,16 +117,19 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var compiler = ToolProvider.getSystemJavaCompiler();
     var fileManager = compiler.getStandardFileManager(null, null, null);
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
-    var classpath = System.getProperty("java.class.path");
-    var options = List.of("-classpath", baseDir + File.pathSeparator + classpath);
+    var classpath = cl.urls.view()
+      .appended(baseDir)
+      .map(Path::toString)
+      .appended(System.getProperty("java.class.path"));
+    var options = List.of("-classpath", classpath.joinToString(File.pathSeparator), "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
     // Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
-    CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
+    CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
   }
 
-  private static @NotNull Path computeBaseDir(@NotNull LibraryOwner owner) {
-    return owner.outDir().resolve("compiled");
+  private static @NotNull Path computeBaseDir(@NotNull Path outDir) {
+    return outDir.resolve("compiled");
   }
 }
