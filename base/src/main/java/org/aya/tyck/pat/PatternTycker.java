@@ -454,6 +454,10 @@ public class PatternTycker implements Problematic, Stateful {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }
+    if (!name.dataRef().equals(dataCall.ref())) {
+      foundError(new PatternProblem.UnknownCon(pattern));
+      return null;
+    }
 
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
       case Result.Ok(var subst) -> {
@@ -462,7 +466,7 @@ public class PatternTycker implements Problematic, Stateful {
       }
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body
-        foundError(new PatternProblem.UnknownCon(pattern));
+        foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
         yield null;
       }
     };
