@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.aya.compiler.AbstractSerializer.getClassName;
+import static org.aya.compiler.NameSerializer.getClassName;
 
 public class CompileTest {
   @Test public void test0() {

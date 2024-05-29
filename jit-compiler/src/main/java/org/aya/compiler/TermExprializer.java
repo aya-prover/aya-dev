@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 import static org.aya.compiler.AbstractSerializer.*;
+import static org.aya.compiler.NameSerializer.getClassReference;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
@@ -56,15 +57,16 @@ public class TermExprializer extends AbstractExprializer<Term> {
 
   private @NotNull String serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
-      case IntegerOps.ConRule conRule -> makeNew(CLASS_INT_CONRULE, getInstance(getReference(conRule.ref())),
+      case IntegerOps.ConRule conRule ->
+        makeNew(CLASS_INT_CONRULE, getInstance(NameSerializer.getClassReference(conRule.ref())),
         doSerialize(conRule.zero())
       );
       case IntegerOps.FnRule fnRule -> makeNew(CLASS_INT_FNRULE,
-        getInstance(getReference(fnRule.ref())),
+        getInstance(NameSerializer.getClassReference(fnRule.ref())),
         makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
       );
       case ListOps.ConRule conRule -> makeNew(CLASS_LIST_CONRULE,
-        getInstance(getReference(conRule.ref())),
+        getInstance(NameSerializer.getClassReference(conRule.ref())),
         doSerialize(conRule.empty())
       );
       default -> Panic.unreachable();
@@ -122,20 +124,20 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case LocalTerm _ -> throw new Panic("LocalTerm");
       case LamTerm lamTerm -> makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
       case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_DATACALL,
-        getInstance(getReference(ref)),
+        getInstance(NameSerializer.getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case ConCall(var head, var args) -> makeNew(CLASS_CONCALL,
-        getInstance(getReference(head.ref())),
+        getInstance(NameSerializer.getClassReference(head.ref())),
         serializeToImmutableSeq(CLASS_TERM, head.ownerArgs()),
         Integer.toString(head.ulift()),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case FnCall call -> {
         var ref = switch (call.ref()) {
-          case JitFn jit -> getInstance(getReference(jit));
-          case FnDef.Delegate def -> getInstance(getCoreReference(def.ref));
+          case JitFn jit -> getInstance(NameSerializer.getClassReference(jit));
+          case FnDef.Delegate def -> getInstance(getClassReference(def.ref));
         };
 
         var ulift = call.ulift();
@@ -184,20 +186,20 @@ public class TermExprializer extends AbstractExprializer<Term> {
       );
       case SigmaTerm sigmaTerm -> throw new UnsupportedOperationException("TODO");
       case PrimCall(var ref, var ulift, var args) -> makeNew(CLASS_PRIMCALL,
-        getInstance(getReference(ref)),
+        getInstance(NameSerializer.getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case IntegerTerm(var repr, var zero, var suc, var type) -> makeNew(CLASS_INTEGER,
         Integer.toString(repr),
-        getInstance(getReference(zero)),
-        getInstance(getReference(suc)),
+        getInstance(NameSerializer.getClassReference(zero)),
+        getInstance(NameSerializer.getClassReference(suc)),
         doSerialize(type)
       );
       case ListTerm(var repr, var nil, var cons, var type) -> makeNew(CLASS_LIST,
         serializeToImmutableSeq(CLASS_TERM, repr),
-        getInstance(getReference(nil)),
-        getInstance(getReference(cons)),
+        getInstance(NameSerializer.getClassReference(nil)),
+        getInstance(NameSerializer.getClassReference(cons)),
         doSerialize(type)
       );
       case StringTerm stringTerm ->

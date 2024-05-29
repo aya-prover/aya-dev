@@ -44,14 +44,14 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
         STR."\{CLASS_ERROR}.DUMMY"
       );
       case Pat.Con con -> makeNew(CLASS_PAT_CON,
-        getInstance(getReference(con.ref())),
+        getInstance(NameSerializer.getClassReference(con.ref())),
         serializeToImmutableSeq(CLASS_PAT, con.args()),
         new TermExprializer(this.nameGen, ImmutableSeq.empty())
           .serialize(con.data()).result());
       case Pat.ShapedInt shapedInt -> makeNew(CLASS_PAT_INT,
         Integer.toString(shapedInt.repr()),
-        getInstance(getReference(shapedInt.zero())),
-        getInstance(getReference(shapedInt.suc())),
+        getInstance(NameSerializer.getClassReference(shapedInt.zero())),
+        getInstance(NameSerializer.getClassReference(shapedInt.suc())),
         serializeTerm(shapedInt.type()));
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.Tuple tuple -> makeNew(CLASS_PAT_TUPLE,

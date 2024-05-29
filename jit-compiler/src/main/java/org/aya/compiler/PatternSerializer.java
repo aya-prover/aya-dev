@@ -68,7 +68,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> multiStage(con, term, ImmutableSeq.of(
         mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(getReference(con.ref()))}",
+          buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(NameSerializer.getClassReference(con.ref()))}",
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
                 nameGen.nextName(null), STR."\{mmTerm}.conArgs()");

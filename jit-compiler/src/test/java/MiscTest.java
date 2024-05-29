@@ -1,7 +1,7 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-import org.aya.compiler.AbstractSerializer;
 import org.aya.compiler.AyaSerializer;
+import org.aya.compiler.NameSerializer;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
 import org.aya.syntax.ref.QPath;
@@ -17,11 +17,11 @@ public class MiscTest {
 
   @Test
   public void test0() {
-    var result = AbstractSerializer.getReference(TOP, null);
+    var result = NameSerializer.getClassReference(TOP, null);
     assertEquals(STR."\{AyaSerializer.PACKAGE_BASE}.baka.$114514", result);
-    result = AbstractSerializer.getReference(SUB, null);
+    result = NameSerializer.getClassReference(SUB, null);
     assertEquals(STR."\{AyaSerializer.PACKAGE_BASE}.baka.$114514.$114514$hentai", result);
-    result = AbstractSerializer.getReference(NAME.module(), NAME.name());
+    result = NameSerializer.getClassReference(NAME.module(), NAME.name());
     assertEquals(STR."\{AyaSerializer.PACKAGE_BASE}.baka.$114514.$114514$hentai.$114514$hentai$urusai", result);
   }
 }

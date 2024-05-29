@@ -21,8 +21,7 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import static org.aya.compiler.AbstractSerializer.getClassName;
-import static org.aya.compiler.AbstractSerializer.getReference;
+import static org.aya.compiler.NameSerializer.getClassName;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class RedBlackTreeTest {
