@@ -7,7 +7,6 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckAnyDef;
@@ -246,10 +245,10 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   /**
    * Compute the package reference of certain <b>file level</b> {@link ModulePath}.
    */
-  public static @NotNull String getModulePackageReference(@NotNull ModulePath module) {
+  public static @NotNull String getModulePackageReference(@NotNull ModulePath module, @NotNull String separator) {
     return module.module().view().dropLast(1)
       .prepended(PACKAGE_BASE)
-      .joinToString(".");
+      .joinToString(separator);
   }
 
   public static @NotNull String getModuleReference(@NotNull QPath module) {
@@ -274,7 +273,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
    */
   public static @NotNull String getReference(@NotNull QPath module, @Nullable String name, @NotNull String separator) {
     // get package name of file level module
-    var packageName = getModulePackageReference(module.fileModule());
+    var packageName = getModulePackageReference(module.fileModule(), ".");
     // get javify class name of each component
     var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
     if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));

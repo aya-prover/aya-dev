@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static org.aya.compiler.AbstractSerializer.getClassName;
+
 public class CompileTest {
   @Test public void test0() {
     var result = tyck("""
@@ -48,17 +50,11 @@ public class CompileTest {
     try {
       var tester = new CompileTester(code);
       tester.compile();
-      var loader = tester.cl;
+      var baka = DumbModuleLoader.DUMB_MODULE_NAME;
 
-      var fieldO = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$O").getField("INSTANCE");
-      var fieldS = loader.loadClass("AYA.$baka$$baka$Nat$$baka$Nat$S").getField("INSTANCE");
-      var fieldPlus = loader.loadClass("AYA.$baka$$baka$plus").getField("INSTANCE");
-      fieldO.setAccessible(true);
-      fieldS.setAccessible(true);
-      fieldPlus.setAccessible(true);
-      var O = (JitCon) fieldO.get(null);
-      var S = (JitCon) fieldS.get(null);
-      var plus = (JitFn) fieldPlus.get(null);
+      JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "O"));
+      JitCon S = tester.loadInstance(getClassName(baka.derive("Nat"), "S"));
+      JitFn plus = tester.loadInstance(getClassName(baka, "plus"));
       var zero = new ConCall(O, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
       var one = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(zero));
       var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
@@ -66,7 +62,7 @@ public class CompileTest {
 
       var mResult = plus.invoke(zero, ImmutableSeq.of(two, three));
       System.out.println(mResult.debuggerOnlyToString());
-    } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException | IOException e) {
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
 

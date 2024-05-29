@@ -119,9 +119,9 @@ public class PatternTycker implements Problematic, Stateful {
   private @NotNull Pat doTyck(@NotNull WithPos<Pattern> pattern, @NotNull Term type) {
     return switch (pattern.data()) {
       case Pattern.Absurd _ -> {
-        var selection = selectCon(type, null, pattern);
+        var selection = makeSureEmpty(type, pattern);
         if (selection != null) {
-          foundError(new PatternProblem.PossiblePat(pattern, selection.conHead));
+          foundError(new PatternProblem.PossiblePat(pattern, selection));
         }
         yield Pat.Absurd.INSTANCE;
       }
@@ -138,7 +138,7 @@ public class PatternTycker implements Problematic, Stateful {
       }
       case Pattern.Con con -> {
         var var = con.resolved().data();
-        var realCon = selectCon(type, new ConDef.Delegate(var), pattern);
+        var realCon = makeSureAvail(type, new ConDef.Delegate(var), pattern);
         if (realCon == null) yield randomPat(type);
         var conCore = realCon.conHead.ref();
 
@@ -424,11 +424,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private record Selection(DataCall data, ImmutableSeq<Term> args, ConCallLike.Head conHead) { }
 
-  /**
-   * @param name if null, the selection will be performed on all constructors
-   * @return null means selection failed
-   */
-  private @Nullable Selection selectCon(Term type, @Nullable ConDefLike name, @NotNull WithPos<Pattern> pattern) {
+  private @Nullable ConCallLike.Head makeSureEmpty(Term type, @NotNull WithPos<Pattern> pattern) {
     if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
@@ -438,33 +434,42 @@ public class PatternTycker implements Problematic, Stateful {
 
     // If name != null, only one iteration of this loop is not skipped
     for (var con : core.body()) {
-      if (name != null && !Objects.equals(con, name)) continue;
       switch (checkAvail(dataCall, con, exprTycker.state)) {
-        case Result.Ok(var subst) -> {
-          var selfTeleSize = con.selfTele(subst).size();      // FIXME: I need size ONLY
-          return new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()), subst, dataCall.conHead(con));
+        case Result.Ok(_) -> {
+          return dataCall.conHead(con);
         }
-        case Result.Err(var st) -> {
-          // For absurd pattern, we look at the next constructor
-          if (name == null) {
-            // Is blocked
-            if (st == PatMatcher.State.Stuck) {
-              foundError(new PatternProblem.BlockedEval(pattern, dataCall));
-              return null;
-            }
-            continue;
-          }
+        // Is blocked
+        case Result.Err(var st) when st == PatMatcher.State.Stuck -> {
+          foundError(new PatternProblem.BlockedEval(pattern, dataCall));
+          return null;
         }
+        default -> { }
       }
-      // Since we cannot have two constructors of the same name,
-      // if the name-matching constructor mismatches the type,
-      // we get an error.
-      foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
+    }
+    return null;
+  }
+
+  private @Nullable Selection makeSureAvail(Term type, @NotNull ConDefLike name, @NotNull WithPos<Pattern> pattern) {
+    if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
+      foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }
-    // Here, name != null, and is not in the list of checked body
-    if (name != null) foundError(new PatternProblem.UnknownCon(pattern));
-    return null;
+    if (!name.dataRef().equals(dataCall.ref())) {
+      foundError(new PatternProblem.UnknownCon(pattern));
+      return null;
+    }
+
+    return switch (checkAvail(dataCall, name, exprTycker.state)) {
+      case Result.Ok(var subst) -> {
+        var selfTeleSize = name.selfTele(subst).size(); // FIXME: I need size ONLY
+        yield new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()), subst, dataCall.conHead(name));
+      }
+      case Result.Err(_) -> {
+        // Here, name != null, and is not in the list of checked body
+        foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
+        yield null;
+      }
+    };
   }
 
   /**

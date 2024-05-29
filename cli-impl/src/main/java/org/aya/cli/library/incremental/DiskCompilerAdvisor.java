@@ -90,8 +90,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
         QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
     var baseDir = computeBaseDir(file.owner()).toAbsolutePath();
-    var javaSrcPath = FileUtil.resolveFile(baseDir.resolve(AyaSerializer.PACKAGE_BASE),
-      file.moduleName().module(), ".java");
+    var relativePath = AbstractSerializer.getModulePackageReference(file.moduleName(), File.separator);
+    var javaSrcPath = baseDir.resolve(relativePath).resolve("$" + file.moduleName().last() + ".java");
     FileUtil.writeString(javaSrcPath, javaCode);
     var compiler = ToolProvider.getSystemJavaCompiler();
     var fileManager = compiler.getStandardFileManager(null, null, null);
@@ -100,7 +100,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var options = List.of("-classpath", baseDir + File.pathSeparator + classpath);
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
-    Files.delete(javaSrcPath);
+    // Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
     CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
   }
