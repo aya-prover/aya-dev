@@ -14,7 +14,9 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.syntax.compile.*;
+import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -201,15 +203,17 @@ public record CompiledModule(
       //     ImmutableMap.from(metadata.recognition()));
       //   shapeFactory.bonjour(jitDef, recognition);
       // }
+      if (jitDef instanceof JitPrim || isExported(context.modulePath(), qname))
+        export(context, qname, new CompiledVar(jitDef));
       switch (jitDef) {
-        case JitCon con -> { }
-        case JitData data -> { }
-        case JitFn fn -> {
-          if (isExported(context.modulePath(), qname)) {
-            export(context, qname, new CompiledVar(fn));
+        case JitData data -> {
+          // The accessibility doesn't matter, this context is readonly
+          var innerCtx = context.derive(data.name());
+          for (var constructor : data.constructors()) {
+            innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
           }
         }
-        case JitPrim prim -> export(context, qname, new CompiledVar(prim));
+        default -> { }
       }
     }
   }
