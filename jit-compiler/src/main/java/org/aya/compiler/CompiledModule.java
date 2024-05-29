@@ -21,6 +21,7 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
@@ -47,6 +48,14 @@ public record CompiledModule(
   public record DeState(@NotNull ClassLoader loader) {
     public @NotNull String classNameBy(@NotNull QName name) {
       return NameSerializer.getClassName(name.module(), name.name());
+    }
+
+    public @NotNull Class<?> topLevelClass(@NotNull ModulePath name) {
+      try {
+        return loader.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(name)));
+      } catch (ClassNotFoundException e) {
+        throw new Panic(e);
+      }
     }
 
     public @NotNull JitDef resolve(@NotNull QName name) {
@@ -174,6 +183,7 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
+    var rootClass = state.topLevelClass(context.modulePath());
     deOp(state, resolveInfo);
     return resolveInfo;
   }
