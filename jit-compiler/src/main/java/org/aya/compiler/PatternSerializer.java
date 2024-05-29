@@ -188,6 +188,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       return;
     }
 
+    buildComment(pats.map(x -> x.debuggerOnlyToString()).joinToString());
     var pat = pats.getFirst();
     var term = terms.getFirst();
     doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));
