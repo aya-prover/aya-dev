@@ -3,6 +3,7 @@
 package org.aya.cli.library.incremental;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
@@ -17,6 +18,7 @@ import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
+import org.aya.util.ArrayUtil;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -113,9 +115,11 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var compiler = ToolProvider.getSystemJavaCompiler();
     var fileManager = compiler.getStandardFileManager(null, null, null);
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
-    var classpath = System.getProperty("java.class.path");
-    var options = List.of("-classpath", baseDir + File.pathSeparator + classpath,
-      "--enable-preview", "--release", "21");
+    URL[] urls = cl.getURLs();
+    var classpath = MutableList.from(ArrayUtil.map(urls, new String[urls.length], URL::getPath));
+    classpath.append(System.getProperty("java.class.path"));
+    classpath.append(baseDir.toString());
+    var options = List.of("-classpath", classpath.joinToString(File.pathSeparator), "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
     // Files.delete(javaSrcPath);

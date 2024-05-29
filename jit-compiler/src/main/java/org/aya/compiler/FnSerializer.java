@@ -58,9 +58,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(FnDef unit, @NotNull String onStuckTerm, @NotNull String argsTerm) {
     var teleSize = unit.telescope().size();
 
-    buildReturn(STR."this.invoke(\{fromSeq(argsTerm, teleSize).view()
+    buildReturn(fromSeq(argsTerm, teleSize).view()
       .prepended(onStuckTerm)
-      .joinToString()})");
+      .joinToString(", ", "this.invoke(", ")"));
   }
   @Override protected void buildShape(FnDef unit) {
     var maybe = shapeFactory.find(TyckAnyDef.make(unit));
