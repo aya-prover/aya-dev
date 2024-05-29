@@ -1,7 +1,7 @@
 TypeMismatch:
 In file $FILE:2:16 ->
 
-  1 │   open import Arith::Nat
+  1 │   open import arith::Nat
   2 │   def test => 1 + Type
     │                   ╰──╯
 
@@ -18,7 +18,7 @@ What are you doing?
 IllTypedApp:
 In file $FILE:2:22 ->
 
-  1 │   open import Arith::Nat
+  1 │   open import arith::Nat
   2 │   def test (a : Nat) => a 1
     │                         ╰─╯
 
@@ -29,7 +29,7 @@ Error: Unable to apply the expression
 
 In file $FILE:2:4 ->
 
-  1 │   open import Arith::Nat
+  1 │   open import arith::Nat
   2 │   def test (a : Nat) => a 1
     │       ╰──╯
 
@@ -41,7 +41,7 @@ What are you doing?
 WantButNo:
 In file $FILE:2:19 ->
 
-  1 │   open import Arith::Nat
+  1 │   open import arith::Nat
   2 │   def test : Type => \ x => x
     │                      ╰──────╯
 

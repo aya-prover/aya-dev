@@ -1,5 +1,5 @@
-open import Arith::Nat
-open import Arith::Bool
+open import arith::Nat
+open import arith::Bool
 open import Paths
 open data Int
 | signed Bool Nat

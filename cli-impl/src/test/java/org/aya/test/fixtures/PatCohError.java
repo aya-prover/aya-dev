@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface PatCohError {
   @Language("Aya") String testUnsureMissing = """
-    open import Arith::Nat
+    open import arith::Nat
     open data Fin+1 (n : Nat) : Type
     | m => fzero
     | suc m => fsuc (Fin+1 m)
@@ -21,7 +21,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testConfl = """
-    open import Arith::Nat
+    open import arith::Nat
     overlap def addN Nat Nat : Nat
     | zero, a => suc a
     | a, zero => a
@@ -30,7 +30,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testConflLiteral = """
-    open import Arith::Nat
+    open import arith::Nat
     overlap def test Nat : Nat
     | 0 => 0
     | a => a
@@ -42,7 +42,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testConflLiteral2 = """
-    open import Arith::Nat
+    open import arith::Nat
     overlap def largeInt1 Nat Nat : Nat
     | a, b => a
     | 114514, 1919810 => 1
@@ -79,7 +79,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testFirstMatchDomination = """
-    open import Arith::Nat
+    open import arith::Nat
     def addN Nat Nat : Nat
     | zero, a => a
     | a, zero => a
@@ -88,7 +88,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testLiteralConfluence = """
-    open import Arith::Nat
+    open import arith::Nat
     overlap def not-conf Nat : Nat
     | zero => 1
     | 0 => 0
@@ -98,7 +98,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testNestedMissing = """
-    open import Arith::Nat
+    open import arith::Nat
     def add {m n : Nat} : Nat
     | {0}, {0} => 0
     | {0}, {suc (suc a)} => 0
@@ -108,9 +108,9 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testIApplyConfluence = """
-    open import Arith::Nat
-    open import Arith::Int
-    open import Arith::Bool
+    open import arith::Nat
+    open import arith::Int
+    open import arith::Bool
     def test Int : Nat
     | signed true _ => 1
     | signed false _ => 0
@@ -118,7 +118,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testCoverage = """
-    open import Arith::Nat
+    open import arith::Nat
     def cov (x x' x'' x''' : Nat) : Nat
     | zero, a, b, c => 0
     | a, zero, b, c => 0
@@ -126,7 +126,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testCoverageLiteral = """
-    open import Arith::Nat
+    open import arith::Nat
     def cov (x x' x'' x''' : Nat) : Nat
     | 0, a, b, c => 0
     | a, 0, b, c => 0
@@ -134,7 +134,7 @@ public interface PatCohError {
     """;
 
   @Language("Aya") String testIApplyConflReduce = """
-    open import Arith::Nat
+    open import arith::Nat
     open import Paths
     open data WrongInt
     | pos Nat

@@ -59,6 +59,7 @@ public record Signature(
    */
   public @NotNull Signature bindTele(@NotNull SeqView<LocalVar> vars) { return bindAll(vars.reversed()); }
   @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return Doc.sep(Doc.sep(param.view().map(p -> p.data().toDoc(options))), Tokens.ARROW, result.toDoc(options));
+    return Doc.sep(Doc.sep(param.view().map(p -> Doc.parened(p.data().toDoc(options)))),
+      Tokens.ARROW, result.toDoc(options));
   }
 }

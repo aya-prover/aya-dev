@@ -16,19 +16,19 @@ public interface ScopeError {
     def one => suc zero
     """;
   @Language("Aya") String testImportDefineShadow = """
-    open import Arith::Bool
+    open import arith::Bool
     module A { def foo => true }
     open A
     def foo => false
     """;
   @Language("Aya") String testImportUsing = """
-    open import Arith::Bool
+    open import arith::Bool
     module A { def foo => true }
     open A using (foo as bruh)
     open A using (bar)
     """;
   @Language("Aya") String testImportHiding = """
-    open import Arith::Bool
+    open import arith::Bool
     module A { def foo => true }
     open A hiding (foo)
     open A hiding (bar)

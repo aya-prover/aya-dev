@@ -47,8 +47,8 @@ public class TestRunner {
     Files.deleteIfExists(TMP_FILE);
   }
 
-  @Test public void playground() throws IOException {
-    // runSingleCase(GoalAndMeta.testLiteralAmbiguous3, System.out);
+  @Test public void playground() throws IOException, IllegalAccessException {
+    // runFixtureClass(PatTyckError.class);
   }
 
   public static void main(String... args) throws Exception {

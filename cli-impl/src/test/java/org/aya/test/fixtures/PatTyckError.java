@@ -16,16 +16,16 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testSelectionFailed = """
-    open import Arith::Nat
-    open import Data::Vec
+    open import arith::Nat
+    open import data::Vec
     def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
     | [] => []
     | _ :> _ => _
     """;
 
   @Language("Aya") String testSelectionBlocked = """
-    open import Arith::Nat
-    open import Data::Vec
+    open import arith::Nat
+    open import data::Vec
     def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
     | () => []
     """;
@@ -43,35 +43,35 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testNotEnoughPattern = """
-    open import Arith::Bool
+    open import arith::Bool
     def ifElse {A : Type} (b : Bool) A A : A
     | true, x => x
     | false, x, y => y
     """;
 
   @Language("Aya") String testTooManyPattern = """
-    open import Arith::Bool
+    open import arith::Bool
     def ifElse {A : Type} (b : Bool) A A : A
     | true, x, {y} => x
     | false, x, y => y
     """;
 
   @Language("Aya") String testTooManyPattern2 = """
-    open import Arith::Bool
+    open import arith::Bool
     def ifElse {A : Type} (b : Bool) A A : A
     | true, x, y, z => x
     | false, x, y => y
     """;
 
   @Language("Aya") String testInvalidEmptyBody = """
-    open import Arith::Bool
+    open import arith::Bool
     def test Bool : Bool
     | true
     | false
     """;
 
   @Language("Aya") String testInvalidAbsurdPattern = """
-    open import Arith::Bool
+    open import arith::Bool
     def test Bool : Bool | ()
     """;
 

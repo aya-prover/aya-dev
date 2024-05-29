@@ -91,7 +91,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn, lFn.ref());
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn, lFn.ref());
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
-        lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt : null;
+        lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon, lCon.ref());
       default -> null;
     };

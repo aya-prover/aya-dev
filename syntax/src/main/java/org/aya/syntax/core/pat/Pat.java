@@ -47,11 +47,11 @@ public sealed interface Pat extends AyaDocile {
 
   record CollectBind(LocalVar var, Term type) { }
 
-  static @NotNull ImmutableSeq<CollectBind> collectBindings(@NotNull SeqView<Pat> pats) {
+  static @NotNull MutableList<CollectBind> collectBindings(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<CollectBind>create();
     pats.forEach(p -> p.consumeBindings((var, type) ->
       buffer.append(new CollectBind(var, type))));
-    return buffer.toImmutableSeq();
+    return buffer;
   }
 
   /**
@@ -114,19 +114,20 @@ public sealed interface Pat extends AyaDocile {
     @Override @NotNull ImmutableSeq<Pat> args,
     @NotNull DataCall data
   ) implements Pat {
-    public @NotNull Con update(@NotNull ImmutableSeq<Pat> args) {
-      return this.args.sameElements(args, true) ? this : new Con(ref, args, data);
+    public @NotNull Con update(@NotNull ImmutableSeq<Pat> args, @NotNull DataCall data) {
+      return this.args.sameElements(args, true) && data == this.data
+        ? this : new Con(ref, args, data);
     }
 
     @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(args.map(patOp));
+      return update(args.map(patOp), (DataCall) termOp.apply(data));
     }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
-      return update(args.map(x -> x.inline(bind)));
+      return update(args.map(x -> x.inline(bind)), data);
     }
   }
 

@@ -1,4 +1,4 @@
-open import Arith::Nat
+open import arith::Nat
 
 open data Vec Nat Type
 | 0, A => []
