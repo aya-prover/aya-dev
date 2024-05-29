@@ -6,7 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.compiler.*;
+import org.aya.compiler.CompiledModule;
+import org.aya.compiler.FileSerializer;
+import org.aya.compiler.ModuleSerializer;
+import org.aya.compiler.NameSerializer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
@@ -103,7 +106,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     task.call();
     // Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
-    CompilerUtil.saveCompiledCore(coreFile, resolveInfo);
+    CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
   }
 
   private static @NotNull Path computeBaseDir(@NotNull LibraryOwner owner) {

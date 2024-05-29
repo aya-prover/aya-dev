@@ -2,12 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedRunnable;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.compiler.CompiledModule;
 import org.aya.generic.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.FileModuleLoader;
+import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.error.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +45,11 @@ public class CompilerUtil {
     }
   }
 
-  public static void saveCompiledCore(@NotNull Path coreFile, @NotNull ResolveInfo resolveInfo) throws IOException {
-    var compiledAya = CompiledModule.from(resolveInfo);
+  public static void saveCompiledCore(
+    @NotNull Path coreFile, @NotNull ImmutableSeq<TyckDef> defs,
+    @NotNull ResolveInfo resolveInfo
+  ) throws IOException {
+    var compiledAya = CompiledModule.from(resolveInfo, defs);
     try (var outputStream = coreWriter(coreFile)) {
       outputStream.writeObject(compiledAya);
     }

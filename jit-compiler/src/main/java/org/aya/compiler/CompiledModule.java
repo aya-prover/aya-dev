@@ -113,13 +113,14 @@ public record CompiledModule(
     }
   }
 
-  public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo) {
+  public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
       throw new UnsupportedOperationException();
     }
 
     var serialization = new Serialization(resolveInfo, MutableMap.create());
+    defs.forEach(serialization::serOp);
 
     var exports = ctx.exports().symbols().view().map((k, vs) ->
       Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModuleName::ids))));
