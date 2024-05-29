@@ -13,46 +13,103 @@ Error: Unknown constructor
 What are you doing?
 
 SelectionFailed:
-In file $FILE:4:2 ->
+In file $FILE:2:4 ->
 
-  2 │   open import Data::Vec
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │       ╰╯
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-  4 │   | [] => []
-    │     ╰╯
 
-Error: I'm unsure if there should be a case for
-         []
-       as index unification is blocked for type
-         Vec (<n> + <n>) A
+Error: Cannot parse
 
-In file $FILE:5:2 ->
+In file $FILE:2:11 ->
 
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │              ╰╯
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-  4 │   | [] => []
-  5 │   | _ :> _ => _
-    │     ╰────╯
 
-Error: I'm unsure if there should be a case for
-         :> _ _
-       as index unification is blocked for type
-         Vec (<n> + <n>) A
+Error: Cannot parse
 
-2 error(s), 0 warning(s).
+In file $FILE:2:16 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │                   ╰╯
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+
+Error: Cannot parse
+
+In file $FILE:2:12 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │               ╰──╯
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+
+Error: Expect a name
+
+In file $FILE:3:54 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+    │                                                         ╰─╯
+
+Error: The name `Vec` is not defined in the current scope
+
+Resolving interrupted due to:
+5 error(s), 0 warning(s).
 What are you doing?
 
 SelectionBlocked:
-In file $FILE:4:2 ->
+In file $FILE:2:4 ->
 
-  2 │   open import Data::Vec
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │       ╰╯
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-  4 │   | () => []
-    │     ╰╯
 
-Error: Unsure if this pattern is actually impossible, as constructor selection 
-       is blocked on:
-         Vec (<n> + <n>) A
+Error: Cannot parse
 
-1 error(s), 0 warning(s).
+In file $FILE:2:11 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │              ╰╯
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+
+Error: Cannot parse
+
+In file $FILE:2:16 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │                   ╰╯
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+
+Error: Cannot parse
+
+In file $FILE:2:12 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+    │               ╰──╯
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+
+Error: Expect a name
+
+In file $FILE:3:54 ->
+
+  1 │   open import arith::Nat
+  2 │   open import data::Vec
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+    │                                                         ╰─╯
+
+Error: The name `Vec` is not defined in the current scope
+
+Resolving interrupted due to:
+5 error(s), 0 warning(s).
 What are you doing?
 
 SplitOnNonData:
@@ -90,7 +147,7 @@ What are you doing?
 NotEnoughPattern:
 In file $FILE:3:8 ->
 
-  1 │   open import Arith::Bool
+  1 │   open import arith::Bool
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x => x
     │           ╰╯
@@ -104,7 +161,7 @@ What are you doing?
 TooManyPattern:
 In file $FILE:3:11 ->
 
-  1 │   open import Arith::Bool
+  1 │   open import arith::Bool
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, {y} => x
     │              ╰─╯
@@ -120,7 +177,7 @@ What are you doing?
 TooManyPattern2:
 In file $FILE:3:14 ->
 
-  1 │   open import Arith::Bool
+  1 │   open import arith::Bool
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, y, z => x
     │                 ╰╯
@@ -137,7 +194,7 @@ What are you doing?
 InvalidEmptyBody:
 In file $FILE:3:2 ->
 
-  1 │   open import Arith::Bool
+  1 │   open import arith::Bool
   2 │   def test Bool : Bool
   3 │   | true
     │     ╰──╯
@@ -161,7 +218,7 @@ What are you doing?
 InvalidAbsurdPattern:
 In file $FILE:2:23 ->
 
-  1 │   open import Arith::Bool
+  1 │   open import arith::Bool
   2 │   def test Bool : Bool | ()
     │                          ╰╯
 

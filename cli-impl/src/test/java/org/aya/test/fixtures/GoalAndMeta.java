@@ -7,17 +7,17 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface GoalAndMeta {
   @Language("Aya") String testUnsolved = """
-    open import Arith::Nat
+    open import arith::Nat
     def test : Nat => _
     """;
 
   @Language("Aya") String testGoal = """
-    open import Arith::Nat
+    open import arith::Nat
     def test (a : Nat) : Nat => {? a ?}
     """;
 
   @Language("Aya") String testUnsolvedMetaLit = """
-    open import Arith::Nat
+    open import arith::Nat
     open data Nat2 | OO | SS Nat2
     open data Option (A : Type)
       | some A
@@ -25,7 +25,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String dontTestUnsolvedMetaLit = """
-    open import Arith::Nat
+    open import arith::Nat
     open data Nat2 | OO | SS Nat2
     open data Empty
     
@@ -34,7 +34,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testDaylily = """
-    open import Arith::Nat
+    open import arith::Nat
     
     def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => 0
     example def test1 (A B : Type) (x : A) (y : B) =>
@@ -49,7 +49,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testNorell = """
-    open import Arith::Nat
+    open import arith::Nat
     data Empty
     def Neg (T : Type) => T -> Empty
     // Ulf's counterexample

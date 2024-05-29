@@ -198,7 +198,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Sugar s ->
         throw new IllegalArgumentException(STR."\{s.getClass()} is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
-        if (!(f.data() instanceof Expr.Ref(var ref, _))) throw new IllegalStateException("function must be Expr.Ref");
+        if (!(f.data() instanceof Expr.Ref ref)) throw new IllegalStateException("function must be Expr.Ref");
         yield checkApplication(ref, expr.sourcePos(), a);
       }
       case Expr.Hole hole -> throw new UnsupportedOperationException("TODO");
@@ -220,7 +220,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           yield fail(litStr, new NoRuleError(expr, null));
         yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
-      case Expr.Ref(var ref, _) -> checkApplication(ref, expr.sourcePos(), ImmutableSeq.empty());
+      case Expr.Ref ref -> checkApplication(ref, expr.sourcePos(), ImmutableSeq.empty());
       case Expr.Sigma _, Expr.Pi _ -> lazyJdg(ty(expr));
       case Expr.Sort _ -> sort(expr);
       case Expr.Tuple(var items) -> {
@@ -265,13 +265,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   }
 
   private @NotNull Jdg checkApplication(
-    @NotNull AnyVar f, @NotNull SourcePos sourcePos,
+    @NotNull Expr.Ref f, @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Expr.NamedArg> args
   ) {
     try {
-      return doCheckApplication(f, args);
+      var result = doCheckApplication(f.var(), args);
+      addWithTerm(f, sourcePos, result.type());
+      return result;
     } catch (NotPi notPi) {
-      var expr = new Expr.App(new WithPos<>(sourcePos, new Expr.Ref(f)), args);
+      var expr = new Expr.App(new WithPos<>(sourcePos, f), args);
       return fail(expr, BadTypeError.pi(state, new WithPos<>(sourcePos, expr), notPi.actual));
     }
   }

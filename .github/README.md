@@ -68,13 +68,13 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../cli-impl/src/test/resources/shared/src/Arith/Nat.aya
-[gadt]: ../cli-impl/src/test/resources/shared/src/Data/Vec.aya
+[oop]: ../cli-impl/src/test/resources/shared/src/arith/Nat.aya
+[gadt]: ../cli-impl/src/test/resources/shared/src/data/Vec.aya
 [regularity]: ../cli-impl/src/test/resources/shared/src/Paths.aya
 [funExt]: ../cli-impl/src/test/resources/shared/src/Paths.aya
 [rbtree]: ../jit-compiler/src/test/resources/TreeSort.aya
 [tbtree-bench]: ../jit-compiler/src/test/java/RedBlackTreeTest.java
-[hiir]: ../cli-impl/src/test/resources/shared/src/TypeTheory/Thorsten.aya
+[hiir]: ../cli-impl/src/test/resources/shared/src/type-theory/Thorsten.aya
 [assoc]: ../base/src/test/resources/success/src/Assoc.aya
 [foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
