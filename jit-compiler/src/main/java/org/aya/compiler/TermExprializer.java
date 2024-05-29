@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 import static org.aya.compiler.AbstractSerializer.*;
+import static org.aya.compiler.NameSerializer.getCoreReference;
+import static org.aya.compiler.NameSerializer.getReference;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.

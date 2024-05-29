@@ -242,57 +242,6 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     return STR."\{term} == null";
   }
 
-  /**
-   * Compute the package reference of certain <b>file level</b> {@link ModulePath}.
-   */
-  public static @NotNull String getModulePackageReference(@NotNull ModulePath module, @NotNull String separator) {
-    return module.module().view().dropLast(1)
-      .prepended(PACKAGE_BASE)
-      .joinToString(separator, AbstractSerializer::javify);
-  }
-
-  public static @NotNull String getModuleReference(@NotNull QPath module) {
-    return getReference(module, null);
-  }
-
-  public static @NotNull String getReference(@NotNull QName name) {
-    return getReference(name.module(), name.name());
-  }
-
-  public static @NotNull String getClassName(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, "$");
-  }
-
-  public static @NotNull String getReference(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, ".");
-  }
-
-  /**
-   * Compute the qualified name for certain {@link QPath module}/symbol in {@link QPath module}.
-   * You may want to specify {@param separator} for different use.
-   */
-  public static @NotNull String getReference(@NotNull QPath module, @Nullable String name, @NotNull String separator) {
-    // get package name of file level module
-    var packageName = getModulePackageReference(module.fileModule(), ".");
-    // get javify class name of each component
-    var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
-    if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
-    return STR."\{packageName}.\{javifyComponent.joinToString(separator)}";
-  }
-
-  protected static @NotNull String getCoreReference(@NotNull DefVar<?, ?> ref) {
-    return getReference(TyckAnyDef.make(ref.core));
-  }
-
-  /**
-   * Obtain the java qualified name of certain {@link AnyDef def}
-   *
-   * @see #getReference(QPath, String, String)
-   */
-  protected static @NotNull String getReference(@NotNull AnyDef def) {
-    return getReference(def.qualifiedName());
-  }
-
   protected static @NotNull String getInstance(@NotNull String defName) {
     return STR."\{defName}.\{STATIC_FIELD_INSTANCE}";
   }
@@ -301,45 +250,10 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     return STR."\{term}.\{FIELD_INSTANCE}()";
   }
 
-  /** Mangle an aya symbol name to a java symbol name */
-  public static @NotNull String javifyClassName(@NotNull DefVar<?, ?> ayaName) {
-    return javifyClassName(Objects.requireNonNull(ayaName.module), ayaName.name());
-  }
-
-  public static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {
-    var ids = path.module().module()
-      .view().drop(path.fileModuleSize() - 1);
-    if (name != null) ids = ids.appended(name);
-    return javifyClassName(ids);
-  }
-
-  /**
-   * Generate a java friendly class name of {@param ids}, this function should be one-to-one
-   *
-   * @param ids the ids that has form {@code [ FILE_MODULE , VIRTUAL_MODULE* , NAME? ]}
-   */
-  public static @NotNull String javifyClassName(@NotNull SeqView<String> ids) {
-    return ids.map(AbstractSerializer::javify)
-      .joinToString("$", "$", "");
-  }
-
-  /**
-   * Generate a java friendly name for {@param name}, this function should be one-to-one.
-   * Note that the result may not be used for class name, see {@link #javifyClassName}
-   */
-  public static @NotNull String javify(String name) {
-    return name.codePoints().flatMap(x ->
-        x == '$' ? "$$".chars()
-          : Character.isJavaIdentifierPart(x) ? IntStream.of(x)
-            : ("$" + x).chars())
-      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-      .toString();
-  }
-
   /**
    * Get the reference to {@param clazz}, it should be imported to current file.
    */
-  public static @NotNull String getJavaReference(@NotNull Class<?> clazz) {
+  static @NotNull String getJavaReference(@NotNull Class<?> clazz) {
     return clazz.getSimpleName().replace('$', '.');
   }
 }

@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+import static org.aya.compiler.NameSerializer.getCoreReference;
+
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
   private final @NotNull Consumer<DataSerializer> conContinuation;

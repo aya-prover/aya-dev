@@ -12,6 +12,7 @@ import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AbstractSerializer.*;
+import static org.aya.compiler.NameSerializer.getReference;
 
 public class PatternExprializer extends AbstractExprializer<Pat> {
   public static final String CLASS_PAT = getJavaReference(Pat.class);

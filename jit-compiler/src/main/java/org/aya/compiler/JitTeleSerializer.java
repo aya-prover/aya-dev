@@ -15,6 +15,8 @@ import org.aya.syntax.core.term.Term;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.NameSerializer.javifyClassName;
+
 public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSerializer<T> {
   public static final String CLASS_METADATA = getJavaReference(CompiledAya.class);
   public static final String CLASS_JITCON = getJavaReference(JitCon.class);

@@ -10,6 +10,8 @@ import org.aya.syntax.ref.QPath;
 import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.NameSerializer.javifyClassName;
+
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
  */

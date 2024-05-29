@@ -11,6 +11,8 @@ import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.NameSerializer.getCoreReference;
+
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
   public ConSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen) {
     super(builder, indent, nameGen, JitCon.class);

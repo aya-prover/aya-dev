@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import org.aya.compiler.AyaSerializer;
+import org.aya.compiler.NameSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
 import org.aya.util.FileUtil;
@@ -15,7 +16,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.aya.compiler.AbstractSerializer.getReference;
+import static org.aya.compiler.NameSerializer.getReference;
 
 public class CompileTester {
   private final Path baka;
@@ -35,7 +36,7 @@ public class CompileTester {
       var compilationUnits = fileManager.getJavaFileObjects(baka);
       var task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
       task.call();
-      var fqName = getReference(DumbModuleLoader.DUMB_MODULE_NAME, null);
+      var fqName = NameSerializer.getClassReference(DumbModuleLoader.DUMB_MODULE_NAME, null);
       cl.loadClass(fqName);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);

@@ -7,6 +7,9 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.ref.ModulePath;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.NameSerializer.PACKAGE_SEPARATOR;
+import static org.aya.compiler.NameSerializer.getModulePackageReference;
+
 public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleResult> {
   private final @NotNull ShapeFactory shapeFactory;
 
@@ -16,7 +19,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
   }
 
   private void buildPackage(@NotNull ModulePath path) {
-    appendLine(STR."package \{getModulePackageReference(path, ".")};");
+    appendLine(STR."package \{getModulePackageReference(path, PACKAGE_SEPARATOR)};");
   }
 
   @Override

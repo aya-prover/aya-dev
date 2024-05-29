@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.aya.compiler.NameSerializer.getReference;
+
 public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<PatternSerializer.Matching>> {
   @FunctionalInterface
   public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
