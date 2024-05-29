@@ -18,7 +18,6 @@ import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
-import org.aya.util.ArrayUtil;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -35,11 +35,13 @@ import java.util.List;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
   private static class AyaClassLoader extends URLClassLoader {
+    public MutableList<Path> urls = MutableList.create();
     public AyaClassLoader() {
       super(new URL[0], DiskCompilerAdvisor.class.getClassLoader());
     }
-    @Override public void addURL(URL url) {
-      super.addURL(url);
+    public void addURL(Path url) throws MalformedURLException {
+      addURL(url.toUri().toURL());
+      urls.append(url);
     }
   }
   private final AyaClassLoader cl = new AyaClassLoader();
@@ -92,7 +94,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       var baseDir = corePath;
       for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
       baseDir = computeBaseDir(baseDir);
-      cl.addURL(baseDir.toUri().toURL());
+      cl.addURL(baseDir);
       cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
       return compiledAya.toResolveInfo(recurseLoader, context, cl);
     }
@@ -115,10 +117,10 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var compiler = ToolProvider.getSystemJavaCompiler();
     var fileManager = compiler.getStandardFileManager(null, null, null);
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
-    URL[] urls = cl.getURLs();
-    var classpath = MutableList.from(ArrayUtil.map(urls, new String[urls.length], URL::getPath));
-    classpath.append(System.getProperty("java.class.path"));
-    classpath.append(baseDir.toString());
+    var classpath = cl.urls.view()
+      .appended(baseDir)
+      .map(Path::toString)
+      .appended(System.getProperty("java.class.path"));
     var options = List.of("-classpath", classpath.joinToString(File.pathSeparator), "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
