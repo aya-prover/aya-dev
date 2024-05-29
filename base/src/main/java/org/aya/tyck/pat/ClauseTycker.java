@@ -142,7 +142,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       // If it is not the case, the pattern must be accompanied by a body.
       if (isFn && !clause.patterns.anyMatch(p -> hasAbsurdity(p.term().data())) && clause.expr.isEmpty()) {
         clause.hasError = true;
-        exprTycker.reporter.report(new PatternProblem.InvalidEmptyBody(clause));
+        exprTycker.fail(new PatternProblem.InvalidEmptyBody(clause));
       }
 
       var patResult = tycker.tyck(clause.patterns.view(), null, clause.expr.getOrNull());
@@ -254,7 +254,8 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
    */
   private static @NotNull PatternTycker.TyckResult inline(@NotNull PatternTycker.TyckResult result, @NotNull LocalCtx ctx) {
     // inline {Pat.Meta} before inline {MetaPatTerm}s
-    var wellTyped = result.wellTyped().map(x -> x.inline(ctx::put));
+    var wellTyped = result.wellTyped().map(x ->
+      x.inline(ctx::put).descent(UnaryOperator.identity(), ClauseTycker::inlineTerm));
     // so that {MetaPatTerm}s can be inlined safely
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
