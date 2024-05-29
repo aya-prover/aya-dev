@@ -120,14 +120,14 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   @Override public @NotNull TyckState state() { return exprTycker.state; }
   private @NotNull PatternTycker newPatternTycker(
     @Nullable ImmutableIntSeq indices,
-    @NotNull SeqView<Param> telescope, boolean isFn
+    @NotNull SeqView<Param> telescope
   ) {
     telescope = indices != null
       ? telescope.mapIndexed((idx, p) -> indices.contains(idx) ? p.explicitize() : p.implicitize())
       : telescope;
 
     return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
-      new NameGenerator(), isFn);
+      new NameGenerator());
   }
 
   public @NotNull LhsResult checkLhs(
@@ -136,7 +136,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     @NotNull Pattern.Clause clause,
     boolean isFn
   ) {
-    var tycker = newPatternTycker(indices, signature.rawParams().view(), isFn);
+    var tycker = newPatternTycker(indices, signature.rawParams().view());
     return exprTycker.subscoped(() -> {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
