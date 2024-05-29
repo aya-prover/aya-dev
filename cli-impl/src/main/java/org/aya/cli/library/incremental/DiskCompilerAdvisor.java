@@ -75,7 +75,10 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledModule) inputStream.readObject();
-      var baseDir = computeBaseDir(owner);
+      var parentCount = mod.size();
+      var baseDir = corePath;
+      for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
+      baseDir = computeBaseDir(baseDir);
       try (var cl = new URLClassLoader(new URL[]{baseDir.toUri().toURL()})) {
         cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
         return compiledAya.toResolveInfo(recurseLoader, context, cl);
@@ -92,7 +95,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       .serialize(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
       .result();
-    var baseDir = computeBaseDir(file.owner()).toAbsolutePath();
+    var baseDir = computeBaseDir(file.owner().outDir()).toAbsolutePath();
     var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,
       NameSerializer.NameType.ClassPath) + ".java";
     var javaSrcPath = baseDir.resolve(relativePath);
@@ -101,7 +104,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var fileManager = compiler.getStandardFileManager(null, null, null);
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
     var classpath = System.getProperty("java.class.path");
-    var options = List.of("-classpath", baseDir + File.pathSeparator + classpath);
+    var options = List.of("-classpath", baseDir + File.pathSeparator + classpath,
+      "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
     // Files.delete(javaSrcPath);
@@ -109,7 +113,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
   }
 
-  private static @NotNull Path computeBaseDir(@NotNull LibraryOwner owner) {
-    return owner.outDir().resolve("compiled");
+  private static @NotNull Path computeBaseDir(@NotNull Path outDir) {
+    return outDir.resolve("compiled");
   }
 }
