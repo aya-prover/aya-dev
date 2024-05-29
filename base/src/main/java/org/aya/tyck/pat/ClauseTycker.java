@@ -150,8 +150,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      @NotNull Term term1 = signature.result().instantiateTele(patResult.paramSubstObj());
-      var resultTerm = TermInline.apply(term1);
+      var resultTerm = TermInline.apply(signature.result().instantiateTele(patResult.paramSubstObj()));
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:

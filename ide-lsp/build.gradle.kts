@@ -49,11 +49,11 @@ fun jdkUrl(platform: String): String = JdkUrls(javaVersion, platform).jdk()
 
 val allPlatformImageDir = layout.buildDirectory.asFile.get().resolve("image-all-platforms")
 jlink {
-  addOptions("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
-  addExtraDependencies("jline-terminal-jansi")
+  addOptions("--strip-debug", "--compress", "zip-6", "--no-header-files", "--no-man-pages")
+  addExtraDependencies("jline-terminal-ni")
   imageDir.set(allPlatformImageDir)
   mergedModule {
-    uses("org.jline.terminal.impl.jansi.JansiTerminalProvider")
+    uses("org.jline.terminal.impl.jni.JniTerminalProvider")
     requires("java.logging")
   }
   launcher {

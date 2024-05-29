@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.console;
 
@@ -7,7 +7,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
-import org.fusesource.jansi.AnsiConsole;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +18,8 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public record AnsiReporter(
+  // TODO: jansi is deprecated, we use jline3-jni now,
+  //  how can we find a replacement?
   boolean supportAnsi,
   @NotNull BooleanSupplier unicode,
   @NotNull Supplier<PrettierOptions> options,
@@ -28,9 +29,9 @@ public record AnsiReporter(
 ) implements Reporter {
   @Contract(pure = true, value = "_, _, _ -> new")
   public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
-    AnsiConsole.systemInstall();
+    // AnsiConsole.systemInstall();
     return new AnsiReporter(true, () -> unicode, () -> options, minimum,
-      AnsiConsole.out()::println, AnsiConsole.err()::println);
+      System.out::println, System.err::println);
   }
 
   @Override public void report(@NotNull Problem problem) {
@@ -44,8 +45,9 @@ public record AnsiReporter(
   }
 
   private int terminalWidth() {
-    int w = AnsiConsole.getTerminalWidth();
-    // output is redirected to a file, so it has infinite width
-    return w <= 0 ? PrinterConfig.INFINITE_SIZE : w;
+    // int w = AnsiConsole.getTerminalWidth();
+    // // output is redirected to a file, so it has infinite width
+    // return w <= 0 ? PrinterConfig.INFINITE_SIZE : w;
+    return PrinterConfig.INFINITE_SIZE;
   }
 }

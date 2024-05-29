@@ -12,7 +12,7 @@ dependencies {
   implementation(project(":producer"))
   implementation(libs.picocli.runtime)
   annotationProcessor(libs.picocli.codegen)
-  implementation(libs.jline.terminal.jansi)
+  implementation(libs.jline.terminal.native)
   implementation(libs.jline.builtins)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)

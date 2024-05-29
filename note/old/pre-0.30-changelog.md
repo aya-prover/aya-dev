@@ -1,6 +1,6 @@
 # Early changelog
 
-This file contains the changelog of the Aya language 0.x.
+This file contains the changelog of the Aya language 0.x for x <= 30.
 
 ## 0.30
 
@@ -442,7 +442,7 @@ use `ErrorExpr` instead of `null` for unspecified result type of primitive defin
 The most notable improvement would be the generalized binary operator parser in `tools`.
 It should be _very useful_ to PL implementers using Java 17.
 
-[index-unification.md]: index-unification.md
+[index-unification.md]: ../index-unification.md
 
 ## 0.12
 

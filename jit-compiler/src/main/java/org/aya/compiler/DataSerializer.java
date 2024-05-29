@@ -59,8 +59,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     return this;
   }
 
-  @Override
-  protected void buildShape(DataDef unit) {
+  @Override protected void buildShape(DataDef unit) {
     var maybe = shapeFactory.find(TyckAnyDef.make(unit));
     if (maybe.isEmpty()) {
       super.buildShape(unit);
