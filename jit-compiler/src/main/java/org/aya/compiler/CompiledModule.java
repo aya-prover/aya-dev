@@ -225,7 +225,7 @@ public record CompiledModule(
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.empty());
-            shapeFactory.bonjour(jitDef, recognition);
+            shapeFactory.bonjour(fn, recognition);
           }
         }
         default -> { }

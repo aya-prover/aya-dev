@@ -41,7 +41,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
 
   private void doSerialize(@NotNull TyckDef unit) {
     switch (unit) {
-      case FnDef teleDef -> new FnSerializer(this)
+      case FnDef teleDef -> new FnSerializer(this, shapeFactory)
         .serialize(teleDef);
       case DataDef dataDef -> new DataSerializer(this, shapeFactory, ser -> serializeCons(dataDef, ser))
         .serialize(dataDef);

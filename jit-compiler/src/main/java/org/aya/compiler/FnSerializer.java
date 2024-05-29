@@ -2,22 +2,28 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.generic.Modifier;
 import org.aya.generic.NameGenerator;
+import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.jetbrains.annotations.NotNull;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
-  public FnSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen) {
+  private final @NotNull ShapeFactory shapeFactory;
+  public FnSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen, @NotNull ShapeFactory shapeFactory) {
     super(builder, indent, nameGen, JitFn.class);
+    this.shapeFactory = shapeFactory;
   }
 
-  public FnSerializer(@NotNull AbstractSerializer<?> other) {
+  public FnSerializer(@NotNull AbstractSerializer<?> other, @NotNull ShapeFactory shapeFactory) {
     super(other, JitFn.class);
+    this.shapeFactory = shapeFactory;
   }
 
   @Override protected void buildConstructor(FnDef unit) {
@@ -56,7 +62,16 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       .prepended(onStuckTerm)
       .joinToString()})");
   }
-
+  @Override protected void buildShape(FnDef unit) {
+    var maybe = shapeFactory.find(TyckAnyDef.make(unit));
+    if (maybe.isEmpty()) {
+      super.buildShape(unit);
+    } else {
+      var recog = maybe.get();
+      appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
+      appendMetadataRecord("recognition", makeHalfArrayFrom(Seq.empty()), false);
+    }
+  }
   @Override public AyaSerializer<FnDef> serialize(FnDef unit) {
     var argsTerm = "args";
     var onStuckTerm = "onStuck";
