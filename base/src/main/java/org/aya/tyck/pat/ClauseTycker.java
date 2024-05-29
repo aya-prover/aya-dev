@@ -211,6 +211,13 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         return term.descent(TermInline::apply);
       }
     }
+
+    public static @NotNull Pat apply(@NotNull Pat pat) {
+      return pat.descent(subpat -> {
+        apply(subpat);
+        return subpat;
+      }, ClauseTycker::inlineTerm);
+    }
   }
 
   private static boolean hasAbsurdity(@NotNull Pattern term) {
@@ -235,10 +242,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       if (typeRef != null) typeRef.update(it -> it == null ? null : inlineTerm(it));
 
-      pat.descent((_, p) -> {
-        apply(p);
-        return p;
-      });
+      pat.forEach((_, p) -> apply(p));
     }
   }
 
@@ -255,7 +259,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   private static @NotNull PatternTycker.TyckResult inline(@NotNull PatternTycker.TyckResult result, @NotNull LocalCtx ctx) {
     // inline {Pat.Meta} before inline {MetaPatTerm}s
     var wellTyped = result.wellTyped().map(x ->
-      x.inline(ctx::put).descent(UnaryOperator.identity(), ClauseTycker::inlineTerm));
+      TermInline.apply(x.inline(ctx::put)));
     // so that {MetaPatTerm}s can be inlined safely
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
