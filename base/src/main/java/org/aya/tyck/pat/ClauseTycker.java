@@ -150,13 +150,14 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      var resultTerm = inlineTerm(signature.result().instantiateTele(patResult.paramSubstObj()));
+      @NotNull Term term1 = signature.result().instantiateTele(patResult.paramSubstObj());
+      var resultTerm = TermInline.apply(term1);
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:
       // * telescope are well-typed and no Meta
       // * PatternTycker doesn't introduce any Meta term
-      ctx = ctx.map(ClauseTycker::inlineTerm);
+      ctx = ctx.map(TermInline::apply);
 
       var newClause = new Pat.Preclause<>(clause.sourcePos, patResult.wellTyped(), patResult.newBody());
       return new LhsResult(ctx, resultTerm, patResult.paramSubst(),
@@ -213,10 +214,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     }
 
     public static @NotNull Pat apply(@NotNull Pat pat) {
-      return pat.descent(subpat -> {
-        apply(subpat);
-        return subpat;
-      }, ClauseTycker::inlineTerm);
+      return pat.descent(TermInline::apply, TermInline::apply);
     }
   }
 
@@ -240,17 +238,14 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         default -> null;
       };
 
-      if (typeRef != null) typeRef.update(it -> it == null ? null : inlineTerm(it));
+      if (typeRef != null) typeRef.update(it -> it == null ? null : TermInline.apply(it));
 
       pat.forEach((_, p) -> apply(p));
     }
   }
 
-  private static @NotNull Term inlineTerm(@NotNull Term term) {
-    return TermInline.apply(term);
-  }
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
-    return r.map(ClauseTycker::inlineTerm);
+    return r.map(TermInline::apply);
   }
 
   /**
