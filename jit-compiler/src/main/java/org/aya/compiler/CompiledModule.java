@@ -46,11 +46,7 @@ public record CompiledModule(
 ) implements Serializable {
   public record DeState(@NotNull ClassLoader loader) {
     public @NotNull String classNameBy(@NotNull QName name) {
-      var module = name.module().module().module();
-      var virtualModulePath = module.drop(name.module().fileModuleSize());
-      var moduleClassReference = module.view().prepended(AyaSerializer.PACKAGE_BASE).joinToString(".");
-      var defClassName = virtualModulePath.view().appended(name.name()).joinToString("$");
-      return STR."\{moduleClassReference}$\{defClassName}";
+      return NameSerializer.getClassName(name.module(), name.name());
     }
 
     public @NotNull JitDef resolve(@NotNull QName name) {
@@ -201,7 +197,7 @@ public record CompiledModule(
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
-      var acc = this.reExports.containsKey(modName)
+      var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(success, SourcePos.SER, acc);
