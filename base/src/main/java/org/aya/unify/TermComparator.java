@@ -10,6 +10,7 @@ import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -92,9 +93,20 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn, lFn.ref());
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
-      case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon, lCon.ref());
+      case Pair(ConCallLike lCon, ConCallLike rCon) -> lossyUnifyCon(lCon, rCon, lCon.ref());
       default -> null;
     };
+  }
+  private @Nullable Term lossyUnifyCon(ConCallLike lCon, ConCallLike rCon, @NotNull ConDefLike ref) {
+    if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
+    // since dataArgs live in a separate telescope
+    if (null == compareMany(lCon.head().ownerArgs(),
+      rCon.head().ownerArgs(), lCon.ulift(), TyckDef.defSignature(ref.dataRef())))
+      return null;
+    if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lCon.ulift(),
+      new JitTele.LocallyNameless(ref.selfTele(lCon.args()), SortTerm.Type0)))
+      return null;
+    return new Synthesizer(this).synth(lCon);
   }
 
   /**
@@ -103,7 +115,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareCallApprox(
     @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs, @NotNull AnyDef typeProvider
   ) {
-    if (!lhs.ref().equals(rhs.ref())) return null;
+    if (!lhs.ref().equals(rhs.ref()) || lhs.ulift() != rhs.ulift()) return null;
     return compareMany(lhs.args(), rhs.args(), lhs.ulift(), TyckDef.defSignature(typeProvider));
   }
 
@@ -289,7 +301,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // fallback case
       case ConCallLike lCon -> switch (rhs) {
         case ListTerm rList -> compareUntyped(lhs, rList.constructorForm());
-        case ConCallLike rCon -> compareCallApprox(lCon, rCon, lCon.ref());
+        case ConCallLike rCon -> lossyUnifyCon(lCon, rCon, lCon.ref());
         default -> null;
       };
       case MetaLitTerm mlt -> switch (rhs) {
