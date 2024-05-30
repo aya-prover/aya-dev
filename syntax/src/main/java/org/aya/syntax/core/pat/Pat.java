@@ -15,6 +15,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.ref.GenerateKind;
@@ -147,6 +148,9 @@ public sealed interface Pat extends AyaDocile {
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
       return update(args.map(x -> x.inline(bind)), data);
+    }
+    public @NotNull ConCallLike.Head conHead() {
+      return new ConCallLike.Head(ref, 0, data.args());
     }
   }
 

@@ -6,14 +6,11 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
-import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,36 +27,10 @@ public interface PatToTerm {
           freshCallback.accept(bind);
           yield new FreeTerm(bind.bind());
         }
-        case Pat.Con con -> new ConCall(conHead(con), con.args().map(this));
+        case Pat.Con con -> new ConCall(con.conHead(), con.args().map(this));
         case Pat.Tuple tuple -> new TupTerm(tuple.elements().map(this));
         case Pat.Meta meta -> new MetaPatTerm(meta);
         case Pat.ShapedInt si -> si.toTerm();
-      };
-    }
-  }
-  private static ConCallLike.@NotNull Head conHead(Pat.Con con) {
-    return new ConCallLike.Head(con.ref(), 0, con.data().args());
-  }
-
-  record Binary(@NotNull LocalCtx ctx, @NotNull Unary unary) implements BiFunction<Pat, Pat, Term> {
-    public Binary(@NotNull LocalCtx ctx) {
-      this(ctx, new Unary(bind -> ctx.put(bind.bind(), bind.type())));
-    }
-    public @NotNull ImmutableSeq<Term> list(@NotNull ImmutableSeq<Pat> lhs, @NotNull ImmutableSeq<Pat> rhs) {
-      return lhs.zip(rhs, this);
-    }
-
-    public @NotNull Term apply(@NotNull Pat l, @NotNull Pat r) {
-      return switch (new Pair<>(l, r)) {
-        case Pair(Pat.Bind _, var rhs) -> unary.apply(rhs);
-        case Pair(var lhs, Pat.Bind _) -> unary.apply(lhs);
-        // It must be the case that lhs.ref == rhs.ref
-        case Pair(Pat.Con lhs, Pat.Con rhs) -> new ConCall(conHead(lhs), list(lhs.args(), rhs.args()));
-        case Pair(Pat.ShapedInt lhs, Pat.Con rhs) -> apply(lhs.constructorForm(), rhs);
-        case Pair(Pat.Con lhs, Pat.ShapedInt rhs) -> apply(lhs, rhs.constructorForm());
-        case Pair(Pat.ShapedInt lhs, Pat.ShapedInt _) -> lhs.toTerm();
-        case Pair(Pat.Tuple lhs, Pat.Tuple rhs) -> new TupTerm(list(lhs.elements(), rhs.elements()));
-        default -> Panic.unreachable();
       };
     }
   }
@@ -95,9 +66,9 @@ public interface PatToTerm {
         }
         case Pat.Con con when con.ref().hasEq() ->
           list(con.args().view().dropLast(1), BOUNDARIES)
-            .map(args -> new ConCall(conHead(con), args));
+            .map(args -> new ConCall(con.conHead(), args));
         case Pat.Con con -> list(con.args().view())
-          .map(args -> new ConCall(conHead(con), args));
+          .map(args -> new ConCall(con.conHead(), args));
         case Pat.Tuple tuple -> list(tuple.elements().view())
           .map(args -> new TupTerm(args));
       };
