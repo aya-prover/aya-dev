@@ -38,7 +38,7 @@ public record YouTrack(
     Info lhsInfo, Info rhsInfo,
     MutableSet<ClausesProblem.Domination> doms
   ) {
-    var ctx = tycker.localCtx().derive();
+    var ctx = tycker.localCtx();
     var unifyResult = PatUnify.unifyPat(
       lhsInfo.matching.patterns().view(),
       rhsInfo.matching.patterns().view(), ctx,
@@ -56,11 +56,9 @@ public record YouTrack(
     //   hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
     // }
     result = tycker.whnf(result.instantiateTele(unifyResult.args().view()));
-    var old = tycker.setLocalCtx(ctx);
     tycker.unifyTermReported(lhsTerm, rhsTerm, result, pos, comparison ->
       new ClausesProblem.Confluence(pos, rhsInfo.ix + 1, lhsInfo.ix + 1,
         comparison, new UnifyInfo(tycker.state), rhsInfo.matching.sourcePos(), lhsInfo.matching.sourcePos()));
-    tycker.setLocalCtx(old);
   }
 
   private void domination(
@@ -82,8 +80,13 @@ public record YouTrack(
       var contents = results.cls()
         .flatMapToObj(i -> Option.ofNullable(Pat.Preclause.lift(clauses.clauses().get(i)))
           .map(matching -> new Info(i, matching)));
-      for (int i = 1, size = contents.size(); i < size; i++)
-        unifyClauses(type, prebuildMatcher, contents.get(i - 1), contents.get(i), doms);
+      for (int i = 1, size = contents.size(); i < size; i++) {
+        var ix = i;
+        tycker.subscoped(() -> {
+          unifyClauses(type, prebuildMatcher, contents.get(ix - 1), contents.get(ix), doms);
+          return null;
+        });
+      }
     });
     doms.forEach(tycker::fail);
   }
