@@ -5,4 +5,4 @@ def something (a : Nat)
  : a + 1 + a = 1 + a + a => refl
 
 def issue1061 : Nat -> Nat
-| n => n
+| n => Nat::suc n

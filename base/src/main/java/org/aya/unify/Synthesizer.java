@@ -5,8 +5,6 @@ package org.aya.unify;
 import kala.collection.mutable.MutableList;
 import org.aya.generic.NameGenerator;
 import org.aya.generic.term.SortKind;
-import org.aya.prettier.AyaPrettierOptions;
-import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
@@ -60,13 +58,13 @@ public record Synthesizer(
 
   public @NotNull Term synth(@NotNull Term term) {
     var result = trySynth(term);
-    assert result != null : term.toDoc(AyaPrettierOptions.debug()).debugRender();
+    assert result != null : term.debuggerOnlyToString() + " : " + term.getClass();
     return result;
   }
 
   public @NotNull Term synthDontNormalize(@NotNull Term term) {
     var result = synthesize(term);
-    assert result != null : term.toDoc(AyaPrettierOptions.debug()).debugRender();
+    assert result != null : term.debuggerOnlyToString() + " : " + term.getClass();
     return result;
   }
 

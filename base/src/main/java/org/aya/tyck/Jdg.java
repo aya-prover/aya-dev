@@ -17,6 +17,7 @@ public sealed interface Jdg {
 
   default @NotNull Jdg bindTele(@NotNull SeqView<LocalVar> vars) { return map(t -> t.bindTele(vars)); }
   @NotNull Jdg map(@NotNull UnaryOperator<Term> f);
+  default Jdg lift(int lift) { return map(t -> t.elevate(lift)); }
 
   /**
    * {@link Default#type} is the type of {@link Default#wellTyped}.

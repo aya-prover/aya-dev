@@ -48,6 +48,7 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
   /** text keywords */
   public static final @NotNull TokenSet KEYWORDS = TokenSet.create(
     AyaPsiElementTypes.KW_AS,
+    AyaPsiElementTypes.KW_ELIM,
     AyaPsiElementTypes.KW_CODATA,
     AyaPsiElementTypes.KW_COERCE,
     AyaPsiElementTypes.KW_COMPLETED,

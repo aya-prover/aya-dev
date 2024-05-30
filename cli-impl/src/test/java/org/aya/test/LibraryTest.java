@@ -52,6 +52,7 @@ public class LibraryTest {
   }
 
   @Test public void fastTestOnDisk() throws IOException {
+    FileUtil.deleteRecursively(DIR.resolve("build"));
     assertEquals(0, compile(DIR));
   }
 
