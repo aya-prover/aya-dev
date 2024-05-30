@@ -172,13 +172,11 @@ public record StmtTycker(
       lhsResult.addLocalLet(ownerBinds, tycker);
       freeDataCall = new DataCall(dataRef, 0, wellPats.map(PatToTerm::visit));
 
-      var patsWithTermBound = Pat.collectVariables(wellPats.view());
-      wellPats = patsWithTermBound.component2();
-      var allBinds = Pat.collectBindings(wellPats.view());
-      ownerBinds = patsWithTermBound.component1().toImmutableSeq();
-      TeleTycker.bindTele(ownerBinds, allBinds);
+      var allTypedBinds = Pat.collectBindings(wellPats.view());
+      ownerBinds = lhsResult.allBinds();
+      TeleTycker.bindTele(ownerBinds, allTypedBinds);
       ownerTele = ownerBinds
-        .zip(allBinds, (bind, param) -> new WithPos<>(bind.definition(), param));
+        .zip(allTypedBinds, (bind, param) -> new WithPos<>(bind.definition(), param));
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {
