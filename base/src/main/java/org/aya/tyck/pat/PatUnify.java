@@ -38,7 +38,7 @@ public record PatUnify(
       case Pat.Con con -> switch (rhs) {
         case Pat.Con con1 -> {
           // Assumption
-          assert con.ref() == con1.ref();
+          assert con.ref().equals(con1.ref());
           yield new ConCall(con.conHead(), visitList(con.args(), con1.args()));
         }
         case Pat.ShapedInt lit -> unify(con, lit.constructorForm());
