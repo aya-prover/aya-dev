@@ -9,16 +9,16 @@ overlap def infixl + Nat Nat : Nat
 | a, suc b => suc (a + b)
 tighter =
 
-overlap def +-comm (a b : Nat) : a + b = b + a
+overlap def +-comm {a b : Nat} : a + b = b + a elim a b
 | 0, _ => refl
-| suc _, _ => pmap suc (+-comm _ _)
+| suc _, _ => pmap suc +-comm
 | _, 0 => refl
-| _, suc _ => pmap suc (+-comm _ _)
+| _, suc _ => pmap suc +-comm
 
-overlap def +-assoc (a b c : Nat) : a + (b + c) = (a + b) + c
+overlap def +-assoc {a b c : Nat} : a + (b + c) = (a + b) + c elim a b c
 | 0, _, _ => refl
-| suc _, _, _ => pmap suc (+-assoc _ _ _)
 | _, 0, _ => refl
-| _, suc _, _ => pmap suc (+-assoc _ _ _)
 | _, _, 0 => refl
-| _, _, suc _ => pmap suc (+-assoc _ _ _)
+| suc _, _, _ => pmap suc +-assoc
+| _, suc _, _ => pmap suc +-assoc
+| _, _, suc _ => pmap suc +-assoc
