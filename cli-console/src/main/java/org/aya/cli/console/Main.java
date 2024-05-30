@@ -40,7 +40,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       if (action.plct != null)
         return new PLCTReport().run(action.plct);
     }
-    if (inputFile == null) {
+    if (inputFile == null || inputFile.equals("null")) {
       System.err.println("No input file specified");
       return 1;
     }

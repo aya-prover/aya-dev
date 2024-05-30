@@ -23,6 +23,27 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
   }
 
+  public final static class Once implements Runnable {
+    public static @NotNull Once of(@NotNull Runnable run) {
+      return new Once(run);
+    }
+
+    private final @NotNull Runnable run;
+    private boolean dirty = false;
+
+    public Once(@NotNull Runnable run) { this.run = run; }
+
+    @Override
+    public void run() {
+      if (dirty) {
+        throw new Panic("Once");
+      }
+
+      dirty = true;
+      this.run.run();
+    }
+  }
+
   public record Matching(@NotNull ImmutableSeq<Pat> patterns, @NotNull SuccessContinuation onSucc) {
   }
 
@@ -57,7 +78,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   /// region Serializing
 
-  private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Runnable continuation) {
+  private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Once continuation) {
     buildComment(pat.debuggerOnlyToString());
 
     switch (pat) {
@@ -75,7 +96,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
                 nameGen.nextName(null), STR."\{mmTerm}.conArgs()");
               doSerialize(con.args().view(), fromSeq(conArgsTerm, con.args().size()).view(),
-                () -> buildUpdate(VARIABLE_SUBSTATE, "true"));
+                Once.of(() -> buildUpdate(VARIABLE_SUBSTATE, "true")));
             }))
       ), continuation);
       case Pat.Meta _ -> Panic.unreachable();
@@ -83,13 +104,13 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         mTerm -> solveMeta(shapedInt, mTerm),
         mTerm -> matchInt(shapedInt, mTerm),
         // do nothing on success, [doSerialize] sets subMatchState, and we will invoke [continuation] when [subMatchState = true]
-        mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, () -> {})
+        mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, Once.of(() -> { }))
       ), continuation);
       case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
         mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
           doSerialize(tuple.elements().view(), fromSeq(STR."\{mmTerm}.items()",
-            tuple.elements().size()).view(), () -> {}))
+            tuple.elements().size()).view(), Once.of(() -> { })))
       ), continuation);
     }
   }
@@ -112,7 +133,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private void multiStage(
     @NotNull String term,
     @NotNull ImmutableSeq<Consumer<String>> preContinuation,
-    @NotNull Runnable continuation
+    @NotNull Once continuation
   ) {
     var tmpName = nameGen.nextName(null);
     buildUpdate(VARIABLE_SUBSTATE, "false");
@@ -134,8 +155,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         // if the solution is still a meta, we solve it
         // this is a heavy work
         buildIfInstanceElse(term, CLASS_META_PAT, stillMetaTerm -> {
-          // TODO: we may store all Pattern in somewhere and refer them by something like `.conArgs().get(114514)`
-          var exprializer = new PatternExprializer(nameGen);
+          var exprializer = new PatternExprializer(nameGen, fromSeq(VARIABLE_RESULT, bindCount));
           exprializer.serialize(pat);
           var doSolveMetaResult = STR."\{CLASS_PAT_MATCHER}.doSolveMeta(\{exprializer.result()}, \{stillMetaTerm}.meta())";
           appendLine(STR."\{CLASS_SER_UTILS}.copyTo(\{VARIABLE_RESULT}, \{doSolveMetaResult}, \{bindCount});");
@@ -162,7 +182,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   /**
    * @apiNote {@code pats.sizeEquals(terms)}
    */
-  private void doSerialize(@NotNull SeqView<Pat> pats, @NotNull SeqView<String> terms, @NotNull Runnable continuation) {
+  private void doSerialize(@NotNull SeqView<Pat> pats, @NotNull SeqView<String> terms, @NotNull Once continuation) {
     if (pats.isEmpty()) {
       continuation.run();
       return;
@@ -170,7 +190,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
     var pat = pats.getFirst();
     var term = terms.getFirst();
-    doSerialize(pat, term, () -> doSerialize(pats.drop(1), terms.drop(1), continuation));
+    doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));
   }
 
   /// endregion Serializing
@@ -221,7 +241,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       doSerialize(
         clause.patterns().view(),
         argNames.view(),
-        () -> updateState(jumpCode));
+        Once.of(() -> updateState(jumpCode)));
 
       buildIf(STR."\{VARIABLE_STATE} > 0", this::buildBreak);
     }));

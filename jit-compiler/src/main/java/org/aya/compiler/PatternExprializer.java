@@ -3,6 +3,8 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSeq;
 import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.ErrorTerm;
@@ -23,13 +25,15 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
   public static final @NotNull String CLASS_ERROR = getJavaReference(ErrorTerm.class);
   public static final @NotNull String CLASS_PAT_TUPLE = makeSub(CLASS_PAT, getJavaReference(Pat.Tuple.class));
 
+  private final @NotNull MutableList<String> matched;
 
-  protected PatternExprializer(@NotNull NameGenerator nameGen) {
+  protected PatternExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> matched) {
     super(nameGen);
+    this.matched = MutableList.from(matched);
   }
 
   private @NotNull String serializeTerm(@NotNull Term term) {
-    return new TermExprializer(this.nameGen, ImmutableSeq.empty())
+    return new TermExprializer(this.nameGen, matched.toImmutableSeq())
       .serialize(term).result();
   }
 
@@ -39,15 +43,19 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
       case Pat.Absurd _ -> getInstance(CLASS_PAT_ABSURD);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
       // but the meta solver will eat all LocalVar so that it will be happy.
-      case Pat.Bind bind -> makeNew(CLASS_PAT_BIND,
-        makeNew(CLASS_LOCALVAR, makeString(bind.bind().name())),
-        STR."\{CLASS_ERROR}.DUMMY"
-      );
+      case Pat.Bind bind -> {
+        // TODO: bind.type may contains LocalTerm
+        var result = makeNew(CLASS_PAT_BIND,
+          makeNew(CLASS_LOCALVAR, makeString(bind.bind().name())),
+          serializeTerm(bind.type())
+        );
+
+        yield result;
+      }
       case Pat.Con con -> makeNew(CLASS_PAT_CON,
         getInstance(NameSerializer.getClassReference(con.ref())),
         serializeToImmutableSeq(CLASS_PAT, con.args()),
-        new TermExprializer(this.nameGen, ImmutableSeq.empty())
-          .serialize(con.data()).result());
+        serializeTerm(con.data()));
       case Pat.ShapedInt shapedInt -> makeNew(CLASS_PAT_INT,
         Integer.toString(shapedInt.repr()),
         getInstance(NameSerializer.getClassReference(shapedInt.zero())),

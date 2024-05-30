@@ -25,7 +25,7 @@ public interface NameSerializer {
   String CLASS_NAME_SEPARATOR = "$";
 
   enum NameType {
-    // class reference in java syntax, i.e. "foo.bar.nestClass"
+    // class reference in java source code, i.e. "foo.bar.nestClass"
     ClassReference(PACKAGE_SEPARATOR, NEST_CLASS_SEPARATOR),
     // class name that used for loading class, i.e. "foo.bar$nestClass"
     ClassName(PACKAGE_SEPARATOR, CLASS_NAME_SEPARATOR),
@@ -111,7 +111,10 @@ public interface NameSerializer {
   /**
    * Generate a java friendly class name of {@param ids}, this function should be one-to-one
    *
-   * @param ids the ids that has form {@code [ FILE_MODULE , VIRTUAL_MODULE* , NAME? ]}
+   * @param ids the qualified id that may refer to a {@link org.aya.syntax.concrete.stmt.ModuleName module}
+   *            or {@link org.aya.syntax.concrete.stmt.QualifiedID definition},
+   *            note that {@link org.aya.syntax.concrete.stmt.ModuleName.ThisRef} should
+   *            be replaced with the name of the file level module.
    */
   static @NotNull String javifyClassName(@NotNull SeqView<String> ids) {
     return ids.map(NameSerializer::javify)
