@@ -13,7 +13,7 @@ import java.util.Objects;
  */
 public record QName(@NotNull QPath module, @NotNull String name) implements Serializable {
   public QName(@NotNull DefVar<?, ?> ref) {
-    this(Objects.requireNonNull(ref.module), ref.name());
+    this(Objects.requireNonNull(ref.module, ref.name()), ref.name());
   }
 
   public ImmutableSeq<String> asStringSeq() {

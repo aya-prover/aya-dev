@@ -46,12 +46,25 @@ public class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_RULE_CON = makeSub(CLASS_RULEREDUCER, getJavaReference(RuleReducer.Con.class));
   public static final String CLASS_RULE_FN = makeSub(CLASS_RULEREDUCER, getJavaReference(RuleReducer.Fn.class));
 
+  /**
+   * Terms that should be instantiated
+   */
   private final @NotNull ImmutableSeq<String> instantiates;
   private final @NotNull MutableMap<LocalVar, String> binds;
 
+  /**
+   * Whether allow LocalTerm, false in default (in order to report unexpected LocalTerm)
+   */
+  private final boolean allowLocalTerm;
+
   public TermExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> instantiates) {
+    this(nameGen, instantiates, false);
+  }
+
+  public TermExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> instantiates, boolean allowLocalTer) {
     super(nameGen);
     this.instantiates = instantiates;
+    this.allowLocalTerm = allowLocalTer;
     this.binds = MutableMap.create();
   }
 
@@ -121,7 +134,11 @@ public class TermExprializer extends AbstractExprializer<Term> {
       }
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case AppTerm appTerm -> makeNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
-      case LocalTerm _ -> throw new Panic("LocalTerm");
+      case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
+      case LocalTerm _ -> {
+        // TODO
+        throw new UnsupportedOperationException("TODO");
+      }
       case LamTerm lamTerm -> makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
       case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_DATACALL,
         getInstance(NameSerializer.getClassReference(ref)),

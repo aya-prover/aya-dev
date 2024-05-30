@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-import static org.aya.normalize.PatMatcher.State.Stuck;
+import static org.aya.generic.State.Stuck;
 
 /**
  * Unlike in pre-v0.30 Aya, we use only one normalizer, only doing head reduction,

@@ -25,15 +25,15 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
   public static final @NotNull String CLASS_ERROR = getJavaReference(ErrorTerm.class);
   public static final @NotNull String CLASS_PAT_TUPLE = makeSub(CLASS_PAT, getJavaReference(Pat.Tuple.class));
 
-  private final @NotNull MutableList<String> matched;
+  private final boolean allowLocalTerm;
 
-  protected PatternExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> matched) {
+  protected PatternExprializer(@NotNull NameGenerator nameGen, boolean allowLocalTerm) {
     super(nameGen);
-    this.matched = MutableList.from(matched);
+    this.allowLocalTerm = allowLocalTerm;
   }
 
   private @NotNull String serializeTerm(@NotNull Term term) {
-    return new TermExprializer(this.nameGen, matched.toImmutableSeq())
+    return new TermExprializer(this.nameGen, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term).result();
   }
 
@@ -43,15 +43,10 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
       case Pat.Absurd _ -> getInstance(CLASS_PAT_ABSURD);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
       // but the meta solver will eat all LocalVar so that it will be happy.
-      case Pat.Bind bind -> {
-        // TODO: bind.type may contains LocalTerm
-        var result = makeNew(CLASS_PAT_BIND,
-          makeNew(CLASS_LOCALVAR, makeString(bind.bind().name())),
-          serializeTerm(bind.type())
-        );
-
-        yield result;
-      }
+      case Pat.Bind bind -> makeNew(CLASS_PAT_BIND,
+        makeNew(CLASS_LOCALVAR, makeString(bind.bind().name())),
+        serializeTerm(bind.type())
+      );
       case Pat.Con con -> makeNew(CLASS_PAT_CON,
         getInstance(NameSerializer.getClassReference(con.ref())),
         serializeToImmutableSeq(CLASS_PAT, con.args()),

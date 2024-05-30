@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
+import org.aya.generic.State;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -33,7 +34,7 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
    * @param args the argument to the data type
    * @return a match result, a sequence of substitution if success
    */
-  public abstract @NotNull Result<ImmutableSeq<Term>, Boolean> isAvailable(@NotNull Seq<Term> args);
+  public abstract @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull Seq<Term> args);
 
   @Override
   public boolean hasEq() {

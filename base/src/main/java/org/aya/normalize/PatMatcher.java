@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
+import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -36,12 +37,6 @@ public final class PatMatcher {
     this.pre = pre;
   }
 
-  public enum State {
-    // like trying to split a non-constructor (fail negatively)
-    Stuck,
-    // like trying to match zero with suc (fail positively)
-    Mismatch
-  }
   public static class Failure extends Throwable {
     public final State reason;
 

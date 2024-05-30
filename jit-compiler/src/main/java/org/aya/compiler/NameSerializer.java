@@ -33,11 +33,11 @@ public interface NameSerializer {
     ClassPath(PATH_SEPARATOR, CLASS_NAME_SEPARATOR);
 
     public final @NotNull String packageSeparator;
-    public final @NotNull String classNameSeparactor;
+    public final @NotNull String classNameSeparator;
 
-    NameType(@NotNull String packageSeparator, @NotNull String classNameSeparactor) {
+    NameType(@NotNull String packageSeparator, @NotNull String classNameSeparator) {
       this.packageSeparator = packageSeparator;
-      this.classNameSeparactor = classNameSeparactor;
+      this.classNameSeparator = classNameSeparator;
     }
   }
 
@@ -60,7 +60,7 @@ public interface NameSerializer {
     // get javify class name of each component
     var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
     if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
-    return STR."\{packageName}\{type.packageSeparator}\{javifyComponent.joinToString(type.classNameSeparactor)}";
+    return STR."\{packageName}\{type.packageSeparator}\{javifyComponent.joinToString(type.classNameSeparator)}";
   }
 
   static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {

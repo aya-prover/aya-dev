@@ -15,7 +15,7 @@ public abstract class AbstractExprializer<T> implements AyaSerializer<T> {
 
   protected AbstractExprializer(@NotNull NameGenerator nameGen) { this.nameGen = nameGen; }
 
-  protected @NotNull String makeNew(@NotNull String className, String... terms) {
+  public static @NotNull String makeNew(@NotNull String className, String... terms) {
     return ImmutableSeq.from(terms).joinToString(SEP, STR."new \{className}(", ")");
   }
 
@@ -27,7 +27,7 @@ public abstract class AbstractExprializer<T> implements AyaSerializer<T> {
     return makeImmutableSeq(typeName, terms.map(this::doSerialize));
   }
 
-  protected @NotNull String makeImmutableSeq(
+  public static @NotNull String makeImmutableSeq(
     @NotNull String typeName, @NotNull ImmutableSeq<String> terms, @NotNull String seqName
   ) {
     if (terms.isEmpty()) {

@@ -6,6 +6,8 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.BooleanConsumer;
 import org.aya.generic.NameGenerator;
+import org.aya.generic.State;
+import org.aya.normalize.PatMatcher;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
@@ -14,6 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
+  public static final String CLASS_STATE = getJavaReference(State.class);
+  public static final String CLASS_PATMATCHER = getJavaReference(PatMatcher.class);
+
   public ConSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen) {
     super(builder, indent, nameGen, JitCon.class);
   }
@@ -28,16 +33,12 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   }
 
   private void buildIsAvailable(ConDef unit, @NotNull String argsTerm) {
-    var pats = unit.pats;
-    var names = buildGenLocalVarsFromSeq(CLASS_TERM, argsTerm, pats.size());
-    appendLine();
-    var ser = new PatternSerializer(this.builder, this.indent, this.nameGen, names, true,
-      s -> s.buildReturn(STR."\{CLASS_RESULT}.err(true)"),
-      s -> s.buildReturn(STR."\{CLASS_RESULT}.err(false)"));
-
-    ser.serialize(ImmutableSeq.of(new PatternSerializer.Matching(pats,
-      // we have only one clause, so the size is useless
-      (s, _) -> s.buildReturn(STR."\{CLASS_RESULT}.ok(\{PatternSerializer.VARIABLE_RESULT}.toImmutableSeq())"))));
+    var patsTerm = unit.pats.map(x -> new PatternExprializer(nameGen, true).serialize(x).result());
+    var patsSeq = AbstractExprializer.makeImmutableSeq(CLASS_PAT, patsTerm, CLASS_IMMSEQ);
+    var termSeq = STR."\{argsTerm}.toImmutableSeq()";
+    var matcherTerm = AbstractExprializer.makeNew(CLASS_PATMATCHER, "true", "x -> x");
+    var matchResult = STR."\{matcherTerm}.apply(\{patsSeq}, \{termSeq})";
+    buildReturn(matchResult);
   }
 
   /**
@@ -64,7 +65,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     buildFramework(unit, () -> {
       buildMethod("isAvailable",
         ImmutableSeq.of(new JitParam(argsTerm, TYPE_TERMSEQ)),
-        STR."\{CLASS_RESULT}<\{TYPE_IMMTERMSEQ}, \{CLASS_BOOLEAN}>", true,
+        STR."\{CLASS_RESULT}<\{TYPE_IMMTERMSEQ}, \{CLASS_STATE}>", true,
         () -> buildIsAvailable(unit, argsTerm));
       appendLine();
       buildMethod("equality",

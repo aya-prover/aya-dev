@@ -9,6 +9,7 @@ import kala.control.Result;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.NameGenerator;
+import org.aya.generic.State;
 import org.aya.normalize.Normalizer;
 import org.aya.normalize.PatMatcher;
 import org.aya.syntax.compile.JitCon;
@@ -439,7 +440,7 @@ public class PatternTycker implements Problematic, Stateful {
           return dataCall.conHead(con);
         }
         // Is blocked
-        case Result.Err(var st) when st == PatMatcher.State.Stuck -> {
+        case Result.Err(var st) when st == State.Stuck -> {
           foundError(new PatternProblem.BlockedEval(pattern, dataCall));
           return null;
         }
@@ -475,12 +476,11 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * Check whether {@param con} is available under {@param type}
    */
-  public static @NotNull Result<ImmutableSeq<Term>, PatMatcher.State> checkAvail(
+  public static @NotNull Result<ImmutableSeq<Term>, State> checkAvail(
     @NotNull DataCall type, @NotNull ConDefLike con, @NotNull TyckState state
   ) {
     return switch (con) {
-      case JitCon jitCon -> jitCon.isAvailable(type.args())
-        .mapErr(b -> b ? PatMatcher.State.Stuck : PatMatcher.State.Mismatch);
+      case JitCon jitCon -> jitCon.isAvailable(type.args());
       case ConDef.Delegate conDef -> {
         var pats = conDef.core().pats;
         if (pats.isNotEmpty()) {

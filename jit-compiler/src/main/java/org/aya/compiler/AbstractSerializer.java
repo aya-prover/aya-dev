@@ -36,11 +36,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
   @Override
   public abstract AyaSerializer<T> serialize(T unit);
 
-  @Override
-  public String result() {
-    return builder.toString();
-  }
-
+  @Override public String result() { return builder.toString(); }
   public void fillIndent() {
     if (indent == 0) return;
     builder.append("  ".repeat(indent));
@@ -58,10 +54,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     return name;
   }
 
-  public void buildUpdate(@NotNull String lhs, @NotNull String rhs) {
-    appendLine(STR."\{lhs} = \{rhs};");
-  }
-
+  public void buildUpdate(@NotNull String lhs, @NotNull String rhs) { appendLine(STR."\{lhs} = \{rhs};"); }
   public void buildIf(@NotNull String condition, @NotNull Runnable onSucc) {
     buildIfElse(condition, onSucc, null);
   }
@@ -101,17 +94,9 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     appendLine("} while (false);");
   }
 
-  public void buildBreak() {
-    appendLine("break;");
-  }
-
-  public void buildReturn(@NotNull String retWith) {
-    appendLine(STR."return \{retWith};");
-  }
-
-  public void buildComment(@NotNull String comment) {
-    appendLine("// " + comment);
-  }
+  public void buildBreak() { appendLine("break;"); }
+  public void buildReturn(@NotNull String retWith) { appendLine(STR."return \{retWith};"); }
+  public void buildComment(@NotNull String comment) { appendLine("// " + comment); }
 
   public void buildPanic(@Nullable String message) {
     message = message == null ? "" : makeString(message);
@@ -156,10 +141,7 @@ public abstract class AbstractSerializer<T> implements AyaSerializer<T> {
     builder.append('\n');
   }
 
-  public void appendLine() {
-    builder.append('\n');
-  }
-
+  public void appendLine() { builder.append('\n'); }
   public <R> void buildSwitch(
     @NotNull String term,
     @NotNull ImmutableSeq<R> cases,
