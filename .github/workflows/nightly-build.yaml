@@ -89,6 +89,10 @@ jobs:
           cp ./ide-lsp/build/libs/*-fat.jar ./lsp-fatjar.jar
           cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
 
+      - name: Get current date
+        id: date
+        run: echo "MY_DATE=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+
       - name: Update Release (jlink zips and jars)
         uses: Xotl/cool-github-releases@v1
         if: matrix.os == 'ubuntu-latest'
@@ -96,7 +100,7 @@ jobs:
           mode: update
           isPrerelease: false
           tag_name: nightly-build
-          release_name: "Nightly builds"
+          release_name: "${{ env.MY_DATE }} nightly build"
           body_mrkdwn: |
             _These are latest builds, but the date on GitHub is frozen due to stupid limitations.
             Corresponding commit: <https://github.com/aya-prover/aya-dev/commit/${{ github.sha }}>_
