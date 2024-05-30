@@ -1,4 +1,5 @@
 open import arith::Nat
+open import Paths
 
 open data Vec Nat Type
 | 0, A => []
@@ -16,3 +17,9 @@ def head (Vec (suc n) A) : A
 
 def tail (Vec (suc n) A) : Vec n A
 | _ :> xs => xs
+
+overlap def infixr ++ (Vec n A) (Vec m A) : Vec (n + m) A
+| [], ys => ys
+| ys, [] => ys
+| x :> xs, ys => x :> xs ++ ys
+tighter :> =
