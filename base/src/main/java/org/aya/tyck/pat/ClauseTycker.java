@@ -192,7 +192,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
 
         // bind all pat bindings
-        var patBindTele = Pat.collectBindings(result.clause.pats().view()).view().map(Pat.CollectBind::var);
+        var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1().view();
         wellBody = wellBody.bindTele(patBindTele);
       }
 

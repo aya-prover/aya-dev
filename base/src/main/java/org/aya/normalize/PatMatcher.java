@@ -13,7 +13,6 @@ import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.tyck.pat.BindEater;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ public record PatMatcher(boolean inferMeta, @NotNull UnaryOperator<Term> pre) {
 
   /**
    * @return a substitution of corresponding bindings of {@param pats} if success.
-   * @apiNote The binding order is the same as {@link Pat#consumeBindings(java.util.function.BiConsumer)}
+   * @apiNote The binding order is the same as {@link Pat#collectVariables}
    * @see State
    */
   public @NotNull Result<ImmutableSeq<Term>, State> apply(
