@@ -27,44 +27,48 @@ public interface AppTycker {
   interface Factory<Ex extends Exception> extends
     CheckedBiFunction<JitTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
+  record CheckAppData<Ex extends Exception>(
+    @NotNull TyckState state, int lift, @NotNull Factory<Ex> makeArgs
+  ) { }
 
-  static <Ex extends Exception> @NotNull Jdg checkCompiledApplication(
-    @NotNull JitTele def, @NotNull TyckState state, @NotNull Factory<Ex> makeArgs
-  ) throws Ex {
+  static <Ex extends Exception> @NotNull Jdg
+  checkCompiledApplication(@NotNull JitTele def, CheckAppData<Ex> input) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();
         var operator = shape != -1 ? AyaShape.ofFn(fn, AyaShape.values()[shape]) : null;
-        yield checkFnCall(makeArgs, fn, operator);
+        yield checkFnCall(input.makeArgs, input.lift, fn, operator);
       }
-      case JitData data -> checkDataCall(makeArgs, data);
-      case JitPrim prim -> checkPrimCall(state, makeArgs, prim);
-      case JitCon con -> checkConCall(state, makeArgs, con);
+      case JitData data -> checkDataCall(input.makeArgs, input.lift, data);
+      case JitPrim prim -> checkPrimCall(input.state, input.makeArgs, input.lift, prim);
+      case JitCon con -> checkConCall(input.state, input.makeArgs, input.lift, con);
       default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }
 
   @SuppressWarnings("unchecked")
   static <Ex extends Exception> @NotNull Jdg checkDefApplication(
-    @NotNull DefVar<?, ?> defVar,
-    @NotNull TyckState state, @NotNull Factory<Ex> makeArgs
+    @NotNull DefVar<?, ?> defVar, @NotNull CheckAppData<Ex> input
   ) throws Ex {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
-        var op = state.shapeFactory().find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
-        yield checkFnCall(makeArgs, fnDef, op);
+        var op = input.state.shapeFactory().find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
+        yield checkFnCall(input.makeArgs, input.lift, fnDef, op);
       }
       // Extracted to prevent pervasive influence of suppression of unchecked warning.
-      case DataDecl _ -> checkDataCall(makeArgs, new DataDef.Delegate((DefVar<DataDef, DataDecl>) defVar));
-      case PrimDecl _ -> checkPrimCall(state, makeArgs, new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
-      case DataCon _ -> checkConCall(state, makeArgs, new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
+      case DataDecl _ -> checkDataCall(input.makeArgs, input.lift,
+        new DataDef.Delegate((DefVar<DataDef, DataDecl>) defVar));
+      case PrimDecl _ -> checkPrimCall(input.state, input.makeArgs, input.lift,
+        new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
+      case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
+        new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
       default -> Panic.unreachable();
     };
   }
 
   private static <Ex extends Exception> Jdg
-  checkConCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, ConDefLike conVar) throws Ex {
+  checkConCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, ConDefLike conVar) throws Ex {
     var dataVar = conVar.dataRef();
 
     // ownerTele + selfTele
@@ -79,37 +83,39 @@ public interface AppTycker {
       var shape = state.shapeFactory().find(dataVar)
         .mapNotNull(recog -> AyaShape.ofCon(conVar, recog, type))
         .getOrNull();
-      if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
-      var wellTyped = new ConCall(conVar, ownerArgs, 0, conArgs);
+      if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, lift, ownerArgs, conArgs), type);
+      var wellTyped = new ConCall(conVar, ownerArgs, lift, conArgs);
       return new Jdg.Default(wellTyped, type);
     });
   }
   private static <Ex extends Exception> Jdg
-  checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, PrimDefLike primVar) throws Ex {
+  checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, PrimDefLike primVar) throws Ex {
     var signature = primVar.signature();
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      state.primFactory().unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
+      state.primFactory().unfold(new PrimCall(primVar, lift, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
   private static <Ex extends Exception> Jdg
-  checkDataCall(@NotNull Factory<Ex> makeArgs, DataDefLike data) throws Ex {
+  checkDataCall(@NotNull Factory<Ex> makeArgs, int lift, DataDefLike data) throws Ex {
     var signature = data.signature();
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      new DataCall(data, 0, ImmutableArray.from(args)),
+      new DataCall(data, lift, ImmutableArray.from(args)),
       signature.result(args)
     ));
   }
-  private static <Ex extends Exception> Jdg
-  checkFnCall(@NotNull Factory<Ex> makeArgs, FnDefLike fnDef, Shaped.Applicable<FnDefLike> operator) throws Ex {
+  private static <Ex extends Exception> @NotNull Jdg checkFnCall(
+    @NotNull Factory<Ex> makeArgs, int lift, FnDefLike fnDef,
+    Shaped.Applicable<FnDefLike> operator
+  ) throws Ex {
     var signature = fnDef.signature();
     return makeArgs.applyChecked(signature, args -> {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);
       if (operator != null) {
-        return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
+        return new Jdg.Default(new RuleReducer.Fn(operator, lift, argsSeq), result);
       }
-      return new Jdg.Default(new FnCall(fnDef, 0, argsSeq), result);
+      return new Jdg.Default(new FnCall(fnDef, lift, argsSeq), result);
     });
   }
 }

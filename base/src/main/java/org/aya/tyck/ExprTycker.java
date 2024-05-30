@@ -198,10 +198,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Sugar s ->
         throw new IllegalArgumentException(STR."\{s.getClass()} is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
+        int lift;
+        if (f.data() instanceof Expr.Lift(var inner, var level)) {
+          lift = level;
+          f = inner;
+        } else lift = 0;
         if (f.data() instanceof Expr.Ref ref) {
-          yield checkApplication(ref, expr.sourcePos(), a);
+          yield checkApplication(ref, lift, expr.sourcePos(), a);
         } else try {
-          yield generateApplication(a, synthesize(f));
+          yield generateApplication(a, synthesize(f)).lift(lift);
         } catch (NotPi e) {
           yield fail(expr.data(), BadTypeError.pi(state, expr, e.actual));
         }
@@ -226,7 +231,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           yield fail(litStr, new NoRuleError(expr, null));
         yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
       }
-      case Expr.Ref ref -> checkApplication(ref, expr.sourcePos(), ImmutableSeq.empty());
+      case Expr.Ref ref -> checkApplication(ref, 0, expr.sourcePos(), ImmutableSeq.empty());
       case Expr.Sigma _, Expr.Pi _ -> lazyJdg(ty(expr));
       case Expr.Sort _ -> sort(expr);
       case Expr.Tuple(var items) -> {
@@ -271,11 +276,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   }
 
   private @NotNull Jdg checkApplication(
-    @NotNull Expr.Ref f, @NotNull SourcePos sourcePos,
+    @NotNull Expr.Ref f, int lift, @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Expr.NamedArg> args
   ) {
     try {
-      var result = doCheckApplication(f.var(), args);
+      var result = doCheckApplication(f.var(), lift, args);
       addWithTerm(f, sourcePos, result.type());
       return result;
     } catch (NotPi notPi) {
@@ -285,16 +290,16 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   }
 
   private @NotNull Jdg doCheckApplication(
-    @NotNull AnyVar f, @NotNull ImmutableSeq<Expr.NamedArg> args
+    @NotNull AnyVar f, int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref));
+      case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref)).lift(lift);
       case LocalVar lVar -> generateApplication(args,
-        new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar)));
-      case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content, state,
-        (params, k) -> computeArgs(args, params, k));
-      case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar, state,
-        (params, k) -> computeArgs(args, params, k));
+        new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
+      case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content,
+        new AppTycker.CheckAppData<>(state, lift, (params, k) -> computeArgs(args, params, k)));
+      case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar,
+        new AppTycker.CheckAppData<>(state, lift, (params, k) -> computeArgs(args, params, k)));
       default -> throw new UnsupportedOperationException("TODO");
     };
   }
