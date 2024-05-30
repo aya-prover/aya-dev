@@ -282,11 +282,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     @NotNull AnyVar f, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) ->
-        generateApplication(args, localLet.get(ref));
+      case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref));
       case LocalVar lVar -> generateApplication(args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar)));
-      case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content,
+      case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content, state,
         (params, k) -> computeArgs(args, params, k));
       case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar, state,
         (params, k) -> computeArgs(args, params, k));

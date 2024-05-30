@@ -5,9 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitTele;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
@@ -31,7 +29,7 @@ public interface AppTycker {
   }
 
   static <Ex extends Exception> @NotNull Jdg checkCompiledApplication(
-    JitTele def, @NotNull Factory<Ex> makeArgs
+    @NotNull JitTele def, @NotNull TyckState state, @NotNull Factory<Ex> makeArgs
   ) throws Ex {
     return switch (def) {
       case JitFn fn -> {
@@ -40,6 +38,8 @@ public interface AppTycker {
         yield checkFnCall(makeArgs, fn, operator);
       }
       case JitData data -> checkDataCall(makeArgs, data);
+      case JitPrim prim -> checkPrimCall(state, makeArgs, prim);
+      case JitCon con -> checkConCall(state, makeArgs, con);
       default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }
@@ -57,40 +57,40 @@ public interface AppTycker {
       }
       // Extracted to prevent pervasive influence of suppression of unchecked warning.
       case DataDecl _ -> checkDataCall(makeArgs, new DataDef.Delegate((DefVar<DataDef, DataDecl>) defVar));
-      case PrimDecl _ -> {
-        var primVar = (DefVar<PrimDef, PrimDecl>) defVar;
-        var signature = TyckDef.defSignature(primVar);
-        yield makeArgs.applyChecked(signature, args -> new Jdg.Default(
-          state.primFactory().unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
-          signature.result(args)
-        ));
-      }
-      case DataCon _ -> {
-        var conVar = (DefVar<ConDef, DataCon>) defVar;
-        var conCore = conVar.core;
-        assert conCore != null;
-        var dataVar = conCore.dataRef;
-
-        // ownerTele + selfTele
-        var fullSignature = TyckDef.defSignature(conVar);
-        var ownerTele = conCore.ownerTele;
-
-        yield makeArgs.applyChecked(fullSignature, args -> {
-          var realArgs = ImmutableArray.from(args);
-          var ownerArgs = realArgs.take(ownerTele.size());
-          var conArgs = realArgs.drop(ownerTele.size());
-
-          var type = (DataCall) fullSignature.result(realArgs);
-          var shape = state.shapeFactory().find(new DataDef.Delegate(dataVar))
-            .mapNotNull(recog -> AyaShape.ofCon(new ConDef.Delegate(conVar), recog, type))
-            .getOrNull();
-          if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
-          var wellTyped = new ConCall(conVar, 0, ownerArgs, conArgs);
-          return new Jdg.Default(wellTyped, type);
-        });
-      }
+      case PrimDecl _ -> checkPrimCall(state, makeArgs, new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
+      case DataCon _ -> checkConCall(state, makeArgs, new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
       default -> Panic.unreachable();
     };
+  }
+
+  private static <Ex extends Exception> Jdg
+  checkConCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, ConDefLike conVar) throws Ex {
+    var dataVar = conVar.dataRef();
+
+    // ownerTele + selfTele
+    var fullSignature = conVar.signature();
+
+    return makeArgs.applyChecked(fullSignature, args -> {
+      var realArgs = ImmutableArray.from(args);
+      var ownerArgs = realArgs.take(conVar.ownerTeleSize());
+      var conArgs = realArgs.drop(conVar.ownerTeleSize());
+
+      var type = (DataCall) fullSignature.result(realArgs);
+      var shape = state.shapeFactory().find(dataVar)
+        .mapNotNull(recog -> AyaShape.ofCon(conVar, recog, type))
+        .getOrNull();
+      if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
+      var wellTyped = new ConCall(conVar, ownerArgs, 0, conArgs);
+      return new Jdg.Default(wellTyped, type);
+    });
+  }
+  private static <Ex extends Exception> Jdg
+  checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, PrimDefLike primVar) throws Ex {
+    var signature = primVar.signature();
+    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+      state.primFactory().unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
+      signature.result(args)
+    ));
   }
   private static <Ex extends Exception> Jdg
   checkDataCall(@NotNull Factory<Ex> makeArgs, DataDefLike data) throws Ex {
