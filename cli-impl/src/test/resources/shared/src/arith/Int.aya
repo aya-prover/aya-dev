@@ -8,9 +8,13 @@ open data Int
 def pos (a : Nat) => signed true a
 def neg (a : Nat) => signed false a
 
-//def negate Int : Int
-//| signed b n => signed (not b) n
-//| posneg i => pinv posneg i
+def negate Int : Int
+| signed b n => signed (not b) n
+| posneg i => pinv (fn j => posneg j) i
+
+def abs Int : Nat
+| signed _ n => n
+| posneg _ => 0
 
 def succInt Int : Int
 | signed true n => pos (suc n)

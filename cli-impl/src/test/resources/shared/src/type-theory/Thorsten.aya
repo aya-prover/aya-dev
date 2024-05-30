@@ -11,10 +11,10 @@ open data Con : Type
 // Incomplete
 open data Ty (Γ : Con) : Type
 | U
-// | Π (A : Ty Γ) (B : Ty (Γ ▷ A))
-// | El (A : Tm Γ U)
-// | Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
-// | SubId {A : Ty Γ} : Subst A (id refl) = A
+| Π (A : Ty Γ) (B : Ty (Γ ▷ A))
+| El (A : Tm Γ U)
+| Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
+| SubId {A : Ty Γ} : Subst A (id refl) = A
 // | SubAss {Δ Θ : Con} {A : Ty Θ} {θ : Γ << Δ} {δ : Δ << Θ}
 //    : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
 // | SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
@@ -25,12 +25,12 @@ open data Ty (Γ : Con) : Type
 
 // Tms
 open data infix << (Γ : Con) (Δ : Con) : Type
-   // tighter = looser ▷
+   tighter = looser ▷
 // | _, • => ε
 // | _, Δ ▷ A => infixr ∷ (δ : Γ << Δ) (Tm Γ (Subst A δ)) tighter =
 // | infix ∘ {Θ : Con} (Θ << Δ) (Γ << Θ) tighter = ∷
 // | π₁ {A : Ty Δ} (Γ << Δ ▷ A)
-// | id (Γ = Δ)
+| id (Γ = Δ)
 // | idl• {s : Γ << Δ} : id refl ∘ s = s
 // | idr• {s : Γ << Δ} : s ∘ id refl = s
 // | ass {Θ Ξ : Con} {ν : Γ << Ξ} {δ : Ξ << Θ} {σ : Θ << Δ}

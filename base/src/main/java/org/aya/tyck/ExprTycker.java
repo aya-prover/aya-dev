@@ -318,7 +318,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         result[paramIx++] = mockTerm(param, arg.sourcePos());
         continue;
       }
-      result[paramIx++] = inherit(arg.arg(), param.type()).wellTyped();
+      result[paramIx++] = inherit(arg.arg(), whnf(param.type())).wellTyped();
       argIx++;
     }
     // Trailing implicits
