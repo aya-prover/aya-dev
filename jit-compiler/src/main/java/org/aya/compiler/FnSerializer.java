@@ -14,15 +14,12 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.AyaSerializer.CLASS_TERM;
+
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
-  public FnSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen, @NotNull ShapeFactory shapeFactory) {
-    super(builder, indent, nameGen, JitFn.class);
-    this.shapeFactory = shapeFactory;
-  }
-
-  public FnSerializer(@NotNull AbstractSerializer<?> other, @NotNull ShapeFactory shapeFactory) {
-    super(other, JitFn.class);
+  public FnSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
+    super(builder, JitFn.class);
     this.shapeFactory = shapeFactory;
   }
 
@@ -42,7 +39,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     switch (unit.body()) {
       case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(this.builder, this.indent, this.nameGen, argTerms, false,
+        var ser = new PatternSerializer(this.builder, argTerms, false,
           s -> s.buildReturn(onStuckTerm), s -> s.buildReturn(onStuckTerm));
         ser.serialize(clauses.map(matching -> new PatternSerializer.Matching(
           matching.patterns(),
@@ -58,7 +55,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(FnDef unit, @NotNull String onStuckTerm, @NotNull String argsTerm) {
     var teleSize = unit.telescope().size();
 
-    buildReturn(fromSeq(argsTerm, teleSize).view()
+    buildReturn(SourceBuilder.fromSeq(argsTerm, teleSize).view()
       .prepended(onStuckTerm)
       .joinToString(", ", "this.invoke(", ")"));
   }
@@ -69,14 +66,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     } else {
       var recog = maybe.get();
       appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
-      appendMetadataRecord("recognition", makeHalfArrayFrom(Seq.empty()), false);
+      appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(Seq.empty()), false);
     }
   }
-  @Override public AyaSerializer<FnDef> serialize(FnDef unit) {
+  @Override public FnSerializer serialize(FnDef unit) {
     var argsTerm = "args";
     var onStuckTerm = "onStuck";
     var onStuckParam = new JitParam(onStuckTerm, CLASS_TERM);
-    var names = ImmutableSeq.fill(unit.telescope().size(), () -> nameGen.nextName(null));
+    var names = ImmutableSeq.fill(unit.telescope().size(), () -> nameGen().nextName(null));
     var fixedParams = MutableList.<JitParam>create();
     fixedParams.append(onStuckParam);
     fixedParams.appendAll(names.view().map(x -> new JitParam(x, CLASS_TERM)));

@@ -15,7 +15,7 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.util.error.Panic;
 import org.intellij.lang.annotations.Language;
 
-import static org.aya.compiler.AbstractSerializer.getJavaReference;
+import static org.aya.compiler.ExprializeUtils.getJavaReference;
 
 /**
  * <h1>Serializing</h1>
@@ -25,7 +25,7 @@ import static org.aya.compiler.AbstractSerializer.getJavaReference;
  * Each aya module will be serialized to a java file,
  * each {@link org.aya.syntax.concrete.stmt.decl.Decl} will be serialized to a nested class.
  */
-public interface AyaSerializer<T> {
+public interface AyaSerializer {
   String PACKAGE_BASE = "AYA";
   String STATIC_FIELD_INSTANCE = "INSTANCE";
   String FIELD_INSTANCE = "ref";
@@ -73,11 +73,4 @@ public interface AyaSerializer<T> {
     import kala.collection.Seq;
     import kala.control.Result;
     """;
-
-  /**
-   * Serialize the given {@param unit} to java source code,
-   * the source code can be a class declaration or a expression, depends on the type of unit.
-   */
-  AyaSerializer<T> serialize(T unit);
-  String result();
 }

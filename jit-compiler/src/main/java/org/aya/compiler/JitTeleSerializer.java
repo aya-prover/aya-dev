@@ -15,14 +15,15 @@ import org.aya.syntax.core.term.Term;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.AyaSerializer.*;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
 public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSerializer<T> {
-  public static final String CLASS_METADATA = getJavaReference(CompiledAya.class);
-  public static final String CLASS_JITCON = getJavaReference(JitCon.class);
-  public static final String CLASS_ASSOC = getJavaReference(Assoc.class);
-  public static final String CLASS_AYASHAPE = getJavaReference(AyaShape.class);
-  public static final String CLASS_GLOBALID = makeSub(getJavaReference(CodeShape.class), getJavaReference(CodeShape.GlobalId.class));
+  public static final String CLASS_METADATA = ExprializeUtils.getJavaReference(CompiledAya.class);
+  public static final String CLASS_JITCON = ExprializeUtils.getJavaReference(JitCon.class);
+  public static final String CLASS_ASSOC = ExprializeUtils.getJavaReference(Assoc.class);
+  public static final String CLASS_AYASHAPE = ExprializeUtils.getJavaReference(AyaShape.class);
+  public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(CodeShape.class), ExprializeUtils.getJavaReference(CodeShape.GlobalId.class));
   public static final String METHOD_TELESCOPE = "telescope";
   public static final String METHOD_RESULT = "result";
   public static final String TYPE_TERMSEQ = STR."\{CLASS_SEQ}<\{CLASS_TERM}>";
@@ -30,20 +31,10 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
   protected final @NotNull Class<?> superClass;
 
   protected JitTeleSerializer(
-    @NotNull StringBuilder builder,
-    int indent,
-    @NotNull NameGenerator nameGen,
+    @NotNull SourceBuilder builder,
     @NotNull Class<?> superClass
   ) {
-    super(builder, indent, nameGen);
-    this.superClass = superClass;
-  }
-
-  protected JitTeleSerializer(
-    @NotNull AbstractSerializer<?> serializer,
-    @NotNull Class<?> superClass
-  ) {
-    super(serializer);
+    super(builder);
     this.superClass = superClass;
   }
 
@@ -96,10 +87,10 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
     assert module != null;
     appendLine(STR."@\{CLASS_METADATA}(");
     var modPath = module.module().module();
-    appendMetadataRecord("module", makeHalfArrayFrom(modPath.view().map(JitTeleSerializer::makeString)), true);
+    appendMetadataRecord("module", ExprializeUtils.makeHalfArrayFrom(modPath.view().map(ExprializeUtils::makeString)), true);
     // Assumption: module.take(fileModule.size).equals(fileModule)
     appendMetadataRecord("fileModuleSize", Integer.toString(module.fileModuleSize()), false);
-    appendMetadataRecord("name", makeString(ref.name()), false);
+    appendMetadataRecord("name", ExprializeUtils.makeString(ref.name()), false);
     appendMetadataRecord("assoc", Integer.toString(assocIdx), false);
     buildShape(unit);
 
@@ -108,7 +99,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
 
   protected void buildShape(T unit) {
     appendMetadataRecord("shape", "-1", false);
-    appendMetadataRecord("recognition", makeHalfArrayFrom(ImmutableSeq.empty()), false);
+    appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(ImmutableSeq.empty()), false);
   }
 
   /**
@@ -124,8 +115,8 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
 
     buildSuperCall(ImmutableSeq.of(
       Integer.toString(size),
-      makeArrayFrom("boolean", licit.toImmutableSeq()),
-      makeArrayFrom("java.lang.String", names.toImmutableArray())
+      ExprializeUtils.makeArrayFrom("boolean", licit.toImmutableSeq()),
+      ExprializeUtils.makeArrayFrom("java.lang.String", names.toImmutableArray())
     ).appendedAll(ext));
   }
 

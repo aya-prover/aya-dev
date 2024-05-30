@@ -24,13 +24,8 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
 
   private final @NotNull ShapeFactory shapeFactory;
 
-  public ModuleSerializer(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGen, @NotNull ShapeFactory shapeFactory) {
-    super(builder, indent, nameGen);
-    this.shapeFactory = shapeFactory;
-  }
-
-  public ModuleSerializer(@NotNull AbstractSerializer<?> other, @NotNull ShapeFactory shapeFactory) {
-    super(other);
+  public ModuleSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
+    super(builder);
     this.shapeFactory = shapeFactory;
   }
 
@@ -45,7 +40,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
         .serialize(teleDef);
       case DataDef dataDef -> new DataSerializer(this, shapeFactory, ser -> serializeCons(dataDef, ser))
         .serialize(dataDef);
-      case ConDef conDef -> new ConSerializer(builder, indent, nameGen)
+      case ConDef conDef -> new ConSerializer(this)
         .serialize(conDef);
       case PrimDef primDef -> new PrimSerializer(this)
         .serialize(primDef);
@@ -63,7 +58,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     });
   }
 
-  @Override public AyaSerializer<ModuleResult> serialize(ModuleResult unit) {
+  @Override public ModuleSerializer serialize(ModuleResult unit) {
     doSerialize(unit, true);
 
     return this;

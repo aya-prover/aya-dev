@@ -22,30 +22,30 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-import static org.aya.compiler.AbstractSerializer.*;
+import static org.aya.compiler.AyaSerializer.*;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
 public class TermExprializer extends AbstractExprializer<Term> {
-  public static final String CLASS_LAMTERM = getJavaReference(LamTerm.class);
-  public static final String CLASS_JITLAMTERM = getJavaReference(Closure.Jit.class);
-  public static final String CLASS_APPTERM = getJavaReference(AppTerm.class);
-  public static final String CLASS_SORTKIND = getJavaReference(SortKind.class);
-  public static final String CLASS_INTOPS = getJavaReference(IntegerOps.class);
-  public static final String CLASS_LISTOPS = getJavaReference(ListOps.class);
-  public static final String CLASS_INTEGER = getJavaReference(IntegerTerm.class);
-  public static final String CLASS_LIST = getJavaReference(ListTerm.class);
-  public static final String CLASS_STRING = getJavaReference(StringTerm.class);
-  public static final String CLASS_LOCALTERM = getJavaReference(LocalTerm.class);
-  public static final String CLASS_INT_CONRULE = makeSub(CLASS_INTOPS, getJavaReference(IntegerOps.ConRule.class));
-  public static final String CLASS_INT_FNRULE = makeSub(CLASS_INTOPS, getJavaReference(IntegerOps.FnRule.class));
-  public static final String CLASS_LIST_CONRULE = makeSub(CLASS_LISTOPS, getJavaReference(ListOps.ConRule.class));
-  public static final String CLASS_FNRULE_KIND = makeSub(CLASS_INT_FNRULE, getJavaReference(IntegerOps.FnRule.Kind.class));
-  public static final String CLASS_RULEREDUCER = getJavaReference(RuleReducer.class);
-  public static final String CLASS_RULE_CON = makeSub(CLASS_RULEREDUCER, getJavaReference(RuleReducer.Con.class));
-  public static final String CLASS_RULE_FN = makeSub(CLASS_RULEREDUCER, getJavaReference(RuleReducer.Fn.class));
+  public static final String CLASS_LAMTERM = ExprializeUtils.getJavaReference(LamTerm.class);
+  public static final String CLASS_JITLAMTERM = ExprializeUtils.getJavaReference(Closure.Jit.class);
+  public static final String CLASS_APPTERM = ExprializeUtils.getJavaReference(AppTerm.class);
+  public static final String CLASS_SORTKIND = ExprializeUtils.getJavaReference(SortKind.class);
+  public static final String CLASS_INTOPS = ExprializeUtils.getJavaReference(IntegerOps.class);
+  public static final String CLASS_LISTOPS = ExprializeUtils.getJavaReference(ListOps.class);
+  public static final String CLASS_INTEGER = ExprializeUtils.getJavaReference(IntegerTerm.class);
+  public static final String CLASS_LIST = ExprializeUtils.getJavaReference(ListTerm.class);
+  public static final String CLASS_STRING = ExprializeUtils.getJavaReference(StringTerm.class);
+  public static final String CLASS_LOCALTERM = ExprializeUtils.getJavaReference(LocalTerm.class);
+  public static final String CLASS_INT_CONRULE = ExprializeUtils.makeSub(CLASS_INTOPS, ExprializeUtils.getJavaReference(IntegerOps.ConRule.class));
+  public static final String CLASS_INT_FNRULE = ExprializeUtils.makeSub(CLASS_INTOPS, ExprializeUtils.getJavaReference(IntegerOps.FnRule.class));
+  public static final String CLASS_LIST_CONRULE = ExprializeUtils.makeSub(CLASS_LISTOPS, ExprializeUtils.getJavaReference(ListOps.ConRule.class));
+  public static final String CLASS_FNRULE_KIND = ExprializeUtils.makeSub(CLASS_INT_FNRULE, ExprializeUtils.getJavaReference(IntegerOps.FnRule.Kind.class));
+  public static final String CLASS_RULEREDUCER = ExprializeUtils.getJavaReference(RuleReducer.class);
+  public static final String CLASS_RULE_CON = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Con.class));
+  public static final String CLASS_RULE_FN = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Fn.class));
 
   /**
    * Terms that should be instantiated
@@ -72,15 +72,15 @@ public class TermExprializer extends AbstractExprializer<Term> {
   private @NotNull String serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
       case IntegerOps.ConRule conRule ->
-        makeNew(CLASS_INT_CONRULE, getInstance(NameSerializer.getClassReference(conRule.ref())),
+        ExprializeUtils.makeNew(CLASS_INT_CONRULE, ExprializeUtils.getInstance(NameSerializer.getClassReference(conRule.ref())),
           doSerialize(conRule.zero())
         );
-      case IntegerOps.FnRule fnRule -> makeNew(CLASS_INT_FNRULE,
-        getInstance(NameSerializer.getClassReference(fnRule.ref())),
-        makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
+      case IntegerOps.FnRule fnRule -> ExprializeUtils.makeNew(CLASS_INT_FNRULE,
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(fnRule.ref())),
+        ExprializeUtils.makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
       );
-      case ListOps.ConRule conRule -> makeNew(CLASS_LIST_CONRULE,
-        getInstance(NameSerializer.getClassReference(conRule.ref())),
+      case ListOps.ConRule conRule -> ExprializeUtils.makeNew(CLASS_LIST_CONRULE,
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(conRule.ref())),
         doSerialize(conRule.empty())
       );
       default -> Panic.unreachable();
@@ -101,7 +101,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
     boolean fixed
   ) {
     var seredArgs = args.map(x -> x.map(this::doSerialize));
-    var seredSeq = seredArgs.map(x -> makeImmutableSeq(CLASS_TERM, x));
+    var seredSeq = seredArgs.map(x -> ExprializeUtils.makeImmutableSeq(CLASS_TERM, x));
     var flatArgs = seredArgs.flatMap(x -> x);
 
     var callArgs = new String[seredSeq.size() + 2];
@@ -112,10 +112,10 @@ public class TermExprializer extends AbstractExprializer<Term> {
     }
 
     var elevate = ulift > 0 ? STR.".elevate(\{ulift})" : "";
-    var onStuck = makeNew(callName, callArgs);
+    var onStuck = ExprializeUtils.makeNew(callName, callArgs);
     var finalArgs = fixed
       ? flatArgs.view().prepended(onStuck).joinToString()
-      : STR."\{onStuck}, \{makeImmutableSeq(CLASS_TERM, flatArgs)}";
+      : STR."\{onStuck}, \{ExprializeUtils.makeImmutableSeq(CLASS_TERM, flatArgs)}";
 
     return STR."\{reducible}.invoke(\{finalArgs})\{elevate}";
   }
@@ -136,23 +136,23 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case AppTerm appTerm -> makeNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
-      case LocalTerm(var index) -> makeNew(CLASS_LOCALTERM, Integer.toString(index));
-      case LamTerm lamTerm -> makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
-      case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_DATACALL,
-        getInstance(NameSerializer.getClassReference(ref)),
+      case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));
+      case LamTerm lamTerm -> ExprializeUtils.makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
+      case DataCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_DATACALL,
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
-      case ConCall(var head, var args) -> makeNew(CLASS_CONCALL,
-        getInstance(NameSerializer.getClassReference(head.ref())),
+      case ConCall(var head, var args) -> ExprializeUtils.makeNew(CLASS_CONCALL,
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(head.ref())),
         serializeToImmutableSeq(CLASS_TERM, head.ownerArgs()),
         Integer.toString(head.ulift()),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case FnCall call -> {
         var ref = switch (call.ref()) {
-          case JitFn jit -> getInstance(NameSerializer.getClassReference(jit));
-          case FnDef.Delegate def -> getInstance(getClassReference(def.ref));
+          case JitFn jit -> ExprializeUtils.getInstance(NameSerializer.getClassReference(jit));
+          case FnDef.Delegate def -> ExprializeUtils.getInstance(getClassReference(def.ref));
         };
 
         var ulift = call.ulift();
@@ -171,54 +171,54 @@ public class TermExprializer extends AbstractExprializer<Term> {
         ImmutableSeq.of(fnRuler.args()),
         false
       );
-      case SortTerm(var kind, var ulift) -> makeNew(getJavaReference(SortTerm.class),
-        makeSub(CLASS_SORTKIND, kind.name()),
+      case SortTerm(var kind, var ulift) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(SortTerm.class),
+        ExprializeUtils.makeSub(CLASS_SORTKIND, kind.name()),
         Integer.toString(ulift));
-      case PiTerm(var param, var body) -> makeNew(getJavaReference(PiTerm.class),
+      case PiTerm(var param, var body) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(PiTerm.class),
         doSerialize(param),
         serializeClosure(body)
       );
-      case CoeTerm(var type, var r, var s) -> makeNew(getJavaReference(CoeTerm.class),
+      case CoeTerm(var type, var r, var s) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(CoeTerm.class),
         serializeClosure(type),
         doSerialize(r),
         doSerialize(s)
       );
-      case ProjTerm(var of, var ix) -> makeNew(getJavaReference(ProjTerm.class),
+      case ProjTerm(var of, var ix) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(ProjTerm.class),
         doSerialize(of),
         Integer.toString(ix)
       );
-      case PAppTerm(var fun, var arg, var a, var b) -> makeNew(getJavaReference(PAppTerm.class),
+      case PAppTerm(var fun, var arg, var a, var b) -> makeNew(ExprializeUtils.getJavaReference(PAppTerm.class),
         fun, arg, a, b
       );
-      case EqTerm(var A, var a, var b) -> makeNew(getJavaReference(EqTerm.class),
+      case EqTerm(var A, var a, var b) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(EqTerm.class),
         serializeClosure(A),
         doSerialize(a), doSerialize(b)
       );
-      case DimTyTerm _ -> getInstance(getJavaReference(DimTyTerm.class));
-      case DimTerm dim -> makeSub(getJavaReference(DimTerm.class), dim.name());
-      case TupTerm(var items) -> makeNew(getJavaReference(TupTerm.class),
+      case DimTyTerm _ -> ExprializeUtils.getInstance(ExprializeUtils.getJavaReference(DimTyTerm.class));
+      case DimTerm dim -> ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(DimTerm.class), dim.name());
+      case TupTerm(var items) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(TupTerm.class),
         serializeToImmutableSeq(CLASS_TERM, items)
       );
       case SigmaTerm sigmaTerm -> throw new UnsupportedOperationException("TODO");
-      case PrimCall(var ref, var ulift, var args) -> makeNew(CLASS_PRIMCALL,
-        getInstance(NameSerializer.getClassReference(ref)),
+      case PrimCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_PRIMCALL,
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
-      case IntegerTerm(var repr, var zero, var suc, var type) -> makeNew(CLASS_INTEGER,
+      case IntegerTerm(var repr, var zero, var suc, var type) -> ExprializeUtils.makeNew(CLASS_INTEGER,
         Integer.toString(repr),
-        getInstance(NameSerializer.getClassReference(zero)),
-        getInstance(NameSerializer.getClassReference(suc)),
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(zero)),
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(suc)),
         doSerialize(type)
       );
-      case ListTerm(var repr, var nil, var cons, var type) -> makeNew(CLASS_LIST,
-        makeImmutableSeq(CLASS_TERM, repr.map(this::doSerialize), CLASS_PIMMSEQ),
-        getInstance(NameSerializer.getClassReference(nil)),
-        getInstance(NameSerializer.getClassReference(cons)),
+      case ListTerm(var repr, var nil, var cons, var type) -> ExprializeUtils.makeNew(CLASS_LIST,
+        ExprializeUtils.makeImmutableSeq(CLASS_TERM, repr.map(this::doSerialize), CLASS_PIMMSEQ),
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(nil)),
+        ExprializeUtils.getInstance(NameSerializer.getClassReference(cons)),
         doSerialize(type)
       );
       case StringTerm stringTerm ->
-        makeNew(CLASS_STRING, makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
+        ExprializeUtils.makeNew(CLASS_STRING, ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
     };
   }
 
@@ -239,15 +239,15 @@ public class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull String serializeClosure(@NotNull String param, @NotNull Closure body) {
-    return makeNew(CLASS_JITLAMTERM, STR."\{param} -> \{with(param, t -> doSerialize(body.apply(t)))}");
+    return ExprializeUtils.makeNew(CLASS_JITLAMTERM, STR."\{param} -> \{with(param, t -> doSerialize(body.apply(t)))}");
   }
 
-  @Override public AyaSerializer<Term> serialize(Term unit) {
+  @Override public @NotNull String serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar(STR."arg\{i}"));
     unit = unit.instantiateTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
 
-    return super.serialize(unit);
+    return doSerialize(unit);
   }
 }

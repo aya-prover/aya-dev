@@ -18,6 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.aya.compiler.AyaSerializer.*;
+
+/**
+ * We do not serialize meta solve, it is annoying
+ */
 public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<PatternSerializer.Matching>> {
   @FunctionalInterface
   public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
@@ -51,8 +56,8 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   public static final @NotNull String VARIABLE_STATE = "matchState";
   public static final @NotNull String VARIABLE_SUBSTATE = "subMatchState";
 
-  static final @NotNull String CLASS_META_PAT = getJavaReference(MetaPatTerm.class);
-  static final @NotNull String CLASS_PAT_MATCHER = getJavaReference(PatMatcher.class);
+  static final @NotNull String CLASS_META_PAT = ExprializeUtils.getJavaReference(MetaPatTerm.class);
+  static final @NotNull String CLASS_PAT_MATCHER = ExprializeUtils.getJavaReference(PatMatcher.class);
 
   private final @NotNull ImmutableSeq<String> argNames;
   private final @NotNull Consumer<PatternSerializer> onStuck;
@@ -61,15 +66,13 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private final boolean inferMeta;
 
   public PatternSerializer(
-    @NotNull StringBuilder builder,
-    int indent,
-    @NotNull NameGenerator nameGen,
+    @NotNull SourceBuilder builder,
     @NotNull ImmutableSeq<String> argNames,
     boolean inferMeta,
     @NotNull Consumer<PatternSerializer> onStuck,
     @NotNull Consumer<PatternSerializer> onMismatch
   ) {
-    super(builder, indent, nameGen);
+    super(builder);
     this.argNames = argNames;
     this.inferMeta = inferMeta;
     this.onStuck = onStuck;
@@ -91,11 +94,11 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(NameSerializer.getClassReference(con.ref()))}",
+          buildIfElse(STR."\{ExprializeUtils.getCallInstance(mmTerm)} == \{ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref()))}",
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
-                nameGen.nextName(null), STR."\{mmTerm}.conArgs()");
-              doSerialize(con.args().view(), fromSeq(conArgsTerm, con.args().size()).view(),
+                nameGen().nextName(null), STR."\{mmTerm}.conArgs()");
+              doSerialize(con.args().view(), SourceBuilder.fromSeq(conArgsTerm, con.args().size()).view(),
                 Once.of(() -> buildUpdate(VARIABLE_SUBSTATE, "true")));
             }))
       ), continuation);
@@ -109,7 +112,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
-          doSerialize(tuple.elements().view(), fromSeq(STR."\{mmTerm}.items()",
+          doSerialize(tuple.elements().view(), SourceBuilder.fromSeq(STR."\{mmTerm}.items()",
             tuple.elements().size()).view(), Once.of(() -> { })))
       ), continuation);
     }
@@ -135,7 +138,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     @NotNull ImmutableSeq<Consumer<String>> preContinuation,
     @NotNull Once continuation
   ) {
-    var tmpName = nameGen.nextName(null);
+    var tmpName = nameGen().nextName(null);
     buildUpdate(VARIABLE_SUBSTATE, "false");
     buildLocalVar(CLASS_TERM, tmpName, term);
 
@@ -155,9 +158,9 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         // if the solution is still a meta, we solve it
         // this is a heavy work
         buildIfInstanceElse(term, CLASS_META_PAT, stillMetaTerm -> {
-          var exprializer = new PatternExprializer(nameGen, true);
-          exprializer.serialize(pat);
-          var doSolveMetaResult = STR."\{CLASS_PAT_MATCHER}.doSolveMeta(\{exprializer.result()}, \{stillMetaTerm}.meta())";
+          var exprializer = new PatternExprializer(nameGen(), true);
+          var result = exprializer.serialize(pat);
+          var doSolveMetaResult = STR."\{CLASS_PAT_MATCHER}.doSolveMeta(\{result}, \{stillMetaTerm}.meta())";
           appendLine(STR."\{CLASS_SER_UTILS}.copyTo(\{VARIABLE_RESULT}, \{doSolveMetaResult}, \{bindCount});");
           buildUpdate(VARIABLE_SUBSTATE, "true");
           // at this moment, the matching is complete,
@@ -228,7 +231,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   /// endregion Java Source Code Generate API
 
   @Override
-  public AyaSerializer<ImmutableSeq<Matching>> serialize(@NotNull ImmutableSeq<Matching> unit) {
+  public PatternSerializer serialize(@NotNull ImmutableSeq<Matching> unit) {
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), x -> bindAmount(x.patterns));
     int maxBindSize = bindSize.max();
 

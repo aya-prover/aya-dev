@@ -27,28 +27,16 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
    * @param conContinuation should generate constructor inside of this data
    */
   public DataSerializer(
-    @NotNull StringBuilder builder,
-    int indent,
-    @NotNull NameGenerator nameGen,
+    @NotNull SourceBuilder builder,
     @NotNull ShapeFactory shapeFactory,
     @NotNull Consumer<DataSerializer> conContinuation
   ) {
-    super(builder, indent, nameGen, JitData.class);
+    super(builder, JitData.class);
     this.shapeFactory = shapeFactory;
     this.conContinuation = conContinuation;
   }
 
-  public DataSerializer(
-    @NotNull AbstractSerializer<?> other,
-    @NotNull ShapeFactory shapeFactory,
-    @NotNull Consumer<DataSerializer> conContinuation
-  ) {
-    super(other, JitData.class);
-    this.shapeFactory = shapeFactory;
-    this.conContinuation = conContinuation;
-  }
-
-  @Override public AyaSerializer<DataDef> serialize(DataDef unit) {
+  @Override public DataSerializer serialize(DataDef unit) {
     buildFramework(unit, () -> {
       buildMethod("constructors", ImmutableSeq.empty(), STR."\{CLASS_JITCON}[]", true,
         () -> buildConstructors(unit));
@@ -70,8 +58,8 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
       // The capture is one-to-one
       var flipped = ImmutableMap.from(recog.captures().view()
         .map((k, v) -> Tuple.<DefVar<?, ?>, CodeShape.GlobalId>of(((TyckAnyDef<?>) v).ref, k)));
-      var capture = unit.body.map(x -> makeSub(CLASS_GLOBALID, flipped.get(x.ref).toString()));
-      appendMetadataRecord("recognition", makeHalfArrayFrom(capture), false);
+      var capture = unit.body.map(x -> ExprializeUtils.makeSub(CLASS_GLOBALID, flipped.get(x.ref).toString()));
+      appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(capture), false);
     }
   }
 
@@ -85,9 +73,9 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
   private void buildConstructors(DataDef unit) {
     var cRef = "this.constructors";
 
-    buildIf(isNull(STR."\{cRef}[0]"), () ->
+    buildIf(ExprializeUtils.isNull(STR."\{cRef}[0]"), () ->
       unit.body.forEachIndexed((idx, con) ->
-        buildUpdate(STR."\{cRef}[\{idx}]", getInstance(getClassReference(con.ref)))));
+        buildUpdate(STR."\{cRef}[\{idx}]", ExprializeUtils.getInstance(getClassReference(con.ref)))));
 
     buildReturn(cRef);
   }
