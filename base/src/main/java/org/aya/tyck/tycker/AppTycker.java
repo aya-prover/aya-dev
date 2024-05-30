@@ -44,7 +44,7 @@ public interface AppTycker {
       });
       case JitData data -> makeArgs.applyChecked(data, args ->
         new Jdg.Default(new DataCall(data, 0, ImmutableArray.from(args)), data.result(args)));
-      default -> Panic.unreachable();
+      default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }
 

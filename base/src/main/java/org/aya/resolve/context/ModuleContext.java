@@ -199,7 +199,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     } else {
       var uniqueCandidates = candidates.uniqueCandidates();
       if (uniqueCandidates.size() != 1 || uniqueCandidates.iterator().next() != ref) {
-        reporter().report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+        fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
 
         if (candidates.map().containsKey(ModuleName.This)) {
           // H : modName instance ModulePath.Qualified
@@ -222,8 +222,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var result = symbols.add(modName, name, ref);
     assert result.isEmpty() : "Sanity check"; // should already be reported as an error
 
-    // Only `DefVar`s can be exported.
-    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) {
+    // Only `AnyDefVar`s can be exported.
+    if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {
       var success = exportSymbol(modName, name, defVar);
       if (!success) {
         reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
