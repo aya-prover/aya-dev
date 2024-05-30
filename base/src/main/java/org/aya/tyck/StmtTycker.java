@@ -130,7 +130,8 @@ public record StmtTycker(
         var result = fn.result;
         if (result == null) result = new WithPos<>(fn.sourcePos(), new Expr.Hole(false, null));
         var fnRef = fn.ref;
-        fnRef.signature = teleTycker.checkSignature(fn.telescope, result);
+        fnRef.signature = teleTycker.checkSignature(fn.telescope, result).pusheen(tycker::whnf);
+
         // For ExprBody, they will be zonked later
         if (fn.body instanceof FnBody.BlockBody(var cls, _)) {
           tycker.solveMetas();

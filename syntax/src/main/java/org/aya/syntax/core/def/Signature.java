@@ -12,6 +12,7 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.ForLSP;
+import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -61,5 +62,14 @@ public record Signature(
   @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return Doc.sep(Doc.sep(param.view().map(p -> Doc.parened(p.data().toDoc(options)))),
       Tokens.ARROW, result.toDoc(options));
+  }
+  /**
+   * The nicest thing about this is that if the whole thing is de Bruijn indexed,
+   * the unpi-ed version of it will have the correct de Bruijn index.
+   */
+  public @NotNull Signature pusheen(UnaryOperator<Term> pre) {
+    var resultPushed = PiTerm.unpiDBI(result, pre);
+    return new Signature(param.appendedAll(resultPushed.params().view()
+      .map(s -> new WithPos<>(SourcePos.NONE, s))), resultPushed.body());
   }
 }
