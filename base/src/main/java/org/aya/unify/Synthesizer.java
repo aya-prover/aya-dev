@@ -6,8 +6,8 @@ import kala.collection.mutable.MutableList;
 import org.aya.generic.NameGenerator;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
-import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ConCall;
@@ -114,8 +114,8 @@ public record Synthesizer(
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();
-      case ConCall conCall -> conCall.head().underlyingDataCall();
-      case Callable.Tele teleCall -> TyckDef.defSignature(teleCall.ref())
+      case ConCall conCall -> conCall.ref().signature().result(conCall.args());
+      case Callable.Tele teleCall -> teleCall.ref().signature()
         .result(teleCall.args())
         .elevate(teleCall.ulift());
 
@@ -155,7 +155,7 @@ public record Synthesizer(
         case Whatever -> false;
         case IsType -> true;
       };
-      case MetaVar.OfType (var type) -> trySynth(type) instanceof SortTerm;
+      case MetaVar.OfType(var type) -> trySynth(type) instanceof SortTerm;
       case MetaVar.PiDom _ -> true;
     };
   }

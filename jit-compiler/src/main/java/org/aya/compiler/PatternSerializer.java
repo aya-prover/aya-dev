@@ -9,7 +9,7 @@ import kala.range.primitive.IntRange;
 import kala.value.primitive.MutableIntValue;
 import org.aya.generic.NameGenerator;
 import org.aya.normalize.PatMatcher;
-import org.aya.normalize.PatMatcher.State;
+import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.util.error.Panic;
@@ -89,7 +89,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       }
       // TODO: match IntegerTerm / ListTerm first
       case Pat.Con con -> multiStage(term, ImmutableSeq.of(
-        mTerm -> solveMeta(con, mTerm),
+        // mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
           buildIfElse(STR."\{getCallInstance(mmTerm)} == \{getInstance(NameSerializer.getClassReference(con.ref()))}",
             State.Mismatch, () -> {
@@ -101,13 +101,13 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       ), continuation);
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.ShapedInt shapedInt -> multiStage(term, ImmutableSeq.of(
-        mTerm -> solveMeta(shapedInt, mTerm),
+        // mTerm -> solveMeta(shapedInt, mTerm),
         mTerm -> matchInt(shapedInt, mTerm),
         // do nothing on success, [doSerialize] sets subMatchState, and we will invoke [continuation] when [subMatchState = true]
         mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, Once.of(() -> { }))
       ), continuation);
       case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
-        mTerm -> solveMeta(tuple, mTerm),
+        // mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
           doSerialize(tuple.elements().view(), fromSeq(STR."\{mmTerm}.items()",
             tuple.elements().size()).view(), Once.of(() -> { })))
@@ -155,7 +155,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         // if the solution is still a meta, we solve it
         // this is a heavy work
         buildIfInstanceElse(term, CLASS_META_PAT, stillMetaTerm -> {
-          var exprializer = new PatternExprializer(nameGen, fromSeq(VARIABLE_RESULT, bindCount));
+          var exprializer = new PatternExprializer(nameGen, true);
           exprializer.serialize(pat);
           var doSolveMetaResult = STR."\{CLASS_PAT_MATCHER}.doSolveMeta(\{exprializer.result()}, \{stillMetaTerm}.meta())";
           appendLine(STR."\{CLASS_SER_UTILS}.copyTo(\{VARIABLE_RESULT}, \{doSolveMetaResult}, \{bindCount});");
@@ -188,6 +188,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       return;
     }
 
+    buildComment(pats.map(x -> x.debuggerOnlyToString()).joinToString());
     var pat = pats.getFirst();
     var term = terms.getFirst();
     doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));

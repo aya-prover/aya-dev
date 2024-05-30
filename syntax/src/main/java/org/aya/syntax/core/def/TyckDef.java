@@ -38,19 +38,15 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
   }
   //endregion
 
+  /**
+   * @see AnyDef#signature()
+   */
   static @NotNull JitTele defSignature(@NotNull DefVar<? extends TyckDef, ? extends Decl> defVar) {
     if (defVar.core != null) return new JitTele.LocallyNameless(defVar.core.telescope(), defVar.core.result());
     // guaranteed as this is already a core term
     var signature = defVar.signature;
     assert signature != null : defVar.name();
     return new JitTele.LocallyNameless(signature.rawParams(), signature.result());
-  }
-
-  static @NotNull JitTele defSignature(@NotNull AnyDef def) {
-    return switch (def) {
-      case TyckAnyDef<?> tyckDef -> defSignature(tyckDef.ref);
-      case JitDef jitDef -> jitDef;
-    };
   }
 
   @NotNull DefVar<? extends TyckDef, ?> ref();

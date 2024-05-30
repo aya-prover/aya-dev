@@ -105,8 +105,8 @@ public interface AppTycker {
           var shape = state.shapeFactory().find(new DataDef.Delegate(dataVar))
             .mapNotNull(recog -> AyaShape.ofCon(new ConDef.Delegate(conVar), recog, type))
             .getOrNull();
-          if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, type.args(), conArgs), type);
-          var wellTyped = new ConCall(conVar, 0, type.args(), conArgs);
+          if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
+          var wellTyped = new ConCall(conVar, 0, ownerArgs, conArgs);
           return new Jdg.Default(wellTyped, type);
         });
       }

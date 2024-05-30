@@ -4,6 +4,7 @@ package org.aya.syntax.core.def;
 
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.ref.*;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -50,4 +51,6 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDe
       case DefVar<?, ?> var -> new TyckAnyDef<>(var);
     };
   }
+
+  @NotNull JitTele signature();
 }

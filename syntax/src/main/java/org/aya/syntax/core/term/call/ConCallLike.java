@@ -2,12 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
+import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,18 +25,22 @@ public sealed interface ConCallLike extends Callable.Tele permits ConCall, RuleR
    * @param ownerArgs the arguments to the owner/patterns, NOT the data type parameters!!
    */
   record Head(
-    @NotNull ConDefLike ref,
-    int ulift,
+    @NotNull ConDefLike ref, int ulift,
     @NotNull ImmutableSeq<@NotNull Term> ownerArgs
   ) {
-    public @NotNull Head descent(@NotNull IndexedFunction<Term, Term> f) {
-      var args = Callable.descent(ownerArgs, f);
+    public @NotNull Head update(ImmutableSeq<Term> args) {
       if (args.sameElements(ownerArgs, true)) return this;
       return new Head(ref, ulift, args);
     }
+    public @NotNull Head descent(@NotNull IndexedFunction<Term, Term> f) {
+      return update(Callable.descent(ownerArgs, f));
+    }
 
-    public @NotNull DataCall underlyingDataCall() {
-      return new DataCall(ref.dataRef(), ulift, ownerArgs);
+    public @NotNull Head bindTele(@NotNull SeqView<LocalVar> tele) {
+      return update(ownerArgs.map(term -> term.bindTele(tele)));
+    }
+    public @NotNull Head instantiateTele(@NotNull SeqView<Term> inst) {
+      return update(ownerArgs.map(term -> term.instantiateTele(inst)));
     }
   }
 

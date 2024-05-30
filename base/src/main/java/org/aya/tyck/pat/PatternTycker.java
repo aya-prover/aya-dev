@@ -9,6 +9,7 @@ import kala.control.Result;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.NameGenerator;
+import org.aya.generic.State;
 import org.aya.normalize.Normalizer;
 import org.aya.normalize.PatMatcher;
 import org.aya.syntax.compile.JitCon;
@@ -144,13 +145,13 @@ public class PatternTycker implements Problematic, Stateful {
 
         // It is possible that `con.params()` is empty.
         var patterns = tyckInner(
-          conCore.selfTele(realCon.args).view(),
+          conCore.selfTele(realCon.ownerArgs).view(),
           con.params().view(),
           pattern);
 
         // check if this Con is a ShapedCon
         var typeRecog = state().shapeFactory().find(conCore.dataRef()).getOrNull();
-        yield new Pat.Con(realCon.conHead.ref(), patterns, realCon.data());
+        yield new Pat.Con(conCore, patterns, realCon.conHead);
       }
       case Pattern.Bind(var bind, var tyRef) -> {
         exprTycker.localCtx().put(bind, type);
@@ -422,7 +423,11 @@ public class PatternTycker implements Problematic, Stateful {
     );
   }
 
-  private record Selection(DataCall data, ImmutableSeq<Term> args, ConCallLike.Head conHead) { }
+  private record Selection(
+    @NotNull DataCall data,
+    @NotNull ImmutableSeq<Term> ownerArgs,
+    @NotNull ConCallLike.Head conHead
+  ) { }
 
   private @Nullable ConCallLike.Head makeSureEmpty(Term type, @NotNull WithPos<Pattern> pattern) {
     if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
@@ -435,11 +440,11 @@ public class PatternTycker implements Problematic, Stateful {
     // If name != null, only one iteration of this loop is not skipped
     for (var con : core.body()) {
       switch (checkAvail(dataCall, con, exprTycker.state)) {
-        case Result.Ok(_) -> {
-          return dataCall.conHead(con);
+        case Result.Ok(var subst) -> {
+          return new ConCallLike.Head(con, dataCall.ulift(), subst);
         }
         // Is blocked
-        case Result.Err(var st) when st == PatMatcher.State.Stuck -> {
+        case Result.Err(var st) when st == State.Stuck -> {
           foundError(new PatternProblem.BlockedEval(pattern, dataCall));
           return null;
         }
@@ -460,10 +465,9 @@ public class PatternTycker implements Problematic, Stateful {
     }
 
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
-      case Result.Ok(var subst) -> {
-        var selfTeleSize = name.selfTele(subst).size(); // FIXME: I need size ONLY
-        yield new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()), subst, dataCall.conHead(name));
-      }
+      case Result.Ok(var subst) -> new Selection(
+        (DataCall) dataCall.replaceTeleFrom(name.selfTeleSize(), subst.view()),
+        subst, new ConCallLike.Head(name, dataCall.ulift(), subst));
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body
         foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
@@ -475,12 +479,11 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * Check whether {@param con} is available under {@param type}
    */
-  public static @NotNull Result<ImmutableSeq<Term>, PatMatcher.State> checkAvail(
+  public static @NotNull Result<ImmutableSeq<Term>, State> checkAvail(
     @NotNull DataCall type, @NotNull ConDefLike con, @NotNull TyckState state
   ) {
     return switch (con) {
-      case JitCon jitCon -> jitCon.isAvailable(type.args())
-        .mapErr(b -> b ? PatMatcher.State.Stuck : PatMatcher.State.Mismatch);
+      case JitCon jitCon -> jitCon.isAvailable(type.args());
       case ConDef.Delegate conDef -> {
         var pats = conDef.core().pats;
         if (pats.isNotEmpty()) {

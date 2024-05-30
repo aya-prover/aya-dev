@@ -9,7 +9,7 @@ import kala.value.MutableValue;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public record BindEater(
         yield meta;
       }
       case Pat.Con con -> {
-        var realType = (DataCall) con.data().instantiateTele(inst());
+        var realType = (ConCallLike.Head) con.head().instantiateTele(inst());
         yield con.update(con.args().map(this), realType);
       }
 

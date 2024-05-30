@@ -27,7 +27,7 @@ public interface PatToTerm {
           freshCallback.accept(bind);
           yield new FreeTerm(bind.bind());
         }
-        case Pat.Con con -> new ConCall(con.conHead(), con.args().map(this));
+        case Pat.Con con -> new ConCall(con.head(), con.args().map(this));
         case Pat.Tuple tuple -> new TupTerm(tuple.elements().map(this));
         case Pat.Meta meta -> new MetaPatTerm(meta);
         case Pat.ShapedInt si -> si.toTerm();
@@ -66,9 +66,13 @@ public interface PatToTerm {
         }
         case Pat.Con con when con.ref().hasEq() ->
           list(con.args().view().dropLast(1), BOUNDARIES)
-            .map(args -> new ConCall(con.conHead(), args));
+            .map(args -> {
+              return new ConCall(con.head(), args);
+            });
         case Pat.Con con -> list(con.args().view())
-          .map(args -> new ConCall(con.conHead(), args));
+          .map(args -> {
+            return new ConCall(con.head(), args);
+          });
         case Pat.Tuple tuple -> list(tuple.elements().view())
           .map(args -> new TupTerm(args));
       };

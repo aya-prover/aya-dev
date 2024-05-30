@@ -9,13 +9,14 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
-import org.aya.normalize.PatMatcher;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
+import org.aya.generic.State;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.ClausesProblem;
@@ -120,14 +121,15 @@ public record PatClassifier(
         // For all constructors,
         for (var con : body) {
           var fuel1 = fuel;
-          var conTele = conTele(clauses, dataCall, con);
-          if (conTele == null) continue;
+          var conTeleResult = conTele(clauses, dataCall, con);
+          if (conTeleResult == null) continue;
+          var conTele = conTeleResult.tele;
           // Find all patterns that are either catchall or splitting on this constructor,
           // e.g. for `suc`, `suc (suc a)` will be picked
           var matches = clauses.mapIndexedNotNull((ix, subPat) ->
             // Convert to constructor form
             matches(conTele, con, ix, subPat));
-          var conHead = dataCall.conHead(con);
+          var conHead = new ConCallLike.Head(con, dataCall.ulift(), conTeleResult.ownerArgs);
           // The only matching cases are catch-all cases, and we skip these
           if (matches.isEmpty()) {
             missedCon++;
@@ -173,14 +175,18 @@ public record PatClassifier(
       new ClausesProblem.FMDomination(i, pos)), classes);
   }
 
-  private @Nullable ImmutableSeq<Param>
+  private record ConTele(
+    @NotNull ImmutableSeq<Param> tele,
+    @NotNull ImmutableSeq<Term> ownerArgs
+  ) { }
+  private @Nullable ConTele
   conTele(@NotNull ImmutableSeq<? extends Indexed<?>> clauses, DataCall dataCall, ConDefLike con) {
     // Check if this constructor is available by doing the obvious thing
     return switch (PatternTycker.checkAvail(dataCall, con, state())) {
       // If not, check the reason why: it may fail negatively or positively
       case Result.Err(var e) -> {
         // Index unification fails negatively
-        if (e == PatMatcher.State.Stuck) {
+        if (e == State.Stuck) {
           // If clauses is empty, we continue splitting to see
           // if we can ensure that the other cases are impossible, it would be fine.
           if (clauses.isNotEmpty() &&
@@ -190,11 +196,11 @@ public record PatClassifier(
             fail(new ClausesProblem.UnsureCase(pos, con, dataCall));
             yield null;
           }
-          yield con.selfTele(ImmutableSeq.empty());
+          yield new ConTele(con.selfTele(ImmutableSeq.empty()), dataCall.args());
         } else yield null;
         // ^ If fails positively, this would be an impossible case
       }
-      case Result.Ok(var ok) -> con.selfTele(ok);
+      case Result.Ok(var ok) -> new ConTele(con.selfTele(ok), ok);
     };
   }
 }
