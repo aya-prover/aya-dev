@@ -343,7 +343,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     assert rist.sizeEquals(types.telescopeSize);
     var argsCum = new Term[types.telescopeSize];
 
-    for (var i = 0; i < list.size(); ++i) {
+    for (var i = 0; i < types.telescopeSize; ++i) {
       var l = list.get(i);
       var r = rist.get(i);
       var ty = whnf(types.telescope(i, argsCum)).elevate(ulift);
