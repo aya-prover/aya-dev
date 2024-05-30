@@ -13,12 +13,15 @@ import org.aya.prettier.CorePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -44,13 +47,18 @@ public sealed interface Pat extends AyaDocile {
    * The order of bindings should be postorder, that is, {@code (Con0 a (Con1 b)) as c} should be {@code [a , b , c]}
    */
   void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer);
+  @NotNull Pat bind(MutableList<LocalVar> vars);
 
-  record CollectBind(LocalVar var, Term type) { }
-
-  static @NotNull MutableList<CollectBind> collectBindings(@NotNull SeqView<Pat> pats) {
-    var buffer = MutableList.<CollectBind>create();
+  static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
+  collectVariables(@NotNull SeqView<Pat> pats) {
+    var buffer = MutableList.<LocalVar>create();
+    var newPats = pats.map(p -> p.bind(buffer)).toImmutableSeq();
+    return new Pair<>(buffer, newPats);
+  }
+  static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
+    var buffer = MutableList.<Param>create();
     pats.forEach(p -> p.consumeBindings((var, type) ->
-      buffer.append(new CollectBind(var, type))));
+      buffer.append(new Param(var.name(), type, false))));
     return buffer;
   }
 
@@ -67,6 +75,7 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
   }
 
@@ -86,6 +95,11 @@ public sealed interface Pat extends AyaDocile {
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       consumer.accept(bind, type);
     }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
+      var newType = type.bindTele(vars.view());
+      vars.append(bind);
+      return update(newType);
+    }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
   }
@@ -95,13 +109,15 @@ public sealed interface Pat extends AyaDocile {
       return this.elements.sameElements(elements, true) ? this : new Tuple(elements);
     }
 
-    @Override
-    public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
+    @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
       return update(elements.map(patOp));
     }
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       elements.forEach(e -> e.consumeBindings(consumer));
+    }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
+      return update(elements.map(e -> e.bind(vars)));
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
@@ -125,9 +141,16 @@ public sealed interface Pat extends AyaDocile {
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));
     }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
+      var newData = (DataCall) data.bindTele(vars.view());
+      return update(args.map(e -> e.bind(vars)), newData);
+    }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
       return update(args.map(x -> x.inline(bind)), data);
+    }
+    public @NotNull ConCallLike.Head conHead() {
+      return new ConCallLike.Head(ref, 0, data.args());
     }
   }
 
@@ -157,8 +180,12 @@ public sealed interface Pat extends AyaDocile {
     }
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
-      // We should call storeBindings after inline
+      // Called after inline
       Panic.unreachable();
+    }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
+      // Called after inline
+      return Panic.unreachable();
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
@@ -195,6 +222,9 @@ public sealed interface Pat extends AyaDocile {
       return this;
     }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
+    @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
+      return update((DataCall) type.bindTele(vars.view()));
+    }
     @Override public @NotNull Con makeZero() {
       return new Pat.Con(zero, ImmutableSeq.empty(), type);
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
@@ -44,7 +44,7 @@ public final class JlineRepl extends AyaRepl {
   public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
     super(modulePaths, config);
     terminal = TerminalBuilder.builder()
-      .jansi(true)
+      .jni(true)
       .jna(false)
       .build();
     lineReader = LineReaderBuilder.builder()

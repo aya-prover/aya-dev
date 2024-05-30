@@ -16,7 +16,7 @@ import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.literate.CodeOptions;
+import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
@@ -132,11 +132,12 @@ public final class Normalizer implements UnaryOperator<Term> {
    * Do NOT use this in the type checker.
    * This is for REPL/literate mode and testing.
    */
-  public @NotNull Term normalize(Term term, CodeOptions.NormalizeMode mode) {
+  public @NotNull Term normalize(Term term, NormalizeMode mode) {
     return switch (mode) {
       case HEAD -> apply(term);
       case FULL -> new Full().apply(term);
       case NULL -> new Finalizer.Freeze(() -> state).zonk(term);
+      case null -> new Finalizer.Freeze(() -> state).zonk(term);
     };
   }
 }

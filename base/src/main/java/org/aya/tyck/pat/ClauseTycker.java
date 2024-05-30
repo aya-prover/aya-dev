@@ -45,6 +45,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   public record LhsResult(
     @NotNull LocalCtx localCtx,
     @NotNull Term type,
+    @NotNull ImmutableSeq<LocalVar> allBinds,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     @NotNull Pat.Preclause<Expr> clause,
@@ -157,10 +158,11 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       // * telescope are well-typed and no Meta
       // * PatternTycker doesn't introduce any Meta term
       ctx = ctx.map(TermInline::apply);
+      var patWithTypeBound = Pat.collectVariables(patResult.wellTyped().view());
 
-      var newClause = new Pat.Preclause<>(clause.sourcePos, patResult.wellTyped(), patResult.newBody());
-      return new LhsResult(ctx, resultTerm, patResult.paramSubst(),
-        patResult.asSubst(), newClause, patResult.hasError());
+      var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(), patResult.newBody());
+      return new LhsResult(ctx, resultTerm, patWithTypeBound.component1().toImmutableSeq(),
+        patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     });
   }
 
@@ -192,7 +194,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
 
         // bind all pat bindings
-        var patBindTele = Pat.collectBindings(result.clause.pats().view()).view().map(Pat.CollectBind::var);
+        var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1().view();
         wellBody = wellBody.bindTele(patBindTele);
       }
 

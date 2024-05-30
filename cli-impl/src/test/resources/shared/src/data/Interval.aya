@@ -14,3 +14,6 @@ private def lemma
 | left ⇒ f a
 | right ⇒ g a
 | line j ⇒ p a j
+
+example def funExt' (f g : A -> B) (p : ∀ a -> f a = g a) : f = g =>
+  pmap (lemma f g p) (fn i => line i)

@@ -154,7 +154,77 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
        and
          suc (suc a)
 
-6 error(s), 0 warning(s).
+In file $FILE:3:2 ->
+
+  1 │   open import arith::Nat
+  2 │   overlap def test Nat : Nat
+  3 │   | 0 => 0
+    │     ╰────╯
+
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
+         unreachable
+
+In file $FILE:5:2 ->
+
+  3 │   | 0 => 0
+  4 │   | a => a
+  5 │   | suc a => suc a
+    │     ╰────────────╯
+
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:9:2 ->
+
+  7 │   | 2147483647 => 3
+  8 │   | 2147483647 => 4
+  9 │   | 114514 => 1919
+    │     ╰────────────╯
+
+Warning: The 2nd clause dominates the 7th clause. The 7th clause will be 
+         unreachable
+
+In file $FILE:6:2 ->
+
+  4 │   | a => a
+  5 │   | suc a => suc a
+  6 │   | suc (suc a) => a
+    │     ╰──────────────╯
+
+Warning: The 3rd clause dominates the 4th clause. The 4th clause will be 
+         unreachable
+
+In file $FILE:8:2 ->
+
+  6 │   | suc (suc a) => a
+  7 │   | 2147483647 => 3
+  8 │   | 2147483647 => 4
+    │     ╰─────────────╯
+
+Warning: The 5th clause dominates the 6th clause. The 6th clause will be 
+         unreachable
+
+In file $FILE:7:2 ->
+
+  5 │   | suc a => suc a
+  6 │   | suc (suc a) => a
+  7 │   | 2147483647 => 3
+    │     ╰─────────────╯
+
+Warning: The 6th clause dominates the 5th clause. The 5th clause will be 
+         unreachable
+
+In file $FILE:8:2 ->
+
+  6 │   | suc (suc a) => a
+  7 │   | 2147483647 => 3
+  8 │   | 2147483647 => 4
+    │     ╰─────────────╯
+
+Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
+         unreachable
+
+6 error(s), 7 warning(s).
 What are you doing?
 
 ConflLiteral2:
@@ -174,6 +244,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
        and
          1
 
+In file $FILE:4:2 ->
+
+  2 │   overlap def largeInt1 Nat Nat : Nat
+  3 │   | a, b => a
+  4 │   | 114514, 1919810 => 1
+    │     ╰──────────────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
 In file $FILE:6:12 ->
 
   4 │       | 114514, 1919810 => 1
@@ -189,6 +269,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1919810
        and
          1
+
+In file $FILE:8:2 ->
+
+  6 │   overlap def largeInt2 Nat Nat : Nat
+  7 │   | a, b => b
+  8 │   | a, 1919810 => 1
+    │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:10:12 ->
 
@@ -239,6 +329,26 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
        and
          suc b
 
+In file $FILE:13:2 ->
+
+  11 │   | a, b => b
+  12 │   | a, suc b => b
+  13 │   | a, 1919810 => 1
+     │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:12:2 ->
+
+  10 │   overlap def largeInt3 Nat Nat : Nat
+  11 │   | a, b => b
+  12 │   | a, suc b => b
+     │     ╰───────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
 In file $FILE:15:12 ->
 
   13 │       | a, 1919810 => 1
@@ -255,6 +365,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
        and
          1
 
+In file $FILE:17:2 ->
+
+  15 │   overlap def largeInt1-inv Nat Nat : Nat
+  16 │   | a, b => a
+  17 │   | 114514, 1919810 => 1
+     │     ╰──────────────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
 In file $FILE:19:12 ->
 
   17 │       | 114514, 1919810 => 1
@@ -270,6 +390,16 @@ Error: The 1st and the 2nd clauses are not confluent because we failed to unify
          1919810
        and
          1
+
+In file $FILE:21:2 ->
+
+  19 │   overlap def largeInt2-inv Nat Nat : Nat
+  20 │   | b, a => b
+  21 │   | 1919810, a => 1
+     │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:23:12 ->
 
@@ -319,6 +449,26 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          b
        and
          suc b
+
+In file $FILE:26:2 ->
+
+  24 │   | b, a => b
+  25 │   | suc b, a => b
+  26 │   | 1919810, a => 1
+     │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:25:2 ->
+
+  23 │   overlap def largeInt3-inv Nat Nat : Nat
+  24 │   | b, a => b
+  25 │   | suc b, a => b
+     │     ╰───────────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
 
 In file $FILE:28:12 ->
 
@@ -338,7 +488,47 @@ Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
        and
          515
 
-11 error(s), 0 warning(s).
+In file $FILE:29:2 ->
+
+  27 │   
+  28 │   overlap def multi-nodes Nat Nat : Nat
+  29 │   | 114, 0 => 0
+     │     ╰─────────╯
+
+Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
+         unreachable
+
+In file $FILE:31:2 ->
+
+  29 │   | 114, 0 => 0
+  30 │   | 114, suc b => suc b
+  31 │   | 114, 514 => 515
+     │     ╰─────────────╯
+
+Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:30:2 ->
+
+  28 │   overlap def multi-nodes Nat Nat : Nat
+  29 │   | 114, 0 => 0
+  30 │   | 114, suc b => suc b
+     │     ╰─────────────────╯
+
+Warning: The 5th clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
+In file $FILE:32:2 ->
+
+  30 │   | 114, suc b => suc b
+  31 │   | 114, 514 => 515
+  32 │   | 115, 514 => 514
+     │     ╰─────────────╯
+
+Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
+         unreachable
+
+11 error(s), 12 warning(s).
 What are you doing?
 
 FirstMatchDomination:
@@ -388,7 +578,47 @@ Error: The 5th and the 3rd clauses are not confluent because we failed to unify
        and
          1
 
-2 error(s), 0 warning(s).
+In file $FILE:4:2 ->
+
+  2 │   overlap def not-conf Nat : Nat
+  3 │   | zero => 1
+  4 │   | 0 => 0
+    │     ╰────╯
+
+Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
+In file $FILE:3:2 ->
+
+  1 │   open import arith::Nat
+  2 │   overlap def not-conf Nat : Nat
+  3 │   | zero => 1
+    │     ╰───────╯
+
+Warning: The 2nd clause dominates the 1st clause. The 1st clause will be 
+         unreachable
+
+In file $FILE:5:2 ->
+
+  3 │   | zero => 1
+  4 │   | 0 => 0
+  5 │   | 1 => 1
+    │     ╰────╯
+
+Warning: The 5th clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:6:2 ->
+
+  4 │   | 0 => 0
+  5 │   | 1 => 1
+  6 │   | suc 1 => 1
+    │     ╰────────╯
+
+Warning: The 5th clause dominates the 4th clause. The 4th clause will be 
+         unreachable
+
+2 error(s), 4 warning(s).
 What are you doing?
 
 NestedMissing:

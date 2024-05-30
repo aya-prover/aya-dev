@@ -198,9 +198,9 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     appendLine(STR."\{VARIABLE_RESULT}.set(\{bindCount++}, \{term});");
   }
 
-  private int bindAmount(@NotNull Pat pat) {
+  private int bindAmount(@NotNull ImmutableSeq<Pat> pats) {
     var acc = MutableIntValue.create();
-    pat.consumeBindings((_, _) -> acc.increment());
+    pats.forEach(pat -> pat.consumeBindings((_, _) -> acc.increment()));
     return acc.get();
   }
 
@@ -208,8 +208,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   @Override
   public AyaSerializer<ImmutableSeq<Matching>> serialize(@NotNull ImmutableSeq<Matching> unit) {
-    var bindSize = unit.mapToInt(ImmutableIntSeq.factory(),
-      x -> x.patterns.view().foldLeft(0, (acc, p) -> acc + bindAmount(p)));
+    var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), x -> bindAmount(x.patterns));
     int maxBindSize = bindSize.max();
 
     buildLocalVar(STR."\{CLASS_MUTSEQ}<\{CLASS_TERM}>", VARIABLE_RESULT, STR."\{CLASS_MUTSEQ}.fill(\{maxBindSize}, (\{CLASS_TERM}) null)");
