@@ -150,7 +150,7 @@ public class PatternTyckTest {
 
       def checkMe {n : Nat} (m : Nat) {v : Vec Nat n} (MatchMe n v) : Nat
       | O, matched => O
-      | S m, /* vcons _ _ ,*/ matched => O
+      | S m, /* {vcons _ _} ,*/ matched => O
       """;
 
     var result = tyck(code).defs();
