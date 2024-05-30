@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
@@ -255,7 +256,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()));
 
         // do type check
-        var results = elements.map(element -> inherit(element, elementTy).wellTyped());
+        var results = ImmutableTreeSeq.from(elements.map(element -> inherit(element, elementTy).wellTyped()));
         var type = new DataCall(def, 0, ImmutableSeq.of(elementTy));
         yield new Jdg.Default(new ListTerm(results, match.recog(), type), type);
       }
