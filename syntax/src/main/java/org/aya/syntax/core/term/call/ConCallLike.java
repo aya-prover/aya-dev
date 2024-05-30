@@ -32,6 +32,10 @@ public sealed interface ConCallLike extends Callable.Tele permits ConCall, RuleR
       if (args.sameElements(ownerArgs, true)) return this;
       return new Head(ref, ulift, args);
     }
+
+    public @NotNull DataCall underlyingDataCall() {
+      return new DataCall(ref.dataRef(), ulift, ownerArgs);
+    }
   }
 
   @NotNull ConCallLike.Head head();

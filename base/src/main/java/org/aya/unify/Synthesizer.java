@@ -10,6 +10,7 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
+import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -113,6 +114,7 @@ public record Synthesizer(
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();
+      case ConCall conCall -> conCall.head().underlyingDataCall();
       case Callable.Tele teleCall -> TyckDef.defSignature(teleCall.ref())
         .result(teleCall.args())
         .elevate(teleCall.ulift());

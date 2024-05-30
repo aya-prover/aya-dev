@@ -9,8 +9,6 @@ import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.compile.JitTele;
-import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -89,34 +87,35 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    */
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
     return switch (new Pair<>(lhs, rhs)) {
-      case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn, lFn.ref());
-      case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn, lFn.ref());
+      case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
+      case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
-      case Pair(ConCallLike lCon, ConCallLike rCon) -> lossyUnifyCon(lCon, rCon, lCon.ref());
+      case Pair(ConCallLike lCon, ConCallLike rCon) -> lossyUnifyCon(lCon, rCon);
       default -> null;
     };
   }
-  private @Nullable Term lossyUnifyCon(ConCallLike lCon, ConCallLike rCon, @NotNull ConDefLike ref) {
+  private @Nullable Term lossyUnifyCon(ConCallLike lCon, ConCallLike rCon) {
     if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
     // since dataArgs live in a separate telescope
-    if (null == compareMany(lCon.head().ownerArgs(),
-      rCon.head().ownerArgs(), lCon.ulift(), TyckDef.defSignature(ref.dataRef())))
+    var lHead = lCon.head();
+    if (null == compareMany(lHead.ownerArgs(),
+      rCon.head().ownerArgs(), lHead.ulift(), TyckDef.defSignature(lHead.ref().dataRef())))
       return null;
-    if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lCon.ulift(),
-      new JitTele.LocallyNameless(ref.selfTele(lCon.args()), SortTerm.Type0)))
+    if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
+      new JitTele.LocallyNameless(lHead.ref().selfTele(lCon.args()), SortTerm.Type0)))
       return null;
-    return new Synthesizer(this).synth(lCon);
+    return lHead.underlyingDataCall();
   }
 
   /**
    * Compare the arguments of two callable ONLY, this method will NOT try to normalize and then compare (while the old project does).
    */
   private @Nullable Term compareCallApprox(
-    @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs, @NotNull AnyDef typeProvider
+    @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs
   ) {
     if (!lhs.ref().equals(rhs.ref()) || lhs.ulift() != rhs.ulift()) return null;
-    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), TyckDef.defSignature(typeProvider));
+    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), TyckDef.defSignature(lhs.ref()));
   }
 
   private <R> R swapped(@NotNull Supplier<R> callback) {
@@ -301,7 +300,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // fallback case
       case ConCallLike lCon -> switch (rhs) {
         case ListTerm rList -> compareUntyped(lhs, rList.constructorForm());
-        case ConCallLike rCon -> lossyUnifyCon(lCon, rCon, lCon.ref());
+        case ConCallLike rCon -> lossyUnifyCon(lCon, rCon);
         default -> null;
       };
       case MetaLitTerm mlt -> switch (rhs) {
