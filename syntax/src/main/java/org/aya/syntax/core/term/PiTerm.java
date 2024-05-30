@@ -48,6 +48,20 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
 
     return new Unpi(params.toImmutableSeq(), names.toImmutableSeq(), term);
   }
+  public record UnpiRaw(
+    @NotNull ImmutableSeq<Param> params,
+    @NotNull Term body
+  ) { }
+  public static @NotNull UnpiRaw unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+    var params = MutableList.<Param>create();
+    var i = 0;
+    while (pre.apply(term) instanceof PiTerm(var param, var body)) {
+      params.append(new Param(Integer.toString(i++), param, true));
+      term = body.toDBI().body();
+    }
+
+    return new UnpiRaw(params.toImmutableSeq(), term);
+  }
 
   public static @NotNull SortTerm lub(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
     var alift = domain.lift();

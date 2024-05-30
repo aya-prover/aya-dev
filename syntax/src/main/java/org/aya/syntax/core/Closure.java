@@ -17,7 +17,7 @@ import java.util.function.UnaryOperator;
  * so we can handle them in a scope-safe manner.
  * Note that you shouldn't supply a {@link LocalTerm} to "DeBruijn Index"-lize a {@link Closure},
  * since it may contain another {@link Closure}, the safe way is to supply a {@link FreeTerm} then bind it,
- * see {@link Jit#toLam()}
+ * see {@link Jit#toDBI()}
  */
 public sealed interface Closure extends UnaryOperator<Term> {
   static @NotNull Closure mkConst(@NotNull Term term) { return new Jit(_ -> term); }
@@ -30,14 +30,15 @@ public sealed interface Closure extends UnaryOperator<Term> {
    */
   @Override Term apply(Term term);
   default @NotNull Term apply(LocalVar var) { return apply(new FreeTerm(var)); }
+  @NotNull Idx toDBI();
 
   // NbE !!!!!!
   record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {
-    public @NotNull Idx toLam() {
+    @Override public @NotNull Idx toDBI() {
       var antiMatter = new LocalVar("matter");
       return lam.apply(new FreeTerm(antiMatter)).bind(antiMatter);
     }
-    @Override public Closure descent(IndexedFunction<Term, Term> f) { return toLam().descent(f); }
+    @Override public Closure descent(IndexedFunction<Term, Term> f) { return toDBI().descent(f); }
     @Override public Term apply(Term term) { return lam.apply(term); }
   }
 
@@ -49,5 +50,6 @@ public sealed interface Closure extends UnaryOperator<Term> {
     }
 
     @Override public Term apply(Term term) { return body.instantiate(term); }
+    @Override public @NotNull Idx toDBI() { return this; }
   }
 }
