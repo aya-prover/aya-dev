@@ -130,10 +130,11 @@ public record StmtTycker(
         var result = fn.result;
         if (result == null) result = new WithPos<>(fn.sourcePos(), new Expr.Hole(false, null));
         var fnRef = fn.ref;
-        fnRef.signature = teleTycker.checkSignature(fn.telescope, result).pusheen(tycker::whnf);
+        fnRef.signature = teleTycker.checkSignature(fn.telescope, result);
 
         // For ExprBody, they will be zonked later
         if (fn.body instanceof FnBody.BlockBody(var cls, _)) {
+          fnRef.signature = fnRef.signature.pusheen(tycker::whnf);
           tycker.solveMetas();
           fnRef.signature = fnRef.signature.descent(tycker::zonk);
           if (fnRef.signature.param().isEmpty() && cls.isEmpty())
@@ -191,7 +192,11 @@ public record StmtTycker(
     var conTy = conDecl.result;
     EqTerm boundaries = null;
     if (conTy != null) {
-      var tyResult = tycker.whnf(tycker.ty(conTy));
+      var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
+      selfTele = selfTele.appendedAll(pusheenResult.params().zip(pusheenResult.names(),
+        (param, name) -> new WithPos<>(conTy.sourcePos(), new Param(name.name(), param, true))));
+      selfTeleVars = selfTeleVars.appendedAll(pusheenResult.names());
+      var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
         var fresh = new FreeTerm("i");
