@@ -436,8 +436,8 @@ public class PatternTycker implements Problematic, Stateful {
     // If name != null, only one iteration of this loop is not skipped
     for (var con : core.body()) {
       switch (checkAvail(dataCall, con, exprTycker.state)) {
-        case Result.Ok(_) -> {
-          return dataCall.conHead(con);
+        case Result.Ok(var subst) -> {
+          return new ConCallLike.Head(con, dataCall.ulift(), subst);
         }
         // Is blocked
         case Result.Err(var st) when st == State.Stuck -> {
@@ -463,7 +463,8 @@ public class PatternTycker implements Problematic, Stateful {
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
       case Result.Ok(var subst) -> {
         var selfTeleSize = name.selfTele(subst).size(); // FIXME: I need size ONLY
-        yield new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()), subst, dataCall.conHead(name));
+        yield new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()),
+          subst, new ConCallLike.Head(name, dataCall.ulift(), subst));
       }
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body
