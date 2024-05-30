@@ -13,7 +13,6 @@ import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
-import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.DataCall;
@@ -251,7 +250,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var def = (DataDefLike) match.def();
 
         // List (A : Type)
-        var sort = TyckDef.defSignature(def).telescopeRich(0);
+        var sort = def.signature().telescopeRich(0);
         // the sort of type below.
         var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()));
 

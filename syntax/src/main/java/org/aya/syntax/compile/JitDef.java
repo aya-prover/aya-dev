@@ -57,4 +57,5 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
     if (assoc == null) return null;
     return new OpInfo(name(), assoc);
   }
+  @Override public @NotNull JitTele signature() { return this; }
 }

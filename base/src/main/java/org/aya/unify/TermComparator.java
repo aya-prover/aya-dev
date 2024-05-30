@@ -9,7 +9,7 @@ import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.compile.JitTele;
-import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -99,13 +99,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
     // since dataArgs live in a separate telescope
     var lHead = lCon.head();
+    @NotNull AnyDef def = lHead.ref().dataRef();
     if (null == compareMany(lHead.ownerArgs(),
-      rCon.head().ownerArgs(), lHead.ulift(), TyckDef.defSignature(lHead.ref().dataRef())))
+      rCon.head().ownerArgs(), lHead.ulift(), def.signature()))
       return null;
     if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
       new JitTele.LocallyNameless(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
       return null;
-    return lHead.underlyingDataCall();
+    return new Synthesizer(nameGen, this).synth(lCon);
   }
 
   /**
@@ -115,7 +116,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs
   ) {
     if (!lhs.ref().equals(rhs.ref()) || lhs.ulift() != rhs.ulift()) return null;
-    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), TyckDef.defSignature(lhs.ref()));
+    @NotNull AnyDef def = lhs.ref();
+    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), def.signature());
   }
 
   private <R> R swapped(@NotNull Supplier<R> callback) {
@@ -458,7 +460,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> {
         if (!lhs.ref().equals(rhs.ref())) yield false;
-        yield compareMany(lhs.args(), rhs.args(), lhs.ulift(), TyckDef.defSignature(lhs.ref())) != null;
+        yield compareMany(lhs.args(), rhs.args(), lhs.ulift(), lhs.ref().signature()) != null;
       }
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
