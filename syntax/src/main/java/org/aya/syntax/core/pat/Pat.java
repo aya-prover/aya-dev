@@ -140,29 +140,26 @@ public sealed interface Pat extends AyaDocile {
   record Con(
     @NotNull ConDefLike ref,
     @Override @NotNull ImmutableSeq<Pat> args,
-    @NotNull DataCall data
+    @NotNull ConCallLike.Head head
   ) implements Pat {
-    public @NotNull Con update(@NotNull ImmutableSeq<Pat> args, @NotNull DataCall data) {
-      return this.args.sameElements(args, true) && data == this.data
-        ? this : new Con(ref, args, data);
+    public @NotNull Con update(@NotNull ImmutableSeq<Pat> args, @NotNull ConCallLike.Head head) {
+      return this.args.sameElements(args, true) && head == this.head
+        ? this : new Con(ref, args, head);
     }
 
     @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(args.map(patOp), (DataCall) termOp.apply(data));
+      return update(args.map(patOp), head.descent((_, term) -> termOp.apply(term)));
     }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));
     }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
-      var newData = (DataCall) data.bindTele(vars.view());
-      return update(args.map(e -> e.bind(vars)), newData);
+      var newHead = (ConCallLike.Head) head.bindTele(vars.view());
+      return update(args.map(e -> e.bind(vars)), newHead);
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
-      return update(args.map(x -> x.inline(bind)), data);
-    }
-    public @NotNull ConCallLike.Head conHead() {
-      return new ConCallLike.Head(ref, 0, data.args());
+      return update(args.map(x -> x.inline(bind)), head);
     }
   }
 
@@ -238,11 +235,14 @@ public sealed interface Pat extends AyaDocile {
       return update((DataCall) type.bindTele(vars.view()));
     }
     @Override public @NotNull Con makeZero() {
-      return new Pat.Con(zero, ImmutableSeq.empty(), type);
+      return new Pat.Con(zero, ImmutableSeq.empty(), makeHead(zero));
     }
 
     @Override public @NotNull Con makeSuc(@NotNull Pat pat) {
-      return new Pat.Con(suc, ImmutableSeq.of(pat), type);
+      return new Pat.Con(suc, ImmutableSeq.of(pat), makeHead(suc));
+    }
+    private ConCallLike.@NotNull Head makeHead(@NotNull ConDefLike conRef) {
+      return new ConCallLike.Head(conRef, 0, ImmutableSeq.empty());
     }
 
     @Override public @NotNull ShapedInt destruct(int repr) {

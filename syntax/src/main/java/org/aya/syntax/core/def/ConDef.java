@@ -54,6 +54,7 @@ public final class ConDef extends SubLevelDef {
       assert equality != null;
       return (is0 ? equality.a() : equality.b()).instantiateTele(args.view());
     }
+    @Override public int selfTeleSize() { return ref.core.selfTele.size(); }
     @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
       return Param.substTele(ref.core.selfTele.view(), ownerArgs.view()).toImmutableSeq();
     }

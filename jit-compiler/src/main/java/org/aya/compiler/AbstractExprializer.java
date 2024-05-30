@@ -37,7 +37,7 @@ public abstract class AbstractExprializer<T> implements AyaSerializer<T> {
     }
   }
 
-  protected @NotNull String makeImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<String> terms) {
+  protected static @NotNull String makeImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<String> terms) {
     return makeImmutableSeq(typeName, terms, CLASS_IMMSEQ);
   }
 

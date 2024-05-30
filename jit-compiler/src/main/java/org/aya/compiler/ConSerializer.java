@@ -29,7 +29,10 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   @Override protected void buildConstructor(ConDef unit) {
     var hasEq = unit.equality != null;
-    buildConstructor(unit, ImmutableSeq.of(getInstance(getClassReference(unit.dataRef)), Boolean.toString(hasEq)));
+    buildConstructor(unit, ImmutableSeq.of(
+      getInstance(getClassReference(unit.dataRef)),
+      Integer.toString(unit.selfTele.size()),
+      Boolean.toString(hasEq)));
   }
 
   private void buildIsAvailable(ConDef unit, @NotNull String argsTerm) {

@@ -39,7 +39,7 @@ public record PatUnify(
         case Pat.Con con1 -> {
           // Assumption
           assert con.ref().equals(con1.ref());
-          yield new ConCall(con.conHead(), visitList(con.args(), con1.args()));
+          yield new ConCall(con.head(), visitList(con.args(), con1.args()));
         }
         case Pat.ShapedInt lit -> unify(con, lit.constructorForm());
         default -> Panic.unreachable();

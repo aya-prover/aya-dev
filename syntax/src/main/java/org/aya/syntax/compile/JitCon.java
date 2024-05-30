@@ -5,7 +5,6 @@ package org.aya.syntax.compile;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
-import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
@@ -21,11 +20,16 @@ import org.jetbrains.annotations.NotNull;
 public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
   public final JitData dataType;
   private final boolean hasEq;
+  private final int selfTeleSize;
 
-  protected JitCon(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, JitData dataType, boolean hasEq) {
+  protected JitCon(
+    int telescopeSize, boolean[] telescopeLicit, String[] telescopeName,
+    JitData dataType, int selfTeleSize, boolean hasEq
+  ) {
     super(telescopeSize, telescopeLicit, telescopeName);
     this.dataType = dataType;
     this.hasEq = hasEq;
+    this.selfTeleSize = selfTeleSize;
   }
 
   /**
@@ -36,15 +40,10 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
    */
   public abstract @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull Seq<Term> args);
 
-  @Override
-  public boolean hasEq() {
-    return hasEq;
-  }
-
+  @Override public boolean hasEq() { return hasEq; }
   @Override public abstract @NotNull Term equality(Seq<Term> args, boolean is0);
-
   @Override public @NotNull DataDefLike dataRef() { return dataType; }
-
+  @Override public int selfTeleSize() { return selfTeleSize; }
   @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
     var ownerArgsSize = ownerArgs.size();
     var selfArgsSize = telescopeSize - ownerArgsSize;

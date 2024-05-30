@@ -145,13 +145,13 @@ public class PatternTycker implements Problematic, Stateful {
 
         // It is possible that `con.params()` is empty.
         var patterns = tyckInner(
-          conCore.selfTele(realCon.args).view(),
+          conCore.selfTele(realCon.ownerArgs).view(),
           con.params().view(),
           pattern);
 
         // check if this Con is a ShapedCon
         var typeRecog = state().shapeFactory().find(conCore.dataRef()).getOrNull();
-        yield new Pat.Con(realCon.conHead.ref(), patterns, realCon.data());
+        yield new Pat.Con(conCore, patterns, realCon.conHead);
       }
       case Pattern.Bind(var bind, var tyRef) -> {
         exprTycker.localCtx().put(bind, type);
@@ -423,7 +423,11 @@ public class PatternTycker implements Problematic, Stateful {
     );
   }
 
-  private record Selection(DataCall data, ImmutableSeq<Term> args, ConCallLike.Head conHead) { }
+  private record Selection(
+    @NotNull DataCall data,
+    @NotNull ImmutableSeq<Term> ownerArgs,
+    @NotNull ConCallLike.Head conHead
+  ) { }
 
   private @Nullable ConCallLike.Head makeSureEmpty(Term type, @NotNull WithPos<Pattern> pattern) {
     if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
@@ -461,11 +465,9 @@ public class PatternTycker implements Problematic, Stateful {
     }
 
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
-      case Result.Ok(var subst) -> {
-        var selfTeleSize = name.selfTele(subst).size(); // FIXME: I need size ONLY
-        yield new Selection((DataCall) dataCall.replaceTeleFrom(selfTeleSize, subst.view()),
-          subst, new ConCallLike.Head(name, dataCall.ulift(), subst));
-      }
+      case Result.Ok(var subst) -> new Selection(
+        (DataCall) dataCall.replaceTeleFrom(name.selfTeleSize(), subst.view()),
+        subst, new ConCallLike.Head(name, dataCall.ulift(), subst));
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body
         foundError(new PatternProblem.UnavailableCon(pattern, dataCall));

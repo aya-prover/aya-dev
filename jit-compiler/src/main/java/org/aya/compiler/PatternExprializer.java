@@ -3,8 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSeq;
 import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.ErrorTerm;
@@ -50,7 +48,7 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
       case Pat.Con con -> makeNew(CLASS_PAT_CON,
         getInstance(NameSerializer.getClassReference(con.ref())),
         serializeToImmutableSeq(CLASS_PAT, con.args()),
-        serializeTerm(con.data()));
+        serializeConHead(con.head()));
       case Pat.ShapedInt shapedInt -> makeNew(CLASS_PAT_INT,
         Integer.toString(shapedInt.repr()),
         getInstance(NameSerializer.getClassReference(shapedInt.zero())),
