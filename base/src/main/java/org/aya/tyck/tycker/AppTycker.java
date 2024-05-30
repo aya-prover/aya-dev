@@ -4,6 +4,7 @@ package org.aya.tyck.tycker;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
+import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitTele;
@@ -33,17 +34,12 @@ public interface AppTycker {
     JitTele def, @NotNull Factory<Ex> makeArgs
   ) throws Ex {
     return switch (def) {
-      case JitFn fn -> makeArgs.applyChecked(fn, args -> {
+      case JitFn fn -> {
         int shape = fn.metadata().shape();
-        if (shape != -1) {
-          var operator = AyaShape.ofFn(fn, AyaShape.values()[shape]);
-          if (operator != null) return new Jdg.Default(
-            new RuleReducer.Fn(operator, 0, ImmutableArray.from(args)), fn.result(args));
-        }
-        return new Jdg.Default(new FnCall(fn, 0, ImmutableArray.from(args)), fn.result(args));
-      });
-      case JitData data -> makeArgs.applyChecked(data, args ->
-        new Jdg.Default(new DataCall(data, 0, ImmutableArray.from(args)), data.result(args)));
+        var operator = shape != -1 ? AyaShape.ofFn(fn, AyaShape.values()[shape]) : null;
+        yield checkFnCall(makeArgs, fn, operator);
+      }
+      case JitData data -> checkDataCall(makeArgs, data);
       default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }
@@ -55,29 +51,12 @@ public interface AppTycker {
   ) throws Ex {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
-        var fnVar = (DefVar<FnDef, FnDecl>) defVar;
-        var signature = TyckDef.defSignature(fnVar);
-        yield makeArgs.applyChecked(signature, args -> {
-          var shape = state.shapeFactory().find(new FnDef.Delegate(fnVar));
-          var argsSeq = ImmutableArray.from(args);
-          var result = signature.result(args);
-          if (shape.isDefined()) {
-            var operator = AyaShape.ofFn(new FnDef.Delegate(fnVar), shape.get().shape());
-            if (operator != null) {
-              return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
-            }
-          }
-          return new Jdg.Default(new FnCall(fnVar, 0, argsSeq), result);
-        });
+        var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
+        var op = state.shapeFactory().find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
+        yield checkFnCall(makeArgs, fnDef, op);
       }
-      case DataDecl _ -> {
-        var dataVar = (DefVar<DataDef, DataDecl>) defVar;
-        var signature = TyckDef.defSignature(dataVar);
-        yield makeArgs.applyChecked(signature, args -> new Jdg.Default(
-          new DataCall(dataVar, 0, ImmutableArray.from(args)),
-          signature.result(args)
-        ));
-      }
+      // Extracted to prevent pervasive influence of suppression of unchecked warning.
+      case DataDecl _ -> checkDataCall(makeArgs, new DataDef.Delegate((DefVar<DataDef, DataDecl>) defVar));
       case PrimDecl _ -> {
         var primVar = (DefVar<PrimDef, PrimDecl>) defVar;
         var signature = TyckDef.defSignature(primVar);
@@ -112,5 +91,25 @@ public interface AppTycker {
       }
       default -> Panic.unreachable();
     };
+  }
+  private static <Ex extends Exception> Jdg
+  checkDataCall(@NotNull Factory<Ex> makeArgs, DataDefLike data) throws Ex {
+    var signature = data.signature();
+    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+      new DataCall(data, 0, ImmutableArray.from(args)),
+      signature.result(args)
+    ));
+  }
+  private static <Ex extends Exception> Jdg
+  checkFnCall(@NotNull Factory<Ex> makeArgs, FnDefLike fnDef, Shaped.Applicable<FnDefLike> operator) throws Ex {
+    var signature = fnDef.signature();
+    return makeArgs.applyChecked(signature, args -> {
+      var argsSeq = ImmutableArray.from(args);
+      var result = signature.result(args);
+      if (operator != null) {
+        return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
+      }
+      return new Jdg.Default(new FnCall(fnDef, 0, argsSeq), result);
+    });
   }
 }
