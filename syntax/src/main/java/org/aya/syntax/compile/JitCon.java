@@ -5,6 +5,7 @@ package org.aya.syntax.compile;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
+import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
@@ -44,10 +45,9 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
   @Override public @NotNull DataDefLike dataRef() { return dataType; }
 
   @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
-    var ownerArgsSize = ownerArgs.size();
+    var args = MutableList.from(isAvailable(ownerArgs).get());
+    var ownerArgsSize = args.size();
     var selfArgsSize = telescopeSize - ownerArgsSize;
-    var args = MutableArrayList.<Term>create(telescopeSize);
-    args.appendAll(ownerArgs);
     var tele = MutableArrayList.<Param>create(selfArgsSize);
 
     for (var i = 0; i < selfArgsSize; ++i) {
