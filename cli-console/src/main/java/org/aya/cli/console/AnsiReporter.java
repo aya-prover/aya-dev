@@ -18,8 +18,6 @@ import java.util.function.Supplier;
  * @author ice1000
  */
 public record AnsiReporter(
-  // TODO: jansi is deprecated, we use jline3-jni now,
-  //  how can we find a replacement?
   boolean supportAnsi,
   @NotNull BooleanSupplier unicode,
   @NotNull Supplier<PrettierOptions> options,
