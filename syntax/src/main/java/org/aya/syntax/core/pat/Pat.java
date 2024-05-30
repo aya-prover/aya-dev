@@ -47,6 +47,13 @@ public sealed interface Pat extends AyaDocile {
    * The order of bindings should be postorder, that is, {@code (Con0 a (Con1 b)) as c} should be {@code [a , b , c]}
    */
   void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer);
+
+  /**
+   * Bind the types in {@link Pat}s
+   *
+   * @see Pat.Bind
+   * @see Pat.Con
+   */
   @NotNull Pat bind(MutableList<LocalVar> vars);
 
   static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
@@ -55,6 +62,7 @@ public sealed interface Pat extends AyaDocile {
     var newPats = pats.map(p -> p.bind(buffer)).toImmutableSeq();
     return new Pair<>(buffer, newPats);
   }
+
   static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<Param>create();
     pats.forEach(p -> p.consumeBindings((var, type) ->
@@ -83,6 +91,10 @@ public sealed interface Pat extends AyaDocile {
     return new CorePrettier(options).pat(this, true, BasePrettier.Outer.Free);
   }
 
+  /**
+   * @param type of this bind, note that the type may refer to former binds (i.e. dependent type)
+   *             by free {@link org.aya.syntax.core.term.LocalTerm}
+   */
   record Bind(@NotNull LocalVar bind, @NotNull Term type) implements Pat {
     public @NotNull Bind update(@NotNull Term type) {
       return this.type == type ? this : new Bind(bind, type);
