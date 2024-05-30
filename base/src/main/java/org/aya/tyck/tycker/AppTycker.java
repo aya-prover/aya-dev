@@ -101,13 +101,12 @@ public interface AppTycker {
           var ownerArgs = realArgs.take(ownerTele.size());
           var conArgs = realArgs.drop(ownerTele.size());
 
-          var type = fullSignature.result(realArgs);
-          var dataCall = new DataCall(dataVar, 0, ownerArgs);
+          var type = (DataCall) fullSignature.result(realArgs);
           var shape = state.shapeFactory().find(new DataDef.Delegate(dataVar))
-            .mapNotNull(recog -> AyaShape.ofCon(new ConDef.Delegate(conVar), recog, dataCall))
+            .mapNotNull(recog -> AyaShape.ofCon(new ConDef.Delegate(conVar), recog, type))
             .getOrNull();
-          if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
-          var wellTyped = new ConCall(conVar, 0, ownerArgs, conArgs);
+          if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, type.args(), conArgs), type);
+          var wellTyped = new ConCall(conVar, 0, type.args(), conArgs);
           return new Jdg.Default(wellTyped, type);
         });
       }

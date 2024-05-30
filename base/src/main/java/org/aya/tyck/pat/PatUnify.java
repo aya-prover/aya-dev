@@ -68,12 +68,12 @@ public record PatUnify(
       rhsSubst.append(fresh);
       return fresh;
     } else {
+      var e = PatToTerm.visit(rhs).instantiateTele(rhsSubst.view());
+      lhsSubst.append(e);
       rhs.consumeBindings((v, ty) -> {
         ctx.put(v, ty.instantiateTele(rhsSubst.view()));
         rhsSubst.append(new FreeTerm(v));
       });
-      var e = PatToTerm.visit(rhs).instantiateTele(rhsSubst.view());
-      lhsSubst.append(e);
       return e;
     }
   }
