@@ -27,12 +27,18 @@ public abstract class AbstractExprializer<T> implements AyaSerializer<T> {
     return makeImmutableSeq(typeName, terms.map(this::doSerialize));
   }
 
-  protected @NotNull String makeImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<String> terms) {
+  protected @NotNull String makeImmutableSeq(
+    @NotNull String typeName, @NotNull ImmutableSeq<String> terms, @NotNull String seqName
+  ) {
     if (terms.isEmpty()) {
-      return STR."\{CLASS_IMMSEQ}.empty()";
+      return STR."\{seqName}.empty()";
     } else {
-      return terms.joinToString(SEP, STR."\{CLASS_IMMSEQ}.<\{typeName}>of(", ")");
+      return terms.joinToString(SEP, STR."\{seqName}.<\{typeName}>of(", ")");
     }
+  }
+
+  protected @NotNull String makeImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<String> terms) {
+    return makeImmutableSeq(typeName, terms, CLASS_IMMSEQ);
   }
 
   protected @NotNull String makeThunk(@NotNull String value) {

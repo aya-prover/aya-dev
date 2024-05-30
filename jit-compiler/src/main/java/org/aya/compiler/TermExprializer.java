@@ -197,7 +197,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(type)
       );
       case ListTerm(var repr, var nil, var cons, var type) -> makeNew(CLASS_LIST,
-        serializeToImmutableSeq(CLASS_TERM, repr),
+        makeImmutableSeq(CLASS_TERM, repr.map(this::doSerialize), CLASS_PIMMSEQ),
         getInstance(NameSerializer.getClassReference(nil)),
         getInstance(NameSerializer.getClassReference(cons)),
         doSerialize(type)

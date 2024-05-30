@@ -3,6 +3,7 @@
 package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableTreeSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.ConDefLike;
@@ -28,7 +29,8 @@ public record ListTerm(
     @NotNull ShapeRecognition recog,
     @NotNull DataCall type
   ) {
-    this(repr, recog.getCon(CodeShape.GlobalId.NIL), recog.getCon(CodeShape.GlobalId.CONS), type);
+    this(ImmutableTreeSeq.from(repr),
+      recog.getCon(CodeShape.GlobalId.NIL), recog.getCon(CodeShape.GlobalId.CONS), type);
   }
 
   @Override public @NotNull ListTerm makeNil() {
@@ -38,7 +40,7 @@ public record ListTerm(
   @Override public @NotNull Term
   makeCons(@NotNull Term x, @NotNull Term last) {
     return new RuleReducer.Con(new ListOps.ConRule(cons, makeNil()), 0,
-      type.args(), ImmutableSeq.of(x, last));
+      type.args(), ImmutableTreeSeq.of(x, last));
   }
 
   @Override public @NotNull Term destruct(@NotNull ImmutableSeq<Term> repr) {

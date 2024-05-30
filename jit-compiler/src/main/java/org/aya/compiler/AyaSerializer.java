@@ -4,6 +4,7 @@ package org.aya.compiler;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.compiler.util.SerializeUtils;
@@ -34,6 +35,7 @@ public interface AyaSerializer<T> {
   String CLASS_DATACALL = getJavaReference(DataCall.class);
   String CLASS_PRIMCALL = getJavaReference(PrimCall.class);
   String CLASS_IMMSEQ = getJavaReference(ImmutableSeq.class);
+  String CLASS_PIMMSEQ = getJavaReference(ImmutableTreeSeq.class);
   String CLASS_MUTSEQ = getJavaReference(MutableSeq.class);
   String CLASS_SEQ = getJavaReference(Seq.class);
   String CLASS_TERM = getJavaReference(Term.class);
@@ -63,6 +65,7 @@ public interface AyaSerializer<T> {
     import org.aya.util.binop.Assoc;
 
     import kala.collection.immutable.ImmutableSeq;
+    import kala.collection.immutable.ImmutableTreeSeq;
     import kala.collection.mutable.MutableSeq;
     import kala.collection.Seq;
     import kala.control.Result;
