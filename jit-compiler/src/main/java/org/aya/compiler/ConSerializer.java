@@ -33,11 +33,18 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   }
 
   private void buildIsAvailable(ConDef unit, @NotNull String argsTerm) {
-    var patsTerm = unit.pats.map(x -> new PatternExprializer(nameGen, true).serialize(x).result());
-    var patsSeq = AbstractExprializer.makeImmutableSeq(CLASS_PAT, patsTerm, CLASS_IMMSEQ);
+    String matchResult;
     var termSeq = STR."\{argsTerm}.toImmutableSeq()";
-    var matcherTerm = AbstractExprializer.makeNew(CLASS_PATMATCHER, "true", "x -> x");
-    var matchResult = STR."\{matcherTerm}.apply(\{patsSeq}, \{termSeq})";
+    if (unit.pats.isEmpty()) {
+      // not indexed data type, this constructor is always available
+      matchResult = STR."\{CLASS_RESULT}.ok(\{termSeq})";
+    } else {
+      var patsTerm = unit.pats.map(x -> new PatternExprializer(nameGen, true).serialize(x).result());
+      var patsSeq = AbstractExprializer.makeImmutableSeq(CLASS_PAT, patsTerm, CLASS_IMMSEQ);
+      var matcherTerm = AbstractExprializer.makeNew(CLASS_PATMATCHER, "true", "x -> x");
+      matchResult = STR."\{matcherTerm}.apply(\{patsSeq}, \{termSeq})";
+    }
+
     buildReturn(matchResult);
   }
 

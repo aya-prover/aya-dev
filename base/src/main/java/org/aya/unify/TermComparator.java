@@ -103,7 +103,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       rCon.head().ownerArgs(), lHead.ulift(), TyckDef.defSignature(lHead.ref().dataRef())))
       return null;
     if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
-      new JitTele.LocallyNameless(lHead.ref().selfTele(lCon.args()), SortTerm.Type0)))
+      new JitTele.LocallyNameless(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
       return null;
     return lHead.underlyingDataCall();
   }

@@ -38,6 +38,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_INTEGER = getJavaReference(IntegerTerm.class);
   public static final String CLASS_LIST = getJavaReference(ListTerm.class);
   public static final String CLASS_STRING = getJavaReference(StringTerm.class);
+  public static final String CLASS_LOCALTERM = getJavaReference(LocalTerm.class);
   public static final String CLASS_INT_CONRULE = makeSub(CLASS_INTOPS, getJavaReference(IntegerOps.ConRule.class));
   public static final String CLASS_INT_FNRULE = makeSub(CLASS_INTOPS, getJavaReference(IntegerOps.FnRule.class));
   public static final String CLASS_LIST_CONRULE = makeSub(CLASS_LISTOPS, getJavaReference(ListOps.ConRule.class));
@@ -72,8 +73,8 @@ public class TermExprializer extends AbstractExprializer<Term> {
     return switch (applicable) {
       case IntegerOps.ConRule conRule ->
         makeNew(CLASS_INT_CONRULE, getInstance(NameSerializer.getClassReference(conRule.ref())),
-        doSerialize(conRule.zero())
-      );
+          doSerialize(conRule.zero())
+        );
       case IntegerOps.FnRule fnRule -> makeNew(CLASS_INT_FNRULE,
         getInstance(NameSerializer.getClassReference(fnRule.ref())),
         makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
@@ -135,10 +136,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case AppTerm appTerm -> makeNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
-      case LocalTerm _ -> {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
-      }
+      case LocalTerm(var index) -> makeNew(CLASS_LOCALTERM, Integer.toString(index));
       case LamTerm lamTerm -> makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
       case DataCall(var ref, var ulift, var args) -> makeNew(CLASS_DATACALL,
         getInstance(NameSerializer.getClassReference(ref)),
