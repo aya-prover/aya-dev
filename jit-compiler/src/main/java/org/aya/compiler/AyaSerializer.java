@@ -22,11 +22,6 @@ import static org.aya.compiler.AbstractSerializer.getJavaReference;
  * <h2>File Structure</h2>
  * Each aya module will be serialized to a java file,
  * each {@link org.aya.syntax.concrete.stmt.decl.Decl} will be serialized to a nested class.
- * The class name should have form {@code AYA_QUALIFIED_NAME}.
- * For example, a module {@code Data::Vec} and a data type definition {@code Vec} in it
- * should have name {@code AYA_Data_Vec} and {@code AYA_Data_Vec_Vec}, respectively.
- * This avoids from the serialized class covering some importing.
- * We can use those importing by qualified name, but that makes the output ugly.
  */
 public interface AyaSerializer<T> {
   String PACKAGE_BASE = "AYA";

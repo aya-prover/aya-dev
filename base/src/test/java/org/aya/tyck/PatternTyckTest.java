@@ -2,7 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.value.MutableValue;
+import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.def.ConDef;
+import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.term.MetaPatTerm;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
+
+import java.util.function.UnaryOperator;
 
 import static org.aya.tyck.TyckTest.tyck;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -127,5 +135,24 @@ public class PatternTyckTest {
       | +-one, +-two => O
       | _, _ => S O
       """).defs().isNotEmpty());
+  }
+
+  @Test
+  public void test5() {
+    @Language("Aya") var code = """
+      open data Nat | O | S Nat
+      open data Vec Type Nat
+      | A, O => vnil
+      | A, S n => vcons A (Vec A n)
+            
+      open data MatchMe (n : Nat) (Vec Nat n)
+      | S n', vcons v xs => matched
+
+      def checkMe {n : Nat} (m : Nat) {v : Vec Nat n} (MatchMe n v) : Nat
+      | O, matched => O
+      | S m, /* {vcons _ _} ,*/ matched => O
+      """;
+
+    var result = tyck(code).defs();
   }
 }
