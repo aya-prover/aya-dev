@@ -91,7 +91,7 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "MY_DATE=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+        run: echo "MY_DATE=$(date +%Y/%m/%d-%H:%M)" >> $GITHUB_ENV
 
       - name: Update Release (jlink zips and jars)
         uses: Xotl/cool-github-releases@v1
