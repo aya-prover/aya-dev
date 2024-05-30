@@ -44,14 +44,14 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
   @Override public abstract @NotNull Term equality(Seq<Term> args, boolean is0);
   @Override public @NotNull DataDefLike dataRef() { return dataType; }
   @Override public int selfTeleSize() { return selfTeleSize; }
+  @Override public int ownerTeleSize() { return telescopeSize - selfTeleSize; }
   @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
     var ownerArgsSize = ownerArgs.size();
-    var selfArgsSize = telescopeSize - ownerArgsSize;
     var args = MutableArrayList.<Term>create(telescopeSize);
     args.appendAll(ownerArgs);
-    var tele = MutableArrayList.<Param>create(selfArgsSize);
+    var tele = MutableArrayList.<Param>create(selfTeleSize);
 
-    for (var i = 0; i < selfArgsSize; ++i) {
+    for (var i = 0; i < selfTeleSize; ++i) {
       var realIdx = ownerArgsSize + i;
       var name = telescopeNames[realIdx];
       var licit = telescopeLicit[realIdx];

@@ -7,6 +7,7 @@ import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
   public static final @NotNull String CLASS_PAT_CON = makeSub(CLASS_PAT, getJavaReference(Pat.Con.class));
   public static final @NotNull String CLASS_PAT_INT = makeSub(CLASS_PAT, getJavaReference(Pat.ShapedInt.class));
   public static final @NotNull String CLASS_LOCALVAR = getJavaReference(LocalVar.class);
+  public static final @NotNull String CLASS_CONHEAD = makeSub(getJavaReference(ConCallLike.class), getJavaReference(ConCallLike.Head.class));
   public static final @NotNull String CLASS_ERROR = getJavaReference(ErrorTerm.class);
   public static final @NotNull String CLASS_PAT_TUPLE = makeSub(CLASS_PAT, getJavaReference(Pat.Tuple.class));
 
@@ -33,6 +35,13 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
   private @NotNull String serializeTerm(@NotNull Term term) {
     return new TermExprializer(this.nameGen, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term).result();
+  }
+
+  private @NotNull String serializeConHead(@NotNull ConCallLike.Head head) {
+    return makeNew(CLASS_CONHEAD,
+      getInstance(NameSerializer.getClassReference(head.ref())),
+      Integer.toString(head.ulift()),
+      makeImmutableSeq(CLASS_TERM, head.ownerArgs().map(this::serializeTerm)));
   }
 
   @Override

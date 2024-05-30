@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
@@ -70,6 +71,19 @@ public abstract class JitTele {
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       assert teleArgs.size() == telescopeSize;
       return result.instantiateTele(teleArgs.view());
+    }
+  }
+  public static class TeleSlice extends JitTele {
+    private final JitTele signature;
+    public TeleSlice(@NotNull JitTele signature, int i) {
+      super(i, signature.telescopeLicit, signature.telescopeNames);
+      this.signature = signature;
+    }
+    @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      return signature.telescope(i, teleArgs);
+    }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
+      return ErrorTerm.DUMMY;
     }
   }
 }

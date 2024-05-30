@@ -16,5 +16,6 @@ public sealed interface ConDefLike extends AnyDef permits JitCon, ConDef.Delegat
   boolean hasEq();
   @NotNull Term equality(Seq<Term> args, boolean is0);
   int selfTeleSize();
+  int ownerTeleSize();
   @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs);
 }

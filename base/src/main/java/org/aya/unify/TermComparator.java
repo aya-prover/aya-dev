@@ -9,7 +9,6 @@ import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.compile.JitTele;
-import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -99,9 +98,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
     // since dataArgs live in a separate telescope
     var lHead = lCon.head();
-    @NotNull AnyDef def = lHead.ref().dataRef();
+    var slice = new JitTele.TeleSlice(lHead.ref().signature(), lHead.ref().ownerTeleSize());
     if (null == compareMany(lHead.ownerArgs(),
-      rCon.head().ownerArgs(), lHead.ulift(), def.signature()))
+      rCon.head().ownerArgs(), lHead.ulift(), slice))
       return null;
     if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
       new JitTele.LocallyNameless(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
@@ -116,8 +115,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs
   ) {
     if (!lhs.ref().equals(rhs.ref()) || lhs.ulift() != rhs.ulift()) return null;
-    @NotNull AnyDef def = lhs.ref();
-    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), def.signature());
+    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), lhs.ref().signature());
   }
 
   private <R> R swapped(@NotNull Supplier<R> callback) {

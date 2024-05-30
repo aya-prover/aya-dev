@@ -114,16 +114,10 @@ public record Synthesizer(
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();
-      case ConCall conCall -> {
-        @NotNull AnyDef def = conCall.ref();
-        yield def.signature().result(conCall.args());
-      }
-      case Callable.Tele teleCall -> {
-        @NotNull AnyDef def = teleCall.ref();
-        yield def.signature()
-          .result(teleCall.args())
-          .elevate(teleCall.ulift());
-      }
+      case ConCall conCall -> conCall.ref().signature().result(conCall.args());
+      case Callable.Tele teleCall -> teleCall.ref().signature()
+        .result(teleCall.args())
+        .elevate(teleCall.ulift());
 
       case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
         type.instantiateTele(args.view());
