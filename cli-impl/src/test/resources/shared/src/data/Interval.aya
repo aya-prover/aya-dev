@@ -1,0 +1,16 @@
+open import Paths
+
+open data Interval
+| left
+| right
+| line : left = right
+
+variable
+  A B : Type
+
+private def lemma
+  (f g : A → B) (p : ∀ x → f x = g x)
+  (i : Interval) (a : A) : B elim i
+| left ⇒ f a
+| right ⇒ g a
+| line j ⇒ p a j
