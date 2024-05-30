@@ -28,5 +28,5 @@ module Angiuli {
 public open Angiuli using (transport)
 
 // TODO: make the following work
-// def infixr <=>' {a b c : A} (p : a = b) (q : b = c) : a = c =>
-  // \k => hcomp2d (\i => p i) q refl k
+def infixr <=>' {a b c : A} (p : a = b) (q : b = c) : a = c =>
+  \k => hcomp2d (\i => p i) q refl k
