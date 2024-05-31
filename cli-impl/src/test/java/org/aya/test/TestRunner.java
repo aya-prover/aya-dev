@@ -36,6 +36,7 @@ public class TestRunner {
 
   @Test public void negative() throws Exception {
     Seq.of(
+      ParseError.class,
       ExprTyckError.class,
       GoalAndMeta.class,
       ScopeError.class,

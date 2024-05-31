@@ -1,0 +1,33 @@
+Trivial:
+In file $FILE:1:0 ->
+
+  1 │   def
+    │   ╰─╯
+
+Error: Expect a name
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+Modifier:
+In file $FILE:1:0 ->
+
+  1 │   overlap inductive Empty
+    │   ╰─────╯
+
+Error: The modifier overlap is not suitable here.
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+IgnoredModifier:
+In file $FILE:1:0 ->
+
+  1 │   inline def id {A : Type} A : A
+    │   ╰────╯
+  2 │   | a => a
+
+Warning: Ignoring inline
+
+That looks right!
+
