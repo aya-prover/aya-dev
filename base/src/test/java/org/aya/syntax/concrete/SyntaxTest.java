@@ -2,17 +2,24 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.SyntaxTestUtil;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class SyntaxTest {
   @Test public void test0() {
     var res = SyntaxTestUtil.parse("""
       def foo (f : Type -> Type 0) (a : Type 0) : Type 0 => f a
       def bar (A : Type 0) : A -> A => fn x => x
+      open inductive Nat | O | S Nat
+      def add Nat Nat : Nat
+      | 0, a => a
+      | S a, b => S (add a b)
       """);
-    assertTrue(res.isNotEmpty());
+    for (var stmt : res) {
+      assertNotNull(stmt.toDoc(AyaPrettierOptions.debug()).debugRender());
+    }
   }
 }

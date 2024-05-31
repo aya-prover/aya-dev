@@ -348,11 +348,11 @@ public record AyaProducer(
 
   public @Nullable DataCon dataBody(@NotNull GenericNode<?> node) {
     var dataConClause = node.peekChild(DATA_CON_CLAUSE);
-    if (dataConClause != null) return dataCtor(
+    if (dataConClause != null) return dataCon(
       patterns(dataConClause.child(PATTERNS).child(COMMA_SEP)),
       dataConClause.child(DATA_CON));
     var dataCon = node.peekChild(DATA_CON);
-    if (dataCon != null) return dataCtor(ImmutableSeq.empty(), dataCon);
+    if (dataCon != null) return dataCon(ImmutableSeq.empty(), dataCon);
     return error(node.childrenView().getFirst(), "Expect a data constructor");
   }
 
@@ -397,7 +397,7 @@ public record AyaProducer(
     );
   }
 
-  public @Nullable DataCon dataCtor(@NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns, @NotNull GenericNode<?> node) {
+  public @Nullable DataCon dataCon(@NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns, @NotNull GenericNode<?> node) {
     var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
     var name = info.checkName(this);
     if (name == null) return null;
