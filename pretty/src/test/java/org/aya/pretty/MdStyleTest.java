@@ -58,7 +58,7 @@ public class MdStyleTest {
       Doc.styled(MdStyle.GFM.Paragraph, "I love Java"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya"),
       Doc.styled(MdStyle.GFM.Paragraph, "I love Aya's pretty printer."),
-      Doc.codeBlock(Language.Builtin.Aya, "data Nat | zero | suc Nat"),
+      Doc.codeBlock(Language.Builtin.Aya, "inductive Nat | zero | suc Nat"),
       Doc.styled(MdStyle.GFM.Paragraph, "Look! She is beautiful")
     );
   }
