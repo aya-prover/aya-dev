@@ -35,8 +35,8 @@ import static org.aya.compiler.NameSerializer.getClassName;
 public class CompileTest {
   @Test public void test0() {
     var result = tyck("""
-      open data Nat | O | S Nat
-      open data Vec (n : Nat) Type
+      open inductive Nat | O | S Nat
+      open inductive Vec (n : Nat) Type
       | O, A   => vnil
       | S n, A => vcons A (Vec n A)
       

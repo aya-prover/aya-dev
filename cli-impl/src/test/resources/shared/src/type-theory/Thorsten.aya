@@ -1,6 +1,6 @@
 open import Paths
 
-open data Con : Type
+open inductive Con : Type
 | •
 | infix ▷ (Γ : Con) (Ty Γ)
 
@@ -9,7 +9,7 @@ open data Con : Type
 //  δ ∘ π₁ (id refl) ∷ transport (Tm _) SubAss (π₂ (id refl))
 
 // Incomplete
-open data Ty (Γ : Con) : Type
+open inductive Ty (Γ : Con) : Type
 | U
 | Π (A : Ty Γ) (B : Ty (Γ ▷ A))
 | El (A : Tm Γ U)
@@ -24,7 +24,7 @@ open data Ty (Γ : Con) : Type
 //    : Subst (Π A B) σ = Π (Subst A σ) (Subst B (ext σ A))
 
 // Tms
-open data infix << (Γ : Con) (Δ : Con) : Type
+open inductive infix << (Γ : Con) (Δ : Con) : Type
    tighter = looser ▷
 | _, • => ε
 | _, Δ' ▷ A => infixr ∷ (δ : Γ << Δ') (Tm Γ (Subst A δ)) tighter =
@@ -42,7 +42,7 @@ open data infix << (Γ : Con) (Δ : Con) : Type
 | _, • => εη {δ : Γ << •} : δ = ε
 
 // Incomplete
-open data Tm (Γ : Con) (A : Ty Γ) : Type
+open inductive Tm (Γ : Con) (A : Ty Γ) : Type
 | _, Π A' B => λ (Tm (Γ ▷ A') B)
 | Γ' ▷ A', B => app (Tm Γ' (Π A' B))
 | _, Subst A' δ => sub (Tm _ A')

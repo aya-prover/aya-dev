@@ -1,5 +1,5 @@
 ```aya
-open data Unit | unit
+open inductive Unit | unit
 ```
 
 This is a tutorial about aya, but I won't tell you how to write aya.
@@ -27,7 +27,7 @@ Umm, now it looks good!
 Also, we can use some special characters as identifier:
 
 ```aya
-open data Bool | true | false
+open inductive Bool | true | false
 
 def > (lhs rhs : Unit) : Bool =>
 ```

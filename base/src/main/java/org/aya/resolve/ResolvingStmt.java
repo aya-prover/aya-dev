@@ -17,12 +17,12 @@ import org.jetbrains.annotations.NotNull;
  *   postulate
  *     Context : Set
  *
- *   data Stmt : Set where
+ *   inductive Stmt : Set where
  *     FnDecl : Stmt
  *     DataDecl : Stmt
  *     DataCon : Stmt
  *
- *   data ExtInfo : Stmt -> Set where
+ *   inductive ExtInfo : Stmt -> Set where
  *     ExtData : Context -> ExtInfo DataDecl
  *     ExtFn : Context -> ExtInfo FnDecl
  *     -- trivial extra info

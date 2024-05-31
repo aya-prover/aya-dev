@@ -69,20 +69,20 @@
     KW_VARIABLE = 'variable'
     KW_DEF = 'def'
     KW_CLASS = 'class'
-    KW_CLASSIFIYING = 'classifying'
-    KW_DATA = 'data'
+    KW_DATA = 'inductive'
     KW_PRIM = 'prim'
     KW_EXTENDS = 'extends'
     KW_NEW = 'new'
     KW_DO = 'do'
-    KW_SELF = 'self'
-    KW_OVERRIDE = 'override'
     KW_ELIM = 'elim'
-
-    // Unimplemented but reserved
-    KW_CODATA = 'codata'
     KW_LET = 'let'
     KW_IN = 'in'
+
+    // Unimplemented but reserved
+    KW_CLASSIFIYING = 'classifying'
+    KW_SELF = 'self'
+    KW_OVERRIDE = 'override'
+    KW_CODATA = 'coinductive'
     KW_COMPLETED = 'completed'
 
     // symbols

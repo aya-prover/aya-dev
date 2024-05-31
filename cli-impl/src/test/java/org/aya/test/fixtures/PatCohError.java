@@ -8,7 +8,7 @@ import org.intellij.lang.annotations.Language;
 public interface PatCohError {
   @Language("Aya") String testUnsureMissing = """
     open import arith::Nat
-    open data Fin+1 (n : Nat) : Type
+    open inductive Fin+1 (n : Nat) : Type
     | m => fzero
     | suc m => fsuc (Fin+1 m)
     
@@ -136,7 +136,7 @@ public interface PatCohError {
   @Language("Aya") String testIApplyConflReduce = """
     open import arith::Nat
     open import Paths
-    open data WrongInt
+    open inductive WrongInt
     | pos Nat
     | neg Nat
     | posneg (n : Nat) : pos n = neg n

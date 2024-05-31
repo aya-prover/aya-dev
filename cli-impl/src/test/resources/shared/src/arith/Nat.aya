@@ -1,6 +1,6 @@
 open import Paths
 
-open data Nat | zero | suc Nat
+open inductive Nat | zero | suc Nat
 
 overlap def infixl + Nat Nat : Nat
 | 0, b => b

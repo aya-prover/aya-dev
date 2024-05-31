@@ -16,7 +16,7 @@ def pinv {a b : A} (p : a = b) : b = a => coe 0 1 (\i => p i = a) idp
 The natural number ($\mathbb{N}$):
 
 ```aya
-open data Nat | zero | suc Nat
+open inductive Nat | zero | suc Nat
 overlap def infixl + Nat Nat : Nat
 | 0, a => a
 | a, 0 => a
@@ -48,7 +48,7 @@ module Yes {
 ### Early type aliases
 
 ```aya
-open data SetTrunc (A : Type)
+open inductive SetTrunc (A : Type)
 | inj A
 //| trunc : isSet (SetTrunc A)
 ```
@@ -58,7 +58,7 @@ def FMSet (A : Type) : Type => SetTrunc (FMSetRaw A)
 ```
 
 ```aya
-open data FMSetRaw (A : Type)
+open inductive FMSetRaw (A : Type)
 | nil
 | infixr :< A (FMSet A)
   tighter =

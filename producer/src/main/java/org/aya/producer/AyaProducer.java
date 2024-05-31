@@ -554,7 +554,16 @@ public record AyaProducer(
     //   );
     // }
     if (node.is(ARROW_EXPR)) {
-      var exprs = node.childrenOfType(EXPR);
+      var exprs = node.childrenOfType(EXPR).toImmutableSeq();
+      if (!exprs.sizeEquals(2)) {
+        reporter.report(new ParseError(pos, exprs.joinToString(
+          ",",
+          "In an arrow expr, I see " + exprs.size() + " expr(s): [",
+          "], but I need 2.",
+          GenericNode::tokenText
+        )));
+        throw new ParsingInterruptedException();
+      }
       var expr0 = exprs.get(0);
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);

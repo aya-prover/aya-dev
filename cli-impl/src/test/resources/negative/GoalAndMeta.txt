@@ -37,7 +37,7 @@ What are you doing?
 UnsolvedMetaLit:
 In file $FILE:5:17 ->
 
-  3 │   open data Option (A : Type)
+  3 │   open inductive Option (A : Type)
   4 │     | some A
   5 │   def test => some 114514
     │                    ╰────╯
@@ -47,7 +47,7 @@ Error: Unsolved meta A
 
 In file $FILE:5:17 ->
 
-  3 │   open data Option (A : Type)
+  3 │   open inductive Option (A : Type)
   4 │     | some A
   5 │   def test => some 114514
     │                    ╰────╯
@@ -57,7 +57,7 @@ Error: Unsolved meta A
 
 In file $FILE:5:17 ->
 
-  3 │   open data Option (A : Type)
+  3 │   open inductive Option (A : Type)
   4 │     | some A
   5 │   def test => some 114514
     │                    ╰────╯

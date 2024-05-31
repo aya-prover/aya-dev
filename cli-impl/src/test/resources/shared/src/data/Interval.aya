@@ -1,6 +1,6 @@
 open import Paths
 
-open data Interval
+open inductive Interval
 | left
 | right
 | line : left = right

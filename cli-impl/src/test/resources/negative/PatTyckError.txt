@@ -13,109 +13,52 @@ Error: Unknown constructor
 What are you doing?
 
 SelectionFailed:
-In file $FILE:2:4 ->
+In file $FILE:4:2 ->
 
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │       ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:11 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │              ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:16 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │                   ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:12 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │               ╰──╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Expect a name
-
-In file $FILE:3:54 ->
-
-  1 │   open import arith::Nat
   2 │   open import data::Vec
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-    │                                                         ╰─╯
+  4 │   | [] => []
+    │     ╰╯
 
-Error: The name `Vec` is not defined in the current scope
+Error: I'm unsure if there should be a case for
+         []
+       as index unification is blocked for type
+         Vec (<n> + <n>) A
 
-Resolving interrupted due to:
-5 error(s), 0 warning(s).
+In file $FILE:5:2 ->
+
+  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
+  4 │   | [] => []
+  5 │   | _ :> _ => _
+    │     ╰────╯
+
+Error: I'm unsure if there should be a case for
+         :> _ _
+       as index unification is blocked for type
+         Vec (<n> + <n>) A
+
+2 error(s), 0 warning(s).
 What are you doing?
 
 SelectionBlocked:
-In file $FILE:2:4 ->
+In file $FILE:4:2 ->
 
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │       ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:11 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │              ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:16 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │                   ╰╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Cannot parse
-
-In file $FILE:2:12 ->
-
-  1 │   open import arith::Nat
-  2 │   open import data::Vec
-    │               ╰──╯
-  3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-
-Error: Expect a name
-
-In file $FILE:3:54 ->
-
-  1 │   open import arith::Nat
   2 │   open import data::Vec
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
-    │                                                         ╰─╯
+  4 │   | () => []
+    │     ╰╯
 
-Error: The name `Vec` is not defined in the current scope
+Error: Unsure if this pattern is actually impossible, as constructor selection 
+       is blocked on:
+         Vec (<n> + <n>) A
 
-Resolving interrupted due to:
-5 error(s), 0 warning(s).
+1 error(s), 0 warning(s).
 What are you doing?
 
 SplitOnNonData:
 In file $FILE:3:3 ->
 
-  1 │   open data Unit | unit
+  1 │   open inductive Unit | unit
   2 │   def test (a : Type) : Type
   3 │    | unit y => a
     │      ╰────╯
@@ -131,7 +74,7 @@ What are you doing?
 BadLiteral:
 In file $FILE:3:2 ->
 
-  1 │   open data Test | t
+  1 │   open inductive Test | t
   2 │   def not-conf Test : Test
   3 │   | 1 => t
     │     ╰╯
@@ -244,7 +187,7 @@ What are you doing?
 NewRepoIssue597:
 In file $FILE:2:22 ->
 
-  1 │   open data Nat | O | S Nat
+  1 │   open inductive Nat | O | S Nat
   2 │   def bad Nat : Nat | S S O => O | _ => O
     │                         ╰╯
 
@@ -253,7 +196,7 @@ Error: There is no pattern for the parameter
 
 In file $FILE:2:24 ->
 
-  1 │   open data Nat | O | S Nat
+  1 │   open inductive Nat | O | S Nat
   2 │   def bad Nat : Nat | S S O => O | _ => O
     │                           ╰╯
 
@@ -269,7 +212,7 @@ What are you doing?
 NewRepoIssue746:
 In file $FILE:4:2 ->
 
-  2 │   open data Test2 | test2
+  2 │   open inductive Test2 | test2
   3 │   def test Test1 : Test1
   4 │   | test2 => test1
     │     ╰───╯

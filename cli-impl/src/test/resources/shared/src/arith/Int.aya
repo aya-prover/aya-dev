@@ -1,7 +1,7 @@
 open import arith::Nat
 open import arith::Bool
 open import Paths
-open data Int
+open inductive Int
 | signed Bool Nat
 | posneg : neg 0 = pos 0
 
