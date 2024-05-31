@@ -47,8 +47,10 @@ public class TestRunner {
     Files.deleteIfExists(TMP_FILE);
   }
 
+  interface Rabbit {
+  }
   @Test public void playground() throws IOException, IllegalAccessException {
-    // runFixtureClass(PatTyckError.class);
+    // runFixtureClass(Rabbit.class);
   }
 
   public static void main(String... args) throws Exception {
