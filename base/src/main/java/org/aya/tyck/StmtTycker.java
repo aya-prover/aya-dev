@@ -150,11 +150,10 @@ public record StmtTycker(
    *
    * @apiNote invoke this method after loading the telescope of data!
    */
-  private void checkKitsune(@NotNull DataCon dataCon, @NotNull ExprTycker tycker) {
-    var ref = dataCon.ref;
+  private void checkKitsune(@NotNull DataCon con, @NotNull ExprTycker tycker) {
+    var ref = con.ref;
     if (ref.core != null) return;
-    var conDecl = ref.concrete;
-    var dataRef = dataCon.dataRef;
+    var dataRef = con.dataRef;
     var dataSig = dataRef.signature;
     assert dataSig != null : "the header of data should be tycked";
     // Intended to be indexed, not free
@@ -165,10 +164,10 @@ public record StmtTycker(
     var freeDataCall = new DataCall(dataRef, 0, ownerBinds.map(FreeTerm::new));
 
     var wellPats = ImmutableSeq.<Pat>empty();
-    if (dataCon.patterns.isNotEmpty()) {
+    if (con.patterns.isNotEmpty()) {
       // do not do coverage check
       var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, null,
-        new Pattern.Clause(dataCon.entireSourcePos(), dataCon.patterns, Option.none()), false);
+        new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
       wellPats = lhsResult.clause().pats();
       tycker.setLocalCtx(lhsResult.localCtx());
       lhsResult.addLocalLet(ownerBinds, tycker);
@@ -186,10 +185,10 @@ public record StmtTycker(
     }
 
     var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.result());
-    var selfTele = teleTycker.checkTele(conDecl.telescope);
-    var selfTeleVars = conDecl.teleVars();
+    var selfTele = teleTycker.checkTele(con.telescope);
+    var selfTeleVars = con.teleVars();
 
-    var conTy = conDecl.result;
+    var conTy = con.result;
     EqTerm boundaries = null;
     if (conTy != null) {
       var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
@@ -201,7 +200,7 @@ public record StmtTycker(
         var state = tycker.state;
         var fresh = new FreeTerm("i");
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
-          cmp -> new UnifyError.ConReturn(conDecl, cmp, new UnifyInfo(state)));
+          cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
         selfTele = selfTele.appended(new WithPos<>(conTy.sourcePos(),
           new Param("i", DimTyTerm.INSTANCE, true)));
@@ -210,7 +209,7 @@ public record StmtTycker(
       } else {
         var state = tycker.state;
         tycker.unifyTermReported(tyResult, freeDataCall, null, conTy.sourcePos(), cmp ->
-          new UnifyError.ConReturn(conDecl, cmp, new UnifyInfo(state)));
+          new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
       }
     }
     tycker.solveMetas();
