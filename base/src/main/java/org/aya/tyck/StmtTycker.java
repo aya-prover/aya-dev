@@ -154,6 +154,7 @@ public record StmtTycker(
     var ref = con.ref;
     if (ref.core != null) return;
     var dataRef = con.dataRef;
+    var dataDef = new DataDef.Delegate(dataRef);
     var dataSig = dataRef.signature;
     assert dataSig != null : "the header of data should be tycked";
     // Intended to be indexed, not free
@@ -161,7 +162,7 @@ public record StmtTycker(
     var ownerBinds = dataRef.concrete.telescope.map(Expr.Param::ref);
     // dataTele already in localCtx
     // The result that a con should be, unless it is a Path result
-    var freeDataCall = new DataCall(dataRef, 0, ownerBinds.map(FreeTerm::new));
+    var freeDataCall = new DataCall(dataDef, 0, ownerBinds.map(FreeTerm::new));
 
     var wellPats = ImmutableSeq.<Pat>empty();
     if (con.patterns.isNotEmpty()) {
@@ -171,7 +172,7 @@ public record StmtTycker(
       wellPats = lhsResult.clause().pats();
       tycker.setLocalCtx(lhsResult.localCtx());
       lhsResult.addLocalLet(ownerBinds, tycker);
-      freeDataCall = new DataCall(dataRef, 0, wellPats.map(PatToTerm::visit));
+      freeDataCall = new DataCall(dataDef, 0, wellPats.map(PatToTerm::visit));
 
       var allTypedBinds = Pat.collectBindings(wellPats.view());
       ownerBinds = lhsResult.allBinds();
@@ -229,7 +230,7 @@ public record StmtTycker(
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new Signature(ownerTele.concat(selfSig.param()), boundDataCall);
-    ref.core = new ConDef(dataRef, ref, wellPats, boundaries,
+    ref.core = new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele.map(WithPos::data),
       selfSig.rawParams(),
       boundDataCall, false);
