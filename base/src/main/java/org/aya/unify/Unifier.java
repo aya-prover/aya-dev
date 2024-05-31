@@ -48,11 +48,18 @@ public final class Unifier extends TermComparator {
 
     var inverted = MutableArrayList.<LocalVar>create(spine.size());
     var overlap = MutableList.<LocalVar>create();
+    var wantToReturn = false;
     for (var arg : spine) {
       // TODO: apply uneta
       if (whnf(arg) instanceof FreeTerm(var var)) {
         if (inverted.contains(var)) overlap.append(var);
         inverted.append(var);
+      } else if (allowVague) {
+        inverted.append(LocalVar.generate("_"));
+      } else if (allowDelay) {
+        state.addEqn(createEqn(meta, rhs));
+        wantToReturn = true;
+        break;
       } else {
         reportBadSpine(meta, rhs);
         return null;
@@ -60,6 +67,7 @@ public final class Unifier extends TermComparator {
     }
 
     var returnType = computeReturnType(meta, rhs, type);
+    if (wantToReturn) return returnType;
     if (returnType == null) return null;
 
     // In this case, the solution may not be unique (see #608),

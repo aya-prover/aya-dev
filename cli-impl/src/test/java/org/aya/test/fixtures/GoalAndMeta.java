@@ -74,4 +74,16 @@ public interface GoalAndMeta {
     def good : List Unit => [ ]
     def bad => [ unit ]
     """;
+
+  @Language("Aya") String testNonPattern = """
+    open import data::Vec
+    open import arith::Nat
+    open import Paths
+    variable n m o : Nat
+    variable A : Type
+    def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+      => Path (fn i => Vec (+-assoc i) A)
+      (xs ++ (ys ++ zs))
+      ((xs ++ ys) ++ zs)
+    """;
 }

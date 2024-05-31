@@ -50,7 +50,7 @@ public class TestRunner {
   interface Rabbit {
   }
   @Test public void playground() throws IOException, IllegalAccessException {
-    // runFixtureClass(Rabbit.class);
+    // System.out.println(runFixtureClass(Rabbit.class));
   }
 
   public static void main(String... args) throws Exception {
