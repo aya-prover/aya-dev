@@ -11,12 +11,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class SyntaxTest {
   @Test public void test0() {
     var res = SyntaxTestUtil.parse("""
+      import Prelude
+      module MyMod {}
       def foo (f : Type -> Type 0) (a : Type 0) : Type 0 => f a
       def bar (A : Type 0) : A -> A => fn x => x
       open inductive Nat | O | S Nat
-      def add Nat Nat : Nat
+      def infixl + Nat Nat : Nat
       | 0, a => a
-      | S a, b => S (add a b)
+      | S a, b => S (a + b)
+      def infixl +' Nat Nat : Nat => fn a b => a + b
+      tighter +
       """);
     for (var stmt : res) {
       assertNotNull(stmt.toDoc(AyaPrettierOptions.debug()).debugRender());
