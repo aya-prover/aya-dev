@@ -5,7 +5,10 @@ package org.aya.unify;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.prettier.FindUsage;
-import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.LamTerm;
+import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.ref.LocalCtx;
@@ -51,7 +54,7 @@ public final class Unifier extends TermComparator {
         if (inverted.contains(var)) overlap.append(var);
         inverted.append(var);
       } else {
-        reportBadSpine(meta);
+        reportBadSpine(meta, rhs);
         return null;
       }
     }
@@ -66,7 +69,7 @@ public final class Unifier extends TermComparator {
         state.addEqn(createEqn(meta, rhs));
         return returnType;
       } else {
-        reportBadSpine(meta);
+        reportBadSpine(meta, rhs);
         return null;
       }
     }
@@ -157,8 +160,8 @@ public final class Unifier extends TermComparator {
     else return returnType;
   }
 
-  private void reportBadSpine(@NotNull MetaCall meta) {
-    fail(new HoleProblem.BadSpineError(meta));
+  private void reportBadSpine(@NotNull MetaCall meta, @NotNull Term rhs) {
+    fail(new HoleProblem.BadSpineError(meta, state, rhs));
   }
   private void reportIllTyped(@NotNull MetaCall meta, @NotNull Term rhs) {
     fail(new HoleProblem.IllTypedError(meta, state, rhs));

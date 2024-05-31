@@ -3,14 +3,33 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.normalize.Normalizer;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.ModuleCallback;
 import org.aya.syntax.SyntaxTestUtil;
-import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.def.*;
+import org.aya.syntax.core.term.LamTerm;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.core.term.call.FnCall;
+import org.aya.syntax.core.term.repr.IntegerTerm;
+import org.aya.syntax.core.term.repr.ListTerm;
+import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TyckTest {
@@ -114,6 +133,51 @@ public class TyckTest {
       // Disambiguate by type checking
       def test (a : Nat) => a = 114514
       """).defs.isNotEmpty());
+  }
+
+  @SuppressWarnings("unchecked") private static <T extends AnyDef> T
+  getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
+    return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());
+  }
+
+  @Test public void sort() throws IOException {
+    var result = tyck(Files.readString(Paths.get("../jit-compiler/src/test/resources/TreeSort.aya")));
+
+    var defs = result.defs;
+
+    DataDefLike Nat = getDef(defs, "Nat");
+    ConDefLike O = getDef(defs, "O");
+    ConDefLike S = getDef(defs, "S");
+    DataDefLike List = getDef(defs, "List");
+    ConDefLike nil = getDef(defs, "[]");
+    ConDefLike cons = getDef(defs, ":>");
+    FnDefLike le = getDef(defs, "le");
+    FnDefLike tree_sort = getDef(defs, "tree_sort");
+
+    var NatCall = new DataCall(Nat, 0, ImmutableSeq.empty());
+    var ListNatCall = new DataCall(List, 0, ImmutableSeq.of(NatCall));
+
+    IntFunction<Term> mkInt = i -> new IntegerTerm(i, O, S, NatCall);
+
+    Function<ImmutableIntSeq, Term> mkList = xs -> new ListTerm(xs.mapToObj(mkInt), nil, cons, ListNatCall);
+
+    var leCall = new LamTerm(new Closure.Jit(x ->
+      new LamTerm(new Closure.Jit(y ->
+        new FnCall(le, 0, ImmutableSeq.of(x, y))))));
+
+    var seed = 114514L;
+    var random = new Random(seed);
+    var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> Math.abs(random.nextInt()) % 100));
+    var args = ImmutableSeq.of(NatCall, leCall, largeList);
+
+    var beginTime = System.currentTimeMillis();
+    var sortResult = new Normalizer(new TyckState(result.info().shapeFactory(), new PrimFactory()))
+      .normalize(new FnCall(tree_sort, 0, args), NormalizeMode.FULL);
+    var endTime = System.currentTimeMillis();
+    assertNotNull(sortResult);
+
+    System.out.println(STR."Done in \{(endTime - beginTime)}");
+    System.out.println(sortResult.debuggerOnlyToString());
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }

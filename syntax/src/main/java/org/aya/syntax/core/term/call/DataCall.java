@@ -4,13 +4,10 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
-import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
-import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 public record DataCall(
@@ -18,14 +15,6 @@ public record DataCall(
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
 ) implements Callable.Tele, StableWHNF, Formation {
-  public DataCall(
-    @NotNull DefVar<DataDef, DataDecl> ref,
-    int ulift,
-    @NotNull ImmutableSeq<@NotNull Term> args
-  ) {
-    this(new DataDef.Delegate(ref), ulift, args);
-  }
-
   public @NotNull DataCall update(@NotNull ImmutableSeq<Term> args) {
     return args.sameElements(args(), true) ? this : new DataCall(ref, ulift, args);
   }

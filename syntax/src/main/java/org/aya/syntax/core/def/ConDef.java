@@ -5,7 +5,6 @@ package org.aya.syntax.core.def;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ice1000, kiva
  */
 public final class ConDef extends SubLevelDef {
-  public final @NotNull DefVar<DataDef, DataDecl> dataRef;
+  public final @NotNull DataDefLike dataRef;
   public final @NotNull DefVar<ConDef, DataCon> ref;
   public final @NotNull ImmutableSeq<Pat> pats;
   public final @Nullable EqTerm equality;
@@ -28,7 +27,7 @@ public final class ConDef extends SubLevelDef {
    * @param selfTele  Ditto
    */
   public ConDef(
-    @NotNull DefVar<DataDef, DataDecl> dataRef, @NotNull DefVar<ConDef, DataCon> ref,
+    @NotNull DataDefLike dataRef, @NotNull DefVar<ConDef, DataCon> ref,
     @NotNull ImmutableSeq<Pat> pats, @Nullable EqTerm equality, @NotNull ImmutableSeq<Param> ownerTele,
     @NotNull ImmutableSeq<Param> selfTele, @NotNull Term result, boolean coerce
   ) {
@@ -47,18 +46,18 @@ public final class ConDef extends SubLevelDef {
 
   public static final class Delegate extends TyckAnyDef<ConDef> implements ConDefLike {
     public Delegate(@NotNull DefVar<ConDef, ?> ref) { super(ref); }
-    @Override public boolean hasEq() { return ref.core.equality != null; }
+    @Override public boolean hasEq() { return core().equality != null; }
     @Override public @NotNull Term equality(Seq<Term> args, boolean is0) {
-      var equality = ref.core.equality;
+      var equality = core().equality;
       assert equality != null;
       return (is0 ? equality.a() : equality.b()).instantiateTele(args.view());
     }
-    @Override public int selfTeleSize() { return ref.core.selfTele.size(); }
+    @Override public int selfTeleSize() { return core().selfTele.size(); }
     @Override public int ownerTeleSize() { return core().ownerTele.size(); }
     @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
-      return Param.substTele(ref.core.selfTele.view(), ownerArgs.view()).toImmutableSeq();
+      return Param.substTele(core().selfTele.view(), ownerArgs.view()).toImmutableSeq();
     }
 
-    @Override public @NotNull DataDefLike dataRef() { return new DataDef.Delegate(ref.core.dataRef); }
+    @Override public @NotNull DataDefLike dataRef() { return core().dataRef; }
   }
 }
