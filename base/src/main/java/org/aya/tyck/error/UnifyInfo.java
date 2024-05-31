@@ -27,7 +27,8 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
   }
 
   public static void exprInfo(Term term, PrettierOptions options, Stateful state, MutableList<@NotNull Doc> buf) {
-    exprInfo(term.toDoc(options), state.whnf(term).toDoc(options), buf);
+    exprInfo(state.freezeHoles(term).toDoc(options),
+      state.freezeHoles(state.whnf(term)).toDoc(options), buf);
   }
 
   public record Comparison(

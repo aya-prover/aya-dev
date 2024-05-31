@@ -24,11 +24,14 @@ public sealed interface HoleProblem extends Problem {
   @Override default @NotNull Severity level() { return Severity.ERROR; }
   @Override default @NotNull SourcePos sourcePos() { return term().ref().pos(); }
 
-  record BadSpineError(@Override @NotNull MetaCall term) implements HoleProblem {
+  record BadSpineError(@Override @NotNull MetaCall term, TyckState state, Term rhs)
+    implements HoleProblem, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The following spine is not in pattern fragment:"),
-        BasePrettier.coreArgsDoc(options, term.args().view())
+        BasePrettier.coreArgsDoc(options, term.args().view()),
+        Doc.english("When trying to solve the meta as"),
+        Doc.par(1, Doc.code(freezeHoles(rhs).toDoc(options)))
       );
     }
   }
