@@ -1,6 +1,6 @@
 open import Nat::Core
 
-open data Vec Type Nat : Type
+open inductive Vec Type Nat : Type
 | A, 0 => vnil
 | A, suc m => infixr :> A (Vec A m)
 

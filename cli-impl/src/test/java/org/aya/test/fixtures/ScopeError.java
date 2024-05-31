@@ -7,12 +7,12 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface ScopeError {
   @Language("Aya") String testDidYouMeanDisamb = """
-    open data Nat1 | zero
-    open data Nat2 | zero
+    open inductive Nat1 | zero
+    open inductive Nat2 | zero
     def one => zero
     """;
   @Language("Aya") String testDidYouMean = """
-    data Nat | zero | suc Nat
+    inductive Nat | zero | suc Nat
     def one => suc zero
     """;
   @Language("Aya") String testImportDefineShadow = """
@@ -34,27 +34,27 @@ public interface ScopeError {
     open A hiding (bar)
     """;
   @Language("Aya") String testImportDefineShadow2 = """
-    open data Bool | true | false
+    open inductive Bool | true | false
     module A { def foo => true }
     def foo => false
     open A
     """;
   @Language("Aya") String testInfRec = "def undefined => undefined";
   @Language("Aya") String testIssue247 = """
-    data Z : Type
+    inductive Z : Type
     | zero
     | zero
     """;
   @Language("Aya") String testRedefPrim = "prim I prim I";
   @Language("Aya") String testUnknownPrim = "prim senpaiSuki";
   @Language("Aya") String testUnknownVar = """
-    open data Nat : Type | zero
+    open inductive Nat : Type | zero
     def p => Nat::suc Nat::zero
     """;
   // This should pass
   @Language("Aya") String testLetOpen = """
     open import Paths using (=, refl)
-    data Nat | O | S Nat
+    inductive Nat | O | S Nat
     def zero : Nat => let open Nat using (O) in O
     def suc (n : Nat) : Nat => let open Nat hiding (O) in S n
     def they-are : suc zero = Nat::S Nat::O => refl

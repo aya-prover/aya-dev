@@ -38,12 +38,12 @@ public class ReplCompilerTest {
 
   @Test public void issue382() {
     // success cases, we can find the definition in the context
-    compile("data Nat | zero | suc Nat");
+    compile("inductive Nat | zero | suc Nat");
     var nat = findContext("Nat");
     assertNotNull(nat);
 
     // failure cases, the context is unchanged
-    assertThrows(Throwable.class, () -> compile("data Nat ="));
+    assertThrows(Throwable.class, () -> compile("inductive Nat ="));
     var newNat = findContext("Nat");
     assertEquals(nat, newNat);
 
@@ -54,9 +54,9 @@ public class ReplCompilerTest {
   /** <a href="https://ice1000.jetbrains.space/im/group/4DLh053zIix6?message=2db0002db&channel=4DLh053zIix6">Bug report</a> */
   @Test public void reportedInSpace() {
     // success cases, we can find the definition in the context
-    compile("data Unit | unit");
+    compile("inductive Unit | unit");
     assertNotNull(findContext("Unit"));
-    compile("data What | what");
+    compile("inductive What | what");
     assertNotNull(findContext("What"));
     assertNotNull(findContext("Unit"));
   }

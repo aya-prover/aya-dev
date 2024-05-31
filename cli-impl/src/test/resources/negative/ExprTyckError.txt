@@ -110,11 +110,11 @@ Error: `prim Path` is expected to have a return type
 What are you doing?
 
 PiDom:
-In file $FILE:2:23 ->
+In file $FILE:2:28 ->
 
-  1 │   data X : Set
-  2 │   data Test : Type | con X
-    │                          ╰╯
+  1 │   inductive X : Set
+  2 │   inductive Test : Type | con X
+    │                               ╰╯
 
 Error: The type
          X
@@ -127,8 +127,8 @@ What are you doing?
 PiDomMeta:
 In file $FILE:4:19 ->
 
-  2 │   data infix = (a b : X) : Type
-  3 │   data Test : Type
+  2 │   inductive infix = (a b : X) : Type
+  3 │   inductive Test : Type
   4 │   | con (x : _) (y : X) (x = y)
     │                      ╰╯
 
@@ -139,8 +139,8 @@ Error: The type
 
 In file $FILE:4:11 ->
 
-  2 │   data infix = (a b : X) : Type
-  3 │   data Test : Type
+  2 │   inductive infix = (a b : X) : Type
+  3 │   inductive Test : Type
   4 │   | con (x : _) (y : X) (x = y)
     │              ╰╯
 

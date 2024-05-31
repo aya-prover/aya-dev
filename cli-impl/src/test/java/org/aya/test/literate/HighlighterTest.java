@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class HighlighterTest {
   @Test public void commonTests() {
     @Language("Aya") String code = """
-      open data Nat
+      open inductive Nat
       | O | S Nat
       
       def add Nat Nat : Nat
@@ -76,7 +76,7 @@ public class HighlighterTest {
   @Test public void incorrectTest() {
     assertThrows(Throwable.class, () -> {
       @Language("Aya") String code = """
-        open data List (A : Type)
+        open inductive List (A : Type)
         | nil
         | cons A (List A)
         """;
@@ -92,7 +92,7 @@ public class HighlighterTest {
     @Language("Aya") String code = """
       module X {}
       open X
-      open data Y
+      open inductive Y
       """;
 
     // TODO: enable this test when `SyntaxHighlight.foldModuleRef` is fixed
@@ -109,7 +109,7 @@ public class HighlighterTest {
 
   @Test public void params() {
     @Language("Aya") String code = """
-      open data Either (A B : Type)
+      open inductive Either (A B : Type)
       | Left A
       | Right B
       

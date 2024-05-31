@@ -34,14 +34,14 @@ public interface ExprTyckError {
     """;
 
   @Language("Aya") String testPiDom = """
-    data X : Set
-    data Test : Type | con X
+    inductive X : Set
+    inductive Test : Type | con X
     """;
 
   @Language("Aya") String testPiDomMeta = """
-    data X : Set
-    data infix = (a b : X) : Type
-    data Test : Type
+    inductive X : Set
+    inductive infix = (a b : X) : Type
+    inductive Test : Type
     | con (x : _) (y : X) (x = y)
     """;
 }

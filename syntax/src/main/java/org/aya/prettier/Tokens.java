@@ -37,7 +37,7 @@ public final class Tokens {
   public static final Doc KW_LET = Doc.styled(KEYWORD, "let");
   public static final Doc KW_IN = Doc.styled(KEYWORD, "in");
   public static final Doc KW_DEF = Doc.styled(KEYWORD, "def");
-  public static final Doc KW_DATA = Doc.styled(KEYWORD, "data");
+  public static final Doc KW_DATA = Doc.styled(KEYWORD, "inductive");
   public static final Doc PAT_ABSURD = Doc.styled(KEYWORD, "()");
   public static final Doc KW_TIGHTER = Doc.styled(KEYWORD, "tighter");
   public static final Doc KW_LOOSER = Doc.styled(KEYWORD, "looser");

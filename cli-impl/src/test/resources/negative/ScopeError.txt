@@ -1,17 +1,17 @@
 DidYouMeanDisamb:
-In file $FILE:2:17 ->
+In file $FILE:2:22 ->
 
-  1 │   open data Nat1 | zero
-  2 │   open data Nat2 | zero
-    │                    ╰──╯
+  1 │   open inductive Nat1 | zero
+  2 │   open inductive Nat2 | zero
+    │                         ╰──╯
   3 │   def one => zero
 
 Warning: The name `zero` shadows a previous local definition from outer scope
 
 In file $FILE:2:0 ->
 
-  1 │   open data Nat1 | zero
-  2 │   open data Nat2 | zero
+  1 │   open inductive Nat1 | zero
+  2 │   open inductive Nat2 | zero
     │   ╰──╯
   3 │   def one => zero
 
@@ -20,8 +20,8 @@ Warning: The name `zero` introduces ambiguity and can only be accessed through a
 
 In file $FILE:3:11 ->
 
-  1 │   open data Nat1 | zero
-  2 │   open data Nat2 | zero
+  1 │   open inductive Nat1 | zero
+  2 │   open inductive Nat2 | zero
   3 │   def one => zero
     │              ╰──╯
 
@@ -37,7 +37,7 @@ What are you doing?
 DidYouMean:
 In file $FILE:2:11 ->
 
-  1 │   data Nat | zero | suc Nat
+  1 │   inductive Nat | zero | suc Nat
   2 │   def one => suc zero
     │              ╰─╯
 
@@ -116,7 +116,7 @@ What are you doing?
 Issue247:
 In file $FILE:3:2 ->
 
-  1 │   data Z : Type
+  1 │   inductive Z : Type
   2 │   | zero
   3 │   | zero
     │     ╰──╯
@@ -154,7 +154,7 @@ What are you doing?
 UnknownVar:
 In file $FILE:2:9 ->
 
-  1 │   open data Nat : Type | zero
+  1 │   open inductive Nat : Type | zero
   2 │   def p => Nat::suc Nat::zero
     │            ╰──────╯
 

@@ -6,7 +6,7 @@ import org.intellij.lang.annotations.Language;
 
 public interface OperatorError {
   @Language("Aya") String testAmbiguous = """
-    open data Nat | zero | suc Nat
+    open inductive Nat | zero | suc Nat
     // Do not replace with the library definition, we need our own fixity
     def infix + (a b: Nat) : Nat => 0
     def infix == (a b: Nat) : Nat => 0
@@ -22,13 +22,13 @@ public interface OperatorError {
     """;
 
   @Language("Aya") String testIssue677 = """
-    data False
+    inductive False
     def fixl ¬ (A : Type) => A -> False
     def NonEmpty (A : Type) => ¬ ¬ A
     """;
 
   @Language("Aya") String testNoAssoc = """
-    open data Nat | zero | suc Nat
+    open inductive Nat | zero | suc Nat
     // Do not replace with the library definition, we need our own fixity
     def infixl + (a b: Nat) => 0
     def infixr ^ (a b : Nat) => 0
@@ -46,7 +46,7 @@ public interface OperatorError {
 
   // This should pass
   @Language("Aya") String testModuleImportRename = """
-    open data Nat | zero | suc Nat
+    open inductive Nat | zero | suc Nat
     module A {
       def infixl + (a b: Nat) => 0
     }

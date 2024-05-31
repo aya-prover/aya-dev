@@ -1,8 +1,8 @@
 Some preload definitions:
 
 ```aya
-open data Nat | zero | suc Nat
-open data Unit | unit
+open inductive Nat | zero | suc Nat
+open inductive Unit | unit
 ```
 
 Lately, **Daylily** told me an interesting problem about Aya's _pattern unification_.
@@ -15,7 +15,7 @@ def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => ze
 In order to make it irreducible, we make it a constructor of an inductive type:
 
 ```aya
-open data Wow : Type 2
+open inductive Wow : Type 2
 | wow {U : Type 1} {T : U -> Type} (A B : U) (x : T A) (y : T B)
 ```
 

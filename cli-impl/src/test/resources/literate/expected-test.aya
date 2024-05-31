@@ -1,5 +1,5 @@
       
-open data Unit | unit
+open inductive Unit | unit
    
 
                                                                     
@@ -27,7 +27,7 @@ def foo =>
                                                        
 
       
-open data Bool | true | false
+open inductive Bool | true | false
 
 def > (lhs rhs : Unit) : Bool =>
    

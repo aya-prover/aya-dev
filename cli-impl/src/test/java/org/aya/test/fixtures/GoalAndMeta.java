@@ -18,16 +18,16 @@ public interface GoalAndMeta {
 
   @Language("Aya") String testUnsolvedMetaLit = """
     open import arith::Nat
-    open data Nat2 | OO | SS Nat2
-    open data Option (A : Type)
+    open inductive Nat2 | OO | SS Nat2
+    open inductive Option (A : Type)
       | some A
     def test => some 114514
     """;
 
   @Language("Aya") String dontTestUnsolvedMetaLit = """
     open import arith::Nat
-    open data Nat2 | OO | SS Nat2
-    open data Empty
+    open inductive Nat2 | OO | SS Nat2
+    open inductive Empty
     
     def take Empty => Empty
     def test => take 114514
@@ -50,7 +50,7 @@ public interface GoalAndMeta {
 
   @Language("Aya") String testNorell = """
     open import arith::Nat
-    data Empty
+    inductive Empty
     def Neg (T : Type) => T -> Empty
     // Ulf's counterexample
     def test
@@ -67,9 +67,9 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testLiteralAmbiguous3 = """
-    open data List (A : Type) | nil | cons A (List A)
-    open data List2 (A : Type) | nil2 | cons2 A (List2 A)
-    open data Unit | unit
+    open inductive List (A : Type) | nil | cons A (List A)
+    open inductive List2 (A : Type) | nil2 | cons2 A (List2 A)
+    open inductive Unit | unit
     
     def good : List Unit => [ ]
     def bad => [ unit ]

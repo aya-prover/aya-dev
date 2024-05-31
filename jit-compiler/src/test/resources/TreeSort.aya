@@ -1,6 +1,6 @@
-open data Nat | O | S Nat
-open data Bool | True | False
-open data List Type
+open inductive Nat | O | S Nat
+open inductive Bool | True | False
+open inductive List Type
 | []
 | A => infixr :> A (List A)
 
@@ -8,12 +8,12 @@ def isZero (a : Nat) : Bool
 | 0 => True
 | _ => False
 
-open data Color | red | black
+open inductive Color | red | black
 def Decider (A : Type) => Fn (x y : A) -> Bool
 
 variable A : Type
 
-open data RBTree (A : Type) : Type
+open inductive RBTree (A : Type) : Type
 | rbLeaf
 | rbNode Color (RBTree A) A (RBTree A)
 

@@ -8,8 +8,8 @@ import org.intellij.lang.annotations.Language;
 public interface PatTyckError {
   // Issue2 746
   @Language("Aya") String testUnknownCon = """
-    open data Test1 | test1
-    open data Test2 | test2
+    open inductive Test1 | test1
+    open inductive Test2 | test2
     
     def test Test1 : Test1
     | test2 => test1
@@ -31,13 +31,13 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testSplitOnNonData = """
-    open data Unit | unit
+    open inductive Unit | unit
     def test (a : Type) : Type
      | unit y => a
     """;
 
   @Language("Aya") String testBadLiteral = """
-    open data Test | t
+    open inductive Test | t
     def not-conf Test : Test
     | 1 => t
     """;
@@ -83,13 +83,13 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testNewRepoIssue597 = """
-    open data Nat | O | S Nat
+    open inductive Nat | O | S Nat
     def bad Nat : Nat | S S O => O | _ => O
     """;
 
   @Language("Aya") String testNewRepoIssue746 = """
-    open data Test1 | test1
-    open data Test2 | test2
+    open inductive Test1 | test1
+    open inductive Test2 | test2
     def test Test1 : Test1
     | test2 => test1
     """;

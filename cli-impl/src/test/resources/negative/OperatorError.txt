@@ -29,7 +29,7 @@ What are you doing?
 Issue677:
 In file $FILE:3:27 ->
 
-  1 │   data False
+  1 │   inductive False
   2 │   def fixl ¬ (A : Type) => A -> False
   3 │   def NonEmpty (A : Type) => ¬ ¬ A
     │                              ╰╯
@@ -38,7 +38,7 @@ Error: There is no operand for this operator `¬`
 
 In file $FILE:3:4 ->
 
-  1 │   data False
+  1 │   inductive False
   2 │   def fixl ¬ (A : Type) => A -> False
   3 │   def NonEmpty (A : Type) => ¬ ¬ A
     │       ╰──────╯

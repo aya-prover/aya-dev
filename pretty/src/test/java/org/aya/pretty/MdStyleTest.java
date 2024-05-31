@@ -16,24 +16,24 @@ public class MdStyleTest {
     assertEquals("""
       # H1
       [Click me](https://google.com)
-            
+      
       ## H2
       ### H3
       #### H4
       ##### H5
       ###### H6
       > BlockQuote
-            
+      
       1\\. fake list
-            
+      
       I love Java.I love Aya.I love Aya's pretty printer.I love Java
-            
+      
       I love Aya
-            
+      
       I love Aya's pretty printer.
-            
+      
       ```aya
-      data Nat | zero | suc Nat
+      inductive Nat | zero | suc Nat
       ```
       Look! She is beautiful
       

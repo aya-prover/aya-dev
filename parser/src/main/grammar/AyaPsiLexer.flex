@@ -132,7 +132,7 @@ BLOCK_COMMENT_END   = "*/"
   "def"                 { return KW_DEF; }
   "class"               { return KW_CLASS; }
   "classifying"         { return KW_CLASSIFIYING; }
-  "data"                { return KW_DATA; }
+  "inductive"           { return KW_DATA; }
   "prim"                { return KW_PRIM; }
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }
@@ -140,7 +140,7 @@ BLOCK_COMMENT_END   = "*/"
   "self"                { return KW_SELF; }
   "elim"                { return KW_ELIM; }
   "override"            { return KW_OVERRIDE; }
-  "codata"              { return KW_CODATA; }
+  "cocoinductive"       { return KW_CODATA; }
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
   "completed"           { return KW_COMPLETED; }

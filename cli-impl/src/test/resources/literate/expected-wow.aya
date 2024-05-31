@@ -1,8 +1,8 @@
                          
 
       
-open data Nat | zero | suc Nat
-open data Unit | unit
+open inductive Nat | zero | suc Nat
+open inductive Unit | unit
    
 
                                                                                      
@@ -15,7 +15,7 @@ def wow-fun {U : Type} {T : U -> Type} (A B : U) (x : T A) (y : T B) : Nat => ze
                                                                                
 
       
-open data Wow : Type 2
+open inductive Wow : Type 2
 | wow {U : Type 1} {T : U -> Type} (A B : U) (x : T A) (y : T B)
    
 

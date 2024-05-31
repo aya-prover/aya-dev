@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PatternTyckTest {
   @Test public void elim0() {
     var result = tyck("""
-      open data Nat | O | S Nat
+      open inductive Nat | O | S Nat
       def lind (a b : Nat) : Nat elim a
       | 0 => b
       | S a' => S (lind a' b)
@@ -28,8 +28,8 @@ public class PatternTyckTest {
 
   @Test public void test1() {
     var result = tyck("""
-      open data Nat | O | S Nat
-      open data Vec Nat Type
+      open inductive Nat | O | S Nat
+      open inductive Vec Nat Type
       | 0, A => vnil
       | S n, A => infixr vcons A (Vec n A)
       
@@ -52,7 +52,7 @@ public class PatternTyckTest {
 
   @Test public void test2() {
     var result = tyck("""
-      open data Nat | O | S Nat
+      open inductive Nat | O | S Nat
       
       prim I : ISet
       prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
@@ -79,7 +79,7 @@ public class PatternTyckTest {
 
   @Test public void test3() {
     var result = tyck("""
-      open data Nat | O | S Nat
+      open inductive Nat | O | S Nat
       
       prim I : ISet
       prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
@@ -94,7 +94,7 @@ public class PatternTyckTest {
       | a, S b => S (a +' b)
       tighter =
       
-      open data Int
+      open inductive Int
       | pos Nat | neg Nat
       | zro : pos 0 = neg 0
       
@@ -114,8 +114,8 @@ public class PatternTyckTest {
 
   @Test public void test4() {
     assertTrue(tyck("""
-      open data Nat | O | S Nat
-      open data Fin Nat
+      open inductive Nat | O | S Nat
+      open inductive Fin Nat
       | 1 => fzero
       | S n => fsucc (Fin n)
       
@@ -125,8 +125,8 @@ public class PatternTyckTest {
 
   @Test public void issue630() {
     assertTrue(tyck("""
-      open data Nat | O | S Nat
-      open data INat (n : Nat)
+      open inductive Nat | O | S Nat
+      open inductive INat (n : Nat)
       | O => zero
       | S n' => +-one
       | S (S n') => +-two
@@ -140,12 +140,12 @@ public class PatternTyckTest {
   @Test
   public void test5() {
     @Language("Aya") var code = """
-      open data Nat | O | S Nat
-      open data Vec Type Nat
+      open inductive Nat | O | S Nat
+      open inductive Vec Type Nat
       | A, O => vnil
       | A, S n => vcons A (Vec A n)
-            
-      open data MatchMe (n : Nat) (Vec Nat n)
+      
+      open inductive MatchMe (n : Nat) (Vec Nat n)
       | S n', vcons v xs => matched
 
       def checkMe {n : Nat} (m : Nat) {v : Vec Nat n} (MatchMe n v) : Nat
