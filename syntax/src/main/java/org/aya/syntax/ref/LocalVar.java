@@ -29,12 +29,8 @@ public record LocalVar(
   }
 
   public static @NotNull LocalVar from(@NotNull WithPos<String> id) {
-    return make(id.data(), id.sourcePos());
-  }
-
-  public static @NotNull LocalVar make(@Nullable String name, @NotNull SourcePos sourcePos) {
-    if (name == null) return new LocalVar("_", sourcePos);
-    return new LocalVar(name, sourcePos);
+    if (id.data() == null) return new LocalVar("_", id.sourcePos());
+    return new LocalVar(id.data(), id.sourcePos());
   }
 
   public static final @NotNull LocalVar IGNORED = new LocalVar("_", SourcePos.NONE);

@@ -182,3 +182,20 @@ Error: Unable to solve the type of this literal:
 1 error(s), 0 warning(s).
 What are you doing?
 
+NonPattern:
+In file $FILE:9:3 ->
+
+  6 │       def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  7 │         => Path (fn i => Vec (+-assoc i) A)
+  8 │         (xs ++ (ys ++ zs))
+    │          ╰──────────────╯ ?a n A m o xs ys zs 0 >= n, ?b n A m o xs ys zs 0 >= m,
+                                ?c n A m o xs ys zs 0 >= o
+  9 │         ((xs ++ ys) ++ zs)
+    │          ╰──────────────╯
+    │          ╰──────────────╯ ?a n A m o xs ys zs 1 >= n, ?b n A m o xs ys zs 1 >= m,
+                                ?c n A m o xs ys zs 1 >= o
+
+Info: Solving equation(s) with not very general solution(s)
+
+That looks right!
+

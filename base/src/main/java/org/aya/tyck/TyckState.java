@@ -5,10 +5,10 @@ package org.aya.tyck;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.AyaDocile;
-import org.aya.primitive.PrimFactory;
-import org.aya.primitive.ShapeFactory;
 import org.aya.prettier.FindUsage;
 import org.aya.pretty.doc.Doc;
+import org.aya.primitive.PrimFactory;
+import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
@@ -48,9 +48,14 @@ public record TyckState(
   }
 
   public void solveMetas(@NotNull Reporter reporter) {
+    int postSimplificationSize = -1;
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
+      if (postSimplificationSize == eqns.size()) {
+        // TODO: report error, cannot solve eqns
+        throw new UnsupportedOperationException("TODO: cannot find solution");
+      } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       var eqns = this.eqns.toImmutableSeq();
       if (eqns.isNotEmpty()) {
