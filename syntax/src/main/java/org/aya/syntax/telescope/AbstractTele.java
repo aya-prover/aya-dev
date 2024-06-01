@@ -43,7 +43,7 @@ public interface AbstractTele {
           make(i + 1, args.appended(arg))));
     }
   }
-  default @NotNull AbstractTele lift(int i) { return new Lift(this, i); }
+  default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
   record Lift(
     @NotNull AbstractTele signature,
     int lift
@@ -73,7 +73,9 @@ public interface AbstractTele {
       return result.instantiateTele(teleArgs.view());
     }
   }
-  default @NotNull AbstractTele prefix(int i) { return new Slice(this, i); }
+  default @NotNull AbstractTele prefix(int i) {
+    return i == telescopeSize() ? this : new Slice(this, i);
+  }
   record Slice(
     @NotNull AbstractTele signature,
     @Override int telescopeSize
