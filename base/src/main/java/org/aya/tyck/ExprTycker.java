@@ -280,7 +280,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     @NotNull ImmutableSeq<Expr.NamedArg> args
   ) {
     try {
-      var result = doCheckApplication(f.var(), lift, args);
+      var result = doCheckApplication(sourcePos, f.var(), lift, args);
       addWithTerm(f, sourcePos, result.type());
       return result;
     } catch (NotPi notPi) {
@@ -290,23 +290,26 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   }
 
   private @NotNull Jdg doCheckApplication(
-    @NotNull AnyVar f, int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
+    @NotNull SourcePos sourcePos, @NotNull AnyVar f,
+    int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
       case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref)).lift(lift);
       case LocalVar lVar -> generateApplication(args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content,
-        new AppTycker.CheckAppData<>(state, lift, (params, k) -> computeArgs(args, params, k)));
+        new AppTycker.CheckAppData<>(state, lift, (params, k) ->
+          computeArgs(sourcePos, args, params, k)));
       case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar,
-        new AppTycker.CheckAppData<>(state, lift, (params, k) -> computeArgs(args, params, k)));
+        new AppTycker.CheckAppData<>(state, lift, (params, k) ->
+          computeArgs(sourcePos, args, params, k)));
       default -> throw new UnsupportedOperationException("TODO");
     };
   }
 
   private Jdg computeArgs(
-    @NotNull ImmutableSeq<Expr.NamedArg> args,
-    AbstractTele params, Function<Term[], Jdg> k
+    @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
+    @NotNull AbstractTele params, @NotNull Function<Term[], Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
     var result = new Term[params.telescopeSize()];
@@ -335,7 +338,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
-      result[paramIx++] = mockTerm(param, SourcePos.NONE);
+      result[paramIx++] = mockTerm(param, pos);
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
