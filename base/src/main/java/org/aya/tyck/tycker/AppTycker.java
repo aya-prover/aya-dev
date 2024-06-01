@@ -76,7 +76,7 @@ public interface AppTycker {
     var dataVar = conVar.dataRef();
 
     // ownerTele + selfTele
-    var fullSignature = conVar.signature();
+    var fullSignature = conVar.signature().lift(lift);
 
     return makeArgs.applyChecked(fullSignature, args -> {
       var realArgs = ImmutableArray.from(args);
@@ -94,7 +94,7 @@ public interface AppTycker {
   }
   private static <Ex extends Exception> Jdg
   checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, PrimDefLike primVar) throws Ex {
-    var signature = primVar.signature();
+    var signature = primVar.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
       state.primFactory().unfold(new PrimCall(primVar, lift, ImmutableArray.from(args)), state),
       signature.result(args)
@@ -102,7 +102,7 @@ public interface AppTycker {
   }
   private static <Ex extends Exception> Jdg
   checkDataCall(@NotNull Factory<Ex> makeArgs, int lift, DataDefLike data) throws Ex {
-    var signature = new AbstractTele.Lift(data.signature(), lift);
+    var signature = data.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
       new DataCall(data, lift, ImmutableArray.from(args)),
       signature.result(args)
@@ -112,7 +112,7 @@ public interface AppTycker {
     @NotNull Factory<Ex> makeArgs, int lift, FnDefLike fnDef,
     Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
-    var signature = fnDef.signature();
+    var signature = fnDef.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);

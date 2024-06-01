@@ -43,6 +43,7 @@ public interface AbstractTele {
           make(i + 1, args.appended(arg))));
     }
   }
+  default @NotNull AbstractTele lift(int i) { return new Lift(this, i); }
   record Lift(
     @NotNull AbstractTele signature,
     int lift
