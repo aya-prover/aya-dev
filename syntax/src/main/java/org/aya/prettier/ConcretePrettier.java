@@ -429,7 +429,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   public Doc visitBindBlock(@NotNull BindBlock bindBlock) {
     if (bindBlock == BindBlock.EMPTY) return Doc.empty();
     var loosers = bindBlock.resolvedLoosers().get();
+    if (loosers == null) loosers = ImmutableSeq.empty();
     var tighters = bindBlock.resolvedTighters().get();
+    if (tighters == null) tighters = ImmutableSeq.empty();
     if (loosers.isEmpty() && tighters.isEmpty()) return Doc.empty();
 
     if (loosers.isEmpty()) return Doc.cat(Doc.line(), Doc.hang(2, Doc.sep(
