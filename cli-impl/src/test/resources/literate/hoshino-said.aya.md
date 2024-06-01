@@ -7,7 +7,7 @@ variable Hoshino : Type
 So, `Hoshino -> Hoshino`{} is a thing.
 
 ```aya
-data Nat | O | S Nat
+inductive Nat | O | S Nat
 prim I : ISet
 prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
 prim coe

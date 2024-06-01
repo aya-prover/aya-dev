@@ -36,6 +36,7 @@ import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
+import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -83,13 +84,15 @@ public class ReplCompiler {
     var resolvedExpr = ExprResolver.resolveLax(context, expr);
     // in case we have un-messaged TyckException
     try (var delayedReporter = new DelayedReporter(reporter)) {
-      var tycker = new ExprTycker(tcState, delayedReporter);
+      tcState.clearTmp();
+      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter));
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
-      return tycker.zonk(tycker.synthesize(desugar));
+      return tycker.checkInlineCode(desugar.params(), desugar.expr());
     }
   }
 
-  private @NotNull WithPos<Expr> desugarExpr(@NotNull WithPos<Expr> expr, @NotNull Reporter reporter) {
+  private @NotNull ExprResolver.LiterateResolved
+  desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
     var ctx = new EmptyContext(reporter, Path.of("dummy")).derive("dummy");
     var resolveInfo = new ResolveInfo(ctx, primFactory, shapeFactory, opSet);
     return expr.descent(new Desalt(resolveInfo));

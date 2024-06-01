@@ -8,8 +8,8 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.generic.Constants;
-import org.aya.primitive.PrimFactory;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
@@ -82,7 +82,7 @@ public class AyaMdParserTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"test", "wow", /*"hoshino-said",*/ "heading", "compiler-output"})
+  @ValueSource(strings = {"test", "wow", "hoshino-said", "heading", "compiler-output"})
   public void testHighlight(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));

@@ -15,6 +15,7 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
+import org.aya.tyck.Jdg;
 import org.aya.tyck.error.UnifyError;
 import org.aya.unify.Synthesizer;
 import org.aya.util.error.WithPos;
@@ -27,7 +28,7 @@ public sealed interface TeleTycker extends Contextful {
    *
    * @return well-typed type or {@link ErrorTerm}
    */
-  @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr);
+  @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult);
 
   /**
    * @return a locally nameless signature computed from what's in the localCtx.
@@ -39,7 +40,7 @@ public sealed interface TeleTycker extends Contextful {
   ) {
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     var checkedParam = checkTele(cTele);
-    var checkedResult = checkType(result).bindTele(locals.view());
+    var checkedResult = checkType(result, true).bindTele(locals.view());
     return new Signature(checkedParam, checkedResult);
   }
 
@@ -61,7 +62,7 @@ public sealed interface TeleTycker extends Contextful {
   @Contract(pure = true)
   default @NotNull MutableSeq<Param> checkTeleFree(ImmutableSeq<Expr.Param> cTele) {
     return MutableSeq.from(cTele.view().map(p -> {
-      var pTy = checkType(p.typeExpr());
+      var pTy = checkType(p.typeExpr(), false);
       localCtx().put(p.ref(), pTy);
       return new Param(p.ref().name(), pTy, p.explicit());
     }));
@@ -108,14 +109,30 @@ public sealed interface TeleTycker extends Contextful {
   }
 
   record Default(@Override @NotNull ExprTycker tycker) implements Impl {
-    @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr) {
+    @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
       return tycker.ty(typeExpr);
     }
   }
 
+  final class InlineCode implements Impl {
+    private final @NotNull ExprTycker tycker;
+    public Jdg result;
+    public InlineCode(@NotNull ExprTycker tycker) { this.tycker = tycker; }
+    public @NotNull Jdg checkInlineCode(@NotNull ImmutableSeq<Expr.Param> params, @NotNull WithPos<Expr> expr) {
+      checkSignature(params, expr);
+      return this.result.map(tycker()::zonk);
+    }
+    @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
+      if (!isResult) return tycker.ty(typeExpr);
+      var jdg = tycker.synthesize(typeExpr);
+      result = jdg;
+      return jdg.wellTyped();
+    }
+    @Override public @NotNull ExprTycker tycker() { return tycker; }
+  }
+
   record Con(@NotNull ExprTycker tycker, @NotNull SortTerm dataResult) implements Impl {
-    @Override
-    public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr) {
+    @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
       var result = tycker.ty(typeExpr);
       if (!new Synthesizer(tycker).inheritPiDom(result, dataResult)) {
         tycker.fail(new UnifyError.PiDom(typeExpr.data(), typeExpr.sourcePos(), result, dataResult));
