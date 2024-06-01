@@ -10,14 +10,19 @@ import org.aya.cli.literate.SyntaxHighlight;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
 import org.aya.normalize.Normalizer;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.salt.Desalt;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.literate.AyaLiterate;
+import org.aya.syntax.literate.CodeOptions;
+import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFile;
@@ -58,19 +63,25 @@ public record LiterateData(
   }
 
   public void tyck(@NotNull ResolveInfo info) {
-    var tycker = info.newTycker();
     extractedExprs.forEach(c -> {
       assert c.expr != null;
       assert c.params != null;
-      c.tyckResult = tycker.subscoped(() -> {
-        var teleTycker = new TeleTycker.InlineCode(tycker);
-        var result = teleTycker.checkInlineCode(c.params, c.expr);
-        var normalizer = new Normalizer(tycker.state);
-        return new AyaLiterate.TyckResult(
-          normalizer.normalize(result.wellTyped(), c.options.mode()),
-          normalizer.normalize(result.type(), c.options.mode())
-        );
-      });
+      if (c.options.mode() == CodeOptions.NormalizeMode.NULL
+        && c.expr.data() instanceof Expr.Ref ref
+        && ref.var() instanceof DefVar<?, ?> defVar) {
+        assert defVar.signature != null;
+        c.tyckResult = new AyaLiterate.TyckResult(new ErrorTerm(opt ->
+          BasePrettier.defVar(defVar)), defVar.signature.makePi());
+        return;
+      }
+      var tycker = info.newTycker();
+      var teleTycker = new TeleTycker.InlineCode(tycker);
+      var result = teleTycker.checkInlineCode(c.params, c.expr);
+      var normalizer = new Normalizer(tycker.state);
+      c.tyckResult = new AyaLiterate.TyckResult(
+        normalizer.normalize(result.wellTyped(), c.options.mode()),
+        normalizer.normalize(result.type(), c.options.mode())
+      );
     });
   }
 
