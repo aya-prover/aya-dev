@@ -14,7 +14,8 @@ public class SyntaxTest {
       import Prelude
       module MyMod {}
       prim I
-      def foo (f : Type -> Type 0) (a : Type 0) : Type 0 => f a
+      def foo (f : Type -> Type 0) (a : Type 0) =>
+        [ f a ]
       def bar (A : Type 0) : A -> A => fn x => {? x ?}
       open inductive Nat | O | S Nat
       open inductive Fin Nat
@@ -24,10 +25,9 @@ public class SyntaxTest {
       | 0, a => a
       | S a, b => S (a + b)
       def infixl +' Nat Nat : Nat => fn a b =>
-        let open Nat
-        in let n := a + b
-        in n
-      tighter +
+        let open Nat in
+        let n := a + b in n
+      tighter + looser +
       """);
     for (var stmt : res) {
       assertNotNull(stmt.toDoc(AyaPrettierOptions.debug()).debugRender());
