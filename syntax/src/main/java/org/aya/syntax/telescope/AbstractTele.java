@@ -57,6 +57,7 @@ public interface AbstractTele {
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return signature.result(teleArgs).elevate(lift);
     }
+    @Override public @NotNull AbstractTele lift(int i) { return new Lift(signature, lift + i); }
   }
   record Locns(
     @NotNull ImmutableSeq<Param> telescope,
@@ -87,6 +88,9 @@ public interface AbstractTele {
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return ErrorTerm.DUMMY;
+    }
+    @Override public @NotNull AbstractTele prefix(int i) {
+      return new Slice(signature, i);
     }
   }
 }
