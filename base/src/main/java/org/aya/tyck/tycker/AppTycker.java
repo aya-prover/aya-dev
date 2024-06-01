@@ -25,14 +25,14 @@ import java.util.function.Function;
 public interface AppTycker {
   @FunctionalInterface
   interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<JitTele, Function<Term[], Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTelescope, Function<Term[], Jdg>, Jdg, Ex> {
   }
   record CheckAppData<Ex extends Exception>(
     @NotNull TyckState state, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
   static <Ex extends Exception> @NotNull Jdg
-  checkCompiledApplication(@NotNull JitTele def, CheckAppData<Ex> input) throws Ex {
+  checkCompiledApplication(@NotNull AbstractTelescope def, CheckAppData<Ex> input) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();

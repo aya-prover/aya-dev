@@ -8,6 +8,7 @@ import org.aya.generic.NameGenerator;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.compile.AbstractTelescope;
 import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -348,13 +349,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareMany(
     @NotNull ImmutableSeq<Term> list,
     @NotNull ImmutableSeq<Term> rist,
-    int ulift, @NotNull JitTele types
+    int ulift, @NotNull AbstractTelescope types
   ) {
     assert list.sizeEquals(rist);
-    assert rist.sizeEquals(types.telescopeSize);
-    var argsCum = new Term[types.telescopeSize];
+    assert rist.sizeEquals(types.telescopeSize());
+    var argsCum = new Term[types.telescopeSize()];
 
-    for (var i = 0; i < types.telescopeSize; ++i) {
+    for (var i = 0; i < types.telescopeSize(); ++i) {
       var l = list.get(i);
       var r = rist.get(i);
       var ty = whnf(types.telescope(i, argsCum)).elevate(ulift);

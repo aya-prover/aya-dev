@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
 import org.aya.generic.Constants;
-import org.aya.syntax.compile.JitTele;
+import org.aya.syntax.compile.AbstractTelescope;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
@@ -306,11 +306,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private Jdg computeArgs(
     @NotNull ImmutableSeq<Expr.NamedArg> args,
-    JitTele params, Function<Term[], Jdg> k
+    AbstractTelescope params, Function<Term[], Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
-    var result = new Term[params.telescopeSize];
-    while (argIx < args.size() && paramIx < params.telescopeSize) {
+    var result = new Term[params.telescopeSize()];
+    while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       var param = params.telescopeRich(paramIx, result);
       // Implicit insertion
@@ -332,15 +332,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       argIx++;
     }
     // Trailing implicits
-    while (paramIx < params.telescopeSize) {
-      if (params.telescopeLicit[paramIx]) break;
+    while (paramIx < params.telescopeSize()) {
+      if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
       result[paramIx++] = mockTerm(param, SourcePos.NONE);
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
       return generateApplication(args.drop(argIx), k.apply(result));
-    } else while (paramIx < params.telescopeSize) {
+    } else while (paramIx < params.telescopeSize()) {
       var param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));

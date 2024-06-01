@@ -3,38 +3,19 @@
 package org.aya.syntax.compile;
 
 import kala.collection.Seq;
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A Jit telescope, which is efficient when instantiating parameters/result, but not friendly with DeBruijn Index.
  */
-public abstract class JitTele {
+public abstract class JitTele implements AbstractTelescope {
   public final int telescopeSize;
   public final boolean[] telescopeLicit;
   public final String[] telescopeNames;
-
-  /**
-   * @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
-   */
-  public final @NotNull Term telescope(int i, Term[] teleArgs) {
-    return telescope(i, ImmutableArray.Unsafe.wrap(teleArgs));
-  }
-  public abstract @NotNull Term telescope(int i, Seq<Term> teleArgs);
-  public Param telescopeRich(int i, Term... teleArgs) {
-    return new Param(telescopeNames[i], telescope(i, teleArgs), telescopeLicit[i]);
-  }
-
-  public final @NotNull Term result(Term... teleArgs) {
-    return result(ImmutableArray.Unsafe.wrap(teleArgs));
-  }
-  public abstract @NotNull Term result(Seq<Term> teleArgs);
 
   protected JitTele(int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames) {
     this.telescopeSize = telescopeSize;
@@ -42,16 +23,9 @@ public abstract class JitTele {
     this.telescopeNames = telescopeNames;
   }
 
-  public @NotNull Term makePi() {
-    return new PiBuilder().make(0, ImmutableSeq.empty());
-  }
-
-  private class PiBuilder {
-    public @NotNull Term make(int i, ImmutableSeq<Term> args) {
-      return i == telescopeSize ? result(args) :
-        new PiTerm(telescope(i, args), new Closure.Jit(arg -> make(i + 1, args.appended(arg))));
-    }
-  }
+  @Override public int telescopeSize() { return telescopeSize; }
+  @Override public boolean telescopeLicit(int i) { return telescopeLicit[i]; }
+  @Override public @NotNull String telescopeName(int i) { return telescopeNames[i]; }
 
   public static class LocallyNameless extends JitTele {
     public final ImmutableSeq<Param> telescope;
@@ -73,12 +47,16 @@ public abstract class JitTele {
       return result.instantiateTele(teleArgs.view());
     }
   }
-  public static class TeleSlice extends JitTele {
-    private final JitTele signature;
-    public TeleSlice(@NotNull JitTele signature, int i) {
-      super(i, signature.telescopeLicit, signature.telescopeNames);
+  public static class TeleSlice implements AbstractTelescope {
+    private final AbstractTelescope signature;
+    private final int size;
+    public TeleSlice(@NotNull AbstractTelescope signature, int size) {
       this.signature = signature;
+      this.size = size;
     }
+    @Override public int telescopeSize() { return size; }
+    @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i); }
+    @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       return signature.telescope(i, teleArgs);
     }
