@@ -4,7 +4,6 @@ package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.range.primitive.IntRange;
-import org.aya.generic.NameGenerator;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
@@ -12,6 +11,7 @@ import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.telescope.JitTele;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 
@@ -121,7 +121,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
   }
 
   /**
-   * @see org.aya.syntax.compile.JitTele#telescope(int, Term...)
+   * @see JitTele#telescope(int, Term...)
    */
   protected void buildTelescope(@NotNull T unit, @NotNull String iTerm, @NotNull String teleArgsTerm) {
     @NotNull ImmutableSeq<Param> tele = unit.telescope();
@@ -130,7 +130,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
   }
 
   /**
-   * @see org.aya.syntax.compile.JitTele#result
+   * @see JitTele#result
    */
   protected void buildResult(@NotNull T unit, @NotNull String teleArgsTerm) {
     buildReturn(serializeTermUnderTele(unit.result(), teleArgsTerm, unit.telescope().size()));

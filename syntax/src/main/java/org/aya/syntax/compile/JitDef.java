@@ -7,6 +7,7 @@ import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
 import org.aya.syntax.ref.QPath;
+import org.aya.syntax.telescope.JitTele;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;

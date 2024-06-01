@@ -5,7 +5,10 @@ package org.aya.tyck.tycker;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.*;
+import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
@@ -15,6 +18,7 @@ import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.Panic;
@@ -25,14 +29,14 @@ import java.util.function.Function;
 public interface AppTycker {
   @FunctionalInterface
   interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTelescope, Function<Term[], Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
   record CheckAppData<Ex extends Exception>(
     @NotNull TyckState state, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
   static <Ex extends Exception> @NotNull Jdg
-  checkCompiledApplication(@NotNull AbstractTelescope def, CheckAppData<Ex> input) throws Ex {
+  checkCompiledApplication(@NotNull AbstractTele def, CheckAppData<Ex> input) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();
@@ -98,7 +102,7 @@ public interface AppTycker {
   }
   private static <Ex extends Exception> Jdg
   checkDataCall(@NotNull Factory<Ex> makeArgs, int lift, DataDefLike data) throws Ex {
-    var signature = data.signature();
+    var signature = new AbstractTele.Lift(data.signature(), lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
       new DataCall(data, lift, ImmutableArray.from(args)),
       signature.result(args)

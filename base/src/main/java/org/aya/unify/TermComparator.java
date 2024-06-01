@@ -8,8 +8,6 @@ import org.aya.generic.NameGenerator;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.syntax.compile.AbstractTelescope;
-import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -20,6 +18,7 @@ import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.tycker.AbstractTycker;
@@ -99,12 +98,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
     // since dataArgs live in a separate telescope
     var lHead = lCon.head();
-    var slice = new JitTele.TeleSlice(lHead.ref().signature(), lHead.ref().ownerTeleSize());
+    var slice = lHead.ref().signature().prefix(lHead.ref().ownerTeleSize());
     if (null == compareMany(lHead.ownerArgs(),
       rCon.head().ownerArgs(), lHead.ulift(), slice))
       return null;
     if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
-      new JitTele.LocallyNameless(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
+      new AbstractTele.Locns(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
       return null;
     return new Synthesizer(nameGen, this).synth(lCon);
   }
@@ -208,7 +207,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         var list = ImmutableSeq.fill(size, i -> ProjTerm.make(lhs, i));
         var rist = ImmutableSeq.fill(size, i -> ProjTerm.make(rhs, i));
 
-        var telescopic = new JitTele.LocallyNameless(paramSeq.map(p -> new Param("_", p, true)), ErrorTerm.DUMMY);
+        var telescopic = new AbstractTele.Locns(paramSeq.map(p -> new Param("_", p, true)), ErrorTerm.DUMMY);
         yield compareMany(list, rist, 0, telescopic) != null;
       }
       default -> compareUntyped(lhs, rhs) != null;
@@ -349,7 +348,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareMany(
     @NotNull ImmutableSeq<Term> list,
     @NotNull ImmutableSeq<Term> rist,
-    int ulift, @NotNull AbstractTelescope types
+    int ulift, @NotNull AbstractTele types
   ) {
     assert list.sizeEquals(rist);
     assert rist.sizeEquals(types.telescopeSize());

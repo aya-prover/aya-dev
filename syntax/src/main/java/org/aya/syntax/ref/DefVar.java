@@ -3,8 +3,8 @@
 package org.aya.syntax.ref;
 
 import org.aya.syntax.concrete.stmt.decl.Decl;
-import org.aya.syntax.core.def.Signature;
 import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.telescope.Signature;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

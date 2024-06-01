@@ -50,8 +50,8 @@ public sealed interface Term extends Serializable, AyaDocile
    * @see Closure#apply(Term)
    * @see Closure#mkConst
    */
-  default @NotNull Closure.Idx bind(@NotNull LocalVar var) {
-    return new Closure.Idx(bindAt(var, 0));
+  default @NotNull Closure.Locns bind(@NotNull LocalVar var) {
+    return new Closure.Locns(bindAt(var, 0));
   }
 
   /**

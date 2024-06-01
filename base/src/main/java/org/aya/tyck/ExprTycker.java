@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
 import org.aya.generic.Constants;
-import org.aya.syntax.compile.AbstractTelescope;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
@@ -25,6 +24,7 @@ import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.*;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.tycker.AbstractTycker;
@@ -306,7 +306,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private Jdg computeArgs(
     @NotNull ImmutableSeq<Expr.NamedArg> args,
-    AbstractTelescope params, Function<Term[], Jdg> k
+    AbstractTele params, Function<Term[], Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
     var result = new Term[params.telescopeSize()];
