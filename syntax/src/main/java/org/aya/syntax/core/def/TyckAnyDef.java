@@ -2,10 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
-import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef 
   @Override public final @Nullable Assoc assoc() { return ref.assoc(); }
   @Override
   public @NotNull QName qualifiedName() { return new QName(ref); }
-  @Override public @NotNull JitTele signature() { return TyckDef.defSignature(ref); }
+  @Override public @NotNull AbstractTele signature() { return TyckDef.defSignature(ref); }
   @Override public boolean equals(Object obj) {
     return obj instanceof TyckAnyDef<?> that && ref.equals(that.ref);
   }

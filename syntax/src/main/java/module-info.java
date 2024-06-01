@@ -30,4 +30,5 @@ module aya.syntax {
   exports org.aya.syntax;
   exports org.aya.generic.term;
   exports org.aya.generic.stmt;
+  exports org.aya.syntax.telescope;
 }

@@ -6,15 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.NameGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public abstract class AbstractExprializer<T> {
   protected final @NotNull NameGenerator nameGen;
 
   protected AbstractExprializer(@NotNull NameGenerator nameGen) { this.nameGen = nameGen; }
 
-  protected @NotNull String makeNew(@NotNull String className, T... terms) {
-    return ImmutableSeq.from(terms).map(this::doSerialize).joinToString(ExprializeUtils.SEP, STR."new \{className}(", ")");
+  @SafeVarargs protected final @NotNull String makeAppNew(@NotNull String className, T... terms) {
+    return ImmutableSeq.from(terms).joinToString(ExprializeUtils.SEP,
+      STR."new \{className}(", ").make()", this::doSerialize);
   }
 
   protected @NotNull String serializeToImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<T> terms) {

@@ -57,7 +57,7 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
     var i = 0;
     while (pre.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(new Param(Integer.toString(i++), param, true));
-      term = body.toDBI().body();
+      term = body.toLocns().body();
     }
 
     return new UnpiRaw(params.toImmutableSeq(), term);
@@ -98,6 +98,6 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
   }
 
   @ForLSP public static @NotNull Term make(@NotNull SeqView<@NotNull Term> telescope, @NotNull Term body) {
-    return telescope.foldRight(body, (param, cod) -> new PiTerm(param, new Closure.Idx(cod)));
+    return telescope.foldRight(body, (param, cod) -> new PiTerm(param, new Closure.Locns(cod)));
   }
 }

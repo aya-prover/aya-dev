@@ -4,8 +4,8 @@ package org.aya.syntax.core.def;
 
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.ref.*;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
@@ -52,5 +52,5 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDe
     };
   }
 
-  @NotNull JitTele signature();
+  @NotNull AbstractTele signature();
 }

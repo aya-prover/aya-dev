@@ -72,7 +72,7 @@ public class PrimFactory {
     var s = LocalVar.generate("s");
     var A = LocalVar.generate("A");
     // Eta-expanded A
-    var closureA = new Closure.Idx(new AppTerm(new FreeTerm(A), new LocalTerm(0)));
+    var closureA = new Closure.Locns(new AppTerm(new FreeTerm(A), new LocalTerm(0)));
     var result = familyI2J(closureA, new FreeTerm(r), new FreeTerm(s))
       .bindTele(ImmutableSeq.of(r, s, A).view());
 

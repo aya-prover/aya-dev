@@ -96,14 +96,16 @@ public class LspTest {
 
     var result0 = client.service.hover(param);
     assertTrue(result0.isPresent());
-    assertEquals("<a href=\"#Nat-Core-Nat\"><span style=\"color:#218c21;\">Nat</span></a>",
+    assertEquals("""
+        <a href="#Nat-Core-Nat"><span style="color:#218c21;">Nat</span></a>""",
       result0.get().contents.getFirst().value);
 
     client.service.updateServerOptions(new ServerOptions(new ServerRenderOptions("IntelliJ", null, RenderOptions.OutputTarget.HTML)));
 
     var result1 = client.service.hover(param);
     assertTrue(result1.isPresent());
-    assertEquals("<a href=\"#Nat-Core-Nat\"><span style=\"color:#000000;\">Nat</span></a>",
+    assertEquals("""
+        <a href="#Nat-Core-Nat"><span style="color:#000000;">Nat</span></a>""",
       result1.get().contents.getFirst().value);
   }
 

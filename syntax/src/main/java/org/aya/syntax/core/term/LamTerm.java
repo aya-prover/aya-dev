@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record LamTerm(Closure body) implements StableWHNF {
   public LamTerm(Term indexedBody) {
-    this(new Closure.Idx(indexedBody));
+    this(new Closure.Locns(indexedBody));
   }
   @Override public @NotNull LamTerm descent(@NotNull IndexedFunction<Term, Term> f) {
     var result = body.descent(f);

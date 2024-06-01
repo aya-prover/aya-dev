@@ -16,3 +16,7 @@ def test (xs' : Vec A n) (ys' : Vec A m) : Nat
 def testBetter (xs : Vec A n) (ys : Vec A m) : Nat elim xs
 | vnil => 0
 | x :> xs' => 0
+
+open inductive List (A : Type) | nil | infixr :< A (List A)
+
+def arr : List Nat => [ 1, 2, 3 ]

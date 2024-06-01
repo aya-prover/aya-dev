@@ -3,7 +3,11 @@ open import arith::Nat
 open import Paths
 
 variable n m o : Nat
-variable A : Type
+variable A B : Type
 
-//def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
-//  => Path (fn i => Vec (+-assoc i) A) ((xs ++ ys) ++ zs) (xs ++ (ys ++ zs))
+def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  => Path (fn i => Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs)
+
+def cast (p : A ↑ = B) : A -> B => ↑ coe 0 1 (fn i => p i)
+def ++-assoc-ty-cast (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  => cast (↑ pmap (fn n => Vec n A) +-assoc) (xs ++ (ys ++ zs)) = ((xs ++ ys) ++ zs)

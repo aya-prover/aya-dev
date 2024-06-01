@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
+import static org.aya.compiler.AyaSerializer.CLASS_PANIC;
 import static org.aya.compiler.ExprializeUtils.getJavaReference;
 import static org.aya.compiler.ExprializeUtils.makeString;
-import static org.aya.compiler.AyaSerializer.CLASS_PANIC;
 
 public interface SourceBuilder {
   final class Default implements SourceBuilder {
@@ -29,24 +29,10 @@ public interface SourceBuilder {
       this.indent = indent;
       this.nameGenerator = nameGenerator;
     }
-
-    @Override
-    public @NotNull StringBuilder builder() {
-      return builder;
-    }
-
-    @Override
-    public int indent() {
-      return indent;
-    }
-
-    @Override
-    public @NotNull NameGenerator nameGen() {
-      return nameGenerator;
-    }
-
-    @Override
-    public void runInside(@NotNull Runnable runnable) {
+    @Override public @NotNull StringBuilder builder() { return builder; }
+    @Override public int indent() { return indent; }
+    @Override public @NotNull NameGenerator nameGen() { return nameGenerator; }
+    @Override public void runInside(@NotNull Runnable runnable) {
       indent++;
       runnable.run();
       indent--;
@@ -112,19 +98,9 @@ public interface SourceBuilder {
     runInside(continuation);
     appendLine("} while (false);");
   }
-
-  default void buildBreak() {
-    appendLine("break;");
-  }
-
-  default void buildReturn(@NotNull String retWith) {
-    appendLine(STR."return \{retWith};");
-  }
-
-  default void buildComment(@NotNull String comment) {
-    appendLine("// " + comment);
-  }
-
+  default void buildBreak() { appendLine("break;"); }
+  default void buildReturn(@NotNull String retWith) { appendLine(STR."return \{retWith};"); }
+  default void buildComment(@NotNull String comment) { appendLine("// " + comment); }
   default void buildPanic(@Nullable String message) {
     message = message == null ? "" : makeString(message);
     appendLine(STR."throw new \{CLASS_PANIC}(\{message});");
@@ -167,11 +143,7 @@ public interface SourceBuilder {
     builder().append(string);
     builder().append('\n');
   }
-
-  default void appendLine() {
-    builder().append('\n');
-  }
-
+  default void appendLine() { builder().append('\n'); }
   default <R> void buildSwitch(
     @NotNull String term,
     @NotNull ImmutableSeq<R> cases,
@@ -208,10 +180,7 @@ public interface SourceBuilder {
     boolean override,
     @NotNull Runnable continuation
   ) {
-    if (override) {
-      appendLine("@Override");
-    }
-
+    if (override) appendLine("@Override");
     var paramStr = params.joinToString(", ", param -> STR."\{param.type()} \{param.name()}");
     appendLine(STR."public \{returnType} \{name}(\{paramStr}) {");
     runInside(continuation);
