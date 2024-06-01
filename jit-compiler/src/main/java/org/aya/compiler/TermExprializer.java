@@ -134,7 +134,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
         yield subst;
       }
       case TyckInternal i -> throw new Panic(i.getClass().toString());
-      case AppTerm appTerm -> makeNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
+      case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));
       case LamTerm lamTerm -> ExprializeUtils.makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
@@ -187,7 +187,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(of),
         Integer.toString(ix)
       );
-      case PAppTerm(var fun, var arg, var a, var b) -> makeNew(ExprializeUtils.getJavaReference(PAppTerm.class),
+      case PAppTerm(var fun, var arg, var a, var b) -> makeAppNew(ExprializeUtils.getJavaReference(PAppTerm.class),
         fun, arg, a, b
       );
       case EqTerm(var A, var a, var b) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(EqTerm.class),
