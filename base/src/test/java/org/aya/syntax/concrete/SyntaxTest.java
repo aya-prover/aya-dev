@@ -13,9 +13,13 @@ public class SyntaxTest {
     var res = SyntaxTestUtil.parse("""
       import Prelude
       module MyMod {}
+      prim I
       def foo (f : Type -> Type 0) (a : Type 0) : Type 0 => f a
       def bar (A : Type 0) : A -> A => fn x => x
       open inductive Nat | O | S Nat
+      open inductive Fin Nat
+      | S n => FZ
+      | S n => FS (Fin n)
       def infixl + Nat Nat : Nat
       | 0, a => a
       | S a, b => S (a + b)

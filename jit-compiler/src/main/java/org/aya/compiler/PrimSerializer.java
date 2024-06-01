@@ -14,7 +14,7 @@ public class PrimSerializer extends JitTeleSerializer<PrimDef> {
   @Override protected void buildConstructor(PrimDef unit) {
     super.buildConstructor(unit, ImmutableSeq.of(STR."org.aya.syntax.core.def.PrimDef.ID.\{unit.id.name()}"));
   }
-  @Override public AyaSerializer<PrimDef> serialize(PrimDef unit) {
+  @Override public PrimSerializer serialize(PrimDef unit) {
     buildFramework(unit, () -> { });
     return this;
   }

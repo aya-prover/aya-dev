@@ -14,7 +14,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
   private final @NotNull ShapeFactory shapeFactory;
 
   public FileSerializer(@NotNull ShapeFactory factory) {
-    super(new StringBuilder(), 0, new NameGenerator());
+    super(new SourceBuilder.Default());
     this.shapeFactory = factory;
   }
 
@@ -23,7 +23,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
   }
 
   @Override
-  public AyaSerializer<ModuleSerializer.ModuleResult> serialize(ModuleSerializer.ModuleResult unit) {
+  public FileSerializer serialize(ModuleSerializer.ModuleResult unit) {
     assert unit.name().isFileModule();
     buildPackage(unit.name().module());
     appendLine();
