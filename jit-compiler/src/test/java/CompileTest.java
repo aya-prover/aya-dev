@@ -86,8 +86,7 @@ public class CompileTest {
     // \ t. (\0. 0 t)
     var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Idx(new AppTerm(new LocalTerm(0), t)))));
     var out = new TermExprializer(new NameGenerator(), ImmutableSeq.empty())
-      .serialize(lam)
-      .result();
+      .serialize(lam);
 
     System.out.println(out);
   }

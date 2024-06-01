@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.generic.Modifier;
-import org.aya.generic.NameGenerator;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
@@ -39,7 +38,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     switch (unit.body()) {
       case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(this.builder, argTerms, false,
+        var ser = new PatternSerializer(this.sourceBuilder, argTerms, false,
           s -> s.buildReturn(onStuckTerm), s -> s.buildReturn(onStuckTerm));
         ser.serialize(clauses.map(matching -> new PatternSerializer.Matching(
           matching.patterns(),

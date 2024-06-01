@@ -142,7 +142,7 @@ public interface SourceBuilder {
   ) {
     var ext = superClass == null ? "" : STR."extends \{getJavaReference(superClass)}";
 
-    appendLine(STR."default \{isStatic ? "static" : ""} final class \{className} \{ext} {");
+    appendLine(STR."public \{isStatic ? "static" : ""} final class \{className} \{ext} {");
     runInside(continuation);
     appendLine("}");
   }
@@ -213,7 +213,7 @@ public interface SourceBuilder {
     }
 
     var paramStr = params.joinToString(", ", param -> STR."\{param.type()} \{param.name()}");
-    appendLine(STR."default \{returnType} \{name}(\{paramStr}) {");
+    appendLine(STR."public \{returnType} \{name}(\{paramStr}) {");
     runInside(continuation);
     appendLine("}");
   }
