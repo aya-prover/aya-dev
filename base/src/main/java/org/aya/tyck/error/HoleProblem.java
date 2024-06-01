@@ -79,9 +79,7 @@ public sealed interface HoleProblem extends Problem {
     }
   }
 
-  record CannotFindGeneralSolution(
-    @NotNull ImmutableSeq<TyckState.Eqn> eqns
-  ) implements Problem {
+  record CannotFindGeneralSolution(@NotNull ImmutableSeq<TyckState.Eqn> eqns) implements Problem {
     @Override public @NotNull SourcePos sourcePos() { return eqns.getLast().pos(); }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
@@ -93,5 +91,19 @@ public sealed interface HoleProblem extends Problem {
     }
 
     @Override public @NotNull Severity level() { return Severity.INFO; }
+  }
+
+  record CannotSolveEquations(@NotNull ImmutableSeq<TyckState.Eqn> eqns) implements Problem {
+    @Override public @NotNull SourcePos sourcePos() { return eqns.getLast().pos(); }
+
+    @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
+      return eqns.view().map(eqn -> new WithPos<>(eqn.pos(), eqn.toDoc(options)));
+    }
+
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.english("Equations do not have solutions!");
+    }
+
+    @Override public @NotNull Severity level() { return Severity.ERROR; }
   }
 }

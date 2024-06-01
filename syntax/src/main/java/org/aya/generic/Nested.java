@@ -42,7 +42,8 @@ public interface Nested<Param, Term, This extends Nested<Param, Term, This>> {
   default @Nullable WithPos<This> tryNested() {
     var body = body();
     var clazz = (Class<This>) getClass();
-    var nested = clazz.isInstance(body.data()) ? clazz.cast(body) : null;
+    var data = body.data();
+    var nested = clazz.isInstance(data) ? clazz.cast(data) : null;
 
     return nested == null ? null : body.replace(nested);
   }

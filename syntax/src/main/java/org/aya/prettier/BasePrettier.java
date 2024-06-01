@@ -278,7 +278,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return switch (ref) {
       case LocalVar _ -> linkRef(ref, LOCAL_VAR);
       case GeneralizedVar _ -> linkRef(ref, GENERALIZED);
-      default -> Doc.linkRef(Doc.plain(ref.name()), linkIdOf(ref));
+      default -> Doc.linkRef(Doc.plain(ref.name()), linkIdOf(null, ref));
     };
   }
 
@@ -291,59 +291,44 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   }
 
   private static @NotNull Doc linkDef(@NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkDef(Doc.styled(color, ref.name()), linkIdOf(ref));
+    return Doc.linkDef(Doc.styled(color, ref.name()), linkIdOf(null, ref));
   }
 
   private static @NotNull Doc linkRef(@NotNull AnyVar ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(ref));
+    return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(null, ref));
   }
 
   private static @NotNull Doc linkRef(@NotNull AnyDef ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(ref));
+    return Doc.linkRef(Doc.styled(color, ref.name()), linkIdOf(null, ref));
   }
 
-  public static @NotNull Link linkIdOf(@NotNull AnyVar ref) {
-    return linkIdOf(null, ref);
-  }
-
-  public static @NotNull Link linkIdOf(@NotNull AnyDef ref) {
-    return linkIdOf(null, ref);
-  }
-
-  // TODO: can we generalize the following two functions?
   public static @NotNull Link linkIdOf(@Nullable ModulePath currentFileModule, @NotNull AnyVar ref) {
-    if (ref instanceof DefVar<?, ?> defVar) {
-      var location = Link.loc(QualifiedID.join(new QName(defVar).asStringSeq()));
-      // referring to the `ref` in its own module
-      if (currentFileModule == null || defVar.module == null) return location;
-      var fileModule = defVar.module.fileModule();
-      if (fileModule.sameElements(currentFileModule))
-        return location;
-      // referring to the `ref` in another module
-      return Link.cross(fileModule.module(), location);
+    if (ref instanceof DefVar<?, ?> defVar && defVar.module != null) {
+      return linkIdOf(currentFileModule, new TyckAnyDef<>(defVar));
     }
     return Link.loc(ref.hashCode());
   }
 
   public static @NotNull Link linkIdOf(@Nullable ModulePath currentFileModule, @NotNull AnyDef ref) {
     var location = Link.loc(QualifiedID.join(ref.qualifiedName().asStringSeq()));
+    var fileModule = ref.fileModule();
     // referring to the `ref` in its own module
-    if (currentFileModule == null || ref.fileModule().sameElements(currentFileModule))
+    if (currentFileModule == null || fileModule.sameElements(currentFileModule))
       return location;
     // referring to the `ref` in another module
-    return Link.cross(ref.fileModule().module(), location);
+    return Link.cross(fileModule.module(), location);
   }
 
   public static @NotNull Doc linkLit(int literal, @NotNull AnyDef ref, @NotNull Style color) {
-    return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), linkIdOf(ref));
+    return Doc.linkRef(Doc.styled(color, Doc.plain(String.valueOf(literal))), linkIdOf(null, ref));
   }
 
   public static @NotNull Doc linkListLit(Doc display, @NotNull AnyDef ref, @NotNull Style color) {
-    return Doc.linkDef(Doc.styled(color, display), linkIdOf(ref));
+    return Doc.linkDef(Doc.styled(color, display), linkIdOf(null, ref));
   }
 
   public static @NotNull Doc linkDef(@NotNull AnyVar ref) {
-    return Doc.linkDef(Doc.plain(ref.name()), linkIdOf(ref));
+    return Doc.linkDef(Doc.plain(ref.name()), linkIdOf(null, ref));
   }
 
   public static @NotNull Doc refVar(DefVar<?, ?> ref) {

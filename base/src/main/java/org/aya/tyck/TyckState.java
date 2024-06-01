@@ -52,12 +52,13 @@ public record TyckState(
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
+      var eqns = this.eqns.toImmutableSeq();
       if (postSimplificationSize == eqns.size()) {
         // TODO: report error, cannot solve eqns
-        throw new UnsupportedOperationException("TODO: cannot find solution");
+        reporter.report(new HoleProblem.CannotSolveEquations(eqns));
+        return;
       } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      var eqns = this.eqns.toImmutableSeq();
       if (eqns.isNotEmpty()) {
         for (var eqn : eqns) solveEqn(reporter, eqn, false);
         reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
