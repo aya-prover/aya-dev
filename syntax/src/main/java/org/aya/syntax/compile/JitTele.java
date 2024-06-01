@@ -27,34 +27,25 @@ public abstract class JitTele implements AbstractTelescope {
   @Override public boolean telescopeLicit(int i) { return telescopeLicit[i]; }
   @Override public @NotNull String telescopeName(int i) { return telescopeNames[i]; }
 
-  public static class LocallyNameless extends JitTele {
+  public static class LocallyNameless implements AbstractTelescope {
     public final ImmutableSeq<Param> telescope;
     public final Term result;
     public LocallyNameless(ImmutableSeq<Param> telescope, Term result) {
-      super(telescope.size(), new boolean[telescope.size()], new String[telescope.size()]);
       this.result = result;
-      for (int i = 0; i < telescope.size(); i++) {
-        telescopeLicit[i] = telescope.get(i).explicit();
-        telescopeNames[i] = telescope.get(i).name();
-      }
       this.telescope = telescope;
     }
+    @Override public int telescopeSize() { return telescope.size(); }
+    @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
+    @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       return telescope.get(i).type().instantiateTele(teleArgs.sliceView(0, i));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      assert teleArgs.size() == telescopeSize;
+      assert teleArgs.size() == telescopeSize();
       return result.instantiateTele(teleArgs.view());
     }
   }
-  public static class TeleSlice implements AbstractTelescope {
-    private final AbstractTelescope signature;
-    private final int size;
-    public TeleSlice(@NotNull AbstractTelescope signature, int size) {
-      this.signature = signature;
-      this.size = size;
-    }
-    @Override public int telescopeSize() { return size; }
+  public record TeleSlice(AbstractTelescope signature, @Override int telescopeSize) implements AbstractTelescope {
     @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i); }
     @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {

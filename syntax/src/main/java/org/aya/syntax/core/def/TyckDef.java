@@ -6,8 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.syntax.compile.JitTele;
+import org.aya.syntax.compile.AbstractTelescope;
 import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -41,7 +42,7 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
   /**
    * @see AnyDef#signature()
    */
-  static @NotNull JitTele defSignature(@NotNull DefVar<? extends TyckDef, ? extends Decl> defVar) {
+  static @NotNull AbstractTelescope defSignature(@NotNull DefVar<? extends TyckDef, ? extends Decl> defVar) {
     if (defVar.core != null) return new JitTele.LocallyNameless(defVar.core.telescope(), defVar.core.result());
     // guaranteed as this is already a core term
     var signature = defVar.signature;

@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
+import org.aya.syntax.compile.AbstractTelescope;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.compile.JitTele;
 import org.aya.syntax.ref.*;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -52,5 +52,5 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDe
     };
   }
 
-  @NotNull JitTele signature();
+  @NotNull AbstractTelescope signature();
 }
