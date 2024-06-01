@@ -15,7 +15,7 @@ public class SyntaxTest {
       module MyMod {}
       prim I
       def foo (f : Type -> Type 0) (a : Type 0) : Type 0 => f a
-      def bar (A : Type 0) : A -> A => fn x => x
+      def bar (A : Type 0) : A -> A => fn x => {? x ?}
       open inductive Nat | O | S Nat
       open inductive Fin Nat
       | S n => FZ
@@ -23,7 +23,10 @@ public class SyntaxTest {
       def infixl + Nat Nat : Nat
       | 0, a => a
       | S a, b => S (a + b)
-      def infixl +' Nat Nat : Nat => fn a b => a + b
+      def infixl +' Nat Nat : Nat => fn a b =>
+        let open Nat
+        in let n := a + b
+        in n
       tighter +
       """);
     for (var stmt : res) {

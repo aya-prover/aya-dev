@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
@@ -19,6 +19,7 @@ import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -49,7 +50,10 @@ public record LiterateData(
   public void resolve(@NotNull ResolveInfo info) {
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      c.expr = ExprResolver.resolveLax(info.thisModule(), c.expr).descent(new Desalt(info));
+      var data = ExprResolver.resolveLax(info.thisModule(), c.expr)
+        .descent(new Desalt(info));
+      c.params = data.params();
+      c.expr = data.expr();
     });
   }
 
@@ -57,12 +61,16 @@ public record LiterateData(
     var tycker = info.newTycker();
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      var result = tycker.zonk(tycker.synthesize(c.expr));
-      var normalizer = new Normalizer(tycker.state);
-      c.tyckResult = new AyaLiterate.TyckResult(
-        normalizer.normalize(result.wellTyped(), c.options.mode()),
-        normalizer.normalize(result.type(), c.options.mode())
-      );
+      assert c.params != null;
+      c.tyckResult = tycker.subscoped(() -> {
+        var teleTycker = new TeleTycker.InlineCode(tycker);
+        var result = teleTycker.checkInlineCode(c.params, c.expr);
+        var normalizer = new Normalizer(tycker.state);
+        return new AyaLiterate.TyckResult(
+          normalizer.normalize(result.wellTyped(), c.options.mode()),
+          normalizer.normalize(result.type(), c.options.mode())
+        );
+      });
     });
   }
 

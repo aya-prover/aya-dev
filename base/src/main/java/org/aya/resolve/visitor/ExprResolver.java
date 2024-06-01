@@ -29,8 +29,6 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.syntax.concrete.Expr.buildLam;
-
 /**
  * Resolves bindings.
  *
@@ -47,17 +45,25 @@ public record ExprResolver(
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where
 ) implements PosedUnaryOperator<Expr> {
+  public record LiterateResolved(
+    ImmutableSeq<Expr.Param> params,
+    WithPos<Expr> expr
+  ) {
+    public @NotNull LiterateResolved descent(PosedUnaryOperator<Expr> desalt) {
+      return new LiterateResolved(params.map(p -> p.descent(desalt)), expr.descent(desalt));
+    }
+  }
   /**
    * Do !!!NOT!!! use in the type checker.
    * This is solely for cosmetic features, such as literate mode inline expressions, or repl.
    */
   @Contract(pure = true)
-  public static WithPos<Expr> resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
+  public static LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
     var resolver = new ExprResolver(context, ExprResolver.LAX);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq().view();
-    return buildLam(expr.sourcePos(), view, inner);
+    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq();
+    return new LiterateResolved(view, inner);
   }
 
   public ExprResolver(@NotNull Context ctx, @NotNull Options options) {

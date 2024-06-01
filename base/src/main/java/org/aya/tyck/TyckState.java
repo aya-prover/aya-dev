@@ -109,6 +109,12 @@ public record TyckState(
     assert activeMetas.sizeGreaterThan(currentActiveMetas) : "Adding a bad equation";
   }
 
+  public void clearTmp() {
+    eqns.clear();
+    activeMetas.clear();
+    solutions.clear();
+  }
+
   public record Eqn(
     @NotNull Term lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,

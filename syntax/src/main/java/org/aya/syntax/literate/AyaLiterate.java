@@ -50,6 +50,7 @@ public interface AyaLiterate {
    * Aya inline code. For code blocks, see {@link AyaVisibleCodeBlock} and {@link AyaHiddenCodeBlock}
    */
   final class AyaInlineCode extends Literate.InlineCode {
+    public @Nullable ImmutableSeq<Expr.Param> params;
     public @Nullable WithPos<Expr> expr;
     public @Nullable TyckResult tyckResult;
     public final @NotNull CodeOptions options;
