@@ -19,10 +19,11 @@ import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.literate.CodeOptions;
-import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFile;
@@ -68,10 +69,10 @@ public record LiterateData(
       assert c.params != null;
       if (c.options.mode() == CodeOptions.NormalizeMode.NULL
         && c.expr.data() instanceof Expr.Ref ref
-        && ref.var() instanceof DefVar<?, ?> defVar) {
-        assert defVar.signature != null;
+        && ref.var() instanceof AnyDefVar defVar) {
+        var anyDef = AnyDef.fromVar(defVar);
         c.tyckResult = new AyaLiterate.TyckResult(new ErrorTerm(opt ->
-          BasePrettier.defVar(defVar)), defVar.signature.makePi());
+          BasePrettier.refVar(anyDef), false), anyDef.signature().makePi());
         return;
       }
       var tycker = info.newTycker();
