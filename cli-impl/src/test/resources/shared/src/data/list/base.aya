@@ -2,20 +2,20 @@ open import arith::nat::base
 open import paths
 
 open inductive List (A : Type)
-| []
+| nil
 | infixr :< A (List A) tighter =
 
 variable A B : Type
 
 def length (List A) : Nat
-| [] => 0
+| [ ] => 0
 | x :< xs => 1 + length xs
 
 def infixr ++ (xs ys : List A) : List A
-| [], _ => ys
-| _, [] => xs
+| [ ], _ => ys
+| _, [ ] => xs
 | x :< xs', _ => x :< (xs' ++ ys)
 
 def map (f : A -> B) (xs : List A) : List B elim xs
-| [] => []
+| [ ] => [ ]
 | x :< xs' => f x :< map f xs'

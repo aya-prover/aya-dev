@@ -654,16 +654,25 @@ Warning: The 5th clause is dominated by the other clauses, hence unreachable
 What are you doing?
 
 IApplyConfluence:
-In file $FILE:2:12 ->
+In file $FILE:4:4 ->
 
-  1 │   open import arith::nat::base
-  2 │   open import arith::int::base
-    │               ╰──────────────╯
-  3 │   open import arith::bool::base
+  2 │     open import arith::int::base
+  3 │     open import arith::bool::base
+  4 │     def test Int : Nat
+    │         ╰──╯
+  5 │     | signed true _ => 1
+  6 │     | signed false _ => 0
+  7 │     | posneg _ => 1
+    │       ╰───────────╯ confluence: this clause is substituted to `1`
 
-Error: The module name `arith::int::base` is not found
+Error: The 3rd clause matches on a path constructor. We failed to unify
+         1
+       for the arguments:
+         posneg 0
+       Normalized:
+         signed false 0
+         0
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?
 
