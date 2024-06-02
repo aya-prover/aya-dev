@@ -19,9 +19,9 @@ public interface Finalizer {
   @NotNull TyckState state();
   default @NotNull Term doZonk(@NotNull Term term) {
     return switch (term) {
-      case MetaCall meta -> state().computeSolution(meta, this::doZonk);
-      case MetaPatTerm meta -> meta.inline(this::doZonk);
-      case MetaLitTerm meta -> meta.inline(this::doZonk);
+      case MetaCall meta -> state().computeSolution(meta, this::zonk);
+      case MetaPatTerm meta -> meta.inline(this::zonk);
+      case MetaLitTerm meta -> meta.inline(this::zonk);
       default -> term.descent(this::zonk);
     };
   }

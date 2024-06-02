@@ -102,12 +102,13 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   ) {
     var lhsError = lhsResults.anyMatch(LhsResult::hasError);
     var rhsResult = lhsResults.map(x -> checkRhs(vars, x));
+    exprTycker.solveMetas();
 
     // inline terms in rhsResult
     rhsResult = rhsResult.map(x -> new Pat.Preclause<>(
       x.sourcePos(),
-      x.pats().map(p -> p.descent(UnaryOperator.identity(), this::freezeHoles)),
-      x.expr() == null ? null : x.expr().descent((_, t) -> freezeHoles(t))
+      x.pats().map(p -> p.descent(UnaryOperator.identity(), exprTycker::zonk)),
+      x.expr() == null ? null : x.expr().descent((_, t) -> exprTycker.zonk(t))
     ));
 
     return new TyckResult(

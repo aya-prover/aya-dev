@@ -44,6 +44,7 @@ In file $FILE:5:17 ->
 
 Error: Unsolved meta A
        in `Option ?A`
+       in `Option ?A`
 
 In file $FILE:5:17 ->
 
@@ -62,12 +63,35 @@ In file $FILE:5:17 ->
   5 │   def test => some 114514
     │                    ╰────╯
 
+Error: Unsolved meta A
+       in `?A`
+       in `114514`
+       in `some 114514`
+
+In file $FILE:5:17 ->
+
+  3 │   open inductive Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
+Error: Unsolved meta A
+       in `114514`
+       in `some 114514`
+
+In file $FILE:5:17 ->
+
+  3 │   open inductive Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
 Error: Unable to solve the type of this literal:
          114514
        I'm confused about the following candidates:
          `Nat`, `Nat2`
 
-3 error(s), 0 warning(s).
+5 error(s), 0 warning(s).
 What are you doing?
 
 Daylily:

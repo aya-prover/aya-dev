@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
+import kala.collection.Seq;
 import org.aya.prettier.BasePrettier.Usage.Ref;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * which is in the syntax module.
  */
 public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
-  public FindUsage(@NotNull Ref ref) {this(ref, new Accumulator());}
+  public FindUsage(@NotNull Ref ref) { this(ref, new Accumulator()); }
   // Z \oplus Z
   public static class Accumulator {
     public int metaUsage;
@@ -26,7 +27,7 @@ public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
       this.metaUsage = metaUsage;
       this.termUsage = termUsage;
     }
-    public Accumulator() {this(0, 0);}
+    public Accumulator() { this(0, 0); }
 
     public void found() {
       if (inMeta) metaUsage++;
@@ -35,12 +36,12 @@ public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
 
     // Z \oplus Z -> Z
     // omg, this is Z_{Integer.MAX_VALUE * 2}
-    public int homomorphism() {return metaUsage + termUsage;}
+    public int homomorphism() { return metaUsage + termUsage; }
   }
 
   public void find(int index, @NotNull Term term) {
     switch (new Pair<>(term, ref)) {
-      case Pair(FreeTerm(_), Ref.AnyFree _) -> accumulator.found();
+      case Pair(FreeTerm(var var), Ref.Unfree(var list)) when !list.contains(var) -> accumulator.found();
       case Pair(FreeTerm(var var), Ref.Free(var fvar)) when var == fvar -> accumulator.found();
       case Pair(MetaCall meta, Ref.Meta(var fvar)) when meta.ref() == fvar -> accumulator.found();
       default -> {
@@ -66,8 +67,8 @@ public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
   public static int meta(Term t, MetaVar l) {
     return new FindUsage(new Ref.Meta(l)).apply(0, t);
   }
-  public static @NotNull Accumulator anyFree(Term t) {
-    var findUsage = new FindUsage(Ref.AnyFree.INSTANCE);
+  public static @NotNull Accumulator unfree(Term t, Seq<LocalVar> frees) {
+    var findUsage = new FindUsage(new Ref.Unfree(frees));
     findUsage.find(0, t);
     return findUsage.accumulator;
   }

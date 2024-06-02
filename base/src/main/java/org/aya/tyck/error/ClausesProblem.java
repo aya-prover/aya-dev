@@ -42,11 +42,13 @@ public sealed interface ClausesProblem extends Problem {
         Doc.ordinal(i),
         Doc.english("clause matches on a path constructor. We failed to unify")
       );
-      var end = Doc.vcat(Doc.english("for the arguments:"),
+      var doc = Doc.vcat(
+        info.describeUnify(options, comparison, begin, Doc.plain("with")),
+        Doc.english("for the arguments:"),
         Doc.par(1, BasePrettier.coreArgsDoc(options, args.view())),
         Doc.english("Normalized:"),
-        Doc.par(1, BasePrettier.coreArgsDoc(options, args.view().map(info::whnf))));
-      return info.describeUnify(options, comparison, begin, end);
+        Doc.par(1, BasePrettier.coreArgsDoc(options, args.view().map(info::fullNormalize))));
+      return doc;
     }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {

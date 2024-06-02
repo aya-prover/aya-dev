@@ -6,9 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
+import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
-import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -81,7 +81,6 @@ public final class PatMatcher {
         switch (pre.apply(term)) {
           case IntegerTerm rit -> {
             if (lit.repr() != rit.repr()) throw new Failure(State.Mismatch);
-            ImmutableSeq.empty();
           }
           case ConCall con -> match(lit.constructorForm(), con);
           // we only need to handle matching both literals, otherwise we just rematch it
