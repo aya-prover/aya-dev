@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -52,8 +52,10 @@ public interface Problem {
     return level() == Severity.ERROR;
   }
 
-  default @NotNull PrettyError toPrettyError(@NotNull PrettierOptions options,
-                                             @NotNull PrettyError.FormatConfig prettyErrorConf) {
+  default @NotNull PrettyError toPrettyError(
+    @NotNull PrettierOptions options,
+    @NotNull PrettyError.FormatConfig prettyErrorConf
+  ) {
     var sourcePos = sourcePos();
     return new PrettyError(
       sourcePos.file().display(),

@@ -257,7 +257,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var name = refVar(con.resolved().data());
         var conDoc = con.params().isEmpty() ? name
           : Doc.sep(name, visitMaybeConPatterns(con.params(), Outer.AppSpine, Doc.ALT_WS));
-        yield ctorDoc(outer, licit, conDoc, con.params().isEmpty());
+        yield conDoc(outer, licit, conDoc, con.params().isEmpty());
       }
       case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
       case Pattern.BinOpSeq(var param) -> {
@@ -265,7 +265,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           yield pattern(param.getFirst().map(WithPos::data), outer);
         }
         var ctorDoc = visitMaybeConPatterns(param.view(), Outer.AppSpine, Doc.ALT_WS);
-        yield ctorDoc(outer, licit, ctorDoc, param.sizeLessThanOrEquals(1));
+        yield conDoc(outer, licit, ctorDoc, param.sizeLessThanOrEquals(1));
       }
       case Pattern.List list -> Doc.sep(
         LIST_LEFT,

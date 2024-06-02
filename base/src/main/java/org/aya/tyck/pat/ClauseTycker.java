@@ -46,6 +46,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     @NotNull LocalCtx localCtx,
     @NotNull Term type,
     @NotNull ImmutableSeq<LocalVar> allBinds,
+    @NotNull ImmutableSeq<Pat> freePats,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     @NotNull Pat.Preclause<Expr> clause,
@@ -82,7 +83,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     }
     private @Nullable ImmutableIntSeq computeIndices() {
       return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
-        i -> vars.indexOf(i));
+        vars::indexOf);
     }
     public @NotNull TyckResult checkNoClassify() {
       return parent.checkAllRhs(vars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
@@ -163,7 +164,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(), patResult.newBody());
       return new LhsResult(ctx, resultTerm, patWithTypeBound.component1().toImmutableSeq(),
-        patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
+        patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     });
   }
 

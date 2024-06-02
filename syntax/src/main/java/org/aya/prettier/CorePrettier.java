@@ -252,7 +252,7 @@ public class CorePrettier extends BasePrettier<Term> {
       case Pat.Con con -> {
         var conDoc = visitCoreCalls(con.ref(), con.args().view().map(PatToTerm::visit), outer,
           optionImplicit());
-        yield ctorDoc(outer, licit, conDoc, con.args().isEmpty());
+        yield conDoc(outer, licit, conDoc, con.args().isEmpty());
       }
       case Pat.Absurd _ -> Doc.bracedUnless(PAT_ABSURD, licit);
       case Pat.Tuple tuple -> Doc.licit(licit,
