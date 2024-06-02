@@ -19,6 +19,7 @@ import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.Stmt.Accessibility;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
@@ -254,11 +255,10 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Pattern.CalmFace _ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Con con -> {
-        var name = refVar(con.resolved().data());
-        var ctorDoc = con.params().isEmpty()
-          ? name
+        var name = refVar(ConDefLike.from(con.resolved().data()));
+        var conDoc = con.params().isEmpty() ? name
           : Doc.sep(name, visitMaybeConPatterns(con.params(), Outer.AppSpine, Doc.ALT_WS));
-        yield ctorDoc(outer, licit, ctorDoc, con.params().isEmpty());
+        yield ctorDoc(outer, licit, conDoc, con.params().isEmpty());
       }
       case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
       case Pattern.BinOpSeq(var param) -> {

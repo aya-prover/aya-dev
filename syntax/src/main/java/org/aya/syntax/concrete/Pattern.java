@@ -10,10 +10,8 @@ import org.aya.prettier.BasePrettier;
 import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
@@ -80,10 +78,10 @@ public sealed interface Pattern extends AyaDocile {
   }
 
   record Con(
-    @NotNull WithPos<@NotNull DefVar<ConDef, DataCon>> resolved,
+    @NotNull WithPos<@NotNull AnyDefVar> resolved,
     @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> params
   ) implements Pattern {
-    public Con(@NotNull SourcePos pos, @NotNull DefVar<ConDef, DataCon> maybe) {
+    public Con(@NotNull SourcePos pos, @NotNull AnyDefVar maybe) {
       this(new WithPos<>(pos, maybe), ImmutableSeq.empty());
     }
 

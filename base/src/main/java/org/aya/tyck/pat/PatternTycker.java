@@ -138,8 +138,7 @@ public class PatternTycker implements Problematic, Stateful {
         ));
       }
       case Pattern.Con con -> {
-        var var = con.resolved().data();
-        var realCon = makeSureAvail(type, new ConDef.Delegate(var), pattern);
+        var realCon = makeSureAvail(type, ConDefLike.from(con.resolved().data()), pattern);
         if (realCon == null) yield randomPat(type);
         var conCore = realCon.conHead.ref();
 
@@ -368,7 +367,7 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * For every implicit parameter which is not explicitly (not user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link org.aya.tyck.pat.ClauseTycker}
+   * so that they can be inferred during {@link ClauseTycker}
    */
   private @NotNull Pat generatePattern() {
     return onTyck(() -> {
