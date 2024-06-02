@@ -63,7 +63,6 @@ public interface StmtResolver {
             assert elims == null;
             // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
             insertGeneralizedVars(decl, resolver);
-            // TODO resolve elim
             var finalElims = rawElims.map(elim -> {
               var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
               if (!(result instanceof LocalVar localVar)) {
