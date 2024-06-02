@@ -175,7 +175,7 @@ public sealed interface Term extends Serializable, AyaDocile
 
   default @NotNull Term doElevate(int level) {
     // Assumption : level > 0
-    return descent((_, t) -> t.doElevate(level));
+    return descent(t -> t.doElevate(level));
   }
 
   record Matching(

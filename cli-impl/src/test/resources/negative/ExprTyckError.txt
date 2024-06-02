@@ -146,6 +146,8 @@ In file $FILE:4:11 ->
 
 Error: The meta (denoted ? below) is supposed to satisfy:
          ? → _ : Type 0
+       The meta itself:
+         `?_`
        However, the solution below does not seem so:
          X
 
