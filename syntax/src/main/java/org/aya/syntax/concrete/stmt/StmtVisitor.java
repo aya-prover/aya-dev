@@ -96,8 +96,13 @@ public interface StmtVisitor extends Consumer<Stmt> {
         switch (decl) {
           case DataDecl data -> data.body.forEach(this);
           // case ClassDecl clazz -> clazz.members.forEach(this);
-          case FnDecl fn -> fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
-            this::visitPattern));
+          case FnDecl fn -> {
+            fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
+              this::visitPattern));
+            if (fn.body instanceof FnBody.BlockBody block) {
+              block.elims().forEach(var -> visitVar(var.sourcePos(), var.data(), noType));
+            }
+          }
           case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
           // case TeleDecl.ClassMember field -> field.body = field.body.map(this);
           case PrimDecl _ -> { }
