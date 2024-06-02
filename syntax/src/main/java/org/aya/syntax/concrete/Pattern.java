@@ -6,12 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
@@ -155,6 +157,24 @@ public sealed interface Pattern extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull List descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) {
       return update(elements.map(x -> x.descent(f)));
+    }
+  }
+  record FakeShapedList(
+    @NotNull SourcePos sourcePos,
+    @Override @NotNull ImmutableSeq<WithPos<Pattern>> repr,
+    @NotNull ConDefLike nil,
+    @NotNull ConDefLike cons,
+    @Override @NotNull DataCall type
+  ) implements Shaped.List<WithPos<Pattern>> {
+    @Override public @NotNull WithPos<Pattern> makeNil() {
+      return new WithPos<>(sourcePos, new Con(sourcePos, nil));
+    }
+    @Override public @NotNull WithPos<Pattern> makeCons(WithPos<Pattern> x, WithPos<Pattern> xs) {
+      return new WithPos<>(sourcePos, new Con(new WithPos<>(sourcePos, cons),
+        ImmutableSeq.of(new Arg<>(x, true), new Arg<>(xs, true))));
+    }
+    @Override public @NotNull WithPos<Pattern> destruct(@NotNull ImmutableSeq<WithPos<Pattern>> repr) {
+      return new FakeShapedList(sourcePos, repr, nil, cons, type).constructorForm();
     }
   }
 

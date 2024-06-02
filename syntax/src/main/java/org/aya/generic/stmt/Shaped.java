@@ -37,7 +37,7 @@ public interface Shaped<T> {
     @NotNull T constructorForm();
   }
 
-  non-sealed interface Nat<T extends AyaDocile> extends Inductive<T> {
+  non-sealed interface Nat<T> extends Inductive<T> {
     @NotNull T makeZero();
     @NotNull T makeSuc(@NotNull T t);
     @NotNull T destruct(int repr);
@@ -52,7 +52,7 @@ public interface Shaped<T> {
     @NotNull Shaped.Nat<T> map(@NotNull IntUnaryOperator f);
   }
 
-  non-sealed interface Bool<T extends AyaDocile> extends Inductive<T> {
+  non-sealed interface Bool<T> extends Inductive<T> {
     @NotNull T makeCon0();
     @NotNull T makeCon1();
     int repr();
@@ -64,7 +64,7 @@ public interface Shaped<T> {
     }
   }
 
-  non-sealed interface List<T extends AyaDocile> extends Inductive<T> {
+  non-sealed interface List<T> extends Inductive<T> {
     @NotNull ImmutableSeq<T> repr();
     @NotNull T makeNil();
     @NotNull T makeCons(T x, T xs);

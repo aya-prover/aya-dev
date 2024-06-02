@@ -179,11 +179,11 @@ public class PatternTycker implements Problematic, Stateful {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref();
-          var shape = state().shapeFactory().find(data);
-          if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
-            // yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
-            //   .constructorForm(), term);
-            throw new UnsupportedOperationException("TODO");
+          var shape = state().shapeFactory().find(data).getOrNull();
+          if (shape != null && shape.shape() == AyaShape.LIST_SHAPE)
+            yield doTyck(new Pattern.FakeShapedList(pattern.sourcePos(), el,
+              shape.getCon(CodeShape.GlobalId.NIL), shape.getCon(CodeShape.GlobalId.CONS), dataCall)
+              .constructorForm(), type);
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, ty), ty);
       }
