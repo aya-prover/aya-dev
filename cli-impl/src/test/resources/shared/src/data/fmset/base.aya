@@ -1,0 +1,14 @@
+open import paths
+
+open inductive FMSet (A : Type)
+| []
+| infixr :] A (FMSet A) tighter =
+| comm (x y : A) (xs : FMSet A) : x :] y :] xs = y :] x :] xs
+
+//variable A : Type
+//
+//def infixr ++ (xs ys : FMSet A) : FMSet A elim xs
+//| [] => ys
+//| x :] xs' => x :] xs' ++ ys
+//| comm x y xs' i => comm x y (xs' ++ ys) i
+//tighter :] =
