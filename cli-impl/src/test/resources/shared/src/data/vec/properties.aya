@@ -1,9 +1,17 @@
 open import arith::nat::base
-open import data::list::base
-open import data::vec::base using (Vec, :>, [])
+open import data::list::base using (List, :<, length)
+open import data::vec::base using (Vec, :>, [], ++)
+open import paths
 
 variable A : Type
-variable n : Nat
+variable n m o : Nat
+
+def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  : Path (\i => Vec (+-assoc i) A)
+    (xs ++ (ys ++ zs))
+    ((xs ++ ys) ++ zs) elim xs
+| [] => refl
+| x :> xs' => pmapd _ (\i => x :>) (++-assoc xs' ys zs)
 
 def toList (Vec n A) : List A
 | [] => [ ]
