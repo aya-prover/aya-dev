@@ -8,9 +8,11 @@ import kala.value.LazyValue;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -40,9 +42,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
   ) { visitVar(pos, var, type); }
 
   private @Nullable Term varType(@Nullable AnyVar var) {
-    if (var instanceof DefVar<?, ?> defVar) {
-      var signature = defVar.signature;
-      if (signature != null) return signature.makePi();
+    if (var instanceof AnyDefVar defVar) {
+      return TyckDef.defType(AnyDef.fromVar(defVar));
     }
     return null;
   }
@@ -118,7 +119,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
     switch (pat) {
       case Pattern.Con con -> {
         var resolvedVar = con.resolved().data();
-        visitVarRef(con.resolved().sourcePos(), resolvedVar, lazyType(resolvedVar));
+        visitVarRef(con.resolved().sourcePos(), AnyDef.toVar(resolvedVar),
+          LazyValue.of(() -> TyckDef.defType(resolvedVar)));
       }
       case Pattern.Bind bind -> visitVarDecl(pos, bind.bind(), LazyValue.of(bind.type()));
       case Pattern.As as -> visitVarDecl(as.as().definition(), as.as(), LazyValue.of(as.type()));

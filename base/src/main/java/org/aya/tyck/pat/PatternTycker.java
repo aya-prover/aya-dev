@@ -138,7 +138,7 @@ public class PatternTycker implements Problematic, Stateful {
         ));
       }
       case Pattern.Con con -> {
-        var realCon = makeSureAvail(type, ConDefLike.from(con.resolved().data()), pattern);
+        var realCon = makeSureAvail(type, con.resolved().data(), pattern);
         if (realCon == null) yield randomPat(type);
         var conCore = realCon.conHead.ref();
 
