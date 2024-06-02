@@ -6,11 +6,17 @@ variable n m o : Nat
 variable A B : Type
 
 def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
-  => Path (fn i => Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs)
+  => Path (fn i => Vec (+-assoc i) A)
+    (xs ++ (ys ++ zs))
+    ((xs ++ ys) ++ zs)
 
 def cast (p : A ↑ = B) : A -> B => ↑ coe 0 1 (fn i => p i)
+
+// This thing is kinda embarrasing, it relies on the fact that Aya only checks universe levels,
+// not lifting levels on definitions.
 def ++-assoc-ty-cast (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
-  => cast (↑ pmap (fn n => Vec n A) +-assoc) (xs ++ (ys ++ zs)) = ((xs ++ ys) ++ zs)
+  => cast (↑ pmap (fn n => Vec n A) +-assoc)
+   (xs ++ (ys ++ zs)) = ((xs ++ ys) ++ zs)
 
 def concat {a b c : A} (p : a = b) (q : b = c) : a = c =>
   cast (\i => a = q i) p
