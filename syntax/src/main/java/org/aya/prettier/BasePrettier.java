@@ -394,7 +394,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     sealed interface Ref {
       record Free(@NotNull LocalVar var) implements Ref { }
       record Meta(@NotNull MetaVar var) implements Ref { }
-      enum AnyFree implements Ref { INSTANCE }
+      record Unfree(@NotNull Seq<LocalVar> var) implements Ref { }
     }
   }
 }

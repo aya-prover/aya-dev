@@ -23,3 +23,10 @@ overlap def infixr ++ (Vec n A) (Vec m A) : Vec (n + m) A
 | ys, [] => ys
 | x :> xs, ys => x :> xs ++ ys
 tighter :> =
+
+def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  : Path (\i => Vec (+-assoc i) A)
+    (xs ++ (ys ++ zs))
+    ((xs ++ ys) ++ zs)
+| [], ys, zs => refl
+| x :> xs', ys, zs => pmapd _ (\i => x :>) (++-assoc xs' ys zs)

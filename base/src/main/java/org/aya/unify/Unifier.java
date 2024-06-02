@@ -72,7 +72,8 @@ public final class Unifier extends TermComparator {
 
     // In this case, the solution may not be unique (see #608),
     // so we may delay its resolution to the end of the tycking when we disallow delayed unification.
-    if (!allowVague && overlap.anyMatch(var -> FindUsage.free(rhs, var) > 0)) {
+    var tmpRhs = rhs; // to get away with Java warning
+    if (!allowVague && overlap.anyMatch(var -> FindUsage.free(tmpRhs, var) > 0)) {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs));
         return returnType;
@@ -83,8 +84,11 @@ public final class Unifier extends TermComparator {
     }
     // Now we are sure that the variables in overlap are all unused.
 
-    var candidate = rhs.bindTele(inverted.view());
-    var findUsage = FindUsage.anyFree(candidate);
+    var findUsage = FindUsage.unfree(rhs, inverted);
+    if (findUsage.termUsage > 0) {
+      rhs = fullNormalize(rhs);
+      findUsage = FindUsage.unfree(rhs, inverted);
+    }
     if (findUsage.termUsage > 0) {
       fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
       return null;
@@ -99,10 +103,11 @@ public final class Unifier extends TermComparator {
       }
     }
     var ref = meta.ref();
-    if (FindUsage.meta(candidate, ref) > 0) {
-      fail(new MetaVarProblem.RecursionError(meta, candidate));
+    if (FindUsage.meta(rhs, ref) > 0) {
+      fail(new MetaVarProblem.RecursionError(meta, rhs));
       return null;
     }
+    var candidate = rhs.bindTele(inverted.view());
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
     return returnType;
