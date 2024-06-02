@@ -138,8 +138,7 @@ public class PatternTycker implements Problematic, Stateful {
         ));
       }
       case Pattern.Con con -> {
-        var var = con.resolved().data();
-        var realCon = makeSureAvail(type, new ConDef.Delegate(var), pattern);
+        var realCon = makeSureAvail(type, con.resolved().data(), pattern);
         if (realCon == null) yield randomPat(type);
         var conCore = realCon.conHead.ref();
 
@@ -180,11 +179,11 @@ public class PatternTycker implements Problematic, Stateful {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref();
-          var shape = state().shapeFactory().find(data);
-          if (shape.isDefined() && shape.get().shape() == AyaShape.LIST_SHAPE)
-            // yield doTyck(new Pattern.FakeShapedList(pos, el, shape.get(), dataCall)
-            //   .constructorForm(), term);
-            throw new UnsupportedOperationException("TODO");
+          var shape = state().shapeFactory().find(data).getOrNull();
+          if (shape != null && shape.shape() == AyaShape.LIST_SHAPE)
+            yield doTyck(new Pattern.FakeShapedList(pattern.sourcePos(), el,
+              shape.getCon(CodeShape.GlobalId.NIL), shape.getCon(CodeShape.GlobalId.CONS), dataCall)
+              .constructorForm(), type);
         }
         yield withError(new PatternProblem.BadLitPattern(pattern, ty), ty);
       }
@@ -368,7 +367,7 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * For every implicit parameter which is not explicitly (not user given pattern) matched,
    * we generate a MetaPat for each,
-   * so that they can be inferred during {@link org.aya.tyck.pat.ClauseTycker}
+   * so that they can be inferred during {@link ClauseTycker}
    */
   private @NotNull Pat generatePattern() {
     return onTyck(() -> {

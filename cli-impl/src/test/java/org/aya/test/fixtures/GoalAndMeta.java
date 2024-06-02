@@ -7,17 +7,17 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface GoalAndMeta {
   @Language("Aya") String testUnsolved = """
-    open import arith::Nat
+    open import arith::nat::base
     def test : Nat => _
     """;
 
   @Language("Aya") String testGoal = """
-    open import arith::Nat
+    open import arith::nat::base
     def test (a : Nat) : Nat => {? a ?}
     """;
 
   @Language("Aya") String testUnsolvedMetaLit = """
-    open import arith::Nat
+    open import arith::nat::base
     open inductive Nat2 | OO | SS Nat2
     open inductive Option (A : Type)
       | some A
@@ -25,7 +25,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String dontTestUnsolvedMetaLit = """
-    open import arith::Nat
+    open import arith::nat::base
     open inductive Nat2 | OO | SS Nat2
     open inductive Empty
     
@@ -34,7 +34,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testDaylily = """
-    open import arith::Nat
+    open import arith::nat::base
     
     def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => 0
     example def test1 (A B : Type) (x : A) (y : B) =>
@@ -49,7 +49,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testNorell = """
-    open import arith::Nat
+    open import arith::nat::base
     inductive Empty
     def Neg (T : Type) => T -> Empty
     // Ulf's counterexample
@@ -59,7 +59,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testScopeCheck = """
-    open import Paths
+    open import paths
     variable A : Type
     
     // https://cstheory.stackexchange.com/a/49160/50892
@@ -76,9 +76,9 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testNonPattern = """
-    open import data::Vec
-    open import arith::Nat
-    open import Paths
+    open import data::vec::base
+    open import arith::nat::base
+    open import paths
     variable n m o : Nat
     variable A : Type
     def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)

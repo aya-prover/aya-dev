@@ -5,12 +5,14 @@ package org.aya.resolve.visitor;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
+import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.concrete.stmt.decl.PrimDecl;
-import org.aya.syntax.core.def.ConDef;
+import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
@@ -39,10 +41,9 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
         // Check whether this {bind} is a Con
         var conMaybe = context.iterate(ctx -> isCon(ctx.getUnqualifiedLocalMaybe(bind.bind().name(), pos)));
         if (conMaybe != null) {
-          var cast = castConVar(conMaybe);
           // It wants to be a con!
           addReference(conMaybe);
-          yield new Pattern.Con(pos, cast);
+          yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
         }
 
         // It is not a constructor, it is a bind
@@ -55,9 +56,8 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
           throw new Panic("QualifiedRef#qualifiedID should be qualified");
         var conMaybe = context.iterate(ctx -> isCon(ctx.getQualifiedLocalMaybe(mod, qid.name(), pos)));
         if (conMaybe != null) {
-          var cast = castConVar(conMaybe);
-          addReference(cast);
-          yield new Pattern.Con(pos, cast);
+          addReference(conMaybe);
+          yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
         }
 
         // !! No Such Thing !!
@@ -71,23 +71,16 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
     };
   }
 
-  @SuppressWarnings("unchecked") private static @NotNull DefVar<ConDef, DataCon>
-  castConVar(DefVar<?, ?> conMaybe) {
-    assert conMaybe.concrete instanceof DataCon;
-    return (DefVar<ConDef, DataCon>) conMaybe;
+  private void addReference(@NotNull AnyDefVar defVar) {
+    if (defVar instanceof DefVar<?, ?> fr) parentAdd.accept(fr.concrete);
   }
 
-  private void addReference(@NotNull DefVar<?, ?> defVar) {
-    parentAdd.accept(defVar.concrete);
-  }
-
-  private static @Nullable DefVar<?, ?> isCon(@Nullable AnyVar myMaybe) {
-    if (myMaybe == null) return null;
-    if (myMaybe instanceof DefVar<?, ?> def && (
-      def.concrete instanceof DataCon
-        || def.concrete instanceof PrimDecl
-    )) return def;
-
-    return null;
+  private static @Nullable AnyDefVar isCon(@Nullable AnyVar myMaybe) {
+    return switch (myMaybe) {
+      case null -> null;
+      case DefVar<?, ?> def when def.concrete instanceof DataCon -> def;
+      case CompiledVar var when var.core() instanceof JitCon -> var;
+      default -> null;
+    };
   }
 }

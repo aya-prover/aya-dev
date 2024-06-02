@@ -14,8 +14,7 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A well-typed generic definition,
@@ -29,10 +28,12 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
   }
 
   //region Pretty & IDE only APIs
-
-  static @NotNull Term defType(@NotNull AnyDef var) {
+  static @Nullable Term defType(@NotNull AnyDef var) {
     return switch (var) {
-      case TyckAnyDef<?> tyckDef -> Objects.requireNonNull(tyckDef.ref.signature).makePi();
+      case TyckAnyDef<?> tyckDef -> {
+        var sig = tyckDef.ref.signature;
+        yield sig == null ? null : sig.result();
+      }
       case JitDef jitDef -> jitDef.makePi();
     };
   }

@@ -102,7 +102,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     var licit = switch (var) {
       case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub ?
         sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit) :
-        Objects.requireNonNull(inner.core().ref().signature).param()
+        Objects.requireNonNull(inner.ref.signature).param()
           .mapToBooleanTo(MutableBooleanList.create(), p -> p.data().explicit());
       case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
     };

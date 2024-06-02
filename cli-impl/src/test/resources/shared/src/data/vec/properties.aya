@@ -1,0 +1,14 @@
+open import arith::nat::base
+open import data::list::base
+open import data::vec::base using (Vec, :>, [])
+
+variable A : Type
+variable n : Nat
+
+def toList (Vec n A) : List A
+| [] => [ ]
+| x :> xs => x :< toList xs
+
+def fromList (xs : List A) : Vec (length xs) A
+| [ ] => []
+| x :< xs' => x :> fromList xs'

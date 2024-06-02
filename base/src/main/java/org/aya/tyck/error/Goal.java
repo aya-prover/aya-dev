@@ -3,11 +3,13 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.normalize.Normalizer;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
@@ -28,7 +30,8 @@ public record Goal(
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),
       Doc.par(1, result.toDoc(options)),
-      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("WHNF:"), whnf(result).toDoc(options)))),
+      Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"),
+        new Normalizer(state).normalize(result, NormalizeMode.FULL).toDoc(options)))),
       Doc.plain("Context:"),
       Doc.vcat(hole.args().map(arg -> renderScopeVar(options, arg)))
       // ,meta.conditions.isNotEmpty() ? Doc.vcat(

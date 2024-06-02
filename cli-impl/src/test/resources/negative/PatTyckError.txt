@@ -15,7 +15,7 @@ What are you doing?
 SelectionFailed:
 In file $FILE:4:2 ->
 
-  2 │   open import data::Vec
+  2 │   open import data::vec::base
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
   4 │   | [] => []
     │     ╰╯
@@ -43,7 +43,7 @@ What are you doing?
 SelectionBlocked:
 In file $FILE:4:2 ->
 
-  2 │   open import data::Vec
+  2 │   open import data::vec::base
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
   4 │   | () => []
     │     ╰╯
@@ -90,7 +90,7 @@ What are you doing?
 NotEnoughPattern:
 In file $FILE:3:8 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x => x
     │           ╰╯
@@ -104,7 +104,7 @@ What are you doing?
 TooManyPattern:
 In file $FILE:3:11 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, {y} => x
     │              ╰─╯
@@ -120,7 +120,7 @@ What are you doing?
 TooManyPattern2:
 In file $FILE:3:14 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, y, z => x
     │                 ╰╯
@@ -137,7 +137,7 @@ What are you doing?
 InvalidEmptyBody:
 In file $FILE:3:2 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def test Bool : Bool
   3 │   | true
     │     ╰──╯
@@ -161,7 +161,7 @@ What are you doing?
 InvalidAbsurdPattern:
 In file $FILE:2:23 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def test Bool : Bool | ()
     │                          ╰╯
 

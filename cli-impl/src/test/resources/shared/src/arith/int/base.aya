@@ -1,6 +1,6 @@
-open import arith::Nat
-open import arith::Bool
-open import Paths
+open import arith::nat::base
+open import arith::bool::base
+open import paths
 open inductive Int
 | signed Bool Nat
 | posneg : neg 0 = pos 0

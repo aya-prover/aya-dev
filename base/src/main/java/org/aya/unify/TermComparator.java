@@ -87,35 +87,22 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
     return switch (new Pair<>(lhs, rhs)) {
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
+      case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
-      case Pair(ConCallLike lCon, ConCallLike rCon) -> lossyUnifyCon(lCon, rCon);
+      case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
       default -> null;
     };
-  }
-  private @Nullable Term lossyUnifyCon(ConCallLike lCon, ConCallLike rCon) {
-    if (!lCon.ref().equals(rCon.ref()) || lCon.ulift() != rCon.ulift()) return null;
-    // since dataArgs live in a separate telescope
-    var lHead = lCon.head();
-    var slice = lHead.ref().signature().prefix(lHead.ref().ownerTeleSize());
-    if (null == compareMany(lHead.ownerArgs(),
-      rCon.head().ownerArgs(), lHead.ulift(), slice))
-      return null;
-    if (null == compareMany(lCon.conArgs(), rCon.conArgs(), lHead.ulift(),
-      new AbstractTele.Locns(lHead.ref().selfTele(lHead.ownerArgs()), SortTerm.Type0)))
-      return null;
-    return new Synthesizer(nameGen, this).synth(lCon);
   }
 
   /**
    * Compare the arguments of two callable ONLY, this method will NOT try to normalize and then compare (while the old project does).
    */
-  private @Nullable Term compareCallApprox(
-    @NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs
-  ) {
-    if (!lhs.ref().equals(rhs.ref()) || lhs.ulift() != rhs.ulift()) return null;
-    return compareMany(lhs.args(), rhs.args(), lhs.ulift(), lhs.ref().signature());
+  private @Nullable Term compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) {
+    if (!lhs.ref().equals(rhs.ref())) return null;
+    return compareMany(lhs.args(), rhs.args(),
+      lhs.ref().signature().lift(Math.min(lhs.ulift(), rhs.ulift())));
   }
 
   private <R> R swapped(@NotNull Supplier<R> callback) {
@@ -208,7 +195,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         var rist = ImmutableSeq.fill(size, i -> ProjTerm.make(rhs, i));
 
         var telescopic = new AbstractTele.Locns(paramSeq.map(p -> new Param("_", p, true)), ErrorTerm.DUMMY);
-        yield compareMany(list, rist, 0, telescopic) != null;
+        yield compareMany(list, rist, telescopic) != null;
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -300,7 +287,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // fallback case
       case ConCallLike lCon -> switch (rhs) {
         case ListTerm rList -> compareUntyped(lhs, rList.constructorForm());
-        case ConCallLike rCon -> lossyUnifyCon(lCon, rCon);
+        case ConCallLike rCon -> compareCallApprox(lCon, rCon);
         default -> null;
       };
       case MetaLitTerm mlt -> switch (rhs) {
@@ -348,7 +335,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareMany(
     @NotNull ImmutableSeq<Term> list,
     @NotNull ImmutableSeq<Term> rist,
-    int ulift, @NotNull AbstractTele types
+    @NotNull AbstractTele types
   ) {
     assert list.sizeEquals(rist);
     assert rist.sizeEquals(types.telescopeSize());
@@ -357,7 +344,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     for (var i = 0; i < types.telescopeSize(); ++i) {
       var l = list.get(i);
       var r = rist.get(i);
-      var ty = whnf(types.telescope(i, argsCum)).elevate(ulift);
+      var ty = whnf(types.telescope(i, argsCum));
       if (!compare(l, r, ty)) return null;
       argsCum[i] = l;
     }
@@ -456,10 +443,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs) {
     if (preLhs.getClass() != preRhs.getClass()) return false;
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
-      case Pair(DataCall lhs, DataCall rhs) -> {
-        if (!lhs.ref().equals(rhs.ref())) yield false;
-        yield compareMany(lhs.args(), rhs.args(), lhs.ulift(), lhs.ref().signature()) != null;
-      }
+      case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs) != null;
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
         () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));

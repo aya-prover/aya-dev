@@ -52,5 +52,12 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDe
     };
   }
 
+  static @NotNull AnyDefVar toVar(@NotNull AnyDef defVar) {
+    return switch (defVar) {
+      case JitDef jitDef -> new CompiledVar(jitDef);
+      case TyckAnyDef<?> tyckAnyDef -> tyckAnyDef.ref;
+    };
+  }
+
   @NotNull AbstractTele signature();
 }

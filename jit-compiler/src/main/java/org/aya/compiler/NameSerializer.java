@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.DefVar;
@@ -58,7 +59,7 @@ public interface NameSerializer {
     // get package name of file level module
     var packageName = getModulePackageReference(module.fileModule(), type.packageSeparator);
     // get javify class name of each component
-    var javifyComponent = module.traversal((path) -> javifyClassName(path, null)).view();
+    var javifyComponent = module.traversal(path -> javifyClassName(path, null)).view();
     if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
     return STR."\{packageName}\{type.packageSeparator}\{javifyComponent.joinToString(type.classNameSeparator)}";
   }
@@ -121,11 +122,20 @@ public interface NameSerializer {
       .joinToString("$", "$", "");
   }
 
+  static ImmutableSeq<String> keywords = ImmutableSeq.of(
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
+    "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
+    "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",
+    "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
+    "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
+    "volatile", "while", "true", "false", "null");
+
   /**
    * Generate a java friendly name for {@param name}, this function should be one-to-one.
    * Note that the result may not be used for class name, see {@link #javifyClassName}
    */
   static @NotNull String javify(String name) {
+    if (keywords.contains(name)) return "_$" + name;
     return name.codePoints().flatMap(x ->
         x == '$' ? "$$".chars()
           : Character.isJavaIdentifierPart(x) ? IntStream.of(x)

@@ -1,7 +1,7 @@
 Unsolved:
 In file $FILE:2:18 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def test : Nat => _
     │                     ╰╯
 
@@ -13,19 +13,19 @@ What are you doing?
 Goal:
 In file $FILE:2:28 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def test (a : Nat) : Nat => {? a ?}
     │                               ╰─────╯
 
 Goal: Goal of type
         Nat
-        (WHNF: Nat)
+        (Normalized: Nat)
       Context:
         a
 
 In file $FILE:2:28 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def test (a : Nat) : Nat => {? a ?}
     │                               ╰─────╯
 

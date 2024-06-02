@@ -1,4 +1,4 @@
-open import Paths
+open import paths
 
 open inductive Interval
 | left

@@ -255,10 +255,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Pattern.Number number -> Doc.bracedUnless(Doc.plain(String.valueOf(number.number())), licit);
       case Pattern.Con con -> {
         var name = refVar(con.resolved().data());
-        var ctorDoc = con.params().isEmpty()
-          ? name
+        var conDoc = con.params().isEmpty() ? name
           : Doc.sep(name, visitMaybeConPatterns(con.params(), Outer.AppSpine, Doc.ALT_WS));
-        yield ctorDoc(outer, licit, ctorDoc, con.params().isEmpty());
+        yield ctorDoc(outer, licit, conDoc, con.params().isEmpty());
       }
       case Pattern.QualifiedRef qref -> Doc.bracedUnless(Doc.plain(qref.qualifiedID().join()), licit);
       case Pattern.BinOpSeq(var param) -> {
