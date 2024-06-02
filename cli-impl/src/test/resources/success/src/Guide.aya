@@ -11,3 +11,8 @@ def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
 def cast (p : A ↑ = B) : A -> B => ↑ coe 0 1 (fn i => p i)
 def ++-assoc-ty-cast (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
   => cast (↑ pmap (fn n => Vec n A) +-assoc) (xs ++ (ys ++ zs)) = ((xs ++ ys) ++ zs)
+
+def concat {a b c : A} (p : a = b) (q : b = c) : a = c =>
+  cast (\i => a = q i) p
+
+def castRefl (a : A) : cast ↑ refl a = a => fn i => coe i 1 (fn j => A) a
