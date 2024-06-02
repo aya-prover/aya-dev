@@ -120,6 +120,7 @@ public sealed interface TeleTycker extends Contextful {
     public InlineCode(@NotNull ExprTycker tycker) { this.tycker = tycker; }
     public @NotNull Jdg checkInlineCode(@NotNull ImmutableSeq<Expr.Param> params, @NotNull WithPos<Expr> expr) {
       checkSignature(params, expr);
+      tycker.solveMetas();
       return this.result.map(tycker()::zonk);
     }
     @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
