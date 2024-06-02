@@ -73,7 +73,8 @@ public record StmtTycker(
             fnRef.signature = fnRef.signature.descent(tycker::zonk);
             yield factory.apply(Either.left(tycker.zonk(result.wellTyped())));
           }
-          case FnBody.BlockBody(var clauses, var elims) -> {
+          case FnBody.BlockBody(var clauses, var elims, _) -> {
+            assert elims != null;
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker = mkTycker()),
@@ -137,7 +138,7 @@ public record StmtTycker(
         fnRef.signature = teleTycker.checkSignature(fn.telescope, result);
 
         // For ExprBody, they will be zonked later
-        if (fn.body instanceof FnBody.BlockBody(var cls, _)) {
+        if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
           fnRef.signature = fnRef.signature.pusheen(tycker::whnf);
           tycker.solveMetas();
           fnRef.signature = fnRef.signature.descent(tycker::zonk);

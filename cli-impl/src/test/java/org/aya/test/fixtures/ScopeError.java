@@ -59,4 +59,10 @@ public interface ScopeError {
     def suc (n : Nat) : Nat => let open Nat hiding (O) in S n
     def they-are : suc zero = Nat::S Nat::O => refl
     """;
+  @Language("Aya") String testUnknownElimVar = """
+    open import arith::bool::base
+    def b => true
+    def p (a : Bool) : Bool elim b
+    | true => false
+    """;
 }

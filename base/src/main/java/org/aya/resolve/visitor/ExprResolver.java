@@ -16,6 +16,7 @@ import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.error.GeneralizedNotAvailableError;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.ref.AnyVar;
@@ -149,27 +150,32 @@ public record ExprResolver(
         },
         right -> right.descent(this)
       ));
-      case Expr.Unresolved(var name) -> switch (ctx.get(name)) {
-        case GeneralizedVar generalized -> {
-          if (!allowedGeneralizes.containsKey(generalized)) {
+      case Expr.Unresolved(var name) -> {
+        var resolved = resolve(name);
+        AnyVar finalVar = switch (resolved) {
+          case GeneralizedVar generalized -> {
+            // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
             if (options.allowIntroduceGeneralized) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sanity check";
-              allowedGeneralizes.put(generalized, owner.toExpr(false, generalized.toLocal()));
+              var param = owner.toExpr(false, generalized.toLocal());
+              allowedGeneralizes.put(generalized, param);
               addReference(owner);
+              yield param.ref();
             } else {
-              ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
+              yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
             }
           }
-          yield new Expr.Ref(allowedGeneralizes.get(generalized).ref());
-        }
-        case DefVar<?, ?> def -> {
-          addReference(def);
-          yield new Expr.Ref(def);
-        }
-        case AnyVar var -> new Expr.Ref(var);
-      };
+          case DefVar<?, ?> defVar -> {
+            addReference(defVar);
+            yield defVar;
+          }
+          case AnyVar var -> var;
+        };
+
+        yield new Expr.Ref(finalVar);
+      }
       case Expr.Let let -> {
         // resolve letBind
         var letBind = let.bind();
@@ -254,6 +260,16 @@ public record ExprResolver(
       ctx.set(ctx.get().bind(bind.var()));
       return b;
     });
+  }
+
+  public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
+    var result = ctx.get(name);
+    if (result instanceof GeneralizedVar gvar) {
+      var gened = allowedGeneralizes.getOrNull(gvar);
+      if (gened != null) return gened.ref();
+    }
+
+    return result;
   }
 
   public enum Where {
