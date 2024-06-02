@@ -1,4 +1,0 @@
-open inductive Bool | true | false
-def not Bool : Bool
-| true => false
-| false => true

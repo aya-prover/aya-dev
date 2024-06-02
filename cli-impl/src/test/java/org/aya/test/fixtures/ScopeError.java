@@ -16,19 +16,19 @@ public interface ScopeError {
     def one => suc zero
     """;
   @Language("Aya") String testImportDefineShadow = """
-    open import arith::Bool
+    open import arith::bool::base
     module A { def foo => true }
     open A
     def foo => false
     """;
   @Language("Aya") String testImportUsing = """
-    open import arith::Bool
+    open import arith::bool::base
     module A { def foo => true }
     open A using (foo as bruh)
     open A using (bar)
     """;
   @Language("Aya") String testImportHiding = """
-    open import arith::Bool
+    open import arith::bool::base
     module A { def foo => true }
     open A hiding (foo)
     open A hiding (bar)
@@ -53,7 +53,7 @@ public interface ScopeError {
     """;
   // This should pass
   @Language("Aya") String testLetOpen = """
-    open import Paths using (=, refl)
+    open import paths using (=, refl)
     inductive Nat | O | S Nat
     def zero : Nat => let open Nat using (O) in O
     def suc (n : Nat) : Nat => let open Nat hiding (O) in S n

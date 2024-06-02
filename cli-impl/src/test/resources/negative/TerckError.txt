@@ -1,7 +1,7 @@
 DirectNonTermination:
 In file $FILE:2:4 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def g Nat : Nat
     │       ╰╯
   3 │   | 0 => 0
@@ -18,7 +18,7 @@ What are you doing?
 UnfoldNonTermination:
 In file $FILE:3:4 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def f Nat : Nat | n => g (suc n)
   3 │   def g Nat : Nat
     │       ╰╯

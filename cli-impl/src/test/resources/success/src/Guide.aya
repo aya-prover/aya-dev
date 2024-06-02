@@ -1,6 +1,6 @@
-open import data::Vec
-open import arith::Nat
-open import Paths
+open import data::Vec::base
+open import arith::nat::base
+open import paths
 
 variable n m o : Nat
 variable A B : Type

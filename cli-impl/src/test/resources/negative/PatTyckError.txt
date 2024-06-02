@@ -13,9 +13,126 @@ Error: Unknown constructor
 What are you doing?
 
 SelectionFailed:
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:32:7 ->
+
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+  32 │   | x :> xs => pmapd {B := \n => Vec n A} (x :>) (++-assoc xs ys zs)
+     │          ╰╯
+
+Warning: The name `xs` shadows a previous local definition from outer scope
+
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:30:5 ->
+
+  27 │       def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  28 │         : Path (\i => Vec (+-assoc i) A)
+  29 │           (xs ++ (ys ++ zs))
+     │            ╰──────────────╯ ?a n A m o xs ys zs 0 >= n, ?b n A m o xs ys zs
+                                   0 >= m, ?c n A m o xs ys zs 0 >= o
+  30 │           ((xs ++ ys) ++ zs) elim xs
+     │            ╰──────────────╯
+     │            ╰──────────────╯ ?a n A m o xs ys zs 1 >= n, ?b n A m o xs ys zs
+                                   1 >= m, ?c n A m o xs ys zs 1 >= o
+
+Info: Solving equation(s) with not very general solution(s)
+
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:31:8 ->
+
+  29 │       (xs ++ (ys ++ zs))
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+     │           ╰──╯
+
+Error: The solution
+         Vec (+-assoc {zero} {m} {o} _Dim_0) A
+       is not well-scoped
+       Only the variables below are allowed: `A`, `m`, `o`, `ys`, `zs`
+
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:31:8 ->
+
+  29 │       (xs ++ (ys ++ zs))
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+     │           ╰──╯
+
+Error: Cannot check the expression
+         refl
+       of type
+         (=) {?A A m o ys zs} (?a A m o ys zs) (?a A m o ys zs)
+         (Normalized: ?a A m o ys zs = ?a A m o ys zs)
+       against the type
+         (++) {zero} {A} {m + o} [] ((++) {m} {A} {o} ys zs) = (++) {zero + m} {A}
+        {o} ((++) {zero} {A} {m} [] ys) zs
+       In particular, we failed to unify
+         ?A A m o ys zs
+       with
+         Vec (+-assoc {zero} {m} {o} _Dim_0) A
+
+Cannot check the expression
+  _
+of type
+  Nat
+against the type
+  Vec (?n A x xs n m o ys zs _) A
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:32:-1 ->
+
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+  32 │   | x :> xs => pmapd {B := \n => Vec n A} (x :>) (++-assoc xs ys zs)
+     │   ╰────────────────────────────────────────────╯
+
+Error: Cannot check the expression
+         x :> _
+       of type
+         Vec (suc (?n A x xs n m o ys zs _)) A
+       against the type
+         Vec _ A
+       In particular, we failed to unify
+         suc (?n A x xs n m o ys zs _)
+       with
+         _
+
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:32:48 ->
+
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+  32 │   | x :> xs => pmapd {B := \n => Vec n A} (x :>) (++-assoc xs ys zs)
+     │                                                   ╰───────────────╯
+
+Error: Cannot check the expression
+         ++-assoc xs ys zs
+       of type
+         (++) {n} {A} {m + o} xs ((++) {m} {A} {o} ys zs) = (++) {n + m} {A} {o}
+        ((++) {n} {A} {m} xs ys) zs
+       against the type
+         ?a A x xs n m o ys zs = ?b A x xs n m o ys zs
+       In particular, we failed to unify
+         Vec (+-assoc {n} {m} {o} _Dim_0) A
+       with
+         Nat
+
+In file C:\Users\ice10\git-repos\aya-dev\cli-impl\src\test\resources\shared\src\data\Vec\base.aya:32:13 ->
+
+  30 │       ((xs ++ ys) ++ zs) elim xs
+  31 │   | [] => refl
+  32 │   | x :> xs => pmapd {B := \n => Vec n A} (x :>) (++-assoc xs ys zs)
+     │                ╰───────────────────────────────────────────────────╯
+
+Error: Cannot check the expression
+         pmapd {\ n ⇒ Vec n A} (\ _ ⇒ x :> _) (++-assoc xs ys zs)
+       of type
+         (x :> ?a A x xs n m o ys zs) = (x :> ?b A x xs n m o ys zs)
+       against the type
+         (++) {suc n} {A} {m + o} (x :> xs) ((++) {m} {A} {o} ys zs) = (++) {suc
+        n + m} {A} {o} ((++) {suc n} {A} {m} (x :> xs) ys) zs
+       In particular, we failed to unify
+         ++-assoc {n} {A} {m} {o} xs ys zs _Dim_0
+       with
+         suc (+-assoc {n} {m} {o} _Dim_0)
+
 In file $FILE:4:2 ->
 
-  2 │   open import data::Vec
+  2 │   open import data::Vec::base
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
   4 │   | [] => []
     │     ╰╯
@@ -37,13 +154,13 @@ Error: I'm unsure if there should be a case for
        as index unification is blocked for type
          Vec (<n> + <n>) A
 
-2 error(s), 0 warning(s).
+8 error(s), 1 warning(s).
 What are you doing?
 
 SelectionBlocked:
 In file $FILE:4:2 ->
 
-  2 │   open import data::Vec
+  2 │   open import data::Vec::base
   3 │   def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
   4 │   | () => []
     │     ╰╯
@@ -90,7 +207,7 @@ What are you doing?
 NotEnoughPattern:
 In file $FILE:3:8 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x => x
     │           ╰╯
@@ -104,7 +221,7 @@ What are you doing?
 TooManyPattern:
 In file $FILE:3:11 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, {y} => x
     │              ╰─╯
@@ -120,7 +237,7 @@ What are you doing?
 TooManyPattern2:
 In file $FILE:3:14 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, y, z => x
     │                 ╰╯
@@ -137,7 +254,7 @@ What are you doing?
 InvalidEmptyBody:
 In file $FILE:3:2 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def test Bool : Bool
   3 │   | true
     │     ╰──╯
@@ -161,7 +278,7 @@ What are you doing?
 InvalidAbsurdPattern:
 In file $FILE:2:23 ->
 
-  1 │   open import arith::Bool
+  1 │   open import arith::bool::base
   2 │   def test Bool : Bool | ()
     │                          ╰╯
 

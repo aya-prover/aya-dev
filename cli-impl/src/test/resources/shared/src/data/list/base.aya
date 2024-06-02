@@ -1,8 +1,9 @@
-open import arith::Nat
+open import arith::nat::base
+open import paths
 
 open inductive List (A : Type)
 | []
-| infixr :< A (List A)
+| infixr :< A (List A) tighter =
 
 variable A B : Type
 

@@ -1,0 +1,11 @@
+open inductive Bool | true | false
+
+def not Bool : Bool
+| true => false
+| false => true
+
+variable A : Type
+
+def if-then-else (b : Bool) (t e : A) : A elim b
+| true => t
+| false => e

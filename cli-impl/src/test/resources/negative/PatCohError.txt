@@ -19,7 +19,7 @@ What are you doing?
 Confl:
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def addN Nat Nat : Nat
     │                   ╰──╯
   3 │       | zero, a => suc a
@@ -39,7 +39,7 @@ What are you doing?
 ConflLiteral:
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -59,7 +59,7 @@ Error: The 2nd and the 7th clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -78,7 +78,7 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -98,7 +98,7 @@ Error: The 6th and the 5th clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -118,7 +118,7 @@ Error: The 2nd and the 6th clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -137,7 +137,7 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def test Nat : Nat
     │                   ╰──╯
   3 │       | 0 => 0
@@ -156,7 +156,7 @@ Error: The 4th and the 3rd clauses are not confluent because we failed to unify
 
 In file $FILE:3:2 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   overlap def test Nat : Nat
   3 │   | 0 => 0
     │     ╰────╯
@@ -230,7 +230,7 @@ What are you doing?
 ConflLiteral2:
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def largeInt1 Nat Nat : Nat
     │                   ╰───────╯
   3 │       | a, b => a
@@ -546,7 +546,7 @@ That looks right!
 LiteralConfluence:
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   3 │       | zero => 1
@@ -562,7 +562,7 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
 
 In file $FILE:2:12 ->
 
-  1 │       open import arith::Nat
+  1 │       open import arith::nat::base
   2 │       overlap def not-conf Nat : Nat
     │                   ╰──────╯
   3 │       | zero => 1
@@ -590,7 +590,7 @@ Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be
 
 In file $FILE:3:2 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   overlap def not-conf Nat : Nat
   3 │   | zero => 1
     │     ╰───────╯
@@ -624,7 +624,7 @@ What are you doing?
 NestedMissing:
 In file $FILE:2:0 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def add {m n : Nat} : Nat
     │ ╭─╯
   3 │ │  | {0}, {0} => 0
@@ -654,32 +654,23 @@ Warning: The 5th clause is dominated by the other clauses, hence unreachable
 What are you doing?
 
 IApplyConfluence:
-In file $FILE:4:4 ->
+In file $FILE:2:12 ->
 
-  2 │     open import arith::Int
-  3 │     open import arith::Bool
-  4 │     def test Int : Nat
-    │         ╰──╯
-  5 │     | signed true _ => 1
-  6 │     | signed false _ => 0
-  7 │     | posneg _ => 1
-    │       ╰───────────╯ confluence: this clause is substituted to `1`
+  1 │   open import arith::nat::base
+  2 │   open import arith::int::base
+    │               ╰──────────────╯
+  3 │   open import arith::bool::base
 
-Error: The 3rd clause matches on a path constructor. We failed to unify
-         1
-       for the arguments:
-         posneg 0
-       Normalized:
-         signed false 0
-         0
+Error: The module name `arith::int::base` is not found
 
+Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?
 
 Coverage:
 In file $FILE:2:0 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def cov (x x' x'' x''' : Nat) : Nat
     │ ╭─╯
   3 │ │  | zero, a, b, c => 0
@@ -698,7 +689,7 @@ What are you doing?
 CoverageLiteral:
 In file $FILE:2:0 ->
 
-  1 │   open import arith::Nat
+  1 │   open import arith::nat::base
   2 │   def cov (x x' x'' x''' : Nat) : Nat
     │ ╭─╯
   3 │ │  | 0, a, b, c => 0

@@ -7,17 +7,17 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface ExprTyckError {
   @Language("Aya") String testTypeMismatch = """
-    open import arith::Nat
+    open import arith::nat::base
     def test => 1 + Type
     """;
 
   @Language("Aya") String testIllTypedApp = """
-    open import arith::Nat
+    open import arith::nat::base
     def test (a : Nat) => a 1
     """;
 
   @Language("Aya") String testWantButNo = """
-    open import arith::Nat
+    open import arith::nat::base
     def test : Type => \\ x => x
     """;
 
