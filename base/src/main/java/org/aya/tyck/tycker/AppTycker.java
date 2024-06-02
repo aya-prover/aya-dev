@@ -87,8 +87,8 @@ public interface AppTycker {
       var shape = state.shapeFactory().find(dataVar)
         .mapNotNull(recog -> AyaShape.ofCon(conVar, recog, type))
         .getOrNull();
-      if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, lift, ownerArgs, conArgs), type);
-      var wellTyped = new ConCall(conVar, ownerArgs, lift, conArgs);
+      if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
+      var wellTyped = new ConCall(conVar, ownerArgs, 0, conArgs);
       return new Jdg.Default(wellTyped, type);
     });
   }
@@ -96,7 +96,7 @@ public interface AppTycker {
   checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      state.primFactory().unfold(new PrimCall(primVar, lift, ImmutableArray.from(args)), state),
+      state.primFactory().unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
@@ -104,7 +104,7 @@ public interface AppTycker {
   checkDataCall(@NotNull Factory<Ex> makeArgs, int lift, DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      new DataCall(data, lift, ImmutableArray.from(args)),
+      new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
   }
@@ -117,9 +117,9 @@ public interface AppTycker {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);
       if (operator != null) {
-        return new Jdg.Default(new RuleReducer.Fn(operator, lift, argsSeq), result);
+        return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
       }
-      return new Jdg.Default(new FnCall(fnDef, lift, argsSeq), result);
+      return new Jdg.Default(new FnCall(fnDef, 0, argsSeq), result);
     });
   }
 }
