@@ -76,7 +76,8 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testNonPattern = """
-    open import data::Vec::base
+    open import data::vec::base
+    open import data::vec::base
     open import arith::nat::base
     open import paths
     variable n m o : Nat

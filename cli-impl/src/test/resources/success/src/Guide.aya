@@ -1,4 +1,4 @@
-open import data::Vec::base
+open import data::vec::base
 open import arith::nat::base
 open import paths
 

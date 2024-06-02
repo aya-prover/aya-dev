@@ -17,7 +17,7 @@ public interface PatTyckError {
 
   @Language("Aya") String testSelectionFailed = """
     open import arith::nat::base
-    open import data::Vec::base
+    open import data::vec::base
     def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
     | [] => []
     | _ :> _ => _
@@ -25,7 +25,7 @@ public interface PatTyckError {
 
   @Language("Aya") String testSelectionBlocked = """
     open import arith::nat::base
-    open import data::Vec::base
+    open import data::vec::base
     def mapImpl {A B : Type} {n : Nat} (f : A -> B) (xs : Vec (n + n) A) : Vec (n + n) B elim xs
     | () => []
     """;
