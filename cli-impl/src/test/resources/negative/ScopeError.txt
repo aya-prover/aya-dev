@@ -168,12 +168,12 @@ LetOpen:
 That looks right!
 
 UnknownElimVar:
-In file $FILE:2:29 ->
+In file $FILE:3:29 ->
 
   1 │   open import arith::bool::base
-  2 │   def p (a : Bool) : Bool elim b
+  2 │   def b => true
+  3 │   def p (a : Bool) : Bool elim b
     │                                ╰╯
-  3 │   | true => false
 
 Error: The name `b` is not defined in the current scope
 

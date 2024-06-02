@@ -61,6 +61,7 @@ public interface ScopeError {
     """;
   @Language("Aya") String testUnknownElimVar = """
     open import arith::bool::base
+    def b => true
     def p (a : Bool) : Bool elim b
     | true => false
     """;
