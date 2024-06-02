@@ -5,8 +5,10 @@ package org.aya.tyck.tycker;
 import org.aya.normalize.Finalizer;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
+import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,5 +33,9 @@ public interface Stateful {
   }
   default @NotNull Term freezeHoles(@NotNull Term term) {
     return new Finalizer.Freeze(this).zonk(term);
+  }
+
+  @ForLSP default @NotNull Term fullNormalize(Term result) {
+    return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 }

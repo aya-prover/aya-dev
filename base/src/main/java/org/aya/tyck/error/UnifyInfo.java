@@ -28,7 +28,7 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
 
   public static void exprInfo(Term term, PrettierOptions options, Stateful state, MutableList<@NotNull Doc> buf) {
     exprInfo(state.freezeHoles(term).toDoc(options),
-      state.freezeHoles(state.whnf(term)).toDoc(options), buf);
+      state.freezeHoles(state.fullNormalize(term)).toDoc(options), buf);
   }
 
   public record Comparison(
@@ -40,15 +40,14 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
   public @NotNull Doc describeUnify(
     @NotNull PrettierOptions options,
     @NotNull Comparison comparison,
-    @NotNull Doc prologue,
-    @NotNull Doc epilogue
+    @NotNull Doc prologue, @NotNull Doc conjunction
   ) {
     var actualDoc = comparison.actual.toDoc(options);
     var expectedDoc = comparison.expected.toDoc(options);
-    var actualNFDoc = whnf(comparison.actual).toDoc(options);
-    var expectedNFDoc = whnf(comparison.expected).toDoc(options);
+    var actualNFDoc = fullNormalize(comparison.actual).toDoc(options);
+    var expectedNFDoc = fullNormalize(comparison.expected).toDoc(options);
     var buf = MutableList.of(prologue);
-    compareExprs(epilogue, actualDoc, expectedDoc, actualNFDoc, expectedNFDoc, buf);
+    compareExprs(conjunction, actualDoc, expectedDoc, actualNFDoc, expectedNFDoc, buf);
     var failureTermL = comparison.failureData.lhs();
     var failureTermR = comparison.failureData.rhs();
     var failureLhs = failureTermL.toDoc(options);
@@ -60,8 +59,8 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
       buf.append(Doc.english("In particular, we failed to unify"));
       compareExprs(Doc.plain("with"),
         failureLhs, failureTermR.toDoc(options),
-        whnf(failureTermL).toDoc(options),
-        whnf(failureTermR).toDoc(options),
+        fullNormalize(failureTermL).toDoc(options),
+        fullNormalize(failureTermR).toDoc(options),
         buf);
     }
     return Doc.vcat(buf);
