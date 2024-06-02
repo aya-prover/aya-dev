@@ -313,10 +313,8 @@ public record AyaProducer(
       .map(this::bareOrBarredClause).toImmutableSeq();
     var elims = node.childrenOfType(WEAK_ID)
       .map(this::weakId)
-      .map(id -> new WithPos<>(id.sourcePos(),
-        vars.find(v -> v.name().equals(id.data())).getOrDefault(LocalVar.IGNORED)))
       .toImmutableSeq();
-    return new FnBody.BlockBody(body, elims);
+    return new FnBody.BlockBody(body, null, elims);
   }
 
   private void giveMeOpen(@NotNull ModifierParser.Modifiers modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {

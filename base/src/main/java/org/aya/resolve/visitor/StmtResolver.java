@@ -10,8 +10,11 @@ import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.visitor.ExprResolver.Where;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -56,12 +59,24 @@ public interface StmtResolver {
         // Generalized works for simple bodies and signatures
         var resolver = resolveDeclSignature(ExprResolver.LAX, info, ctx, decl, where);
         switch (decl.body) {
-          case FnBody.BlockBody(var cls, var elims) -> {
+          case FnBody.BlockBody(var cls, var elims, var rawElims) -> {
+            assert elims == null;
             // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
             insertGeneralizedVars(decl, resolver);
+            // TODO resolve elim
+            var finalElims = rawElims.map(elim -> {
+              var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
+              if (!(result instanceof LocalVar localVar)) {
+                return resolver.ctx().reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(resolver.ctx(),
+                  elim.data(), elim.sourcePos()));
+              }
+              // result is LocalVar -> result in telescope
+              return localVar;
+            });
+
             var clausesResolver = resolver.deriveRestrictive();
             clausesResolver.reference().append(new TyckOrder.Head(decl));
-            decl.body = new FnBody.BlockBody(cls.map(clausesResolver::clause), elims);
+            decl.body = new FnBody.BlockBody(cls.map(clausesResolver::clause), finalElims, rawElims);
             addReferences(info, new TyckOrder.Body(decl), clausesResolver);
           }
           case FnBody.ExprBody(var expr) -> {

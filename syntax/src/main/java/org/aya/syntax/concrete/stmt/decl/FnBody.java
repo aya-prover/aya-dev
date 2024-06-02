@@ -10,6 +10,8 @@ import org.aya.util.error.PosedConsumer;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -25,12 +27,17 @@ public sealed interface FnBody {
       f.accept(expr);
     }
   }
+
+  /**
+   * @param elims NotNull after resolving
+   */
   record BlockBody(
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull ImmutableSeq<WithPos<LocalVar>> elims
+    @Nullable ImmutableSeq<LocalVar> elims,
+    @NotNull ImmutableSeq<WithPos<String>> rawElims
   ) implements FnBody {
     @Override public BlockBody map(@NotNull PosedUnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g) {
-      return new BlockBody(clauses.map(g), elims);
+      return new BlockBody(clauses.map(g), elims, rawElims);
     }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f, @NotNull Consumer<Pattern.Clause> g) {
       clauses.forEach(g);

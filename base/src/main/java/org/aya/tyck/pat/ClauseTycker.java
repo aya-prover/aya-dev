@@ -63,7 +63,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     @NotNull ImmutableSeq<LocalVar> vars,
     @NotNull Signature signature,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull ImmutableSeq<WithPos<LocalVar>> elims,
+    @NotNull ImmutableSeq<LocalVar> elims,
     boolean isFn
   ) {
     public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
@@ -82,7 +82,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     }
     private @Nullable ImmutableIntSeq computeIndices() {
       return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
-        i -> vars.indexOf(i.data()));
+        i -> vars.indexOf(i));
     }
     public @NotNull TyckResult checkNoClassify() {
       return parent.checkAllRhs(vars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
