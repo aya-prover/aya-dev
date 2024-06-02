@@ -42,6 +42,14 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     boolean hasLhsError
   ) { }
 
+  /**
+   * @param paramSubst substitution for parameter, in the same order as parameter.
+   *                   See {@link PatternTycker#paramSubst}
+   * @param freePats   a free version of the patterns.
+   *                   In most cases you want to use {@code clause.pats} instead
+   * @param allBinds   all binders in the patterns
+   * @param asSubst    substitution of the {@code as} patterns
+   */
   public record LhsResult(
     @NotNull LocalCtx localCtx,
     @NotNull Term type,

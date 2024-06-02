@@ -183,8 +183,8 @@ public record StmtTycker(
       var allTypedBinds = Pat.collectBindings(wellPats.view());
       ownerBinds = lhsResult.allBinds();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
-      ownerTele = ownerBinds
-        .zip(allTypedBinds, (bind, param) -> new WithPos<>(bind.definition(), param));
+      ownerTele = ownerBinds.zip(allTypedBinds,
+        (bind, param) -> new WithPos<>(bind.definition(), param));
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {
