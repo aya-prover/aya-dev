@@ -13,7 +13,7 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
-import org.aya.tyck.error.HoleProblem;
+import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
@@ -55,13 +55,13 @@ public record TyckState(
       var eqns = this.eqns.toImmutableSeq();
       if (postSimplificationSize == eqns.size()) {
         // TODO: report error, cannot solve eqns
-        reporter.report(new HoleProblem.CannotSolveEquations(eqns));
+        reporter.report(new MetaVarProblem.CannotSolveEquations(eqns));
         return;
       } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       if (eqns.isNotEmpty()) {
         for (var eqn : eqns) solveEqn(reporter, eqn, false);
-        reporter.report(new HoleProblem.CannotFindGeneralSolution(eqns));
+        reporter.report(new MetaVarProblem.CannotFindGeneralSolution(eqns));
       }
     }
   }

@@ -19,13 +19,13 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface HoleProblem extends Problem {
+public sealed interface MetaVarProblem extends Problem {
   @NotNull MetaCall term();
   @Override default @NotNull Severity level() { return Severity.ERROR; }
   @Override default @NotNull SourcePos sourcePos() { return term().ref().pos(); }
 
   record BadSpineError(@Override @NotNull MetaCall term, TyckState state, Term rhs)
-    implements HoleProblem, Stateful {
+    implements MetaVarProblem, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The following spine is not in pattern fragment:"),
@@ -40,10 +40,12 @@ public sealed interface HoleProblem extends Problem {
     @Override @NotNull MetaCall term,
     @Override @NotNull TyckState state,
     @Override @NotNull Term solution
-  ) implements HoleProblem, Stateful {
+  ) implements MetaVarProblem, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
         Doc.par(1, term.ref().req().toDoc(options)),
+        Doc.english("The meta itself:"),
+        Doc.par(1, Doc.code(term.toDoc(options))),
         Doc.english("However, the solution below does not seem so:"));
       UnifyInfo.exprInfo(solution, options, this, list);
       return Doc.vcat(list);
@@ -54,7 +56,7 @@ public sealed interface HoleProblem extends Problem {
     @Override @NotNull MetaCall term,
     @NotNull Term solved,
     @NotNull Seq<LocalVar> allowed
-  ) implements HoleProblem {
+  ) implements MetaVarProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The solution"),
@@ -67,7 +69,7 @@ public sealed interface HoleProblem extends Problem {
     }
   }
 
-  record RecursionError(@Override @NotNull MetaCall term, @NotNull Term sol) implements HoleProblem {
+  record RecursionError(@Override @NotNull MetaCall term, @NotNull Term sol) implements MetaVarProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.sep(

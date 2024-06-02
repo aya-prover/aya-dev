@@ -15,7 +15,7 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.error.HoleProblem;
+import org.aya.tyck.error.MetaVarProblem;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -86,7 +86,7 @@ public final class Unifier extends TermComparator {
     var candidate = rhs.bindTele(inverted.view());
     var findUsage = FindUsage.anyFree(candidate);
     if (findUsage.termUsage > 0) {
-      fail(new HoleProblem.BadlyScopedError(meta, rhs, inverted));
+      fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
       return null;
     }
     if (findUsage.metaUsage > 0) {
@@ -94,13 +94,13 @@ public final class Unifier extends TermComparator {
         state.addEqn(createEqn(meta, rhs));
         return returnType;
       } else {
-        fail(new HoleProblem.BadlyScopedError(meta, rhs, inverted));
+        fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
         return null;
       }
     }
     var ref = meta.ref();
     if (FindUsage.meta(candidate, ref) > 0) {
-      fail(new HoleProblem.RecursionError(meta, candidate));
+      fail(new MetaVarProblem.RecursionError(meta, candidate));
       return null;
     }
     // It might have extra arguments, in those cases we need to abstract them out.
@@ -169,9 +169,9 @@ public final class Unifier extends TermComparator {
   }
 
   private void reportBadSpine(@NotNull MetaCall meta, @NotNull Term rhs) {
-    fail(new HoleProblem.BadSpineError(meta, state, rhs));
+    fail(new MetaVarProblem.BadSpineError(meta, state, rhs));
   }
   private void reportIllTyped(@NotNull MetaCall meta, @NotNull Term rhs) {
-    fail(new HoleProblem.IllTypedError(meta, state, rhs));
+    fail(new MetaVarProblem.IllTypedError(meta, state, rhs));
   }
 }

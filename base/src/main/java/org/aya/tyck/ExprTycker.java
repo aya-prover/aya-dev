@@ -225,6 +225,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var type = new DataCall((DataDefLike) match.def(), 0, ImmutableSeq.empty());
         yield new Jdg.Default(new IntegerTerm(integer, match.recog(), type), type);
       }
+      case Expr.Lift(WithPos(var innerPos, Expr.Ref ref), var level) ->
+        checkApplication(ref, level, innerPos, ImmutableSeq.empty());
       case Expr.Lift(var inner, var level) -> synthesize(inner).map(x -> x.elevate(level));
       case Expr.LitString litStr -> {
         if (!state.primFactory().have(PrimDef.ID.STRING))

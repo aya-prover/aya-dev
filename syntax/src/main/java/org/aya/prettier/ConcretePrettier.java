@@ -18,6 +18,8 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.Stmt.Accessibility;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
@@ -89,8 +91,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.App(var head, var args) -> {
         Assoc assoc = null;
-        if (head.data() instanceof Expr.Ref ref && ref.var() instanceof DefVar<?, ?> var)
-          assoc = var.assoc();
+        if (head.data() instanceof Expr.Ref ref && ref.var() instanceof AnyDefVar var)
+          assoc = AnyDef.fromVar(var).assoc();
         yield visitConcreteCalls(assoc,
           term(Outer.AppHead, head.data()),
           args.view(), outer,

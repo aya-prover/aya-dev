@@ -5,14 +5,15 @@ package org.aya.prettier;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.primitive.MutableBooleanList;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleKey;
+import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
@@ -97,17 +98,18 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   ) {
     var preArgs = args.toImmutableSeq();
 
-    ImmutableSeq<Param> licit = ImmutableSeq.empty();
     // Because the signature of DataCon is selfTele, so we only need to deal with core con
-    if (var instanceof TyckAnyDef<?> inner) {
-      if (inner.core() instanceof SubLevelDef sub) licit = sub.selfTele;
-      else if (inner.core() instanceof TyckDef tyck) licit = Objects.requireNonNull(tyck.ref().signature).rawParams();
-    }
-    // TODO: handle serialized code, where you can use telescopeLicit
+    var licit = switch (var) {
+      case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub ?
+        sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit) :
+        Objects.requireNonNull(inner.core().ref().signature).param()
+          .mapToBooleanTo(MutableBooleanList.create(), p -> p.data().explicit());
+      case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
+    };
 
     // licited args, note that this may not include all [var] args since [preArgs.size()] may less than [licit.size()]
     // this is safe since the core call is always fully applied, that is, no missing implicit arguments.
-    var licitArgs = preArgs.zip(licit, (t, p) -> new Arg<>(t, p.explicit()));
+    var licitArgs = preArgs.zip(licit.asGeneric(), Arg::new);
     // explicit arguments, these are not [var] arguments, for example, a function [f {Nat} Nat : Nat -> Nat]
     // [explicitArgs.isEmpty] if licitArgs doesn't include all [var] args.
     var explicitArgs = preArgs.view().drop(licitArgs.size()).map(Arg::ofExplicitly);

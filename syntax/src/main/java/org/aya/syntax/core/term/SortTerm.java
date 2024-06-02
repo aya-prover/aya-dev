@@ -34,8 +34,7 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
     };
   }
 
-  @Override
-  public @NotNull SortTerm doElevate(int lift) {
+  @Override public @NotNull SortTerm doElevate(int lift) {
     return switch (kind) {
       case Type, Set -> new SortTerm(kind, this.lift + lift);
       case ISet -> lift == 1 ? Set1 : Set1.doElevate(lift - 1);

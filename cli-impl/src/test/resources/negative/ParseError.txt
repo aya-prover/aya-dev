@@ -31,3 +31,13 @@ Warning: Ignoring inline
 
 That looks right!
 
+OverlapOnExpr:
+In file $FILE:1:0 ->
+
+  1 │   overlap def id {A : Type} (a : A) => a
+    │   ╰─────╯
+
+Warning: The modifier overlap is redundant, ignored.
+
+That looks right!
+
