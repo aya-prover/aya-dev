@@ -21,6 +21,12 @@ public interface ExprTyckError {
     def test : Type => \\ x => x
     """;
 
+  @Language("Aya") String testCringeReturnType = """
+    open import arith::nat::base
+    def fr : Type -> Type => \\x => x
+    def test : fr => Type
+    """;
+
   @Language("Aya") String testBadInterval = """
     prim I
     def test : I => 2

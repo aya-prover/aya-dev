@@ -22,6 +22,11 @@ public enum Modifier {
    * pattern matching semantics.
    */
   Overlap("overlap"),
+  /**
+   * That the function does not need termination checking,
+   * and will not be reduced.
+   */
+  Partial("partial"),
   ;
 
   public final @NotNull String keyword;

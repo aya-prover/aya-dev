@@ -28,4 +28,11 @@ public interface TerckError {
     | 0 => b
     | suc a' => suc (swapAdd b a')
     """;
+
+  // This should pass
+  @Language("Aya") String testPartialDef = """
+    open import arith::nat::base
+    partial def f Nat : Nat
+    | a => f a
+    """;
 }

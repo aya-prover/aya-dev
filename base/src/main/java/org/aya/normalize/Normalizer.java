@@ -101,7 +101,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   }
 
   private boolean isOpaque(@NotNull FnDef fn) {
-    return opaque.contains(fn.ref()) || fn.is(Modifier.Opaque);
+    return opaque.contains(fn.ref()) || fn.is(Modifier.Opaque) || fn.is(Modifier.Partial);
   }
 
   public @NotNull Option<Term> tryUnfoldClauses(

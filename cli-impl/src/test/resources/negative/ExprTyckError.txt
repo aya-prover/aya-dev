@@ -24,7 +24,7 @@ In file $FILE:2:22 ->
 
 Error: Unable to apply the expression
          a 1
-       because the type of what you applied is not a Pi type, but instead:
+       because the type of what you applied is not a Pi/Path type, but instead:
          Nat
 
 In file $FILE:2:4 ->
@@ -45,12 +45,43 @@ In file $FILE:2:19 ->
   2 │   def test : Type => \ x => x
     │                      ╰──────╯
 
-Error: Unable to apply the expression
+Error: Unable to accept the expression
          \ x ⇒ x
-       because the type of what you applied is not a Pi type, but instead:
+       because the type we expect is not a Pi/Path type, but instead:
          Type 0
 
 1 error(s), 0 warning(s).
+What are you doing?
+
+CringeReturnType:
+In file $FILE:3:11 ->
+
+  1 │   open import arith::nat::base
+  2 │   def fr : Type -> Type => \x => x
+  3 │   def test : fr => Type
+    │              ╰╯
+
+Error: Unable to accept the expression
+         fr
+       because the type provided is not a type, but instead:
+         Type 0 → Type 0
+
+In file $FILE:3:17 ->
+
+  1 │   open import arith::nat::base
+  2 │   def fr : Type -> Type => \x => x
+  3 │   def test : fr => Type
+    │                    ╰──╯
+
+Error: Cannot check the expression
+         Type 0
+       of type
+         Type 1
+       against the type
+         \ _0 ⇒ 1
+         (Normalized: \ _0 ⇒ 1)
+
+2 error(s), 0 warning(s).
 What are you doing?
 
 BadInterval:

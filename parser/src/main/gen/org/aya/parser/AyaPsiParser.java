@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -785,6 +788,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //                 | KW_OPAQUE
   //                 | KW_INLINE
   //                 | KW_OVERLAP
+  //                 | KW_PARTIAL
   //                 | KW_OPEN
   public static boolean declModifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declModifiers")) return false;
@@ -795,6 +799,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_OPAQUE);
     if (!r) r = consumeToken(b, KW_INLINE);
     if (!r) r = consumeToken(b, KW_OVERLAP);
+    if (!r) r = consumeToken(b, KW_PARTIAL);
     if (!r) r = consumeToken(b, KW_OPEN);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1739,28 +1744,22 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
-  //                      | KW_EXAMPLE | DOC_COMMENT
+  // KW_IMPORT | KW_MODULE | DOC_COMMENT | KW_PUBLIC
   //                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
-  //                      | KW_OPAQUE | KW_INLINE | KW_OVERLAP
+  //                      | declModifiers
   static boolean stmt_first(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stmt_first")) return false;
     boolean r;
-    r = consumeToken(b, KW_PUBLIC);
-    if (!r) r = consumeToken(b, KW_PRIVATE);
-    if (!r) r = consumeToken(b, KW_OPEN);
-    if (!r) r = consumeToken(b, KW_IMPORT);
+    r = consumeToken(b, KW_IMPORT);
     if (!r) r = consumeToken(b, KW_MODULE);
-    if (!r) r = consumeToken(b, KW_EXAMPLE);
     if (!r) r = consumeToken(b, DOC_COMMENT);
+    if (!r) r = consumeToken(b, KW_PUBLIC);
     if (!r) r = consumeToken(b, KW_DEF);
     if (!r) r = consumeToken(b, KW_CLASS);
     if (!r) r = consumeToken(b, KW_PRIM);
     if (!r) r = consumeToken(b, KW_DATA);
     if (!r) r = consumeToken(b, KW_VARIABLE);
-    if (!r) r = consumeToken(b, KW_OPAQUE);
-    if (!r) r = consumeToken(b, KW_INLINE);
-    if (!r) r = consumeToken(b, KW_OVERLAP);
+    if (!r) r = declModifiers(b, l + 1);
     return r;
   }
 

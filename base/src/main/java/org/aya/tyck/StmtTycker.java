@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
+import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.concrete.Expr;
@@ -127,7 +128,8 @@ public record StmtTycker(
         signature = signature.descent(tycker::zonk);
         var sort = SortTerm.Type0;
         if (signature.result() instanceof SortTerm userSort) sort = userSort;
-        else fail(BadTypeError.univ(tycker.state, result, signature.result()));
+        else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
+          _ -> Doc.plain("universe")));
         data.ref.signature = new Signature(signature.param(), sort);
       }
       case FnDecl fn -> {
