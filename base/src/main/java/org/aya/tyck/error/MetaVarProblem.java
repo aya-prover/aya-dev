@@ -11,6 +11,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.SourcePos;
@@ -43,11 +44,17 @@ public sealed interface MetaVarProblem extends Problem {
   ) implements MetaVarProblem, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
-        Doc.par(1, term.ref().req().toDoc(options)),
+        Doc.par(1, switch (term.ref().req()) {
+          case MetaVar.OfType(var type) -> {
+            type = freezeHoles(MetaCall.appType(term, type));
+            yield new MetaVar.OfType(type).toDoc(options);
+          }
+          case MetaVar.Requirement misc -> misc.toDoc(options);
+        }),
         Doc.english("The meta itself:"),
         Doc.par(1, Doc.code(term.toDoc(options))),
         Doc.english("However, the solution below does not seem so:"));
-      UnifyInfo.exprInfo(solution, options, this, list);
+      UnifyInfo.exprInfo(freezeHoles(solution), options, this, list);
       return Doc.vcat(list);
     }
   }

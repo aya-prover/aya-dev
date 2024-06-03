@@ -160,7 +160,7 @@ public final class Unifier extends TermComparator {
         needUnify = false;
       }
       case MetaVar.OfType(var target) -> {
-        target = MetaCall.appType(ref, target, meta.args());
+        target = MetaCall.appType(meta, target);
         if (type != null && !compare(type, target, null)) {
           reportIllTyped(meta, rhs);
           return null;

@@ -24,7 +24,9 @@ public record MetaCall(
     var restArgs = args.sliceView(ref.ctxSize(), args.size());
     return AppTerm.make(rhs.instantiateTele(directArgs), restArgs);
   }
-  public static @NotNull Term appType(MetaVar ref, Term rhsType, ImmutableSeq<Term> args) {
+  public static @NotNull Term appType(MetaCall call, Term rhsType) {
+    var ref = call.ref;
+    var args = call.args;
     var directArgs = args.sliceView(0, ref.ctxSize());
     var restArgs = args.sliceView(ref.ctxSize(), args.size());
     return PiTerm.substBody(rhsType.instantiateTele(directArgs), restArgs);
