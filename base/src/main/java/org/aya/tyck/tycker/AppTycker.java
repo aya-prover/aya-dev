@@ -119,7 +119,8 @@ public interface AppTycker {
       if (operator != null) {
         return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
       }
-      return new Jdg.Default(new FnCall(fnDef, 0, argsSeq), result);
+      var fnCall = new FnCall(fnDef, 0, argsSeq);
+      return new Jdg.Default(fnCall, result);
     });
   }
 }

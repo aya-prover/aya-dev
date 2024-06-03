@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
 import org.aya.generic.InterruptException;
+import org.aya.generic.Modifier;
 import org.aya.generic.stmt.TyckOrder;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.ResolveInfo;
@@ -111,6 +112,7 @@ public record AyaSccTycker(
     // TODO: positivity check for data/record definitions
     var fn = recDefs.view()
       .filterIsInstance(FnDecl.class)
+      .filterNot(f -> f.modifiers.contains(Modifier.Partial))
       .map(f -> f.ref.core)
       .toImmutableSeq();
     terckRecursiveFn(fn);
@@ -125,6 +127,12 @@ public record AyaSccTycker(
       .sorted(Comparator.comparing(a -> domRef(a).concrete.sourcePos()))
       .forEach(f -> {
         var ref = domRef(f);
+        if (ref.core instanceof FnDef fnDef) {
+          fnDef.modifiers().add(Modifier.Partial);
+          // If it fails to terck, it seems very dangerous because the user seems unaware
+          // what they're doing. So we take extra care and mark it as opaque.
+          fnDef.modifiers().add(Modifier.Opaque);
+        }
         fail(new BadRecursion(ref.concrete.sourcePos(), ref, f));
       });
   }
