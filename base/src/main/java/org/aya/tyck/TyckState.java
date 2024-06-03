@@ -40,11 +40,11 @@ public record TyckState(
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
-  private void solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
+  private boolean solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;
-    unifier.checkEqn(eqn);
+    return unifier.checkEqn(eqn);
   }
 
   public void solveMetas(@NotNull Reporter reporter) {
@@ -60,8 +60,8 @@ public record TyckState(
       } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       if (eqns.isNotEmpty()) {
-        for (var eqn : eqns) solveEqn(reporter, eqn, false);
-        reporter.report(new MetaVarProblem.CannotFindGeneralSolution(eqns));
+        if (eqns.anyMatch(eqn -> solveEqn(reporter, eqn, false)))
+          reporter.report(new MetaVarProblem.CannotFindGeneralSolution(eqns));
       }
     }
   }
