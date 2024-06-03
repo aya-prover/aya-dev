@@ -178,6 +178,16 @@ Error: The solution
        is not well-scoped
        Only the variables below are allowed: 
 
+In file $FILE:5:41 ->
+
+  3 │     
+  4 │     // https://cstheory.stackexchange.com/a/49160/50892
+  5 │     def test (a : _) (B : Type) (b : B) (p : a = b) : I => 0
+    │                                              ╰╯
+    │                                              ╰╯ ?_ <= ?A a B b
+
+Error: Equations do not have solutions!
+
 In file $FILE:5:14 ->
 
   3 │   
@@ -187,7 +197,7 @@ In file $FILE:5:14 ->
 
 Error: Unsolved meta _
 
-2 error(s), 0 warning(s).
+3 error(s), 0 warning(s).
 What are you doing?
 
 LiteralAmbiguous3:

@@ -5,7 +5,6 @@ package org.aya.tyck;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.AyaDocile;
-import org.aya.prettier.FindUsage;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
@@ -22,6 +21,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -40,15 +40,16 @@ public record TyckState(
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
-  private void solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
+  private boolean solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;
-    unifier.checkEqn(eqn);
+    return unifier.checkEqn(eqn);
   }
 
   public void solveMetas(@NotNull Reporter reporter) {
     int postSimplificationSize = -1;
+    var evilEqns = MutableList.<Eqn>create();
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
@@ -59,10 +60,12 @@ public record TyckState(
         return;
       } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      if (eqns.isNotEmpty()) {
-        for (var eqn : eqns) solveEqn(reporter, eqn, false);
-        reporter.report(new MetaVarProblem.CannotFindGeneralSolution(eqns));
+      if (eqns.isNotEmpty()) for (var eqn : eqns) {
+        if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);
       }
+    }
+    if (evilEqns.isNotEmpty()) {
+      reporter.report(new MetaVarProblem.DidSomethingBad(evilEqns.toImmutableArray()));
     }
   }
 
@@ -79,7 +82,8 @@ public record TyckState(
       var v = activeMeta.data();
       if (solutions.containsKey(v)) {
         eqns.retainIf(eqn -> {
-          if (FindUsage.meta(eqn.lhs, v) + FindUsage.meta(eqn.rhs, v) > 0) {
+          // If the blocking meta is solved, we can check again
+          if (eqn.lhs.ref() == v) {
             solveEqn(reporter, eqn, true);
             return false;
           } else return true;
@@ -116,7 +120,7 @@ public record TyckState(
   }
 
   public record Eqn(
-    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx
   ) implements AyaDocile {

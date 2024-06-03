@@ -34,8 +34,8 @@ public final class Unifier extends TermComparator {
     this.allowDelay = allowDelay;
   }
 
-  public @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
-    return new TyckState.Eqn(lhs, rhs, cmp, pos, localCtx().clone());
+  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
+    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
   public @NotNull Unifier derive(@NotNull SourcePos pos, Ordering ordering) {
@@ -43,6 +43,8 @@ public final class Unifier extends TermComparator {
   }
 
   @Override protected @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
+      return sameMeta(meta, type, rMeta);
     // Assumption: rhs is in whnf
     var spine = meta.args();
 
@@ -57,7 +59,6 @@ public final class Unifier extends TermComparator {
       } else if (allowVague) {
         inverted.append(LocalVar.generate("_"));
       } else if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
         wantToReturn = true;
         break;
       } else {
@@ -67,7 +68,10 @@ public final class Unifier extends TermComparator {
     }
 
     var returnType = computeReturnType(meta, rhs, type);
-    if (wantToReturn) return returnType;
+    if (wantToReturn) {
+      state.addEqn(createEqn(meta, rhs, returnType));
+      return returnType;
+    }
     if (returnType == null) return null;
 
     // In this case, the solution may not be unique (see #608),
@@ -75,7 +79,7 @@ public final class Unifier extends TermComparator {
     var tmpRhs = rhs; // to get away with Java warning
     if (!allowVague && overlap.anyMatch(var -> FindUsage.free(tmpRhs, var) > 0)) {
       if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
+        state.addEqn(createEqn(meta, rhs, returnType));
         return returnType;
       } else {
         reportBadSpine(meta, rhs);
@@ -95,7 +99,7 @@ public final class Unifier extends TermComparator {
     }
     if (findUsage.metaUsage > 0) {
       if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
+        state.addEqn(createEqn(meta, rhs, returnType));
         return returnType;
       } else {
         fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
@@ -111,6 +115,17 @@ public final class Unifier extends TermComparator {
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
     return returnType;
+  }
+
+  /** The "flex-flex" case with identical meta ref */
+  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+    if (meta.args().size() != rMeta.args().size()) return null;
+    for (var i = 0; i < meta.args().size(); i++) {
+      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
+        return null;
+      }
+    }
+    return type;
   }
 
   /**
@@ -145,7 +160,7 @@ public final class Unifier extends TermComparator {
         needUnify = false;
       }
       case MetaVar.OfType(var target) -> {
-        target = MetaCall.appType(ref, target, meta.args());
+        target = MetaCall.appType(meta, target);
         if (type != null && !compare(type, target, null)) {
           reportIllTyped(meta, rhs);
           return null;

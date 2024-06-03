@@ -85,7 +85,7 @@ public class TestRunner {
       .resolve(fixturesClass.getSimpleName() + ".txt");
     if (Files.exists(expectedOutFile)) {
       checkOutput(expectedOutFile, result);
-      System.out.println("success");
+      System.out.println("Success!");
     } else {
       System.out.println(); // add line break after `--->`
       generateWorkflow(expectedOutFile, result);
