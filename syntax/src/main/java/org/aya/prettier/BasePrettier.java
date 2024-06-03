@@ -179,15 +179,14 @@ public abstract class BasePrettier<Term extends AyaDocile> {
    *   <li>Wrap the constructor with parentheses or braces</li>
    * </ul>
    *
-   * @param ctorDoc  The constructor pretty-printed doc, without the 'as' or parentheses.
+   * @param conDoc   The constructor pretty-printed doc, without the 'as' or parentheses.
    * @param noParams Whether the constructor has no parameters or not.
    */
-  @NotNull Doc ctorDoc(@NotNull Outer outer, boolean ex, Doc ctorDoc, boolean noParams) {
-    var withEx = Doc.bracedUnless(ctorDoc, ex);
+  @NotNull Doc conDoc(@NotNull Outer outer, boolean ex, Doc conDoc, boolean noParams) {
+    var withEx = Doc.bracedUnless(conDoc, ex);
     return !ex ? withEx
       : outer != Outer.Free && !noParams
-        ? Doc.parened(withEx)
-        : withEx;
+        ? Doc.parened(withEx) : withEx;
   }
 
   /**

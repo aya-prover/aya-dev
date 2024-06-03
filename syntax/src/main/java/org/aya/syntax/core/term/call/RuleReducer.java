@@ -43,29 +43,29 @@ public sealed interface RuleReducer extends Callable.Tele {
   record Con(
     @NotNull Shaped.Applicable<ConDefLike> rule,
     int ulift,
-    @NotNull ImmutableSeq<Term> dataArgs,
+    @NotNull ImmutableSeq<Term> ownerArgs,
     @Override @NotNull ImmutableSeq<Term> conArgs
   ) implements RuleReducer, ConCallLike {
     @Override public @NotNull ConCallLike.Head head() {
-      return new Head(rule.ref(), this.ulift, dataArgs);
+      return new Head(rule.ref(), this.ulift, ownerArgs);
     }
 
     @Override public @NotNull ConDefLike ref() { return rule.ref(); }
 
     public @NotNull RuleReducer.Con update(
       @NotNull Shaped.Applicable<ConDefLike> rule,
-      @NotNull ImmutableSeq<Term> dataArgs,
+      @NotNull ImmutableSeq<Term> ownerArgs,
       @NotNull ImmutableSeq<Term> conArgs
     ) {
-      return dataArgs.sameElements(this.dataArgs, true)
+      return ownerArgs.sameElements(this.ownerArgs, true)
         && conArgs.sameElements(this.conArgs, true)
         && rule == this.rule
-        ? this : new Con(rule, ulift, dataArgs, conArgs);
+        ? this : new Con(rule, ulift, ownerArgs, conArgs);
     }
 
     @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
       return update(rule.descent(f),
-        Callable.descent(dataArgs, f), Callable.descent(conArgs, f));
+        Callable.descent(ownerArgs, f), Callable.descent(conArgs, f));
     }
   }
 }

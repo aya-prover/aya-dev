@@ -162,7 +162,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case RuleReducer.Con conRuler -> buildReducibleCall(
         serializeApplicable(conRuler.rule()),
         CLASS_RULE_CON, conRuler.ulift(),
-        ImmutableSeq.of(conRuler.dataArgs(), conRuler.conArgs()),
+        ImmutableSeq.of(conRuler.ownerArgs(), conRuler.conArgs()),
         false
       );
       case RuleReducer.Fn fnRuler -> buildReducibleCall(
