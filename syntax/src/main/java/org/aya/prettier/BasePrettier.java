@@ -357,7 +357,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       case FnDefLike _ -> FN;
       case DataDefLike _ -> DATA;
       case ConDefLike _ -> CON;
-      case PrimDef _ -> PRIM;
+      case PrimDefLike _ -> PRIM;
       /*
       case ClassDecl d -> CLAZZ;
       case TeleDecl.ClassMember d -> MEMBER;
