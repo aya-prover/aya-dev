@@ -28,5 +28,11 @@ public record FnDef(
   public boolean is(@NotNull Modifier mod) { return modifiers.contains(mod); }
   public static final class Delegate extends TyckAnyDef<FnDef> implements FnDefLike {
     public Delegate(@NotNull DefVar<FnDef, ?> ref) { super(ref); }
+    @Override
+    public boolean is(@NotNull Modifier mod) {
+      var core = ref.core;
+      if (core != null) return core.is(mod);
+      return ((FnDecl) ref.concrete).modifiers.contains(mod);
+    }
   }
 }
