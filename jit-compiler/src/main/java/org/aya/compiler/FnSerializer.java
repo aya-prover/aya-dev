@@ -13,7 +13,10 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.AyaSerializer.CLASS_MODIFIER;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
+import static org.aya.compiler.ExprializeUtils.makeEnum;
+import static org.aya.compiler.ExprializeUtils.makeImmutableSeq;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -23,7 +26,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override protected void buildConstructor(FnDef unit) {
-    super.buildConstructor(unit, ImmutableSeq.empty());
+    super.buildConstructor(unit, ImmutableSeq.of(
+      makeImmutableSeq(CLASS_MODIFIER, ImmutableSeq.from(unit.modifiers()).map(mody ->
+        makeEnum(CLASS_MODIFIER, mody)))));
   }
 
   /**

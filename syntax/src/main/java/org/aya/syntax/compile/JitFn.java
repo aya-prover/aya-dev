@@ -3,14 +3,23 @@
 package org.aya.syntax.compile;
 
 import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public abstract non-sealed class JitFn extends JitDef implements FnDefLike, Reducible {
-  protected JitFn(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName) {
+  public final @NotNull EnumSet<Modifier> modifier;
+
+  protected JitFn(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName,
+                  @NotNull ImmutableSeq<Modifier> modifier) {
     super(telescopeSize, telescopeLicit, telescopeName);
+    this.modifier = EnumSet.noneOf(Modifier.class);
+    modifier.forEach(this.modifier::add);
   }
 
   /**
