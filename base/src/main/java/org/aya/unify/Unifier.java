@@ -34,8 +34,8 @@ public final class Unifier extends TermComparator {
     this.allowDelay = allowDelay;
   }
 
-  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs) {
-    return new TyckState.Eqn(lhs, rhs, cmp, pos, localCtx().clone());
+  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
+    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
   public @NotNull Unifier derive(@NotNull SourcePos pos, Ordering ordering) {
@@ -59,7 +59,6 @@ public final class Unifier extends TermComparator {
       } else if (allowVague) {
         inverted.append(LocalVar.generate("_"));
       } else if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
         wantToReturn = true;
         break;
       } else {
@@ -69,7 +68,10 @@ public final class Unifier extends TermComparator {
     }
 
     var returnType = computeReturnType(meta, rhs, type);
-    if (wantToReturn) return returnType;
+    if (wantToReturn) {
+      state.addEqn(createEqn(meta, rhs, returnType));
+      return returnType;
+    }
     if (returnType == null) return null;
 
     // In this case, the solution may not be unique (see #608),
@@ -77,7 +79,7 @@ public final class Unifier extends TermComparator {
     var tmpRhs = rhs; // to get away with Java warning
     if (!allowVague && overlap.anyMatch(var -> FindUsage.free(tmpRhs, var) > 0)) {
       if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
+        state.addEqn(createEqn(meta, rhs, returnType));
         return returnType;
       } else {
         reportBadSpine(meta, rhs);
@@ -97,7 +99,7 @@ public final class Unifier extends TermComparator {
     }
     if (findUsage.metaUsage > 0) {
       if (allowDelay) {
-        state.addEqn(createEqn(meta, rhs));
+        state.addEqn(createEqn(meta, rhs, returnType));
         return returnType;
       } else {
         fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));

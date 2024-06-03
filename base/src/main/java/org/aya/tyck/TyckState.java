@@ -21,6 +21,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -116,7 +117,7 @@ public record TyckState(
   }
 
   public record Eqn(
-    @NotNull MetaCall lhs, @NotNull Term rhs,
+    @NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx
   ) implements AyaDocile {
