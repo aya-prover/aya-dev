@@ -34,7 +34,7 @@ public final class Unifier extends TermComparator {
     this.allowDelay = allowDelay;
   }
 
-  public @NotNull TyckState.Eqn createEqn(@NotNull Term lhs, @NotNull Term rhs) {
+  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs) {
     return new TyckState.Eqn(lhs, rhs, cmp, pos, localCtx().clone());
   }
 

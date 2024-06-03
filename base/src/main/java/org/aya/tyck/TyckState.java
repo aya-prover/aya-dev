@@ -5,7 +5,6 @@ package org.aya.tyck;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.AyaDocile;
-import org.aya.prettier.FindUsage;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
@@ -79,7 +78,8 @@ public record TyckState(
       var v = activeMeta.data();
       if (solutions.containsKey(v)) {
         eqns.retainIf(eqn -> {
-          if (FindUsage.meta(eqn.lhs, v) + FindUsage.meta(eqn.rhs, v) > 0) {
+          // If the blocking meta is solved, we can check again
+          if (eqn.lhs.ref() == v) {
             solveEqn(reporter, eqn, true);
             return false;
           } else return true;
@@ -116,7 +116,7 @@ public record TyckState(
   }
 
   public record Eqn(
-    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull MetaCall lhs, @NotNull Term rhs,
     @NotNull Ordering cmp, @NotNull SourcePos pos,
     @NotNull LocalCtx localCtx
   ) implements AyaDocile {
