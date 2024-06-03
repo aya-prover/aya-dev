@@ -43,9 +43,16 @@ public record BadTypeError(
     return Doc.empty();
   }
 
-  public static @NotNull BadTypeError pi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
+  public static @NotNull BadTypeError
+  appOnNonPi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType, Doc.plain("apply"),
-      Doc.english("of what you applied"), _ -> Doc.english("Pi type"), state);
+      Doc.english("of what you applied"), _ -> Doc.english("Pi/Path type"), state);
+  }
+
+  public static @NotNull BadTypeError
+  absOnNonPi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
+    return new BadTypeError(expr, actualType, Doc.plain("accept"),
+      Doc.english("we expect"), _ -> Doc.english("Pi/Path type"), state);
   }
 
   public static @NotNull BadTypeError sigmaAcc(@NotNull TyckState state, @NotNull WithPos<Expr> expr, int ix, @NotNull Term actualType) {
@@ -80,11 +87,11 @@ public record BadTypeError(
       state);
   }
 
-  public static @NotNull BadTypeError univ(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actual) {
-    return new BadTypeError(expr, actual,
-      Doc.english("make sense of"),
-      Doc.english("provided"),
-      _ -> Doc.english("universe"),
-      state);
+  public static @NotNull BadTypeError doNotLike(
+    @NotNull TyckState state, @NotNull WithPos<Expr> expr,
+    @NotNull Term actual, @NotNull AyaDocile need
+  ) {
+    return new BadTypeError(expr, actual, Doc.plain("accept"),
+      Doc.plain("provided"), need, state);
   }
 }

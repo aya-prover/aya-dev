@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
 import org.aya.generic.Constants;
+import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
@@ -96,7 +97,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
         }
-        default -> fail(expr.data(), type, BadTypeError.pi(state, expr, type));
+        default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(), new MetaVar.OfType(type));
@@ -163,7 +164,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }));
       });
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
-      default -> synthesize(expr).wellTyped();
+      default -> {
+        var result = synthesize(expr);
+        if (!(result.type() instanceof SortTerm))
+          fail(expr.data(), BadTypeError.doNotLike(state, expr, result.type(),
+            _ -> Doc.plain("type")));
+        yield result.wellTyped();
+      }
     };
   }
 
@@ -179,7 +186,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield SortTerm.Type0;
       }
       default -> {
-        fail(BadTypeError.univ(state, errorMsg, term));
+        fail(BadTypeError.doNotLike(state, errorMsg, term, _ -> Doc.plain("universe")));
         yield SortTerm.Type0;
       }
     };
@@ -208,7 +215,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         } else try {
           yield generateApplication(a, synthesize(f)).lift(lift);
         } catch (NotPi e) {
-          yield fail(expr.data(), BadTypeError.pi(state, expr, e.actual));
+          yield fail(expr.data(), BadTypeError.appOnNonPi(state, expr, e.actual));
         }
       }
       case Expr.Hole hole -> throw new UnsupportedOperationException("TODO");
@@ -287,7 +294,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       return result;
     } catch (NotPi notPi) {
       var expr = new Expr.App(new WithPos<>(sourcePos, f), args);
-      return fail(expr, BadTypeError.pi(state, new WithPos<>(sourcePos, expr), notPi.actual));
+      return fail(expr, BadTypeError.appOnNonPi(state, new WithPos<>(sourcePos, expr), notPi.actual));
     }
   }
 
