@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -147,6 +150,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_OPEN = new AyaPsiTokenType("open");
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");
   IElementType KW_OVERRIDE = new AyaPsiTokenType("override");
+  IElementType KW_PARTIAL = new AyaPsiTokenType("partial");
   IElementType KW_PI = new AyaPsiTokenType("Fn");
   IElementType KW_PRIM = new AyaPsiTokenType("prim");
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");

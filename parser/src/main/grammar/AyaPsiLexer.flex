@@ -109,41 +109,45 @@ BLOCK_COMMENT_END   = "*/"
   "fixl"                { return KW_FIXL; }
   "fixr"                { return KW_FIXR; }
 
-  "tighter"             { return KW_TIGHTER; }
-  "looser"              { return KW_LOOSER; }
   "example"             { return KW_EXAMPLE; }
-  "Type"                { return KW_TYPE; }
-  "Set"                 { return KW_SET; }
-  "ISet"                { return KW_ISET; }
-  "as"                  { return KW_AS; }
+  "partial"             { return KW_PARTIAL; }
+  "coerce"              { return KW_COERCE; }
+  "opaque"              { return KW_OPAQUE; }
+  "inline"              { return KW_INLINE; }
+  "overlap"             { return KW_OVERLAP; }
+  "override"            { return KW_OVERRIDE; }
+  "completed"           { return KW_COMPLETED; }
+
+  "variable"            { return KW_VARIABLE; }
+  "def"                 { return KW_DEF; }
+  "class"               { return KW_CLASS; }
+  "inductive"           { return KW_DATA; }
+  "prim"                { return KW_PRIM; }
+  "coinductive"         { return KW_CODATA; }
+
   "open"                { return KW_OPEN; }
   "import"              { return KW_IMPORT; }
   "public"              { return KW_PUBLIC; }
   "private"             { return KW_PRIVATE; }
   "using"               { return KW_USING; }
   "hiding"              { return KW_HIDING; }
-  "coerce"              { return KW_COERCE; }
-  "opaque"              { return KW_OPAQUE; }
-  "inline"              { return KW_INLINE; }
-  "overlap"             { return KW_OVERLAP; }
   "module"              { return KW_MODULE; }
+
+  "tighter"             { return KW_TIGHTER; }
+  "looser"              { return KW_LOOSER; }
+  "Type"                { return KW_TYPE; }
+  "Set"                 { return KW_SET; }
+  "ISet"                { return KW_ISET; }
+  "as"                  { return KW_AS; }
   "match"               { return KW_MATCH; }
-  "variable"            { return KW_VARIABLE; }
-  "def"                 { return KW_DEF; }
-  "class"               { return KW_CLASS; }
   "classifying"         { return KW_CLASSIFIYING; }
-  "inductive"           { return KW_DATA; }
-  "prim"                { return KW_PRIM; }
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }
   "do"                  { return KW_DO; }
   "self"                { return KW_SELF; }
   "elim"                { return KW_ELIM; }
-  "override"            { return KW_OVERRIDE; }
-  "cocoinductive"       { return KW_CODATA; }
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
-  "completed"           { return KW_COMPLETED; }
   ":="                  { return DEFINE_AS; }
   "**"                  { return SUCHTHAT; }
   "."                   { return DOT; }

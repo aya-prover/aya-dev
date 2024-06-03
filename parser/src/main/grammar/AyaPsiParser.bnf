@@ -53,6 +53,12 @@
     KW_PROP = 'Prop'
     KW_ISET = 'ISet'
 
+    KW_COERCE = 'coerce'
+    KW_OPAQUE = 'opaque'
+    KW_INLINE = 'inline'
+    KW_PARTIAL = 'partial'
+    KW_OVERLAP = 'overlap'
+
     KW_AS = 'as'
     KW_OPEN = 'open'
     KW_IMPORT = 'import'
@@ -60,10 +66,6 @@
     KW_PRIVATE = 'private'
     KW_USING = 'using'
     KW_HIDING = 'hiding'
-    KW_COERCE = 'coerce'
-    KW_OPAQUE = 'opaque'
-    KW_INLINE = 'inline'
-    KW_OVERLAP = 'overlap'
     KW_MODULE = 'module'
     KW_MATCH = 'match'
     KW_VARIABLE = 'variable'
@@ -154,10 +156,9 @@ private stmt_with_recover ::= !(<<eof>>) stmt {
   recoverWhile = stmt_recover
 }
 private stmt_recover ::= !(stmt_first)
-private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
-                     | KW_EXAMPLE | DOC_COMMENT
+private stmt_first ::= KW_IMPORT | KW_MODULE | DOC_COMMENT | KW_PUBLIC
                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
-                     | KW_OPAQUE | KW_INLINE | KW_OVERLAP
+                     | declModifiers
 
 private repl ::= REPL_COMMAND? expr
 
@@ -217,6 +218,7 @@ declModifiers ::= KW_PRIVATE
                 | KW_OPAQUE
                 | KW_INLINE
                 | KW_OVERLAP
+                | KW_PARTIAL
                 | KW_OPEN
 
 classDecl

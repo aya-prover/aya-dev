@@ -35,3 +35,6 @@ What are you doing?
 SwapAddition:
 That looks right!
 
+PartialDef:
+That looks right!
+
