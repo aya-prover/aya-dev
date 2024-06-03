@@ -88,7 +88,7 @@ public sealed interface MetaVarProblem extends Problem {
     }
   }
 
-  record CannotFindGeneralSolution(@NotNull ImmutableSeq<TyckState.Eqn> eqns) implements Problem {
+  record DidSomethingBad(@NotNull ImmutableSeq<TyckState.Eqn> eqns) implements Problem {
     @Override public @NotNull SourcePos sourcePos() { return eqns.getLast().pos(); }
 
     @Override public @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {

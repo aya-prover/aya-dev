@@ -49,6 +49,7 @@ public record TyckState(
 
   public void solveMetas(@NotNull Reporter reporter) {
     int postSimplificationSize = -1;
+    var evilEqns = MutableList.<Eqn>create();
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
@@ -59,10 +60,12 @@ public record TyckState(
         return;
       } else postSimplificationSize = eqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      if (eqns.isNotEmpty()) {
-        if (eqns.anyMatch(eqn -> solveEqn(reporter, eqn, false)))
-          reporter.report(new MetaVarProblem.CannotFindGeneralSolution(eqns));
+      if (eqns.isNotEmpty()) for (var eqn : eqns) {
+        if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);
       }
+    }
+    if (evilEqns.isNotEmpty()) {
+      reporter.report(new MetaVarProblem.DidSomethingBad(evilEqns.toImmutableArray()));
     }
   }
 
