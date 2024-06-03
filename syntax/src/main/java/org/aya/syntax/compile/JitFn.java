@@ -3,18 +3,27 @@
 package org.aya.syntax.compile;
 
 import kala.collection.Seq;
+import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 public abstract non-sealed class JitFn extends JitDef implements FnDefLike, Reducible {
-  protected JitFn(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName) {
+  public final int modifiers;
+
+  protected JitFn(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, int modifiers) {
     super(telescopeSize, telescopeLicit, telescopeName);
+    this.modifiers = modifiers;
   }
 
   /**
    * Unfold this function
    */
   @Override public abstract Term invoke(Term stuck, @NotNull Seq<Term> args);
+
+  @Override
+  public boolean is(@NotNull Modifier mod) {
+    return (modifiers & (1 << mod.ordinal())) != 0;
+  }
 }

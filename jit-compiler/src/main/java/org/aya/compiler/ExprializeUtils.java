@@ -44,6 +44,10 @@ public interface ExprializeUtils {
     return STR."\{superClass}.\{sub}";
   }
 
+  static @NotNull String makeEnum(@NotNull String enumClass, @NotNull Enum<?> value) {
+    return makeSub(enumClass, value.toString());
+  }
+
   static @NotNull String makeString(@NotNull String raw) {
     return STR."\"\{StringUtil.escapeStringCharacters(raw)}\"";
   }
