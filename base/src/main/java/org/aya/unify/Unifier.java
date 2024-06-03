@@ -43,6 +43,8 @@ public final class Unifier extends TermComparator {
   }
 
   @Override protected @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
+      return sameMeta(meta, type, rMeta);
     // Assumption: rhs is in whnf
     var spine = meta.args();
 
@@ -111,6 +113,17 @@ public final class Unifier extends TermComparator {
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
     return returnType;
+  }
+
+  /** The "flex-flex" case with identical meta ref */
+  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+    if (meta.args().size() != rMeta.args().size()) return null;
+    for (var i = 0; i < meta.args().size(); i++) {
+      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
+        return null;
+      }
+    }
+    return type;
   }
 
   /**
