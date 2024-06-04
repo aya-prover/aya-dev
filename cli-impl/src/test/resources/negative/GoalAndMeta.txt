@@ -160,7 +160,7 @@ In file $FILE:7:15 ->
 
 Error: Unsolved meta _
        in `^0 (?_ ^0)`
-       in `Fn (_0 : ^0 (?_ ^0)) → ^1 (Neg _0)`
+       in `Fn (x : ^0 (?_ ^0)) → ^1 (Neg x)`
 
 4 error(s), 0 warning(s).
 What are you doing?

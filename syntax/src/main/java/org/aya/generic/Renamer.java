@@ -13,7 +13,6 @@ import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public record Renamer(MutableMap<String, LocalVar> scope) {
   public Renamer() {
@@ -24,12 +23,12 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
     ctx.extract().forEach(lv -> scope.put(lv.name(), lv));
   }
 
-  public static @Nullable String nameOf(@NotNull Term ty) {
+  public static @NotNull String nameOf(@NotNull Term ty) {
     return switch (ty) {
       case FreeTerm(var name) -> name.name();
       case MetaPatTerm(var meta) -> {
         var solution = meta.solution().get();
-        if (solution == null) yield null;
+        if (solution == null) yield "p";
         yield nameOf(PatToTerm.visit(solution));
       }
       case Callable.Tele c -> Character.toString(Character.toLowerCase(
@@ -41,14 +40,14 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
       case AppTerm a -> nameOf(a.fun());
       case PAppTerm a -> nameOf(a.fun());
       case EqTerm _, CoeTerm _ -> "p";
-      default -> null;
+      default -> "x";
     };
   }
 
   public @NotNull LocalVar bindName(@NotNull Term name) {
     return bindName(nameOf(name));
   }
-  public @NotNull LocalVar bindName(String name) {
+  public @NotNull LocalVar bindName(@NotNull String name) {
     if (scope.containsKey(name)) {
       var newGame = sanitizeName(name);
       var uid = LocalVar.generate(newGame);

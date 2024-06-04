@@ -138,9 +138,7 @@ public record Synthesizer(
   }
 
   public @NotNull Term mkFree(@NotNull Term type) {
-    var name = Renamer.nameOf(type);
-    if (name == null) name = "x";
-    var param = LocalVar.generate(name);
+    var param = LocalVar.generate(Renamer.nameOf(type));
     localCtx().put(param, type);
     return new FreeTerm(param);
   }
