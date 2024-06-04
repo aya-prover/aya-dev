@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.telescope;
 
+import kala.collection.ArraySeq;
+import kala.collection.SeqView;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,4 +23,7 @@ public abstract class JitTele implements AbstractTele {
   @Override public int telescopeSize() { return telescopeSize; }
   @Override public boolean telescopeLicit(int i) { return telescopeLicit[i]; }
   @Override public @NotNull String telescopeName(int i) { return telescopeNames[i]; }
+  @Override public @NotNull SeqView<String> namesView() {
+    return ArraySeq.wrap(telescopeNames).view();
+  }
 }

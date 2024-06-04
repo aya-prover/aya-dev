@@ -102,9 +102,10 @@ public record ExprResolver(
         // if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(projName.sourcePos(), projName.join()));
         yield new Expr.Proj(tup, ix, resolvedIx, theCore);
       }
-      case Expr.Hole(var expl, var fill, var local) -> {
+      case Expr.Hole(var expl, var fill, var core, var local) -> {
         assert local.isEmpty();
-        yield new Expr.Hole(expl, fill, ctx.collect(MutableList.create()).toImmutableSeq());
+        yield new Expr.Hole(expl, fill, core,
+          ctx.collect(MutableList.create()).toImmutableSeq());
       }
       default -> expr;
     };

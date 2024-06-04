@@ -22,7 +22,10 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.concrete.stmt.decl.DataCon;
+import org.aya.syntax.concrete.stmt.decl.DataDecl;
+import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.FnDef;
@@ -80,14 +83,18 @@ public record SyntaxHighlight(
     return prettier.info.toImmutableSeq();
   }
 
-  @Override
-  public void visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
+  @Override public void
+  visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
     info.append(linkRef(pos, var, type.get()));
   }
   @Override public void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
       case Expr.LitInt _ -> info.append(LitKind.Int.toLit(pos));
       case Expr.LitString _ -> info.append(LitKind.String.toLit(pos));
+      case Expr.Hole hole when hole.filling() == null -> {
+        var hover = hole.solution().get();
+        if (hover != null) info.append(new HighlightInfo.UserMeta(pos, hover));
+      }
       default -> StmtVisitor.super.visitExpr(pos, expr);
     }
   }

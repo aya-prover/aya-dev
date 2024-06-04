@@ -74,9 +74,9 @@ public interface FaithfulPrettier {
       case HighlightInfo.Def def -> Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
       case HighlightInfo.Ref ref -> Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
       case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
-      case HighlightInfo.Err err -> {
-        var doc = doHighlight(StringSlice.of(raw), base, err.children());
-        var style = switch (err.problem().level()) {
+      case HighlightInfo.Err(var problem, var children) -> {
+        var doc = doHighlight(StringSlice.of(raw), base, children);
+        var style = switch (problem.level()) {
           case ERROR -> BasePrettier.ERROR;
           case WARN -> BasePrettier.WARNING;
           case GOAL -> BasePrettier.GOAL;
@@ -84,9 +84,11 @@ public interface FaithfulPrettier {
         };
         yield style == null ? doc : new Doc.Tooltip(Doc.styled(style, doc), () -> Doc.codeBlock(
           Language.Builtin.Aya,
-          err.problem().brief(options()).toDoc()
+          problem.brief(options()).toDoc()
         ));
       }
+      case HighlightInfo.UserMeta meta -> new Doc.Tooltip(Doc.plain(raw),
+        () -> Doc.codeBlock(Language.Builtin.Aya, meta.hover().toDoc(options())));
     };
   }
 

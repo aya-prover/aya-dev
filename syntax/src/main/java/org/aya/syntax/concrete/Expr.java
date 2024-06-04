@@ -78,14 +78,15 @@ public sealed interface Expr extends AyaDocile {
   record Hole(
     boolean explicit,
     @Nullable WithPos<Expr> filling,
-    ImmutableSeq<LocalVar> accessibleLocal
+    @NotNull MutableValue<Term> solution,
+    @NotNull ImmutableSeq<LocalVar> accessibleLocal
   ) implements Expr {
     public Hole(boolean explicit, @Nullable WithPos<Expr> filling) {
-      this(explicit, filling, ImmutableSeq.empty());
+      this(explicit, filling, MutableValue.create(), ImmutableSeq.empty());
     }
 
     public @NotNull Hole update(@Nullable WithPos<Expr> filling) {
-      return filling == filling() ? this : new Hole(explicit, filling, accessibleLocal);
+      return filling == filling() ? this : new Hole(explicit, filling, solution, accessibleLocal);
     }
 
     @Override public @NotNull Hole descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {

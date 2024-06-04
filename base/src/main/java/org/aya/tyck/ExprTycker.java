@@ -51,6 +51,7 @@ import java.util.function.Supplier;
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
+  public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
   private @NotNull LocalLet localLet;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
@@ -73,6 +74,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public void solveMetas() {
     state.solveMetas(reporter);
     withTerms.forEach(with -> with.data().theCoreType().update(this::freezeHoles));
+    userHoles.forEach(hole -> hole.data().solution().update(this::freezeHoles));
   }
 
   /**
@@ -102,6 +104,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       };
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(), new MetaVar.OfType(type));
+        hole.solution().set(freshHole);
+        userHoles.append(new WithPos<>(expr.sourcePos(), hole));
         if (hole.explicit()) fail(new Goal(state, freshHole, hole.accessibleLocal()));
         yield new Jdg.Default(freshHole, type);
       }
@@ -149,6 +153,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+        if (expr.data() instanceof Expr.WithTerm with)
+          addWithTerm(with, expr.sourcePos(), eq);
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }

@@ -40,7 +40,6 @@ open inductive infix << (Γ : Con) (Δ : Con) : Type
   : (σ ∷ t) ∘ δ = (σ ∘ δ) ∷ transport (Tm _) SubAss (sub t)
 | _, • => εη {δ : Γ << •} : δ = ε
 
-// Incomplete
 open inductive Tm (Γ : Con) (Ty Γ) : Type
 | _, Π A B => λ (Tm (Γ ▷ A) B)
 | Γ' ▷ A, B => app (Tm Γ' (Π A B))
