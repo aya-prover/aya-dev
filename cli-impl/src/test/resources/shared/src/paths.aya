@@ -25,8 +25,8 @@ def infixr <=> {a b c : A} (p : a = b) (q : b = c) : a = c =>
   \k => hcomp2d p q refl k
 
 /// Carlo Angiuli's PhD thesis, Section 3.2
-module Angiuli {
+//module Angiuli {
   def transport {a b : A} (B : A -> Type) (p : a = b) (x : B a) : B b
     => coe 0 1 (\y => B (p y)) x
-}
-public open Angiuli using (transport)
+//}
+//public open Angiuli using (transport)

@@ -10,7 +10,7 @@ def neg (a : Nat) => signed false a
 
 def negate Int : Int
 | signed b n => signed (not b) n
-| posneg i => pinv (fn j => posneg j) i
+| posneg i => pinv posneg i
 
 def abs Int : Nat
 | signed _ n => n
