@@ -149,6 +149,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+        if (expr.data() instanceof Expr.WithTerm with)
+          addWithTerm(with, expr.sourcePos(), eq);
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }

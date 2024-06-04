@@ -18,6 +18,7 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.error.UnifyError;
 import org.aya.unify.Synthesizer;
+import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ public sealed interface TeleTycker extends Contextful {
    * @return well-typed type or {@link ErrorTerm}
    */
   @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult);
+  void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type);
 
   /**
    * @return a locally nameless signature computed from what's in the localCtx.
@@ -63,6 +65,7 @@ public sealed interface TeleTycker extends Contextful {
   default @NotNull MutableSeq<Param> checkTeleFree(ImmutableSeq<Expr.Param> cTele) {
     return MutableSeq.from(cTele.view().map(p -> {
       var pTy = checkType(p.typeExpr(), false);
+      addWithTerm(p, p.sourcePos(), pTy);
       localCtx().put(p.ref(), pTy);
       return new Param(p.ref().name(), pTy, p.explicit());
     }));
@@ -112,6 +115,9 @@ public sealed interface TeleTycker extends Contextful {
     @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
       return tycker.ty(typeExpr);
     }
+    @Override public void addWithTerm(Expr.@NotNull WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
+      tycker.addWithTerm(with, pos, type);
+    }
   }
 
   final class InlineCode implements Impl {
@@ -129,6 +135,9 @@ public sealed interface TeleTycker extends Contextful {
       result = jdg;
       return jdg.wellTyped();
     }
+    @Override public void addWithTerm(Expr.@NotNull WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
+      tycker.addWithTerm(with, pos, type);
+    }
     @Override public @NotNull ExprTycker tycker() { return tycker; }
   }
 
@@ -139,6 +148,9 @@ public sealed interface TeleTycker extends Contextful {
         tycker.fail(new UnifyError.PiDom(typeExpr.data(), typeExpr.sourcePos(), result, dataResult));
       }
       return result;
+    }
+    @Override public void addWithTerm(Expr.@NotNull WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
+      tycker.addWithTerm(with, pos, type);
     }
   }
 }
