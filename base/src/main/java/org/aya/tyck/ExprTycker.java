@@ -146,7 +146,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         if (!wellTyped) return result;
         var closure = result.wellTyped() instanceof LamTerm(var clo) ? clo
           // This is kinda unsafe but it should be fine
-          : new Closure.Locns(new AppTerm(result.wellTyped(), new LocalTerm(0)));
+          : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
         return new Jdg.Default(new LamTerm(closure), eq);
