@@ -5,8 +5,8 @@ open inductive Con : Type
 | infix ▷ (Γ : Con) (Ty Γ)
 
 // The ↑ operator in the paper
-//def ext {Γ Δ : Con} (δ : Γ << Δ) (A : Ty Δ) : Γ ▷ Subst A δ << Δ ▷ A =>
-//  δ ∘ π₁ (id refl) ∷ transport (Tm _) SubAss (π₂ (id refl))
+def ext {Γ Δ : Con} (δ : Γ << Δ) (A : Ty Δ) : Γ ▷ Subst A δ << Δ ▷ A =>
+  δ ∘ π₁ (id refl) ∷ transport (Tm _) SubAss (π₂ (id refl))
 
 // Incomplete
 open inductive Ty (Γ : Con) : Type
@@ -20,8 +20,8 @@ open inductive Ty (Γ : Con) : Type
 | SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
 | SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
   : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
-//| SubΠ {Δ : Con} (σ : Γ << Δ) {A : Ty Δ} {B : Ty (Δ ▷ A)}
-//    : Subst (Π A B) σ = Π (Subst A σ) (Subst B (ext σ A))
+| SubΠ {Δ : Con} (σ : Γ << Δ) {A : Ty Δ} {B : Ty (Δ ▷ A)}
+  : Subst (Π A B) σ = Π (Subst A σ) (Subst B (ext σ A))
 
 // Tms
 open inductive infix << (Γ : Con) (Δ : Con) : Type
