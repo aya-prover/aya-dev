@@ -3,7 +3,7 @@
 package org.aya.unify;
 
 import kala.collection.mutable.MutableList;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
@@ -27,11 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record Synthesizer(
-  @NotNull NameGenerator nameGen,
+  @NotNull Renamer renamer,
   @NotNull AbstractTycker tycker
 ) implements Stateful, Contextful {
   public Synthesizer(@NotNull AbstractTycker tycker) {
-    this(new NameGenerator(), tycker);
+    this(new Renamer(), tycker);
+    renamer.store(tycker.localCtx());
   }
 
   public boolean inheritPiDom(@NotNull Term ty, @NotNull SortTerm expected) {
@@ -77,10 +78,8 @@ public record Synthesizer(
       case AppTerm(var f, var a) -> trySynth(f) instanceof PiTerm pi ? pi.body().apply(a) : null;
       case PiTerm pi -> {
         if (!(trySynth(pi.param()) instanceof SortTerm pSort)) yield null;
-        var bTy = subscoped(() -> {
-          var param = putIndex(pi.param());
-          return trySynth(pi.body().apply(param));
-        });
+        var bTy = tycker.subscoped(pi.param(), param ->
+          trySynth(pi.body().apply(param)), renamer);
 
         if (!(bTy instanceof SortTerm bSort)) yield null;
         yield PiTerm.lub(pSort, bSort);
@@ -88,7 +87,7 @@ public record Synthesizer(
       case SigmaTerm sigma -> {
         var pTys = MutableList.<SortTerm>create();
         boolean succ = subscoped(() -> {
-          for (var p : sigma.view(i -> new FreeTerm(putIndex(i)))) {
+          for (var p : sigma.view(this::mkFree)) {
             if (!(trySynth(p) instanceof SortTerm pSort)) return false;
             pTys.append(pSort);
           }
@@ -138,8 +137,12 @@ public record Synthesizer(
     };
   }
 
-  public @NotNull LocalVar putIndex(@NotNull Term type) {
-    return tycker.putIndex(nameGen, type);
+  public @NotNull Term mkFree(@NotNull Term type) {
+    var name = Renamer.nameOf(type);
+    if (name == null) name = "x";
+    var param = LocalVar.generate(name);
+    localCtx().put(param, type);
+    return new FreeTerm(param);
   }
   @Override public @NotNull TyckState state() { return tycker.state; }
   @Override public @NotNull LocalCtx localCtx() { return tycker.localCtx(); }

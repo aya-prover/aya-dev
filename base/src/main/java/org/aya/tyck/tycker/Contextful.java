@@ -59,14 +59,6 @@ public interface Contextful {
     return result;
   }
 
-  @Contract(mutates = "this")
-  default <R> R with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
-    return subscoped(() -> {
-      localCtx().put(var, type);
-      return action.get();
-    });
-  }
-
   /**
    * Generate a fresh {@link MetaCall} with type {@link Param#type()}
    */

@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.function.IndexedFunction;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.marker.Formation;
@@ -38,10 +38,10 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
   @ForLSP public static @NotNull Unpi unpi(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
-    var nameGen = new NameGenerator();
+    var nameGen = new Renamer();
     while (pre.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
-      var var = LocalVar.generate(nameGen.next(param));
+      var var = nameGen.bindName(param);
       names.append(var);
       term = body.apply(var);
     }
