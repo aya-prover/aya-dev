@@ -8,7 +8,6 @@ open inductive Con : Type
 def ext {Γ Δ : Con} (δ : Γ << Δ) (A : Ty Δ) : Γ ▷ Subst A δ << Δ ▷ A =>
   δ ∘ π₁ (id refl) ∷ transport (Tm _) SubAss (π₂ (id refl))
 
-// Incomplete
 open inductive Ty (Γ : Con) : Type
 | U
 | Π (A : Ty Γ) (B : Ty (Γ ▷ A))
@@ -51,4 +50,8 @@ open inductive Tm (Γ : Con) (Ty Γ) : Type
   : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
 | _ ▷ _, A => Πβ (f : Tm Γ A) : app (λ f) = f
 | _, Π _ _ as A => Πη (f : Tm Γ A) : λ (app f) = f
-// Subλ is omitted for its overwhleming complexity
+| _, Π A B => subλ {Δ : Con} {σ : Γ << Δ} {A' : Ty Δ} {B' : Ty (Δ ▷ A')}
+  (fording : Π (Subst A' σ) (Subst B' _) = Π A B) {t : Tm (Δ ▷ A') B'}
+  : let ford := transport (Tm _) fording
+    in ford (transport (Tm _) (SubΠ σ) (sub (λ t)))
+     = ford (λ (sub t))
