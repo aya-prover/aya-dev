@@ -12,6 +12,7 @@ import org.aya.cli.library.json.LibraryConfigData;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
+import org.aya.cli.utils.LiterateData;
 import org.aya.generic.InterruptException;
 import org.aya.normalize.Normalizer;
 import org.aya.primitive.PrimFactory;
@@ -80,17 +81,6 @@ public class ReplCompiler {
     tcState = new TyckState(shapeFactory, primFactory);
   }
 
-  private @NotNull Jdg tyckExpr(@NotNull WithPos<Expr> expr) {
-    var resolvedExpr = ExprResolver.resolveLax(context, expr);
-    // in case we have un-messaged TyckException
-    try (var delayedReporter = new DelayedReporter(reporter)) {
-      tcState.clearTmp();
-      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter));
-      var desugar = desugarExpr(resolvedExpr, delayedReporter);
-      return tycker.checkInlineCode(desugar.params(), desugar.expr());
-    }
-  }
-
   private @NotNull ExprResolver.LiterateResolved
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
     var ctx = new EmptyContext(reporter, Path.of("dummy")).derive("dummy");
@@ -157,7 +147,7 @@ public class ReplCompiler {
           shapeFactory.merge();
           return newDefs.get();
         },
-        expr -> new Normalizer(tcState).normalize(tyckExpr(expr).wellTyped(), normalizeMode)
+        expr -> tyckAndNormalize(expr, false, normalizeMode)
       );
     } catch (InterruptException _) {
       // Only two kinds of interruptions are possible: parsing and resolving
@@ -172,10 +162,25 @@ public class ReplCompiler {
         reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
         return null;
       }
-      return new Normalizer(tcState).normalize(tyckExpr(parseTree.getRightValue()).type(), mode);
+      return tyckAndNormalize(parseTree.getRightValue(), true, mode);
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+
+  /** @param isType true means take the type, otherwise take the term. */
+  private @NotNull Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
+    Jdg jdg = null;
+    var resolvedExpr = ExprResolver.resolveLax(context, expr);
+    if (mode == NormalizeMode.NULL) jdg = LiterateData.simpleVar(resolvedExpr.expr().data());
+    // in case we have un-messaged TyckException
+    if (jdg == null) try (var delayedReporter = new DelayedReporter(reporter)) {
+      tcState.clearTmp();
+      var desugar = desugarExpr(resolvedExpr, delayedReporter);
+      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter));
+      jdg = tycker.checkInlineCode(desugar.params(), desugar.expr());
+    }
+    return new Normalizer(tcState).normalize(isType ? jdg.type() : jdg.wellTyped(), mode);
   }
 
   public @NotNull ReplContext getContext() {

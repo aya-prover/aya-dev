@@ -25,6 +25,7 @@ import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.tyck.Jdg;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
@@ -63,17 +64,26 @@ public record LiterateData(
     });
   }
 
+  public static @Nullable Jdg simpleVar(Expr expr) {
+    if (expr instanceof Expr.Ref ref && ref.var() instanceof AnyDefVar defVar) {
+      var anyDef = AnyDef.fromVar(defVar);
+      return new Jdg.Default(
+        new ErrorTerm(_ -> BasePrettier.refVar(anyDef), false),
+        anyDef.signature().makePi());
+    }
+    return null;
+  }
+
   public void tyck(@NotNull ResolveInfo info) {
     extractedExprs.forEach(c -> {
       assert c.expr != null;
       assert c.params != null;
-      if (c.options.mode() == CodeOptions.NormalizeMode.NULL
-        && c.expr.data() instanceof Expr.Ref ref
-        && ref.var() instanceof AnyDefVar defVar) {
-        var anyDef = AnyDef.fromVar(defVar);
-        c.tyckResult = new AyaLiterate.TyckResult(new ErrorTerm(opt ->
-          BasePrettier.refVar(anyDef), false), anyDef.signature().makePi());
-        return;
+      if (c.options.mode() == CodeOptions.NormalizeMode.NULL) {
+        var jdg = simpleVar(c.expr.data());
+        if (jdg != null) {
+          c.tyckResult = new AyaLiterate.TyckResult(jdg.wellTyped(), jdg.type());
+          return;
+        }
       }
       var tycker = info.newTycker();
       var teleTycker = new TeleTycker.InlineCode(tycker);

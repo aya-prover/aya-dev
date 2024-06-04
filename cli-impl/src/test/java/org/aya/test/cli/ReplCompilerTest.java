@@ -8,6 +8,8 @@ import org.aya.generic.Constants;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.core.term.PiTerm;
+import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.util.error.SourcePos;
@@ -35,6 +37,14 @@ public class ReplCompilerTest {
   }
 
   @Test public void simpleExpr() { compile("Set"); }
+
+  @Test public void implicitParams() {
+    compile("def f {A : Set} (a : A) : A => a");
+    var computedType = compiler.computeType("f", NormalizeMode.NULL);
+    assertNotNull(computedType);
+    var pi = assertInstanceOf(PiTerm.class, computedType);
+    assertInstanceOf(SortTerm.class, pi.param());
+  }
 
   @Test public void issue382() {
     // success cases, we can find the definition in the context
