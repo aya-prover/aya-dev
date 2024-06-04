@@ -13,6 +13,7 @@ import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record Renamer(MutableMap<String, LocalVar> scope) {
   public Renamer() {
@@ -23,7 +24,7 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
     ctx.extract().forEach(lv -> scope.put(lv.name(), lv));
   }
 
-  public static @NotNull String nameOf(@NotNull Term ty) {
+  public static @NotNull String nameOf(@Nullable Term ty) {
     return switch (ty) {
       case FreeTerm(var name) -> name.name();
       case MetaPatTerm(var meta) -> {
@@ -40,11 +41,11 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
       case AppTerm a -> nameOf(a.fun());
       case PAppTerm a -> nameOf(a.fun());
       case EqTerm _, CoeTerm _ -> "p";
-      default -> "x";
+      case null, default -> "x";
     };
   }
 
-  public @NotNull LocalVar bindName(@NotNull Term name) {
+  public @NotNull LocalVar bindName(@Nullable Term name) {
     return bindName(nameOf(name));
   }
   public @NotNull LocalVar bindName(@NotNull String name) {

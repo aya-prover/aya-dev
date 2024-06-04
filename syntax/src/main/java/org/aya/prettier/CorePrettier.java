@@ -8,7 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
@@ -44,7 +44,7 @@ import static org.aya.prettier.Tokens.*;
  * @see ConcretePrettier
  */
 public class CorePrettier extends BasePrettier<Term> {
-  private final NameGenerator nameGen = new NameGenerator();
+  private final Renamer nameGen = new Renamer();
 
   public CorePrettier(@NotNull PrettierOptions options) {
     super(options);
@@ -96,10 +96,10 @@ public class CorePrettier extends BasePrettier<Term> {
         yield checkParen(outer, doc, Outer.BinOp);
       }
       case LamTerm lam -> {
-        var pair = LamTerm.unwrap(lam);
-        var params = generateNames(pair.component1()).view();
-        var paramRef = params.<Term>map(FreeTerm::new);
-        var body = pair.component2().instantiateTele(paramRef);
+        var pair = LamTerm.unlam(lam, nameGen);
+        var params = pair.params();
+        var paramRef = params.view().<Term>map(FreeTerm::new);
+        var body = pair.body().instantiateTele(paramRef);
         Doc bodyDoc;
         // Syntactic eta-contraction
         if (body instanceof Callable.Tele call) {
@@ -121,7 +121,10 @@ public class CorePrettier extends BasePrettier<Term> {
         if (params.isEmpty()) yield bodyDoc;
 
         var list = MutableList.of(LAMBDA);
-        params.forEach(param -> list.append(Doc.bracedUnless(linkDef(param), true)));
+        params.forEach(param -> {
+          nameGen.unbindName(param);
+          list.append(Doc.bracedUnless(linkDef(param), true));
+        });
         list.append(FN_DEFINED_AS);
         list.append(bodyDoc);
         var doc = Doc.sep(list);
@@ -175,25 +178,23 @@ public class CorePrettier extends BasePrettier<Term> {
       case PiTerm piTerm -> {
         // Try to omit the Pi keyword
         {
-          var var = nameGen.nextVar(piTerm.param());
+          var var = nameGen.bindName(piTerm.param());
           var codomain = piTerm.body().apply(var);
           if (FindUsage.free(codomain, var) == 0) {
-            yield checkParen(outer, Doc.sep(
-              justType(Arg.ofExplicitly(piTerm.param()), Outer.BinOp),
-              ARROW,
-              term(Outer.Codomain, codomain)
-            ), Outer.BinOp);
+            var param = justType(Arg.ofExplicitly(piTerm.param()), Outer.BinOp);
+            var cod = term(Outer.Codomain, codomain);
+            nameGen.unbindName(var);
+            yield checkParen(outer, Doc.sep(param, ARROW, cod), Outer.BinOp);
           }
         }
-        var pair = PiTerm.unpi(piTerm, UnaryOperator.identity());
-        var params = pair.names().zip(pair.params(), CoreParam::new);
+        var pair = PiTerm.unpi(piTerm, UnaryOperator.identity(), nameGen);
+        var params = pair.names().zip(pair.params(), CoreParam::new)
+          .toImmutableSeq();
         var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
-        var doc = Doc.sep(
-          KW_PI,
-          visitTele(params, body, FindUsage::free),
-          ARROW,
-          term(Outer.Codomain, body)
-        );
+        var teleDoc = visitTele(params, body, FindUsage::free);
+        var cod = term(Outer.Codomain, body);
+        var doc = Doc.sep(KW_PI, teleDoc, ARROW, cod);
+        pair.names().forEach(nameGen::unbindName);
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
@@ -401,13 +402,8 @@ public class CorePrettier extends BasePrettier<Term> {
     return richTele.toImmutableSeq();
   }
 
-  // used for lambda
-  private @NotNull ImmutableSeq<LocalVar> generateNames(int count) {
-    return ImmutableSeq.fill(count, () -> generateName(null));
-  }
-
   private @NotNull LocalVar generateName(@Nullable Term whty) {
-    return LocalVar.generate(nameGen.next(whty), SourcePos.SER);
+    return nameGen.bindName(whty);
   }
   /// endregion Name Generating
 }

@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
+import kala.collection.Seq;
+import kala.collection.mutable.MutableList;
 import kala.function.IndexedFunction;
-import kala.tuple.primitive.IntObjTuple2;
+import org.aya.generic.Renamer;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.ref.LocalVar;
@@ -24,21 +26,24 @@ public record LamTerm(Closure body) implements StableWHNF {
     return body;
   }
 
+  public record Unlam(@NotNull Seq<LocalVar> params, @NotNull Term body) { }
+
   /**
    * Unwrap a {@link LamTerm} as much as possible
    *
    * @return an integer indicates how many bindings are introduced
    * and a most inner term that is not a {@link LamTerm}.
    */
-  public static @NotNull IntObjTuple2<Term> unwrap(@NotNull Term term) {
-    int params = 0;
+  public static @NotNull Unlam unlam(@NotNull Term term, @NotNull Renamer nameGen) {
+    var params = MutableList.<LocalVar>create();
     var it = term;
 
     while (it instanceof LamTerm lamTerm) {
-      params = params + 1;
-      it = lamTerm.body.apply(new FreeTerm(LocalVar.generate(String.valueOf(params))));
+      var name = nameGen.bindName(String.valueOf(params.size()));
+      params.append(name);
+      it = lamTerm.body.apply(new FreeTerm(name));
     }
 
-    return IntObjTuple2.of(params, it);
+    return new Unlam(params, it);
   }
 }

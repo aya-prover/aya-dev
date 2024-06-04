@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -31,14 +32,17 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
   }
 
   public record Unpi(
-    @NotNull ImmutableSeq<Term> params,
-    @NotNull ImmutableSeq<LocalVar> names,
+    @NotNull Seq<Term> params,
+    @NotNull Seq<LocalVar> names,
     @NotNull Term body
   ) { }
-  @ForLSP public static @NotNull Unpi unpi(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  public static @NotNull Unpi unpi(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+    return unpi(term, pre, new Renamer());
+  }
+  @ForLSP public static @NotNull Unpi
+  unpi(@NotNull Term term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
-    var nameGen = new Renamer();
     while (pre.apply(term) instanceof PiTerm(var param, var body)) {
       params.append(param);
       var var = nameGen.bindName(param);
@@ -46,7 +50,7 @@ public record PiTerm(@NotNull Term param, @NotNull Closure body) implements Stab
       term = body.apply(var);
     }
 
-    return new Unpi(params.toImmutableSeq(), names.toImmutableSeq(), term);
+    return new Unpi(params, names, term);
   }
   public record UnpiRaw(
     @NotNull ImmutableSeq<Param> params,
