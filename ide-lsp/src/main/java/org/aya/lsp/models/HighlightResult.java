@@ -64,8 +64,9 @@ public record HighlightResult(@NotNull URI uri, @NotNull List<Symbol> symbols) {
           case Prim -> Option.some(Kind.PrimRef);
           case Unknown -> Option.none();
         };
-        case HighlightInfo.Lit _ -> Option.none();   // handled by client
+        case HighlightInfo.Lit _ -> Option.none(); // handled by client
         case HighlightInfo.Err _ -> Option.none(); // handled by client
+        case HighlightInfo.UserMeta _ -> Option.none(); // handled by something else
       };
     }
   }

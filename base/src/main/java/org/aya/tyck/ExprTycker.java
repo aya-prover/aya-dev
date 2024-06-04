@@ -74,6 +74,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public void solveMetas() {
     state.solveMetas(reporter);
     withTerms.forEach(with -> with.data().theCoreType().update(this::freezeHoles));
+    userHoles.forEach(hole -> hole.data().solution().update(this::freezeHoles));
   }
 
   /**

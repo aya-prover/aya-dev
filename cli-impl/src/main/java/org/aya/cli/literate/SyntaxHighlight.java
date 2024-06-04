@@ -92,7 +92,8 @@ public record SyntaxHighlight(
       case Expr.LitInt _ -> info.append(LitKind.Int.toLit(pos));
       case Expr.LitString _ -> info.append(LitKind.String.toLit(pos));
       case Expr.Hole hole when hole.filling() == null -> {
-        // info.append();
+        var hover = hole.solution().get();
+        if (hover != null) info.append(new HighlightInfo.UserMeta(pos, hover));
       }
       default -> StmtVisitor.super.visitExpr(pos, expr);
     }
