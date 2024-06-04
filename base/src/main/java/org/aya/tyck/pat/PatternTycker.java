@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.generic.State;
 import org.aya.normalize.Normalizer;
 import org.aya.normalize.PatMatcher;
@@ -69,7 +69,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private @UnknownNullability Param currentParam = null;
   private boolean hasError = false;
-  private final @NotNull NameGenerator nameGen;
+  private final @NotNull Renamer nameGen;
 
   /**
    * @see #tyckInner(SeqView, SeqView, WithPos)
@@ -78,7 +78,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ExprTycker tycker,
     @NotNull SeqView<Param> tele,
     @NotNull LocalLet sub,
-    @NotNull NameGenerator nameGen
+    @NotNull Renamer nameGen
   ) {
     this(tycker, tele, sub, true, nameGen);
   }
@@ -88,7 +88,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull SeqView<Param> telescope,
     @NotNull LocalLet asSubst,
     boolean allowImplicit,
-    @NotNull NameGenerator nameGen
+    @NotNull Renamer nameGen
   ) {
     this.exprTycker = exprTycker;
     this.telescope = telescope;
@@ -96,6 +96,7 @@ public class PatternTycker implements Problematic, Stateful {
     this.asSubst = asSubst;
     this.allowImplicit = allowImplicit;
     this.nameGen = nameGen;
+    nameGen.store(exprTycker.localCtx());
   }
 
   public record TyckResult(
@@ -373,13 +374,12 @@ public class PatternTycker implements Problematic, Stateful {
     return onTyck(() -> {
       var type = currentParam.type();
       Pat pat;
-      var freshName = currentParam.name();
+      var freshVar = nameGen.bindName(currentParam.name());
       if (exprTycker.whnf(type) instanceof DataCall dataCall) {
         // this pattern would be a Con, it can be inferred
         // TODO: I NEED A SOURCE POS!!
-        pat = new Pat.Meta(MutableValue.create(), freshName, dataCall, SourcePos.NONE);
+        pat = new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, SourcePos.NONE);
       } else {
-        var freshVar = LocalVar.generate(freshName);
         // If the type is not a DataCall, then the only available pattern is Pat.Bind
         pat = new Pat.Bind(freshVar, type);
         exprTycker.localCtx().put(freshVar, type);
@@ -412,14 +412,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped, @Nullable WithPos<Expr> newBody) {
     var paramSubst = this.paramSubst.toImmutableSeq();
-
-    return new TyckResult(
-      wellTyped.toImmutableSeq(),
-      paramSubst,
-      asSubst,
-      newBody,
-      hasError
-    );
+    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst, asSubst, newBody, hasError);
   }
 
   private record Selection(
@@ -497,7 +490,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   /// region Helper
   private @NotNull Pat randomPat(Term param) {
-    return new Pat.Bind(LocalVar.generate("?"), param);
+    return new Pat.Bind(nameGen.bindName(param), param);
   }
 
   /**
@@ -505,7 +498,7 @@ public class PatternTycker implements Problematic, Stateful {
    */
   private @NotNull SeqView<Param> generateNames(@NotNull ImmutableSeq<Term> telescope) {
     return telescope.view().mapIndexed((_, t) ->
-      new Param(nameGen.next(exprTycker.whnf(t)), t, true));
+      new Param(nameGen.bindName(exprTycker.whnf(t)).name(), t, true));
   }
 
   /// endregion Helper

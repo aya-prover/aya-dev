@@ -87,7 +87,7 @@ public interface SourceBuilder {
     @NotNull Consumer<String> onSucc,
     @Nullable Runnable onFailed
   ) {
-    String name = nameGen().nextName(null);
+    String name = nameGen().nextName();
     buildIfElse(STR."\{term} instanceof \{type} \{name}",
       () -> onSucc.accept(name),
       onFailed);
@@ -126,7 +126,7 @@ public interface SourceBuilder {
   default @NotNull ImmutableSeq<String> buildGenLocalVarsFromSeq(@NotNull String type, @NotNull String seqTerm, int size) {
     String[] names = new String[size];
     for (int i = 0; i < size; ++i) {
-      var name = nameGen().nextName(null);
+      var name = nameGen().nextName();
       names[i] = name;
       buildLocalVar(type, name, STR."\{seqTerm}.get(\{i})");
     }
