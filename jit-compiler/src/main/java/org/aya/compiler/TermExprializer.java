@@ -235,7 +235,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull String serializeClosure(@NotNull Closure body) {
-    return serializeClosure(nameGen.nextName(null), body);
+    return serializeClosure(nameGen.nextName(), body);
   }
 
   private @NotNull String serializeClosure(@NotNull String param, @NotNull Closure body) {

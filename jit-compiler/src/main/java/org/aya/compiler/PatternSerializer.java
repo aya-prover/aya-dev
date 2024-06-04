@@ -96,7 +96,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
           buildIfElse(STR."\{ExprializeUtils.getCallInstance(mmTerm)} == \{ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref()))}",
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
-                nameGen().nextName(null), STR."\{mmTerm}.conArgs()");
+                nameGen().nextName(), STR."\{mmTerm}.conArgs()");
               doSerialize(con.args().view(), SourceBuilder.fromSeq(conArgsTerm, con.args().size()).view(),
                 Once.of(() -> buildUpdate(VARIABLE_SUBSTATE, "true")));
             }))
@@ -137,7 +137,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     @NotNull ImmutableSeq<Consumer<String>> preContinuation,
     @NotNull Once continuation
   ) {
-    var tmpName = nameGen().nextName(null);
+    var tmpName = nameGen().nextName();
     buildUpdate(VARIABLE_SUBSTATE, "false");
     buildLocalVar(CLASS_TERM, tmpName, term);
 

@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.primitive.MutableBooleanValue;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
@@ -138,7 +138,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       : telescope;
 
     return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
-      new NameGenerator());
+      new Renamer());
   }
 
   public @NotNull LhsResult checkLhs(

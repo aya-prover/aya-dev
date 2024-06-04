@@ -17,6 +17,8 @@ import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 /**
  * @apiNote {@link Unifier#localCtx()} should be the same object as {@link Synthesizer#localCtx()}
  */
@@ -24,21 +26,20 @@ public record DoubleChecker(
   @NotNull Unifier unifier,
   @NotNull Synthesizer synthesizer
 ) implements Stateful, Contextful, Problematic {
-  public DoubleChecker(@NotNull Unifier unifier) { this(unifier, new Synthesizer(unifier)); }
+  public DoubleChecker(@NotNull Unifier unifier) { this(unifier, new Synthesizer(unifier.nameGen, unifier)); }
 
   public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
     return switch (preterm) {
       case ErrorTerm _ -> true;
       case PiTerm(var pParam, var pBody) -> {
         if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(() -> {
-          var param = putIndex(pParam);
-          return inherit(pBody.apply(param), expectedTy);
-        });
+        yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
+          inherit(pBody.apply(param), expectedTy));
       }
       case SigmaTerm sigma -> {
         if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield subscoped(() -> sigma.view(i -> new FreeTerm(putIndex(i)))
+        yield subscoped(() -> sigma
+          .view(synthesizer::mkFree)
           .allMatch(param -> inherit(param, expectedTy)));
       }
       case TupTerm(var elems) when whnf(expected) instanceof SigmaTerm sigmaTy -> {
@@ -50,18 +51,15 @@ public record DoubleChecker(
           return null;
         }).isOk();
       }
-      case LamTerm(var body) -> subscoped(() -> switch (whnf(expected)) {
-        case PiTerm(var dom, var cod) -> {
-          var param = putIndex(dom);
-          yield inherit(body.apply(param), cod.apply(param));
-        }
-        case EqTerm eq -> {
-          var param = putIndex(DimTyTerm.INSTANCE);
+      case LamTerm(var body) -> switch (whnf(expected)) {
+        case PiTerm(var dom, var cod) -> subscoped(dom, param ->
+          inherit(body.apply(param), cod.apply(param)));
+        case EqTerm eq -> subscoped(DimTyTerm.INSTANCE, param -> {
           // TODO: check boundaries
-          yield inherit(body.apply(param), eq.A().apply(param));
-        }
+          return inherit(body.apply(param), eq.A().apply(param));
+        });
         default -> failF(new BadExprError(preterm, unifier.pos, expected));
-      });
+      };
       case TupTerm _ -> failF(new BadExprError(preterm, unifier.pos, expected));
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
     };
@@ -75,5 +73,7 @@ public record DoubleChecker(
   @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) { return unifier.setLocalCtx(ctx); }
   @Override public @NotNull TyckState state() { return unifier.state(); }
   @Override public @NotNull Reporter reporter() { return unifier.reporter(); }
-  public @NotNull LocalVar putIndex(@NotNull Term type) { return unifier.putIndex(type); }
+  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
+    return unifier.subscoped(type, action);
+  }
 }

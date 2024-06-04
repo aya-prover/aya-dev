@@ -78,8 +78,8 @@ Error: Cannot check the expression
        of type
          Type 1
        against the type
-         \ _0 ⇒ 1
-         (Normalized: \ _0 ⇒ 1)
+         \ 0 ⇒ 0
+         (Normalized: \ 0 ⇒ 0)
 
 2 error(s), 0 warning(s).
 What are you doing?

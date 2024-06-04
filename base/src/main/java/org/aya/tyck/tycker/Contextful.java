@@ -11,6 +11,7 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.LocalCtx1;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.error.SourcePos;
@@ -51,11 +52,11 @@ public interface Contextful {
   }
 
   @Contract(mutates = "this")
-  default <R> R with(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
-    return subscoped(() -> {
-      localCtx().put(var, type);
-      return action.get();
-    });
+  default <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
+    var parentCtx = setLocalCtx(new LocalCtx1(type, var, localCtx()));
+    var result = action.get();
+    setLocalCtx(parentCtx);
+    return result;
   }
 
   /**

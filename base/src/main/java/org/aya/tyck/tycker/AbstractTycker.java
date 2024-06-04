@@ -4,11 +4,12 @@ package org.aya.tyck.tycker;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
-import org.aya.generic.NameGenerator;
+import org.aya.generic.Renamer;
 import org.aya.normalize.Finalizer;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.LocalCtx1;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -18,6 +19,8 @@ import org.aya.unify.TermComparator;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits ExprTycker, TermComparator {
   public final @NotNull TyckState state;
@@ -44,11 +47,13 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }
-
-  public @NotNull LocalVar putIndex(@NotNull NameGenerator nameGen, @NotNull Term type) {
-    var var = nameGen.nextVar(whnf(type));
-    localCtx.put(var, type);
-    return var;
+  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
+    var var = nameGen.bindName(type);
+    var parentCtx = setLocalCtx(new LocalCtx1(type, var, localCtx()));
+    var result = action.apply(var);
+    setLocalCtx(parentCtx);
+    nameGen.unbindName(var);
+    return result;
   }
 
   public @NotNull Term zonk(Term t) {
@@ -57,5 +62,4 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   public ImmutableSeq<WithPos<Param>> zonk(ImmutableSeq<WithPos<Param>> tele) {
     return tele.map(wp -> wp.map(p -> p.descent(this::zonk)));
   }
-  public @NotNull Jdg zonk(@NotNull Jdg result) { return result.map(this::zonk); }
 }
