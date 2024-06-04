@@ -1,6 +1,5 @@
 [![actions]](https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yaml)
 [![maven]][maven-repo]
-[![gitter]](https://gitter.im/aya-prover/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![codecov]](https://codecov.io/gh/aya-prover/aya-dev)
 
 [**Website**](https://www.aya-prover.org) contains:
@@ -8,21 +7,21 @@
 + Development blogs which are written for general audience
 + [Installation](https://www.aya-prover.org/guide/install.html)
   instructions (basically telling you what to download in [GitHub Releases])
-+ [Tutorial for Haskellers](https://www.aya-prover.org/guide/haskeller-tutorial.html)
-+ [Tutorial of extension types](https://www.aya-prover.org/guide/ext-types.html)
++ [Tutorial for functional programming features](https://www.aya-prover.org/guide/haskeller-tutorial.html)
++ [Tutorial for theorem proving features](https://www.aya-prover.org/guide/prover-tutorial.html)
 
 Aya is under active development, so please expect bugs, usability or performance issues
 (please file issues or create threads in discussions!).
 
 ## What to expect?
 
-+ Dependent types, including pi-types, sigma types, indexed families, etc.
++ Dependent types, including Π-types, Σ-types, indexed families, etc.
   You could write a [sized-vector type][gadt].
 + Set-level cubical type theory (XTT).
   + Demonstration of [quotient-inductive-inductive types][hiir],
     no forward declaration or mutual block needed!
     We infer the type checking order by how definitions use each other.
-  + Proof of `funExt` in [Paths.aya][funExt].
+  + Proof of `funExt` in [paths.aya][funExt].
 + Pattern matching with first-match semantics.
   Checkout the [red-black tree][rbtree] (without deletion yet).
 + A JIT-compiler that translates Aya code to higher-order abstract syntax in Java.
@@ -32,11 +31,10 @@ Aya is under active development, so please expect bugs, usability or performance
   You may preview the features (in Chinese)
   [here](https://blog.imkiva.org/posts/intro-literate-aya.html).
 + Binary operators, with precedence specified by a partial ordering
-  (instead of a number like in Haskell or Agda)
-  which is useful for [equation reasoning][assoc].
+  (instead of a number like in Haskell or Agda).
 + A fairly good termination checker.
-  We adapted some code from Agda's implementation to accept
-  [more definitions][foetus] (which are rejected by, e.g. Arend).
+  We adapted some code from Agda's implementation to accept more definitions such as the
+  `testSwapAdd` example in [this file][foetus] (which are rejected by, e.g. Arend).
 
 See also [use as a library](#use-as-a-library).
 
@@ -54,9 +52,9 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 + We welcome nitpicks on error reporting! Please let us know anything not perfect.
   We have already implemented several user-suggested error messages.
 + Before contributing in any form, please read
-  [the contribution guideline](https://github.com/aya-prover/aya-dev/blob/master/.github/CONTRIBUTING.md) thoroughly
+  [the contribution guideline](CONTRIBUTING.md) thoroughly
   and make sure you understand your responsibilities.
-+ Please follow [the Code of Conduct](https://github.com/aya-prover/aya-dev/blob/master/.github/CODE_OF_CONDUCT.md) to
++ Please follow [the Code of Conduct](CODE_OF_CONDUCT.md) to
   ensure an inclusive and welcoming community atmosphere.
 + Ask [@ice1000] or simply create a ticket in the discussion to become an organization member.
   + If you want to contribute, ask before doing anything.
@@ -66,17 +64,15 @@ of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 [@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yaml/badge.svg
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
-[gitter]: https://img.shields.io/gitter/room/aya-prover/community?color=cyan&logo=gitter
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle
-[oop]: ../cli-impl/src/test/resources/shared/src/arith/Nat.aya
-[gadt]: ../cli-impl/src/test/resources/shared/src/data/Vec.aya
-[regularity]: ../cli-impl/src/test/resources/shared/src/Paths.aya
-[funExt]: ../cli-impl/src/test/resources/shared/src/Paths.aya
+[oop]: ../cli-impl/src/test/resources/shared/src/arith/nat/base.aya
+[gadt]: ../cli-impl/src/test/resources/shared/src/data/vec/base.aya
+[regularity]: ../cli-impl/src/test/resources/shared/src/paths.aya
+[funExt]: ../cli-impl/src/test/resources/shared/src/paths.aya
 [rbtree]: ../jit-compiler/src/test/resources/TreeSort.aya
 [tbtree-bench]: ../jit-compiler/src/test/java/RedBlackTreeTest.java
-[hiir]: ../cli-impl/src/test/resources/shared/src/type-theory/Thorsten.aya
-[assoc]: ../base/src/test/resources/success/src/Assoc.aya
-[foetus]: ../base/src/test/resources/success/src/FoetusLimitation.aya
+[hiir]: https://www.aya-prover.org/blog/tt-in-tt-qiit.html
+[foetus]: ../cli-impl/src/test/java/org/aya/test/fixtures/TerckError.java
 [maven-repo]: https://repo1.maven.org/maven2/org/aya-prover
 
 ## Use as a library
@@ -101,7 +97,8 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
 + `[project name]` specifies the subproject of Aya you want to use,
   and the options are `pretty`, `base`, `cli-impl`, `parser`, etc.
   + The syntax definitions live in `syntax`.
-  + The parser lives in `parser` and `producer`.
+  + The parser lives in `parser` (the generated parsing code) and `producer`
+    (transformer from parse tree to concrete syntax tree).
   + The type checker lives in `base`.
   + The JIT compiler lives in `jit-compiler`.
   + The generalized pretty printing framework is in `pretty`.
