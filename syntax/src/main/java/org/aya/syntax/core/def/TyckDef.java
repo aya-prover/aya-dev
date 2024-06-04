@@ -7,9 +7,11 @@ import org.aya.generic.AyaDocile;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.ForLSP;
@@ -31,7 +33,14 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
   @ForLSP static @Nullable Term defType(@NotNull AnyDef var) {
     if (var instanceof TyckAnyDef<?> def && def.ref.signature == null) return null;
     var sig = var.signature();
-    return sig.result(sig.namesView().<Term>map(FreeTerm::new).toSeq());
+    var names = sig.namesView().<Term>map(FreeTerm::new).toSeq();
+    var result = sig.result(names);
+    if (var instanceof ConDefLike con && con.hasEq()) result = new EqTerm(
+      Closure.mkConst(result),
+      con.equality(names, true),
+      con.equality(names, false)
+    );
+    return result;
   }
 
   /**

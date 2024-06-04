@@ -100,9 +100,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
             fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
               this::visitPattern));
             if (fn.body instanceof FnBody.BlockBody block) {
-              if (block.elims() != null) {
-                block.elims().forEachWith(block.rawElims(), (var, name) -> visitVar(name.sourcePos(), var, noType));
-              }
+              if (block.elims() != null) block.elims().forEachWith(block.rawElims(), (var, name) ->
+                visitVarRef(name.sourcePos(), var, noType));
             }
           }
           case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
