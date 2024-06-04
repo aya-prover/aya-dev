@@ -9,7 +9,7 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
-import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
@@ -53,7 +53,7 @@ public record IApplyConfl(
 
   private void apply(int i, PatMatcher chillMatcher) {
     var matching = matchings.get(i);
-    var ctx = new LocalCtx();
+    var ctx = new MapLocalCtx();
     var cases = new PatToTerm.Monadic(ctx).list(matching.patterns().view());
     if (cases.sizeEquals(1)) return;
     if (cases.isEmpty()) Panic.unreachable();

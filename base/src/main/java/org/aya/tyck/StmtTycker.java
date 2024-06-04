@@ -22,7 +22,7 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
@@ -46,7 +46,8 @@ public record StmtTycker(
   @NotNull PrimFactory primFactory
 ) implements Problematic {
   private @NotNull ExprTycker mkTycker() {
-    return new ExprTycker(new TyckState(shapeFactory, primFactory), new LocalCtx(), new LocalLet(), reporter);
+    return new ExprTycker(new TyckState(shapeFactory, primFactory),
+      new MapLocalCtx(), new LocalLet(), reporter);
   }
   public @NotNull TyckDef check(Decl predecl) {
     ExprTycker tycker = null;
@@ -272,6 +273,6 @@ public record StmtTycker(
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     primRef.signature = tele.descent(tycker::zonk);
     tycker.solveMetas();
-    tycker.setLocalCtx(new LocalCtx());
+    tycker.setLocalCtx(new MapLocalCtx());
   }
 }
