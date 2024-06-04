@@ -6,12 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.util.ForLSP;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,17 +28,11 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
     return new CorePrettier(options).def(this);
   }
 
-  //region Pretty & IDE only APIs
-  static @Nullable Term defType(@NotNull AnyDef var) {
-    return switch (var) {
-      case TyckAnyDef<?> tyckDef -> {
-        var sig = tyckDef.ref.signature;
-        yield sig == null ? null : sig.result();
-      }
-      case JitDef jitDef -> jitDef.makePi();
-    };
+  @ForLSP static @Nullable Term defType(@NotNull AnyDef var) {
+    if (var instanceof TyckAnyDef<?> def && def.ref.signature == null) return null;
+    var sig = var.signature();
+    return sig.result(sig.namesView().<Term>map(FreeTerm::new).toSeq());
   }
-  //endregion
 
   /**
    * @see AnyDef#signature()
