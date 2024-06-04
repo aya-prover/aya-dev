@@ -2,6 +2,8 @@ open import paths
 
 open inductive Nat | zero | suc Nat
 
+variable a b c : Nat
+
 overlap def infixl + Nat Nat : Nat
 | 0, b => b
 | a, 0 => a
@@ -9,16 +11,22 @@ overlap def infixl + Nat Nat : Nat
 | a, suc b => suc (a + b)
 tighter =
 
-overlap def +-comm {a b : Nat} : a + b = b + a elim a b
+overlap def +-comm : a + b = b + a elim a b
 | 0, _ => refl
 | suc _, _ => pmap suc +-comm
 | _, 0 => refl
 | _, suc _ => pmap suc +-comm
 
-overlap def +-assoc {a b c : Nat} : a + (b + c) = (a + b) + c elim a b c
+overlap def +-assoc : a + (b + c) = (a + b) + c elim a b c
 | 0, _, _ => refl
 | _, 0, _ => refl
 | _, _, 0 => refl
 | suc _, _, _ => pmap suc +-assoc
 | _, suc _, _ => pmap suc +-assoc
 | _, _, suc _ => pmap suc +-assoc
+
+overlap def infixl * Nat Nat : Nat
+| 0, n => 0
+| m, 0 => 0
+| suc m, n => n + m * n
+tighter +

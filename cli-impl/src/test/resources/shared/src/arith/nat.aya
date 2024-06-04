@@ -1,0 +1,2 @@
+public open import arith::nat::base
+public open import arith::nat::properties
