@@ -16,10 +16,10 @@ open inductive Ty (Γ : Con) : Type
 | Subst {Δ : Con} (Ty Δ) (s : Γ << Δ)
 | SubId {A : Ty Γ} : Subst A (id refl) = A
 | SubAss {Δ Θ : Con} {A : Ty Θ} {θ : Γ << Δ} {δ : Δ << Θ}
-   : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
+  : Subst (Subst A δ) θ = Subst A (δ ∘ θ)
 | SubU {Δ : Con} (δ : Γ << Δ) : Subst U δ = U
-//| SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
-//    : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
+| SubEl {Δ : Con} {δ : Γ << Δ} {a : Tm Δ U}
+  : Subst (El a) δ = El (transport (Tm _) (SubU δ) (sub a))
 //| SubΠ {Δ : Con} (σ : Γ << Δ) {A : Ty Δ} {B : Ty (Δ ▷ A)}
 //    : Subst (Π A B) σ = Π (Subst A σ) (Subst B (ext σ A))
 
@@ -34,11 +34,11 @@ open inductive infix << (Γ : Con) (Δ : Con) : Type
 | idl• {s : Γ << Δ} : id refl ∘ s = s
 | idr• {s : Γ << Δ} : s ∘ id refl = s
 | ass {Θ Ξ : Con} {ν : Γ << Ξ} {δ : Ξ << Θ} {σ : Θ << Δ}
-   : (σ ∘ δ) ∘ ν = σ ∘ (δ ∘ ν)
+  : (σ ∘ δ) ∘ ν = σ ∘ (δ ∘ ν)
 | π₁β {δ : Γ << Δ} {A : Ty Δ} (t : Tm Γ (Subst A δ)) : π₁ (δ ∷ t) = δ
 | Γ, Δ ▷ A => πη {δ : Γ << Δ ▷ A} : (π₁ δ ∷ π₂ δ) = δ
-//| Γ, Δ ▷ A => ∷∘ {Θ : Con} {σ : Θ << Δ} {δ : Γ << Θ} {t : Tm Θ (Subst A σ)}
-//    : (σ ∷ t) ∘ δ = (σ ∘ δ) ∷ transport (Tm _) SubAss (sub t)
+| Γ, Δ ▷ A => ∷∘ {Θ : Con} {σ : Θ << Δ} {δ : Γ << Θ} {t : Tm Θ (Subst A σ)}
+  : (σ ∷ t) ∘ δ = (σ ∘ δ) ∷ transport (Tm _) SubAss (sub t)
 | _, • => εη {δ : Γ << •} : δ = ε
 
 // Incomplete
@@ -47,8 +47,8 @@ open inductive Tm (Γ : Con) (Ty Γ) : Type
 | Γ' ▷ A, B => app (Tm Γ' (Π A B))
 | _, Subst A δ => sub (Tm _ A)
 | _, Subst A (π₁ δ) => π₂ (Γ << _ ▷ A)
-// | _, Subst B δ => π₂β {Δ : Con} (t : Tm Γ A)
-//    : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
+| _, Subst B δ as A => π₂β {Δ : Con} (t : Tm Γ A)
+  : transport (Tm _) (pmap (Subst B) (π₁β t)) (π₂ (δ ∷ t)) = t
 | _ ▷ _, A => Πβ (f : Tm Γ A) : app (λ f) = f
 | _, Π _ _ as A => Πη (f : Tm Γ A) : λ (app f) = f
 // Subλ is omitted for its overwhleming complexity

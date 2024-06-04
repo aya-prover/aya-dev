@@ -11,6 +11,7 @@ import kala.control.Result;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
@@ -79,7 +80,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    */
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
-      case Expr.Lambda(var ref, var body) -> switch (type) {
+      case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
         case PiTerm(var dom, var cod) -> {
           // unifyTyReported(param, dom, expr);
           var core = subscoped(() -> {
@@ -112,7 +113,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.Tuple(var elems) when type instanceof SigmaTerm sigmaTerm -> {
+      case Expr.Tuple(var elems) when whnf(type) instanceof SigmaTerm sigmaTerm -> {
         Term wellTyped = switch (sigmaTerm.check(elems, (elem, ty) -> inherit(elem, ty).wellTyped())) {
           case Result.Ok(var v) -> new TupTerm(v);
           case Result.Err(var e) -> switch (e) {
@@ -130,9 +131,28 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
-  // TODO: coercive subtyping if needed
   private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
-    unifyTyReported(type, result.type(), expr);
+    type = whnf(type);
+    var resultType = result.type();
+    // Try coercive subtyping for (I -> A) into (Path A ...)
+    if (type instanceof EqTerm eq) {
+      resultType = whnf(resultType);
+      if (resultType instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+        var wellTyped = subscoped(() -> {
+          var ref = new FreeTerm(new LocalVar("i"));
+          localCtx().put(ref.name(), DimTyTerm.INSTANCE);
+          return unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
+        });
+        if (!wellTyped) return result;
+        var closure = result.wellTyped() instanceof LamTerm(var clo) ? clo
+          // This is kinda unsafe but it should be fine
+          : new Closure.Locns(new AppTerm(result.wellTyped(), new LocalTerm(0)));
+        checkBoundaries(eq, closure, expr.sourcePos(), msg ->
+          new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+        return new Jdg.Default(new LamTerm(closure), eq);
+      }
+    }
+    unifyTyReported(type, resultType, expr);
     return result;
   }
 
@@ -340,7 +360,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         result[paramIx++] = mockTerm(param, arg.sourcePos());
         continue;
       }
-      result[paramIx++] = inherit(arg.arg(), whnf(param.type())).wellTyped();
+      result[paramIx++] = inherit(arg.arg(), param.type()).wellTyped();
       argIx++;
     }
     // Trailing implicits
