@@ -51,6 +51,7 @@ import java.util.function.Supplier;
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
+  public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
   private @NotNull LocalLet localLet;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
@@ -102,6 +103,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       };
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(), new MetaVar.OfType(type));
+        hole.solution().set(freshHole);
+        userHoles.append(new WithPos<>(expr.sourcePos(), hole));
         if (hole.explicit()) fail(new Goal(state, freshHole, hole.accessibleLocal()));
         yield new Jdg.Default(freshHole, type);
       }

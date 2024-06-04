@@ -91,6 +91,9 @@ public record SyntaxHighlight(
     switch (expr) {
       case Expr.LitInt _ -> info.append(LitKind.Int.toLit(pos));
       case Expr.LitString _ -> info.append(LitKind.String.toLit(pos));
+      case Expr.Hole hole when hole.filling() == null -> {
+        // info.append();
+      }
       default -> StmtVisitor.super.visitExpr(pos, expr);
     }
   }
