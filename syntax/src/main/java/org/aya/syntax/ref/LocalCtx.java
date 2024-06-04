@@ -21,8 +21,7 @@ public interface LocalCtx extends Scoped<LocalVar, Term, LocalCtx> {
   @NotNull LocalCtx clone();
   @Override default @NotNull LocalCtx self() { return this; }
 
-  @Override @Contract("-> new")
-  default @NotNull LocalCtx derive() {
+  @Override @Contract("-> new") default @NotNull LocalCtx derive() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), MutableList.create(), this);
   }
 }

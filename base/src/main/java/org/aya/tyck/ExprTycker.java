@@ -85,17 +85,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
         case PiTerm(var dom, var cod) -> {
           // unifyTyReported(param, dom, expr);
-          var core = subscoped(() -> {
-            localCtx().put(ref, dom);
-            return inherit(body, cod.apply(new FreeTerm(ref))).wellTyped();
-          }).bind(ref);
+          var core = subscoped(ref, dom, () ->
+            inherit(body, cod.apply(new FreeTerm(ref))).wellTyped()).bind(ref);
           yield new Jdg.Default(new LamTerm(core), type);
         }
         case EqTerm eq -> {
-          var core = subscoped(() -> {
-            localCtx().put(ref, DimTyTerm.INSTANCE);
-            return inherit(body, eq.appA(new FreeTerm(ref))).wellTyped();
-          }).bind(ref);
+          var core = subscoped(ref, DimTyTerm.INSTANCE, () ->
+            inherit(body, eq.appA(new FreeTerm(ref))).wellTyped()).bind(ref);
           checkBoundaries(eq, core, body.sourcePos(), msg ->
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
@@ -142,11 +138,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     if (type instanceof EqTerm eq) {
       resultType = whnf(resultType);
       if (resultType instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
-        var wellTyped = subscoped(() -> {
-          var ref = new FreeTerm(new LocalVar("i"));
-          localCtx().put(ref.name(), DimTyTerm.INSTANCE);
-          return unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
-        });
+        var ref = new FreeTerm(new LocalVar("i"));
+        var wellTyped = subscoped(ref.name(), DimTyTerm.INSTANCE, () ->
+          unifyTyReported(eq.appA(ref), cod.apply(ref), expr));
         if (!wellTyped) return result;
         var closure = result.wellTyped() instanceof LamTerm(var clo) ? clo
           // This is kinda unsafe but it should be fine
@@ -173,11 +167,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Pi(var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
-        yield subscoped(() -> {
-          localCtx().put(param.ref(), wellParam);
-          var wellLast = ty(last).bind(param.ref());
-          return new PiTerm(wellParam, wellLast);
-        });
+        yield subscoped(param.ref(), wellParam, () ->
+          new PiTerm(wellParam, ty(last).bind(param.ref())));
       }
       case Expr.Sigma(var elems) -> subscoped(() -> {
         var tele = MutableList.<LocalVar>create();
