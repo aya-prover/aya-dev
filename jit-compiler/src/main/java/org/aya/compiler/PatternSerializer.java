@@ -7,9 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import kala.value.primitive.MutableIntValue;
-import org.aya.generic.NameGenerator;
-import org.aya.normalize.PatMatcher;
 import org.aya.generic.State;
+import org.aya.normalize.PatMatcher;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.util.error.Panic;
@@ -230,8 +229,11 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   /// endregion Java Source Code Generate API
 
-  @Override
-  public PatternSerializer serialize(@NotNull ImmutableSeq<Matching> unit) {
+  @Override public PatternSerializer serialize(@NotNull ImmutableSeq<Matching> unit) {
+    if (unit.isEmpty()) {
+      onMismatch.accept(this);
+      return this;
+    }
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), x -> bindAmount(x.patterns));
     int maxBindSize = bindSize.max();
 

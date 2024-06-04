@@ -1,0 +1,4 @@
+inductive Empty
+variable A : Type
+
+def exfalso Empty : A | ()

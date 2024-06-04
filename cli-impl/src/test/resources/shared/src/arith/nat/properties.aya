@@ -1,0 +1,16 @@
+open import arith::nat::base
+open import data::empty
+open import paths
+
+private def diag Nat : Type
+| 0 => Nat
+| suc a => Empty
+
+def z≠s {a : Nat} (p : 0 = suc a) : Empty => coe 0 1 (\i => diag (p i)) a
+
+private def suc-inj Nat : Nat
+| 0 => 114514
+| suc m => m
+
+def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\i => suc-inj (p i))
+
