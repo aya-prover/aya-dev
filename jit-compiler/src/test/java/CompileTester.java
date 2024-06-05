@@ -15,6 +15,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class CompileTester {
   private final Path baka;
@@ -32,7 +33,8 @@ public class CompileTester {
       var compiler = ToolProvider.getSystemJavaCompiler();
       var fileManager = compiler.getStandardFileManager(null, null, null);
       var compilationUnits = fileManager.getJavaFileObjects(baka);
-      var task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
+      var options = List.of("--enable-preview", "--release", "21");
+      var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
       task.call();
       var fqName = NameSerializer.getClassReference(DumbModuleLoader.DUMB_MODULE_NAME, null);
       cl.loadClass(fqName);

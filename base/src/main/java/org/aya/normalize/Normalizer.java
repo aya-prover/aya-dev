@@ -54,8 +54,8 @@ public final class Normalizer implements UnaryOperator<Term> {
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
         case JitFn instance -> {
-          var result = instance.invoke(term, args);
-          if (term != result) yield apply(result.elevate(ulift));
+          var result = instance.invoke(() -> defaultValue, args);
+          if (defaultValue != result) yield apply(result.elevate(ulift));
           yield result;
         }
         case FnDef.Delegate delegate -> {

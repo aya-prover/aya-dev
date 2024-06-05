@@ -9,6 +9,8 @@ import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 public abstract non-sealed class JitFn extends JitDef implements FnDefLike, Reducible {
   public final int modifiers;
 
@@ -20,10 +22,9 @@ public abstract non-sealed class JitFn extends JitDef implements FnDefLike, Redu
   /**
    * Unfold this function
    */
-  @Override public abstract Term invoke(Term stuck, @NotNull Seq<Term> args);
-
-  @Override
-  public boolean is(@NotNull Modifier mod) {
+  @Override abstract public @NotNull Term
+  invoke(@NotNull Supplier<Term> fallback, @NotNull Seq<@NotNull Term> args);
+  @Override public boolean is(@NotNull Modifier mod) {
     return (modifiers & (1 << mod.ordinal())) != 0;
   }
 }

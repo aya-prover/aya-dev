@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Supplier;
 
 /**
  * <h2> What should I do after I creating a new Shape? </h2>
@@ -109,9 +110,9 @@ public interface Shaped<T> {
      */
     @Nullable Term apply(@NotNull ImmutableSeq<Term> args);
     @NotNull Applicable<Def> descent(@NotNull IndexedFunction<Term, Term> f);
-    @Override default Term invoke(Term onStuck, @NotNull Seq<Term> args) {
+    @Override default Term invoke(@NotNull Supplier<Term> onStuck, @NotNull Seq<Term> args) {
       var result = apply(args.toImmutableSeq());
-      if (result == null) return onStuck;
+      if (result == null) return onStuck.get();
       return result;
     }
   }

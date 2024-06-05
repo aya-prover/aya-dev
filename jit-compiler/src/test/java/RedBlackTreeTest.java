@@ -4,6 +4,7 @@
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.normalize.Normalizer;
+import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitFn;
@@ -35,7 +36,7 @@ public class RedBlackTreeTest {
     var tester = new CompileTester(CompileTest.serializeFrom(result));
     tester.compile();
 
-    var baka = QPath.fileLevel(ModulePath.of("baka"));
+    var baka = QPath.fileLevel(ModulePath.of(DumbModuleLoader.DUMB_MODULE_STRING));
 
     JitData List = tester.loadInstance(getClassName(baka, "List"));
     JitCon nil = tester.loadInstance(getClassName(baka.derive("List"), "[]"));
@@ -54,15 +55,15 @@ public class RedBlackTreeTest {
 
     var seed = 114514L;
     var random = new Random(seed);
-    var largeList = mkList.apply(ImmutableIntSeq.fill(300, () -> random.nextInt(200)));
+    var largeList = mkList.apply(ImmutableIntSeq.fill(500, () -> random.nextInt(400)));
     var args = ImmutableSeq.of(largeList);
 
     var normalizer = new Normalizer(result.info().makeTyckState());
-    var sortResult = normalizer.normalize(tree_sortNat.invoke(null, args), CodeOptions.NormalizeMode.FULL);
+    var sortResult = normalizer.normalize(tree_sortNat.invoke(() -> null, args), CodeOptions.NormalizeMode.FULL);
     assertNotNull(sortResult);
 
     Profiler.profileMany(5, () ->
-      normalizer.normalize(tree_sortNat.invoke(null, args), CodeOptions.NormalizeMode.FULL));
+      normalizer.normalize(tree_sortNat.invoke(() -> null, args), CodeOptions.NormalizeMode.FULL));
 
     System.out.println(sortResult.debuggerOnlyToString());
   }

@@ -48,6 +48,7 @@ public sealed interface Pat extends AyaDocile {
    */
   void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer);
 
+
   /**
    * Bind the types in {@link Pat}s
    *

@@ -44,8 +44,7 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
       ExprializeUtils.makeImmutableSeq(CLASS_TERM, head.ownerArgs().map(this::serializeTerm)));
   }
 
-  @Override
-  protected @NotNull String doSerialize(@NotNull Pat term) {
+  @Override protected @NotNull String doSerialize(@NotNull Pat term) {
     return switch (term) {
       case Pat.Absurd _ -> ExprializeUtils.getInstance(CLASS_PAT_ABSURD);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
