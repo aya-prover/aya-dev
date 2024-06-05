@@ -58,18 +58,15 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private final @NotNull Consumer<SourceBuilder> onStuck;
   private final @NotNull Consumer<SourceBuilder> onMismatch;
   private int bindCount = 0;
-  private final boolean inferMeta;
 
   public PatternSerializer(
     @NotNull SourceBuilder builder,
     @NotNull ImmutableSeq<String> argNames,
-    boolean inferMeta,
     @NotNull Consumer<SourceBuilder> onStuck,
     @NotNull Consumer<SourceBuilder> onMismatch
   ) {
     super(builder);
     this.argNames = argNames;
-    this.inferMeta = inferMeta;
     this.onStuck = onStuck;
     this.onMismatch = onMismatch;
   }
@@ -148,10 +145,9 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   private void matchInt(@NotNull Pat.ShapedInt pat, @NotNull String term) {
     buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm ->
-      buildIf(STR."\{pat.repr()} == \{intTerm}.repr()", () -> {
+      buildIf(STR."\{pat.repr()} == \{intTerm}.repr()", () ->
         // Pat.ShapedInt provides no binds
-        buildUpdate(VARIABLE_SUBSTATE, "true");
-      }), null);
+        buildUpdate(VARIABLE_SUBSTATE, "true")), null);
   }
 
   /**
