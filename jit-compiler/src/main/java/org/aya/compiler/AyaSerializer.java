@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
-import org.aya.compiler.util.SerializeUtils;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -38,7 +37,6 @@ public interface AyaSerializer {
   String CLASS_PANIC = getJavaReference(Panic.class);
 
   String CLASS_SUPPLIER = getJavaReference(Supplier.class);
-  String CLASS_SER_UTILS = getJavaReference(SerializeUtils.class);
   String CLASS_RESULT = getJavaReference(Result.class);
   String TYPE_IMMTERMSEQ = STR."\{CLASS_IMMSEQ}<\{CLASS_TERM}>";
 
@@ -46,7 +44,6 @@ public interface AyaSerializer {
     import org.aya.generic.term.SortKind;
     import org.aya.generic.State;
     import org.aya.generic.Modifier;
-    import org.aya.compiler.util.*;
     import org.aya.syntax.compile.*;
     import org.aya.syntax.compile.CompiledAya;
     import org.aya.syntax.ref.LocalVar;

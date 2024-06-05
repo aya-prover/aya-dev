@@ -5,7 +5,6 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.generic.NameGenerator;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.DataDef;
