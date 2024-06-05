@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
-import org.aya.generic.NameGenerator;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.ref.ModulePath;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +21,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
     appendLine(STR."package \{getModulePackageReference(path, PACKAGE_SEPARATOR)};");
   }
 
-  @Override
-  public FileSerializer serialize(ModuleSerializer.ModuleResult unit) {
+  @Override public @NotNull FileSerializer serialize(ModuleSerializer.ModuleResult unit) {
     assert unit.name().isFileModule();
     buildPackage(unit.name().module());
     appendLine();

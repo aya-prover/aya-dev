@@ -14,10 +14,14 @@ import org.aya.syntax.core.def.TyckAnyDef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.function.Consumer;
 
+import static org.aya.compiler.AyaSerializer.CLASS_SUPPLIER;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
+  public static final String TYPE_STUCK = STR."\{CLASS_SUPPLIER}<\{CLASS_TERM}>";
+
   private final @NotNull ShapeFactory shapeFactory;
   public FnSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
     super(builder, JitFn.class);
@@ -42,19 +46,20 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build fixed argument `invoke`
    */
   private void buildInvoke(FnDef unit, @NotNull String onStuckTerm, @NotNull ImmutableSeq<String> argTerms) {
+    Consumer<SourceBuilder> onStuckCon = s -> s.buildReturn(STR."\{onStuckTerm}.get()");
+
     if (unit.is(Modifier.Opaque)) {
-      buildReturn(onStuckTerm);
+      onStuckCon.accept(this);
       return;
     }
 
     switch (unit.body()) {
       case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(this.sourceBuilder, argTerms, false,
-          s -> s.buildReturn(onStuckTerm), s -> s.buildReturn(onStuckTerm));
+        var ser = new PatternSerializer(this.sourceBuilder, argTerms, onStuckCon, onStuckCon);
         ser.serialize(clauses.map(matching -> new PatternSerializer.Matching(
-          matching.patterns(),
-          (s, bindSize) -> s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
+          matching.patterns(), (s, bindSize) ->
+          s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
         )));
       }
     }
@@ -85,7 +90,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   @Override public FnSerializer serialize(FnDef unit) {
     var argsTerm = "args";
     var onStuckTerm = "onStuck";
-    var onStuckParam = new JitParam(onStuckTerm, CLASS_TERM);
+    var onStuckParam = new JitParam(onStuckTerm, TYPE_STUCK);
     var names = ImmutableSeq.fill(unit.telescope().size(), () -> nameGen().nextName());
     var fixedParams = MutableList.<JitParam>create();
     fixedParams.append(onStuckParam);

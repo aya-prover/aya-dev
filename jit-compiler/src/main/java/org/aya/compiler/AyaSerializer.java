@@ -7,8 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
-import org.aya.compiler.util.SerializeUtils;
-import org.aya.generic.Modifier;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -16,16 +14,10 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.util.error.Panic;
 import org.intellij.lang.annotations.Language;
 
+import java.util.function.Supplier;
+
 import static org.aya.compiler.ExprializeUtils.getJavaReference;
 
-/**
- * <h1>Serializing</h1>
- * AyaSerializer will serialize some {@link T} to some (java) class or expression, depends on what {@link T} is.
- *
- * <h2>File Structure</h2>
- * Each aya module will be serialized to a java file,
- * each {@link org.aya.syntax.concrete.stmt.decl.Decl} will be serialized to a nested class.
- */
 public interface AyaSerializer {
   String PACKAGE_BASE = "AYA";
   String STATIC_FIELD_INSTANCE = "INSTANCE";
@@ -43,18 +35,15 @@ public interface AyaSerializer {
   String CLASS_TERM = getJavaReference(Term.class);
   String CLASS_PAT = getJavaReference(Pat.class);
   String CLASS_PANIC = getJavaReference(Panic.class);
-  String CLASS_MODIFIER = getJavaReference(Modifier.class);
 
-  String CLASS_SER_UTILS = getJavaReference(SerializeUtils.class);
+  String CLASS_SUPPLIER = getJavaReference(Supplier.class);
   String CLASS_RESULT = getJavaReference(Result.class);
-  String CLASS_BOOLEAN = getJavaReference(Boolean.class);
   String TYPE_IMMTERMSEQ = STR."\{CLASS_IMMSEQ}<\{CLASS_TERM}>";
 
   @Language("Java") String IMPORT_BLOCK = """
     import org.aya.generic.term.SortKind;
     import org.aya.generic.State;
     import org.aya.generic.Modifier;
-    import org.aya.compiler.util.*;
     import org.aya.syntax.compile.*;
     import org.aya.syntax.compile.CompiledAya;
     import org.aya.syntax.ref.LocalVar;
@@ -70,6 +59,7 @@ public interface AyaSerializer {
     import org.aya.util.error.Panic;
     import org.aya.util.binop.Assoc;
 
+    import java.util.function.Supplier;
     import kala.collection.immutable.ImmutableSeq;
     import kala.collection.immutable.ImmutableTreeSeq;
     import kala.collection.mutable.MutableSeq;

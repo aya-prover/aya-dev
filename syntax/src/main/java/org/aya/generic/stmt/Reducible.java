@@ -7,6 +7,8 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.Callable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * A marker that indicates something can be reduced/has a corresponding {@link Callable}.
  * This is used for making serialization safer,
@@ -17,5 +19,5 @@ public interface Reducible {
    * @param fallback return this when unable to reduce, it is acceptable that fallback is null.
    * @return not null if reduce successfully, fallback if unable to reduce
    */
-  Term invoke(Term fallback, @NotNull Seq<@NotNull Term> args);
+  @NotNull Term invoke(@NotNull Supplier<Term> fallback, @NotNull Seq<@NotNull Term> args);
 }

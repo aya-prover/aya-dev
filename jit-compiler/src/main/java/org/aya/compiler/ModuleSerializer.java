@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;

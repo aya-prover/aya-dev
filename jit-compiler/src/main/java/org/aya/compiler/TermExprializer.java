@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 import static org.aya.compiler.AyaSerializer.*;
+import static org.aya.compiler.ExprializeUtils.makeThunk;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 /**
@@ -106,13 +107,13 @@ public class TermExprializer extends AbstractExprializer<Term> {
 
     var callArgs = new String[seredSeq.size() + 2];
     callArgs[0] = reducible;
-    callArgs[1] = "0";      // elevate later
+    callArgs[1] = "0"; // elevate later
     for (var i = 0; i < seredSeq.size(); ++i) {
       callArgs[i + 2] = seredSeq.get(i);
     }
 
     var elevate = ulift > 0 ? STR.".elevate(\{ulift})" : "";
-    var onStuck = ExprializeUtils.makeNew(callName, callArgs);
+    var onStuck = makeThunk(ExprializeUtils.makeNew(callName, callArgs));
     var finalArgs = fixed
       ? flatArgs.view().prepended(onStuck).joinToString()
       : STR."\{onStuck}, \{ExprializeUtils.makeImmutableSeq(CLASS_TERM, flatArgs)}";
