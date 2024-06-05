@@ -10,8 +10,11 @@
 + [Tutorial for functional programming features](https://www.aya-prover.org/guide/haskeller-tutorial.html)
 + [Tutorial for theorem proving features](https://www.aya-prover.org/guide/prover-tutorial.html)
 
-Aya is under active development, so please expect bugs, usability or performance issues
-(please file issues or create threads in discussions!).
+> [!WARNING]
+>
+> Aya is under active development, so don't be surprised about bugs, usability or performance issues
+> (please file issues or create threads in discussions!), but we have the goal to make it as
+> user-friendly as we can feasibly do.
 
 ## What to expect?
 
@@ -44,8 +47,10 @@ See also [use as a library](#use-as-a-library).
 
 ## Contributing to Aya
 
-Since you need [Java 21] to set this project up, in case your choice
-of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
+> [!IMPORTANT]
+>
+> Since you need [Java 21] to set this project up, in case your choice
+> of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.
