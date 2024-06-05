@@ -7,10 +7,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import kala.value.primitive.MutableIntValue;
+import org.aya.generic.AyaDocile;
 import org.aya.generic.State;
-import org.aya.normalize.PatMatcher;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,9 +53,6 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   public static final @NotNull String VARIABLE_RESULT = "result";
   public static final @NotNull String VARIABLE_STATE = "matchState";
   public static final @NotNull String VARIABLE_SUBSTATE = "subMatchState";
-
-  static final @NotNull String CLASS_META_PAT = ExprializeUtils.getJavaReference(MetaPatTerm.class);
-  static final @NotNull String CLASS_PAT_MATCHER = ExprializeUtils.getJavaReference(PatMatcher.class);
 
   private final @NotNull ImmutableSeq<String> argNames;
   private final @NotNull Consumer<SourceBuilder> onStuck;
@@ -125,7 +121,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
    *   {@param preContinuation} may change the term be matched
    *   </li>
    * </ul>
-   *
+   * <p>
    * Note that {@param preContinuation}s should not invoke {@param continuation}!
    *
    * @param term            the expression be matched, not always a variable reference
@@ -150,33 +146,12 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     buildIf(VARIABLE_SUBSTATE, continuation);
   }
 
-  private void solveMeta(@NotNull Pat pat, @NotNull String term) {
-    if (inferMeta) {
-      buildIfInstanceElse(term, CLASS_META_PAT, metaTerm -> {
-        buildUpdate(term, STR."\{CLASS_PAT_MATCHER}.realSolution(\{metaTerm})");
-        // if the solution is still a meta, we solve it
-        // this is a heavy work
-        buildIfInstanceElse(term, CLASS_META_PAT, stillMetaTerm -> {
-          var exprializer = new PatternExprializer(nameGen(), true);
-          var result = exprializer.serialize(pat);
-          var doSolveMetaResult = STR."\{CLASS_PAT_MATCHER}.doSolveMeta(\{result}, \{stillMetaTerm}.meta())";
-          appendLine(STR."\{CLASS_SER_UTILS}.copyTo(\{VARIABLE_RESULT}, \{doSolveMetaResult}, \{bindCount});");
-          buildUpdate(VARIABLE_SUBSTATE, "true");
-          // at this moment, the matching is complete,
-          // but we still need to generate the code for normal matching
-          // and it will increase bindCount
-        }, null);
-      }, null);
-    }
-  }
-
   private void matchInt(@NotNull Pat.ShapedInt pat, @NotNull String term) {
-    buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm -> {
+    buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm ->
       buildIf(STR."\{pat.repr()} == \{intTerm}.repr()", () -> {
         // Pat.ShapedInt provides no binds
         buildUpdate(VARIABLE_SUBSTATE, "true");
-      });
-    }, null);
+      }), null);
   }
 
   /**
@@ -188,7 +163,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       return;
     }
 
-    buildComment(pats.map(x -> x.debuggerOnlyToString()).joinToString());
+    buildComment(pats.map(AyaDocile::debuggerOnlyToString).joinToString());
     var pat = pats.getFirst();
     var term = terms.getFirst();
     doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));
