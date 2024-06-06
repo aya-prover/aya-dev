@@ -6,14 +6,15 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Result;
+import org.aya.generic.State;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
-import org.aya.generic.State;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +42,7 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
   public abstract @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull Seq<Term> args);
 
   @Override public boolean hasEq() { return hasEq; }
-  @Override public abstract @NotNull Term equality(Seq<Term> args, boolean is0);
+  @Override public @NotNull Term equality(Seq<Term> args, boolean is0) { throw new Panic("Not an HIT"); }
   @Override public @NotNull DataDefLike dataRef() { return dataType; }
   @Override public int selfTeleSize() { return selfTeleSize; }
   @Override public int ownerTeleSize() { return telescopeSize - selfTeleSize; }

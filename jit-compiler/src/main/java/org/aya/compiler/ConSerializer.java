@@ -52,16 +52,13 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
    */
   private void buildEquality(ConDef unit, @NotNull String argsTerm, @NotNull String is0Term) {
     var eq = unit.equality;
-    if (eq == null) {
-      buildPanic(null);
-    } else {
-      BooleanConsumer continuation = b -> {
-        var side = b ? eq.a() : eq.b();
-        buildReturn(serializeTermUnderTele(side, argsTerm, unit.telescope().size()));
-      };
+    assert eq != null;
+    BooleanConsumer continuation = b -> {
+      var side = b ? eq.a() : eq.b();
+      buildReturn(serializeTermUnderTele(side, argsTerm, unit.telescope().size()));
+    };
 
-      buildIfElse(is0Term, () -> continuation.accept(true), () -> continuation.accept(false));
-    }
+    buildIfElse(is0Term, () -> continuation.accept(true), () -> continuation.accept(false));
   }
 
   @Override public ConSerializer serialize(ConDef unit) {
@@ -74,7 +71,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
         STR."\{CLASS_RESULT}<\{TYPE_IMMTERMSEQ}, \{CLASS_STATE}>", true,
         () -> buildIsAvailable(unit, argsTerm));
       appendLine();
-      buildMethod("equality",
+      if (unit.equality != null) buildMethod("equality",
         ImmutableSeq.of(new JitParam(argsTerm, TYPE_TERMSEQ), new JitParam(is0Term, "boolean")),
         CLASS_TERM, true, () -> buildEquality(unit, argsTerm, is0Term));
     });
