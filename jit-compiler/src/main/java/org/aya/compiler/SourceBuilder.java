@@ -158,6 +158,10 @@ public interface SourceBuilder {
     @NotNull Consumer<R> continuation,
     @NotNull Runnable defaultCase
   ) {
+    if (cases.isEmpty()) {
+      defaultCase.run();
+      return;
+    }
     appendLine(STR."switch (\{term}) {");
     runInside(() -> {
       for (var kase : cases) {

@@ -172,6 +172,10 @@ public class TermExprializer extends AbstractExprializer<Term> {
         ImmutableSeq.of(fnRuler.args()),
         false
       );
+      case SortTerm sort when sort.equals(SortTerm.Type0) -> ExprializeUtils.makeSub(
+        ExprializeUtils.getJavaReference(SortTerm.class), "Type0");
+      case SortTerm sort when sort.equals(SortTerm.ISet) -> ExprializeUtils.makeSub(
+        ExprializeUtils.getJavaReference(SortTerm.class), "ISet");
       case SortTerm(var kind, var ulift) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(SortTerm.class),
         ExprializeUtils.makeSub(CLASS_SORTKIND, kind.name()),
         Integer.toString(ulift));
