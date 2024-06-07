@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractExprializer<T> {

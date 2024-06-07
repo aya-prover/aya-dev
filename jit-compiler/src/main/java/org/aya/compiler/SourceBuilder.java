@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,9 +65,8 @@ public interface SourceBuilder {
   default void buildIfElse(@NotNull String condition, @NotNull Runnable onSucc, @Nullable Runnable onFailed) {
     appendLine(STR."if (\{condition}) {");
     runInside(onSucc);
-    if (onFailed == null) {
-      appendLine("}");
-    } else {
+    if (onFailed == null) appendLine("}");
+    else {
       appendLine("} else {");
       runInside(onFailed);
       appendLine("}");
@@ -166,7 +164,7 @@ public interface SourceBuilder {
     @NotNull Runnable continuation
   ) {
     var paramStr = params.joinToString(", ",
-      STR."\{override ? "@Override" : ""} public \{returnType} \{name}(", ") {",
+      STR."\{override ? "@Override " : ""}public \{returnType} \{name}(", ") {",
       param -> STR."\{param.type()} \{param.name()}");
     appendLine(paramStr);
     runInside(continuation);

@@ -5,7 +5,6 @@ package org.aya.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.generic.NameGenerator;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.compile.JitFn;

@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
