@@ -1,0 +1,12 @@
+open import prelude hiding (map)
+
+open inductive infix / (A : Type) (R : Fn (a b : A) → Type) tighter =
+| in~ A
+| eq~ {a b : A} (R a b) : in~ a = in~ b
+
+variable A B : Type
+
+def map {R : ∀ a b → Type} {Q : ∀ a b → Type} (f : A → B)
+        (p : ∀ a a' → R a a' → Q (f a) (f a')) (q : A / R) : B / Q elim q
+| in~ a => in~ (f a)
+| eq~ r i => eq~ (p _ _ r) i
