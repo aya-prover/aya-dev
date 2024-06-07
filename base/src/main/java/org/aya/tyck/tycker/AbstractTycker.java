@@ -9,7 +9,6 @@ import org.aya.normalize.Finalizer;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.syntax.ref.LocalCtx1;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -49,7 +48,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   }
   public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
     var var = nameGen.bindName(type);
-    var parentCtx = setLocalCtx(new LocalCtx1(type, var, localCtx()));
+    var parentCtx = setLocalCtx(localCtx.derive1(var, type));
     var result = action.apply(var);
     setLocalCtx(parentCtx);
     nameGen.unbindName(var);

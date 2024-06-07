@@ -3,6 +3,8 @@
 package org.aya.syntax.ref;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.ImmutableTreeSeq;
 import kala.control.Option;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.error.Panic;
@@ -11,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
-public record LocalCtx1(
-  @NotNull Term type,
-  @NotNull LocalVar var,
+public record SeqLocalCtx(
+  @NotNull ImmutableSeq<Term> type,
+  @NotNull ImmutableSeq<LocalVar> var,
   @Override @Nullable LocalCtx parent
 ) implements LocalCtx {
   @Override public boolean isEmpty() { return false; }
@@ -21,19 +23,26 @@ public record LocalCtx1(
     return 1 + (parent == null ? 0 : parent.size());
   }
   @Override public @NotNull LocalCtx map(UnaryOperator<Term> mapper) {
-    return new LocalCtx1(mapper.apply(type), var, parent == null ? null : parent.map(mapper));
+    return new SeqLocalCtx(ImmutableTreeSeq.from(type.view().map(mapper)), var,
+      parent == null ? null : parent.map(mapper));
   }
   @Override public @NotNull SeqView<LocalVar> extract() {
     SeqView<LocalVar> parentView = parent == null ? SeqView.empty() : parent.extract();
-    return parentView.concat(SeqView.of(var));
+    return parentView.concat(var.view());
   }
   @Override public @NotNull LocalCtx clone() {
-    return new LocalCtx1(type, var, parent == null ? null : parent.clone());
+    if (parent == null) return this;
+    return new SeqLocalCtx(type, var, parent.clone());
   }
   @Override public @NotNull Option<Term> getLocal(@NotNull LocalVar key) {
-    return key.equals(var) ? Option.some(type) : parent == null ? Option.none() : parent.getLocal(key);
+    var index = var.indexOf(key);
+    if (index >= 0) return Option.some(type.get(index));
+    return parent == null ? Option.none() : parent.getLocal(key);
   }
   @Override public void putLocal(@NotNull LocalVar key, @NotNull Term value) {
     throw new Panic("LocalCtx1 is immutable");
+  }
+  @Override public @NotNull LocalCtx derive1(@NotNull LocalVar var1, @NotNull Term type1) {
+    return new SeqLocalCtx(type.prepended(type1), var.prepended(var1), this);
   }
 }

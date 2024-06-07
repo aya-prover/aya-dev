@@ -3,6 +3,7 @@
 package org.aya.syntax.ref;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import org.aya.syntax.core.term.Term;
@@ -23,5 +24,8 @@ public interface LocalCtx extends Scoped<LocalVar, Term, LocalCtx> {
 
   @Override @Contract("-> new") default @NotNull LocalCtx derive() {
     return new MapLocalCtx(MutableLinkedHashMap.of(), MutableList.create(), this);
+  }
+  @Contract("_,_->new") default @NotNull LocalCtx derive1(@NotNull LocalVar var, @NotNull Term type) {
+    return new SeqLocalCtx(ImmutableTreeSeq.of(type), ImmutableTreeSeq.of(var), this);
   }
 }
