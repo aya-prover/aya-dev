@@ -152,8 +152,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }
-    unifyTyReported(type, resultType, expr);
-    return result;
+    if (unifyTyReported(type, resultType, expr)) return result;
+    return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
   }
 
   public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
