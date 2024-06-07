@@ -17,23 +17,13 @@ public abstract class AbstractSerializer<T> implements SourceBuilder {
     this.sourceBuilder = builder;
   }
 
-  @Override
-  public @NotNull StringBuilder builder() {
-    return sourceBuilder.builder();
-  }
-
-  @Override
-  public @NotNull NameGenerator nameGen() {
-    return sourceBuilder.nameGen();
-  }
-
-  @Override
-  public int indent() {
+  @Override public @NotNull StringBuilder builder() { return sourceBuilder.builder(); }
+  @Override public @NotNull NameGenerator nameGen() { return sourceBuilder.nameGen(); }
+  @Override public int indent() {
     return sourceBuilder.indent();
   }
 
-  @Override
-  public void runInside(@NotNull Runnable runnable) {
+  @Override public void runInside(@NotNull Runnable runnable) {
     sourceBuilder.runInside(runnable);
   }
   /**

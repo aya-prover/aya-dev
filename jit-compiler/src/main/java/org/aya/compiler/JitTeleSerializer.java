@@ -7,12 +7,10 @@ import kala.range.primitive.IntRange;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.telescope.JitTele;
-import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AyaSerializer.*;
@@ -21,8 +19,6 @@ import static org.aya.compiler.NameSerializer.javifyClassName;
 public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSerializer<T> {
   public static final String CLASS_METADATA = ExprializeUtils.getJavaReference(CompiledAya.class);
   public static final String CLASS_JITCON = ExprializeUtils.getJavaReference(JitCon.class);
-  public static final String CLASS_ASSOC = ExprializeUtils.getJavaReference(Assoc.class);
-  public static final String CLASS_AYASHAPE = ExprializeUtils.getJavaReference(AyaShape.class);
   public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(CodeShape.class), ExprializeUtils.getJavaReference(CodeShape.GlobalId.class));
   public static final String METHOD_TELESCOPE = "telescope";
   public static final String METHOD_RESULT = "result";
@@ -43,10 +39,13 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
     buildMetadata(unit);
     buildInnerClass(className, superClass, () -> {
       buildInstance(className);
-      appendLine();     // make code more pretty
+      appendLine();
       // empty return type for constructor
       buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
       appendLine();
+      if (unit.telescope().isEmpty()) {
+
+      }
       var iTerm = "i";
       var teleArgsTerm = "teleArgs";
       var teleArgsTy = TYPE_TERMSEQ;
