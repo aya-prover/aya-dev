@@ -21,7 +21,7 @@ Goal: Goal of type
         Nat
         (Normalized: Nat)
       Context:
-        a
+        a : Nat
 
 In file $FILE:2:28 ->
 
@@ -146,8 +146,8 @@ In file $FILE:7:41 ->
 Error: Cannot check the expression
          g 0
        of type
-         F (Neg 0)
-         (Normalized: F (0 → Empty))
+         F (Neg <X>)
+         (Normalized: F (<X> → Empty))
        against the type
          Nat
 
@@ -160,7 +160,7 @@ In file $FILE:7:15 ->
 
 Error: Unsolved meta _
        in `^0 (?_ ^0)`
-       in `Fn (y : ^0 (?_ ^0)) → ^1 (Neg y)`
+       in `^0 (?_ ^0) → ^1 (Neg <X>)`
 
 4 error(s), 0 warning(s).
 What are you doing?
