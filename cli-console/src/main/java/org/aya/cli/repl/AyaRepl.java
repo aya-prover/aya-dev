@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -34,8 +34,8 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     return 0;
   }
 
-  @NotNull
-  private static AyaRepl makeRepl(@NotNull ImmutableSeq<Path> modulePaths, MainArgs.@NotNull ReplAction replAction, ReplConfig replConfig) throws IOException {
+  private static @NotNull AyaRepl
+  makeRepl(@NotNull ImmutableSeq<Path> modulePaths, MainArgs.@NotNull ReplAction replAction, ReplConfig replConfig) throws IOException {
     return switch (replAction.replType) {
       case jline -> new JlineRepl(modulePaths, replConfig);
       case plain -> new PlainRepl(modulePaths, replConfig, IO.STDIO);
@@ -76,6 +76,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.TOGGLE_UNICODE,
       ReplCommands.CHANGE_CWD,
       ReplCommands.PRINT_CWD,
+      ReplCommands.SHOW_MODULE_PATHS,
       ReplCommands.LOAD,
       ReplCommands.COLOR,
       ReplCommands.STYLE
@@ -93,6 +94,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     replCompiler = new ReplCompiler(modulePaths, new AnsiReporter(true,
       () -> config.enableUnicode, () -> config.literatePrettier.prettierOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
+    replCompiler.loadPreludeIfPossible();
   }
 
   protected abstract @Nullable String hintMessage();

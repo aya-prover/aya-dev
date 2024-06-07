@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -77,6 +77,11 @@ public interface ReplCommands {
   @NotNull Command PRINT_CWD = new Command(ImmutableSeq.of("pwd"), "Print current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
       return new Result(Output.stdout(repl.cwd.toAbsolutePath().toString()), true);
+    }
+  };
+  @NotNull Command SHOW_MODULE_PATHS = new Command(ImmutableSeq.of("module-path"), "Show module path(s)") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
+      return new Result(Output.stdout(repl.replCompiler.modulePaths.joinToString()), true);
     }
   };
 
