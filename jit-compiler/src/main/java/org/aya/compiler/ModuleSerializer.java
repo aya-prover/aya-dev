@@ -17,8 +17,7 @@ import static org.aya.compiler.NameSerializer.javifyClassName;
 public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.ModuleResult> {
   public record ModuleResult(
     @NotNull QPath name,
-    @NotNull ImmutableSeq<TopLevelDef> defs,
-    @NotNull ImmutableSeq<ModuleResult> submodules
+    @NotNull ImmutableSeq<TopLevelDef> defs
   ) { }
 
   private final @NotNull ShapeFactory shapeFactory;
@@ -28,7 +27,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     this.shapeFactory = shapeFactory;
   }
 
-  private void serializeCons(@NotNull DataDef dataDef, @NotNull DataSerializer serializer) {
+  private void serializeCons(@NotNull DataDef dataDef, @NotNull SourceBuilder serializer) {
     var ser = new ConSerializer(serializer);
     IterableUtil.forEach(dataDef.body, ser::appendLine, ser::serialize);
   }
@@ -37,8 +36,10 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(this, shapeFactory)
         .serialize(teleDef);
-      case DataDef dataDef -> new DataSerializer(this, shapeFactory, ser -> serializeCons(dataDef, ser))
-        .serialize(dataDef);
+      case DataDef dataDef -> {
+        new DataSerializer(this, shapeFactory).serialize(dataDef);
+        serializeCons(dataDef, this);
+      }
       case ConDef conDef -> new ConSerializer(this)
         .serialize(conDef);
       case PrimDef primDef -> new PrimSerializer(this)
@@ -46,19 +47,13 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     }
   }
 
-  private void doSerialize(ModuleResult unit, boolean isTopLevel) {
-    var moduleName = javifyClassName(unit.name, null);
-
-    buildClass(moduleName, null, !isTopLevel, () -> {
-      IterableUtil.forEach(unit.defs, this::appendLine, this::doSerialize);
-      // serialize submodules
-      if (unit.submodules.isNotEmpty()) appendLine();
-      IterableUtil.forEach(unit.submodules, this::appendLine, r -> doSerialize(r, false));
-    });
+  private void doSerialize(ModuleResult unit) {
+    buildClass(javifyClassName(unit.name, null), null, false, () ->
+      IterableUtil.forEach(unit.defs, this::appendLine, this::doSerialize));
   }
 
   @Override public ModuleSerializer serialize(ModuleResult unit) {
-    doSerialize(unit, true);
+    doSerialize(unit);
 
     return this;
   }

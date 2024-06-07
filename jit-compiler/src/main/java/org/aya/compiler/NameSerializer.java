@@ -58,10 +58,10 @@ public interface NameSerializer {
   static @NotNull String getReference(@NotNull QPath module, @Nullable String name, @NotNull NameType type) {
     // get package name of file level module
     var packageName = getModulePackageReference(module.fileModule(), type.packageSeparator);
-    // get javify class name of each component
-    var javifyComponent = module.traversal(path -> javifyClassName(path, null)).view();
-    if (name != null) javifyComponent = javifyComponent.appended(javifyClassName(module, name));
-    return STR."\{packageName}\{type.packageSeparator}\{javifyComponent.joinToString(type.classNameSeparator)}";
+    var fileModuleName = javifyClassName(QPath.fileLevel(module.fileModule()), null);
+    var prefix = packageName + type.packageSeparator + fileModuleName;
+    if (name == null) return prefix;
+    return prefix + type.classNameSeparator + javifyClassName(module, name);
   }
 
   static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {
