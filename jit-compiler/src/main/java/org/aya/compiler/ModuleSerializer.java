@@ -27,7 +27,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     this.shapeFactory = shapeFactory;
   }
 
-  private void serializeCons(@NotNull DataDef dataDef, @NotNull DataSerializer serializer) {
+  private void serializeCons(@NotNull DataDef dataDef, @NotNull SourceBuilder serializer) {
     var ser = new ConSerializer(serializer);
     IterableUtil.forEach(dataDef.body, ser::appendLine, ser::serialize);
   }
@@ -36,8 +36,10 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(this, shapeFactory)
         .serialize(teleDef);
-      case DataDef dataDef -> new DataSerializer(this, shapeFactory, ser -> serializeCons(dataDef, ser))
-        .serialize(dataDef);
+      case DataDef dataDef -> {
+        new DataSerializer(this, shapeFactory).serialize(dataDef);
+        serializeCons(dataDef, this);
+      }
       case ConDef conDef -> new ConSerializer(this)
         .serialize(conDef);
       case PrimDef primDef -> new PrimSerializer(this)

@@ -13,37 +13,22 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
-
 import static org.aya.compiler.AyaSerializer.CLASS_DATACALL;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
-  private final @NotNull Consumer<DataSerializer> conContinuation;
   private final @NotNull ShapeFactory shapeFactory;
 
-  /**
-   * @param conContinuation should generate constructor inside of this data
-   */
-  public DataSerializer(
-    @NotNull SourceBuilder builder,
-    @NotNull ShapeFactory shapeFactory,
-    @NotNull Consumer<DataSerializer> conContinuation
-  ) {
+  public DataSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
     super(builder, JitData.class);
     this.shapeFactory = shapeFactory;
-    this.conContinuation = conContinuation;
   }
 
   @Override public DataSerializer serialize(DataDef unit) {
-    buildFramework(unit, () -> {
-      buildMethod("constructors", ImmutableSeq.empty(), STR."\{CLASS_JITCON}[]", true,
-        () -> buildConstructors(unit));
-      appendLine();
-      conContinuation.accept(this);
-    });
-
+    buildFramework(unit, () -> buildMethod("constructors", ImmutableSeq.empty(),
+      STR."\{CLASS_JITCON}[]", true,
+      () -> buildConstructors(unit)));
     return this;
   }
 
@@ -52,16 +37,16 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     var maybe = shapeFactory.find(TyckAnyDef.make(unit));
     if (maybe.isEmpty()) {
       super.buildShape(unit);
-    } else {
-      var recog = maybe.get();
-      appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
-
-      // The capture is one-to-one
-      var flipped = ImmutableMap.from(recog.captures().view()
-        .map((k, v) -> Tuple.<DefVar<?, ?>, CodeShape.GlobalId>of(((TyckAnyDef<?>) v).ref, k)));
-      var capture = unit.body.map(x -> ExprializeUtils.makeSub(CLASS_GLOBALID, flipped.get(x.ref).toString()));
-      appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(capture), false);
+      return;
     }
+    var recog = maybe.get();
+    appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
+
+    // The capture is one-to-one
+    var flipped = ImmutableMap.from(recog.captures().view()
+      .map((k, v) -> Tuple.<DefVar<?, ?>, CodeShape.GlobalId>of(((TyckAnyDef<?>) v).ref, k)));
+    var capture = unit.body.map(x -> ExprializeUtils.makeSub(CLASS_GLOBALID, flipped.get(x.ref).toString()));
+    appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(capture), false);
   }
 
   @Override protected void buildConstructor(DataDef unit) {
