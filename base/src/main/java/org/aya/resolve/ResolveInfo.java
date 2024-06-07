@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @param opRename     open/import renames with operators
  * @param depGraph     local to this module
  */
-@Debug.Renderer(text = "thisModule.moduleName().joinToString(\"::\")")
+@Debug.Renderer(text = "thisModule.modulePath().toString()")
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull PrimFactory primFactory,

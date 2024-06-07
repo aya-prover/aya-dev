@@ -107,7 +107,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   ) throws IOException {
     var javaCode = new FileSerializer(resolveInfo.shapeFactory())
       .serialize(new ModuleSerializer.ModuleResult(
-        QPath.fileLevel(file.moduleName()), defs.filterIsInstance(TopLevelDef.class), ImmutableSeq.empty()))
+        QPath.fileLevel(file.moduleName()),
+        defs.filterIsInstance(TopLevelDef.class)))
       .result();
     var baseDir = computeBaseDir(file.owner().outDir()).toAbsolutePath();
     var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,
