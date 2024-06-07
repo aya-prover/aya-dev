@@ -130,6 +130,13 @@ public interface SourceBuilder {
     builder().append('\n');
   }
   default void appendLine() { builder().append('\n'); }
+  default void buildConstantField(
+    @NotNull String type,
+    @NotNull String name,
+    @NotNull String value
+  ) {
+    appendLine(STR."public static final \{type} \{name} = \{value};");
+  }
 
   default <R> void buildSwitch(
     @NotNull String term,

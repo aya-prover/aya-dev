@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.function.Consumer;
 
-import static org.aya.compiler.AyaSerializer.CLASS_SUPPLIER;
-import static org.aya.compiler.AyaSerializer.CLASS_TERM;
+import static org.aya.compiler.AyaSerializer.*;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   public static final String TYPE_STUCK = STR."\{CLASS_SUPPLIER}<\{CLASS_TERM}>";
@@ -76,6 +75,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       .joinToString(", ", "this.invoke(", ")"));
   }
 
+  @Override protected @NotNull String callClass() { return CLASS_FNCALL; }
   @Override protected void buildShape(FnDef unit) {
     var maybe = shapeFactory.find(TyckAnyDef.make(unit));
     if (maybe.isEmpty()) {

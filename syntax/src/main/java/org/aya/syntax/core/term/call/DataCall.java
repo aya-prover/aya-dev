@@ -14,7 +14,8 @@ public record DataCall(
   @Override @NotNull DataDefLike ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
-) implements Callable.Tele, StableWHNF, Formation {
+) implements Callable.SharableCall, StableWHNF, Formation {
+  public DataCall(@NotNull DataDefLike ref) { this(ref, 0, ImmutableSeq.empty()); }
   public @NotNull DataCall update(@NotNull ImmutableSeq<Term> args) {
     return args.sameElements(args(), true) ? this : new DataCall(ref, ulift, args);
   }

@@ -44,30 +44,31 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
       buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
       appendLine();
       if (unit.telescope().isEmpty()) {
-
+        buildConstantField(callClass(), "ourCall", ExprializeUtils.makeNew(
+          callClass(), ExprializeUtils.getInstance(className)));
       }
       var iTerm = "i";
       var teleArgsTerm = "teleArgs";
-      var teleArgsTy = TYPE_TERMSEQ;
       buildMethod(METHOD_TELESCOPE, ImmutableSeq.of(
         new JitParam(iTerm, "int"),
-        new JitParam(teleArgsTerm, teleArgsTy)
+        new JitParam(teleArgsTerm, TYPE_TERMSEQ)
       ), CLASS_TERM, true, () -> buildTelescope(unit, iTerm, teleArgsTerm));
       appendLine();
       buildMethod(METHOD_RESULT, ImmutableSeq.of(
-        new JitParam(teleArgsTerm, teleArgsTy)
+        new JitParam(teleArgsTerm, TYPE_TERMSEQ)
       ), CLASS_TERM, true, () -> buildResult(unit, teleArgsTerm));
       appendLine();
       continuation.run();
     });
   }
 
+  protected abstract @NotNull String callClass();
   private @NotNull String getClassName(@NotNull T unit) {
     return javifyClassName(unit.ref());
   }
 
   public void buildInstance(@NotNull String className) {
-    appendLine(STR."public static final \{className} \{STATIC_FIELD_INSTANCE} = new \{className}();");
+    buildConstantField(className, STATIC_FIELD_INSTANCE, ExprializeUtils.makeNew(className));
   }
 
   protected void appendMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
