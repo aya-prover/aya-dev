@@ -38,10 +38,10 @@ public record LamTerm(Closure body) implements StableWHNF {
     var params = MutableList.<LocalVar>create();
     var it = term;
 
-    while (it instanceof LamTerm lamTerm) {
-      var name = nameGen.bindName(String.valueOf(params.size()));
+    while (it instanceof LamTerm(var lam)) {
+      var name = nameGen.bindName(STR."p\{params.size()}");
       params.append(name);
-      it = lamTerm.body.apply(new FreeTerm(name));
+      it = lam.apply(new FreeTerm(name));
     }
 
     return new Unlam(params, it);

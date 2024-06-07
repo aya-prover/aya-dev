@@ -97,7 +97,7 @@ What are you doing?
 Daylily:
 In file $FILE:5:12 ->
 
-  3 │       def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => 0
+  3 │       def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Bool => true
   4 │       example def test1 (A B : Type) (x : A) (y : B) =>
   5 │         wow A B x y
     │                 ╰╯  ╰╯ ?B A B x y A >= A
