@@ -160,7 +160,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * @return whether they are 'the same' and their types are {@param type}
    */
   private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
-    return switch (type) {
+    return switch (whnf(type)) {
       // TODO: ClassCall
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
       case ErrorTerm _ -> true;
@@ -206,7 +206,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) {
     {
       var result = compareApprox(preLhs, preRhs);
-      if (result != null) return result;
+      if (result != null) return whnf(result);
       failure = null;
     }
 
@@ -214,7 +214,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs)) {
       var result = compareApprox(lhs, rhs);
-      if (result != null) return result;
+      if (result != null) return whnf(result);
     }
 
     Term result;
@@ -337,12 +337,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     for (var i = 0; i < types.telescopeSize(); ++i) {
       var l = list.get(i);
       var r = rist.get(i);
-      var ty = whnf(types.telescope(i, argsCum));
+      var ty = types.telescope(i, argsCum);
       if (!compare(l, r, ty)) return null;
       argsCum[i] = l;
     }
 
-    return whnf(types.result(argsCum));
+    return types.result(argsCum);
   }
 
   /**
