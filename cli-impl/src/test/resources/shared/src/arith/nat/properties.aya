@@ -1,6 +1,6 @@
 open import arith::nat::base
-open import data::empty
-open import paths
+open import relation::nullary::empty
+open import relation::binary::path
 
 private def diag Nat : Type
 | 0 => Nat

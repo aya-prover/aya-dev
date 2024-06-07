@@ -23,7 +23,7 @@ public record Goal(
 ) implements Problem, Stateful {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
-    var result = meta.req() instanceof MetaVar.OfType(var type) ? freezeHoles(type)
+    var result = meta.req() instanceof MetaVar.OfType(var type) ? freezeHoles(MetaCall.appType(hole, type))
       : new ErrorTerm(_ -> Doc.plain("???"));
     var doc = Doc.vcatNonEmpty(
       Doc.english("Goal of type"),

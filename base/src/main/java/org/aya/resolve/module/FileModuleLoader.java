@@ -33,8 +33,7 @@ public record FileModuleLoader(
   ) {
     this(locator, basePath, reporter, parser, fileManager, new PrimFactory());
   }
-  @Override
-  public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
     try {
       var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);

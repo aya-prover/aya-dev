@@ -1,11 +1,11 @@
 open import arith::nat::base
-open import paths
+open import relation::binary::path
 
 open inductive List (A : Type)
 | nil
 | infixr :< A (List A) tighter =
 
-variable A B C : Type
+variable A B : Type
 
 def length (List A) : Nat
 | [ ] => 0
@@ -19,19 +19,3 @@ def infixr ++ (xs ys : List A) : List A
 def map (f : A -> B) (xs : List A) : List B elim xs
 | [ ] => [ ]
 | x :< xs' => f x :< map f xs'
-
-def length-map (f : A -> B) (l : List A) : length (map f l) = length l elim l
-| [ ] => refl
-| x :< xs => pmap suc (length-map f xs)
-
-def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
-| [ ] => refl
-| x :< xs => pmap (g (f x) :<) (map-comp g f xs)
-
-def map-id (l : List A) : map (\x => x) l = l
-| [ ] => refl
-| x :< xs => pmap (x :<) (map-id xs)
-
-def head-def (x : A) (xs : List A) : A elim xs
-| [ ] => x
-| a :< _ => a

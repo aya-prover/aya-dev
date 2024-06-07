@@ -54,10 +54,10 @@ import java.nio.file.Path;
 
 public class ReplCompiler {
   public final @NotNull CountingReporter reporter;
+  public final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull SourceFileLocator locator;
   private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;
-  private final @NotNull ImmutableSeq<Path> modulePaths;
   private final @NotNull PrimFactory primFactory;
   private final @NotNull ReplShapeFactory shapeFactory;
   private final @NotNull GenericAyaFile.Factory fileManager;
@@ -183,7 +183,10 @@ public class ReplCompiler {
     return new Normalizer(tcState).normalize(isType ? jdg.type() : jdg.wellTyped(), mode);
   }
 
-  public @NotNull ReplContext getContext() {
-    return context;
+  public @NotNull ReplContext getContext() { return context; }
+  public void loadPreludeIfPossible() {
+    if (loader.existsFileLevelModule(ModulePath.of("prelude"))) {
+      compileToContext("open import prelude", NormalizeMode.NULL);
+    }
   }
 }

@@ -1,7 +1,6 @@
-open import arith::nat::base
+open import prelude hiding (++)
 open import data::list::base using (List, :<, length)
 open import data::vec::base using (Vec, :>, [], ++)
-open import paths
 
 variable A : Type
 variable n m o : Nat

@@ -59,7 +59,7 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testScopeCheck = """
-    open import paths
+    open import relation::binary::path
     variable A : Type
     
     // https://cstheory.stackexchange.com/a/49160/50892
@@ -78,7 +78,7 @@ public interface GoalAndMeta {
   @Language("Aya") String testNonPattern = """
     open import data::vec::base
     open import arith::nat::base
-    open import paths
+    open import relation::binary::path
     variable n m o : Nat
     variable A : Type
     def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)

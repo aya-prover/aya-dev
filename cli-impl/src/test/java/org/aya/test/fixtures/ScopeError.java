@@ -53,7 +53,7 @@ public interface ScopeError {
     """;
   // This should pass
   @Language("Aya") String testLetOpen = """
-    open import paths using (=, refl)
+    open import relation::binary::path using (=, refl)
     inductive Nat | O | S Nat
     def zero : Nat => let open Nat using (O) in O
     def suc (n : Nat) : Nat => let open Nat hiding (O) in S n
