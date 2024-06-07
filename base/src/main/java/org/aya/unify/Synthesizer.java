@@ -48,7 +48,7 @@ public record Synthesizer(
     return switch (tyty.kind()) {
       case Type -> expected.kind() == SortKind.Type && tyty.lift() <= expected.lift();
       case Set -> expected.kind() == SortKind.Set && tyty.lift() <= expected.lift();
-      case ISet -> Panic.unreachable();
+      case ISet -> expected.kind() == SortKind.Type;
     };
   }
 

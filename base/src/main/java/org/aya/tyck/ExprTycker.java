@@ -102,7 +102,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(), new MetaVar.OfType(type));
         hole.solution().set(freshHole);
         userHoles.append(new WithPos<>(expr.sourcePos(), hole));
-        if (hole.explicit()) fail(new Goal(state, freshHole, hole.accessibleLocal()));
+        if (hole.explicit()) fail(new Goal(state, freshHole, localCtx().clone(), hole.accessibleLocal()));
         yield new Jdg.Default(freshHole, type);
       }
       case Expr.LitInt(var end) -> {
@@ -152,15 +152,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }
-    unifyTyReported(type, resultType, expr);
-    return result;
+    if (unifyTyReported(type, resultType, expr)) return result;
+    return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
   }
 
   public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType);
-        if (hole.explicit()) fail(new Goal(state, meta, hole.accessibleLocal()));
+        if (hole.explicit()) fail(new Goal(state, meta, localCtx().clone(), hole.accessibleLocal()));
         yield meta;
       }
       case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());

@@ -1,0 +1,12 @@
+open import prelude
+
+open inductive FreeGroup (A : Type)
+| η A
+| infixl · (a b : FreeGroup A) tighter =
+| ε
+| inv (FreeGroup A)
+| assoc (x y z : FreeGroup A) : x · (y · z) = (x · y) · z
+| idr (x : FreeGroup A) : x = x · ε
+| idl (x : FreeGroup A) : x = ε · x
+| invr (x : FreeGroup A) : x · (inv x) = ε
+| invl (x : FreeGroup A) : (inv x) · x = ε

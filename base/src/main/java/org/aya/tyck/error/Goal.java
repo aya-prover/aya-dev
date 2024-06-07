@@ -8,6 +8,7 @@ import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record Goal(
   @Override @NotNull TyckState state, @NotNull MetaCall hole,
-  @NotNull ImmutableSeq<LocalVar> scope
+  @NotNull LocalCtx ctx, @NotNull ImmutableSeq<LocalVar> scope
 ) implements Problem, Stateful {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
@@ -48,9 +49,11 @@ public record Goal(
   }
   private @NotNull Doc renderScopeVar(@NotNull PrettierOptions options, Term arg) {
     var paramDoc = freezeHoles(arg).toDoc(options);
-    var scopeInfo = arg instanceof FreeTerm(var ref) && scope.contains(ref)
-      ? paramDoc : Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope")));
-    return Doc.par(1, scopeInfo);
+    if (arg instanceof FreeTerm(var ref)) {
+      if (ctx.contains(ref)) paramDoc = Doc.sep(paramDoc, Doc.symbol(":"), ctx.get(ref).toDoc(options));
+      if (!scope.contains(ref)) paramDoc = Doc.sep(paramDoc, Doc.parened(Doc.english("not in scope")));
+    }
+    return Doc.par(1, paramDoc);
   }
 
   @Override public @NotNull SourcePos sourcePos() { return hole.ref().pos(); }
