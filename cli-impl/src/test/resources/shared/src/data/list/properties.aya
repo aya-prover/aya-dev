@@ -1,0 +1,21 @@
+open import arith::nat::base
+open import data::list::base
+open import relation::binary::path
+
+variable A B C : Type
+
+def length-map (f : A -> B) (l : List A) : length (map f l) = length l elim l
+| [ ] => refl
+| x :< xs => pmap suc (length-map f xs)
+
+def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
+| [ ] => refl
+| x :< xs => pmap (g (f x) :<) (map-comp g f xs)
+
+def map-id (l : List A) : map (\x => x) l = l
+| [ ] => refl
+| x :< xs => pmap (x :<) (map-id xs)
+
+def head-def (x : A) (xs : List A) : A elim xs
+| [ ] => x
+| a :< _ => a

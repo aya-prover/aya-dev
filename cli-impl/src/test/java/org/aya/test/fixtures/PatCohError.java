@@ -135,7 +135,7 @@ public interface PatCohError {
 
   @Language("Aya") String testIApplyConflReduce = """
     open import arith::nat::base
-    open import paths
+    open import relation::binary::path
     open inductive WrongInt
     | pos Nat
     | neg Nat

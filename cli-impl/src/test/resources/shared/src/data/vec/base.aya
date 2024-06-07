@@ -1,5 +1,4 @@
-open import arith::nat::base
-open import paths
+open import prelude hiding (++)
 
 open inductive Vec Nat Type
 | 0, A => []

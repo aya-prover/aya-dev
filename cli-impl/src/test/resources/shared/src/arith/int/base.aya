@@ -1,6 +1,7 @@
 open import arith::nat::base
 open import arith::bool::base
-open import paths
+open import relation::binary::path
+
 open inductive Int
 | signed Bool Nat
 | posneg : neg 0 = pos 0
@@ -16,7 +17,7 @@ def abs Int : Nat
 | signed _ n => n
 | posneg _ => 0
 
-def succInt Int : Int
+def succ Int : Int
 | signed true n => pos (suc n)
 | signed false (suc n) => neg n
 | signed false zero => pos 1

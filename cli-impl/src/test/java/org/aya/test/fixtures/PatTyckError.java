@@ -76,7 +76,7 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testNoPattern = """
-    open import paths hiding (funExt)
+    open import relation::binary::path hiding (funExt)
     
     variable A B : Type
     def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g

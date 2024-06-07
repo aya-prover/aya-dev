@@ -1,4 +1,4 @@
-open import paths
+open import relation::binary::path
 
 open inductive FMSet (A : Type)
 | []
@@ -7,8 +7,9 @@ open inductive FMSet (A : Type)
 
 variable A : Type
 
-def infixr ++ (xs ys : FMSet A) : FMSet A elim xs
-| [] => ys
-| x :] xs' => x :] xs' ++ ys
-| comm x y xs' i => comm x y (xs' ++ ys) i
+overlap def infixr ++ (xs ys : FMSet A) : FMSet A
+| [], _ => ys
+| _, [] => xs
+| x :] xs', _ => x :] xs' ++ ys
+| comm x y xs' i, _ => comm x y (xs' ++ ys) i
 tighter :] =

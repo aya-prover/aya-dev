@@ -1,4 +1,4 @@
-open import paths
+open import relation::binary::path
 
 open inductive Nat | zero | suc Nat
 

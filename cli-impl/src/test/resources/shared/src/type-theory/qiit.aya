@@ -1,4 +1,4 @@
-open import paths
+open import prelude
 
 open inductive Con : Type
 | •
