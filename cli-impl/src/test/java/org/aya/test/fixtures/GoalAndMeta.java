@@ -34,9 +34,9 @@ public interface GoalAndMeta {
     """;
 
   @Language("Aya") String testDaylily = """
-    open import arith::nat::base
+    open import arith::bool::base
     
-    def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Nat => 0
+    def wow {A : Type 1} {B : A -> Type} (a b : A) (x : B a) (y : B b) : Bool => true
     example def test1 (A B : Type) (x : A) (y : B) =>
       wow A B x y
     example def test2 (A B : Type) (x : A) (y : B) =>

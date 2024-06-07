@@ -7,10 +7,13 @@ import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.core.def.PrimDef;
 import org.jetbrains.annotations.NotNull;
 
+import static org.aya.compiler.AyaSerializer.CLASS_PRIMCALL;
+
 public class PrimSerializer extends JitTeleSerializer<PrimDef> {
   public PrimSerializer(@NotNull AbstractSerializer<?> parent) {
     super(parent, JitPrim.class);
   }
+  @Override protected @NotNull String callClass() { return CLASS_PRIMCALL; }
   @Override protected void buildConstructor(PrimDef unit) {
     super.buildConstructor(unit, ImmutableSeq.of(STR."org.aya.syntax.core.def.PrimDef.ID.\{unit.id.name()}"));
   }

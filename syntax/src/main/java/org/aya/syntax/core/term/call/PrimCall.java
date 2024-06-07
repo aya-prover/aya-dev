@@ -15,10 +15,11 @@ public record PrimCall(
   @Override @NotNull PrimDefLike ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
-) implements Callable.Tele {
+) implements Callable.SharableCall {
   public @NotNull PrimCall update(@NotNull ImmutableSeq<Term> args) {
     return args.sameElements(args(), true) ? this : new PrimCall(ref, ulift, args);
   }
+  public PrimCall(@NotNull PrimDefLike prim) { this(prim, 0, ImmutableSeq.empty()); }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(Callable.descent(args, f));

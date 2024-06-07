@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 public record ConCall(
   @Override @NotNull ConCall.Head head,
   @Override @NotNull ImmutableSeq<Term> conArgs
-) implements ConCallLike {
+) implements ConCallLike, Callable.SharableCall {
+  public ConCall(@NotNull ConDefLike con) {
+    this(new Head(con, 0, ImmutableSeq.empty()), ImmutableSeq.empty());
+  }
   public @NotNull ConCall update(@NotNull Head head, @NotNull ImmutableSeq<Term> conArgs) {
     return head == head() && conArgs.sameElements(conArgs(), true) ? this : new ConCall(head, conArgs);
   }

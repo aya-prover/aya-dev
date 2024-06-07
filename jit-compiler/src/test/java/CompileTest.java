@@ -4,8 +4,8 @@
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
+import org.aya.compiler.NameGenerator;
 import org.aya.compiler.TermExprializer;
-import org.aya.generic.NameGenerator;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;

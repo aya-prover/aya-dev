@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;

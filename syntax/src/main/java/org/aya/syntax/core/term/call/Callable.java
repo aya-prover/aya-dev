@@ -5,7 +5,6 @@ package org.aya.syntax.core.term.call;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
-import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.Term;
@@ -27,10 +26,12 @@ public sealed interface Callable extends Term permits Callable.Tele, MetaCall {
   }
 
   /**
-   * Call to a {@link Decl}.
+   * Call to a {@link AnyDef}.
    */
-  sealed interface Tele extends Callable permits ConCallLike, DataCall, FnCall, PrimCall, RuleReducer {
+  sealed interface Tele extends Callable permits ConCallLike, SharableCall, RuleReducer {
     @NotNull AnyDef ref();
     int ulift();
   }
+  /** A call that allows {@code ourCall} field sharing when the args are always empty. */
+  sealed interface SharableCall extends Tele permits ConCall, DataCall, FnCall, PrimCall { }
 }

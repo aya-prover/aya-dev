@@ -2,9 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,9 +65,8 @@ public interface SourceBuilder {
   default void buildIfElse(@NotNull String condition, @NotNull Runnable onSucc, @Nullable Runnable onFailed) {
     appendLine(STR."if (\{condition}) {");
     runInside(onSucc);
-    if (onFailed == null) {
-      appendLine("}");
-    } else {
+    if (onFailed == null) appendLine("}");
+    else {
       appendLine("} else {");
       runInside(onFailed);
       appendLine("}");
@@ -123,17 +120,6 @@ public interface SourceBuilder {
     appendLine("}");
   }
 
-  default @NotNull ImmutableSeq<String> buildGenLocalVarsFromSeq(@NotNull String type, @NotNull String seqTerm, int size) {
-    String[] names = new String[size];
-    for (int i = 0; i < size; ++i) {
-      var name = nameGen().nextName();
-      names[i] = name;
-      buildLocalVar(type, name, STR."\{seqTerm}.get(\{i})");
-    }
-
-    return ImmutableArray.Unsafe.wrap(names);
-  }
-
   static @NotNull ImmutableSeq<String> fromSeq(@NotNull String term, int size) {
     return ImmutableSeq.fill(size, idx -> STR."\{term}.get(\{idx})");
   }
@@ -144,12 +130,12 @@ public interface SourceBuilder {
     builder().append('\n');
   }
   default void appendLine() { builder().append('\n'); }
-  default <R> void buildSwitch(
-    @NotNull String term,
-    @NotNull ImmutableSeq<R> cases,
-    @NotNull Consumer<R> continuation
+  default void buildConstantField(
+    @NotNull String type,
+    @NotNull String name,
+    @NotNull String value
   ) {
-    buildSwitch(term, cases, continuation, () -> buildPanic(null));
+    appendLine(STR."public static final \{type} \{name} = \{value};");
   }
 
   default <R> void buildSwitch(
@@ -184,9 +170,10 @@ public interface SourceBuilder {
     boolean override,
     @NotNull Runnable continuation
   ) {
-    if (override) appendLine("@Override");
-    var paramStr = params.joinToString(", ", param -> STR."\{param.type()} \{param.name()}");
-    appendLine(STR."public \{returnType} \{name}(\{paramStr}) {");
+    var paramStr = params.joinToString(", ",
+      STR."\{override ? "@Override " : ""}public \{returnType} \{name}(", ") {",
+      param -> STR."\{param.type()} \{param.name()}");
+    appendLine(paramStr);
     runInside(continuation);
     appendLine("}");
   }

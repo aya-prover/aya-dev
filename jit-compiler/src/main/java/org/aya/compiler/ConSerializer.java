@@ -23,6 +23,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     super(other, JitCon.class);
   }
 
+  @Override protected @NotNull String callClass() { return CLASS_CONCALL; }
   @Override protected void buildConstructor(ConDef unit) {
     var hasEq = unit.equality != null;
     buildConstructor(unit, ImmutableSeq.of(

@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.generic.NameGenerator;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,23 +16,13 @@ public abstract class AbstractSerializer<T> implements SourceBuilder {
     this.sourceBuilder = builder;
   }
 
-  @Override
-  public @NotNull StringBuilder builder() {
-    return sourceBuilder.builder();
-  }
-
-  @Override
-  public @NotNull NameGenerator nameGen() {
-    return sourceBuilder.nameGen();
-  }
-
-  @Override
-  public int indent() {
+  @Override public @NotNull StringBuilder builder() { return sourceBuilder.builder(); }
+  @Override public @NotNull NameGenerator nameGen() { return sourceBuilder.nameGen(); }
+  @Override public int indent() {
     return sourceBuilder.indent();
   }
 
-  @Override
-  public void runInside(@NotNull Runnable runnable) {
+  @Override public void runInside(@NotNull Runnable runnable) {
     sourceBuilder.runInside(runnable);
   }
   /**
