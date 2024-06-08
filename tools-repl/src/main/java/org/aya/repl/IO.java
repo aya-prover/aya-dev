@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -12,11 +12,7 @@ import java.util.Scanner;
 /**
  * A simple wrapper for common IO operations.
  */
-public record IO(
-  @NotNull Scanner scanner,
-  @NotNull PrintWriter out,
-  @NotNull PrintWriter err
-) {
+public record IO(@NotNull Scanner scanner, @NotNull PrintWriter out, @NotNull PrintWriter err) {
   public IO(@NotNull Readable input, @NotNull Writer out, @NotNull Writer err) {
     this(new Scanner(input), new PrintWriter(out), new PrintWriter(err));
   }
