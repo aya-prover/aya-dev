@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -18,7 +18,7 @@ import java.util.function.Supplier;
  * @see CommandManager
  */
 public interface ReplCompleters {
-  @NotNull Completer BOOL = (reader, line, candidates) -> {
+  @NotNull Completer BOOL = (_, _, candidates) -> {
     candidates.add(new Candidate("true"));
     candidates.add(new Candidate("false"));
   };

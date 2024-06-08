@@ -20,7 +20,7 @@ public record AyaOrgaTycker(
   @NotNull AyaSccTycker sccTycker,
   @NotNull MutableGraph<TyckOrder> usageGraph,
   @NotNull MutableSet<TyckOrder> skippedSet
-) implements OrgaTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed> {
+) implements OrgaTycker<TyckOrder, AyaSccTycker.SccTyckingFailed> {
   public AyaOrgaTycker(@NotNull AyaSccTycker sccTycker, @NotNull ResolveInfo resolveInfo) {
     this(sccTycker, resolveInfo.depGraph().transpose(), MutableSet.create());
   }
