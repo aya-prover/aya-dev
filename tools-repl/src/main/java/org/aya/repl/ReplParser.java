@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @param shellLike see {@link org.aya.repl.CommandArg#shellLike}
+ * @param shellLike see {@link CommandArg#shellLike}
  */
 public record ReplParser<T>(
   @NotNull CommandManager cmd, @NotNull ReplLexer<T> lexer,

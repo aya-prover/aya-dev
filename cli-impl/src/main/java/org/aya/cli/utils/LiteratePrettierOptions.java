@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 
 /**
- * A JSON object for {@link org.aya.cli.render.RenderOptions} and {@link org.aya.prettier.AyaPrettierOptions }
+ * A JSON object for {@link RenderOptions} and {@link AyaPrettierOptions }
  *
  * @see org.aya.cli.interactive.ReplConfig
  * @see org.aya.cli.library.json.LibraryConfigData

@@ -13,7 +13,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * An "abstract" Lambda Term.<br/>
- * We also use it to represent a term that contains a "free" {@link org.aya.syntax.core.term.LocalTerm},
+ * We also use it to represent a term that contains a "free" {@link LocalTerm},
  * so we can handle them in a scope-safe manner.
  * Note that you shouldn't supply a {@link LocalTerm} to "DeBruijn Index"-lize a {@link Closure},
  * since it may contain another {@link Closure}, the safe way is to supply a {@link FreeTerm} then bind it,
