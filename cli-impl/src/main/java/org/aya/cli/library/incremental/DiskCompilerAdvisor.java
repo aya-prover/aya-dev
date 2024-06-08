@@ -19,6 +19,7 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.FileUtil;
+import org.aya.util.error.Global;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var options = List.of("-classpath", classpath.joinToString(File.pathSeparator), "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
-    // Files.delete(javaSrcPath);
+    if (Global.DELETE_JIT_JAVA_SOURCE) Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
     CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
   }

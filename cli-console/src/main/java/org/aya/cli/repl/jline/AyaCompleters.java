@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl.jline;
 
@@ -22,14 +22,11 @@ public interface AyaCompleters {
   @NotNull List<Candidate> KEYWORDS = Seq.of(AyaParserDefinitionBase.KEYWORDS.getTypes())
     .view().map(IElementType::toString)
     .map(Candidate::new).collect(Collectors.toList());
-  @NotNull Completer KW = (reader, line, candidates) -> candidates.addAll(KEYWORDS);
+  @NotNull Completer KW = (_, _, candidates) -> candidates.addAll(KEYWORDS);
 
   class Context implements Completer {
     private final @NotNull AyaRepl repl;
-
-    public Context(@NotNull AyaRepl repl) {
-      this.repl = repl;
-    }
+    public Context(@NotNull AyaRepl repl) { this.repl = repl; }
 
     private @NotNull Tuple2<String, Boolean> fixWord(@NotNull String word, ParsedLine line) {
       if (word.startsWith(":") || word.startsWith(Constants.SCOPE_SEPARATOR)) {
@@ -56,9 +53,7 @@ public interface AyaCompleters {
   }
 
   class Code extends Context {
-    public Code(@NotNull AyaRepl repl) {
-      super(repl);
-    }
+    public Code(@NotNull AyaRepl repl) { super(repl); }
 
     @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
       KW.complete(reader, line, candidates);

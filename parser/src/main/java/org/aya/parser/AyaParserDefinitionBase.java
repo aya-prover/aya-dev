@@ -57,6 +57,7 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
     AyaPsiElementTypes.KW_DO,
     AyaPsiElementTypes.KW_SELF,
     AyaPsiElementTypes.KW_OVERRIDE,
+    AyaPsiElementTypes.KW_PARTIAL,
     AyaPsiElementTypes.KW_EXAMPLE,
     AyaPsiElementTypes.KW_EXTENDS,
     AyaPsiElementTypes.KW_FORALL,
