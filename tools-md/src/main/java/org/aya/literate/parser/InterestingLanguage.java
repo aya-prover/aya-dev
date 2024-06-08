@@ -14,7 +14,7 @@ public interface InterestingLanguage<T extends Literate.CodeBlock> {
   boolean test(@NotNull String language);
   @NotNull T create(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos);
 
-  @NotNull InterestingLanguage<Literate.CodeBlock> ALL = of(s -> true);
+  @NotNull InterestingLanguage<Literate.CodeBlock> ALL = of(_ -> true);
 
   static @NotNull InterestingLanguage<Literate.CodeBlock> of(@NotNull String language) {
     return of(language::equalsIgnoreCase);
@@ -29,12 +29,9 @@ public interface InterestingLanguage<T extends Literate.CodeBlock> {
     @NotNull TriFunction<String, String, SourcePos, T> factory
   ) {
     return new InterestingLanguage<>() {
-      @Override public boolean test(@NotNull String language) {
-        return test.test(language);
-      }
+      @Override public boolean test(@NotNull String language) { return test.test(language); }
 
-      @Override
-      public @NotNull T create(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      @Override public @NotNull T create(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
         return factory.apply(language, code, sourcePos);
       }
     };
