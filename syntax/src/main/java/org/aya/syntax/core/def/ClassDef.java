@@ -10,4 +10,9 @@ public record ClassDef(
   @Override @NotNull DefVar<ClassDef, ?> ref,
   @NotNull ImmutableSeq<MemberDef> members
 ) implements TopLevelDef {
+  public static class Delegate extends TyckAnyDef<ClassDef> {
+    public Delegate(@NotNull DefVar<ClassDef, ?> ref) {
+      super(ref);
+    }
+  }
 }
