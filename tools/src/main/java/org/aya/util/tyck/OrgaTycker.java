@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck;
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva
  */
 public interface OrgaTycker<T, E extends Exception> {
-  @NotNull SCCTycker<T, E> sccTycker();
+  @NotNull SccTycker<T, E> sccTycker();
   @NotNull MutableSet<T> skippedSet();
   @NotNull Iterable<T> collectUsageOf(@NotNull T failed);
 

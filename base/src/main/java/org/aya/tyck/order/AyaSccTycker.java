@@ -28,7 +28,7 @@ import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.Diagonal;
 import org.aya.util.terck.MutableGraph;
-import org.aya.util.tyck.SCCTycker;
+import org.aya.util.tyck.SccTycker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -43,7 +43,7 @@ public record AyaSccTycker(
   @NotNull CountingReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull TyckDef> wellTyped
-) implements SCCTycker<TyckOrder, AyaSccTycker.SCCTyckingFailed>, Problematic {
+) implements SccTycker<TyckOrder, AyaSccTycker.SccTyckingFailed>, Problematic {
   public static @NotNull AyaSccTycker create(ResolveInfo info, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
     var stmt = new StmtTycker(counting, info.shapeFactory(), info.primFactory());
@@ -51,13 +51,13 @@ public record AyaSccTycker(
   }
 
   @Override public @NotNull ImmutableSeq<TyckOrder>
-  tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) throws SCCTyckingFailed {
+  tyckSCC(@NotNull ImmutableSeq<TyckOrder> scc) throws SccTyckingFailed {
     try {
       if (scc.isEmpty()) return ImmutableSeq.empty();
       if (scc.sizeEquals(1)) checkUnit(scc.getFirst());
       else checkMutual(scc);
       return ImmutableSeq.empty();
-    } catch (SCCTyckingFailed failed) {
+    } catch (SccTyckingFailed failed) {
       reporter.clear();
       return failed.what;
     }
@@ -67,7 +67,7 @@ public record AyaSccTycker(
     var heads = scc.filterIsInstance(TyckOrder.Head.class);
     if (heads.sizeGreaterThanOrEquals(2)) {
       fail(new TyckOrderError.CircularSignature(heads.map(TyckOrder.Head::unit)));
-      throw new SCCTyckingFailed(scc);
+      throw new SccTyckingFailed(scc);
     }
     throw new Panic("This place is in theory unreachable, we need to investigate if it is reached");
     /*
@@ -95,7 +95,7 @@ public record AyaSccTycker(
     if (order.unit() instanceof FnDecl fn && fn.body instanceof FnBody.ExprBody) {
       if (selfReferencing(resolveInfo.depGraph(), order)) {
         fail(new BadRecursion(fn.sourcePos(), fn.ref, null));
-        throw new SCCTyckingFailed(ImmutableSeq.of(order));
+        throw new SccTyckingFailed(ImmutableSeq.of(order));
       }
       check(new TyckOrder.Body(fn));
     } else {
@@ -143,7 +143,7 @@ public record AyaSccTycker(
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     if (stmt instanceof Decl decl) tycker.checkHeader(decl);
-    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
+    if (reporter.anyError()) throw new SccTyckingFailed(ImmutableSeq.of(order));
   }
 
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
@@ -155,7 +155,7 @@ public record AyaSccTycker(
         tycker.shapeFactory().bonjour(def);
       }
     }
-    if (reporter.anyError()) throw new SCCTyckingFailed(ImmutableSeq.of(order));
+    if (reporter.anyError()) throw new SccTyckingFailed(ImmutableSeq.of(order));
   }
 
   /**
@@ -184,9 +184,9 @@ public record AyaSccTycker(
     return hasSuc(graph, MutableSet.create(), unit, unit);
   }
 
-  public static class SCCTyckingFailed extends InterruptException {
+  public static class SccTyckingFailed extends InterruptException {
     public final @NotNull ImmutableSeq<TyckOrder> what;
-    public SCCTyckingFailed(@NotNull ImmutableSeq<TyckOrder> what) { this.what = what; }
+    public SccTyckingFailed(@NotNull ImmutableSeq<TyckOrder> what) { this.what = what; }
     @Override public InterruptStage stage() { return InterruptStage.Tycking; }
   }
 }

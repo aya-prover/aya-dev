@@ -31,7 +31,7 @@ import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.MutableGraph;
 import org.aya.util.tyck.OrgaTycker;
-import org.aya.util.tyck.SCCTycker;
+import org.aya.util.tyck.SccTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,7 +354,7 @@ public class LibraryCompiler {
     @NotNull CountingReporter reporter,
     @NotNull ModuleLoader moduleLoader,
     @NotNull CompilerAdvisor advisor
-  ) implements SCCTycker<LibrarySource, IOException> {
+  ) implements SccTycker<LibrarySource, IOException> {
     @Override
     public @NotNull ImmutableSeq<LibrarySource> tyckSCC(@NotNull ImmutableSeq<LibrarySource> order) throws IOException {
       for (var f : order) advisor.clearModuleOutput(f);
