@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelDef {
+public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef, TopLevelDef {
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).def(this);
   }

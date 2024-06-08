@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Top-level definitions.
  */
-public sealed interface TopLevelDef extends TyckDef permits DataDef, FnDef, PrimDef {
+public sealed interface TopLevelDef extends TyckDef permits ClassDef, DataDef, FnDef, PrimDef {
   @Override default @NotNull ImmutableSeq<Param> telescope() {
     var signature = ref().signature;
     assert signature != null;
