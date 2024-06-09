@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.syntax.concrete.stmt.decl.ClassDecl;
-import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.telescope.AbstractTele;
@@ -54,17 +53,13 @@ public record ClassDef(
     // | foo : A
     // | + : A -> A -> A
     // | bar : Fn (x : Foo A) -> (x.foo) self.+ (self.foo)
-    //                            instantiate these!   ^       ^
+    //                  instantiate these!   ^       ^
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members.get(i);
-      // FIXME: duplicated with somewhere, abstract!
-      // TODO: wrong impl, we need to inst self.xxx rather than index
-      var instedParam = member.telescope().mapIndexed((idx, param) ->
-        param.type().replaceTeleFrom(idx, teleArgs.view()));
-      var instedResult = member.result().replaceTeleFrom(instedParam.size(), teleArgs.view());
-      return PiTerm.make(instedParam.view(), instedResult);
+      // TODO: instantiate self projection with teleArgs
+      return TyckDef.defSignature(member.ref()).makePi();
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       // Use SigmaTerm::lub

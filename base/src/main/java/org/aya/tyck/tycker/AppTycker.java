@@ -15,10 +15,13 @@ import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
 import org.aya.util.error.Panic;
+import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -29,7 +32,8 @@ public interface AppTycker {
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
   record CheckAppData<Ex extends Exception>(
-    @NotNull TyckState state, int argsCount, int lift, @NotNull Factory<Ex> makeArgs
+    @NotNull TyckState state, @NotNull SourcePos pos,
+    int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
   static <Ex extends Exception> @NotNull Jdg
@@ -64,8 +68,10 @@ public interface AppTycker {
         new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
       case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
-      case ClassDecl _ -> checkClassCall(input.makeArgs, input.argsCount, input.lift,
+      case ClassDecl _ -> checkClassCall(input.makeArgs, input.pos, input.argsCount, input.lift,
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
+      case ClassMember _ -> checkProjCall(input.makeArgs, input.lift,
+        new MemberDef.Delegate((DefVar<MemberDef, ClassMember>) defVar));
       case Decl any -> throw new Panic(any.getClass().getCanonicalName());
     };
   }
@@ -124,13 +130,26 @@ public interface AppTycker {
   }
 
   private static <Ex extends Exception> Jdg
-  checkClassCall(@NotNull Factory<Ex> makeArgs, int argsCount, int lift, ClassDefLike clazz) throws Ex {
+  checkClassCall(
+    @NotNull Factory<Ex> makeArgs, @NotNull SourcePos pos,
+    int argsCount, int lift, @NotNull ClassDefLike clazz
+  ) throws Ex {
     var appliedParams = clazz.takeMembers(argsCount).lift(lift);
     return makeArgs.applyChecked(appliedParams, args -> {
+      var self = new LocalVar("self", pos, GenerateKind.Basic.Tyck);
       return new Jdg.Default(
-        new ClassCall(clazz, 0, ImmutableArray.from(args)),
+        new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
         appliedParams.result(args)
       );
     });
+  }
+
+  static @NotNull <Ex extends Exception> Jdg
+  checkProjCall(@NotNull Factory<Ex> makeArgs, int lift, MemberDefLike member) throws Ex {
+    var signature = member.signature().lift(lift);
+    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+      Panic.unreachable(),
+      signature.result(args)
+    ));
   }
 }
