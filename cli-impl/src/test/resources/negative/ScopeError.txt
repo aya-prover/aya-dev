@@ -139,6 +139,18 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?
 
+PrimDeps:
+In file $FILE:1:5 ->
+
+  1 │   prim Path
+    │        ╰──╯
+
+Error: The primitive `Path` depends on undeclared primitive(s): `I`
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
 UnknownPrim:
 In file $FILE:1:5 ->
 
@@ -190,6 +202,19 @@ In file $FILE:3:7 ->
     │          ╰╯
 
 Error: The generalized variable `A` is not available here
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+DuplicateModName:
+In file $FILE:2:7 ->
+
+  1 │   module A {}
+  2 │   module A {}
+    │          ╰╯
+
+Error: The module name `A` is already defined elsewhere
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).

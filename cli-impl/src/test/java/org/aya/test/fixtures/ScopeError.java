@@ -46,6 +46,7 @@ public interface ScopeError {
     | zero
     """;
   @Language("Aya") String testRedefPrim = "prim I prim I";
+  @Language("Aya") String testPrimDeps = "prim Path";
   @Language("Aya") String testUnknownPrim = "prim senpaiSuki";
   @Language("Aya") String testUnknownVar = """
     open inductive Nat : Type | zero
@@ -69,5 +70,9 @@ public interface ScopeError {
     variable A : Type
     def test Type : Type
     | _ => A
+    """;
+  @Language("Aya") String testDuplicateModName = """
+    module A {}
+    module A {}
     """;
 }
