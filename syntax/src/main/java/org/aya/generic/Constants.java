@@ -26,16 +26,12 @@ public interface Constants {
 
   @NotNull @NonNls String ALTERNATIVE_EMPTY = "empty";
   @NotNull @NonNls String ALTERNATIVE_OR = "<|>";
-  @NotNull @NonNls String LIST_NIL = "nil";
-  @NotNull @NonNls String LIST_CONS = ":<";
   @NotNull @NonNls String APPLICATIVE_APP = "<*>";
   @NotNull @NonNls String FUNCTOR_PURE = "pure";
   @NotNull @NonNls String MONAD_BIND = ">>=";
 
   @NotNull Expr alternativeOr = new Expr.Unresolved(SourcePos.NONE, ALTERNATIVE_OR);
   @NotNull Expr alternativeEmpty = new Expr.Unresolved(SourcePos.NONE, ALTERNATIVE_EMPTY);
-  @NotNull Expr listNil = new Expr.Unresolved(SourcePos.NONE, LIST_NIL);
-  @NotNull Expr listCons = new Expr.Unresolved(SourcePos.NONE, LIST_CONS);
   @NotNull Expr applicativeApp = new Expr.Unresolved(SourcePos.NONE, APPLICATIVE_APP);
   @NotNull Expr functorPure = new Expr.Unresolved(SourcePos.NONE, FUNCTOR_PURE);
   @NotNull Expr monadBind = new Expr.Unresolved(SourcePos.NONE, MONAD_BIND);

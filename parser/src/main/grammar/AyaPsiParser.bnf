@@ -158,7 +158,7 @@ private stmt_with_recover ::= !(<<eof>>) stmt {
 private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_IMPORT | KW_MODULE | DOC_COMMENT | KW_PUBLIC
                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
-                     | declModifiers
+                     | declModifier
 
 private repl ::= REPL_COMMAND? expr
 
@@ -197,7 +197,7 @@ bindBlock ::= (tighters | loosers)+
 tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
-fnDecl ::= declModifiers*
+fnDecl ::= declModifier*
  KW_DEF declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
 private simpleBody ::= IMPLIES expr { pin=1 }
@@ -213,28 +213,29 @@ primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
 // IMPORTANT NOTE: Adding all of these to stmt_first or you will get parser errors!
-declModifiers ::= KW_PRIVATE
-                | KW_EXAMPLE
-                | KW_OPAQUE
-                | KW_INLINE
-                | KW_OVERLAP
-                | KW_PARTIAL
-                | KW_OPEN
+declModifier ::= KW_PRIVATE
+               | KW_EXAMPLE
+               | KW_OPAQUE
+               | KW_INLINE
+               | KW_OVERLAP
+               | KW_PARTIAL
+               | KW_OPEN
 
 classDecl
-  ::= declModifiers*
+  ::= declModifier*
       KW_CLASS declNameOrInfix (KW_EXTENDS <<commaSep weakId>>)?
       bindBlock?
       (BAR classMember)*
 
+memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
 classMember
-  ::= KW_CLASSIFIYING? KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
-    | KW_CLASSIFIYING? KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock? {
+  ::= memberModifier* declNameOrInfix type? IMPLIES expr bindBlock?
+    | memberModifier* declNameOrInfix type               bindBlock? {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataDecl ::= declModifiers*
+dataDecl ::= declModifier*
  KW_DATA declNameOrInfix?
  tele* type? bindBlock? dataBody* { pin=2 }
 

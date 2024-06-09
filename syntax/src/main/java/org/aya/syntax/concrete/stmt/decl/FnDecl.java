@@ -23,7 +23,7 @@ import java.util.EnumSet;
  */
 public final class FnDecl extends Decl {
   public final @NotNull EnumSet<Modifier> modifiers;
-  public final @NotNull DefVar<FnDef, org.aya.syntax.concrete.stmt.decl.FnDecl> ref;
+  public final @NotNull DefVar<FnDef, FnDecl> ref;
   public @NotNull FnBody body;
 
   public FnDecl(
@@ -41,7 +41,7 @@ public final class FnDecl extends Decl {
     this.body = body;
   }
 
-  @Override public @NotNull DefVar<FnDef, org.aya.syntax.concrete.stmt.decl.FnDecl> ref() { return ref; }
+  @Override public @NotNull DefVar<FnDef, FnDecl> ref() { return ref; }
 
   @Override
   public void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author zaoqi
  */
-public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelDef {
+public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef, TopLevelDef {
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).def(this);
   }
@@ -46,7 +46,7 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
   /**
    * @see AnyDef#signature()
    */
-  static @NotNull AbstractTele defSignature(@NotNull DefVar<? extends TyckDef, ? extends Decl> defVar) {
+  static @NotNull AbstractTele defSignature(@NotNull DefVar<?, ? extends Decl> defVar) {
     if (defVar.core != null) return new AbstractTele.Locns(defVar.core.telescope(), defVar.core.result());
     // guaranteed as this is already a core term
     var signature = defVar.signature;
@@ -54,7 +54,7 @@ public sealed interface TyckDef extends AyaDocile permits SubLevelDef, TopLevelD
     return new AbstractTele.Locns(signature.rawParams(), signature.result());
   }
 
-  @NotNull DefVar<? extends TyckDef, ?> ref();
+  @NotNull DefVar<?, ?> ref();
   @NotNull Term result();
   @NotNull ImmutableSeq<Param> telescope();
 }

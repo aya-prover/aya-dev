@@ -33,15 +33,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Resolves bindings.
  *
- * @param allowedGeneralizes will be filled with generalized vars if {@link Options#allowIntroduceGeneralized},
+ * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
  *                           and represents the allowed generalized level vars otherwise
+ * @param allowGeneralizing  allow new generalized vars to be introduced
  * @author re-xyr, ice1000
  * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
 public record ExprResolver(
   @NotNull Context ctx,
-  @NotNull Options options,
+  boolean allowGeneralizing,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where
@@ -60,26 +61,23 @@ public record ExprResolver(
    */
   @Contract(pure = true)
   public static LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
-    var resolver = new ExprResolver(context, ExprResolver.LAX);
+    var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
     var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq();
     return new LiterateResolved(view, inner);
   }
 
-  public ExprResolver(@NotNull Context ctx, @NotNull Options options) {
-    this(ctx, options, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
+  public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
+    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
   }
-
-  public static final @NotNull Options RESTRICTIVE = new Options(false);
-  public static final @NotNull Options LAX = new Options(true);
 
   public void resetRefs() { reference.clear(); }
   public void enter(Where loc) { where.push(loc); }
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, options, allowedGeneralizes, reference, where);
+    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where);
   }
 
   /**
@@ -87,9 +85,7 @@ public record ExprResolver(
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, RESTRICTIVE,
-      // Hoshino: we needn't copy {allowedGeneralizes} cause this resolver is RESTRICTIVE
-      allowedGeneralizes, reference, where);
+    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -156,7 +152,7 @@ public record ExprResolver(
         AnyVar finalVar = switch (resolved) {
           case GeneralizedVar generalized -> {
             // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
-            if (options.allowIntroduceGeneralized) {
+            if (allowGeneralizing) {
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sanity check";

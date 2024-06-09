@@ -45,7 +45,7 @@ public record Signature(
     return vars.foldLeftIndexed(this, (idx, acc, var) -> acc.bindAt(var, idx));
   }
 
-  public @NotNull Signature descent(@NotNull UnaryOperator<org.aya.syntax.core.term.Term> f) {
+  public @NotNull Signature descent(@NotNull UnaryOperator<Term> f) {
     return new Signature(param.map(p -> p.map(q -> q.descent(f))), f.apply(result));
   }
 

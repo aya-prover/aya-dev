@@ -32,6 +32,7 @@ import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MemberVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
@@ -223,7 +224,7 @@ public record AyaProducer(
     if (node.is(FN_DECL)) return fnDecl(node);
     if (node.is(PRIM_DECL)) return primDecl(node);
     if (node.is(DATA_DECL)) return dataDecl(node, additional);
-    // if (node.is(CLASS_DECL)) return classDecl(node, additional);
+    if (node.is(CLASS_DECL)) return classDecl(node, additional);
     return unreachable(node);
   }
 
@@ -251,8 +252,8 @@ public record AyaProducer(
   private record DeclParseData(
     @NotNull GenericNode<?> node,
     @NotNull DeclInfo info,
-    @Nullable String name
-    , @NotNull ModifierParser.Modifiers modifier
+    @Nullable String name,
+    @NotNull ModifierParser.Modifiers modifier
   ) {
     public @Nullable String checkName(@NotNull AyaProducer self) {
       if (name != null) return name;
@@ -260,9 +261,7 @@ public record AyaProducer(
     }
   }
 
-  private @NotNull DeclParseData declInfo(
-    @NotNull GenericNode<?> node, @NotNull ModifierParser.Filter filter
-  ) {
+  private @NotNull DeclParseData declInfo(@NotNull GenericNode<?> node, @NotNull ModifierParser.Filter filter) {
     var modifier = declModifiersOf(node, filter);
     var bind = node.peekChild(BIND_BLOCK);
     var nameOrInfix = Option.ofNullable(declNameOrInfix(node.peekChild(DECL_NAME_OR_INFIX)));
@@ -354,28 +353,28 @@ public record AyaProducer(
     return error(node.childrenView().getFirst(), "Expect a data constructor");
   }
 
-  // public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-  //   var info = declInfo(node, ModifierParser.DECL_FILTER);
-  //   var name = info.checkName(this, true);
-  //   if (name == null) return null;
-  //   var members = node.childrenOfType(CLASS_MEMBER).map(this::classMember).toImmutableSeq();
-  //   var decl = new ClassDecl(info.info, name, members);
-  //   giveMeOpen(info.modifier, decl, additional);
-  //   return decl;
-  // }
+  public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
+    var info = declInfo(node, ModifierParser.DECL_FILTER);
+    var name = info.checkName(this);
+    if (name == null) return null;
+    var members = node.childrenOfType(CLASS_MEMBER).mapIndexed(this::classMember).toImmutableSeq();
+    var decl = new ClassDecl(name, info.info, members);
+    giveMeOpen(info.modifier, decl, additional);
+    return decl;
+  }
 
-  // public @NotNull TeleDecl.ClassMember classMember(GenericNode<?> node) {
-  //   var tele = telescope(node.childrenOfType(TELE).map(x -> x));
-  //   var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
-  //   var name = info.checkName(this, true);
-  //   if (name == null) return unreachable(node);
-  //   return new TeleDecl.ClassMember(
-  //     info.info, name, tele,
-  //     typeOrHole(node.peekChild(TYPE), info.info.sourcePos()),
-  //     Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
-  //     node.peekChild(KW_COERCE) != null
-  //   );
-  // }
+  public @NotNull ClassDecl.Member classMember(int index, GenericNode<?> node) {
+    var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
+    var name = info.checkName(this);
+    if (name == null) return unreachable(node);
+    var local = new LocalVar(name, info.info.sourcePos());
+    var typeExpr = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());
+    return new ClassDecl.Member(
+      new MemberVar(index, local),
+      new Expr.Param(info.info.entireSourcePos(), local, typeExpr, true),
+      info.info.bindBlock(),
+      info.info.opInfo());
+  }
 
   private <T> @Nullable T error(@NotNull GenericNode<?> node, @NotNull String message) {
     reporter.report(new ParseError(sourcePosOf(node), message));

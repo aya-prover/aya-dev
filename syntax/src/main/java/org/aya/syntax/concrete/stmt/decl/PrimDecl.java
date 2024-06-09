@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @implSpec the result field of {@link org.aya.syntax.concrete.stmt.decl.PrimDecl} might be {@link Expr.Error},
+ * @implSpec the result field of {@link PrimDecl} might be {@link Expr.Error},
  * which means it's unspecified in the concrete syntax.
  * @see PrimDef
  */
 public final class PrimDecl extends Decl {
-  public final @NotNull DefVar<PrimDef, org.aya.syntax.concrete.stmt.decl.PrimDecl> ref;
+  public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
   public PrimDecl(
     @NotNull SourcePos sourcePos, @NotNull SourcePos entireSourcePos,
@@ -30,5 +30,5 @@ public final class PrimDecl extends Decl {
     ref = DefVar.concrete(this, name);
   }
 
-  @Override public @NotNull DefVar<PrimDef, org.aya.syntax.concrete.stmt.decl.PrimDecl> ref() { return ref; }
+  @Override public @NotNull DefVar<PrimDef, PrimDecl> ref() { return ref; }
 }

@@ -88,7 +88,7 @@ public record CompiledModule(
     @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
     boolean isPublic) implements Serializable { }
 
-  /** @see org.aya.syntax.concrete.stmt.UseHide */
+  /** @see UseHide */
   record SerUseHide(
     boolean isUsing,
     @NotNull ImmutableSeq<ImmutableSeq<String>> names,

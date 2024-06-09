@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @see Decl
  */
 public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
-  permits DataCon, DataDecl, FnDecl, PrimDecl {
+  permits ClassDecl, DataCon, DataDecl, FnDecl, PrimDecl {
   public @Nullable WithPos<Expr> result;
   // will change after resolve
   public @NotNull ImmutableSeq<Expr.Param> telescope;
@@ -59,6 +59,6 @@ public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
     modifyResult(f);
   }
 
-  @Contract(pure = true) public abstract @NotNull DefVar<? extends TyckDef, ?> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<?, ?> ref();
   public SeqView<LocalVar> teleVars() { return telescope.view().map(Expr.Param::ref); }
 }

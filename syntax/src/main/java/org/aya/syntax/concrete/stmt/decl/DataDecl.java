@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * @see DataDef
  */
 public final class DataDecl extends Decl {
-  public final @NotNull DefVar<DataDef, org.aya.syntax.concrete.stmt.decl.DataDecl> ref;
+  public final @NotNull DefVar<DataDef, DataDecl> ref;
   public final @NotNull ImmutableSeq<DataCon> body;
 
   public DataDecl(
@@ -40,5 +40,5 @@ public final class DataDecl extends Decl {
     body.forEach(con -> con.descentInPlace(f, p));
   }
 
-  @Override public @NotNull DefVar<DataDef, org.aya.syntax.concrete.stmt.decl.DataDecl> ref() { return ref; }
+  @Override public @NotNull DefVar<DataDef, DataDecl> ref() { return ref; }
 }
