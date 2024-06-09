@@ -12,7 +12,7 @@ public record ClassDef(
   @NotNull ImmutableSeq<MemberDef> members
 ) implements TopLevelDef {
   public ClassDef { ref.initialize(this); }
-  public static class Delegate extends TyckAnyDef<ClassDef> {
+  public static final class Delegate extends TyckAnyDef<ClassDef> implements ClassDefLike {
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
   }
 }

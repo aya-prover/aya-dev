@@ -6,6 +6,7 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.SigmaTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
@@ -15,5 +16,5 @@ import org.aya.syntax.core.term.xtt.EqTerm;
  * Note that {@link org.aya.syntax.core.term.call.PrimCall} may also be term formers, but not necessarily.
  */
 public sealed interface Formation extends Term
-  permits PiTerm, SigmaTerm, SortTerm, DataCall, DimTyTerm, EqTerm {
+  permits PiTerm, SigmaTerm, SortTerm, ClassCall, DataCall, DimTyTerm, EqTerm {
 }

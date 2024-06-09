@@ -2,6 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.function.IndexedFunction;
+import org.aya.syntax.concrete.stmt.decl.ClassDecl;
+import org.aya.syntax.core.def.ClassDef;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.Formation;
+import org.aya.syntax.core.term.marker.StableWHNF;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.LocalVar;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * ClassCall is a very special construction in Aya.
  * <ul>
@@ -12,10 +23,20 @@ package org.aya.syntax.core.term.call;
  *
  * @author kiva, ice1000
  */
-// public record ClassCall(
-//   @NotNull LocalVar self,
-//   @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
-//   @Override int ulift,
-//   @NotNull ImmutableMap<DefVar<MemberDef, TeleDecl.ClassMember>, Term> args
-// ) implements StableWHNF, Formation {
-// }
+public record ClassCall(
+  @NotNull LocalVar self,
+  @NotNull DefVar<ClassDef, ClassDecl> ref,
+  @Override int ulift,
+  @NotNull ImmutableSeq<Term> args
+) implements StableWHNF, Formation {
+  public @NotNull ClassCall update(@NotNull ImmutableSeq<Term> args) {
+    return this.args.sameElements(args, true)
+      ? this
+      : new ClassCall(self, ref, ulift, args);
+  }
+
+  @Override
+  public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+    return update(args.map(x -> f.apply(0, x)));
+  }
+}
