@@ -59,6 +59,6 @@ public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
     modifyResult(f);
   }
 
-  @Contract(pure = true) public abstract @NotNull DefVar<? extends TyckDef, ?> ref();
+  @Contract(pure = true) public abstract @NotNull DefVar<?, ?> ref();
   public SeqView<LocalVar> teleVars() { return telescope.view().map(Expr.Param::ref); }
 }

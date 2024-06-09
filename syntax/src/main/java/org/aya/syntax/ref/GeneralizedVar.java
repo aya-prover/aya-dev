@@ -3,10 +3,11 @@
 package org.aya.syntax.ref;
 
 import org.aya.syntax.concrete.stmt.Generalize;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public final class GeneralizedVar implements AnyVar {
+public final class GeneralizedVar implements AnyVar, SourceNode {
   public final @NotNull String name;
   public final @NotNull SourcePos sourcePos;
   public Generalize owner;
@@ -20,7 +21,6 @@ public final class GeneralizedVar implements AnyVar {
     return new LocalVar(name, sourcePos, new GenerateKind.Generalized(this));
   }
 
-  public @NotNull String name() {
-    return name;
-  }
+  public @NotNull String name() { return name; }
+  @Override public @NotNull SourcePos sourcePos() { return sourcePos; }
 }

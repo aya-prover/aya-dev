@@ -3,11 +3,12 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 public record ClassDef(
-  @Override @NotNull DefVar<ClassDef, ?> ref,
+  @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
   @NotNull ImmutableSeq<MemberDef> members
 ) implements TopLevelDef {
   public static class Delegate extends TyckAnyDef<ClassDef> {
