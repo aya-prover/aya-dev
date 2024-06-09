@@ -338,15 +338,12 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   public @NotNull Doc decl(@NotNull Decl predecl) {
     return switch (predecl) {
-      /*case ClassDecl decl -> {
-        var prelude = MutableList.of(Doc.styled(KEYWORD, "class"));
-        prelude.append(linkDef(decl.ref, CLAZZ));
-        yield Doc.cat(Doc.sepNonEmpty(prelude),
-          Doc.emptyIf(decl.members.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.members.view().map(this::decl))))),
-          visitBindBlock(decl.bindBlock())
-        );
-      }*/
+      case ClassDecl decl -> {
+        var prelude = MutableList.of(KW_CLASS);
+        prelude.append(defVar(decl.ref));
+        prelude.append(visitTele(decl.telescope));
+        yield Doc.cat(Doc.sepNonEmpty(prelude), visitBindBlock(decl.bindBlock()));
+      }
       case FnDecl decl -> {
         var prelude = declPrelude(decl);
         prelude.appendAll(Seq.from(decl.modifiers).view().map(this::visitModifier));

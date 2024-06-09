@@ -112,7 +112,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) ->
-          mCtx.defineSymbol(mem, Stmt.Accessibility.Public, mem.name.definition()));
+          mCtx.defineSymbol(mem, Stmt.Accessibility.Public, mem.definition()));
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {

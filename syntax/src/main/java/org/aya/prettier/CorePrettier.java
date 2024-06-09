@@ -46,10 +46,7 @@ import static org.aya.prettier.Tokens.*;
 public class CorePrettier extends BasePrettier<Term> {
   private final Renamer nameGen = new Renamer();
 
-  public CorePrettier(@NotNull PrettierOptions options) {
-    super(options);
-  }
-
+  public CorePrettier(@NotNull PrettierOptions options) { super(options); }
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
       case FreeTerm(var var) -> varDoc(var);
@@ -284,28 +281,25 @@ public class CorePrettier extends BasePrettier<Term> {
           term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instantiateTele(subst))),
           clauses -> Doc.vcat(line1sep, Doc.nest(2, visitClauses(clauses, subst))));
       }
-      // case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
-      //   coe(field.coerce),
-      //   linkDef(field.ref(), MEMBER),
-      //   visitTele(field.telescope),
-      //   Doc.symbol(":"),
-      //   term(Outer.Free, field.result));
+      case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
+        defVar(field.ref()),
+        visitTele(enrich(field.telescope())),
+        Doc.symbol(":"),
+        term(Outer.Free, field.result()));
       case ConDef con -> {
         var doc = Doc.sepNonEmpty(coe(con.coerce),
           defVar(con.ref()),
           visitTele(enrich(con.selfTele)));
-        Doc line1;
         if (con.pats.isNotEmpty()) {
           var pats = Doc.commaList(con.pats.view().map(pat -> pat(pat, true, Outer.Free)));
-          line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
+          yield Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
         } else {
-          line1 = Doc.sep(BAR, doc);
+          yield Doc.sep(BAR, doc);
         }
-        yield Doc.cblock(line1, 2, Doc.empty() /*partial(options, con.clauses, false, Doc.empty(), Doc.empty())*/);
       }
-      // case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(Doc.styled(KEYWORD, "class"),
-      //   linkDef(def.ref(), CLAZZ),
-      //   Doc.nest(2, Doc.vcat(def.members.view().map(this::def)))));
+      case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(KW_CLASS,
+        defVar(def.ref()),
+        Doc.nest(2, Doc.vcat(def.members().view().map(this::def)))));
       case DataDef def -> {
         var richDataTele = enrich(def.telescope());
         var dataArgs = richDataTele.view().<Term>map(t -> new FreeTerm(t.ref()));

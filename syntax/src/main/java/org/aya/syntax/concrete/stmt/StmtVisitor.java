@@ -95,7 +95,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visitTelescopic(decl);
         switch (decl) {
           case DataDecl data -> data.body.forEach(this);
-          // case ClassDecl clazz -> clazz.members.forEach(this);
+          case ClassDecl clazz -> clazz.members.forEach(m -> visitVarDecl(m.definition(), m, noType));
           case FnDecl fn -> {
             fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
               this::visitPattern));
@@ -105,7 +105,6 @@ public interface StmtVisitor extends Consumer<Stmt> {
             }
           }
           case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
-          // case TeleDecl.ClassMember field -> field.body = field.body.map(this);
           case PrimDecl _ -> { }
         }
       }
