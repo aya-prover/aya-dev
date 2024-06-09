@@ -9,7 +9,7 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.BindBlock;
 import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.syntax.concrete.stmt.decl.DataCon;
+import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
@@ -70,16 +70,15 @@ public record StmtBinder(@NotNull ResolveInfo info) {
         decl.body.forEach(con -> resolveBind(innerCtx, new MiscDecl(con)));
         visitBind(ctx, decl.ref, decl.bindBlock());
       }
+      case TopDecl(ClassDecl decl, var innerCtx) -> {
+        decl.members.forEach(field -> resolveBind(innerCtx, new MiscDecl(field)));
+        visitBind(ctx, decl.ref, decl.bindBlock());
+      }
       case TopDecl(FnDecl fn, var innerCtx) -> visitBind(innerCtx, fn.ref, fn.bindBlock());
-      case MiscDecl(DataCon con) -> visitBind(ctx, con.ref, con.bindBlock());
+      case MiscDecl(var decl) -> visitBind(ctx, decl.ref(), decl.bindBlock());
       case TopDecl(PrimDecl _, _), GenStmt _ -> { }
-      case TopDecl _, MiscDecl _ -> Panic.unreachable();
+      case TopDecl _ -> Panic.unreachable();
       case ModStmt(var stmts) -> resolveBind(stmts);
-      // case TeleDecl.ClassMember field -> visitBind(field.ref, field.bindBlock());
-      // case ClassDecl decl -> {
-      //   decl.members.forEach(field -> resolveBind(field));
-      //   visitBind(decl.ref, decl.bindBlock());
-      // }
     }
   }
 }
