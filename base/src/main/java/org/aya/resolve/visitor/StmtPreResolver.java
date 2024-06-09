@@ -112,12 +112,12 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) ->
-          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().definition()));
+          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.sourcePos()));
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
-        var innerCtx = resolveTopLevelDecl(decl, context);
-        yield new ResolvingStmt.TopDecl(decl, innerCtx);
+        var resolvedCtx = resolveTopLevelDecl(decl, context);
+        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
@@ -131,13 +131,21 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         else if (factory.have(primID) && !factory.suppressRedefinition())
           context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
         factory.factory(primID, decl.ref);
-        var innerCtx = resolveTopLevelDecl(decl, context);
-        yield new ResolvingStmt.TopDecl(decl, innerCtx);
+        var resolvedCtx = resolveTopLevelDecl(decl, context);
+        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
       default -> Panic.unreachable();
     };
   }
 
+  /**
+   * pre-resolve children of {@param decl}
+   * @param decl the top-level decl
+   * @param context the context where {@paran decl} lives in
+   * @param childrenGet the children of {@param decl}
+   * @param childResolver perform resolve on the child of {@param decl}
+   * @return the module context of {@param decl}, it should be a sub-module of {@param context}
+   */
   private <D extends Decl, Child> PhysicalModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
