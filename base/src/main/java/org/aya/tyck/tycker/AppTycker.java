@@ -9,10 +9,7 @@ import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
-import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
-import org.aya.syntax.concrete.stmt.decl.FnDecl;
-import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.Term;
@@ -32,7 +29,7 @@ public interface AppTycker {
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
   record CheckAppData<Ex extends Exception>(
-    @NotNull TyckState state, int lift, @NotNull Factory<Ex> makeArgs
+    @NotNull TyckState state, int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
   static <Ex extends Exception> @NotNull Jdg
@@ -67,7 +64,9 @@ public interface AppTycker {
         new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
       case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
-      default -> Panic.unreachable();
+      case ClassDecl _ -> checkClassCall(input.makeArgs, input.argsCount, input.lift,
+        new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
+      case Decl any -> throw new Panic(any.getClass().getCanonicalName());
     };
   }
 
@@ -121,6 +120,17 @@ public interface AppTycker {
       }
       var fnCall = new FnCall(fnDef, 0, argsSeq);
       return new Jdg.Default(fnCall, result);
+    });
+  }
+
+  private static <Ex extends Exception> Jdg
+  checkClassCall(@NotNull Factory<Ex> makeArgs, int argsCount, int lift, ClassDefLike clazz) throws Ex {
+    var appliedParams = clazz.takeMembers(argsCount).lift(lift);
+    return makeArgs.applyChecked(appliedParams, args -> {
+      return new Jdg.Default(
+        new ClassCall(clazz, 0, ImmutableArray.from(args)),
+        appliedParams.result(args)
+      );
     });
   }
 }

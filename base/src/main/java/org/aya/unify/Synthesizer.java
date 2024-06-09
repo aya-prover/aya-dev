@@ -8,6 +8,7 @@ import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -134,6 +135,7 @@ public record Synthesizer(
       case DimTyTerm _ -> SortTerm.ISet;
       case MetaLitTerm mlt -> mlt.type();
       case StringTerm str -> state().primFactory().getCall(PrimDef.ID.STRING);
+      case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
     };
   }
 

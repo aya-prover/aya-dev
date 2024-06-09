@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * Note that {@link ConDef.Delegate} <b>contains</b> a {@link ConDef} rather than a super class of.
  */
-public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDefLike, FnDefLike, PrimDefLike, TyckAnyDef {
+public sealed interface AnyDef extends OpDecl permits JitDef, ClassDefLike, ConDefLike, DataDefLike, FnDefLike, MemberDefLike, PrimDefLike, TyckAnyDef {
   /**
    * Returns which file level module this def lives in.
    */
@@ -56,6 +56,7 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ConDefLike, DataDe
     return switch (defVar) {
       case JitDef jitDef -> new CompiledVar(jitDef);
       case TyckAnyDef<?> tyckAnyDef -> tyckAnyDef.ref;
+      default -> throw new UnsupportedOperationException("TODO");
     };
   }
 

@@ -11,7 +11,6 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
@@ -31,7 +30,7 @@ public final class FnDecl extends TeleDecl {
     @NotNull EnumSet<Modifier> modifiers,
     @NotNull String name,
     @NotNull ImmutableSeq<Expr.Param> telescope,
-    @Nullable WithPos<Expr> result,
+    @NotNull WithPos<Expr> result,
     @NotNull FnBody body
   ) {
     super(info, telescope, result);

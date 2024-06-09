@@ -107,6 +107,7 @@ public interface StmtResolver {
         var resolver = new ExprResolver(ctx, false);
         resolver.enter(Where.Head);
         decl.members.forEach(field -> {
+          // TODO: how does a field refer to a former member? DefVar or LocalVar?
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
           resolveMemberSignature(field, bodyResolver, mCtx);
@@ -117,7 +118,7 @@ public interface StmtResolver {
           // field.body = field.body.map(bodyResolver.enter(mCtx.get()));
           // addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
-        addReferences(info, new TyckOrder.Head(decl), resolver.reference().view()
+        addReferences(info, new TyckOrder.Body(decl), resolver.reference().view()
           .concat(decl.members.map(TyckOrder.Head::new)));
       }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {

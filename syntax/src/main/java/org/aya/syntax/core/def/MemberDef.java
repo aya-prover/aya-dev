@@ -3,19 +3,28 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.syntax.concrete.stmt.decl.ClassDecl;
+import org.aya.syntax.concrete.stmt.decl.ClassMember;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @apiNote the telescope/result of a member probably need to be instantiated, they may refer to the former members.
+ */
 public record MemberDef(
-  @NotNull DefVar<ClassDef, ?> classRef,
-  @Override @NotNull DefVar<MemberDef, ?> ref,
+  @NotNull DefVar<ClassDef, ClassDecl> classRef,
+  @Override @NotNull DefVar<MemberDef, ClassMember> ref,
   @Override ImmutableSeq<Param> telescope,
   @Override @NotNull Term result
 ) implements TyckDef {
   public MemberDef { ref.initialize(this); }
-  public static class Delegate extends TyckAnyDef<MemberDef> {
+  public static final class Delegate extends TyckAnyDef<MemberDef> implements MemberDefLike {
     public Delegate(@NotNull DefVar<MemberDef, ?> ref) { super(ref); }
+
+    @Override public @NotNull ClassDefLike classRef() {
+      return new ClassDef.Delegate(core().classRef());
+    }
   }
 }
