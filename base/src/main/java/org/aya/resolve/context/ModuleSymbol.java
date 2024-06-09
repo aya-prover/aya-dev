@@ -23,12 +23,8 @@ import java.util.function.BiConsumer;
  *              It says a `Symbol` can be referred by `{Component}::{Unqualified}`
  * @apiNote the methods that end with `Definitely` will get/remove only one symbol or fail if ambiguous.
  */
-public record ModuleSymbol<T>(
-  @NotNull MutableMap<String, MutableMap<ModuleName, T>> table
-) {
-  public ModuleSymbol() {
-    this(MutableMap.create());
-  }
+public record ModuleSymbol<T>(@NotNull MutableMap<String, MutableMap<ModuleName, T>> table) {
+  public ModuleSymbol() { this(MutableMap.create()); }
 
   public ModuleSymbol(@NotNull ModuleSymbol<T> other) {
     this(other.table.toImmutableSeq().collect(MutableMap.collector(
@@ -38,8 +34,10 @@ public record ModuleSymbol<T>(
   }
 
   /** @apiNote should not use this after {@link #asMut} is called. */
-  public record UnqualifiedResolve<T>(@NotNull MapView<ModuleName, T> map,
-                                      @NotNull LazyValue<MutableMap<ModuleName, T>> asMut) {
+  public record UnqualifiedResolve<T>(
+    @NotNull MapView<ModuleName, T> map,
+    @NotNull LazyValue<MutableMap<ModuleName, T>> asMut
+  ) {
     public @NotNull ImmutableSeq<T> uniqueCandidates() {
       return map.valuesView().distinct().toImmutableSeq();
     }
@@ -95,8 +93,8 @@ public record ModuleSymbol<T>(
    */
   public @NotNull Result<T, Error> getMaybe(@NotNull ModuleName component, @NotNull String unqualifiedName) {
     return switch (component) {
-      case ModuleName.Qualified qualified -> getQualifiedMaybe(component, unqualifiedName).toResult(Error.NotFound);
-      case ModuleName.ThisRef aThis -> getUnqualifiedMaybe(unqualifiedName);
+      case ModuleName.Qualified qualified -> getQualifiedMaybe(qualified, unqualifiedName).toResult(Error.NotFound);
+      case ModuleName.ThisRef _ -> getUnqualifiedMaybe(unqualifiedName);
     };
   }
 
@@ -118,11 +116,7 @@ public record ModuleSymbol<T>(
    *
    * @implNote This method always overwrites the symbol that is added in the past.
    */
-  public Option<T> add(
-    @NotNull ModuleName componentName,
-    @NotNull String name,
-    @NotNull T ref
-  ) {
+  public Option<T> add(@NotNull ModuleName componentName, @NotNull String name, @NotNull T ref) {
     var candidates = resolveUnqualified(name).asMut.get();
     return candidates.put(componentName, ref);
   }

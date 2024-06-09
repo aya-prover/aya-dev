@@ -49,7 +49,6 @@ public sealed interface Pat extends AyaDocile {
    */
   void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer);
 
-
   /**
    * Bind the types in {@link Pat}s
    *
@@ -263,7 +262,7 @@ public sealed interface Pat extends AyaDocile {
   record Preclause<T extends AyaDocile>(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> pats,
-    @Nullable WithPos<T> expr
+    int bindCount, @Nullable WithPos<T> expr
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var prettier = new CorePrettier(options);
@@ -273,13 +272,14 @@ public sealed interface Pat extends AyaDocile {
     }
 
     public static @NotNull Preclause<Term> weaken(@NotNull Term.Matching clause) {
-      return new Preclause<>(clause.sourcePos(), clause.patterns(), WithPos.dummy(clause.body()));
+      return new Preclause<>(clause.sourcePos(), clause.patterns(), clause.bindCount(),
+        WithPos.dummy(clause.body()));
     }
 
     public static @NotNull Option<Term.Matching>
     lift(@NotNull Preclause<Term> clause) {
       if (clause.expr == null) return Option.none();
-      var match = new Term.Matching(clause.sourcePos, clause.pats, clause.expr.data());
+      var match = new Term.Matching(clause.sourcePos, clause.pats, clause.bindCount, clause.expr.data());
       return Option.some(match);
     }
   }

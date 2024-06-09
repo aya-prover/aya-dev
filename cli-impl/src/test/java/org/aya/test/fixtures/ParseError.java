@@ -6,12 +6,8 @@ import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("unused")
 public interface ParseError {
-  String testTrivial = """
-    def
-    """;
-  @Language("Aya") String testModifier = """
-    overlap inductive Empty
-    """;
+  String testTrivial = "def";
+  @Language("Aya") String testModifier = "overlap inductive E";
   @Language("Aya") String testIgnoredModifier = """
     inline def id {A : Type} A : A
     | a => a

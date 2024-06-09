@@ -181,7 +181,7 @@ public sealed interface Term extends Serializable, AyaDocile
   record Matching(
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> patterns,
-    @NotNull Term body
+    int bindCount, @NotNull Term body
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Pat.Preclause.weaken(this).toDoc(options);
@@ -189,7 +189,7 @@ public sealed interface Term extends Serializable, AyaDocile
 
     public @NotNull Matching update(@NotNull ImmutableSeq<Pat> patterns, @NotNull Term body) {
       return body == body() && patterns.sameElements(patterns(), true) ? this
-        : new Matching(sourcePos, patterns, body);
+        : new Matching(sourcePos, patterns, bindCount, body);
     }
 
     public @NotNull Matching descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {

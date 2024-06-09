@@ -140,6 +140,7 @@ public class TestRunner {
 
   public static @NotNull CompilerFlags flags() {
     var modulePaths = ImmutableSeq.of(DEFAULT_TEST_DIR.resolve("shared/src"));
-    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, null, modulePaths, null);
+    return new CompilerFlags(CompilerFlags.Message.ASCII,
+      false, false, null, modulePaths, null);
   }
 }

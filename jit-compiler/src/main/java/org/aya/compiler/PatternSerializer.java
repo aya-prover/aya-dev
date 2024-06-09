@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
-import kala.value.primitive.MutableIntValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
@@ -27,28 +26,23 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   }
 
   public final static class Once implements Runnable {
-    public static @NotNull Once of(@NotNull Runnable run) {
-      return new Once(run);
-    }
-
+    public static @NotNull Once of(@NotNull Runnable run) { return new Once(run); }
     private final @NotNull Runnable run;
     private boolean dirty = false;
 
     public Once(@NotNull Runnable run) { this.run = run; }
 
-    @Override
-    public void run() {
-      if (dirty) {
-        throw new Panic("Once");
-      }
-
+    @Override public void run() {
+      if (dirty) throw new Panic("Once");
       dirty = true;
       this.run.run();
     }
   }
 
-  public record Matching(@NotNull ImmutableSeq<Pat> patterns, @NotNull SuccessContinuation onSucc) {
-  }
+  public record Matching(
+    int bindCount, @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull SuccessContinuation onSucc
+  ) { }
 
   public static final @NotNull String VARIABLE_RESULT = "result";
   public static final @NotNull String VARIABLE_STATE = "matchState";
@@ -135,9 +129,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     buildLocalVar(CLASS_TERM, tmpName, term);
 
     for (var pre : preContinuation) {
-      buildIf(STR."! \{VARIABLE_SUBSTATE}", () -> {
-        pre.accept(tmpName);
-      });
+      buildIf(STR."! \{VARIABLE_SUBSTATE}", () -> pre.accept(tmpName));
     }
 
     buildIf(VARIABLE_SUBSTATE, continuation);
@@ -190,12 +182,6 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     appendLine(STR."\{VARIABLE_RESULT}.set(\{bindCount++}, \{term});");
   }
 
-  private int bindAmount(@NotNull ImmutableSeq<Pat> pats) {
-    var acc = MutableIntValue.create();
-    pats.forEach(pat -> pat.consumeBindings((_, _) -> acc.increment()));
-    return acc.get();
-  }
-
   /// endregion Java Source Code Generate API
 
   @Override public PatternSerializer serialize(@NotNull ImmutableSeq<Matching> unit) {
@@ -203,7 +189,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       onMismatch.accept(this);
       return this;
     }
-    var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), x -> bindAmount(x.patterns));
+    var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int maxBindSize = bindSize.max();
 
     buildLocalVar(STR."\{CLASS_MUTSEQ}<\{CLASS_TERM}>", VARIABLE_RESULT, STR."\{CLASS_MUTSEQ}.fill(\{maxBindSize}, (\{CLASS_TERM}) null)");
