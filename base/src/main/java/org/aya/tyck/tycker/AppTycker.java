@@ -129,8 +129,7 @@ public interface AppTycker {
     });
   }
 
-  private static <Ex extends Exception> Jdg
-  checkClassCall(
+  private static <Ex extends Exception> Jdg checkClassCall(
     @NotNull Factory<Ex> makeArgs, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull ClassDefLike clazz
   ) throws Ex {
@@ -144,12 +143,17 @@ public interface AppTycker {
     });
   }
 
-  static @NotNull <Ex extends Exception> Jdg
-  checkProjCall(@NotNull Factory<Ex> makeArgs, int lift, MemberDefLike member) throws Ex {
+  static @NotNull <Ex extends Exception> Jdg checkProjCall(
+    @NotNull Factory<Ex> makeArgs, int lift,
+    @NotNull MemberDefLike member
+  ) throws Ex {
     var signature = member.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      Panic.unreachable(),
-      signature.result(args)
-    ));
+    return makeArgs.applyChecked(signature, args -> {
+      var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
+      return new Jdg.Default(
+        new FieldCall(args[0], member, 0, fieldArgs),
+        signature.result(args)
+      );
+    });
   }
 }

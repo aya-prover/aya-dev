@@ -107,12 +107,12 @@ public class CorePrettier extends BasePrettier<Term> {
               params = params.dropLast(1);
             } else break;
           }
-          // if (call instanceof FieldTerm access) bodyDoc = visitAccessHead(access);
-          // else {
-          bodyDoc = visitCoreCalls(call.ref(), args,
-            params.isEmpty() ? outer : Outer.Free,
-            optionImplicit());
-          // }
+          if (call instanceof FieldCall access) bodyDoc = visitAccessHead(access);
+          else {
+            bodyDoc = visitCoreCalls(call.ref(), args,
+              params.isEmpty() ? outer : Outer.Free,
+              optionImplicit());
+          }
         } else bodyDoc = term(Outer.Free, body);
 
         if (params.isEmpty()) yield bodyDoc;
@@ -140,8 +140,9 @@ public class CorePrettier extends BasePrettier<Term> {
       //   SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
       //   options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
       // );
-      // case FieldTerm term -> visitCalls(null, visitAccessHead(term), term.args().view(), outer,
-      //   options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs));
+      case FieldCall term -> visitCoreApp(null, visitAccessHead(term),
+        term.args().view(), outer,
+        optionImplicit());
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(generateName(null));
         yield Doc.wrap(META_LEFT, META_RIGHT, pat(ref, true, outer));
@@ -229,15 +230,14 @@ public class CorePrettier extends BasePrettier<Term> {
 
   private ImmutableSeq<Term> visibleArgsOf(Callable call) {
     return call instanceof ConCall con
-      ? con.conArgs() : call.args();
-    // call instanceof FieldTerm access
-    // ? access.args() : call.args();
+      ? con.conArgs() : call instanceof FieldCall access
+      ? access.args() : call.args();
   }
 
-  // private @NotNull Doc visitAccessHead(@NotNull FieldTerm term) {
-  //   return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
-  //     linkRef(term.ref(), MEMBER));
-  // }
+  private @NotNull Doc visitAccessHead(@NotNull FieldCall term) {
+    return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
+      refVar(term.ref()));
+  }
 
   public @NotNull Doc pat(@NotNull Pat pat, boolean licit, Outer outer) {
     return switch (pat) {
@@ -330,14 +330,13 @@ public class CorePrettier extends BasePrettier<Term> {
     boolean coerce
   ) {
     var doc = Doc.sepNonEmpty(coe(coerce), defVar(ref), visitTele(richSelfTele));
-    Doc line1;
-    // if (ctor.pats.isNotEmpty()) {
-    //   var pats = Doc.commaList(ctor.pats.view().map(pat -> pat(pat, Outer.Free)));
-    //   line1 = Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
-    // } else {
-    line1 = Doc.sep(BAR, doc);
-    // }
-    return Doc.cblock(line1, 2, Doc.empty() /*partial(options, ctor.clauses, false, Doc.empty(), Doc.empty())*/);
+    var con = ref.core;
+    if (con.pats.isNotEmpty()) {
+      var pats = Doc.commaList(con.pats.view().map(pat -> pat(pat, true, Outer.Free)));
+      return Doc.sep(BAR, pats, FN_DEFINED_AS, doc);
+    } else {
+      return Doc.sep(BAR, doc);
+    }
   }
 
   private @NotNull Doc visitClauses(
@@ -362,7 +361,6 @@ public class CorePrettier extends BasePrettier<Term> {
     @Override @NotNull Term type
   ) implements ParamLike<Term> {
     @Override public boolean explicit() { return true; }
-
   }
 
   private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull SeqLike<Param> tele) {

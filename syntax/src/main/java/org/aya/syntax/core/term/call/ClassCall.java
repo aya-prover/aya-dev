@@ -35,4 +35,8 @@ public record ClassCall(
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(args.map(t -> f.apply(0, t)));
   }
+
+  @Override public @NotNull Term doElevate(int level) {
+    return new ClassCall(self, ref, ulift + level, args);
+  }
 }
