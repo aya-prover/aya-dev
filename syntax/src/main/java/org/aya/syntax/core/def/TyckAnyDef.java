@@ -13,15 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef {
-  public final @NotNull DefVar<Interface , ?> ref;
+  public final @NotNull DefVar<Interface, ?> ref;
   public Interface core() { return ref.core; }
   public TyckAnyDef(@NotNull DefVar<Interface, ?> ref) { this.ref = ref; }
   @Override public final @NotNull ModulePath fileModule() { return Objects.requireNonNull(ref.module).fileModule(); }
   @Override public final @NotNull ModulePath module() { return Objects.requireNonNull(ref.module).module(); }
   @Override public final @NotNull String name() { return ref.name(); }
   @Override public final @Nullable Assoc assoc() { return ref.assoc(); }
-  @Override
-  public @NotNull QName qualifiedName() { return new QName(ref); }
+  @Override public @NotNull QName qualifiedName() { return new QName(ref); }
   @Override public @NotNull AbstractTele signature() { return TyckDef.defSignature(ref); }
   @Override public boolean equals(Object obj) {
     return obj instanceof TyckAnyDef<?> that && ref.equals(that.ref);

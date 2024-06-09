@@ -48,7 +48,7 @@ public record StmtTycker(
   }
   public @NotNull TyckDef check(Decl predecl) {
     ExprTycker tycker = null;
-    if (predecl instanceof Decl decl) {
+    if (predecl instanceof TeleDecl decl) {
       if (decl.ref().signature == null) tycker = checkHeader(decl);
     }
 
@@ -116,12 +116,11 @@ public record StmtTycker(
     };
   }
 
-  public ExprTycker checkHeader(@NotNull Decl decl) {
+  public ExprTycker checkHeader(@NotNull TeleDecl decl) {
     var tycker = mkTycker();
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);
       case PrimDecl prim -> checkPrim(tycker, prim);
-      case ClassDecl clazz -> throw new UnsupportedOperationException("TODO");
       case ClassMember member -> throw new UnsupportedOperationException("TODO");
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
