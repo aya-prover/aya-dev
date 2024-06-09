@@ -5,6 +5,7 @@ package org.aya.syntax.core.pat;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.stmt.Shaped;
@@ -275,9 +276,11 @@ public sealed interface Pat extends AyaDocile {
       return new Preclause<>(clause.sourcePos(), clause.patterns(), WithPos.dummy(clause.body()));
     }
 
-    public static @Nullable Term.Matching lift(@NotNull Preclause<Term> clause) {
-      if (clause.expr == null) return null;
-      return new Term.Matching(clause.sourcePos, clause.pats, clause.expr.data());
+    public static @NotNull Option<Term.Matching>
+    lift(@NotNull Preclause<Term> clause) {
+      if (clause.expr == null) return Option.none();
+      var match = new Term.Matching(clause.sourcePos, clause.pats, clause.expr.data());
+      return Option.some(match);
     }
   }
 }
