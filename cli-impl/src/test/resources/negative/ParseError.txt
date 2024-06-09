@@ -12,7 +12,7 @@ What are you doing?
 Modifier:
 In file $FILE:1:0 ->
 
-  1 │   overlap inductive Empty
+  1 │   overlap inductive E
     │   ╰─────╯
 
 Error: The modifier overlap is not suitable here.

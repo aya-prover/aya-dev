@@ -114,10 +114,11 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     exprTycker.solveMetas();
 
     // inline terms in rhsResult
-    rhsResult = rhsResult.map(x -> new Pat.Preclause<>(
-      x.sourcePos(),
-      x.pats().map(p -> p.descent(UnaryOperator.identity(), exprTycker::zonk)),
-      x.expr() == null ? null : x.expr().descent((_, t) -> exprTycker.zonk(t))
+    rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
+      preclause.sourcePos(),
+      preclause.pats().map(p -> p.descent(UnaryOperator.identity(), exprTycker::zonk)),
+      preclause.bindCount(),
+      preclause.expr() == null ? null : preclause.expr().descent((_, t) -> exprTycker.zonk(t))
     ));
 
     return new TyckResult(
@@ -170,8 +171,10 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       ctx = ctx.map(TermInline::apply);
       var patWithTypeBound = Pat.collectVariables(patResult.wellTyped().view());
 
-      var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(), patResult.newBody());
-      return new LhsResult(ctx, resultTerm, patWithTypeBound.component1().toImmutableSeq(),
+      var allBinds = patWithTypeBound.component1().toImmutableSeq();
+      var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
+        allBinds.size(), patResult.newBody());
+      return new LhsResult(ctx, resultTerm, allBinds,
         patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     });
   }
@@ -189,6 +192,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       var clause = result.clause;
       var bodyExpr = clause.expr();
       Term wellBody;
+      var bindCount = 0;
       if (bodyExpr == null) wellBody = null;
       else if (result.hasError) {
         // In case the patterns are malformed, do not check the body
@@ -204,11 +208,13 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
 
         // bind all pat bindings
-        var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1().view();
-        wellBody = wellBody.bindTele(patBindTele);
+        var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();
+        bindCount = patBindTele.size();
+        wellBody = wellBody.bindTele(patBindTele.view());
       }
 
-      return new Pat.Preclause<>(clause.sourcePos(), clause.pats(), wellBody == null ? null : WithPos.dummy(wellBody));
+      return new Pat.Preclause<>(clause.sourcePos(), clause.pats(), bindCount,
+        wellBody == null ? null : WithPos.dummy(wellBody));
     });
   }
 
