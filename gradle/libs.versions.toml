@@ -2,7 +2,7 @@
 # The Version of this project, aka, The Aya Theorem Prover.
 # Remove "-SNAPSHOT" suffix and run gradle publish to release a new version.
 # After that, increase the version number and add "-SNAPSHOT" suffix back for next cycle.
-project = "0.33.0-SNAPSHOT"
+project = "0.34.0-SNAPSHOT"
 
 # https://openjdk.org/
 java = "21"

@@ -15,9 +15,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleKey;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
-import org.aya.syntax.concrete.stmt.decl.FnDecl;
-import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.ref.*;
@@ -354,14 +352,12 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       case FnDecl _ -> FN;
       case DataDecl _ -> DATA;
       case PrimDecl _ -> PRIM;
+      case ClassDecl _ -> CLAZZ;
+      case ClassMember _ -> MEMBER;
       case FnDefLike _ -> FN;
       case DataDefLike _ -> DATA;
       case ConDefLike _ -> CON;
       case PrimDefLike _ -> PRIM;
-      /*
-      case ClassDecl d -> CLAZZ;
-      case TeleDecl.ClassMember d -> MEMBER;
-      */
       case null, default -> null;
     };
   }
