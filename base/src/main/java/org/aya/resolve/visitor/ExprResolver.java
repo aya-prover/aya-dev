@@ -274,7 +274,7 @@ public record ExprResolver(
     var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
       MutableStack.create());
-    resolver.where.push(initial);
+    resolver.enter(initial);
     return resolver;
   }
 

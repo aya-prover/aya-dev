@@ -112,10 +112,10 @@ public interface StmtResolver {
           resolveMemberSignature(field, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
             .appended(new TyckOrder.Head(decl)));
-          bodyResolver.enter(Where.Head);     // FIXME: enter body
           // TODO: body
+          // bodyResolver.enter(Where.FnSimple);
           // field.body = field.body.map(bodyResolver.enter(mCtx.get()));
-          addReferences(info, new TyckOrder.Body(field), bodyResolver);
+          // addReferences(info, new TyckOrder.Body(field), bodyResolver);
         });
         addReferences(info, new TyckOrder.Head(decl), resolver.reference().view()
           .concat(decl.members.map(TyckOrder.Head::new)));
