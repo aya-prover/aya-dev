@@ -28,9 +28,6 @@ public sealed abstract class SubLevelDef implements TyckDef permits ConDef {
     this.coerce = coerce;
   }
 
-  public @NotNull SeqView<Param> fullTelescope() {
-    return ownerTele.view().concat(selfTele);
-  }
-
+  public @NotNull SeqView<Param> fullTelescope() { return ownerTele.view().concat(selfTele); }
   @Override public @NotNull Term result() { return result; }
 }

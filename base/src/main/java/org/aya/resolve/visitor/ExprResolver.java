@@ -244,6 +244,7 @@ public record ExprResolver(
 
   private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx) { return ctx.bind(as); }
 
+  @Contract(mutates = "param2")
   public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
     ctx.set(ctx.get().bind(param.ref()));

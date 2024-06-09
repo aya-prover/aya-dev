@@ -18,7 +18,7 @@ public final class DataDef implements TopLevelDef {
   public final @NotNull ImmutableSeq<ConDef> body;
 
   public DataDef(@NotNull DefVar<DataDef, DataDecl> ref, @NotNull ImmutableSeq<ConDef> body) {
-    ref.core = this;
+    ref.initialize(this);
     this.ref = ref;
     this.body = body;
   }

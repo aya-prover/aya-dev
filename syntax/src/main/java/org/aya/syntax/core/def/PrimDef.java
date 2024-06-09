@@ -34,7 +34,7 @@ public final class PrimDef implements TopLevelDef {
     this.result = result;
     this.ref = ref;
     this.id = id;
-    ref.core = this;
+    ref.initialize(this);
   }
 
   public PrimDef(@NotNull DefVar<@NotNull PrimDef, @NotNull PrimDecl> ref, @NotNull Term result, @NotNull ID name) {

@@ -18,7 +18,7 @@ public record FnDef(
   @NotNull EnumSet<Modifier> modifiers,
   @NotNull Either<Term, ImmutableSeq<Term.Matching>> body
 ) implements TopLevelDef {
-  public FnDef { ref.core = this; }
+  public FnDef { ref.initialize(this); }
 
   public static <T> Function<Either<Term, ImmutableSeq<Term.Matching>>, T>
   factory(Function<Either<Term, ImmutableSeq<Term.Matching>>, T> function) {

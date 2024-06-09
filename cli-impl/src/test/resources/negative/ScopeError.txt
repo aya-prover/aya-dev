@@ -181,3 +181,17 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?
 
+GeneralizedDisallowed:
+In file $FILE:3:7 ->
+
+  1 │   variable A : Type
+  2 │   def test Type : Type
+  3 │   | _ => A
+    │          ╰╯
+
+Error: The generalized variable `A` is not available here
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+

@@ -15,6 +15,9 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Index-safe telescope
+ */
 public interface AbstractTele {
   /**
    * @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
