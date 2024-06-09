@@ -104,7 +104,6 @@ public record StmtTycker(
       case DataCon _, PrimDecl _, ClassMember _ ->
         Objects.requireNonNull(predecl.ref().core);   // see checkHeader
       case ClassDecl clazz -> {
-        assert clazz.ref.signature != null;
         for (var member : clazz.members) checkHeader(member);
         yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core));
       }

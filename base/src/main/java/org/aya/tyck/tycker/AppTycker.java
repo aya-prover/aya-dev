@@ -66,7 +66,7 @@ public interface AppTycker {
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
       case ClassDecl _ -> checkClassCall(input.makeArgs, input.argsCount, input.lift,
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
-      default -> Panic.unreachable();
+      case Decl any -> throw new Panic(any.getClass().getCanonicalName());
     };
   }
 
