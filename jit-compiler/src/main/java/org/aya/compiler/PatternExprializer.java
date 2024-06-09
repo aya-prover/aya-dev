@@ -4,7 +4,6 @@ package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.LocalVar;
@@ -21,7 +20,6 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
   public static final @NotNull String CLASS_PAT_INT = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.ShapedInt.class));
   public static final @NotNull String CLASS_LOCALVAR = ExprializeUtils.getJavaReference(LocalVar.class);
   public static final @NotNull String CLASS_CONHEAD = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(ConCallLike.class), ExprializeUtils.getJavaReference(ConCallLike.Head.class));
-  public static final @NotNull String CLASS_ERROR = ExprializeUtils.getJavaReference(ErrorTerm.class);
   public static final @NotNull String CLASS_PAT_TUPLE = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Tuple.class));
 
   private final boolean allowLocalTerm;
@@ -67,8 +65,5 @@ public class PatternExprializer extends AbstractExprializer<Pat> {
     };
   }
 
-  @Override
-  public @NotNull String serialize(Pat unit) {
-    return doSerialize(unit);
-  }
+  @Override public @NotNull String serialize(Pat unit) { return doSerialize(unit); }
 }

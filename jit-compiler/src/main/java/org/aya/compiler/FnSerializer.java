@@ -57,7 +57,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       case Either.Right(var clauses) -> {
         var ser = new PatternSerializer(this.sourceBuilder, argTerms, onStuckCon, onStuckCon);
         ser.serialize(clauses.map(matching -> new PatternSerializer.Matching(
-          matching.patterns(), (s, bindSize) ->
+          matching.bindCount(), matching.patterns(), (s, bindSize) ->
           s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
         )));
       }
