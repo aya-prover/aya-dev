@@ -356,7 +356,7 @@ public record AyaProducer(
 
   // public @Nullable ClassDecl classDecl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
   //   var info = declInfo(node, ModifierParser.DECL_FILTER);
-  //   var name = info.checkName(this, true);
+  //   var name = info.checkName(this);
   //   if (name == null) return null;
   //   var members = node.childrenOfType(CLASS_MEMBER).map(this::classMember).toImmutableSeq();
   //   var decl = new ClassDecl(info.info, name, members);
@@ -364,12 +364,13 @@ public record AyaProducer(
   //   return decl;
   // }
 
-  // public @NotNull TeleDecl.ClassMember classMember(GenericNode<?> node) {
+  // public @NotNull ClassDecl.Member classMember(int index, GenericNode<?> node) {
   //   var tele = telescope(node.childrenOfType(TELE).map(x -> x));
   //   var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
-  //   var name = info.checkName(this, true);
+  //   var name = info.checkName(this);
   //   if (name == null) return unreachable(node);
-  //   return new TeleDecl.ClassMember(
+  //   return new ClassDecl.Member(
+  //     new MemberVar(index, name),
   //     info.info, name, tele,
   //     typeOrHole(node.peekChild(TYPE), info.info.sourcePos()),
   //     Option.ofNullable(node.peekChild(EXPR)).map(this::expr),
