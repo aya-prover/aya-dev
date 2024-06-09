@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.jetbrains.annotations.NotNull;
 
 public record ClassDef(
@@ -19,5 +20,8 @@ public record ClassDef(
 
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
     @Override public @NotNull ImmutableSeq<MemberDefLike> members() { return members.get(); }
+    @Override public @NotNull AbstractTele takeMembers(int size) {
+      return null;
+    }
   }
 }

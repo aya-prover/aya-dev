@@ -29,7 +29,7 @@ public interface AppTycker {
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
   record CheckAppData<Ex extends Exception>(
-    @NotNull TyckState state, int lift, @NotNull Factory<Ex> makeArgs
+    @NotNull TyckState state, int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
   static <Ex extends Exception> @NotNull Jdg
@@ -64,7 +64,7 @@ public interface AppTycker {
         new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
       case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
-      case ClassDecl _ -> checkClassCall(input.makeArgs, input.lift,
+      case ClassDecl _ -> checkClassCall(input.makeArgs, input.argsCount, input.lift,
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
       default -> Panic.unreachable();
     };
@@ -122,8 +122,15 @@ public interface AppTycker {
       return new Jdg.Default(fnCall, result);
     });
   }
+
   private static <Ex extends Exception> Jdg
-  checkClassCall(@NotNull Factory<Ex> makeArgs, int lift, ClassDefLike data) throws Ex {
-    throw new UnsupportedOperationException("TODO");
+  checkClassCall(@NotNull Factory<Ex> makeArgs, int argsCount, int lift, ClassDefLike clazz) throws Ex {
+    var appliedParams = clazz.takeMembers(argsCount).lift(lift);
+    return makeArgs.applyChecked(appliedParams, args -> {
+      return new Jdg.Default(
+        new ClassCall(clazz, 0, ImmutableArray.from(args)),
+        appliedParams.result(args)
+      );
+    });
   }
 }
