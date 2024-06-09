@@ -64,6 +64,10 @@ public interface ExprializeUtils {
     return STR."\{term}.\{AyaSerializer.FIELD_INSTANCE}()";
   }
 
+  static @NotNull String getEmptyCallTerm(@NotNull String term) {
+    return STR."\{term}.\{AyaSerializer.FIELD_EMPTYCALL}";
+  }
+
   /**
    * Get the reference to {@param clazz}, it should be imported to current file.
    */

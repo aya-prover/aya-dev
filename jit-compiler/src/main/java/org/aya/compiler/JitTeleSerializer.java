@@ -44,7 +44,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
       buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
       appendLine();
       if (unit.telescope().isEmpty()) {
-        buildConstantField(callClass(), "ourCall", ExprializeUtils.makeNew(
+        buildConstantField(callClass(), FIELD_EMPTYCALL, ExprializeUtils.makeNew(
           callClass(), ExprializeUtils.getInstance(className)));
       }
       var iTerm = "i";

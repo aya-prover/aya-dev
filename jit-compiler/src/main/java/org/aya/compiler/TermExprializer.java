@@ -134,7 +134,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
       }
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
-        NameSerializer.getClassReference(call.ref()) + ".ourCall";
+        ExprializeUtils.getEmptyCallTerm(NameSerializer.getClassReference(call.ref()));
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
       case FieldCall fieldCall -> throw new UnsupportedOperationException("TODO");
       case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());

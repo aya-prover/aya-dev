@@ -22,6 +22,7 @@ public interface AyaSerializer {
   String PACKAGE_BASE = "AYA";
   String STATIC_FIELD_INSTANCE = "INSTANCE";
   String FIELD_INSTANCE = "ref";
+  String FIELD_EMPTYCALL = "ourCall";
   String CLASS_CONCALL = getJavaReference(ConCall.class);
   String CLASS_CONCALLLIKE = getJavaReference(ConCallLike.class);
   String CLASS_TUPLE = getJavaReference(TupTerm.class);
