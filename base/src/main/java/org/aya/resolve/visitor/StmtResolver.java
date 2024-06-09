@@ -57,7 +57,7 @@ public interface StmtResolver {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
         var where = decl.body instanceof FnBody.BlockBody ? Where.Head : Where.FnSimple;
         // Generalized works for simple bodies and signatures
-        var resolver = resolveDeclSignature(ExprResolver.LAX, info, ctx, decl, where);
+        var resolver = resolveDeclSignature(info, new ExprResolver(ctx, ExprResolver.LAX), decl, where);
         switch (decl.body) {
           case FnBody.BlockBody(var cls, var elims, var rawElims) -> {
             assert elims == null;
@@ -87,7 +87,7 @@ public interface StmtResolver {
         }
       }
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
-        var resolver = resolveDeclSignature(ExprResolver.LAX, info, ctx, data, Where.Head);
+        var resolver = resolveDeclSignature(info, new ExprResolver(ctx, ExprResolver.LAX), data, Where.Head);
         insertGeneralizedVars(data, resolver);
         data.body.forEach(con -> {
           var bodyResolver = resolver.deriveRestrictive();
@@ -103,15 +103,17 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(data), resolver.reference().view()
           .concat(data.body.map(TyckOrder.Body::new)));
       }
+      case ResolvingStmt.TopDecl(ClassDecl clazz, var ctx) -> {
+        var resolver = resolveDeclSignature(info,
+          new ExprResolver(ctx, ExprResolver.RESTRICTIVE), clazz, Where.Head);
+        insertGeneralizedVars(clazz, resolver);
+        addReferences(info, new TyckOrder.Body(clazz), SeqView.empty());
+      }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {
-        resolveDeclSignature(ExprResolver.RESTRICTIVE, info, ctx, decl, Where.Head);
+        resolveDeclSignature(info, new ExprResolver(ctx, ExprResolver.RESTRICTIVE), decl, Where.Head);
         addReferences(info, new TyckOrder.Body(decl), SeqView.empty());
       }
       case ResolvingStmt.TopDecl _ -> Panic.unreachable();
-      // case ClassDecl decl -> {
-      //   assert decl.ctx != null;
-      //   var resolver = new ExprResolver(decl.ctx, ExprResolver.RESTRICTIVE);
-      //   resolver.enterHead();
       //   decl.members.forEach(field -> {
       //     var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
       //     var mCtx = MutableValue.create(resolver.ctx());
@@ -124,10 +126,8 @@ public interface StmtResolver {
       //   });
       //   addReferences(info, new TyckOrder.Head(decl), resolver.reference().view()
       //     .concat(decl.members.map(TyckOrder.Head::new)));
-      // }
       // handled in DataDecl and ClassDecl
       case ResolvingStmt.MiscDecl _ -> Panic.unreachable();
-      // case TeleDecl.ClassMember field -> {}
     }
   }
   private static void
@@ -152,12 +152,11 @@ public interface StmtResolver {
 
   private static @NotNull ExprResolver
   resolveDeclSignature(
-    @NotNull ExprResolver.Options options, @NotNull ResolveInfo info,
-    @NotNull Context ctx, Decl stmt, Where where
+    @NotNull ResolveInfo info, @NotNull ExprResolver resolver,
+    @NotNull Decl stmt, @NotNull Where where
   ) {
-    var resolver = new ExprResolver(ctx, options);
     resolver.enter(where);
-    var mCtx = MutableValue.create(ctx);
+    var mCtx = MutableValue.create(resolver.ctx());
     var telescope = stmt.telescope.map(param -> resolver.bind(param, mCtx));
     var newResolver = resolver.enter(mCtx.get());
     stmt.modifyResult(newResolver);
