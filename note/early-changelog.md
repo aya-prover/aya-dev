@@ -1,5 +1,17 @@
 # Early changelog
 
+## v0.33
+
+New features:
+
+- Implement flex-flex unification
+- Thorsten Altenkirch's QIIT is now correctly type-checked
+
+Bug fixes:
+
+- Modifiers of `def` are now serialized
+- Indexed constructor return types are now correctly indexed
+
 ## v0.32
 
 Breaking changes:
