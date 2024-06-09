@@ -65,4 +65,9 @@ public interface ScopeError {
     def p (a : Bool) : Bool elim b
     | true => false
     """;
+  @Language("Aya") String testGeneralizedDisallowed = """
+    variable A : Type
+    def test Type : Type
+    | _ => A
+    """;
 }
