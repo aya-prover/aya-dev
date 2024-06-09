@@ -107,7 +107,6 @@ public interface StmtResolver {
         var resolver = new ExprResolver(ctx, false);
         resolver.enter(Where.Head);
         decl.members.forEach(field -> {
-          // TODO: how does a field refer to a former member? DefVar or LocalVar?
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
           var mCtx = MutableValue.create(resolver.ctx());
           resolveMemberSignature(field, bodyResolver, mCtx);

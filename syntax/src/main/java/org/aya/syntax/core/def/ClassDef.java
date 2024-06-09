@@ -49,10 +49,18 @@ public record ClassDef(
       assert i < telescopeSize;
       return clazz.members.get(i).ref().name();
     }
+
+    // class Foo
+    // | foo : A
+    // | + : A -> A -> A
+    // | bar : Fn (x : Foo A) -> (x.foo) self.+ (self.foo)
+    //                            instantiate these!   ^       ^
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members.get(i);
       // FIXME: duplicated with somewhere, abstract!
+      // TODO: wrong impl, we need to inst self.xxx rather than index
       var instedParam = member.telescope().mapIndexed((idx, param) ->
         param.type().replaceTeleFrom(idx, teleArgs.view()));
       var instedResult = member.result().replaceTeleFrom(instedParam.size(), teleArgs.view());
