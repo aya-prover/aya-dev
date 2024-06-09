@@ -10,6 +10,9 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @apiNote the telescope/result of a member probably need to be instantiated, they may refer to the former members.
+ */
 public record MemberDef(
   @NotNull DefVar<ClassDef, ClassDecl> classRef,
   @Override @NotNull DefVar<MemberDef, ClassMember> ref,

@@ -71,10 +71,7 @@ public interface AbstractTele {
     @Override public @NotNull AbstractTele lift(int i) { return new Lift(signature, lift + i); }
     @Override public @NotNull SeqView<String> namesView() { return signature.namesView(); }
   }
-  record Locns(
-    @NotNull ImmutableSeq<Param> telescope,
-    @NotNull Term result
-  ) implements AbstractTele {
+  record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
     @Override public int telescopeSize() { return telescope.size(); }
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
