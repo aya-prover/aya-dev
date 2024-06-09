@@ -195,7 +195,7 @@ public class CorePrettier extends BasePrettier<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      // case ClassCall classCall -> visitArgsCalls(classCall.ref(), CLAZZ, classCall.orderedArgs(), outer);
+      case ClassCall classCall -> visitCoreCalls(classCall.ref(), classCall.args(), outer, true);
       case DataCall dataCall -> visitCoreCalls(dataCall.ref(), dataCall.args(), outer, optionImplicit());
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
       case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.fun()),

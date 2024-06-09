@@ -18,10 +18,6 @@ public record ClassDef(
       core().members.map(x -> new MemberDef.Delegate(x.ref())));
 
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
-
-    @Override
-    public @NotNull ImmutableSeq<MemberDefLike> members() {
-      return members.get();
-    }
+    @Override public @NotNull ImmutableSeq<MemberDefLike> members() { return members.get(); }
   }
 }
