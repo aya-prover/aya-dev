@@ -111,12 +111,9 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       }
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        // var innerCtx = resolveChildren(decl, decl, ctx, s -> s.members.view(), (field, mockCtx) -> {
-        //   field.ref().module = mockCtx.modulePath().path();
-        //   field.ref().fileModule = resolveInfo.thisModule().modulePath().path();
-        //   mockCtx.defineSymbol(field.ref, Stmt.Accessibility.Public, field.sourcePos());
-        // });
-        yield new ResolvingStmt.TopDecl(decl, ctx);
+        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) ->
+          mCtx.defineSymbol(mem, Stmt.Accessibility.Public, mem.name.definition()));
+        yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
         var innerCtx = resolveTopLevelDecl(decl, context);
@@ -141,7 +138,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     };
   }
 
-  private <D extends Decl, Child extends Decl> PhysicalModuleContext resolveChildren(
+  private <D extends Decl, Child> PhysicalModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,

@@ -15,8 +15,6 @@ public record MemberDef(
   @Override @NotNull Term result
 ) implements TyckDef {
   public static class Delegate extends TyckAnyDef<MemberDef> {
-    public Delegate(@NotNull DefVar<MemberDef, ?> ref) {
-      super(ref);
-    }
+    public Delegate(@NotNull DefVar<MemberDef, ?> ref) { super(ref); }
   }
 }

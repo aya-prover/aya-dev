@@ -39,8 +39,8 @@ public final class DefVar<Core extends TyckDef, Concrete extends Decl> implement
     return new DefVar<>(concrete, null, name);
   }
 
-  @Override public boolean equals(@Nullable Object o) {return this == o;}
-  @Override public int hashCode() {return System.identityHashCode(this);}
+  @Override public boolean equals(@Nullable Object o) { return this == o; }
+  @Override public int hashCode() { return System.identityHashCode(this); }
 
   public boolean isInModule(@NotNull ModulePath moduleName) {
     return module != null && module.module().isInModule(moduleName);
