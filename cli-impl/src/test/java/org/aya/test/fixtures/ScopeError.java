@@ -75,4 +75,6 @@ public interface ScopeError {
     module A {}
     module A {}
     """;
+  @Language("Aya") String testImportNoneExistMod = "import hopefullyThisModuleWillNeverExist";
+  @Language("Aya") String testOpenNoneExistMod = "open hopefullyThisModuleWillNeverExist";
 }

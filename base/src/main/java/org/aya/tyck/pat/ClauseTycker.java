@@ -122,7 +122,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
     return new TyckResult(
       rhsResult,
-      rhsResult.mapNotNull(Pat.Preclause::lift),
+      rhsResult.flatMap(Pat.Preclause::lift),
       lhsError
     );
   }

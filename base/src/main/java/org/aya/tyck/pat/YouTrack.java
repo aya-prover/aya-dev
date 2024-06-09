@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
 import org.aya.normalize.PatMatcher;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.FreeTerm;
@@ -78,7 +77,7 @@ public record YouTrack(
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
       var contents = results.cls()
-        .flatMapToObj(i -> Option.ofNullable(Pat.Preclause.lift(clauses.clauses().get(i)))
+        .flatMapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> new Info(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
         var ix = i;

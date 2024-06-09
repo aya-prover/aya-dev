@@ -220,3 +220,28 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 What are you doing?
 
+ImportNoneExistMod:
+In file $FILE:1:7 ->
+
+  1 │   import hopefullyThisModuleWillNeverExist
+    │          ╰───────────────────────────────╯
+
+Error: The module name `hopefullyThisModuleWillNeverExist` is not found
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
+OpenNoneExistMod:
+In file $FILE:1:5 ->
+
+  1 │   open hopefullyThisModuleWillNeverExist
+    │        ╰───────────────────────────────╯
+
+Error: The module name `hopefullyThisModuleWillNeverExist` is not defined in the
+       current scope
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+What are you doing?
+
