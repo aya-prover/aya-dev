@@ -54,11 +54,10 @@ Error: Unable to accept the expression
 What are you doing?
 
 CringeReturnType:
-In file $FILE:3:11 ->
+In file $FILE:2:11 ->
 
-  1 │   open import arith::nat::base
-  2 │   def fr : Type -> Type => \x => x
-  3 │   def test : fr => Type
+  1 │   def fr : Type -> Type => \x => x
+  2 │   def test : fr => Type
     │              ╰╯
 
 Error: Unable to accept the expression
@@ -66,11 +65,10 @@ Error: Unable to accept the expression
        because the type provided is not a type, but instead:
          Type 0 → Type 0
 
-In file $FILE:3:17 ->
+In file $FILE:2:17 ->
 
-  1 │   open import arith::nat::base
-  2 │   def fr : Type -> Type => \x => x
-  3 │   def test : fr => Type
+  1 │   def fr : Type -> Type => \x => x
+  2 │   def test : fr => Type
     │                    ╰──╯
 
 Error: Cannot check the expression
@@ -181,6 +179,41 @@ Error: The meta (denoted ? below) is supposed to satisfy:
          `?_`
        However, the solution below does not seem so:
          X
+
+2 error(s), 0 warning(s).
+What are you doing?
+
+ConReturn:
+In file $FILE:2:14 ->
+
+  1 │   inductive X
+  2 │   inductive Y | con : X
+    │                 ╰─╯
+
+Error: Cannot make sense of the return type of the constructor
+         | con : X
+       which eventually returns
+         Y
+       while it should return
+         X
+
+1 error(s), 0 warning(s).
+What are you doing?
+
+NoRule:
+In file $FILE:1:9 ->
+
+  1 │   def x => "114514"
+    │            ╰──────╯
+
+Error: No rule inferring the type of "114514"
+
+In file $FILE:1:4 ->
+
+  1 │   def x => "114514"
+    │       ╰╯
+
+Error: Unsolved meta _
 
 2 error(s), 0 warning(s).
 What are you doing?

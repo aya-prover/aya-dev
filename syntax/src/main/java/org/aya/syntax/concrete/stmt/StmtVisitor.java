@@ -84,7 +84,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Decl decl -> {
         visit(decl.bindBlock());
         visitVarDecl(decl.sourcePos(), decl.ref(), lazyType(decl.ref()));
-        decl.telescope.forEach(p -> visitVarDecl(p.sourcePos(), p.ref(), withTermType(p)));
+        if (decl instanceof TeleDecl tele)
+          tele.telescope.forEach(p -> visitVarDecl(p.sourcePos(), p.ref(), withTermType(p)));
       }
     }
   }
@@ -92,10 +93,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> {
-        visitTelescopic(decl);
+        if (decl instanceof TeleDecl tele) visitTelescopic(tele);
         switch (decl) {
           case DataDecl data -> data.body.forEach(this);
-          case ClassDecl clazz -> clazz.members.forEach(m -> visitVarDecl(m.ref().definition(), m.ref(), noType));
+          case ClassDecl clazz -> clazz.members.forEach(this);
           case FnDecl fn -> {
             fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
               this::visitPattern));
@@ -105,7 +106,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
             }
           }
           case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
-          case PrimDecl _ -> { }
+          case PrimDecl _, ClassMember _ -> { }
         }
       }
       case Command command -> {
@@ -167,7 +168,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     expr.forEach(this::visitExpr);
   }
 
-  default void visitTelescopic(@NotNull Decl telescopic) {
+  default void visitTelescopic(@NotNull TeleDecl telescopic) {
     telescopic.telescope.forEach(param -> param.forEach(this::visitExpr));
     if (telescopic.result != null) visitExpr(telescopic.result);
   }

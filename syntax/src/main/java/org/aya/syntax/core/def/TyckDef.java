@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
-import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
@@ -46,7 +45,7 @@ public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef
   /**
    * @see AnyDef#signature()
    */
-  static @NotNull AbstractTele defSignature(@NotNull DefVar<?, ? extends Decl> defVar) {
+  static @NotNull AbstractTele defSignature(@NotNull DefVar<?, ?> defVar) {
     if (defVar.core != null) return new AbstractTele.Locns(defVar.core.telescope(), defVar.core.result());
     // guaranteed as this is already a core term
     var signature = defVar.signature;

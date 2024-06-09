@@ -341,8 +341,11 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case ClassDecl decl -> {
         var prelude = MutableList.of(KW_CLASS);
         prelude.append(defVar(decl.ref));
-        prelude.append(visitTele(decl.telescope));
-        yield Doc.cat(Doc.sepNonEmpty(prelude), visitBindBlock(decl.bindBlock()));
+        yield Doc.cat(Doc.sepNonEmpty(prelude),
+          Doc.emptyIf(decl.members.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
+            decl.members.view().map(this::decl))))),
+          visitBindBlock(decl.bindBlock())
+        );
       }
       case FnDecl decl -> {
         var prelude = declPrelude(decl);
@@ -373,19 +376,16 @@ public class ConcretePrettier extends BasePrettier<Expr> {
             decl.body.view().map(this::decl))))),
           visitBindBlock(decl.bindBlock())
         );
-      }/*
-      case TeleDecl.ClassMember field -> {
-        var doc = MutableList.of(Doc.symbol("|"),
-          coe(field.coerce),
-          linkDef(field.ref, MEMBER),
-          visitTele(field.telescope));
+      }
+      case ClassMember field -> {
+        var doc = MutableList.of(Doc.symbol("|"), defVar(field.ref), visitTele(field.telescope));
         appendResult(doc, field.result);
-        field.body.ifDefined(body -> {
+        /*field.body.ifDefined(body -> {
           doc.append(Doc.symbol("=>"));
           doc.append(term(Outer.Free, body));
-        });
+        });*/
         yield Doc.sepNonEmpty(doc);
-      }*/
+      }
       case DataCon con -> {
         var ret = con.result == null ? Doc.empty() : Doc.sep(HAS_TYPE, term(Outer.Free, con.result));
         var doc = Doc.sepNonEmpty(coe(con.coerce), defVar(con.ref), visitTele(con.telescope), ret);

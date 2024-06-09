@@ -4,12 +4,11 @@ package org.aya.syntax.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.concrete.stmt.BindBlock;
+import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.MemberVar;
+import org.aya.util.error.PosedUnaryOperator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The fields of a class is represented as a telescope,
@@ -17,20 +16,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ClassDecl extends Decl {
   public final @NotNull DefVar<ClassDef, ClassDecl> ref;
-  public final @NotNull ImmutableSeq<Member> members;
+  public final @NotNull ImmutableSeq<ClassMember> members;
   public ClassDecl(
     @NotNull String name, @NotNull DeclInfo info,
-    @NotNull ImmutableSeq<Member> members
+    @NotNull ImmutableSeq<ClassMember> members
   ) {
-    super(info, members.map(Member::param), null);
+    super(info);
     this.ref = DefVar.concrete(this, name);
     this.members = members;
   }
-  public record Member(
-    @NotNull MemberVar ref,
-    @NotNull Expr.Param param,
-    @NotNull BindBlock bindBlock,
-    @Nullable OpInfo opInfo
-  ) { }
   @Override public @NotNull DefVar<ClassDef, ClassDecl> ref() { return ref; }
+  @Override public void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) {
+    members.forEach(x -> x.descentInPlace(f, p));
+  }
 }

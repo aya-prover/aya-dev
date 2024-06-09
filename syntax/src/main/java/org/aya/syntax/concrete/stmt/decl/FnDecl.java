@@ -21,7 +21,7 @@ import java.util.EnumSet;
  * @author re-xyr
  * @see FnDef
  */
-public final class FnDecl extends Decl {
+public final class FnDecl extends TeleDecl {
   public final @NotNull EnumSet<Modifier> modifiers;
   public final @NotNull DefVar<FnDef, FnDecl> ref;
   public @NotNull FnBody body;

@@ -32,7 +32,6 @@ import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.ref.MemberVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
@@ -236,7 +235,7 @@ public record AyaProducer(
     @NotNull GenericNode<?> node,
     @NotNull ModifierParser.Filter filter
   ) {
-    var modifiers = node.childrenOfType(DECL_MODIFIERS).map(x -> {
+    var modifiers = node.childrenOfType(DECL_MODIFIER).map(x -> {
       var pos = sourcePosOf(x);
       ModifierParser.CModifier modifier = null;
       for (var mod : ModifierParser.CModifier.values())
@@ -363,17 +362,14 @@ public record AyaProducer(
     return decl;
   }
 
-  public @NotNull ClassDecl.Member classMember(int index, GenericNode<?> node) {
+  public @NotNull ClassMember classMember(int index, GenericNode<?> node) {
     var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
     var name = info.checkName(this);
     if (name == null) return unreachable(node);
-    var local = new LocalVar(name, info.info.sourcePos());
-    var typeExpr = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());
-    return new ClassDecl.Member(
-      new MemberVar(index, local),
-      new Expr.Param(info.info.entireSourcePos(), local, typeExpr, true),
-      info.info.bindBlock(),
-      info.info.opInfo());
+    return new ClassMember(
+      name, info.info,
+      telescope(node.childrenOfType(TELE)),
+      typeOrHole(node.peekChild(TYPE), info.info.sourcePos()));
   }
 
   private <T> @Nullable T error(@NotNull GenericNode<?> node, @NotNull String message) {

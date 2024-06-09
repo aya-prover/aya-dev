@@ -104,10 +104,7 @@ public interface StmtResolver {
           .concat(data.body.map(TyckOrder.Body::new)));
       }
       case ResolvingStmt.TopDecl(ClassDecl clazz, var ctx) -> {
-        var resolver = resolveDeclSignature(info,
-          new ExprResolver(ctx, true), clazz, Where.Head);
-        insertGeneralizedVars(clazz, resolver);
-        addReferences(info, new TyckOrder.Body(clazz), SeqView.empty());
+        throw new UnsupportedOperationException("ClassDecl");
       }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {
         resolveDeclSignature(info, new ExprResolver(ctx, false), decl, Where.Head);
@@ -119,7 +116,7 @@ public interface StmtResolver {
     }
   }
   private static void
-  resolveMemberSignature(Decl con, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
+  resolveMemberSignature(TeleDecl con, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
     bodyResolver.enter(Where.Head);
     con.telescope = con.telescope.map(param -> bodyResolver.bind(param, mCtx));
     // If changed to method reference, `bodyResolver.enter(mCtx.get())` will be evaluated eagerly
@@ -141,7 +138,7 @@ public interface StmtResolver {
   private static @NotNull ExprResolver
   resolveDeclSignature(
     @NotNull ResolveInfo info, @NotNull ExprResolver resolver,
-    @NotNull Decl stmt, @NotNull Where where
+    @NotNull TeleDecl stmt, @NotNull Where where
   ) {
     resolver.enter(where);
     var mCtx = MutableValue.create(resolver.ctx());
@@ -155,7 +152,7 @@ public interface StmtResolver {
   }
 
   private static void insertGeneralizedVars(
-    @NotNull Decl decl, @NotNull ExprResolver resolver
+    @NotNull TeleDecl decl, @NotNull ExprResolver resolver
   ) {
     decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
   }

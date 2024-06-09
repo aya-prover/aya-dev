@@ -13,6 +13,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.concrete.stmt.decl.TeleDecl;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.call.Callable;
@@ -142,7 +143,7 @@ public record AyaSccTycker(
   }
 
   private void checkHeader(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
-    if (stmt instanceof Decl decl) tycker.checkHeader(decl);
+    if (stmt instanceof TeleDecl decl) tycker.checkHeader(decl);
     if (reporter.anyError()) throw new SccTyckingFailed(ImmutableSeq.of(order));
   }
 

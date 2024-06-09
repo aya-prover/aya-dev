@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * which means it's unspecified in the concrete syntax.
  * @see PrimDef
  */
-public final class PrimDecl extends Decl {
+public final class PrimDecl extends TeleDecl {
   public final @NotNull DefVar<PrimDef, PrimDecl> ref;
 
   public PrimDecl(

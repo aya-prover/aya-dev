@@ -22,7 +22,6 @@ public interface ExprTyckError {
     """;
 
   @Language("Aya") String testCringeReturnType = """
-    open import arith::nat::base
     def fr : Type -> Type => \\x => x
     def test : fr => Type
     """;
@@ -49,5 +48,14 @@ public interface ExprTyckError {
     inductive infix = (a b : X) : Type
     inductive Test : Type
     | con (x : _) (y : X) (x = y)
+    """;
+
+  @Language("Aya") String testConReturn = """
+    inductive X
+    inductive Y | con : X
+    """;
+
+  @Language("Aya") String testNoRule = """
+    def x => "114514"
     """;
 }
