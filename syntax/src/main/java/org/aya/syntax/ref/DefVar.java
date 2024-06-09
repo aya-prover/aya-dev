@@ -33,6 +33,11 @@ public final class DefVar<Core extends TyckDef, Concrete extends Decl> implement
     this.name = name;
   }
 
+  public void initialize(@NotNull Core core) {
+    assert this.core == null;
+    this.core = core;
+  }
+
   /** Used in user definitions. */
   public static <Core extends TyckDef, Concrete extends Decl>
   @NotNull DefVar<Core, Concrete> concrete(@NotNull Concrete concrete, @NotNull String name) {

@@ -105,7 +105,7 @@ public interface StmtResolver {
       }
       case ResolvingStmt.TopDecl(ClassDecl clazz, var ctx) -> {
         var resolver = resolveDeclSignature(info,
-          new ExprResolver(ctx, false), clazz, Where.Head);
+          new ExprResolver(ctx, true), clazz, Where.Head);
         insertGeneralizedVars(clazz, resolver);
         addReferences(info, new TyckOrder.Body(clazz), SeqView.empty());
       }
