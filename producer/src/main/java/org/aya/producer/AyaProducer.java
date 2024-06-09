@@ -296,7 +296,7 @@ public record AyaProducer(
       reporter.report(new ModifierProblem(overlap, ModifierParser.CModifier.Overlap, ModifierProblem.Reason.Duplicative));
     }
 
-    var ty = typeOrNull(node.peekChild(TYPE));
+    var ty = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());
     var fnDecl = new FnDecl(info.info, fnMods, name, tele, ty, dynamite);
     if (info.modifier.isExample()) fnDecl.isExample = true;
     return fnDecl;

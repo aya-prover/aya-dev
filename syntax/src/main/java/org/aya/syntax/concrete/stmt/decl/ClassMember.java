@@ -8,14 +8,13 @@ import org.aya.syntax.core.def.MemberDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class ClassMember extends TeleDecl {
   public final @NotNull DefVar<MemberDef, ClassMember> ref;
 
   public ClassMember(
     @NotNull String name, @NotNull DeclInfo info,
-    @NotNull ImmutableSeq<Expr.Param> telescope, @Nullable WithPos<Expr> result
+    @NotNull ImmutableSeq<Expr.Param> telescope, @NotNull WithPos<Expr> result
   ) {
     super(info, telescope, result);
     ref = DefVar.concrete(this, name);

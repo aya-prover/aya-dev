@@ -121,7 +121,15 @@ public record StmtTycker(
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);
       case PrimDecl prim -> checkPrim(tycker, prim);
-      case ClassMember member -> throw new UnsupportedOperationException("TODO");
+      case ClassMember member -> {
+        var teleTycker = new TeleTycker.Default(tycker);
+        var result = member.result;
+        assert result != null; // See AyaProducer
+        var signature = teleTycker.checkSignature(member.telescope, result);
+        tycker.solveMetas();
+        signature = signature.pusheen(tycker::whnf).descent(tycker::zonk);
+        member.ref.signature = signature;
+      }
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;
@@ -138,15 +146,14 @@ public record StmtTycker(
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = fn.result;
-        if (result == null) result = new WithPos<>(fn.sourcePos(), new Expr.Hole(false, null));
+        assert result != null; // See AyaProducer
         var fnRef = fn.ref;
         fnRef.signature = teleTycker.checkSignature(fn.telescope, result);
 
         // For ExprBody, they will be zonked later
         if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
-          fnRef.signature = fnRef.signature.pusheen(tycker::whnf);
           tycker.solveMetas();
-          fnRef.signature = fnRef.signature.descent(tycker::zonk);
+          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(tycker::zonk);
           if (fnRef.signature.param().isEmpty() && cls.isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
