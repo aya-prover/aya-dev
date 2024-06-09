@@ -34,7 +34,7 @@ public final class ConDef extends SubLevelDef {
     super(ownerTele, selfTele, result, coerce);
     this.pats = pats;
     this.equality = equality;
-    ref.core = this;
+    ref.initialize(this);
     this.dataRef = dataRef;
     this.ref = ref;
   }
