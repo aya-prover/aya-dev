@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author kiva
  * @see DataDef
  */
-public final class DataDecl extends Decl {
+public final class DataDecl extends TeleDecl {
   public final @NotNull DefVar<DataDef, DataDecl> ref;
   public final @NotNull ImmutableSeq<DataCon> body;
 

@@ -12,10 +12,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
-import org.aya.syntax.core.def.ConDef;
-import org.aya.syntax.core.def.DataDef;
-import org.aya.syntax.core.def.FnDef;
-import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
@@ -104,11 +101,15 @@ public record StmtTycker(
           }
         };
       }
-      case DataCon _, PrimDecl _, ClassDecl _ ->
+      case DataCon _, PrimDecl _, ClassMember _ ->
         Objects.requireNonNull(predecl.ref().core);   // see checkHeader
+      case ClassDecl clazz -> {
+        assert clazz.ref.signature != null;
+        for (var member : clazz.members) checkHeader(member);
+        yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core));
+      }
       case DataDecl data -> {
-        var sig = data.ref.signature;
-        assert sig != null;
+        assert data.ref.signature != null;
         for (var kon : data.body) checkHeader(kon);
         yield new DataDef(data.ref, data.body.map(kon -> kon.ref.core));
       }
@@ -120,9 +121,8 @@ public record StmtTycker(
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);
       case PrimDecl prim -> checkPrim(tycker, prim);
-      case ClassDecl clazz -> {
-        throw new UnsupportedOperationException("TODO");
-      }
+      case ClassDecl clazz -> throw new UnsupportedOperationException("TODO");
+      case ClassMember member -> throw new UnsupportedOperationException("TODO");
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;

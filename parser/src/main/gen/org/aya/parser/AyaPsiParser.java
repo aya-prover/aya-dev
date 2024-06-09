@@ -306,7 +306,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // declModifiers*
+  // declModifier*
   //       KW_CLASS declNameOrInfix (KW_EXTENDS <<commaSep weakId>>)?
   //       bindBlock?
   //       (BAR classMember)*
@@ -324,12 +324,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // declModifiers*
+  // declModifier*
   private static boolean classDecl_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classDecl_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!declModifiers(b, l + 1)) break;
+      if (!declModifier(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "classDecl_0", c)) break;
     }
     return true;
@@ -383,8 +383,8 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_CLASSIFIYING? KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
-  //     | KW_CLASSIFIYING? KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock?
+  // memberModifier* declNameOrInfix tele* type? IMPLIES expr bindBlock?
+  //     | memberModifier* declNameOrInfix tele* type               bindBlock?
   public static boolean classMember(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classMember")) return false;
     boolean r;
@@ -395,113 +395,97 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // KW_CLASSIFIYING? KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+  // memberModifier* declNameOrInfix tele* type? IMPLIES expr bindBlock?
   private static boolean classMember_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classMember_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = classMember_0_0(b, l + 1);
-    r = r && classMember_0_1(b, l + 1);
     r = r && declNameOrInfix(b, l + 1);
+    r = r && classMember_0_2(b, l + 1);
     r = r && classMember_0_3(b, l + 1);
-    r = r && classMember_0_4(b, l + 1);
     r = r && consumeToken(b, IMPLIES);
     r = r && expr(b, l + 1, -1);
-    r = r && classMember_0_7(b, l + 1);
+    r = r && classMember_0_6(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // KW_CLASSIFIYING?
+  // memberModifier*
   private static boolean classMember_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classMember_0_0")) return false;
-    consumeToken(b, KW_CLASSIFIYING);
-    return true;
-  }
-
-  // KW_OVERRIDE?
-  private static boolean classMember_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_0_1")) return false;
-    consumeToken(b, KW_OVERRIDE);
+    while (true) {
+      int c = current_position_(b);
+      if (!memberModifier(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "classMember_0_0", c)) break;
+    }
     return true;
   }
 
   // tele*
-  private static boolean classMember_0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_0_3")) return false;
+  private static boolean classMember_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "classMember_0_2")) return false;
     while (true) {
       int c = current_position_(b);
       if (!tele(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "classMember_0_3", c)) break;
+      if (!empty_element_parsed_guard_(b, "classMember_0_2", c)) break;
     }
     return true;
   }
 
   // type?
-  private static boolean classMember_0_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_0_4")) return false;
+  private static boolean classMember_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "classMember_0_3")) return false;
     type(b, l + 1);
     return true;
   }
 
   // bindBlock?
-  private static boolean classMember_0_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_0_7")) return false;
+  private static boolean classMember_0_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "classMember_0_6")) return false;
     bindBlock(b, l + 1);
     return true;
   }
 
-  // KW_CLASSIFIYING? KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock?
+  // memberModifier* declNameOrInfix tele* type               bindBlock?
   private static boolean classMember_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classMember_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = classMember_1_0(b, l + 1);
-    r = r && classMember_1_1(b, l + 1);
-    r = r && classMember_1_2(b, l + 1);
     r = r && declNameOrInfix(b, l + 1);
-    r = r && classMember_1_4(b, l + 1);
+    r = r && classMember_1_2(b, l + 1);
     r = r && type(b, l + 1);
-    r = r && classMember_1_6(b, l + 1);
+    r = r && classMember_1_4(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // KW_CLASSIFIYING?
+  // memberModifier*
   private static boolean classMember_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "classMember_1_0")) return false;
-    consumeToken(b, KW_CLASSIFIYING);
-    return true;
-  }
-
-  // KW_OVERRIDE?
-  private static boolean classMember_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_1_1")) return false;
-    consumeToken(b, KW_OVERRIDE);
-    return true;
-  }
-
-  // KW_COERCE?
-  private static boolean classMember_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_1_2")) return false;
-    consumeToken(b, KW_COERCE);
+    while (true) {
+      int c = current_position_(b);
+      if (!memberModifier(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "classMember_1_0", c)) break;
+    }
     return true;
   }
 
   // tele*
-  private static boolean classMember_1_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_1_4")) return false;
+  private static boolean classMember_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "classMember_1_2")) return false;
     while (true) {
       int c = current_position_(b);
       if (!tele(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "classMember_1_4", c)) break;
+      if (!empty_element_parsed_guard_(b, "classMember_1_2", c)) break;
     }
     return true;
   }
 
   // bindBlock?
-  private static boolean classMember_1_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "classMember_1_6")) return false;
+  private static boolean classMember_1_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "classMember_1_4")) return false;
     bindBlock(b, l + 1);
     return true;
   }
@@ -695,7 +679,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // declModifiers*
+  // declModifier*
   //  KW_DATA declNameOrInfix?
   //  tele* type? bindBlock? dataBody*
   public static boolean dataDecl(PsiBuilder b, int l) {
@@ -714,12 +698,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // declModifiers*
+  // declModifier*
   private static boolean dataDecl_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!declModifiers(b, l + 1)) break;
+      if (!declModifier(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "dataDecl_0", c)) break;
     }
     return true;
@@ -784,16 +768,16 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // KW_PRIVATE
-  //                 | KW_EXAMPLE
-  //                 | KW_OPAQUE
-  //                 | KW_INLINE
-  //                 | KW_OVERLAP
-  //                 | KW_PARTIAL
-  //                 | KW_OPEN
-  public static boolean declModifiers(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "declModifiers")) return false;
+  //                | KW_EXAMPLE
+  //                | KW_OPAQUE
+  //                | KW_INLINE
+  //                | KW_OVERLAP
+  //                | KW_PARTIAL
+  //                | KW_OPEN
+  public static boolean declModifier(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "declModifier")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, DECL_MODIFIERS, "<decl modifiers>");
+    Marker m = enter_section_(b, l, _NONE_, DECL_MODIFIER, "<decl modifier>");
     r = consumeToken(b, KW_PRIVATE);
     if (!r) r = consumeToken(b, KW_EXAMPLE);
     if (!r) r = consumeToken(b, KW_OPAQUE);
@@ -932,7 +916,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // declModifiers*
+  // declModifier*
   //  KW_DEF declNameOrInfix
   //  tele* type? fnBody bindBlock?
   public static boolean fnDecl(PsiBuilder b, int l) {
@@ -951,12 +935,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // declModifiers*
+  // declModifier*
   private static boolean fnDecl_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fnDecl_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!declModifiers(b, l + 1)) break;
+      if (!declModifier(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "fnDecl_0", c)) break;
     }
     return true;
@@ -1364,6 +1348,19 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
+  public static boolean memberModifier(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "memberModifier")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, MEMBER_MODIFIER, "<member modifier>");
+    r = consumeToken(b, KW_CLASSIFIYING);
+    if (!r) r = consumeToken(b, KW_OVERRIDE);
+    if (!r) r = consumeToken(b, KW_COERCE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // KW_MODULE weakId LBRACE stmt* RBRACE
   public static boolean module(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module")) return false;
@@ -1746,7 +1743,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // KW_IMPORT | KW_MODULE | DOC_COMMENT | KW_PUBLIC
   //                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
-  //                      | declModifiers
+  //                      | declModifier
   static boolean stmt_first(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stmt_first")) return false;
     boolean r;
@@ -1759,7 +1756,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_PRIM);
     if (!r) r = consumeToken(b, KW_DATA);
     if (!r) r = consumeToken(b, KW_VARIABLE);
-    if (!r) r = declModifiers(b, l + 1);
+    if (!r) r = declModifier(b, l + 1);
     return r;
   }
 

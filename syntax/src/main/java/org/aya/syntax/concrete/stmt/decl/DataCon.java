@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @implNote {@link DefVar#signature} is always null.
  */
-public final class DataCon extends Decl {
+public final class DataCon extends TeleDecl {
   public final @NotNull DefVar<ConDef, DataCon> ref;
   public DefVar<DataDef, DataDecl> dataRef;
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns;

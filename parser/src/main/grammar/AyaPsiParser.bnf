@@ -229,8 +229,8 @@ classDecl
 
 memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
 classMember
-  ::= memberModifier* declNameOrInfix type? IMPLIES expr bindBlock?
-    | memberModifier* declNameOrInfix type               bindBlock? {
+  ::= memberModifier* declNameOrInfix tele* type? IMPLIES expr bindBlock?
+    | memberModifier* declNameOrInfix tele* type               bindBlock? {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }

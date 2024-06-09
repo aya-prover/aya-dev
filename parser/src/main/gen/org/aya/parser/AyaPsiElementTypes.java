@@ -36,7 +36,7 @@ public interface AyaPsiElementTypes {
   IElementType DATA_CON_CLAUSE = new AyaPsiElementType("DATA_CON_CLAUSE");
   IElementType DATA_DECL = new AyaPsiElementType("DATA_DECL");
   IElementType DECL = new AyaPsiElementType("DECL");
-  IElementType DECL_MODIFIERS = new AyaPsiElementType("DECL_MODIFIERS");
+  IElementType DECL_MODIFIER = new AyaPsiElementType("DECL_MODIFIER");
   IElementType DECL_NAME_OR_INFIX = new AyaPsiElementType("DECL_NAME_OR_INFIX");
   IElementType DO_BINDING = new AyaPsiElementType("DO_BINDING");
   IElementType DO_BLOCK_CONTENT = new AyaPsiElementType("DO_BLOCK_CONTENT");
@@ -65,6 +65,7 @@ public interface AyaPsiElementTypes {
   IElementType LIT_STRING_EXPR = new AyaPsiElementType("LIT_STRING_EXPR");
   IElementType LOOSERS = new AyaPsiElementType("LOOSERS");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
+  IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");
   IElementType MODULE = new AyaPsiElementType("MODULE");
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
   IElementType NEW_ARG = new AyaPsiElementType("NEW_ARG");
