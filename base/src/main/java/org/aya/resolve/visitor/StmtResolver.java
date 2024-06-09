@@ -103,8 +103,22 @@ public interface StmtResolver {
         addReferences(info, new TyckOrder.Body(data), resolver.reference().view()
           .concat(data.body.map(TyckOrder.Body::new)));
       }
-      case ResolvingStmt.TopDecl(ClassDecl clazz, var ctx) -> {
-        throw new UnsupportedOperationException("ClassDecl");
+      case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
+        var resolver = new ExprResolver(ctx, false);
+        resolver.enter(Where.Head);
+        decl.members.forEach(field -> {
+          var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
+          var mCtx = MutableValue.create(resolver.ctx());
+          resolveMemberSignature(field, bodyResolver, mCtx);
+          addReferences(info, new TyckOrder.Head(field), bodyResolver.reference().view()
+            .appended(new TyckOrder.Head(decl)));
+          bodyResolver.enter(Where.Head);     // FIXME: enter body
+          // TODO: body
+          // field.body = field.body.map(bodyResolver.enter(mCtx.get()));
+          addReferences(info, new TyckOrder.Body(field), bodyResolver);
+        });
+        addReferences(info, new TyckOrder.Head(decl), resolver.reference().view()
+          .concat(decl.members.map(TyckOrder.Head::new)));
       }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {
         resolveDeclSignature(info, new ExprResolver(ctx, false), decl, Where.Head);

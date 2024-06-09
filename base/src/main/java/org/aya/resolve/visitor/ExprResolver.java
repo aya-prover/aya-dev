@@ -270,6 +270,14 @@ public record ExprResolver(
     return result;
   }
 
+  public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
+    var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
+      MutableList.of(new TyckOrder.Head(decl)),
+      MutableStack.create());
+    resolver.where.push(initial);
+    return resolver;
+  }
+
   public enum Where {
     // Data head & Fn head
     Head,
