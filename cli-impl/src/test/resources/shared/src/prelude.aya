@@ -2,3 +2,4 @@ public open import arith::bool::base
 public open import arith::nat::base
 public open import data::list::base
 public open import relation::binary::path
+public open import relation::nullary::empty

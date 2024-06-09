@@ -5,3 +5,12 @@ def something (a : Nat)
 
 def issue1061 : Nat -> Nat
 | n => Nat::suc n
+
+module Issue942 {
+  open import arith::nat::properties
+  open inductive Wrapper (P : Type)
+  | wrap (P -> Empty)
+
+  def what? (m : Nat) : Wrapper (suc m = 0) =>
+    wrap (\ x => z≠s (pinv x))
+}

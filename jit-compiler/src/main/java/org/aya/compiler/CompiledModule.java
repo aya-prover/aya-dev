@@ -198,7 +198,7 @@ public record CompiledModule(
     @NotNull PhysicalModuleContext context, @NotNull ShapeFactory shapeFactory,
     @NotNull Class<?> rootClass
   ) {
-    for (Class<?> jitClass : rootClass.getDeclaredClasses()) {
+    for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
       var qname = jitDef.qualifiedName();
       var metadata = jitDef.metadata();

@@ -58,6 +58,10 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
    */
   private void buildConstructors(DataDef unit) {
     var cRef = "this.constructors";
+    if (unit.body.isEmpty()) {
+      buildReturn(cRef);
+      return;
+    }
 
     buildIf(ExprializeUtils.isNull(STR."\{cRef}[0]"), () ->
       unit.body.forEachIndexed((idx, con) ->
