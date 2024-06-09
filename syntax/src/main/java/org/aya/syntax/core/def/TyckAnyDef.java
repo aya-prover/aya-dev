@@ -9,12 +9,13 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Objects;
 
 public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef {
   public final @NotNull DefVar<Interface, ?> ref;
-  public Interface core() { return ref.core; }
+  public @UnknownNullability Interface core() { return ref.core; }
   public TyckAnyDef(@NotNull DefVar<Interface, ?> ref) { this.ref = ref; }
   @Override public final @NotNull ModulePath fileModule() { return Objects.requireNonNull(ref.module).fileModule(); }
   @Override public final @NotNull ModulePath module() { return Objects.requireNonNull(ref.module).module(); }

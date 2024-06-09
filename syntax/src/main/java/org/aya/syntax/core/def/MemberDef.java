@@ -15,7 +15,12 @@ public record MemberDef(
   @Override @NotNull Term result
 ) implements TyckDef {
   public MemberDef { ref.initialize(this); }
-  public static class Delegate extends TyckAnyDef<MemberDef> {
+  public static final class Delegate extends TyckAnyDef<MemberDef> implements MemberDefLike {
     public Delegate(@NotNull DefVar<MemberDef, ?> ref) { super(ref); }
+
+    @Override
+    public @NotNull ClassDefLike classRef() {
+      return new ClassDef.Delegate(core().classRef());
+    }
   }
 }
