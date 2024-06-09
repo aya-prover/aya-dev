@@ -28,6 +28,11 @@ public class SyntaxTest {
         let open Nat in
         let n := a + b in n
       tighter + looser +
+      open class Cat
+      | A : Type
+      open class Monoid
+      | A : Type
+      | infixl + : Fn (a b : A) -> A
       """);
     for (var stmt : res) {
       assertNotNull(stmt.toDoc(AyaPrettierOptions.debug()).debugRender());
