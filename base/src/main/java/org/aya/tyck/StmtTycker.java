@@ -104,8 +104,8 @@ public record StmtTycker(
           }
         };
       }
-      case DataCon con -> Objects.requireNonNull(con.ref.core);   // see checkHeader
-      case PrimDecl prim -> Objects.requireNonNull(prim.ref.core);
+      case DataCon _, PrimDecl _, ClassDecl _ ->
+        Objects.requireNonNull(predecl.ref().core);   // see checkHeader
       case DataDecl data -> {
         var sig = data.ref.signature;
         assert sig != null;
@@ -120,6 +120,9 @@ public record StmtTycker(
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);
       case PrimDecl prim -> checkPrim(tycker, prim);
+      case ClassDecl clazz -> {
+        throw new UnsupportedOperationException("TODO");
+      }
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;
