@@ -27,6 +27,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public interface AppTycker {
+  /**
+   * <pre>
+   * Signature (0th param) --------> Argument Parser (this interface)
+   *                                        |
+   *                                  [ arguments ]
+   *                                        |
+   *                                        v
+   * Well-typed Call (result) <---- Factory (1st param)
+   * </pre>
+   */
   @FunctionalInterface
   interface Factory<Ex extends Exception> extends
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
