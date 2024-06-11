@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
@@ -143,7 +145,7 @@ public interface AppTycker {
     @NotNull Factory<Ex> makeArgs, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull ClassDefLike clazz
   ) throws Ex {
-    var appliedParams = clazz.takeMembers(argsCount).lift(lift);
+    var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     return makeArgs.applyChecked(appliedParams, args -> {
       var self = new LocalVar("self", pos, GenerateKind.Basic.Tyck);
       return new Jdg.Default(
@@ -165,5 +167,39 @@ public interface AppTycker {
         signature.result(args)
       );
     });
+  }
+
+  static @NotNull AbstractTele ofClassMembers(@NotNull ClassDefLike def, int memberCount) {
+    return switch (def) {
+      case ClassDef.Delegate delegate -> new TakeMembers(delegate.core(), memberCount);
+    };
+  }
+
+  record TakeMembers(@NotNull ClassDef clazz, @Override int telescopeSize) implements AbstractTele {
+    @Override public boolean telescopeLicit(int i) { return true; }
+    @Override public @NotNull String telescopeName(int i) {
+      assert i < telescopeSize;
+      return clazz.members().get(i).ref().name();
+    }
+
+    // class Foo
+    // | foo : A
+    // | + : A -> A -> A
+    // | bar : Fn (x : Foo A) -> (x.foo) self.+ (self.foo)
+    //                  instantiate these!   ^       ^
+    @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      // teleArgs are former members
+      assert i < telescopeSize;
+      var member = clazz.members().get(i);
+      // TODO: instantiate self projection with teleArgs
+      return TyckDef.defSignature(member.ref()).makePi();
+    }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
+      // Use SigmaTerm::lub
+      throw new UnsupportedOperationException("TODO");
+    }
+    @Override public @NotNull SeqView<String> namesView() {
+      return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());
+    }
   }
 }
