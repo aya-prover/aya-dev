@@ -9,7 +9,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * A qualified name to some definition
+ * A qualified name to some definition, should not confused with {@link org.aya.syntax.concrete.stmt.QualifiedID},
+ * which indicates a relative (to the current module) qualified name.
  */
 public record QName(@NotNull QPath module, @NotNull String name) implements Serializable {
   public QName(@NotNull DefVar<?, ?> ref) {
