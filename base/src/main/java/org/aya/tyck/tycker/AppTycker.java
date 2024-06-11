@@ -161,6 +161,7 @@ public interface AppTycker {
   ) throws Ex {
     var signature = member.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> {
+      assert args.length >= 1;
       var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(
         new FieldCall(args[0], member, 0, fieldArgs),
