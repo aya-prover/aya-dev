@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
+import kala.function.CheckedSupplier;
 import org.aya.generic.Constants;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
@@ -43,6 +44,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.function.Function;
@@ -53,6 +55,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
   public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
   private @NotNull LocalLet localLet;
+  private @Nullable LocalVar classThis = null;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
     withTerms.add(new WithPos<>(pos, with));
@@ -324,10 +327,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case LocalVar lVar -> generateApplication(args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content,
-        new AppTycker.CheckAppData<>(state, sourcePos, args.size(), lift, (params, k) ->
+        new AppTycker.CheckAppData<>(state, new ClassScoper(), sourcePos, args.size(), lift, (params, k) ->
           computeArgs(sourcePos, args, params, k)));
       case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar,
-        new AppTycker.CheckAppData<>(state, sourcePos, args.size(), lift, (params, k) ->
+        new AppTycker.CheckAppData<>(state, new ClassScoper(), sourcePos, args.size(), lift, (params, k) ->
           computeArgs(sourcePos, args, params, k)));
       default -> throw new UnsupportedOperationException("TODO");
     };
@@ -443,6 +446,29 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     setLocalLet(parentDef);
     return result;
   }
+
+  private class ClassScoper implements AppTycker.ClassCallScope<NotPi> {
+    @Override
+    public <R> R subscopedClass(@NotNull CheckedSupplier<R, NotPi> action) throws NotPi {
+      var parentClass = ExprTycker.this.classThis;
+      ExprTycker.this.classThis = LocalVar.generate("self");
+      R result;
+
+      try {
+        result = action.getChecked();
+      } finally {
+        ExprTycker.this.classThis = parentClass;
+      }
+
+      return result;
+    }
+
+    @Override
+    public LocalVar thisClass() {
+      return ExprTycker.this.classThis;
+    }
+  }
+
   public @NotNull LocalLet localLet() { return localLet; }
   public @NotNull LocalLet setLocalLet(@NotNull LocalLet let) {
     var old = localLet;
