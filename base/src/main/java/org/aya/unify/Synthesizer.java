@@ -120,7 +120,7 @@ public record Synthesizer(
       case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
         type.instantiateTele(args.view());
       case MetaCall meta -> {
-        if (!state().solutions().containsKey(meta.ref())) yield null;
+        if (!state().solutions.containsKey(meta.ref())) yield null;
         yield trySynth(whnf(meta));
       }
       case CoeTerm coe -> coe.family();
@@ -134,7 +134,7 @@ public record Synthesizer(
       case DimTerm _ -> DimTyTerm.INSTANCE;
       case DimTyTerm _ -> SortTerm.ISet;
       case MetaLitTerm mlt -> mlt.type();
-      case StringTerm str -> state().primFactory().getCall(PrimDef.ID.STRING);
+      case StringTerm str -> state().primFactory.getCall(PrimDef.ID.STRING);
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
     };
   }

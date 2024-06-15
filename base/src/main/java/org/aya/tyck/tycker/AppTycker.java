@@ -70,7 +70,7 @@ public interface AppTycker {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
-        var op = input.state.shapeFactory().find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
+        var op = input.state.shapeFactory.find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
         yield checkFnCall(input.makeArgs, input.lift, fnDef, op);
       }
       // Extracted to prevent pervasive influence of suppression of unchecked warning.
@@ -101,7 +101,7 @@ public interface AppTycker {
       var conArgs = realArgs.drop(conVar.ownerTeleSize());
 
       var type = (DataCall) fullSignature.result(realArgs);
-      var shape = state.shapeFactory().find(dataVar)
+      var shape = state.shapeFactory.find(dataVar)
         .mapNotNull(recog -> AyaShape.ofCon(conVar, recog, type))
         .getOrNull();
       if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
@@ -113,7 +113,7 @@ public interface AppTycker {
   checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
-      state.primFactory().unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
+      state.primFactory.unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
@@ -148,12 +148,12 @@ public interface AppTycker {
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     // TODO: We may just accept a LocalVar and do subscopedClass in ExprTycker as long as appliedParams won't be affected.
     var self = LocalVar.generate("self");
-    scoper.classThis().push(self);
+    scoper.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
       new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
       appliedParams.result(args)
     ));
-    scoper.classThis().pop();
+    scoper.classThis.pop();
     return result;
   }
 

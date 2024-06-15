@@ -43,7 +43,7 @@ public record Goal(
       //     )))))
       //   : Doc.empty()
     );
-    var metas = state.solutions();
+    var metas = state.solutions;
     return !metas.containsKey(meta) ? doc :
       Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, metas.get(meta).toDoc(options)), doc);
   }

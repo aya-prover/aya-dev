@@ -150,7 +150,8 @@ public class PatternTycker implements Problematic, Stateful {
           pattern);
 
         // check if this Con is a ShapedCon
-        var typeRecog = state().shapeFactory().find(conCore.dataRef()).getOrNull();
+        TyckState tyckState = state();
+        var typeRecog = tyckState.shapeFactory.find(conCore.dataRef()).getOrNull();
         yield new Pat.Con(conCore, patterns, realCon.conHead);
       }
       case Pattern.Bind(var bind, var tyRef) -> {
@@ -164,7 +165,8 @@ public class PatternTycker implements Problematic, Stateful {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref();
-          var shape = state().shapeFactory().find(data);
+          TyckState tyckState = state();
+          var shape = tyckState.shapeFactory.find(data);
           if (shape.isDefined() && shape.get().shape() == AyaShape.NAT_SHAPE)
             yield new Pat.ShapedInt(number,
               shape.get().getCon(CodeShape.GlobalId.ZERO),
@@ -180,7 +182,8 @@ public class PatternTycker implements Problematic, Stateful {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
           var data = dataCall.ref();
-          var shape = state().shapeFactory().find(data).getOrNull();
+          TyckState tyckState = state();
+          var shape = tyckState.shapeFactory.find(data).getOrNull();
           if (shape != null && shape.shape() == AyaShape.LIST_SHAPE)
             yield doTyck(new Pattern.FakeShapedList(pattern.sourcePos(), el,
               shape.getCon(CodeShape.GlobalId.NIL), shape.getCon(CodeShape.GlobalId.CONS), dataCall)

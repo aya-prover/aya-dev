@@ -84,7 +84,7 @@ public final class Normalizer implements UnaryOperator<Term> {
       case ConCall(var head, _) when !head.ref().hasEq() -> defaultValue;
       case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
         call.head().ref().equality(call.args(), dim == DimTerm.I0);
-      case PrimCall prim -> state.primFactory().unfold(prim, state);
+      case PrimCall prim -> state.primFactory.unfold(prim, state);
       case MetaPatTerm metaTerm -> metaTerm.inline(this);
       case MetaCall meta -> state.computeSolution(meta, this);
       case CoeTerm(var type, var r, var s) -> {

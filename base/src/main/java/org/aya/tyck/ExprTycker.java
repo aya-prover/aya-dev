@@ -239,7 +239,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Lambda lam -> inherit(expr, generatePi(lam, expr.sourcePos()));
       case Expr.LitInt(var integer) -> {
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
-        var defs = state.shapeFactory().findImpl(AyaShape.NAT_SHAPE);
+        var defs = state.shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr.data(), new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
           var type = freshMeta(STR."_ty\{integer}'", expr.sourcePos(), MetaVar.Misc.IsType);
@@ -253,9 +253,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         checkApplication(ref, level, innerPos, ImmutableSeq.empty());
       case Expr.Lift(var inner, var level) -> synthesize(inner).map(x -> x.elevate(level));
       case Expr.LitString litStr -> {
-        if (!state.primFactory().have(PrimDef.ID.STRING))
+        if (!state.primFactory.have(PrimDef.ID.STRING))
           yield fail(litStr, new NoRuleError(expr, null));
-        yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory().getCall(PrimDef.ID.STRING));
+        yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory.getCall(PrimDef.ID.STRING));
       }
       case Expr.Ref ref -> checkApplication(ref, 0, expr.sourcePos(), ImmutableSeq.empty());
       case Expr.Sigma _, Expr.Pi _ -> lazyJdg(ty(expr));
@@ -276,7 +276,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var elements = arrayBlock.exprList();
 
         // find def
-        var defs = state.shapeFactory().findImpl(AyaShape.LIST_SHAPE);
+        var defs = state.shapeFactory.findImpl(AyaShape.LIST_SHAPE);
         if (defs.isEmpty()) yield fail(arr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
           var tyMeta = freshMeta("arr_ty", expr.sourcePos(), MetaVar.Misc.IsType);
