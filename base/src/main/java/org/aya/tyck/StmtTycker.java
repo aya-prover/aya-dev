@@ -101,8 +101,7 @@ public record StmtTycker(
           }
         };
       }
-      case DataCon _, PrimDecl _, ClassMember _ ->
-        Objects.requireNonNull(predecl.ref().core);   // see checkHeader
+      case DataCon _, PrimDecl _, ClassMember _ -> Objects.requireNonNull(predecl.ref().core);   // see checkHeader
       case ClassDecl clazz -> {
         for (var member : clazz.members) checkHeader(member);
         yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core));
@@ -120,15 +119,7 @@ public record StmtTycker(
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);
       case PrimDecl prim -> checkPrim(tycker, prim);
-      case ClassMember member -> {
-        var teleTycker = new TeleTycker.Default(tycker);
-        var result = member.result;
-        assert result != null; // See AyaProducer
-        var signature = teleTycker.checkSignature(member.telescope, result);
-        tycker.solveMetas();
-        signature = signature.pusheen(tycker::whnf).descent(tycker::zonk);
-        member.ref.signature = signature;
-      }
+      case ClassMember member -> checkMember(member, tycker);
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;
@@ -159,6 +150,16 @@ public record StmtTycker(
       }
     }
     return tycker;
+  }
+  private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {
+    if (member.ref.core != null) return;
+    var teleTycker = new TeleTycker.Default(tycker);
+    var result = member.result;
+    assert result != null; // See AyaProducer
+    var signature = teleTycker.checkSignature(member.telescope, result);
+    tycker.solveMetas();
+    signature = signature.pusheen(tycker::whnf).descent(tycker::zonk);
+    member.ref.signature = signature;
   }
 
   /**

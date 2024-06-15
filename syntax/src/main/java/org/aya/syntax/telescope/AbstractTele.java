@@ -26,11 +26,42 @@ public interface AbstractTele {
     return telescope(i, ArraySeq.wrap(teleArgs));
   }
 
+  /**
+   * Get the type of {@param i}-th (count from {@code 0}) parameter.
+   *
+   * @param teleArgs the arguments to the former parameters
+   * @return the type of {@param i}-th parameter.
+   */
   @NotNull Term telescope(int i, Seq<Term> teleArgs);
+
+  /**
+   * Get the result of this signature
+   * @param teleArgs the arguments to all parameters.
+   */
   @NotNull Term result(Seq<Term> teleArgs);
+
+  /**
+   * Return the amount of parameters.
+   */
   int telescopeSize();
+
+  /**
+   * Return the licit of {@param i}-th parameter.
+   * @return true if explicit
+   */
   boolean telescopeLicit(int i);
+
+  /**
+   * Get the name of {@param i}-th parameter.
+   */
   @NotNull String telescopeName(int i);
+
+  /**
+   * Get all information of {@param i}-th parameter
+   * @see #telescope
+   * @see #telescopeName
+   * @see #telescopeLicit
+   */
   default @NotNull Param telescopeRich(int i, Term... teleArgs) {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
@@ -47,6 +78,7 @@ public interface AbstractTele {
   default @NotNull Term makePi() {
     return new PiBuilder(this).make(0, ImmutableSeq.empty());
   }
+
   record PiBuilder(AbstractTele telescope) {
     public @NotNull Term make(int i, ImmutableSeq<Term> args) {
       return i == telescope.telescopeSize() ? telescope.result(args) :
@@ -54,7 +86,43 @@ public interface AbstractTele {
           make(i + 1, args.appended(arg))));
     }
   }
+
+  default void checkIndex(int i) {
+    assert i < telescopeSize();
+  }
+
+  default void checkResult(@NotNull Seq<Term> teleArgs) {
+    assert teleArgs.size() == telescopeSize();
+  }
+
   default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
+  default @NotNull AbstractTele prefix(int i) {
+    return i == telescopeSize() ? this : new Slice(this, i);
+  }
+
+  /**
+   * Default implementation of {@link AbstractTele}
+   *
+   * @param telescope bound parameters, that is, the later parameter can refer to the former parameters
+   *                  by {@link org.aya.syntax.core.term.LocalTerm}
+   * @param result    bound result
+   */
+  record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
+    @Override public int telescopeSize() { return telescope.size(); }
+    @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
+    @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
+    @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      return telescope.get(i).type().instantiateTele(teleArgs.sliceView(0, i));
+    }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
+      assert teleArgs.size() == telescopeSize();
+      return result.instantiateTele(teleArgs.view());
+    }
+    @Override public @NotNull SeqView<String> namesView() {
+      return telescope.view().map(Param::name);
+    }
+  }
+
   record Lift(
     @NotNull AbstractTele signature,
     int lift
@@ -71,24 +139,10 @@ public interface AbstractTele {
     @Override public @NotNull AbstractTele lift(int i) { return new Lift(signature, lift + i); }
     @Override public @NotNull SeqView<String> namesView() { return signature.namesView(); }
   }
-  record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
-    @Override public int telescopeSize() { return telescope.size(); }
-    @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
-    @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
-    @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      return telescope.get(i).type().instantiateTele(teleArgs.sliceView(0, i));
-    }
-    @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      assert teleArgs.size() == telescopeSize();
-      return result.instantiateTele(teleArgs.view());
-    }
-    @Override public @NotNull SeqView<String> namesView() {
-      return telescope.view().map(Param::name);
-    }
-  }
-  default @NotNull AbstractTele prefix(int i) {
-    return i == telescopeSize() ? this : new Slice(this, i);
-  }
+
+  /**
+   * Takes first {@param telescopeSize} parameters of {@param signature}. {@link #result} is not available
+   */
   record Slice(
     @NotNull AbstractTele signature,
     @Override int telescopeSize
@@ -106,6 +160,47 @@ public interface AbstractTele {
     }
     @Override public @NotNull SeqView<String> namesView() {
       return signature.namesView().sliceView(0, telescopeSize);
+    }
+  }
+
+  /**
+   * Apply first {@code args.size()} parameters with {@param args} of {@param signature}
+   */
+  record Apply(
+    @NotNull AbstractTele signature,
+    @NotNull ImmutableSeq<Term> args
+  ) implements AbstractTele {
+    public Apply {
+      assert args.size() <= signature.telescopeSize();
+    }
+
+    @Override
+    public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      checkIndex(i);
+      return signature.telescope(telescopeSize() + i, args.appendedAll(teleArgs));
+    }
+
+    @Override
+    public @NotNull Term result(Seq<Term> teleArgs) {
+      checkResult(teleArgs);
+      return signature.result(args.appendedAll(teleArgs));
+    }
+
+    @Override
+    public int telescopeSize() {
+      return signature.telescopeSize() - args.size();
+    }
+
+    @Override
+    public boolean telescopeLicit(int i) {
+      checkIndex(i);
+      return signature.telescopeLicit(telescopeSize() + i);
+    }
+
+    @Override
+    public @NotNull String telescopeName(int i) {
+      checkIndex(i);
+      return signature.telescopeName(telescopeSize() + i);
     }
   }
 }

@@ -473,7 +473,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   /** Maybe you're looking for {@link #compare} instead. */
   @ApiStatus.Internal public boolean checkEqn(@NotNull TyckState.Eqn eqn) {
-    if (state.solutions().containsKey(eqn.lhs().ref()))
+    if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
     else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;
   }

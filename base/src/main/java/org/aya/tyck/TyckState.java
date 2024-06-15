@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableStack;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
@@ -11,6 +12,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
@@ -26,16 +28,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-public record TyckState(
-  @NotNull MutableList<Eqn> eqns,
-  @NotNull MutableList<WithPos<MetaVar>> activeMetas,
-  @NotNull MutableMap<MetaVar, Term> solutions,
-  @NotNull ShapeFactory shapeFactory,
-  @NotNull PrimFactory primFactory
-) {
+public final class TyckState {
+  public final @NotNull MutableList<Eqn> eqns = MutableList.create();
+  public final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
+  public final @NotNull MutableMap<MetaVar, Term> solutions = MutableMap.create();
+  public final @NotNull MutableStack<LocalVar> classThis = MutableStack.create();
+  public final @NotNull ShapeFactory shapeFactory;
+  public final @NotNull PrimFactory primFactory;
+
   public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
-    this(MutableList.create(), MutableList.create(), MutableMap.create(),
-      shapeFactory, primFactory);
+    this.shapeFactory = shapeFactory;
+    this.primFactory = primFactory;
   }
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
@@ -53,14 +56,14 @@ public record TyckState(
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
-      var eqns = this.eqns.toImmutableSeq();
-      if (postSimplificationSize == eqns.size()) {
+      var frozenEqns = eqns.toImmutableSeq();
+      if (postSimplificationSize == frozenEqns.size()) {
         // TODO: report error, cannot solve eqns
-        reporter.report(new MetaVarProblem.CannotSolveEquations(eqns));
+        reporter.report(new MetaVarProblem.CannotSolveEquations(frozenEqns));
         return;
-      } else postSimplificationSize = eqns.size();
+      } else postSimplificationSize = frozenEqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
-      if (eqns.isNotEmpty()) for (var eqn : eqns) {
+      if (frozenEqns.isNotEmpty()) for (var eqn : frozenEqns) {
         if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);
       }
     }

@@ -8,6 +8,7 @@ import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
+import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,16 +22,21 @@ import org.jetbrains.annotations.NotNull;
  * @author kiva, ice1000
  */
 public record ClassCall(
+  @NotNull LocalVar self,
   @NotNull ClassDefLike ref,
   @Override int ulift,
   @NotNull ImmutableSeq<Term> args
 ) implements StableWHNF, Formation {
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Term> args) {
     return this.args.sameElements(args, true)
-      ? this : new ClassCall(ref, ulift, args);
+      ? this : new ClassCall(self, ref, ulift, args);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(args.map(t -> f.apply(0, t)));
+  }
+
+  @Override public @NotNull Term doElevate(int level) {
+    return new ClassCall(self, ref, ulift + level, args);
   }
 }

@@ -3,10 +3,8 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.syntax.telescope.AbstractTele;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface ClassDefLike extends AnyDef permits ClassDef.Delegate {
   @NotNull ImmutableSeq<MemberDefLike> members();
-  @NotNull AbstractTele takeMembers(int size);
 }
