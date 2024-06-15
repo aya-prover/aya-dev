@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableStack;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
@@ -11,6 +12,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
@@ -30,11 +32,12 @@ public record TyckState(
   @NotNull MutableList<Eqn> eqns,
   @NotNull MutableList<WithPos<MetaVar>> activeMetas,
   @NotNull MutableMap<MetaVar, Term> solutions,
+  @NotNull MutableStack<LocalVar> classThis,
   @NotNull ShapeFactory shapeFactory,
   @NotNull PrimFactory primFactory
 ) {
   public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
-    this(MutableList.create(), MutableList.create(), MutableMap.create(),
+    this(MutableList.create(), MutableList.create(), MutableMap.create(), MutableStack.create(),
       shapeFactory, primFactory);
   }
   @ApiStatus.Internal

@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
-import kala.function.CheckedSupplier;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -44,13 +43,8 @@ public interface AppTycker {
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
 
-  interface ClassCallScope<Ex extends Exception> {
-    <R> R subscopedClass(@NotNull CheckedSupplier<R, Ex> block) throws Ex;
-    LocalVar thisClass();
-  }
-
   record CheckAppData<Ex extends Exception>(
-    @NotNull TyckState state, @NotNull ClassCallScope<Ex> scoper, @NotNull SourcePos pos,
+    @NotNull TyckState state, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) { }
 
@@ -86,7 +80,7 @@ public interface AppTycker {
         new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
       case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
-      case ClassDecl _ -> checkClassCall(input.makeArgs, input.scoper, input.pos, input.argsCount, input.lift,
+      case ClassDecl _ -> checkClassCall(input.state, input.makeArgs, input.pos, input.argsCount, input.lift,
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
       case ClassMember _ -> checkProjCall(input.makeArgs, input.lift,
         new MemberDef.Delegate((DefVar<MemberDef, ClassMember>) defVar));
@@ -148,18 +142,19 @@ public interface AppTycker {
   }
 
   private static <Ex extends Exception> Jdg checkClassCall(
-    @NotNull Factory<Ex> makeArgs, @NotNull ClassCallScope<Ex> scoper, @NotNull SourcePos pos,
+    @NotNull TyckState scoper, @NotNull Factory<Ex> makeArgs, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull ClassDefLike clazz
   ) throws Ex {
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     // TODO: We may just accept a LocalVar and do subscopedClass in ExprTycker as long as appliedParams won't be affected.
-    return scoper.subscopedClass(() -> makeArgs.applyChecked(appliedParams, args -> {
-      var self = scoper.thisClass();
-      return new Jdg.Default(
-        new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
-        appliedParams.result(args)
-      );
-    }));
+    var self = LocalVar.generate("self");
+    scoper.classThis().push(self);
+    var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
+      new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
+      appliedParams.result(args)
+    ));
+    scoper.classThis().pop();
+    return result;
   }
 
   static @NotNull <Ex extends Exception> Jdg checkProjCall(
