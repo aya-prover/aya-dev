@@ -24,6 +24,7 @@ public final class ClassDecl extends Decl {
     super(info);
     this.ref = DefVar.concrete(this, name);
     this.members = members;
+    members.forEach(member -> member.classRef = ref);
   }
   @Override public @NotNull DefVar<ClassDef, ClassDecl> ref() { return ref; }
   @Override public void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) {
