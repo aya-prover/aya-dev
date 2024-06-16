@@ -153,12 +153,14 @@ public record StmtTycker(
   }
   private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {
     if (member.ref.core != null) return;
+    tycker.state.classThis.push(member.classRef.concrete.self);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
     var signature = teleTycker.checkSignature(member.telescope, result);
     tycker.solveMetas();
     signature = signature.pusheen(tycker::whnf).descent(tycker::zonk);
+    tycker.state.classThis.pop();
     member.ref.signature = signature;
   }
 
