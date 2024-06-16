@@ -14,6 +14,7 @@ import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
@@ -82,7 +83,7 @@ public interface AppTycker {
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
       case ClassDecl _ -> checkClassCall(input.state, input.makeArgs, input.pos, input.argsCount, input.lift,
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
-      case ClassMember _ -> checkProjCall(input.makeArgs, input.lift,
+      case ClassMember _ -> checkProjCall(input.state, input.makeArgs, input.lift,
         new MemberDef.Delegate((DefVar<MemberDef, ClassMember>) defVar));
       case Decl any -> throw new Panic(any.getClass().getCanonicalName());
     };
@@ -158,15 +159,19 @@ public interface AppTycker {
   }
 
   static @NotNull <Ex extends Exception> Jdg checkProjCall(
-    @NotNull Factory<Ex> makeArgs, int lift,
+    @NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift,
     @NotNull MemberDefLike member
   ) throws Ex {
     var signature = member.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> {
-      assert args.length >= 1;
-      var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
+      // assert args.length >= 1;
+      // var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
+      // return new Jdg.Default(
+      //   new FieldCall(args[0], member, 0, fieldArgs),
+      //   signature.result(args)
+      // );
       return new Jdg.Default(
-        new FieldCall(args[0], member, 0, fieldArgs),
+        new FieldCall(new FreeTerm(state.classThis.peek()), member, 0, ImmutableArray.from(args)),
         signature.result(args)
       );
     });
