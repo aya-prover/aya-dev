@@ -34,7 +34,6 @@ New features:
 
 - Implemented some missing features from previous Aya, including:
   - Pushing telescope for fn and constructors, not for data yet
-  - 
 - `partial` definitions will not be termination-checked and will not be unfolded,
   definitions that fail termination check will be marked as `partial`
 - `ListTerm` now uses a persistent list, which should be more efficient
