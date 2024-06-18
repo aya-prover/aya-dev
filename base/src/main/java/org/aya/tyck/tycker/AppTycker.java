@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public record AppTycker<Ex extends Exception>(
   @NotNull TyckState state, @NotNull SourcePos pos,
@@ -187,28 +186,9 @@ public record AppTycker<Ex extends Exception>(
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       // teleArgs are former members
       assert i < telescopeSize;
-      var subster = new UnaryOperator<Term>() {
-        @Override
-        public Term apply(Term term) {
-          return switch (term) {
-            case FieldCall(var of, var ref, var ulift, var args) when of instanceof FreeTerm(var selfRef)
-              && selfRef == clazz.ref().concrete.self -> {
-              var replacement = new ClassCall(
-                // nobody refers to you, sorry
-                LocalVar.generate("dummy"),
-                new ClassDef.Delegate(clazz.ref()),
-                0, teleArgs.toImmutableSeq());
-
-              yield new FieldCall(replacement, ref, ulift, args);
-            }
-
-            default -> term.descent(this);
-          };
-        }
-      };
-
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).makePi().descent(subster);
+      // TODO: instantiate self projection with teleArgs
+      return TyckDef.defSignature(member.ref()).makePi();
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       // Use SigmaTerm::lub
