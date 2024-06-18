@@ -111,8 +111,10 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       }
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) ->
-          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.sourcePos()));
+        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) -> {
+          setupModule(mCtx, mem.ref);
+          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.sourcePos());
+        });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
@@ -140,9 +142,10 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
 
   /**
    * pre-resolve children of {@param decl}
-   * @param decl the top-level decl
-   * @param context the context where {@paran decl} lives in
-   * @param childrenGet the children of {@param decl}
+   *
+   * @param decl          the top-level decl
+   * @param context       the context where {@paran decl} lives in
+   * @param childrenGet   the children of {@param decl}
    * @param childResolver perform resolve on the child of {@param decl}
    * @return the module context of {@param decl}, it should be a sub-module of {@param context}
    */
