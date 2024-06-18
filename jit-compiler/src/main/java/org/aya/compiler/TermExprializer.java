@@ -136,7 +136,7 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
         ExprializeUtils.getEmptyCallTerm(NameSerializer.getClassReference(call.ref()));
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
-      case FieldCall fieldCall -> throw new UnsupportedOperationException("TODO");
+      case MemberCall memberCall -> throw new UnsupportedOperationException("TODO");
       case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));

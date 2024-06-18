@@ -163,6 +163,10 @@ public interface AbstractTele {
     }
   }
 
+  default @NotNull AbstractTele inst(ImmutableSeq<Term> preArgs) {
+    return new Apply(this, preArgs);
+  }
+
   /**
    * Apply first {@code args.size()} parameters with {@param args} of {@param signature}
    */
@@ -174,31 +178,26 @@ public interface AbstractTele {
       assert args.size() <= signature.telescopeSize();
     }
 
-    @Override
-    public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+    @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       checkIndex(i);
       return signature.telescope(telescopeSize() + i, args.appendedAll(teleArgs));
     }
 
-    @Override
-    public @NotNull Term result(Seq<Term> teleArgs) {
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
       checkResult(teleArgs);
       return signature.result(args.appendedAll(teleArgs));
     }
 
-    @Override
-    public int telescopeSize() {
+    @Override public int telescopeSize() {
       return signature.telescopeSize() - args.size();
     }
 
-    @Override
-    public boolean telescopeLicit(int i) {
+    @Override public boolean telescopeLicit(int i) {
       checkIndex(i);
       return signature.telescopeLicit(telescopeSize() + i);
     }
 
-    @Override
-    public @NotNull String telescopeName(int i) {
+    @Override public @NotNull String telescopeName(int i) {
       checkIndex(i);
       return signature.telescopeName(telescopeSize() + i);
     }

@@ -159,7 +159,7 @@ public record AppTycker<Ex extends Exception>(
       //   signature.result(args)
       // );
       return new Jdg.Default(
-        new FieldCall(new FreeTerm(state.classThis.peek()), member, 0, ImmutableArray.from(args)),
+        new MemberCall(new FreeTerm(state.classThis.peek()), member, 0, ImmutableArray.from(args)),
         signature.result(args)
       );
     });

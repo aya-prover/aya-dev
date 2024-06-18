@@ -28,7 +28,7 @@ public sealed interface Callable extends Term permits Callable.Tele, MetaCall {
   /**
    * Call to a {@link AnyDef}.
    */
-  sealed interface Tele extends Callable permits SharableCall, ConCallLike, FieldCall, RuleReducer {
+  sealed interface Tele extends Callable permits SharableCall, ConCallLike, MemberCall, RuleReducer {
     @NotNull AnyDef ref();
     int ulift();
   }
