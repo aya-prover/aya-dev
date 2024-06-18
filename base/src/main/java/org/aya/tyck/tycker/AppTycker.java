@@ -187,8 +187,7 @@ public record AppTycker<Ex extends Exception>(
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      // TODO: instantiate self projection with teleArgs
-      return TyckDef.defSignature(member.ref()).makePi();
+      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(clazz.ref().concrete.self)));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       // Use SigmaTerm::lub

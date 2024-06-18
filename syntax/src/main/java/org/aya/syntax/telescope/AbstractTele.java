@@ -75,12 +75,12 @@ public interface AbstractTele {
       .view().mapToObj(this::telescopeName);
   }
 
-  default @NotNull Term makePi() {
-    return new PiBuilder(this).make(0, ImmutableSeq.empty());
+  default @NotNull Term makePi(@NotNull Seq<Term> initialArgs) {
+    return new PiBuilder(this).make(0, initialArgs);
   }
 
   record PiBuilder(AbstractTele telescope) {
-    public @NotNull Term make(int i, ImmutableSeq<Term> args) {
+    public @NotNull Term make(int i, Seq<Term> args) {
       return i == telescope.telescopeSize() ? telescope.result(args) :
         new PiTerm(telescope.telescope(i, args), new Closure.Jit(arg ->
           make(i + 1, args.appended(arg))));
