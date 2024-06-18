@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
@@ -150,7 +151,8 @@ public record AppTycker<Ex extends Exception>(
   }
 
   private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
-    var signature = member.signature().lift(lift);
+    var self = new FreeTerm(state.classThis.peek());
+    var signature = member.signature().inst(ImmutableSeq.of(self)).lift(lift);
     return makeArgs.applyChecked(signature, args -> {
       // assert args.length >= 1;
       // var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
@@ -159,7 +161,7 @@ public record AppTycker<Ex extends Exception>(
       //   signature.result(args)
       // );
       return new Jdg.Default(
-        new MemberCall(new FreeTerm(state.classThis.peek()), member, 0, ImmutableArray.from(args)),
+        new MemberCall(self, member, 0, ImmutableArray.from(args)),
         signature.result(args)
       );
     });
