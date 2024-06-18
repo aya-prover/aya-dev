@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -153,14 +154,17 @@ public record StmtTycker(
   }
   private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {
     if (member.ref.core != null) return;
-    tycker.state.classThis.push(member.classRef.concrete.self);
+    var classRef = member.classRef;
+    tycker.state.classThis.push(classRef.concrete.self);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
     var signature = teleTycker.checkSignature(member.telescope, result);
     tycker.solveMetas();
-    signature = signature.pusheen(tycker::whnf).descent(tycker::zonk);
-    tycker.state.classThis.pop();
+    signature = signature.pusheen(tycker::whnf)
+      .descent(tycker::zonk)
+      .bindTele(SeqView.of(tycker.state.classThis.pop()));
+    new MemberDef(classRef, member.ref, signature.rawParams(), signature.result());
     member.ref.signature = signature;
   }
 
@@ -250,7 +254,7 @@ public record StmtTycker(
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new Signature(ownerTele.concat(selfSig.param()), boundDataCall);
-    ref.core = new ConDef(dataDef, ref, wellPats, boundaries,
+    new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele.map(WithPos::data),
       selfSig.rawParams(),
       boundDataCall, false);

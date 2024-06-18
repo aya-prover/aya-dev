@@ -10,6 +10,11 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A class field definition.
+ * @param telescope it is bound with the `self` pointer, so whenever you need to make sense of this type,
+ *                  you need to inst its elements with `self` first.
+ */
 public record MemberDef(
   @NotNull DefVar<ClassDef, ClassDecl> classRef,
   @Override @NotNull DefVar<MemberDef, ClassMember> ref,
