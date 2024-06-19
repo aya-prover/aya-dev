@@ -103,13 +103,9 @@ public interface AbstractTele {
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      // TODO: +1 on this
       return telescope.get(i).type().instantiateTele(teleArgs.sliceView(0, i));
     }
-    @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      assert teleArgs.size() == telescopeSize();
-      return result.instantiateTele(teleArgs.view());
-    }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instantiateTele(teleArgs.view()); }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
     }

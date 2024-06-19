@@ -164,6 +164,7 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(tycker::zonk)
       .bindTele(SeqView.of(tycker.state.classThis.pop()));
+    // TODO: prepend {this: Class} to the telescope
     new MemberDef(classRef, member.ref, signature.rawParams(), signature.result());
     member.ref.signature = signature;
   }
