@@ -9,6 +9,7 @@ import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jline.terminal.TerminalBuilder;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -27,12 +28,17 @@ public record AnsiReporter(
 ) implements Reporter {
   @Contract(pure = true, value = "_, _, _ -> new")
   public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
-    // AnsiConsole.systemInstall();
+    if (unicode) try {
+      var terminal = TerminalBuilder.builder().jni(true).dumb(true).build();
+      Consumer<String> out = s -> {
+        terminal.writer().println(s);
+        terminal.flush();
+      };
+      return new AnsiReporter(true, () -> true, () -> options, minimum, out, out);
+    } catch (Exception _) {
+    }
     return new AnsiReporter(true, () -> unicode, () -> options, minimum,
-      s -> {
-        System.console().writer().println(s);
-        System.console().flush();
-      }, System.err::println);
+      System.out::println, System.err::println);
   }
 
   @Override public void report(@NotNull Problem problem) {
