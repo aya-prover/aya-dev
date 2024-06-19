@@ -21,7 +21,6 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
@@ -159,8 +158,7 @@ public record StmtTycker(
     var classRef = member.classRef;
     var self = classRef.concrete.self;
     tycker.state.classThis.push(self);
-    var classCall = new ClassCall(new LocalVar("self"),
-      new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
+    var classCall = new ClassCall(new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
     tycker.localCtx().put(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;

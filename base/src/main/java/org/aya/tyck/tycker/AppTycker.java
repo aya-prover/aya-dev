@@ -138,13 +138,12 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
-    // TODO: We may just accept a LocalVar and do subscopedClass in ExprTycker as long as appliedParams won't be affected.
     var self = LocalVar.generate("self");
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
-      new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
+      new ClassCall(clazz, 0, ImmutableArray.from(args)),
       appliedParams.result(args)
-    ));
+    ).bindTele(SeqView.of(self)));
     state.classThis.pop();
     return result;
   }
