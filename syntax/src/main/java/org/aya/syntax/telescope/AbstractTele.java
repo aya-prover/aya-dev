@@ -141,14 +141,14 @@ public interface AbstractTele {
     @NotNull ImmutableSeq<Term> args
   ) implements AbstractTele {
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      return signature.telescope(i, args.appendedAll(teleArgs));
+      return signature.telescope(i + args.size(), args.appendedAll(teleArgs));
     }
 
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return signature.result(args.appendedAll(teleArgs));
     }
     @Override public int telescopeSize() { return signature.telescopeSize(); }
-    @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i); }
-    @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i); }
+    @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i + args.size()); }
+    @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i + args.size()); }
   }
 }

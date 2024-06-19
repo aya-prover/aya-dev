@@ -17,9 +17,11 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
@@ -164,8 +166,10 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(tycker::zonk)
       .bindTele(SeqView.of(tycker.state.classThis.pop()));
-    // TODO: prepend {this: Class} to the telescope
-    new MemberDef(classRef, member.ref, signature.rawParams(), signature.result());
+    // TODO: reconsider these `self` references, they should be locally nameless!
+    var self = new Param("this", new ClassCall(new LocalVar("self"),
+      new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty()), false);
+    new MemberDef(classRef, member.ref, signature.rawParams().prepended(self), signature.result());
     member.ref.signature = signature;
   }
 
