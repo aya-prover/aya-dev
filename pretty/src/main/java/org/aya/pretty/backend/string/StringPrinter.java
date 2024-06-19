@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -52,7 +52,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
 
   protected int predictWidth(@NotNull Cursor cursor, @NotNull Doc doc) {
     return switch (doc) {
-      case Doc.Empty d -> 0;
+      case Doc.Empty _, Doc.Line _ -> 0;
       case Doc.PlainText(var text) -> text.length();
       case Doc.EscapedText(var text) -> text.length();
       case Doc.SpecialSymbol(var text) -> text.length();
@@ -60,7 +60,6 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.Image i -> predictWidth(cursor, i.alt());
       case Doc.Styled styled -> predictWidth(cursor, styled.doc());
       case Doc.Tooltip tooltip -> predictWidth(cursor, tooltip.doc());
-      case Doc.Line d -> 0;
       case Doc.FlatAlt alt -> predictWidth(cursor, alt.defaultDoc());
       case Doc.Cat cat -> cat.inner().view().map(inner -> predictWidth(cursor, inner)).reduce(Integer::sum);
       case Doc.Nest nest -> predictWidth(cursor, nest.doc()) + nest.indent();
@@ -84,11 +83,8 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     return lineRem == PrinterConfig.INFINITE_SIZE || predictWidth(cursor, a) <= lineRem ? a : b;
   }
 
-  protected void renderHeader(@NotNull Cursor cursor) {
-  }
-
-  protected void renderFooter(@NotNull Cursor cursor) {
-  }
+  protected void renderHeader(@NotNull Cursor cursor) { }
+  protected void renderFooter(@NotNull Cursor cursor) { }
 
   protected void renderDoc(@NotNull Cursor cursor, @NotNull Doc doc, EnumSet<Outer> outer) {
     switch (doc) {
@@ -98,7 +94,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.HyperLinked text -> renderHyperLinked(cursor, text, outer);
       case Doc.Image image -> renderImage(cursor, image, outer);
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
-      case Doc.Line d -> renderHardLineBreak(cursor, outer);
+      case Doc.Line _ -> renderHardLineBreak(cursor, outer);
       case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
       case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner, outer));
       case Doc.Nest nest -> renderNest(cursor, nest, outer);
@@ -112,26 +108,25 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.InlineMath inlineMath -> renderInlineMath(cursor, inlineMath, outer);
       case Doc.MathBlock mathBlock -> renderMathBlock(cursor, mathBlock, outer);
       case Doc.Tooltip tooltip -> renderTooltip(cursor, tooltip, outer);
-      case Doc.Empty _ -> {}
+      case Doc.Empty _ -> { }
     }
   }
 
   private static final @NotNull Map<String, String> unicodeMapping = Map.ofEntries(
-    Tuple.of("Sig", "\u03A3"),
-    Tuple.of("/\\", "\u2227"),
-    Tuple.of("\\/", "\u2228"),
-    Tuple.of("=>", "\u21D2"),
-    Tuple.of("ulift", "\u2191"),
-    Tuple.of("forall", "\u2200"),
-    Tuple.of("->", "\u2192"),
-    Tuple.of("_|_", "\u22A5"),
-    Tuple.of("top", "\u22A4"),
-    Tuple.of("(|", "\u2987"),
-    Tuple.of("|)", "\u2988"),
-    Tuple.of("{|", "\u2983"),
-    Tuple.of("|}", "\u2984"),
-    Tuple.of("[|", "\u27E6"),
-    Tuple.of("|]", "\u27E7")
+    Tuple.of("/\\", "∧"),
+    Tuple.of("\\/", "∨"),
+    Tuple.of("=>", "⇒"),
+    Tuple.of("ulift", "↑"),
+    Tuple.of("forall", "∀"),
+    Tuple.of("->", "→"),
+    Tuple.of("_|_", "⊥"),
+    Tuple.of("top", "⊤"),
+    Tuple.of("(|", "⦇"),
+    Tuple.of("|)", "⦈"),
+    Tuple.of("{|", "⦃"),
+    Tuple.of("|}", "⦄"),
+    Tuple.of("[|", "⟦"),
+    Tuple.of("|]", "⟧")
   );
 
   protected void renderSpecialSymbol(@NotNull Cursor cursor, @NotNull String text, EnumSet<Outer> outer) {
@@ -169,17 +164,13 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
     stylist.format(styled.styles(), cursor, outer, () -> renderDoc(cursor, styled.doc(), outer));
   }
 
-  protected @NotNull StringStylist prepareStylist() {
-    return config.getStylist();
-  }
+  protected @NotNull StringStylist prepareStylist() { return config.getStylist(); }
 
   protected void renderPlainText(@NotNull Cursor cursor, @NotNull String content, EnumSet<Outer> outer) {
     cursor.visibleContent(escapePlainText(content, outer));
   }
 
-  protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) {
-    return content;
-  }
+  protected @NotNull String escapePlainText(@NotNull String content, EnumSet<Outer> outer) { return content; }
 
   /**
    * This line break makes target source code beautiful (like .tex or .md generated from Doc).
@@ -191,7 +182,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
    * @apiNote This is called by {@link #renderCodeBlock}, {@link #renderMathBlock}, {@link #formatList},
    * and other block rendering methods to separate the current block from the previous one.
    */
-  protected void renderBlockSeparator(@NotNull Cursor cursor, EnumSet<Outer> outer) {
+  protected void renderBlockSeparator(@NotNull Cursor cursor, EnumSet<Outer> ignoredOuter) {
     cursor.lineBreakWith("\n");
   }
 

@@ -31,7 +31,7 @@ public final class PLCTReport {
     Tuple.of("Aya VSCode", "aya-prover/aya-vscode"),
     Tuple.of("Aya Intellij Plugin", "aya-prover/intellij-aya")
   );
-  public static final @NotNull @Nls String SHRUG = "\ud83e\udd37";
+  public static final @NotNull @Nls String SHRUG = "🤷";
   private final @NotNull HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
   private Consumer<String> out;
 
