@@ -147,7 +147,7 @@ public interface AbstractTele {
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return signature.result(args.appendedAll(teleArgs));
     }
-    @Override public int telescopeSize() { return signature.telescopeSize(); }
+    @Override public int telescopeSize() { return signature.telescopeSize() - args.size(); }
     @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i + args.size()); }
     @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i + args.size()); }
   }

@@ -157,7 +157,11 @@ public record StmtTycker(
   private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {
     if (member.ref.core != null) return;
     var classRef = member.classRef;
-    tycker.state.classThis.push(classRef.concrete.self);
+    var self = classRef.concrete.self;
+    tycker.state.classThis.push(self);
+    var classCall = new ClassCall(new LocalVar("self"),
+      new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
+    tycker.localCtx().put(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
@@ -167,9 +171,8 @@ public record StmtTycker(
       .descent(tycker::zonk)
       .bindTele(SeqView.of(tycker.state.classThis.pop()));
     // TODO: reconsider these `self` references, they should be locally nameless!
-    var self = new Param("this", new ClassCall(new LocalVar("self"),
-      new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty()), false);
-    new MemberDef(classRef, member.ref, signature.rawParams().prepended(self), signature.result());
+    var selfParam = new Param("this", classCall, false);
+    new MemberDef(classRef, member.ref, signature.rawParams().prepended(selfParam), signature.result());
     member.ref.signature = signature;
   }
 
