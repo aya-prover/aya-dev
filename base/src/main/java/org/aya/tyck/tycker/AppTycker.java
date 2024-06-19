@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
@@ -14,6 +15,7 @@ import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
@@ -24,10 +26,14 @@ import org.aya.tyck.TyckState;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public interface AppTycker {
+public record AppTycker<Ex extends Exception>(
+  @NotNull TyckState state, @NotNull SourcePos pos,
+  int argsCount, int lift, @NotNull Factory<Ex> makeArgs
+) {
   /**
    * <pre>
    * Signature (0th param) --------> Argument Parser (this interface)
@@ -39,57 +45,50 @@ public interface AppTycker {
    * </pre>
    */
   @FunctionalInterface
-  interface Factory<Ex extends Exception> extends
+  public interface Factory<Ex extends Exception> extends
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
   }
 
-  record CheckAppData<Ex extends Exception>(
-    @NotNull TyckState state, @NotNull SourcePos pos,
-    int argsCount, int lift, @NotNull Factory<Ex> makeArgs
-  ) { }
-
-  static <Ex extends Exception> @NotNull Jdg
-  checkCompiledApplication(@NotNull AbstractTele def, CheckAppData<Ex> input) throws Ex {
+  public @NotNull Jdg checkCompiledApplication(@NotNull AbstractTele def) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();
         var operator = shape != -1 ? AyaShape.ofFn(fn, AyaShape.values()[shape]) : null;
-        yield checkFnCall(input.makeArgs, input.lift, fn, operator);
+        yield checkFnCall(fn, operator);
       }
-      case JitData data -> checkDataCall(input.makeArgs, input.lift, data);
-      case JitPrim prim -> checkPrimCall(input.state, input.makeArgs, input.lift, prim);
-      case JitCon con -> checkConCall(input.state, input.makeArgs, input.lift, con);
+      case JitData data -> checkDataCall(data);
+      case JitPrim prim -> checkPrimCall(prim);
+      case JitCon con -> checkConCall(con);
       default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }
 
   @SuppressWarnings("unchecked")
-  static <Ex extends Exception> @NotNull Jdg checkDefApplication(
-    @NotNull DefVar<?, ?> defVar, @NotNull CheckAppData<Ex> input
+  public @NotNull Jdg checkDefApplication(
+    @NotNull DefVar<?, ?> defVar
   ) throws Ex {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
-        var op = input.state.shapeFactory.find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
-        yield checkFnCall(input.makeArgs, input.lift, fnDef, op);
+        var op = state.shapeFactory.find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
+        yield checkFnCall(fnDef, op);
       }
       // Extracted to prevent pervasive influence of suppression of unchecked warning.
-      case DataDecl _ -> checkDataCall(input.makeArgs, input.lift,
+      case DataDecl _ -> checkDataCall(
         new DataDef.Delegate((DefVar<DataDef, DataDecl>) defVar));
-      case PrimDecl _ -> checkPrimCall(input.state, input.makeArgs, input.lift,
+      case PrimDecl _ -> checkPrimCall(
         new PrimDef.Delegate((DefVar<PrimDef, PrimDecl>) defVar));
-      case DataCon _ -> checkConCall(input.state, input.makeArgs, input.lift,
+      case DataCon _ -> checkConCall(
         new ConDef.Delegate((DefVar<ConDef, DataCon>) defVar));
-      case ClassDecl _ -> checkClassCall(input.state, input.makeArgs, input.pos, input.argsCount, input.lift,
+      case ClassDecl _ -> checkClassCall(
         new ClassDef.Delegate((DefVar<ClassDef, ClassDecl>) defVar));
-      case ClassMember _ -> checkProjCall(input.makeArgs, input.lift,
+      case ClassMember _ -> checkProjCall(
         new MemberDef.Delegate((DefVar<MemberDef, ClassMember>) defVar));
       case Decl any -> throw new Panic(any.getClass().getCanonicalName());
     };
   }
 
-  private static <Ex extends Exception> Jdg
-  checkConCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, ConDefLike conVar) throws Ex {
+  private @NotNull Jdg checkConCall(@NotNull ConDefLike conVar) throws Ex {
     var dataVar = conVar.dataRef();
 
     // ownerTele + selfTele
@@ -109,25 +108,22 @@ public interface AppTycker {
       return new Jdg.Default(wellTyped, type);
     });
   }
-  private static <Ex extends Exception> Jdg
-  checkPrimCall(@NotNull TyckState state, @NotNull Factory<Ex> makeArgs, int lift, PrimDefLike primVar) throws Ex {
+  private @NotNull Jdg checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
       state.primFactory.unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
-  private static <Ex extends Exception> Jdg
-  checkDataCall(@NotNull Factory<Ex> makeArgs, int lift, DataDefLike data) throws Ex {
+  private @NotNull Jdg checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> new Jdg.Default(
       new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
   }
-  private static <Ex extends Exception> @NotNull Jdg checkFnCall(
-    @NotNull Factory<Ex> makeArgs, int lift, FnDefLike fnDef,
-    Shaped.Applicable<FnDefLike> operator
+  private @NotNull Jdg checkFnCall(
+    @NotNull FnDefLike fnDef, @Nullable Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
     var signature = fnDef.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> {
@@ -141,32 +137,31 @@ public interface AppTycker {
     });
   }
 
-  private static <Ex extends Exception> Jdg checkClassCall(
-    @NotNull TyckState scoper, @NotNull Factory<Ex> makeArgs, @NotNull SourcePos pos,
-    int argsCount, int lift, @NotNull ClassDefLike clazz
-  ) throws Ex {
+  private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     // TODO: We may just accept a LocalVar and do subscopedClass in ExprTycker as long as appliedParams won't be affected.
     var self = LocalVar.generate("self");
-    scoper.classThis.push(self);
+    state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
       new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
       appliedParams.result(args)
     ));
-    scoper.classThis.pop();
+    state.classThis.pop();
     return result;
   }
 
-  static @NotNull <Ex extends Exception> Jdg checkProjCall(
-    @NotNull Factory<Ex> makeArgs, int lift,
-    @NotNull MemberDefLike member
-  ) throws Ex {
-    var signature = member.signature().lift(lift);
+  private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
+    var self = new FreeTerm(state.classThis.peek());
+    var signature = member.signature().inst(ImmutableSeq.of(self)).lift(lift);
     return makeArgs.applyChecked(signature, args -> {
-      assert args.length >= 1;
-      var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
+      // assert args.length >= 1;
+      // var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
+      // return new Jdg.Default(
+      //   new FieldCall(args[0], member, 0, fieldArgs),
+      //   signature.result(args)
+      // );
       return new Jdg.Default(
-        new FieldCall(args[0], member, 0, fieldArgs),
+        new MemberCall(self, member, 0, ImmutableArray.from(args)),
         signature.result(args)
       );
     });
@@ -194,8 +189,7 @@ public interface AppTycker {
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      // TODO: instantiate self projection with teleArgs
-      return TyckDef.defSignature(member.ref()).makePi();
+      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(clazz.ref().concrete.self)));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       // Use SigmaTerm::lub

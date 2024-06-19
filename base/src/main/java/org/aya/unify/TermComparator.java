@@ -93,6 +93,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
+      case Pair(MemberCall lMem, MemberCall rMem) -> {
+        if (!lMem.ref().equals(rMem.ref())) yield null;
+        // TODO: type info?
+        if (!compare(lMem.of(), rMem.of(), null)) yield null;
+        yield compareMany(lMem.args(), rMem.args(),
+          lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
+      }
       default -> null;
     };
   }
@@ -125,7 +132,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
     var lhs = whnf(preLhs);
     var rhs = whnf(preRhs);
-    if ((!(lhs == preLhs && rhs == preRhs)) &&
+    if (!(lhs == preLhs && rhs == preRhs) &&
       checkApproxResult(type, compareApprox(lhs, rhs))) return true;
 
     if (rhs instanceof MetaCall rMeta) {
@@ -295,7 +302,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the ref don't match),
       // so we are unable to do more if we can't normalize them.
-      case FnCall _ -> null;
+      case FnCall _, MemberCall _ -> null;
 
       default -> throw noRules(lhs);
     };

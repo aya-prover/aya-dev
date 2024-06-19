@@ -8,15 +8,15 @@ import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-public record FieldCall(
+public record MemberCall(
   @NotNull Term of,
   @Override @NotNull MemberDefLike ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
 ) implements Callable.Tele {
-  private FieldCall update(Term clazz, ImmutableSeq<Term> newArgs) {
+  private MemberCall update(Term clazz, ImmutableSeq<Term> newArgs) {
     return clazz == of && newArgs.sameElements(args, true) ? this
-      : new FieldCall(clazz, ref, ulift, newArgs);
+      : new MemberCall(clazz, ref, ulift, newArgs);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {

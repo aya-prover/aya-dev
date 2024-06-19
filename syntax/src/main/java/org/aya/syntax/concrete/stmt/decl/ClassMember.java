@@ -4,6 +4,7 @@ package org.aya.syntax.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.def.MemberDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.WithPos;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ClassMember extends TeleDecl {
   public final @NotNull DefVar<MemberDef, ClassMember> ref;
+  public DefVar<ClassDef, ClassDecl> classRef;
 
   public ClassMember(
     @NotNull String name, @NotNull DeclInfo info,

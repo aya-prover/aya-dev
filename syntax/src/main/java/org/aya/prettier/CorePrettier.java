@@ -107,7 +107,7 @@ public class CorePrettier extends BasePrettier<Term> {
               params = params.dropLast(1);
             } else break;
           }
-          if (call instanceof FieldCall access) bodyDoc = visitAccessHead(access);
+          if (call instanceof MemberCall access) bodyDoc = visitAccessHead(access);
           else {
             bodyDoc = visitCoreCalls(call.ref(), args,
               params.isEmpty() ? outer : Outer.Free,
@@ -140,7 +140,7 @@ public class CorePrettier extends BasePrettier<Term> {
       //   SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
       //   options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
       // );
-      case FieldCall term -> visitCoreApp(null, visitAccessHead(term),
+      case MemberCall term -> visitCoreApp(null, visitAccessHead(term),
         term.args().view(), outer,
         optionImplicit());
       case MetaPatTerm(var ref) -> {
@@ -230,11 +230,11 @@ public class CorePrettier extends BasePrettier<Term> {
 
   private ImmutableSeq<Term> visibleArgsOf(Callable call) {
     return call instanceof ConCall con
-      ? con.conArgs() : call instanceof FieldCall access
+      ? con.conArgs() : call instanceof MemberCall access
       ? access.args() : call.args();
   }
 
-  private @NotNull Doc visitAccessHead(@NotNull FieldCall term) {
+  private @NotNull Doc visitAccessHead(@NotNull MemberCall term) {
     return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
       refVar(term.ref()));
   }

@@ -151,6 +151,8 @@ public class TyckTest {
     assertTrue(tyck("""
       class Monoid
       | classifying carrier : Type
+      | unit : carrier
+      | op : carrier -> carrier -> carrier
       """).defs.isNotEmpty());
   }
 

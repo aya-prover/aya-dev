@@ -350,15 +350,12 @@ public abstract class BasePrettier<Term extends AyaDocile> {
   protected static @Nullable Style chooseStyle(Object obj) {
     return switch (obj) {
       case DefVar<?, ?> d -> chooseStyle(d.concrete);
-      case FnDecl _ -> FN;
-      case DataDecl _ -> DATA;
-      case PrimDecl _ -> PRIM;
-      case ClassDecl _ -> CLAZZ;
-      case ClassMember _ -> MEMBER;
-      case FnDefLike _ -> FN;
-      case DataDefLike _ -> DATA;
-      case ConDefLike _ -> CON;
-      case PrimDefLike _ -> PRIM;
+      case FnDecl _, FnDefLike _ -> FN;
+      case DataDecl _, DataDefLike _ -> DATA;
+      case DataCon _, ConDefLike _ -> CON;
+      case PrimDecl _, PrimDefLike _ -> PRIM;
+      case ClassDecl _, ClassDefLike _ -> CLAZZ;
+      case ClassMember _, MemberDefLike _ -> MEMBER;
       case null, default -> null;
     };
   }

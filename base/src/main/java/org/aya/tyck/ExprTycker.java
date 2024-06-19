@@ -323,12 +323,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref)).lift(lift);
       case LocalVar lVar -> generateApplication(args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
-      case CompiledVar(var content) -> AppTycker.checkCompiledApplication(content,
-        new AppTycker.CheckAppData<>(state, sourcePos, args.size(), lift, (params, k) ->
-          computeArgs(sourcePos, args, params, k)));
-      case DefVar<?, ?> defVar -> AppTycker.checkDefApplication(defVar,
-        new AppTycker.CheckAppData<>(state, sourcePos, args.size(), lift, (params, k) ->
-          computeArgs(sourcePos, args, params, k)));
+      case CompiledVar(var content) -> new AppTycker<>(state, sourcePos, args.size(), lift, (params, k) ->
+        computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
+      case DefVar<?, ?> defVar -> new AppTycker<>(state, sourcePos, args.size(), lift, (params, k) ->
+        computeArgs(sourcePos, args, params, k)).checkDefApplication(defVar);
       default -> throw new UnsupportedOperationException("TODO");
     };
   }
