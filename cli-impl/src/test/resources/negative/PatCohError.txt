@@ -14,7 +14,7 @@ Error: I'm unsure if there should be a case for constructor
          Fin+1 m
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Confl:
 In file $FILE:2:12 ->
@@ -34,7 +34,7 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
          suc zero
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ConflLiteral:
 In file $FILE:2:12 ->
@@ -225,7 +225,7 @@ Warning: The 2nd clause dominates the 6th clause. The 6th clause will be
          unreachable
 
 6 error(s), 7 warning(s).
-What are you doing?
+Let's learn from that.
 
 ConflLiteral2:
 In file $FILE:2:12 ->
@@ -529,7 +529,7 @@ Warning: The 5th clause dominates the 4th clause. The 4th clause will be
          unreachable
 
 11 error(s), 12 warning(s).
-What are you doing?
+Let's learn from that.
 
 FirstMatchDomination:
 In file $FILE:6:2 ->
@@ -619,7 +619,7 @@ Warning: The 5th clause dominates the 4th clause. The 4th clause will be
          unreachable
 
 2 error(s), 4 warning(s).
-What are you doing?
+Let's learn from that.
 
 NestedMissing:
 In file $FILE:2:0 ->
@@ -651,7 +651,7 @@ In file $FILE:7:2 ->
 Warning: The 5th clause is dominated by the other clauses, hence unreachable
 
 1 error(s), 1 warning(s).
-What are you doing?
+Let's learn from that.
 
 IApplyConfluence:
 In file $FILE:4:4 ->
@@ -675,7 +675,7 @@ Error: The 3rd clause matches on a path constructor. We failed to unify
          signed false 0
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Coverage:
 In file $FILE:2:0 ->
@@ -694,7 +694,7 @@ Error: Unhandled case:
          suc _, suc _, suc _, x'''
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 CoverageLiteral:
 In file $FILE:2:0 ->
@@ -713,7 +713,7 @@ Error: Unhandled case:
          1, 1, 1, x'''
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 IApplyConflReduce:
 In file $FILE:8:4 ->
@@ -739,5 +739,5 @@ Error: The 4th clause matches on a path constructor. We failed to unify
          pos n
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 

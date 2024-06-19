@@ -10,7 +10,7 @@ Error: Unknown constructor
          test2
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 SelectionFailed:
 In file $FILE:4:2 ->
@@ -38,7 +38,7 @@ Error: I'm unsure if there should be a case for
          Vec (<n> + <n>) A
 
 2 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 SelectionBlocked:
 In file $FILE:4:2 ->
@@ -53,7 +53,7 @@ Error: Unsure if this pattern is actually impossible, as constructor selection
          Vec (<n> + <n>) A
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 SplitOnNonData:
 In file $FILE:3:3 ->
@@ -69,7 +69,7 @@ Error: Cannot split on a non-inductive type
          unit y
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 BadLiteral:
 In file $FILE:3:2 ->
@@ -85,7 +85,7 @@ Error: The literal
          Test
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NotEnoughPattern:
 In file $FILE:3:8 ->
@@ -99,7 +99,7 @@ Error: There is no pattern for the parameter
          ^2
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 TooManyPattern:
 In file $FILE:3:11 ->
@@ -115,7 +115,7 @@ Error: There are too many implicit patterns:
          ^2
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 TooManyPattern2:
 In file $FILE:3:14 ->
@@ -132,7 +132,7 @@ Error: There is no parameter for the pattern
        before the `:` in the signature)
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 InvalidEmptyBody:
 In file $FILE:3:2 ->
@@ -156,7 +156,7 @@ Error: This match arm does not contain any absurd pattern but it has an empty
        body
 
 2 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 InvalidAbsurdPattern:
 In file $FILE:2:23 ->
@@ -168,7 +168,7 @@ In file $FILE:2:23 ->
 Error: Absurd pattern does not fit here because `true` is still available
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NoPattern:
 In file $FILE:4:0 ->
@@ -182,7 +182,7 @@ Error: Unhandled case:
          A, B, f, g, p
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NewRepoIssue597:
 In file $FILE:2:22 ->
@@ -207,7 +207,7 @@ Error: There is no parameter for the pattern
        before the `:` in the signature)
 
 2 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NewRepoIssue746:
 In file $FILE:4:2 ->
@@ -221,7 +221,7 @@ Error: Unknown constructor
          test2
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NewRepoIssue384:
 In file $FILE:1:4 ->
@@ -232,5 +232,5 @@ In file $FILE:1:4 ->
 Error: The empty pattern-matching function test does not have a telescope
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 

@@ -13,7 +13,7 @@ note: In particular, the problematic call is:
         =
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 UnfoldNonTermination:
 In file $FILE:3:4 ->
@@ -30,7 +30,7 @@ note: In particular, the problematic call is:
         =
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 SwapAddition:
 That looks right!

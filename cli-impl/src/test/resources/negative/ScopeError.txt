@@ -32,7 +32,7 @@ Error: The unqualified name `zero` is ambiguous
 
 Resolving interrupted due to:
 1 error(s), 2 warning(s).
-What are you doing?
+Let's learn from that.
 
 DidYouMean:
 In file $FILE:2:11 ->
@@ -46,7 +46,7 @@ Error: The name `suc` is not defined in the current scope
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ImportDefineShadow:
 In file $FILE:4:4 ->
@@ -73,7 +73,7 @@ Error: The qualified name `A::bar` is not defined in the current scope
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ImportHiding:
 In file $FILE:4:15 ->
@@ -87,7 +87,7 @@ Error: The qualified name `A::bar` is not defined in the current scope
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ImportDefineShadow2:
 In file $FILE:4:5 ->
@@ -111,7 +111,7 @@ In file $FILE:1:4 ->
 Error: The recursive definition `undefined` is not structurally recursive
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Issue247:
 In file $FILE:3:2 ->
@@ -125,7 +125,7 @@ Error: The name zero (`zero`) is already defined elsewhere
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 RedefPrim:
 In file $FILE:1:12 ->
@@ -137,7 +137,7 @@ Error: Redefinition of primitive `I`
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 PrimDeps:
 In file $FILE:1:5 ->
@@ -149,7 +149,7 @@ Error: The primitive `Path` depends on undeclared primitive(s): `I`
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 UnknownPrim:
 In file $FILE:1:5 ->
@@ -161,7 +161,7 @@ Error: Unknown primitive `senpaiSuki`
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 UnknownVar:
 In file $FILE:2:9 ->
@@ -174,7 +174,7 @@ Error: The qualified name `Nat::suc` is not defined in the current scope
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 LetOpen:
 That looks right!
@@ -191,7 +191,7 @@ Error: The name `b` is not defined in the current scope
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 GeneralizedDisallowed:
 In file $FILE:3:7 ->
@@ -205,7 +205,7 @@ Error: The generalized variable `A` is not available here
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 DuplicateModName:
 In file $FILE:2:7 ->
@@ -218,7 +218,7 @@ Error: The module name `A` is already defined elsewhere
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ImportNoneExistMod:
 In file $FILE:1:7 ->
@@ -230,7 +230,7 @@ Error: The module name `hopefullyThisModuleWillNeverExist` is not found
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 OpenNoneExistMod:
 In file $FILE:1:5 ->
@@ -243,5 +243,5 @@ Error: The module name `hopefullyThisModuleWillNeverExist` is not defined in the
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
