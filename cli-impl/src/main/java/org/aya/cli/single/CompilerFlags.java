@@ -57,7 +57,7 @@ public record CompilerFlags(
     @NotNull String successNotion,
     @NotNull String failNotion
   ) {
-    public static final Message EMOJI = new Message("\uD83D\uDC02\uD83C\uDF7A", "\uD83D\uDD28");
-    public static final Message ASCII = new Message("That looks right!", "What are you doing?");
+    public static final Message EMOJI = new Message("🎉", "🥲");
+    public static final Message ASCII = new Message("That looks right!", "Let's learn from that.");
   }
 }
