@@ -15,6 +15,8 @@ import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.SigmaTerm;
+import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
@@ -22,6 +24,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
+import org.aya.unify.Synthesizer;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public record AppTycker<Ex extends Exception>(
-  @NotNull TyckState state, @NotNull SourcePos pos,
+  @NotNull TyckState state, @NotNull AbstractTycker tycker, @NotNull SourcePos pos,
   int argsCount, int lift, @NotNull Factory<Ex> makeArgs
 ) {
   /**
@@ -46,6 +49,13 @@ public record AppTycker<Ex extends Exception>(
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
     CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
+  }
+
+  public AppTycker(
+    @NotNull AbstractTycker tycker, @NotNull SourcePos pos,
+    int argsCount, int lift, @NotNull Factory<Ex> makeArgs
+  ) {
+    this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
   }
 
   public @NotNull Jdg checkCompiledApplication(@NotNull AbstractTele def) throws Ex {
@@ -137,8 +147,8 @@ public record AppTycker<Ex extends Exception>(
   }
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
-    var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     var self = LocalVar.generate("self");
+    var appliedParams = ofClassMembers(self, clazz, argsCount).lift(lift);
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
@@ -160,13 +170,17 @@ public record AppTycker<Ex extends Exception>(
     });
   }
 
-  static @NotNull AbstractTele ofClassMembers(@NotNull ClassDefLike def, int memberCount) {
+  private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
+    var synthesizer = new Synthesizer(tycker);
     return switch (def) {
-      case ClassDef.Delegate delegate -> new TakeMembers(delegate.core(), memberCount);
+      case ClassDef.Delegate delegate -> new TakeMembers(self, delegate.core(), memberCount, synthesizer);
     };
   }
 
-  record TakeMembers(@NotNull ClassDef clazz, @Override int telescopeSize) implements AbstractTele {
+  record TakeMembers(
+    @NotNull LocalVar self, @NotNull ClassDef clazz,
+    @Override int telescopeSize, @NotNull Synthesizer synthesizer
+  ) implements AbstractTele {
     @Override public boolean telescopeLicit(int i) { return true; }
     @Override public @NotNull String telescopeName(int i) {
       assert i < telescopeSize;
@@ -175,18 +189,21 @@ public record AppTycker<Ex extends Exception>(
 
     // class Foo
     // | foo : A
-    // | + : A -> A -> A
+    // | infix + : A -> A -> A
     // | bar : Fn (x : Foo A) -> (x.foo) self.+ (self.foo)
     //                  instantiate these!   ^       ^
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(clazz.ref().concrete.self)));
+      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(self)));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      // Use SigmaTerm::lub
-      throw new UnsupportedOperationException("TODO");
+      return clazz.members().view()
+        .drop(telescopeSize)
+        .map(member -> TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(self))))
+        .map(ty -> (SortTerm) synthesizer.synth(ty))
+        .reduce(SigmaTerm::lub);
     }
     @Override public @NotNull SeqView<String> namesView() {
       return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());
