@@ -3,13 +3,13 @@
 package org.aya.cli.console;
 
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.repl.ReplUtil;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jline.terminal.TerminalBuilder;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -29,11 +29,7 @@ public record AnsiReporter(
   @Contract(pure = true, value = "_, _, _ -> new")
   public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
     if (unicode) try {
-      var terminal = TerminalBuilder.builder().jni(true).dumb(true).build();
-      Consumer<String> out = s -> {
-        terminal.writer().println(s);
-        terminal.flush();
-      };
+      var out = ReplUtil.jlineDumbTerminalWriter();
       return new AnsiReporter(true, () -> true, () -> options, minimum, out, out);
     } catch (Exception _) {
     }

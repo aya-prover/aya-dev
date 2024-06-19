@@ -9,9 +9,9 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.cli.console.MainArgs;
 import org.aya.pretty.doc.Doc;
+import org.aya.repl.ReplUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,8 +37,7 @@ public final class PLCTReport {
 
   {
     try {
-      var terminal = TerminalBuilder.builder().jni(true).dumb(true).build();
-      out = s -> terminal.writer().println(s);
+      out = ReplUtil.jlineDumbTerminalWriter();
     } catch (Exception _) {
       out = System.out::println;
     }
