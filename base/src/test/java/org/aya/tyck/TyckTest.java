@@ -197,8 +197,9 @@ public class TyckTest {
     var endTime = System.currentTimeMillis();
     assertNotNull(sortResult);
 
-    System.out.println(STR."Done in \{(endTime - beginTime)}");
-    System.out.println(sortResult.debuggerOnlyToString());
+    var writer = System.console().writer();
+    writer.println(STR."Done in \{(endTime - beginTime)}");
+    writer.println(sortResult.debuggerOnlyToString());
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }

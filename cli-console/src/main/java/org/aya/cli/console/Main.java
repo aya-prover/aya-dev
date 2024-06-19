@@ -70,7 +70,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var setup = info.backendOpts(false);
     var output = renderOptions.render(prettyFormat.target, doc, setup);
     if (outputPath != null) FileUtil.writeString(outputPath, output);
-    else System.out.println(output);
+    else System.console().writer().write(output);
     return 0;
   }
 

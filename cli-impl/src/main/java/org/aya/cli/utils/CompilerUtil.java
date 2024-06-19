@@ -36,11 +36,11 @@ public class CompilerUtil {
       if (flags.interruptedTrace()) e.printStackTrace();
     }
     if (reporter.noError()) {
-      reporter.reportString(flags.message().successNotion());
+      reporter.reportString(flags.message().successNotation());
       return 0;
     } else {
       reporter.reportString(reporter.countToString());
-      reporter.reportString(flags.message().failNotion());
+      reporter.reportString(flags.message().failNotation());
       return 1;
     }
   }

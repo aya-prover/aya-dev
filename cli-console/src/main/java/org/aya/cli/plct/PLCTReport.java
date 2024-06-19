@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.plct;
 
@@ -52,7 +52,7 @@ public final class PLCTReport {
 
   public int run(@NotNull MainArgs.PlctAction args) throws Exception {
     if (!args.plctReport) {
-      System.out.println(SHRUG);
+      System.console().writer().println(SHRUG);
       return 1;
     }
     Doc markdown;
@@ -60,7 +60,7 @@ public final class PLCTReport {
     if (args.reportSince > 0) {
       since = LocalDate.now().minusDays(args.reportSince).atStartOfDay();
     } else if (args.reportSince < 0) {
-      System.out.println(SHRUG);
+      System.console().writer().println(SHRUG);
       return 1;
     } else since = sinceDate().atStartOfDay();
     if (args.repoName != null) {
@@ -71,7 +71,7 @@ public final class PLCTReport {
         .view()
         .prepended(Doc.plain("## The Aya Theorem Prover")));
     }
-    System.out.println(markdown.debugRender());
+    System.console().writer().println(markdown.debugRender());
     return 0;
   }
 

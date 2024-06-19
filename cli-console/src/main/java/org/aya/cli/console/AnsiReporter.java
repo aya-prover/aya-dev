@@ -29,7 +29,10 @@ public record AnsiReporter(
   public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
     // AnsiConsole.systemInstall();
     return new AnsiReporter(true, () -> unicode, () -> options, minimum,
-      System.out::println, System.err::println);
+      s -> {
+        System.console().writer().println(s);
+        System.console().flush();
+      }, System.err::println);
   }
 
   @Override public void report(@NotNull Problem problem) {
