@@ -5,7 +5,6 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
-import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
@@ -139,29 +138,23 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
-    // TODO: We may just accept a LocalVar and do subscopedClass in ExprTycker as long as appliedParams won't be affected.
     var self = LocalVar.generate("self");
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
-      new ClassCall(self, clazz, 0, ImmutableArray.from(args)),
+      new ClassCall(clazz, 0, ImmutableArray.from(args)),
       appliedParams.result(args)
-    ));
+    ).bindTele(SeqView.of(self)));
     state.classThis.pop();
     return result;
   }
 
   private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
-    var self = new FreeTerm(state.classThis.peek());
-    var signature = member.signature().inst(ImmutableSeq.of(self)).lift(lift);
+    var signature = member.signature().lift(lift);
     return makeArgs.applyChecked(signature, args -> {
-      // assert args.length >= 1;
-      // var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
-      // return new Jdg.Default(
-      //   new FieldCall(args[0], member, 0, fieldArgs),
-      //   signature.result(args)
-      // );
+      assert args.length >= 1;
+      var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(
-        new MemberCall(self, member, 0, ImmutableArray.from(args)),
+        new MemberCall(args[0], member, 0, fieldArgs),
         signature.result(args)
       );
     });

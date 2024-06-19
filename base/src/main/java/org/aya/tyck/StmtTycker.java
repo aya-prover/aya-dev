@@ -17,6 +17,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
@@ -155,7 +156,10 @@ public record StmtTycker(
   private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {
     if (member.ref.core != null) return;
     var classRef = member.classRef;
-    tycker.state.classThis.push(classRef.concrete.self);
+    var self = classRef.concrete.self;
+    tycker.state.classThis.push(self);
+    var classCall = new ClassCall(new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
+    tycker.localCtx().put(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
@@ -164,8 +168,9 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(tycker::zonk)
       .bindTele(SeqView.of(tycker.state.classThis.pop()));
-    // TODO: prepend {this: Class} to the telescope
-    new MemberDef(classRef, member.ref, signature.rawParams(), signature.result());
+    // TODO: reconsider these `self` references, they should be locally nameless!
+    var selfParam = new Param("this", classCall, false);
+    new MemberDef(classRef, member.ref, signature.rawParams().prepended(selfParam), signature.result());
     member.ref.signature = signature;
   }
 

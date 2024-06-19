@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -331,6 +332,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
+  private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
+    if (param.type() instanceof ClassCall clazz) {
+      // TODO: type checking
+      return new FreeTerm(state.classThis.peek());
+    } else return mockTerm(param, pos);
+  }
+
   private Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
     @NotNull AbstractTele params, @NotNull Function<Term[], Jdg> k
@@ -347,12 +355,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           break;
         } else if (arg.name() == null) {
           // here, arg.explicit() == true and param.explicit() == false
-          result[paramIx++] = mockTerm(param, arg.sourcePos());
+          result[paramIx++] = insertImplicit(param, arg.sourcePos());
           continue;
         }
       }
       if (arg.name() != null && !param.nameEq(arg.name())) {
-        result[paramIx++] = mockTerm(param, arg.sourcePos());
+        result[paramIx++] = insertImplicit(param, arg.sourcePos());
         continue;
       }
       result[paramIx++] = inherit(arg.arg(), param.type()).wellTyped();
@@ -362,7 +370,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
-      result[paramIx++] = mockTerm(param, pos);
+      result[paramIx++] = insertImplicit(param, pos);
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
