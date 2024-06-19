@@ -150,9 +150,10 @@ public class TyckTest {
     // 🦀
     assertTrue(tyck("""
       class Monoid
-      | classifying carrier : Type
+      | carrier : Type
       | unit : carrier
       | op : carrier -> carrier -> carrier
+      | idl (x : carrier) : op unit x = x
       """).defs.isNotEmpty());
   }
 
