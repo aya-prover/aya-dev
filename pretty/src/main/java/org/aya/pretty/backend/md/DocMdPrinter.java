@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.md;
 
@@ -19,8 +19,7 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
   /** `Doc.plain("1. hello")` should not be rendered as a list, see MdStyleTest */
   public static final Pattern MD_ESCAPE_FAKE_LIST = Pattern.compile("(^\\s*\\d+)\\.( |$)", Pattern.MULTILINE);
 
-  @Override protected void renderHeader(@NotNull Cursor cursor) {
-  }
+  @Override protected void renderHeader(@NotNull Cursor cursor) { }
 
   @Override protected void renderFooter(@NotNull Cursor cursor) {
     // put generated styles at the end of the file

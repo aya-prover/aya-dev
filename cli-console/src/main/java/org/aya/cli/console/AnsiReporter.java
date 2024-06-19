@@ -3,6 +3,7 @@
 package org.aya.cli.console;
 
 import org.aya.pretty.printer.PrinterConfig;
+import org.aya.repl.ReplUtil;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
@@ -27,7 +28,11 @@ public record AnsiReporter(
 ) implements Reporter {
   @Contract(pure = true, value = "_, _, _ -> new")
   public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
-    // AnsiConsole.systemInstall();
+    if (unicode) try {
+      var out = ReplUtil.jlineDumbTerminalWriter();
+      return new AnsiReporter(true, () -> true, () -> options, minimum, out, out);
+    } catch (Exception _) {
+    }
     return new AnsiReporter(true, () -> unicode, () -> options, minimum,
       System.out::println, System.err::println);
   }

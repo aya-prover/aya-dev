@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -11,21 +11,10 @@ public class Cursor {
   private final StringBuilder builder = new StringBuilder();
   private final StringPrinter<?> printer;
 
-  public Cursor(StringPrinter<?> printer) {
-    this.printer = printer;
-  }
-
-  public @NotNull CharSequence result() {
-    return builder;
-  }
-
-  public int getCursor() {
-    return cursor;
-  }
-
-  public int getNestLevel() {
-    return nestLevel;
-  }
+  public Cursor(StringPrinter<?> printer) { this.printer = printer; }
+  public @NotNull CharSequence result() { return builder; }
+  public int getCursor() { return cursor; }
+  public int getNestLevel() { return nestLevel; }
 
   public void content(@NotNull CharSequence content, boolean visible) {
     if (visible) visibleContent(content);
@@ -58,19 +47,9 @@ public class Cursor {
     invisibleContent(lineBreak);
     moveToNewLine();
   }
-
-  public boolean isAtLineStart() {
-    return cursor == lineStartCursor;
-  }
-
-  public void moveToNewLine() {
-    cursor = lineStartCursor = 0;
-  }
-
-  public void moveForward(int count) {
-    cursor += Math.max(0, count);
-  }
-
+  public boolean isAtLineStart() { return cursor == lineStartCursor; }
+  public void moveToNewLine() { cursor = lineStartCursor = 0; }
+  public void moveForward(int count) { cursor += Math.max(0, count); }
   public void nested(int nest, @NotNull Runnable r) {
     nestLevel += nest;
     r.run();

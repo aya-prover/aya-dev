@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -44,17 +44,9 @@ public interface Reporter {
 
   static @NotNull Problem dummyProblem(@NotNull Doc doc, Problem.Severity severity) {
     return new Problem() {
-      @Override public @NotNull SourcePos sourcePos() {
-        return SourcePos.NONE;
-      }
-
-      @Override public @NotNull Severity level() {
-        return severity;
-      }
-
-      @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-        return doc;
-      }
+      @Override public @NotNull SourcePos sourcePos() { return SourcePos.NONE; }
+      @Override public @NotNull Severity level() { return severity; }
+      @Override public @NotNull Doc describe(@NotNull PrettierOptions options) { return doc; }
     };
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
@@ -54,8 +54,8 @@ public record CompilerFlags(
   }
 
   public record Message(
-    @NotNull String successNotion,
-    @NotNull String failNotion
+    @NotNull String successNotation,
+    @NotNull String failNotation
   ) {
     public static final Message EMOJI = new Message("🎉", "🥲");
     public static final Message ASCII = new Message("That looks right!", "Let's learn from that.");

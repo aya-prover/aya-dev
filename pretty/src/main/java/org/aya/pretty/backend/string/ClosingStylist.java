@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -23,7 +23,7 @@ public abstract class ClosingStylist extends StringStylist {
       this(c -> c.content(start, visible), c -> c.content(end, visible));
     }
 
-    public static final @NotNull StyleToken NULL = new StyleToken(c -> {}, c -> {});
+    public static final @NotNull StyleToken NULL = new StyleToken(_ -> { }, _ -> { });
   }
 
   @Override
@@ -110,7 +110,7 @@ public abstract class ClosingStylist extends StringStylist {
 
     @Override
     protected @NotNull StyleToken formatLineThrough(@NotNull Style.LineThrough line, EnumSet<StringPrinter.Outer> outer) {
-      return delegate.formatLineThrough(line,outer);
+      return delegate.formatLineThrough(line, outer);
     }
 
     @Override protected @NotNull StyleToken formatColorHex(int rgb, boolean background) {
