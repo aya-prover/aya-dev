@@ -8,7 +8,7 @@ In file $FILE:2:18 ->
 Error: Unsolved meta _
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Goal:
 In file $FILE:2:28 ->
@@ -32,7 +32,7 @@ In file $FILE:2:28 ->
 Error: Unsolved meta _
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 UnsolvedMetaLit:
 In file $FILE:5:17 ->
@@ -92,7 +92,7 @@ Error: Unable to solve the type of this literal:
          `Nat`, `Nat2`
 
 5 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Daylily:
 In file $FILE:5:12 ->
@@ -163,7 +163,7 @@ Error: Unsolved meta _
        in `^0 (?_ ^0) → ^1 (Neg <X>)`
 
 4 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ScopeCheck:
 In file $FILE:5:14 ->
@@ -198,7 +198,7 @@ In file $FILE:5:14 ->
 Error: Unsolved meta _
 
 3 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 LiteralAmbiguous3:
 In file $FILE:6:11 ->
@@ -214,7 +214,7 @@ Error: Unable to solve the type of this literal:
          `List`, `List2`
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NonPattern:
 In file $FILE:9:3 ->

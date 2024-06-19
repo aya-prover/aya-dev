@@ -97,7 +97,6 @@ subprojects {
     modularity.inferModulePath.set(true)
 
     options.apply {
-      encoding = "UTF-8"
       isDeprecation = true
       release.set(javaVersion)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
@@ -126,7 +125,6 @@ subprojects {
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", javaVersion.toString())
     options.addStringOption("Xdoclint:none", "-quiet")
-    options.encoding("UTF-8")
     options.tags(
       "apiNote:a:API Note:",
       "implSpec:a:Implementation Requirements:",

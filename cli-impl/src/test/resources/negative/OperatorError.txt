@@ -10,7 +10,7 @@ Error: Ambiguous operator precedence detected between `==` and `+`
 note: Use `tighter/looser` clause or insert parentheses to make it clear.
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Cyclic:
 In file $FILE:3:28 ->
@@ -24,7 +24,7 @@ Error: Circular precedence found between b, c, d
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Issue677:
 In file $FILE:3:27 ->
@@ -46,7 +46,7 @@ In file $FILE:3:4 ->
 Error: Unsolved meta _
 
 2 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 NoAssoc:
 In file $FILE:9:21 ->
@@ -61,7 +61,7 @@ Error: Cannot figure out computation order because `=` (Infix) and `=` (Infix)
 note: Make them both left/right-associative to resolve this problem.
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 SelfBind:
 In file $FILE:2:9 ->
@@ -74,7 +74,7 @@ Error: Self bind is not allowed
 
 Resolving interrupted due to:
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 ModuleImportRename:
 That looks right!

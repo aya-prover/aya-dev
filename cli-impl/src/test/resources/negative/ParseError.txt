@@ -7,7 +7,7 @@ In file $FILE:1:0 ->
 Error: Expect a name
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 Modifier:
 In file $FILE:1:0 ->
@@ -18,7 +18,7 @@ In file $FILE:1:0 ->
 Error: The modifier overlap is not suitable here.
 
 1 error(s), 0 warning(s).
-What are you doing?
+Let's learn from that.
 
 IgnoredModifier:
 In file $FILE:1:0 ->
