@@ -19,6 +19,11 @@ import org.jetbrains.annotations.NotNull;
  *   <li>It can be applied like a function, which essentially inserts the nearest missing field.</li>
  * </ul>
  *
+ * As the type of some class instance {@link NewTerm}, the {@param args} may refer to other member
+ * (not just former members!), therefore the value of members depend on the class instance.
+ * In order to check a class instance against to a ClassCall, you need to supply the class instance
+ * to obtain the actual arguments of the ClassCall, see {@link #args(Term)}
+ *
  * @author kiva, ice1000
  */
 public record ClassCall(
@@ -26,6 +31,10 @@ public record ClassCall(
   @Override int ulift,
   @NotNull ImmutableSeq<Closure> args
 ) implements StableWHNF, Formation {
+  public @NotNull ImmutableSeq<Term> args(@NotNull Term self) {
+    return this.args.map(x -> x.apply(self));
+  }
+
   public @NotNull ClassCall update(@NotNull ImmutableSeq<Closure> args) {
     return this.args.sameElements(args, true)
       ? this : new ClassCall(ref, ulift, args);
