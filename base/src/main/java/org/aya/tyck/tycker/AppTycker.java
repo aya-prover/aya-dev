@@ -141,9 +141,9 @@ public record AppTycker<Ex extends Exception>(
     var self = LocalVar.generate("self");
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
-      new ClassCall(clazz, 0, ImmutableArray.from(args)),
+      new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
-    ).bindTele(SeqView.of(self)));
+    ));
     state.classThis.pop();
     return result;
   }

@@ -4,6 +4,7 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
@@ -23,15 +24,15 @@ import org.jetbrains.annotations.NotNull;
 public record ClassCall(
   @NotNull ClassDefLike ref,
   @Override int ulift,
-  @NotNull ImmutableSeq<Term> args
+  @NotNull ImmutableSeq<Closure> args
 ) implements StableWHNF, Formation {
-  public @NotNull ClassCall update(@NotNull ImmutableSeq<Term> args) {
+  public @NotNull ClassCall update(@NotNull ImmutableSeq<Closure> args) {
     return this.args.sameElements(args, true)
       ? this : new ClassCall(ref, ulift, args);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(args.map(t -> f.apply(0, t)));
+    return update(args.map(t -> t.descent(f)));
   }
 
   @Override public @NotNull Term doElevate(int level) {
