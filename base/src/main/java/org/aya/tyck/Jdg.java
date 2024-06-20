@@ -16,6 +16,10 @@ public sealed interface Jdg {
   @NotNull Term type();
 
   default @NotNull Jdg bindTele(@NotNull SeqView<LocalVar> vars) { return map(t -> t.bindTele(vars)); }
+
+  /**
+   * @apiNote the mapper {@param f} may not executed immediately, so make sure that {@param f} is pure.
+   */
   @NotNull Jdg map(@NotNull UnaryOperator<Term> f);
   default Jdg lift(int lift) { return map(t -> t.elevate(lift)); }
 

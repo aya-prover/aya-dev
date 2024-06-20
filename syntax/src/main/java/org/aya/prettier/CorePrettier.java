@@ -44,6 +44,7 @@ import static org.aya.prettier.Tokens.*;
  * @see ConcretePrettier
  */
 public class CorePrettier extends BasePrettier<Term> {
+  private static final @NotNull LocalVar SELF = LocalVar.generate("self");
   private final Renamer nameGen = new Renamer();
 
   public CorePrettier(@NotNull PrettierOptions options) { super(options); }
@@ -196,7 +197,8 @@ public class CorePrettier extends BasePrettier<Term> {
         // Add paren when it's not free or a codomain
         yield checkParen(outer, doc, Outer.BinOp);
       }
-      case ClassCall classCall -> visitCoreCalls(classCall.ref(), classCall.args(), outer, true);
+      case ClassCall classCall ->
+        visitCoreCalls(classCall.ref(), classCall.args().map(x -> x.apply(SELF)), outer, true);
       case DataCall dataCall -> visitCoreCalls(dataCall.ref(), dataCall.args(), outer, optionImplicit());
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
       case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.fun()),

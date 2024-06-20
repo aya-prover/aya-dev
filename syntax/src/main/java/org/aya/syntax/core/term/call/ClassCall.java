@@ -4,6 +4,7 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
@@ -18,20 +19,29 @@ import org.jetbrains.annotations.NotNull;
  *   <li>It can be applied like a function, which essentially inserts the nearest missing field.</li>
  * </ul>
  *
+ * As the type of some class instance {@link NewTerm}, the {@param args} may refer to other member
+ * (not just former members!), therefore the value of members depend on the class instance.
+ * In order to check a class instance against to a ClassCall, you need to supply the class instance
+ * to obtain the actual arguments of the ClassCall, see {@link #args(Term)}
+ *
  * @author kiva, ice1000
  */
 public record ClassCall(
   @NotNull ClassDefLike ref,
   @Override int ulift,
-  @NotNull ImmutableSeq<Term> args
+  @NotNull ImmutableSeq<Closure> args
 ) implements StableWHNF, Formation {
-  public @NotNull ClassCall update(@NotNull ImmutableSeq<Term> args) {
+  public @NotNull ImmutableSeq<Term> args(@NotNull Term self) {
+    return this.args.map(x -> x.apply(self));
+  }
+
+  public @NotNull ClassCall update(@NotNull ImmutableSeq<Closure> args) {
     return this.args.sameElements(args, true)
       ? this : new ClassCall(ref, ulift, args);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(args.map(t -> f.apply(0, t)));
+    return update(args.map(t -> t.descent(f)));
   }
 
   @Override public @NotNull Term doElevate(int level) {
