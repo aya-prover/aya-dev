@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
+import org.aya.syntax.core.term.NewTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;

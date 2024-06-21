@@ -199,6 +199,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case ClassCall classCall ->
         visitCoreCalls(classCall.ref(), classCall.args().map(x -> x.apply(SELF)), outer, true);
+      case NewTerm newTerm -> Doc.sep(KW_NEW, term(Outer.Free, newTerm.inner()));
       case DataCall dataCall -> visitCoreCalls(dataCall.ref(), dataCall.args(), outer, optionImplicit());
       case StringTerm(var str) -> Doc.plain("\"" + StringUtil.escapeStringCharacters(str) + "\"");
       case PAppTerm app -> visitCalls(null, term(Outer.AppHead, app.fun()),
