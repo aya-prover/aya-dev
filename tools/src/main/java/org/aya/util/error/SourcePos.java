@@ -27,7 +27,7 @@ public record SourcePos(
   int endColumn
 ) implements Comparable<SourcePos> {
   public SourcePos {
-    assert tokenEndIndex >= tokenStartIndex;
+    assert tokenEndIndex >= tokenStartIndex - 1;
   }
 
   /** Single instance SourcePos for mocking tests and other usages. */
@@ -143,8 +143,9 @@ public record SourcePos(
 
   @Override public int compareTo(@NotNull SourcePos o) { return Integer.compare(tokenStartIndex, o.tokenStartIndex); }
   public boolean isEmpty() { return length() <= 0; }
-  private int length() { return tokenEndIndex - tokenStartIndex; }
-  public @NotNull SourcePos coaleaseLeft() {
-    return new SourcePos(file, tokenStartIndex, tokenStartIndex, startLine, startColumn, startLine, startColumn);
+  private int length() { return tokenEndIndex - tokenStartIndex + 1; }
+  public @NotNull SourcePos coalesceLeft() {
+    return new SourcePos(file, tokenStartIndex, tokenStartIndex - 1,
+      startLine, startColumn, startLine, startColumn);
   }
 }
