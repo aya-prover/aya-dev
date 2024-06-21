@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -105,13 +105,8 @@ public record SourcePos(
     return tokenStartIndex <= x.tokenStartIndex && tokenEndIndex >= x.tokenEndIndex;
   }
 
-  public boolean belongsToSomeFile() {
-    return this != SourcePos.NONE && file.isSomeFile();
-  }
-
-  public int linesOfCode() {
-    return endLine - startLine + 1;
-  }
+  public boolean belongsToSomeFile() { return this != SourcePos.NONE && file.isSomeFile(); }
+  public int linesOfCode() { return endLine - startLine + 1; }
 
   public @NotNull SourcePos sourcePosForSubExpr(@NotNull SeqView<SourcePos> params) {
     return sourcePosForSubExpr(file, params);
@@ -146,15 +141,10 @@ public record SourcePos(
     return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
   }
 
-  @Override public int compareTo(@NotNull SourcePos o) {
-    return Integer.compare(tokenStartIndex, o.tokenStartIndex);
-  }
-
-  public boolean isEmpty() {
-    return size() <= 0;
-  }
-
-  private int size() {
-    return tokenEndIndex - tokenStartIndex + 1;
+  @Override public int compareTo(@NotNull SourcePos o) { return Integer.compare(tokenStartIndex, o.tokenStartIndex); }
+  public boolean isEmpty() { return length() <= 0; }
+  private int length() { return tokenEndIndex - tokenStartIndex; }
+  public @NotNull SourcePos coaleaseLeft() {
+    return new SourcePos(file, tokenStartIndex, tokenStartIndex, startLine, startColumn, startLine, startColumn);
   }
 }
