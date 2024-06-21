@@ -23,16 +23,7 @@ Goal: Goal of type
       Context:
         a : Nat
 
-In file $FILE:2:28 ->
-
-  1 │   open import arith::nat::base
-  2 │   def test (a : Nat) : Nat => {? a ?}
-    │                               ╰─────╯
-
-Error: Unsolved meta _
-
-1 error(s), 0 warning(s).
-Let's learn from that.
+That looks right!
 
 UnsolvedMetaLit:
 In file $FILE:5:17 ->
