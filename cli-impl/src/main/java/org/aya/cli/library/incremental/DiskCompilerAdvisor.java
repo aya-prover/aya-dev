@@ -123,7 +123,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       .appended(baseDir)
       .map(Path::toString)
       .appended(System.getProperty("java.class.path"));
-    var options = List.of("-classpath", classpath.joinToString(File.pathSeparator), "--enable-preview", "--release", "21");
+    var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
+      "--enable-preview", "--release", "21", "--system", System.getProperty("java.home"));
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
     if (Global.DELETE_JIT_JAVA_SOURCE) Files.delete(javaSrcPath);
