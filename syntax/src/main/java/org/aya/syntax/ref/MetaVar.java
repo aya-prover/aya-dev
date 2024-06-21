@@ -26,14 +26,15 @@ import org.jetbrains.annotations.Nullable;
 public record MetaVar(
   @Override @NotNull String name,
   @NotNull SourcePos pos,
-  int ctxSize, @NotNull Requirement req
+  int ctxSize, @NotNull Requirement req,
+  boolean isUser
 ) implements AnyVar {
   @Override public boolean equals(@Nullable Object o) { return this == o; }
   @Override public int hashCode() { return System.identityHashCode(this); }
 
   public @NotNull MetaCall asPiDom(@NotNull SortTerm sort, @NotNull ImmutableSeq<Term> args) {
     assert req == Misc.IsType;
-    var typed = new MetaVar(name, pos, ctxSize, new PiDom(sort));
+    var typed = new MetaVar(name, pos, ctxSize, new PiDom(sort), isUser);
     return new MetaCall(typed, args);
   }
 

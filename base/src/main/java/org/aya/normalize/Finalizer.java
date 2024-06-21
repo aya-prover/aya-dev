@@ -45,7 +45,7 @@ public interface Finalizer {
       var result = doZonk(term);
       // result shall not be MetaPatTerm
       switch (result) {
-        case MetaCall meta -> fail(new UnsolvedMeta(stack.view()
+        case MetaCall meta when !meta.ref().isUser() -> fail(new UnsolvedMeta(stack.view()
           .drop(1)
           .map(this::freezeHoles)
           .toImmutableSeq(), meta.ref().pos(), meta.ref().name()));

@@ -23,16 +23,7 @@ Goal: Goal of type
       Context:
         a : Nat
 
-In file $FILE:2:28 ->
-
-  1 │   open import arith::nat::base
-  2 │   def test (a : Nat) : Nat => {? a ?}
-    │                               ╰─────╯
-
-Error: Unsolved meta _
-
-1 error(s), 0 warning(s).
-Let's learn from that.
+That looks right!
 
 UnsolvedMetaLit:
 In file $FILE:5:17 ->
@@ -232,4 +223,183 @@ In file $FILE:9:3 ->
 Info: Solving equation(s) with not very general solution(s)
 
 That looks right!
+
+UtensilFullFile:
+In file $FILE:8:54 ->
+
+  6 │       
+  7 │       def ++-assoc' (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+  8 │       : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+    │                                          ╰──────────────╯    ╰──────────────╯ ?a
+                                                                                    n
+                                                                                    A
+                                                                                    m
+                                                                                    o
+                                                                                    xs
+                                                                                    ys
+                                                                                    zs
+                                                                                    0 >= n,
+                                                                                    ?b
+                                                                                    n
+                                                                                    A
+                                                                                    m
+                                                                                    o
+                                                                                    xs
+                                                                                    ys
+                                                                                    zs
+                                                                                    0 >= m,
+                                                                                    ?c
+                                                                                    n
+                                                                                    A
+                                                                                    m
+                                                                                    o
+                                                                                    xs
+                                                                                    ys
+                                                                                    zs
+                                                                                    0 >= o
+    │                                                             ╰──────────────╯ ?a
+                                                                                   n
+                                                                                   A
+                                                                                   m
+                                                                                   o
+                                                                                   xs
+                                                                                   ys
+                                                                                   zs
+                                                                                   1 >= n,
+                                                                                   ?b
+                                                                                   n
+                                                                                   A
+                                                                                   m
+                                                                                   o
+                                                                                   xs
+                                                                                   ys
+                                                                                   zs
+                                                                                   1 >= m,
+                                                                                   ?c
+                                                                                   n
+                                                                                   A
+                                                                                   m
+                                                                                   o
+                                                                                   xs
+                                                                                   ys
+                                                                                   zs
+                                                                                   1 >= o
+
+Info: Solving equation(s) with not very general solution(s)
+
+In file $FILE:10:18 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                     ╰──╯
+
+Error: The solution
+         Vec (+-assoc {?n A x n m o _ ys zs} {?m A x n m o _ ys zs} {?o A x n m o _
+        ys zs} i) (?A A x n m o _ ys zs)
+       is not well-scoped
+       Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
+       `zs`
+
+In file $FILE:10:25 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                            ╰─────────────╯
+
+Error: Cannot check the expression
+         ++-assoc' _ _ _
+       of type
+         (++) {?n A x n m o _ ys zs} {?A A x n m o _ ys zs} {?m A x n m o _ ys zs +
+        ?o A x n m o _ ys zs} (?_ A x n m o _ ys zs) ((++) {?m A x n m o _ ys zs} {?A
+        A x n m o _ ys zs} {?o A x n m o _ ys zs} (?_ A x n m o _ ys zs) (?_ A x
+        n m o _ ys zs)) = (++) {?n A x n m o _ ys zs + ?m A x n m o _ ys zs} {?A
+        A x n m o _ ys zs} {?o A x n m o _ ys zs} ((++) {?n A x n m o _ ys zs} {?A
+        A x n m o _ ys zs} {?m A x n m o _ ys zs} (?_ A x n m o _ ys zs) (?_ A x
+        n m o _ ys zs)) (?_ A x n m o _ ys zs)
+       against the type
+         ?a A x n m o _ ys zs = ?b A x n m o _ ys zs
+       In particular, we failed to unify
+         ?A A x n m o _ ys zs
+       with
+         Vec (+-assoc {?n A x n m o _ ys zs} {?m A x n m o _ ys zs} {?o A x n m o _
+        ys zs} i) (?A A x n m o _ ys zs)
+
+In file $FILE:10:18 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                     ╰──╯
+
+Error: The solution
+         Vec (suc (+-assoc {n} {m} {o} i)) A
+       is not well-scoped
+       Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
+       `zs`
+
+In file $FILE:10:12 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │               ╰───────────────────────────╯
+
+Error: Cannot check the expression
+         pmap (\ _ ⇒ x :> _) (++-assoc' _ _ _)
+       of type
+         (x :> ?a A x n m o _ ys zs) = (x :> ?b A x n m o _ ys zs)
+       against the type
+         (++) {suc n} {A} {m + o} (x :> _) ((++) {m} {A} {o} ys zs) = (++) {suc n +
+        m} {A} {o} ((++) {suc n} {A} {m} (x :> _) ys) zs
+         (Normalized: (x :> (++) {n} {A} {m + o} _ ((++) {m} {A} {o} ys zs)) = (x :>
+        (++) {n + m} {A} {o} ((++) {n} {A} {m} _ ys) zs))
+       In particular, we failed to unify
+         ?B A x n m o _ ys zs
+       with
+         Vec (+-assoc {suc n} {m} {o} i) A
+         (Normalized: Vec (suc (+-assoc {n} {m} {o} i)) A)
+
+In file $FILE:10:18 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                     ╰──╯
+
+Error: The solution
+         Vec (?n A x n m o _ ys zs _) (?A A x n m o _ ys zs _)
+       is not well-scoped
+       Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
+       `zs`
+
+In file $FILE:10:18 ->
+
+  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │   | [] ⇒ refl
+  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                     ╰──╯
+
+Error: The solution
+         Vec (suc (?n A x n m o _ ys zs _)) (?A A x n m o _ ys zs _)
+       is not well-scoped
+       Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
+       `zs`
+
+In file $FILE:10:18 ->
+
+  8  │       : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  9  │       | [] ⇒ refl
+  10 │       | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+     │                         ╰──╯
+     │                         ╰──╯ ?B A x n m o _ ys zs >= Vec (suc (?n A x n m
+                                    o _ ys zs _)) (?A A x n m o _ ys zs _)
+     │                           ╰╯ ?A A x n m o _ ys zs <= Vec (?n A x n m o _ ys
+                                    zs _) (?A A x n m o _ ys zs _)
+
+Error: Equations do not have solutions!
+
+7 error(s), 0 warning(s).
+Let's learn from that.
 
