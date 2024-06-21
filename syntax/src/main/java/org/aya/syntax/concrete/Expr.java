@@ -318,6 +318,48 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
+  record New(
+    @NotNull WithPos<Expr> struct,
+    @NotNull ImmutableSeq<Field<Expr>> fields
+  ) implements Expr {
+    public @NotNull Expr.New update(@NotNull WithPos<Expr> struct, @NotNull ImmutableSeq<Field<Expr>> fields) {
+      return struct == struct() && fields.sameElements(fields(), true) ? this : new New(struct, fields);
+    }
+
+    @Override public @NotNull Expr.New descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(struct.descent(f), fields.map(field -> field.descent(f)));
+    }
+
+    @Override
+    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      f.accept(struct);
+      fields.forEach(field -> field.forEach(f));
+    }
+  }
+
+  /**
+   * @param resolvedField will be modified during tycking for LSP to function properly.
+   */
+  record Field<Term extends AyaDocile>(
+    @NotNull SourcePos sourcePos,
+    @NotNull WithPos<String> name,
+    @NotNull ImmutableSeq<WithPos<LocalVar>> bindings,
+    @NotNull WithPos<Term> body,
+    @ForLSP @NotNull MutableValue<AnyVar> resolvedField
+  ) {
+    public @NotNull Field<Term> update(@NotNull WithPos<Term> body) {
+      return body == body() ? this : new Field<Term>(sourcePos, name, bindings, body, resolvedField);
+    }
+
+    public @NotNull Field<Term> descent(@NotNull PosedUnaryOperator<@NotNull Term> f) {
+      return update(body.descent(f));
+    }
+
+    public void forEach(@NotNull PosedConsumer<@NotNull Term> f) {
+      f.accept(body);
+    }
+  }
+
   record Idiom(
     @NotNull IdiomNames names,
     @NotNull ImmutableSeq<WithPos<Expr>> barredApps
