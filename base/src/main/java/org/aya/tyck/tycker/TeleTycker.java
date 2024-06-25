@@ -37,14 +37,14 @@ public sealed interface TeleTycker extends Contextful {
    * @return a locally nameless signature computed from what's in the localCtx.
    */
   @Contract(pure = true)
-  default @NotNull Signature checkSignature(
+  default @NotNull PosedTele checkSignature(
     @NotNull ImmutableSeq<Expr.Param> cTele,
     @NotNull WithPos<Expr> result
   ) {
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
-    return new Signature(checkedParam, checkedResult);
+    return PosedTele.fromSig(checkedParam, checkedResult);
   }
 
   /**

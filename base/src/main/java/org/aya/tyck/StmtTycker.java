@@ -70,7 +70,7 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // In the ordering, we guarantee that expr bodied fn are always checked as a whole
             assert tycker != null;
-            var result = tycker.inherit(expr, tycker.whnf(signature.result().instantiateTeleVar(teleVars.view())))
+            var result = tycker.inherit(expr, tycker.whnf(signature.boundResult().instantiateTeleVar(teleVars.view())))
               // we still need to bind [result.type()] in case it was a hole
               .bindTele(teleVars.view());
             tycker.solveMetas();
@@ -92,9 +92,9 @@ public record StmtTycker(
               patResult = clauseTycker.checkNoClassify();
               def = factory.apply(Either.right(patResult.wellTyped()));
               if (!patResult.hasLhsError()) {
-                var rawParams = signature.rawParams();
+                var rawParams = signature.rawBoundParams();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
-                confluence.check(patResult, signature.result(),
+                confluence.check(patResult, signature.boundResult(),
                   PatClassifier.classify(patResult.clauses().view(), rawParams.view(), tycker, fnDecl.sourcePos()));
               }
             } else {
@@ -132,11 +132,11 @@ public record StmtTycker(
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
         signature = signature.descent(tycker::zonk);
-        var sort = SortTerm.Type0;
-        if (signature.result() instanceof SortTerm userSort) sort = userSort;
-        else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
-          _ -> Doc.plain("universe")));
-        data.ref.signature = new Signature(signature.param(), sort);
+        if (!(signature.boundResult() instanceof SortTerm)) {
+          fail(BadTypeError.doNotLike(tycker.state, result, signature.boundResult(),
+            _ -> Doc.plain("universe")));
+        }
+        data.ref.signature = signature;
       }
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
@@ -149,7 +149,7 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
           tycker.solveMetas();
           fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(tycker::zonk);
-          if (fnRef.signature.param().isEmpty() && cls.isEmpty())
+          if (fnRef.signature.rawBoundParams().isEmpty() && cls.isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
       }
@@ -187,9 +187,8 @@ public record StmtTycker(
     if (ref.core != null) return;
     var dataRef = con.dataRef;
     var dataDef = new DataDef.Delegate(dataRef);
-    var dataSig = PosedTele.fromSig(
-      Objects.requireNonNull(dataRef.signature, "the header of data should be tycked")
-    );
+    var dataSig = dataRef.signature;
+    assert dataSig != null : "the header of data should be tycked";
     // Intended to be indexed, not free
     var ownerTele = dataSig.telescope().telescope().map(Param::implicitize);
     var ownerTelePos = dataSig.pos();
@@ -255,22 +254,21 @@ public record StmtTycker(
     var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfTeleVars);
     if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfTeleVars);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var selfSig = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
+    var wholeSig = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
       .bindTele(ownerBinds.zip(ownerTele).view());
-    var selfSigResult = ((TupTerm) selfSig.result()).items();
+    var selfSigResult = ((TupTerm) wholeSig.result()).items();
     boundDataCall = (DataCall) selfSigResult.get(0);
     if (boundaries != null) boundaries = (EqTerm) selfSigResult.get(1);
 
     // The signature of con should be full (the same as [konCore.telescope()])
-    var betterSig = new PosedTele(new AbstractTele.Locns(selfSig.telescope(), boundDataCall),
+    ref.signature = new PosedTele(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
       ownerTelePos.appendedAll(selfTele.map(WithPos::sourcePos)));
-    ref.signature = (Signature) null;   // TODO
     new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele,
-      selfSig.telescope(),
+      wholeSig.telescope(), // FIXME: only selfTele
       boundDataCall, false);
   }
 
@@ -283,7 +281,7 @@ public record StmtTycker(
     var core = primRef.core;
     if (prim.telescope.isEmpty() && prim.result == null) {
       var pos = prim.sourcePos();
-      primRef.signature = new Signature(core.telescope().map(param -> new WithPos<>(pos, param)), core.result());
+      primRef.signature = PosedTele.fromSig(core.telescope().map(param -> new WithPos<>(pos, param)), core.result());
       return;
     }
     if (prim.telescope.isNotEmpty()) {
@@ -295,7 +293,7 @@ public record StmtTycker(
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
     tycker.unifyTermReported(
-      PiTerm.make(tele.param().view().map(p -> p.data().type()), tele.result()),
+      PiTerm.make(tele.rawBoundParams().view().map(Param::type), tele.boundResult()),
       // No checks, slightly faster than TeleDef.defType
       PiTerm.make(core.telescope.view().map(Param::type), core.result),
       null, prim.entireSourcePos(),
