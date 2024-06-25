@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -117,7 +118,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var javaSrcPath = baseDir.resolve(relativePath);
     FileUtil.writeString(javaSrcPath, javaCode);
     var compiler = ToolProvider.getSystemJavaCompiler();
-    var fileManager = compiler.getStandardFileManager(null, null, null);
+    var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8);
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
     var classpath = cl.urls.view()
       .appended(baseDir)
