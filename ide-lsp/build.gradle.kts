@@ -98,6 +98,10 @@ supportedPlatforms.forEach { platform ->
   val copyAyaJRE = tasks.register<Copy>("copyAyaJRE_$platform") {
     from(allPlatformImageDir.resolve("aya-lsp-$platform"))
     into(installDir.resolve(Constants.jreDirName))
+    exclude("bin/aya")
+    exclude("bin/aya.bat")
+    exclude("bin/aya-lsp")
+    exclude("bin/aya-lsp.bat")
     dependsOn(jlinkTask)
   }
 
