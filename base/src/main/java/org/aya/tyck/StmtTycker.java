@@ -21,6 +21,7 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.PosedTele;
@@ -186,10 +187,12 @@ public record StmtTycker(
     if (ref.core != null) return;
     var dataRef = con.dataRef;
     var dataDef = new DataDef.Delegate(dataRef);
-    var dataSig = dataRef.signature;
-    assert dataSig != null : "the header of data should be tycked";
+    var dataSig = PosedTele.fromSig(
+      Objects.requireNonNull(dataRef.signature, "the header of data should be tycked")
+    );
     // Intended to be indexed, not free
-    var ownerTele = dataSig.param().map(x -> x.descent((_, p) -> p.implicitize()));
+    var ownerTele = dataSig.telescope().telescope().map(Param::implicitize);
+    var ownerTelePos = dataSig.pos();
     var ownerBinds = dataRef.concrete.telescope.map(Expr.Param::ref);
     // dataTele already in localCtx
     // The result that a con should be, unless it is a Path result
@@ -209,15 +212,15 @@ public record StmtTycker(
       var allTypedBinds = Pat.collectBindings(wellPats.view());
       ownerBinds = lhsResult.allBinds();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
-      ownerTele = ownerBinds.zip(allTypedBinds,
-        (bind, param) -> new WithPos<>(bind.definition(), param));
+      ownerTelePos = ownerBinds.map(LocalVar::definition);
+      ownerTele = allTypedBinds.toImmutableSeq();
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {
       loadTele(ownerBinds.view(), dataSig, tycker);
     }
 
-    var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.result());
+    var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.boundResult());
     var selfTele = teleTycker.checkTele(con.telescope);
     var selfTeleVars = con.teleVars();
 
@@ -252,24 +255,22 @@ public record StmtTycker(
     var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfTeleVars);
     if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfTeleVars);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var selfSig = new Signature(tycker.zonk(selfTele), new TupTerm(
+    var selfSig = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
-      ImmutableSeq.of(boundDataCall, boundariesWithDummy))).bindTele(ownerBinds.view());
-    var selfSig0 = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
       ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
-      .bindTele(ownerBinds.zip(ownerTele.map(WithPos::data)).view());
-    var selfSigResult = ((TupTerm) selfSig0.result()).items();
+      .bindTele(ownerBinds.zip(ownerTele).view());
+    var selfSigResult = ((TupTerm) selfSig.result()).items();
     boundDataCall = (DataCall) selfSigResult.get(0);
     if (boundaries != null) boundaries = (EqTerm) selfSigResult.get(1);
 
     // The signature of con should be full (the same as [konCore.telescope()])
-    var betterSig = new PosedTele(new AbstractTele.Locns(selfSig0.telescope(), boundDataCall),
-      ownerTele.map(WithPos::sourcePos).appendedAll(selfTele.map(WithPos::sourcePos)));
-    ref.signature = new Signature(ownerTele.concat(selfSig.param()), boundDataCall);
+    var betterSig = new PosedTele(new AbstractTele.Locns(selfSig.telescope(), boundDataCall),
+      ownerTelePos.appendedAll(selfTele.map(WithPos::sourcePos)));
+    ref.signature = (Signature) null;   // TODO
     new ConDef(dataDef, ref, wellPats, boundaries,
-      ownerTele.map(WithPos::data),
-      selfSig.rawParams(),
+      ownerTele,
+      selfSig.telescope(),
       boundDataCall, false);
   }
 

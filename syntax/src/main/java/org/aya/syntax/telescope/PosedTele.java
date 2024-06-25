@@ -4,6 +4,7 @@ package org.aya.syntax.telescope;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Param;
+import org.aya.syntax.core.term.Term;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +18,15 @@ public record PosedTele(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
     return new PosedTele(new AbstractTele.Locns(sig.rawParams(), sig.result()), sig.param().map(WithPos::sourcePos));
   }
 
-  public @NotNull ImmutableSeq<Param> rawParams() {
+  public @NotNull ImmutableSeq<Param> rawBoundParams() {
     return telescope.telescope();
   }
 
-  public @NotNull ImmutableSeq<WithPos<Param>> param() {
-    return rawParams().zip(pos, (p, s) -> new WithPos<>(s, p));
+  public @NotNull ImmutableSeq<WithPos<Param>> boundParam() {
+    return rawBoundParams().zip(pos, (p, s) -> new WithPos<>(s, p));
+  }
+
+  public @NotNull Term boundResult() {
+    return telescope.result();
   }
 }
