@@ -124,6 +124,11 @@ public interface AbstractTele {
         return acc.bind(var, type);
       });
     }
+
+    public @NotNull Locns drop(int count) {
+      assert count <= telescopeSize();
+      return new Locns(telescope.drop(count), result);
+    }
   }
 
   record Lift(
