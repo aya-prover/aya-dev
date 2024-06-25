@@ -221,7 +221,7 @@ public record StmtTycker(
 
     var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.boundResult());
     var selfTele = teleTycker.checkTele(con.telescope);
-    var selfTeleVars = con.teleVars();
+    var selfBinds = con.teleVars();
 
     var conTy = con.result;
     EqTerm boundaries = null;
@@ -229,7 +229,7 @@ public record StmtTycker(
       var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
       selfTele = selfTele.appendedAll(pusheenResult.params().zip(pusheenResult.names(),
         (param, name) -> new WithPos<>(conTy.sourcePos(), new Param(name.name(), param, true))));
-      selfTeleVars = selfTeleVars.appendedAll(pusheenResult.names());
+      selfBinds = selfBinds.appendedAll(pusheenResult.names());
       var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
@@ -239,7 +239,7 @@ public record StmtTycker(
 
         selfTele = selfTele.appended(new WithPos<>(conTy.sourcePos(),
           new Param("i", DimTyTerm.INSTANCE, true)));
-        selfTeleVars = selfTeleVars.appended(fresh.name());
+        selfBinds = selfBinds.appended(fresh.name());
         boundaries = eq;
       } else {
         var state = tycker.state;
@@ -251,17 +251,17 @@ public record StmtTycker(
 
     // the result will refer to the telescope of con if it has patterns,
     // the path result may also refer to it, so we need to bind both
-    var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfTeleVars);
-    if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfTeleVars);
+    var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfBinds);
+    if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
     var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele.map(WithPos::data)), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
       .bindTele(ownerBinds.zip(ownerTele).view());
-    var selfSigResult = ((TupTerm) wholeSig.result()).items();
-    boundDataCall = (DataCall) selfSigResult.get(0);
-    if (boundaries != null) boundaries = (EqTerm) selfSigResult.get(1);
+    var wholeSigResult = ((TupTerm) wholeSig.result()).items();
+    boundDataCall = (DataCall) wholeSigResult.get(0);
+    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.get(1);
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new PosedTele(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
