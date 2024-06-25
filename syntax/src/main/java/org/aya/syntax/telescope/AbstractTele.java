@@ -8,10 +8,12 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
+import kala.tuple.Tuple2;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -108,6 +110,19 @@ public interface AbstractTele {
     @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instantiateTele(teleArgs.view()); }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
+    }
+
+    public @NotNull Locns bind(@NotNull LocalVar var, @NotNull Param type) {
+      var boundTele = telescope.view().mapIndexed((idx, p) -> p.descent(t -> t.bindAt(var, idx)));
+      return new Locns(boundTele.prepended(type).toImmutableSeq(), result.bindAt(var, telescope.size()));
+    }
+
+    public @NotNull Locns bindTele(@NotNull SeqView<Tuple2<LocalVar, Param>> tele) {
+      return tele.foldRight(this, (pair, acc) -> {
+        var var = pair.component1();
+        var type = pair.component2();
+        return acc.bind(var, type);
+      });
     }
   }
 

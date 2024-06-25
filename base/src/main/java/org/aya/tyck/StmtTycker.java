@@ -22,6 +22,8 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.MapLocalCtx;
+import org.aya.syntax.telescope.AbstractTele;
+import org.aya.syntax.telescope.PosedTele;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
@@ -254,11 +256,16 @@ public record StmtTycker(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       ImmutableSeq.of(boundDataCall, boundariesWithDummy))).bindTele(ownerBinds.view());
-    var selfSigResult = ((TupTerm) selfSig.result()).items();
+    var selfSig0 = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
+      ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
+      .bindTele(ownerBinds.zip(ownerTele.map(WithPos::data)).view());
+    var selfSigResult = ((TupTerm) selfSig0.result()).items();
     boundDataCall = (DataCall) selfSigResult.get(0);
     if (boundaries != null) boundaries = (EqTerm) selfSigResult.get(1);
 
     // The signature of con should be full (the same as [konCore.telescope()])
+    var betterSig = new PosedTele(new AbstractTele.Locns(selfSig0.telescope(), boundDataCall),
+      ownerTele.map(WithPos::sourcePos).appendedAll(selfTele.map(WithPos::sourcePos)));
     ref.signature = new Signature(ownerTele.concat(selfSig.param()), boundDataCall);
     new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele.map(WithPos::data),
