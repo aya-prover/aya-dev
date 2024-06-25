@@ -58,7 +58,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   public @NotNull Term zonk(Term t) {
     return new Finalizer.Zonk<>(this).zonk(t);
   }
-  public ImmutableSeq<WithPos<Param>> zonk(ImmutableSeq<WithPos<Param>> tele) {
-    return tele.map(wp -> wp.map(p -> p.descent(this::zonk)));
+  public ImmutableSeq<Param> zonk(ImmutableSeq<Param> tele) {
+    return tele.map(wp -> wp.descent(this::zonk));
   }
 }

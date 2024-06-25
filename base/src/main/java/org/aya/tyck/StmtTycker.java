@@ -132,11 +132,11 @@ public record StmtTycker(
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
         signature = signature.descent(tycker::zonk);
-        if (!(signature.boundResult() instanceof SortTerm)) {
-          fail(BadTypeError.doNotLike(tycker.state, result, signature.boundResult(),
-            _ -> Doc.plain("universe")));
-        }
-        data.ref.signature = signature;
+        var sort = SortTerm.Type0;
+        if (signature.boundResult() instanceof SortTerm userSort) sort = userSort;
+        else fail(BadTypeError.doNotLike(tycker.state, result, signature.boundResult(),
+          _ -> Doc.plain("universe")));
+        data.ref.signature = new PosedTele(new AbstractTele.Locns(signature.telescope().telescope(), sort), signature.pos());
       }
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
@@ -254,7 +254,7 @@ public record StmtTycker(
     var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfTeleVars);
     if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfTeleVars);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var wholeSig = new AbstractTele.Locns(selfTele.map(WithPos::data), new TupTerm(
+    var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele.map(WithPos::data)), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
@@ -268,7 +268,7 @@ public record StmtTycker(
       ownerTelePos.appendedAll(selfTele.map(WithPos::sourcePos)));
     new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele,
-      wholeSig.telescope(), // FIXME: only selfTele
+      wholeSig.telescope().drop(ownerTele.size()),
       boundDataCall, false);
   }
 
