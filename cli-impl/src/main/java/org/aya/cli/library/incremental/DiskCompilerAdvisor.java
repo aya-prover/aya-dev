@@ -33,6 +33,7 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
@@ -122,10 +123,17 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
     var classpath = cl.urls.view()
       .appended(baseDir)
-      .map(Path::toString)
-      .appended(System.getProperty("java.class.path"));
+      .map(Path::toString);
+    var selfClassPath = System.getProperty("java.class.path");
+    if (selfClassPath != null && !selfClassPath.isBlank()) classpath = classpath.appended(selfClassPath);
+    else {
+      // here, I'm in jlink mode
+      var jlinkClassPath = Paths.get(System.getProperty("jdk.module.path"))
+        .resolveSibling("misc")
+        .normalize();
+    }
     var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
-      "--enable-preview", "--release", "21", "--system", System.getProperty("java.home"));
+      "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     task.call();
     if (Global.DELETE_JIT_JAVA_SOURCE) Files.delete(javaSrcPath);
