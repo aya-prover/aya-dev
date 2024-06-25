@@ -14,7 +14,6 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.PosedTele;
-import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.error.UnifyError;
@@ -89,21 +88,6 @@ public sealed interface TeleTycker extends Contextful {
         tele.set(j, og.descent(x -> x.bindAt(p, jj - ii - 1)));
       }
     }
-  }
-
-  @Contract(mutates = "param3")
-  static void loadTele(
-    @NotNull SeqView<LocalVar> binds,
-    @NotNull Signature signature,
-    @NotNull ExprTycker tycker
-  ) {
-    assert binds.sizeEquals(signature.param());
-    var tele = MutableList.<LocalVar>create();
-
-    binds.forEachWith(signature.param(), (ref, param) -> {
-      tycker.localCtx().put(ref, param.data().type().instantiateTeleVar(tele.view()));
-      tele.append(ref);
-    });
   }
 
   @Contract(mutates = "param3")

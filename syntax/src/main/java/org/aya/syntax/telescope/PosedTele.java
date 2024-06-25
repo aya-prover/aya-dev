@@ -21,10 +21,6 @@ public record PosedTele(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
     return new PosedTele(new AbstractTele.Locns(param.map(WithPos::data), result), param.map(WithPos::sourcePos));
   }
 
-  public static @NotNull PosedTele fromSig(@NotNull Signature sig) {
-    return new PosedTele(new AbstractTele.Locns(sig.rawParams(), sig.result()), sig.param().map(WithPos::sourcePos));
-  }
-
   public @NotNull ImmutableSeq<Param> rawBoundParams() {
     return telescope.telescope();
   }

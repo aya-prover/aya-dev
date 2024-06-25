@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -25,7 +24,6 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.PosedTele;
-import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
