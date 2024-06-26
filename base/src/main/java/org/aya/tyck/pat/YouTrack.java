@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
-import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;

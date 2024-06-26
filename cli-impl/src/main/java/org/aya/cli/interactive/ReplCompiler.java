@@ -64,20 +64,24 @@ public class ReplCompiler {
   private final @NotNull AyaBinOpSet opSet;
   private final @NotNull TyckState tcState;
 
-  public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
+  public ReplCompiler(
+    @NotNull ImmutableSeq<Path> modulePaths,
+    @NotNull Reporter delegateReporter,
+    @Nullable SourceFileLocator locator
+  ) {
     this.modulePaths = modulePaths;
-    this.reporter = CountingReporter.delegate(reporter);
+    reporter = CountingReporter.delegate(delegateReporter);
     this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
     this.primFactory = new PrimFactory() {
       @Override public boolean suppressRedefinition() { return true; }
     };
     this.shapeFactory = new ReplShapeFactory();
-    this.opSet = new AyaBinOpSet(this.reporter);
-    this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ModulePath.of("REPL"));
-    this.fileManager = new SingleAyaFile.Factory(this.reporter);
-    var parser = new AyaParserImpl(this.reporter);
-    this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
-      new FileModuleLoader(this.locator, path, this.reporter, parser, fileManager, primFactory))));
+    this.opSet = new AyaBinOpSet(reporter);
+    this.context = new ReplContext(new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
+    this.fileManager = new SingleAyaFile.Factory(reporter);
+    var parser = new AyaParserImpl(reporter);
+    this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
+      new FileModuleLoader(this.locator, path, reporter, parser, fileManager, primFactory))));
     tcState = new TyckState(shapeFactory, primFactory);
   }
 

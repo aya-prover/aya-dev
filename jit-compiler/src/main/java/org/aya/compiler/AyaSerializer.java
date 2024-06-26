@@ -51,12 +51,12 @@ public interface AyaSerializer {
     import org.aya.syntax.core.*;
     import org.aya.syntax.core.Closure.Jit;
     import org.aya.syntax.core.pat.Pat;
+    import org.aya.syntax.core.pat.PatMatcher;
     import org.aya.syntax.core.repr.*;
     import org.aya.syntax.core.term.*;
     import org.aya.syntax.core.term.repr.*;
     import org.aya.syntax.core.term.call.*;
     import org.aya.syntax.core.term.xtt.*;
-    import org.aya.normalize.PatMatcher;
     import org.aya.util.error.Panic;
     import org.aya.util.binop.Assoc;
 
