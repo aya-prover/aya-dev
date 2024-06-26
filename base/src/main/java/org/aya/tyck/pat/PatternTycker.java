@@ -11,7 +11,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
 import org.aya.normalize.Normalizer;
-import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;

@@ -4,7 +4,7 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Modifier;
-import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;

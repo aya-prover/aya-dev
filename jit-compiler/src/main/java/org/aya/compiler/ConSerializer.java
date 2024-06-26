@@ -6,7 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.BooleanConsumer;
 import org.aya.generic.State;
-import org.aya.normalize.PatMatcher;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;

@@ -130,7 +130,9 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       // here, I'm in jlink mode
       var jlinkClassPath = Paths.get(System.getProperty("jdk.module.path"))
         .resolveSibling("misc")
+        .resolve("syntax-fat.jar")
         .normalize();
+      classpath = classpath.appended(jlinkClassPath.toString());
     }
     var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
       "--enable-preview", "--release", "21");

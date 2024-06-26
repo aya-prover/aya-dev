@@ -94,6 +94,11 @@ supportedPlatforms.forEach { platform ->
     }
     into(installDir.resolve("bin"))
   }
+  val copySyntaxJar = tasks.register<Copy>("copySyntaxJar_$platform") {
+    from((tasks.getByPath(":syntax:fatJar") as AbstractArchiveTask).archiveFile)
+    rename { "syntax-fat.jar" }
+    into(installDir.resolve("misc"))
+  }
 
   val copyAyaJRE = tasks.register<Copy>("copyAyaJRE_$platform") {
     from(allPlatformImageDir.resolve("aya-lsp-$platform"))
@@ -118,20 +123,13 @@ supportedPlatforms.forEach { platform ->
   val packageAya = tasks.register<Zip>("packageAya_$platform") {
     val fileName = "aya-prover_jlink_$platform.zip"
     val sha256FileName = "$fileName.sha256.txt"
-    dependsOn(copyAyaJRE)
-    dependsOn(copyAyaExecutables)
-    dependsOn(copyAyaLibrary)
+    dependsOn(copyAyaJRE, copyAyaExecutables, copyAyaLibrary)
     archiveFileName.set(fileName)
     destinationDirectory.set(ayaImageDir)
+    val executables = arrayOf("bin/aya", "bin/aya-lsp", "${Constants.jreDirName}/bin/java")
+    from(installDir) { exclude(*executables) }
     from(installDir) {
-      exclude("bin/aya")
-      exclude("bin/aya-lsp")
-      exclude("${Constants.jreDirName}/bin/**")
-    }
-    from(installDir) {
-      include("bin/aya")
-      include("bin/aya-lsp")
-      include("${Constants.jreDirName}/bin/**")
+      include(*executables)
       filePermissions { unix("755") }
     }
     doLast {
@@ -146,11 +144,9 @@ supportedPlatforms.forEach { platform ->
   }
 
   ayaJlinkTask.configure {
-    dependsOn(copyAyaJRE, copyAyaExecutables, copyAyaLibrary, copyAyaLicense)
+    dependsOn(copyAyaJRE, copySyntaxJar, copyAyaExecutables, copyAyaLibrary, copyAyaLicense)
   }
-  ayaJlinkZipTask.configure {
-    dependsOn(packageAya)
-  }
+  ayaJlinkZipTask.configure { dependsOn(packageAya) }
 }
 
 val prepareMergedJarsDirTask = tasks.named("prepareMergedJarsDir")
@@ -170,9 +166,6 @@ tasks.withType<AbstractCopyTask>().configureEach {
 
 if (rootProject.hasProperty("installDir")) {
   val destDir = file(rootProject.property("installDir")!!)
-  // val dbi = tasks.register<Delete>("deleteBeforeInstall") {
-  //   delete(File.listFiles(destDir))
-  // }
   tasks.register<Copy>("install") {
     dependsOn(ayaJlinkTask, prepareMergedJarsDirTask)
     from(ayaImageDir.resolve(currentPlatform))
