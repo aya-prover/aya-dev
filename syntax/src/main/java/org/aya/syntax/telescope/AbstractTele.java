@@ -129,6 +129,19 @@ public interface AbstractTele {
       assert count <= telescopeSize();
       return new Locns(telescope.drop(count), result);
     }
+
+    @Override
+    public @NotNull Locns inst(ImmutableSeq<Term> preArgs) {
+      if (preArgs.isEmpty()) return this;
+      assert preArgs.size() <= telescopeSize();
+      var view = preArgs.view();
+      var cope = telescope.view()
+        .drop(preArgs.size())
+        .mapIndexed((idx, p) -> p.descent(t -> t.replaceTeleFrom(idx, view)))
+        .toImmutableSeq();
+      var result = this.result.replaceTeleFrom(cope.size(), view);
+      return new Locns(cope, result);
+    }
   }
 
   record Lift(
