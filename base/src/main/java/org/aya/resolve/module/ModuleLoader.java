@@ -62,26 +62,26 @@ public interface ModuleLoader extends Problematic {
     @NotNull ModuleLoader recurseLoader
   ) {
     var opSet = new AyaBinOpSet(reporter());
-    return resolveModule(primFactory, new ShapeFactory(), opSet, context, program, recurseLoader);
+    var resolveInfo = new ResolveInfo(context, primFactory, new ShapeFactory(), opSet);
+    resolveModule(resolveInfo, program, recurseLoader);
+    return resolveInfo;
   }
 
   /**
    * Resolve a certain module.
    *
-   * @param context the context of the module
-   * @param program the statements of the module
+   * @param context       the context of the module
+   * @param program       the statements of the module
    * @param recurseLoader the module loader that used to resolve
    */
   @ApiStatus.Internal
-  default @NotNull ResolveInfo resolveModule(
-      @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull AyaBinOpSet opSet,
-      @NotNull ModuleContext context, @NotNull ImmutableSeq<Stmt> program, @NotNull ModuleLoader recurseLoader
+  default void resolveModule(
+    @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> program,
+    @NotNull ModuleLoader recurseLoader
   ) {
-    var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, opSet);
     var resolver = new StmtResolvers(recurseLoader, resolveInfo);
     resolver.resolve(program);
     resolver.desugar(program);
-    return resolveInfo;
   }
 
   @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);
