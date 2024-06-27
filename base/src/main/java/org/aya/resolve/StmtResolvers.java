@@ -27,7 +27,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
       binder.bind(rename.bindCtx(), rename.bind(), var));
   }
 
-  private void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
+  public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
     stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern()));
   }
@@ -39,7 +39,6 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
     var resolving = fillContext(stmts);
     resolveStmts(resolving); // resolve mutates stmts
     resolveBind(resolving); // mutates bind blocks
-    desugar(stmts);
     info.opSet().reportIfCyclic();
   }
 }
