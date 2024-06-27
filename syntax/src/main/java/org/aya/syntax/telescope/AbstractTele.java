@@ -125,13 +125,12 @@ public interface AbstractTele {
       });
     }
 
-    public @NotNull Locns drop(int count) {
-      assert count <= telescopeSize();
-      return new Locns(telescope.drop(count), result);
-    }
+    // public @NotNull Locns drop(int count) {
+    //   assert count <= telescopeSize();
+    //   return new Locns(telescope.drop(count), result);
+    // }
 
-    @Override
-    public @NotNull Locns inst(ImmutableSeq<Term> preArgs) {
+    @Override public @NotNull Locns inst(ImmutableSeq<Term> preArgs) {
       if (preArgs.isEmpty()) return this;
       assert preArgs.size() <= telescopeSize();
       var view = preArgs.view();
