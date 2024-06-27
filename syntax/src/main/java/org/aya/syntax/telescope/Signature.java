@@ -7,11 +7,18 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.ForLSP;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
+/**
+ * Signature of a definition, used in concrete and tycking.
+ *
+ * @apiNote All terms in signature are as bound as possible.
+ */
+@ForLSP
 public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull ImmutableSeq<SourcePos> pos) {
   public Signature { assert telescope.telescopeSize() == pos.size(); }
 
