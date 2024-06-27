@@ -17,7 +17,7 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.telescope.PosedTele;
+import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
@@ -70,7 +70,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   public record Worker(
     @NotNull ClauseTycker parent,
     @NotNull ImmutableSeq<LocalVar> vars,
-    @NotNull PosedTele signature,
+    @NotNull Signature signature,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
     @NotNull ImmutableSeq<LocalVar> elims,
     boolean isFn
@@ -80,7 +80,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       if (lhsResult.noneMatch(r -> r.hasError)) {
         var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
-          signature.boundParams().view(), parent.exprTycker, overallPos);
+          signature.params().view(), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent.reporter(), classes);
           // refinePatterns(lhsResults, usages, classes);
@@ -99,7 +99,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   }
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
-    @Nullable ImmutableIntSeq indices, @NotNull PosedTele signature,
+    @Nullable ImmutableIntSeq indices, @NotNull Signature signature,
     @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
   ) {
     return clauses.map(c -> checkLhs(signature, indices, c, isFn)).toImmutableSeq();
@@ -143,12 +143,12 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   }
 
   public @NotNull LhsResult checkLhs(
-    @NotNull PosedTele signature,
+    @NotNull Signature signature,
     @Nullable ImmutableIntSeq indices,
     @NotNull Pattern.Clause clause,
     boolean isFn
   ) {
-    var tycker = newPatternTycker(indices, signature.boundParams().view());
+    var tycker = newPatternTycker(indices, signature.params().view());
     return exprTycker.subscoped(() -> {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
@@ -162,7 +162,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      var resultTerm = TermInline.apply(signature.boundResult().instantiateTele(patResult.paramSubstObj()));
+      var resultTerm = TermInline.apply(signature.result().instantiateTele(patResult.paramSubstObj()));
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:

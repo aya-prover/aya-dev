@@ -100,7 +100,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     var licit = switch (var) {
       case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub ?
         sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit) :
-        Objects.requireNonNull(inner.ref.signature).boundParams()
+        Objects.requireNonNull(inner.ref.signature).params()
           .mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
       case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
       default -> throw new UnsupportedOperationException("TODO");

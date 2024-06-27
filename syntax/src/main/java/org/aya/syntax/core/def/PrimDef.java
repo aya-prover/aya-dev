@@ -43,13 +43,13 @@ public final class PrimDef implements TopLevelDef {
   @Override public @NotNull ImmutableSeq<Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     var signature = ref.signature;
-    if (signature != null) return signature.boundParams();
+    if (signature != null) return signature.params();
     return telescope;
   }
 
   @Override public @NotNull Term result() {
     var signature = ref.signature;
-    if (signature != null) return signature.boundResult();
+    if (signature != null) return signature.result();
     return result;
   }
 

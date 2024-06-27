@@ -14,12 +14,12 @@ public sealed interface TopLevelDef extends TyckDef permits ClassDef, DataDef, F
   @Override default @NotNull ImmutableSeq<Param> telescope() {
     var signature = ref().signature;
     assert signature != null;
-    return signature.boundParams();
+    return signature.params();
   }
 
   @Override default @NotNull Term result() {
     var signature = ref().signature;
     assert signature != null;
-    return signature.boundResult();
+    return signature.result();
   }
 }

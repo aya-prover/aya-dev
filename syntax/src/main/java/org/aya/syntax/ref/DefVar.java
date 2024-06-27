@@ -4,7 +4,7 @@ package org.aya.syntax.ref;
 
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.telescope.PosedTele;
+import org.aya.syntax.telescope.Signature;
 import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ public final class DefVar<Core extends TyckDef, Concrete extends Decl> implement
   private final @NotNull String name;
   /** Initialized in parsing. */
   public @NotNull Concrete concrete;
-  public @Nullable PosedTele signature;
+  public @Nullable Signature signature;
   /** Initialized in type checking, so it might be null for unchecked user definitions. */
   public @UnknownNullability Core core;
   /** Initialized in the resolver or core deserialization */

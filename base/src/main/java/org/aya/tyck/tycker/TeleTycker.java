@@ -13,7 +13,7 @@ import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.telescope.PosedTele;
+import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.error.UnifyError;
@@ -36,14 +36,14 @@ public sealed interface TeleTycker extends Contextful {
    * @return a locally nameless signature computed from what's in the localCtx.
    */
   @Contract(pure = true)
-  default @NotNull PosedTele checkSignature(
+  default @NotNull Signature checkSignature(
     @NotNull ImmutableSeq<Expr.Param> cTele,
     @NotNull WithPos<Expr> result
   ) {
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
-    return PosedTele.fromSig(checkedParam, checkedResult);
+    return Signature.fromSig(checkedParam, checkedResult);
   }
 
   /**
@@ -93,13 +93,13 @@ public sealed interface TeleTycker extends Contextful {
   @Contract(mutates = "param3")
   static void loadTele(
     @NotNull SeqView<LocalVar> binds,
-    @NotNull PosedTele signature,
+    @NotNull Signature signature,
     @NotNull ExprTycker tycker
   ) {
     assert binds.sizeEquals(signature.telescope().telescopeSize());
     var tele = MutableList.<LocalVar>create();
 
-    binds.forEachWith(signature.boundParams(), (ref, param) -> {
+    binds.forEachWith(signature.params(), (ref, param) -> {
       tycker.localCtx().put(ref, param.type().instantiateTeleVar(tele.view()));
       tele.append(ref);
     });
