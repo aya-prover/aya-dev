@@ -7,17 +7,12 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
 public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull ImmutableSeq<SourcePos> pos) {
   public Signature { assert telescope.telescopeSize() == pos.size(); }
-
-  public static @NotNull Signature fromSig(@NotNull ImmutableSeq<WithPos<Param>> param, @NotNull Term result) {
-    return new Signature(new AbstractTele.Locns(param.map(WithPos::data), result), param.map(WithPos::sourcePos));
-  }
 
   public @NotNull ImmutableSeq<Param> params() { return telescope.telescope(); }
   public @NotNull Term result() { return telescope.result(); }

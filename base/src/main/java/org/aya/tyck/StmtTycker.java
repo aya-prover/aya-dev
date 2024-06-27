@@ -219,14 +219,18 @@ public record StmtTycker(
 
     var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.result());
     var selfTele = teleTycker.checkTele(con.telescope);
+    var selfTelePos = con.telescope.map(Expr.Param::sourcePos);
     var selfBinds = con.teleVars();
 
     var conTy = con.result;
     EqTerm boundaries = null;
     if (conTy != null) {
       var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
+
       selfTele = selfTele.appendedAll(pusheenResult.params().zip(pusheenResult.names(),
-        (param, name) -> new WithPos<>(conTy.sourcePos(), new Param(name.name(), param, true))));
+        (param, name) -> new Param(name.name(), param, true)));
+      selfTelePos = selfTelePos.appendedAll(ImmutableSeq.fill(pusheenResult.params().size(), conTy.sourcePos()));
+
       selfBinds = selfBinds.appendedAll(pusheenResult.names());
       var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
@@ -235,8 +239,9 @@ public record StmtTycker(
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
-        selfTele = selfTele.appended(new WithPos<>(conTy.sourcePos(),
-          new Param("i", DimTyTerm.INSTANCE, true)));
+        selfTele = selfTele.appended(new Param("i", DimTyTerm.INSTANCE, true));
+        selfTelePos = selfTelePos.appended(conTy.sourcePos());
+
         selfBinds = selfBinds.appended(fresh.name());
         boundaries = eq;
       } else {
@@ -252,7 +257,7 @@ public record StmtTycker(
     var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfBinds);
     if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele.map(WithPos::data)), new TupTerm(
+    var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
@@ -263,7 +268,7 @@ public record StmtTycker(
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new Signature(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
-      ownerTelePos.appendedAll(selfTele.map(WithPos::sourcePos)));
+      ownerTelePos.appendedAll(selfTelePos));
     new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele,
       wholeSig.telescope().drop(ownerTele.size()),

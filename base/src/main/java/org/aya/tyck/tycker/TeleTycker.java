@@ -13,6 +13,7 @@ import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -43,18 +44,17 @@ public sealed interface TeleTycker extends Contextful {
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
-    return Signature.fromSig(checkedParam, checkedResult);
+    return new Signature(new AbstractTele.Locns(checkedParam, checkedResult), cTele.map(Expr.Param::sourcePos));
   }
 
   /**
    * Does not zonk the result. Need <emph>you</emph> to zonk them.
    */
-  default @NotNull ImmutableSeq<WithPos<Param>> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
+  default @NotNull ImmutableSeq<Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
     var tele = checkTeleFree(cTele);
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     bindTele(locals, tele);
-    return tele.zip(cTele, (param, sp) -> new WithPos<>(sp.sourcePos(), param))
-      .toImmutableSeq();
+    return tele.toImmutableSeq();
   }
 
   /**
