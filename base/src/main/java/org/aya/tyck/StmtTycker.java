@@ -90,7 +90,7 @@ public record StmtTycker(
               patResult = clauseTycker.checkNoClassify();
               def = factory.apply(Either.right(patResult.wellTyped()));
               if (!patResult.hasLhsError()) {
-                var rawParams = signature.rawBoundParams();
+                var rawParams = signature.boundParams();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
                 confluence.check(patResult, signature.boundResult(),
                   PatClassifier.classify(patResult.clauses().view(), rawParams.view(), tycker, fnDecl.sourcePos()));
@@ -134,7 +134,7 @@ public record StmtTycker(
         if (signature.boundResult() instanceof SortTerm userSort) sort = userSort;
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.boundResult(),
           _ -> Doc.plain("universe")));
-        data.ref.signature = new PosedTele(new AbstractTele.Locns(signature.telescope().telescope(), sort), signature.pos());
+        data.ref.signature = new PosedTele(new AbstractTele.Locns(signature.boundParams(), sort), signature.pos());
       }
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
@@ -147,7 +147,7 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
           tycker.solveMetas();
           fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(tycker::zonk);
-          if (fnRef.signature.rawBoundParams().isEmpty() && cls.isEmpty())
+          if (fnRef.signature.boundParams().isEmpty() && cls.isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
       }
@@ -279,7 +279,7 @@ public record StmtTycker(
     var core = primRef.core;
     if (prim.telescope.isEmpty() && prim.result == null) {
       var pos = prim.sourcePos();
-      primRef.signature = PosedTele.fromSig(core.telescope().map(param -> new WithPos<>(pos, param)), core.result());
+      primRef.signature = new PosedTele(TyckDef.defSignature(core), ImmutableSeq.fill(core.telescope().size(), pos));
       return;
     }
     if (prim.telescope.isNotEmpty()) {
@@ -291,7 +291,7 @@ public record StmtTycker(
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
     tycker.unifyTermReported(
-      PiTerm.make(tele.rawBoundParams().view().map(Param::type), tele.boundResult()),
+      PiTerm.make(tele.boundParams().view().map(Param::type), tele.boundResult()),
       // No checks, slightly faster than TeleDef.defType
       PiTerm.make(core.telescope.view().map(Param::type), core.result),
       null, prim.entireSourcePos(),

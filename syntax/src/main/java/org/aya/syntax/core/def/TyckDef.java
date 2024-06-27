@@ -45,12 +45,15 @@ public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef
   /**
    * @see AnyDef#signature()
    */
-  static @NotNull AbstractTele defSignature(@NotNull DefVar<?, ?> defVar) {
-    if (defVar.core != null) return new AbstractTele.Locns(defVar.core.telescope(), defVar.core.result());
+  static @NotNull AbstractTele.Locns defSignature(@NotNull DefVar<?, ?> defVar) {
+    if (defVar.core != null) return defSignature(defVar.core);
     // guaranteed as this is already a core term
     var signature = defVar.signature;
     assert signature != null : defVar.name();
     return signature.telescope();
+  }
+  static @NotNull AbstractTele.Locns defSignature(@NotNull TyckDef core) {
+    return new AbstractTele.Locns(core.telescope(), core.result());
   }
 
   @NotNull DefVar<?, ?> ref();
