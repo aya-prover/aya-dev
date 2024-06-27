@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -21,7 +20,9 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
@@ -89,7 +90,7 @@ public record StmtTycker(
               patResult = clauseTycker.checkNoClassify();
               def = factory.apply(Either.right(patResult.wellTyped()));
               if (!patResult.hasLhsError()) {
-                var rawParams = signature.rawParams();
+                var rawParams = signature.params();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
                 confluence.check(patResult, signature.result(),
                   PatClassifier.classify(patResult.clauses().view(), rawParams.view(), tycker, fnDecl.sourcePos()));
@@ -133,7 +134,7 @@ public record StmtTycker(
         if (signature.result() instanceof SortTerm userSort) sort = userSort;
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
           _ -> Doc.plain("universe")));
-        data.ref.signature = new Signature(signature.param(), sort);
+        data.ref.signature = new Signature(new AbstractTele.Locns(signature.params(), sort), signature.pos());
       }
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
@@ -146,7 +147,7 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
           tycker.solveMetas();
           fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(tycker::zonk);
-          if (fnRef.signature.param().isEmpty() && cls.isEmpty())
+          if (fnRef.signature.params().isEmpty() && cls.isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
       }
@@ -167,10 +168,12 @@ public record StmtTycker(
     tycker.solveMetas();
     signature = signature.pusheen(tycker::whnf)
       .descent(tycker::zonk)
-      .bindTele(SeqView.of(tycker.state.classThis.pop()));
-    // TODO: reconsider these `self` references, they should be locally nameless!
-    var selfParam = new Param("this", classCall, false);
-    new MemberDef(classRef, member.ref, signature.rawParams().prepended(selfParam), signature.result());
+      .bindTele(
+        tycker.state.classThis.pop(),
+        new Param("self", classCall, false),
+        classRef.concrete.sourcePos()
+      );
+    new MemberDef(classRef, member.ref, signature.params(), signature.result());
     member.ref.signature = signature;
   }
 
@@ -187,7 +190,8 @@ public record StmtTycker(
     var dataSig = dataRef.signature;
     assert dataSig != null : "the header of data should be tycked";
     // Intended to be indexed, not free
-    var ownerTele = dataSig.param().map(x -> x.descent((_, p) -> p.implicitize()));
+    var ownerTele = dataSig.telescope().telescope().map(Param::implicitize);
+    var ownerTelePos = dataSig.pos();
     var ownerBinds = dataRef.concrete.telescope.map(Expr.Param::ref);
     // dataTele already in localCtx
     // The result that a con should be, unless it is a Path result
@@ -207,8 +211,8 @@ public record StmtTycker(
       var allTypedBinds = Pat.collectBindings(wellPats.view());
       ownerBinds = lhsResult.allBinds();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
-      ownerTele = ownerBinds.zip(allTypedBinds,
-        (bind, param) -> new WithPos<>(bind.definition(), param));
+      ownerTelePos = ownerBinds.map(LocalVar::definition);
+      ownerTele = allTypedBinds.toImmutableSeq();
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {
@@ -217,15 +221,19 @@ public record StmtTycker(
 
     var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.result());
     var selfTele = teleTycker.checkTele(con.telescope);
-    var selfTeleVars = con.teleVars();
+    var selfTelePos = con.telescope.map(Expr.Param::sourcePos);
+    var selfBinds = con.teleVars();
 
     var conTy = con.result;
     EqTerm boundaries = null;
     if (conTy != null) {
       var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
+
       selfTele = selfTele.appendedAll(pusheenResult.params().zip(pusheenResult.names(),
-        (param, name) -> new WithPos<>(conTy.sourcePos(), new Param(name.name(), param, true))));
-      selfTeleVars = selfTeleVars.appendedAll(pusheenResult.names());
+        (param, name) -> new Param(name.name(), param, true)));
+      selfTelePos = selfTelePos.appendedAll(ImmutableSeq.fill(pusheenResult.params().size(), conTy.sourcePos()));
+
+      selfBinds = selfBinds.appendedAll(pusheenResult.names());
       var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
@@ -233,9 +241,10 @@ public record StmtTycker(
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
-        selfTele = selfTele.appended(new WithPos<>(conTy.sourcePos(),
-          new Param("i", DimTyTerm.INSTANCE, true)));
-        selfTeleVars = selfTeleVars.appended(fresh.name());
+        selfTele = selfTele.appended(new Param("i", DimTyTerm.INSTANCE, true));
+        selfTelePos = selfTelePos.appended(conTy.sourcePos());
+
+        selfBinds = selfBinds.appended(fresh.name());
         boundaries = eq;
       } else {
         var state = tycker.state;
@@ -247,22 +256,24 @@ public record StmtTycker(
 
     // the result will refer to the telescope of con if it has patterns,
     // the path result may also refer to it, so we need to bind both
-    var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfTeleVars);
-    if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfTeleVars);
+    var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfBinds);
+    if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var selfSig = new Signature(tycker.zonk(selfTele), new TupTerm(
+    var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
-      ImmutableSeq.of(boundDataCall, boundariesWithDummy))).bindTele(ownerBinds.view());
-    var selfSigResult = ((TupTerm) selfSig.result()).items();
-    boundDataCall = (DataCall) selfSigResult.get(0);
-    if (boundaries != null) boundaries = (EqTerm) selfSigResult.get(1);
+      ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
+      .bindTele(ownerBinds.zip(ownerTele).view());
+    var wholeSigResult = ((TupTerm) wholeSig.result()).items();
+    boundDataCall = (DataCall) wholeSigResult.get(0);
+    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.get(1);
 
     // The signature of con should be full (the same as [konCore.telescope()])
-    ref.signature = new Signature(ownerTele.concat(selfSig.param()), boundDataCall);
+    ref.signature = new Signature(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
+      ownerTelePos.appendedAll(selfTelePos));
     new ConDef(dataDef, ref, wellPats, boundaries,
-      ownerTele.map(WithPos::data),
-      selfSig.rawParams(),
+      ownerTele,
+      wholeSig.telescope().drop(ownerTele.size()),
       boundDataCall, false);
   }
 
@@ -275,7 +286,7 @@ public record StmtTycker(
     var core = primRef.core;
     if (prim.telescope.isEmpty() && prim.result == null) {
       var pos = prim.sourcePos();
-      primRef.signature = new Signature(core.telescope().map(param -> new WithPos<>(pos, param)), core.result());
+      primRef.signature = new Signature(TyckDef.defSignature(core), ImmutableSeq.fill(core.telescope().size(), pos));
       return;
     }
     if (prim.telescope.isNotEmpty()) {
@@ -287,7 +298,7 @@ public record StmtTycker(
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
     tycker.unifyTermReported(
-      PiTerm.make(tele.param().view().map(p -> p.data().type()), tele.result()),
+      PiTerm.make(tele.params().view().map(Param::type), tele.result()),
       // No checks, slightly faster than TeleDef.defType
       PiTerm.make(core.telescope.view().map(Param::type), core.result),
       null, prim.entireSourcePos(),

@@ -10,7 +10,6 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.ref.DefVar;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ public final class PrimDef implements TopLevelDef {
   @Override public @NotNull ImmutableSeq<Param> telescope() {
     if (telescope.isEmpty()) return telescope;
     var signature = ref.signature;
-    if (signature != null) return signature.param().map(WithPos::data);
+    if (signature != null) return signature.params();
     return telescope;
   }
 

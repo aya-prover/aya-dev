@@ -13,6 +13,7 @@ import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -43,18 +44,17 @@ public sealed interface TeleTycker extends Contextful {
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
-    return new Signature(checkedParam, checkedResult);
+    return new Signature(new AbstractTele.Locns(checkedParam, checkedResult), cTele.map(Expr.Param::sourcePos));
   }
 
   /**
    * Does not zonk the result. Need <emph>you</emph> to zonk them.
    */
-  default @NotNull ImmutableSeq<WithPos<Param>> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
+  default @NotNull ImmutableSeq<Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
     var tele = checkTeleFree(cTele);
     var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
     bindTele(locals, tele);
-    return tele.zip(cTele, (param, sp) -> new WithPos<>(sp.sourcePos(), param))
-      .toImmutableSeq();
+    return tele.toImmutableSeq();
   }
 
   /**
@@ -96,11 +96,11 @@ public sealed interface TeleTycker extends Contextful {
     @NotNull Signature signature,
     @NotNull ExprTycker tycker
   ) {
-    assert binds.sizeEquals(signature.param());
+    assert binds.sizeEquals(signature.telescope().telescopeSize());
     var tele = MutableList.<LocalVar>create();
 
-    binds.forEachWith(signature.param(), (ref, param) -> {
-      tycker.localCtx().put(ref, param.data().type().instantiateTeleVar(tele.view()));
+    binds.forEachWith(signature.params(), (ref, param) -> {
+      tycker.localCtx().put(ref, param.type().instantiateTeleVar(tele.view()));
       tele.append(ref);
     });
   }
