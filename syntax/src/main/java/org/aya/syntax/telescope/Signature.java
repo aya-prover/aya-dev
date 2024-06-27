@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,5 +31,8 @@ public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
     return new Signature(
       new AbstractTele.Locns(params().appendedAll(resultPushed.params().view()), resultPushed.body()),
       pos.appendedAll(ImmutableSeq.fill(resultPushed.params().size(), SourcePos.NONE)));
+  }
+  public @NotNull Signature bindTele(@NotNull LocalVar var, @NotNull Param type, @NotNull SourcePos newPos) {
+    return new Signature(telescope.bind(var, type), pos.prepended(newPos));
   }
 }

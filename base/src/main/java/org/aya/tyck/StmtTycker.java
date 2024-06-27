@@ -166,13 +166,16 @@ public record StmtTycker(
     assert result != null; // See AyaProducer
     var signature = teleTycker.checkSignature(member.telescope, result);
     tycker.solveMetas();
-    // signature = signature.pusheen(tycker::whnf)
-    //   .descent(tycker::zonk)
-    //   .bindTele(SeqView.of(tycker.state.classThis.pop()));
-    // // TODO: reconsider these `self` references, they should be locally nameless!
-    // var selfParam = new Param("this", classCall, false);
-    // new MemberDef(classRef, member.ref, signature.rawParams().prepended(selfParam), signature.result());
-    // member.ref.signature = signature;
+    signature = signature.pusheen(tycker::whnf)
+      .descent(tycker::zonk)
+      .bindTele(
+        tycker.state.classThis.pop(),
+        new Param("self", classCall, false),
+        classRef.concrete.sourcePos()
+      );
+    // TODO: reconsider these `self` references, they should be locally nameless!
+    new MemberDef(classRef, member.ref, signature.params(), signature.result());
+    member.ref.signature = signature;
   }
 
   /**
