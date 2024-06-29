@@ -285,7 +285,7 @@ public record AyaProducer(
 
     var fnMods = info.modifier().toFnModifiers();
     var tele = telescope(node.childrenOfType(TELE));
-    var dynamite = fnBody(tele.map(Expr.Param::ref), fnBodyNode);
+    var dynamite = fnBody(fnBodyNode);
     if (dynamite == null) return null;
     var inline = info.modifier.misc(ModifierParser.CModifier.Inline);
     var overlap = info.modifier.misc(ModifierParser.CModifier.Overlap);
@@ -302,7 +302,7 @@ public record AyaProducer(
     return fnDecl;
   }
 
-  public @Nullable FnBody fnBody(@NotNull ImmutableSeq<LocalVar> vars, @NotNull GenericNode<?> node) {
+  public @Nullable FnBody fnBody(@NotNull GenericNode<?> node) {
     var expr = node.peekChild(EXPR);
     var implies = node.peekChild(IMPLIES);
     if (expr == null && implies != null) return error(implies, "Expect function body");

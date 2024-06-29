@@ -3,8 +3,8 @@
 package org.aya.producer;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.builder.FleetPsiBuilder;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.aya.intellij.GenericNode;
@@ -32,7 +32,7 @@ public interface ParserUtil {
 
   static @NotNull IFileElementType forLanguage(@NotNull Language language) {
     return new IFileElementType(language) {
-      @Override public void parse(@NotNull FleetPsiBuilder<?> builder) {
+      @Override public void parse(@NotNull PsiBuilder builder) {
       }
     };
   }
