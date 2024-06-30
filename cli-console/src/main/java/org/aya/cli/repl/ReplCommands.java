@@ -55,8 +55,12 @@ public interface ReplCommands {
       if (!(resolved instanceof AnyDefVar defVar)) return Result.err("Not a valid reference", true);
       var def = AnyDef.fromVar(defVar);
       AnyDef topLevel = def;
-      if (def instanceof ConDefLike conDefLike) topLevel = conDefLike.dataRef();
-      else if (def instanceof MemberDefLike memberDefLike) topLevel = memberDefLike.classRef();
+      switch (def) {
+        case ConDefLike conDefLike -> topLevel = conDefLike.dataRef();
+        case MemberDefLike memberDefLike -> topLevel = memberDefLike.classRef();
+        default -> {
+        }
+      }
 
       return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
     }
