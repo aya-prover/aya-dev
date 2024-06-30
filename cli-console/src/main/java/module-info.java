@@ -19,4 +19,5 @@ module aya.cli.console {
   exports org.aya.cli.console;
 
   opens org.aya.cli.repl to aya.repl;
+  opens org.aya.cli.plct to com.google.gson;
 }

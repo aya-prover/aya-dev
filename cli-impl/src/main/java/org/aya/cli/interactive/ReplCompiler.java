@@ -162,13 +162,9 @@ public class ReplCompiler {
   }
 
   public @Nullable QualifiedID parseToQualifiedID(@NotNull String text) {
-    var parseTree = new AyaParserImpl(reporter).repl(text);
-    if (parseTree.isLeft()) {
-      reporter.reportString("Expect reference expression, got statement", Problem.Severity.ERROR);
-      return null;
-    }
-    // TODO: duplicated with below one
-    var expr = parseTree.getRightValue().data();
+    var parseTree = parseExpr(text);
+    if (parseTree == null) return null;
+    var expr = parseTree.data();
     if (expr instanceof Expr.Unresolved unresolved) {
       return unresolved.name();
     }
@@ -179,15 +175,20 @@ public class ReplCompiler {
 
   public @Nullable Term computeType(@NotNull String text, NormalizeMode mode) {
     try {
-      var parseTree = new AyaParserImpl(reporter).repl(text);
-      if (parseTree.isLeft()) {
-        reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
-        return null;
-      }
-      return tyckAndNormalize(parseTree.getRightValue(), true, mode);
+      var expr = parseExpr(text);
+      if (expr == null) return null;
+      return tyckAndNormalize(expr, true, mode);
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+  private @Nullable WithPos<Expr> parseExpr(@NotNull String text) {
+    var parseTree = new AyaParserImpl(reporter).repl(text);
+    if (parseTree.isLeft()) {
+      reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
+      return null;
+    }
+    return parseTree.getRightValue();
   }
 
   /** @param isType true means take the type, otherwise take the term. */
