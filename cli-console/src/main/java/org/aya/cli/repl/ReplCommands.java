@@ -15,7 +15,6 @@ import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
-import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,10 +51,8 @@ public interface ReplCommands {
 
   @NotNull Command SHOW_INFO = new Command(ImmutableSeq.of("info"), "Show the information of the given definition") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
-      var id = repl.replCompiler.parseToQualifiedID(code.code);
-      if (id == null) return Result.err("Failed to get reference", true);
-      var resolved = repl.replCompiler.getContext().getMaybe(id);
-      if (!(resolved instanceof AnyDefVar defVar)) return Result.err("Unresolved symbol", true);
+      var resolved = repl.replCompiler.parseToAnyVar(code.code);
+      if (!(resolved instanceof AnyDefVar defVar)) return Result.err("Not a valid reference", true);
       var def = AnyDef.fromVar(defVar);
       AnyDef topLevel = def;
       if (def instanceof ConDefLike conDefLike) topLevel = conDefLike.dataRef();

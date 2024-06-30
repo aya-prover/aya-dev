@@ -29,11 +29,11 @@ import org.aya.resolve.salt.Desalt;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
+import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -161,15 +161,11 @@ public class ReplCompiler {
     }
   }
 
-  public @Nullable QualifiedID parseToQualifiedID(@NotNull String text) {
+  public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
     var parseTree = parseExpr(text);
     if (parseTree == null) return null;
-    var expr = parseTree.data();
-    if (expr instanceof Expr.Unresolved unresolved) {
-      return unresolved.name();
-    }
-
-    reporter.reportString("Expect reference expression", Problem.Severity.ERROR);
+    if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
+      return unresolved.var();
     return null;
   }
 
