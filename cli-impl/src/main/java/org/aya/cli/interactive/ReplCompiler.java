@@ -29,6 +29,7 @@ import org.aya.resolve.salt.Desalt;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
@@ -158,6 +159,22 @@ public class ReplCompiler {
       // Only two kinds of interruptions are possible: parsing and resolving
       return Either.left(ImmutableSeq.empty());
     }
+  }
+
+  public @Nullable QualifiedID parseToQualifiedID(@NotNull String text) {
+    var parseTree = new AyaParserImpl(reporter).repl(text);
+    if (parseTree.isLeft()) {
+      reporter.reportString("Expect reference expression, got statement", Problem.Severity.ERROR);
+      return null;
+    }
+    // TODO: duplicated with below one
+    var expr = parseTree.getRightValue().data();
+    if (expr instanceof Expr.Unresolved unresolved) {
+      return unresolved.name();
+    }
+
+    reporter.reportString("Expect reference expression", Problem.Severity.ERROR);
+    return null;
   }
 
   public @Nullable Term computeType(@NotNull String text, NormalizeMode mode) {

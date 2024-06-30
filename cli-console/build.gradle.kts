@@ -24,4 +24,8 @@ tasks.withType<AbstractCopyTask>().configureEach {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+tasks.named<JavaExec>("run") {
+  standardInput = System.`in`
+}
+
 tasks.withType<JavaCompile>().configureEach { CommonTasks.picocli(this) }
