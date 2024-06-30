@@ -13,6 +13,7 @@ import org.aya.repl.ReplUtil;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,9 @@ public interface ReplCommands {
         default -> {
         }
       }
-
+      if (topLevel instanceof TyckAnyDef<?> tyckDef) {
+        return new Command.Result(Output.stdout(repl.render(tyckDef.core())), true);
+      }
       return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
     }
   };
@@ -142,7 +145,7 @@ public interface ReplCommands {
   @NotNull Command TOGGLE_PRETTY = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaPrettierOptions.Key key) {
       var builder = new StringBuilder();
-      var map = repl.config.literatePrettier.prettierOptions.map;
+      var map = repl.prettierOptions().map;
       if (key == null) {
         builder.append("Current pretty printing options:");
         for (var k : AyaPrettierOptions.Key.values())
