@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public sealed interface Term extends Serializable, AyaDocile
-  permits BetaRedex, Formation, LocalTerm, StableWHNF, TyckInternal, Callable, CoeTerm {
+  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);

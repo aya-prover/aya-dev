@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
@@ -13,6 +15,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.DataDefLike;
+import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.*;
@@ -132,6 +135,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
+  /**
+   * @param type   expected type
+   * @param result wellTyped + actual type from synthesize
+   * @param expr   original expr, used for error reporting
+   */
   private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     var resultType = result.type();
@@ -152,8 +160,21 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           addWithTerm(with, expr.sourcePos(), eq);
         return new Jdg.Default(new LamTerm(closure), eq);
       }
-    }
-    if (unifyTyReported(type, resultType, expr)) return result;
+    } else if (type instanceof ClassCall clazz) {
+      resultType = whnf(resultType);
+      if (resultType instanceof ClassCall resultClazz) {
+        if (unifyTyReported(clazz, resultClazz, expr)) {
+          var restr = resultClazz.args()
+            .drop(clazz.args().size());
+          var fields = clazz.ref().members()
+            .sliceView(clazz.args().size(), resultClazz.args().size());
+          ;
+          var extra = ImmutableMap.from(fields.zipView(restr));
+          return new Jdg.Default(new ClassCastTerm(result.wellTyped(), extra), type);
+        }
+      }
+    } else if (unifyTyReported(type, resultType, expr)) return result;
+
     return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
   }
 
