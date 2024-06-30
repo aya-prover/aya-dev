@@ -161,6 +161,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     } else if (type instanceof ClassCall clazz) {
+      // Try coercive subtyping for `SomeClass (foo := 114514)` into `SomeClass`
       resultType = whnf(resultType);
       if (resultType instanceof ClassCall resultClazz) {
         if (unifyTyReported(clazz, resultClazz, expr)) {
@@ -168,7 +169,6 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             .drop(clazz.args().size());
           var fields = clazz.ref().members()
             .sliceView(clazz.args().size(), resultClazz.args().size());
-          ;
           var extra = ImmutableMap.from(fields.zipView(restr));
           return new Jdg.Default(new ClassCastTerm(result.wellTyped(), extra), type);
         }
