@@ -164,8 +164,11 @@ public class ReplCompiler {
   public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
     var parseTree = parseExpr(text);
     if (parseTree == null) return null;
-    if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
-      return unresolved.var();
+    try {
+      if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
+        return unresolved.var();
+    } catch (InterruptException ignored) {
+    }
     return null;
   }
 
