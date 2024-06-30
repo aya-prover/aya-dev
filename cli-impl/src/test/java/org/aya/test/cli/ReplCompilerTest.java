@@ -12,6 +12,7 @@ import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,12 @@ public class ReplCompilerTest {
 
     assertThrows(Throwable.class, () -> compile("def a a"));
     assertNull(findContext("a"));
+  }
+
+  @Test public void info() {
+    compile("inductive Nat | zero | suc Nat");
+    assertInstanceOf(DefVar.class, compiler.parseToAnyVar("Nat"));
+    assertInstanceOf(DefVar.class, compiler.parseToAnyVar("Nat::suc"));
   }
 
   /** <a href="https://ice1000.jetbrains.space/im/group/4DLh053zIix6?message=2db0002db&channel=4DLh053zIix6">Bug report</a> */
