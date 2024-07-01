@@ -9,6 +9,7 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.util.MapUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public record ClassCastTerm(
   @NotNull Term subterm,
   @NotNull ImmutableSeq<Closure> remember,
   @NotNull ImmutableSeq<Closure> forget
-) implements Term {
+) implements StableWHNF, Term {
   public ClassCastTerm {
     assert forget.isNotEmpty();
   }
