@@ -26,6 +26,18 @@ public record MemberCall(
   }
 
   public static @NotNull Term make(
+    @NotNull ClassCall typeOfOf,
+    @NotNull Term of,
+    @NotNull MemberDefLike ref,
+    int ulift,
+    @NotNull ImmutableSeq<@NotNull Term> args
+  ) {
+    var impl = typeOfOf.get(ref);
+    if (impl != null) return impl.apply(of);
+    return make(new MemberCall(of, ref, ulift, args));
+  }
+
+  public static @NotNull Term make(
     @NotNull Term of,
     @NotNull MemberDefLike ref,
     int ulift,
