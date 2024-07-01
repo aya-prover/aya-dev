@@ -49,7 +49,7 @@ public record ClassCall(
 
   public @Nullable Closure get(@NotNull MemberDefLike member) {
     assert member.classRef() == ref;
-    return args.getOrNull(ref.members().indexOf(member));
+    return args.getOrNull(member.index());
   }
 
   @Override public @NotNull Term doElevate(int level) {

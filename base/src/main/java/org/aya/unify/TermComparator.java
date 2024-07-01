@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -120,6 +121,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
+  private <L, R, T> T swapped(@NotNull L lhs, @NotNull R rhs, @NotNull BiFunction<R, L, T> callback) {
+    cmp = cmp.invert();
+    var result = callback.apply(rhs, lhs);
+    cmp = cmp.invert();
+    return result;
+  }
+
   /**
    * Compare two terms with the given {@param type} (if not null)
    *
@@ -140,12 +148,20 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // prefer solving the IsType one as the OfType one.
       if (lhs instanceof MetaCall lMeta && lMeta.ref().req() == MetaVar.Misc.IsType)
         return solveMeta(lMeta, rMeta, type) != null;
-      return swapped(() -> solveMeta(rMeta, lhs, type)) != null;
+      return swapped(lhs, rMeta, (r, l) -> solveMeta(r, l, type)) != null;
     }
     // ^ Beware of the order!!
     if (lhs instanceof MetaCall lMeta) {
       return solveMeta(lMeta, rhs, type) != null;
-    } else if (type == null) {
+    }
+
+    if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
+      var tmp = lhs;
+      lhs = rhs;
+      rhs = tmp;
+    }
+
+    if (type == null) {
       return compareUntyped(lhs, rhs) != null;
     }
 
@@ -171,6 +187,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // TODO: ClassCall
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
       case ErrorTerm _ -> true;
+      case ClassCall classCall -> {
+        if (classCall.args().size() == classCall.ref().members().size()) yield true;
+        // otherwise, lhs and rhs will finally
+      }
       case PiTerm pi -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
           compare(
@@ -226,8 +246,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
     Term result;
     if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm)
-      result = swapped(() -> doCompareUntyped(rhs, lhs));
-    else result = doCompareUntyped(lhs, rhs);
+      result = swapped(lhs, rhs, this::doCompareUntyped);
+    else {
+      if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
+        var tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+      }
+
+      result = doCompareUntyped(lhs, rhs);
+    }
     if (result != null) return whnf(result);
     fail(lhs, rhs);
     return null;
@@ -299,10 +327,19 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         case MetaLitTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
         default -> null;
       };
+      case MemberCall memberCall -> {
+        var lof = memberCall.of() instanceof ClassCastTerm cast ? cast.unwrap(this::whnf) : memberCall.of();
+        if (rhs instanceof MemberCall memberCarr) {
+          var rof = memberCarr.of() instanceof ClassCastTerm cast ? cast.unwrap(this::whnf) : memberCarr.of();
+          yield compareUntyped(lof, rof);
+        } else {
+          yield null;
+        }
+      }
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the ref don't match),
       // so we are unable to do more if we can't normalize them.
-      case FnCall _, MemberCall _ -> null;
+      case FnCall _ -> null;
 
       default -> throw noRules(lhs);
     };

@@ -42,10 +42,10 @@ public record MemberCall(
         yield impl.apply(neu);
       }
       case ClassCastTerm cast -> {
-        var impl = cast.restriction().getOrNull(call.ref());
+        var impl = cast.get(call.ref);
         if (impl != null) yield impl.apply(cast);
-        // delegate to inner
-        yield make(call.update(cast.subterm(), call.args));
+        // no impl
+        yield call;
       }
       default -> call;
     };
