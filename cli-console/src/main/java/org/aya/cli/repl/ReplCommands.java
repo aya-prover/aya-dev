@@ -10,7 +10,12 @@ import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.literate.CodeOptions;
+import org.aya.syntax.ref.AnyDefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,14 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface ReplCommands {
-  record Code(@NotNull String code) {}
-  record Prompt(@NotNull String prompt) {}
+  record Code(@NotNull String code) { }
+  record Prompt(@NotNull String prompt) { }
 
   record ColorParam(@NotNull Either<RenderOptions.ColorSchemeName, Path> value)
-    implements CommandArg.ArgEither<RenderOptions.ColorSchemeName, Path> {}
+    implements CommandArg.ArgEither<RenderOptions.ColorSchemeName, Path> { }
 
   record StyleParam(@NotNull Either<RenderOptions.StyleFamilyName, Path> value)
-    implements CommandArg.ArgEither<RenderOptions.StyleFamilyName, Path> {}
+    implements CommandArg.ArgEither<RenderOptions.StyleFamilyName, Path> { }
 
   @NotNull Command CHANGE_PROMPT = new Command(ImmutableSeq.of("prompt"), "Change the REPL prompt text") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Prompt argument) {
@@ -42,6 +47,25 @@ public interface ReplCommands {
       var type = repl.replCompiler.computeType(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command SHOW_INFO = new Command(ImmutableSeq.of("info"), "Show the information of the given definition") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var resolved = repl.replCompiler.parseToAnyVar(code.code);
+      if (!(resolved instanceof AnyDefVar defVar)) return Result.err("Not a valid reference", true);
+      var def = AnyDef.fromVar(defVar);
+      AnyDef topLevel = def;
+      switch (def) {
+        case ConDefLike conDefLike -> topLevel = conDefLike.dataRef();
+        case MemberDefLike memberDefLike -> topLevel = memberDefLike.classRef();
+        default -> {
+        }
+      }
+      if (topLevel instanceof TyckAnyDef<?> tyckDef) {
+        return new Command.Result(Output.stdout(repl.render(tyckDef.core())), true);
+      }
+      return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
     }
   };
 
@@ -74,9 +98,16 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command PRINT_CWD = new Command(ImmutableSeq.of("pwd"), "Print current working directory") {
+  @NotNull Command SHOW_CWD = new Command(ImmutableSeq.of("pwd"), "Show current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
       return new Result(Output.stdout(repl.cwd.toAbsolutePath().toString()), true);
+    }
+  };
+  @NotNull Command SHOW_PROPERTY = new Command(ImmutableSeq.of("system-property"), "Show a system property") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull String key) {
+      var property = key.isBlank() ? null : System.getProperty(key);
+      var stdout = property != null ? Output.stdout(property) : Output.stderr("No such property");
+      return new Result(stdout, true);
     }
   };
   @NotNull Command SHOW_MODULE_PATHS = new Command(ImmutableSeq.of("module-path"), "Show module path(s)") {
@@ -101,7 +132,8 @@ public interface ReplCommands {
   };
 
   @NotNull Command CHANGE_NORM_MODE = new Command(ImmutableSeq.of("normalize"), "Set or display the normalization mode") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable CodeOptions.NormalizeMode normalizeMode) {
+    @Entry
+    public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable CodeOptions.NormalizeMode normalizeMode) {
       if (normalizeMode == null) return Result.ok(STR."Normalization mode: \{repl.config.normalizeMode}", true);
       else {
         repl.config.normalizeMode = normalizeMode;
@@ -113,7 +145,7 @@ public interface ReplCommands {
   @NotNull Command TOGGLE_PRETTY = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaPrettierOptions.Key key) {
       var builder = new StringBuilder();
-      var map = repl.config.literatePrettier.prettierOptions.map;
+      var map = repl.prettierOptions().map;
       if (key == null) {
         builder.append("Current pretty printing options:");
         for (var k : AyaPrettierOptions.Key.values())

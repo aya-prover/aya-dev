@@ -62,7 +62,7 @@ public interface Contextful {
    * Generate a fresh {@link MetaCall} with type {@link Param#type()}
    */
   default @NotNull MetaCall mockTerm(@NotNull Param param, @NotNull SourcePos pos) {
-    return freshMeta(param.name(), pos, new MetaVar.OfType(param.type()));
+    return freshMeta(param.name(), pos, new MetaVar.OfType(param.type()), false);
   }
 
   /**
@@ -70,10 +70,10 @@ public interface Contextful {
    *
    * @see LocalCtx#extract()
    */
-  default @NotNull MetaCall freshMeta(String name, @NotNull SourcePos pos, MetaVar.Requirement req) {
+  default @NotNull MetaCall freshMeta(String name, @NotNull SourcePos pos, MetaVar.Requirement req, boolean isUser) {
     var vars = localCtx().extract().toImmutableSeq();
     var args = vars.<Term>map(FreeTerm::new);
-    return new MetaCall(new MetaVar(name, pos, args.size(), req.bind(vars.view())), args);
+    return new MetaCall(new MetaVar(name, pos, args.size(), req.bind(vars.view()), isUser), args);
   }
 
   default @NotNull Term generatePi(Expr.@NotNull Lambda expr, SourcePos sourcePos) {
@@ -83,8 +83,8 @@ public interface Contextful {
 
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {
     var genName = name + Constants.GENERATED_POSTFIX;
-    var domain = freshMeta(STR."\{genName}ty", pos, MetaVar.Misc.IsType);
-    var codomain = freshMeta(STR."\{genName}ret", pos, MetaVar.Misc.IsType);
+    var domain = freshMeta(STR."\{genName}ty", pos, MetaVar.Misc.IsType, false);
+    var codomain = freshMeta(STR."\{genName}ret", pos, MetaVar.Misc.IsType, false);
     return new PiTerm(domain, Closure.mkConst(codomain));
   }
 }

@@ -33,6 +33,7 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
+import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -64,20 +65,24 @@ public class ReplCompiler {
   private final @NotNull AyaBinOpSet opSet;
   private final @NotNull TyckState tcState;
 
-  public ReplCompiler(@NotNull ImmutableSeq<Path> modulePaths, @NotNull Reporter reporter, @Nullable SourceFileLocator locator) {
+  public ReplCompiler(
+    @NotNull ImmutableSeq<Path> modulePaths,
+    @NotNull Reporter delegateReporter,
+    @Nullable SourceFileLocator locator
+  ) {
     this.modulePaths = modulePaths;
-    this.reporter = CountingReporter.delegate(reporter);
+    reporter = CountingReporter.delegate(delegateReporter);
     this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
     this.primFactory = new PrimFactory() {
       @Override public boolean suppressRedefinition() { return true; }
     };
     this.shapeFactory = new ReplShapeFactory();
-    this.opSet = new AyaBinOpSet(this.reporter);
-    this.context = new ReplContext(new EmptyContext(this.reporter, Path.of("REPL")), ModulePath.of("REPL"));
-    this.fileManager = new SingleAyaFile.Factory(this.reporter);
-    var parser = new AyaParserImpl(this.reporter);
-    this.loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter, this.modulePaths.map(path ->
-      new FileModuleLoader(this.locator, path, this.reporter, parser, fileManager, primFactory))));
+    this.opSet = new AyaBinOpSet(reporter);
+    this.context = new ReplContext(new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
+    this.fileManager = new SingleAyaFile.Factory(reporter);
+    var parser = new AyaParserImpl(reporter);
+    this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
+      new FileModuleLoader(this.locator, path, reporter, parser, fileManager, primFactory))));
     tcState = new TyckState(shapeFactory, primFactory);
   }
 
@@ -139,7 +144,8 @@ public class ReplCompiler {
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
-          var resolveInfo = loader.resolveModule(primFactory, shapeFactory, opSet, context.fork(), program, loader);
+          var resolveInfo = new ResolveInfo(context.fork(), primFactory, shapeFactory, opSet);
+          loader.resolveModule(resolveInfo, program, loader);
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return ImmutableSeq.empty();
@@ -155,17 +161,33 @@ public class ReplCompiler {
     }
   }
 
+  public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
+    var parseTree = parseExpr(text);
+    if (parseTree == null) return null;
+    try {
+      if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
+        return unresolved.var();
+    } catch (InterruptException ignored) {
+    }
+    return null;
+  }
+
   public @Nullable Term computeType(@NotNull String text, NormalizeMode mode) {
     try {
-      var parseTree = new AyaParserImpl(reporter).repl(text);
-      if (parseTree.isLeft()) {
-        reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
-        return null;
-      }
-      return tyckAndNormalize(parseTree.getRightValue(), true, mode);
+      var expr = parseExpr(text);
+      if (expr == null) return null;
+      return tyckAndNormalize(expr, true, mode);
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+  private @Nullable WithPos<Expr> parseExpr(@NotNull String text) {
+    var parseTree = new AyaParserImpl(reporter).repl(text);
+    if (parseTree.isLeft()) {
+      reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
+      return null;
+    }
+    return parseTree.getRightValue();
   }
 
   /** @param isType true means take the type, otherwise take the term. */

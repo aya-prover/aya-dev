@@ -10,6 +10,7 @@ module aya.cli.impl {
   requires org.jetbrains.annotations;
   requires org.commonmark;
   requires java.compiler;
+  requires jdk.compiler;
 
   exports org.aya.cli.interactive;
   exports org.aya.cli.library.incremental;

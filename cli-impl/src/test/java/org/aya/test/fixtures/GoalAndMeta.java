@@ -86,4 +86,17 @@ public interface GoalAndMeta {
       (xs ++ (ys ++ zs))
       ((xs ++ ys) ++ zs)
     """;
+
+  @Language("Aya") String testUtensilFullFile = """
+    open import data::vec::base
+    open import arith::nat::base
+    open import relation::binary::path
+    variable n m o : Nat
+    variable A : Type
+    
+    def ++-assoc' (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
+    : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+    | [] ⇒ refl
+    | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+    """;
 }

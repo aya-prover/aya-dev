@@ -5,7 +5,6 @@ package org.aya.syntax.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,7 +14,7 @@ public sealed interface TopLevelDef extends TyckDef permits ClassDef, DataDef, F
   @Override default @NotNull ImmutableSeq<Param> telescope() {
     var signature = ref().signature;
     assert signature != null;
-    return signature.param().map(WithPos::data);
+    return signature.params();
   }
 
   @Override default @NotNull Term result() {

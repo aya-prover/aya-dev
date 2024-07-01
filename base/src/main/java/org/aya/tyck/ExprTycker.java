@@ -103,7 +103,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
       case Expr.Hole hole -> {
-        var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(), new MetaVar.OfType(type));
+        var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(),
+          new MetaVar.OfType(type), hole.explicit());
         hole.solution().set(freshHole);
         userHoles.append(new WithPos<>(expr.sourcePos(), hole));
         if (hole.explicit()) fail(new Goal(state, freshHole, localCtx().clone(), hole.accessibleLocal()));
@@ -181,7 +182,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
-        var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType);
+        var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
         if (hole.explicit()) fail(new Goal(state, meta, localCtx().clone(), hole.accessibleLocal()));
         yield meta;
       }
@@ -264,7 +265,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var defs = state.shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr.data(), new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var type = freshMeta(STR."_ty\{integer}'", expr.sourcePos(), MetaVar.Misc.IsType);
+          var type = freshMeta(STR."_ty\{integer}'", expr.sourcePos(), MetaVar.Misc.IsType, false);
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), integer, defs, type), type);
         }
         var match = defs.getFirst();
@@ -301,7 +302,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var defs = state.shapeFactory.findImpl(AyaShape.LIST_SHAPE);
         if (defs.isEmpty()) yield fail(arr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var tyMeta = freshMeta("arr_ty", expr.sourcePos(), MetaVar.Misc.IsType);
+          var tyMeta = freshMeta("arr_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
           var results = elements.map(element -> inherit(element, tyMeta).wellTyped());
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), results, defs, tyMeta), tyMeta);
         }
@@ -311,7 +312,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         // List (A : Type)
         var sort = def.signature().telescopeRich(0);
         // the sort of type below.
-        var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()));
+        var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()), false);
 
         // do type check
         var results = ImmutableTreeSeq.from(elements.map(element -> inherit(element, elementTy).wellTyped()));

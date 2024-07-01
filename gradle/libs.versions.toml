@@ -12,7 +12,7 @@ annotations = "24.1.0"
 kala = "0.74.0"
 # https://picocli.info
 picocli = "4.7.6"
-build-util = "0.0.25"
+build-util = "0.0.26"
 # https://github.com/jline/jline3
 jline = "3.26.2"
 # https://github.com/commonmark/commonmark-java

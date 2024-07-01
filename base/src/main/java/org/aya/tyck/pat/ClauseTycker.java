@@ -80,7 +80,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       if (lhsResult.noneMatch(r -> r.hasError)) {
         var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
-          signature.param().view().map(WithPos::data), parent.exprTycker, overallPos);
+          signature.params().view(), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent.reporter(), classes);
           // refinePatterns(lhsResults, usages, classes);
@@ -148,7 +148,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     @NotNull Pattern.Clause clause,
     boolean isFn
   ) {
-    var tycker = newPatternTycker(indices, signature.rawParams().view());
+    var tycker = newPatternTycker(indices, signature.params().view());
     return exprTycker.subscoped(() -> {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.

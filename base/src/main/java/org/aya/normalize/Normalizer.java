@@ -10,6 +10,7 @@ import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.BetaRedex;

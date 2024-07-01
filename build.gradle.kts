@@ -98,7 +98,6 @@ subprojects {
 
     options.apply {
       isDeprecation = true
-      release.set(javaVersion)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
 
