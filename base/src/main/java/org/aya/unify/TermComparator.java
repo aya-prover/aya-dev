@@ -328,10 +328,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         default -> null;
       };
       case MemberCall memberCall -> {
-        var lof = memberCall.of() instanceof ClassCastTerm cast ? cast.unwrap(this::whnf) : memberCall.of();
+        // it is impossible that memberCall.of() is an cast term, cause it is whnfed.
+        assert !(memberCall.of() instanceof ClassCastTerm);
         if (rhs instanceof MemberCall memberCarr) {
-          var rof = memberCarr.of() instanceof ClassCastTerm cast ? cast.unwrap(this::whnf) : memberCarr.of();
-          yield compareUntyped(lof, rof);
+          assert !(memberCarr.of() instanceof ClassCastTerm);
+          yield compareUntyped(memberCall.of(), memberCarr.of());
         } else {
           yield null;
         }

@@ -56,8 +56,8 @@ public record MemberCall(
       case ClassCastTerm cast -> {
         var impl = cast.get(call.ref);
         if (impl != null) yield impl.apply(cast);
-        // no impl
-        yield call;
+        // no impl, try inner
+        yield call.update(cast.subterm(), call.args);
       }
       default -> call;
     };
