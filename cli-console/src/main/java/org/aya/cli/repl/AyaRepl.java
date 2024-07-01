@@ -71,6 +71,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.CHANGE_NORM_MODE,
       ReplCommands.TOGGLE_PRETTY,
       ReplCommands.SHOW_TYPE,
+      ReplCommands.SHOW_INFO,
       ReplCommands.SHOW_PARSE_TREE,
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,
@@ -129,13 +130,17 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
       program -> config.silent ? Doc.empty() :
-        Doc.vcat(program.view().map(def -> def.toDoc(config.literatePrettier.prettierOptions))),
+        Doc.vcat(program.view().map(this::render)),
       this::render
     ));
   }
 
   public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
-    return ayaDocile.toDoc(config.literatePrettier.prettierOptions);
+    return ayaDocile.toDoc(prettierOptions());
+  }
+
+  public @NotNull AyaPrettierOptions prettierOptions() {
+    return config.literatePrettier.prettierOptions;
   }
 
   @Override public @NotNull String renderDoc(@NotNull Doc doc) {

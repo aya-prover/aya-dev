@@ -10,7 +10,12 @@ import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.literate.CodeOptions;
+import org.aya.syntax.ref.AnyDefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +47,25 @@ public interface ReplCommands {
       var type = repl.replCompiler.computeType(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command SHOW_INFO = new Command(ImmutableSeq.of("info"), "Show the information of the given definition") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var resolved = repl.replCompiler.parseToAnyVar(code.code);
+      if (!(resolved instanceof AnyDefVar defVar)) return Result.err("Not a valid reference", true);
+      var def = AnyDef.fromVar(defVar);
+      AnyDef topLevel = def;
+      switch (def) {
+        case ConDefLike conDefLike -> topLevel = conDefLike.dataRef();
+        case MemberDefLike memberDefLike -> topLevel = memberDefLike.classRef();
+        default -> {
+        }
+      }
+      if (topLevel instanceof TyckAnyDef<?> tyckDef) {
+        return new Command.Result(Output.stdout(repl.render(tyckDef.core())), true);
+      }
+      return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
     }
   };
 
@@ -121,7 +145,7 @@ public interface ReplCommands {
   @NotNull Command TOGGLE_PRETTY = new Command(ImmutableSeq.of("print-toggle"), "Toggle a pretty printing option") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable AyaPrettierOptions.Key key) {
       var builder = new StringBuilder();
-      var map = repl.config.literatePrettier.prettierOptions.map;
+      var map = repl.prettierOptions().map;
       if (key == null) {
         builder.append("Current pretty printing options:");
         for (var k : AyaPrettierOptions.Key.values())

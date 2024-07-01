@@ -87,10 +87,7 @@ public final class PLCTReport {
   }
 
   public @NotNull Doc generate(@NotNull String name, @NotNull String repo, LocalDateTime since) throws IOException, InterruptedException {
-    var req = HttpRequest.newBuilder().GET()
-      .uri(URI.create("https://api.github.com/repos/" + repo + "/pulls?state=closed&sort=updated&direction=desc&per_page=100"))
-      .build();
-
+    var req = buildRequest("https://api.github.com/repos/" + repo + "/pulls?state=closed&sort=updated&direction=desc&per_page=100");
     var seq = parse(client.send(req, HttpResponse.BodyHandlers.ofInputStream()).body())
       .view()
       .filter(i -> i.updatedAt.isAfter(since))
@@ -104,6 +101,12 @@ public final class PLCTReport {
         Doc.parened(Doc.plain("https://github.com/%s".formatted(repo)))
       ))
       .prepended(Doc.empty()));
+  }
+
+  public static HttpRequest buildRequest(String uri) {
+    return HttpRequest.newBuilder().GET()
+      .uri(URI.create(uri))
+      .build();
   }
 
   public static @NotNull LocalDate sinceDate() {

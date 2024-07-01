@@ -33,6 +33,7 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
+import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.Jdg;
@@ -160,17 +161,33 @@ public class ReplCompiler {
     }
   }
 
+  public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
+    var parseTree = parseExpr(text);
+    if (parseTree == null) return null;
+    try {
+      if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
+        return unresolved.var();
+    } catch (InterruptException ignored) {
+    }
+    return null;
+  }
+
   public @Nullable Term computeType(@NotNull String text, NormalizeMode mode) {
     try {
-      var parseTree = new AyaParserImpl(reporter).repl(text);
-      if (parseTree.isLeft()) {
-        reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
-        return null;
-      }
-      return tyckAndNormalize(parseTree.getRightValue(), true, mode);
+      var expr = parseExpr(text);
+      if (expr == null) return null;
+      return tyckAndNormalize(expr, true, mode);
     } catch (InterruptException ignored) {
       return null;
     }
+  }
+  private @Nullable WithPos<Expr> parseExpr(@NotNull String text) {
+    var parseTree = new AyaParserImpl(reporter).repl(text);
+    if (parseTree.isLeft()) {
+      reporter.reportString("Expect expression, got statement", Problem.Severity.ERROR);
+      return null;
+    }
+    return parseTree.getRightValue();
   }
 
   /** @param isType true means take the type, otherwise take the term. */
