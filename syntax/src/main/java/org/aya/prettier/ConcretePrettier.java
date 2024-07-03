@@ -235,7 +235,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         Doc.sep(Doc.styled(KEYWORD, "let"), stmt(letOpen.openCmd()), Doc.styled(KEYWORD, "in")),
         Doc.indent(2, term(Outer.Free, letOpen.body()))
       );
-      case Expr.New neu -> throw new UnsupportedOperationException("TODO");
+      case Expr.New neu -> Doc.sep(KW_NEW, term(Outer.Free, neu.classCall()));
     };
   }
 
