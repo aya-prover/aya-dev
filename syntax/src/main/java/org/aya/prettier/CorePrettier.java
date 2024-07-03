@@ -219,6 +219,7 @@ public class CorePrettier extends BasePrettier<Term> {
         yield checkParen(outer, doc, Outer.BinOp);
       }
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
+      case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
     };
   }
 
