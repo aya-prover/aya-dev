@@ -191,8 +191,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (classCall.args().size() == classCall.ref().members().size()) yield true;
         // TODO: should we compare fields that have impl?
         yield classCall.ref().members().allMatch(member -> {
-          // loop invariant: first [i] members are the "same". ([i] is the loop counter)
-          // Note that member can only refer to first [i - 1] members, so it is safe that we supply [lhs] or [rhs]
+          // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
+          // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
           var ty = member.signature().inst(ImmutableSeq.of(lhs));
           var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
           var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
