@@ -5,6 +5,7 @@ package org.aya.syntax.core.term.call;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.NewTerm;
@@ -48,7 +49,7 @@ public record ClassCall(
   }
 
   public @Nullable Closure get(@NotNull MemberDefLike member) {
-    assert member.classRef() == ref;
+    assert AnyDef.equals(ref, member.classRef());
     return args.getOrNull(member.index());
   }
 

@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -376,10 +377,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
-    @NotNull AbstractTele params, @NotNull Function<Term[], Jdg> k
+    @NotNull AbstractTele params, @NotNull BiFunction<Term[], Term[], Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
     var result = new Term[params.telescopeSize()];
+    var types = new Term[params.telescopeSize()];
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       var param = params.telescopeRich(paramIx, result);
@@ -390,33 +392,39 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           break;
         } else if (arg.name() == null) {
           // here, arg.explicit() == true and param.explicit() == false
-          result[paramIx++] = insertImplicit(param, arg.sourcePos());
+          result[paramIx] = insertImplicit(param, arg.sourcePos());
+          types[paramIx++] = param.type();
           continue;
         }
       }
       if (arg.name() != null && !param.nameEq(arg.name())) {
-        result[paramIx++] = insertImplicit(param, arg.sourcePos());
+        result[paramIx] = insertImplicit(param, arg.sourcePos());
+        types[paramIx++] = param.type();
         continue;
       }
-      result[paramIx++] = inherit(arg.arg(), param.type()).wellTyped();
+      var what = inherit(arg.arg(), param.type());
+      result[paramIx] = what.wellTyped();
+      types[paramIx++] = what.type();
       argIx++;
     }
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
-      result[paramIx++] = insertImplicit(param, pos);
+      result[paramIx] = insertImplicit(param, pos);
+      types[paramIx++] = param.type();
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
-      return generateApplication(args.drop(argIx), k.apply(result));
+      return generateApplication(args.drop(argIx), k.apply(result, types));
     } else while (paramIx < params.telescopeSize()) {
       var param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));
-      result[paramIx++] = new FreeTerm(atarashiVar);
+      result[paramIx] = new FreeTerm(atarashiVar);
+      types[paramIx++] = param.type();
     }
-    var generated = k.apply(result);
+    var generated = k.apply(result, types);
     while (extraParams.isNotEmpty()) {
       var pair = extraParams.pop();
       generated = new Jdg.Default(

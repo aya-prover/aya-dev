@@ -6,6 +6,7 @@ import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.util.Pair;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,14 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ClassDefLike, ConD
     return switch (defVar) {
       case JitDef jitDef -> new CompiledVar(jitDef);
       case TyckAnyDef<?> tyckAnyDef -> tyckAnyDef.ref;
+      default -> throw new UnsupportedOperationException("TODO");
+    };
+  }
+
+  static @NotNull boolean equals(@NotNull AnyDef lhs, @NotNull AnyDef rhs) {
+    return switch (new Pair<>(lhs, rhs)) {
+      case Pair(JitDef jlhs, JitDef jrhs) -> jlhs == jrhs;
+      case Pair(TyckAnyDef<?> tlhs, TyckAnyDef<?> trhs) -> tlhs.ref == trhs.ref;
       default -> throw new UnsupportedOperationException("TODO");
     };
   }

@@ -30,12 +30,17 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public record AppTycker<Ex extends Exception>(
-  @NotNull TyckState state, @NotNull AbstractTycker tycker, @NotNull SourcePos pos,
-  int argsCount, int lift, @NotNull Factory<Ex> makeArgs
-) {
+  @Override @NotNull TyckState state,
+  @NotNull AbstractTycker tycker,
+  @NotNull SourcePos pos,
+  int argsCount,
+  int lift,
+  @NotNull Factory<Ex> makeArgs
+) implements Stateful {
   /**
    * <pre>
    * Signature (0th param) --------> Argument Parser (this interface)
@@ -48,7 +53,7 @@ public record AppTycker<Ex extends Exception>(
    */
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, BiFunction<Term[], Term[], Jdg>, Jdg, Ex> {
   }
 
   public AppTycker(
@@ -103,7 +108,7 @@ public record AppTycker<Ex extends Exception>(
     // ownerTele + selfTele
     var fullSignature = conVar.signature().lift(lift);
 
-    return makeArgs.applyChecked(fullSignature, args -> {
+    return makeArgs.applyChecked(fullSignature, (args, _) -> {
       var realArgs = ImmutableArray.from(args);
       var ownerArgs = realArgs.take(conVar.ownerTeleSize());
       var conArgs = realArgs.drop(conVar.ownerTeleSize());
@@ -119,14 +124,14 @@ public record AppTycker<Ex extends Exception>(
   }
   private @NotNull Jdg checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
       state.primFactory.unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
   private @NotNull Jdg checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
       new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
@@ -135,7 +140,7 @@ public record AppTycker<Ex extends Exception>(
     @NotNull FnDefLike fnDef, @Nullable Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
     var signature = fnDef.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> {
+    return makeArgs.applyChecked(signature, (args, _) -> {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);
       if (operator != null) {
@@ -150,7 +155,7 @@ public record AppTycker<Ex extends Exception>(
     var self = LocalVar.generate("self");
     var appliedParams = ofClassMembers(self, clazz, argsCount).lift(lift);
     state.classThis.push(self);
-    var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
+    var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
@@ -160,11 +165,13 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
     var signature = member.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> {
+    return makeArgs.applyChecked(signature, (args, ty) -> {
       assert args.length >= 1;
+      var ofTy = whnf(ty[0]);
+      if (!(ofTy instanceof ClassCall classTy)) throw new UnsupportedOperationException("report");   // TODO
       var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(
-        new MemberCall(args[0], member, 0, fieldArgs),
+        MemberCall.make(classTy, args[0], member, 0, fieldArgs),
         signature.result(args)
       );
     });
