@@ -49,7 +49,7 @@ public record ClassCall(
   }
 
   public @Nullable Closure get(@NotNull MemberDefLike member) {
-    assert AnyDef.equals(ref, member.classRef());
+    assert ref.equals(member.classRef());
     return args.getOrNull(member.index());
   }
 
