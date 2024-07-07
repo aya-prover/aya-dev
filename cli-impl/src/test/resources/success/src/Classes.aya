@@ -1,0 +1,7 @@
+open import prelude
+
+class Kontainer
+| Taipe : Type
+| walue : Taipe
+
+def norm0 : walue (new Kontainer Nat 0) = 0 => idp

@@ -2261,16 +2261,8 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = consumeTokenSmart(b, KW_NEW);
     p = r;
     r = p && expr(b, l, 0);
-    r = p && report_error_(b, newExpr_1(b, l + 1)) && r;
     exit_section_(b, l, m, NEW_EXPR, r, p, null);
     return r || p;
-  }
-
-  // newBody?
-  private static boolean newExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newExpr_1")) return false;
-    newBody(b, l + 1);
-    return true;
   }
 
   public static boolean piExpr(PsiBuilder b, int l) {

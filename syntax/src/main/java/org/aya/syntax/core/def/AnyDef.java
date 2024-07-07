@@ -61,13 +61,5 @@ public sealed interface AnyDef extends OpDecl permits JitDef, ClassDefLike, ConD
     };
   }
 
-  static @NotNull boolean equals(@NotNull AnyDef lhs, @NotNull AnyDef rhs) {
-    return switch (new Pair<>(lhs, rhs)) {
-      case Pair(JitDef jlhs, JitDef jrhs) -> jlhs == jrhs;
-      case Pair(TyckAnyDef<?> tlhs, TyckAnyDef<?> trhs) -> tlhs.ref == trhs.ref;
-      default -> throw new UnsupportedOperationException("TODO");
-    };
-  }
-
   @NotNull AbstractTele signature();
 }

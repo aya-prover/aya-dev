@@ -563,6 +563,10 @@ public record AyaProducer(
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
       return new WithPos<>(pos, new Expr.Pi(param, to));
     }
+    if (node.is(NEW_EXPR)) {
+      var classCall = expr(node.child(EXPR));
+      return new WithPos<>(pos, new Expr.New(classCall));
+    }
     // if (node.is(NEW_EXPR)) {
     //   var struct = expr(node.child(EXPR));
     //   var newBody = node.peekChild(NEW_BODY);

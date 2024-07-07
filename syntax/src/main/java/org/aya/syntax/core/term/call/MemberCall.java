@@ -37,15 +37,6 @@ public record MemberCall(
     return make(new MemberCall(of, ref, ulift, args));
   }
 
-  public static @NotNull Term make(
-    @NotNull Term of,
-    @NotNull MemberDefLike ref,
-    int ulift,
-    @NotNull ImmutableSeq<@NotNull Term> args
-  ) {
-    return make(new MemberCall(of, ref, ulift, args));
-  }
-
   public static @NotNull Term make(@NotNull MemberCall call) {
     return switch (call.of()) {
       case NewTerm neu -> {
