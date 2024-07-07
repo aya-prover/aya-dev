@@ -121,13 +121,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
-  private <L, R, T> T swapped(@NotNull L lhs, @NotNull R rhs, @NotNull BiFunction<R, L, T> callback) {
-    cmp = cmp.invert();
-    var result = callback.apply(rhs, lhs);
-    cmp = cmp.invert();
-    return result;
-  }
-
   /**
    * Compare two terms with the given {@param type} (if not null)
    *
@@ -148,7 +141,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // prefer solving the IsType one as the OfType one.
       if (lhs instanceof MetaCall lMeta && lMeta.ref().req() == MetaVar.Misc.IsType)
         return solveMeta(lMeta, rMeta, type) != null;
-      return swapped(lhs, rMeta, (r, l) -> solveMeta(r, l, type)) != null;
+      var llhs = lhs;
+      return swapped(() -> solveMeta(rMeta, llhs, type)) != null;
     }
     // ^ Beware of the order!!
     if (lhs instanceof MetaCall lMeta) {
@@ -253,9 +247,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     Term result;
-    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm)
-      result = swapped(lhs, rhs, this::doCompareUntyped);
-    else {
+    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm) {
+      var llhs = lhs;
+      var rrhs = rhs;
+      result = swapped(() -> doCompareUntyped(rrhs, llhs));
+    } else {
       if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
         var tmp = lhs;
         lhs = rhs;
