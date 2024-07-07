@@ -172,9 +172,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           if (clazz.args().size() == resultClazz.args().size()) return result;
           var forget = resultClazz.args().drop(clazz.args().size());
           return new Jdg.Default(new ClassCastTerm(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
+        } else {
+          // TODO: skip unifyTyReported below
         }
       }
-    } else if (unifyTyReported(type, resultType, expr)) return result;
+    }
+
+    if (unifyTyReported(type, resultType, expr)) return result;
 
     return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
   }
