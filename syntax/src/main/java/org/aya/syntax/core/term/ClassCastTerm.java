@@ -50,7 +50,7 @@ public record ClassCastTerm(
   }
 
   public @Nullable Closure get(@NotNull MemberDefLike member) {
-    assert ref == member.classRef();
+    assert ref.equals(member.classRef());
     var idx = member.index();
     if (idx < remember.size()) return remember.get(idx);
     idx = idx - remember.size();

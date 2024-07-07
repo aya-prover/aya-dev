@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
@@ -12,12 +13,10 @@ import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
-import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.core.term.SigmaTerm;
-import org.aya.syntax.core.term.SortTerm;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
@@ -203,14 +202,19 @@ public record AppTycker<Ex extends Exception>(
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(self)));
+      return TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new NewTerm(
+        new ClassCall(new ClassDef.Delegate(clazz.ref()), 0,
+          ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < teleArgs.size() ? teleArgs.get(idx) : ErrorTerm.DUMMY))
+        )
+      ))).makePi(Seq.empty());
     }
+
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return clazz.members().view()
         .drop(telescopeSize)
         .map(member -> TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(self))))
         .map(ty -> (SortTerm) synthesizer.synth(ty))
-        .reduce(SigmaTerm::lub);
+        .foldLeft(SortTerm.Type0, SigmaTerm::lub);
     }
     @Override public @NotNull SeqView<String> namesView() {
       return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());
