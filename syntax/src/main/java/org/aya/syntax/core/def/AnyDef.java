@@ -6,7 +6,6 @@ import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.util.Pair;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;

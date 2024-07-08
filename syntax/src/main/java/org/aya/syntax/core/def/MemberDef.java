@@ -34,10 +34,7 @@ public record MemberDef(
     /**
      * this implementation prevents invocation of {@link ClassDef.Delegate#members()} while tycking {@link ClassDef}
      */
-    @Override
-    public int index() {
-      return ref.core.index;
-    }
+    @Override public int index() { return ref.core.index; }
 
     @Override public @NotNull ClassDefLike classRef() {
       return new ClassDef.Delegate(core().classRef());
