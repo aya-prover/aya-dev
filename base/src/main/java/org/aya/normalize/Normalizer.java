@@ -94,9 +94,6 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         yield defaultValue;
       }
-      // TODO: handle other cases
-      // ice: what are the other cases?
-      // h: i don't know
       default -> defaultValue;
     };
   }

@@ -225,73 +225,25 @@ Info: Solving equation(s) with not very general solution(s)
 That looks right!
 
 UtensilFullFile:
-In file $FILE:8:54 ->
+In file $FILE:9:22 ->
 
-  6 │       
   7 │       def ++-assoc' (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
-  8 │       : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-    │                                          ╰──────────────╯    ╰──────────────╯ ?a
-                                                                                    n
-                                                                                    A
-                                                                                    m
-                                                                                    o
-                                                                                    xs
-                                                                                    ys
-                                                                                    zs
-                                                                                    0 >= n,
-                                                                                    ?b
-                                                                                    n
-                                                                                    A
-                                                                                    m
-                                                                                    o
-                                                                                    xs
-                                                                                    ys
-                                                                                    zs
-                                                                                    0 >= m,
-                                                                                    ?c
-                                                                                    n
-                                                                                    A
-                                                                                    m
-                                                                                    o
-                                                                                    xs
-                                                                                    ys
-                                                                                    zs
-                                                                                    0 >= o
-    │                                                             ╰──────────────╯ ?a
-                                                                                   n
-                                                                                   A
-                                                                                   m
-                                                                                   o
-                                                                                   xs
-                                                                                   ys
-                                                                                   zs
-                                                                                   1 >= n,
-                                                                                   ?b
-                                                                                   n
-                                                                                   A
-                                                                                   m
-                                                                                   o
-                                                                                   xs
-                                                                                   ys
-                                                                                   zs
-                                                                                   1 >= m,
-                                                                                   ?c
-                                                                                   n
-                                                                                   A
-                                                                                   m
-                                                                                   o
-                                                                                   xs
-                                                                                   ys
-                                                                                   zs
-                                                                                   1 >= o
+  8 │       : Path (fn i ⇒ Vec (+-assoc i) A)
+  9 │         (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+    │          ╰──────────────╯    ╰──────────────╯ ?a n A m o xs ys zs 0 >= n, ?b
+                                                    n A m o xs ys zs 0 >= m, ?c n A
+                                                    m o xs ys zs 0 >= o
+    │                             ╰──────────────╯ ?a n A m o xs ys zs 1 >= n, ?b n
+                                                   A m o xs ys zs 1 >= m, ?c n A
+                                                   m o xs ys zs 1 >= o
 
 Info: Solving equation(s) with not very general solution(s)
 
-In file $FILE:10:18 ->
+In file $FILE:11:18 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                     ╰──╯
 
 Error: The solution
@@ -301,11 +253,11 @@ Error: The solution
        Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
        `zs`
 
-In file $FILE:10:25 ->
+In file $FILE:11:25 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                            ╰─────────────╯
 
 Error: Cannot check the expression
@@ -326,11 +278,11 @@ Error: Cannot check the expression
          Vec (+-assoc {?n A x n m o _ ys zs} {?m A x n m o _ ys zs} {?o A x n m o _
         ys zs} i) (?A A x n m o _ ys zs)
 
-In file $FILE:10:18 ->
+In file $FILE:11:18 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                     ╰──╯
 
 Error: The solution
@@ -339,17 +291,19 @@ Error: The solution
        Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
        `zs`
 
-In file $FILE:10:12 ->
+In file $FILE:11:12 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │               ╰───────────────────────────╯
 
 Error: Cannot check the expression
          pmap (\ _ ⇒ x :> _) (++-assoc' _ _ _)
        of type
-         (x :> ?a A x n m o _ ys zs) = (x :> ?b A x n m o _ ys zs)
+         (=) {?B A x n m o _ ys zs} (x :> ?a A x n m o _ ys zs) (x :> ?b A x n m
+        o _ ys zs)
+         (Normalized: (x :> ?a A x n m o _ ys zs) = (x :> ?b A x n m o _ ys zs))
        against the type
          (++) {suc n} {A} {m + o} (x :> _) ((++) {m} {A} {o} ys zs) = (++) {suc n +
         m} {A} {o} ((++) {suc n} {A} {m} (x :> _) ys) zs
@@ -361,11 +315,11 @@ Error: Cannot check the expression
          Vec (+-assoc {suc n} {m} {o} i) A
          (Normalized: Vec (suc (+-assoc {n} {m} {o} i)) A)
 
-In file $FILE:10:18 ->
+In file $FILE:11:18 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                     ╰──╯
 
 Error: The solution
@@ -374,11 +328,11 @@ Error: The solution
        Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
        `zs`
 
-In file $FILE:10:18 ->
+In file $FILE:11:18 ->
 
-  8  │   : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │   | [] ⇒ refl
-  10 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │     (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │   | [] ⇒ refl
+  11 │   | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                     ╰──╯
 
 Error: The solution
@@ -387,11 +341,11 @@ Error: The solution
        Only the variables below are allowed: `A`, `x`, `n`, `m`, `o`, `_`, `ys`,
        `zs`
 
-In file $FILE:10:18 ->
+In file $FILE:11:18 ->
 
-  8  │       : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-  9  │       | [] ⇒ refl
-  10 │       | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+  9  │         (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+  10 │       | [] ⇒ refl
+  11 │       | x :> _ => pmap (x :>) (++-assoc' _ _ _)
      │                         ╰──╯
      │                         ╰──╯ ?B A x n m o _ ys zs >= Vec (suc (?n A x n m
                                     o _ ys zs _)) (?A A x n m o _ ys zs _)

@@ -47,6 +47,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.function.BiFunction;
@@ -145,24 +146,26 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     var resultType = result.type();
-    // Try coercive subtyping for (I -> A) into (Path A ...)
-    if (type instanceof EqTerm eq) {
-      resultType = whnf(resultType);
-      if (resultType instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
-        var ref = new FreeTerm(new LocalVar("i"));
-        var wellTyped = subscoped(ref.name(), DimTyTerm.INSTANCE, () ->
-          unifyTyReported(eq.appA(ref), cod.apply(ref), expr));
-        if (!wellTyped) return result;
-        var closure = result.wellTyped() instanceof LamTerm(var clo) ? clo
-          // This is kinda unsafe but it should be fine
-          : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
-        checkBoundaries(eq, closure, expr.sourcePos(), msg ->
-          new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-        if (expr.data() instanceof Expr.WithTerm with)
-          addWithTerm(with, expr.sourcePos(), eq);
+    // Try coercive subtyping for (Path A ...) into (I -> A)
+    if (type instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+      if (whnf(resultType) instanceof EqTerm eq) {
+        var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
+        if (closure == null) return makeErrorResult(type, result);
         return new Jdg.Default(new LamTerm(closure), eq);
       }
-    } else if (type instanceof ClassCall clazz) {
+    }
+    // Try coercive subtyping for (I -> A) into (Path A ...)
+    if (type instanceof EqTerm eq) {
+      if (whnf(resultType) instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+        var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
+        if (closure == null) return makeErrorResult(type, result);
+        checkBoundaries(eq, closure, expr.sourcePos(), msg ->
+          new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+        return new Jdg.Default(new LamTerm(closure), eq);
+      }
+    }
+    // Try coercive subtyping between classes
+    if (type instanceof ClassCall clazz) {
       // Try coercive subtyping for `SomeClass (foo := 114514)` into `SomeClass`
       resultType = whnf(resultType);
       if (resultType instanceof ClassCall resultClazz) {
@@ -177,10 +180,24 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
       }
     }
-
     if (unifyTyReported(type, resultType, expr)) return result;
+    return makeErrorResult(type, result);
+  }
 
+  private static @NotNull Jdg makeErrorResult(@NotNull Term type, @NotNull Jdg result) {
     return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
+  }
+
+  private @Nullable Closure makeClosurePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod, @NotNull Term core) {
+    var ref = new FreeTerm(new LocalVar("i"));
+    var wellTyped = subscoped(ref.name(), DimTyTerm.INSTANCE, () ->
+      unifyTyReported(eq.appA(ref), cod.apply(ref), expr));
+    if (!wellTyped) return null;
+    if (expr.data() instanceof Expr.WithTerm with)
+      addWithTerm(with, expr.sourcePos(), eq);
+    return core instanceof LamTerm(var clo) ? clo
+      // This is kinda unsafe but it should be fine
+      : new Closure.Jit(i -> new AppTerm(core, i));
   }
 
   public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
