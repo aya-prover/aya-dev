@@ -142,14 +142,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.LitInt expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawSort e -> Doc.styled(KEYWORD, e.kind().name());
-      // case Expr.New expr -> Doc.cblock(
-      //   Doc.sep(Doc.styled(KEYWORD, "new"), term(Outer.Free, expr.struct())),
-      //   2, Doc.vcat(expr.fields().view().map(t ->
-      //     Doc.sep(Doc.symbol("|"), Doc.styled(MEMBER, t.name().data()),
-      //       Doc.emptyIf(t.bindings().isEmpty(), () ->
-      //         Doc.sep(t.bindings().map(v -> varDoc(v.data())))),
-      //       Doc.plain("=>"), term(Outer.Free, t.body()))
-      //   )));
       case Expr.Sigma expr -> checkParen(outer, Doc.sep(
         KW_SIGMA,
         visitTele(expr.params().dropLast(1)),
@@ -235,6 +227,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         Doc.sep(Doc.styled(KEYWORD, "let"), stmt(letOpen.openCmd()), Doc.styled(KEYWORD, "in")),
         Doc.indent(2, term(Outer.Free, letOpen.body()))
       );
+      case Expr.New neu -> Doc.sep(KW_NEW, term(Outer.Free, neu.classCall()));
     };
   }
 

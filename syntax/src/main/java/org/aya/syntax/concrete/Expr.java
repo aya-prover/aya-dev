@@ -318,6 +318,23 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
+  record New(
+    @NotNull WithPos<Expr> classCall
+  ) implements Expr {
+    public @NotNull Expr.New update(@NotNull WithPos<Expr> classCall) {
+      return classCall == classCall() ? this : new New(classCall);
+    }
+
+    @Override public @NotNull Expr.New descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(classCall.descent(f));
+    }
+
+    @Override
+    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      f.accept(classCall);
+    }
+  }
+
   record Idiom(
     @NotNull IdiomNames names,
     @NotNull ImmutableSeq<WithPos<Expr>> barredApps
