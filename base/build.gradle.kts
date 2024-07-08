@@ -32,3 +32,8 @@ val cleanGenerated = tasks.register("cleanGenerated") {
 }
 
 tasks.named("clean") { dependsOn(cleanGenerated) }
+
+// Thank you Long
+tasks.withType<JavaExec>().configureEach {
+  jvmArgs( "-Xss32m")
+}
