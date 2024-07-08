@@ -8,6 +8,7 @@ import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.ClassCastTerm;
 import org.aya.syntax.core.term.NewTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
 public record MemberCall(
@@ -15,7 +16,7 @@ public record MemberCall(
   @Override @NotNull MemberDefLike ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
-) implements Callable.Tele {
+) implements Callable.Tele, BetaRedex {
   private MemberCall update(Term clazz, ImmutableSeq<Term> newArgs) {
     return clazz == of && newArgs.sameElements(args, true) ? this
       : new MemberCall(clazz, ref, ulift, newArgs);
@@ -34,23 +35,23 @@ public record MemberCall(
   ) {
     var impl = typeOfOf.get(ref);
     if (impl != null) return impl.apply(of);
-    return make(new MemberCall(of, ref, ulift, args));
+    return new MemberCall(of, ref, ulift, args).make();
   }
 
-  public static @NotNull Term make(@NotNull MemberCall call) {
-    return switch (call.of()) {
+  public @NotNull Term make() {
+    return switch (of()) {
       case NewTerm neu -> {
-        var impl = neu.inner().get(call.ref);
+        var impl = neu.inner().get(ref);
         assert impl != null;    // NewTerm is always fully applied
         yield impl.apply(neu);
       }
       case ClassCastTerm cast -> {
-        var impl = cast.get(call.ref);
+        var impl = cast.get(ref);
         if (impl != null) yield impl.apply(cast);
         // no impl, try inner
-        yield call.update(cast.subterm(), call.args);
+        yield update(cast.subterm(), args);
       }
-      default -> call;
+      default -> this;
     };
   }
 }

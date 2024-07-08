@@ -82,11 +82,6 @@ public final class Normalizer implements UnaryOperator<Term> {
           ? apply(fnRule.toFnCall())
           : reduceRule;
       }
-      case MemberCall memberCall -> {
-        var result = MemberCall.make(memberCall);
-        if (result != memberCall) yield apply(result);
-        yield defaultValue;
-      }
       case ConCall(var head, _) when !head.ref().hasEq() -> defaultValue;
       case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
         call.head().ref().equality(call.args(), dim == DimTerm.I0);
