@@ -114,7 +114,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var docTele = telescope.map(this::lambdaParam);
 
         prelude.appendAll(docTele);
-        if (!(body instanceof Expr.Hole)) {
+        if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
           prelude.append(FN_DEFINED_AS);
           prelude.append(term(Outer.Free, body));
         }

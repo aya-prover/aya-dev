@@ -16,6 +16,7 @@ public class SyntaxTest {
       prim I
       def foo (f : Type -> Type 0) (a : Type 0) =>
         [ f a ]
+      def foo2 => ↑↑ foo
       def bar (A : Type 0) : A -> A => fn x => {? x ?}
       open inductive Nat | O | S Nat
       open inductive Fin Nat
