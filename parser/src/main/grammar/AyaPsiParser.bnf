@@ -279,7 +279,7 @@ arrayCompBlock ::= expr BAR <<commaSep doBinding>>
 arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr
 
-newExpr ::= KW_NEW expr newBody?
+newExpr ::= KW_NEW expr // newBody?
 appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
 projExpr ::= expr projFix

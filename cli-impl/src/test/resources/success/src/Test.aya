@@ -14,3 +14,8 @@ module Issue942 {
   def what? (m : Nat) : Wrapper (suc m = 0) =>
     wrap (\ x => z≠s (pinv x))
 }
+
+module Issue1130 {
+  def f (p : I -> Nat) => 0
+  def test => f (refl {a := 1})
+}

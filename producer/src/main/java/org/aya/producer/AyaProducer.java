@@ -563,21 +563,10 @@ public record AyaProducer(
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
       return new WithPos<>(pos, new Expr.Pi(param, to));
     }
-    // if (node.is(NEW_EXPR)) {
-    //   var struct = expr(node.child(EXPR));
-    //   var newBody = node.peekChild(NEW_BODY);
-    //   return new WithPos<>(pos, new Expr.New(pos, struct,
-    //     newBody == null
-    //       ? ImmutableSeq.empty()
-    //       : newBody.childrenOfType(NEW_ARG).map(arg -> {
-    //         var id = newArgField(arg.child(NEW_ARG_FIELD));
-    //         var bindings = arg.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName)
-    //           .map(b -> b.map(_ -> LocalVar.from(b)))
-    //           .toImmutableSeq();
-    //         var body = expr(arg.child(EXPR));
-    //         return new WithPos<>(pos, new Expr.Field<>(sourcePosOf(arg), id, bindings, body, MutableValue.create()));
-    //       }).toImmutableSeq()));
-    // }
+    if (node.is(NEW_EXPR)) {
+      var classCall = expr(node.child(EXPR));
+      return new WithPos<>(pos, new Expr.New(classCall));
+    }
     if (node.is(PI_EXPR)) return Expr.buildPi(pos,
       telescope(node.childrenOfType(TELE)).view(),
       expr(node.child(EXPR)));

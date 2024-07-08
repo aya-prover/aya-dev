@@ -95,7 +95,8 @@ public interface GoalAndMeta {
     variable A : Type
     
     def ++-assoc' (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
-    : Path (fn i ⇒ Vec (+-assoc i) A) (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
+    : Path (fn i ⇒ Vec (+-assoc i) A)
+      (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
     | [] ⇒ refl
     | x :> _ => pmap (x :>) (++-assoc' _ _ _)
     """;
