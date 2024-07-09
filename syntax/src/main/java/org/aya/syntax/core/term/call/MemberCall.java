@@ -26,11 +26,6 @@ public record MemberCall(
     return update(f.apply(0, of), Callable.descent(args, f));
   }
 
-  @Override
-  public @NotNull Term make() {
-    return make(this);
-  }
-
   public static @NotNull Term make(
     @NotNull ClassCall typeOfOf,
     @NotNull Term of,
@@ -43,7 +38,7 @@ public record MemberCall(
     return new MemberCall(of, ref, ulift, args).make();
   }
 
-  public @NotNull Term make() {
+  @Override public @NotNull Term make() {
     return switch (of()) {
       case NewTerm neu -> {
         var impl = neu.inner().get(ref);
