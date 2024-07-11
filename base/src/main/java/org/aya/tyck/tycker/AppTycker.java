@@ -212,7 +212,7 @@ public record AppTycker<Ex extends Exception>(
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return clazz.members().view()
         .drop(telescopeSize)
-        .map(member -> TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(self))))
+        .map(member -> TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new FreeTerm(self))).makePi(Seq.empty()))
         .map(ty -> (SortTerm) synthesizer.synth(ty))
         .foldLeft(SortTerm.Type0, SigmaTerm::lub);
     }

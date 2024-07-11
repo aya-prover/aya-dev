@@ -43,7 +43,8 @@ public class TestRunner {
       PatTyckError.class,
       OperatorError.class,
       TerckError.class,
-      PatCohError.class
+      PatCohError.class,
+      ClassError.class
     ).forEachChecked(TestRunner::expectFixture);
     Files.deleteIfExists(TMP_FILE);
   }

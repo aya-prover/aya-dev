@@ -343,13 +343,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.New neutron -> {
         var wellTyped = synthesize(neutron.classCall());
         if (!(wellTyped.wellTyped() instanceof ClassCall call)) {
-          // TODO
-          throw new UnsupportedOperationException("TODO");
+          yield fail(expr.data(), new ClassError.NotClassCall(neutron.classCall()));
         }
 
         // check whether the call is fully applied
         if (call.args().size() != call.ref().members().size()) {
-          throw new UnsupportedOperationException("TODO");
+          yield fail(expr.data(), new ClassError.NotFullyApplied(neutron.classCall()));
         }
 
         yield new Jdg.Default(new NewTerm(call), call);

@@ -332,7 +332,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         default -> null;
       };
       case MemberCall memberCall -> {
-        // it is impossible that memberCall.of() is an cast term, cause it is whnfed.
+        // it is impossible that memberCall.of() is a cast term, since it is whnfed.
         assert !(memberCall.of() instanceof ClassCastTerm);
         if (rhs instanceof MemberCall memberCarr) {
           assert !(memberCarr.of() instanceof ClassCastTerm);
