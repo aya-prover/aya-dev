@@ -1,0 +1,24 @@
+NotClassCall:
+In file $FILE:1:31 ->
+
+  1 │   def what (A : Type) : A => new A
+    │                                  ╰╯
+
+Error: Unable to new a non-class type: `A`
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+NotFullyApplied:
+In file $FILE:5:28 ->
+
+  3 │   | walue : Nat
+  4 │   
+  5 │   def what : Kontainer => new Kontainer
+    │                               ╰───────╯
+
+Error: Unable to new an incomplete class type: `Kontainer`
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
