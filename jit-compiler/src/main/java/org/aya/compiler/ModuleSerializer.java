@@ -45,10 +45,10 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
       case PrimDef primDef -> new PrimSerializer(this)
         .serialize(primDef);
       case ClassDef classDef -> {
-        throw new UnsupportedOperationException("ClassDef");
+        // throw new UnsupportedOperationException("ClassDef");
       }
       case MemberDef memberDef -> {
-        throw new UnsupportedOperationException("MemberDef");
+        // throw new UnsupportedOperationException("MemberDef");
       }
     }
   }
