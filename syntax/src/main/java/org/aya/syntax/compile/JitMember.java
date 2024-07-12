@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract non-sealed class JitMember extends JitDef implements MemberDefLike {
   public final @NotNull JitClass classRef;
-  public final @NotNull int index;
+  public final int index;
 
   protected JitMember(
     int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames,

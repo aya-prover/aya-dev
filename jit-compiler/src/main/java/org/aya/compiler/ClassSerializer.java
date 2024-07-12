@@ -10,10 +10,12 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AyaSerializer.CLASS_IMMSEQ;
+import static org.aya.compiler.ExprializeUtils.getJavaReference;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
-  public static final String CLASS_JITMEMBERS = ExprializeUtils.getJavaReference(JitMember.class);
+  public static final String CLASS_JITMEMBERS = getJavaReference(JitMember.class);
+  public static final String CLASS_CLASSCALL = getJavaReference(ClassCall.class);
   public static final String FIELD_MEMBERS = "members";
   public static final String METHOD_MEMBARS = "membars";
 
@@ -23,8 +25,7 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
 
   @Override
   protected @NotNull String callClass() {
-    // TODO: return Class<?>
-    return ClassCall.class.getSimpleName();
+    return CLASS_CLASSCALL;
   }
 
   @Override
