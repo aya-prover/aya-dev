@@ -3,8 +3,9 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.syntax.compile.JitClass;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface ClassDefLike extends AnyDef permits ClassDef.Delegate {
+public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.Delegate {
   @NotNull ImmutableSeq<MemberDefLike> members();
 }
