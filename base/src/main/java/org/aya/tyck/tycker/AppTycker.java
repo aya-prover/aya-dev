@@ -202,7 +202,7 @@ public record AppTycker<Ex extends Exception>(
       var member = clazz.members().get(i);
       return TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new NewTerm(
         new ClassCall(new ClassDef.Delegate(clazz.ref()), 0,
-          ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < teleArgs.size() ? teleArgs.get(idx) : ErrorTerm.DUMMY))
+          ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < i ? teleArgs.get(idx) : ErrorTerm.DUMMY))
         )
       ))).makePi(Seq.empty());
     }

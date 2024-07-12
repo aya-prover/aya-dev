@@ -22,14 +22,7 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
-import org.aya.syntax.concrete.stmt.decl.FnDecl;
-import org.aya.syntax.concrete.stmt.decl.PrimDecl;
-import org.aya.syntax.core.def.ConDef;
-import org.aya.syntax.core.def.DataDef;
-import org.aya.syntax.core.def.FnDef;
-import org.aya.syntax.core.def.PrimDef;
+import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.*;
 import org.aya.util.error.Panic;
@@ -144,21 +137,15 @@ public record SyntaxHighlight(
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {
     return switch (var) {
       case GeneralizedVar _ -> DefKind.Generalized;
-      case DefVar<?, ?> defVar -> {
-        if (defVar.concrete instanceof FnDecl || defVar.core instanceof FnDef)
-          yield DefKind.Fn;
-//        else if (defVar.concrete instanceof TeleDecl.ClassMember || defVar.core instanceof MemberDef)
-//          yield DefKind.Member;
-        else if (defVar.concrete instanceof DataDecl || defVar.core instanceof DataDef)
-          yield DefKind.Data;
-        else if (defVar.concrete instanceof DataCon || defVar.core instanceof ConDef)
-          yield DefKind.Con;
-        else if (defVar.concrete instanceof PrimDecl || defVar.core instanceof PrimDef)
-          yield DefKind.Prim;
-//        else if (defVar.concrete instanceof ClassDecl || defVar.core instanceof ClassDef)
-//          yield DefKind.Clazz;
-        else throw new Panic(STR."unknown def type: \{defVar}");
-      }
+      case DefVar<?, ?> defVar -> switch (defVar.concrete) {
+        case FnDecl _ -> DefKind.Fn;
+        case ClassMember _ -> DefKind.Member;
+        case DataDecl _ -> DefKind.Data;
+        case DataCon _ -> DefKind.Con;
+        case PrimDecl _ -> DefKind.Prim;
+        case ClassDecl _ -> DefKind.Clazz;
+        default -> throw new Panic(STR."unknown def type: \{defVar}");
+      };
       case LocalVar(_, _, GenerateKind.Generalized(_)) -> DefKind.Generalized;
       case LocalVar _ -> DefKind.LocalVar;
       default -> DefKind.Unknown;
