@@ -46,6 +46,8 @@ public class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_RULEREDUCER = ExprializeUtils.getJavaReference(RuleReducer.class);
   public static final String CLASS_RULE_CON = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Con.class));
   public static final String CLASS_RULE_FN = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Fn.class));
+  public static final String CLASS_NEW = ExprializeUtils.getJavaReference(NewTerm.class);
+  public static final String CLASS_MEMCALL = ExprializeUtils.getJavaReference(MemberCall.class);
 
   /**
    * Terms that should be instantiated
@@ -136,7 +138,12 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
         ExprializeUtils.getEmptyCallTerm(getClassReference(call.ref()));
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
-      case MemberCall memberCall -> throw new UnsupportedOperationException("TODO");
+      case MemberCall(var of, var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_MEMCALL,
+        doSerialize(of),
+        ExprializeUtils.getInstance(getClassReference(ref)),
+        Integer.toString(ulift),
+        serializeToImmutableSeq(CLASS_TERM, args)
+      );
       case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));
@@ -158,9 +165,8 @@ public class TermExprializer extends AbstractExprializer<Term> {
           case FnDef.Delegate def -> ExprializeUtils.getInstance(getClassReference(def.ref));
         };
 
-        var ulift = call.ulift();
         var args = call.args();
-        yield buildReducibleCall(ref, CLASS_FNCALL, ulift, ImmutableSeq.of(args), true);
+        yield buildReducibleCall(ref, CLASS_FNCALL, call.ulift(), ImmutableSeq.of(args), true);
       }
       case RuleReducer.Con conRuler -> buildReducibleCall(
         serializeApplicable(conRuler.rule()),
@@ -224,10 +230,10 @@ public class TermExprializer extends AbstractExprializer<Term> {
         ExprializeUtils.getInstance(getClassReference(cons)),
         doSerialize(type)
       );
-      case StringTerm stringTerm ->
-        ExprializeUtils.makeNew(CLASS_STRING, ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
+      case StringTerm stringTerm -> ExprializeUtils.makeNew(CLASS_STRING,
+        ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
       case ClassCastTerm classCastTerm -> throw new UnsupportedOperationException("TODO");
-      case NewTerm newTerm -> throw new UnsupportedOperationException("TODO");
+      case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
   }
 
