@@ -29,6 +29,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
 
   @Override
   public AbstractSerializer<MemberDef> serialize(MemberDef unit) {
-    return null;
+    buildFramework(unit, () -> { });
+    return this;
   }
 }
