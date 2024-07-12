@@ -10,9 +10,10 @@ import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract non-sealed class JitClass extends JitDef implements ClassDefLike {
-  private JitMember[] members = null;
+  private JitMember @Nullable [] members = null;
 
   protected JitClass() {
     super(0, new boolean[0], new String[0]);
@@ -26,12 +27,12 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
   }
 
   @Override
-  public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+  public final @NotNull Term telescope(int i, Seq<Term> teleArgs) {
     throw new UnsupportedOperationException("Unreachable");
   }
 
   @Override
-  public @NotNull Term result(Seq<Term> teleArgs) {
+  public final @NotNull Term result(Seq<Term> teleArgs) {
     return SortTerm.Type0;
   }
 }
