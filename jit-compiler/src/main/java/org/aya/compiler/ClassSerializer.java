@@ -48,6 +48,6 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
       buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), STR."\{CLASS_IMMSEQ}<\{CLASS_JITMEMBERS}>", true,
         () -> buildMembers(unit)));
 
-    return null;
+    return this;
   }
 }

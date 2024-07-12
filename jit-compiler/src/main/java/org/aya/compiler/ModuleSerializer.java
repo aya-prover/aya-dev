@@ -32,6 +32,11 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
     IterableUtil.forEach(dataDef.body, ser::appendLine, ser::serialize);
   }
 
+  private void serializeMems(@NotNull ClassDef classDef, @NotNull SourceBuilder serializer) {
+    var ser = new MemberSerializer(serializer);
+    IterableUtil.forEach(classDef.members(), ser::appendLine, ser::serialize);
+  }
+
   private void doSerialize(@NotNull TyckDef unit) {
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(this, shapeFactory)
@@ -45,11 +50,12 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
       case PrimDef primDef -> new PrimSerializer(this)
         .serialize(primDef);
       case ClassDef classDef -> {
-        // throw new UnsupportedOperationException("ClassDef");
+        new ClassSerializer(this)
+          .serialize(classDef);
+        serializeMems(classDef, this);
       }
-      case MemberDef memberDef -> {
-        // throw new UnsupportedOperationException("MemberDef");
-      }
+      case MemberDef memberDef -> new MemberSerializer(this)
+        .serialize(memberDef);
     }
   }
 
