@@ -1,0 +1,9 @@
+open import prelude
+
+class Kontainer
+| Taipe : Type
+| walue : Taipe
+
+def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
+
+ def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl

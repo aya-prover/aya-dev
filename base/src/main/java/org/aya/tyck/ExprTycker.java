@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -134,6 +135,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
+  /**
+   * @param type   expected type
+   * @param result wellTyped + actual type from synthesize
+   * @param expr   original expr, used for error reporting
+   */
   private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     var resultType = result.type();
@@ -153,6 +159,22 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
         return new Jdg.Default(new LamTerm(closure), eq);
+      }
+    }
+    // Try coercive subtyping between classes
+    if (type instanceof ClassCall clazz) {
+      // Try coercive subtyping for `SomeClass (foo := 114514)` into `SomeClass`
+      resultType = whnf(resultType);
+      if (resultType instanceof ClassCall resultClazz) {
+        // TODO: check whether resultClazz <: clazz
+        if (true) {
+          // No need to coerce
+          if (clazz.args().size() == resultClazz.args().size()) return result;
+          var forget = resultClazz.args().drop(clazz.args().size());
+          return new Jdg.Default(new ClassCastTerm(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
+        } else {
+          return makeErrorResult(type, result);
+        }
       }
     }
     if (unifyTyReported(type, resultType, expr)) return result;
@@ -315,6 +337,19 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var type = new DataCall(def, 0, ImmutableSeq.of(elementTy));
         yield new Jdg.Default(new ListTerm(results, match.recog(), type), type);
       }
+      case Expr.New(var classCall) -> {
+        var wellTyped = synthesize(classCall);
+        if (!(wellTyped.wellTyped() instanceof ClassCall call)) {
+          yield fail(expr.data(), new ClassError.NotClassCall(classCall));
+        }
+
+        // check whether the call is fully applied
+        if (call.args().size() != call.ref().members().size()) {
+          yield fail(expr.data(), new ClassError.NotFullyApplied(classCall));
+        }
+
+        yield new Jdg.Default(new NewTerm(call), call);
+      }
       case Expr.Unresolved _ -> Panic.unreachable();
       default -> fail(expr.data(), new NoRuleError(expr, null));
     };
@@ -342,9 +377,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref)).lift(lift);
       case LocalVar lVar -> generateApplication(args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
-      case CompiledVar(var content) -> new AppTycker<>(state, sourcePos, args.size(), lift, (params, k) ->
+      case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
-      case DefVar<?, ?> defVar -> new AppTycker<>(state, sourcePos, args.size(), lift, (params, k) ->
+      case DefVar<?, ?> defVar -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkDefApplication(defVar);
       default -> throw new UnsupportedOperationException("TODO");
     };
@@ -359,10 +394,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
-    @NotNull AbstractTele params, @NotNull Function<Term[], Jdg> k
+    @NotNull AbstractTele params, @NotNull BiFunction<Term[], Term, Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
     var result = new Term[params.telescopeSize()];
+    Term firstType = null;
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       var param = params.telescopeRich(paramIx, result);
@@ -373,33 +409,39 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           break;
         } else if (arg.name() == null) {
           // here, arg.explicit() == true and param.explicit() == false
+          if (paramIx == 0) firstType = param.type();
           result[paramIx++] = insertImplicit(param, arg.sourcePos());
           continue;
         }
       }
       if (arg.name() != null && !param.nameEq(arg.name())) {
+        if (paramIx == 0) firstType = param.type();
         result[paramIx++] = insertImplicit(param, arg.sourcePos());
         continue;
       }
-      result[paramIx++] = inherit(arg.arg(), param.type()).wellTyped();
+      var what = inherit(arg.arg(), param.type());
+      if (paramIx == 0) firstType = param.type();
+      result[paramIx++] = what.wellTyped();
       argIx++;
     }
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
+      if (paramIx == 0) firstType = param.type();
       result[paramIx++] = insertImplicit(param, pos);
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
-      return generateApplication(args.drop(argIx), k.apply(result));
+      return generateApplication(args.drop(argIx), k.apply(result, firstType));
     } else while (paramIx < params.telescopeSize()) {
       var param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));
+      if (paramIx == 0) firstType = param.type();
       result[paramIx++] = new FreeTerm(atarashiVar);
     }
-    var generated = k.apply(result);
+    var generated = k.apply(result, firstType);
     while (extraParams.isNotEmpty()) {
       var pair = extraParams.pop();
       generated = new Jdg.Default(

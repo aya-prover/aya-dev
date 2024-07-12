@@ -7,6 +7,7 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.primitive.MutableBooleanList;
+import kala.collection.primitive.BooleanSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
@@ -98,10 +99,11 @@ public abstract class BasePrettier<Term extends AyaDocile> {
 
     // Because the signature of DataCon is selfTele, so we only need to deal with core con
     var licit = switch (var) {
-      case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub ?
-        sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit) :
-        Objects.requireNonNull(inner.ref.signature).params()
-          .mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
+      case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub
+        ? sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit)
+        : inner.ref.signature == null
+          ? BooleanSeq.fill(preArgs.size(), true)
+          : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
       case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
       default -> throw new UnsupportedOperationException("TODO");
     };

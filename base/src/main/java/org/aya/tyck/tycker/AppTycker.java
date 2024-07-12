@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitCon;
@@ -12,27 +13,31 @@ import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
-import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
+import org.aya.unify.Synthesizer;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public record AppTycker<Ex extends Exception>(
-  @NotNull TyckState state, @NotNull SourcePos pos,
-  int argsCount, int lift, @NotNull Factory<Ex> makeArgs
-) {
+  @Override @NotNull TyckState state,
+  @NotNull AbstractTycker tycker,
+  @NotNull SourcePos pos,
+  int argsCount, int lift,
+  @NotNull Factory<Ex> makeArgs
+) implements Stateful {
   /**
    * <pre>
    * Signature (0th param) --------> Argument Parser (this interface)
@@ -45,7 +50,14 @@ public record AppTycker<Ex extends Exception>(
    */
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, Function<Term[], Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, BiFunction<Term[], Term, Jdg>, Jdg, Ex> {
+  }
+
+  public AppTycker(
+    @NotNull AbstractTycker tycker, @NotNull SourcePos pos,
+    int argsCount, int lift, @NotNull Factory<Ex> makeArgs
+  ) {
+    this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
   }
 
   public @NotNull Jdg checkCompiledApplication(@NotNull AbstractTele def) throws Ex {
@@ -93,7 +105,7 @@ public record AppTycker<Ex extends Exception>(
     // ownerTele + selfTele
     var fullSignature = conVar.signature().lift(lift);
 
-    return makeArgs.applyChecked(fullSignature, args -> {
+    return makeArgs.applyChecked(fullSignature, (args, _) -> {
       var realArgs = ImmutableArray.from(args);
       var ownerArgs = realArgs.take(conVar.ownerTeleSize());
       var conArgs = realArgs.drop(conVar.ownerTeleSize());
@@ -109,14 +121,14 @@ public record AppTycker<Ex extends Exception>(
   }
   private @NotNull Jdg checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
       state.primFactory.unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
       signature.result(args)
     ));
   }
   private @NotNull Jdg checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> new Jdg.Default(
+    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
       new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
@@ -125,7 +137,7 @@ public record AppTycker<Ex extends Exception>(
     @NotNull FnDefLike fnDef, @Nullable Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
     var signature = fnDef.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> {
+    return makeArgs.applyChecked(signature, (args, _) -> {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);
       if (operator != null) {
@@ -137,10 +149,10 @@ public record AppTycker<Ex extends Exception>(
   }
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
-    var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     var self = LocalVar.generate("self");
+    var appliedParams = ofClassMembers(self, clazz, argsCount).lift(lift);
     state.classThis.push(self);
-    var result = makeArgs.applyChecked(appliedParams, args -> new Jdg.Default(
+    var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
@@ -150,23 +162,29 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
     var signature = member.signature().lift(lift);
-    return makeArgs.applyChecked(signature, args -> {
+    return makeArgs.applyChecked(signature, (args, fstTy) -> {
       assert args.length >= 1;
+      var ofTy = whnf(fstTy);
+      if (!(ofTy instanceof ClassCall classTy)) throw new UnsupportedOperationException("report");   // TODO
       var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(
-        new MemberCall(args[0], member, 0, fieldArgs),
+        MemberCall.make(classTy, args[0], member, 0, fieldArgs),
         signature.result(args)
       );
     });
   }
 
-  static @NotNull AbstractTele ofClassMembers(@NotNull ClassDefLike def, int memberCount) {
+  private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
+    var synthesizer = new Synthesizer(tycker);
     return switch (def) {
-      case ClassDef.Delegate delegate -> new TakeMembers(delegate.core(), memberCount);
+      case ClassDef.Delegate delegate -> new TakeMembers(self, delegate.core(), memberCount, synthesizer);
     };
   }
 
-  record TakeMembers(@NotNull ClassDef clazz, @Override int telescopeSize) implements AbstractTele {
+  record TakeMembers(
+    @NotNull LocalVar self, @NotNull ClassDef clazz,
+    @Override int telescopeSize, @NotNull Synthesizer synthesizer
+  ) implements AbstractTele {
     @Override public boolean telescopeLicit(int i) { return true; }
     @Override public @NotNull String telescopeName(int i) {
       assert i < telescopeSize;
@@ -175,18 +193,26 @@ public record AppTycker<Ex extends Exception>(
 
     // class Foo
     // | foo : A
-    // | + : A -> A -> A
+    // | infix + : A -> A -> A
     // | bar : Fn (x : Foo A) -> (x.foo) self.+ (self.foo)
     //                  instantiate these!   ^       ^
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).makePi(Seq.of(new FreeTerm(clazz.ref().concrete.self)));
+      return TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new NewTerm(
+        new ClassCall(new ClassDef.Delegate(clazz.ref()), 0,
+          ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < i ? teleArgs.get(idx) : ErrorTerm.DUMMY))
+        )
+      ))).makePi(Seq.empty());
     }
+
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      // Use SigmaTerm::lub
-      throw new UnsupportedOperationException("TODO");
+      return clazz.members().view()
+        .drop(telescopeSize)
+        .map(member -> TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new FreeTerm(self))).makePi(Seq.empty()))
+        .map(ty -> (SortTerm) synthesizer.synth(ty))
+        .foldLeft(SortTerm.Type0, SigmaTerm::lub);
     }
     @Override public @NotNull SeqView<String> namesView() {
       return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());

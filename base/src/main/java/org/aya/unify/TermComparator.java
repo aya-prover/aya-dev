@@ -145,14 +145,32 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     // ^ Beware of the order!!
     if (lhs instanceof MetaCall lMeta) {
       return solveMeta(lMeta, rhs, type) != null;
-    } else if (type == null) {
-      return compareUntyped(lhs, rhs) != null;
     }
 
-    var result = doCompareTyped(lhs, rhs, type);
+    if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
+      return swapped(() -> doCompare(rhs, lhs, type));
+    }
+
+    return doCompare(lhs, rhs, type);
+  }
+
+  /**
+   * Do compare {@param lhs} and {@param rhs} against type {@param type} (if not null),
+   * with assumption on a good {@param lhs}, see below.
+   *
+   * @param lhs is {@link MemberCall} if rhs is not;
+   *            if there is a {@link MetaCall} then it must be lhs.
+   *            Reason: we case on lhs.
+   */
+  private boolean doCompare(Term lhs, Term rhs, @Nullable Term type) {
+    var result = type == null
+      ? compareUntyped(lhs, rhs) != null
+      : doCompareTyped(lhs, rhs, type);
+
     if (!result) fail(lhs, rhs);
     return result;
   }
+
   private boolean checkApproxResult(@Nullable Term type, Term approxResult) {
     if (approxResult != null) {
       if (type != null) compare(approxResult, type, null);
@@ -168,9 +186,20 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    */
   private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return switch (whnf(type)) {
-      // TODO: ClassCall
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
       case ErrorTerm _ -> true;
+      case ClassCall classCall -> {
+        if (classCall.args().size() == classCall.ref().members().size()) yield true;
+        // TODO: skip comparing fields that already have impl specified in the type
+        yield classCall.ref().members().allMatch(member -> {
+          // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
+          // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
+          var ty = member.signature().inst(ImmutableSeq.of(lhs));
+          var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
+          var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
+          return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
+        });
+      }
       case PiTerm pi -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
           compare(
@@ -206,9 +235,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /**
-   * Compare whnfed {@param preLhs} and whnfed {@param preRhs} without type information.
+   * Compare head-normalized {@param preLhs} and whnfed {@param preRhs} without type information.
    *
-   * @return the whnfed type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
+   * @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
    */
   private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) {
     {
@@ -225,9 +254,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     Term result;
-    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm)
+    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm || rhs instanceof MemberCall) {
       result = swapped(() -> doCompareUntyped(rhs, lhs));
-    else result = doCompareUntyped(lhs, rhs);
+    } else {
+      result = doCompareUntyped(lhs, rhs);
+    }
     if (result != null) return whnf(result);
     fail(lhs, rhs);
     return null;
@@ -299,10 +330,20 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         case MetaLitTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
         default -> null;
       };
+      case MemberCall memberCall -> {
+        // it is impossible that memberCall.of() is a cast term, since it is whnfed.
+        assert !(memberCall.of() instanceof ClassCastTerm);
+        if (rhs instanceof MemberCall memberCarr) {
+          assert !(memberCarr.of() instanceof ClassCastTerm);
+          yield compareUntyped(memberCall.of(), memberCarr.of());
+        } else {
+          yield null;
+        }
+      }
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the ref don't match),
       // so we are unable to do more if we can't normalize them.
-      case FnCall _, MemberCall _ -> null;
+      case FnCall _ -> null;
 
       default -> throw noRules(lhs);
     };

@@ -6,4 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface MemberDefLike extends AnyDef permits MemberDef.Delegate {
   @NotNull ClassDefLike classRef();
+
+  default int index() {
+    var idx = classRef().members().indexOf(this);
+    assert idx >= 0;
+    return idx;
+  }
 }

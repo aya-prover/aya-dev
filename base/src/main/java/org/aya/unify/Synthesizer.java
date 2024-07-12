@@ -136,6 +136,8 @@ public record Synthesizer(
       case MetaLitTerm mlt -> mlt.type();
       case StringTerm str -> state().primFactory.getCall(PrimDef.ID.STRING);
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
+      case NewTerm newTerm -> newTerm.inner();
+      case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
     };
   }
 

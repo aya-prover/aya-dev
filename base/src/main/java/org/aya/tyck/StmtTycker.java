@@ -173,7 +173,7 @@ public record StmtTycker(
         new Param("self", classCall, false),
         classRef.concrete.sourcePos()
       );
-    new MemberDef(classRef, member.ref, signature.params(), signature.result());
+    new MemberDef(classRef, member.ref, classRef.concrete.members.indexOf(member), signature.params(), signature.result());
     member.ref.signature = signature;
   }
 

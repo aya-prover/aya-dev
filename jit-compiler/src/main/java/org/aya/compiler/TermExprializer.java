@@ -46,6 +46,8 @@ public class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_RULEREDUCER = ExprializeUtils.getJavaReference(RuleReducer.class);
   public static final String CLASS_RULE_CON = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Con.class));
   public static final String CLASS_RULE_FN = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Fn.class));
+  public static final String CLASS_NEW = ExprializeUtils.getJavaReference(NewTerm.class);
+  public static final String CLASS_MEMCALL = ExprializeUtils.getJavaReference(MemberCall.class);
 
   /**
    * Terms that should be instantiated
@@ -72,15 +74,15 @@ public class TermExprializer extends AbstractExprializer<Term> {
   private @NotNull String serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
       case IntegerOps.ConRule conRule ->
-        ExprializeUtils.makeNew(CLASS_INT_CONRULE, ExprializeUtils.getInstance(NameSerializer.getClassReference(conRule.ref())),
+        ExprializeUtils.makeNew(CLASS_INT_CONRULE, ExprializeUtils.getInstance(getClassReference(conRule.ref())),
           doSerialize(conRule.zero())
         );
       case IntegerOps.FnRule fnRule -> ExprializeUtils.makeNew(CLASS_INT_FNRULE,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(fnRule.ref())),
+        ExprializeUtils.getInstance(getClassReference(fnRule.ref())),
         ExprializeUtils.makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
       );
       case ListOps.ConRule conRule -> ExprializeUtils.makeNew(CLASS_LIST_CONRULE,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(conRule.ref())),
+        ExprializeUtils.getInstance(getClassReference(conRule.ref())),
         doSerialize(conRule.empty())
       );
       default -> Panic.unreachable();
@@ -134,33 +136,37 @@ public class TermExprializer extends AbstractExprializer<Term> {
       }
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
-        ExprializeUtils.getEmptyCallTerm(NameSerializer.getClassReference(call.ref()));
+        ExprializeUtils.getEmptyCallTerm(getClassReference(call.ref()));
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
-      case MemberCall memberCall -> throw new UnsupportedOperationException("TODO");
+      case MemberCall(var of, var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_MEMCALL,
+        doSerialize(of),
+        ExprializeUtils.getInstance(getClassReference(ref)),
+        Integer.toString(ulift),
+        serializeToImmutableSeq(CLASS_TERM, args)
+      );
       case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));
       case LamTerm lamTerm -> ExprializeUtils.makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
       case DataCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_DATACALL,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(ref)),
+        ExprializeUtils.getInstance(getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case ConCall(var head, var args) -> ExprializeUtils.makeNew(CLASS_CONCALL,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(head.ref())),
+        ExprializeUtils.getInstance(getClassReference(head.ref())),
         serializeToImmutableSeq(CLASS_TERM, head.ownerArgs()),
         Integer.toString(head.ulift()),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case FnCall call -> {
         var ref = switch (call.ref()) {
-          case JitFn jit -> ExprializeUtils.getInstance(NameSerializer.getClassReference(jit));
+          case JitFn jit -> ExprializeUtils.getInstance(getClassReference(jit));
           case FnDef.Delegate def -> ExprializeUtils.getInstance(getClassReference(def.ref));
         };
 
-        var ulift = call.ulift();
         var args = call.args();
-        yield buildReducibleCall(ref, CLASS_FNCALL, ulift, ImmutableSeq.of(args), true);
+        yield buildReducibleCall(ref, CLASS_FNCALL, call.ulift(), ImmutableSeq.of(args), true);
       }
       case RuleReducer.Con conRuler -> buildReducibleCall(
         serializeApplicable(conRuler.rule()),
@@ -208,24 +214,26 @@ public class TermExprializer extends AbstractExprializer<Term> {
       );
       case SigmaTerm sigmaTerm -> throw new UnsupportedOperationException("TODO");
       case PrimCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_PRIMCALL,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(ref)),
+        ExprializeUtils.getInstance(getClassReference(ref)),
         Integer.toString(ulift),
         serializeToImmutableSeq(CLASS_TERM, args)
       );
       case IntegerTerm(var repr, var zero, var suc, var type) -> ExprializeUtils.makeNew(CLASS_INTEGER,
         Integer.toString(repr),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(zero)),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(suc)),
+        ExprializeUtils.getInstance(getClassReference(zero)),
+        ExprializeUtils.getInstance(getClassReference(suc)),
         doSerialize(type)
       );
       case ListTerm(var repr, var nil, var cons, var type) -> ExprializeUtils.makeNew(CLASS_LIST,
         ExprializeUtils.makeImmutableSeq(CLASS_TERM, repr.map(this::doSerialize), CLASS_PIMMSEQ),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(nil)),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(cons)),
+        ExprializeUtils.getInstance(getClassReference(nil)),
+        ExprializeUtils.getInstance(getClassReference(cons)),
         doSerialize(type)
       );
-      case StringTerm stringTerm ->
-        ExprializeUtils.makeNew(CLASS_STRING, ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
+      case StringTerm stringTerm -> ExprializeUtils.makeNew(CLASS_STRING,
+        ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
+      case ClassCastTerm classCastTerm -> throw new UnsupportedOperationException("TODO");
+      case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
   }
 

@@ -154,10 +154,11 @@ public class TyckTest {
       def infix = (a b : A) => Path (\\i => A) a b
       
       class Monoid
-      | carrier : Type
+      | classifying carrier : Type
       | unit : carrier
-      | op : carrier -> carrier -> carrier
-      | idl (x : carrier) : op unit x = x
+      | infix * : carrier -> carrier -> carrier
+        tighter =
+      | idl (x : carrier) : unit * x = x
       """).defs.isNotEmpty());
   }
 

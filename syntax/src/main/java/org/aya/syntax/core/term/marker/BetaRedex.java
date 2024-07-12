@@ -5,9 +5,10 @@ package org.aya.syntax.core.term.marker;
 import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.ProjTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface BetaRedex extends Term permits AppTerm, PAppTerm, ProjTerm {
+public sealed interface BetaRedex extends Term permits AppTerm, ProjTerm, MemberCall, PAppTerm {
   @NotNull Term make();
 }
