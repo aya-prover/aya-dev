@@ -2,19 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.marker.StableWHNF;
-import org.aya.util.MapUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.UnaryOperator;
 
 /**
  * This term is used for subtyping of class, a term {@code x : SomeClass (foo := 114514)} is treated an
@@ -56,14 +51,5 @@ public record ClassCastTerm(
     idx = idx - remember.size();
     if (idx < forget.size()) return forget.get(idx);
     return null;
-  }
-
-  public @NotNull Term unwrap(@NotNull UnaryOperator<Term> pre) {
-    Term term = this;
-    while (term instanceof ClassCastTerm cast) {
-      term = pre.apply(cast.subterm);
-    }
-
-    return term;
   }
 }

@@ -140,8 +140,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // prefer solving the IsType one as the OfType one.
       if (lhs instanceof MetaCall lMeta && lMeta.ref().req() == MetaVar.Misc.IsType)
         return solveMeta(lMeta, rMeta, type) != null;
-      var llhs = lhs;
-      return swapped(() -> solveMeta(rMeta, llhs, type)) != null;
+      return swapped(() -> solveMeta(rMeta, lhs, type)) != null;
     }
     // ^ Beware of the order!!
     if (lhs instanceof MetaCall lMeta) {
@@ -149,19 +148,29 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
-      var tmp = lhs;
-      lhs = rhs;
-      rhs = tmp;
+      return swapped(() -> doCompare(rhs, lhs, type));
     }
 
-    if (type == null) {
-      return compareUntyped(lhs, rhs) != null;
-    }
+    return doCompare(lhs, rhs, type);
+  }
 
-    var result = doCompareTyped(lhs, rhs, type);
+  /**
+   * Do compare {@param lhs} and {@param rhs} against type {@param type} (if not null),
+   * with assumption on a good {@param lhs}, see below.
+   *
+   * @param lhs is {@link MemberCall} if rhs is not;
+   *            if there is a {@link MetaCall} then it must be lhs.
+   *            Reason: we case on lhs.
+   */
+  private boolean doCompare(Term lhs, Term rhs, @Nullable Term type) {
+    var result = type == null
+      ? compareUntyped(lhs, rhs) != null
+      : doCompareTyped(lhs, rhs, type);
+
     if (!result) fail(lhs, rhs);
     return result;
   }
+
   private boolean checkApproxResult(@Nullable Term type, Term approxResult) {
     if (approxResult != null) {
       if (type != null) compare(approxResult, type, null);
@@ -226,9 +235,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /**
-   * Compare whnfed {@param preLhs} and whnfed {@param preRhs} without type information.
+   * Compare head-normalized {@param preLhs} and whnfed {@param preRhs} without type information.
    *
-   * @return the whnfed type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
+   * @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
    */
   private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) {
     {
@@ -245,17 +254,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     Term result;
-    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm) {
-      var llhs = lhs;
-      var rrhs = rhs;
-      result = swapped(() -> doCompareUntyped(rrhs, llhs));
+    if (rhs instanceof MetaCall || rhs instanceof MetaLitTerm || rhs instanceof MemberCall) {
+      result = swapped(() -> doCompareUntyped(rhs, lhs));
     } else {
-      if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
-        var tmp = lhs;
-        lhs = rhs;
-        rhs = tmp;
-      }
-
       result = doCompareUntyped(lhs, rhs);
     }
     if (result != null) return whnf(result);
