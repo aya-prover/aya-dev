@@ -12,21 +12,16 @@ import org.jetbrains.annotations.NotNull;
 public interface ClassError extends TyckError {
   @NotNull WithPos<Expr> problemExpr();
 
-  @Override
-  default @NotNull SourcePos sourcePos() {
-    return problemExpr().sourcePos();
-  }
+  @Override default @NotNull SourcePos sourcePos() { return problemExpr().sourcePos(); }
 
   record NotClassCall(@Override @NotNull WithPos<Expr> problemExpr) implements ClassError {
-    @Override
-    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unable to new a non-class type:"), Doc.code(problemExpr.data().toDoc(options)));
     }
   }
 
   record NotFullyApplied(@Override @NotNull WithPos<Expr> problemExpr) implements ClassError {
-    @Override
-    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Unable to new an incomplete class type:"), Doc.code(problemExpr.data().toDoc(options)));
     }
   }

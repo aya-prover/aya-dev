@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -178,12 +177,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    */
   private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return switch (whnf(type)) {
-      // TODO: ClassCall
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
       case ErrorTerm _ -> true;
       case ClassCall classCall -> {
         if (classCall.args().size() == classCall.ref().members().size()) yield true;
-        // TODO: should we compare fields that have impl?
+        // TODO: skip comparing fields that already have impl specified in the type
         yield classCall.ref().members().allMatch(member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]

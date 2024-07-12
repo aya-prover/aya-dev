@@ -30,14 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public record AppTycker<Ex extends Exception>(
   @Override @NotNull TyckState state,
   @NotNull AbstractTycker tycker,
   @NotNull SourcePos pos,
-  int argsCount,
-  int lift,
+  int argsCount, int lift,
   @NotNull Factory<Ex> makeArgs
 ) implements Stateful {
   /**
@@ -52,7 +50,7 @@ public record AppTycker<Ex extends Exception>(
    */
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, BiFunction<Term[], Term[], Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, BiFunction<Term[], Term, Jdg>, Jdg, Ex> {
   }
 
   public AppTycker(
@@ -164,9 +162,9 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
     var signature = member.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, ty) -> {
+    return makeArgs.applyChecked(signature, (args, fstTy) -> {
       assert args.length >= 1;
-      var ofTy = whnf(ty[0]);
+      var ofTy = whnf(fstTy);
       if (!(ofTy instanceof ClassCall classTy)) throw new UnsupportedOperationException("report");   // TODO
       var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(

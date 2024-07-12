@@ -2,11 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import kala.control.Result;
@@ -15,7 +13,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.DataDefLike;
-import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.*;
@@ -176,7 +173,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           var forget = resultClazz.args().drop(clazz.args().size());
           return new Jdg.Default(new ClassCastTerm(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
         } else {
-          // TODO: skip unifyTyReported below
+          return makeErrorResult(type, result);
         }
       }
     }
@@ -340,15 +337,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var type = new DataCall(def, 0, ImmutableSeq.of(elementTy));
         yield new Jdg.Default(new ListTerm(results, match.recog(), type), type);
       }
-      case Expr.New neutron -> {
-        var wellTyped = synthesize(neutron.classCall());
+      case Expr.New(var classCall) -> {
+        var wellTyped = synthesize(classCall);
         if (!(wellTyped.wellTyped() instanceof ClassCall call)) {
-          yield fail(expr.data(), new ClassError.NotClassCall(neutron.classCall()));
+          yield fail(expr.data(), new ClassError.NotClassCall(classCall));
         }
 
         // check whether the call is fully applied
         if (call.args().size() != call.ref().members().size()) {
-          yield fail(expr.data(), new ClassError.NotFullyApplied(neutron.classCall()));
+          yield fail(expr.data(), new ClassError.NotFullyApplied(classCall));
         }
 
         yield new Jdg.Default(new NewTerm(call), call);
@@ -397,11 +394,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
-    @NotNull AbstractTele params, @NotNull BiFunction<Term[], Term[], Jdg> k
+    @NotNull AbstractTele params, @NotNull BiFunction<Term[], Term, Jdg> k
   ) throws NotPi {
     int argIx = 0, paramIx = 0;
     var result = new Term[params.telescopeSize()];
-    var types = new Term[params.telescopeSize()];
+    Term firstType = null;
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       var param = params.telescopeRich(paramIx, result);
@@ -412,39 +409,39 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           break;
         } else if (arg.name() == null) {
           // here, arg.explicit() == true and param.explicit() == false
-          result[paramIx] = insertImplicit(param, arg.sourcePos());
-          types[paramIx++] = param.type();
+          if (paramIx == 0) firstType = param.type();
+          result[paramIx++] = insertImplicit(param, arg.sourcePos());
           continue;
         }
       }
       if (arg.name() != null && !param.nameEq(arg.name())) {
-        result[paramIx] = insertImplicit(param, arg.sourcePos());
-        types[paramIx++] = param.type();
+        if (paramIx == 0) firstType = param.type();
+        result[paramIx++] = insertImplicit(param, arg.sourcePos());
         continue;
       }
       var what = inherit(arg.arg(), param.type());
-      result[paramIx] = what.wellTyped();
-      types[paramIx++] = what.type();
+      if (paramIx == 0) firstType = param.type();
+      result[paramIx++] = what.wellTyped();
       argIx++;
     }
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       var param = params.telescopeRich(paramIx, result);
-      result[paramIx] = insertImplicit(param, pos);
-      types[paramIx++] = param.type();
+      if (paramIx == 0) firstType = param.type();
+      result[paramIx++] = insertImplicit(param, pos);
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
-      return generateApplication(args.drop(argIx), k.apply(result, types));
+      return generateApplication(args.drop(argIx), k.apply(result, firstType));
     } else while (paramIx < params.telescopeSize()) {
       var param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));
-      result[paramIx] = new FreeTerm(atarashiVar);
-      types[paramIx++] = param.type();
+      if (paramIx == 0) firstType = param.type();
+      result[paramIx++] = new FreeTerm(atarashiVar);
     }
-    var generated = k.apply(result, types);
+    var generated = k.apply(result, firstType);
     while (extraParams.isNotEmpty()) {
       var pair = extraParams.pop();
       generated = new Jdg.Default(
