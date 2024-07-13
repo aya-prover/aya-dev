@@ -79,6 +79,10 @@ public interface AbstractTele {
       .view().mapToObj(this::telescopeName);
   }
 
+  default @NotNull Term makePi() {
+    return makePi(Seq.empty());
+  }
+
   default @NotNull Term makePi(@NotNull Seq<Term> initialArgs) {
     return new PiBuilder(this).make(0, initialArgs);
   }

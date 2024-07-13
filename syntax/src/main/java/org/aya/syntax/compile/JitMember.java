@@ -4,18 +4,21 @@ package org.aya.syntax.compile;
 
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.term.SortTerm;
 import org.jetbrains.annotations.NotNull;
 
 public abstract non-sealed class JitMember extends JitDef implements MemberDefLike {
   public final @NotNull JitClass classRef;
   public final int index;
+  public final @NotNull SortTerm type;
 
   protected JitMember(
     int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames,
-    JitClass classRef, int index) {
+    JitClass classRef, int index, @NotNull SortTerm type) {
     super(telescopeSize, telescopeLicit, telescopeNames);
     this.classRef = classRef;
     this.index = index;
+    this.type = type;
   }
 
   @Override
@@ -23,6 +26,8 @@ public abstract non-sealed class JitMember extends JitDef implements MemberDefLi
     return classRef;
   }
 
+  @Override
+  public @NotNull SortTerm type() { return type; }
   @Override
   public int index() {
     return index;
