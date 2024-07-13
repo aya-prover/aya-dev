@@ -16,7 +16,8 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   @Override protected void buildConstructor(MemberDef unit) {
     buildConstructor(unit, ImmutableSeq.of(
       ExprializeUtils.getInstance(getClassReference(unit.classRef())),
-      Integer.toString(unit.index())
+      Integer.toString(unit.index()),
+      serializeTerm(unit.type())
     ));
   }
 

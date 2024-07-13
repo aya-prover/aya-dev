@@ -8,10 +8,7 @@ import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.JitCon;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitPrim;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.*;
@@ -177,6 +174,7 @@ public record AppTycker<Ex extends Exception>(
   private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
     var synthesizer = new Synthesizer(tycker);
     return switch (def) {
+      case JitClass jit -> throw new UnsupportedOperationException("TODO");
       case ClassDef.Delegate delegate -> new TakeMembers(self, delegate.core(), memberCount, synthesizer);
     };
   }

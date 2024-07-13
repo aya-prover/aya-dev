@@ -32,6 +32,8 @@ import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.YouTrack;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.TeleTycker;
+import org.aya.unify.Synthesizer;
+import org.aya.util.error.Panic;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -173,8 +175,15 @@ public record StmtTycker(
         new Param("self", classCall, false),
         classRef.concrete.sourcePos()
       );
-    new MemberDef(classRef, member.ref, classRef.concrete.members.indexOf(member), signature.params(), signature.result());
-    member.ref.signature = signature;
+
+    // self is still in the context
+    var type = new Synthesizer(tycker).synth(signature.telescope().inst(ImmutableSeq.of(new FreeTerm(self))).makePi());
+    if (!(type instanceof SortTerm sortType)) {
+      Panic.unreachable();
+    } else {
+      new MemberDef(classRef, member.ref, classRef.concrete.members.indexOf(member), signature.params(), signature.result(), sortType);
+      member.ref.signature = signature;
+    }
   }
 
   /**
