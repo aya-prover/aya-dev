@@ -10,25 +10,17 @@ import org.jetbrains.annotations.NotNull;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
-  public MemberSerializer(@NotNull SourceBuilder builder) {
-    super(builder, JitMember.class);
-  }
+  public MemberSerializer(@NotNull SourceBuilder builder) { super(builder, JitMember.class); }
+  @Override protected @NotNull String callClass() { return TermExprializer.CLASS_MEMCALL; }
 
-  @Override
-  protected @NotNull String callClass() {
-    return TermExprializer.CLASS_MEMCALL;
-  }
-
-  @Override
-  protected void buildConstructor(MemberDef unit) {
+  @Override protected void buildConstructor(MemberDef unit) {
     buildConstructor(unit, ImmutableSeq.of(
       ExprializeUtils.getInstance(getClassReference(unit.classRef())),
       Integer.toString(unit.index())
     ));
   }
 
-  @Override
-  public AbstractSerializer<MemberDef> serialize(MemberDef unit) {
+  @Override public AbstractSerializer<MemberDef> serialize(MemberDef unit) {
     buildFramework(unit, () -> { });
     return this;
   }

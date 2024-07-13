@@ -19,19 +19,9 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
   public static final String FIELD_MEMBERS = "members";
   public static final String METHOD_MEMBARS = "membars";
 
-  public ClassSerializer(@NotNull SourceBuilder builder) {
-    super(builder, JitClass.class);
-  }
-
-  @Override
-  protected @NotNull String callClass() {
-    return CLASS_CLASSCALL;
-  }
-
-  @Override
-  protected void buildConstructor(ClassDef unit) {
-    buildSuperCall(ImmutableSeq.empty());
-  }
+  public ClassSerializer(@NotNull SourceBuilder builder) { super(builder, JitClass.class); }
+  @Override protected @NotNull String callClass() { return CLASS_CLASSCALL; }
+  @Override protected void buildConstructor(ClassDef unit) { buildSuperCall(ImmutableSeq.empty()); }
 
   private void buildMembers(ClassDef unit) {
     buildIf(STR."\{FIELD_MEMBERS} == null", () ->
@@ -42,8 +32,7 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
     buildReturn(FIELD_MEMBERS);
   }
 
-  @Override
-  public AbstractSerializer<ClassDef> serialize(ClassDef unit) {
+  @Override public AbstractSerializer<ClassDef> serialize(ClassDef unit) {
     buildFramework(unit, () ->
       buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), STR."\{CLASS_IMMSEQ}<\{CLASS_JITMEMBERS}>", true,
         () -> buildMembers(unit)));
