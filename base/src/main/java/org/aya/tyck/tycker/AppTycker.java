@@ -147,7 +147,7 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var self = LocalVar.generate("self");
-    var appliedParams = ofClassMembers(self, clazz, argsCount).lift(lift);
+    var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
@@ -171,14 +171,11 @@ public record AppTycker<Ex extends Exception>(
     });
   }
 
-  private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
-    return new TakeMembers(self, def, memberCount);
+  private @NotNull AbstractTele ofClassMembers(@NotNull ClassDefLike def, int memberCount) {
+    return new TakeMembers(def, memberCount);
   }
 
-  record TakeMembers(
-    @NotNull LocalVar self, @NotNull ClassDefLike clazz,
-    @Override int telescopeSize
-  ) implements AbstractTele {
+  record TakeMembers(@NotNull ClassDefLike clazz, @Override int telescopeSize) implements AbstractTele {
     @Override public boolean telescopeLicit(int i) { return true; }
     @Override public @NotNull String telescopeName(int i) {
       assert i < telescopeSize;
