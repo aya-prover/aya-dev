@@ -6,4 +6,8 @@ class Kontainer
 
 def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
 
- def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
+def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
+
+def subtype : Kontainer Nat => new Kontainer Nat 0
+
+def norm1 : Kontainer::walue {subtype} = 0 => refl
