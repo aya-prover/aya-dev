@@ -199,10 +199,7 @@ public record AppTycker<Ex extends Exception>(
     }
 
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      return clazz.members().view()
-        .drop(telescopeSize)
-        .map(MemberDefLike::type)
-        .foldLeft(SortTerm.Type0, SigmaTerm::lub);
+      return clazz.result(telescopeSize);
     }
     @Override public @NotNull SeqView<String> namesView() {
       return clazz.members().sliceView(0, telescopeSize).map(AnyDef::name);
