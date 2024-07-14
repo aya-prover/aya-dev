@@ -37,7 +37,7 @@ public class TyckTest {
     var result = tyck("""
       inductive Nat | O | S Nat
       inductive FreeMonoid (A : Type) | e | cons A (FreeMonoid A)
-      
+            
       def id {A : Type} (a : A) => a
       def lam (A : Type) : Fn (a : A) -> Type => fn a => A
       def tup (A : Type) (B : A -> Type) (a : A) (b : Fn (a : A) -> B a)
@@ -66,7 +66,7 @@ public class TyckTest {
       prim I : ISet
       prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
       prim coe (r s : I) (A : I -> Type) : A r -> A s
-      
+            
       def transp (A : I -> Type) (a : A 0) : A 1 => coe 0 1 A a
       def transpInv (A : I -> Type) (a : A 1) : A 0 => coe 1 0 A a
       def coeFill0 (A : I -> Type) (u : A 0) : Path A u (transp A u) => \\i => coe 0 i A u
@@ -152,13 +152,22 @@ public class TyckTest {
       prim I prim Path prim coe
       variable A : Type
       def infix = (a b : A) => Path (\\i => A) a b
-      
+            
       class Monoid
       | classifying carrier : Type
       | unit : carrier
       | infix * : carrier -> carrier -> carrier
         tighter =
       | idl (x : carrier) : unit * x = x
+      """).defs.isNotEmpty());
+  }
+
+  @Test
+  public void what() {
+    assertTrue(tyck("""
+      class Kontainer
+      | Taipe : Type
+      | walue : Taipe
       """).defs.isNotEmpty());
   }
 

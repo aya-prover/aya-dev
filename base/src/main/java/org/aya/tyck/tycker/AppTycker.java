@@ -172,21 +172,17 @@ public record AppTycker<Ex extends Exception>(
   }
 
   private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
-    var synthesizer = new Synthesizer(tycker);
-    return switch (def) {
-      case JitClass jit -> throw new UnsupportedOperationException("TODO");
-      case ClassDef.Delegate delegate -> new TakeMembers(self, delegate.core(), memberCount, synthesizer);
-    };
+    return new TakeMembers(self, def, memberCount);
   }
 
   record TakeMembers(
-    @NotNull LocalVar self, @NotNull ClassDef clazz,
-    @Override int telescopeSize, @NotNull Synthesizer synthesizer
+    @NotNull LocalVar self, @NotNull ClassDefLike clazz,
+    @Override int telescopeSize
   ) implements AbstractTele {
     @Override public boolean telescopeLicit(int i) { return true; }
     @Override public @NotNull String telescopeName(int i) {
       assert i < telescopeSize;
-      return clazz.members().get(i).ref().name();
+      return clazz.members().get(i).name();
     }
 
     // class Foo
@@ -198,8 +194,8 @@ public record AppTycker<Ex extends Exception>(
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new NewTerm(
-        new ClassCall(new ClassDef.Delegate(clazz.ref()), 0,
+      return member.signature().inst(ImmutableSeq.of(new NewTerm(
+        new ClassCall(clazz, 0,
           ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < i ? teleArgs.get(idx) : ErrorTerm.DUMMY))
         )
       ))).makePi(Seq.empty());
@@ -208,11 +204,11 @@ public record AppTycker<Ex extends Exception>(
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
       return clazz.members().view()
         .drop(telescopeSize)
-        .map(MemberDef::type)
+        .map(MemberDefLike::type)
         .foldLeft(SortTerm.Type0, SigmaTerm::lub);
     }
     @Override public @NotNull SeqView<String> namesView() {
-      return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());
+      return clazz.members().sliceView(0, telescopeSize).map(AnyDef::name);
     }
   }
 }
