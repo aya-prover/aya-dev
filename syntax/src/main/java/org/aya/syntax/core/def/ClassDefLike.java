@@ -13,7 +13,7 @@ public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.D
 
   default @NotNull SortTerm result(int implSize) {
     var members = members();
-    assert implSize < members.size();
+    assert implSize <= members.size();
 
     return members.view()
       .drop(implSize)

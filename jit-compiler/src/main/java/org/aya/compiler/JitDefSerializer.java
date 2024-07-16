@@ -59,6 +59,8 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
     appendLine(STR."super(\{args.joinToString(", ")});");
   }
 
+  protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
+
   protected void buildFramework(@NotNull T unit, @NotNull Runnable continuation) {
     var className = javifyClassName(unit.ref());
     buildMetadata(unit);
@@ -68,7 +70,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
       // empty return type for constructor
       buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
       appendLine();
-      if (unit.telescope().isEmpty()) {
+      if (shouldBuildEmptyCall(unit)) {
         buildConstantField(callClass(), FIELD_EMPTYCALL, ExprializeUtils.makeNew(
           callClass(), ExprializeUtils.getInstance(className)));
       }
