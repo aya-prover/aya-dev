@@ -13,7 +13,7 @@ import static org.aya.compiler.AyaSerializer.CLASS_IMMSEQ;
 import static org.aya.compiler.ExprializeUtils.getJavaReference;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
-public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
+public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   public static final String CLASS_JITMEMBERS = getJavaReference(JitMember.class);
   public static final String CLASS_CLASSCALL = getJavaReference(ClassCall.class);
   public static final String FIELD_MEMBERS = "members";
@@ -22,6 +22,11 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
   public ClassSerializer(@NotNull SourceBuilder builder) { super(builder, JitClass.class); }
   @Override protected @NotNull String callClass() { return CLASS_CLASSCALL; }
   @Override protected void buildConstructor(ClassDef unit) { buildSuperCall(ImmutableSeq.empty()); }
+
+  @Override
+  protected boolean shouldBuildEmptyCall(@NotNull ClassDef unit) {
+    return true;
+  }
 
   private void buildMembers(ClassDef unit) {
     buildIf(STR."\{FIELD_MEMBERS} == null", () ->

@@ -46,6 +46,10 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     });
   }
 
+  @Override
+  protected boolean shouldBuildEmptyCall(@NotNull T unit) {
+    return unit.telescope().isEmpty();
+  }
   protected void buildConstructor(@NotNull T def, @NotNull ImmutableSeq<String> ext) {
     var tele = def.telescope();
     var size = tele.size();
