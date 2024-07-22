@@ -49,6 +49,15 @@ public final class ClassResolver {
     // return envCache;
   }
 
+  public void resolve(
+    @NotNull MemberDefLike field,
+    @NotNull ImmutableSeq<Jdg> args,
+    @NotNull LocalCtx ctx,
+    @NotNull Stateful normalizerProvider
+  ) {
+    var candies = findCandidates(field, ctx, normalizerProvider);
+  }
+
   /**
    * Find the candidate for the invocation of {@code field args}
    *
@@ -57,12 +66,9 @@ public final class ClassResolver {
   public @NotNull ImmutableSeq<AnyVar> findCandidates(
     @NotNull MemberDefLike field,
     @NotNull LocalCtx ctx,
-    @NotNull ClassDefLike thisTy,
-    @NotNull LocalVar thisTm,
     @NotNull Stateful normalizerProvider
   ) {
     var candies = MutableList.<AnyVar>create();
-    if (field.classRef().equals(thisTy)) candies.append(thisTm);
     // find from localCtx
     // can be improved by forEach and extractLocal (if there is)
     ctx.extract().forEach(v -> {
