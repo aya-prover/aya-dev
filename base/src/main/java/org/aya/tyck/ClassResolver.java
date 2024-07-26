@@ -56,6 +56,9 @@ public final class ClassResolver {
     @NotNull Stateful normalizerProvider
   ) {
     var candies = findCandidates(field, ctx, normalizerProvider);
+    var matches = MutableList.<AnyVar>create();
+
+
   }
 
   /**
