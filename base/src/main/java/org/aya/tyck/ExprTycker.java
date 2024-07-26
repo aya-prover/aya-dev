@@ -452,7 +452,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return generated;
   }
 
-  private Jdg generateApplication(@NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws NotPi {
+  public Jdg generateApplication(@NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws NotPi {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) fail(new LicitError.BadNamedArg(arg));
       switch (whnf(acc.type())) {
