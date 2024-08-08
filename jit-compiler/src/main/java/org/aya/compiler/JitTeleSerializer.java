@@ -4,7 +4,6 @@ package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.range.primitive.IntRange;
-import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
@@ -16,37 +15,22 @@ import org.jetbrains.annotations.NotNull;
 import static org.aya.compiler.AyaSerializer.*;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
-public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSerializer<T> {
-  public static final String CLASS_METADATA = ExprializeUtils.getJavaReference(CompiledAya.class);
+public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSerializer<T> {
   public static final String CLASS_JITCON = ExprializeUtils.getJavaReference(JitCon.class);
   public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(CodeShape.class), ExprializeUtils.getJavaReference(CodeShape.GlobalId.class));
   public static final String METHOD_TELESCOPE = "telescope";
   public static final String METHOD_RESULT = "result";
   public static final String TYPE_TERMSEQ = STR."\{CLASS_SEQ}<\{CLASS_TERM}>";
 
-  protected final @NotNull Class<?> superClass;
-
   protected JitTeleSerializer(
     @NotNull SourceBuilder builder,
     @NotNull Class<?> superClass
   ) {
-    super(builder);
-    this.superClass = superClass;
+    super(builder, superClass);
   }
 
   protected void buildFramework(@NotNull T unit, @NotNull Runnable continuation) {
-    var className = getClassName(unit);
-    buildMetadata(unit);
-    buildInnerClass(className, superClass, () -> {
-      buildInstance(className);
-      appendLine();
-      // empty return type for constructor
-      buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
-      appendLine();
-      if (unit.telescope().isEmpty()) {
-        buildConstantField(callClass(), FIELD_EMPTYCALL, ExprializeUtils.makeNew(
-          callClass(), ExprializeUtils.getInstance(className)));
-      }
+    super.buildFramework(unit, () -> {
       var iTerm = "i";
       var teleArgsTerm = "teleArgs";
       buildMethod(METHOD_TELESCOPE, ImmutableSeq.of(
@@ -62,51 +46,10 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
     });
   }
 
-  protected abstract @NotNull String callClass();
-  private @NotNull String getClassName(@NotNull T unit) {
-    return javifyClassName(unit.ref());
+  @Override
+  protected boolean shouldBuildEmptyCall(@NotNull T unit) {
+    return unit.telescope().isEmpty();
   }
-
-  public void buildInstance(@NotNull String className) {
-    buildConstantField(className, STATIC_FIELD_INSTANCE, ExprializeUtils.makeNew(className));
-  }
-
-  protected void appendMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
-    var prepend = isFirst ? "" : ", ";
-    appendLine(STR."\{prepend}\{name} = \{value}");
-  }
-
-  /**
-   * @see CompiledAya
-   */
-  protected void buildMetadata(@NotNull T unit) {
-    var ref = unit.ref();
-    var module = ref.module;
-    var assoc = ref.assoc();
-    var assocIdx = assoc == null ? -1 : assoc.ordinal();
-    assert module != null;
-    appendLine(STR."@\{CLASS_METADATA}(");
-    var modPath = module.module().module();
-    appendMetadataRecord("module", ExprializeUtils.makeHalfArrayFrom(modPath.view().map(ExprializeUtils::makeString)), true);
-    // Assumption: module.take(fileModule.size).equals(fileModule)
-    appendMetadataRecord("fileModuleSize", Integer.toString(module.fileModuleSize()), false);
-    appendMetadataRecord("name", ExprializeUtils.makeString(ref.name()), false);
-    appendMetadataRecord("assoc", Integer.toString(assocIdx), false);
-    buildShape(unit);
-
-    appendLine(")");
-  }
-
-  protected void buildShape(T unit) {
-    appendMetadataRecord("shape", "-1", false);
-    appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(ImmutableSeq.empty()), false);
-  }
-
-  /**
-   * @see org.aya.syntax.compile.JitDef
-   */
-  protected abstract void buildConstructor(T unit);
-
   protected void buildConstructor(@NotNull T def, @NotNull ImmutableSeq<String> ext) {
     var tele = def.telescope();
     var size = tele.size();
@@ -134,9 +77,5 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends AbstractSeria
    */
   protected void buildResult(@NotNull T unit, @NotNull String teleArgsTerm) {
     buildReturn(serializeTermUnderTele(unit.result(), teleArgsTerm, unit.telescope().size()));
-  }
-
-  public void buildSuperCall(@NotNull ImmutableSeq<String> args) {
-    appendLine(STR."super(\{args.joinToString(", ")});");
   }
 }

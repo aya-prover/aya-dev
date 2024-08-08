@@ -6,4 +6,13 @@ class Kontainer
 
 def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
 
- def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
+def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
+
+def subtype : Kontainer Nat => new Kontainer Nat 0
+// In core:
+// def subtype : Kontainer Nat => cast [Taipe := Nat] [walue := 0] (new Kontainer Nat 0)
+
+def norm1 : Kontainer::walue {subtype} = 0 => refl
+// In core:
+// (cast [Taipe := Nat] [walue := 0] (new Kontainer Nat 0)) .walue
+// -> 0 (it is recorded in the ClassCastTerm!)

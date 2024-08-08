@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import static org.aya.compiler.AyaSerializer.CLASS_PAT;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
-public class PatternExprializer extends AbstractExprializer<Pat> {
+public final class PatternExprializer extends AbstractExprializer<Pat> {
   public static final @NotNull String CLASS_PAT_ABSURD = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Absurd.class));
   public static final @NotNull String CLASS_PAT_BIND = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Bind.class));
   public static final @NotNull String CLASS_PAT_CON = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Con.class));

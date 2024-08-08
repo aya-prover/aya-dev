@@ -8,10 +8,7 @@ import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.JitCon;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitPrim;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.*;
@@ -150,7 +147,7 @@ public record AppTycker<Ex extends Exception>(
 
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var self = LocalVar.generate("self");
-    var appliedParams = ofClassMembers(self, clazz, argsCount).lift(lift);
+    var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     state.classThis.push(self);
     var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
@@ -174,21 +171,15 @@ public record AppTycker<Ex extends Exception>(
     });
   }
 
-  private @NotNull AbstractTele ofClassMembers(@NotNull LocalVar self, @NotNull ClassDefLike def, int memberCount) {
-    var synthesizer = new Synthesizer(tycker);
-    return switch (def) {
-      case ClassDef.Delegate delegate -> new TakeMembers(self, delegate.core(), memberCount, synthesizer);
-    };
+  private @NotNull AbstractTele ofClassMembers(@NotNull ClassDefLike def, int memberCount) {
+    return new TakeMembers(def, memberCount);
   }
 
-  record TakeMembers(
-    @NotNull LocalVar self, @NotNull ClassDef clazz,
-    @Override int telescopeSize, @NotNull Synthesizer synthesizer
-  ) implements AbstractTele {
+  record TakeMembers(@NotNull ClassDefLike clazz, @Override int telescopeSize) implements AbstractTele {
     @Override public boolean telescopeLicit(int i) { return true; }
     @Override public @NotNull String telescopeName(int i) {
       assert i < telescopeSize;
-      return clazz.members().get(i).ref().name();
+      return clazz.members().get(i).name();
     }
 
     // class Foo
@@ -200,22 +191,18 @@ public record AppTycker<Ex extends Exception>(
       // teleArgs are former members
       assert i < telescopeSize;
       var member = clazz.members().get(i);
-      return TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new NewTerm(
-        new ClassCall(new ClassDef.Delegate(clazz.ref()), 0,
+      return member.signature().inst(ImmutableSeq.of(new NewTerm(
+        new ClassCall(clazz, 0,
           ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < i ? teleArgs.get(idx) : ErrorTerm.DUMMY))
         )
       ))).makePi(Seq.empty());
     }
 
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      return clazz.members().view()
-        .drop(telescopeSize)
-        .map(member -> TyckDef.defSignature(member.ref()).inst(ImmutableSeq.of(new FreeTerm(self))).makePi(Seq.empty()))
-        .map(ty -> (SortTerm) synthesizer.synth(ty))
-        .foldLeft(SortTerm.Type0, SigmaTerm::lub);
+      return clazz.result(telescopeSize);
     }
     @Override public @NotNull SeqView<String> namesView() {
-      return clazz.members().sliceView(0, telescopeSize).map(i -> i.ref().name());
+      return clazz.members().sliceView(0, telescopeSize).map(AnyDef::name);
     }
   }
 }
