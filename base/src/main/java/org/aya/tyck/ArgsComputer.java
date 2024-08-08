@@ -61,7 +61,7 @@ public class ArgsComputer {
     } else return tycker.mockTerm(param, pos);
   }
 
-  @NotNull Jdg generateApplication(@NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws ExprTycker.NotPi {
+  static @NotNull Jdg generateApplication(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws ExprTycker.NotPi {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) tycker.fail(new LicitError.BadNamedArg(arg));
       switch (tycker.whnf(acc.type())) {
@@ -78,11 +78,11 @@ public class ArgsComputer {
     });
   }
 
-  private @NotNull Jdg kon(@NotNull BiFunction<Term[], Term, Jdg> k) {
+  private @NotNull Jdg kon(@NotNull BiFunction<Term[], @Nullable Term, Jdg> k) {
     return k.apply(result, firstTy);
   }
 
-  @NotNull Jdg boot(@NotNull BiFunction<Term[], Term, Jdg> k) throws ExprTycker.NotPi {
+  @NotNull Jdg boot(@NotNull BiFunction<Term[], @Nullable Term, Jdg> k) throws ExprTycker.NotPi {
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       arg = args.get(argIx);
       param = params.telescopeRich(paramIx, result);
@@ -114,7 +114,7 @@ public class ArgsComputer {
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
-      return generateApplication(args.drop(argIx), kon(k));
+      return generateApplication(tycker, args.drop(argIx), kon(k));
     } else while (paramIx < params.telescopeSize()) {
       var param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
