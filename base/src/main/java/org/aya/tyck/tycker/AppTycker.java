@@ -190,12 +190,7 @@ public record AppTycker<Ex extends Exception>(
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       // teleArgs are former members
       assert i < telescopeSize;
-      var member = clazz.members().get(i);
-      return member.signature().inst(ImmutableSeq.of(new NewTerm(
-        new ClassCall(clazz, 0,
-          ImmutableSeq.fill(clazz.members().size(), idx -> Closure.mkConst(idx < i ? teleArgs.get(idx) : ErrorTerm.DUMMY))
-        )
-      ))).makePi(Seq.empty());
+      return clazz.telescope(i, teleArgs);
     }
 
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
