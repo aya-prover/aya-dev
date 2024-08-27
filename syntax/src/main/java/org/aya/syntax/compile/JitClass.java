@@ -27,12 +27,12 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
   }
 
   @Override
-  public final @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-    throw new UnsupportedOperationException("Unreachable");
+  public final @NotNull Term telescope(int i, @NotNull Seq<Term> teleArgs) {
+    return ClassDefLike.super.telescope(i, teleArgs);
   }
 
   @Override
   public final @NotNull Term result(Seq<Term> teleArgs) {
-    return SortTerm.Type0;
+    return result(teleArgs.size());
   }
 }

@@ -10,11 +10,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract non-sealed class JitMember extends JitDef implements MemberDefLike {
   public final @NotNull JitClass classRef;
   public final int index;
+
+  /**
+   * the type of the type/telescope (exclude self-parameter) of this member
+   */
   public final @NotNull SortTerm type;
 
   protected JitMember(
     int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames,
-    JitClass classRef, int index, @NotNull SortTerm type) {
+    @NotNull JitClass classRef, int index, @NotNull SortTerm type) {
     super(telescopeSize, telescopeLicit, telescopeNames);
     this.classRef = classRef;
     this.index = index;
