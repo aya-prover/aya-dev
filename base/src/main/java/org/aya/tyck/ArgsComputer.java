@@ -109,14 +109,14 @@ public class ArgsComputer {
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
-      var param = params.telescopeRich(paramIx, result);
+      param = params.telescopeRich(paramIx, result);
       onParamTyck(insertImplicit(param, pos));
     }
     var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
       return generateApplication(tycker, args.drop(argIx), kon(k));
     } else while (paramIx < params.telescopeSize()) {
-      var param = params.telescopeRich(paramIx, result);
+      param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));
       onParamTyck(new FreeTerm(atarashiVar));
