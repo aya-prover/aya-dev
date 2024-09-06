@@ -40,4 +40,8 @@ public abstract class AbstractSerializer<T> implements SourceBuilder {
     return new TermExprializer(sourceBuilder.nameGen(), argTerms)
       .serialize(term);
   }
+
+  protected @NotNull String serializeTerm(@NotNull Term term) {
+    return serializeTermUnderTele(term, ImmutableSeq.empty());
+  }
 }
