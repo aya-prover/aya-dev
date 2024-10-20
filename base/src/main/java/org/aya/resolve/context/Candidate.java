@@ -14,6 +14,14 @@ public sealed interface Candidate<T> {
   @NotNull Candidate<T> merge(@NotNull Candidate<T> candy);
   boolean isAmbiguous();
   boolean isEmpty();
+  @NotNull ImmutableSeq<ModuleName> from();
+
+  static <T> @NotNull Candidate<T> of(@NotNull ModuleName fromModule, @NotNull T symbol) {
+    return switch (fromModule) {
+      case ModuleName.Qualified qualified -> Imported.of(qualified, symbol);
+      case ModuleName.ThisRef _ -> new Defined<>(symbol);
+    };
+  }
 
   /**
    * Returns the only symbol in this candidate, should check {@link #isEmpty()} and {@link #isAmbiguous()} first.
@@ -31,6 +39,7 @@ public sealed interface Candidate<T> {
       assert !(symbol instanceof Candidate.Defined<T>);
       return this;
     }
+
     @Override
     public boolean isAmbiguous() {
       return false;
@@ -44,6 +53,11 @@ public sealed interface Candidate<T> {
     @Override
     public T get() {
       return symbol;
+    }
+
+    @Override
+    public @NotNull ImmutableSeq<ModuleName> from() {
+      return ImmutableSeq.of(ModuleName.This);
     }
   }
 
@@ -77,6 +91,11 @@ public sealed interface Candidate<T> {
     @Override
     public T get() {
       return symbols.keysView().stream().findFirst().get();
+    }
+
+    @Override
+    public @NotNull ImmutableSeq<ModuleName> from() {
+      return ImmutableSeq.from(symbols.valuesView().flatMap(x -> x));
     }
 
     @Override

@@ -41,7 +41,7 @@ public record ModuleSymbol2<T>(@NotNull MutableMap<String, Candidate<T>> table) 
   }
 
   public @NotNull Candidate<T> get(@NotNull String name) {
-    return table.getOrDefault(name, Candidate.Imported.empty());
+    return table.getOrPut(name, Candidate.Imported::empty);
   }
 
   /**
@@ -49,11 +49,7 @@ public record ModuleSymbol2<T>(@NotNull MutableMap<String, Candidate<T>> table) 
    * @param symbol the symbol
    */
   public void add(@NotNull String name, T symbol, ModuleName fromModule) {
-    var candy = switch (fromModule) {
-      case ModuleName.Qualified qualified -> Candidate.Imported.of(qualified, symbol);
-      case ModuleName.ThisRef thisRef -> new Candidate.Defined<>(symbol);
-    };
-
+    var candy = Candidate.of(fromModule, symbol);
     var old = get(name);
     table.put(name, old.merge(candy));
   }

@@ -43,6 +43,16 @@ public interface Context extends Problematic {
     return null;
   }
 
+  default <T> @NotNull ImmutableSeq<T> iterateMod(@NotNull Function<@NotNull Context, @NotNull ImmutableSeq<T>> f) {
+    var p = this;
+    while (p != null) {
+      var result = f.apply(p);
+      if (result.isNotEmpty()) return result;
+      p = p.parent();
+    }
+    return ImmutableSeq.empty();
+  }
+
   /**
    * The path of this module
    */
@@ -169,7 +179,7 @@ public interface Context extends Problematic {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName);
+  @Nullable ModuleExport2 getModuleLocalMaybe(@NotNull ModuleName.Qualified modName);
 
   /**
    * Trying to get a {@link ModuleExport} by a module {@param modName} in the whole context.
@@ -177,7 +187,7 @@ public interface Context extends Problematic {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  default @Nullable ModuleExport getModuleMaybe(@NotNull ModuleName.Qualified modName) {
+  default @Nullable ModuleExport2 getModuleMaybe(@NotNull ModuleName.Qualified modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 

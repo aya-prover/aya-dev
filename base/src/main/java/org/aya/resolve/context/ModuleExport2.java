@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
-import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.util.error.WithPos;
@@ -16,7 +15,6 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.module.ModuleReader;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -41,6 +39,15 @@ public record ModuleExport2(
       if (symbol != null) symbolConsumer.accept(symbol);
       if (module != null) moduleConsumer.accept(module);
     }
+  }
+
+  public @Nullable ModuleExport2 resolveModule(@NotNull ModuleName.Qualified qmod) {
+    var head = qmod.head();
+    var tail = qmod.tail();
+    var mod = getMaybe(head);
+    if (mod == null || mod.module == null) return null;
+    if (tail == null) return mod.module;
+    return mod.module.resolveModule(tail);
   }
 
   private @Nullable ExportUnit getMaybe(@NotNull String name) {

@@ -6,6 +6,7 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -33,6 +34,15 @@ public sealed interface ModuleName extends Serializable {
     public Qualified(@NotNull String @NotNull ... ids) { this(ImmutableSeq.of(ids)); }
     public Qualified {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
+    }
+
+    public @NotNull String head() {
+      return ids.getFirst();
+    }
+
+    public @Nullable ModuleName.Qualified tail() {
+      if (ids.size() == 1) return null;
+      return new Qualified(ids.drop(1));
     }
 
     @Override public int size() { return ids.size(); }
