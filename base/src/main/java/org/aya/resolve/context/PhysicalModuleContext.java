@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull ModuleExport exports = new ModuleExport();
-  public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
-  public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules = MutableHashMap.create();
+  public final @NotNull ModuleExport2 exports = new ModuleExport2();
+  public final @NotNull ModuleSymbol2<AnyVar> symbols = new ModuleSymbol2<>();
+  public final @NotNull MutableMap<String, ModuleExport2> modules = MutableHashMap.create();
   private final @NotNull ModulePath modulePath;
   @Override public @NotNull ModulePath modulePath() { return modulePath; }
 
@@ -32,19 +32,20 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
-    @NotNull ModuleName.Qualified modName,
-    @NotNull ModuleExport modExport,
+    @NotNull String modName,
+    @NotNull ModuleExport2 modExport,
     @NotNull Stmt.Accessibility accessibility,
+    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
+    ModuleContext.super.importModule(modName, modExport, accessibility, isDefined, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       exports.export(modName, modExport);
     }
   }
 
-  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
-    return exports.export(modName, name, ref);
+  @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
+    return exports.export(name, ref);
   }
 
   public @NotNull NoExportContext exampleContext() {
@@ -53,7 +54,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public @NotNull Context parent() { return parent; }
-  @Override public @NotNull ModuleSymbol<AnyVar> symbols() { return symbols; }
-  @Override public @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules() { return modules; }
-  @Override public @NotNull ModuleExport exports() { return exports; }
+  @Override public @NotNull ModuleSymbol2<AnyVar> symbols() { return symbols; }
+  @Override public @NotNull MutableMap<String, ModuleExport2> modules() { return modules; }
+  @Override public @NotNull ModuleExport2 exports() { return exports; }
 }

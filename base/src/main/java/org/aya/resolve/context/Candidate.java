@@ -4,6 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ public sealed interface Candidate<T> {
   boolean isAmbiguous();
   boolean isEmpty();
   @NotNull ImmutableSeq<ModuleName> from();
+  boolean contains(@NotNull ModuleName modName);
 
   static <T> @NotNull Candidate<T> of(@NotNull ModuleName fromModule, @NotNull T symbol) {
     return switch (fromModule) {
@@ -59,6 +61,11 @@ public sealed interface Candidate<T> {
     public @NotNull ImmutableSeq<ModuleName> from() {
       return ImmutableSeq.of(ModuleName.This);
     }
+
+    @Override
+    public boolean contains(@NotNull ModuleName modName) {
+      return modName == ModuleName.This;
+    }
   }
 
   /**
@@ -69,18 +76,18 @@ public sealed interface Candidate<T> {
    *                Also, the intersection of any two module name sets should be empty.
    * @param <T>
    */
-  record Imported<T>(@NotNull ImmutableMap<T, ImmutableSeq<ModuleName.Qualified>> symbols) implements Candidate<T> {
+  record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
     public static <T> @NotNull Candidate<T> empty() {
       return new Imported<>(ImmutableMap.empty());
     }
 
     public static <T> @NotNull Candidate<T> of(@NotNull ModuleName.Qualified from, @NotNull T symbol) {
-      return new Imported<>(ImmutableMap.of(symbol, ImmutableSeq.of(from)));
+      return new Imported<>(ImmutableMap.of(from, symbol));
     }
 
     @Override
     public boolean isAmbiguous() {
-      return symbols.size() > 1;
+      return symbols.valuesView().distinct().size() > 1;
     }
 
     @Override
@@ -90,19 +97,28 @@ public sealed interface Candidate<T> {
 
     @Override
     public T get() {
-      return symbols.keysView().stream().findFirst().get();
+      return symbols.valuesView().stream().findFirst().get();
     }
 
     @Override
     public @NotNull ImmutableSeq<ModuleName> from() {
-      return ImmutableSeq.from(symbols.valuesView().flatMap(x -> x));
+      return ImmutableSeq.from(symbols.keysView());
     }
 
+    @Override
+    public boolean contains(@NotNull ModuleName modName) {
+      return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
+    }
     @Override
     public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
-        case Candidate.Imported<T> imported -> new Imported<>(null);    // TODO: merge
+        case Candidate.Imported<T> imported -> {
+          var symbols = MutableMap.<ModuleName.Qualified, T>create();
+          symbols.putAll(this.symbols);
+          symbols.putAll(imported.symbols);
+          yield new Imported<>(ImmutableMap.from(symbols));
+        }
       };
     }
   }

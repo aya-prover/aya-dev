@@ -16,22 +16,22 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull Context parent,
-  @NotNull ModuleSymbol<AnyVar> symbols,
-  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules,
+  @NotNull ModuleSymbol2<AnyVar> symbols,
+  @NotNull MutableMap<String, ModuleExport2> modules,
   @Override @NotNull ModulePath modulePath
 ) implements ModuleContext {
   public NoExportContext(
     @NotNull Context parent,
-    @NotNull ModuleSymbol<AnyVar> symbols,
-    @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
+    @NotNull ModuleSymbol2<AnyVar> symbols,
+    @NotNull MutableMap<String, ModuleExport2> modules
   ) {
     this(parent, symbols, modules, parent.modulePath().derive(":NoExport"));
   }
 
   public NoExportContext(@NotNull Context parent) {
-    this(parent, new ModuleSymbol<>(), MutableHashMap.create());
+    this(parent, new ModuleSymbol2<>(), MutableHashMap.create());
   }
 
   @Override public @NotNull Path underlyingFile() { return parent.underlyingFile(); }
-  @Override public @NotNull ModuleExport exports() { return new ModuleExport(); }
+  @Override public @NotNull ModuleExport2 exports() { return new ModuleExport2(); }
 }

@@ -59,7 +59,7 @@ public record BindContext(
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
+  public @Nullable ModuleExport2 getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return null;
   }
 }

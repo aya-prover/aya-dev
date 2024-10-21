@@ -26,6 +26,10 @@ public record ModuleExport2(
   @NotNull MutableMap<String, AnyDefVar> symbols,
   @NotNull MutableMap<String, ModuleExport2> modules
 ) {
+  public ModuleExport2() {
+    this(MutableMap.create(), MutableMap.create());
+  }
+
   public ModuleExport2(@NotNull ModuleExport2 other) {
     this(MutableMap.from(other.symbols), MutableMap.from(other.modules));
   }

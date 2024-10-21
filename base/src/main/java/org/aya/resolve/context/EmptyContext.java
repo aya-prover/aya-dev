@@ -43,7 +43,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
   }
 
   @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
+  public @Nullable ModuleExport2 getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return null;
   }
 }

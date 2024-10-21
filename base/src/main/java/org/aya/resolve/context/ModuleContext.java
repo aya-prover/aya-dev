@@ -20,6 +20,20 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 /**
+ * A Context for Module.<br/>
+ * A module may import symbols/modules and export some symbols/modules, it also defines some symbols/modules.
+ * However, name conflicting is a problem during using module, in order to solve it easier in both
+ * designer side and user side, a module should hold these properties:
+ * <ol>
+ *   <li>
+ *     No ambiguous on module name: module name conflicting is hard to solve,
+ *     unless we introduce unique qualified name for each module. There are also some implementation problems.
+ *   </li>
+ *   <li>
+ *    No ambiguous on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
+ *   </li>
+ * </ol>
+ *
  * @author re-xyr
  */
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
@@ -35,10 +49,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
   /**
    * All imported modules in this context.<br/>
-   * {@code Qualified Module -> Module Export}
-   *
-   * @apiNote empty list => this module
-   * @implNote This module should be automatically imported.
+   * {@code Module Name -> Module Export}
    */
   @NotNull MutableMap<String, ModuleExport2> modules();
 
@@ -60,10 +71,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var symbol = symbols().get(name);
     if (symbol.isEmpty()) return null;
     if (symbol.isAmbiguous()) reportAndThrow(new NameProblem.AmbiguousNameError(
-      name, ImmutableSeq.from(((Candidate.Imported<AnyVar>) symbol)
-      .symbols()
-      .valuesView()
-      .flatMap(x -> x)
+      name, ImmutableSeq.from(symbol.from()
       .map(x -> x.resolve(name))),
       sourcePos
     ));
@@ -80,18 +88,17 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   /**
-   * Import the whole module (including itself and its re-exports)
-   *
-   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
+   * @see ModuleContext#importModule(String, ModuleExport2, Stmt.Accessibility, boolean, SourcePos)
    */
   default void importModule(
     @NotNull String modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
+    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
     var export = module.exports();
-    importModule(modName, export, accessibility, /*TODO*/ false, sourcePos);
+    importModule(modName, export, accessibility, isDefined, sourcePos);
   }
 
   /**
@@ -109,13 +116,14 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull SourcePos sourcePos
   ) {
     var modules = modules();
+    var qname = new ModuleName.Qualified(modName);
     var exists = modules.getOrNull(modName);
     if (exists != null && !isDefined) {
       if (exists != moduleExport) {
-        reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+        reportAndThrow(new NameProblem.DuplicateModNameError(qname, sourcePos));
       } else return;
-    } else if (getModuleMaybe(new ModuleName.Qualified(modName)) != null) {
-      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
+    } else if (getModuleMaybe(qname) != null) {
+      fail(new NameProblem.ModShadowingWarn(qname, sourcePos));
     }
 
     modules.set(modName, moduleExport);
@@ -127,7 +135,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull UseHide useHide
   ) {
     openModule(modName, accessibility,
-      useHide.list().map(UseHide.Name::id),
+      useHide.list().map(x -> x.id().name()),
       useHide.renaming(),
       sourcePos, useHide.strategy());
   }
@@ -140,16 +148,16 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param rename  renaming
    */
   default void openModule(
-    @NotNull String modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull ImmutableSeq<WithPos<String>> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
     UseHide.Strategy strategy
   ) {
-    var modExport = getModuleMaybe(new ModuleName.Qualified(modName));
+    var modExport = getModuleMaybe(modName);
     if (modExport == null)
-      reportAndThrow(new NameProblem.ModNameNotFoundError(new ModuleName.Qualified(modName), sourcePos));
+      reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
 
     var filterRes = modExport.filter(filter, strategy);
     if (filterRes.anyError()) reportAllAndThrow(filterRes.problems());
@@ -163,8 +171,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, ref) -> {
-      var fullComponentName = new ModuleName.Qualified(modName, name);
-      importSymbol(ref, fullComponentName, name, accessibility, sourcePos);
+      importSymbol(ref, modName, name, accessibility, sourcePos);
     });
 
     // import the modules that {renamed} exported
@@ -202,9 +209,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
     // Only `AnyDefVar`s can be exported.
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {
-      var success = exportSymbol(modName, name, defVar);
+      var success = exportSymbol(name, defVar);
       if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));    // TODO: use a more appropriate error
       }
     }
   }
@@ -214,7 +221,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
+  default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
     return true;
   }
 

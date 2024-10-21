@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.prettier.BasePrettier;
@@ -10,6 +11,7 @@ import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
@@ -203,9 +205,8 @@ public interface NameProblem extends Problem {
       while (ctx instanceof BindContext bindCtx) ctx = bindCtx.parent();
       var possible = MutableList.<String>create();
       if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
-        if (mod.symbols().contains(name)) {
-          // TODO: The name `{modName}::{name}` is probably ambiguous
-          possible.append(modName.resolve(name).toString());
+        if (mod.symbols().containsKey(name)) {
+          possible.append(QualifiedID.join(Seq.of(modName, name)));
         }
       });
       return possible.toImmutableSeq();
