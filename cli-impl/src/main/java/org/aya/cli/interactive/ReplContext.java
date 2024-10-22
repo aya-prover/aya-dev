@@ -2,10 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
-import org.aya.resolve.context.ModuleSymbol;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.*;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyDefVar;
@@ -26,7 +23,6 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override public void importSymbol(
-    boolean imported,
     @NotNull AnyVar ref,
     @NotNull ModuleName modName,
     @NotNull String name,
@@ -34,20 +30,21 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull SourcePos sourcePos
   ) {
     // REPL always overwrites symbols.
-    symbols().add(modName, name, ref);
-    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(modName, name, defVar);
+    symbols().add(name, ref, modName);
+    if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
   }
 
-  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
-    super.exportSymbol(modName, name, ref);
+  @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
+    super.exportSymbol(name, ref);
     // REPL always overwrites symbols.
     return true;
   }
 
   @Override public void importModule(
-    @NotNull ModuleName.Qualified modName,
-    @NotNull ModuleExport mod,
+    @NotNull String modName,
+    @NotNull ModuleExport2 mod,
     Stmt.@NotNull Accessibility accessibility,
+    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
     modules.put(modName, mod);
@@ -77,14 +74,14 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     RepoLike.super.merge();
     if (bors == null) return;
     mergeSymbols(symbols, bors.symbols);
-    mergeSymbols(exports.symbols(), bors.exports.symbols());
+    exports.symbols().putAll(bors.exports.symbols());
     exports.modules().putAll(bors.exports.modules());
     modules.putAll(bors.modules);
   }
 
   @Contract(mutates = "this") public void clear() {
     modules.clear();
-    exports.symbols().table().clear();
+    exports.symbols().clear();
     exports.modules().clear();
     symbols.table().clear();
   }
@@ -93,7 +90,10 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
    * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
    * so be careful about {@param rhs}
    */
-  private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> lhs, @NotNull ModuleSymbol<T> rhs) {
-    rhs.table().forEach((uname, candy) -> lhs.resolveUnqualified(uname).asMut().get().putAll(candy));
+  private static <T> void mergeSymbols(@NotNull ModuleSymbol2<T> dest, @NotNull ModuleSymbol2<T> src) {
+    for (var key : src.table().keysView()) {
+      var candy = dest.get(key);
+      dest.table().put(key, candy.merge(src.get(key)));
+    }
   }
 }

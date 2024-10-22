@@ -38,8 +38,7 @@ public sealed interface Candidate<T> {
   record Defined<T>(T symbol) implements Candidate<T> {
     @Override
     public @NotNull Candidate<T> merge(@NotNull Candidate<T> symbol) {
-      assert !(symbol instanceof Candidate.Defined<T>);
-      return this;
+      return symbol instanceof Candidate.Defined<T> defined ? defined : this;
     }
 
     @Override

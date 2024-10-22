@@ -83,8 +83,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = getModuleLocalMaybe(modName);
     if (mod == null) return null;
-
-    throw new UnsupportedOperationException("TODO");    // TODo
+    return mod.symbols().getOrNull(name);
   }
 
   /**
@@ -135,7 +134,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull UseHide useHide
   ) {
     openModule(modName, accessibility,
-      useHide.list().map(x -> x.id().name()),
+      useHide.list().map(UseHide.Name::name),
       useHide.renaming(),
       sourcePos, useHide.strategy());
   }
