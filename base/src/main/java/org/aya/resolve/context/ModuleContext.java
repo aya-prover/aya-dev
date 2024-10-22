@@ -30,7 +30,7 @@ import java.nio.file.Path;
  *     unless we introduce unique qualified name for each module. There are also some implementation problems.
  *   </li>
  *   <li>
- *    No ambiguous on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
+ *    No ambiguous on exported symbol name: ambiguous on symbol name i s acceptable, as long as it won't be exported.
  *   </li>
  * </ol>
  *
@@ -134,7 +134,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull UseHide useHide
   ) {
     openModule(modName, accessibility,
-      useHide.list().map(UseHide.Name::name),
+      useHide.list().map(UseHide.Name::id),
       useHide.renaming(),
       sourcePos, useHide.strategy());
   }

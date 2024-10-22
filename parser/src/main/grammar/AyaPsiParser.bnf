@@ -174,9 +174,9 @@ openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
 module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
-hideList ::= LPAREN <<commaSep qualifiedId>>? RPAREN
+hideList ::= LPAREN <<commaSep weakId>>? RPAREN
 useList ::= LPAREN <<commaSep useId>>? RPAREN
-useId ::= qualifiedId useAs?
+useId ::= weakId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
 generalizeParamName ::= teleParamName
