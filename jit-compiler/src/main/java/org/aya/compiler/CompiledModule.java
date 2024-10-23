@@ -82,44 +82,38 @@ public record CompiledModule(
   record SerRenamedOp(@NotNull OpDecl.OpInfo info, @NotNull SerBind bind) implements Serializable { }
 
   /**
-   * @param rename not empty
+   * @param path absolute module path
+   * @param isPublic re-export
    */
   record SerImport(
-    @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
+    @NotNull ModulePath path, @NotNull String asName,
     boolean isPublic) implements Serializable { }
 
   /** @see UseHide */
   record SerUseHide(
     boolean isUsing,
-    @NotNull ImmutableSeq<ImmutableSeq<String>> names,
+    @NotNull ImmutableSeq<String> names,
     @NotNull ImmutableSeq<UseHide.Rename> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(x -> x.id().ids()),
+        useHide.list().map(x -> x.id().data()),
         useHide.renaming().map(WithPos::data)
       );
     }
   }
 
   /**
+   * TODO: inline this
+   * SerExport stores the information of whether certain definition is exported, this is not about re-exporting.
    * @param exports (Unqualified Name -> Candidates)
    */
   record SerExport(
-    @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
+    @NotNull ImmutableSet<String> exports
   ) implements Serializable {
-    public boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-      var qmod = qname.module().module().module();
-      assert qmod.sizeGreaterThanOrEquals(module.size());
-      var component = ModuleName.from(qmod.drop(module.size()));
-
-      // A QName refers to a def,
-      // which means it was defined in {module} if `component == This`;
-      //                    defined in {component} if `component != This`
-      return exports.getOption(qname.name())
-        .map(components -> components.contains(component.ids()))
-        .getOrDefault(false);
+    public boolean isExported(@NotNull String name) {
+      return exports.contains(name);
     }
   }
 
@@ -132,14 +126,13 @@ public record CompiledModule(
     var serialization = new Serialization(resolveInfo, MutableMap.create());
     defs.forEach(serialization::serOp);
 
-    var exports = ctx.exports().symbols().view().map((k, vs) ->
-      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModuleName::ids))));
+    var exports = ctx.exports().symbols().keysView();
 
     var imports = resolveInfo.imports().view().map((k, v) ->
       new SerImport(v.resolveInfo().thisModule().modulePath(),
-        k.ids(), v.reExport())).toImmutableSeq();
+        k, v.reExport())).toImmutableSeq();
     return new CompiledModule(imports,
-      new SerExport(ImmutableMap.from(exports)),
+      new SerExport(ImmutableSet.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
         .map((k, v) -> Tuple.of(
           resolveInfo.imports()
@@ -200,10 +193,9 @@ public record CompiledModule(
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
-      var qname = jitDef.qualifiedName();
       var metadata = jitDef.metadata();
-      if (jitDef instanceof JitPrim || isExported(context.modulePath(), qname))
-        export(context, qname, new CompiledVar(jitDef));
+      if (jitDef instanceof JitPrim || isExported(jitDef.name()))
+        export(context, jitDef.name(), new CompiledVar(jitDef));
       switch (jitDef) {
         case JitData data -> {
           // The accessibility doesn't matter, this context is readonly
@@ -212,8 +204,10 @@ public record CompiledModule(
             innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
           }
           context.importModule(
-            ModuleName.This.resolve(data.name()),
-            innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
+            data.name(),
+            innerCtx, Stmt.Accessibility.Public,
+            true,
+            SourcePos.SER);
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -239,17 +233,17 @@ public record CompiledModule(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var anImport : imports) {
       var modName = anImport.path;
-      var modRename = ModuleName.qualified(anImport.rename);
+      var modRename = anImport.asName;
       var isPublic = anImport.isPublic;
       var success = loader.load(modName);
       if (success == null)
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
       var mod = success.thisModule();
-      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
+      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, false, SourcePos.SER);
+      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(new ModuleName.Qualified(modRename),
         Stmt.Accessibility.Public,
-        useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
+        useHide.names().map(x -> new WithPos<>(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
       var acc = reExports.containsKey(modName)
@@ -297,23 +291,16 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull AnyDefVar ref) {
-    var modName = context.modulePath();
-    var qmodName = ModuleName.from(qname.asStringSeq().drop(modName.module().size()));
-    export(context, qmodName, qname.name(), ref);
-  }
-
   private void export(
     @NotNull PhysicalModuleContext context,
-    @NotNull ModuleName component,
     @NotNull String name,
     @NotNull AnyDefVar var
   ) {
-    var success = context.exportSymbol(component, name, var);
+    var success = context.exportSymbol(name, var);
     assert success : "DuplicateExportError should not happen in CompiledModule";
   }
 
-  private boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-    return exports.isExported(module, qname);
+  private boolean isExported(@NotNull String name) {
+    return exports.isExported(name);
   }
 }

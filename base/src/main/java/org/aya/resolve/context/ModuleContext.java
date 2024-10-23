@@ -26,11 +26,12 @@ import java.nio.file.Path;
  * designer side and user side, a module should hold these properties:
  * <ol>
  *   <li>
- *     No ambiguous on module name: module name conflicting is hard to solve,
- *     unless we introduce unique qualified name for each module. There are also some implementation problems.
+ *     No ambiguity on module name: module name conflicting is hard to solve,
+ *     unless we introduce unique qualified name for each module which is a little complicate.
+ *     Also, there are some implementation problems.
  *   </li>
  *   <li>
- *    No ambiguous on exported symbol name: ambiguous on symbol name i s acceptable, as long as it won't be exported.
+ *     No ambiguity on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
  *   </li>
  * </ol>
  *
@@ -118,6 +119,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var qname = new ModuleName.Qualified(modName);
     var exists = modules.getOrNull(modName);
     if (exists != null && !isDefined) {
+      // TODO: this check is not very useful, how about merge ModuleExport that come from the same module?
       if (exists != moduleExport) {
         reportAndThrow(new NameProblem.DuplicateModNameError(qname, sourcePos));
       } else return;

@@ -43,8 +43,8 @@ public record ResolveInfo(
   @NotNull ShapeFactory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<AnyDef, OpRenameInfo> opRename,
-  @NotNull MutableMap<ModuleName.Qualified, ImportInfo> imports,
-  @NotNull MutableMap<ModuleName.Qualified, UseHide> reExports,
+  @NotNull MutableMap<String, ImportInfo> imports,
+  @NotNull MutableMap<String, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
   public ResolveInfo(
