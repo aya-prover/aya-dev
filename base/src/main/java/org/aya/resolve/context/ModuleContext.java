@@ -106,7 +106,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @param accessibility of importing, re-export if public
    * @param modName       the name of the module
-   * @param moduleExport  the module--[=]
+   * @param moduleExport  the module
+   * @param isDefined whether {@param moduleExport} is defined in this module, if true,
+   *                  it will shadow previous module with the same name
    */
   default void importModule(
     @NotNull String modName,

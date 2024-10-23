@@ -32,6 +32,7 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * The .ayac file representation.
@@ -135,8 +136,7 @@ public record CompiledModule(
       new SerExport(ImmutableSet.from(exports)),
       ImmutableMap.from(resolveInfo.reExports().view()
         .map((k, v) -> Tuple.of(
-          resolveInfo.imports()
-            .get(k)   // should not fail
+          Objects.requireNonNull(resolveInfo.getImport(k)) // should not fail
             .resolveInfo().thisModule().modulePath(),
           SerUseHide.from(v)))),
       // serialization.serDefs.toImmutableSeq(),
