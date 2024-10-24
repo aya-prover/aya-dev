@@ -51,7 +51,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         }
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
-        context.importModule(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
+        context.importModule(mod.name(), newCtx, mod.accessibility(), true, mod.sourcePos());
         yield new ResolvingStmt.ModStmt(children);
       }
       case Command.Import cmd -> {
@@ -61,8 +61,8 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
           context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
         var mod = success.thisModule();
         var as = cmd.asName();
-        var importedName = as != null ? ModuleName.This.resolve(as) : modulePath.asName();
-        context.importModule(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+        var importedName = as != null ? as : modulePath.last();
+        context.importModule(importedName, mod, cmd.accessibility(), false, cmd.sourcePos());
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
         yield null;
@@ -75,19 +75,21 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
-        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
+        var importInfo = resolveInfo.getImport(mod);
+        if (importInfo != null) {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc);
-        });
+          resolveInfo.open(importInfo.resolveInfo(), cmd.sourcePos(), acc);
+        }
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           if (use.asAssoc() == Assoc.Invalid) return;
-          var symbol = ctx.modules().get(mod).symbols().getMaybe(use.id().component(), use.id().name());
-          assert symbol.isOk(); // checked in openModule
-          var asName = use.asName().getOrDefault(use.id().name());
+          var modExport = ctx.getModuleMaybe(mod);
+          assert modExport != null;     // should not fail, checked in ctx.openModule
+          var symbol = modExport.symbols().get(use.id().data());
+          var asName = use.asName().getOrDefault(use.id().data());
           var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
           var bind = use.asBind();
-          resolveInfo.renameOp(ctx, AnyDef.fromVar(symbol.get()), renamedOpDecl, bind, true);
+          resolveInfo.renameOp(ctx, AnyDef.fromVar(symbol), renamedOpDecl, bind, true);
         });
         yield null;
       }
@@ -159,9 +161,10 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
     context.importModule(
-      ModuleName.This.resolve(module),
+      module,
       innerCtx.exports,
       decl.accessibility(),
+      false,
       decl.sourcePos()
     );
     return innerCtx;

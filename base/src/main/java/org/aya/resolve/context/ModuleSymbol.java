@@ -106,11 +106,6 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, MutableMap<ModuleName,
     return resolveUnqualified(unqualified).map.containsKey(component);
   }
 
-  public enum Error {
-    NotFound,
-    Ambiguous
-  }
-
   /**
    * Adding a new symbol which can be referred by `{componentName}::{name}`
    *
