@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
  * @param opSet        operators local to this module
  * @param opRename     open/import renames with operators
  * @param depGraph     local to this module
+ * @param imports      importing information
+ * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String} like {@param imports},
+ *                     cause we can re-export a module inside another module without import it.
  */
 @Debug.Renderer(text = "thisModule.modulePath().toString()")
 public record ResolveInfo(

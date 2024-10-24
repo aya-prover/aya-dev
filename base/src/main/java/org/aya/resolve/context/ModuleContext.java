@@ -107,8 +107,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param accessibility of importing, re-export if public
    * @param modName       the name of the module
    * @param moduleExport  the module
-   * @param isDefined whether {@param moduleExport} is defined in this module, if true,
-   *                  it will shadow previous module with the same name
+   * @param isDefined     whether {@param moduleExport} is defined in this module, if true,
+   *                      it will shadow previous module with the same name
    */
   default void importModule(
     @NotNull String modName,
@@ -186,7 +186,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default void importSymbol(
     @NotNull AnyVar ref,
-    @NotNull ModuleName modName,
+    @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
@@ -199,16 +199,13 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         // {name} isn't used in this scope, but used in outer scope, shadow!
         fail(new NameProblem.ShadowingWarn(name, sourcePos));
       }
-    } else if (candidates.from().contains(modName)) {
+    } else if (candidates.from().contains(fromModule)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-    } else {
-      if (candidates.isAmbiguous()) {
-        fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
-        // symbols.add(name, ref, modName);
-      }
+    } else if (fromModule != ModuleName.This && !(candidates instanceof Candidate.Defined<AnyVar>)) {
+      fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
-    symbols.add(name, ref, modName);
+    symbols.add(name, ref, fromModule);
 
     // Only `AnyDefVar`s can be exported.
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {

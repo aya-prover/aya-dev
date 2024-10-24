@@ -24,13 +24,13 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   @Override public void importSymbol(
     @NotNull AnyVar ref,
-    @NotNull ModuleName modName,
+    @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
     // REPL always overwrites symbols.
-    symbols().add(name, ref, modName);
+    symbols().add(name, ref, fromModule);
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
   }
 
