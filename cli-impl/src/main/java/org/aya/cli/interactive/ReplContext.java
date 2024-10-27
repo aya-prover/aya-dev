@@ -42,7 +42,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   @Override public void importModule(
     @NotNull String modName,
-    @NotNull ModuleExport2 mod,
+    @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
     boolean isDefined,
     @NotNull SourcePos sourcePos
@@ -90,7 +90,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
    * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
    * so be careful about {@param rhs}
    */
-  private static <T> void mergeSymbols(@NotNull ModuleSymbol2<T> dest, @NotNull ModuleSymbol2<T> src) {
+  private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> dest, @NotNull ModuleSymbol<T> src) {
     for (var key : src.table().keysView()) {
       var candy = dest.get(key);
       dest.table().put(key, candy.merge(src.get(key)));

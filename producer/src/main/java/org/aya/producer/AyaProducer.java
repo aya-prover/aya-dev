@@ -136,7 +136,7 @@ public record AyaProducer(
     var open = new Command.Open(
       namePos,
       accessibility,
-      modName.asName(),
+      openImport ? new ModuleName.Qualified(modName.last()) : modName.asName(),
       useHide != null ? useHide(useHide) : UseHide.EMPTY,
       false,
       openImport

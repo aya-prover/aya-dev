@@ -4,7 +4,6 @@ package org.aya.resolve.context;
 
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.jetbrains.annotations.NotNull;
@@ -16,22 +15,22 @@ import java.nio.file.Path;
  */
 public record NoExportContext(
   @NotNull Context parent,
-  @NotNull ModuleSymbol2<AnyVar> symbols,
-  @NotNull MutableMap<String, ModuleExport2> modules,
+  @NotNull ModuleSymbol<AnyVar> symbols,
+  @NotNull MutableMap<String, ModuleExport> modules,
   @Override @NotNull ModulePath modulePath
 ) implements ModuleContext {
   public NoExportContext(
     @NotNull Context parent,
-    @NotNull ModuleSymbol2<AnyVar> symbols,
-    @NotNull MutableMap<String, ModuleExport2> modules
+    @NotNull ModuleSymbol<AnyVar> symbols,
+    @NotNull MutableMap<String, ModuleExport> modules
   ) {
     this(parent, symbols, modules, parent.modulePath().derive(":NoExport"));
   }
 
   public NoExportContext(@NotNull Context parent) {
-    this(parent, new ModuleSymbol2<>(), MutableHashMap.create());
+    this(parent, new ModuleSymbol<>(), MutableHashMap.create());
   }
 
   @Override public @NotNull Path underlyingFile() { return parent.underlyingFile(); }
-  @Override public @NotNull ModuleExport2 exports() { return new ModuleExport2(); }
+  @Override public @NotNull ModuleExport exports() { return new ModuleExport(); }
 }

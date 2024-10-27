@@ -1,5 +1,9 @@
-open import arith::nat::base
-open import data::list::base
+import arith::nat::base as nbase
+import data::list::base as lbase
+
+open nbase
+open lbase
+
 open import relation::binary::path
 
 variable A B C : Type

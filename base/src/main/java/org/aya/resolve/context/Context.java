@@ -179,7 +179,7 @@ public interface Context extends Problematic {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  @Nullable ModuleExport2 getModuleLocalMaybe(@NotNull ModuleName.Qualified modName);
+  @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName);
 
   /**
    * Trying to get a {@link ModuleExport} by a module {@param modName} in the whole context.
@@ -187,7 +187,7 @@ public interface Context extends Problematic {
    * @param modName qualified module name
    * @return a ModuleExport of that module; null if no such module.
    */
-  default @Nullable ModuleExport2 getModuleMaybe(@NotNull ModuleName.Qualified modName) {
+  default @Nullable ModuleExport getModuleMaybe(@NotNull ModuleName.Qualified modName) {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 

@@ -313,10 +313,9 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         Doc.plain(cmd.path().toString()),
         Doc.styled(KEYWORD, cmd.useHide().strategy().name().toLowerCase(Locale.ROOT)),
         Doc.parened(Doc.commaList(cmd.useHide().list().view()
-          .map(name -> name.asName().isEmpty()
-            || name.id().component() == ModuleName.This && name.asName().get().equals(name.id().name())
-            ? Doc.plain(name.id().name())
-            : Doc.sep(Doc.plain(name.id().join()), KW_AS, Doc.plain(name.asName().get())))))
+          .map(name -> name.asName().isEmpty() || name.asName().get().equals(name.id().data())
+            ? Doc.plain(name.id().data())
+            : Doc.sep(Doc.plain(name.id().data()), KW_AS, Doc.plain(name.asName().get())))))
       );
       case Command.Module mod -> Doc.vcat(
         Doc.sep(visitAccess(mod.accessibility(), Accessibility.Public),

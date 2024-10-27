@@ -3,11 +3,9 @@
 package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
-import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.*;
@@ -46,20 +44,20 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   /**
    * All available symbols in this context
    */
-  @NotNull ModuleSymbol2<AnyVar> symbols();
+  @NotNull ModuleSymbol<AnyVar> symbols();
 
   /**
    * All imported modules in this context.<br/>
    * {@code Module Name -> Module Export}
    */
-  @NotNull MutableMap<String, ModuleExport2> modules();
+  @NotNull MutableMap<String, ModuleExport> modules();
 
   /**
    * Things (symbol or module) that are exported by this module.
    */
-  @NotNull ModuleExport2 exports();
+  @NotNull ModuleExport exports();
 
-  @Override default @Nullable ModuleExport2 getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
+  @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     var head = modName.head();
     var tail = modName.tail();
     var mod = modules().getOrNull(head);
@@ -88,7 +86,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   /**
-   * @see ModuleContext#importModule(String, ModuleExport2, Stmt.Accessibility, boolean, SourcePos)
+   * @see ModuleContext#importModule(String, ModuleExport, Stmt.Accessibility, boolean, SourcePos)
    */
   default void importModule(
     @NotNull String modName,
@@ -112,7 +110,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default void importModule(
     @NotNull String modName,
-    @NotNull ModuleExport2 moduleExport,
+    @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     boolean isDefined,
     @NotNull SourcePos sourcePos

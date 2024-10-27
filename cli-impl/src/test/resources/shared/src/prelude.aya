@@ -1,5 +1,10 @@
-public open import arith::bool::base
-public open import arith::nat::base
-public open import data::list::base
+public import arith::bool::base as bbase
+public import arith::nat::base as nbase
+public import data::list::base as lbase
+
+public open bbase
+public open nbase
+public open lbase
+
 public open import relation::binary::path
 public open import relation::nullary::empty
