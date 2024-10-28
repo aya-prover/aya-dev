@@ -41,7 +41,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override public void importModule(
-    @NotNull String modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
     boolean isDefined,

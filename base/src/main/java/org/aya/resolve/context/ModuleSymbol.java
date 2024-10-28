@@ -23,20 +23,6 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
     this(MutableMap.from(other.table));
   }
 
-  /** @apiNote should not use this after {@link #asMut} is called. */
-  public record UnqualifiedResolve<T>(
-    @NotNull MapView<ModuleName, T> map,
-    @NotNull LazyValue<MutableMap<ModuleName, T>> asMut
-  ) {
-    public @NotNull ImmutableSeq<T> uniqueCandidates() {
-      return map.valuesView().distinct().toImmutableSeq();
-    }
-
-    public @NotNull ImmutableSeq<ModuleName> moduleNames() {
-      return map.keysView().toImmutableSeq();
-    }
-  }
-
   public @NotNull Candidate<T> get(@NotNull String name) {
     return table.getOrPut(name, Candidate.Imported::empty);
   }

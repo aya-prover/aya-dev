@@ -4,6 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
+import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
@@ -19,7 +20,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
-  public final @NotNull MutableMap<String, ModuleExport> modules = MutableHashMap.create();
+  public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules = MutableHashMap.create();
   private final @NotNull ModulePath modulePath;
   @Override public @NotNull ModulePath modulePath() { return modulePath; }
 
@@ -31,7 +32,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
   }
 
   @Override public void importModule(
-    @NotNull String modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
     boolean isDefined,
@@ -54,6 +55,6 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   @Override public @NotNull Context parent() { return parent; }
   @Override public @NotNull ModuleSymbol<AnyVar> symbols() { return symbols; }
-  @Override public @NotNull MutableMap<String, ModuleExport> modules() { return modules; }
+  @Override public @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules() { return modules; }
   @Override public @NotNull ModuleExport exports() { return exports; }
 }

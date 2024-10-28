@@ -65,6 +65,11 @@ public sealed interface ModuleName extends Serializable {
 
   @NotNull ModuleName.ThisRef This = ThisRef.Obj;
 
+  static @NotNull ModuleName of(String... ids) {
+    if (ids.length == 0) return This;
+    return new Qualified(ids);
+  }
+
   static @NotNull ModuleName from(@NotNull SeqLike<String> ids) {
     if (ids.isEmpty()) return This;
     return new Qualified(ids.toImmutableSeq());

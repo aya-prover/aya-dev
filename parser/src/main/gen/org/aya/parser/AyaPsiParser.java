@@ -1034,7 +1034,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN <<commaSep weakId>>? RPAREN
+  // LPAREN <<commaSep qualifiedId>>? RPAREN
   public static boolean hideList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hideList")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
@@ -1047,10 +1047,10 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // <<commaSep weakId>>?
+  // <<commaSep qualifiedId>>?
   private static boolean hideList_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hideList_1")) return false;
-    commaSep(b, l + 1, AyaPsiParser::weakId);
+    commaSep(b, l + 1, AyaPsiParser::qualifiedId);
     return true;
   }
 
@@ -2139,13 +2139,13 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // weakId useAs?
+  // qualifiedId useAs?
   public static boolean useId(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "useId")) return false;
     if (!nextTokenIs(b, ID)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
+    r = qualifiedId(b, l + 1);
     r = r && useId_1(b, l + 1);
     exit_section_(b, m, USE_ID, r);
     return r;

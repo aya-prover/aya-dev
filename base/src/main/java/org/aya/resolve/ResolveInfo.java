@@ -46,7 +46,7 @@ public record ResolveInfo(
   @NotNull ShapeFactory shapeFactory,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<AnyDef, OpRenameInfo> opRename,
-  @NotNull MutableMap<String, ImportInfo> imports,
+  @NotNull MutableMap<ModuleName.Qualified, ImportInfo> imports,
   @NotNull MutableMap<ModuleName.Qualified, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
@@ -75,21 +75,6 @@ public record ResolveInfo(
     @NotNull Context bindCtx, @NotNull RenamedOpDecl renamed,
     @NotNull BindBlock bind, boolean reExport
   ) { }
-
-  public @Nullable ImportInfo getImport(@NotNull ModuleName.Qualified qname) {
-    var resolveInfo = this;
-    while (resolveInfo != null && qname.ids().size() > 1) {
-      resolveInfo = resolveInfo.imports
-        .getOption(qname.head())
-        .map(x -> x.resolveInfo)
-        .getOrNull();
-      qname = qname.tail();
-      assert qname != null;
-    }
-
-    if (resolveInfo == null) return null;
-    return resolveInfo.imports.getOrNull(qname.head());
-  }
 
   public @Nullable OpDecl resolveOpDecl(AnyVar var) {
     return switch (var) {

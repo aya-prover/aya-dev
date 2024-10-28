@@ -32,7 +32,6 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * The .ayac file representation.
@@ -83,23 +82,22 @@ public record CompiledModule(
   record SerRenamedOp(@NotNull OpDecl.OpInfo info, @NotNull SerBind bind) implements Serializable { }
 
   /**
-   * @param path absolute module path
-   * @param isPublic re-export
+   * @param rename not empty
    */
   record SerImport(
-    @NotNull ModulePath path, @NotNull String asName,
+    @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
     boolean isPublic) implements Serializable { }
 
   /** @see UseHide */
   record SerUseHide(
     boolean isUsing,
-    @NotNull ImmutableSeq<String> names,
+    @NotNull ImmutableSeq<ImmutableSeq<String>> names,
     @NotNull ImmutableSeq<UseHide.Rename> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(x -> x.id().data()),
+        useHide.list().map(x -> x.id().ids()),
         useHide.renaming().map(WithPos::data)
       );
     }
@@ -108,7 +106,6 @@ public record CompiledModule(
   /**
    * TODO: inline this
    * SerExport stores the information of whether certain definition is exported, this is not about re-exporting.
-   * @param exports (Unqualified Name -> Candidates)
    */
   record SerExport(
     @NotNull ImmutableSet<String> exports
@@ -131,25 +128,25 @@ public record CompiledModule(
 
     var imports = resolveInfo.imports().view().map((k, v) ->
       new SerImport(v.resolveInfo().thisModule().modulePath(),
-        k, v.reExport())).toImmutableSeq();
-    return new CompiledModule(imports,
-      new SerExport(ImmutableSet.from(exports)),
-      ImmutableMap.from(resolveInfo.reExports().view()
-        .map((k, v) -> Tuple.of(
-          Objects.requireNonNull(resolveInfo.getImport(k)) // should not fail
-            .resolveInfo().thisModule().modulePath(),
-          SerUseHide.from(v)))),
-      // serialization.serDefs.toImmutableSeq(),
-      ImmutableMap.from(serialization.serOps),
-      ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
-          var name = k.qualifiedName();
-          var info = v.renamed().opInfo();
-          var renamed = new SerRenamedOp(info, serialization.serBind(v.bind()));
-          return Tuple.of(v.reExport(), name, renamed);
-        })
-        .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
-        .map(Tuple3::tail))
-    );
+        k.ids(), v.reExport())).toImmutableSeq();
+    var serExport = new SerExport(ImmutableSet.from(exports));
+    var reExports = ImmutableMap.from(resolveInfo.reExports().view()
+      .map((k, v) -> Tuple.of(
+        resolveInfo.imports()
+          .get(k)   // should not fail
+          .resolveInfo().thisModule().modulePath(),
+        SerUseHide.from(v))));
+    var serOps = ImmutableMap.from(serialization.serOps);
+    var opRename = ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
+        var name = k.qualifiedName();
+        var info = v.renamed().opInfo();
+        var renamed = new SerRenamedOp(info, serialization.serBind(v.bind()));
+        return Tuple.of(v.reExport(), name, renamed);
+      })
+      .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
+      .map(Tuple3::tail));
+
+    return new CompiledModule(imports, serExport, reExports, serOps, opRename);
   }
 
   private record Serialization(
@@ -204,10 +201,8 @@ public record CompiledModule(
             innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
           }
           context.importModule(
-            data.name(),
-            innerCtx, Stmt.Accessibility.Public,
-            true,
-            SourcePos.SER);
+            ModuleName.This.resolve(data.name()),
+            innerCtx, Stmt.Accessibility.Public, true, SourcePos.SER);
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -233,7 +228,7 @@ public record CompiledModule(
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
     for (var anImport : imports) {
       var modName = anImport.path;
-      var modRename = anImport.asName;
+      var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
       var success = loader.load(modName);
       if (success == null)
@@ -241,9 +236,9 @@ public record CompiledModule(
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
       var mod = success.thisModule();
       thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, false, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(new ModuleName.Qualified(modRename),
+      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
-        useHide.names().map(x -> new WithPos<>(SourcePos.SER, x)),
+        useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
       var acc = reExports.containsKey(modName)

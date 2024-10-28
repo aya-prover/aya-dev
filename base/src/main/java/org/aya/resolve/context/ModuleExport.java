@@ -2,21 +2,26 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
+import kala.control.Result;
+import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * ModuleExport stores symbols that imports from another module.
@@ -24,14 +29,122 @@ import java.util.function.Function;
  */
 public record ModuleExport(
   @NotNull MutableMap<String, AnyDefVar> symbols,
-  @NotNull MutableMap<String, ModuleExport> modules
+  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
   public ModuleExport() {
     this(MutableMap.create(), MutableMap.create());
   }
 
-  public ModuleExport(@NotNull ModuleExport other) {
-    this(MutableMap.from(other.symbols), MutableMap.from(other.modules));
+  public ModuleExport(@NotNull ModuleExport that) {
+    this(MutableMap.from(that.symbols), MutableMap.from(that.modules));
+  }
+
+  @Contract(pure = true)
+  @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
+    ModuleExport newModule;
+    var badNames = MutableList.<QualifiedID>create();
+
+    switch (strategy) {
+      case Using -> {
+        var mData = new ModuleExport();
+        for (var name : names) {
+          var unit = get(name.component(), name.name());
+
+          if (unit == null) {
+            badNames.append(name);
+          } else {
+            unit.forEach(x -> {
+              if (name.component() == ModuleName.This) mData.export(name.name(), x);
+            }, x -> mData.export(name.component().resolve(name.name()), x));
+          }
+        }
+
+        newModule = mData;
+      }
+      case Hiding -> {
+        var aNewModule = new ModuleExport(this);
+        newModule = aNewModule;
+
+        names.forEach(qname -> {
+          var oldUnit = aNewModule.remove(qname.component(), qname.name());
+          if (oldUnit == null) badNames.append(qname);
+        });
+      }
+      default -> throw new AssertionError("I mean, this case is impossible.");
+    }
+
+    return new ExportResult(
+      badNames.isNotEmpty() ? this : newModule,
+      badNames.toImmutableSeq(),
+      ImmutableSeq.empty());
+  }
+
+  @Contract(pure = true)
+  @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
+    var newExport = new ModuleExport(this);
+    var badNames = MutableList.<QualifiedID>create();
+    var shadowNames = MutableList.<WithPos<String>>create();
+
+    for (var pair : mapper) {
+      var pos = pair.sourcePos();
+      var fromModule = pair.data().name().component();
+      var fromName = pair.data().name().name();
+      var to = pair.data().to();
+      if (fromModule == ModuleName.This && fromName.equals(to)) continue;
+
+      var thing = newExport.remove(fromModule, fromName);
+      if (thing != null) {
+        var dest = newExport.get(ModuleName.This, to);
+        if (dest != null) {
+          var isShadow = (thing.symbol != null && dest.symbol != null) || (thing.module != null && dest.module != null);
+          if (isShadow) {
+            shadowNames.append(new WithPos<>(pos, to));
+          }
+        }
+
+        thing.forEach(x -> newExport.export(to, x), x -> newExport.export(new ModuleName.Qualified(to), x));
+      } else {
+        badNames.append(pair.data().name());
+      }
+    }
+
+    var hasError = badNames.isNotEmpty();
+
+    return new ExportResult(
+      hasError ? this : newExport,
+      badNames.toImmutableSeq(),
+      shadowNames.toImmutableSeq()
+    );
+  }
+
+  /**
+   * @return false if there already exist a symbol with the same name.
+   */
+  public boolean export(@NotNull String name, @NotNull AnyDefVar ref) {
+    var exists = symbols.put(name, ref);
+    return exists.isEmpty();
+  }
+
+  public boolean export(@NotNull ModuleName.Qualified componentName, @NotNull ModuleExport module) {
+    return modules.put(componentName, module).isEmpty();
+  }
+
+  /// region Helper Methods for Mapping/Filtering
+
+  private @Nullable ExportUnit get(@NotNull ModuleName component, @NotNull String name) {
+    var symbol = component == ModuleName.This ? symbols.getOrNull(name) : null;
+    var module = modules.getOrNull(component.resolve(name));
+    if (symbol == null && module == null) return null;
+
+    return new ExportUnit(symbol, module);
+  }
+
+  private @Nullable ExportUnit remove(@NotNull ModuleName component, @NotNull String name) {
+    var symbol = component == ModuleName.This ? symbols.remove(name).getOrNull() : null;
+    var module = modules.remove(component.resolve(name)).getOrNull();
+    if (symbol == null && module == null) return null;
+
+    return new ExportUnit(symbol, module);
   }
 
   private record ExportUnit(@Nullable AnyDefVar symbol, @Nullable ModuleExport module) {
@@ -45,101 +158,14 @@ public record ModuleExport(
     }
   }
 
-  public @Nullable ModuleExport resolveModule(@NotNull ModuleName.Qualified qmod) {
-    var head = qmod.head();
-    var tail = qmod.tail();
-    var mod = getMaybe(head);
-    if (mod == null || mod.module == null) return null;
-    if (tail == null) return mod.module;
-    return mod.module.resolveModule(tail);
-  }
+  /// endregion
 
-  private @Nullable ExportUnit getMaybe(@NotNull String name) {
-    var symbol = symbols.getOption(name);
-    var module = modules.getOption(name);      // `getOption` for beauty
-
-    if (symbol.isEmpty() && module.isEmpty()) return null;
-
-    return new ExportUnit(symbol.getOrNull(), module.getOrNull());
-  }
-
-  private @Nullable ExportUnit removeMaybe(@NotNull String name) {
-    var symbol = symbols.remove(name);
-    var module = modules.remove(name);
-    if (symbol.isEmpty() && module.isEmpty()) return null;
-
-    return new ExportUnit(symbol.getOrNull(), module.getOrNull());
-  }
-
-  public @NotNull ExportResult filter(
-    @NotNull ImmutableSeq<WithPos<String>> names,
-    @NotNull UseHide.Strategy strategy
-  ) {
-    ModuleExport data = null;
-    var badNames = MutableList.<WithPos<String>>create();
-
-    // filter
-    switch (strategy) {
-      case Using -> {
-        var mData = new ModuleExport(MutableMap.create(), MutableMap.create());
-        for (var name : names) {
-          var unit = getMaybe(name.data());
-
-          if (unit == null) {
-            badNames.append(name);
-          } else {
-            unit.forEach(x -> mData.export(name.data(), x), x -> mData.export(name.data(), x));
-          }
-        }
-
-        data = mData;
-      }
-      case Hiding -> {
-        var mData = new ModuleExport(this);
-        for (var name : names) {
-          var removed = mData.removeMaybe(name.data());
-
-          if (removed == null) {
-            badNames.append(name);
-          }
-        }
-
-        data = mData;
-      }
-    }
-
-    return new ExportResult(data, badNames.toImmutableSeq(), ImmutableSeq.empty());
-  }
-
-  public @NotNull ExportResult map(@NotNull ImmutableSeq<WithPos<UseHide.Rename>> mapper) {
-    var newOne = new ModuleExport(this);
-
-    var badNames = MutableList.<WithPos<String>>create();
-    var shadowNames = MutableList.<WithPos<String>>create();
-
-    for (var pair : mapper) {
-      var pos = pair.sourcePos();
-      var rename = pair.data();
-      var from = rename.name();
-      var to = rename.to();
-
-      var symbol = getMaybe(from);
-      if (symbol == null) {
-        badNames.append(new WithPos<>(pos, from));
-      } else {
-        var notShadow = newOne.export(to, symbol);
-        if (!notShadow) {
-          shadowNames.append(new WithPos<>(pos, to));
-        }
-      }
-    }
-
-    return new ExportResult(newOne, badNames.toImmutableSeq(), shadowNames.toImmutableSeq());
-  }
-
+  /**
+   * @param result the new module export if success, the old module export if failed.
+   */
   record ExportResult(
     @NotNull ModuleExport result,
-    @NotNull ImmutableSeq<WithPos<String>> invalidNames,
+    @NotNull ImmutableSeq<QualifiedID> invalidNames,
     @NotNull ImmutableSeq<WithPos<String>> shadowNames
   ) {
     public boolean anyError() {
@@ -150,20 +176,11 @@ public record ModuleExport(
       return shadowNames().isNotEmpty();
     }
 
-    public @NotNull ExportResult flatMap(@NotNull Function<ModuleExport, ExportResult> bind) {
-      var newResult = bind.apply(result);
-      return new ExportResult(
-        newResult.result,
-        invalidNames.appendedAll(newResult.invalidNames),
-        shadowNames.appendedAll(newResult.shadowNames)
-      );
-    }
-
-    public SeqView<Problem> problems() {
+    public SeqView<Problem> problems(@NotNull ModuleName modName) {
       SeqView<Problem> invalidNameProblems = invalidNames().view()
         .map(name -> new NameProblem.QualifiedNameNotFoundError(
-          ModuleName.This,
-          name.data(),
+          modName.concat(name.component()),
+          name.name(),
           name.sourcePos()));
 
       SeqView<Problem> shadowNameProblems = shadowNames().view()
@@ -171,25 +188,5 @@ public record ModuleExport(
 
       return shadowNameProblems.concat(invalidNameProblems);
     }
-  }
-
-  private boolean export(@NotNull String name, @NotNull ExportUnit unit) {
-    var exists = getMaybe(name);
-    if (exists != null) removeMaybe(name);    // shadow
-    unit.forEach(x -> export(name, x), x -> export(name, x));
-    return exists == null;
-  }
-
-  /**
-   * @return false if there already exist a symbol with the same name.
-   */
-  public boolean export(@NotNull String name, @NotNull AnyDefVar ref) {
-    var exists = symbols.put(name, ref);
-    return exists.isEmpty();
-  }
-
-  public boolean export(@NotNull String name, @NotNull ModuleExport module) {
-    var exists = modules.put(name, module);
-    return exists.isEmpty();
   }
 }

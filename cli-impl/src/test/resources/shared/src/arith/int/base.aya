@@ -1,9 +1,5 @@
-import arith::nat::base as nbase
-import arith::bool::base as bbase
-
-open nbase
-open bbase
-
+open import arith::nat::base
+open import arith::bool::base
 open import relation::binary::path
 
 open inductive Int

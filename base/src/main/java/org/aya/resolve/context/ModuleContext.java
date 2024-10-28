@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.*;
@@ -32,6 +33,8 @@ import java.nio.file.Path;
  *     No ambiguity on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
  *   </li>
  * </ol>
+ * <br/>
+ * We also don't handle the case that we have {@code b::c} in {@code a} and {@code c} in {@code a::b} simultaneously.
  *
  * @author re-xyr
  */
@@ -46,11 +49,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   @NotNull ModuleSymbol<AnyVar> symbols();
 
-  /**
-   * All imported modules in this context.<br/>
-   * {@code Module Name -> Module Export}
-   */
-  @NotNull MutableMap<String, ModuleExport> modules();
+  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
   /**
    * Things (symbol or module) that are exported by this module.
@@ -58,12 +57,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
-    var head = modName.head();
-    var tail = modName.tail();
-    var mod = modules().getOrNull(head);
-    if (mod == null) return null;
-    if (tail == null) return mod;
-    return mod.resolveModule(tail);
+    return modules().getOrNull(modName);
   }
 
   @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
@@ -86,10 +80,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   /**
-   * @see ModuleContext#importModule(String, ModuleExport, Stmt.Accessibility, boolean, SourcePos)
+   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, boolean, SourcePos)
    */
   default void importModule(
-    @NotNull String modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     boolean isDefined,
@@ -97,6 +91,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   ) {
     var export = module.exports();
     importModule(modName, export, accessibility, isDefined, sourcePos);
+    export.modules().forEach((qname, innerMod) -> {
+      importModule(modName.concat(qname), innerMod, accessibility, isDefined, sourcePos);
+    });
   }
 
   /**
@@ -109,26 +106,24 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *                      it will shadow previous module with the same name
    */
   default void importModule(
-    @NotNull String modName,
+    @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
-    var modules = modules();
-    var qname = new ModuleName.Qualified(modName);
-    var exists = modules.getOrNull(modName);
+    var exists = modules().getOrNull(modName);
     if (exists != null && !isDefined) {
-      // TODO: this check is not very useful, how about merge ModuleExport that come from the same module?
-      if (exists != moduleExport) {
-        reportAndThrow(new NameProblem.DuplicateModNameError(qname, sourcePos));
-      } else return;
-    } else if (getModuleMaybe(qname) != null) {
-      fail(new NameProblem.ModShadowingWarn(qname, sourcePos));
+      if (exists == moduleExport) return;
+      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+    } else if (getModuleMaybe(modName) != null) {
+      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
     }
 
-    modules.set(modName, moduleExport);
+    // put after check, otherwise you will get a lot of ModShadowingWarn!
+    modules().put(modName, moduleExport);
   }
+
   default void openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
@@ -151,7 +146,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   default void openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull ImmutableSeq<WithPos<String>> filter,
+    @NotNull ImmutableSeq<QualifiedID> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
     UseHide.Strategy strategy
@@ -161,14 +156,15 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
 
     var filterRes = modExport.filter(filter, strategy);
-    if (filterRes.anyError()) reportAllAndThrow(filterRes.problems());
+    var filterProblem = filterRes.problems(modName);
+    if (filterRes.anyError()) reportAllAndThrow(filterProblem);
 
-    var filtered = filterRes.result();
-    var mapRes = filtered.map(rename);
-    if (mapRes.anyError()) reportAllAndThrow(mapRes.problems());
+    var mapRes = filterRes.result().map(rename);
+    var mapProblem = mapRes.problems(modName);
+    if (mapRes.anyError()) reportAllAndThrow(mapProblem);
 
     // report all warnings
-    reportAll(filterRes.problems().concat(mapRes.problems()));
+    reportAll(filterProblem.concat(mapProblem));
 
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, ref) -> {
