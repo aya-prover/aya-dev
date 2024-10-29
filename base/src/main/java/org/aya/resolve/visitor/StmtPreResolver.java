@@ -51,7 +51,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         }
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
-        context.importModule(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), true, mod.sourcePos());
+        context.importModule(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
         yield new ResolvingStmt.ModStmt(children);
       }
       case Command.Import cmd -> {
@@ -62,7 +62,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModuleName.This.resolve(as) : modulePath.asName();
-        context.importModule(importedName, mod, cmd.accessibility(), false, cmd.sourcePos());
+        context.importModule(importedName, mod, cmd.accessibility(), cmd.sourcePos());
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
         yield null;
@@ -162,7 +162,6 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       ModuleName.This.resolve(module),
       innerCtx.exports,
       decl.accessibility(),
-      true,
       decl.sourcePos()
     );
     return innerCtx;

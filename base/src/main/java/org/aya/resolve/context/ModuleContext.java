@@ -94,13 +94,12 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
-    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
     var export = module.exports();
-    importModule(modName, export, accessibility, isDefined, sourcePos);
+    importModule(modName, export, accessibility, sourcePos);
     export.modules().forEach((qname, innerMod) -> {
-      importModule(modName.concat(qname), innerMod, accessibility, isDefined, sourcePos);
+      importModule(modName.concat(qname), innerMod, accessibility, sourcePos);
     });
   }
 
@@ -110,18 +109,15 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param accessibility of importing, re-export if public
    * @param modName       the name of the module
    * @param moduleExport  the module
-   * @param isDefined     whether {@param moduleExport} is defined in this module, if true,
-   *                      it will shadow previous module with the same name
    */
   default void importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
-    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
     var exists = modules().getOrNull(modName);
-    if (exists != null && !isDefined) {
+    if (exists != null) {
       if (exists == moduleExport) return;
       reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
     } else if (getModuleMaybe(modName) != null) {
@@ -180,7 +176,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     });
 
     // import the modules that {renamed} exported
-    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, false, sourcePos));
+    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
   }
 
   /**
@@ -203,7 +199,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       }
     } else if (candidates.from().contains(fromModule)) {
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-    } else if (fromModule != ModuleName.This && !(candidates instanceof Candidate.Defined<AnyVar>)) {
+    } else if (candidates.isAmbiguous() || candidates.get() != ref) {
       fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 

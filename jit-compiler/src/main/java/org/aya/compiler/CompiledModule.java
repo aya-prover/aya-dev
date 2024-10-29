@@ -202,7 +202,7 @@ public record CompiledModule(
           }
           context.importModule(
             ModuleName.This.resolve(data.name()),
-            innerCtx, Stmt.Accessibility.Public, true, SourcePos.SER);
+            innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -235,7 +235,7 @@ public record CompiledModule(
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
       var mod = success.thisModule();
-      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, false, SourcePos.SER);
+      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),

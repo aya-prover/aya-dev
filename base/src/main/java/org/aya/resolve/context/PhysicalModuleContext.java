@@ -35,10 +35,9 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
-    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
-    ModuleContext.super.importModule(modName, modExport, accessibility, isDefined, sourcePos);
+    ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       exports.export(modName, modExport);
     }

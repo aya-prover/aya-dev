@@ -44,7 +44,6 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
-    boolean isDefined,
     @NotNull SourcePos sourcePos
   ) {
     modules.put(modName, mod);

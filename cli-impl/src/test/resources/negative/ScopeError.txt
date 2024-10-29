@@ -18,17 +18,15 @@ In file $FILE:2:0 ->
 Warning: The name `zero` introduces ambiguity and can only be accessed through a
          qualified name
 
-In file $FILE:3:11 ->
+In file $FILE:2:0 ->
 
   1 │   open inductive Nat1 | zero
   2 │   open inductive Nat2 | zero
+    │   ╰──╯
   3 │   def one => zero
-    │              ╰──╯
 
-Error: The unqualified name `zero` is ambiguous
-       Did you mean:
-         `Nat1::zero`
-         `Nat2::zero`
+Error: The name `zero` being exported clashes with another exported definition 
+       with the same name
 
 Resolving interrupted due to:
 1 error(s), 2 warning(s).
