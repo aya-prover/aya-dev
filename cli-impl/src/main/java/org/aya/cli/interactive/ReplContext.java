@@ -2,6 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
+import kala.collection.Seq;
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
+import kala.tuple.Tuple2;
 import org.aya.resolve.context.*;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
@@ -17,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
   private @Nullable ReplContext downstream = null;
+  private boolean modified = true;
+  private @Nullable ImmutableMap<String, ModuleTree> moduleTree = null;
 
   public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
     super(parent, name);
@@ -29,6 +38,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
   ) {
+    modified = true;
     // REPL always overwrites symbols.
     symbols().add(name, ref, fromModule);
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
@@ -46,6 +56,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     Stmt.@NotNull Accessibility accessibility,
     @NotNull SourcePos sourcePos
   ) {
+    modified = true;
     modules.put(modName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
   }
@@ -72,6 +83,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var bors = downstream;
     RepoLike.super.merge();
     if (bors == null) return;
+    modified = true;
     mergeSymbols(symbols, bors.symbols);
     exports.symbols().putAll(bors.exports.symbols());
     exports.modules().putAll(bors.exports.modules());
@@ -79,6 +91,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Contract(mutates = "this") public void clear() {
+    modified = true;
     modules.clear();
     exports.symbols().clear();
     exports.modules().clear();
@@ -95,4 +108,58 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       dest.table().put(key, candy.merge(src.get(key)));
     }
   }
+
+  /// region Rebuild Module Tree
+
+  public record ModuleTree(@NotNull ImmutableMap<String, ModuleTree> children, boolean inhabited) { }
+
+  public @NotNull ImmutableMap<String, ModuleTree> moduleTree() {
+    if (!modified) {
+      assert this.moduleTree != null;
+      return this.moduleTree;
+    }
+
+    var moduleNames = this.modules.keysView().toImmutableSeq()
+      .map(x -> x.ids().view());
+
+    this.moduleTree = buildModuleTree(moduleNames);
+    this.modified = false;
+
+    return moduleTree;
+  }
+
+  /**
+   * Rebuild module tree from flattened module names
+   *
+   * @param moduleNames a list of {@link ModuleName.Qualified} but in an efficient representation, the element should be non-empty
+   */
+  private @NotNull ImmutableMap<String, ModuleTree> buildModuleTree(
+    @NotNull Seq<SeqView<String>> moduleNames
+  ) {
+    var indexed = MutableMap.<String, MutableList<SeqView<String>>>create();
+    var inhabited = MutableSet.<String>create();
+
+    for (var name : moduleNames) {
+      var head = name.getFirst();
+      var tail = name.drop(1);
+      // we always create a record even [tail] is empty
+      var root = indexed.getOrPut(head, MutableList::create);
+      if (tail.isNotEmpty()) {
+        root.append(tail);
+      } else {
+        inhabited.add(head);
+      }
+    }
+
+    var result = indexed.toImmutableSeq()
+      .collect(ImmutableMap.collector(Tuple2::component1, x -> {
+        var children = buildModuleTree(x.component2());
+        var isInhabited = inhabited.contains(x.component1());
+        return new ModuleTree(children, isInhabited);
+      }));
+
+    return result;
+  }
+
+  /// endregion Rebuild Module Tree
 }
