@@ -49,6 +49,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   @NotNull ModuleSymbol<AnyVar> symbols();
 
+  /**
+   * All imported modules in this context.<br/>
+   * {@code Qualified Module -> Module Export}
+   */
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
   /**
@@ -76,7 +80,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
     var mod = getModuleLocalMaybe(modName);
     if (mod == null) return null;
-    return mod.symbols().getOrNull(name);
+    var symbol = mod.symbols().getOrNull(name);
+    if (symbol == null) {
+      reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+    }
+    return symbol;
   }
 
   /**

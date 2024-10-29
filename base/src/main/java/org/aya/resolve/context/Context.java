@@ -43,16 +43,6 @@ public interface Context extends Problematic {
     return null;
   }
 
-  default <T> @NotNull ImmutableSeq<T> iterateMod(@NotNull Function<@NotNull Context, @NotNull ImmutableSeq<T>> f) {
-    var p = this;
-    while (p != null) {
-      var result = f.apply(p);
-      if (result.isNotEmpty()) return result;
-      p = p.parent();
-    }
-    return ImmutableSeq.empty();
-  }
-
   /**
    * The path of this module
    */
