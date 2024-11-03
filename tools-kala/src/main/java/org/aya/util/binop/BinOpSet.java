@@ -36,7 +36,7 @@ public abstract class BinOpSet {
   }
 
   public Assoc assocOf(@Nullable OpDecl opDecl) {
-    if (isOperand(opDecl)) return Assoc.Invalid;
+    if (isOperand(opDecl)) return Assoc.Unspecified;
     return ensureHasElem(opDecl).assoc;
   }
 

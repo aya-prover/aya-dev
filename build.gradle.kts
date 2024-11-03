@@ -22,7 +22,7 @@ projectVersion = libs.versions.project.get()
 javaVersion = libs.versions.java.get().toInt()
 
 // Workaround that `libs` is not available in `jacoco {}` block
-var jacocoVersion = libs.versions.jacoco.get()
+var jacocoVersion: String = libs.versions.jacoco.get()
 
 // Platforms we build jlink-ed aya for:
 // The "current" means the "current platform", as it is unnecessary to detect what the current system is,

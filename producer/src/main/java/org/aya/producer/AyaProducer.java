@@ -173,7 +173,7 @@ public record AyaProducer(
       var asAssoc = useAs.peekChild(ASSOC);
       var asBind = useAs.peekChild(BIND_BLOCK);
       return new UseHide.Name(wholePos, name, Option.some(asId),
-        asAssoc != null ? assoc(asAssoc) : Assoc.Invalid,
+        asAssoc != null ? assoc(asAssoc) : Assoc.Unspecified,
         asBind != null ? bindBlock(asBind) : BindBlock.EMPTY);
     });
   }

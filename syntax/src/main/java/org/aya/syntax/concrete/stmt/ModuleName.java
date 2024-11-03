@@ -16,11 +16,9 @@ import java.io.Serializable;
  * This name should be used in a local scope instead of a global scope (like a path to a module).
  */
 public sealed interface ModuleName extends Serializable {
-  int size();
   enum ThisRef implements ModuleName {
     Obj;
 
-    @Override public int size() { return 0; }
     @Override public @NotNull ImmutableSeq<String> ids() { return ImmutableSeq.empty(); }
     @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ImmutableSeq.of(name));
@@ -35,7 +33,6 @@ public sealed interface ModuleName extends Serializable {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
     }
 
-    @Override public int size() { return ids.size(); }
     @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ids.appended(name));
     }

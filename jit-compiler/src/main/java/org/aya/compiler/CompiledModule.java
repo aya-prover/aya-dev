@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple3;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
@@ -37,13 +36,13 @@ import java.io.Serializable;
  * The .ayac file representation.
  *
  * @param imports   The modules that this ayac imports. Absolute path.
- * @param exports   Each name consist of {@code This Module Name}, {@code Export Module Name} and {@code Symbol Name}
- * @param reExports key: a imported module that is in {@param imports}
+ * @param exports   Whether certain definition is exported. Re-exported symbols will not be here.
+ * @param reExports key: an imported module that is in {@param imports}
  * @author kiva
  */
 public record CompiledModule(
   @NotNull ImmutableSeq<SerImport> imports,
-  @NotNull SerExport exports,
+  @NotNull ImmutableSet<String> exports,
   @NotNull ImmutableMap<ModulePath, SerUseHide> reExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -103,26 +102,6 @@ public record CompiledModule(
     }
   }
 
-  /**
-   * @param exports (Unqualified Name -> Candidates)
-   */
-  record SerExport(
-    @NotNull ImmutableMap<String, ImmutableSet<ImmutableSeq<String>>> exports
-  ) implements Serializable {
-    public boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-      var qmod = qname.module().module().module();
-      assert qmod.sizeGreaterThanOrEquals(module.size());
-      var component = ModuleName.from(qmod.drop(module.size()));
-
-      // A QName refers to a def,
-      // which means it was defined in {module} if `component == This`;
-      //                    defined in {component} if `component != This`
-      return exports.getOption(qname.name())
-        .map(components -> components.contains(component.ids()))
-        .getOrDefault(false);
-    }
-  }
-
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
@@ -132,31 +111,30 @@ public record CompiledModule(
     var serialization = new Serialization(resolveInfo, MutableMap.create());
     defs.forEach(serialization::serOp);
 
-    var exports = ctx.exports().symbols().view().map((k, vs) ->
-      Tuple.of(k, ImmutableSet.from(vs.keysView().map(ModuleName::ids))));
+    var exports = ctx.exports().symbols().keysView();
 
     var imports = resolveInfo.imports().view().map((k, v) ->
       new SerImport(v.resolveInfo().thisModule().modulePath(),
         k.ids(), v.reExport())).toImmutableSeq();
-    return new CompiledModule(imports,
-      new SerExport(ImmutableMap.from(exports)),
-      ImmutableMap.from(resolveInfo.reExports().view()
-        .map((k, v) -> Tuple.of(
-          resolveInfo.imports()
-            .get(k)   // should not fail
-            .resolveInfo().thisModule().modulePath(),
-          SerUseHide.from(v)))),
-      // serialization.serDefs.toImmutableSeq(),
-      ImmutableMap.from(serialization.serOps),
-      ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
-          var name = k.qualifiedName();
-          var info = v.renamed().opInfo();
-          var renamed = new SerRenamedOp(info, serialization.serBind(v.bind()));
-          return Tuple.of(v.reExport(), name, renamed);
-        })
-        .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
-        .map(Tuple3::tail))
-    );
+    var serExport = ImmutableSet.from(exports);
+    var reExports = ImmutableMap.from(resolveInfo.reExports().view()
+      .map((k, v) -> Tuple.of(
+        resolveInfo.imports()
+          .get(k)   // should not fail
+          .resolveInfo().thisModule().modulePath(),
+        SerUseHide.from(v))));
+    var serOps = ImmutableMap.from(serialization.serOps);
+    record RenameData(boolean reExport, QName name, SerRenamedOp renamed) { }
+    var opRename = ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
+        var name = k.qualifiedName();
+        var info = v.renamed().opInfo();
+        var renamed = new SerRenamedOp(info, serialization.serBind(v.bind()));
+        return new RenameData(v.reExport(), name, renamed);
+      })
+      .filter(RenameData::reExport) // should not serialize publicly renamed ops from upstreams
+      .map(data -> Tuple.of(data.name, data.renamed)));
+
+    return new CompiledModule(imports, serExport, reExports, serOps, opRename);
   }
 
   private record Serialization(
@@ -200,10 +178,9 @@ public record CompiledModule(
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
-      var qname = jitDef.qualifiedName();
       var metadata = jitDef.metadata();
-      if (jitDef instanceof JitPrim || isExported(context.modulePath(), qname))
-        export(context, qname, new CompiledVar(jitDef));
+      if (jitDef instanceof JitPrim || isExported(jitDef.name()))
+        export(context, jitDef.name(), new CompiledVar(jitDef));
       switch (jitDef) {
         case JitData data -> {
           // The accessibility doesn't matter, this context is readonly
@@ -297,23 +274,14 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  private void export(@NotNull PhysicalModuleContext context, @NotNull QName qname, @NotNull AnyDefVar ref) {
-    var modName = context.modulePath();
-    var qmodName = ModuleName.from(qname.asStringSeq().drop(modName.module().size()));
-    export(context, qmodName, qname.name(), ref);
-  }
-
   private void export(
     @NotNull PhysicalModuleContext context,
-    @NotNull ModuleName component,
     @NotNull String name,
     @NotNull AnyDefVar var
   ) {
-    var success = context.exportSymbol(component, name, var);
+    var success = context.exportSymbol(name, var);
     assert success : "DuplicateExportError should not happen in CompiledModule";
   }
 
-  private boolean isExported(@NotNull ModulePath module, @NotNull QName qname) {
-    return exports.isExported(module, qname);
-  }
+  private boolean isExported(@NotNull String name) { return exports.contains(name); }
 }

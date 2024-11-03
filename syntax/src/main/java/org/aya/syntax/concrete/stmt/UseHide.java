@@ -18,7 +18,7 @@ import java.io.Serializable;
 public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strategy strategy) {
   public static final UseHide EMPTY = new UseHide(ImmutableSeq.empty(), Strategy.Hiding);
 
-  public record Rename(@NotNull ImmutableSeq<String> fromModule, @NotNull String name,
+  public record Rename(@NotNull QualifiedID name,
                        @NotNull String to) implements Serializable {}
 
   public @NotNull ImmutableSeq<WithPos<Rename>> renaming() {
@@ -41,12 +41,12 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
     @NotNull Assoc asAssoc,
     @NotNull BindBlock asBind
   ) implements SourceNode {
-    public Name(@NotNull QualifiedID qname) {
-      this(qname.sourcePos(), qname, Option.none(), Assoc.Invalid, BindBlock.EMPTY);
+    public Name(@NotNull QualifiedID name) {
+      this(name.sourcePos(), name, Option.none(), Assoc.Unspecified, BindBlock.EMPTY);
     }
 
     public Option<Rename> rename() {
-      return asName.map(x -> new Rename(id.component().ids(), id.name(), x));
+      return asName.map(x -> new Rename(id, x));
     }
   }
 }

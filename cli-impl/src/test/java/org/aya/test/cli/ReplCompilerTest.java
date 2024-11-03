@@ -35,6 +35,16 @@ public class ReplCompilerTest {
     assertNotNull(findContext("Nat::Core::zero"));
     assertNotNull(findContext("VecCore::vnil"));
     assertNotNull(findContext("VecCore:::>"));
+
+    // Don't be too harsh on the test lib structure, maybe we will change it
+    var rootHints = compiler.getContext().giveMeHint(ImmutableSeq.empty());
+    assertTrue(rootHints.contains("Nat"));
+    assertTrue(rootHints.contains("Path"));
+
+    assertEquals(ImmutableSeq.of("Core"),
+      compiler.getContext().giveMeHint(ImmutableSeq.of("Nat")));
+    assertEquals(ImmutableSeq.of("Nat", "suc", "zero"),
+      compiler.getContext().giveMeHint(ImmutableSeq.of("Nat", "Core")));
   }
 
   @Test public void simpleExpr() { compile("Set"); }

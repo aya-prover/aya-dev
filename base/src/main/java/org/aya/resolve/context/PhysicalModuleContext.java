@@ -43,8 +43,8 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     }
   }
 
-  @Override public boolean exportSymbol(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
-    return exports.export(modName, name, ref);
+  @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
+    return exports.export(name, ref);
   }
 
   public @NotNull NoExportContext exampleContext() {

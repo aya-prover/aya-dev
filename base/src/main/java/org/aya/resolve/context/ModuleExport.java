@@ -7,8 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Result;
-import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -23,65 +21,69 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * A data class that contains all public definitions/re-exports of some module.
+ * ModuleExport stores symbols that imports from another module.
+ * Any module should NOT export ambiguous symbol/module, they should be solved before they are exported.
  */
 public record ModuleExport(
-  @NotNull ModuleSymbol<AnyDefVar> symbols,
+  @NotNull MutableMap<String, AnyDefVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
-  public ModuleExport() {
-    this(new ModuleSymbol<>(), MutableMap.create());
-  }
+  public ModuleExport() { this(MutableMap.create(), MutableMap.create()); }
 
   public ModuleExport(@NotNull ModuleExport that) {
-    this(new ModuleSymbol<>(that.symbols), MutableMap.from(that.modules));
+    this(MutableMap.from(that.symbols), MutableMap.from(that.modules));
   }
 
+  /**
+   * @implSpec In case of qualified renaming, only the module is renamed, for example (pseudocode):
+   * <pre>
+   *   module foo {
+   *     module bar {
+   *       data A
+   *     }
+   *   }
+   *
+   *   open import foo using (bar::A as B)
+   *   // only module [bar::A] is renamed, the name [B] can not be used as the type, but only
+   *   // the accessor of its constructors.
+   * </pre>
+   * Well, the cost to also rename the type is not very expensive, we just need to make a new {@link ModuleExport}
+   * to store that symbol, but I am 2 lazy 😭😭😭😭.
+   */
   @Contract(pure = true)
   @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
-    ModuleExport newModule;
+    final ModuleExport newModule;
     var badNames = MutableList.<QualifiedID>create();
-    var ambiNames = MutableList.<WithPos<String>>create();
 
     switch (strategy) {
       case Using -> {
         newModule = new ModuleExport();
-        names.forEach(qname -> {
-          var unit = getMaybe(qname.component(), qname.name());
+        for (var name : names) {
+          var unit = get(name.component(), name.name());
 
-          if (unit.isOk()) unit.get().forEach(
-            symbol -> newModule.export(qname.component(), qname.name(), symbol),
-            module -> newModule.export(qname.component().resolve(qname.name()), module)
-          );
-          else switch (unit.getErr()) {
-            case NotFound -> badNames.append(qname);
-            case Ambiguous -> ambiNames.append(new WithPos<>(qname.sourcePos(), qname.name()));
+          if (unit == null) {
+            badNames.append(name);
+          } else {
+            unit.forEach(x -> {
+              if (name.component() == ModuleName.This) newModule.export(name.name(), x);
+            }, x -> newModule.export(name.component().resolve(name.name()), x));
           }
-        });
+        }
       }
       case Hiding -> {
-        var aNewModule = new ModuleExport(this);
-        newModule = aNewModule;
+        newModule = new ModuleExport(this);
 
         names.forEach(qname -> {
-          var oldUnit = aNewModule.removeMaybe(qname.component(), qname.name());
-
-          switch (oldUnit.getErrOrNull()) {
-            case NotFound -> badNames.append(qname);
-            case Ambiguous -> ambiNames.append(new WithPos<>(qname.sourcePos(), qname.name()));
-            case null -> { }
-          }
+          var oldUnit = newModule.remove(qname.component(), qname.name());
+          if (oldUnit == null) badNames.append(qname);
         });
       }
       default -> throw new AssertionError("I mean, this case is impossible.");
     }
 
-    var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
-
     return new ExportResult(
-      hasError ? this : newModule,
+      badNames.isNotEmpty() ? this : newModule,
       badNames.toImmutableSeq(),
-      ambiNames.toImmutableSeq(),
       ImmutableSeq.empty());
   }
 
@@ -89,60 +91,36 @@ public record ModuleExport(
   @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
     var newExport = new ModuleExport(this);
     var badNames = MutableList.<QualifiedID>create();
-    var ambiNames = MutableList.<WithPos<String>>create();
     var shadowNames = MutableList.<WithPos<String>>create();
 
-    mapper.forEach(pair -> {
+    for (var pair : mapper) {
       var pos = pair.sourcePos();
-      var fromModule = ModuleName.from(pair.data().fromModule());
-      var fromName = pair.data().name();
+      var fromModule = pair.data().name().component();
+      var fromName = pair.data().name().name();
       var to = pair.data().to();
-      if (fromModule == ModuleName.This && fromName.equals(to)) return;
+      if (fromModule == ModuleName.This && fromName.equals(to)) continue;
 
-      var thing = newExport.removeMaybe(fromModule, fromName);
-      if (thing.isOk()) {
-        var reportShadow = MutableBooleanValue.create(false);
-
-        thing.get().forEach(symbol -> {
-            var candidates = newExport.symbols.resolveUnqualified(to).asMut().get();
-            var isShadow = candidates.isNotEmpty();
-            // If there is an export with name `to`, shadow!
-            if (isShadow) {
-              // do clear
-              candidates.clear();
-              reportShadow.set(true);
-            }
-
-            // now, {candidates} is empty
-            candidates.put(ModuleName.This, symbol);
-          }, module -> {
-            var isShadow = newExport.modules.containsKey(new ModuleName.Qualified(to));
-
-            if (isShadow) {
-              reportShadow.set(true);
-            }
-
-            newExport.modules.put(new ModuleName.Qualified(to), module);
+      var thing = newExport.remove(fromModule, fromName);
+      if (thing != null) {
+        var dest = newExport.get(ModuleName.This, to);
+        if (dest != null) {
+          var isShadow = (thing.symbol != null && dest.symbol != null) || (thing.module != null && dest.module != null);
+          if (isShadow) {
+            shadowNames.append(new WithPos<>(pos, to));
           }
-        );
-
-        if (reportShadow.get()) {
-          shadowNames.append(new WithPos<>(pos, to));
         }
+
+        thing.forEach(x -> newExport.export(to, x), x -> newExport.export(new ModuleName.Qualified(to), x));
       } else {
-        switch (thing.getErr()) {
-          case NotFound -> badNames.append(new QualifiedID(pos, fromModule, fromName));
-          case Ambiguous -> ambiNames.append(new WithPos<>(pos, fromName));
-        }
+        badNames.append(pair.data().name());
       }
-    });
+    }
 
-    var hasError = badNames.isNotEmpty() || ambiNames.isNotEmpty();
+    var hasError = badNames.isNotEmpty();
 
     return new ExportResult(
       hasError ? this : newExport,
       badNames.toImmutableSeq(),
-      ambiNames.toImmutableSeq(),
       shadowNames.toImmutableSeq()
     );
   }
@@ -150,38 +128,31 @@ public record ModuleExport(
   /**
    * @return false if there already exist a symbol with the same name.
    */
-  public boolean export(@NotNull ModuleName modName, @NotNull String name, @NotNull AnyDefVar ref) {
-    var exists = symbols.add(modName, name, ref);
+  public boolean export(@NotNull String name, @NotNull AnyDefVar ref) {
+    var exists = symbols.put(name, ref);
     return exists.isEmpty();
   }
 
   public boolean export(@NotNull ModuleName.Qualified componentName, @NotNull ModuleExport module) {
-    var exists = modules.put(componentName, module);
-    return exists.isEmpty();
+    return modules.put(componentName, module).isEmpty();
   }
 
   /// region Helper Methods for Mapping/Filtering
 
-  private Result<ExportUnit, ModuleSymbol.Error> getMaybe(@NotNull ModuleName component, @NotNull String name) {
-    var symbol = symbols.getMaybe(component, name);
-    var module = modules.getOption(component.resolve(name));      // `getOption` for beauty
+  private @Nullable ExportUnit get(@NotNull ModuleName component, @NotNull String name) {
+    var symbol = component == ModuleName.This ? symbols.getOrNull(name) : null;
+    var module = modules.getOrNull(component.resolve(name));
+    if (symbol == null && module == null) return null;
 
-    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous)
-      return Result.err(ModuleSymbol.Error.Ambiguous);
-    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
-
-    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
+    return new ExportUnit(symbol, module);
   }
 
-  private Result<ExportUnit, ModuleSymbol.Error> removeMaybe(@NotNull ModuleName component, @NotNull String name) {
-    var symbol = symbols.removeDefinitely(component, name);
-    if (symbol.getErrOrNull() == ModuleSymbol.Error.Ambiguous) return Result.err(ModuleSymbol.Error.Ambiguous);
+  private @Nullable ExportUnit remove(@NotNull ModuleName component, @NotNull String name) {
+    var symbol = component == ModuleName.This ? symbols.remove(name).getOrNull() : null;
+    var module = modules.remove(component.resolve(name)).getOrNull();
+    if (symbol == null && module == null) return null;
 
-    var module = modules.remove(component.resolve(name));
-    // symbol.isEmpty <-> symbol.getErr() == NotFound
-    if (symbol.isEmpty() && module.isEmpty()) return Result.err(ModuleSymbol.Error.NotFound);
-
-    return Result.ok(new ExportUnit(symbol.getOrNull(), module.getOrNull()));
+    return new ExportUnit(symbol, module);
   }
 
   private record ExportUnit(@Nullable AnyDefVar symbol, @Nullable ModuleExport module) {
@@ -198,17 +169,15 @@ public record ModuleExport(
   /// endregion
 
   /**
-   * @param result         the new module export if success, the old module export if failed.
-   * @param ambiguousNames Ambiguous always occurs with unqualified name, so it is {@link String} instead of {@link QualifiedID}
+   * @param result the new module export if success, the old module export if failed.
    */
   record ExportResult(
     @NotNull ModuleExport result,
     @NotNull ImmutableSeq<QualifiedID> invalidNames,
-    @NotNull ImmutableSeq<WithPos<String>> ambiguousNames,
     @NotNull ImmutableSeq<WithPos<String>> shadowNames
   ) {
     public boolean anyError() {
-      return invalidNames().isNotEmpty() || ambiguousNames().isNotEmpty();
+      return invalidNames().isNotEmpty();
     }
 
     public boolean anyWarn() {
@@ -222,17 +191,10 @@ public record ModuleExport(
           name.name(),
           name.sourcePos()));
 
-      SeqView<Problem> ambiguousNameProblems = ambiguousNames().view()
-        .map(name -> {
-          var old = result();
-          var disambi = old.symbols().resolveUnqualified(name.data()).moduleNames();
-          return new NameProblem.AmbiguousNameError(name.data(), disambi, name.sourcePos());
-        });
-
       SeqView<Problem> shadowNameProblems = shadowNames().view()
         .map(name -> new NameProblem.ShadowingWarn(name.data(), name.sourcePos()));
 
-      return shadowNameProblems.concat(invalidNameProblems).concat(ambiguousNameProblems);
+      return shadowNameProblems.concat(invalidNameProblems);
     }
   }
 }
