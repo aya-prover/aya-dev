@@ -42,7 +42,7 @@ public record UseHide(@NotNull ImmutableSeq<@NotNull Name> list, @NotNull Strate
     @NotNull BindBlock asBind
   ) implements SourceNode {
     public Name(@NotNull QualifiedID name) {
-      this(name.sourcePos(), name, Option.none(), Assoc.Invalid, BindBlock.EMPTY);
+      this(name.sourcePos(), name, Option.none(), Assoc.Unspecified, BindBlock.EMPTY);
     }
 
     public Option<Rename> rename() {

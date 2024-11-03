@@ -81,7 +81,9 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         });
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
-          if (use.asAssoc() == Assoc.Invalid) return;
+          // skip if there is no `as` or it is qualified.
+          if (use.asAssoc() == Assoc.Unspecified) return;
+          // In case of qualified, it must be a module, not a definition.
           if (use.id().component() != ModuleName.This) return;
           var symbol = ctx.modules().get(mod).symbols().get(use.id().name());
           var asName = use.asName().getOrDefault(use.id().name());

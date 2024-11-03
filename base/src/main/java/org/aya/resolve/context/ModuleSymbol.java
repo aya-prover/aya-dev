@@ -4,10 +4,8 @@ package org.aya.resolve.context;
 
 import kala.collection.MapView;
 import kala.collection.SetView;
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Result;
-import kala.value.LazyValue;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,16 +23,6 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
 
   public @NotNull Candidate<T> get(@NotNull String name) {
     return table.getOrPut(name, Candidate.Imported::empty);
-  }
-
-  /**
-   * @param name   name for symbol
-   * @param symbol the symbol
-   */
-  public void add(@NotNull String name, T symbol, ModuleName fromModule) {
-    var candy = Candidate.of(fromModule, symbol);
-    var old = get(name);
-    table.put(name, old.merge(candy));
   }
 
   /**
@@ -56,6 +44,16 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
   public enum Error {
     NotFound,
     Ambiguous
+  }
+
+  /**
+   * @param name   name for symbol
+   * @param symbol the symbol
+   */
+  public void add(@NotNull String name, T symbol, ModuleName fromModule) {
+    var candy = Candidate.of(fromModule, symbol);
+    var old = get(name);
+    table.put(name, old.merge(candy));
   }
 
   public @NotNull SetView<String> keysView() {

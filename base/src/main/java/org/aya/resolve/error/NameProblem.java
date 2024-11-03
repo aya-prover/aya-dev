@@ -4,6 +4,7 @@ package org.aya.resolve.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.generic.Constants;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.BindContext;
@@ -98,7 +99,7 @@ public interface NameProblem extends Problem {
         Doc.english("The inner module"),
         Doc.code(modulePath.toString()),
         Doc.english("clashes with a file level module"),
-        Doc.code(STR."\{modulePath.module().joinToString("/")}.aya")
+        Doc.code(modulePath.module().joinToString("/") + Constants.AYA_POSTFIX)
       );
     }
   }

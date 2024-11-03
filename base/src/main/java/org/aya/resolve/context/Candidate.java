@@ -36,43 +36,22 @@ public sealed interface Candidate<T> {
    * A candidate list that only store one symbol, furthermore, it implies the symbol is defined in this module.
    */
   record Defined<T>(T symbol) implements Candidate<T> {
-    @Override
-    public @NotNull Candidate<T> merge(@NotNull Candidate<T> symbol) {
+    @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> symbol) {
       return symbol instanceof Candidate.Defined<T> defined ? defined : this;
     }
 
-    @Override
-    public boolean isAmbiguous() {
-      return false;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    @Override
-    public T get() {
-      return symbol;
-    }
-
-    @Override
-    public @NotNull ImmutableSeq<ModuleName> from() {
-      return ImmutableSeq.of(ModuleName.This);
-    }
-
-    @Override
-    public boolean contains(@NotNull ModuleName modName) {
-      return modName == ModuleName.This;
-    }
+    @Override public boolean isAmbiguous() { return false; }
+    @Override public boolean isEmpty() { return false; }
+    @Override public T get() { return symbol; }
+    @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.of(ModuleName.This); }
+    @Override public boolean contains(@NotNull ModuleName modName) { return modName == ModuleName.This; }
   }
 
   /**
    * Default candidate, it represents a candidate list that is imported from other module
    *
-   * @param symbols a list of candidates with some module names says where they come from.
-   *                it is a list of module name cause one symbol can comes from different module.
-   *                Also, the intersection of any two module name sets should be empty.
+   * @param symbols key: the module that the symbol comes from<br/>
+   *                value: the symbol
    * @param <T>
    */
   record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
@@ -84,18 +63,14 @@ public sealed interface Candidate<T> {
       return new Imported<>(ImmutableMap.of(from, symbol));
     }
 
-    @Override
-    public boolean isAmbiguous() {
-      return symbols.valuesView().distinct().size() > 1;
+    @Override public boolean isAmbiguous() {
+      return symbols.valuesView().distinct().sizeGreaterThan(1);
     }
 
-    @Override
-    public boolean isEmpty() {
-      return symbols.isEmpty();
-    }
+    @Override public boolean isEmpty() { return symbols.isEmpty(); }
 
-    @Override
-    public T get() {
+    @Override public T get() {
+      //noinspection OptionalGetWithoutIsPresent
       return symbols.valuesView().stream().findFirst().get();
     }
 
@@ -104,12 +79,10 @@ public sealed interface Candidate<T> {
       return ImmutableSeq.from(symbols.keysView());
     }
 
-    @Override
-    public boolean contains(@NotNull ModuleName modName) {
+    @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
-    @Override
-    public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
+    @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
         case Candidate.Imported<T> imported -> {

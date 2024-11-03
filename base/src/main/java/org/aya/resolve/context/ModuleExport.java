@@ -7,9 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.control.Option;
-import kala.control.Result;
-import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -31,22 +28,36 @@ public record ModuleExport(
   @NotNull MutableMap<String, AnyDefVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
-  public ModuleExport() {
-    this(MutableMap.create(), MutableMap.create());
-  }
+  public ModuleExport() { this(MutableMap.create(), MutableMap.create()); }
 
   public ModuleExport(@NotNull ModuleExport that) {
     this(MutableMap.from(that.symbols), MutableMap.from(that.modules));
   }
 
+  /**
+   * @implSpec In case of qualified renaming, only the module is renamed, for example (pseudocode):
+   * <pre>
+   *   module foo {
+   *     module bar {
+   *       data A
+   *     }
+   *   }
+   *
+   *   open import foo using (bar::A as B)
+   *   // only module [bar::A] is renamed, the name [B] can not be used as the type, but only
+   *   // the accessor of its constructors.
+   * </pre>
+   * Well, the cost to also rename the type is not very expensive, we just need to make a new {@link ModuleExport}
+   * to store that symbol, but I am 2 lazy 😭😭😭😭.
+   */
   @Contract(pure = true)
   @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
-    ModuleExport newModule;
+    final ModuleExport newModule;
     var badNames = MutableList.<QualifiedID>create();
 
     switch (strategy) {
       case Using -> {
-        var mData = new ModuleExport();
+        newModule = new ModuleExport();
         for (var name : names) {
           var unit = get(name.component(), name.name());
 
@@ -54,19 +65,16 @@ public record ModuleExport(
             badNames.append(name);
           } else {
             unit.forEach(x -> {
-              if (name.component() == ModuleName.This) mData.export(name.name(), x);
-            }, x -> mData.export(name.component().resolve(name.name()), x));
+              if (name.component() == ModuleName.This) newModule.export(name.name(), x);
+            }, x -> newModule.export(name.component().resolve(name.name()), x));
           }
         }
-
-        newModule = mData;
       }
       case Hiding -> {
-        var aNewModule = new ModuleExport(this);
-        newModule = aNewModule;
+        newModule = new ModuleExport(this);
 
         names.forEach(qname -> {
-          var oldUnit = aNewModule.remove(qname.component(), qname.name());
+          var oldUnit = newModule.remove(qname.component(), qname.name());
           if (oldUnit == null) badNames.append(qname);
         });
       }

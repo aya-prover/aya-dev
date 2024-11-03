@@ -2,7 +2,6 @@ module aya.base {
   requires transitive aya.syntax;
 
   requires static org.jetbrains.annotations;
-  requires jdk.compiler;
 
   // requires manifold.delegation.rt;
 
