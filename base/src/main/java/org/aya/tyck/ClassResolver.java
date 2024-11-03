@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import org.aya.resolve.context.Candidate;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ClassDefLike;
@@ -35,7 +36,7 @@ public final class ClassResolver {
     if (envCache != null) return envCache;
     var result = env.symbols().table()
       .valuesView()
-      .flatMap(MapLike::valuesView)
+      .flatMap(Candidate::getAll)
       .filterIsInstance(AnyDefVar.class);
 
     var builder = MutableMap.<ClassDefLike, ImmutableSeq<AnyDefVar>>create();
