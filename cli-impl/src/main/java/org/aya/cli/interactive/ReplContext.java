@@ -5,6 +5,8 @@ package org.aya.cli.interactive;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
@@ -112,6 +114,35 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   /// region Rebuild Module Tree
 
   public record ModuleTree(@NotNull ImmutableMap<String, ModuleTree> children, boolean inhabited) { }
+
+  private @Nullable ModuleTree resolve(@NotNull ImmutableSeq<String> path) {
+    var pathView = path.view();
+    var tree = new ModuleTree(moduleTree(), false);
+    while (pathView.isNotEmpty() && tree != null) {
+      var head = pathView.getFirst();
+      var tail = pathView.drop(1);
+      tree = tree.children().getOrNull(head);
+      pathView = tail;
+    }
+
+    return tree;
+  }
+
+  public @NotNull ImmutableSeq<String> giveMeHint(@NotNull ImmutableSeq<String> prefix) {
+    var node = resolve(prefix);
+    if (node == null) return ImmutableSeq.empty();
+
+    var hint = MutableLinkedSet.<String>create();
+
+    hint.addAll(node.children().keysView());
+    if (node.inhabited) {
+      var mod = getModuleMaybe(new ModuleName.Qualified(prefix));
+      assert mod != null;
+      hint.addAll(mod.symbols().keysView());
+    }
+
+    return hint.toImmutableSeq();
+  }
 
   public @NotNull ImmutableMap<String, ModuleTree> moduleTree() {
     if (!modified) {
