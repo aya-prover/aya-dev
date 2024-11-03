@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate.parser;
 
@@ -28,7 +28,7 @@ public class FillCodeBlock implements PostProcessor {
             // Continuous?
             while (lastSpan.getLineIndex() + 1 != curSpan.getLineIndex()) {
               // No, fill the empty line
-              lastSpan = SourceSpan.of(lastSpan.getLineIndex() + 1, -1, 0);
+              lastSpan = SourceSpan.of(lastSpan.getLineIndex() + 1, 0, 0, 0);
               conSourceSpans.append(lastSpan);
             }
 
