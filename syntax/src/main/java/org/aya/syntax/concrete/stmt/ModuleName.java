@@ -6,7 +6,6 @@ import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -17,11 +16,9 @@ import java.io.Serializable;
  * This name should be used in a local scope instead of a global scope (like a path to a module).
  */
 public sealed interface ModuleName extends Serializable {
-  int size();
   enum ThisRef implements ModuleName {
     Obj;
 
-    @Override public int size() { return 0; }
     @Override public @NotNull ImmutableSeq<String> ids() { return ImmutableSeq.empty(); }
     @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ImmutableSeq.of(name));
@@ -36,16 +33,6 @@ public sealed interface ModuleName extends Serializable {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
     }
 
-    public @NotNull String head() {
-      return ids.getFirst();
-    }
-
-    public @Nullable ModuleName.Qualified tail() {
-      if (ids.size() == 1) return null;
-      return new Qualified(ids.drop(1));
-    }
-
-    @Override public int size() { return ids.size(); }
     @Override public @NotNull Qualified resolve(@NotNull String name) {
       return new Qualified(ids.appended(name));
     }
@@ -64,11 +51,6 @@ public sealed interface ModuleName extends Serializable {
   /// region static
 
   @NotNull ModuleName.ThisRef This = ThisRef.Obj;
-
-  static @NotNull ModuleName of(String... ids) {
-    if (ids.length == 0) return This;
-    return new Qualified(ids);
-  }
 
   static @NotNull ModuleName from(@NotNull SeqLike<String> ids) {
     if (ids.isEmpty()) return This;
