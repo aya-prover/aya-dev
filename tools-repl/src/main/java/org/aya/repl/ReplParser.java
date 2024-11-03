@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
@@ -20,8 +21,9 @@ public record ReplParser<T>(
     this(cmd, lexer, new DefaultParser());
   }
 
-  public record ReplParsedLine(
+  public record ReplParsedLine<T>(
     @Override int wordCursor,
+    @NotNull ImmutableSeq<T> rawTokens,
     @Override @NotNull List<@NotNull String> words,
     @Override @NotNull String word,
     @Override int wordIndex,
@@ -32,17 +34,12 @@ public record ReplParser<T>(
       return charSequence;
     }
 
-    @Override public int rawWordCursor() {
-      return wordCursor;
-    }
-
-    @Override public int rawWordLength() {
-      return word.length();
-    }
+    @Override public int rawWordCursor() { return wordCursor; }
+    @Override public int rawWordLength() { return word.length(); }
   }
 
   @Override public ParsedLine parse(String line, int cursor, ParseContext context) throws SyntaxError {
-    if (line.isBlank()) return simplest(line, cursor, 0, Collections.emptyList());
+    if (line.isBlank()) return simplest(line, cursor, 0, ImmutableSeq.empty(), Collections.emptyList());
     // ref: https://github.com/jline/jline3/issues/36
     if ((context == ParseContext.UNSPECIFIED || context == ParseContext.ACCEPT_LINE)
       && line.startsWith(Command.MULTILINE_BEGIN) && !line.endsWith(Command.MULTILINE_END)) {
@@ -68,19 +65,21 @@ public record ReplParser<T>(
     if (wordOpt.isEmpty()) {
       var tokenOpt = tokens.findFirst(tok -> lexer.startOffset(tok) >= cursor);
       if (tokenOpt.isEmpty())
-        return simplest(line, cursor, tokens.size(), tokens
+        return simplest(line, cursor, tokens.size(), tokens, tokens
           .map(tok -> textOf(line, tok)).asJava());
       var token = tokenOpt.get();
       var wordCursor = cursor - lexer.startOffset(token);
-      return new ReplParsedLine(
-        Math.max(wordCursor, 0), tokens.map(tok -> textOf(line, tok)).asJava(),
+      return new ReplParsedLine<>(
+        Math.max(wordCursor, 0), tokens,
+        tokens.map(tok -> textOf(line, tok)).asJava(),
         textOf(line, token), tokens.size() - 1, line, cursor
       );
     }
     var word = wordOpt.get();
     var wordText = textOf(line, word);
-    return new ReplParsedLine(
+    return new ReplParsedLine<>(
       cursor - lexer.startOffset(word),
+      tokens,
       tokens.stream().map(tok -> textOf(line, tok)).toList(),
       wordText, tokens.indexOf(word), line, cursor
     );
@@ -90,7 +89,11 @@ public record ReplParser<T>(
     return lexer.tokenText(line, tok);
   }
 
-  public @NotNull ReplParsedLine simplest(String line, int cursor, int wordIndex, List<@NotNull String> tokens) {
-    return new ReplParsedLine(0, tokens, "", wordIndex, line, cursor);
+  public @NotNull ReplParsedLine<T> simplest(
+    String line, int cursor, int wordIndex,
+    @NotNull ImmutableSeq<T> rawTokens,
+    @NotNull List<@NotNull String> tokens
+  ) {
+    return new ReplParsedLine<>(0, rawTokens, tokens, "", wordIndex, line, cursor);
   }
 }

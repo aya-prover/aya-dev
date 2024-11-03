@@ -11,7 +11,10 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.tuple.Tuple2;
-import org.aya.resolve.context.*;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleExport;
+import org.aya.resolve.context.ModuleSymbol;
+import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyDefVar;
@@ -26,8 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
   private @Nullable ReplContext downstream = null;
+  /** @see #moduleTree() */
   private boolean modified = true;
-  private @Nullable ImmutableMap<String, ModuleTree> moduleTree = null;
+  private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
   public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
     super(parent, name);
@@ -113,11 +117,11 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
 
   /// region Rebuild Module Tree
 
-  public record ModuleTree(@NotNull ImmutableMap<String, ModuleTree> children, boolean inhabited) { }
+  public record ModuleTrie(@NotNull ImmutableMap<String, ModuleTrie> children, boolean inhabited) { }
 
-  private @Nullable ModuleTree resolve(@NotNull ImmutableSeq<String> path) {
+  private @Nullable ReplContext.ModuleTrie resolve(@NotNull ImmutableSeq<String> path) {
     var pathView = path.view();
-    var tree = new ModuleTree(moduleTree(), false);
+    var tree = new ModuleTrie(moduleTree(), false);
     while (pathView.isNotEmpty() && tree != null) {
       var head = pathView.getFirst();
       var tail = pathView.drop(1);
@@ -144,7 +148,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return hint.toImmutableSeq();
   }
 
-  public @NotNull ImmutableMap<String, ModuleTree> moduleTree() {
+  public @NotNull ImmutableMap<String, ModuleTrie> moduleTree() {
     if (!modified) {
       assert this.moduleTree != null;
       return this.moduleTree;
@@ -164,9 +168,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
    *
    * @param moduleNames a list of {@link ModuleName.Qualified} but in an efficient representation, the element should be non-empty
    */
-  private @NotNull ImmutableMap<String, ModuleTree> buildModuleTree(
-    @NotNull Seq<SeqView<String>> moduleNames
-  ) {
+  private @NotNull ImmutableMap<String, ModuleTrie>
+  buildModuleTree(@NotNull Seq<SeqView<String>> moduleNames) {
     var indexed = MutableMap.<String, MutableList<SeqView<String>>>create();
     var inhabited = MutableSet.<String>create();
 
@@ -182,14 +185,12 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       }
     }
 
-    var result = indexed.toImmutableSeq()
+    return indexed.toImmutableSeq()
       .collect(ImmutableMap.collector(Tuple2::component1, x -> {
         var children = buildModuleTree(x.component2());
         var isInhabited = inhabited.contains(x.component1());
-        return new ModuleTree(children, isInhabited);
+        return new ModuleTrie(children, isInhabited);
       }));
-
-    return result;
   }
 
   /// endregion Rebuild Module Tree
