@@ -88,7 +88,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   /**
-   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, boolean, SourcePos)
+   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
    */
   default void importModule(
     @NotNull ModuleName.Qualified modName,

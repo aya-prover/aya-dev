@@ -5,7 +5,6 @@ package org.aya.resolve.context;
 import kala.collection.MapView;
 import kala.collection.SetView;
 import kala.collection.mutable.MutableMap;
-import kala.control.Result;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,26 +24,7 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
     return table.getOrPut(name, Candidate.Imported::empty);
   }
 
-  /**
-   * Trying to get a symbol of name {@param name}.
-   */
-  public @NotNull Result<T, Error> getMaybe(@NotNull String name) {
-    var candidates = get(name);
-
-    if (candidates.isEmpty()) return Result.err(Error.NotFound);
-    if (candidates.isAmbiguous()) return Result.err(Error.Ambiguous);
-
-    return Result.ok(candidates.get());
-  }
-
-  public boolean contains(@NotNull String name) {
-    return !get(name).isEmpty();
-  }
-
-  public enum Error {
-    NotFound,
-    Ambiguous
-  }
+  public boolean contains(@NotNull String name) { return !get(name).isEmpty(); }
 
   /**
    * @param name   name for symbol
@@ -56,13 +36,8 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
     table.put(name, old.merge(candy));
   }
 
-  public @NotNull SetView<String> keysView() {
-    return table.keysView();
-  }
-
-  public @NotNull MapView<String, Candidate<T>> view() {
-    return table.view();
-  }
+  public @NotNull SetView<String> keysView() { return table.keysView(); }
+  public @NotNull MapView<String, Candidate<T>> view() { return table.view(); }
 
   public void forEach(@NotNull BiConsumer<String, Candidate<T>> action) {
     table.forEach(action);
