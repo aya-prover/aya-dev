@@ -8,7 +8,7 @@ project = "0.34.0-SNAPSHOT"
 java = "21"
 
 # https://github.com/JetBrains/java-annotations
-annotations = "24.1.0"
+annotations = "26.0.1"
 kala = "0.74.0"
 # https://picocli.info
 picocli = "4.7.6"
@@ -18,7 +18,7 @@ jline = "3.26.3"
 # https://github.com/commonmark/commonmark-java
 commonmark = "0.22.0"
 # https://junit.org/junit5
-junit = "5.10.2"
+junit = "5.11.3"
 hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.11.0"
@@ -27,7 +27,7 @@ jlink = "3.0.1"
 # https://github.com/jacoco/jacoco
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
-manifold = "2024.1.14"
+manifold = "2024.1.39"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
