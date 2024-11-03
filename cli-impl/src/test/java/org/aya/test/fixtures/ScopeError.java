@@ -7,9 +7,13 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("unused")
 public interface ScopeError {
   @Language("Aya") String testDidYouMeanDisamb = """
+    private open inductive Nat1 | zero
+    private open inductive Nat2 | zero
+    def one => zero
+    """;
+  @Language("Aya") String testExportClashes = """
     open inductive Nat1 | zero
     open inductive Nat2 | zero
-    def one => zero
     """;
   @Language("Aya") String testDidYouMean = """
     inductive Nat | zero | suc Nat

@@ -9,7 +9,10 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
-import org.aya.syntax.ref.*;
+import org.aya.syntax.ref.AnyDefVar;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -68,10 +71,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var symbol = symbols().get(name);
     if (symbol.isEmpty()) return null;
     if (symbol.isAmbiguous()) reportAndThrow(new NameProblem.AmbiguousNameError(
-      name, ImmutableSeq.from(symbol.from()
-      .map(x -> x.resolve(name))),
-      sourcePos
-    ));
+      name, symbol.from(), sourcePos));
 
     return symbol.get();
   }

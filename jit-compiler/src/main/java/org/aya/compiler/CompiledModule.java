@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
-import kala.tuple.Tuple3;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
@@ -37,13 +36,13 @@ import java.io.Serializable;
  * The .ayac file representation.
  *
  * @param imports   The modules that this ayac imports. Absolute path.
- * @param exports   Each name consist of {@code This Module Name}, {@code Export Module Name} and {@code Symbol Name}
- * @param reExports key: a imported module that is in {@param imports}
+ * @param exports   Whether certain definition is exported. Re-exported symbols will not be here.
+ * @param reExports key: an imported module that is in {@param imports}
  * @author kiva
  */
 public record CompiledModule(
   @NotNull ImmutableSeq<SerImport> imports,
-  @NotNull SerExport exports,
+  @NotNull ImmutableSet<String> exports,
   @NotNull ImmutableMap<ModulePath, SerUseHide> reExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -103,18 +102,6 @@ public record CompiledModule(
     }
   }
 
-  /**
-   * TODO: inline this
-   * SerExport stores the information of whether certain definition is exported, this is not about re-exporting.
-   */
-  record SerExport(
-    @NotNull ImmutableSet<String> exports
-  ) implements Serializable {
-    public boolean isExported(@NotNull String name) {
-      return exports.contains(name);
-    }
-  }
-
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       // TODO[kiva]: how to reach here?
@@ -129,7 +116,7 @@ public record CompiledModule(
     var imports = resolveInfo.imports().view().map((k, v) ->
       new SerImport(v.resolveInfo().thisModule().modulePath(),
         k.ids(), v.reExport())).toImmutableSeq();
-    var serExport = new SerExport(ImmutableSet.from(exports));
+    var serExport = ImmutableSet.from(exports);
     var reExports = ImmutableMap.from(resolveInfo.reExports().view()
       .map((k, v) -> Tuple.of(
         resolveInfo.imports()
@@ -137,14 +124,15 @@ public record CompiledModule(
           .resolveInfo().thisModule().modulePath(),
         SerUseHide.from(v))));
     var serOps = ImmutableMap.from(serialization.serOps);
+    record RenameData(boolean reExport, QName name, SerRenamedOp renamed) { }
     var opRename = ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
         var name = k.qualifiedName();
         var info = v.renamed().opInfo();
         var renamed = new SerRenamedOp(info, serialization.serBind(v.bind()));
-        return Tuple.of(v.reExport(), name, renamed);
+        return new RenameData(v.reExport(), name, renamed);
       })
-      .filter(Tuple3::head) // should not serialize publicly renamed ops from upstreams
-      .map(Tuple3::tail));
+      .filter(RenameData::reExport) // should not serialize publicly renamed ops from upstreams
+      .map(data -> Tuple.of(data.name, data.renamed)));
 
     return new CompiledModule(imports, serExport, reExports, serOps, opRename);
   }
@@ -295,7 +283,5 @@ public record CompiledModule(
     assert success : "DuplicateExportError should not happen in CompiledModule";
   }
 
-  private boolean isExported(@NotNull String name) {
-    return exports.isExported(name);
-  }
+  private boolean isExported(@NotNull String name) { return exports.contains(name); }
 }
