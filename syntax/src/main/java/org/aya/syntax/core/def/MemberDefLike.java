@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface MemberDefLike extends AnyDef permits JitMember, MemberDef.Delegate {
   @NotNull ClassDefLike classRef();
+
+  /**
+   * The type of the type of this member, not include self-parameter
+   */
   @NotNull SortTerm type();
 
   int index();

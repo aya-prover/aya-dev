@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  *     v                    v                   v                  v
  *   ConDef  <- - -  ConDef.Delegate <----- ConDefLike ----->    JitCon
  * </pre>
- * where the arrows indicate mean "is superclass of".<br/>
+ * where the arrows mean "is superclass of".<br/>
  * <ul>
  *   <li>The first chain is "core def" chain, which are well-typed definition</li>
  *   <li>The second chain is "local def" chain, which may refer to a not yet tycked definition, i.e. tyck a recursive function</li>
