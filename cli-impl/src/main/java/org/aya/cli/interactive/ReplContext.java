@@ -177,6 +177,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var indexed = MutableMap.<String, MutableList<SeqView<String>>>create();
     var inhabited = MutableSet.<String>create();
 
+    // merge module names those have the same 1-length prefix
+    // also mark 1-length name as inhabited
     for (var name : moduleNames) {
       var head = name.getFirst();
       var tail = name.drop(1);
