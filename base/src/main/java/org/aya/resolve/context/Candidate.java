@@ -82,6 +82,10 @@ public sealed interface Candidate<T> {
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
+
+    /**
+     * Note that we always overwrite symbols comes from the same module, they should be checked before merge (if one wants to report errors)
+     */
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
