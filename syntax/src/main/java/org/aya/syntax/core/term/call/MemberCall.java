@@ -38,6 +38,19 @@ public record MemberCall(
     return new MemberCall(of, ref, ulift, args).make();
   }
 
+  /**
+   * Trying to normalize this {@link MemberCall}:
+   * <ul>
+   *   <li>If it calls on a {@link NewTerm}, we just pick the corresponding term.</li>
+   *   <li>
+   *     If it calls on a {@link ClassCastTerm}, we will try to obtain the restriction information from it (see {@link ClassCastTerm#get(MemberDefLike)}).
+   *     If failed, we look inside. Note that nested {@link ClassCastTerm} is possible,
+   *     we also return {@code mostInnerTerm .someField} when we are unable to normalize it anymore, it looks like we normalized
+   *     the arguments of a function call but we still unable to unfold it.
+   *   </li>
+   *   <li>Otherwise, we just return the {@link MemberCall} itself</li>
+   * </ul>
+   */
   @Override public @NotNull Term make() {
     return switch (of()) {
       case NewTerm neu -> {
