@@ -3,6 +3,8 @@
 package org.aya.syntax.concrete.stmt;
 
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,6 @@ public sealed interface ModuleName extends Serializable {
   }
 
   record Qualified(@NotNull ImmutableSeq<String> ids) implements ModuleName {
-    public Qualified(@NotNull String @NotNull ... ids) { this(ImmutableSeq.of(ids)); }
     public Qualified {
       assert ids.isNotEmpty() : "Otherwise please use `This`";
     }
@@ -55,6 +56,14 @@ public sealed interface ModuleName extends Serializable {
   static @NotNull ModuleName from(@NotNull SeqLike<String> ids) {
     if (ids.isEmpty()) return This;
     return new Qualified(ids.toImmutableSeq());
+  }
+
+  static @NotNull ModuleName.ThisRef of() {
+    return ModuleName.This;
+  }
+
+  static @NotNull ModuleName.Qualified of(@NotNull String first, @NotNull String @NotNull ... tail) {
+    return new Qualified(ImmutableSeq.from(SeqView.of(first).concat(ImmutableArray.Unsafe.wrap(tail))));
   }
 
   /**

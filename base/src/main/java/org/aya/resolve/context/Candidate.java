@@ -12,6 +12,12 @@ import org.jetbrains.annotations.NotNull;
  * Candidate represents a list of candidate of symbol resolving
  */
 public sealed interface Candidate<T> {
+  /**
+   * Merge two candidate.
+   *
+   * @implSpec If conflict happens, {@param candy} will overwrite {@code this},
+   * the user should check all possible conflicts before merge.
+   */
   @NotNull Candidate<T> merge(@NotNull Candidate<T> candy);
   boolean isAmbiguous();
   boolean isEmpty();
@@ -28,7 +34,7 @@ public sealed interface Candidate<T> {
   /**
    * Returns the only symbol in this candidate, should check {@link #isEmpty()} and {@link #isAmbiguous()} first.
    *
-   * @return the only symbol in this candidate, exception if this candidate {@link #isEmpty()} or {@link #isAmbiguous()}
+   * @return the only symbol in this candidate, exception <b>MAY</b> be thrown if this candidate {@link #isEmpty()} or {@link #isAmbiguous()}
    */
   T get();
 
@@ -52,7 +58,6 @@ public sealed interface Candidate<T> {
    *
    * @param symbols key: the module that the symbol comes from<br/>
    *                value: the symbol
-   * @param <T>
    */
   record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
     public static <T> @NotNull Candidate<T> empty() {
@@ -83,9 +88,6 @@ public sealed interface Candidate<T> {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
 
-    /**
-     * Note that we always overwrite symbols comes from the same module, they should be checked before merge (if one wants to report errors)
-     */
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;

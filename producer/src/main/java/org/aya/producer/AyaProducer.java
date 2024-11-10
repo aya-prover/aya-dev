@@ -322,7 +322,7 @@ public record AyaProducer(
     additional.append(new Command.Open(
       keyword,
       modiSet.accessibility().data(),
-      new ModuleName.Qualified(decl.ref().name()),
+      ModuleName.of(decl.ref().name()),
       UseHide.EMPTY,
       modiSet.isExample(),
       true

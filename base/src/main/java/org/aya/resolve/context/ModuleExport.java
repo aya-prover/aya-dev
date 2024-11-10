@@ -110,7 +110,7 @@ public record ModuleExport(
           }
         }
 
-        thing.forEach(x -> newExport.export(to, x), x -> newExport.export(new ModuleName.Qualified(to), x));
+        thing.forEach(x -> newExport.export(to, x), x -> newExport.export(ModuleName.of(to), x));
       } else {
         badNames.append(pair.data().name());
       }

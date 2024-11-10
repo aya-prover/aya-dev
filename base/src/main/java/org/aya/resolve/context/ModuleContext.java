@@ -88,9 +88,12 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   }
 
   /**
+   * Import modules from {@param module}, this method also import modules
+   * that inside {@param module}.
+   *
    * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
    */
-  default void importModule(
+  default void importModuleContext(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
@@ -198,6 +201,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         fail(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (candidates.from().contains(fromModule)) {
+      // this case happens when the user is trying to open a module in twice (even the symbol are equal)
+      // or define two symbols with same name ([fromModule == ModuleName.This])
       reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
     } else if (candidates.isAmbiguous() || candidates.get() != ref) {
       fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
@@ -209,13 +214,13 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {
       var success = exportSymbol(name, defVar);
       if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));    // TODO: use a more appropriate error
+        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
       }
     }
   }
 
   /**
-   * Exporting an {@link AnyVar} with qualified id {@code {modName}::{name}}
+   * Exporting an {@link AnyDefVar}.
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
