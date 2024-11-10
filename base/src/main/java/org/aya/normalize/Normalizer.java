@@ -51,6 +51,8 @@ public final class Normalizer implements UnaryOperator<Term> {
       case StableWHNF _, FreeTerm _ -> postTerm;
       case BetaRedex app -> {
         var result = app.make();
+        // TODO: should we use defaultValue? note that this infect the [MemberCall] case in [TermComparator#doCompareUntyped]
+        //       this to-do must be solved before merging.
         yield result == app ? result : apply(result);
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
@@ -75,6 +77,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
       };
       case RuleReducer reduceRule -> {
+        // TODO: similar to the case of BetaRedex
         var result = reduceRule.rule().apply(reduceRule.args());
         if (result != null) yield apply(result);
         // We can't handle it, try to delegate to FnCall
@@ -82,6 +85,7 @@ public final class Normalizer implements UnaryOperator<Term> {
           ? apply(fnRule.toFnCall())
           : reduceRule;
       }
+      // TODO: ths case seems unreachable cause there is a fast path at the beginning of this method
       case ConCall(var head, _) when !head.ref().hasEq() -> defaultValue;
       case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
         call.head().ref().equality(call.args(), dim == DimTerm.I0);
