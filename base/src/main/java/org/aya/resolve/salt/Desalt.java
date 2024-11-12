@@ -2,10 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.salt;
 
+import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.error.DoNotationError;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
@@ -56,7 +60,32 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
         assert seq.isNotEmpty();
         yield apply(new ExprBinParser(info, seq.view()).build(sourcePos));
       }
-      case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
+      case Expr.Do aDo -> {
+        var bindName = aDo.bindName();
+        var binds = aDo.binds();
+        var last = binds.getLast();
+        if (last.var() != LocalVar.IGNORED) {
+          info.opSet().reporter.report(new DoNotationError(new WithPos<>(last.sourcePos(), aDo)));
+          yield new Expr.Error(aDo);
+        }
+        var rest = binds.view().dropLast(1);
+        // `do x <- xs, continued` is desugared as `xs >>= (\x => continued)`,
+        // where `x <- xs` is denoted `thisBind` and `continued` can also be a do-notation
+        var desugared = Expr.buildNested(sourcePos, rest, last.expr(),
+          (thisBind, continued) -> {
+            var pos = thisBind.sourcePos();
+            // (>>=)
+            return new Expr.App(new WithPos<>(pos, bindName), ImmutableSeq.of(
+              // x
+              new Expr.NamedArg(true, thisBind.expr()),
+              // \x => continued
+              new Expr.NamedArg(true, new WithPos<>(pos,
+                new Expr.Lambda(new Expr.Param(thisBind.var().definition(), thisBind.var(), true), continued)
+              ))
+            ));
+          });
+        yield apply(desugared);
+      }
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
       case Expr.RawSort(var kind) -> switch (kind) {
         case Type -> new Expr.Type(0);
