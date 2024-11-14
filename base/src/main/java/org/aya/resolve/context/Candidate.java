@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +35,7 @@ public sealed interface Candidate<T> {
   /**
    * Returns the only symbol in this candidate, should check {@link #isEmpty()} and {@link #isAmbiguous()} first.
    *
-   * @return the only symbol in this candidate, exception <b>MAY</b> be thrown if this candidate {@link #isEmpty()} or {@link #isAmbiguous()}
+   * @return the only symbol in this candidate, exception if this candidate {@link #isEmpty()} or {@link #isAmbiguous()}
    */
   T get();
 
@@ -75,6 +76,8 @@ public sealed interface Candidate<T> {
     @Override public boolean isEmpty() { return symbols.isEmpty(); }
 
     @Override public T get() {
+      var view = symbols.valuesView();
+      if (view.sizeGreaterThan(1)) Panic.unreachable();
       //noinspection OptionalGetWithoutIsPresent
       return symbols.valuesView().stream().findFirst().get();
     }
