@@ -27,10 +27,8 @@ public record MemberCall(
   }
 
   public static @NotNull Term make(
-    @NotNull ClassCall typeOfOf,
-    @NotNull Term of,
-    @NotNull MemberDefLike ref,
-    int ulift,
+    @NotNull ClassCall typeOfOf, @NotNull Term of,
+    @NotNull MemberDefLike ref, int ulift,
     @NotNull ImmutableSeq<@NotNull Term> args
   ) {
     var impl = typeOfOf.get(ref);
