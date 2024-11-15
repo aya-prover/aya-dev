@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract non-sealed class JitClass extends JitDef implements ClassDefLike {
-  private JitMember @Nullable [] members = null;
+  protected JitMember @Nullable [] members = null;
 
   protected JitClass() {
     super(0, new boolean[0], new String[0]);

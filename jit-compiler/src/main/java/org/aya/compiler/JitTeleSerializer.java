@@ -12,15 +12,15 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.AyaSerializer.*;
-import static org.aya.compiler.NameSerializer.javifyClassName;
+import static org.aya.compiler.AyaSerializer.CLASS_SEQ;
+import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSerializer<T> {
   public static final String CLASS_JITCON = ExprializeUtils.getJavaReference(JitCon.class);
   public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(CodeShape.class), ExprializeUtils.getJavaReference(CodeShape.GlobalId.class));
   public static final String METHOD_TELESCOPE = "telescope";
   public static final String METHOD_RESULT = "result";
-  public static final String TYPE_TERMSEQ = STR."\{CLASS_SEQ}<\{CLASS_TERM}>";
+  public static final String TYPE_TERMSEQ = CLASS_SEQ + "<" + CLASS_TERM + ">";
 
   protected JitTeleSerializer(
     @NotNull SourceBuilder builder,
@@ -54,7 +54,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     var tele = def.telescope();
     var size = tele.size();
     var licit = tele.view().map(Param::explicit).map(Object::toString);
-    var names = tele.view().map(Param::name).map(x -> STR."\"\{x}\"");
+    var names = tele.view().map(Param::name).map(x -> "\"" + x + "\"");
 
     buildSuperCall(ImmutableSeq.of(
       Integer.toString(size),

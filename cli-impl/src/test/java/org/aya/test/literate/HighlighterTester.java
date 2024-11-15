@@ -110,7 +110,7 @@ public class HighlighterTester {
       var expectedText = expected.expected.display();
       var actualText = sourceCode.substring(sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex() + 1);
 
-      assertEquals(expectedText, actualText, STR."at \{sourcePos}");
+      assertEquals(expectedText, actualText, "at " + sourcePos);
 
       switch (actual) {
         case HighlightInfo.Lit(_, var ty)
@@ -134,7 +134,7 @@ public class HighlighterTester {
         case HighlightInfo.Err _ -> throw new UnsupportedOperationException("TODO");   // TODO
 
         default ->
-          fail(STR."expected: \{expected.getClass().getSimpleName()}, but actual: \{actual.getClass().getSimpleName()}");
+          fail("expected: " + expected.getClass().getSimpleName() + ", but actual: " + actual.getClass().getSimpleName());
       }
     });
     assertEquals(expecteds.size(), actuals.size(), "size mismatch");
@@ -145,7 +145,7 @@ public class HighlighterTester {
    */
   public void checkDef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Def def) {
     var existDef = defSet.containsKey(def.target());
-    assertFalse(existDef, STR."Duplicated def: \{def.target()} at \{sourcePos}");
+    assertFalse(existDef, "Duplicated def: " + def.target() + " at " + sourcePos);
 
     defSet.put(def.target(), Option.ofNullable(def.kind()));
   }
@@ -159,7 +159,7 @@ public class HighlighterTester {
 
     if (name != null) {
       var existName = defMap.getOption(name);
-      assertFalse(existName.isDefined(), STR."Duplicated name: \{expectedDef.name()}");
+      assertFalse(existName.isDefined(), "Duplicated name: " + expectedDef.name());
 
       defMap.put(name, Tuple.of(actualDef.target(), Option.ofNullable(actualDef.kind())));
     }
@@ -171,7 +171,7 @@ public class HighlighterTester {
   public void checkRef(@NotNull SourcePos sourcePos, @NotNull HighlightInfo.Ref ref) {
     var defData = defSet.getOrNull(ref.target());
 
-    assertNotNull(defData, STR."Expected def: \{ref.target()} at \{sourcePos}");
+    assertNotNull(defData, "Expected def: " + ref.target() + " at " + sourcePos);
     assertEquals(defData.getOrNull(), ref.kind());
   }
 
@@ -182,7 +182,7 @@ public class HighlighterTester {
 
     if (name != null) {
       var existName = defMap.getOption(name);
-      assertTrue(existName.isDefined(), STR."Undefined name: \{expectedRef.name()}");
+      assertTrue(existName.isDefined(), "Undefined name: " + expectedRef.name());
 
       var defData = existName.get();
       assertEquals(defData.component2().getOrNull(), actualRef.kind());

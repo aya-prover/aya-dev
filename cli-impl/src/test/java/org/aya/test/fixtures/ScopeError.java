@@ -81,4 +81,10 @@ public interface ScopeError {
     """;
   @Language("Aya") String testImportNoneExistMod = "import hopefullyThisModuleWillNeverExist";
   @Language("Aya") String testOpenNoneExistMod = "open hopefullyThisModuleWillNeverExist";
+  @Language("Aya") String testDuplicateExport = """
+    module A { def t => Type }
+    module B { def t => Type }
+    public open A
+    public open B
+    """;
 }

@@ -73,7 +73,7 @@ public class AyaMdParserTest {
     var expPath = oneCase.expectedAyaFile();
 
     if (!expPath.toFile().exists()) {
-      System.err.println(STR."Test Data \{expPath} doesn't exist, skip.");
+      System.err.println("Test Data " + expPath + " doesn't exist, skip.");
     } else {
       var expAyaFile = file(expPath);
 

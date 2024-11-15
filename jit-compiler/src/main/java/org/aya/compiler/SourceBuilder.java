@@ -49,13 +49,13 @@ public interface SourceBuilder {
   void runInside(@NotNull Runnable runnable);
 
   default @NotNull String buildLocalVar(@NotNull String type, @NotNull String name, @Nullable String initial) {
-    var update = initial == null ? "" : STR." = \{initial}";
-    appendLine(STR."\{type} \{name}\{update};");
+    var update = initial == null ? "" : " = " + initial;
+    appendLine(type + " " + name + update + ";");
     return name;
   }
 
   default void buildUpdate(@NotNull String lhs, @NotNull String rhs) {
-    appendLine(STR."\{lhs} = \{rhs};");
+    appendLine(lhs + " = " + rhs + ";");
   }
 
   default void buildIf(@NotNull String condition, @NotNull Runnable onSucc) {
@@ -63,7 +63,7 @@ public interface SourceBuilder {
   }
 
   default void buildIfElse(@NotNull String condition, @NotNull Runnable onSucc, @Nullable Runnable onFailed) {
-    appendLine(STR."if (\{condition}) {");
+    appendLine("if (" + condition + ") {");
     runInside(onSucc);
     if (onFailed == null) appendLine("}");
     else {
@@ -85,7 +85,7 @@ public interface SourceBuilder {
     @Nullable Runnable onFailed
   ) {
     String name = nameGen().nextName();
-    buildIfElse(STR."\{term} instanceof \{type} \{name}",
+    buildIfElse(term + " instanceof " + type + " " + name,
       () -> onSucc.accept(name),
       onFailed);
   }
@@ -96,11 +96,11 @@ public interface SourceBuilder {
     appendLine("} while (false);");
   }
   default void buildBreak() { appendLine("break;"); }
-  default void buildReturn(@NotNull String retWith) { appendLine(STR."return \{retWith};"); }
+  default void buildReturn(@NotNull String retWith) { appendLine("return " + retWith + ";"); }
   default void buildComment(@NotNull String comment) { appendLine("// " + comment); }
   default void buildPanic(@Nullable String message) {
     message = message == null ? "" : makeString(message);
-    appendLine(STR."throw new \{CLASS_PANIC}(\{message});");
+    appendLine("throw new " + CLASS_PANIC + "(" + message + ");");
   }
 
   default void buildInnerClass(@NotNull String className, @Nullable Class<?> superClass, @NotNull Runnable continuation) {
@@ -113,15 +113,15 @@ public interface SourceBuilder {
     boolean isStatic,
     @NotNull Runnable continuation
   ) {
-    var ext = superClass == null ? "" : STR."extends \{getJavaReference(superClass)}";
+    var ext = superClass == null ? "" : "extends " + getJavaReference(superClass);
 
-    appendLine(STR."public \{isStatic ? "static" : ""} final class \{className} \{ext} {");
+    appendLine("public " + (isStatic ? "static" : "") + " final class " + className + " " + ext + " {");
     runInside(continuation);
     appendLine("}");
   }
 
   static @NotNull ImmutableSeq<String> fromSeq(@NotNull String term, int size) {
-    return ImmutableSeq.fill(size, idx -> STR."\{term}.get(\{idx})");
+    return ImmutableSeq.fill(size, idx -> term + ".get(" + idx + ")");
   }
 
   default void appendLine(@NotNull String string) {
@@ -135,7 +135,7 @@ public interface SourceBuilder {
     @NotNull String name,
     @NotNull String value
   ) {
-    appendLine(STR."public static final \{type} \{name} = \{value};");
+    appendLine("public static final " + type + " " + name + " = " + value + ";");
   }
 
   default <R> void buildSwitch(
@@ -148,10 +148,10 @@ public interface SourceBuilder {
       defaultCase.run();
       return;
     }
-    appendLine(STR."switch (\{term}) {");
+    appendLine("switch (" + term + ") {");
     runInside(() -> {
       for (var kase : cases) {
-        appendLine(STR."case \{kase} -> {");
+        appendLine("case " + kase + " -> {");
         runInside(() -> continuation.accept(kase));
         appendLine("}");
       }
@@ -171,8 +171,8 @@ public interface SourceBuilder {
     @NotNull Runnable continuation
   ) {
     var paramStr = params.joinToString(", ",
-      STR."\{override ? "@Override " : ""}public \{returnType} \{name}(", ") {",
-      param -> STR."\{param.type()} \{param.name()}");
+      (override ? "@Override " : "") + "public " + returnType + " " + name + "(", ") {",
+      param -> param.type() + " " + param.name());
     appendLine(paramStr);
     runInside(continuation);
     appendLine("}");

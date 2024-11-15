@@ -11,16 +11,16 @@ public interface ExprializeUtils {
   String SEP = ", ";
 
   static @NotNull String makeNew(@NotNull String className, String... terms) {
-    return ImmutableSeq.from(terms).joinToString(SEP, STR."new \{className}(", ")");
+    return ImmutableSeq.from(terms).joinToString(SEP, "new " + className + "(", ")");
   }
 
   static @NotNull String makeImmutableSeq(
     @NotNull String typeName, @NotNull ImmutableSeq<String> terms, @NotNull String seqName
   ) {
     if (terms.isEmpty()) {
-      return STR."\{seqName}.empty()";
+      return seqName + ".empty()";
     } else {
-      return terms.joinToString(SEP, STR."\{seqName}.<\{typeName}>of(", ")");
+      return terms.joinToString(SEP, seqName + ".<" + typeName + ">of(", ")");
     }
   }
 
@@ -29,11 +29,11 @@ public interface ExprializeUtils {
   }
 
   static @NotNull String makeThunk(@NotNull String value) {
-    return STR."() -> \{value}";
+    return "() -> " + value;
   }
 
   static @NotNull String makeArrayFrom(@NotNull String type, @NotNull ImmutableSeq<String> elements) {
-    return STR."new \{type}[] \{makeHalfArrayFrom(elements)}";
+    return "new " + type + "[] " + makeHalfArrayFrom(elements);
   }
 
   static @NotNull String makeHalfArrayFrom(@NotNull SeqLike<String> elements) {
@@ -41,7 +41,7 @@ public interface ExprializeUtils {
   }
 
   static @NotNull String makeSub(@NotNull String superClass, @NotNull String sub) {
-    return STR."\{superClass}.\{sub}";
+    return superClass + "." + sub;
   }
 
   static @NotNull String makeEnum(@NotNull String enumClass, @NotNull Enum<?> value) {
@@ -49,23 +49,23 @@ public interface ExprializeUtils {
   }
 
   static @NotNull String makeString(@NotNull String raw) {
-    return STR."\"\{StringUtil.escapeStringCharacters(raw)}\"";
+    return "\"" + StringUtil.escapeStringCharacters(raw) + "\"";
   }
 
   static @NotNull String isNull(@NotNull String term) {
-    return STR."\{term} == null";
+    return term + " == null";
   }
 
   static @NotNull String getInstance(@NotNull String defName) {
-    return STR."\{defName}.\{AyaSerializer.STATIC_FIELD_INSTANCE}";
+    return defName + "." + AyaSerializer.STATIC_FIELD_INSTANCE;
   }
 
   static @NotNull String getCallInstance(@NotNull String term) {
-    return STR."\{term}.\{AyaSerializer.FIELD_INSTANCE}()";
+    return term + "." + AyaSerializer.FIELD_INSTANCE + "()";
   }
 
   static @NotNull String getEmptyCallTerm(@NotNull String term) {
-    return STR."\{term}.\{AyaSerializer.FIELD_EMPTYCALL}";
+    return term + "." + AyaSerializer.FIELD_EMPTYCALL;
   }
 
   /**

@@ -83,8 +83,8 @@ public interface Contextful {
 
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {
     var genName = name + Constants.GENERATED_POSTFIX;
-    var domain = freshMeta(STR."\{genName}ty", pos, MetaVar.Misc.IsType, false);
-    var codomain = freshMeta(STR."\{genName}ret", pos, MetaVar.Misc.IsType, false);
+    var domain = freshMeta(genName + "ty", pos, MetaVar.Misc.IsType, false);
+    var codomain = freshMeta(genName + "ret", pos, MetaVar.Misc.IsType, false);
     return new PiTerm(domain, Closure.mkConst(codomain));
   }
 }

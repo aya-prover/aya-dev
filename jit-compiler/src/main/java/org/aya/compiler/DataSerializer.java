@@ -27,7 +27,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
   @Override public DataSerializer serialize(DataDef unit) {
     buildFramework(unit, () -> buildMethod("constructors", ImmutableSeq.empty(),
-      STR."\{CLASS_JITCON}[]", true,
+      CLASS_JITCON + "[]", true,
       () -> buildConstructors(unit)));
     return this;
   }
@@ -63,9 +63,9 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
       return;
     }
 
-    buildIf(ExprializeUtils.isNull(STR."\{cRef}[0]"), () ->
+    buildIf(ExprializeUtils.isNull(cRef + "[0]"), () ->
       unit.body.forEachIndexed((idx, con) ->
-        buildUpdate(STR."\{cRef}[\{idx}]", ExprializeUtils.getInstance(getClassReference(con.ref)))));
+        buildUpdate(cRef + "[" + idx + "]", ExprializeUtils.getInstance(getClassReference(con.ref)))));
 
     buildReturn(cRef);
   }

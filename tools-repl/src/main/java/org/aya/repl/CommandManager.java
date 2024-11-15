@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -43,7 +43,7 @@ public class CommandManager {
   private @NotNull CommandGen genCommand(@NotNull Command c) {
     var entry = Seq.of(c.getClass().getDeclaredMethods())
       .findFirst(method -> method.isAnnotationPresent(Command.Entry.class));
-    if (entry.isEmpty()) throw new IllegalArgumentException(STR."no entry found in \{c.getClass()}");
+    if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.getClass());
     try {
       var method = entry.get();
       method.setAccessible(true); // for anonymous class
@@ -56,10 +56,10 @@ public class CommandManager {
       if (param.size() == 2) return new CommandGen(c, handle, null);
       // TODO: support more than 1 parameter
       var factory = argFactory.getOption(param.get(2));
-      if (factory.isEmpty()) throw new IllegalArgumentException(STR."no argument factory found for \{param.get(2)}");
+      if (factory.isEmpty()) throw new IllegalArgumentException("no argument factory found for " + param.get(2));
       return new CommandGen(c, handle, factory.get());
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(STR."unable to unreflect entry for: \{c.names()}", e);
+      throw new IllegalArgumentException("unable to unreflect entry for: " + c.names(), e);
     }
   }
 
@@ -71,7 +71,7 @@ public class CommandManager {
     public Command.Result run(@NotNull Object repl) throws Throwable {
       return switch (command.size()) {
         case 1 -> command.getFirst().invoke(repl, argument);
-        case 0 -> Command.Result.err(STR."Command `\{name}` not found", true);
+        case 0 -> Command.Result.err("Command `" + name + "` not found", true);
         default -> Command.Result.err(command.view()
             .flatMap(s -> s.owner.names())
             .joinToString("`, `", "Ambiguous command name (`", "`), please be more accurate", s -> s),

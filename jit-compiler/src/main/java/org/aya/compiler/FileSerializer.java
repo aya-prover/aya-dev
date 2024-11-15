@@ -18,7 +18,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
   }
 
   private void buildPackage(@NotNull ModulePath path) {
-    appendLine(STR."package \{getModulePackageReference(path, PACKAGE_SEPARATOR)};");
+    appendLine("package " + getModulePackageReference(path, PACKAGE_SEPARATOR) + ";");
   }
 
   @Override public @NotNull FileSerializer serialize(ModuleSerializer.ModuleResult unit) {

@@ -9,7 +9,6 @@ import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.AyaSerializer.CLASS_IMMSEQ;
 import static org.aya.compiler.ExprializeUtils.getJavaReference;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
@@ -23,13 +22,12 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   @Override protected @NotNull String callClass() { return CLASS_CLASSCALL; }
   @Override protected void buildConstructor(ClassDef unit) { buildSuperCall(ImmutableSeq.empty()); }
 
-  @Override
-  protected boolean shouldBuildEmptyCall(@NotNull ClassDef unit) {
+  @Override protected boolean shouldBuildEmptyCall(@NotNull ClassDef unit) {
     return true;
   }
 
   private void buildMembers(ClassDef unit) {
-    buildIf(STR."\{FIELD_MEMBERS} == null", () ->
+    buildIf(FIELD_MEMBERS + " == null", () ->
       buildUpdate(FIELD_MEMBERS, ExprializeUtils.makeArrayFrom(CLASS_JITMEMBERS, unit.members().map(mem ->
         ExprializeUtils.getInstance(getClassReference(mem.ref())))
       )));
@@ -39,7 +37,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
 
   @Override public AbstractSerializer<ClassDef> serialize(ClassDef unit) {
     buildFramework(unit, () ->
-      buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), STR."\{CLASS_IMMSEQ}<\{CLASS_JITMEMBERS}>", true,
+      buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), CLASS_JITMEMBERS + "[]", true,
         () -> buildMembers(unit)));
 
     return this;

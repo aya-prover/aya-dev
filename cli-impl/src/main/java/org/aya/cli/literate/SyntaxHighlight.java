@@ -144,7 +144,7 @@ public record SyntaxHighlight(
         case DataCon _ -> DefKind.Con;
         case PrimDecl _ -> DefKind.Prim;
         case ClassDecl _ -> DefKind.Clazz;
-        default -> throw new Panic(STR."unknown def type: \{defVar}");
+        default -> throw new Panic("unknown def type: " + defVar);
       };
       case LocalVar(_, _, GenerateKind.Generalized(_)) -> DefKind.Generalized;
       case LocalVar _ -> DefKind.LocalVar;
