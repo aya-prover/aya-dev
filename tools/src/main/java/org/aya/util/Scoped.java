@@ -12,10 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 
 /**
- * A container that has scope structure,
- * this is designed to growable, but not shrinkable or modify existing record.
+ * A map-like container that has a scope structure,
+ * this is designed to be growable, but not shrinkable or modify existing record.
  *
- * @param <This> the <b>final</b> type that implemented this interface
+ * @param <This> the <b>final</b>(at least, final for user) type that implemented this interface
  */
 public interface Scoped<K, V, This extends Scoped<K, V, This>> {
   @Contract(pure = true) @Nullable This parent();

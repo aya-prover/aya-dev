@@ -80,6 +80,7 @@ public interface AyaCompleters {
       var word = line.word();
       var fixed = fixWord(word, line.wordIndex(), (ImmutableSeq<FlexLexer.Token>) line.rawTokens(), line.line());
       var context = repl.replCompiler.getContext();
+      // Keep these for debugging, they are hard to type.
       // System.out.println(word + " ∈ " + line.words() + ", [idx, cursor, wordCursor]: "
       //   + line.wordIndex() + ", " + line.cursor() + ", " + line.wordCursor());
       context.giveMeHint(fixed.moduleName).forEach(candidate -> {

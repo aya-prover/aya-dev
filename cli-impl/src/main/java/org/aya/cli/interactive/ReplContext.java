@@ -170,13 +170,19 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
    */
   private @NotNull ImmutableMap<String, ModuleTrie>
   buildModuleTree(@NotNull Seq<SeqView<String>> moduleNames) {
+    if (moduleNames.isEmpty()) {
+      return ImmutableMap.empty();
+    }
+
     var indexed = MutableMap.<String, MutableList<SeqView<String>>>create();
     var inhabited = MutableSet.<String>create();
 
+    // merge module names those have the same 1-length prefix
+    // also mark 1-length name as inhabited
     for (var name : moduleNames) {
       var head = name.getFirst();
       var tail = name.drop(1);
-      // we always create a record even [tail] is empty
+      // we always create a record even [tail] is empty, it is used to trigger the creation of ModuleTrie.
       var root = indexed.getOrPut(head, MutableList::create);
       if (tail.isNotEmpty()) {
         root.append(tail);

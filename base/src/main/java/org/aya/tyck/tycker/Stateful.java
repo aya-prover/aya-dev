@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Indicating something is {@link TyckState}ful,
- * therefore we can perform weak-head normalizing and <b>Ice Spell 「 Perfect Freeze 」</b>
+ * therefore we can perform weak-head normalizing and <b>Freeze Spell 「 Perfect Freeze 」</b>
  *
  * @see #state()
  * @see #whnf(Term)

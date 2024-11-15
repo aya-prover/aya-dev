@@ -188,7 +188,7 @@ public record CompiledModule(
           for (var constructor : data.constructors()) {
             innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
           }
-          context.importModule(
+          context.importModuleContext(
             ModuleName.This.resolve(data.name()),
             innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
           if (metadata.shape() != -1) {
@@ -223,7 +223,7 @@ public record CompiledModule(
         thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
       var mod = success.thisModule();
-      thisResolve.thisModule().importModule(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
+      thisResolve.thisModule().importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),

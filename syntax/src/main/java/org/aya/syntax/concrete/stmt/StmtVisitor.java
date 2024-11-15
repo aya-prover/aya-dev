@@ -64,12 +64,12 @@ public interface StmtVisitor extends Consumer<Stmt> {
   private void visitVars(@NotNull Stmt stmt) {
     switch (stmt) {
       case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, noType));
-      case Command.Module m -> visitModuleDecl(m.sourcePos(), new ModuleName.Qualified(m.name()));
+      case Command.Module m -> visitModuleDecl(m.sourcePos(), ModuleName.of(m.name()));
       case Command.Import i -> {
         var isAlsoDef = i.asName() == null;
         visitModuleRef(i.sourcePos(), i.path());
         if (!isAlsoDef) {
-          visitModuleDecl(i.sourcePos(), new ModuleName.Qualified(i.asName()));
+          visitModuleDecl(i.sourcePos(), ModuleName.of(i.asName()));
         } else {
           // TODO: visitModuleDecl on the last element of i.path
         }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-public interface LocalCtx extends Scoped<LocalVar, Term, LocalCtx> {
+public sealed interface LocalCtx extends Scoped<LocalVar, Term, LocalCtx> permits SeqLocalCtx, MapLocalCtx {
   boolean isEmpty();
   int size();
   @Contract(value = "_ -> new", pure = true)

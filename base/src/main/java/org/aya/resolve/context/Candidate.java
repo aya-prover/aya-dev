@@ -6,12 +6,19 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Candidate represents a list of candidate of symbol resolving
  */
 public sealed interface Candidate<T> {
+  /**
+   * Merge two candidate.
+   *
+   * @implSpec If conflict happens, {@param candy} will overwrite {@code this},
+   * the user should check all possible conflicts before merge.
+   */
   @NotNull Candidate<T> merge(@NotNull Candidate<T> candy);
   boolean isAmbiguous();
   boolean isEmpty();
@@ -52,7 +59,6 @@ public sealed interface Candidate<T> {
    *
    * @param symbols key: the module that the symbol comes from<br/>
    *                value: the symbol
-   * @param <T>
    */
   record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
     public static <T> @NotNull Candidate<T> empty() {
@@ -70,6 +76,8 @@ public sealed interface Candidate<T> {
     @Override public boolean isEmpty() { return symbols.isEmpty(); }
 
     @Override public T get() {
+      var view = symbols.valuesView().distinct();
+      if (view.sizeGreaterThan(1)) Panic.unreachable();
       //noinspection OptionalGetWithoutIsPresent
       return symbols.valuesView().stream().findFirst().get();
     }
@@ -82,6 +90,7 @@ public sealed interface Candidate<T> {
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
+
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
