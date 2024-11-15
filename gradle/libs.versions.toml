@@ -14,7 +14,7 @@ kala = "0.74.0"
 picocli = "4.7.6"
 build-util = "0.0.28"
 # https://github.com/jline/jline3
-jline = "3.26.3"
+jline = "3.27.1"
 # https://github.com/commonmark/commonmark-java
 commonmark = "0.24.0"
 # https://junit.org/junit5
@@ -23,11 +23,11 @@ hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.11.0"
 # https://github.com/beryx/badass-jlink-plugin
-jlink = "3.0.1"
+jlink = "3.1.0"
 # https://github.com/jacoco/jacoco
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
-manifold = "2024.1.39"
+manifold = "2024.1.41"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }

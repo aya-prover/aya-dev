@@ -57,16 +57,15 @@ jlink {
     requires("java.logging")
   }
   launcher {
-    mainClass.set(Constants.mainClassQName)
+    mainClass = Constants.mainClassQName
     name = "aya-lsp"
     jvmArgs = mutableListOf("--enable-preview")
   }
   secondaryLauncher {
+    moduleName = "aya.cli.console"
+    mainClass = "org.aya.cli.console.Main"
     name = "aya"
     jvmArgs = mutableListOf("--enable-preview")
-    this as org.beryx.jlink.data.SecondaryLauncherData
-    mainClass = "org.aya.cli.console.Main"
-    moduleName = "aya.cli.console"
   }
   supportedPlatforms.forEach { platform ->
     targetPlatform(platform) {
