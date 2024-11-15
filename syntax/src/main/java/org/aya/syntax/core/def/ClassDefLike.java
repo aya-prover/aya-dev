@@ -14,12 +14,12 @@ public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.D
 
   default @NotNull Term telescope(int i, @NotNull Seq<Term> restriction) {
     var member = members().get(i);
-    // Our code should not refer the subterm of [self], the only meaningful part is [self.forget()]
+    // Our code should not refer any out-of-scope field, the only meaningful part is [self.forget().take(i)]
     // Also, we don't use NewTerm, cause the type of the self-parameter is a class call without any restriction.
-    var self = new ClassCastTerm(this, ErrorTerm.DUMMY, ImmutableSeq.empty(),
-      restriction.view().take(i).map(Closure::mkConst).toImmutableSeq()
-    );
+    var implList = ImmutableSeq.fill(members().size(), idx ->
+      Closure.mkConst(idx < i ? restriction.get(idx) : ErrorTerm.DUMMY));
 
+    var self = new ClassCastTerm(this, ErrorTerm.DUMMY, ImmutableSeq.empty(), implList);
     return member.signature().inst(ImmutableSeq.of(self)).makePi(Seq.empty());
   }
 
