@@ -23,7 +23,7 @@ hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.11.0"
 # https://github.com/beryx/badass-jlink-plugin
-jlink = "3.1.0"
+jlink = "3.1.0-rc-1"
 # https://github.com/jacoco/jacoco
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
