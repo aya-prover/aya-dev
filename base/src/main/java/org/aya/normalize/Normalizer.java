@@ -45,6 +45,7 @@ public final class Normalizer implements UnaryOperator<Term> {
     // ConCall for point constructors are always in WHNF
     if (term instanceof ConCall con && !con.ref().hasEq()) return con;
     var postTerm = term.descent(this);
+    // descent may change the java type of term, i.e. beta reduce
     var defaultValue = usePostTerm ? postTerm : term;
 
     return switch (postTerm) {
@@ -78,11 +79,12 @@ public final class Normalizer implements UnaryOperator<Term> {
         var result = reduceRule.rule().apply(reduceRule.args());
         if (result != null) yield apply(result);
         // We can't handle it, try to delegate to FnCall
-        yield reduceRule instanceof RuleReducer.Fn fnRule
-          ? apply(fnRule.toFnCall())
-          : defaultValue;
+        yield switch (reduceRule) {
+          case RuleReducer.Fn fn -> apply(fn.toFnCall());
+          case RuleReducer.Con _ -> postTerm;
+        };
       }
-      case ConCall(var head, _) when !head.ref().hasEq() -> defaultValue;
+      case ConCall(var head, _) when !head.ref().hasEq() -> postTerm;
       case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
         call.head().ref().equality(call.args(), dim == DimTerm.I0);
       case PrimCall prim -> state.primFactory.unfold(prim, state);
