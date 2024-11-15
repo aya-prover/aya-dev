@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * A map-like container that has a scope structure,
@@ -43,6 +44,14 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
     }
 
     return acc;
+  }
+
+  default void forEach(@NotNull Consumer<This> consumer) {
+    @Nullable var scope = self();
+    while (scope != null) {
+      consumer.accept(scope);
+      scope = scope.parent();
+    }
   }
 
   @ApiStatus.Internal
