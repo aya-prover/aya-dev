@@ -22,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 import static org.aya.compiler.AyaSerializer.*;
-import static org.aya.compiler.ExprializeUtils.makeThunk;
+import static org.aya.compiler.ExprializeUtils.*;
 import static org.aya.compiler.NameSerializer.getClassReference;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
-public class TermExprializer extends AbstractExprializer<Term> {
+public final class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_LAMTERM = ExprializeUtils.getJavaReference(LamTerm.class);
   public static final String CLASS_JITLAMTERM = ExprializeUtils.getJavaReference(Closure.Jit.class);
   public static final String CLASS_APPTERM = ExprializeUtils.getJavaReference(AppTerm.class);
@@ -48,6 +48,9 @@ public class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_RULE_FN = ExprializeUtils.makeSub(CLASS_RULEREDUCER, ExprializeUtils.getJavaReference(RuleReducer.Fn.class));
   public static final String CLASS_NEW = ExprializeUtils.getJavaReference(NewTerm.class);
   public static final String CLASS_MEMCALL = ExprializeUtils.getJavaReference(MemberCall.class);
+  public static final String CLASS_CASTTERM = ExprializeUtils.getJavaReference(ClassCastTerm.class);
+  public static final String CLASS_CLSCALL = ExprializeUtils.getJavaReference(ClassCall.class);
+  public static final String CLASS_CLOSURE = ExprializeUtils.getJavaReference(Closure.class);
 
   /**
    * Terms that should be instantiated
@@ -137,7 +140,11 @@ public class TermExprializer extends AbstractExprializer<Term> {
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
         ExprializeUtils.getEmptyCallTerm(getClassReference(call.ref()));
-      case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
+      case ClassCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_CLSCALL,
+        getInstance(getClassReference(ref)),
+        Integer.toString(ulift),
+        serializeClosureToImmutableSeq(args)
+      );
       case MemberCall(var of, var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_MEMCALL,
         doSerialize(of),
         ExprializeUtils.getInstance(getClassReference(ref)),
@@ -232,7 +239,12 @@ public class TermExprializer extends AbstractExprializer<Term> {
       );
       case StringTerm stringTerm -> ExprializeUtils.makeNew(CLASS_STRING,
         ExprializeUtils.makeString(StringUtil.escapeStringCharacters(stringTerm.string())));
-      case ClassCastTerm classCastTerm -> throw new UnsupportedOperationException("TODO");
+      case ClassCastTerm(var classRef, var subterm, var rember, var forgor) -> makeNew(CLASS_CASTTERM,
+        getInstance(getClassReference(classRef)),
+        serialize(subterm),
+        serializeClosureToImmutableSeq(rember),
+        serializeClosureToImmutableSeq(forgor)
+      );
       case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
   }
@@ -247,6 +259,10 @@ public class TermExprializer extends AbstractExprializer<Term> {
     var result = continuation.apply(new FreeTerm(bind));
     this.binds.remove(bind);
     return result;
+  }
+
+  private @NotNull String serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
+    return makeImmutableSeq(CLASS_CLOSURE, cls.map(this::serializeClosure));
   }
 
   private @NotNull String serializeClosure(@NotNull Closure body) {

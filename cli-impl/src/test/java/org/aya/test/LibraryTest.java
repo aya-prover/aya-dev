@@ -34,6 +34,13 @@ import java.nio.file.attribute.FileTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * LibraryTest testing the compilation of a library and its dependencies
+ *
+ * @see #testOnDisk
+ * @see #testLiterate
+ * @see #testInMemoryAndPrim
+ */
 public class LibraryTest {
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());
   @ParameterizedTest
@@ -51,6 +58,7 @@ public class LibraryTest {
     assertEquals(0, compile(libRoot));
   }
 
+  // Use this test for additional compilation
   @Test public void fastTestOnDisk() throws IOException {
     FileUtil.deleteRecursively(DIR.resolve("build"));
     assertEquals(0, compile(DIR));
