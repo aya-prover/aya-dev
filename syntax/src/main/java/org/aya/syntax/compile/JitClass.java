@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
-import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +20,7 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
 
   public abstract @NotNull JitMember[] membars();
 
-  @Override
-  public final @NotNull ImmutableSeq<MemberDefLike> members() {
+  @Override public final @NotNull ImmutableSeq<MemberDefLike> members() {
     return ImmutableArray.Unsafe.wrap(membars());
   }
 
@@ -31,8 +29,7 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
     return ClassDefLike.super.telescope(i, teleArgs);
   }
 
-  @Override
-  public final @NotNull Term result(Seq<Term> teleArgs) {
+  @Override public final @NotNull Term result(Seq<Term> teleArgs) {
     return result(teleArgs.size());
   }
 }

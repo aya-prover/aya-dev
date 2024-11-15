@@ -25,15 +25,7 @@ public abstract non-sealed class JitMember extends JitDef implements MemberDefLi
     this.type = type;
   }
 
-  @Override
-  public @NotNull ClassDefLike classRef() {
-    return classRef;
-  }
-
-  @Override
-  public @NotNull SortTerm type() { return type; }
-  @Override
-  public int index() {
-    return index;
-  }
+  @Override public @NotNull ClassDefLike classRef() { return classRef; }
+  @Override public @NotNull SortTerm type() { return type; }
+  @Override public int index() { return index; }
 }
