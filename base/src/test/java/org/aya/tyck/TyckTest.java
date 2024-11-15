@@ -212,7 +212,7 @@ public class TyckTest {
     var endTime = System.currentTimeMillis();
     assertNotNull(sortResult);
 
-    System.out.println(STR."Done in \{(endTime - beginTime)}");
+    System.out.println("Done in " + (endTime - beginTime));
     System.out.println(sortResult.debuggerOnlyToString());
   }
 

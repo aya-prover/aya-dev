@@ -27,11 +27,11 @@ public class Profiler {
     for (var i = 0; i < count; ++i) {
       var time = times[i];
       sum += time;
-      System.out.println(STR."\{i}: Done in \{time}ms");
+      System.out.println(i + ": Done in " + time + "ms");
     }
 
     var ave = sum / count;
-    System.out.println(STR."Average: Done in \{ave}ms");
+    System.out.println("Average: Done in " + ave + "ms");
     return ave;
   }
 }

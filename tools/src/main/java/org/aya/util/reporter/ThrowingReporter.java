@@ -12,9 +12,7 @@ public record ThrowingReporter(@NotNull PrettierOptions options) implements Coun
       System.err.println(render);
       return;
     }
-    throw new AssertionError(STR."""
-Failed with `\{problem.getClass()}`: \{render}
-at \{problem.sourcePos()}""");
+    throw new AssertionError("Failed with `" + problem.getClass() + "`: " + render + "\nat " + problem.sourcePos());
   }
 
   @Override public int problemSize(Problem.@NotNull Severity severity) { return 0; }

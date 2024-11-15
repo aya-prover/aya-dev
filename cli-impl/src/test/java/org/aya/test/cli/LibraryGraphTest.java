@@ -42,7 +42,7 @@ public class LibraryGraphTest {
    * Create a {@link LibraryConfig} for identifying.
    */
   private @NotNull LibraryConfig config(@NotNull String name) {
-    var libRoot = Path.of(STR."/home/senpai/\{name}");
+    var libRoot = Path.of("/home/senpai/" + name);
 
     return new LibraryConfig(
       Version.create("11.4.514"),

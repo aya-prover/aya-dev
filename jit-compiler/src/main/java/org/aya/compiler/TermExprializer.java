@@ -116,13 +116,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       callArgs[i + 2] = seredSeq.get(i);
     }
 
-    var elevate = ulift > 0 ? STR.".elevate(\{ulift})" : "";
+    var elevate = ulift > 0 ? ".elevate(" + ulift + ")" : "";
     var onStuck = makeThunk(ExprializeUtils.makeNew(callName, callArgs));
     var finalArgs = fixed
       ? flatArgs.view().prepended(onStuck).joinToString()
-      : STR."\{onStuck}, \{ExprializeUtils.makeImmutableSeq(CLASS_TERM, flatArgs)}";
+      : onStuck + ", " + ExprializeUtils.makeImmutableSeq(CLASS_TERM, flatArgs);
 
-    return STR."\{reducible}.invoke(\{finalArgs})\{elevate}";
+    return reducible + ".invoke(" + finalArgs + ")" + elevate;
   }
 
   @Override protected @NotNull String doSerialize(@NotNull Term term) {
@@ -132,7 +132,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         // the serializer will instantiate some variable while serializing LamTerm
         var subst = binds.getOrNull(bind);
         if (subst == null) {
-          throw new Panic(STR."No substitution for \{bind} during serialization");
+          throw new Panic("No substitution for " + bind + " during serialization");
         }
 
         yield subst;
@@ -270,12 +270,12 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull String serializeClosure(@NotNull String param, @NotNull Closure body) {
-    return ExprializeUtils.makeNew(CLASS_JITLAMTERM, STR."\{param} -> \{with(param, t -> doSerialize(body.apply(t)))}");
+    return ExprializeUtils.makeNew(CLASS_JITLAMTERM, param + " -> " + with(param, t -> doSerialize(body.apply(t))));
   }
 
   @Override public @NotNull String serialize(Term unit) {
     binds.clear();
-    var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar(STR."arg\{i}"));
+    var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instantiateTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
 

@@ -80,10 +80,10 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(STR."\{ExprializeUtils.getCallInstance(mmTerm)} == \{ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref()))}",
+          buildIfElse(ExprializeUtils.getCallInstance(mmTerm) + " == " + ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref())),
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
-                nameGen().nextName(), STR."\{mmTerm}.conArgs()");
+                nameGen().nextName(), mmTerm + ".conArgs()");
               doSerialize(con.args().view(), SourceBuilder.fromSeq(conArgsTerm, con.args().size()).view(),
                 Once.of(() -> buildUpdate(VARIABLE_SUBSTATE, "true")));
             }))
@@ -98,7 +98,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
-          doSerialize(tuple.elements().view(), SourceBuilder.fromSeq(STR."\{mmTerm}.items()",
+          doSerialize(tuple.elements().view(), SourceBuilder.fromSeq(mmTerm + ".items()",
             tuple.elements().size()).view(), Once.of(() -> { })))
       ), continuation);
     }
@@ -129,7 +129,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     buildLocalVar(CLASS_TERM, tmpName, term);
 
     for (var pre : preContinuation) {
-      buildIf(STR."! \{VARIABLE_SUBSTATE}", () -> pre.accept(tmpName));
+      buildIf("! " + VARIABLE_SUBSTATE, () -> pre.accept(tmpName));
     }
 
     buildIf(VARIABLE_SUBSTATE, continuation);
@@ -137,7 +137,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   private void matchInt(@NotNull Pat.ShapedInt pat, @NotNull String term) {
     buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm ->
-      buildIf(STR."\{pat.repr()} == \{intTerm}.repr()", () ->
+      buildIf(pat.repr() + " == " + intTerm + ".repr()", () ->
         // Pat.ShapedInt provides no binds
         buildUpdate(VARIABLE_SUBSTATE, "true")), null);
   }
@@ -179,7 +179,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   }
 
   private void onMatchBind(@NotNull String term) {
-    appendLine(STR."\{VARIABLE_RESULT}.set(\{bindCount++}, \{term});");
+    appendLine(VARIABLE_RESULT + ".set(" + bindCount++ + ", " + term + ");");
   }
 
   /// endregion Java Source Code Generate API
@@ -192,7 +192,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int maxBindSize = bindSize.max();
 
-    buildLocalVar(STR."\{CLASS_MUTSEQ}<\{CLASS_TERM}>", VARIABLE_RESULT, STR."\{CLASS_MUTSEQ}.fill(\{maxBindSize}, (\{CLASS_TERM}) null)");
+    buildLocalVar(CLASS_MUTSEQ + "<" + CLASS_TERM + ">", VARIABLE_RESULT, CLASS_MUTSEQ + ".fill(" + maxBindSize + ", (" + CLASS_TERM + ") null)");
     buildLocalVar("int", VARIABLE_STATE, "0");
     buildLocalVar("boolean", VARIABLE_SUBSTATE, "false");
 
@@ -204,7 +204,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         argNames.view(),
         Once.of(() -> updateState(jumpCode)));
 
-      buildIf(STR."\{VARIABLE_STATE} > 0", this::buildBreak);
+      buildIf(VARIABLE_STATE + " > 0", this::buildBreak);
     }));
 
     // -1 ..= unit.size()

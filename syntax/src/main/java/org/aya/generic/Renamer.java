@@ -3,7 +3,6 @@
 package org.aya.generic;
 
 import kala.collection.mutable.MutableMap;
-import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.xtt.CoeTerm;
@@ -27,11 +26,7 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
   public static @NotNull String nameOf(@Nullable Term ty) {
     return switch (ty) {
       case FreeTerm(var name) -> name.name();
-      case MetaPatTerm(var meta) -> {
-        var solution = meta.solution().get();
-        if (solution == null) yield "p";
-        yield nameOf(PatToTerm.visit(solution));
-      }
+      case MetaPatTerm _ -> "p";
       case Callable.Tele c -> Character.toString(Character.toLowerCase(
         c.ref().name().codePointAt(0)));
       case PiTerm _ -> "f";

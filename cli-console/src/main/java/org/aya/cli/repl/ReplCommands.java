@@ -81,7 +81,7 @@ public interface ReplCommands {
       try {
         repl.replCompiler.loadToContext(path);
       } catch (IOException e) {
-        return Result.err(STR."Unable to load file or library: \{e.getLocalizedMessage()}", true);
+        return Result.err("Unable to load file or library: " + e.getLocalizedMessage(), true);
       }
       // SingleFileCompiler would print result to REPL.
       return new Result(Output.empty(), true);
@@ -90,7 +90,7 @@ public interface ReplCommands {
 
   @NotNull Command CHANGE_CWD = new Command(ImmutableSeq.of("cd"), "Change current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Path path) {
-      if (!Files.isDirectory(path)) return Result.err(STR."cd: no such file or directory: \{path}", true);
+      if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + path, true);
       repl.cwd = path;
       // for jline completer to work properly, but it does not have any effect actually
       System.setProperty("user.dir", path.toAbsolutePath().toString());
@@ -134,10 +134,10 @@ public interface ReplCommands {
   @NotNull Command CHANGE_NORM_MODE = new Command(ImmutableSeq.of("normalize"), "Set or display the normalization mode") {
     @Entry
     public @NotNull Command.Result execute(@NotNull AyaRepl repl, @Nullable CodeOptions.NormalizeMode normalizeMode) {
-      if (normalizeMode == null) return Result.ok(STR."Normalization mode: \{repl.config.normalizeMode}", true);
+      if (normalizeMode == null) return Result.ok("Normalization mode: " + repl.config.normalizeMode, true);
       else {
         repl.config.normalizeMode = normalizeMode;
-        return Result.ok(STR."Normalization mode set to \{normalizeMode}", true);
+        return Result.ok("Normalization mode set to " + normalizeMode, true);
       }
     }
   };

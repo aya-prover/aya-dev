@@ -19,7 +19,7 @@ public interface ReplUtil {
       return commandManager.cmd.find(c -> c.owner().names().contains(argument.cmd))
         .getOrElse(
           it -> Command.Result.ok(it.owner().help(), true),
-          () -> Command.Result.err(STR."No such command: \{argument.cmd}", true));
+          () -> Command.Result.err("No such command: " + argument.cmd, true));
     }
     var commands = Doc.vcat(commandManager.cmd.view()
       .map(command -> Doc.sep(

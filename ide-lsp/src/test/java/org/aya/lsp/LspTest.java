@@ -110,7 +110,7 @@ public class LspTest {
   }
 
   private void logTime(long time) {
-    System.out.println(STR."Remake changed modules took: \{time}ms");
+    System.out.println("Remake changed modules took: " + time + "ms");
   }
 
   private void assertRemake(@NotNull LspTestCompilerAdvisor advisor, long time, @NotNull String... modules) {

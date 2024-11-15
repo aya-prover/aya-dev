@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.html;
 
@@ -103,7 +103,7 @@ public class Html5Stylist extends ClosingStylist {
   }
 
   public static @NotNull String cssVar(@NotNull String name) {
-    return STR."--\{normalizeCssId(name)}";
+    return "--" + normalizeCssId(name);
   }
 
   public static @NotNull String cssColor(int rgb) {

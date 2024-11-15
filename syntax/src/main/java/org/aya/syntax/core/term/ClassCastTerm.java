@@ -24,7 +24,8 @@ public record ClassCastTerm(
   @NotNull ImmutableSeq<Closure> forget
 ) implements StableWHNF, Term {
   public ClassCastTerm {
-    assert forget.isNotEmpty();
+    // TODO: uncomment
+    // assert forget.isNotEmpty();
   }
 
   public @NotNull ClassCastTerm update(

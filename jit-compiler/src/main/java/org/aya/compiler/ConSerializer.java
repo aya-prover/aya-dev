@@ -6,10 +6,10 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.BooleanConsumer;
 import org.aya.generic.State;
-import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AyaSerializer.*;
@@ -34,15 +34,15 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   private void buildIsAvailable(ConDef unit, @NotNull String argsTerm) {
     String matchResult;
-    var termSeq = STR."\{argsTerm}.toImmutableSeq()";
+    var termSeq = argsTerm + ".toImmutableSeq()";
     if (unit.pats.isEmpty()) {
       // not indexed data type, this constructor is always available
-      matchResult = STR."\{CLASS_RESULT}.ok(\{termSeq})";
+      matchResult = CLASS_RESULT + ".ok(" + termSeq + ")";
     } else {
       var patsTerm = unit.pats.map(x -> new PatternExprializer(nameGen(), true).serialize(x));
       var patsSeq = ExprializeUtils.makeImmutableSeq(CLASS_PAT, patsTerm, CLASS_IMMSEQ);
       var matcherTerm = ExprializeUtils.makeNew(CLASS_PATMATCHER, "true", "x -> x");
-      matchResult = STR."\{matcherTerm}.apply(\{patsSeq}, \{termSeq})";
+      matchResult = matcherTerm + ".apply(" + patsSeq + ", " + termSeq + ")";
     }
 
     buildReturn(matchResult);
@@ -69,7 +69,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     buildFramework(unit, () -> {
       buildMethod("isAvailable",
         ImmutableSeq.of(new JitParam(argsTerm, TYPE_TERMSEQ)),
-        STR."\{CLASS_RESULT}<\{TYPE_IMMTERMSEQ}, \{CLASS_STATE}>", true,
+        CLASS_RESULT + "<" + TYPE_IMMTERMSEQ + ", " + CLASS_STATE + ">", true,
         () -> buildIsAvailable(unit, argsTerm));
       appendLine();
       if (unit.equality != null) buildMethod("equality",

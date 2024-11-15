@@ -276,3 +276,28 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+DuplicateExport:
+In file $FILE:4:12 ->
+
+  2 │   module B { def t => Type }
+  3 │   public open A
+  4 │   public open B
+    │               ╰╯
+
+Warning: The name `t` introduces ambiguity and can only be accessed through a 
+         qualified name
+
+In file $FILE:4:12 ->
+
+  2 │   module B { def t => Type }
+  3 │   public open A
+  4 │   public open B
+    │               ╰╯
+
+Error: The name `t` being exported clashes with another exported definition with
+       the same name
+
+Resolving interrupted due to:
+1 error(s), 1 warning(s).
+Let's learn from that.
+

@@ -76,7 +76,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   private @NotNull Panic noRules(@NotNull Term term) {
-    return new Panic(STR."\{term.getClass()}: \{term.toDoc(AyaPrettierOptions.debug()).debugRender()}");
+    return new Panic(term.getClass() + ": " + term.toDoc(AyaPrettierOptions.debug()).debugRender());
   }
   /// endregion Utilities
 

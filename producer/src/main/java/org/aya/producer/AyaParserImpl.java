@@ -5,12 +5,12 @@ package org.aya.producer;
 import com.intellij.psi.DefaultPsiParser;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.syntax.GenericAyaParser;
 import org.aya.intellij.GenericNode;
 import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.parser.AyaPsiElementTypes;
+import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.error.SourceFile;
@@ -29,7 +29,7 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
   }
 
   @Override public @NotNull WithPos<Expr> expr(@NotNull String code, @NotNull SourcePos sourcePos) {
-    var node = parseNode(STR."prim a : \{code}");
+    var node = parseNode("prim a : " + code);
     var type = node.child(AyaPsiElementTypes.PRIM_DECL).child(AyaPsiElementTypes.TYPE);
     return new AyaProducer(Either.right(sourcePos), reporter).type(type);
   }

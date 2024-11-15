@@ -27,7 +27,7 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
 
   public @NotNull CompiledAya metadata() {
     if (metadata == null) metadata = getClass().getAnnotation(CompiledAya.class);
-    if (metadata == null) throw new Panic(STR."No @CompiledAya on \{getClass().getName()}");
+    if (metadata == null) throw new Panic("No @CompiledAya on " + getClass().getName());
     return metadata;
   }
 

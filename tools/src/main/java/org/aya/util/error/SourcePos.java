@@ -130,7 +130,7 @@ public record SourcePos(
   }
 
   @Override public String toString() {
-    return STR."(\{tokenStartIndex}-\{tokenEndIndex}) [\{startLine},\{startColumn}-\{endLine},\{endColumn}\{']'}";
+    return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';
   }
 
   @Override

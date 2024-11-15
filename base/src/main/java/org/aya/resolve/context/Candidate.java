@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.CollectionView;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
@@ -39,6 +41,8 @@ public sealed interface Candidate<T> {
    */
   T get();
 
+  CollectionView<T> getAll();
+
   /**
    * A candidate list that only store one symbol, furthermore, it implies the symbol is defined in this module.
    */
@@ -50,6 +54,11 @@ public sealed interface Candidate<T> {
     @Override public boolean isAmbiguous() { return false; }
     @Override public boolean isEmpty() { return false; }
     @Override public T get() { return symbol; }
+
+    @Override
+    public CollectionView<T> getAll() {
+      return SeqView.of(symbol);
+    }
     @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.of(ModuleName.This); }
     @Override public boolean contains(@NotNull ModuleName modName) { return modName == ModuleName.This; }
   }
@@ -80,6 +89,11 @@ public sealed interface Candidate<T> {
       if (view.sizeGreaterThan(1)) Panic.unreachable();
       //noinspection OptionalGetWithoutIsPresent
       return symbols.valuesView().stream().findFirst().get();
+    }
+
+    @Override
+    public CollectionView<T> getAll() {
+      return symbols.valuesView();
     }
 
     @Override

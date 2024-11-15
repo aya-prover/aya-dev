@@ -7,7 +7,8 @@ import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.AyaSerializer.*;
+import static org.aya.compiler.AyaSerializer.FIELD_EMPTYCALL;
+import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<T> {
@@ -29,7 +30,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
     var assoc = ref.assoc();
     var assocIdx = assoc == null ? -1 : assoc.ordinal();
     assert module != null;
-    appendLine(STR."@\{CLASS_METADATA}(");
+    appendLine("@" + CLASS_METADATA + "(");
     var modPath = module.module().module();
     appendMetadataRecord("module", ExprializeUtils.makeHalfArrayFrom(modPath.view().map(ExprializeUtils::makeString)), true);
     // Assumption: module.take(fileModule.size).equals(fileModule)
@@ -48,7 +49,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
 
   protected void appendMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
     var prepend = isFirst ? "" : ", ";
-    appendLine(STR."\{prepend}\{name} = \{value}");
+    appendLine(prepend + name + " = " + value);
   }
 
   public void buildInstance(@NotNull String className) {
@@ -56,7 +57,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
   }
 
   public void buildSuperCall(@NotNull ImmutableSeq<String> args) {
-    appendLine(STR."super(\{args.joinToString(", ")});");
+    appendLine("super(" + args.joinToString(", ") + ");");
   }
 
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);

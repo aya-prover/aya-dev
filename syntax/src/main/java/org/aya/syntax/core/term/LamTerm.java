@@ -39,7 +39,7 @@ public record LamTerm(Closure body) implements StableWHNF {
     var it = term;
 
     while (it instanceof LamTerm(var lam)) {
-      var name = nameGen.bindName(STR."p\{params.size()}");
+      var name = nameGen.bindName("p" + params.size());
       params.append(name);
       it = lam.apply(new FreeTerm(name));
     }

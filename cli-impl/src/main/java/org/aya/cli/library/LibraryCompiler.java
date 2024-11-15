@@ -88,13 +88,13 @@ public class LibraryCompiler {
     @NotNull Path libraryRoot
   ) throws IOException {
     if (!Files.exists(libraryRoot)) {
-      reporter.reportString(STR."Specified library root does not exist: \{libraryRoot}");
+      reporter.reportString("Specified library root does not exist: " + libraryRoot);
       return 1;
     }
     try {
       return newCompiler(primFactory, reporter, flags, advisor, libraryRoot).start();
     } catch (LibraryConfigData.BadConfig bad) {
-      reporter.reportString(STR."Cannot load malformed library: \{bad.getMessage()}");
+      reporter.reportString("Cannot load malformed library: " + bad.getMessage());
       return 1;
     }
   }
@@ -139,8 +139,8 @@ public class LibraryCompiler {
         known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
       known.appendAll(dedup);
     });
-    reporter.reportNest(STR."Done in \{StringUtil.timeToString(
-      System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
+    reporter.reportNest("Done in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return depGraph;
   }
 
@@ -212,7 +212,7 @@ public class LibraryCompiler {
       owner.addModulePath(dep.outDir());
     }
 
-    reporter.reportString(STR."Compiling \{library.name()}");
+    reporter.reportString("Compiling " + library.name());
     var startTime = System.currentTimeMillis();
     if (anyDepChanged || flags.remake()) {
       owner.librarySources().forEach(this::clearModified);
@@ -229,8 +229,8 @@ public class LibraryCompiler {
     }
 
     var make = make(modified);
-    reporter.reportNest(STR."Library loaded in \{StringUtil.timeToString(
-      System.currentTimeMillis() - startTime)}", LibraryOwner.DEFAULT_INDENT + 2);
+    reporter.reportNest("Library loaded in " + StringUtil.timeToString(
+      System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     pretty(modified);
     return make;
   }
@@ -374,7 +374,7 @@ public class LibraryCompiler {
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
-        throw new Panic(STR."Unable to load module: \{moduleName}");
+        throw new Panic("Unable to load module: " + moduleName);
     }
   }
 

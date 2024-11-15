@@ -28,7 +28,7 @@ public sealed interface TupleError extends TyckError {
         Doc.english("Cannot project the"),
         Doc.ordinal(actual),
         Doc.english("element because the type has index range"),
-        Doc.plain(STR."[1, \{expectedBound}]")
+        Doc.plain("[1, " + expectedBound + "]")
       );
     }
   }

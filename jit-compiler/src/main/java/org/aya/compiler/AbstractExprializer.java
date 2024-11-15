@@ -12,7 +12,7 @@ public abstract class AbstractExprializer<T> {
 
   @SafeVarargs protected final @NotNull String makeAppNew(@NotNull String className, T... terms) {
     return ImmutableSeq.from(terms).joinToString(ExprializeUtils.SEP,
-      STR."new \{className}(", ").make()", this::doSerialize);
+      "new " + className + "(", ").make()", this::doSerialize);
   }
 
   protected @NotNull String serializeToImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<T> terms) {

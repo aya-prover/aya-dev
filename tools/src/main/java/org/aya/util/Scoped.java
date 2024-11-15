@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * A map-like container that has a scope structure,
@@ -45,6 +46,14 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
     return acc;
   }
 
+  default void forEach(@NotNull Consumer<This> consumer) {
+    @Nullable var scope = self();
+    while (scope != null) {
+      consumer.accept(scope);
+      scope = scope.parent();
+    }
+  }
+
   @ApiStatus.Internal
   @NotNull Option<V> getLocal(@NotNull K key);
 
@@ -58,11 +67,11 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
 
   default @NotNull V get(@NotNull K key) {
     return fold(Option.<V>none(), (self, acc) -> acc.orElse(() -> self.getLocal(key)))
-      .getOrThrow(() -> new Panic(STR."¿: Not in scope: \{key}"));
+      .getOrThrow(() -> new Panic("¿: Not in scope: " + key));
   }
 
   default void put(@NotNull K key, @NotNull V value) {
-    if (contains(key)) throw new Panic(STR."Existing \{key}");
+    if (contains(key)) throw new Panic("Existing " + key);
     putLocal(key, value);
   }
 

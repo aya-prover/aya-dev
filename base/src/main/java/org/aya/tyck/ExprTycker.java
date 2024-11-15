@@ -261,7 +261,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Sugar s ->
-        throw new IllegalArgumentException(STR."\{s.getClass()} is desugared, should be unreachable");
+        throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
         int lift;
         if (f.data() instanceof Expr.Lift(var inner, var level)) {
@@ -283,7 +283,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var defs = state.shapeFactory.findImpl(AyaShape.NAT_SHAPE);
         if (defs.isEmpty()) yield fail(expr.data(), new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var type = freshMeta(STR."_ty\{integer}'", expr.sourcePos(), MetaVar.Misc.IsType, false);
+          var type = freshMeta("_ty" + integer + "'", expr.sourcePos(), MetaVar.Misc.IsType, false);
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), integer, defs, type), type);
         }
         var match = defs.getFirst();

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import static org.aya.compiler.AyaSerializer.*;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
-  public static final String TYPE_STUCK = STR."\{CLASS_SUPPLIER}<\{CLASS_TERM}>";
+  public static final String TYPE_STUCK = CLASS_SUPPLIER + "<" + CLASS_TERM + ">";
 
   private final @NotNull ShapeFactory shapeFactory;
   public FnSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
@@ -45,7 +45,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build fixed argument `invoke`
    */
   private void buildInvoke(FnDef unit, @NotNull String onStuckTerm, @NotNull ImmutableSeq<String> argTerms) {
-    Consumer<SourceBuilder> onStuckCon = s -> s.buildReturn(STR."\{onStuckTerm}.get()");
+    Consumer<SourceBuilder> onStuckCon = s -> s.buildReturn(onStuckTerm + ".get()");
 
     if (unit.is(Modifier.Opaque)) {
       onStuckCon.accept(this);

@@ -39,7 +39,7 @@ public interface AyaSerializer {
 
   String CLASS_SUPPLIER = getJavaReference(Supplier.class);
   String CLASS_RESULT = getJavaReference(Result.class);
-  String TYPE_IMMTERMSEQ = STR."\{CLASS_IMMSEQ}<\{CLASS_TERM}>";
+  String TYPE_IMMTERMSEQ = CLASS_IMMSEQ + "<" + CLASS_TERM + ">";
 
   @Language("Java") String IMPORT_BLOCK = """
     import org.aya.generic.term.SortKind;

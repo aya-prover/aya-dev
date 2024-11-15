@@ -75,7 +75,7 @@ public class TestRunner {
         Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
       assertEquals(expected, output, TMP_FILE.getFileName().toString());
     } catch (IOException e) {
-      fail(STR."error reading file \{expectedOutFile.toAbsolutePath()}");
+      fail("error reading file " + expectedOutFile.toAbsolutePath());
     }
   }
 
@@ -98,7 +98,7 @@ public class TestRunner {
     try {
       FileUtil.writeString(expectedOutFile, hookOut);
     } catch (IOException e) {
-      fail(STR."error generating todo file \{expectedOutFile.toAbsolutePath()}");
+      fail("error generating todo file " + expectedOutFile.toAbsolutePath());
     }
     System.out.printf(Locale.getDefault(),
       """
