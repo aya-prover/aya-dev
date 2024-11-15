@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.Delegate {
@@ -18,7 +17,7 @@ public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.D
     // Our code should not refer the subterm of [self], the only meaningful part is [self.forget()]
     // Also, we don't use NewTerm, cause the type of the self-parameter is a class call without any restriction.
     var self = new ClassCastTerm(this, ErrorTerm.DUMMY, ImmutableSeq.empty(),
-      restriction.map(Closure::mkConst)
+      restriction.view().take(i).map(Closure::mkConst).toImmutableSeq()
     );
 
     return member.signature().inst(ImmutableSeq.of(self)).makePi(Seq.empty());

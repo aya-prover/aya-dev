@@ -5,7 +5,6 @@ package org.aya.syntax.core.term.call;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
-import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.NewTerm;
@@ -35,6 +34,10 @@ public record ClassCall(
   @Override int ulift,
   @NotNull ImmutableSeq<Closure> args
 ) implements StableWHNF, Formation {
+  public ClassCall(@NotNull ClassDefLike ref) {
+      this(ref, 0, ImmutableSeq.empty());
+  }
+
   public @NotNull ImmutableSeq<Term> args(@NotNull Term self) {
     return this.args.map(x -> x.apply(self));
   }
