@@ -3,6 +3,7 @@
 package org.aya.cli.repl;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
 import org.aya.prettier.AyaPrettierOptions;
@@ -81,10 +82,11 @@ public interface ReplCommands {
   @NotNull Command SHOW_SHAPES = new Command(ImmutableSeq.of("debug-show-shapes"), "Show recognized shapes") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
       var discovered = repl.replCompiler.getShapeFactory().discovered;
-      return Result.ok(discovered.joinToString((def, recog) ->
-        repl.renderDoc(Doc.sep(BasePrettier.refVar(def),
-          Doc.symbol("=>"),
-          Doc.plain(recog.shape().name())))), true);
+      return Result.ok(repl.renderDoc(Doc.vcat(discovered.mapTo(MutableList.create(),
+        (def, recog) ->
+          Doc.sep(BasePrettier.refVar(def),
+            Doc.symbol("=>"),
+            Doc.plain(recog.shape().name()))))), true);
     }
   };
 
