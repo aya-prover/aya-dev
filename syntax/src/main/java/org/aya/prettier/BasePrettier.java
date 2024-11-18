@@ -96,17 +96,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     @NotNull Outer outer, boolean showImplicits
   ) {
     var preArgs = args.toImmutableSeq();
-
-    // Because the signature of DataCon is selfTele, so we only need to deal with core con
-    var licit = switch (var) {
-      case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub
-        ? sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit)
-        : inner.ref.signature == null
-          ? BooleanSeq.fill(preArgs.size(), true)
-          : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
-      case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
-      default -> throw new UnsupportedOperationException("TODO");
-    };
+    var licit = computeLicitFromDef(var, preArgs.size());
 
     // licited args, note that this may not include all [var] args since [preArgs.size()] may less than [licit.size()]
     // this is safe since the core call is always fully applied, that is, no missing implicit arguments.
@@ -116,6 +106,17 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     var explicitArgs = preArgs.view().drop(licitArgs.size()).map(Arg::ofExplicitly);
 
     return visitCalls(var.assoc(), refVar(var), licitArgs.view().appendedAll(explicitArgs), outer, showImplicits);
+  }
+  private static BooleanSeq computeLicitFromDef(@NotNull AnyDef var, int size) {
+    return switch (var) {
+      case TyckAnyDef<?> inner -> inner.core() instanceof SubLevelDef sub
+        // Because the signature of DataCon is selfTele, so we only need to deal with core con
+        ? sub.selfTele.mapToBoolean(MutableBooleanList.factory(), Param::explicit)
+        : inner.ref.signature == null
+          ? BooleanSeq.fill(size, true)
+          : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
+      case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
+    };
   }
 
   /**

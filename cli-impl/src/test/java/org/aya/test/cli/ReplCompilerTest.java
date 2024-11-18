@@ -88,6 +88,10 @@ public class ReplCompilerTest {
     assertNotNull(findContext("Unit"));
   }
 
+  @Test public void issue1143() {
+    compile("module A { module B {} }");
+  }
+
   private @Nullable AnyVar findContext(@NotNull String name) {
     try {
       var ctx = compiler.getContext();

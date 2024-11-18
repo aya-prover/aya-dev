@@ -233,9 +233,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private ImmutableSeq<Term> visibleArgsOf(Callable call) {
-    return call instanceof ConCall con
-      ? con.conArgs() : call instanceof MemberCall access
-      ? access.args() : call.args();
+    return call instanceof ConCallLike con ? con.conArgs() : call.args();
   }
 
   private @NotNull Doc visitAccessHead(@NotNull MemberCall term) {
