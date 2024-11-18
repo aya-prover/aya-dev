@@ -19,3 +19,11 @@ module Issue1130 {
   def f (p : I -> Nat) => 0
   def test => f (refl {a := 1})
 }
+
+module Issue1144 {
+  open inductive NewList (A : Type) : Type
+  | newNil
+  | newCons (head : A) (tail : NewList A)
+
+  def test : NewList Nat => [ 0 ]
+}

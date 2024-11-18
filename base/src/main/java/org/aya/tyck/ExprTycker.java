@@ -320,8 +320,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var defs = state.shapeFactory.findImpl(AyaShape.LIST_SHAPE);
         if (defs.isEmpty()) yield fail(arr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
+          var elMeta = freshMeta("el_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
           var tyMeta = freshMeta("arr_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
-          var results = elements.map(element -> inherit(element, tyMeta).wellTyped());
+          var results = elements.map(element -> inherit(element, elMeta).wellTyped());
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), results, defs, tyMeta), tyMeta);
         }
         var match = defs.getFirst();
