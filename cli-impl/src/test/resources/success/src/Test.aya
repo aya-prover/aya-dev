@@ -21,9 +21,18 @@ module Issue1130 {
 }
 
 module Issue1144 {
-  open inductive NewList (A : Type) : Type
+  open inductive NewList (A : Type)
   | newNil
-  | newCons (head : A) (tail : NewList A)
+  | newCons A (NewList A)
+
+  private def test : NewList Nat => [ 0 ]
+}
+
+module Issue1145 {
+  open Issue1144
+  open inductive NewNat : Type
+  | newZero
+  | newSucc (pred : NewNat)
 
   def test : NewList Nat => [ 0 ]
 }

@@ -15,7 +15,6 @@ import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
 import org.aya.unify.Synthesizer;
 import org.aya.unify.TermComparator;
-import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 

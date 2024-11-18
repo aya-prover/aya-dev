@@ -29,7 +29,10 @@ public record MetaLitTerm(
   }
 
   @SuppressWarnings("unchecked") public @NotNull Term inline(UnaryOperator<Term> pre) {
-    if (!(pre.apply(type) instanceof DataCall dataCall)) return this;
+    var normalizedType = pre.apply(type);
+    // really?
+    // if (normalizedType == DimTyTerm.INSTANCE) return (int) repr == 0 ? DimTerm.I0 : DimTerm.I1;
+    if (!(normalizedType instanceof DataCall dataCall)) return this;
     return candidates.find(t -> t.def().equals(dataCall.ref())).flatMap(t -> {
       var recog = t.recog();
       var shape = recog.shape();

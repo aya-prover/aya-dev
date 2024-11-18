@@ -15,6 +15,7 @@ import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
+import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
@@ -129,6 +130,16 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           };
         };
         yield new Jdg.Default(wellTyped, sigmaTerm);
+      }
+      case Expr.Array arr when arr.arrayBlock().isRight()
+        && whnf(type) instanceof DataCall dataCall
+        && state.shapeFactory.find(dataCall.ref()).getOrNull() instanceof ShapeRecognition recog
+        && recog.shape() == AyaShape.LIST_SHAPE -> {
+        var arrayBlock = arr.arrayBlock().getRightValue();
+        var elementTy = dataCall.args().get(0);
+        var results = ImmutableTreeSeq.from(arrayBlock.exprList().map(
+          element -> inherit(element, elementTy).wellTyped()));
+        yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
