@@ -1,5 +1,31 @@
 # Early changelog
 
+## v0.34
+
+Semi-breaking changes:
+
+- Revise the behavior of ambiguous exports -- we report errors on ambiguous exports now.
+  Before, Aya will export all candidates, and error will occur only when you try to use one.
+  But there is no way to resolve such ambiguity, so we now report errors earlier
+- Kotlin stdlib is now in the binary dependencies of Aya due to transitive dependency
+- Upgrade many dependencies
+
+New features:
+
+- Add `:debug-show-shapes` in REPL to show currently recognized shapes in the REPL context
+- Preliminary support for classes, adding type checking for class declarations,
+  class specializations, JIT-compilation, etc., but not yet for class instance resolution
+- Add `:info` (alias: `:i`) command in REPL to show information about a name, similar to GHCi
+
+Improvements to existing features including bug fixes:
+
+- Correctly display emojis in Windows Terminal
+- Improve error messages for unsolved metas thanks to @utensil and @HoshinoTented
+- The jlink release will include compiled version of the std library
+- Coercive subtyping now works from path to functions
+- Better type checking for list literals with the presence of ambiguity
+- Correctly pretty print `RuleReducer.Con`
+
 ## v0.33
 
 We've started working on classes.
