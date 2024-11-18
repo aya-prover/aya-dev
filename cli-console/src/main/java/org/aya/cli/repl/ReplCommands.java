@@ -6,6 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.prettier.BasePrettier;
+import org.aya.pretty.doc.Doc;
 import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
@@ -73,6 +75,16 @@ public interface ReplCommands {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
       var parseTree = new AyaParserImpl(repl.replCompiler.reporter).parseNode(code.code());
       return Result.ok(parseTree.toDebugString(), true);
+    }
+  };
+
+  @NotNull Command SHOW_SHAPES = new Command(ImmutableSeq.of("debug-show-shapes"), "Show recognized shapes") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
+      var discovered = repl.replCompiler.getShapeFactory().discovered;
+      return Result.ok(discovered.joinToString((def, recog) ->
+        repl.renderDoc(Doc.sep(BasePrettier.refVar(def),
+          Doc.symbol("=>"),
+          Doc.plain(recog.shape().name())))), true);
     }
   };
 

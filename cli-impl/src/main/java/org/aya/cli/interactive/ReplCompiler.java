@@ -16,6 +16,7 @@ import org.aya.cli.utils.LiterateData;
 import org.aya.generic.InterruptException;
 import org.aya.normalize.Normalizer;
 import org.aya.primitive.PrimFactory;
+import org.aya.primitive.ShapeFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -206,6 +207,7 @@ public class ReplCompiler {
   }
 
   public @NotNull ReplContext getContext() { return context; }
+  public @NotNull ShapeFactory getShapeFactory() { return shapeFactory; }
   public void loadPreludeIfPossible() {
     if (loader.existsFileLevelModule(ModulePath.of("prelude"))) {
       compileToContext("open import prelude", NormalizeMode.NULL);
