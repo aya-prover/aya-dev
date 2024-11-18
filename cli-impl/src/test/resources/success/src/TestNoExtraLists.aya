@@ -1,0 +1,3 @@
+open import prelude
+
+def canonicalList => [ 114514 ]
