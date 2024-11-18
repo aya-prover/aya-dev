@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 public record FileModuleLoader(
@@ -45,8 +46,12 @@ public record FileModuleLoader(
   }
 
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {
-    var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
-    return Files.exists(sourcePath);
+    try {
+      var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
+      return Files.exists(sourcePath);
+    } catch (InvalidPathException e) {
+      return false;
+    }
   }
 
   public static void handleInternalError(@NotNull Panic e) {

@@ -105,7 +105,6 @@ public abstract class BasePrettier<Term extends AyaDocile> {
           ? BooleanSeq.fill(preArgs.size(), true)
           : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
       case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
-      default -> throw new UnsupportedOperationException("TODO");
     };
 
     // licited args, note that this may not include all [var] args since [preArgs.size()] may less than [licit.size()]
