@@ -9,7 +9,6 @@ import org.aya.syntax.AyaFiles;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +51,5 @@ public record FileModuleLoader(
     } catch (InvalidPathException e) {
       return false;
     }
-  }
-
-  public static void handleInternalError(@NotNull Panic e) {
-    e.printStackTrace();
-    e.printHint();
-    System.err.println("""
-      Please report the stacktrace to the developers so a better error handling could be made.
-      Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
   }
 }

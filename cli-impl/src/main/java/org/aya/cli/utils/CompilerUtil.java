@@ -8,7 +8,6 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.compiler.CompiledModule;
 import org.aya.generic.InterruptException;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.module.FileModuleLoader;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.error.Panic;
 import org.aya.util.reporter.CountingReporter;
@@ -28,7 +27,7 @@ public class CompilerUtil {
     try {
       block.runChecked();
     } catch (Panic e) {
-      FileModuleLoader.handleInternalError(e);
+      handleInternalError(e);
       reporter.reportString("Internal error");
       return e.exitCode();
     } catch (InterruptException e) {
@@ -58,5 +57,12 @@ public class CompilerUtil {
   private static @NotNull ObjectOutputStream coreWriter(@NotNull Path coreFile) throws IOException {
     Files.createDirectories(coreFile.toAbsolutePath().getParent());
     return new ObjectOutputStream(Files.newOutputStream(coreFile));
+  }
+  public static void handleInternalError(@NotNull Panic e) {
+    e.printStackTrace();
+    e.printHint();
+    System.err.println("""
+      Please report the stacktrace to the developers so a better error handling could be made.
+      Don't forget to inform the version of Aya you're using and attach your code for reproduction.""");
   }
 }
