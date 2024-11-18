@@ -15,6 +15,7 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.marker.StableWHNF;
+import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
@@ -88,8 +89,9 @@ public final class Normalizer implements UnaryOperator<Term> {
       case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
         call.head().ref().equality(call.args(), dim == DimTerm.I0);
       case PrimCall prim -> state.primFactory.unfold(prim, state);
-      case MetaPatTerm metaTerm -> metaTerm.inline(this);
+      case MetaPatTerm meta -> meta.inline(this);
       case MetaCall meta -> state.computeSolution(meta, this);
+      case MetaLitTerm meta -> meta.inline(this);
       case CoeTerm(var type, var r, var s) -> {
         if (r instanceof DimTerm || r instanceof FreeTerm) {
           if (r.equals(s)) yield new LamTerm(new LocalTerm(0));

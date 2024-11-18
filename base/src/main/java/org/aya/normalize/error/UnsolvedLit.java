@@ -9,9 +9,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public record UnsolvedLit(
-  @NotNull MetaLitTerm lit
-) implements Problem {
+public record UnsolvedLit(@NotNull MetaLitTerm lit) implements Problem {
   @Override public @NotNull SourcePos sourcePos() { return lit.sourcePos(); }
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.vcat(

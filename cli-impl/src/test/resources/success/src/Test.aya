@@ -19,3 +19,20 @@ module Issue1130 {
   def f (p : I -> Nat) => 0
   def test => f (refl {a := 1})
 }
+
+module Issue1144 {
+  open inductive NewList (A : Type)
+  | newNil
+  | newCons A (NewList A)
+
+  private def test : NewList Nat => [ 0 ]
+}
+
+module Issue1145 {
+  open Issue1144
+  open inductive NewNat : Type
+  | newZero
+  | newSucc (pred : NewNat)
+
+  def test : NewList Nat => [ 0 ]
+}

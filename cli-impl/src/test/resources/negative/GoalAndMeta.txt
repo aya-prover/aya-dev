@@ -192,6 +192,36 @@ Error: Unsolved meta _
 Let's learn from that.
 
 LiteralAmbiguous3:
+In file $FILE:6:4 ->
+
+  4 │   
+  5 │   def good : List Unit => [ ]
+  6 │   def bad => [ unit ]
+    │       ╰─╯
+
+Error: Unsolved meta _
+
+In file $FILE:6:4 ->
+
+  4 │   
+  5 │   def good : List Unit => [ ]
+  6 │   def bad => [ unit ]
+    │       ╰─╯
+
+Error: Unsolved meta _
+       in `?_`
+       in `[unit]`
+
+In file $FILE:6:4 ->
+
+  4 │   
+  5 │   def good : List Unit => [ ]
+  6 │   def bad => [ unit ]
+    │       ╰─╯
+
+Error: Unsolved meta _
+       in `[unit]`
+
 In file $FILE:6:11 ->
 
   4 │   
@@ -204,7 +234,7 @@ Error: Unable to solve the type of this literal:
        I'm confused about the following candidates:
          `List`, `List2`
 
-1 error(s), 0 warning(s).
+4 error(s), 0 warning(s).
 Let's learn from that.
 
 NonPattern:

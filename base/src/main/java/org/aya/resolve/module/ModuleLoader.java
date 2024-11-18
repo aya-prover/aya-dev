@@ -70,7 +70,7 @@ public interface ModuleLoader extends Problematic {
   /**
    * Resolve a certain module.
    *
-   * @param context       the context of the module
+   * @param resolveInfo   the context of the module
    * @param program       the statements of the module
    * @param recurseLoader the module loader that used to resolve
    */
