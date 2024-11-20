@@ -140,7 +140,7 @@ public interface ReplCommands {
 
   @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit"), "Quit the REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
-      return Result.ok(repl.config.silent ? "" :
+      return Result.ok(repl.config.quiet ? "" :
         "See you space cow woof woof :3", false);
     }
   };
