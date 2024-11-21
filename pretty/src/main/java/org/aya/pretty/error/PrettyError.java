@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.error;
 
@@ -196,7 +196,7 @@ public record PrettyError(
     // commit hint
     var underlines = Doc.cat(split.underlines);
     var notes = Doc.cat(split.notes);
-    var almost = notes.isEmpty() || (notes instanceof Doc.Cat cat && cat.inner().isEmpty())
+    var almost = notes.isEmpty() || (notes instanceof Doc.Cat(ImmutableSeq<Doc> inner) && inner.isEmpty())
       ? underlines : Doc.stickySep(underlines, Doc.align(notes));
     var codeHint = startOrEnd != null
       ? renderStartEndHint(startOrEnd, vbar, almost, rest)

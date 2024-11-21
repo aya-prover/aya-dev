@@ -42,9 +42,11 @@ public record DoubleChecker(
           .view(synthesizer::mkFree)
           .allMatch(param -> inherit(param, expectedTy)));
       }
-      case TupTerm(var elems) when whnf(expected) instanceof SigmaTerm sigmaTy -> {
+      case TupTerm(var elems) when whnf(expected) instanceof SigmaTerm(
+        kala.collection.immutable.ImmutableSeq<Term> params
+      ) sigmaTy -> {
         // This is not an assertion because the input is not guaranteed to be well-typed
-        if (!elems.sizeEquals(sigmaTy.params())) yield false;
+        if (!elems.sizeEquals(params)) yield false;
 
         yield sigmaTy.check(elems, (elem, param) -> {
           if (inherit(whnf(elem), param)) return elem;

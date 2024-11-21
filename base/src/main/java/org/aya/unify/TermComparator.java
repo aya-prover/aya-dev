@@ -273,9 +273,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield null;
         var fTy = compareUntyped(f, g);
-        if (!(fTy instanceof PiTerm pi)) yield null;
-        if (!compare(a, b, pi.param())) yield null;
-        yield pi.body().apply(a);
+        if (!(fTy instanceof PiTerm(Term param, org.aya.syntax.core.Closure body))) yield null;
+        if (!compare(a, b, param)) yield null;
+        yield body.apply(a);
       }
       case PAppTerm(var f, var a, _, _) -> {
         if (!(rhs instanceof PAppTerm(var g, var b, _, _))) yield null;

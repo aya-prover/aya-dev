@@ -8,7 +8,6 @@ module aya.cli.console {
   requires info.picocli;
   requires org.jline.builtins;
   requires org.jline.reader;
-  requires org.jline.terminal.jni;
   requires org.jline.terminal;
   requires java.net.http;
   requires jdk.crypto.ec;

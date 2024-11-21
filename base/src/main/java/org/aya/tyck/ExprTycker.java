@@ -118,12 +118,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.Tuple(var elems) when whnf(type) instanceof SigmaTerm sigmaTerm -> {
+      case Expr.Tuple(var elems) when whnf(type) instanceof SigmaTerm(ImmutableSeq<Term> params) sigmaTerm -> {
         Term wellTyped = switch (sigmaTerm.check(elems, (elem, ty) -> inherit(elem, ty).wellTyped())) {
           case Result.Ok(var v) -> new TupTerm(v);
           case Result.Err(var e) -> switch (e) {
             case TooManyElement, TooManyParameter -> {
-              fail(new TupleError.ElemMismatchError(expr.sourcePos(), sigmaTerm.params().size(), elems.size()));
+              fail(new TupleError.ElemMismatchError(expr.sourcePos(), params.size(), elems.size()));
               yield new ErrorTerm(expr.data());
             }
             case CheckFailed -> Panic.unreachable();

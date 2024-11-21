@@ -25,14 +25,14 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
 
   @Override public @NotNull Expr apply(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
     if (expr instanceof Expr.App(var f, var args)) {
-      if (f.data() instanceof Expr.RawSort typeF && typeF.kind() != SortKind.ISet) {
+      if (f.data() instanceof Expr.RawSort(SortKind kind) && kind != SortKind.ISet) {
         if (args.sizeEquals(1)) {
           var arg = args.getFirst();
           if (arg.explicit() && arg.name() == null) {
             // in case of [Type {foo = 0}], report at tyck stage
             var level = levelVar(new WithPos<>(sourcePos, arg.arg().data()));
             if (level != null) {
-              return switch (typeF.kind()) {
+              return switch (kind) {
                 case Type -> new Expr.Type(level);
                 case Set -> new Expr.Set(level);
                 default -> Panic.unreachable();

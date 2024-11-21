@@ -299,11 +299,6 @@ letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
 
 doBlockContent ::= doBinding | expr
 
-newArgField ::= weakId
-newArg ::= BAR newArgField teleParamName* IMPLIES expr
-// New body new body but you!
-newBody ::= <<braced newArg*>>
-
 argument ::= atomExArgument
            | tupleImArgument
            | namedImArgument

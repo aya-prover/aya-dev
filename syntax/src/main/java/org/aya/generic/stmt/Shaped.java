@@ -110,7 +110,7 @@ public interface Shaped<T> {
      */
     @Nullable Term apply(@NotNull ImmutableSeq<Term> args);
     @NotNull Applicable<Def> descent(@NotNull IndexedFunction<Term, Term> f);
-    @Override default Term invoke(@NotNull Supplier<Term> onStuck, @NotNull Seq<Term> args) {
+    @Override default @NotNull Term invoke(@NotNull Supplier<Term> onStuck, @NotNull Seq<Term> args) {
       var result = apply(args.toImmutableSeq());
       if (result == null) return onStuck.get();
       return result;

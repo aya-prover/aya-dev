@@ -43,7 +43,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
     if (rhs instanceof Unknown) return rhs;
     return switch (this) {
       case Unknown lhs -> lhs;
-      case Decrease l when rhs instanceof Decrease r -> decr(l.usable || r.usable, l.size + r.size);
+      case Decrease l when rhs instanceof Decrease(boolean usable, int size) -> decr(l.usable || usable, l.size + size);
       default -> throw new AssertionError("unreachable");
     };
   }
@@ -81,7 +81,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
   }
 
   default boolean isDecreasing() {
-    return this instanceof Decrease d && d.usable && d.size > 0;
+    return this instanceof Decrease(boolean usable, int size) && usable && size > 0;
   }
 
   static @NotNull Relation fromCompare(int compare) {

@@ -24,7 +24,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
 
   private final boolean allowLocalTerm;
 
-  protected PatternExprializer(@NotNull NameGenerator nameGen, boolean allowLocalTerm) {
+  PatternExprializer(@NotNull NameGenerator nameGen, boolean allowLocalTerm) {
     super(nameGen);
     this.allowLocalTerm = allowLocalTerm;
   }

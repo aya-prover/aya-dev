@@ -3,12 +3,10 @@
 package org.aya.syntax.ref;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableArray;
 import kala.collection.mutable.MutableList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**

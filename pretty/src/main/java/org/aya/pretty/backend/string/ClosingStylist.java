@@ -38,8 +38,8 @@ public abstract class ClosingStylist extends StringStylist {
     }
 
     var style = styles.getFirst();
-    var formats = style instanceof Style.Preset preset
-      ? formatPresetStyle(preset.styleName(), outer)
+    var formats = style instanceof Style.Preset(String styleName)
+      ? formatPresetStyle(styleName, outer)
       : ImmutableSeq.of(formatOne(style, outer));
     formats.forEach(format -> format.start.accept(cursor));
     formatInternal(styles.drop(1), cursor, outer, inside);

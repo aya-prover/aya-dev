@@ -64,8 +64,8 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
 
   @Override protected @NotNull Expr.NamedArg
   makeArg(@NotNull SourcePos pos, @NotNull WithPos<Expr> func, Expr.@NotNull NamedArg arg, boolean explicit) {
-    if (func.data() instanceof Expr.App app) {
-      var newApp = new Expr.App(app.function(), app.argument().appended(new Expr.NamedArg(arg.explicit(), arg.term())));
+    if (func.data() instanceof Expr.App(WithPos<Expr> function, ImmutableSeq<Expr.NamedArg> argument)) {
+      var newApp = new Expr.App(function, argument.appended(new Expr.NamedArg(arg.explicit(), arg.term())));
       return new Expr.NamedArg(explicit, new WithPos<>(pos, newApp));
     } else {
       return new Expr.NamedArg(explicit, new WithPos<>(pos, new Expr.App(func, ImmutableSeq.of(arg))));

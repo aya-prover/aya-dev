@@ -122,7 +122,7 @@ public interface NameSerializer {
       .joinToString("$", "$", "");
   }
 
-  static ImmutableSeq<String> keywords = ImmutableSeq.of(
+  ImmutableSeq<String> keywords = ImmutableSeq.of(
     "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
     "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
     "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",

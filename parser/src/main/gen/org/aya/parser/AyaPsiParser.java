@@ -1412,68 +1412,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // BAR newArgField teleParamName* IMPLIES expr
-  public static boolean newArg(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newArg")) return false;
-    if (!nextTokenIs(b, BAR)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, BAR);
-    r = r && newArgField(b, l + 1);
-    r = r && newArg_2(b, l + 1);
-    r = r && consumeToken(b, IMPLIES);
-    r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, NEW_ARG, r);
-    return r;
-  }
-
-  // teleParamName*
-  private static boolean newArg_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newArg_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!teleParamName(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "newArg_2", c)) break;
-    }
-    return true;
-  }
-
-  /* ********************************************************** */
-  // weakId
-  public static boolean newArgField(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newArgField")) return false;
-    if (!nextTokenIs(b, ID)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
-    exit_section_(b, m, NEW_ARG_FIELD, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // <<braced newArg*>>
-  public static boolean newBody(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newBody")) return false;
-    if (!nextTokenIs(b, LBRACE)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = braced(b, l + 1, AyaPsiParser::newBody_0_0);
-    exit_section_(b, m, NEW_BODY, r);
-    return r;
-  }
-
-  // newArg*
-  private static boolean newBody_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "newBody_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!newArg(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "newBody_0_0", c)) break;
-    }
-    return true;
-  }
-
-  /* ********************************************************** */
   // KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
   public static boolean openCmd(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "openCmd")) return false;
