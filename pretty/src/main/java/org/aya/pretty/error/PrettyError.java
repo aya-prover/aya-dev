@@ -196,7 +196,7 @@ public record PrettyError(
     // commit hint
     var underlines = Doc.cat(split.underlines);
     var notes = Doc.cat(split.notes);
-    var almost = notes.isEmpty() || (notes instanceof Doc.Cat(ImmutableSeq<Doc> inner) && inner.isEmpty())
+    var almost = notes.isEmpty() || (notes instanceof Doc.Cat(var inner) && inner.isEmpty())
       ? underlines : Doc.stickySep(underlines, Doc.align(notes));
     var codeHint = startOrEnd != null
       ? renderStartEndHint(startOrEnd, vbar, almost, rest)

@@ -45,7 +45,7 @@ public record Synthesizer(
       return true;
     }
 
-    if (!(trySynth(ty) instanceof SortTerm(SortKind kind, int lift))) return false;
+    if (!(trySynth(ty) instanceof SortTerm(var kind, int lift))) return false;
     return switch (kind) {
       case Type -> expected.kind() == SortKind.Type && lift <= expected.lift();
       case Set -> expected.kind() == SortKind.Set && lift <= expected.lift();
@@ -105,7 +105,7 @@ public record Synthesizer(
       case MetaPatTerm meta -> meta.meta().type();
       case ProjTerm(Term of, int index) -> {
         var ofTy = trySynth(of);
-        if (!(ofTy instanceof SigmaTerm(kala.collection.immutable.ImmutableSeq<Term> params))) yield null;
+        if (!(ofTy instanceof SigmaTerm(var params))) yield null;
         yield params.get(index - 1)
           // the type of projOf.{index - 1} may refer to the previous parameters
           .instantiateTele(ProjTerm.projSubst(of, index).view());
@@ -134,7 +134,7 @@ public record Synthesizer(
       case DimTerm _ -> DimTyTerm.INSTANCE;
       case DimTyTerm _ -> SortTerm.ISet;
       case MetaLitTerm mlt -> mlt.type();
-      case StringTerm str -> state().primFactory.getCall(PrimDef.ID.STRING);
+      case StringTerm _ -> state().primFactory.getCall(PrimDef.ID.STRING);
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());

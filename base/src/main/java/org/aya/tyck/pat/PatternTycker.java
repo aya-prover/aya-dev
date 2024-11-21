@@ -128,7 +128,7 @@ public class PatternTycker implements Problematic, Stateful {
         yield Pat.Absurd.INSTANCE;
       }
       case Pattern.Tuple tuple -> {
-        if (!(exprTycker.whnf(type) instanceof SigmaTerm(ImmutableSeq<Term> params))) {
+        if (!(exprTycker.whnf(type) instanceof SigmaTerm(var params))) {
           var frozen = freezeHoles(type);
           yield withError(new PatternProblem.TupleNonSig(pattern.replace(tuple), frozen), frozen);
         }

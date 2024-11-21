@@ -220,8 +220,8 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
   private static final class TermInline {
     public static @NotNull Term apply(@NotNull Term term) {
-      if (term instanceof MetaPatTerm(Pat.Meta meta) metaPat) {
-        var isEmpty = meta.solution().isEmpty();
+      if (term instanceof MetaPatTerm metaPat) {
+        var isEmpty = metaPat.meta().solution().isEmpty();
         if (isEmpty) throw new Panic("Unable to inline " + metaPat.toDoc(AyaPrettierOptions.debug()));
         // the solution may contain other MetaPatTerm
         return metaPat.inline(TermInline::apply);

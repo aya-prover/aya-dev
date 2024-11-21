@@ -73,10 +73,7 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
   @Override protected @NotNull Arg<WithPos<Pattern>>
   makeArg(@NotNull SourcePos pos, @NotNull WithPos<Pattern> func, @NotNull Arg<WithPos<Pattern>> arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
-    if (func.data() instanceof Pattern.Con(
-      WithPos<org.aya.syntax.core.def.ConDefLike> resolved,
-      kala.collection.immutable.ImmutableSeq<Arg<WithPos<Pattern>>> params
-    )) {
+    if (func.data() instanceof Pattern.Con(var resolved, var params)) {
       var newCon = new Pattern.Con(resolved, params.appended(new Arg<>(arg.term(), arg.explicit())));
       return new Arg<>(new WithPos<>(pos, newCon), explicit);
     } else {
