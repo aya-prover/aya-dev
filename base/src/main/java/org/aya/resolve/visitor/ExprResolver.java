@@ -210,13 +210,13 @@ public record ExprResolver(
   private void addReference(@NotNull TyckUnit unit) {
     if (where.isEmpty()) throw new Panic("where am I?");
     switch (where.peek()) {
-      default -> reference.append(new TyckOrder.Head(unit));
       case FnPattern -> {
         reference.append(new TyckOrder.Body(unit));
         if (unit instanceof DataCon con) {
           reference.append(new TyckOrder.Body(con.dataRef.concrete));
         }
       }
+      default -> reference.append(new TyckOrder.Head(unit));
     }
   }
 

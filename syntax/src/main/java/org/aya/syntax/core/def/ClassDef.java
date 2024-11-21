@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.telescope.AbstractTele;
 import org.jetbrains.annotations.NotNull;
 
 /**

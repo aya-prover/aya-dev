@@ -11,7 +11,6 @@ import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;

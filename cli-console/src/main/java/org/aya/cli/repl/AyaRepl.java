@@ -27,8 +27,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public abstract class AyaRepl implements Closeable, Runnable, Repl {
-  public static int start(@NotNull ImmutableSeq<Path> modulePaths, MainArgs.@NotNull ReplAction replAction) throws IOException {
-    try (var repl = makeRepl(modulePaths, replAction, ReplConfig.loadFromDefault())) {
+  public static int start(
+    @NotNull ImmutableSeq<Path> modulePaths,
+    boolean loadPrelude,
+    MainArgs.@NotNull ReplAction replAction
+  ) throws IOException {
+    var replConfig = ReplConfig.loadFromDefault();
+    replConfig.loadPrelude = loadPrelude;
+    try (var repl = makeRepl(modulePaths, replAction, replConfig)) {
       repl.run();
     }
     return 0;
@@ -97,7 +103,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     replCompiler = new ReplCompiler(modulePaths, new AnsiReporter(true,
       () -> config.enableUnicode, () -> config.literatePrettier.prettierOptions,
       Problem.Severity.INFO, this::println, this::errPrintln), null);
-    replCompiler.loadPreludeIfPossible();
+    if (config.loadPrelude) replCompiler.loadPreludeIfPossible();
   }
 
   protected abstract @Nullable String hintMessage();
@@ -107,7 +113,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   }
 
   @Override public void run() {
-    if (!config.silent) {
+    if (!config.quiet) {
       println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH + ")");
       var hint = hintMessage();
       if (hint != null) println(hint);
@@ -130,7 +136,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
   @Override public @NotNull Command.Output eval(@NotNull String line) {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
-      program -> config.silent ? Doc.empty() :
+      program -> config.quiet ? Doc.empty() :
         Doc.vcat(program.view().map(this::render)),
       this::render
     ));

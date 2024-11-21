@@ -91,7 +91,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
-        lInt.repr() == ((Shaped.@NotNull Nat<Term>) rInt).repr() ? lInt.type() : null;
+        lInt.repr() == rInt.repr() ? lInt.type() : null;
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
       case Pair(MemberCall lMem, MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield null;
@@ -273,9 +273,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield null;
         var fTy = compareUntyped(f, g);
-        if (!(fTy instanceof PiTerm pi)) yield null;
-        if (!compare(a, b, pi.param())) yield null;
-        yield pi.body().apply(a);
+        if (!(fTy instanceof PiTerm(Term param, var body))) yield null;
+        if (!compare(a, b, param)) yield null;
+        yield body.apply(a);
       }
       case PAppTerm(var f, var a, _, _) -> {
         if (!(rhs instanceof PAppTerm(var g, var b, _, _))) yield null;

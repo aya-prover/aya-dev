@@ -1,5 +1,4 @@
 module aya.repl {
-  requires aya.util;
   requires transitive aya.pretty;
 
   requires static org.jetbrains.annotations;

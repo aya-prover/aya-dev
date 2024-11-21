@@ -115,8 +115,8 @@ public class PrimFactory {
     var first = norm.apply(prim.args().get(0));
     var second = norm.apply(prim.args().get(1));
 
-    if (first instanceof StringTerm str1 && second instanceof StringTerm str2) {
-      return new StringTerm(str1.string() + str2.string());
+    if (first instanceof StringTerm(var str1) && second instanceof StringTerm(var str2)) {
+      return new StringTerm(str1 + str2);
     }
 
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));

@@ -77,10 +77,9 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
 
   private static @Nullable AnyDefVar isCon(@Nullable AnyVar myMaybe) {
     return switch (myMaybe) {
-      case null -> null;
       case DefVar<?, ?> def when def.concrete instanceof DataCon -> def;
       case CompiledVar var when var.core() instanceof JitCon -> var;
-      default -> null;
+      case null, default -> null;
     };
   }
 }

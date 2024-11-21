@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.console;
 
@@ -97,6 +97,8 @@ public class MainArgs {
   public Problem.Severity verbosity;
   @Option(names = {"--fake-literate"}, description = "Generate literate output without compiling.")
   public boolean fakeLiterate;
+  @Option(names = {"--no-prelude"}, description = "Disable the implicit import of the prelude.")
+  public boolean noPrelude;
 
   @Parameters(paramLabel = "<input-file>", defaultValue = "null", description = "File to compile")
   public String inputFile;

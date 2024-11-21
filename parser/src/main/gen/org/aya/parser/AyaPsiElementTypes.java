@@ -68,9 +68,6 @@ public interface AyaPsiElementTypes {
   IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");
   IElementType MODULE = new AyaPsiElementType("MODULE");
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
-  IElementType NEW_ARG = new AyaPsiElementType("NEW_ARG");
-  IElementType NEW_ARG_FIELD = new AyaPsiElementType("NEW_ARG_FIELD");
-  IElementType NEW_BODY = new AyaPsiElementType("NEW_BODY");
   IElementType NEW_EXPR = new AyaPsiElementType("NEW_EXPR");
   IElementType OPEN_CMD = new AyaPsiElementType("OPEN_CMD");
   IElementType PATTERN = new AyaPsiElementType("PATTERN");

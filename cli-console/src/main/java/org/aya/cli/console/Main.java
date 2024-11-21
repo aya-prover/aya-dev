@@ -36,7 +36,7 @@ public class Main extends MainArgs implements Callable<Integer> {
   @Override public Integer call() throws Exception {
     if (action != null) {
       if (action.repl != null)
-        return AyaRepl.start(modulePaths().map(Paths::get), action.repl);
+        return AyaRepl.start(modulePaths().map(Paths::get), !noPrelude, action.repl);
       if (action.plct != null)
         return new PLCTReport().run(action.plct);
     }
@@ -53,6 +53,7 @@ public class Main extends MainArgs implements Callable<Integer> {
 
   private int doFakeLiterate() throws IOException {
     var replConfig = ReplConfig.loadFromDefault();
+    replConfig.loadPrelude = !noPrelude;
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
     var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
     var renderOptions = createRenderOptions(replConfig);
@@ -81,6 +82,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var filePath = Paths.get(inputFile);
     var outputPath = outputFile == null ? null : Paths.get(outputFile);
     var replConfig = ReplConfig.loadFromDefault();
+    replConfig.loadPrelude = !noPrelude;
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
     var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
     var renderOptions = createRenderOptions(replConfig);

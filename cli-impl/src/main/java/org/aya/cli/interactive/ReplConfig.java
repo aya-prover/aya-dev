@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
@@ -23,7 +23,8 @@ public class ReplConfig implements AutoCloseable {
   public @NotNull LiteratePrettierOptions literatePrettier = new LiteratePrettierOptions();
   public boolean enableUnicode = true;
   /** Disables welcome message, echoing info, etc. */
-  public boolean silent = false;
+  public boolean quiet = false;
+  public boolean loadPrelude = true;
 
   public ReplConfig(@NotNull Option<Path> file) {
     this.configFile = file;

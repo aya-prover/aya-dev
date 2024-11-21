@@ -47,7 +47,7 @@
 考虑这样的定义：
 
 ```aya
-data Vec (n : Nat) (A : Type)
+inductive Vec (n : Nat) (A : Type)
 | O, A => vnil
 | S n', A => vcons A (Vec n' A)
 ```

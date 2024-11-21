@@ -73,8 +73,8 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
   @Override protected @NotNull Arg<WithPos<Pattern>>
   makeArg(@NotNull SourcePos pos, @NotNull WithPos<Pattern> func, @NotNull Arg<WithPos<Pattern>> arg, boolean explicit) {
     // param explicit should be ignored since the BinOpSeq we are processing already specified the explicitness
-    if (func.data() instanceof Pattern.Con con) {
-      var newCon = new Pattern.Con(con.resolved(), con.params().appended(new Arg<>(arg.term(), arg.explicit())));
+    if (func.data() instanceof Pattern.Con(var resolved, var params)) {
+      var newCon = new Pattern.Con(resolved, params.appended(new Arg<>(arg.term(), arg.explicit())));
       return new Arg<>(new WithPos<>(pos, newCon), explicit);
     } else {
       fail(new PatternProblem.UnknownCon(func));

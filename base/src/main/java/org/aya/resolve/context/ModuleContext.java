@@ -101,9 +101,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   ) {
     var export = module.exports();
     importModule(modName, export, accessibility, sourcePos);
-    export.modules().forEach((qname, innerMod) -> {
-      importModule(modName.concat(qname), innerMod, accessibility, sourcePos);
-    });
+    export.modules().forEach((qname, innerMod) ->
+      importModule(modName.concat(qname), innerMod, accessibility, sourcePos));
   }
 
   /**
@@ -174,9 +173,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     reportAll(filterProblem.concat(mapProblem));
 
     var renamed = mapRes.result();
-    renamed.symbols().forEach((name, ref) -> {
-      importSymbol(ref, modName, name, accessibility, sourcePos);
-    });
+    renamed.symbols().forEach((name, ref) ->
+      importSymbol(ref, modName, name, accessibility, sourcePos));
 
     // import the modules that {renamed} exported
     renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));

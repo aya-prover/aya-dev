@@ -46,7 +46,7 @@ public final class PatMatcher {
   /**
    * Match {@param term} against to {@param pat}
    *
-   * @return a substitution of corresponding bindings of {@param pat} if success
+   * Produces substitution of corresponding bindings of {@param pat} in {@link #matched} if success
    */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Failure {
     switch (pat) {
@@ -86,7 +86,6 @@ public final class PatMatcher {
         }
       }
     }
-    ;
   }
 
   private void onMatchBind(@NotNull Term matched) {
@@ -135,9 +134,9 @@ public final class PatMatcher {
 
   private void solve(@NotNull Pat pat, @NotNull MetaPatTerm term) throws Failure {
     var maybeMeta = realSolution(term);
-    if (maybeMeta instanceof MetaPatTerm meta) {
+    if (maybeMeta instanceof MetaPatTerm(var meta)) {
       if (inferMeta) {
-        var bindsMetas = doSolveMetaPrime(pat, meta.meta());
+        var bindsMetas = doSolveMetaPrime(pat, meta);
         bindsMetas.forEach(this::onMatchBind);
       }
       else throw new Failure(State.Stuck);

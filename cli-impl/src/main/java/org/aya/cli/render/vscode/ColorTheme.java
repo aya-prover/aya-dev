@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.render.vscode;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.Strictness;
 import kala.collection.Map;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableMap;
@@ -28,7 +29,7 @@ public class ColorTheme {
   public static Try<ColorTheme> loadFrom(@NotNull Path path) throws JsonParseException {
     return Try.of(() -> {
       var jsonObj = newGsonBuilder()
-        .setLenient()
+        .setStrictness(Strictness.LENIENT)
         .create()
         .fromJson(Files.newBufferedReader(path), VscColorTheme.class);
       var include = jsonObj.include;

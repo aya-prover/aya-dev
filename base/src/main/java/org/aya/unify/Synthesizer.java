@@ -45,10 +45,10 @@ public record Synthesizer(
       return true;
     }
 
-    if (!(trySynth(ty) instanceof SortTerm tyty)) return false;
-    return switch (tyty.kind()) {
-      case Type -> expected.kind() == SortKind.Type && tyty.lift() <= expected.lift();
-      case Set -> expected.kind() == SortKind.Set && tyty.lift() <= expected.lift();
+    if (!(trySynth(ty) instanceof SortTerm(var kind, int lift))) return false;
+    return switch (kind) {
+      case Type -> expected.kind() == SortKind.Type && lift <= expected.lift();
+      case Set -> expected.kind() == SortKind.Set && lift <= expected.lift();
       case ISet -> expected.kind() == SortKind.Type;
     };
   }
@@ -105,8 +105,8 @@ public record Synthesizer(
       case MetaPatTerm meta -> meta.meta().type();
       case ProjTerm(Term of, int index) -> {
         var ofTy = trySynth(of);
-        if (!(ofTy instanceof SigmaTerm ofSigma)) yield null;
-        yield ofSigma.params().get(index - 1)
+        if (!(ofTy instanceof SigmaTerm(var params))) yield null;
+        yield params.get(index - 1)
           // the type of projOf.{index - 1} may refer to the previous parameters
           .instantiateTele(ProjTerm.projSubst(of, index).view());
       }
@@ -134,7 +134,7 @@ public record Synthesizer(
       case DimTerm _ -> DimTyTerm.INSTANCE;
       case DimTyTerm _ -> SortTerm.ISet;
       case MetaLitTerm mlt -> mlt.type();
-      case StringTerm str -> state().primFactory.getCall(PrimDef.ID.STRING);
+      case StringTerm _ -> state().primFactory.getCall(PrimDef.ID.STRING);
       case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
