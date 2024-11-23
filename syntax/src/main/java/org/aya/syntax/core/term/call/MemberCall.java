@@ -19,11 +19,18 @@ public record MemberCall(
 ) implements Callable.Tele, BetaRedex {
   private Term update(Term clazz, ImmutableSeq<Term> newArgs) {
     return clazz == of && newArgs.sameElements(args, true) ? this
-      : new MemberCall(clazz, ref, ulift, newArgs).make();
+      : MemberCall.make(clazz, ref, ulift, newArgs);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, of), Callable.descent(args, f));
+  }
+
+  public static @NotNull Term make(
+    @NotNull Term of, @NotNull MemberDefLike ref,
+    int ulift, @NotNull ImmutableSeq<@NotNull Term> args
+  ) {
+    return new MemberCall(of, ref, ulift, args).make();
   }
 
   public static @NotNull Term make(
