@@ -17,13 +17,20 @@ public record MemberCall(
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
 ) implements Callable.Tele, BetaRedex {
-  private MemberCall update(Term clazz, ImmutableSeq<Term> newArgs) {
+  private Term update(Term clazz, ImmutableSeq<Term> newArgs) {
     return clazz == of && newArgs.sameElements(args, true) ? this
-      : new MemberCall(clazz, ref, ulift, newArgs);
+      : MemberCall.make(clazz, ref, ulift, newArgs);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, of), Callable.descent(args, f));
+  }
+
+  public static @NotNull Term make(
+    @NotNull Term of, @NotNull MemberDefLike ref,
+    int ulift, @NotNull ImmutableSeq<@NotNull Term> args
+  ) {
+    return new MemberCall(of, ref, ulift, args).make();
   }
 
   public static @NotNull Term make(
@@ -60,6 +67,7 @@ public record MemberCall(
         var impl = cast.get(ref);
         if (impl != null) yield impl.apply(cast);
         // no impl, try inner
+        assert !(cast.subterm() instanceof ClassCastTerm) : "eliminated by ClassCastTerm#make";
         yield update(cast.subterm(), args);
       }
       default -> this;

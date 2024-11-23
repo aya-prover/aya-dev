@@ -9,7 +9,7 @@ java = "21"
 
 # https://github.com/JetBrains/java-annotations
 annotations = "26.0.1"
-kala = "0.74.0"
+kala = "0.76.0"
 # https://picocli.info
 picocli = "4.7.6"
 build-util = "0.0.28"
@@ -23,11 +23,11 @@ hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.11.0"
 # https://github.com/beryx/badass-jlink-plugin
-jlink = "3.1.0-rc-1"
+jlink = "3.1.1"
 # https://github.com/jacoco/jacoco
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
-manifold = "2024.1.41"
+manifold = "2024.1.42"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }

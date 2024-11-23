@@ -24,6 +24,8 @@ public record ClassCastTerm(
   @NotNull ImmutableSeq<Closure> forget
 ) implements StableWHNF, Term {
   public ClassCastTerm {
+    // forget cannot be empty, I think it is not good because we can make an infinite size term,
+    // i.e. fix (\x => cast x [] [])
     assert forget.isNotEmpty();
   }
 
@@ -36,7 +38,27 @@ public record ClassCastTerm(
       && this.remember.sameElements(remember, true)
       && this.forget.sameElements(forget, true)
       ? this
-      : new ClassCastTerm(ref, subterm, remember, forget);
+      : ClassCastTerm.make(ref, subterm, remember, forget);
+  }
+
+  public static @NotNull ClassCastTerm make(
+    @NotNull ClassDefLike ref,
+    @NotNull Term subterm,
+    @NotNull ImmutableSeq<Closure> remember,
+    @NotNull ImmutableSeq<Closure> forget
+  ) {
+    return new ClassCastTerm(ref, subterm, remember, forget).make();
+  }
+
+  public @NotNull ClassCastTerm make() {
+    return switch (subterm) {
+      case ClassCastTerm subcast ->
+        // subcast : SomeClass (this.remember ++ this.forget)
+        // subcast.subterm : SomeClass ((this.remember ++ this.forget) ++ subcast.forget)
+        // Obviously, if we only remember [this.remember], we forget [this.forget ++ subcast.forget]
+        new ClassCastTerm(ref, subcast.subterm, remember, forget.appendedAll(subcast.forget));
+      default -> this;
+    };
   }
 
   @Override

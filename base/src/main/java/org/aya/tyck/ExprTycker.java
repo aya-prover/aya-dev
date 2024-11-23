@@ -182,7 +182,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           // No need to coerce
           if (clazz.args().size() == resultClazz.args().size()) return result;
           var forget = resultClazz.args().drop(clazz.args().size());
-          return new Jdg.Default(new ClassCastTerm(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
+          return new Jdg.Default(ClassCastTerm.make(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
         } else {
           return makeErrorResult(type, result);
         }
@@ -292,7 +292,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.LitInt(var integer) -> {
         // TODO[literal]: int literals. Currently the parser does not allow negative literals.
         var defs = state.shapeFactory.findImpl(AyaShape.NAT_SHAPE);
-        if (defs.isEmpty()) yield fail(expr.data(), new NoRuleError(expr, null));
+        if (defs.isEmpty()) {
+          yield fail(expr.data(), new NoRuleError(expr, null));
+        }
         if (defs.sizeGreaterThan(1)) {
           var type = freshMeta("_ty" + integer + "'", expr.sourcePos(), MetaVar.Misc.IsType, false);
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), integer, defs, type), type);
