@@ -91,7 +91,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     var argsTerm = "args";
     var onStuckTerm = "onStuck";
     var onStuckParam = new JitParam(onStuckTerm, TYPE_STUCK);
-    var names = ImmutableSeq.fill(unit.telescope().size(), () -> nameGen().nextName());
+    var names = ImmutableSeq.fill(unit.telescope().size(), _ -> nameGen().nextName());
     var fixedParams = MutableList.<JitParam>create();
     fixedParams.append(onStuckParam);
     fixedParams.appendAll(names.view().map(x -> new JitParam(x, CLASS_TERM)));
