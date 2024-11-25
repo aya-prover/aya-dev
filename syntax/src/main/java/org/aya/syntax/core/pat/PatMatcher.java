@@ -65,9 +65,12 @@ public final class PatMatcher {
           default -> throw new Failure(State.Stuck);
         }
       }
-      case Pat.Tuple tuple -> {
+      case Pat.Tuple (var l, var r) -> {
         switch (pre.apply(term)) {
-          case TupTerm tup -> matchMany(tuple.elements(), tup.items());
+          case TupTerm (var ll, var rr) -> {
+            match(l, ll);
+            match(r, rr);
+          }
           case MetaPatTerm metaPatTerm -> solve(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }

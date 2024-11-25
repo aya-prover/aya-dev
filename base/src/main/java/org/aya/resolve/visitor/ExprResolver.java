@@ -135,8 +135,8 @@ public record ExprResolver(
       }
       case Expr.Sigma sigma -> {
         var mCtx = MutableValue.create(ctx);
-        var params = sigma.params().map(param -> bind(param, mCtx));
-        yield sigma.update(params);
+        var param = bind(sigma.param(), mCtx);
+        yield sigma.update(param, sigma.last().descent(enter(mCtx.get())));
       }
       case Expr.Array array -> array.update(array.arrayBlock().map(
         left -> {

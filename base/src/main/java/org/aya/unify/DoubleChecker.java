@@ -36,21 +36,10 @@ public record DoubleChecker(
         yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
           inherit(pBody.apply(param), expectedTy));
       }
-      case SigmaTerm sigma -> {
-        if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield subscoped(() -> sigma
-          .view(synthesizer::mkFree)
-          .allMatch(param -> inherit(param, expectedTy)));
-      }
-      case TupTerm(var elems) when whnf(expected) instanceof SigmaTerm sigmaTy -> {
-        // This is not an assertion because the input is not guaranteed to be well-typed
-        if (!elems.sizeEquals(sigmaTy.params())) yield false;
-
-        yield sigmaTy.check(elems, (elem, param) -> {
-          if (inherit(whnf(elem), param)) return elem;
-          return null;
-        }).isOk();
-      }
+      case SigmaTerm (var sParam, var sBody) -> inherit(sParam, expected) && subscoped(sParam, param ->
+        inherit(sBody.apply(param), expected));
+      case TupTerm(var lhs, var rhs) when whnf(expected) instanceof SigmaTerm (var lhsT, var rhsTClos) ->
+        inherit(lhs, lhsT) && inherit(rhs, rhsTClos.apply(lhs));
       case LamTerm(var body) -> switch (whnf(expected)) {
         case PiTerm(var dom, var cod) -> subscoped(dom, param ->
           inherit(body.apply(param), cod.apply(param)));

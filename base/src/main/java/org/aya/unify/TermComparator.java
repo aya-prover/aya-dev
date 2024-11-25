@@ -5,7 +5,6 @@ package org.aya.unify;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Renamer;
-import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.*;
@@ -222,13 +221,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
-      case SigmaTerm(var paramSeq) -> {
-        var size = paramSeq.size();
-        var list = ImmutableSeq.fill(size, i -> ProjTerm.make(lhs, i));
-        var rist = ImmutableSeq.fill(size, i -> ProjTerm.make(rhs, i));
-
-        var telescopic = new AbstractTele.Locns(paramSeq.map(p -> new Param("_", p, true)), ErrorTerm.DUMMY);
-        yield compareMany(list, rist, telescopic) != null;
+      case SigmaTerm(var lTy, var rTy) -> {
+        var lProj = ProjTerm.make(lhs, 0);
+        var rProj = ProjTerm.make(rhs, 0);
+        if (!compare(lProj, rProj, lTy)) yield false;
+        yield compare(ProjTerm.make(lhs, 1), ProjTerm.make(rhs, 1), rTy.apply(lProj));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -296,12 +293,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // Since {lhs} and {rhs} are whnf, at this point, {lof} is unable to evaluate.
         // Thus the only thing we can do is check whether {lof} and {rhs.of(}} (if rhs is ProjTerm) are 'the same'.
         if (!(rhs instanceof ProjTerm(var rof, var rdx))) yield null;
-        if (!(compareUntyped(lof, rof) instanceof SigmaTerm(var params))) yield null;
+        if (!(compareUntyped(lof, rof) instanceof SigmaTerm(var lhsT, var rhsTClos))) yield null;
         if (ldx != rdx) yield null;
-        // Make type
-        var spine = ImmutableSeq.fill(ldx /* ldx is 0-based */, i -> ProjTerm.make(lof, i));    // 0 = lof.0, 1 = lof.1, ...
-        // however, for {lof.ldx}, the nearest(0) element is {lof.(idx - 1)}, so we need to reverse the spine.
-        yield params.get(ldx).instantiateTele(spine.view());
+        if (ldx == 0) yield lhsT;
+        yield rhsTClos.apply(new ProjTerm(lof, 0));
       }
       case FreeTerm(var lvar) -> rhs instanceof FreeTerm(var rvar) && lvar == rvar ? localCtx().get(lvar) : null;
       case DimTerm l -> rhs instanceof DimTerm r && l == r ? l : null;
@@ -485,8 +480,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
       case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
         () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));
-      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
-        compareTypesWith(lParams, rParams, () -> false, _ -> true);
+      case Pair(SigmaTerm(var lParam, var lBody), SigmaTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
+        () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = subscoped(DimTyTerm.INSTANCE, var ->

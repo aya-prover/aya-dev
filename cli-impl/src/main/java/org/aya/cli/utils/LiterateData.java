@@ -65,6 +65,14 @@ public record LiterateData(
     });
   }
 
+  /**
+   * Directly calling a def is usually an error due to the possible existence of
+   * implicit parameters. However, when writing these functions in the REPL or a
+   * literate document, we are not usually asking for normalizing the function,
+   * instead we might just want to take a look at it, or check if it exists, or
+   * generate a link to it. So it's a good idea to not show an error message,
+   * and just pretty print the def instead.
+   */
   public static @Nullable Jdg simpleVar(Expr expr) {
     if (expr instanceof Expr.Ref ref && ref.var() instanceof AnyDefVar defVar) {
       var anyDef = AnyDef.fromVar(defVar);

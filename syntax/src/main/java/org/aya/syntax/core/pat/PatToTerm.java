@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.*;
@@ -28,7 +29,7 @@ public interface PatToTerm {
           yield new FreeTerm(bind.bind());
         }
         case Pat.Con con -> new ConCall(con.head(), con.args().map(this));
-        case Pat.Tuple tuple -> new TupTerm(tuple.elements().map(this));
+        case Pat.Tuple(var l, var r) -> new TupTerm(apply(l), apply(r));
         case Pat.Meta meta -> new MetaPatTerm(meta);
         case Pat.ShapedInt si -> si.toTerm();
       };
@@ -73,8 +74,8 @@ public interface PatToTerm {
           .map(args -> {
             return new ConCall(con.head(), args);
           });
-        case Pat.Tuple tuple -> list(tuple.elements().view())
-          .map(args -> new TupTerm(args));
+        case Pat.Tuple(var l, var r) -> list(Seq.of(l, r).view())
+          .map(args -> new TupTerm(args.get(0), args.get(1)));
       };
     }
   }

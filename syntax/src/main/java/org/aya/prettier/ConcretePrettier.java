@@ -47,7 +47,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Expr prexpr) {
     return switch (prexpr) {
       case Expr.Error error -> Doc.angled(error.description().toDoc(options));
-      case Expr.Tuple expr -> Doc.parened(Doc.commaList(expr.items().view().map(e -> term(Outer.Free, e.data()))));
+      case Expr.BinTuple (var lhs, var rhs) -> Doc.parened(Doc.commaList(term(Outer.Free, lhs), term(Outer.Free, rhs)));
       case Expr.BinOpSeq binOpSeq -> {
         var seq = binOpSeq.seq();
         var first = seq.getFirst().term();
@@ -142,11 +142,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.LitInt expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawSort e -> Doc.styled(KEYWORD, e.kind().name());
-      case Expr.Sigma expr -> checkParen(outer, Doc.sep(
-        KW_SIGMA,
-        visitTele(expr.params().dropLast(1)),
-        SIGMA_RESULT,
-        term(Outer.Codomain, expr.params().getLast().type())), Outer.BinOp);
+      case Expr.Sigma (var param, var body) -> checkParen(outer, Doc.sep(KW_SIGMA,
+        param.toDoc(options), SIGMA_RESULT, term(Outer.Codomain, body.data())), Outer.Domain);
       // ^ Same as Pi
       case Expr.Sort expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().name());
@@ -241,7 +238,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   public @NotNull Doc pattern(@NotNull Pattern pattern, boolean licit, Outer outer) {
     return switch (pattern) {
-      case Pattern.Tuple tuple -> Doc.licit(licit, patterns(tuple.patterns().map(WithPos::data)));
+      case Pattern.Tuple(var l, var r) ->
+        Doc.licit(licit, Doc.commaList(pattern(l.data(), true, Outer.Free), pattern(r.data(), true, Outer.Free)));
       case Pattern.Absurd _ -> Doc.bracedUnless(PAT_ABSURD, licit);
       case Pattern.Bind bind -> Doc.bracedUnless(linkDef(bind.bind()), licit);
       case Pattern.CalmFace _ -> Doc.bracedUnless(Doc.plain(Constants.ANONYMOUS_PREFIX), licit);

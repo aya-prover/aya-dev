@@ -37,15 +37,18 @@ public sealed interface Pattern extends AyaDocile {
     return new ConcretePrettier(options).pattern(this, true, BasePrettier.Outer.Free);
   }
 
-  record Tuple(@NotNull ImmutableSeq<WithPos<Pattern>> patterns) implements Pattern {
-    public @NotNull Tuple update(@NotNull ImmutableSeq<WithPos<Pattern>> patterns) {
-      return patterns.sameElements(patterns(), true) ? this : new Tuple(patterns);
+  record Tuple(@NotNull WithPos<Pattern> l, @NotNull WithPos<Pattern> r) implements Pattern {
+    public @NotNull Tuple update(@NotNull WithPos<Pattern> l, @NotNull WithPos<Pattern> r) {
+      return l == this.l && r == this.r ? this : new Tuple(l, r);
     }
 
     @Override public @NotNull Tuple descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) {
-      return update(patterns.map(a -> a.descent(f)));
+      return update(l.descent(f), r.descent(f));
     }
-    @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { patterns.forEach(f::accept); }
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) {
+      f.accept(l);
+      f.accept(r);
+    }
   }
 
   record Number(int number) implements Pattern {

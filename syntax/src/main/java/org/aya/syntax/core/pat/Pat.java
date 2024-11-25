@@ -117,24 +117,25 @@ public sealed interface Pat extends AyaDocile {
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
   }
 
-  record Tuple(@NotNull ImmutableSeq<Pat> elements) implements Pat {
-    public @NotNull Tuple update(@NotNull ImmutableSeq<Pat> elements) {
-      return this.elements.sameElements(elements, true) ? this : new Tuple(elements);
+  record Tuple(@NotNull Pat lhs, @NotNull Pat rhs) implements Pat {
+    public @NotNull Tuple update(@NotNull Pat lhs, @NotNull Pat rhs) {
+      return this.lhs == lhs && this.rhs == rhs ? this : new Tuple(lhs, rhs);
     }
 
     @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(elements.map(patOp));
+      return update(patOp.apply(lhs), patOp.apply(rhs));
     }
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
-      elements.forEach(e -> e.consumeBindings(consumer));
+      lhs.consumeBindings(consumer);
+      rhs.consumeBindings(consumer);
     }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
-      return update(elements.map(e -> e.bind(vars)));
+      return update(lhs.bind(vars), rhs.bind(vars));
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
-      return update(elements.map(x -> x.inline(bind)));
+      return update(lhs.inline(bind), rhs.inline(bind));
     }
   }
 
@@ -155,7 +156,7 @@ public sealed interface Pat extends AyaDocile {
       args.forEach(e -> e.consumeBindings(consumer));
     }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
-      var newHead = (ConCallLike.Head) head.bindTele(vars.view());
+      var newHead = head.bindTele(vars.view());
       return update(args.map(e -> e.bind(vars)), newHead);
     }
 

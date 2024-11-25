@@ -60,8 +60,8 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
         ExprializeUtils.getInstance(NameSerializer.getClassReference(shapedInt.suc())),
         serializeTerm(shapedInt.type()));
       case Pat.Meta _ -> Panic.unreachable();
-      case Pat.Tuple tuple -> ExprializeUtils.makeNew(CLASS_PAT_TUPLE,
-        serializeToImmutableSeq(CLASS_PAT, tuple.elements()));
+      case Pat.Tuple(var l, var r) -> ExprializeUtils.makeNew(CLASS_PAT_TUPLE,
+        serializeToImmutableSeq(CLASS_PAT, ImmutableSeq.of(l, r)));
     };
   }
 

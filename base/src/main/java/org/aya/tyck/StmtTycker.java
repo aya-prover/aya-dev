@@ -271,11 +271,11 @@ public record StmtTycker(
     var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
-      ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
+      boundDataCall, boundariesWithDummy))
       .bindTele(ownerBinds.zip(ownerTele).view());
-    var wholeSigResult = ((TupTerm) wholeSig.result()).items();
-    boundDataCall = (DataCall) wholeSigResult.get(0);
-    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.get(1);
+    var wholeSigResult = (TupTerm) wholeSig.result();
+    boundDataCall = (DataCall) wholeSigResult.lhs();
+    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.rhs();
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new Signature(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),

@@ -9,20 +9,22 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
+import org.aya.generic.State;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
-import org.aya.generic.State;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.util.Pair;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -72,20 +74,25 @@ public record PatClassifier(
     switch (whnfTy) {
       // Note that we cannot have ill-typed patterns such as constructor patterns under sigma,
       // since patterns here are already well-typed
-      case SigmaTerm(var params) -> {
+      case SigmaTerm(var lT, var rT) -> {
         // The type is sigma type, and do we have any non-catchall patterns?
         // In case we do,
         if (clauses.anyMatch(i -> i.pat() instanceof Pat.Tuple)) {
-          var namedParams = params.mapIndexed((i, p) ->
-            new Param(String.valueOf(i), p, true));
-          // ^ the licit shall not matter
           var matches = clauses.mapIndexedNotNull((i, subPat) -> switch (subPat.pat()) {
-            case Pat.Tuple tuple -> new Indexed<>(tuple.elements().view(), i);
-            case Pat.Bind _ -> new Indexed<>(namedParams.view().map(Param::toFreshPat), i);
+            case Pat.Tuple(var l, var r) -> new Indexed<>(new Pair<>(l, r), i);
+            case Pat.Bind b -> {
+              var name = b.bind().name();
+              var ref = LocalVar.generate(name + ".1");
+              yield new Indexed<>(new Pair<Pat, Pat>(new Pat.Bind(ref, lT),
+                new Pat.Bind(LocalVar.generate(name + ".2"), rT.apply(ref))), i);
+            }
             default -> null;
           });
-          var classes = classifyN(subst, namedParams.view(), matches, fuel);
-          return classes.map(args -> new PatClass<>(new TupTerm(args.term()), args.cls()));
+          var classes = classify2(subst, new Param("1", lT, true),
+            term -> new Param("2", rT.apply(term), true), matches, fuel);
+          // ^ the licit shall not matter
+          return classes.map(args -> new PatClass<>(new TupTerm(
+            args.term().component1(), args.term().component2()), args.cls()));
         }
       }
       // THE BIG GAME

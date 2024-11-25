@@ -1,14 +1,16 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck.pat;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.util.Pair;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 
 public interface ClassifierUtil<Subst, Term, Param, Pat> {
@@ -37,6 +39,21 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
         .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
+  }
+
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<Pair<Term, Term>>>
+  classify2(
+    @NotNull Subst subst, @NotNull Param tele1, @NotNull Function<Term, Param> tele2,
+    @NotNull ImmutableSeq<Indexed<Pair<Pat, Pat>>> clauses, int fuel
+  ) {
+    var cls = classify1(subst, subst(subst, tele1),
+      clauses.mapIndexed((ix, it) -> new Indexed<>(normalize(it.pat().component1()), ix)), fuel);
+    return cls.flatMap(subclauses ->
+      classify1(add(subst, subclauses.term()),
+        tele2.apply(subclauses.term()),
+        subclauses.extract(clauses.map(it ->
+          new Indexed<>(it.pat().component2(), it.ix()))), fuel)
+        .map(args -> args.map(ls -> new Pair<>(subclauses.term(), ls))));
   }
 
   static int[] firstMatchDomination(

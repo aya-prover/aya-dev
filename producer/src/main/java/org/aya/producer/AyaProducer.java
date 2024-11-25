@@ -525,7 +525,7 @@ public record AyaProducer(
     if (node.is(TUPLE_ATOM)) {
       var expr = node.child(COMMA_SEP).childrenOfType(EXPR).toImmutableSeq();
       if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
-      return new WithPos<>(pos, new Expr.Tuple(expr.map(this::expr)));
+      return Expr.buildTuple(pos, expr.map(this::expr).view());
     }
     if (node.is(APP_EXPR)) {
       var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
@@ -573,11 +573,9 @@ public record AyaProducer(
     if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
       lambdaTelescope(node.childrenOfType(LAMBDA_TELE)).view(),
       expr(node.child(EXPR)));
-    if (node.is(SIGMA_EXPR)) {
-      var last = expr(node.child(EXPR));
-      return new WithPos<>(pos, new Expr.Sigma(telescope(node.childrenOfType(TELE))
-        .appended(new Expr.Param(last.sourcePos(), LocalVar.IGNORED, last, true))));
-    }
+    if (node.is(SIGMA_EXPR)) return Expr.buildSigma(pos,
+      telescope(node.childrenOfType(TELE)).view(),
+      expr(node.child(EXPR)));
     if (node.is(LAMBDA_EXPR)) {
       WithPos<Expr> result;
       var bodyExpr = node.peekChild(EXPR);
@@ -657,7 +655,7 @@ public record AyaProducer(
     if (node.is(TUPLE_IM_ARGUMENT)) {
       var items = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
       if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.getFirst()));
-      var tupExpr = new WithPos<Expr>(pos, new Expr.Tuple(items));
+      var tupExpr = Expr.buildTuple(pos, items.view());
       return new Expr.NamedArg(false, tupExpr);
     }
     if (node.is(NAMED_IM_ARGUMENT)) {
@@ -722,7 +720,7 @@ public record AyaProducer(
           reporter.report(new ParseError(pos, "Implicit pattern is not allowed here."));
         });
 
-        pat = new Pattern.Tuple(patterns.map(Arg::term));
+        pat = Expr.buildTupPat(sourcePosOf(child), patterns.map(Arg::term).view()).data();
       }
 
       return new Arg<>(new WithPos<>(sourcePosOf(node), pat), explicit);
