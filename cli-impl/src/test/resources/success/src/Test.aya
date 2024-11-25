@@ -38,7 +38,10 @@ module Issue1145 {
 }
 
 module PullRequest1156 {
-  def testIntro : Sig Nat ** Nat => (0 , 0)
-  def testElim (p : Sig Nat ** Nat) : Nat
+  def intro : Sig Nat ** Nat => (0 , 0)
+  def elimmm (p : Sig Nat ** Nat) : Nat
   | (a, b) => a
+
+  def id {A : Type} (x : A) : A => x
+  def idTest (t : Sig Nat ** Nat) : t = id t => refl
 }
