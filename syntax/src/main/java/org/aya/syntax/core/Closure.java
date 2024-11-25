@@ -20,7 +20,7 @@ import java.util.function.UnaryOperator;
  * see {@link Jit#toLocns()}
  */
 public sealed interface Closure extends UnaryOperator<Term> {
-  static @NotNull Closure mkConst(@NotNull Term term) { return new Jit(_ -> term); }
+  static @NotNull Closure mkConst(@NotNull Term term) { return new Const(term); }
   Closure descent(IndexedFunction<Term, Term> f);
 
   /**
@@ -31,6 +31,16 @@ public sealed interface Closure extends UnaryOperator<Term> {
   @Override Term apply(Term term);
   default @NotNull Term apply(LocalVar var) { return apply(new FreeTerm(var)); }
   @NotNull Closure.Locns toLocns();
+
+  record Const(@NotNull Term term) implements Closure {
+    @Override public Closure descent(IndexedFunction<Term, Term> f) {
+      var result = f.apply(1, term);
+      if (result == term) return this;
+      return new Const(result);
+    }
+    @Override public Term apply(Term ignored) { return term; }
+    @Override public @NotNull Closure.Locns toLocns() { return new Locns(term); }
+  }
 
   // NbE !!!!!!
   record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {

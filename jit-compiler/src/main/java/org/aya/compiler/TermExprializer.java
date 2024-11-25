@@ -271,11 +271,15 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   private @NotNull String serializeClosure(@NotNull Closure body) {
     var param = nameGen.nextName();
     return with(param, t -> {
+      if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
       var appliedBody = body.apply(t);
       if (FindUsage.free(appliedBody, t.name()) > 0)
         return makeNew(CLASS_JITLAMTERM, param + " -> " + doSerialize(appliedBody));
-      else return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
+      else return serializeConst(appliedBody);
     });
+  }
+  private @NotNull String serializeConst(Term appliedBody) {
+    return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
   }
 
   @Override public @NotNull String serialize(Term unit) {
