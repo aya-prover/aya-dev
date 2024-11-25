@@ -210,7 +210,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         if (hole.explicit()) fail(new Goal(state, meta, localCtx().clone(), hole.accessibleLocal()));
         yield meta;
       }
-      case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());
+      case Expr.Sort(var kind, var lift) -> new SortTerm(kind, lift);
       case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);

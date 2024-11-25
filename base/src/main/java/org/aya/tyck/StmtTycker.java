@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
+import org.aya.generic.term.SortKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
@@ -129,7 +130,7 @@ public record StmtTycker(
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;
-        if (result == null) result = new WithPos<>(data.sourcePos(), new Expr.Type(0));
+        if (result == null) result = new WithPos<>(data.sourcePos(), new Expr.Sort(SortKind.Type, 0));
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
         signature = signature.descent(tycker::zonk);

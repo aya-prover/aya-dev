@@ -264,27 +264,9 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  sealed interface Sort extends Expr {
-    int lift();
-    SortKind kind();
-
-    @Override default @NotNull Sort descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
-    @Override default void forEach(@NotNull PosedConsumer<Expr> f) { }
-  }
-
-  record Type(@Override int lift) implements Sort {
-    @Override public SortKind kind() { return SortKind.Type; }
-  }
-
-  record Set(@Override int lift) implements Sort {
-    @Override public SortKind kind() { return SortKind.Set; }
-  }
-
-  enum ISet implements Sort {
-    INSTANCE;
-
-    @Override public int lift() { return 0; }
-    @Override public SortKind kind() { return SortKind.ISet; }
+  record Sort(@NotNull SortKind kind, int lift) implements Expr {
+    @Override public @NotNull Sort descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
+    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
   record Lift(@NotNull WithPos<Expr> expr, int lift) implements Expr {
