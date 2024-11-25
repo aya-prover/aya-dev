@@ -3,7 +3,6 @@
 package org.aya.syntax.core.term.marker;
 
 import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.syntax.core.term.SigmaTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
@@ -16,5 +15,5 @@ import org.aya.syntax.core.term.xtt.EqTerm;
  * Note that {@link org.aya.syntax.core.term.call.PrimCall} may also be term formers, but not necessarily.
  */
 public sealed interface Formation extends Term
-  permits DepTypeTerm, SigmaTerm, SortTerm, ClassCall, DataCall, DimTyTerm, EqTerm {
+  permits DepTypeTerm, SortTerm, ClassCall, DataCall, DimTyTerm, EqTerm {
 }

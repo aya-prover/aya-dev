@@ -15,6 +15,7 @@ import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
@@ -74,7 +75,7 @@ public record PatClassifier(
     switch (whnfTy) {
       // Note that we cannot have ill-typed patterns such as constructor patterns under sigma,
       // since patterns here are already well-typed
-      case SigmaTerm(var lT, var rT) -> {
+      case DepTypeTerm(var kind, var lT, var rT) when kind == DTKind.Sigma -> {
         // The type is sigma type, and do we have any non-catchall patterns?
         // In case we do,
         if (clauses.anyMatch(i -> i.pat() instanceof Pat.Tuple)) {

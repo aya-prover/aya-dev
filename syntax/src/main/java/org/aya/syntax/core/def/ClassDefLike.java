@@ -30,6 +30,6 @@ public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.D
     return members.view()
       .drop(implSize)
       .map(MemberDefLike::type)
-      .foldLeft(SortTerm.Type0, SigmaTerm::lub);
+      .foldLeft(SortTerm.Type0, DepTypeTerm::lubSigma);
   }
 }

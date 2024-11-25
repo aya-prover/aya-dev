@@ -32,14 +32,17 @@ public record DoubleChecker(
   public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
     return switch (preterm) {
       case ErrorTerm _ -> true;
-      case DepTypeTerm(var kind, var pParam, var pBody) when kind == DTKind.Pi -> {
-        if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
-          inherit(pBody.apply(param), expectedTy));
-      }
-      case SigmaTerm (var sParam, var sBody) -> inherit(sParam, expected) && subscoped(sParam, param ->
-        inherit(sBody.apply(param), expected));
-      case TupTerm(var lhs, var rhs) when whnf(expected) instanceof SigmaTerm (var lhsT, var rhsTClos) ->
+      case DepTypeTerm(var kind, var pParam, var pBody) -> switch (kind) {
+        case Pi -> {
+          if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
+          yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
+            inherit(pBody.apply(param), expectedTy));
+        }
+        case Sigma -> inherit(pParam, expected) && subscoped(pParam, param ->
+          inherit(pBody.apply(param), expected));
+      };
+      case TupTerm(var lhs, var rhs) when whnf(expected) instanceof
+        DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma ->
         inherit(lhs, lhsT) && inherit(rhs, rhsTClos.apply(lhs));
       case LamTerm(var body) -> switch (whnf(expected)) {
         case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> subscoped(dom, param ->

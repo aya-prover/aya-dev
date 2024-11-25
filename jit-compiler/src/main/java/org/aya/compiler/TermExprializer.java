@@ -196,7 +196,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         Integer.toString(ulift));
       case DepTypeTerm(var kind, var param, var body) -> ExprializeUtils.makeNew(
         ExprializeUtils.getJavaReference(DepTypeTerm.class),
-        ExprializeUtils.getJavaReference(DepTypeTerm.DTKind.class) + "." + kind.name(),
+        ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(DepTypeTerm.class),
+          ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(DepTypeTerm.DTKind.class), kind.name())),
         doSerialize(param),
         serializeClosure(body)
       );
@@ -220,10 +221,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case DimTerm dim -> ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(DimTerm.class), dim.name());
       case TupTerm(var l, var r) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(TupTerm.class),
         serializeToImmutableSeq(CLASS_TERM, ImmutableSeq.of(l, r))
-      );
-      case SigmaTerm(var param, var body) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(SigmaTerm.class),
-        doSerialize(param),
-        serializeClosure(body)
       );
       case PrimCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_PRIMCALL,
         ExprializeUtils.getInstance(getClassReference(ref)),

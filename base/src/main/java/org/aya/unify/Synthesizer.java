@@ -6,6 +6,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.ConCall;
@@ -87,21 +88,13 @@ public record Synthesizer(
           case Sigma -> DepTypeTerm.lubSigma(pSort, bSort);
         };
       }
-      case SigmaTerm(var sigParam, var body) -> {
-        if (!(trySynth(sigParam) instanceof SortTerm pSort)) yield null;
-        var bTy = tycker.subscoped(sigParam, param ->
-          trySynth(body.apply(param)), renamer);
-
-        if (!(bTy instanceof SortTerm bSort)) yield null;
-        yield SigmaTerm.lub(pSort, bSort);
-      }
       case TupTerm _, LamTerm _ -> null;
       case FreeTerm(var var) -> localCtx().get(var);
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
       case ProjTerm(var of, int index) -> {
         var ofTy = trySynth(of);
-        if (!(ofTy instanceof SigmaTerm(var lhs, var rhs))) yield null;
+        if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
         yield index == 0 ? lhs : rhs.apply(ProjTerm.make(of, 0));
       }
       case IntegerTerm lit -> lit.type();

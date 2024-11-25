@@ -30,7 +30,6 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
       case Callable.Tele c -> Character.toString(Character.toLowerCase(
         c.ref().name().codePointAt(0)));
       case DepTypeTerm _ -> "f";
-      case SigmaTerm _ -> "t";
       case DimTyTerm _ -> "i";
       case ProjTerm p -> nameOf(p.of());
       case AppTerm a -> nameOf(a.fun());

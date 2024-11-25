@@ -82,10 +82,6 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case ConCallLike conCall -> visitCoreCalls(conCall.ref(), conCall.conArgs(), outer, optionImplicit());
       case FnCall fnCall -> visitCoreCalls(fnCall.ref(), fnCall.args(), outer, optionImplicit());
-      case SigmaTerm sigma -> {
-        var pair = SigmaTerm.unpi(sigma, UnaryOperator.identity(), nameGen);
-        yield visitDT(outer, pair, KW_SIGMA, SIGMA_RESULT);
-      }
       case LamTerm lam -> {
         var pair = LamTerm.unlam(lam, nameGen);
         var params = pair.params();
@@ -167,20 +163,23 @@ public class CorePrettier extends BasePrettier<Term> {
       //       Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
       //       Doc.symbol("=>"), term(Outer.Free, clause.body())))
       //     .toImmutableSeq()));
-      case DepTypeTerm depTypeTerm -> {
+      case DepTypeTerm depType -> {
         // Try to omit the Pi keyword
-        if (depTypeTerm.kind() == DTKind.Pi) {
-          var var = nameGen.bindName(depTypeTerm.param());
-          var codomain = depTypeTerm.body().apply(var);
+        if (depType.kind() == DTKind.Pi) {
+          var var = nameGen.bindName(depType.param());
+          var codomain = depType.body().apply(var);
           if (FindUsage.free(codomain, var) == 0) {
-            var param = justType(Arg.ofExplicitly(depTypeTerm.param()), Outer.BinOp);
+            var param = justType(Arg.ofExplicitly(depType.param()), Outer.BinOp);
             var cod = term(Outer.Codomain, codomain);
             nameGen.unbindName(var);
             yield checkParen(outer, Doc.sep(param, ARROW, cod), Outer.BinOp);
           }
         }
-        var pair = DepTypeTerm.unpi(depTypeTerm, UnaryOperator.identity(), nameGen);
-        yield visitDT(outer, pair, KW_PI, ARROW);
+        var pair = DepTypeTerm.unpi(depType, UnaryOperator.identity(), nameGen);
+        yield switch (depType.kind()) {
+          case Pi -> visitDT(outer, pair, KW_PI, ARROW);
+          case Sigma -> visitDT(outer, pair, KW_SIGMA, SIGMA_RESULT);
+        };
       }
       case ClassCall classCall ->
         visitCoreCalls(classCall.ref(), classCall.args().map(x -> x.apply(SELF)), outer, true);

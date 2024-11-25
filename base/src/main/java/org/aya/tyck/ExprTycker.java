@@ -118,7 +118,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.BinTuple(var lhs, var rhs) when whnf(type) instanceof SigmaTerm(var lhsT, var rhsTClos) -> {
+      case Expr.BinTuple(var lhs, var rhs) when whnf(type) instanceof
+        DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma -> {
         var lhsX = inherit(lhs, lhsT).wellTyped();
         var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
         yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
@@ -156,7 +157,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
     // Try coercive subtyping for (I -> A) into (Path A ...)
     if (type instanceof EqTerm eq) {
-      if (whnf(resultType) instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
+      if (whnf(resultType) instanceof DepTypeTerm(
+        var kind, var dom, var cod
+      ) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
         var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
         if (closure == null) return makeErrorResult(type, result);
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
@@ -218,7 +221,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
         yield subscoped(param.ref(), wellParam, () ->
-          new SigmaTerm(wellParam, ty(last).bind(param.ref())));
+          new DepTypeTerm(DTKind.Sigma, wellParam, ty(last).bind(param.ref())));
       }
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
@@ -259,8 +262,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
-      case Expr.Sugar s ->
-        throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
+      case Expr.Sugar s -> throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
         int lift;
         if (f.data() instanceof Expr.Lift(var inner, var level)) {
@@ -306,7 +308,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var lhsX = synthesize(lhs);
         var rhsX = synthesize(rhs);
         var wellTyped = new TupTerm(lhsX.wellTyped(), rhsX.wellTyped());
-        var ty = new SigmaTerm(lhsX.type(), Closure.mkConst(rhsX.type()));
+        var ty = new DepTypeTerm(DTKind.Sigma, lhsX.type(), Closure.mkConst(rhsX.type()));
 
         yield new Jdg.Default(wellTyped, ty);
       }

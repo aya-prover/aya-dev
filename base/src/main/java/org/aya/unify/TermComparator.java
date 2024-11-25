@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
@@ -199,17 +198,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
         });
       }
-      case DepTypeTerm pi -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
-          compare(
-            lbody.apply(var),
-            rbody.apply(var),
-            pi.body().apply(var)
-          ));
-        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
-        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
-        default -> compare(lhs, rhs, null);
-      };
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(DimTyTerm.INSTANCE, var ->
           compare(
@@ -221,7 +209,19 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
-      case SigmaTerm(var lTy, var rTy) -> {
+      case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
+          compare(
+            lbody.apply(var),
+            rbody.apply(var),
+            pi.body().apply(var)
+          ));
+        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
+        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
+        default -> compare(lhs, rhs, null);
+      };
+      // Sigma types
+      case DepTypeTerm(_, var lTy, var rTy) -> {
         var lProj = ProjTerm.make(lhs, 0);
         var rProj = ProjTerm.make(rhs, 0);
         if (!compare(lProj, rProj, lTy)) yield false;
@@ -293,7 +293,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // Since {lhs} and {rhs} are whnf, at this point, {lof} is unable to evaluate.
         // Thus the only thing we can do is check whether {lof} and {rhs.of(}} (if rhs is ProjTerm) are 'the same'.
         if (!(rhs instanceof ProjTerm(var rof, var rdx))) yield null;
-        if (!(compareUntyped(lof, rof) instanceof SigmaTerm(var lhsT, var rhsTClos))) yield null;
+        if (!(compareUntyped(lof, rof) instanceof DepTypeTerm(var k, var lhsT, var rhsTClos) && k == DTKind.Sigma))
+          yield null;
         if (ldx != rdx) yield null;
         if (ldx == 0) yield lhsT;
         yield rhsTClos.apply(new ProjTerm(lof, 0));
@@ -403,36 +404,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return subscoped(lTy, continuation);
   }
 
-  private <R> R compareTypesWithAux(
-    @NotNull SeqView<LocalVar> vars,
-    @NotNull ImmutableSeq<Term> list,
-    @NotNull ImmutableSeq<Term> rist,
-    @NotNull Supplier<R> onFailed,
-    @NotNull Function<ImmutableSeq<LocalVar>, R> continuation
-  ) {
-    if (!list.sizeEquals(rist)) return onFailed.get();
-    if (list.isEmpty()) return continuation.apply(vars.toImmutableSeq());
-    return compareTypeWith(
-      list.getFirst().instantiateTeleVar(vars),
-      rist.getFirst().instantiateTeleVar(vars), onFailed, var ->
-        compareTypesWithAux(vars.appended(var), list.drop(1), rist.drop(1), onFailed, continuation));
-  }
-
-  /**
-   * Compare types and run the {@param continuation} with those types in context (reverse order).
-   *
-   * @param onFailed     run while failed (size doesn't match or compare failed)
-   * @param continuation a function that accept the {@link LocalVar} of all {@param list}
-   */
-  private <R> R compareTypesWith(
-    @NotNull ImmutableSeq<Term> list,
-    @NotNull ImmutableSeq<Term> rist,
-    @NotNull Supplier<R> onFailed,
-    @NotNull Function<ImmutableSeq<LocalVar>, R> continuation
-  ) {
-    return subscoped(() -> compareTypesWithAux(SeqView.empty(), list, rist, onFailed, continuation));
-  }
-
   private boolean sortLt(@NotNull SortTerm l, @NotNull SortTerm r) {
     var lift = l.lift();
     var rift = r.lift();
@@ -492,11 +463,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private @NotNull LocalVar putParam(@NotNull Param param) {
-    var var = LocalVar.generate(param.name());
-    localCtx().put(var, param.type());
-    return var;
-  }
   public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
     return super.subscoped(type, action, nameGen);
   }

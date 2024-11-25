@@ -21,9 +21,10 @@ import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.syntax.core.term.DepTypeTerm;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.SigmaTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
@@ -128,7 +129,7 @@ public class PatternTycker implements Problematic, Stateful {
         yield Pat.Absurd.INSTANCE;
       }
       case Pattern.Tuple(var l, var r) -> {
-        if (!(exprTycker.whnf(type) instanceof SigmaTerm(var lT, var rT))) {
+        if (!(exprTycker.whnf(type) instanceof DepTypeTerm(var kind, var lT, var rT) && kind == DTKind.Sigma)) {
           var frozen = freezeHoles(type);
           yield withError(new PatternProblem.TupleNonSig(pattern, frozen), frozen);
         }
