@@ -36,3 +36,9 @@ module Issue1145 {
 
   def test : NewList Nat => [ 0 ]
 }
+
+module PullRequest1156 {
+  def testIntro : Sig Nat ** Nat => (0 , 0)
+  def testElim (p : Sig Nat ** Nat) : Nat
+  | (a, b) => a
+}

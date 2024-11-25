@@ -219,7 +219,10 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case TupTerm(var l, var r) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(TupTerm.class),
         serializeToImmutableSeq(CLASS_TERM, ImmutableSeq.of(l, r))
       );
-      case SigmaTerm sigmaTerm -> throw new UnsupportedOperationException("TODO");
+      case SigmaTerm(var param, var body) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(SigmaTerm.class),
+        doSerialize(param),
+        serializeClosure(body)
+      );
       case PrimCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_PRIMCALL,
         ExprializeUtils.getInstance(getClassReference(ref)),
         Integer.toString(ulift),
