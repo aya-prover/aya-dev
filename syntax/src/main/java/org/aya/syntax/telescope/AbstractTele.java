@@ -10,8 +10,9 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import kala.tuple.Tuple2;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.DepTypeTerm;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.PiTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public interface AbstractTele {
   record PiBuilder(AbstractTele telescope) {
     public @NotNull Term make(int i, Seq<Term> args) {
       return i == telescope.telescopeSize() ? telescope.result(args) :
-        new PiTerm(telescope.telescope(i, args), new Closure.Jit(arg ->
+        new DepTypeTerm(DTKind.Pi, telescope.telescope(i, args), new Closure.Jit(arg ->
           make(i + 1, args.appended(arg))));
     }
   }

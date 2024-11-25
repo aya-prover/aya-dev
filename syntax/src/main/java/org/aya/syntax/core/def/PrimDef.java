@@ -5,8 +5,9 @@ package org.aya.syntax.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.PiTerm;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.ref.DefVar;
@@ -54,11 +55,11 @@ public final class PrimDef implements TopLevelDef {
   }
 
   /** <code>I -> Type</code> */
-  public static final @NotNull Term intervalToType = new PiTerm(DimTyTerm.INSTANCE, Closure.mkConst(Type0));
+  public static final @NotNull Term intervalToType = new DepTypeTerm(DTKind.Pi, DimTyTerm.INSTANCE, Closure.mkConst(Type0));
 
   /** Let A be argument, then <code>A i -> A j</code>. Handles index shifting. */
-  public static @NotNull PiTerm familyI2J(Closure term, Term i, Term j) {
-    return new PiTerm(term.apply(i), Closure.mkConst(term.apply(j)));
+  public static @NotNull DepTypeTerm familyI2J(Closure term, Term i, Term j) {
+    return new DepTypeTerm(DTKind.Pi, term.apply(i), Closure.mkConst(term.apply(j)));
   }
 
   public enum ID {

@@ -194,7 +194,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case SortTerm(var kind, var ulift) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(SortTerm.class),
         ExprializeUtils.makeSub(CLASS_SORTKIND, kind.name()),
         Integer.toString(ulift));
-      case PiTerm(var param, var body) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaReference(PiTerm.class),
+      case DepTypeTerm(var kind, var param, var body) -> ExprializeUtils.makeNew(
+        ExprializeUtils.getJavaReference(DepTypeTerm.class),
+        ExprializeUtils.getJavaReference(DepTypeTerm.DTKind.class) + "." + kind.name(),
         doSerialize(param),
         serializeClosure(body)
       );

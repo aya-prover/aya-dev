@@ -75,14 +75,17 @@ public record Synthesizer(
    */
   private @Nullable Term synthesize(@NotNull Term term) {
     return switch (term) {
-      case AppTerm(var f, var a) -> trySynth(f) instanceof PiTerm pi ? pi.body().apply(a) : null;
-      case PiTerm (var piParam, var body) -> {
+      case AppTerm(var f, var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
+      case DepTypeTerm(var kind, var piParam, var body) -> {
         if (!(trySynth(piParam) instanceof SortTerm pSort)) yield null;
         var bTy = tycker.subscoped(piParam, param ->
           trySynth(body.apply(param)), renamer);
 
         if (!(bTy instanceof SortTerm bSort)) yield null;
-        yield PiTerm.lub(pSort, bSort);
+        yield switch (kind) {
+          case Pi -> DepTypeTerm.lubPi(pSort, bSort);
+          case Sigma -> DepTypeTerm.lubSigma(pSort, bSort);
+        };
       }
       case SigmaTerm(var sigParam, var body) -> {
         if (!(trySynth(sigParam) instanceof SortTerm pSort)) yield null;

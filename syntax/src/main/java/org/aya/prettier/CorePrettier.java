@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -166,19 +167,19 @@ public class CorePrettier extends BasePrettier<Term> {
       //       Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
       //       Doc.symbol("=>"), term(Outer.Free, clause.body())))
       //     .toImmutableSeq()));
-      case PiTerm piTerm -> {
+      case DepTypeTerm depTypeTerm -> {
         // Try to omit the Pi keyword
-        {
-          var var = nameGen.bindName(piTerm.param());
-          var codomain = piTerm.body().apply(var);
+        if (depTypeTerm.kind() == DTKind.Pi) {
+          var var = nameGen.bindName(depTypeTerm.param());
+          var codomain = depTypeTerm.body().apply(var);
           if (FindUsage.free(codomain, var) == 0) {
-            var param = justType(Arg.ofExplicitly(piTerm.param()), Outer.BinOp);
+            var param = justType(Arg.ofExplicitly(depTypeTerm.param()), Outer.BinOp);
             var cod = term(Outer.Codomain, codomain);
             nameGen.unbindName(var);
             yield checkParen(outer, Doc.sep(param, ARROW, cod), Outer.BinOp);
           }
         }
-        var pair = PiTerm.unpi(piTerm, UnaryOperator.identity(), nameGen);
+        var pair = DepTypeTerm.unpi(depTypeTerm, UnaryOperator.identity(), nameGen);
         yield visitDT(outer, pair, KW_PI, ARROW);
       }
       case ClassCall classCall ->
@@ -207,7 +208,7 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  private @NotNull Doc visitDT(@NotNull Outer outer, PiTerm.Unpi pair, Doc kw, Doc operator) {
+  private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.Unpi pair, Doc kw, Doc operator) {
     var params = pair.names().zip(pair.params(), CoreParam::new);
     var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
     var teleDoc = visitTele(params, body, FindUsage::free);

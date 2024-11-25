@@ -40,7 +40,7 @@ public record SigmaTerm(@NotNull Term param, @NotNull Closure body) implements S
           ? SortTerm.ISet : Panic.unreachable();
   }
 
-  @ForLSP public static @NotNull PiTerm.Unpi
+  @ForLSP public static @NotNull DepTypeTerm.Unpi
   unpi(@NotNull Term term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
@@ -51,6 +51,6 @@ public record SigmaTerm(@NotNull Term param, @NotNull Closure body) implements S
       term = body.apply(var);
     }
 
-    return new PiTerm.Unpi(params, names, term);
+    return new DepTypeTerm.Unpi(params, names, term);
   }
 }

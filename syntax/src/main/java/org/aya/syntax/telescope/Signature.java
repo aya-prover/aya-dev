@@ -4,7 +4,7 @@ package org.aya.syntax.telescope;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.PiTerm;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.ForLSP;
@@ -34,7 +34,7 @@ public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
    * the unpi-ed version of it will have the correct de Bruijn index.
    */
   public @NotNull Signature pusheen(UnaryOperator<Term> pre) {
-    var resultPushed = PiTerm.unpiDBI(result(), pre);
+    var resultPushed = DepTypeTerm.unpiDBI(result(), pre);
     return new Signature(
       new AbstractTele.Locns(params().appendedAll(resultPushed.params().view()), resultPushed.body()),
       pos.appendedAll(ImmutableSeq.fill(resultPushed.params().size(), SourcePos.NONE)));

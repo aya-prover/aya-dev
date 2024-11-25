@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -86,7 +87,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
-        case PiTerm(var dom, var cod) -> {
+        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
           // unifyTyReported(param, dom, expr);
           var core = subscoped(ref, dom, () ->
             inherit(body, cod.apply(new FreeTerm(ref))).wellTyped()).bind(ref);
@@ -146,7 +147,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     type = whnf(type);
     var resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
-    if (type instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+    if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
       if (whnf(resultType) instanceof EqTerm eq) {
         var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
         if (closure == null) return makeErrorResult(type, result);
@@ -155,7 +156,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
     // Try coercive subtyping for (I -> A) into (Path A ...)
     if (type instanceof EqTerm eq) {
-      if (whnf(resultType) instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+      if (whnf(resultType) instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
         var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
         if (closure == null) return makeErrorResult(type, result);
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
@@ -211,7 +212,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
         yield subscoped(param.ref(), wellParam, () ->
-          new PiTerm(wellParam, ty(last).bind(param.ref())));
+          new DepTypeTerm(DTKind.Pi, wellParam, ty(last).bind(param.ref())));
       }
       case Expr.Sigma(var param, var last) -> {
         var wellParam = ty(param.typeExpr());
@@ -446,7 +447,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       var pair = extraParams.pop();
       generated = new Jdg.Default(
         new LamTerm(generated.wellTyped().bind(pair.component1())),
-        new PiTerm(pair.component2(), generated.type().bind(pair.component1()))
+        new DepTypeTerm(DTKind.Pi, pair.component2(), generated.type().bind(pair.component1()))
       );
     }
     return generated;
@@ -456,7 +457,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) fail(new LicitError.BadNamedArg(arg));
       switch (whnf(acc.type())) {
-        case PiTerm(var param, var body) -> {
+        case DepTypeTerm(var kind, var param, var body) when kind == DTKind.Pi -> {
           var wellTy = inherit(arg.arg(), param).wellTyped();
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }

@@ -8,6 +8,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -89,8 +90,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
-      case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
-        lInt.repr() == rInt.repr() ? lInt.type() : null;
+      case Pair(IntegerTerm lInt, IntegerTerm rInt) -> lInt.repr() == rInt.repr() ? lInt.type() : null;
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
       case Pair(MemberCall lMem, MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield null;
@@ -199,7 +199,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
         });
       }
-      case PiTerm pi -> switch (new Pair<>(lhs, rhs)) {
+      case DepTypeTerm pi -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
           compare(
             lbody.apply(var),
@@ -270,7 +270,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield null;
         var fTy = compareUntyped(f, g);
-        if (!(fTy instanceof PiTerm(Term param, var body))) yield null;
+        if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
         if (!compare(a, b, param)) yield null;
         yield body.apply(a);
       }
@@ -351,7 +351,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
-  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull PiTerm type) {
+  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull DepTypeTerm type) {
     return subscoped(type.param(), var -> {
       var lhsBody = lambda.body().apply(var);
       var rhsBody = AppTerm.make(rhs, new FreeTerm(var));
@@ -478,10 +478,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs) != null;
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
-      case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
-        () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));
-      case Pair(SigmaTerm(var lParam, var lBody), SigmaTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
-        () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));
+      case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) ->
+        lK == rK && compareTypeWith(lParam, rParam, () -> false, var ->
+          compare(lBody.apply(var), rBody.apply(var), null));
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = subscoped(DimTyTerm.INSTANCE, var ->

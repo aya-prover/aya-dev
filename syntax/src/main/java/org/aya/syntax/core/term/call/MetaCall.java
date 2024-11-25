@@ -5,7 +5,7 @@ package org.aya.syntax.core.term.call;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.AppTerm;
-import org.aya.syntax.core.term.PiTerm;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.TyckInternal;
@@ -29,7 +29,7 @@ public record MetaCall(
     var args = call.args;
     var directArgs = args.sliceView(0, ref.ctxSize());
     var restArgs = args.sliceView(ref.ctxSize(), args.size());
-    return PiTerm.substBody(rhsType.instantiateTele(directArgs), restArgs);
+    return DepTypeTerm.substBody(rhsType.instantiateTele(directArgs), restArgs);
   }
 
   public @NotNull MetaCall asPiDom(@NotNull SortTerm result) {
