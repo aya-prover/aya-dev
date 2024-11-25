@@ -414,10 +414,7 @@ public sealed interface Expr extends AyaDocile {
       public void forEach(@NotNull PosedConsumer<Expr> f) { exprList.forEach(f::accept); }
     }
 
-    public record ListCompNames(
-      @NotNull Expr monadBind,
-      @NotNull Expr functorPure
-    ) {
+    public record ListCompNames(@NotNull Expr monadBind, @NotNull Expr functorPure) {
       public ListCompNames fmap(@NotNull Function<Expr, Expr> f) {
         return new ListCompNames(f.apply(monadBind), f.apply(functorPure));
       }
@@ -469,12 +466,8 @@ public sealed interface Expr extends AyaDocile {
     /**
      * helper constructor, also find constructor calls easily in IDE
      */
-    public static Expr.Array newList(
-      @NotNull ImmutableSeq<WithPos<Expr>> exprs
-    ) {
-      return new Expr.Array(
-        Either.right(new ElementList(exprs))
-      );
+    public static Expr.Array newList(@NotNull ImmutableSeq<WithPos<Expr>> exprs) {
+      return new Expr.Array(Either.right(new ElementList(exprs)));
     }
 
     public static Expr.Array newGenerator(
@@ -482,9 +475,7 @@ public sealed interface Expr extends AyaDocile {
       @NotNull ImmutableSeq<DoBind> bindings,
       @NotNull ListCompNames names
     ) {
-      return new Expr.Array(
-        Either.left(new CompBlock(generator, bindings, names))
-      );
+      return new Expr.Array(Either.left(new CompBlock(generator, bindings, names)));
     }
   }
 
@@ -534,8 +525,7 @@ public sealed interface Expr extends AyaDocile {
   ) implements SourceNode {
     public @NotNull LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
-        ? this
-        : new LetBind(sourcePos, bindName, telescope, result, definedAs);
+        ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs);
     }
 
     public @NotNull LetBind descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
