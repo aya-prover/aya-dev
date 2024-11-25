@@ -13,11 +13,11 @@ import org.aya.syntax.core.pat.PatMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AyaSerializer.*;
-import static org.aya.compiler.NameSerializer.getClassReference;
+import static org.aya.compiler.NameSerializer.getClassRef;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
-  public static final String CLASS_STATE = ExprializeUtils.getJavaReference(State.class);
-  public static final String CLASS_PATMATCHER = ExprializeUtils.getJavaReference(PatMatcher.class);
+  public static final String CLASS_STATE = ExprializeUtils.getJavaRef(State.class);
+  public static final String CLASS_PATMATCHER = ExprializeUtils.getJavaRef(PatMatcher.class);
 
   public ConSerializer(@NotNull SourceBuilder other) {
     super(other, JitCon.class);
@@ -27,7 +27,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override protected void buildConstructor(ConDef unit) {
     var hasEq = unit.equality != null;
     buildConstructor(unit, ImmutableSeq.of(
-      ExprializeUtils.getInstance(getClassReference(unit.dataRef)),
+      ExprializeUtils.getInstance(NameSerializer.getClassRef(unit.dataRef)),
       Integer.toString(unit.selfTele.size()),
       Boolean.toString(hasEq)));
   }

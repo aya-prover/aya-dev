@@ -7,7 +7,7 @@ import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.MemberDef;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.NameSerializer.getClassReference;
+import static org.aya.compiler.NameSerializer.getClassRef;
 
 public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   public MemberSerializer(@NotNull SourceBuilder builder) { super(builder, JitMember.class); }
@@ -15,7 +15,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
 
   @Override protected void buildConstructor(MemberDef unit) {
     buildConstructor(unit, ImmutableSeq.of(
-      ExprializeUtils.getInstance(getClassReference(unit.classRef())),
+      ExprializeUtils.getInstance(getClassRef(unit.classRef())),
       Integer.toString(unit.index()),
       serializeTerm(unit.type())
     ));

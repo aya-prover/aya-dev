@@ -71,7 +71,7 @@ public interface ExprializeUtils {
   /**
    * Get the reference to {@param clazz}, it should be imported to current file.
    */
-  static @NotNull String getJavaReference(@NotNull Class<?> clazz) {
+  static @NotNull String getJavaRef(@NotNull Class<?> clazz) {
     return clazz.getSimpleName().replace('$', '.');
   }
 }

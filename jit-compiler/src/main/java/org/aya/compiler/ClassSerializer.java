@@ -9,12 +9,12 @@ import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.ExprializeUtils.getJavaReference;
-import static org.aya.compiler.NameSerializer.getClassReference;
+import static org.aya.compiler.ExprializeUtils.getJavaRef;
+import static org.aya.compiler.NameSerializer.getClassRef;
 
 public final class ClassSerializer extends JitDefSerializer<ClassDef> {
-  public static final String CLASS_JITMEMBERS = getJavaReference(JitMember.class);
-  public static final String CLASS_CLASSCALL = getJavaReference(ClassCall.class);
+  public static final String CLASS_JITMEMBERS = getJavaRef(JitMember.class);
+  public static final String CLASS_CLASSCALL = getJavaRef(ClassCall.class);
   public static final String FIELD_MEMBERS = "members";
   public static final String METHOD_MEMBARS = "membars";
 
@@ -29,7 +29,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   private void buildMembers(ClassDef unit) {
     buildIf(FIELD_MEMBERS + " == null", () ->
       buildUpdate(FIELD_MEMBERS, ExprializeUtils.makeArrayFrom(CLASS_JITMEMBERS, unit.members().map(mem ->
-        ExprializeUtils.getInstance(getClassReference(mem.ref())))
+        ExprializeUtils.getInstance(getClassRef(mem.ref())))
       )));
 
     buildReturn(FIELD_MEMBERS);

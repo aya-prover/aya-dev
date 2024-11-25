@@ -12,7 +12,7 @@ import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<T> {
-  public static final String CLASS_METADATA = ExprializeUtils.getJavaReference(CompiledAya.class);
+  public static final String CLASS_METADATA = ExprializeUtils.getJavaRef(CompiledAya.class);
 
   protected final @NotNull Class<?> superClass;
 

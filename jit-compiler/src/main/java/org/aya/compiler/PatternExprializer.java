@@ -14,13 +14,13 @@ import static org.aya.compiler.AyaSerializer.CLASS_PAT;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {
-  public static final @NotNull String CLASS_PAT_ABSURD = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Absurd.class));
-  public static final @NotNull String CLASS_PAT_BIND = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Bind.class));
-  public static final @NotNull String CLASS_PAT_CON = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Con.class));
-  public static final @NotNull String CLASS_PAT_INT = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.ShapedInt.class));
-  public static final @NotNull String CLASS_LOCALVAR = ExprializeUtils.getJavaReference(LocalVar.class);
-  public static final @NotNull String CLASS_CONHEAD = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(ConCallLike.class), ExprializeUtils.getJavaReference(ConCallLike.Head.class));
-  public static final @NotNull String CLASS_PAT_TUPLE = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaReference(Pat.Tuple.class));
+  public static final @NotNull String CLASS_PAT_ABSURD = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Absurd.class));
+  public static final @NotNull String CLASS_PAT_BIND = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Bind.class));
+  public static final @NotNull String CLASS_PAT_CON = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Con.class));
+  public static final @NotNull String CLASS_PAT_INT = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.ShapedInt.class));
+  public static final @NotNull String CLASS_LOCALVAR = ExprializeUtils.getJavaRef(LocalVar.class);
+  public static final @NotNull String CLASS_CONHEAD = ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(ConCallLike.class), ExprializeUtils.getJavaRef(ConCallLike.Head.class));
+  public static final @NotNull String CLASS_PAT_TUPLE = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Tuple.class));
 
   private final boolean allowLocalTerm;
 
@@ -36,7 +36,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
 
   private @NotNull String serializeConHead(@NotNull ConCallLike.Head head) {
     return ExprializeUtils.makeNew(CLASS_CONHEAD,
-      ExprializeUtils.getInstance(NameSerializer.getClassReference(head.ref())),
+      ExprializeUtils.getInstance(NameSerializer.getClassRef(head.ref())),
       Integer.toString(head.ulift()),
       ExprializeUtils.makeImmutableSeq(CLASS_TERM, head.ownerArgs().map(this::serializeTerm)));
   }
@@ -51,13 +51,13 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
         serializeTerm(bind.type())
       );
       case Pat.Con con -> ExprializeUtils.makeNew(CLASS_PAT_CON,
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref())),
+        ExprializeUtils.getInstance(NameSerializer.getClassRef(con.ref())),
         serializeToImmutableSeq(CLASS_PAT, con.args()),
         serializeConHead(con.head()));
       case Pat.ShapedInt shapedInt -> ExprializeUtils.makeNew(CLASS_PAT_INT,
         Integer.toString(shapedInt.repr()),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(shapedInt.zero())),
-        ExprializeUtils.getInstance(NameSerializer.getClassReference(shapedInt.suc())),
+        ExprializeUtils.getInstance(NameSerializer.getClassRef(shapedInt.zero())),
+        ExprializeUtils.getInstance(NameSerializer.getClassRef(shapedInt.suc())),
         serializeTerm(shapedInt.type()));
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.Tuple(var l, var r) -> ExprializeUtils.makeNew(CLASS_PAT_TUPLE,

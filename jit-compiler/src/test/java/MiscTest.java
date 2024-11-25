@@ -17,14 +17,14 @@ public class MiscTest {
 
   @Test public void test0() {
     assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514",
-      NameSerializer.getClassReference(TOP, null));
+      NameSerializer.getClassRef(TOP, null));
     assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$shinji",
-      NameSerializer.getClassReference(TOP, "shinji"));
+      NameSerializer.getClassRef(TOP, "shinji"));
     assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514",
-      NameSerializer.getClassReference(SUB, null));
+      NameSerializer.getClassRef(SUB, null));
     assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$hentai$shinji",
-      NameSerializer.getClassReference(SUB, "shinji"));
+      NameSerializer.getClassRef(SUB, "shinji"));
     assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$hentai$urusai",
-      NameSerializer.getClassReference(NAME.module(), NAME.name()));
+      NameSerializer.getClassRef(NAME.module(), NAME.name()));
   }
 }

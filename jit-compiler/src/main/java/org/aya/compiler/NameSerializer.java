@@ -64,7 +64,7 @@ public interface NameSerializer {
     return prefix + type.classNameSeparator + javifyClassName(module, name);
   }
 
-  static @NotNull String getClassReference(@NotNull QPath module, @Nullable String name) {
+  static @NotNull String getClassRef(@NotNull QPath module, @Nullable String name) {
     return getReference(module, name, NameType.ClassReference);
   }
 
@@ -77,15 +77,15 @@ public interface NameSerializer {
   }
 
   static @NotNull String getModuleReference(@NotNull QPath module) {
-    return getClassReference(module, null);
+    return getClassRef(module, null);
   }
 
-  static @NotNull String getClassReference(@NotNull QName name) {
-    return getClassReference(name.module(), name.name());
+  static @NotNull String getClassRef(@NotNull QName name) {
+    return getClassRef(name.module(), name.name());
   }
 
-  static @NotNull String getClassReference(@NotNull DefVar<?, ?> ref) {
-    return getClassReference(TyckAnyDef.make(ref.core));
+  static @NotNull String getClassRef(@NotNull DefVar<?, ?> ref) {
+    return getClassRef(TyckAnyDef.make(ref.core));
   }
 
   /**
@@ -93,8 +93,8 @@ public interface NameSerializer {
    *
    * @see #getReference(QPath, String, NameType)
    */
-  static @NotNull String getClassReference(@NotNull AnyDef def) {
-    return getClassReference(def.qualifiedName());
+  static @NotNull String getClassRef(@NotNull AnyDef def) {
+    return getClassRef(def.qualifiedName());
   }
 
   static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {
