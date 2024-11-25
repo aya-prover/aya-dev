@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.marker.Formation;
@@ -23,9 +24,6 @@ import java.util.function.UnaryOperator;
  * @author re-xyr, kiva, ice1000
  */
 public record DepTypeTerm(@NotNull DTKind kind, @NotNull Term param, @NotNull Closure body) implements StableWHNF, Formation {
-  public enum DTKind {
-    Pi, Sigma
-  }
   public @NotNull DepTypeTerm update(@NotNull Term param, @NotNull Closure body) {
     return param == this.param && body == this.body ? this : new DepTypeTerm(kind, param, body);
   }

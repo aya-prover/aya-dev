@@ -11,7 +11,7 @@ import kala.range.primitive.IntRange;
 import kala.tuple.Tuple2;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;

@@ -144,8 +144,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     switch (expr) {
       case Expr.Ref ref -> visitVarRef(pos, ref.var(), withTermType(ref));
       case Expr.Lambda lam -> visitParamDecl(lam.param());
-      case Expr.Pi pi -> visitParamDecl(pi.param());
-      case Expr.Sigma sigma -> visitParamDecl(sigma.param());
+      case Expr.DepType depType -> visitParamDecl(depType.param());
       case Expr.Array array -> array.arrayBlock().forEach(
         left -> left.binds().forEach(bind -> visitVarDecl(bind.sourcePos(), bind.var(), noType)),
         _ -> { }

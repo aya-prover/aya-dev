@@ -22,7 +22,7 @@ import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;

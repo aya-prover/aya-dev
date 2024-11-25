@@ -8,6 +8,7 @@ import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Nested;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.BasePrettier;
@@ -244,26 +245,12 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  record Pi(@NotNull Param param, @NotNull WithPos<Expr> last) implements Expr {
-    public @NotNull Pi update(@NotNull Param param, @NotNull WithPos<Expr> last) {
-      return param == param() && last == last() ? this : new Pi(param, last);
+  record DepType(@NotNull DTKind kind, @NotNull Param param, @NotNull WithPos<Expr> last) implements Expr {
+    public @NotNull Expr.DepType update(@NotNull Param param, @NotNull WithPos<Expr> last) {
+      return param == param() && last == last() ? this : new DepType(kind, param, last);
     }
 
-    @Override public @NotNull Pi descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(param.descent(f), last.descent(f));
-    }
-    @Override public void forEach(@NotNull PosedConsumer<Expr> f) {
-      param.forEach(f);
-      f.accept(last);
-    }
-  }
-
-  record Sigma(@NotNull Param param, @NotNull WithPos<Expr> last) implements Expr {
-    public @NotNull Sigma update(@NotNull Param param, @NotNull WithPos<Expr> last) {
-      return param == param() && last == last() ? this : new Sigma(param, last);
-    }
-
-    @Override public @NotNull Sigma descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.DepType descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), last.descent(f));
     }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) {
@@ -608,11 +595,11 @@ public sealed interface Expr extends AyaDocile {
   }
 
   static @NotNull WithPos<Expr> buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params, body, Pi::new);
+    return buildNested(sourcePos, params, body, (a, b) -> new DepType(DTKind.Pi, a, b));
   }
 
   static @NotNull WithPos<Expr> buildSigma(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params, body, Sigma::new);
+    return buildNested(sourcePos, params, body, (a, b) -> new DepType(DTKind.Sigma, a, b));
   }
 
   static @NotNull WithPos<Expr> buildTuple(@NotNull SourcePos sourcePos, @NotNull SeqView<WithPos<Expr>> params) {

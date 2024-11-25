@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.Shaped;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
@@ -196,8 +197,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         Integer.toString(ulift));
       case DepTypeTerm(var kind, var param, var body) -> ExprializeUtils.makeNew(
         ExprializeUtils.getJavaRef(DepTypeTerm.class),
-        ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(DepTypeTerm.class),
-          ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(DepTypeTerm.DTKind.class), kind.name())),
+        ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(DTKind.class), kind.name()),
         doSerialize(param),
         serializeClosure(body)
       );

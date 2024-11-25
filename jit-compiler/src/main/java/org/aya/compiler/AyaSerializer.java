@@ -43,6 +43,7 @@ public interface AyaSerializer {
 
   @Language("Java") String IMPORT_BLOCK = """
     import org.aya.generic.term.SortKind;
+    import org.aya.generic.term.DTKind;
     import org.aya.generic.State;
     import org.aya.generic.Modifier;
     import org.aya.syntax.compile.*;

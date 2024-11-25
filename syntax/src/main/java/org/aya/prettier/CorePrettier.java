@@ -16,7 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;

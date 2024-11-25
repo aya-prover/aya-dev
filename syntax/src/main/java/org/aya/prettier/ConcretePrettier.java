@@ -12,6 +12,7 @@ import kala.range.primitive.IntRange;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
 import org.aya.generic.Nested;
+import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
@@ -60,7 +61,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         );
       }
       case Expr.LitString expr -> Doc.plain('"' + StringUtil.unescapeStringCharacters(expr.string()) + '"');
-      case Expr.Pi expr -> {
+      case Expr.DepType expr -> {
         var visitor = new Object() {
           boolean paramRef = false;
           boolean unresolved = false;
@@ -81,11 +82,13 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
         Doc doc;
         var last = term(Outer.Codomain, expr.last().data());
-        if (!visitor.paramRef && !visitor.unresolved) {
-          doc = Doc.sep(justType(expr.param(), Outer.Domain), ARROW, last);
-        } else {
-          doc = Doc.sep(KW_PI, expr.param().toDoc(options), ARROW, last);
-        }
+        if (expr.kind() == DTKind.Pi) {
+          if (!visitor.paramRef && !visitor.unresolved) {
+            doc = Doc.sep(justType(expr.param(), Outer.Domain), ARROW, last);
+          } else {
+            doc = Doc.sep(KW_PI, expr.param().toDoc(options), ARROW, last);
+          }
+        } else doc = Doc.sep(KW_SIGMA, expr.param().toDoc(options), SIGMA_RESULT, last);
         // When outsider is neither a codomain nor non-expression, we need to add parentheses.
         yield checkParen(outer, doc, Outer.Domain);
       }
@@ -142,9 +145,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.LitInt expr -> Doc.plain(String.valueOf(expr.integer()));
       case Expr.RawSort e -> Doc.styled(KEYWORD, e.kind().name());
-      case Expr.Sigma (var param, var body) -> checkParen(outer, Doc.sep(KW_SIGMA,
-        param.toDoc(options), SIGMA_RESULT, term(Outer.Codomain, body.data())), Outer.Domain);
-      // ^ Same as Pi
       case Expr.Sort expr -> {
         var fn = Doc.styled(KEYWORD, expr.kind().name());
         if (!expr.kind().hasLevel()) yield fn;

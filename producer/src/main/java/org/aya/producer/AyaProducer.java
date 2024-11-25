@@ -18,6 +18,7 @@ import kala.function.BooleanObjBiFunction;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiElementTypes;
@@ -561,7 +562,7 @@ public record AyaProducer(
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);
       var param = new Expr.Param(paramPos, Constants.randomlyNamed(paramPos), expr(expr0), true);
-      return new WithPos<>(pos, new Expr.Pi(param, to));
+      return new WithPos<>(pos, new Expr.DepType(DTKind.Pi, param, to));
     }
     if (node.is(NEW_EXPR)) {
       var classCall = expr(node.child(EXPR));

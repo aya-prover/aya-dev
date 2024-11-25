@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
+import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
@@ -16,7 +17,6 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -211,17 +211,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield meta;
       }
       case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());
-      case Expr.Pi(var param, var last) -> {
+      case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
         yield subscoped(param.ref(), wellParam, () ->
-          new DepTypeTerm(DTKind.Pi, wellParam, ty(last).bind(param.ref())));
-      }
-      case Expr.Sigma(var param, var last) -> {
-        var wellParam = ty(param.typeExpr());
-        addWithTerm(param, param.sourcePos(), wellParam);
-        yield subscoped(param.ref(), wellParam, () ->
-          new DepTypeTerm(DTKind.Sigma, wellParam, ty(last).bind(param.ref())));
+          new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref())));
       }
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
@@ -302,7 +296,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory.getCall(PrimDef.ID.STRING));
       }
       case Expr.Ref ref -> checkApplication(ref, 0, expr.sourcePos(), ImmutableSeq.empty());
-      case Expr.Sigma _, Expr.Pi _ -> lazyJdg(ty(expr));
+      case Expr.DepType _ -> lazyJdg(ty(expr));
       case Expr.Sort _ -> sort(expr);
       case Expr.BinTuple(var lhs, var rhs) -> {
         var lhsX = synthesize(lhs);

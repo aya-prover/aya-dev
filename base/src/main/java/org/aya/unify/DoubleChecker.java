@@ -3,7 +3,7 @@
 package org.aya.unify;
 
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalCtx;

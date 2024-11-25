@@ -6,7 +6,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.ConCall;

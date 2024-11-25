@@ -7,7 +7,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.repr.IntegerTerm;

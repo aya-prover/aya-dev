@@ -5,7 +5,7 @@ package org.aya.syntax.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Term;

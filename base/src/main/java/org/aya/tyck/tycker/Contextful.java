@@ -5,7 +5,7 @@ package org.aya.tyck.tycker;
 import org.aya.generic.Constants;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
-import org.aya.syntax.core.term.DepTypeTerm.DTKind;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.DepTypeTerm;
