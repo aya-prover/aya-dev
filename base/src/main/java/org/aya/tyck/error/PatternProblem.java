@@ -79,7 +79,7 @@ public sealed interface PatternProblem extends Problem {
   }
 
   record TupleNonSig(
-    @Override @NotNull WithPos<Pattern.Tuple> pattern,
+    @Override @NotNull WithPos<Pattern> pattern,
     @NotNull Term type
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {

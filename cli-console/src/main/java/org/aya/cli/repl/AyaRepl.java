@@ -25,16 +25,19 @@ import org.jline.builtins.Completers;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public static int start(
     @NotNull ImmutableSeq<Path> modulePaths,
     boolean loadPrelude,
+    @Nullable String initFile,
     MainArgs.@NotNull ReplAction replAction
   ) throws IOException {
     var replConfig = ReplConfig.loadFromDefault();
     replConfig.loadPrelude = loadPrelude;
     try (var repl = makeRepl(modulePaths, replAction, replConfig)) {
+      if (initFile != null) repl.replCompiler.loadToContext(Paths.get(initFile));
       repl.run();
     }
     return 0;

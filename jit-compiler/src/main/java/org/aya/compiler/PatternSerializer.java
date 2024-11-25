@@ -80,7 +80,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(con, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(ExprializeUtils.getCallInstance(mmTerm) + " == " + ExprializeUtils.getInstance(NameSerializer.getClassReference(con.ref())),
+          buildIfElse(ExprializeUtils.getCallInstance(mmTerm) + " == " + ExprializeUtils.getInstance(NameSerializer.getClassRef(con.ref())),
             State.Mismatch, () -> {
               var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
                 nameGen().nextName(), mmTerm + ".conArgs()");
@@ -95,11 +95,11 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         // do nothing on success, [doSerialize] sets subMatchState, and we will invoke [continuation] when [subMatchState = true]
         mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, Once.of(() -> { }))
       ), continuation);
-      case Pat.Tuple tuple -> multiStage(term, ImmutableSeq.of(
+      case Pat.Tuple(var l, var r) -> multiStage(term, ImmutableSeq.of(
         // mTerm -> solveMeta(tuple, mTerm),
         mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
-          doSerialize(tuple.elements().view(), SourceBuilder.fromSeq(mmTerm + ".items()",
-            tuple.elements().size()).view(), Once.of(() -> { })))
+          doSerialize(l, mmTerm + ".lhs()", Once.of(() ->
+            doSerialize(r, mmTerm + ".rhs()", Once.of(() -> { })))))
       ), continuation);
     }
   }

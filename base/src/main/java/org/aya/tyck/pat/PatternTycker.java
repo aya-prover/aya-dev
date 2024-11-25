@@ -11,19 +11,20 @@ import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
 import org.aya.normalize.Normalizer;
-import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.syntax.core.term.DepTypeTerm;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.SigmaTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
@@ -127,16 +128,13 @@ public class PatternTycker implements Problematic, Stateful {
         }
         yield Pat.Absurd.INSTANCE;
       }
-      case Pattern.Tuple tuple -> {
-        if (!(exprTycker.whnf(type) instanceof SigmaTerm(var params))) {
+      case Pattern.Tuple(var l, var r) -> {
+        if (!(exprTycker.whnf(type) instanceof DepTypeTerm(var kind, var lT, var rT) && kind == DTKind.Sigma)) {
           var frozen = freezeHoles(type);
-          yield withError(new PatternProblem.TupleNonSig(pattern.replace(tuple), frozen), frozen);
+          yield withError(new PatternProblem.TupleNonSig(pattern, frozen), frozen);
         }
-        yield new Pat.Tuple(tyckInner(
-          generateNames(params),
-          tuple.patterns().view().map(Arg::ofExplicitly),
-          pattern
-        ));
+        var lhs = doTyck(l, lT);
+        yield new Pat.Tuple(lhs, doTyck(r, rT.apply(PatToTerm.visit(lhs))));
       }
       case Pattern.Con con -> {
         var realCon = makeSureAvail(type, con.resolved().data(), pattern);

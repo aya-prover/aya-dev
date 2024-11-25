@@ -16,8 +16,8 @@ import static org.aya.compiler.AyaSerializer.CLASS_SEQ;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSerializer<T> {
-  public static final String CLASS_JITCON = ExprializeUtils.getJavaReference(JitCon.class);
-  public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaReference(CodeShape.class), ExprializeUtils.getJavaReference(CodeShape.GlobalId.class));
+  public static final String CLASS_JITCON = ExprializeUtils.getJavaRef(JitCon.class);
+  public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(CodeShape.class), ExprializeUtils.getJavaRef(CodeShape.GlobalId.class));
   public static final String METHOD_TELESCOPE = "telescope";
   public static final String METHOD_RESULT = "result";
   public static final String TYPE_TERMSEQ = CLASS_SEQ + "<" + CLASS_TERM + ">";

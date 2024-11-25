@@ -8,6 +8,7 @@ import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Nested;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.BasePrettier;
@@ -159,15 +160,18 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(body); }
   }
 
-  record Tuple(@NotNull ImmutableSeq<@NotNull WithPos<Expr>> items) implements Expr {
-    public @NotNull Expr.Tuple update(@NotNull ImmutableSeq<@NotNull WithPos<Expr>> items) {
-      return items.sameElements(items(), true) ? this : new Tuple(items);
+  record BinTuple(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) implements Expr {
+    public @NotNull Expr.BinTuple update(@NotNull WithPos<Expr> newLhs, @NotNull WithPos<Expr> newRhs) {
+      return lhs == newLhs && rhs == newRhs ? this : new BinTuple(newLhs, newRhs);
     }
 
-    @Override public @NotNull Expr.Tuple descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(items.map(x -> x.descent(f)));
+    @Override public @NotNull Expr.BinTuple descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(lhs.descent(f), rhs.descent(f));
     }
-    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { items.forEach(f::accept); }
+    @Override public void forEach(@NotNull PosedConsumer<Expr> f) {
+      f.accept(lhs);
+      f.accept(rhs);
+    }
   }
 
   /**
@@ -241,32 +245,18 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  record Pi(
-    @NotNull Param param,
-    @NotNull WithPos<Expr> last
-  ) implements Expr {
-    public @NotNull Pi update(@NotNull Param param, @NotNull WithPos<Expr> last) {
-      return param == param() && last == last() ? this : new Pi(param, last);
+  record DepType(@NotNull DTKind kind, @NotNull Param param, @NotNull WithPos<Expr> last) implements Expr {
+    public @NotNull Expr.DepType update(@NotNull Param param, @NotNull WithPos<Expr> last) {
+      return param == param() && last == last() ? this : new DepType(kind, param, last);
     }
 
-    @Override public @NotNull Pi descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.DepType descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(param.descent(f), last.descent(f));
     }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) {
       param.forEach(f);
       f.accept(last);
     }
-  }
-
-  record Sigma(@NotNull ImmutableSeq<@NotNull Param> params) implements Expr {
-    public @NotNull Sigma update(@NotNull ImmutableSeq<@NotNull Param> params) {
-      return params.sameElements(params(), true) ? this : new Sigma(params);
-    }
-
-    @Override public @NotNull Sigma descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(params.map(param -> param.descent(f)));
-    }
-    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { params.forEach(param -> param.forEach(f)); }
   }
 
   record RawSort(@NotNull SortKind kind) implements Expr, Sugar {
@@ -605,7 +595,19 @@ public sealed interface Expr extends AyaDocile {
   }
 
   static @NotNull WithPos<Expr> buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params, body, Pi::new);
+    return buildNested(sourcePos, params, body, (a, b) -> new DepType(DTKind.Pi, a, b));
+  }
+
+  static @NotNull WithPos<Expr> buildSigma(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
+    return buildNested(sourcePos, params, body, (a, b) -> new DepType(DTKind.Sigma, a, b));
+  }
+
+  static @NotNull WithPos<Expr> buildTuple(@NotNull SourcePos sourcePos, @NotNull SeqView<WithPos<Expr>> params) {
+    return buildNested(sourcePos, params.dropLast(1), params.getLast(), BinTuple::new);
+  }
+
+  static @NotNull WithPos<Pattern> buildTupPat(@NotNull SourcePos sourcePos, @NotNull SeqView<WithPos<Pattern>> params) {
+    return buildNested(sourcePos, params.dropLast(1), params.getLast(), Pattern.Tuple::new);
   }
 
   static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
@@ -617,11 +619,11 @@ public sealed interface Expr extends AyaDocile {
   }
 
   /** convert flattened terms into nested right-associate terms */
-  static <P extends SourceNode> @NotNull WithPos<Expr> buildNested(
+  static <P extends SourceNode, E> @NotNull WithPos<E> buildNested(
     @NotNull SourcePos sourcePos,
     @NotNull SeqView<P> params,
-    @NotNull WithPos<Expr> body,
-    @NotNull BiFunction<P, WithPos<Expr>, Expr> constructor
+    @NotNull WithPos<E> body,
+    @NotNull BiFunction<P, WithPos<E>, E> constructor
   ) {
     if (params.isEmpty()) return body;
     var drop = params.drop(1);

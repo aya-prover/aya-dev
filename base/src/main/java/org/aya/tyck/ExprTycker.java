@@ -7,8 +7,8 @@ import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
-import kala.control.Result;
 import org.aya.generic.Constants;
+import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
@@ -87,7 +87,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
-        case PiTerm(var dom, var cod) -> {
+        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
           // unifyTyReported(param, dom, expr);
           var core = subscoped(ref, dom, () ->
             inherit(body, cod.apply(new FreeTerm(ref))).wellTyped()).bind(ref);
@@ -118,18 +118,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.Tuple(var elems) when whnf(type) instanceof SigmaTerm sigmaTerm -> {
-        Term wellTyped = switch (sigmaTerm.check(elems, (elem, ty) -> inherit(elem, ty).wellTyped())) {
-          case Result.Ok(var v) -> new TupTerm(v);
-          case Result.Err(var e) -> switch (e) {
-            case TooManyElement, TooManyParameter -> {
-              fail(new TupleError.ElemMismatchError(expr.sourcePos(), sigmaTerm.params().size(), elems.size()));
-              yield new ErrorTerm(expr.data());
-            }
-            case CheckFailed -> Panic.unreachable();
-          };
-        };
-        yield new Jdg.Default(wellTyped, sigmaTerm);
+      case Expr.BinTuple(var lhs, var rhs) when whnf(type) instanceof
+        DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma -> {
+        var lhsX = inherit(lhs, lhsT).wellTyped();
+        var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
+        yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
       }
       case Expr.Array arr when arr.arrayBlock().isRight()
         && whnf(type) instanceof DataCall dataCall
@@ -155,7 +148,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     type = whnf(type);
     var resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
-    if (type instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+    if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
       if (whnf(resultType) instanceof EqTerm eq) {
         var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
         if (closure == null) return makeErrorResult(type, result);
@@ -164,7 +157,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
     // Try coercive subtyping for (I -> A) into (Path A ...)
     if (type instanceof EqTerm eq) {
-      if (whnf(resultType) instanceof PiTerm(var dom, var cod) && dom == DimTyTerm.INSTANCE) {
+      if (whnf(resultType) instanceof DepTypeTerm(
+        var kind, var dom, var cod
+      ) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
         var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
         if (closure == null) return makeErrorResult(type, result);
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
@@ -216,22 +211,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield meta;
       }
       case Expr.Sort sort -> new SortTerm(sort.kind(), sort.lift());
-      case Expr.Pi(var param, var last) -> {
+      case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
         yield subscoped(param.ref(), wellParam, () ->
-          new PiTerm(wellParam, ty(last).bind(param.ref())));
+          new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref())));
       }
-      case Expr.Sigma(var elems) -> subscoped(() -> {
-        var tele = MutableList.<LocalVar>create();
-        return new SigmaTerm(elems.map(elem -> {
-          var result = ty(elem.typeExpr());
-          var boundResult = result.bindTele(tele.view());
-          localCtx().put(elem.ref(), result);
-          tele.append(elem.ref());
-          return boundResult;
-        }));
-      });
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
         var result = synthesize(expr);
@@ -271,8 +256,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
-      case Expr.Sugar s ->
-        throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
+      case Expr.Sugar s -> throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
         int lift;
         if (f.data() instanceof Expr.Lift(var inner, var level)) {
@@ -312,14 +296,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield new Jdg.Default(new StringTerm(litStr.string()), state.primFactory.getCall(PrimDef.ID.STRING));
       }
       case Expr.Ref ref -> checkApplication(ref, 0, expr.sourcePos(), ImmutableSeq.empty());
-      case Expr.Sigma _, Expr.Pi _ -> lazyJdg(ty(expr));
+      case Expr.DepType _ -> lazyJdg(ty(expr));
       case Expr.Sort _ -> sort(expr);
-      case Expr.Tuple(var items) -> {
-        var results = items.map(this::synthesize);
-        var wellTypeds = results.map(Jdg::wellTyped);
-        var tys = results.map(Jdg::type);
-        var wellTyped = new TupTerm(wellTypeds);
-        var ty = new SigmaTerm(tys);
+      case Expr.BinTuple(var lhs, var rhs) -> {
+        var lhsX = synthesize(lhs);
+        var rhsX = synthesize(rhs);
+        var wellTyped = new TupTerm(lhsX.wellTyped(), rhsX.wellTyped());
+        var ty = new DepTypeTerm(DTKind.Sigma, lhsX.type(), Closure.mkConst(rhsX.type()));
 
         yield new Jdg.Default(wellTyped, ty);
       }
@@ -460,7 +443,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       var pair = extraParams.pop();
       generated = new Jdg.Default(
         new LamTerm(generated.wellTyped().bind(pair.component1())),
-        new PiTerm(pair.component2(), generated.type().bind(pair.component1()))
+        new DepTypeTerm(DTKind.Pi, pair.component2(), generated.type().bind(pair.component1()))
       );
     }
     return generated;
@@ -470,7 +453,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) fail(new LicitError.BadNamedArg(arg));
       switch (whnf(acc.type())) {
-        case PiTerm(var param, var body) -> {
+        case DepTypeTerm(var kind, var param, var body) when kind == DTKind.Pi -> {
           var wellTy = inherit(arg.arg(), param).wellTyped();
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }

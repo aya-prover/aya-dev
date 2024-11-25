@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -65,7 +66,7 @@ public class CorePrettier extends BasePrettier<Term> {
           Doc.commaList(seq.view().map(p -> ((AyaDocile) p).toDoc(options))));
         case Object unknown -> Doc.plain(unknown.toString());
       };
-      case TupTerm(var items) -> Doc.parened(argsDoc(options, items.view().map(Arg::ofExplicitly)));
+      case TupTerm(var lhs, var rhs) -> Doc.commaList(ImmutableSeq.of(lhs, rhs).map(t -> term(Outer.Free, t)));
       case IntegerTerm shaped -> shaped.repr() == 0
         ? linkLit(0, shaped.zero(), CON)
         : linkLit(shaped.repr(), shaped.suc(), CON);
@@ -81,18 +82,6 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case ConCallLike conCall -> visitCoreCalls(conCall.ref(), conCall.conArgs(), outer, optionImplicit());
       case FnCall fnCall -> visitCoreCalls(fnCall.ref(), fnCall.args(), outer, optionImplicit());
-      case SigmaTerm(var params) -> {
-        var tele = generateNames(params.dropLast(1));
-        var last = params.getLast().instantiateTele(tele.view().map(p -> new FreeTerm(p.ref())));
-        var doc = Doc.sep(
-          KW_SIGMA,
-          visitTele(tele, last, FindUsage::free),
-          SIGMA_RESULT,
-          justType(Arg.ofExplicitly(last), Outer.Codomain)
-        );
-        // Same as Pi
-        yield checkParen(outer, doc, Outer.BinOp);
-      }
       case LamTerm lam -> {
         var pair = LamTerm.unlam(lam, nameGen);
         var params = pair.params();
@@ -174,28 +163,23 @@ public class CorePrettier extends BasePrettier<Term> {
       //       Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
       //       Doc.symbol("=>"), term(Outer.Free, clause.body())))
       //     .toImmutableSeq()));
-      case PiTerm piTerm -> {
+      case DepTypeTerm depType -> {
         // Try to omit the Pi keyword
-        {
-          var var = nameGen.bindName(piTerm.param());
-          var codomain = piTerm.body().apply(var);
+        if (depType.kind() == DTKind.Pi) {
+          var var = nameGen.bindName(depType.param());
+          var codomain = depType.body().apply(var);
           if (FindUsage.free(codomain, var) == 0) {
-            var param = justType(Arg.ofExplicitly(piTerm.param()), Outer.BinOp);
+            var param = justType(Arg.ofExplicitly(depType.param()), Outer.BinOp);
             var cod = term(Outer.Codomain, codomain);
             nameGen.unbindName(var);
             yield checkParen(outer, Doc.sep(param, ARROW, cod), Outer.BinOp);
           }
         }
-        var pair = PiTerm.unpi(piTerm, UnaryOperator.identity(), nameGen);
-        var params = pair.names().zip(pair.params(), CoreParam::new)
-          .toImmutableSeq();
-        var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
-        var teleDoc = visitTele(params, body, FindUsage::free);
-        var cod = term(Outer.Codomain, body);
-        var doc = Doc.sep(KW_PI, teleDoc, ARROW, cod);
-        pair.names().forEach(nameGen::unbindName);
-        // Add paren when it's not free or a codomain
-        yield checkParen(outer, doc, Outer.BinOp);
+        var pair = DepTypeTerm.unpi(depType, UnaryOperator.identity(), nameGen);
+        yield switch (depType.kind()) {
+          case Pi -> visitDT(outer, pair, KW_PI, ARROW);
+          case Sigma -> visitDT(outer, pair, KW_SIGMA, SIGMA_RESULT);
+        };
       }
       case ClassCall classCall ->
         visitCoreCalls(classCall.ref(), classCall.args().map(x -> x.apply(SELF)), outer, true);
@@ -221,6 +205,16 @@ public class CorePrettier extends BasePrettier<Term> {
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
       case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
     };
+  }
+
+  private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.Unpi pair, Doc kw, Doc operator) {
+    var params = pair.names().zip(pair.params(), CoreParam::new);
+    var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
+    var teleDoc = visitTele(params, body, FindUsage::free);
+    var cod = term(Outer.Codomain, body);
+    var doc = Doc.sep(kw, teleDoc, operator, cod);
+    pair.names().forEach(nameGen::unbindName);
+    return checkParen(outer, doc, Outer.BinOp);
   }
 
   /** @return if we can eta-contract the last argument */
@@ -255,8 +249,8 @@ public class CorePrettier extends BasePrettier<Term> {
         yield conDoc(outer, licit, conDoc, con.args().isEmpty());
       }
       case Pat.Absurd _ -> Doc.bracedUnless(PAT_ABSURD, licit);
-      case Pat.Tuple tuple -> Doc.licit(licit,
-        Doc.commaList(tuple.elements().view().map(sub -> pat(sub, true, Outer.Free))));
+      case Pat.Tuple (var l, var r) -> Doc.licit(licit,
+        Doc.commaList(pat(l, true, Outer.Free), pat(r, true, Outer.Free)));
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
           ? linkLit(0, lit.zero(), CON)
           : linkLit(lit.repr(), lit.suc(), CON),

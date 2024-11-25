@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
-import kala.collection.mutable.MutableList;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.ConCall;
@@ -76,39 +76,26 @@ public record Synthesizer(
    */
   private @Nullable Term synthesize(@NotNull Term term) {
     return switch (term) {
-      case AppTerm(var f, var a) -> trySynth(f) instanceof PiTerm pi ? pi.body().apply(a) : null;
-      case PiTerm pi -> {
-        if (!(trySynth(pi.param()) instanceof SortTerm pSort)) yield null;
-        var bTy = tycker.subscoped(pi.param(), param ->
-          trySynth(pi.body().apply(param)), renamer);
+      case AppTerm(var f, var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
+      case DepTypeTerm(var kind, var piParam, var body) -> {
+        if (!(trySynth(piParam) instanceof SortTerm pSort)) yield null;
+        var bTy = tycker.subscoped(piParam, param ->
+          trySynth(body.apply(param)), renamer);
 
         if (!(bTy instanceof SortTerm bSort)) yield null;
-        yield PiTerm.lub(pSort, bSort);
-      }
-      case SigmaTerm sigma -> {
-        var pTys = MutableList.<SortTerm>create();
-        boolean succ = subscoped(() -> {
-          for (var p : sigma.view(this::mkFree)) {
-            if (!(trySynth(p) instanceof SortTerm pSort)) return false;
-            pTys.append(pSort);
-          }
-          return true;
-        });
-        if (!succ) yield null;
-
-        // This is safe since a [SigmaTerm] has at least 2 parameters.
-        yield pTys.reduce(SigmaTerm::lub);
+        yield switch (kind) {
+          case Pi -> DepTypeTerm.lubPi(pSort, bSort);
+          case Sigma -> DepTypeTerm.lubSigma(pSort, bSort);
+        };
       }
       case TupTerm _, LamTerm _ -> null;
       case FreeTerm(var var) -> localCtx().get(var);
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
-      case ProjTerm(Term of, int index) -> {
+      case ProjTerm(var of, int index) -> {
         var ofTy = trySynth(of);
-        if (!(ofTy instanceof SigmaTerm(var params))) yield null;
-        yield params.get(index - 1)
-          // the type of projOf.{index - 1} may refer to the previous parameters
-          .instantiateTele(ProjTerm.projSubst(of, index).view());
+        if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
+        yield index == 0 ? lhs : rhs.apply(ProjTerm.make(of, 0));
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();

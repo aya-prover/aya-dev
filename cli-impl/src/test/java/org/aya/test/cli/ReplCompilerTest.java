@@ -8,7 +8,7 @@ import org.aya.generic.Constants;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.syntax.core.term.PiTerm;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
@@ -53,7 +53,7 @@ public class ReplCompilerTest {
     compile("def f {A : Set} (a : A) : A => a");
     var computedType = compiler.computeType("f", NormalizeMode.NULL);
     assertNotNull(computedType);
-    var pi = assertInstanceOf(PiTerm.class, computedType);
+    var pi = assertInstanceOf(DepTypeTerm.class, computedType);
     assertInstanceOf(SortTerm.class, pi.param());
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.doc;
 
@@ -731,6 +731,9 @@ public sealed interface Doc extends Docile {
     return sep(docs.view().filter(Doc::isNotEmpty));
   }
 
+  @Contract("_ -> new") static @NotNull Doc commaList(Doc @NotNull ... docs) {
+    return commaList(Seq.of(docs));
+  }
   @Contract("_ -> new") static @NotNull Doc commaList(@NotNull SeqLike<Doc> docs) {
     return join(COMMA, docs);
   }

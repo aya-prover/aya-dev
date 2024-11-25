@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty;
 
@@ -67,7 +67,7 @@ public class DocStringPrinterTest {
     var list = Doc.catBlockR(
       12,
       Seq.of(
-        Doc.commaList(Seq.of(Doc.plain("exit"), Doc.plain("quit"))),
+        Doc.commaList(Doc.plain("exit"), Doc.plain("quit")),
         Doc.english("print-toggle"),
         Doc.plain("help"),
         Doc.hyperLink("cd", Link.page("aa"))
@@ -96,7 +96,7 @@ public class DocStringPrinterTest {
     var list = Doc.catBlockL(
       18,
       Seq.of(
-        Doc.commaList(Seq.of(Doc.plain("exit"), Doc.plain("quit"))),
+        Doc.commaList(Doc.plain("exit"), Doc.plain("quit")),
         Doc.english("print-toggle"),
         Doc.plain("help"),
         Doc.hyperLink("cd", Link.page("aa"))

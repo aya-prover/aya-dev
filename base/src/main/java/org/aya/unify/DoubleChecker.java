@@ -3,6 +3,7 @@
 package org.aya.unify;
 
 import org.aya.syntax.core.term.*;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -31,28 +32,20 @@ public record DoubleChecker(
   public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
     return switch (preterm) {
       case ErrorTerm _ -> true;
-      case PiTerm(var pParam, var pBody) -> {
-        if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
-          inherit(pBody.apply(param), expectedTy));
-      }
-      case SigmaTerm sigma -> {
-        if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-        yield subscoped(() -> sigma
-          .view(synthesizer::mkFree)
-          .allMatch(param -> inherit(param, expectedTy)));
-      }
-      case TupTerm(var elems) when whnf(expected) instanceof SigmaTerm sigmaTy -> {
-        // This is not an assertion because the input is not guaranteed to be well-typed
-        if (!elems.sizeEquals(sigmaTy.params())) yield false;
-
-        yield sigmaTy.check(elems, (elem, param) -> {
-          if (inherit(whnf(elem), param)) return elem;
-          return null;
-        }).isOk();
-      }
+      case DepTypeTerm(var kind, var pParam, var pBody) -> switch (kind) {
+        case Pi -> {
+          if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
+          yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
+            inherit(pBody.apply(param), expectedTy));
+        }
+        case Sigma -> inherit(pParam, expected) && subscoped(pParam, param ->
+          inherit(pBody.apply(param), expected));
+      };
+      case TupTerm(var lhs, var rhs) when whnf(expected) instanceof
+        DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma ->
+        inherit(lhs, lhsT) && inherit(rhs, rhsTClos.apply(lhs));
       case LamTerm(var body) -> switch (whnf(expected)) {
-        case PiTerm(var dom, var cod) -> subscoped(dom, param ->
+        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> subscoped(dom, param ->
           inherit(body.apply(param), cod.apply(param)));
         case EqTerm eq -> subscoped(DimTyTerm.INSTANCE, param -> {
           // TODO: check boundaries

@@ -32,8 +32,8 @@ public record PatUnify(
   private @NotNull Term unify(@NotNull Pat lhs, @NotNull Pat rhs) {
     return switch (lhs) {
       case Pat.Bind bind -> visitAs(bind.bind(), rhs);
-      case Pat.Tuple(var elements) -> rhs instanceof Pat.Tuple(var erements)
-        ? new TupTerm(visitList(elements, erements))
+      case Pat.Tuple(var lX, var lY) -> rhs instanceof Pat.Tuple(var rX, var rY)
+        ? new TupTerm(unify(lX, rX), unify(lY, rY))
         : Panic.unreachable();
       case Pat.Con con -> switch (rhs) {
         case Pat.Con con1 -> {

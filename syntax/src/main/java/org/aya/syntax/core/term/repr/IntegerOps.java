@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @see org.aya.syntax.core.term.call.RuleReducer
  */
 public sealed interface IntegerOps<Def extends AnyDef> extends Shaped.Applicable<Def> {
-  record ConRule(
-    @Override @NotNull ConDefLike ref,
-    @NotNull IntegerTerm zero
-  ) implements IntegerOps<ConDefLike> {
+  record ConRule(@Override @NotNull ConDefLike ref, @NotNull IntegerTerm zero) implements IntegerOps<ConDefLike> {
     @Override public @Nullable Term apply(@NotNull ImmutableSeq<Term> args) {
       // zero
       if (args.isEmpty()) return zero;
@@ -32,21 +29,15 @@ public sealed interface IntegerOps<Def extends AnyDef> extends Shaped.Applicable
       if (arg instanceof IntegerTerm intTerm) return intTerm.map(x -> x + 1);
       return null;
     }
-    @Override public @NotNull ConRule descent(@NotNull IndexedFunction<Term, Term> f) {
-      return this;
-    }
+    @Override public @NotNull ConRule descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
   }
 
-  record FnRule(
-    @Override @NotNull FnDefLike ref,
-    @NotNull Kind kind
-  ) implements IntegerOps<FnDefLike> {
+  record FnRule(@Override @NotNull FnDefLike ref, @NotNull Kind kind) implements IntegerOps<FnDefLike> {
     public enum Kind {
       Add, SubTrunc
     }
 
-    @Override
-    public @Nullable Term apply(@NotNull ImmutableSeq<Term> args) {
+    @Override public @Nullable Term apply(@NotNull ImmutableSeq<Term> args) {
       return switch (kind) {
         case Add -> {
           assert args.sizeEquals(2);
@@ -66,8 +57,6 @@ public sealed interface IntegerOps<Def extends AnyDef> extends Shaped.Applicable
         }
       };
     }
-    @Override public @NotNull FnRule descent(@NotNull IndexedFunction<Term, Term> f) {
-      return this;
-    }
+    @Override public @NotNull FnRule descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
   }
 }

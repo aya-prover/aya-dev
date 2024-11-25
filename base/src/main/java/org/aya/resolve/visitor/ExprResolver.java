@@ -128,15 +128,10 @@ public record ExprResolver(
         mCtx.update(ctx -> bindAs(lam.ref(), ctx));
         yield lam.update(lam.body().descent(enter(mCtx.get())));
       }
-      case Expr.Pi pi -> {
+      case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
-        var param = bind(pi.param(), mCtx);
-        yield pi.update(param, pi.last().descent(enter(mCtx.get())));
-      }
-      case Expr.Sigma sigma -> {
-        var mCtx = MutableValue.create(ctx);
-        var params = sigma.params().map(param -> bind(param, mCtx));
-        yield sigma.update(params);
+        var param = bind(depType.param(), mCtx);
+        yield depType.update(param, depType.last().descent(enter(mCtx.get())));
       }
       case Expr.Array array -> array.update(array.arrayBlock().map(
         left -> {

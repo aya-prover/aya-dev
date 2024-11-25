@@ -34,13 +34,14 @@ public class Main extends MainArgs implements Callable<Integer> {
   }
 
   @Override public Integer call() throws Exception {
+    if ("null".equals(inputFile)) inputFile = null;
     if (action != null) {
       if (action.repl != null)
-        return AyaRepl.start(modulePaths().map(Paths::get), !noPrelude, action.repl);
+        return AyaRepl.start(modulePaths().map(Paths::get), !noPrelude, inputFile, action.repl);
       if (action.plct != null)
         return new PLCTReport().run(action.plct);
     }
-    if (inputFile == null || inputFile.equals("null")) {
+    if (inputFile == null) {
       System.err.println("No input file specified");
       return 1;
     }

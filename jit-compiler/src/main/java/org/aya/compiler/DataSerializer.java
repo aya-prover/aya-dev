@@ -14,7 +14,7 @@ import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
 import static org.aya.compiler.AyaSerializer.CLASS_DATACALL;
-import static org.aya.compiler.NameSerializer.getClassReference;
+import static org.aya.compiler.NameSerializer.getClassRef;
 
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
@@ -65,7 +65,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
     buildIf(ExprializeUtils.isNull(cRef + "[0]"), () ->
       unit.body.forEachIndexed((idx, con) ->
-        buildUpdate(cRef + "[" + idx + "]", ExprializeUtils.getInstance(getClassReference(con.ref)))));
+        buildUpdate(cRef + "[" + idx + "]", ExprializeUtils.getInstance(getClassRef(con.ref)))));
 
     buildReturn(cRef);
   }

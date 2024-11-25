@@ -2,13 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Renamer;
-import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.*;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -90,8 +89,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
-      case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
-        lInt.repr() == rInt.repr() ? lInt.type() : null;
+      case Pair(IntegerTerm lInt, IntegerTerm rInt) -> lInt.repr() == rInt.repr() ? lInt.type() : null;
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
       case Pair(MemberCall lMem, MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield null;
@@ -200,17 +198,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
         });
       }
-      case PiTerm pi -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
-          compare(
-            lbody.apply(var),
-            rbody.apply(var),
-            pi.body().apply(var)
-          ));
-        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
-        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
-        default -> compare(lhs, rhs, null);
-      };
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(DimTyTerm.INSTANCE, var ->
           compare(
@@ -222,13 +209,23 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
-      case SigmaTerm(var paramSeq) -> {
-        var size = paramSeq.size();
-        var list = ImmutableSeq.fill(size, i -> ProjTerm.make(lhs, i));
-        var rist = ImmutableSeq.fill(size, i -> ProjTerm.make(rhs, i));
-
-        var telescopic = new AbstractTele.Locns(paramSeq.map(p -> new Param("_", p, true)), ErrorTerm.DUMMY);
-        yield compareMany(list, rist, telescopic) != null;
+      case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
+          compare(
+            lbody.apply(var),
+            rbody.apply(var),
+            pi.body().apply(var)
+          ));
+        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
+        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
+        default -> compare(lhs, rhs, null);
+      };
+      // Sigma types
+      case DepTypeTerm(_, var lTy, var rTy) -> {
+        var lProj = ProjTerm.make(lhs, 0);
+        var rProj = ProjTerm.make(rhs, 0);
+        if (!compare(lProj, rProj, lTy)) yield false;
+        yield compare(ProjTerm.make(lhs, 1), ProjTerm.make(rhs, 1), rTy.apply(lProj));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -273,7 +270,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield null;
         var fTy = compareUntyped(f, g);
-        if (!(fTy instanceof PiTerm(Term param, var body))) yield null;
+        if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
         if (!compare(a, b, param)) yield null;
         yield body.apply(a);
       }
@@ -296,12 +293,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // Since {lhs} and {rhs} are whnf, at this point, {lof} is unable to evaluate.
         // Thus the only thing we can do is check whether {lof} and {rhs.of(}} (if rhs is ProjTerm) are 'the same'.
         if (!(rhs instanceof ProjTerm(var rof, var rdx))) yield null;
-        if (!(compareUntyped(lof, rof) instanceof SigmaTerm(var params))) yield null;
+        if (!(compareUntyped(lof, rof) instanceof DepTypeTerm(var k, var lhsT, var rhsTClos) && k == DTKind.Sigma))
+          yield null;
         if (ldx != rdx) yield null;
-        // Make type
-        var spine = ImmutableSeq.fill(ldx /* ldx is 0-based */, i -> ProjTerm.make(lof, i));    // 0 = lof.0, 1 = lof.1, ...
-        // however, for {lof.ldx}, the nearest(0) element is {lof.(idx - 1)}, so we need to reverse the spine.
-        yield params.get(ldx).instantiateTele(spine.view());
+        if (ldx == 0) yield lhsT;
+        yield rhsTClos.apply(new ProjTerm(lof, 0));
       }
       case FreeTerm(var lvar) -> rhs instanceof FreeTerm(var rvar) && lvar == rvar ? localCtx().get(lvar) : null;
       case DimTerm l -> rhs instanceof DimTerm r && l == r ? l : null;
@@ -356,7 +352,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
-  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull PiTerm type) {
+  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull DepTypeTerm type) {
     return subscoped(type.param(), var -> {
       var lhsBody = lambda.body().apply(var);
       var rhsBody = AppTerm.make(rhs, new FreeTerm(var));
@@ -408,36 +404,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return subscoped(lTy, continuation);
   }
 
-  private <R> R compareTypesWithAux(
-    @NotNull SeqView<LocalVar> vars,
-    @NotNull ImmutableSeq<Term> list,
-    @NotNull ImmutableSeq<Term> rist,
-    @NotNull Supplier<R> onFailed,
-    @NotNull Function<ImmutableSeq<LocalVar>, R> continuation
-  ) {
-    if (!list.sizeEquals(rist)) return onFailed.get();
-    if (list.isEmpty()) return continuation.apply(vars.toImmutableSeq());
-    return compareTypeWith(
-      list.getFirst().instantiateTeleVar(vars),
-      rist.getFirst().instantiateTeleVar(vars), onFailed, var ->
-        compareTypesWithAux(vars.appended(var), list.drop(1), rist.drop(1), onFailed, continuation));
-  }
-
-  /**
-   * Compare types and run the {@param continuation} with those types in context (reverse order).
-   *
-   * @param onFailed     run while failed (size doesn't match or compare failed)
-   * @param continuation a function that accept the {@link LocalVar} of all {@param list}
-   */
-  private <R> R compareTypesWith(
-    @NotNull ImmutableSeq<Term> list,
-    @NotNull ImmutableSeq<Term> rist,
-    @NotNull Supplier<R> onFailed,
-    @NotNull Function<ImmutableSeq<LocalVar>, R> continuation
-  ) {
-    return subscoped(() -> compareTypesWithAux(SeqView.empty(), list, rist, onFailed, continuation));
-  }
-
   private boolean sortLt(@NotNull SortTerm l, @NotNull SortTerm r) {
     var lift = l.lift();
     var rift = r.lift();
@@ -483,10 +449,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs) != null;
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
-      case Pair(PiTerm(var lParam, var lBody), PiTerm(var rParam, var rBody)) -> compareTypeWith(lParam, rParam,
-        () -> false, var -> compare(lBody.apply(var), rBody.apply(var), null));
-      case Pair(SigmaTerm(var lParams), SigmaTerm(var rParams)) ->
-        compareTypesWith(lParams, rParams, () -> false, _ -> true);
+      case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) ->
+        lK == rK && compareTypeWith(lParam, rParam, () -> false, var ->
+          compare(lBody.apply(var), rBody.apply(var), null));
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = subscoped(DimTyTerm.INSTANCE, var ->
@@ -498,11 +463,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private @NotNull LocalVar putParam(@NotNull Param param) {
-    var var = LocalVar.generate(param.name());
-    localCtx().put(var, param.type());
-    return var;
-  }
   public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
     return super.subscoped(type, action, nameGen);
   }

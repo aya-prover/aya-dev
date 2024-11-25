@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.AyaSerializer.CLASS_PANIC;
-import static org.aya.compiler.ExprializeUtils.getJavaReference;
+import static org.aya.compiler.ExprializeUtils.getJavaRef;
 import static org.aya.compiler.ExprializeUtils.makeString;
 
 public interface SourceBuilder {
@@ -113,7 +113,7 @@ public interface SourceBuilder {
     boolean isStatic,
     @NotNull Runnable continuation
   ) {
-    var ext = superClass == null ? "" : "extends " + getJavaReference(superClass);
+    var ext = superClass == null ? "" : "extends " + getJavaRef(superClass);
 
     appendLine("public " + (isStatic ? "static" : "") + " final class " + className + " " + ext + " {");
     runInside(continuation);

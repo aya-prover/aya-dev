@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
@@ -236,7 +237,7 @@ public record StmtTycker(
     var conTy = con.result;
     EqTerm boundaries = null;
     if (conTy != null) {
-      var pusheenResult = PiTerm.unpi(tycker.ty(conTy), tycker::whnf);
+      var pusheenResult = DepTypeTerm.unpi(DTKind.Pi, tycker.ty(conTy), tycker::whnf);
 
       selfTele = selfTele.appendedAll(pusheenResult.params().zip(pusheenResult.names(),
         (param, name) -> new Param(name.name(), param, true)));
@@ -271,11 +272,11 @@ public record StmtTycker(
     var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
-      ImmutableSeq.of(boundDataCall, boundariesWithDummy)))
+      boundDataCall, boundariesWithDummy))
       .bindTele(ownerBinds.zip(ownerTele).view());
-    var wholeSigResult = ((TupTerm) wholeSig.result()).items();
-    boundDataCall = (DataCall) wholeSigResult.get(0);
-    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.get(1);
+    var wholeSigResult = (TupTerm) wholeSig.result();
+    boundDataCall = (DataCall) wholeSigResult.lhs();
+    if (boundaries != null) boundaries = (EqTerm) wholeSigResult.rhs();
 
     // The signature of con should be full (the same as [konCore.telescope()])
     ref.signature = new Signature(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
@@ -307,9 +308,9 @@ public record StmtTycker(
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
     tycker.unifyTermReported(
-      PiTerm.make(tele.params().view().map(Param::type), tele.result()),
+      DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result()),
       // No checks, slightly faster than TeleDef.defType
-      PiTerm.make(core.telescope.view().map(Param::type), core.result),
+      DepTypeTerm.makePi(core.telescope.view().map(Param::type), core.result),
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     primRef.signature = tele.descent(tycker::zonk);
