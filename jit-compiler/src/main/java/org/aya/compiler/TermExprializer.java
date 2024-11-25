@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
+import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.FnDef;
@@ -255,7 +256,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   // (A : Type) : Pi(^0, IdxClosure(^1))
   // (A : Type) : Pi(^0, JitClosure(_ -> ^1))
 
-  private @NotNull String with(@NotNull String subst, @NotNull Function<Term, String> continuation) {
+  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
     var bind = new LocalVar(subst);
     this.binds.put(bind, subst);
     var result = continuation.apply(new FreeTerm(bind));
@@ -268,11 +269,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull String serializeClosure(@NotNull Closure body) {
-    return serializeClosure(nameGen.nextName(), body);
-  }
-
-  private @NotNull String serializeClosure(@NotNull String param, @NotNull Closure body) {
-    return ExprializeUtils.makeNew(CLASS_JITLAMTERM, param + " -> " + with(param, t -> doSerialize(body.apply(t))));
+    var param = nameGen.nextName();
+    return with(param, t -> {
+      var appliedBody = body.apply(t);
+      if (FindUsage.free(appliedBody, t.name()) > 0)
+        return makeNew(CLASS_JITLAMTERM, param + " -> " + doSerialize(appliedBody));
+      else return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
+    });
   }
 
   @Override public @NotNull String serialize(Term unit) {
