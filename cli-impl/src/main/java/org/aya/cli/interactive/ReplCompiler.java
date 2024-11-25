@@ -141,7 +141,7 @@ public class ReplCompiler {
   ) {
     try {
       var parser = new AyaParserImpl(reporter);
-      var programOrExpr = parsing.apply(parser);
+      var programOrExpr = parsing.applyChecked(parser);
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
@@ -158,6 +158,9 @@ public class ReplCompiler {
       );
     } catch (InterruptException _) {
       // Only two kinds of interruptions are possible: parsing and resolving
+      return Either.left(ImmutableSeq.empty());
+    } catch (IOException e) {
+      reporter.reportString(e.getMessage());
       return Either.left(ImmutableSeq.empty());
     }
   }
