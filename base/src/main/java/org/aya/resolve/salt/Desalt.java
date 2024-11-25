@@ -33,8 +33,7 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
             var level = levelVar(new WithPos<>(sourcePos, arg.arg().data()));
             if (level != null) {
               return switch (kind) {
-                case Type -> new Expr.Type(level);
-                case Set -> new Expr.Set(level);
+                case Type, Set -> new Expr.Sort(kind, level);
                 default -> Panic.unreachable();
               };
             }
@@ -58,11 +57,7 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
       }
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
-      case Expr.RawSort(var kind) -> switch (kind) {
-        case Type -> new Expr.Type(0);
-        case Set -> new Expr.Set(0);
-        case ISet -> Expr.ISet.INSTANCE;
-      };
+      case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
     };
   }
