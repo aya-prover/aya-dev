@@ -117,3 +117,5 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
   + The literate-markdown related infrastructure is in `tools-md`.
     It offers commonmark extensions for literate mode of any language with a highlighter.
 + `[latest version]` is what you see on this badge ![maven].
+
+![](./fat_agda.jpg)
