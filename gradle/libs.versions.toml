@@ -12,7 +12,8 @@ annotations = "26.0.1"
 kala = "0.76.0"
 # https://picocli.info
 picocli = "4.7.6"
-build-util = "0.0.28"
+# https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util/
+build-util = "0.0.29"
 # https://github.com/jline/jline3
 jline = "3.27.1"
 # https://github.com/commonmark/commonmark-java
