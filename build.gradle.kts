@@ -110,9 +110,10 @@ subprojects {
       tree.include("module-info.class")
       tree.forEach {
         BuildUtil.stripPreview(
-          root.toPath(), it.toPath(),
-          false, false,
-          "java/lang/RuntimeException",
+          /* root = */ root.toPath(),
+          /* classFile = */ it.toPath(),
+          /* forceJava21 = */ false,
+          /* verbose = */ false,
         )
       }
     }
