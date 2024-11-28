@@ -5,7 +5,6 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableStack;
 import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
@@ -37,7 +36,6 @@ import org.aya.tyck.tycker.Unifiable;
 import org.aya.unify.TermComparator;
 import org.aya.unify.Unifier;
 import org.aya.util.Ordering;
-import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -266,7 +264,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         if (f.data() instanceof Expr.Ref ref) {
           yield checkApplication(ref, lift, expr.sourcePos(), a);
         } else try {
-          yield generateApplication(a, synthesize(f)).lift(lift);
+          yield ArgsComputer.generateApplication(this, a, synthesize(f)).lift(lift);
         } catch (NotPi e) {
           yield fail(expr.data(), BadTypeError.appOnNonPi(state, expr, e.actual));
         }
@@ -371,8 +369,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) -> generateApplication(args, localLet.get(ref)).lift(lift);
-      case LocalVar lVar -> generateApplication(args,
+      case LocalVar ref when localLet.contains(ref) ->
+        ArgsComputer.generateApplication(this, args, localLet.get(ref)).lift(lift);
+      case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
@@ -382,88 +381,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
-  private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
-    if (param.type() instanceof ClassCall clazz) {
-      // TODO: type checking
-      return new FreeTerm(state.classThis.peek());
-    } else return mockTerm(param, pos);
-  }
-
   private Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
-    @NotNull AbstractTele params, @NotNull BiFunction<Term[], Term, Jdg> k
+    @NotNull AbstractTele params, @NotNull BiFunction<Term[], @Nullable Term, Jdg> k
   ) throws NotPi {
-    int argIx = 0, paramIx = 0;
-    var result = new Term[params.telescopeSize()];
-    Term firstType = null;
-    while (argIx < args.size() && paramIx < params.telescopeSize()) {
-      var arg = args.get(argIx);
-      var param = params.telescopeRich(paramIx, result);
-      // Implicit insertion
-      if (arg.explicit() != param.explicit()) {
-        if (!arg.explicit()) {
-          fail(new LicitError.BadImplicitArg(arg));
-          break;
-        } else if (arg.name() == null) {
-          // here, arg.explicit() == true and param.explicit() == false
-          if (paramIx == 0) firstType = param.type();
-          result[paramIx++] = insertImplicit(param, arg.sourcePos());
-          continue;
-        }
-      }
-      if (arg.name() != null && !param.nameEq(arg.name())) {
-        if (paramIx == 0) firstType = param.type();
-        result[paramIx++] = insertImplicit(param, arg.sourcePos());
-        continue;
-      }
-      var what = inherit(arg.arg(), param.type());
-      if (paramIx == 0) firstType = param.type();
-      result[paramIx++] = what.wellTyped();
-      argIx++;
-    }
-    // Trailing implicits
-    while (paramIx < params.telescopeSize()) {
-      if (params.telescopeLicit(paramIx)) break;
-      var param = params.telescopeRich(paramIx, result);
-      if (paramIx == 0) firstType = param.type();
-      result[paramIx++] = insertImplicit(param, pos);
-    }
-    var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
-    if (argIx < args.size()) {
-      return generateApplication(args.drop(argIx), k.apply(result, firstType));
-    } else while (paramIx < params.telescopeSize()) {
-      var param = params.telescopeRich(paramIx, result);
-      var atarashiVar = LocalVar.generate(param.name());
-      extraParams.push(new Pair<>(atarashiVar, param.type()));
-      if (paramIx == 0) firstType = param.type();
-      result[paramIx++] = new FreeTerm(atarashiVar);
-    }
-    var generated = k.apply(result, firstType);
-    while (extraParams.isNotEmpty()) {
-      var pair = extraParams.pop();
-      generated = new Jdg.Default(
-        new LamTerm(generated.wellTyped().bind(pair.component1())),
-        new DepTypeTerm(DTKind.Pi, pair.component2(), generated.type().bind(pair.component1()))
-      );
-    }
-    return generated;
-  }
-
-  private Jdg generateApplication(@NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws NotPi {
-    return args.foldLeftChecked(start, (acc, arg) -> {
-      if (arg.name() != null || !arg.explicit()) fail(new LicitError.BadNamedArg(arg));
-      switch (whnf(acc.type())) {
-        case DepTypeTerm(var kind, var param, var body) when kind == DTKind.Pi -> {
-          var wellTy = inherit(arg.arg(), param).wellTyped();
-          return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
-        }
-        case EqTerm eq -> {
-          var wellTy = inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
-          return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
-        }
-        case Term otherwise -> throw new NotPi(otherwise);
-      }
-    });
+    return new ArgsComputer(this, pos, args, params).boot(k);
   }
 
   /**

@@ -111,6 +111,7 @@ public record StmtTycker(
       case DataCon _, PrimDecl _, ClassMember _ -> Objects.requireNonNull(predecl.ref().core);   // see checkHeader
       case ClassDecl clazz -> {
         for (var member : clazz.members) checkHeader(member);
+        // TODO: store signature here?
         yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core));
       }
       case DataDecl data -> {
