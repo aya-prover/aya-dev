@@ -13,6 +13,7 @@ import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -57,6 +58,12 @@ public sealed interface Pat extends AyaDocile {
    */
   @NotNull Pat bind(MutableList<LocalVar> vars);
 
+  /**
+   * Traversal the patterns, collect and bind free variables.
+   *
+   * @param pats the patterns
+   * @return (free variables, bound patterns)
+   */
   static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
   collectVariables(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<LocalVar>create();
@@ -65,9 +72,14 @@ public sealed interface Pat extends AyaDocile {
   }
 
   static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
-    var buffer = MutableList.<Param>create();
+    // so slow, but i dont care
+    return MutableList.from(collectRichBindings(pats).view().map(RichParam::degenerate));
+  }
+
+  static @NotNull MutableList<RichParam> collectRichBindings(@NotNull SeqView<Pat> pats) {
+    var buffer = MutableList.<RichParam>create();
     pats.forEach(p -> p.consumeBindings((var, type) ->
-      buffer.append(new Param(var.name(), type, false))));
+      buffer.append(new RichParam(var, type, false))));
     return buffer;
   }
 
@@ -267,9 +279,13 @@ public sealed interface Pat extends AyaDocile {
   ) implements AyaDocile {
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var prettier = new CorePrettier(options);
-      var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-        pats.view().map(p -> prettier.pat(p, true, BasePrettier.Outer.Free)))));
-      return expr == null ? doc : Doc.sep(doc, Tokens.FN_DEFINED_AS, expr.data().toDoc(options));
+      var doc = prettier.visitClauseLhs(ImmutableSeq.fill(pats.size(), true).view(), this);
+
+      if (expr == null) return doc;
+      var expr = this.expr.data();
+      assert !(expr instanceof Term) : "no teleSubst";
+
+      return Doc.sep(doc, Tokens.FN_DEFINED_AS, expr.toDoc(options));
     }
 
     public static @NotNull Preclause<Term> weaken(@NotNull Term.Matching clause) {
