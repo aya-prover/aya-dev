@@ -343,20 +343,12 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.commaList(enrichPats);
   }
 
-  public @Nullable Doc visitClauseRhs(@NotNull Term.Matching clause, @NotNull SeqView<Term> patSubst) {
-    return term(Outer.Free, clause.body().instantiateTele(patSubst));
-  }
-
-  private @NotNull Doc visitClause(
-    @NotNull Term.Matching clause,
-    @NotNull SeqView<Boolean> licits
-  ) {
+  private @NotNull Doc visitClause(@NotNull Term.Matching clause, @NotNull SeqView<Boolean> licits) {
     var patSubst = Pat.collectRichBindings(clause.patterns().view());
     var lhsWithoutBar = visitClauseLhs(licits, clause);
-    var prerhs = visitClauseRhs(clause, patSubst.view().map(x -> new FreeTerm(x.ref())));
-    var rhs = prerhs == null ? Doc.empty() : Doc.sep(FN_DEFINED_AS, prerhs);
+    var rhs = term(Outer.Free, clause.body().instantiateTele(patSubst.view().map(RichParam::toTerm)));
 
-    return Doc.sep(BAR, lhsWithoutBar, rhs);
+    return Doc.sep(BAR, lhsWithoutBar, FN_DEFINED_AS, rhs);
   }
 
   private @NotNull Doc visitClauses(

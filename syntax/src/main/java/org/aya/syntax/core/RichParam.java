@@ -3,6 +3,7 @@
 package org.aya.syntax.core;
 
 import org.aya.generic.term.ParamLike;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
@@ -21,8 +22,8 @@ public record RichParam(
     return new RichParam(ref, type, true);
   }
 
-  @Contract("-> new")
-  public @NotNull Param degenerate() {
+  public @NotNull FreeTerm toTerm() { return new FreeTerm(ref); }
+  @Contract("-> new") public @NotNull Param degenerate() {
     return new Param(ref.name(), type, explicit);
   }
 }
