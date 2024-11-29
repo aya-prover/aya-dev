@@ -127,10 +127,6 @@ public class CorePrettier extends BasePrettier<Term> {
         );
       }
       case DimTyTerm _ -> KW_INTERVAL;
-      // case NewTerm(var inner) -> visitCalls(null, Doc.styled(KEYWORD, "new"), (nest, t) -> t.toDoc(options), outer,
-      //   SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
-      //   options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
-      // );
       case MemberCall term -> visitCoreApp(null, visitAccessHead(term),
         term.args().view(), outer,
         optionImplicit());
@@ -155,7 +151,6 @@ public class CorePrettier extends BasePrettier<Term> {
         yield visitCoreApp(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case PrimCall prim -> visitCoreCalls(prim.ref(), prim.args(), outer, optionImplicit());
-      // case RefTerm.Field term -> linkRef(term.ref(), MEMBER);
       case ProjTerm(var of, var ix) -> Doc.cat(term(Outer.ProjHead, of), PROJ, Doc.plain(String.valueOf(ix)));
       // case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
       //     Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
@@ -372,26 +367,6 @@ public class CorePrettier extends BasePrettier<Term> {
       var freeTy = param.type().instantiateTeleVar(richTele.view()
         .map(ParamLike::ref));
       richTele.append(new RichParam(LocalVar.generate(param.name(), SourcePos.SER), freeTy, param.explicit()));
-    }
-
-    return richTele.toImmutableSeq();
-  }
-
-  /**
-   * TODO: why this thing is used?
-   * Generate human friendly names for {@param tele}
-   *
-   * @return a {@link ParamLike} telescope
-   * @apiNote remember to instantiate body with corresponding {@link FreeTerm}
-   */
-  private @NotNull ImmutableSeq<ParamLike<Term>> generateNames(@NotNull ImmutableSeq<Term> tele) {
-    var richTele = MutableList.<ParamLike<Term>>create();
-    for (var param : tele) {
-      var freeTy = param.instantiateTeleVar(richTele.view().map(ParamLike::ref));
-      // mutable view!!😱
-      // perhaps we can obtain the whnf of ty as the name
-      // ice: just use freeTy I think it's ok
-      richTele.append(new RichParam(generateName(freeTy), freeTy, true));
     }
 
     return richTele.toImmutableSeq();
