@@ -7,10 +7,9 @@ import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.primitive.BooleanSeq;
-import kala.collection.primitive.BooleanSeqView;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Renamer;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
@@ -19,7 +18,6 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -340,15 +338,13 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   public @NotNull Doc visitClauseLhs(@NotNull SeqView<Boolean> licits, @NotNull Term.Matching clause) {
-    var enrichPats = clause.patterns().zip(licits);
-    return Doc.emptyIf(enrichPats.isEmpty(), () -> Doc.commaList(
-      enrichPats.view().map(p -> pat(p.component1(), p.component2(), Outer.Free))));
+    var enrichPats = clause.patterns().zip(licits,
+      (pat, licit) -> pat(pat, licit, Outer.Free));
+    return Doc.commaList(enrichPats);
   }
 
   public @Nullable Doc visitClauseRhs(@NotNull Term.Matching clause, @NotNull SeqView<Term> patSubst) {
-    var body = clause.body()
-      .instantiateTele(patSubst);
-    return term(Outer.Free, body);
+    return term(Outer.Free, clause.body().instantiateTele(patSubst));
   }
 
   private @NotNull Doc visitClause(

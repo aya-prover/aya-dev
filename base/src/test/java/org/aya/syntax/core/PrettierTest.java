@@ -5,11 +5,10 @@ package org.aya.syntax.core;
 import org.aya.tyck.TyckTest;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PrettierTest {
-  @Test
-  public void clauses() {
+  @Test public void clauses() {
     var result = TyckTest.tyck("""
       open inductive Nat | O | S Nat
       

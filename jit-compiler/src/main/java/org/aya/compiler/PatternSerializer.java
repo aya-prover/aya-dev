@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
-import org.aya.generic.AyaDocile;
 import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.util.error.Panic;

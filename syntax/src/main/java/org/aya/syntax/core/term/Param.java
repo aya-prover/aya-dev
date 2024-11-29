@@ -38,8 +38,7 @@ public record Param(@NotNull String name, @NotNull Term type, boolean explicit) 
     return update(mapper.apply(type));
   }
 
-  @Override
-  public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+  @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).visitParam(this, BasePrettier.Outer.Free);
   }
 }
