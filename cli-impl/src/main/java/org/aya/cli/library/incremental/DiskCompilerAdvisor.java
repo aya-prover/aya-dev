@@ -80,6 +80,22 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public void clearModuleOutput(@NotNull LibrarySource source) throws IOException {
     Files.deleteIfExists(source.compiledCorePath());
   }
+
+  private @NotNull ResolveInfo doLoadCompiledCore(
+    @NotNull CompiledModule compiledAya,
+    @NotNull Reporter reporter,
+    @NotNull ModulePath mod,
+    @NotNull Path sourcePath,
+    @NotNull Path libraryRoot,
+    @NotNull ModuleLoader recurseLoader
+  ) throws ClassNotFoundException, MalformedURLException {
+    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    var coreDir = computeBaseDir(libraryRoot);
+    cl.addURL(coreDir);
+    cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
+    return compiledAya.toResolveInfo(recurseLoader, context, cl);
+  }
+
   @Override public @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull Reporter reporter,
     @NotNull LibraryOwner owner, @NotNull ModulePath mod,
@@ -90,16 +106,12 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     if (corePath == null || sourcePath == null) return null;
     if (!Files.exists(corePath)) return null;
 
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledModule) inputStream.readObject();
       var parentCount = mod.size();
-      var baseDir = corePath;
-      for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
-      baseDir = computeBaseDir(baseDir);
-      cl.addURL(baseDir);
-      cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
-      return compiledAya.toResolveInfo(recurseLoader, context, cl);
+      var libraryRoot = corePath;
+      for (int i = 0; i < parentCount; i++) libraryRoot = libraryRoot.getParent();
+      return doLoadCompiledCore(compiledAya, reporter, mod, sourcePath, libraryRoot, recurseLoader);
     }
   }
 
