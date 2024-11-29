@@ -276,23 +276,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> pats,
     int bindCount, @Nullable WithPos<T> expr
-  ) implements AyaDocile {
-    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      var prettier = new CorePrettier(options);
-      var doc = prettier.visitClauseLhs(ImmutableSeq.fill(pats.size(), true).view(), this);
-
-      if (expr == null) return doc;
-      var expr = this.expr.data();
-      assert !(expr instanceof Term) : "no teleSubst";
-
-      return Doc.sep(doc, Tokens.FN_DEFINED_AS, expr.toDoc(options));
-    }
-
-    public static @NotNull Preclause<Term> weaken(@NotNull Term.Matching clause) {
-      return new Preclause<>(clause.sourcePos(), clause.patterns(), clause.bindCount(),
-        WithPos.dummy(clause.body()));
-    }
-
+  ) {
     public static @NotNull Option<Term.Matching>
     lift(@NotNull Preclause<Term> clause) {
       if (clause.expr == null) return Option.none();

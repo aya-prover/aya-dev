@@ -339,24 +339,23 @@ public class CorePrettier extends BasePrettier<Term> {
     }
   }
 
-  public @NotNull Doc visitClauseLhs(@NotNull SeqView<Boolean> licits, @NotNull Pat.Preclause<?> clause) {
-    var enrichPats = clause.pats().zip(licits);
+  public @NotNull Doc visitClauseLhs(@NotNull SeqView<Boolean> licits, @NotNull Term.Matching clause) {
+    var enrichPats = clause.patterns().zip(licits);
     return Doc.emptyIf(enrichPats.isEmpty(), () -> Doc.commaList(
       enrichPats.view().map(p -> pat(p.component1(), p.component2(), Outer.Free))));
   }
 
-  public @Nullable Doc visitClauseRhs(@NotNull Pat.Preclause<Term> clause, @NotNull SeqView<Term> patSubst) {
-    if (clause.expr() == null) return null;
-    var body = clause.expr().data()
+  public @Nullable Doc visitClauseRhs(@NotNull Term.Matching clause, @NotNull SeqView<Term> patSubst) {
+    var body = clause.body()
       .instantiateTele(patSubst);
     return term(Outer.Free, body);
   }
 
   private @NotNull Doc visitClause(
-    @NotNull Pat.Preclause<Term> clause,
+    @NotNull Term.Matching clause,
     @NotNull SeqView<Boolean> licits
   ) {
-    var patSubst = Pat.collectRichBindings(clause.pats().view());
+    var patSubst = Pat.collectRichBindings(clause.patterns().view());
     var lhsWithoutBar = visitClauseLhs(licits, clause);
     var prerhs = visitClauseRhs(clause, patSubst.view().map(x -> new FreeTerm(x.ref())));
     var rhs = prerhs == null ? Doc.empty() : Doc.sep(FN_DEFINED_AS, prerhs);
@@ -368,10 +367,7 @@ public class CorePrettier extends BasePrettier<Term> {
     @NotNull ImmutableSeq<Term.Matching> clauses,
     @NotNull SeqView<Boolean> licits
   ) {
-    return Doc.vcat(clauses.view().map(matching ->
-      // TODO: toDoc use a new CorePrettier => new NameGenerator
-      // TODO: ^ should we?
-      visitClause(Pat.Preclause.weaken(matching), licits)));
+    return Doc.vcat(clauses.view().map(matching -> visitClause(matching, licits)));
   }
 
   public @NotNull Doc visitParam(@NotNull Param param, @NotNull Outer outer) {
