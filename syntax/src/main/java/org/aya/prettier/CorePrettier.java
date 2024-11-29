@@ -9,14 +9,15 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Renamer;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
+import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -126,10 +127,6 @@ public class CorePrettier extends BasePrettier<Term> {
         );
       }
       case DimTyTerm _ -> KW_INTERVAL;
-      // case NewTerm(var inner) -> visitCalls(null, Doc.styled(KEYWORD, "new"), (nest, t) -> t.toDoc(options), outer,
-      //   SeqView.of(new Arg<>(o -> term(Outer.AppSpine, inner), true)),
-      //   options.map.get(AyaPrettierOptions.Key.ShowImplicitArgs)
-      // );
       case MemberCall term -> visitCoreApp(null, visitAccessHead(term),
         term.args().view(), outer,
         optionImplicit());
@@ -154,7 +151,6 @@ public class CorePrettier extends BasePrettier<Term> {
         yield visitCoreApp(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case PrimCall prim -> visitCoreCalls(prim.ref(), prim.args(), outer, optionImplicit());
-      // case RefTerm.Field term -> linkRef(term.ref(), MEMBER);
       case ProjTerm(var of, var ix) -> Doc.cat(term(Outer.ProjHead, of), PROJ, Doc.plain(String.valueOf(ix)));
       // case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
       //     Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
@@ -208,7 +204,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.Unpi pair, Doc kw, Doc operator) {
-    var params = pair.names().zip(pair.params(), CoreParam::new);
+    var params = pair.names().zip(pair.params(), RichParam::ofExplicit);
     var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
     var teleDoc = visitTele(params, body, FindUsage::free);
     var cod = term(Outer.Codomain, body);
@@ -275,7 +271,8 @@ public class CorePrettier extends BasePrettier<Term> {
         var line1sep = Doc.sepNonEmpty(line1);
         yield def.body().fold(
           term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instantiateTele(subst))),
-          clauses -> Doc.vcat(line1sep, Doc.nest(2, visitClauses(clauses, subst))));
+          clauses -> Doc.vcat(line1sep,
+            Doc.nest(2, visitClauses(clauses, tele.view().map(ParamLike::explicit)))));
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         defVar(field.ref()),
@@ -335,56 +332,41 @@ public class CorePrettier extends BasePrettier<Term> {
     }
   }
 
+  public @NotNull Doc visitClauseLhs(@NotNull SeqView<Boolean> licits, @NotNull Term.Matching clause) {
+    var enrichPats = clause.patterns().zip(licits,
+      (pat, licit) -> pat(pat, licit, Outer.Free));
+    return Doc.commaList(enrichPats);
+  }
+
+  private @NotNull Doc visitClause(@NotNull Term.Matching clause, @NotNull SeqView<Boolean> licits) {
+    var patSubst = Pat.collectRichBindings(clause.patterns().view());
+    var lhsWithoutBar = visitClauseLhs(licits, clause);
+    var rhs = term(Outer.Free, clause.body().instantiateTele(patSubst.view().map(RichParam::toTerm)));
+
+    return Doc.sep(BAR, lhsWithoutBar, FN_DEFINED_AS, rhs);
+  }
+
   private @NotNull Doc visitClauses(
     @NotNull ImmutableSeq<Term.Matching> clauses,
-    @NotNull SeqView<Term> teleSubst
+    @NotNull SeqView<Boolean> licits
   ) {
-    // TODO: subset clause body with [teleSubst]
-    return Doc.vcat(clauses.view().map(matching ->
-      // TODO: toDoc use a new CorePrettier => new NameGenerator
-      Doc.sep(BAR, matching.toDoc(options))));
+    return Doc.vcat(clauses.view().map(matching -> visitClause(matching, licits)));
   }
 
   public @NotNull Doc visitParam(@NotNull Param param, @NotNull Outer outer) {
     return justType(
-      new CoreParam(new LocalVar(param.name(), SourcePos.SER, GenerateKind.Basic.Tyck), param.type()),
+      new RichParam(new LocalVar(param.name(), SourcePos.SER, GenerateKind.Basic.Tyck), param.type(), param.explicit()),
       outer);
   }
 
   /// region Name Generating
-  private record CoreParam(
-    @Override @NotNull LocalVar ref,
-    @Override @NotNull Term type
-  ) implements ParamLike<Term> {
-    @Override public boolean explicit() { return true; }
-  }
-
   private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull SeqLike<Param> tele) {
     var richTele = MutableList.<ParamLike<Term>>create();
 
     for (var param : tele) {
-      var freeTy = param.type().instantiateTele(richTele.view()
-        .map(x -> new FreeTerm(x.ref())));
-      richTele.append(new CoreParam(LocalVar.generate(param.name(), SourcePos.SER), freeTy));
-    }
-
-    return richTele.toImmutableSeq();
-  }
-
-  /**
-   * Generate human friendly names for {@param tele}
-   *
-   * @return a {@link ParamLike} telescope
-   * @apiNote remember to instantiate body with corresponding {@link FreeTerm}
-   */
-  private @NotNull ImmutableSeq<ParamLike<Term>> generateNames(@NotNull ImmutableSeq<Term> tele) {
-    var richTele = MutableList.<ParamLike<Term>>create();
-    for (var param : tele) {
-      var freeTy = param.instantiateTeleVar(richTele.view().map(ParamLike::ref));
-      // mutable view!!😱
-      // perhaps we can obtain the whnf of ty as the name
-      // ice: just use freeTy I think it's ok
-      richTele.append(new CoreParam(generateName(freeTy), freeTy));
+      var freeTy = param.type().instantiateTeleVar(richTele.view()
+        .map(ParamLike::ref));
+      richTele.append(new RichParam(LocalVar.generate(param.name(), SourcePos.SER), freeTy, param.explicit()));
     }
 
     return richTele.toImmutableSeq();

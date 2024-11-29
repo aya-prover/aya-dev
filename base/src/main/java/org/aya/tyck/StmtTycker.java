@@ -224,7 +224,7 @@ public record StmtTycker(
       ownerBinds = lhsResult.allBinds();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
       ownerTelePos = ownerBinds.map(LocalVar::definition);
-      ownerTele = allTypedBinds.toImmutableSeq();
+      ownerTele = allTypedBinds.map(Param::implicitize);
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
         wellPats = ImmutableSeq.empty();
     } else {

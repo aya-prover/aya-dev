@@ -9,10 +9,7 @@ import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.stmt.Shaped;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
-import org.aya.prettier.Tokens;
-import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -26,12 +23,12 @@ import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.function.UnaryOperator;
 
@@ -41,7 +38,7 @@ import java.util.function.UnaryOperator;
  * @author kiva, ice1000, HoshinoTented
  */
 @Debug.Renderer(text = "PatToTerm.visit(this).debuggerOnlyToString()")
-public sealed interface Pat extends AyaDocile {
+public sealed interface Pat {
   @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp);
 
   /**
@@ -57,6 +54,12 @@ public sealed interface Pat extends AyaDocile {
    */
   @NotNull Pat bind(MutableList<LocalVar> vars);
 
+  /**
+   * Traversal the patterns, collect and bind free variables.
+   *
+   * @param pats the patterns
+   * @return (free variables, bound patterns)
+   */
   static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
   collectVariables(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<LocalVar>create();
@@ -64,11 +67,18 @@ public sealed interface Pat extends AyaDocile {
     return new Pair<>(buffer, newPats);
   }
 
-  static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
-    var buffer = MutableList.<Param>create();
-    pats.forEach(p -> p.consumeBindings((var, type) ->
-      buffer.append(new Param(var.name(), type, false))));
+  static <U> @NotNull MutableList<U> collectBindings(@NotNull SeqView<Pat> pats, @NotNull BiFunction<LocalVar, Term, U> collector) {
+    var buffer = MutableList.<U>create();
+    pats.forEach(p -> p.consumeBindings((var, type) -> buffer.append(collector.apply(var, type))));
     return buffer;
+  }
+
+  static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
+    return collectBindings(pats, (v, t) -> new Param(v.name(), t, true));
+  }
+
+  static @NotNull MutableList<RichParam> collectRichBindings(@NotNull SeqView<Pat> pats) {
+    return collectBindings(pats, RichParam::ofExplicit);
   }
 
   /**
@@ -86,10 +96,6 @@ public sealed interface Pat extends AyaDocile {
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
-  }
-
-  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return new CorePrettier(options).pat(this, true, BasePrettier.Outer.Free);
   }
 
   /**
@@ -264,21 +270,8 @@ public sealed interface Pat extends AyaDocile {
     @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> pats,
     int bindCount, @Nullable WithPos<T> expr
-  ) implements AyaDocile {
-    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      var prettier = new CorePrettier(options);
-      var doc = Doc.emptyIf(pats.isEmpty(), () -> Doc.cat(Doc.ONE_WS, Doc.commaList(
-        pats.view().map(p -> prettier.pat(p, true, BasePrettier.Outer.Free)))));
-      return expr == null ? doc : Doc.sep(doc, Tokens.FN_DEFINED_AS, expr.data().toDoc(options));
-    }
-
-    public static @NotNull Preclause<Term> weaken(@NotNull Term.Matching clause) {
-      return new Preclause<>(clause.sourcePos(), clause.patterns(), clause.bindCount(),
-        WithPos.dummy(clause.body()));
-    }
-
-    public static @NotNull Option<Term.Matching>
-    lift(@NotNull Preclause<Term> clause) {
+  ) {
+    public static @NotNull Option<Term.Matching> lift(@NotNull Preclause<Term> clause) {
       if (clause.expr == null) return Option.none();
       var match = new Term.Matching(clause.sourcePos, clause.pats, clause.bindCount, clause.expr.data());
       return Option.some(match);
