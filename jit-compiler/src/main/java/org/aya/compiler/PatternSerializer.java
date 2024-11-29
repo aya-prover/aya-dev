@@ -68,8 +68,6 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   /// region Serializing
 
   private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Once continuation) {
-    buildComment(pat.debuggerOnlyToString());
-
     switch (pat) {
       case Pat.Absurd _ -> buildIfElse("Panic.unreachable()", State.Stuck, continuation);
       case Pat.Bind _ -> {
@@ -151,7 +149,6 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       return;
     }
 
-    buildComment(pats.map(AyaDocile::debuggerOnlyToString).joinToString());
     var pat = pats.getFirst();
     var term = terms.getFirst();
     doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));
