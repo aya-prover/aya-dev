@@ -5,6 +5,8 @@ package org.aya.syntax.core;
 import org.aya.tyck.TyckTest;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class PrettierTest {
   @Test
   public void clauses() {
@@ -20,7 +22,12 @@ public class PrettierTest {
     var fnPlus = result.defs()
       .findFirst(x -> x.ref().name().equals("plus"))
       .get();
-    var doc = fnPlus.debuggerOnlyToString();
-    System.out.println(doc);
+
+    assertEquals("""
+        def plus (a b : Nat) : Nat
+          | 0, c => c
+          | S c, 0 => S (plus c 0)
+          | S c, S d => S (plus c (S d))""",      // no new line here!!
+      fnPlus.debuggerOnlyToString());
   }
 }

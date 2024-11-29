@@ -32,9 +32,7 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
-import java.util.function.IntUnaryOperator;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 
 /**
  * Patterns in the core syntax.
@@ -71,16 +69,18 @@ public sealed interface Pat extends AyaDocile {
     return new Pair<>(buffer, newPats);
   }
 
+  static <U> @NotNull MutableList<U> collectBindings(@NotNull SeqView<Pat> pats, @NotNull BiFunction<LocalVar, Term, U> collector) {
+    var buffer = MutableList.<U>create();
+    pats.forEach(p -> p.consumeBindings((var, type) -> buffer.append(collector.apply(var, type))));
+    return buffer;
+  }
+
   static @NotNull MutableList<Param> collectBindings(@NotNull SeqView<Pat> pats) {
-    // so slow, but i dont care
-    return MutableList.from(collectRichBindings(pats).view().map(RichParam::degenerate));
+    return collectBindings(pats, (v, t) -> new Param(v.name(), t, true));
   }
 
   static @NotNull MutableList<RichParam> collectRichBindings(@NotNull SeqView<Pat> pats) {
-    var buffer = MutableList.<RichParam>create();
-    pats.forEach(p -> p.consumeBindings((var, type) ->
-      buffer.append(new RichParam(var, type, false))));
-    return buffer;
+    return collectBindings(pats, RichParam::ofExplicit);
   }
 
   /**
