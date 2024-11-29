@@ -9,10 +9,6 @@ import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.stmt.Shaped;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
-import org.aya.prettier.Tokens;
-import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Param;
@@ -27,12 +23,14 @@ import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.IntUnaryOperator;
+import java.util.function.UnaryOperator;
 
 /**
  * Patterns in the core syntax.
@@ -40,7 +38,7 @@ import java.util.function.*;
  * @author kiva, ice1000, HoshinoTented
  */
 @Debug.Renderer(text = "PatToTerm.visit(this).debuggerOnlyToString()")
-public sealed interface Pat extends AyaDocile {
+public sealed interface Pat {
   @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp);
 
   /**
@@ -98,10 +96,6 @@ public sealed interface Pat extends AyaDocile {
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
-  }
-
-  @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return new CorePrettier(options).pat(this, true, BasePrettier.Outer.Free);
   }
 
   /**
@@ -277,8 +271,7 @@ public sealed interface Pat extends AyaDocile {
     @NotNull ImmutableSeq<Pat> pats,
     int bindCount, @Nullable WithPos<T> expr
   ) {
-    public static @NotNull Option<Term.Matching>
-    lift(@NotNull Preclause<Term> clause) {
+    public static @NotNull Option<Term.Matching> lift(@NotNull Preclause<Term> clause) {
       if (clause.expr == null) return Option.none();
       var match = new Term.Matching(clause.sourcePos, clause.pats, clause.bindCount, clause.expr.data());
       return Option.some(match);
