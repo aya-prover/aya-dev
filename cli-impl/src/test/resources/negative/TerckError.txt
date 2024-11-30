@@ -62,3 +62,17 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+SelfFn:
+In file $FILE:2:4 ->
+
+  1 │   open import arith::nat::base
+  2 │   def crazyAdd (a : Nat) : crazyAdd a
+    │       ╰──────╯
+  3 │   | x => x
+
+Error: Self-reference found in the signature of crazyAdd
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+
