@@ -36,8 +36,7 @@ public interface TerckError {
     | a => f a
     """;
 
-  @Language("Aya") String testSelfData = """
-    inductive SelfData (A : SelfData)
-    | SelfCon SelfCon
-    """;
+  @Language("Aya") String testSelfData = "inductive SelfData (A : SelfData)";
+
+  @Language("Aya") String testSelfCon = "inductive SelfData | SelfCon SelfCon";
 }

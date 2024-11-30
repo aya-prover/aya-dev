@@ -17,9 +17,6 @@ import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.error.Panic;
-import org.aya.util.reporter.Problem;
-import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -144,6 +141,7 @@ public interface StmtResolver {
     // check self-reference
     if (decl instanceof TyckOrder.Head head && refs.contains(head)) {
       info.opSet().reporter.report(new TyckOrderError.SelfReference(head.unit()));
+      throw new Context.ResolvingInterruptedException();
     }
 
     info.depGraph().sucMut(decl).appendAll(refs
@@ -171,15 +169,7 @@ public interface StmtResolver {
     return newResolver;
   }
 
-  private static void insertGeneralizedVars(
-    @NotNull TeleDecl decl, @NotNull ExprResolver resolver
-  ) {
+  private static void insertGeneralizedVars(@NotNull TeleDecl decl, @NotNull ExprResolver resolver) {
     decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
-  }
-
-  @Contract("_, _ -> fail")
-  static Context.ResolvingInterruptedException resolvingInterrupt(Reporter reporter, Problem problem) {
-    reporter.report(problem);
-    throw new Context.ResolvingInterruptedException();
   }
 }

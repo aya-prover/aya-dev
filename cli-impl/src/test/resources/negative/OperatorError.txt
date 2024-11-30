@@ -64,24 +64,16 @@ note: Make them both left/right-associative to resolve this problem.
 Let's learn from that.
 
 SelfBind:
-In file $FILE:1:10 ->
-
-  1 │   def infix + : Type => +
-    │             ╰╯
-  2 │     looser +
-
-Error: Self-reference found in the signature of +
-
 In file $FILE:2:9 ->
 
-  1 │   def infix + : Type => +
+  1 │   def infix + : Type 1 => Type
   2 │     looser +
     │            ╰╯
 
 Error: Self bind is not allowed
 
 Resolving interrupted due to:
-2 error(s), 0 warning(s).
+1 error(s), 0 warning(s).
 Let's learn from that.
 
 ModuleImportRename:
