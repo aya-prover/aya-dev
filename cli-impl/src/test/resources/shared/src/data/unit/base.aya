@@ -1,0 +1,6 @@
+open import relation::binary::path
+
+open inductive Unit | tt
+
+def Unit-isContr (u : Unit) : u = tt
+| tt => refl

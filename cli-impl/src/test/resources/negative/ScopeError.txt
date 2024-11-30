@@ -133,17 +133,6 @@ Warning: The name `foo` introduces ambiguity and can only be accessed through a
 
 That looks right!
 
-InfRec:
-In file $FILE:1:4 ->
-
-  1 │   def undefined => undefined
-    │       ╰───────╯
-
-Error: The recursive definition `undefined` is not structurally recursive
-
-1 error(s), 0 warning(s).
-Let's learn from that.
-
 Issue247:
 In file $FILE:3:2 ->
 

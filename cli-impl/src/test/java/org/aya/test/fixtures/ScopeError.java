@@ -43,7 +43,6 @@ public interface ScopeError {
     def foo => false
     open A
     """;
-  @Language("Aya") String testInfRec = "def undefined => undefined";
   @Language("Aya") String testIssue247 = """
     inductive Z : Type
     | zero

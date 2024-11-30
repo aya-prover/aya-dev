@@ -73,7 +73,7 @@ public class TestRunner {
       var output = Strings.convertLineSeparators(hookOut);
       var expected = instantiateVars(Strings.convertLineSeparators(
         Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
-      assertEquals(expected, output, TMP_FILE.getFileName().toString());
+      assertEquals(expected, output, expectedOutFile.getFileName().toString());
     } catch (IOException e) {
       fail("error reading file " + expectedOutFile.toAbsolutePath());
     }

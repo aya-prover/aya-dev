@@ -15,6 +15,7 @@ import org.aya.resolve.visitor.ExprResolver.Where;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.error.Panic;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
@@ -140,6 +141,11 @@ public interface StmtResolver {
   }
 
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
+    // check self-reference
+    if (decl instanceof TyckOrder.Head head && refs.contains(head)) {
+      info.opSet().reporter.report(new TyckOrderError.SelfReference(head.unit()));
+    }
+
     info.depGraph().sucMut(decl).appendAll(refs
       .filter(unit -> TyckUnit.needTyck(unit, info.thisModule().modulePath())));
   }

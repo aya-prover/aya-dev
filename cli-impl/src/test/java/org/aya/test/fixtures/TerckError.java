@@ -35,4 +35,9 @@ public interface TerckError {
     partial def f Nat : Nat
     | a => f a
     """;
+
+  @Language("Aya") String testSelfData = """
+    inductive SelfData (A : SelfData)
+    | SelfCon SelfCon
+    """;
 }
