@@ -38,3 +38,41 @@ That looks right!
 PartialDef:
 That looks right!
 
+SelfData:
+In file $FILE:1:10 ->
+
+  1 │   inductive SelfData (A : SelfData)
+    │             ╰──────╯
+
+Error: Self-reference found in the signature of SelfData
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+SelfCon:
+In file $FILE:1:21 ->
+
+  1 │   inductive SelfData | SelfCon SelfCon
+    │                        ╰─────╯
+
+Error: Self-reference found in the signature of SelfCon
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+SelfFn:
+In file $FILE:2:4 ->
+
+  1 │   open import arith::nat::base
+  2 │   def crazyAdd (a : Nat) : crazyAdd a
+    │       ╰──────╯
+  3 │   | x => x
+
+Error: Self-reference found in the signature of crazyAdd
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+

@@ -66,7 +66,7 @@ Let's learn from that.
 SelfBind:
 In file $FILE:2:9 ->
 
-  1 │   def infix + : Type => +
+  1 │   def infix + : Type 1 => Type
   2 │     looser +
     │            ╰╯
 

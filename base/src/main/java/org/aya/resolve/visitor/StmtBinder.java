@@ -49,8 +49,9 @@ public record StmtBinder(@NotNull ResolveInfo info) {
     }
 
     // make compiler happy 😥
-    throw StmtResolver.resolvingInterrupt(info.opSet().reporter,
+    info.opSet().reporter.report(
       new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
+    throw new Context.ResolvingInterruptedException();
   }
 
   public void resolveBind(@NotNull SeqLike<ResolvingStmt> contents) {

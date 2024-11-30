@@ -35,4 +35,14 @@ public interface TerckError {
     partial def f Nat : Nat
     | a => f a
     """;
+
+  @Language("Aya") String testSelfData = "inductive SelfData (A : SelfData)";
+
+  @Language("Aya") String testSelfCon = "inductive SelfData | SelfCon SelfCon";
+
+  @Language("Aya") String testSelfFn = """
+    open import arith::nat::base
+    def crazyAdd (a : Nat) : crazyAdd a
+    | x => x
+    """;
 }

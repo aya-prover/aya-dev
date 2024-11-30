@@ -40,7 +40,7 @@ public interface OperatorError {
     """;
 
   @Language("Aya") String testSelfBind = """
-    def infix + : Type => +
+    def infix + : Type 1 => Type
       looser +
     """;
 
