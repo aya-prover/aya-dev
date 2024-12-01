@@ -18,7 +18,7 @@ import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
-import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
@@ -149,8 +149,8 @@ public record CompiledModule(
 
     private @NotNull SerBind serBind(@NotNull BindBlock bindBlock) {
       if (bindBlock == BindBlock.EMPTY) return SerBind.EMPTY;
-      var loosers = bindBlock.resolvedLoosers().get().map(x -> TyckAnyDef.make(x.core).qualifiedName());
-      var tighters = bindBlock.resolvedTighters().get().map(x -> TyckAnyDef.make(x.core).qualifiedName());
+      var loosers = bindBlock.resolvedLoosers().get().map(x -> AnyDef.fromVar(x).qualifiedName());
+      var tighters = bindBlock.resolvedTighters().get().map(x -> AnyDef.fromVar(x).qualifiedName());
       return new SerBind(loosers, tighters);
     }
   }

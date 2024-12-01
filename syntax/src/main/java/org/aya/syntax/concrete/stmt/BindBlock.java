@@ -4,7 +4,7 @@ package org.aya.syntax.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
-import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.util.ForLSP;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -13,9 +13,8 @@ public record BindBlock(
   @Override @NotNull SourcePos sourcePos,
   @NotNull ImmutableSeq<QualifiedID> loosers,
   @NotNull ImmutableSeq<QualifiedID> tighters,
-  // TODO: make AnyVar
-  @ForLSP @NotNull MutableValue<ImmutableSeq<DefVar<?, ?>>> resolvedLoosers,
-  @ForLSP @NotNull MutableValue<ImmutableSeq<DefVar<?, ?>>> resolvedTighters
+  @ForLSP @NotNull MutableValue<ImmutableSeq<AnyDefVar>> resolvedLoosers,
+  @ForLSP @NotNull MutableValue<ImmutableSeq<AnyDefVar>> resolvedTighters
 ) {
   public static final @NotNull BindBlock EMPTY = new BindBlock(SourcePos.NONE,
     ImmutableSeq.empty(), ImmutableSeq.empty(), MutableValue.create(), MutableValue.create());
