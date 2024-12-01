@@ -221,7 +221,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case DimTyTerm _ -> ExprializeUtils.getInstance(ExprializeUtils.getJavaRef(DimTyTerm.class));
       case DimTerm dim -> ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(DimTerm.class), dim.name());
       case TupTerm(var l, var r) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaRef(TupTerm.class),
-        serializeToImmutableSeq(CLASS_TERM, ImmutableSeq.of(l, r))
+        doSerialize(l), doSerialize(r)
       );
       case PrimCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_PRIMCALL,
         ExprializeUtils.getInstance(NameSerializer.getClassRef(ref)),
