@@ -74,11 +74,19 @@ record LibraryModuleLoader(
     assert program != null;
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
-    source.resolveInfo().set(resolveInfo);
-    return tyckModule(resolveInfo, (moduleResolve, defs) -> {
+    tyckModule(resolveInfo, (moduleResolve, defs) -> {
       source.notifyTycked(moduleResolve, defs);
-      if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs);
+      if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs, recurseLoader);
     });
+
+    @Nullable var tyckedInfo = source.resolveInfo().get();
+    // I know we can set resolveInfo before the tyckModule, but that doesn't tell the goal of the code.
+    if (tyckedInfo == null) {
+      // this happens if [saveCompiledCore] meets an exception, use fallback ResolveInfo
+      tyckedInfo = resolveInfo;
+    }
+
+    return tyckedInfo;
   }
 
   @Override
@@ -96,9 +104,11 @@ record LibraryModuleLoader(
   private void saveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<TyckDef> defs
+    @NotNull ImmutableSeq<TyckDef> defs,
+    @NotNull ModuleLoader recurseLoader
   ) {
-    advisor.saveCompiledCore(file, resolveInfo, defs);
+    var info = advisor.saveCompiledCore(file, resolveInfo, defs, recurseLoader);
+    file.resolveInfo().set(info);
   }
 
   record United(@NotNull PrimFactory primFactory) {

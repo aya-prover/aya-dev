@@ -116,6 +116,10 @@ public record ResolveInfo(
     });
   }
 
+  public @NotNull Reporter reporter() {
+    return this.opSet.reporter;
+  }
+
   @Debug.Renderer(text = "opInfo.name()")
   public record RenamedOpDecl(@NotNull OpInfo opInfo) implements OpDecl { }
 }
