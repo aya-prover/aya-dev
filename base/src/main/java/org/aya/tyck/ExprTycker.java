@@ -254,7 +254,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
-      case Expr.Sugar s -> throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
+      case Expr.Sugar s -> throw new Panic(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
         int lift;
         if (f.data() instanceof Expr.Lift(var inner, var level)) {
