@@ -26,4 +26,5 @@ def coeSigma (r s : I)
 def coeSigmaEq (r s : I)
   (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
   (p : Sig (a : A r) ** B r a)
-  : coeSigma r s A B p = coe r s (fn i => Sig (a : A i) ** (B i a)) p
+  : coeSigma r s A B p = coe r s (fn i => Sig (a : A i) ** (B i a)) p =>
+  refl
