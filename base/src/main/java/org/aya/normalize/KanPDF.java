@@ -36,12 +36,12 @@ public interface KanPDF {
 
       // In order to construct a term of type `(a : A s) * B s a`, we may use TupTerm
       //   (??, ??)
-      // But first, we need a term of type `A s`, one way is coe `p.0` forward
+      // But first, we need a term of type `A s`, one way is coe `p.0 : A r` forward
       //   coe^{r -> s}_A p.0 : A s
       var a = AppTerm.make(coe.recoe(A), fst);
       // and now:
       //   (a, ??)
-      // We need to find a term of type `B s a`, similarly, we may coe `B r p.0` forward, but we need to choose
+      // We need to find a term of type `B s a`, similarly, we may coe `p.1 : B r p.0` forward, but we need to choose
       // a path that agree both side:
       //   We need `a'` such that `a'[r/i] = p.0` and `a'[s/i] = a`
       // a' = coe^{r -> j}_A p.0 : A j
@@ -81,13 +81,13 @@ public interface KanPDF {
       //   \(x : A s). ??
       return new LamTerm(new Closure.Jit(x -> {
         // We still need to construct the body of lambda of type `B s x`.
-        // Recall that we have `f : (a : A r) -> B r a`, we can obtain `A r` by coe `A s` backward.
+        // Recall that we have `f : (a : A r) -> B r a`, we can obtain `A r` by coe `x : A s` backward.
         // coe^{s -> r}_A x : A r
         var fArg = AppTerm.make(coe.inverse(A), x);
         // f fArg : B r fArg
         var fApp = AppTerm.make(f, fArg);
 
-        // We can also obtain `B s x` by coe `B r fArg` forward, but we need to choose a path that agree with both side:
+        // We can also obtain `B s x` by coe `f fArg : B r fArg` forward, but we need to choose a path that agree with both side:
         //   We need `a'` that `a'[s/j] = x` and `a'[r/j] = fArg`,
         //   if you look `fArg` closer you may find that if we replace `r` with `j`,
         //   then `fArg = x` when `j` is substituted with `s`
