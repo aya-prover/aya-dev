@@ -270,7 +270,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
       }
       // TODO: what is resolvedVar used for?
-      case Expr.Proj(var p, var ix, var resolvedVar, var type) -> {
+      case Expr.Proj(var p, var ix, var resolvedVar, var _) -> {
         var wellP = synthesize(p);
 
         yield ix.fold(iix -> {
@@ -285,7 +285,6 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             default -> throw new UnsupportedOperationException("TODO");
           };
 
-          type.set(ty);
           return new Jdg.Default(ProjTerm.make(wellP.wellTyped(), iix == 1), ty);
         }, member -> {
           // TODO: MemberCall
