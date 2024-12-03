@@ -107,7 +107,7 @@ public final class Normalizer implements UnaryOperator<Term> {
 
         var i = new LocalVar("i");
         yield switch (apply(A.apply(i))) {
-          case DepTypeTerm dep -> dep.coe(i, coe);
+          case DepTypeTerm dep -> apply(dep.coe(i, coe));
           case SortTerm _ -> LamTerm.ID;
           // TODO: when the data is not indexed, also return ID
           case DataCall data when data.args().isEmpty() -> LamTerm.ID;
