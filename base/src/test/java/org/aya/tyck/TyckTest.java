@@ -222,7 +222,7 @@ public class TyckTest {
     var moduleLoader = SyntaxTestUtil.moduleLoader();
     var callback = new ModuleCallback<RuntimeException>() {
       ImmutableSeq<TyckDef> ok;
-      @Override public void onModuleTycked(@NotNull ResolveInfo x, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
+      @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
     };
     var info = moduleLoader.tyckModule(moduleLoader.resolve(SyntaxTestUtil.parse(code)), callback);
     return new TyckResult(callback.ok, info);

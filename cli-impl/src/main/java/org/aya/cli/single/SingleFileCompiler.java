@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
@@ -58,12 +58,12 @@ public final class SingleFileCompiler {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
-      loader.tyckModule(new PrimFactory(), ctx, program, (moduleResolve, defs) -> {
-        ayaFile.tyckAdditional(moduleResolve);
+      loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
+        ayaFile.tyckAdditional(resolveInfo);
         ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
         ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
         ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
-        if (moduleCallback != null) moduleCallback.onModuleTycked(moduleResolve, defs);
+        if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
       });
     });
   }

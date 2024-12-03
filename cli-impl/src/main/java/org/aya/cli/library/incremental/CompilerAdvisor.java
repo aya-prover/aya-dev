@@ -69,11 +69,19 @@ public interface CompilerAdvisor extends AutoCloseable {
     @NotNull ModuleLoader recurseLoader
   ) throws IOException, ClassNotFoundException;
 
-  void doSaveCompiledCore(
+  /**
+   * Save the well-typed defs as compiled defs
+   *
+   * @param file        the source file
+   * @param resolveInfo the resolve info of the module
+   * @param defs        the well-typed definitions
+   */
+  @NotNull ResolveInfo doSaveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<TyckDef> defs
-  ) throws IOException;
+    @NotNull ImmutableSeq<TyckDef> defs,
+    @NotNull ModuleLoader recurseLoader
+  ) throws IOException, ClassNotFoundException;
 
   @ApiStatus.NonExtendable
   default @Nullable ResolveInfo loadCompiledCore(
@@ -91,17 +99,25 @@ public interface CompilerAdvisor extends AutoCloseable {
     }
   }
 
+  /**
+   * @return possibly the compiled version of the {@link ResolveInfo}
+   * @see #doSaveCompiledCore
+   */
   @ApiStatus.NonExtendable
-  default void saveCompiledCore(
+  default @NotNull ResolveInfo saveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<TyckDef> defs
+    @NotNull ImmutableSeq<TyckDef> defs,
+    @NotNull ModuleLoader recurseLoader
   ) {
+    assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
-      doSaveCompiledCore(file, resolveInfo, defs);
+      var info = doSaveCompiledCore(file, resolveInfo, defs, recurseLoader);
       updateLastModified(file);
-    } catch (IOException e) {
+      return info;
+    } catch (IOException | ClassNotFoundException e) {
       e.printStackTrace();
+      return resolveInfo;
     }
   }
 

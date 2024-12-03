@@ -132,7 +132,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var lack = factory.checkDependency(primID);
         if (lack.isNotEmpty() && lack.get().isNotEmpty())
           context.reportAndThrow(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
-        else if (factory.have(primID) && !factory.suppressRedefinition())
+        else if (factory.isForbiddenRedefinition(primID, false))
           context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
         factory.factory(primID, decl.ref);
         var resolvedCtx = resolveTopLevelDecl(decl, context);
