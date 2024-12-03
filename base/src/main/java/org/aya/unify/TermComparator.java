@@ -4,10 +4,10 @@ package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Renamer;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -339,7 +339,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the ref don't match),
       // so we are unable to do more if we can't normalize them.
-      case FnCall _ -> null;
+      case FnCall _, PrimCall _ -> null;
 
       default -> throw noRules(lhs);
     };
