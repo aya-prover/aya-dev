@@ -156,10 +156,11 @@ public record CompiledModule(
   }
 
   public @NotNull ResolveInfo toResolveInfo(
-    @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, ClassLoader classLoader
+    @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context,
+    @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory
   ) {
     var state = new DeState(classLoader);
-    return toResolveInfo(loader, context, state, new PrimFactory(), new ShapeFactory());
+    return toResolveInfo(loader, context, state, primFactory, new ShapeFactory());
   }
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,

@@ -34,8 +34,10 @@ import org.jetbrains.annotations.NotNull;
  * {@link org.aya.cli.library.incremental.InMemoryCompilerAdvisor} will be updated to the newest compilation result.
  */
 public class LspPrimFactory extends PrimFactory {
-  @Override public boolean suppressRedefinition() { return true; }
-
+  /** Allow all kinds of redefinition. */
+  @Override public boolean isForbiddenRedefinition(PrimDef.@NotNull ID id, boolean isJit) {
+    return false;
+  }
   @Override public @NotNull PrimDefLike factory(PrimDef.@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
     return getOption(name).getOrElse(() -> super.factory(name, ref));
   }

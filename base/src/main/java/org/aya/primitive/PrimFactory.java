@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.normalize.Normalizer;
+import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.PrimDef;
@@ -47,7 +48,7 @@ public class PrimFactory {
   }
 
   public void definePrim(PrimDefLike prim) {
-    assert suppressRedefinition() || !have(prim.id());
+    assert !isForbiddenRedefinition(prim.id(), prim instanceof JitPrim);
     defs.put(prim.id(), prim);
   }
 
@@ -186,8 +187,22 @@ public class PrimFactory {
     return defs.containsKey(name);
   }
 
-  /** whether redefinition should be treated as error */
-  @ForLSP public boolean suppressRedefinition() { return false; }
+  /**
+   * Whether this definition is a redefinition that should be treated as error.
+   * There are two cases where a redefinition is allowed:
+   * <ul>
+   *   <li>When we are working in an LSP, and users can reload a file to redefine things.</li>
+   *   <li>When we are serializing a file, which we will deserialize immediately, and this will
+   *     replace the existing PrimDefs with their JIT-compiled version.</li>
+   * </ul>
+   *
+   * @return true if redefinition is forbidden.
+   */
+  @ForLSP public boolean isForbiddenRedefinition(@NotNull PrimDef.ID id, boolean isJit) {
+    if (isJit)
+      return have(id) && defs.get(id) instanceof JitPrim;
+    else return have(id);
+  }
 
   public @NotNull Option<ImmutableSeq<@NotNull ID>> checkDependency(@NotNull ID name) {
     return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));

@@ -11,6 +11,7 @@ import org.aya.compiler.CompiledModule;
 import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.compiler.NameSerializer;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
@@ -92,13 +93,14 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ModulePath mod,
     @NotNull Path sourcePath,
     @NotNull Path libraryRoot,
-    @NotNull ModuleLoader recurseLoader
+    @NotNull ModuleLoader recurseLoader,
+    @NotNull PrimFactory primFactory
   ) throws ClassNotFoundException, MalformedURLException {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var coreDir = computeBaseDir(libraryRoot);
     cl.addURL(coreDir);
     cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
-    return compiledAya.toResolveInfo(recurseLoader, context, cl);
+    return compiledAya.toResolveInfo(recurseLoader, context, cl, primFactory);
   }
 
   @Override public @Nullable ResolveInfo doLoadCompiledCore(
@@ -116,7 +118,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       var parentCount = mod.size();
       var libraryRoot = corePath;
       for (int i = 0; i < parentCount; i++) libraryRoot = libraryRoot.getParent();
-      return doLoadCompiledCore(compiledAya, reporter, mod, sourcePath, libraryRoot, recurseLoader);
+      return doLoadCompiledCore(compiledAya, reporter, mod, sourcePath, libraryRoot, recurseLoader, new PrimFactory());
     }
   }
 
@@ -165,7 +167,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     return doLoadCompiledCore(
       coreMod, resolveInfo.reporter(),
       resolveInfo.thisModule().modulePath(), file.underlyingFile(), libraryRoot,
-      recurseLoader
+      recurseLoader, resolveInfo.primFactory()
     );
   }
 
