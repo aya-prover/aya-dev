@@ -13,6 +13,7 @@ import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
@@ -37,7 +38,7 @@ public record StmtBinder(@NotNull ResolveInfo info) {
       bind(self, ctx, OpDecl.BindPred.Tighter, tighter)));
   }
 
-  private @Nullable DefVar<?, ?> bind(
+  private @Nullable AnyDefVar bind(
     @NotNull OpDecl self, @NotNull Context ctx,
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
   ) throws Context.ResolvingInterruptedException {
@@ -45,7 +46,7 @@ public record StmtBinder(@NotNull ResolveInfo info) {
     var opDecl = info.resolveOpDecl(var);
     if (opDecl != null) {
       info.opSet().bind(self, pred, opDecl, id.sourcePos());
-      return var instanceof DefVar<?, ?> defVar ? defVar : null;
+      return var instanceof AnyDefVar defVar ? defVar : null;
     }
 
     // make compiler happy 😥

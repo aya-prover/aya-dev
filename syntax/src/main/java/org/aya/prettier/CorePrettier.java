@@ -151,7 +151,8 @@ public class CorePrettier extends BasePrettier<Term> {
         yield visitCoreApp(null, term(Outer.AppHead, head), args.view(), outer, implicits);
       }
       case PrimCall prim -> visitCoreCalls(prim.ref(), prim.args(), outer, optionImplicit());
-      case ProjTerm(var of, var ix) -> Doc.cat(term(Outer.ProjHead, of), PROJ, Doc.plain(String.valueOf(ix)));
+      case ProjTerm projTerm ->
+        Doc.cat(term(Outer.ProjHead, projTerm.of()), PROJ, Doc.plain(String.valueOf(projTerm.index())));
       // case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
       //     Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
       //   Doc.vcat(match.clauses().view()

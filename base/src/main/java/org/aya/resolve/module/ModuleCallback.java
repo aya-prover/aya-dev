@@ -9,6 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface ModuleCallback<E extends Exception> {
-  void onModuleTycked(@NotNull ResolveInfo moduleResolve, @NotNull ImmutableSeq<TyckDef> defs)
+  void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs)
     throws E;
 }

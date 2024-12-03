@@ -18,7 +18,7 @@ import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
-import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
@@ -149,17 +149,18 @@ public record CompiledModule(
 
     private @NotNull SerBind serBind(@NotNull BindBlock bindBlock) {
       if (bindBlock == BindBlock.EMPTY) return SerBind.EMPTY;
-      var loosers = bindBlock.resolvedLoosers().get().map(x -> TyckAnyDef.make(x.core).qualifiedName());
-      var tighters = bindBlock.resolvedTighters().get().map(x -> TyckAnyDef.make(x.core).qualifiedName());
+      var loosers = bindBlock.resolvedLoosers().get().map(x -> AnyDef.fromVar(x).qualifiedName());
+      var tighters = bindBlock.resolvedTighters().get().map(x -> AnyDef.fromVar(x).qualifiedName());
       return new SerBind(loosers, tighters);
     }
   }
 
   public @NotNull ResolveInfo toResolveInfo(
-    @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, ClassLoader classLoader
+    @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context,
+    @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory
   ) {
     var state = new DeState(classLoader);
-    return toResolveInfo(loader, context, state, new PrimFactory(), new ShapeFactory());
+    return toResolveInfo(loader, context, state, primFactory, new ShapeFactory());
   }
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
@@ -167,14 +168,14 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
-    loadModule(context, shapeFactory, state.topLevelClass(context.modulePath()));
+    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()));
     deOp(state, resolveInfo);
     return resolveInfo;
   }
 
   private void loadModule(
-    @NotNull PhysicalModuleContext context, @NotNull ShapeFactory shapeFactory,
-    @NotNull Class<?> rootClass
+    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
+    @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
@@ -205,6 +206,7 @@ public record CompiledModule(
             shapeFactory.bonjour(fn, recognition);
           }
         }
+        case JitPrim prim -> primFactory.definePrim(prim);
         default -> { }
       }
     }

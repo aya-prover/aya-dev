@@ -11,6 +11,7 @@ import org.aya.compiler.CompiledModule;
 import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.compiler.NameSerializer;
+import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
@@ -80,6 +81,28 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public void clearModuleOutput(@NotNull LibrarySource source) throws IOException {
     Files.deleteIfExists(source.compiledCorePath());
   }
+
+  /**
+   * Load all core file to the ClassLoader
+   *
+   * @return a compiled ResolveInfo
+   */
+  private @NotNull ResolveInfo doLoadCompiledCore(
+    @NotNull CompiledModule compiledAya,
+    @NotNull Reporter reporter,
+    @NotNull ModulePath mod,
+    @NotNull Path sourcePath,
+    @NotNull Path libraryRoot,
+    @NotNull ModuleLoader recurseLoader,
+    @NotNull PrimFactory primFactory
+  ) throws ClassNotFoundException, MalformedURLException {
+    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    var coreDir = computeBaseDir(libraryRoot);
+    cl.addURL(coreDir);
+    cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
+    return compiledAya.toResolveInfo(recurseLoader, context, cl, primFactory);
+  }
+
   @Override public @Nullable ResolveInfo doLoadCompiledCore(
     @NotNull Reporter reporter,
     @NotNull LibraryOwner owner, @NotNull ModulePath mod,
@@ -90,30 +113,28 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     if (corePath == null || sourcePath == null) return null;
     if (!Files.exists(corePath)) return null;
 
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
     try (var inputStream = FileUtil.ois(corePath)) {
       var compiledAya = (CompiledModule) inputStream.readObject();
       var parentCount = mod.size();
-      var baseDir = corePath;
-      for (int i = 0; i < parentCount; i++) baseDir = baseDir.getParent();
-      baseDir = computeBaseDir(baseDir);
-      cl.addURL(baseDir);
-      cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
-      return compiledAya.toResolveInfo(recurseLoader, context, cl);
+      var libraryRoot = corePath;
+      for (int i = 0; i < parentCount; i++) libraryRoot = libraryRoot.getParent();
+      return doLoadCompiledCore(compiledAya, reporter, mod, sourcePath, libraryRoot, recurseLoader, new PrimFactory());
     }
   }
 
-  @Override public void doSaveCompiledCore(
+  @Override public @NotNull ResolveInfo doSaveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<TyckDef> defs
-  ) throws IOException {
+    @NotNull ImmutableSeq<TyckDef> defs,
+    @NotNull ModuleLoader recurseLoader
+  ) throws IOException, ClassNotFoundException {
     var javaCode = new FileSerializer(resolveInfo.shapeFactory())
       .serialize(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)))
       .result();
-    var baseDir = computeBaseDir(file.owner().outDir()).toAbsolutePath();
+    var libraryRoot = file.owner().outDir();
+    var baseDir = computeBaseDir(libraryRoot).toAbsolutePath();
     var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,
       NameSerializer.NameType.ClassPath) + ".java";
     var javaSrcPath = baseDir.resolve(relativePath);
@@ -140,7 +161,14 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     task.call();
     if (Global.DELETE_JIT_JAVA_SOURCE) Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
-    CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
+
+    // save compiled core and load compiled ResolveInfo
+    var coreMod = CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
+    return doLoadCompiledCore(
+      coreMod, resolveInfo.reporter(),
+      resolveInfo.thisModule().modulePath(), file.underlyingFile(), libraryRoot,
+      recurseLoader, resolveInfo.primFactory()
+    );
   }
 
   private static @NotNull Path computeBaseDir(@NotNull Path outDir) {

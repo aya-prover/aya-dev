@@ -309,6 +309,11 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     if (ref instanceof DefVar<?, ?> defVar && defVar.module != null) {
       return linkIdOf(currentFileModule, new TyckAnyDef<>(defVar));
     }
+
+    if (ref instanceof CompiledVar(JitDef core)) {
+      return linkIdOf(currentFileModule, core);
+    }
+
     return Link.loc(ref.hashCode());
   }
 
@@ -334,7 +339,19 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return Doc.linkDef(Doc.plain(ref.name()), linkIdOf(null, ref));
   }
 
+  public static @NotNull Doc refVar(@NotNull AnyDefVar ref) {
+    return switch (ref) {
+      case CompiledVar compiledVar -> refVar(compiledVar);
+      case DefVar<?, ?> defVar -> refVar(defVar);
+    };
+  }
+
   public static @NotNull Doc refVar(DefVar<?, ?> ref) {
+    var style = chooseStyle(ref);
+    return style != null ? linkRef(ref, style) : varDoc(ref);
+  }
+
+  public static @NotNull Doc refVar(CompiledVar ref) {
     var style = chooseStyle(ref);
     return style != null ? linkRef(ref, style) : varDoc(ref);
   }
@@ -345,8 +362,20 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return linkRef(ref, style);
   }
 
+  public static @NotNull Doc defVar(@NotNull AnyDefVar ref) {
+    return switch (ref) {
+      case CompiledVar compiledVar -> defVar(compiledVar);
+      case DefVar<?, ?> defVar -> defVar(defVar);
+    };
+  }
+
   public static @NotNull Doc defVar(DefVar<?, ?> ref) {
     var style = chooseStyle(ref.concrete);
+    return style != null ? linkDef(ref, style) : varDoc(ref);
+  }
+
+  public static @NotNull Doc defVar(CompiledVar ref) {
+    var style = chooseStyle(ref.core());
     return style != null ? linkDef(ref, style) : varDoc(ref);
   }
 

@@ -92,10 +92,10 @@ public record Synthesizer(
       case FreeTerm(var var) -> localCtx().get(var);
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
-      case ProjTerm(var of, int index) -> {
+      case ProjTerm(var of, var fst) -> {
         var ofTy = trySynth(of);
         if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
-        yield index == 0 ? lhs : rhs.apply(ProjTerm.make(of, 0));
+        yield fst ? lhs : rhs.apply(ProjTerm.fst(of));
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();

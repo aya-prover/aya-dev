@@ -107,7 +107,7 @@ public class CompileTest {
     var moduleLoader = new DumbModuleLoader(new EmptyContext(REPORTER, FILE));
     var callback = new ModuleCallback<RuntimeException>() {
       ImmutableSeq<TyckDef> ok;
-      @Override public void onModuleTycked(@NotNull ResolveInfo x, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
+      @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
     };
     var info = moduleLoader.tyckModule(moduleLoader.resolve(new AyaParserImpl(REPORTER).program(
       new SourceFile("<baka>", FILE, code))), callback);

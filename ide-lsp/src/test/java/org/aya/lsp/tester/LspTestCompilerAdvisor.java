@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,15 @@ public class LspTestCompilerAdvisor extends InMemoryCompilerAdvisor {
     newlyCompiled.clear();
   }
 
-  @Override
-  public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+  @Override public void
+  notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
     this.lastJob = affected;
   }
 
-  @Override
-  public void doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
-    super.doSaveCompiledCore(file, resolveInfo, defs);
+  @Override public @NotNull ResolveInfo
+  doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs, @NotNull ModuleLoader recurseLoader) {
+    var info = super.doSaveCompiledCore(file, resolveInfo, defs, recurseLoader);
     newlyCompiled.append(resolveInfo);
+    return info;
   }
 }

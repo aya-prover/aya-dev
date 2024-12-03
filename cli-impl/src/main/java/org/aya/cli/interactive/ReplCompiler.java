@@ -31,6 +31,7 @@ import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
@@ -75,7 +76,9 @@ public class ReplCompiler {
     reporter = CountingReporter.delegate(delegateReporter);
     this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
     this.primFactory = new PrimFactory() {
-      @Override public boolean suppressRedefinition() { return true; }
+      @Override public boolean isForbiddenRedefinition(PrimDef.@NotNull ID id, boolean isJit) {
+        return false;
+      }
     };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(reporter);

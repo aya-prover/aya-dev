@@ -44,7 +44,7 @@ public class CompilerUtil {
     }
   }
 
-  public static void saveCompiledCore(
+  public static @NotNull CompiledModule saveCompiledCore(
     @NotNull Path coreFile, @NotNull ImmutableSeq<TyckDef> defs,
     @NotNull ResolveInfo resolveInfo
   ) throws IOException {
@@ -52,6 +52,8 @@ public class CompilerUtil {
     try (var outputStream = coreWriter(coreFile)) {
       outputStream.writeObject(compiledAya);
     }
+
+    return compiledAya;
   }
 
   private static @NotNull ObjectOutputStream coreWriter(@NotNull Path coreFile) throws IOException {

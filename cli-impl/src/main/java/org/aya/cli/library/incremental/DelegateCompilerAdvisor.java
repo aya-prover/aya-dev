@@ -56,9 +56,9 @@ public class DelegateCompilerAdvisor implements CompilerAdvisor {
     return delegate.doLoadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
   }
 
-  @Override public void
-  doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) throws IOException {
-    delegate.doSaveCompiledCore(file, resolveInfo, defs);
+  @Override public @NotNull ResolveInfo
+  doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs, @NotNull ModuleLoader recurseLoader) throws IOException, ClassNotFoundException {
+    return delegate.doSaveCompiledCore(file, resolveInfo, defs, recurseLoader);
   }
   @Override public void close() throws Exception {
     delegate.close();
