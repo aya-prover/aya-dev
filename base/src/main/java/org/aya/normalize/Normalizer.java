@@ -8,9 +8,7 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.control.Result;
 import org.aya.generic.Modifier;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.*;
@@ -25,10 +23,8 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.unify.Unifier;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import static org.aya.generic.State.Stuck;
@@ -107,12 +103,8 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
 
         var i = new LocalVar("i");
-        var cod = apply(A.apply(i));
-        if (cod instanceof DepTypeTerm dep) {
-          yield switch (dep.kind()) {
-            case Pi -> coe.coePi(i, dep);
-            case Sigma -> coe.coeSigma(i, dep);
-          };
+        if (apply(A.apply(i)) instanceof DepTypeTerm dep) {
+          yield dep.coe(i, coe);
         }
 
         yield defaultValue;
