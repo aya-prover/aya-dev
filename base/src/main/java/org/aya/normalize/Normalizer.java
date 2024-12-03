@@ -8,7 +8,9 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.control.Result;
 import org.aya.generic.Modifier;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.*;
@@ -20,10 +22,13 @@ import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.unify.Unifier;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import static org.aya.generic.State.Stuck;
@@ -92,10 +97,24 @@ public final class Normalizer implements UnaryOperator<Term> {
       case MetaPatTerm meta -> meta.inline(this);
       case MetaCall meta -> state.computeSolution(meta, this);
       case MetaLitTerm meta -> meta.inline(this);
-      case CoeTerm(var type, var r, var s) -> {
+      case CoeTerm coe -> {
+        var r = coe.r();
+        var s = coe.s();
+        var A = coe.type();
+
         if (r instanceof DimTerm || r instanceof FreeTerm) {
           if (r.equals(s)) yield new LamTerm(new LocalTerm(0));
         }
+
+        var i = new LocalVar("i");
+        var cod = apply(A.apply(i));
+        if (cod instanceof DepTypeTerm dep) {
+          yield switch (dep.kind()) {
+            case Pi -> KanPDF.coePi(i, dep, coe);
+            case Sigma -> throw new UnsupportedOperationException("TODO");
+          };
+        }
+
         yield defaultValue;
       }
       default -> defaultValue;
