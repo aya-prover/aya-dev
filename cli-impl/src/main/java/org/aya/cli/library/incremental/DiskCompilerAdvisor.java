@@ -120,7 +120,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     }
   }
 
-  @Override public @Nullable ResolveInfo doSaveCompiledCore(
+  @Override public @NotNull ResolveInfo doSaveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs,

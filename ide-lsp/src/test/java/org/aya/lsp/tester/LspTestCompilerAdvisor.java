@@ -34,13 +34,13 @@ public class LspTestCompilerAdvisor extends InMemoryCompilerAdvisor {
     newlyCompiled.clear();
   }
 
-  @Override
-  public void notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
+  @Override public void
+  notifyIncrementalJob(@NotNull ImmutableSeq<LibrarySource> modified, @NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
     this.lastJob = affected;
   }
 
-  @Override
-  public @Nullable ResolveInfo doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs, @NotNull ModuleLoader recurseLoader) {
+  @Override public @NotNull ResolveInfo
+  doSaveCompiledCore(@NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs, @NotNull ModuleLoader recurseLoader) {
     var info = super.doSaveCompiledCore(file, resolveInfo, defs, recurseLoader);
     newlyCompiled.append(resolveInfo);
     return info;

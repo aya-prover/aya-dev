@@ -71,11 +71,12 @@ public class InMemoryCompilerAdvisor implements CompilerAdvisor {
     return compiledCore.getOrNull(mod);
   }
 
-  @Override public @Nullable ResolveInfo doSaveCompiledCore(
+  @Override public @NotNull ResolveInfo doSaveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs,
-    @NotNull ModuleLoader recurseLoader) {
+    @NotNull ModuleLoader recurseLoader
+  ) {
     // TODO: what if module name clashes?
     compiledCore.put(file.moduleName(), resolveInfo);
     return resolveInfo;

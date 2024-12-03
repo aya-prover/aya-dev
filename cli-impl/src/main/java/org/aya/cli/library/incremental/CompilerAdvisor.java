@@ -76,7 +76,7 @@ public interface CompilerAdvisor extends AutoCloseable {
    * @param resolveInfo the resolve info of the module
    * @param defs        the well-typed definitions
    */
-  @Nullable ResolveInfo doSaveCompiledCore(
+  @NotNull ResolveInfo doSaveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs,
@@ -100,22 +100,24 @@ public interface CompilerAdvisor extends AutoCloseable {
   }
 
   /**
+   * @return possibly the compiled version of the {@link ResolveInfo}
    * @see #doSaveCompiledCore
    */
   @ApiStatus.NonExtendable
-  default @Nullable ResolveInfo saveCompiledCore(
+  default @NotNull ResolveInfo saveCompiledCore(
     @NotNull LibrarySource file,
     @NotNull ResolveInfo resolveInfo,
     @NotNull ImmutableSeq<TyckDef> defs,
     @NotNull ModuleLoader recurseLoader
   ) {
+    assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
       var info = doSaveCompiledCore(file, resolveInfo, defs, recurseLoader);
       updateLastModified(file);
       return info;
     } catch (IOException | ClassNotFoundException e) {
       e.printStackTrace();
-      return null;
+      return resolveInfo;
     }
   }
 

@@ -89,8 +89,7 @@ record LibraryModuleLoader(
     return tyckedInfo;
   }
 
-  @Override
-  public boolean existsFileLevelModule(@NotNull ModulePath path) {
+  @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {
     return owner.findModule(path) != null;
   }
 
@@ -102,10 +101,8 @@ record LibraryModuleLoader(
   }
 
   private void saveCompiledCore(
-    @NotNull LibrarySource file,
-    @NotNull ResolveInfo resolveInfo,
-    @NotNull ImmutableSeq<TyckDef> defs,
-    @NotNull ModuleLoader recurseLoader
+    @NotNull LibrarySource file, @NotNull ResolveInfo resolveInfo,
+    @NotNull ImmutableSeq<TyckDef> defs, @NotNull ModuleLoader recurseLoader
   ) {
     var info = advisor.saveCompiledCore(file, resolveInfo, defs, recurseLoader);
     file.resolveInfo().set(info);
