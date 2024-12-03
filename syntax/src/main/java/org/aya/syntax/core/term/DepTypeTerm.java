@@ -13,6 +13,7 @@ import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
+import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.ForLSP;
 import org.aya.util.error.Panic;
@@ -23,13 +24,90 @@ import java.util.function.UnaryOperator;
 /**
  * @author re-xyr, kiva, ice1000
  */
-public record DepTypeTerm(@NotNull DTKind kind, @NotNull Term param, @NotNull Closure body) implements StableWHNF, Formation {
+public record DepTypeTerm(@NotNull DTKind kind, @NotNull Term param,
+                          @NotNull Closure body) implements StableWHNF, Formation {
   public @NotNull DepTypeTerm update(@NotNull Term param, @NotNull Closure body) {
     return param == this.param && body == this.body ? this : new DepTypeTerm(kind, param, body);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, param), body.descent(f));
+  }
+
+  /**
+   * i : I |- a : A i
+   * ------------------
+   * i : I |- B i a
+   * <p>
+   * It's not the case that [a] contains [i], [i] only appears in [A] and [B a]
+   */
+  private Closure.@NotNull Locns abstractBia(@NotNull LocalVar i, Closure a) {
+    return body.apply(a.apply(i)).bind(i);
+  }
+
+  /**
+   * Perform {@code coe} on a dependent type.
+   *
+   * @param i the parameter of {@link CoeTerm#type()}
+   */
+  public @NotNull Term coe(@NotNull LocalVar i, CoeTerm coe) {
+    // We may suppose: pi/sigma = `(a : A i), B i a`,
+    // this is i : I |- A i
+    var A = param.bind(i);
+
+    return new LamTerm(switch (kind) {
+      case Pi -> new Closure.Jit(f -> {
+        // We are trying to construct a term for:
+        //   coe^{r -> s}_{\i. pi} : pi[r/i] -> pi[s/i]
+        // We may intro (f : pi[r/i])
+        //   coe^{r -> s}_{\i. pi} f : pi[s/i]
+
+        // In order to construct a term of type `pi[s/i]`, we may use LamTerm
+        //   \(x : A s). ??
+        return new LamTerm(new Closure.Jit(x -> {
+          // We still need to construct the body of lambda of type `B s x`.
+          // Recall that we have `f : (a : A r) -> B r a`, we can obtain `A r` by coe `x : A s` backward.
+          // coe^{s -> r}_A x : A r
+          var fArg = coe.inverse(A).app(x);
+          // f fArg : B r fArg
+          var fApp = AppTerm.make(f, fArg);
+
+          // We can also obtain `B s x` by coe `f fArg : B r fArg` forward, but we need to choose a path that agree with both side:
+          //   We need `a'` that `a'[s/j] = x` and `a'[r/j] = fArg`,
+          //   if you look `fArg` closer you may find that if we replace `r` with `j`,
+          //   then `fArg = x` when `j` is substituted with `s`
+          // a' : coe^{s -> j}_A x
+          var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.s(), j).app(x));
+          // coe^{r -> s}_{\j. B j a'} : B r a'[r/j] -> B s x
+          var recoe = coe.recoe(j -> abstractBia(i, aPrime).apply(j));
+          return recoe.app(fApp);
+        }));
+      });
+      case Sigma -> new Closure.Jit(p -> {
+        // We are trying to construct a term for:
+        //   coe^{r -> s}_{\i. sigma}: sigma[r/i] -> sigma[s/i]
+        // We may intro (p : sigma[r/i])
+        //   coe^{r -> s}_{\i. sigma} p : sigma[s/i]
+        var fst = ProjTerm.fst(p);
+        var snd = ProjTerm.snd(p);
+
+        // In order to construct a term of type `(a : A s) * B s a`, we may use TupTerm
+        //   (??, ??)
+        // But first, we need a term of type `A s`, one way is coe `p.0 : A r` forward
+        //   coe^{r -> s}_A p.0 : A s
+        var a = coe.recoe(A).app(fst);
+        // and now:
+        //   (a, ??)
+        // We need to find a term of type `B s a`, similarly, we may coe `p.1 : B r p.0` forward, but we need to choose
+        // a path that agree both side:
+        //   We need `a'` such that `a'[r/i] = p.0` and `a'[s/i] = a`
+        // a' = coe^{r -> j}_A p.0 : A j
+        var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.r(), j).app(fst));
+        // coe^{r -> s}_{\j. B j a'} p.1 : B s a
+        var b = coe.recoe(j -> abstractBia(i, aPrime).apply(j)).app(snd);
+        return new TupTerm(a, b);
+      });
+    });
   }
 
   public record Unpi(

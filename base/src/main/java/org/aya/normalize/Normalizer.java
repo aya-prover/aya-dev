@@ -20,6 +20,7 @@ import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,10 @@ public final class Normalizer implements UnaryOperator<Term> {
       case StableWHNF _, FreeTerm _ -> postTerm;
       case BetaRedex app -> {
         var result = app.make();
-        yield result == app ? defaultValue : apply(result);
+        // It might be the case where term -> postTerm reduces,
+        // but it reduces again to a neutral, in this case we still want it to keep the reduction.
+        // So return default value only when term -> postTerm -> result is entirely constant.
+        yield result == term ? defaultValue : apply(result);
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
         case JitFn instance -> {
@@ -92,10 +96,20 @@ public final class Normalizer implements UnaryOperator<Term> {
       case MetaPatTerm meta -> meta.inline(this);
       case MetaCall meta -> state.computeSolution(meta, this);
       case MetaLitTerm meta -> meta.inline(this);
-      case CoeTerm(var type, var r, var s) -> {
+      case CoeTerm coe -> {
+        var r = coe.r();
+        var s = coe.s();
+        var A = coe.type();
+
         if (r instanceof DimTerm || r instanceof FreeTerm) {
           if (r.equals(s)) yield new LamTerm(new LocalTerm(0));
         }
+
+        var i = new LocalVar("i");
+        if (apply(A.apply(i)) instanceof DepTypeTerm dep) {
+          yield dep.coe(i, coe);
+        }
+
         yield defaultValue;
       }
       default -> defaultValue;

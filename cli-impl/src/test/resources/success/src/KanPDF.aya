@@ -1,0 +1,30 @@
+open import relation::binary::path
+
+def coePi (r s : I)
+  (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+  (f : Fn (a : A r) -> B r a)
+  : Fn (a : A s) -> B s a =>
+  fn a =>
+    coe r s (fn i => B i (coe s i A a))
+      (f (coe s r A a))
+
+def coePiEq (r s : I)
+  (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+  (f : Fn (a : A r) -> B r a)
+  : coePi r s A B f = coe r s (fn i => Fn (a : A i) -> B i a) f =>
+  refl
+
+def coeSigma (r s : I)
+  (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+  (p : Sig (a : A r) ** B r a)
+  : Sig (a : A s) ** B s a =>
+  let
+  | fst : A s := coe r s A p.1
+  | snd : B s fst := coe r s (fn i => B i (coe r i A p.1)) p.2
+  in (fst, snd)
+
+def coeSigmaEq (r s : I)
+  (A : I -> Type) (B : Fn (i : I) -> A i -> Type)
+  (p : Sig (a : A r) ** B r a)
+  : coeSigma r s A B p = coe r s (fn i => Sig (a : A i) ** (B i a)) p =>
+  refl

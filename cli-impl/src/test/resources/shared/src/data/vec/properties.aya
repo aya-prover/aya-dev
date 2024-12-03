@@ -1,8 +1,8 @@
 open import prelude hiding (++)
 open import data::list::base using (List, :<, length)
-open import data::vec::base using (Vec, :>, [], ++)
+open import data::vec::base using (Vec, :>, [], ++, vmap)
 
-variable A : Type
+variable A B : Type
 variable n m o : Nat
 
 def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
@@ -11,6 +11,17 @@ def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
     ((xs ++ ys) ++ zs) elim xs
 | [] => refl
 | x :> xs' => pmapd _ (\i => x :>) (++-assoc xs' ys zs)
+
+def vmap-distrib-++ (f : A -> B) (xs : Vec n A) (ys : Vec m A) : vmap f (xs ++ ys) = vmap f xs ++ vmap f ys elim xs
+| [] => refl
+// n m : Nat
+// f : A -> B
+// x : A
+// xs : Vec (suc n) A
+// ys : Vec m A
+// vmap f ((x :> xs) ++ ys) = vmap f (x :> (xs ++ ys)) = f x :> (vmap f (xs ++ ys))
+// vmap f (x :> xs) ++ vmap f ys = (f x :> vmap f xs) ++ vmap f ys = f x :> (vmap f xs ++ vmap f ys)
+| x :> xs => pmap (f x :>) (vmap-distrib-++ f xs ys)
 
 def toList (Vec n A) : List A
 | [] => [ ]
