@@ -4,10 +4,7 @@ package org.aya.normalize;
 
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.Closure;
-import org.aya.syntax.core.term.AppTerm;
-import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.syntax.core.term.LamTerm;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -15,16 +12,48 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public interface KanPDF {
+  static @NotNull Term coeSigma(@NotNull LocalVar i, @NotNull DepTypeTerm sigma, @NotNull CoeTerm coe) {
+    assert sigma.kind() == DTKind.Sigma;
+
+    // We are trying to construct a term for:
+    //   coe^{r -> s}_{\i. sigma}: sigma[r/i] -> sigma[s/i]
+    // We may intro (p : sigma[r/i])
+    //   coe^{r -> s}_{\i. sigma} p : sigma[s/i]
+    return new LamTerm(new Closure.Jit(p -> {
+      var fst = ProjTerm.make(p, 0);
+      var snd = ProjTerm.make(p, 1);
+
+      // We may suppose:
+      //  sigma = (a : A i) * B i a
+      // i : I |- A i
+      var A = sigma.param().bind(i);
+      //  i : I |- a : A i
+      // ------------------
+      //   i : I |- B i a
+      // It is impossible that [a] contains [i], [i] only appears in [A] and [B a]
+      Function<Closure, Closure> B = a -> sigma.body().apply(a.apply(i)).bind(i);
+      // TODO: the code until here is the same as [coePi], maybe unify
+
+      // In order to construct a term of type `(a : A s) * B s a`, we may use TupTerm
+      //   (??, ??)
+      // But first, we need a term of type `A s`, one way is coe `p.0` forward
+      //   coe^{r -> s}_A p.0 : A s
+      var a = AppTerm.make(coe.recoe(A), fst);
+      // and now:
+      //   (a, ??)
+      // We need to find a term of type `B s a`, similarly, we may coe `B r p.0` forward, but we need to choose
+      // a path that agree both side:
+      //   We need `a'` such that `a'[r/i] = p.0` and `a'[s/i] = a`
+      // a' = coe^{r -> j}_A p.0 : A j
+      var aPrime = new Closure.Jit(j -> AppTerm.make(new CoeTerm(A, coe.r(), j), fst));
+      // coe^{r -> s}_{\j. B j a'} p.1 : B s a
+      var b = AppTerm.make(coe.recoe(new Closure.Jit(j -> B.apply(aPrime).apply(j))), snd);
+      return new TupTerm(a, b);
+    }));
+  }
+
   /**
    * Perform {@code coe} on {@code Pi}
-   * <pre>
-   *   pi = (a : A i) -> B a i
-   *   f : pi[r/i]
-   *   coe^{r -> s}_{\i. pi} f : pi[s/i]
-   *   = \(x : A s). ??
-   *
-   *
-   * </pre>
    *
    * @param i   the parameter of {@link CoeTerm#type()}
    * @param pi  the codomain of {@link CoeTerm#type()}, instantiated with {@param i}
