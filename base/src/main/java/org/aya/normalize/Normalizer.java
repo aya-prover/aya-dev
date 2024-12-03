@@ -110,13 +110,13 @@ public final class Normalizer implements UnaryOperator<Term> {
         var cod = apply(A.apply(i));
         if (cod instanceof DepTypeTerm dep) {
           yield switch (dep.kind()) {
-            case Pi -> KanPDF.coePi(i, dep, coe);
-            case Sigma -> throw new UnsupportedOperationException("TODO");
+            case Pi -> coe.coePi(i, dep);
+            case Sigma -> coe.coeSigma(i, dep);
           };
         }
 
         yield defaultValue;
-      } 
+      }
       default -> defaultValue;
     };
   }
