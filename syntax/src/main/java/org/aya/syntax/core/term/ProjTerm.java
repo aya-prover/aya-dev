@@ -7,6 +7,9 @@ import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
 public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
+  public static final int INDEX_FST = 1;
+  public static final int INDEX_SND = 2;
+
   public @NotNull ProjTerm update(@NotNull Term of, boolean fst) {
     return this.of == of && this.fst == fst ? this : new ProjTerm(of, fst);
   }
@@ -24,5 +27,9 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
   @Override public @NotNull Term make() {
     if (of instanceof TupTerm(var lhs, var rhs)) return fst ? lhs : rhs;
     return this;
+  }
+
+  public int index() {
+    return fst ? INDEX_FST : INDEX_SND;
   }
 }
