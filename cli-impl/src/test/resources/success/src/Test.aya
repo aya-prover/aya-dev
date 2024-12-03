@@ -43,5 +43,11 @@ module PullRequest1156 {
   | (a, b) => a
 
   def id {A : Type} (x : A) : A => x
-  def idTest (t : Sig Nat ** Nat) : t = id t => refl
+  def idTestR (t : Sig Nat ** Nat) : t = id t => refl
+  def idTestL (t : Sig Nat ** Nat) : id t = t => refl
+}
+
+module PullRequest1171 {
+  def etaTestR (t : Sig Nat ** Nat) : t = (t.1 , t.2) => refl
+  def etaTestL (t : Sig Nat ** Nat) : (t.1 , t.2) = t => refl
 }
