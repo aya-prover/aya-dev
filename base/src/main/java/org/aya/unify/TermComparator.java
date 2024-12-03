@@ -222,10 +222,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       };
       // Sigma types
       case DepTypeTerm(_, var lTy, var rTy) -> {
-        var lProj = ProjTerm.make(lhs, true);
-        var rProj = ProjTerm.make(rhs, true);
+        var lProj = ProjTerm.fst(lhs);
+        var rProj = ProjTerm.fst(rhs);
         if (!compare(lProj, rProj, lTy)) yield false;
-        yield compare(ProjTerm.make(lhs, false), ProjTerm.make(rhs, false), rTy.apply(lProj));
+        yield compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };

@@ -18,6 +18,14 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
     return update(f.apply(0, of), fst);
   }
 
+  public static @NotNull Term fst(@NotNull Term of) {
+    return make(of, true);
+  }
+
+  public static @NotNull Term snd(@NotNull Term of) {
+    return make(of, false);
+  }
+
   /** Unwrap {@code of.index} if possible */
   public static @NotNull Term make(@NotNull Term of, boolean fst) {
     return new ProjTerm(of, fst).make();

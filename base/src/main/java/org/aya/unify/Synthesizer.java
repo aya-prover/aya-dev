@@ -95,7 +95,7 @@ public record Synthesizer(
       case ProjTerm(var of, var fst) -> {
         var ofTy = trySynth(of);
         if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
-        yield fst ? lhs : rhs.apply(ProjTerm.make(of, true));
+        yield fst ? lhs : rhs.apply(ProjTerm.fst(of));
       }
       case IntegerTerm lit -> lit.type();
       case ListTerm list -> list.type();
