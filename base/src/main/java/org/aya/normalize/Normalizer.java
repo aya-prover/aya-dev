@@ -54,7 +54,10 @@ public final class Normalizer implements UnaryOperator<Term> {
       case StableWHNF _, FreeTerm _ -> postTerm;
       case BetaRedex app -> {
         var result = app.make();
-        yield result == app ? defaultValue : apply(result);
+        // It might be the case where term -> postTerm reduces,
+        // but it reduces again to a neutral, in this case we still want it to keep the reduction.
+        // So return default value only when term -> postTerm -> result is entirely constant.
+        yield result == term ? defaultValue : apply(result);
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
         case JitFn instance -> {
