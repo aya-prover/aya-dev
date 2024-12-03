@@ -207,9 +207,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(r),
         doSerialize(s)
       );
-      case ProjTerm(var of, var ix) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaRef(ProjTerm.class),
+      case ProjTerm(var of, var fst) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaRef(ProjTerm.class),
         doSerialize(of),
-        Integer.toString(ix)
+        Boolean.toString(fst)
       );
       case PAppTerm(var fun, var arg, var a, var b) -> makeAppNew(ExprializeUtils.getJavaRef(PAppTerm.class),
         fun, arg, a, b

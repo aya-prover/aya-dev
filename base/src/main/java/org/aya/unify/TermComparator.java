@@ -222,10 +222,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       };
       // Sigma types
       case DepTypeTerm(_, var lTy, var rTy) -> {
-        var lProj = ProjTerm.make(lhs, 0);
-        var rProj = ProjTerm.make(rhs, 0);
+        var lProj = ProjTerm.fst(lhs);
+        var rProj = ProjTerm.fst(rhs);
         if (!compare(lProj, rProj, lTy)) yield false;
-        yield compare(ProjTerm.make(lhs, 1), ProjTerm.make(rhs, 1), rTy.apply(lProj));
+        yield compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -296,8 +296,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(compareUntyped(lof, rof) instanceof DepTypeTerm(var k, var lhsT, var rhsTClos) && k == DTKind.Sigma))
           yield null;
         if (ldx != rdx) yield null;
-        if (ldx == 0) yield lhsT;
-        yield rhsTClos.apply(new ProjTerm(lof, 0));
+        if (ldx) yield lhsT;
+        yield rhsTClos.apply(new ProjTerm(lof, true));
       }
       case FreeTerm(var lvar) -> rhs instanceof FreeTerm(var rvar) && lvar == rvar ? localCtx().get(lvar) : null;
       case DimTerm l -> rhs instanceof DimTerm r && l == r ? l : null;

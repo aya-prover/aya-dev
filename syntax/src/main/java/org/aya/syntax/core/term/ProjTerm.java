@@ -6,26 +6,38 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @param index can only be 0 or 1
- */
-public record ProjTerm(@NotNull Term of, int index) implements BetaRedex {
-  public @NotNull ProjTerm update(@NotNull Term of, int index) {
-    return this.of == of && this.index == index ? this : new ProjTerm(of, index);
+public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
+  public static final int INDEX_FST = 1;
+  public static final int INDEX_SND = 2;
+
+  public @NotNull ProjTerm update(@NotNull Term of, boolean fst) {
+    return this.of == of && this.fst == fst ? this : new ProjTerm(of, fst);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, of), index);
+    return update(f.apply(0, of), fst);
+  }
+
+  public static @NotNull Term fst(@NotNull Term of) {
+    return make(of, true);
+  }
+
+  public static @NotNull Term snd(@NotNull Term of) {
+    return make(of, false);
   }
 
   /** Unwrap {@code of.index} if possible */
-  public static @NotNull Term make(@NotNull Term of, int index) {
-    return new ProjTerm(of, index).make();
+  public static @NotNull Term make(@NotNull Term of, boolean fst) {
+    return new ProjTerm(of, fst).make();
   }
 
   /** Unwrap the {@param material} if possible. */
   @Override public @NotNull Term make() {
-    if (of instanceof TupTerm(var lhs, var rhs)) return index == 0 ? lhs : rhs;
+    if (of instanceof TupTerm(var lhs, var rhs)) return fst ? lhs : rhs;
     return this;
+  }
+
+  public int index() {
+    return fst ? INDEX_FST : INDEX_SND;
   }
 }

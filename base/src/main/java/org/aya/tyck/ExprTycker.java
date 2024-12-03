@@ -254,7 +254,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
-      case Expr.Sugar s -> throw new IllegalArgumentException(s.getClass() + " is desugared, should be unreachable");
+      case Expr.Sugar s -> throw new Panic(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
         int lift;
         if (f.data() instanceof Expr.Lift(var inner, var level)) {
@@ -268,6 +268,30 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         } catch (NotPi e) {
           yield fail(expr.data(), BadTypeError.appOnNonPi(state, expr, e.actual));
         }
+      }
+      // TODO: what is resolvedVar used for?
+      case Expr.Proj(var p, var ix, var resolvedVar, var _) -> {
+        var result = synthesize(p);
+        var wellP = result.wellTyped();
+
+        yield ix.fold(iix -> {
+          if (!(whnf(result.type()) instanceof DepTypeTerm(DTKind kind, Term param, Closure body))
+            || kind != DTKind.Sigma) {
+            // report wrong type
+            throw new UnsupportedOperationException("TODO");
+          }
+
+          var ty = switch (iix) {
+            case ProjTerm.INDEX_FST -> param;
+            case ProjTerm.INDEX_SND -> body.apply(ProjTerm.fst(wellP));
+            default -> throw new UnsupportedOperationException("TODO");
+          };
+
+          return new Jdg.Default(ProjTerm.make(wellP, iix == ProjTerm.INDEX_FST), ty);
+        }, member -> {
+          // TODO: MemberCall
+          throw new UnsupportedOperationException("TODO");
+        });
       }
       case Expr.Hole hole -> throw new UnsupportedOperationException("TODO");
       case Expr.Lambda lam -> inherit(expr, generatePi(lam, expr.sourcePos()));
