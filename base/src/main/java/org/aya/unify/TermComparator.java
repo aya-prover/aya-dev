@@ -296,8 +296,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(compareUntyped(lof, rof) instanceof DepTypeTerm(var k, var lhsT, var rhsTClos) && k == DTKind.Sigma))
           yield null;
         if (ldx != rdx) yield null;
-        if (ldx == 0) yield lhsT;
-        yield rhsTClos.apply(new ProjTerm(lof, 0));
+        if (ldx) yield lhsT;
+        yield rhsTClos.apply(new ProjTerm(lof, true));
       }
       case FreeTerm(var lvar) -> rhs instanceof FreeTerm(var rvar) && lvar == rvar ? localCtx().get(lvar) : null;
       case DimTerm l -> rhs instanceof DimTerm r && l == r ? l : null;

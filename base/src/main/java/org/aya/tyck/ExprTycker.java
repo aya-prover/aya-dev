@@ -281,12 +281,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
           var ty = switch (iix) {
             case 1 -> param;
-            case 2 -> body.apply(ProjTerm.make(wellP.wellTyped(), 1));
+            case 2 -> body.apply(ProjTerm.make(wellP.wellTyped(), true));
             default -> throw new UnsupportedOperationException("TODO");
           };
 
           type.set(ty);
-          return new Jdg.Default(ProjTerm.make(wellP.wellTyped(), iix), ty);
+          return new Jdg.Default(ProjTerm.make(wellP.wellTyped(), iix == 1), ty);
         }, member -> {
           // TODO: MemberCall
           throw new UnsupportedOperationException("TODO");
