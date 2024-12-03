@@ -47,17 +47,17 @@ public final class Normalizer implements UnaryOperator<Term> {
     // ConCall for point constructors are always in WHNF
     if (term instanceof ConCall con && !con.ref().hasEq()) return con;
     var postTerm = term.descent(this);
-    // descent may change the java type of term, i.e. beta reduce
-    var defaultValue = usePostTerm ? postTerm : term;
+    // descent may change the java type of term, i.e. beta reduce,
+    // and can also reduce the subterms. We intend to return the reduction
+    // result when it beta reduces, so keep `postTerm` both when in NF mode or
+    // the term is not a call term.
+    var defaultValue = usePostTerm || !(term instanceof Callable) ? postTerm : term;
 
     return switch (postTerm) {
       case StableWHNF _, FreeTerm _ -> postTerm;
       case BetaRedex app -> {
         var result = app.make();
-        // It might be the case where term -> postTerm reduces,
-        // but it reduces again to a neutral, in this case we still want it to keep the reduction.
-        // So return default value only when term -> postTerm -> result is entirely constant.
-        yield result == term ? defaultValue : apply(result);
+        yield result == app ? defaultValue : apply(result);
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
         case JitFn instance -> {
@@ -102,15 +102,17 @@ public final class Normalizer implements UnaryOperator<Term> {
         var A = coe.type();
 
         if (r instanceof DimTerm || r instanceof FreeTerm) {
-          if (r.equals(s)) yield new LamTerm(new LocalTerm(0));
+          if (r.equals(s)) yield LamTerm.ID;
         }
 
         var i = new LocalVar("i");
-        if (apply(A.apply(i)) instanceof DepTypeTerm dep) {
-          yield dep.coe(i, coe);
-        }
-
-        yield defaultValue;
+        yield switch (apply(A.apply(i))) {
+          case DepTypeTerm dep -> dep.coe(i, coe);
+          case SortTerm _ -> LamTerm.ID;
+          // TODO: when the data is not indexed, also return ID
+          case DataCall data when data.args().isEmpty() -> LamTerm.ID;
+          case null, default -> defaultValue;
+        };
       }
       default -> defaultValue;
     };
