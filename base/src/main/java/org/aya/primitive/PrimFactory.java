@@ -11,6 +11,7 @@ import org.aya.normalize.Normalizer;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.PrimDef;
+import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.core.term.repr.StringTerm;
@@ -33,7 +34,7 @@ import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
   private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
-  private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDef> defs = new EnumMap<>(ID.class);
+  private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDefLike> defs = new EnumMap<>(ID.class);
 
   public PrimFactory() {
     seeds = ImmutableMap.from(ImmutableSeq.of(
@@ -43,6 +44,11 @@ public class PrimFactory {
       pathType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
+  }
+
+  public void definePrim(PrimDefLike prim) {
+    assert suppressRedefinition() || !have(prim.id());
+    defs.put(prim.id(), prim);
   }
 
   @FunctionalInterface
@@ -96,7 +102,7 @@ public class PrimFactory {
   }
 
   final @NotNull PrimSeed stringType =
-    new PrimSeed(ID.STRING, this::primCall,
+    new PrimSeed(ID.STRING, (prim, _) -> prim,
       ref -> new PrimDef(ref, Type0, ID.STRING), ImmutableSeq.empty());
 
   final @NotNull PrimSeed stringConcat =
@@ -153,29 +159,26 @@ public class PrimFactory {
   }
   */
 
-  private @NotNull PrimCall primCall(@NotNull PrimCall prim, @NotNull TyckState tyckState) { return prim; }
-
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
     ((_, _) -> DimTyTerm.INSTANCE),
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
 
-  public @NotNull PrimDef factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
-    assert suppressRedefinition() || !have(name);
-    var rst = seeds.get(name).supply(ref);
-    defs.put(name, rst);
+  public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
+    var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref);
+    definePrim(rst);
     return rst;
   }
 
   public @NotNull PrimCall getCall(@NotNull ID id, @NotNull ImmutableSeq<Term> args) {
-    return new PrimCall(getOption(id).get().ref(), 0, args);
+    return new PrimCall(getOption(id).get(), 0, args);
   }
 
   public @NotNull PrimCall getCall(@NotNull ID id) {
-    return getCall(id, ImmutableSeq.empty());
+    return new PrimCall(getOption(id).get());
   }
 
-  public @NotNull Option<PrimDef> getOption(@NotNull ID name) {
+  public @NotNull Option<PrimDefLike> getOption(@NotNull ID name) {
     return Option.ofNullable(defs.get(name));
   }
 
@@ -185,10 +188,6 @@ public class PrimFactory {
 
   /** whether redefinition should be treated as error */
   @ForLSP public boolean suppressRedefinition() { return false; }
-
-  public @NotNull PrimDef getOrCreate(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
-    return getOption(name).getOrElse(() -> factory(name, ref));
-  }
 
   public @NotNull Option<ImmutableSeq<@NotNull ID>> checkDependency(@NotNull ID name) {
     return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));

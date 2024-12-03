@@ -167,14 +167,14 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
-    loadModule(context, shapeFactory, state.topLevelClass(context.modulePath()));
+    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()));
     deOp(state, resolveInfo);
     return resolveInfo;
   }
 
   private void loadModule(
-    @NotNull PhysicalModuleContext context, @NotNull ShapeFactory shapeFactory,
-    @NotNull Class<?> rootClass
+    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
+    @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
@@ -205,6 +205,7 @@ public record CompiledModule(
             shapeFactory.bonjour(fn, recognition);
           }
         }
+        case JitPrim prim -> primFactory.definePrim(prim);
         default -> { }
       }
     }

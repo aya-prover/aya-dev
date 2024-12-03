@@ -5,6 +5,7 @@ package org.aya.ide;
 import org.aya.primitive.PrimFactory;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.def.PrimDef;
+import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public class LspPrimFactory extends PrimFactory {
   @Override public boolean suppressRedefinition() { return true; }
 
-  @Override public @NotNull PrimDef factory(PrimDef.@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
+  @Override public @NotNull PrimDefLike factory(PrimDef.@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
     return getOption(name).getOrElse(() -> super.factory(name, ref));
   }
 }
