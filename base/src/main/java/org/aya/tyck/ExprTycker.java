@@ -269,6 +269,29 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           yield fail(expr.data(), BadTypeError.appOnNonPi(state, expr, e.actual));
         }
       }
+      // TODO: what is resolvedVar used for?
+      case Expr.Proj(var p, var ix, var resolvedVar, var type) -> {
+        var wellP = synthesize(p);
+
+        yield ix.fold(iix -> {
+          if (!(wellP.type() instanceof DepTypeTerm(DTKind kind, Term param, Closure body)) || kind != DTKind.Sigma) {
+            // report wrong type
+            throw new UnsupportedOperationException("TODO");
+          }
+
+          var ty = switch (iix) {
+            case 1 -> param;
+            case 2 -> body.apply(ProjTerm.make(wellP.wellTyped(), 1));
+            default -> throw new UnsupportedOperationException("TODO");
+          };
+
+          type.set(ty);
+          return new Jdg.Default(ProjTerm.make(wellP.wellTyped(), iix), ty);
+        }, member -> {
+          // TODO: MemberCall
+          throw new UnsupportedOperationException("TODO");
+        });
+      }
       case Expr.Hole hole -> throw new UnsupportedOperationException("TODO");
       case Expr.Lambda lam -> inherit(expr, generatePi(lam, expr.sourcePos()));
       case Expr.LitInt(var integer) -> {
