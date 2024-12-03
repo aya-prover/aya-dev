@@ -116,7 +116,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
 
         yield defaultValue;
-      }
+      } 
       default -> defaultValue;
     };
   }
