@@ -44,8 +44,8 @@ public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) i
     // We may intro (p : sigma[r/i])
     //   coe^{r -> s}_{\i. sigma} p : sigma[s/i]
     return new LamTerm(new Closure.Jit(p -> {
-      var fst = ProjTerm.make(p, 0);
-      var snd = ProjTerm.make(p, 1);
+      var fst = ProjTerm.fst(p);
+      var snd = ProjTerm.snd(p);
 
       // We may suppose:
       //  sigma = (a : A i) * B i a
@@ -54,7 +54,7 @@ public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) i
       //  i : I |- a : A i
       // ------------------
       //   i : I |- B i a
-      // It is impossible that [a] contains [i], [i] only appears in [A] and [B a]
+      // It's not the case that [a] contains [i], [i] only appears in [A] and [B a]
       Function<Closure, Closure> B = a -> sigma.body().apply(a.apply(i)).bind(i);
       // TODO: the code until here is the same as [coePi], maybe unify
 
@@ -99,7 +99,7 @@ public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) i
       //  i : I |- a : A i
       // ------------------
       //   i : I |- B i a
-      // It is impossible that [a] contains [i], [i] only appears in [A] and [B a]
+      // It's not the case that [a] contains [i], [i] only appears in [A] and [B a]
       Function<Closure, Closure> B = a -> pi.body().apply(a.apply(i)).bind(i);
 
       // In order to construct a term of type `pi[s/i]`, we may use LamTerm
