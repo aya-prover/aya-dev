@@ -26,10 +26,7 @@ public record SeqLocalCtx(
     return new SeqLocalCtx(ImmutableTreeSeq.from(type.view().map(mapper)), var,
       parent == null ? null : parent.map(mapper));
   }
-  @Override public @NotNull SeqView<LocalVar> extract() {
-    SeqView<LocalVar> parentView = parent == null ? SeqView.empty() : parent.extract();
-    return parentView.concat(var.view());
-  }
+  @Override public @NotNull SeqView<LocalVar> extractLocal() { return var.view(); }
   @Override public @NotNull LocalCtx clone() {
     if (parent == null) return this;
     return new SeqLocalCtx(type, var, parent.clone());

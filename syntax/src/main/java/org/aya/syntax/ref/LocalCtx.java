@@ -18,7 +18,13 @@ public sealed interface LocalCtx extends Scoped<LocalVar, Term, LocalCtx> permit
   int size();
   @Contract(value = "_ -> new", pure = true)
   @NotNull LocalCtx map(UnaryOperator<Term> mapper);
-  @NotNull SeqView<LocalVar> extract();
+
+  @NotNull SeqView<LocalVar> extractLocal();
+  default @NotNull SeqView<LocalVar> extract() {
+    SeqView<LocalVar> parentView = parent() == null ? SeqView.empty() : parent().extract();
+    return parentView.concat(extractLocal());
+  }
+
   @NotNull LocalCtx clone();
   @Override default @NotNull LocalCtx self() { return this; }
 

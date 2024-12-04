@@ -9,19 +9,24 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
+import org.aya.util.DynamicForest;
 import org.aya.util.Ordering;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +34,55 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public final class TyckState {
-  public final @NotNull MutableList<Eqn> eqns = MutableList.create();
-  public final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
+  private final @NotNull MutableList<Eqn> eqns = MutableList.create();
+  private final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
   public final @NotNull MutableMap<MetaVar, Term> solutions = MutableMap.create();
   public final @NotNull MutableStack<LocalVar> classThis = MutableStack.create();
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
+  private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
+
+  public static final DynamicForest.Handle I0 = DynamicForest.create();
+  public static final DynamicForest.Handle I1 = DynamicForest.create();
 
   public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
   }
+
+  private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
+    return switch (term) {
+      case FreeTerm(var v) -> create ? connections.getOrPut(v, DynamicForest::create) : connections.getOrNull(v);
+      case DimTerm dim -> switch (dim) {
+        case I0 -> I0;
+        case I1 -> I1;
+      };
+      default -> null;
+    };
+  }
+
+  public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, true);
+    var r = computeHandle(rhs, true);
+    if (l == null || r == null) return false;
+    return l.isConnected(r);
+  }
+
+  public void connect(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, true);
+    var r = computeHandle(rhs, true);
+    if (l == null || r == null) throw new Panic("Unsupported connection, need error report");
+    l.connect(r);
+  }
+
+  public void disconnect(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, false);
+    var r = computeHandle(rhs, false);
+    if (l != null && r != null) l.disconnect(r);
+  }
+
+  public void removeConnection(@NotNull LocalVar var) { connections.remove(var); }
+
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 

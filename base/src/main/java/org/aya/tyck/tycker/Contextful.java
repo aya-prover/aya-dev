@@ -3,16 +3,15 @@
 package org.aya.tyck.tycker;
 
 import org.aya.generic.Constants;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
-import org.aya.generic.term.DTKind;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,22 +41,6 @@ public interface Contextful {
   @ApiStatus.Internal
   @Contract(mutates = "this")
   @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx);
-
-  @Contract(mutates = "this")
-  default <R> R subscoped(@NotNull Supplier<R> action) {
-    var parentCtx = setLocalCtx(localCtx().derive());
-    var result = action.get();
-    setLocalCtx(parentCtx);
-    return result;
-  }
-
-  @Contract(mutates = "this")
-  default <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
-    var parentCtx = setLocalCtx(localCtx().derive1(var, type));
-    var result = action.get();
-    setLocalCtx(parentCtx);
-    return result;
-  }
 
   /**
    * Generate a fresh {@link MetaCall} with type {@link Param#type()}

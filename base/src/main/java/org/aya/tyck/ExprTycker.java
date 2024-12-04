@@ -443,13 +443,22 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
-  @Override @Contract(mutates = "this")
-  public <R> R subscoped(@NotNull Supplier<R> action) {
-    var parentCtx = setLocalCtx(localCtx().derive());
+  @Contract(mutates = "this") public <R> R subscoped(@NotNull Supplier<R> action) {
+    var derived = localCtx().derive();
+    var parentCtx = setLocalCtx(derived);
     var parentDef = setLocalLet(localLet.derive());
     var result = action.get();
     setLocalCtx(parentCtx);
     setLocalLet(parentDef);
+    derived.extractLocal().forEach(state::removeConnection);
+    return result;
+  }
+  @Contract(mutates = "this")
+  public  <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
+    var parentCtx = setLocalCtx(localCtx().derive1(var, type));
+    var result = action.get();
+    setLocalCtx(parentCtx);
+    state.removeConnection(var);
     return result;
   }
 

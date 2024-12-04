@@ -51,6 +51,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     var result = action.apply(var);
     setLocalCtx(parentCtx);
     nameGen.unbindName(var);
+    state.removeConnection(var);
     return result;
   }
 
