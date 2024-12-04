@@ -1,0 +1,3 @@
+open import relation::nullary::empty
+
+def neg (A : Type) : Type => A -> Empty

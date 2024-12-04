@@ -582,8 +582,8 @@ public sealed interface Expr extends AyaDocile {
     return buildNested(sourcePos, params.dropLast(1), params.getLast(), Pattern.Tuple::new);
   }
 
-  static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params, body, Lambda::new);
+  static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<LocalVar> params, @NotNull WithPos<Expr> body) {
+    return buildNested(sourcePos, params.map(x -> new Param(x.definition(), x, true)), body, Lambda::new);
   }
 
   static @NotNull WithPos<Expr> buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull WithPos<Expr> body) {

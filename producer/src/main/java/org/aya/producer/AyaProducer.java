@@ -586,8 +586,7 @@ public record AyaProducer(
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
       var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
-        .map(LocalVar::from)
-        .map(v -> new Expr.Param(v.definition(), v, true));
+        .map(LocalVar::from);
       return Expr.buildLam(pos, tele, result);
     }
     if (node.is(IDIOM_ATOM)) {

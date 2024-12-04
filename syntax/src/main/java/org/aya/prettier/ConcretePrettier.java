@@ -105,14 +105,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var pair = Nested.destructNested(WithPos.dummy(expr));
         var telescope = pair.component1();
         var body = pair.component2().data();
-
-        if (!options.map.get(AyaPrettierOptions.Key.ShowImplicitPats)) {
-          var exTele = telescope.filter(Expr.Param::explicit);
-          if (exTele.isEmpty()) yield term(outer, body);
-
-          telescope = exTele;
-        }
-
         var prelude = MutableList.of(LAMBDA);
         var docTele = telescope.map(this::lambdaParam);
 

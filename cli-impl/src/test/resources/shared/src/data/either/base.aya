@@ -1,0 +1,25 @@
+open import relation::binary::path using (= , refl)
+
+open inductive Either (A B : Type) | left A | right B
+
+variable A B : Type
+
+def Either-rec
+  (P : Type)
+  (lrec : A -> P)
+  (rrec : B -> P)
+  (e : Either A B)
+  : P => Either-ind e (fn _e => P) (fn a _p => lrec a) (fn b _p => rrec b)
+
+def Either-ind
+  (e : Either A B)
+  (P : Either A B -> Type)
+  (lrec : Fn (a : A) -> e = left a -> P (left a))
+  (rrec : Fn (b : B) -> e = right b -> P (right b))
+  : P e elim e
+| left a => lrec a refl
+| right b => rrec b refl
+
+def swap (Either A B) : Either B A
+| left a => right a
+| right b => left b
