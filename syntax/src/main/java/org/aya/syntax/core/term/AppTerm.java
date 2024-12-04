@@ -10,13 +10,15 @@ import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record AppTerm(@NotNull Term fun, @NotNull Term arg) implements BetaRedex {
-  public @NotNull Term update(@NotNull Term fun, @NotNull Term arg) {
-    return fun == this.fun && arg == this.arg ? this : new AppTerm(fun, arg).make();
+  public @NotNull Term update(@NotNull Term fun, @NotNull Term arg, UnaryOperator<Term> f) {
+    return fun == this.fun && arg == this.arg ? this : new AppTerm(fun, arg).make(f);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, fun), f.apply(0, arg));
+    return update(f.apply(0, fun), f.apply(0, arg), term -> f.apply(0, term));
   }
 
   public static @NotNull Term make(@NotNull Term f, @NotNull Term a) { return new AppTerm(f, a).make(); }
@@ -25,9 +27,9 @@ public record AppTerm(@NotNull Term fun, @NotNull Term arg) implements BetaRedex
     return f;
   }
 
-  @Override public @NotNull Term make() {
+  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
     return switch (fun) {
-      case LamTerm(var closure) -> closure.apply(arg);
+      case LamTerm(var closure) -> mapper.apply(closure.apply(arg));
       case MetaCall(var ref, var args) -> new MetaCall(ref, args.appended(arg));
       default -> this;
     };

@@ -18,9 +18,7 @@ public record EqTerm(Closure A, Term a, Term b) implements Formation, StableWHNF
     return new EqTerm(A, a, b);
   }
 
-  public @NotNull Term appA(@NotNull Term arg) {
-    return A.apply(arg);
-  }
+  public @NotNull Term appA(@NotNull Term arg) { return A.apply(arg); }
 
   public @NotNull Term makePApp(@NotNull Term fun, @NotNull Term arg) {
     return new PAppTerm(fun, arg, a, b).make();

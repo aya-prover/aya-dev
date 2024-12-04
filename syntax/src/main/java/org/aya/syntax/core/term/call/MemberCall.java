@@ -11,26 +11,21 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record MemberCall(
   @NotNull Term of,
   @Override @NotNull MemberDefLike ref,
   @Override int ulift,
   @Override @NotNull ImmutableSeq<@NotNull Term> args
 ) implements Callable.Tele, BetaRedex {
-  private Term update(Term clazz, ImmutableSeq<Term> newArgs) {
+  private Term update(Term clazz, ImmutableSeq<Term> newArgs, UnaryOperator<Term> f) {
     return clazz == of && newArgs.sameElements(args, true) ? this
-      : MemberCall.make(clazz, ref, ulift, newArgs);
+      : new MemberCall(clazz, ref, ulift, newArgs).make(f);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, of), Callable.descent(args, f));
-  }
-
-  public static @NotNull Term make(
-    @NotNull Term of, @NotNull MemberDefLike ref,
-    int ulift, @NotNull ImmutableSeq<@NotNull Term> args
-  ) {
-    return new MemberCall(of, ref, ulift, args).make();
+    return update(f.apply(0, of), Callable.descent(args, f), term -> f.apply(0, term));
   }
 
   public static @NotNull Term make(
@@ -56,19 +51,19 @@ public record MemberCall(
    *   <li>Otherwise, we just return the {@link MemberCall} itself</li>
    * </ul>
    */
-  @Override public @NotNull Term make() {
+  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
     return switch (of()) {
       case NewTerm neu -> {
         var impl = neu.inner().get(ref);
         assert impl != null;    // NewTerm is always fully applied
-        yield impl.apply(neu);
+        yield mapper.apply(impl.apply(neu));
       }
       case ClassCastTerm cast -> {
         var impl = cast.get(ref);
-        if (impl != null) yield impl.apply(cast);
+        if (impl != null) yield mapper.apply(impl.apply(cast));
         // no impl, try inner
         assert !(cast.subterm() instanceof ClassCastTerm) : "eliminated by ClassCastTerm#make";
-        yield update(cast.subterm(), args);
+        yield update(cast.subterm(), args, mapper);
       }
       default -> this;
     };
