@@ -11,6 +11,8 @@ import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * Indicating something is {@link TyckState}ful,
  * therefore we can perform weak-head normalizing and <b>Freeze Spell 「 Perfect Freeze 」</b>
@@ -37,5 +39,12 @@ public interface Stateful {
 
   @ForLSP default @NotNull Term fullNormalize(Term result) {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
+  }
+
+  default <R> R withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull Supplier<R> action) {
+    state().connect(lhs, rhs);
+    var result = action.get();
+    state().disconnect(lhs, rhs);
+    return result;
   }
 }
