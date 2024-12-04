@@ -16,6 +16,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
+import org.aya.util.DynamicForest;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -29,17 +30,39 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public final class TyckState {
-  public final @NotNull MutableList<Eqn> eqns = MutableList.create();
-  public final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
+  private final @NotNull MutableList<Eqn> eqns = MutableList.create();
+  private final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
   public final @NotNull MutableMap<MetaVar, Term> solutions = MutableMap.create();
   public final @NotNull MutableStack<LocalVar> classThis = MutableStack.create();
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
+  private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
 
   public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
   }
+
+  public boolean isConnected(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
+    var l = connections.getOrNull(lhs);
+    if (l == null) return false;
+    var r = connections.getOrNull(rhs);
+    if (r == null) return false;
+    return l.isConnected(r);
+  }
+
+  public void connect(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
+    var l = connections.getOrPut(lhs, DynamicForest::create);
+    var r = connections.getOrPut(rhs, DynamicForest::create);
+    l.connect(r);
+  }
+
+  public void disconnect(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
+    var l = connections.getOrPut(lhs, DynamicForest::create);
+    var r = connections.getOrPut(rhs, DynamicForest::create);
+    l.disconnect(r);
+  }
+
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
