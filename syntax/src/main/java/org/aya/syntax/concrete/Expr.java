@@ -142,13 +142,6 @@ public sealed interface Expr extends AyaDocile {
     @NotNull LocalVar ref,
     @Override @NotNull WithPos<Expr> body
   ) implements Expr, Nested<Param, Expr, Lambda> {
-    // compatibility shit!
-    public Lambda(@NotNull Param param, @NotNull WithPos<Expr> body) {
-      this(param.ref, body);
-      assert param.explicit;
-      assert param.type() instanceof Expr.Hole;
-    }
-
     @Override public @NotNull Param param() { return new Param(ref.definition(), ref, true); }
     public @NotNull Lambda update(@NotNull WithPos<Expr> body) {
       return body == body() ? this : new Lambda(ref, body);
@@ -583,7 +576,7 @@ public sealed interface Expr extends AyaDocile {
   }
 
   static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<LocalVar> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params.map(x -> new Param(x.definition(), x, true)), body, Lambda::new);
+    return buildNested(sourcePos, params, body, Lambda::new);
   }
 
   static @NotNull WithPos<Expr> buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull WithPos<Expr> body) {
