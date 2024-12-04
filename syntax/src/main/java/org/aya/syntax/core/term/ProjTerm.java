@@ -6,6 +6,8 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
   public static final int INDEX_FST = 1;
   public static final int INDEX_SND = 2;
@@ -32,8 +34,8 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
   }
 
   /** Unwrap the {@param material} if possible. */
-  @Override public @NotNull Term make() {
-    if (of instanceof TupTerm(var lhs, var rhs)) return fst ? lhs : rhs;
+  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
+    if (of instanceof TupTerm(var lhs, var rhs)) return mapper.apply(fst ? lhs : rhs);
     return this;
   }
 

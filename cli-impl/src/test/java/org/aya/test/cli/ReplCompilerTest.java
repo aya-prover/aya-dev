@@ -10,6 +10,7 @@ import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
@@ -90,6 +91,16 @@ public class ReplCompilerTest {
 
   @Test public void issue1143() {
     compile("module A { module B {} }");
+  }
+
+  @Test public void issue1173() {
+    compile("prim I prim coe");
+    compile("open inductive Nat | zero | suc Nat");
+    compile("def infix + (a b : Nat) : Nat elim a | 0 => b | suc n => suc (n + b)");
+    // Must be in WHNF mode
+    var term = compiler.compileToContext("coe 0 1 (fn x => Nat -> Nat) (+ 3) 3", NormalizeMode.HEAD).getRightValue();
+    var integer = assertInstanceOf(IntegerTerm.class, term);
+    assertEquals(6, integer.repr());
   }
 
   private @Nullable AnyVar findContext(@NotNull String name) {

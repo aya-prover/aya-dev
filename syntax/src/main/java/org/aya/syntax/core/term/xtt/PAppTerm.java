@@ -8,22 +8,26 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public record PAppTerm(@NotNull Term fun, @NotNull Term arg, @NotNull Term a, @NotNull Term b) implements BetaRedex {
-  public @NotNull Term update(@NotNull Term fun, @NotNull Term arg, @NotNull Term a, @NotNull Term b) {
+  public @NotNull Term update(
+    @NotNull Term fun, @NotNull Term arg, @NotNull Term a, @NotNull Term b,
+    UnaryOperator<Term> f
+  ) {
     if (this.fun == fun && this.arg == arg && this.a == a && this.b == b) return this;
-    return new PAppTerm(fun, arg, a, b).make();
+    return new PAppTerm(fun, arg, a, b).make(f);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(
-      f.apply(0, fun),
-      f.apply(0, arg),
-      f.apply(0, a),
-      f.apply(0, b)
+      f.apply(0, fun), f.apply(0, arg),
+      f.apply(0, a), f.apply(0, b),
+      term -> f.apply(0, term)
     );
   }
 
-  @Override public @NotNull Term make() {
+  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
     if (fun instanceof LamTerm(var closure)) return closure.apply(arg);
     if (arg instanceof DimTerm dim) return switch (dim) {
       case I0 -> a;

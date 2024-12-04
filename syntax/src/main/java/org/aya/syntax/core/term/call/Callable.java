@@ -6,12 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @see AppTerm#make()
+ * @see BetaRedex#make(java.util.function.UnaryOperator)
  */
 public sealed interface Callable extends Term permits Callable.Tele, MetaCall {
   @NotNull ImmutableSeq<@NotNull Term> args();

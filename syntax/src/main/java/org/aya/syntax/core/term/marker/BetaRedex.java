@@ -9,6 +9,9 @@ import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public sealed interface BetaRedex extends Term permits AppTerm, ProjTerm, MemberCall, PAppTerm {
-  @NotNull Term make();
+  @NotNull Term make(@NotNull UnaryOperator<Term> mapper);
+  default @NotNull Term make() { return make(UnaryOperator.identity()); }
 }

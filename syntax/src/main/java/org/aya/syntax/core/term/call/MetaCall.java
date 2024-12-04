@@ -8,12 +8,13 @@ import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.ref.MetaVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param args can grow!! See {@link AppTerm#make()}
+ * @param args can grow!! See {@link BetaRedex#make(java.util.function.UnaryOperator)}
  */
 public record MetaCall(
   @NotNull MetaVar ref,

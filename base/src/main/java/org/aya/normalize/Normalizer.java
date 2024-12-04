@@ -51,12 +51,12 @@ public final class Normalizer implements UnaryOperator<Term> {
     // and can also reduce the subterms. We intend to return the reduction
     // result when it beta reduces, so keep `postTerm` both when in NF mode or
     // the term is not a call term.
-    var defaultValue = usePostTerm || !(term instanceof Callable) ? postTerm : term;
+    var defaultValue = usePostTerm || term instanceof BetaRedex ? postTerm : term;
 
     return switch (postTerm) {
       case StableWHNF _, FreeTerm _ -> postTerm;
       case BetaRedex app -> {
-        var result = app.make();
+        var result = app.make(this);
         yield result == app ? defaultValue : apply(result);
       }
       case FnCall(var fn, int ulift, var args) -> switch (fn) {
