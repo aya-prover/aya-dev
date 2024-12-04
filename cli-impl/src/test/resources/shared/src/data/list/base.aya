@@ -15,6 +15,7 @@ def infixr ++ (xs ys : List A) : List A
 | [ ], _ => ys
 | _, [ ] => xs
 | x :< xs', _ => x :< (xs' ++ ys)
+tighter =
 
 def map (f : A -> B) (xs : List A) : List B elim xs
 | [ ] => [ ]

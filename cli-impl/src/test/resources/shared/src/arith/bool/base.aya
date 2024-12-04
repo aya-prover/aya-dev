@@ -1,3 +1,5 @@
+open import relation::binary::path using (=)
+
 open inductive Bool | true | false
 
 def not Bool : Bool
@@ -10,16 +12,16 @@ def if-then-else (b : Bool) (t e : A) : A elim b
 | true => t
 | false => e
 
-overlap def infixl \/ (a b : Bool) : Bool
+overlap def infixl ∨ (a b : Bool) : Bool
 | true, b => true
 | a, true => true
 | false, b => b
 | a, false => a
-tighter /\
+tighter =
 
-overlap def infixl /\ (a b : Bool) : Bool
+overlap def infixl ∧ (a b : Bool) : Bool
 | true, b => b
 | a, true => a
 | false, b => false
 | a, false => false
-
+tighter ∨ =

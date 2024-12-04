@@ -14,13 +14,6 @@ def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
 
 def vmap-distrib-++ (f : A -> B) (xs : Vec n A) (ys : Vec m A) : vmap f (xs ++ ys) = vmap f xs ++ vmap f ys elim xs
 | [] => refl
-// n m : Nat
-// f : A -> B
-// x : A
-// xs : Vec (suc n) A
-// ys : Vec m A
-// vmap f ((x :> xs) ++ ys) = vmap f (x :> (xs ++ ys)) = f x :> (vmap f (xs ++ ys))
-// vmap f (x :> xs) ++ vmap f ys = (f x :> vmap f xs) ++ vmap f ys = f x :> (vmap f xs ++ vmap f ys)
 | x :> xs => pmap (f x :>) (vmap-distrib-++ f xs ys)
 
 def toList (Vec n A) : List A

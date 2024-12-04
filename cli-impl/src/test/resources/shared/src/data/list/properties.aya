@@ -20,8 +20,31 @@ def head-def (x : A) (xs : List A) : A elim xs
 | [ ] => x
 | a :< _ => a
 
-def rev'-map (f : A -> B) (buf xs : List A) : map f (rev' buf xs) = rev' (map f buf) (map f xs) elim xs
+def ++-assoc (xs ys zs : List A) : (xs ++ ys) ++ zs = xs ++ (ys ++ zs) elim xs
+| [ ] => refl
+| x :< xs => pmap (x :<) (++-assoc xs ys zs)
+
+private def rev'-map (f : A -> B) (buf xs : List A) : map f (rev' buf xs) = rev' (map f buf) (map f xs) elim xs
 | [ ] => refl
 | x :< xs => rev'-map f (x :< buf) xs
 
-def rev-map (f : A -> B) (xs : List A) : map f (rev xs) = rev (map f xs) => rev'-map f [ ] xs
+def rev-commu-map (f : A -> B) (xs : List A) : map f (rev xs) = rev (map f xs) => rev'-map f [ ] xs
+
+private def rev'-++ (buf xs : List A) : rev' buf xs = rev xs ++ buf elim xs
+| [ ] => refl
+| x :< xs =>
+  let
+  | step0 : rev' buf (x :< xs) = rev xs ++ (x :< buf) := rev'-++ (x :< buf) xs
+  | step1 : rev' [ x ] xs ++ buf = (rev xs ++ [ x ]) ++ buf := pmap (++ buf) (rev'-++ [ x ] xs)
+  | step2 : (rev xs ++ [ x ]) ++ buf = /* rev xs ++ ([ x ] ++ buf) = */ rev xs ++ (x :< buf) := ++-assoc (rev xs) [ x ] buf
+  in step0 <=> pinv step2 <=> pinv step1
+
+def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim xs
+| [ ] => refl
+| x :< xs =>
+  let
+  | step0 : /* rev (x :< (xs ++ ys)) = */ rev' [ x ] (xs ++ ys) = rev (xs ++ ys) ++ [ x ] := rev'-++ _ _
+  | step1 : rev (xs ++ ys) ++ [ x ] = (rev ys ++ rev xs) ++ [ x ] := pmap (++ [ x ]) (rev-distrib-++ _ _)
+  | step2 : (rev ys ++ rev xs) ++ [ x ] = rev ys ++ (rev xs ++ [ x ]) := ++-assoc _ _ _
+  | step3 : /* rev ys ++ rev (x :< xs) = */ rev ys ++ rev' [ x ] xs = rev ys ++ (rev xs ++ [ x ]) := pmap (rev ys ++) (rev'-++ _ _)
+  in step0 <=> step1 <=> step2 <=> pinv step3
