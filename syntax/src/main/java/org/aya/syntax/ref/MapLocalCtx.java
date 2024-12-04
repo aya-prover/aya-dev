@@ -54,6 +54,7 @@ public record MapLocalCtx(
     SeqView<LocalVar> parentView = parent == null ? SeqView.empty() : parent.extract();
     return parentView.concat(vars);
   }
+  @Override public @NotNull SeqView<LocalVar> extractLocal() { return vars.view(); }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override public @NotNull MapLocalCtx clone() {

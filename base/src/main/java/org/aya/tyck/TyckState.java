@@ -81,6 +81,8 @@ public final class TyckState {
     if (l != null && r != null) l.disconnect(r);
   }
 
+  public void removeConnection(@NotNull LocalVar var) { connections.remove(var); }
+
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
