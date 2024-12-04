@@ -28,7 +28,7 @@ private def rev'-map (f : A -> B) (buf xs : List A) : map f (rev' buf xs) = rev'
 | [ ] => refl
 | x :< xs => rev'-map f (x :< buf) xs
 
-def rev-commu-map (f : A -> B) (xs : List A) : map f (rev xs) = rev (map f xs) => rev'-map f [ ] xs
+def rev-map (f : A -> B) (xs : List A) : map f (rev xs) = rev (map f xs) => rev'-map f [ ] xs
 
 private def rev'-++ (buf xs : List A) : rev' buf xs = rev xs ++ buf elim xs
 | [ ] => refl
