@@ -23,6 +23,6 @@ def map (f : A -> B) (xs : List A) : List B elim xs
 
 def rev' (buf xs : List A) : List A elim xs
 | [ ] => buf
-| x :< xs => rev' (x :< buf) xs
+| x :< xs' => rev' (x :< buf) xs'
 
 def rev (xs : List A) : List A => rev' [ ] xs
