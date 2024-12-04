@@ -60,7 +60,6 @@ public class LibraryTest {
 
   // Use this test for additional compilation
   public static void main() throws IOException {
-    FileUtil.deleteRecursively(DIR.resolve("build"));
     assertEquals(0, compile(DIR));
   }
 
