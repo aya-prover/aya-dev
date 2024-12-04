@@ -9,8 +9,10 @@ import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
@@ -23,6 +25,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,29 +41,44 @@ public final class TyckState {
   public final @NotNull PrimFactory primFactory;
   private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
 
+  public static final DynamicForest.Handle I0 = DynamicForest.create();
+  public static final DynamicForest.Handle I1 = DynamicForest.create();
+
   public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
   }
 
-  public boolean isConnected(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
-    var l = connections.getOrNull(lhs);
+  @Contract("_, true -> !null")
+  private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
+    return switch (term) {
+      case FreeTerm(var v) -> create ? connections.getOrPut(v, DynamicForest::create) : connections.getOrNull(v);
+      case DimTerm dim -> switch (dim) {
+        case I0 -> I0;
+        case I1 -> I1;
+      };
+      default -> null;
+    };
+  }
+
+  public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, false);
     if (l == null) return false;
-    var r = connections.getOrNull(rhs);
+    var r = computeHandle(rhs, false);
     if (r == null) return false;
     return l.isConnected(r);
   }
 
-  public void connect(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
-    var l = connections.getOrPut(lhs, DynamicForest::create);
-    var r = connections.getOrPut(rhs, DynamicForest::create);
+  public void connect(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, true);
+    var r = computeHandle(rhs, true);
     l.connect(r);
   }
 
-  public void disconnect(@NotNull LocalVar lhs, @NotNull LocalVar rhs) {
-    var l = connections.getOrPut(lhs, DynamicForest::create);
-    var r = connections.getOrPut(rhs, DynamicForest::create);
-    l.disconnect(r);
+  public void disconnect(@NotNull Term lhs, @NotNull Term rhs) {
+    var l = computeHandle(lhs, false);
+    var r = computeHandle(rhs, false);
+    if (l != null && r != null) l.disconnect(r);
   }
 
   @ApiStatus.Internal
