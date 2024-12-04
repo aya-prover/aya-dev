@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public record ThrowingReporter(@NotNull PrettierOptions options) implements CountingReporter {
   @Override public void report(@NotNull Problem problem) {
     var render = Reporter.errorMessage(problem, options, false, false, 80);
-    if (problem.level() != Problem.Severity.ERROR) {
+    if (!problem.isError()) {
       System.err.println(render);
       return;
     }

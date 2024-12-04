@@ -49,7 +49,7 @@ public interface Problem {
   }
 
   default boolean isError() {
-    return level() == Severity.ERROR;
+    return level() == Severity.ERROR || level() == Severity.GOAL;
   }
 
   default @NotNull PrettyError toPrettyError(
