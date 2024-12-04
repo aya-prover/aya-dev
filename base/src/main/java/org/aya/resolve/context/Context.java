@@ -95,10 +95,7 @@ public interface Context extends Problematic {
   /**
    * Trying to get a symbol by unqualified name {@param name} in {@code this} context.
    */
-  @Nullable AnyVar getUnqualifiedLocalMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  );
+  @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos);
 
   /**
    * Trying to get a symbol which can referred by unqualified name {@param name} in the whole context.
@@ -108,18 +105,14 @@ public interface Context extends Problematic {
    * @return null if not found
    * @see Context#getUnqualifiedLocalMaybe(String, SourcePos)
    */
-  default @Nullable AnyVar getUnqualifiedMaybe(
-    @NotNull String name, @NotNull SourcePos sourcePos
-  ) {
+  default @Nullable AnyVar getUnqualifiedMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     return iterate(c -> c.getUnqualifiedLocalMaybe(name, sourcePos));
   }
 
   /**
    * @see Context#getUnqualified(String, SourcePos)
    */
-  default @NotNull AnyVar getUnqualified(
-    @NotNull String name, @NotNull SourcePos sourcePos
-  ) {
+  default @NotNull AnyVar getUnqualified(@NotNull String name, @NotNull SourcePos sourcePos) {
     var result = getUnqualifiedMaybe(name, sourcePos);
     if (result == null) reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(this, name, sourcePos));
     return result;
@@ -189,7 +182,7 @@ public interface Context extends Problematic {
   }
 
   default @NotNull Context bind(@NotNull LocalVar ref) {
-    return bind(ref.name(), ref, var -> var instanceof LocalVar);
+    return bind(ref, var -> var instanceof LocalVar);
   }
 
   default @NotNull Context bind(
@@ -199,8 +192,7 @@ public interface Context extends Problematic {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
     var exists = getUnqualifiedMaybe(name, ref.definition());
-    if (toWarn.test(exists)
-      && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
+    if (toWarn.test(exists) && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
       fail(new NameProblem.ShadowingWarn(name, ref.definition()));
     }
     return new BindContext(this, name, ref);

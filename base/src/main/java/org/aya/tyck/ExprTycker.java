@@ -426,7 +426,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // as well as the body of the binding, for example:
     // `let f x := g` is desugared to `let f := \x => g`
     var definedAsExpr = Expr.buildLam(letBind.sourcePos(),
-      letBind.telescope().view(), letBind.definedAs());
+      letBind.telescope().view().map(Expr.Param::ref), letBind.definedAs());
 
     // Now everything is in form `let f : G := g in h`
 

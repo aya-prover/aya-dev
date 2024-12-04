@@ -79,8 +79,7 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
     var missing = Constants.randomlyNamed(defPos);
     var missingElem = new Expr.NamedArg(true, new WithPos<>(
       defPos.coalesceLeft(), new Expr.Ref(missing)));
-    var missingParam = new Expr.Param(missing.definition(), missing, true);
-    var term = new Expr.Lambda(missingParam, lamBody.apply(missingElem));
+    var term = new Expr.Lambda(missing, lamBody.apply(missingElem));
     return new Expr.NamedArg(op.explicit(), new WithPos<>(pos, term));
   }
 }

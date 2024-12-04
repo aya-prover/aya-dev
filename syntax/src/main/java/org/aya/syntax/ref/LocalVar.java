@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,7 @@ public record LocalVar(
   @NotNull String name,
   @NotNull SourcePos definition,
   @NotNull GenerateKind generateKind
-) implements AnyVar {
+) implements AnyVar, SourceNode {
   public LocalVar(@NotNull String name) {
     this(name, SourcePos.NONE);
   }
@@ -34,6 +35,7 @@ public record LocalVar(
   }
 
   public static final @NotNull LocalVar IGNORED = new LocalVar("_", SourcePos.NONE);
+  @Override public @NotNull SourcePos sourcePos() { return definition; }
   @Override public boolean equals(@Nullable Object o) { return this == o; }
   @Override public int hashCode() { return System.identityHashCode(this); }
 
