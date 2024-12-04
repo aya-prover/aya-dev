@@ -100,10 +100,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         var r = coe.r();
         var s = coe.s();
         var A = coe.type();
-
-        if (r instanceof DimTerm || r instanceof FreeTerm) {
-          if (r.equals(s)) yield LamTerm.ID;
-        }
+        if (state.isConnected(r, s)) yield LamTerm.ID;
 
         var i = new LocalVar("i");
         yield switch (apply(A.apply(i))) {
