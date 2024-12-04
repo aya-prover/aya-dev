@@ -20,6 +20,7 @@ import org.aya.tyck.error.MetaVarProblem;
 import org.aya.unify.Unifier;
 import org.aya.util.DynamicForest;
 import org.aya.util.Ordering;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -49,7 +50,6 @@ public final class TyckState {
     this.primFactory = primFactory;
   }
 
-  @Contract("_, true -> !null")
   private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
     return switch (term) {
       case FreeTerm(var v) -> create ? connections.getOrPut(v, DynamicForest::create) : connections.getOrNull(v);
@@ -62,16 +62,16 @@ public final class TyckState {
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
-    var l = computeHandle(lhs, false);
-    if (l == null) return false;
-    var r = computeHandle(rhs, false);
-    if (r == null) return false;
+    var l = computeHandle(lhs, true);
+    var r = computeHandle(rhs, true);
+    if (l == null || r == null) return false;
     return l.isConnected(r);
   }
 
   public void connect(@NotNull Term lhs, @NotNull Term rhs) {
     var l = computeHandle(lhs, true);
     var r = computeHandle(rhs, true);
+    if (l == null || r == null) throw new Panic("Unsupported connection, need error report");
     l.connect(r);
   }
 
