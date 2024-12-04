@@ -192,8 +192,7 @@ public interface Context extends Problematic {
     // do not bind ignored var, and users should not try to use it
     if (ref == LocalVar.IGNORED) return this;
     var exists = getUnqualifiedMaybe(name, ref.definition());
-    if (toWarn.test(exists)
-      && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
+    if (toWarn.test(exists) && (!(ref.generateKind() == GenerateKind.Basic.Anonymous))) {
       fail(new NameProblem.ShadowingWarn(name, ref.definition()));
     }
     return new BindContext(this, name, ref);

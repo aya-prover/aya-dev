@@ -11,7 +11,7 @@ def length (List A) : Nat
 | [ ] => 0
 | x :< xs => 1 + length xs
 
-def infixr ++ (xs ys : List A) : List A
+overlap def infixr ++ (xs ys : List A) : List A
 | [ ], _ => ys
 | _, [ ] => xs
 | x :< xs', _ => x :< (xs' ++ ys)
