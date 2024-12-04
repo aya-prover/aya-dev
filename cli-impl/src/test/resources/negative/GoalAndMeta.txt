@@ -23,7 +23,8 @@ Goal: Goal of type
       Context:
         a : Nat
 
-That looks right!
+0 error(s), 0 warning(s).
+Let's learn from that.
 
 UnsolvedMetaLit:
 In file $FILE:5:17 ->
