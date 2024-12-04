@@ -93,13 +93,13 @@ supportedPlatforms.forEach { platform ->
     }
     into(installDir.resolve("bin"))
   }
-  val copySyntaxJar = tasks.register<Copy>("copySyntaxJar_$platform") {
+  val copySyntaxJar = tasks.register<Sync>("copySyntaxJar_$platform") {
     from((tasks.getByPath(":syntax:fatJar") as AbstractArchiveTask).archiveFile)
     rename { "syntax-fat.jar" }
     into(installDir.resolve("misc"))
   }
 
-  val copyAyaJRE = tasks.register<Copy>("copyAyaJRE_$platform") {
+  val copyAyaJRE = tasks.register<Sync>("copyAyaJRE_$platform") {
     from(allPlatformImageDir.resolve("aya-lsp-$platform"))
     into(installDir.resolve(Constants.jreDirName))
     exclude("bin/aya")
@@ -109,12 +109,12 @@ supportedPlatforms.forEach { platform ->
     dependsOn(jlinkTask)
   }
 
-  val copyAyaLibrary = tasks.register<Copy>("copyAyaLibrary_$platform") {
+  val copyAyaLibrary = tasks.register<Sync>("copyAyaLibrary_$platform") {
     from(rootProject.file("cli-impl/src/test/resources/shared"))
     into(installDir.resolve("std"))
   }
 
-  val copyAyaLicense = tasks.register<Copy>("copyAyaLicense_$platform") {
+  val copyAyaLicense = tasks.register<Sync>("copyAyaLicense_$platform") {
     from(rootProject.file("LICENSE"))
     into(installDir.resolve("licenses"))
   }
@@ -165,7 +165,7 @@ tasks.withType<AbstractCopyTask>().configureEach {
 
 if (rootProject.hasProperty("installDir")) {
   val destDir = file(rootProject.property("installDir")!!)
-  tasks.register<Copy>("install") {
+  tasks.register<Sync>("install") {
     dependsOn(ayaJlinkTask, prepareMergedJarsDirTask)
     from(ayaImageDir.resolve(currentPlatform))
     into(destDir)
