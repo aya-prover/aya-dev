@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
@@ -17,7 +18,6 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
@@ -72,12 +72,12 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // In the ordering, we guarantee that expr bodied fn are always checked as a whole
             assert tycker != null;
-            var result = tycker.inherit(expr, tycker.whnf(signature.result().instantiateTeleVar(teleVars.view())))
-              // we still need to bind [result.type()] in case it was a hole
-              .bindTele(teleVars.view());
+            var expectedType = tycker.whnf(signature.result().instantiateTeleVar(teleVars.view()));
+            var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
+            var resultTerm = tycker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(tycker::zonk);
-            yield factory.apply(Either.left(tycker.zonk(result.wellTyped())));
+            yield factory.apply(Either.left(resultTerm));
           }
           case FnBody.BlockBody(var clauses, var elims, _) -> {
             assert elims != null;
