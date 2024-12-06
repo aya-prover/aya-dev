@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -91,6 +92,9 @@ public class ArgsComputer {
           var argJdg = tycker.synthesize(arg.arg());
           var codMeta = new MetaVar(ref.name() + "_cod", ref.pos(), ref.ctxSize() + 1, req, false);
           var cod = new MetaCall(codMeta, metaArgs.appended(argJdg.wellTyped()));
+          tycker.solve(ref, new DepTypeTerm(DTKind.Pi,
+            argJdg.type(), new Closure.Jit(t ->
+            new MetaCall(codMeta, metaArgs.appended(t)))));
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
         }
         case Term otherwise -> throw new ExprTycker.NotPi(otherwise);
