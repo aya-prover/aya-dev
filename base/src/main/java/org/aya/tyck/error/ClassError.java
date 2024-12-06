@@ -9,8 +9,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
-public interface ClassError extends TyckError {
-  @NotNull WithPos<Expr> expr();
+public interface ClassError extends TyckError, SourceNodeProblem {
   @Override default @NotNull SourcePos sourcePos() { return expr().sourcePos(); }
 
   record NotFullyApplied(@Override @NotNull WithPos<Expr> expr) implements ClassError {
