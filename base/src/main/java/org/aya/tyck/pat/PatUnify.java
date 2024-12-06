@@ -19,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The unification of patterns. This is <strong>not</strong> pattern unification.
+ * Used for confluence checking.
  *
  * @author ice1000
  * @see #unifyPat
+ * @see YouTrack
  */
 public record PatUnify(
   @NotNull MutableList<Term> lhsSubst, @NotNull MutableList<Term> rhsSubst,
