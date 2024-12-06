@@ -111,7 +111,6 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   ) {
     var lhsError = lhsResults.anyMatch(LhsResult::hasError);
     var rhsResult = lhsResults.map(x -> checkRhs(vars, x));
-    exprTycker.solveMetas();
 
     // inline terms in rhsResult
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
@@ -206,6 +205,8 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         result.addLocalLet(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
         wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
+        exprTycker.solveMetas();
+        wellBody = exprTycker.zonk(wellBody);
 
         // bind all pat bindings
         var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();
