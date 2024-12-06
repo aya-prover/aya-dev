@@ -2,6 +2,8 @@ open import relation::binary::path using (= , refl)
 
 open inductive Sum (A B : Type) | inl A | inr B
 
+def infixr ⊎ (A B : Type) : Type => Sum A B
+
 variable A B : Type
 
 def Sum-rec
