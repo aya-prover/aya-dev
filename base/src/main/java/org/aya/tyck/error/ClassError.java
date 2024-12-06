@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -28,6 +29,15 @@ public interface ClassError extends TyckError, SourceNodeProblem {
         Doc.code(name),
         Doc.english("projected")
       );
+    }
+  }
+
+  record ProjIxError(@Override @NotNull SourceNode expr, int actual)
+    implements TyckError, SourceNodeProblem {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(
+        Doc.english("Index can only be 1 or 2, there's no"),
+        Doc.ordinal(actual), Doc.english("projection"));
     }
   }
 }

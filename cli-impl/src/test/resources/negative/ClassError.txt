@@ -54,10 +54,10 @@ Error: The following tuple introduction is not good:
 Let's learn from that.
 
 SigmaAcc:
-In file $FILE:1:23 ->
+In file $FILE:1:30 ->
 
-  1 │   def bruh (A : Type) => A.1
-    │                          ╰─╯
+  1 │   def bruh (A : Type) : Type => A.1
+    │                                 ╰─╯
 
 Error: The following 1st element projection is not good:
          A.1
@@ -65,13 +65,17 @@ Error: The following 1st element projection is not good:
        instead:
          Type 0
 
-In file $FILE:1:4 ->
+1 error(s), 0 warning(s).
+Let's learn from that.
 
-  1 │   def bruh (A : Type) => A.1
-    │       ╰──╯
+SigmaProj:
+In file $FILE:1:41 ->
 
-Error: Unsolved meta _
+  1 │   def bruh (A : Sig Type ** ISet) : Set => A.3
+    │                                            ╰─╯
 
-2 error(s), 0 warning(s).
+Error: Index can only be 1 or 2, there's no 3rd projection
+
+1 error(s), 0 warning(s).
 Let's learn from that.
 
