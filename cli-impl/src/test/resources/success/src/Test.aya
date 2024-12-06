@@ -62,3 +62,9 @@ module Issue1185 {
   def erm {A B : Type} (f : Sig A ** B) => how (fn t => t.1) f
   def sigma {A B : Type} (f : Sig A ** B) => how (fn t => t.2) f
 }
+
+module Issue1187 {
+  variable A B : Type
+  def FunExt (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = g
+  def FunExt' (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = (fn a => g a)
+}
