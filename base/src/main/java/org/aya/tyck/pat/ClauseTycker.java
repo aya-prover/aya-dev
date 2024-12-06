@@ -116,7 +116,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     // inline terms in rhsResult
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
       preclause.sourcePos(),
-      preclause.pats().map(p -> p.descent(UnaryOperator.identity(), exprTycker::zonk)),
+      preclause.pats().map(p -> p.descentTerm(exprTycker::zonk)),
       preclause.bindCount(),
       preclause.expr() == null ? null : preclause.expr().descent((_, t) -> exprTycker.zonk(t))
     ));
@@ -162,13 +162,13 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      var resultTerm = TermInline.apply(signature.result().instantiateTele(patResult.paramSubstObj()));
+      var resultTerm = signature.result().instantiateTele(patResult.paramSubstObj()).descent(new TermInline());
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:
       // * telescope are well-typed and no Meta
       // * PatternTycker doesn't introduce any Meta term
-      ctx = ctx.map(TermInline::apply);
+      ctx = ctx.map(new TermInline());
       var patWithTypeBound = Pat.collectVariables(patResult.wellTyped().view());
 
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
@@ -218,20 +218,16 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     });
   }
 
-  private static final class TermInline {
-    public static @NotNull Term apply(@NotNull Term term) {
+  private static final class TermInline implements UnaryOperator<Term> {
+    @Override public @NotNull Term apply(@NotNull Term term) {
       if (term instanceof MetaPatTerm metaPat) {
         var isEmpty = metaPat.meta().solution().isEmpty();
         if (isEmpty) throw new Panic("Unable to inline " + metaPat.toDoc(AyaPrettierOptions.debug()));
         // the solution may contain other MetaPatTerm
-        return metaPat.inline(TermInline::apply);
+        return metaPat.inline(this);
       } else {
-        return term.descent(TermInline::apply);
+        return term.descent(this);
       }
-    }
-
-    public static @NotNull Pat apply(@NotNull Pat pat) {
-      return pat.descent(TermInline::apply, TermInline::apply);
     }
   }
 
@@ -255,14 +251,15 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         default -> null;
       };
 
-      if (typeRef != null) typeRef.update(it -> it == null ? null : TermInline.apply(it));
+      if (typeRef != null) typeRef.update(it -> it == null ? null :
+        it.descent(new TermInline()));
 
       pat.forEach((_, p) -> apply(p));
     }
   }
 
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
-    return r.map(TermInline::apply);
+    return r.map(new TermInline());
   }
 
   /**
@@ -271,7 +268,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
   private static @NotNull PatternTycker.TyckResult inline(@NotNull PatternTycker.TyckResult result, @NotNull LocalCtx ctx) {
     // inline {Pat.Meta} before inline {MetaPatTerm}s
     var wellTyped = result.wellTyped().map(x ->
-      TermInline.apply(x.inline(ctx::put)));
+      x.inline(ctx::put).descentTerm(new TermInline()));
     // so that {MetaPatTerm}s can be inlined safely
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 

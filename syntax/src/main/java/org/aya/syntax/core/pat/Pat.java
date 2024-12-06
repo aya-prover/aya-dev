@@ -39,7 +39,8 @@ import java.util.function.UnaryOperator;
  */
 @Debug.Renderer(text = "PatToTerm.visit(this).debuggerOnlyToString()")
 public sealed interface Pat {
-  @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp);
+  default @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) { return this; }
+  default @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) { return this; }
 
   /**
    * The order of bindings should be postorder, that is, {@code (Con0 a (Con1 b)) as c} should be {@code [a , b , c]}
@@ -89,10 +90,6 @@ public sealed interface Pat {
   enum Absurd implements Pat {
     INSTANCE;
 
-    @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return this;
-    }
-
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
@@ -107,10 +104,9 @@ public sealed interface Pat {
       return this.type == type ? this : new Bind(bind, type);
     }
 
-    @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(termOp.apply(type));
+    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
+      return update(op.apply(type));
     }
-
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       consumer.accept(bind, type);
     }
@@ -128,10 +124,12 @@ public sealed interface Pat {
       return this.lhs == lhs && this.rhs == rhs ? this : new Tuple(lhs, rhs);
     }
 
-    @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(patOp.apply(lhs), patOp.apply(rhs));
+    @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
+      return update(op.apply(lhs), op.apply(rhs));
     }
-
+    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
+      return update(lhs.descentTerm(op), rhs.descentTerm(op));
+    }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       lhs.consumeBindings(consumer);
       rhs.consumeBindings(consumer);
@@ -155,8 +153,13 @@ public sealed interface Pat {
         ? this : new Con(ref, args, head);
     }
 
-    @Override public @NotNull Pat descent(@NotNull UnaryOperator<Pat> patOp, @NotNull UnaryOperator<Term> termOp) {
-      return update(args.map(patOp), head.descent((_, term) -> termOp.apply(term)));
+    @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
+      return update(args.map(op), head);
+    }
+    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
+      return update(
+        args.map(arg -> arg.descentTerm(op)),
+        head.descent((_, term) -> op.apply(term)));
     }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));
@@ -191,11 +194,13 @@ public sealed interface Pat {
         ? this : new Meta(MutableValue.create(solution), fakeBind, type, errorReport);
     }
 
-    @Override public @NotNull Meta descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
+    @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
       var solution = solution().get();
-      return solution == null ? update(null, g.apply(type)) : update(f.apply(solution), g.apply(type));
+      return solution == null ? this : update(op.apply(solution), type);
     }
-
+    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
+      return update(solution().get(), op.apply(type));
+    }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       // Called after inline
       Panic.unreachable();
@@ -230,10 +235,9 @@ public sealed interface Pat {
       return type == type() ? this : new ShapedInt(repr, zero, suc, type);
     }
 
-    @Override public @NotNull ShapedInt descent(@NotNull UnaryOperator<Pat> f, @NotNull UnaryOperator<Term> g) {
-      return update((DataCall) g.apply(type));
+    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
+      return update((DataCall) op.apply(type));
     }
-
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
       // We are no need to inline type here, because the type of Nat doesn't (mustn't) have any type parameter.
       return this;

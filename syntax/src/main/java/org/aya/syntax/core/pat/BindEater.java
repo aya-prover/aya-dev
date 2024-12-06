@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,11 +36,11 @@ public record BindEater(
         yield meta;
       }
       case Pat.Con con -> {
-        var realType = (ConCallLike.Head) con.head().instantiateTele(inst());
+        var realType = con.head().instantiateTele(inst());
         yield con.update(con.args().map(this), realType);
       }
 
-      default -> pat.descent(this, UnaryOperator.identity());
+      default -> pat.descentPat(this);
     };
   }
 }
