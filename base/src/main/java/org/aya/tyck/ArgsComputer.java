@@ -5,7 +5,6 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
-import org.aya.generic.term.SortKind;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.*;
@@ -81,14 +80,8 @@ public class ArgsComputer {
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
         case MetaCall(var ref, var metaArgs) -> {
-          var req = ref.req();
-          if (req == MetaVar.Misc.Whatever) req = MetaVar.Misc.IsType;
-          else if (req instanceof MetaVar.OfType(var expected)) {
-            if (!(tycker.whnf(expected) instanceof SortTerm sort)
-              || sort.kind() == SortKind.ISet) {
-              throw new ExprTycker.NotPi(acc.type());
-            }
-          }
+          var req = ref.req().asDepTypeReq(tycker::whnf);
+          if (req == null) throw new ExprTycker.NotPi(acc.type());
           var argJdg = tycker.synthesize(arg.arg());
           var codMeta = new MetaVar(ref.name() + "_cod", ref.pos(), ref.ctxSize() + 1, req, false);
           var cod = new MetaCall(codMeta, metaArgs.appended(argJdg.wellTyped()));
