@@ -4,14 +4,11 @@ package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.stmt.TyckUnit;
-import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.Decl;
-import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -39,22 +36,10 @@ public interface TyckOrderError extends TyckError {
     }
   }
 
-  record SelfReference(@NotNull TyckUnit unit) implements TyckOrderError {
-    @Override public @NotNull SourcePos sourcePos() {
-      return unit.sourcePos();
-    }
-
+  record SelfReference(@NotNull TyckUnit expr) implements TyckOrderError, SourceNodeProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Self-reference found in the signature of"),
-        Doc.plain(nameOf(unit)));
+        Doc.plain(nameOf(expr)));
     }
-  }
-
-  @Contract(pure = true)
-  static @NotNull Panic notYetTycked(@NotNull DefVar<?, ?> var) {
-    var msg = Doc.sep(Doc.english("Attempting to use a definition"),
-      Doc.code(BasePrettier.refVar(var)),
-      Doc.english("which is not yet typechecked"));
-    return new Panic(msg.debugRender());
   }
 }

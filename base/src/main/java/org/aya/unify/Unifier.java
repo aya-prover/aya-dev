@@ -15,7 +15,7 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.error.MetaVarProblem;
+import org.aya.tyck.error.MetaVarError;
 import org.aya.util.Ordering;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -94,7 +94,7 @@ public final class Unifier extends TermComparator {
       findUsage = FindUsage.unfree(rhs, inverted);
     }
     if (findUsage.termUsage > 0) {
-      fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
+      fail(new MetaVarError.BadlyScopedError(meta, rhs, inverted));
       return null;
     }
     if (findUsage.metaUsage > 0) {
@@ -102,13 +102,13 @@ public final class Unifier extends TermComparator {
         state.addEqn(createEqn(meta, rhs, returnType));
         return returnType;
       } else {
-        fail(new MetaVarProblem.BadlyScopedError(meta, rhs, inverted));
+        fail(new MetaVarError.BadlyScopedError(meta, rhs, inverted));
         return null;
       }
     }
     var ref = meta.ref();
     if (FindUsage.meta(rhs, ref) > 0) {
-      fail(new MetaVarProblem.RecursionError(meta, rhs));
+      fail(new MetaVarError.RecursionError(meta, rhs));
       return null;
     }
     var candidate = rhs.bindTele(inverted.view());
@@ -189,9 +189,9 @@ public final class Unifier extends TermComparator {
   }
 
   private void reportBadSpine(@NotNull MetaCall meta, @NotNull Term rhs) {
-    fail(new MetaVarProblem.BadSpineError(meta, state, rhs));
+    fail(new MetaVarError.BadSpineError(meta, state, rhs));
   }
   private void reportIllTyped(@NotNull MetaCall meta, @NotNull Term rhs) {
-    fail(new MetaVarProblem.IllTypedError(meta, state, rhs));
+    fail(new MetaVarError.IllTypedError(meta, state, rhs));
   }
 }

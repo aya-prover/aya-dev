@@ -10,10 +10,18 @@ public interface ClassError {
     """;
 
   @Language("Aya") String testNotFullyApplied = """
-    inductive Nat | O | S Nat
     class Kontainer
-    | walue : Nat
-
+    | walue : ISet
     def what : Kontainer => new Kontainer
     """;
+
+  @Language("Aya") String testUnknownMember = """
+    open class Kontainer
+    | walue : Set
+    def what (k : Kontainer) => k.ummm
+    """;
+
+  @Language("Aya") String testSigmaCon = "def bruh : Type => (ISet, Set)";
+  @Language("Aya") String testSigmaAcc = "def bruh (A : Type) : Type => A.1";
+  @Language("Aya") String testSigmaProj = "def bruh (A : Sig Type ** ISet) : Set => A.3";
 }

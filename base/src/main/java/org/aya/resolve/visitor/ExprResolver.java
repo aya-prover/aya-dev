@@ -23,6 +23,7 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.tyck.error.ClassError;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
@@ -94,8 +95,7 @@ public record ExprResolver(
         if (ix.isLeft()) yield expr;
         var projName = ix.getRightValue();
         var resolvedIx = ctx.getMaybe(projName);
-        // TODO: require Record things
-        // if (resolvedIx == null) ctx.reportAndThrow(new FieldError.UnknownField(projName.sourcePos(), projName.join()));
+        if (resolvedIx == null) ctx.reportAndThrow(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
         yield new Expr.Proj(tup, ix, resolvedIx, theCore);
       }
       case Expr.Hole(var expl, var fill, var core, var local) -> {
@@ -119,10 +119,6 @@ public record ExprResolver(
 //        var clauses = match.clauses().map(this::apply);
 //        yield match.update(match.discriminant().map(this), clauses);
 //      }
-//      case Expr.New neu -> neu.update(apply(neu.struct()), neu.fields().map(field -> {
-//        var fieldCtx = field.bindings().foldLeft(ctx, (c, x) -> c.bind(x.data()));
-//        return field.descent(enter(fieldCtx));
-//      }));
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
         mCtx.update(ctx -> bindAs(lam.ref(), ctx));

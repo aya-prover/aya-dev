@@ -16,7 +16,7 @@ import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
-import org.aya.tyck.error.MetaVarProblem;
+import org.aya.tyck.error.MetaVarError;
 import org.aya.unify.Unifier;
 import org.aya.util.DynamicForest;
 import org.aya.util.Ordering;
@@ -26,7 +26,6 @@ import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +101,7 @@ public final class TyckState {
       var frozenEqns = eqns.toImmutableSeq();
       if (postSimplificationSize == frozenEqns.size()) {
         // TODO: report error, cannot solve eqns
-        reporter.report(new MetaVarProblem.CannotSolveEquations(frozenEqns));
+        reporter.report(new MetaVarError.CannotSolveEquations(frozenEqns));
         return;
       } else postSimplificationSize = frozenEqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
@@ -111,7 +110,7 @@ public final class TyckState {
       }
     }
     if (evilEqns.isNotEmpty()) {
-      reporter.report(new MetaVarProblem.DidSomethingBad(evilEqns.toImmutableArray()));
+      reporter.report(new MetaVarError.DidSomethingBad(evilEqns.toImmutableArray()));
     }
   }
 

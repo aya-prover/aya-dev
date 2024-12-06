@@ -177,9 +177,7 @@ public sealed interface Expr extends AyaDocile {
     @Nullable AnyVar resolvedVar,
     @Override @NotNull MutableValue<Term> theCoreType
   ) implements Expr, WithTerm {
-    public Proj(
-      @NotNull WithPos<Expr> tup, @NotNull Either<Integer, QualifiedID> ix
-    ) {
+    public Proj(@NotNull WithPos<Expr> tup, @NotNull Either<Integer, QualifiedID> ix) {
       this(tup, ix, null, MutableValue.create());
     }
 
