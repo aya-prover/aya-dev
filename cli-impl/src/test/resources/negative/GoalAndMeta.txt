@@ -35,17 +35,6 @@ In file $FILE:5:17 ->
     │                    ╰────╯
 
 Error: Unsolved meta A
-       in `Option ?A`
-       in `Option ?A`
-
-In file $FILE:5:17 ->
-
-  3 │   open inductive Option (A : Type)
-  4 │     | some A
-  5 │   def test => some 114514
-    │                    ╰────╯
-
-Error: Unsolved meta A
        in `some 114514`
 
 In file $FILE:5:17 ->
@@ -82,6 +71,17 @@ Error: Unable to solve the type of this literal:
          114514
        I'm confused about the following candidates:
          `Nat`, `Nat2`
+
+In file $FILE:5:17 ->
+
+  3 │   open inductive Option (A : Type)
+  4 │     | some A
+  5 │   def test => some 114514
+    │                    ╰────╯
+
+Error: Unsolved meta A
+       in `Option ?A`
+       in `Option ?A`
 
 5 error(s), 0 warning(s).
 Let's learn from that.
@@ -201,15 +201,6 @@ In file $FILE:6:4 ->
     │       ╰─╯
 
 Error: Unsolved meta _
-
-In file $FILE:6:4 ->
-
-  4 │   
-  5 │   def good : List Unit => [ ]
-  6 │   def bad => [ unit ]
-    │       ╰─╯
-
-Error: Unsolved meta _
        in `?_`
        in `[unit]`
 
@@ -234,6 +225,15 @@ Error: Unable to solve the type of this literal:
          [unit]
        I'm confused about the following candidates:
          `List`, `List2`
+
+In file $FILE:6:4 ->
+
+  4 │   
+  5 │   def good : List Unit => [ ]
+  6 │   def bad => [ unit ]
+    │       ╰─╯
+
+Error: Unsolved meta _
 
 4 error(s), 0 warning(s).
 Let's learn from that.
