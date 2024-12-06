@@ -98,6 +98,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
         }
+        case MetaCall(var metaRef, var metaArgs) -> {
+          var pi = metaRef.asDt(this::whnf, "_dom", "_cod", DTKind.Pi, metaArgs);
+          if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+          solve(metaRef, pi);
+          var core = subscoped(ref, pi.param(), () ->
+            inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped()).bind(ref);
+          yield new Jdg.Default(new LamTerm(core), pi);
+        }
         default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
       case Expr.Hole hole -> {
