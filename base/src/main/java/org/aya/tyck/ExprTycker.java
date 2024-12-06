@@ -116,14 +116,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.BinTuple(var lhs, var rhs) -> {
-        if (!(whnf(type) instanceof DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma)) {
-          yield fail(expr.data(), BadTypeError.sigmaCon(state, expr, type));
+      case Expr.BinTuple(var lhs, var rhs) -> switch (whnf(type)) {
+        case DepTypeTerm(var kind, var lhsT, var rhsTClos) when kind == DTKind.Sigma -> {
+          var lhsX = inherit(lhs, lhsT).wellTyped();
+          var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
+          yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
         }
-        var lhsX = inherit(lhs, lhsT).wellTyped();
-        var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
-        yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
-      }
+        case MetaCall meta -> inheritFallbackUnify(meta, synthesize(expr), expr);
+        default -> fail(expr.data(), BadTypeError.sigmaCon(state, expr, type));
+      };
       case Expr.Array arr when arr.arrayBlock().isRight()
         && whnf(type) instanceof DataCall dataCall
         && state.shapeFactory.find(dataCall.ref()).getOrNull() instanceof ShapeRecognition recog
@@ -455,7 +456,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return result;
   }
   @Contract(mutates = "this")
-  public  <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
+  public <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
     var parentCtx = setLocalCtx(localCtx().derive1(var, type));
     var result = action.get();
     setLocalCtx(parentCtx);
