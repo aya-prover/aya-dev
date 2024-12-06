@@ -56,3 +56,9 @@ module Issue1181 {
   def how {A B : Type} (f : A -> B) (a : A) : B => f a
   def what {A B : Type} (a : A) (f : A -> B) : B => how (fn g => g a) f
 }
+
+module Issue1185 {
+  open Issue1181 hiding (what)
+  def erm {A B : Type} (f : Sig A ** B) => how (fn t => t.1) f
+  def sigma {A B : Type} (f : Sig A ** B) => how (fn t => t.2) f
+}

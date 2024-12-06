@@ -78,6 +78,7 @@ public class ArgsComputer {
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
         case MetaCall(var ref, var metaArgs) -> {
+          // dom is solved immediately by the `inherit` below
           var pi = ref.asDt(tycker::whnf, "", "_cod", DTKind.Pi, metaArgs);
           if (pi == null) throw new ExprTycker.NotPi(acc.type());
           var argJdg = tycker.inherit(arg.arg(), pi.param());
