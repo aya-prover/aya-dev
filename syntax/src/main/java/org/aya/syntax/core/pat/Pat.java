@@ -6,7 +6,9 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import kala.function.IndexedFunction;
 import kala.value.MutableValue;
+import kala.value.primitive.MutableIntValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.RichParam;
@@ -39,8 +41,10 @@ import java.util.function.UnaryOperator;
  */
 @Debug.Renderer(text = "PatToTerm.visit(this).debuggerOnlyToString()")
 public sealed interface Pat {
-  default @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) { return this; }
-  default @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) { return this; }
+  default @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) { return descentTerm((_, t) -> op.apply(t)); }
+  default @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op) { return descentTerm(op, MutableIntValue.create(0)); }
+  @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op);
+  @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount);
 
   /**
    * The order of bindings should be postorder, that is, {@code (Con0 a (Con1 b)) as c} should be {@code [a , b , c]}
@@ -94,6 +98,10 @@ public sealed interface Pat {
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
+    @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) { return this; }
+    @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      return this;
+    }
   }
 
   /**
@@ -105,12 +113,10 @@ public sealed interface Pat {
       return this.type == type ? this : new Bind(bind, type);
     }
 
-    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
-      return update(op.apply(type));
-    }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       consumer.accept(bind, type);
     }
+
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
       var newType = type.bindTele(vars.view());
       vars.append(bind);
@@ -118,6 +124,14 @@ public sealed interface Pat {
     }
 
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) { return this; }
+    @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) { return this; }
+
+    @Override
+    public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      var result = update(op.apply(bindCount.get(), type));
+      bindCount.add(1);
+      return result;
+    }
   }
 
   record Tuple(@NotNull Pat lhs, @NotNull Pat rhs) implements Pat {
@@ -128,13 +142,19 @@ public sealed interface Pat {
     @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
       return update(op.apply(lhs), op.apply(rhs));
     }
-    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
-      return update(lhs.descentTerm(op), rhs.descentTerm(op));
+
+    @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      var lhsResult = lhs.descentTerm(op, bindCount);
+      var rhsResult = rhs.descentTerm(op, bindCount);
+      // order is required
+      return update(lhsResult, rhsResult);
     }
+
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       lhs.consumeBindings(consumer);
       rhs.consumeBindings(consumer);
     }
+
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
       return update(lhs.bind(vars), rhs.bind(vars));
     }
@@ -157,14 +177,19 @@ public sealed interface Pat {
     @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
       return update(args.map(op), head);
     }
-    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
-      return update(
-        args.map(arg -> arg.descentTerm(op)),
-        head.descent((_, term) -> op.apply(term)));
+
+    @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      // head first, head cannot refer to the arguments
+      var headResult = head.descent((i, t) -> op.apply(bindCount.get() + i, t));
+      var argResult = args.map(arg -> arg.descentTerm(op, bindCount));
+
+      return update(argResult, headResult);
     }
+
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));
     }
+
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
       var newHead = head.bindTele(vars.view());
       return update(args.map(e -> e.bind(vars)), newHead);
@@ -199,13 +224,24 @@ public sealed interface Pat {
       var solution = solution().get();
       return solution == null ? this : update(op.apply(solution), type);
     }
-    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
-      return update(solution().get(), op.apply(type));
+
+    @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      var type = op.apply(bindCount.get(), this.type);
+
+      // TODO: what about solution? The bindCount may be incorrect if the Meta is not solved!
+      var solution = this.solution.get();
+      if (solution != null) {
+        solution = solution.descentTerm(op, bindCount);
+      }
+
+      return update(solution, type);
     }
+
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       // Called after inline
       Panic.unreachable();
     }
+
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
       // Called after inline
       return Panic.unreachable();
@@ -236,17 +272,25 @@ public sealed interface Pat {
       return type == type() ? this : new ShapedInt(repr, zero, suc, type);
     }
 
-    @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
-      return update((DataCall) op.apply(type));
+    @Override
+    public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
+      return this;
     }
+
+    @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
+      return update((DataCall) op.apply(bindCount.get(), type));
+    }
+
     @Override public @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind) {
       // We are no need to inline type here, because the type of Nat doesn't (mustn't) have any type parameter.
       return this;
     }
+
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) {
       return update((DataCall) type.bindTele(vars.view()));
     }
+
     @Override public @NotNull Con makeZero() {
       return new Pat.Con(zero, ImmutableSeq.empty(), makeHead(zero));
     }
@@ -254,6 +298,7 @@ public sealed interface Pat {
     @Override public @NotNull Con makeSuc(@NotNull Pat pat) {
       return new Pat.Con(suc, ImmutableSeq.of(pat), makeHead(suc));
     }
+
     private ConCallLike.@NotNull Head makeHead(@NotNull ConDefLike conRef) {
       return new ConCallLike.Head(conRef, 0, ImmutableSeq.empty());
     }

@@ -6,8 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
-
 public record MatchTerm(
   @NotNull ImmutableSeq<Term> discriminant,
   @NotNull ImmutableSeq<Term.Matching> clauses
@@ -27,8 +25,7 @@ public record MatchTerm(
     return update(discriminant.map(x -> f.apply(0, x)), clauses.map(clause ->
       clause.descent(
         t -> f.apply(clause.bindCount(), t),
-        // TODO: do not supply 0 here, use the number of the bindings introduced by previous patterns
-        p -> p.descent(UnaryOperator.identity(), t -> f.apply(0, t))
-      )));
+        p -> p.descentTerm(f))
+    ));
   }
 }
