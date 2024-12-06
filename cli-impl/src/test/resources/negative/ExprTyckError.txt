@@ -22,7 +22,7 @@ In file $FILE:2:22 ->
   2 │   def test (a : Nat) => a 1
     │                         ╰─╯
 
-Error: Unable to accept the expression
+Error: The following application is not good:
          a 1
        because the type of what you applied is not a Pi/Path type, but instead:
          Nat
@@ -45,9 +45,9 @@ In file $FILE:2:19 ->
   2 │   def test : Type => \ x => x
     │                      ╰──────╯
 
-Error: Unable to accept the expression
+Error: The following abstraction is not good:
          \ x ⇒ x
-       because the type we expect is not a Pi/Path type, but instead:
+       because the type being expected is not a Pi/Path type, but instead:
          Type 0
 
 1 error(s), 0 warning(s).
@@ -60,7 +60,7 @@ In file $FILE:2:11 ->
   2 │   def test : fr => Type
     │              ╰╯
 
-Error: Unable to accept the expression
+Error: The following expression is not good:
          fr
        because the type provided is not a type, but instead:
          Type 0 → Type 0

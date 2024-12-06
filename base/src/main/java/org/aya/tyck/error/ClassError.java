@@ -10,19 +10,12 @@ import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public interface ClassError extends TyckError {
-  @NotNull WithPos<Expr> problemExpr();
+  @NotNull WithPos<Expr> expr();
+  @Override default @NotNull SourcePos sourcePos() { return expr().sourcePos(); }
 
-  @Override default @NotNull SourcePos sourcePos() { return problemExpr().sourcePos(); }
-
-  record NotClassCall(@Override @NotNull WithPos<Expr> problemExpr) implements ClassError {
+  record NotFullyApplied(@Override @NotNull WithPos<Expr> expr) implements ClassError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Unable to new a non-class type:"), Doc.code(problemExpr.data().toDoc(options)));
-    }
-  }
-
-  record NotFullyApplied(@Override @NotNull WithPos<Expr> problemExpr) implements ClassError {
-    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Unable to new an incomplete class type:"), Doc.code(problemExpr.data().toDoc(options)));
+      return Doc.sep(Doc.english("Unable to new an incomplete class type:"), Doc.code(expr.data().toDoc(options)));
     }
   }
 

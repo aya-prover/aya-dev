@@ -4,7 +4,10 @@ In file $FILE:1:31 ->
   1 │   def what (A : Type) : A => new A
     │                                  ╰╯
 
-Error: Unable to new a non-class type: `A`
+Error: The following instantiation is not good:
+         A
+       because the type you gave is not a class type, but instead:
+         A
 
 1 error(s), 0 warning(s).
 Let's learn from that.
@@ -42,7 +45,7 @@ In file $FILE:1:19 ->
   1 │   def bruh : Type => (ISet, Set)
     │                      ╰─────────╯
 
-Error: Unable to construct the expression
+Error: The following tuple introduction is not good:
          (ISet, Set 0)
        because the type you checked it against is not a Sigma type, but instead:
          Type 0
@@ -56,7 +59,7 @@ In file $FILE:1:23 ->
   1 │   def bruh (A : Type) => A.1
     │                          ╰─╯
 
-Error: Unable to project the 1st element of the expression
+Error: The following 1st element projection is not good:
          A.1
        because the type of what you projected on is not a Sigma type, but 
        instead:

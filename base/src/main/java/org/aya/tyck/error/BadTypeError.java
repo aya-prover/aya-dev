@@ -15,15 +15,16 @@ import org.jetbrains.annotations.NotNull;
 
 public record BadTypeError(
   @Override @NotNull WithPos<Expr> expr,
-  @NotNull Term actualType, @NotNull Doc action,
+  @NotNull Term actualType, @NotNull Doc observed,
   @NotNull Doc thing, @NotNull AyaDocile desired,
   @Override @NotNull TyckState state
 ) implements TyckError, Stateful, SourceNodeProblem {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var list = MutableList.of(
-      Doc.sep(Doc.english("Unable to"), action, Doc.english("the expression")),
+      Doc.sep(Doc.english("The following"), observed, Doc.english("is not good:")),
       Doc.par(1, expr.data().toDoc(options)),
-      Doc.sep(Doc.english("because the type"), thing, Doc.english("is not a"), Doc.cat(desired.toDoc(options), Doc.plain(",")), Doc.english("but instead:")));
+      Doc.sep(Doc.english("because the type"), thing, Doc.english("is not a"),
+        Doc.cat(desired.toDoc(options), Doc.plain(",")), Doc.english("but instead:")));
     UnifyInfo.exprInfo(actualType, options, this, list);
     return Doc.vcat(list);
   }
@@ -45,19 +46,19 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError
   appOnNonPi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
-    return new BadTypeError(expr, actualType, Doc.plain("accept"),
+    return new BadTypeError(expr, actualType, Doc.plain("application"),
       Doc.english("of what you applied"), _ -> Doc.english("Pi/Path type"), state);
   }
 
   public static @NotNull BadTypeError
   absOnNonPi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
-    return new BadTypeError(expr, actualType, Doc.plain("accept"),
-      Doc.english("we expect"), _ -> Doc.english("Pi/Path type"), state);
+    return new BadTypeError(expr, actualType, Doc.plain("abstraction"),
+      Doc.english("being expected"), _ -> Doc.english("Pi/Path type"), state);
   }
 
   public static @NotNull BadTypeError sigmaAcc(@NotNull TyckState state, @NotNull WithPos<Expr> expr, int ix, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("project the"), Doc.ordinal(ix), Doc.english("element of")),
+      Doc.sep(Doc.ordinal(ix), Doc.english("element projection")),
       Doc.english("of what you projected on"),
       _ -> Doc.english("Sigma type"),
       state);
@@ -65,25 +66,25 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError sigmaCon(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.plain("construct")),
+      Doc.sep(Doc.plain("tuple introduction")),
       Doc.english("you checked it against"),
       _ -> Doc.english("Sigma type"),
       state);
   }
 
-  public static @NotNull BadTypeError structAcc(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull String fieldName, @NotNull Term actualType) {
+  public static @NotNull BadTypeError classAcc(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull String fieldName, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.english("access field"), Doc.code(fieldName), Doc.plain("of")),
+      Doc.sep(Doc.english("field access"), Doc.code(fieldName), Doc.plain("of")),
       Doc.english("of what you accessed"),
-      _ -> Doc.english("struct type"),
+      _ -> Doc.english("class type"),
       state);
   }
 
-  public static @NotNull BadTypeError structCon(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
+  public static @NotNull BadTypeError classCon(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
     return new BadTypeError(expr, actualType,
-      Doc.sep(Doc.plain("construct")),
+      Doc.sep(Doc.plain("instantiation")),
       Doc.english("you gave"),
-      _ -> Doc.english("struct type"),
+      _ -> Doc.english("class type"),
       state);
   }
 
@@ -91,7 +92,7 @@ public record BadTypeError(
     @NotNull TyckState state, @NotNull WithPos<Expr> expr,
     @NotNull Term actual, @NotNull AyaDocile need
   ) {
-    return new BadTypeError(expr, actual, Doc.plain("accept"),
+    return new BadTypeError(expr, actual, Doc.plain("expression"),
       Doc.plain("provided"), need, state);
   }
 }

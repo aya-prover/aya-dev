@@ -360,7 +360,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.New(var classCall) -> {
         var wellTyped = synthesize(classCall);
         if (!(wellTyped.wellTyped() instanceof ClassCall call)) {
-          yield fail(expr.data(), new ClassError.NotClassCall(classCall));
+          yield fail(expr.data(), BadTypeError.classCon(state, classCall, wellTyped.wellTyped()));
         }
 
         // check whether the call is fully applied
