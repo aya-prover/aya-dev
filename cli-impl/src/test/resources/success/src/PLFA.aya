@@ -1,0 +1,57 @@
+open import relation::binary::path using (= , refl)
+open import relation::unary::negation
+open import relation::nullary::empty
+open import data::sum
+
+// Exercise of Chapter: Negation
+def LEM => Fn (A : Type) -> A ⊎ (neg A)
+def double-neg-elim => Fn (A : Type) -> neg (neg A) -> A
+def peirce-law => Fn (A B : Type) -> ((A -> B) -> A) -> A
+def imply-as-lor => Fn (A B : Type) -> (A -> B) -> Sum (neg A) B
+def deMorgan-law => Fn (A B : Type) -> (neg (Sig (neg A) ** (neg B))) -> Sum A B
+
+def LEM=>deMorgan-law (lem : LEM) : deMorgan-law =>
+  fn tyA tyB np =>
+    Sum-rec
+    (lem tyA)
+    _
+    (fn A => A)
+    (fn ¬A =>
+      Sum-rec
+      (lem tyB)
+      _
+      (fn B => B)
+      (fn ¬B => exfalso (np (¬A, ¬B))))
+
+def deMorgan-law=>imply-as-lor (dml : deMorgan-law) : imply-as-lor =>
+  fn tyA tyB f =>
+    dml (neg tyA) tyB (fn p => p.1 (fn A => exfalso (p.2 (f A))))
+
+def imply-as-lor=>LEM (ial : imply-as-lor) : LEM =>
+  fn tyA => swap (ial _ _ (fn x => x))
+
+def imply-as-lor=>peirce-law (ial : imply-as-lor) : peirce-law =>
+  // f : ((A -> B) -> A)
+  fn tyA tyB f => Sum-rec
+    (imply-as-lor=>LEM ial tyA)
+    _
+    (fn A => A)
+    (fn nA => f (fn A => exfalso (nA A)))
+
+def peirce-law=>double-neg-elim (pl : peirce-law) : double-neg-elim =>
+  fn tyA ¬¬A =>
+    pl tyA Empty (fn ¬A => exfalso (¬¬A ¬A))
+
+def double-neg-elim=>LEM (dne : double-neg-elim) : LEM =>
+  fn tyA =>
+    dne _
+      (fn ¬A+nA =>
+        ¬A+nA
+          (inr (fn A => ¬A+nA (inl A))))
+
+def circle : LEM -> LEM => fn lem =>
+  double-neg-elim=>LEM
+    (peirce-law=>double-neg-elim
+      (imply-as-lor=>peirce-law
+        (deMorgan-law=>imply-as-lor
+          (LEM=>deMorgan-law lem))))
