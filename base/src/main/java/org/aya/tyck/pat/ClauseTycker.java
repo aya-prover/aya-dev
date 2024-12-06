@@ -38,9 +38,12 @@ import java.util.function.UnaryOperator;
 public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problematic, Stateful {
   public record TyckResult(
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    @NotNull ImmutableSeq<Term.Matching> wellTyped,
     boolean hasLhsError
-  ) { }
+  ) {
+    public @NotNull ImmutableSeq<Term.Matching> wellTyped() {
+      return clauses.flatMap(Pat.Preclause::lift);
+    }
+  }
 
   /**
    * @param paramSubst substitution for parameter, in the same order as parameter.
@@ -116,15 +119,10 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
       preclause.sourcePos(),
       preclause.pats().map(p -> p.descentTerm(exprTycker::zonk)),
-      preclause.bindCount(),
-      preclause.expr() == null ? null : preclause.expr().descent((_, t) -> exprTycker.zonk(t))
+      preclause.bindCount(), preclause.expr()
     ));
 
-    return new TyckResult(
-      rhsResult,
-      rhsResult.flatMap(Pat.Preclause::lift),
-      lhsError
-    );
+    return new TyckResult(rhsResult, lhsError);
   }
 
   @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }

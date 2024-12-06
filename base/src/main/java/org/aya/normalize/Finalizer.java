@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
 
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
@@ -9,6 +10,7 @@ import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
@@ -33,10 +35,11 @@ public interface Finalizer {
   }
 
   record Zonk<T extends Problematic & Stateful>(
-    @NotNull T delegate, @NotNull MutableSinglyLinkedList<Term> stack
+    @NotNull T delegate, @NotNull MutableSinglyLinkedList<Term> stack,
+    @NotNull MutableList<MetaVar> alreadyReported
   ) implements Finalizer, Stateful, Problematic {
     public Zonk(@NotNull T delegate) {
-      this(delegate, MutableSinglyLinkedList.create());
+      this(delegate, MutableSinglyLinkedList.create(), MutableList.create());
     }
     @Override public @NotNull TyckState state() { return delegate.state(); }
     @Override public @NotNull Reporter reporter() { return delegate.reporter(); }
@@ -45,10 +48,13 @@ public interface Finalizer {
       var result = doZonk(term);
       // result shall not be MetaPatTerm
       switch (result) {
-        case MetaCall meta when !meta.ref().isUser() -> fail(new UnsolvedMeta(stack.view()
-          .drop(1)
-          .map(this::freezeHoles)
-          .toImmutableSeq(), meta.ref().pos(), meta.ref().name()));
+        case MetaCall(var ref, _) when !ref.isUser() && !alreadyReported.contains(ref) -> {
+          alreadyReported.append(ref);
+          fail(new UnsolvedMeta(stack.view()
+            .drop(1)
+            .map(this::freezeHoles)
+            .toImmutableSeq(), ref.pos(), ref.name()));
+        }
         case MetaLitTerm mlt -> fail(new UnsolvedLit(mlt));
         default -> {
         }
