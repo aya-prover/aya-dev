@@ -116,8 +116,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
-      case Expr.BinTuple(var lhs, var rhs) when whnf(type) instanceof
-        DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma -> {
+      case Expr.BinTuple(var lhs, var rhs) -> {
+        if (!(whnf(type) instanceof DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma)) {
+          yield fail(expr.data(), BadTypeError.sigmaCon(state, expr, type));
+        }
         var lhsX = inherit(lhs, lhsT).wellTyped();
         var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
         yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
@@ -274,10 +276,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var wellP = result.wellTyped();
 
         yield ix.fold(iix -> {
-          if (!(whnf(result.type()) instanceof DepTypeTerm(DTKind kind, Term param, Closure body))
-            || kind != DTKind.Sigma) {
-            // report wrong type
-            throw new UnsupportedOperationException("TODO");
+          if (!(whnf(result.type()) instanceof DepTypeTerm(
+            DTKind kind, Term param, Closure body
+          ) && kind == DTKind.Sigma)) {
+            return fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
           }
 
           var ty = switch (iix) {

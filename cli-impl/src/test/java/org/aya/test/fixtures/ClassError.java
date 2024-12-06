@@ -20,4 +20,8 @@ public interface ClassError {
     | walue : Set
     def what (k : Kontainer) => k.ummm
     """;
+
+  @Language("Aya") String testSigmaCon = "def bruh : Type => (ISet, Set)";
+
+  @Language("Aya") String testSigmaAcc = "def bruh (A : Type) => A.1";
 }

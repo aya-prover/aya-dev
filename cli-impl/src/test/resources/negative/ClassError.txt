@@ -36,3 +36,39 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+SigmaCon:
+In file $FILE:1:19 ->
+
+  1 │   def bruh : Type => (ISet, Set)
+    │                      ╰─────────╯
+
+Error: Unable to construct the expression
+         (ISet, Set 0)
+       because the type you checked it against is not a Sigma type, but instead:
+         Type 0
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+SigmaAcc:
+In file $FILE:1:23 ->
+
+  1 │   def bruh (A : Type) => A.1
+    │                          ╰─╯
+
+Error: Unable to project the 1st element of the expression
+         A.1
+       because the type of what you projected on is not a Sigma type, but 
+       instead:
+         Type 0
+
+In file $FILE:1:4 ->
+
+  1 │   def bruh (A : Type) => A.1
+    │       ╰──╯
+
+Error: Unsolved meta _
+
+2 error(s), 0 warning(s).
+Let's learn from that.
+
