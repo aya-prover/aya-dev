@@ -5,12 +5,16 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
+import org.aya.generic.term.SortKind;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
+import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.LicitError;
 import org.aya.util.Pair;
@@ -32,7 +36,7 @@ public class ArgsComputer {
   private int paramIx = 0;
   private @Nullable Term firstTy = null;
   private final @NotNull Term @NotNull [] result;
-  private @NotNull Param param;
+  private Param param;
 
   public ArgsComputer(
     @NotNull ExprTycker tycker,
@@ -61,7 +65,10 @@ public class ArgsComputer {
     } else return tycker.mockTerm(param, pos);
   }
 
-  static @NotNull Jdg generateApplication(@NotNull ExprTycker tycker, @NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start) throws ExprTycker.NotPi {
+  static @NotNull Jdg generateApplication(
+    @NotNull ExprTycker tycker,
+    @NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start
+  ) throws ExprTycker.NotPi {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) tycker.fail(new LicitError.BadNamedArg(arg));
       switch (tycker.whnf(acc.type())) {
@@ -72,6 +79,23 @@ public class ArgsComputer {
         case EqTerm eq -> {
           var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
+        }
+        case MetaCall(var ref, var metaArgs) -> {
+          var req = ref.req();
+          if (req == MetaVar.Misc.Whatever) req = MetaVar.Misc.IsType;
+          else if (req instanceof MetaVar.OfType(var expected)) {
+            if (!(tycker.whnf(expected) instanceof SortTerm sort)
+              || sort.kind() == SortKind.ISet) {
+              throw new ExprTycker.NotPi(acc.type());
+            }
+          }
+          var argJdg = tycker.synthesize(arg.arg());
+          var codMeta = new MetaVar(ref.name() + "_cod", ref.pos(), ref.ctxSize() + 1, req, false);
+          var cod = new MetaCall(codMeta, metaArgs.appended(argJdg.wellTyped()));
+          tycker.solve(ref, new DepTypeTerm(DTKind.Pi,
+            argJdg.type(), new Closure.Jit(t ->
+            new MetaCall(codMeta, metaArgs.appended(t)))));
+          return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
         }
         case Term otherwise -> throw new ExprTycker.NotPi(otherwise);
       }

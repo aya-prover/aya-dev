@@ -51,3 +51,8 @@ module PullRequest1171 {
   def etaTestR (t : Sig Nat ** Nat) : t = (t.1 , t.2) => refl
   def etaTestL (t : Sig Nat ** Nat) : (t.1 , t.2) = t => refl
 }
+
+module Issue1181 {
+  def how {A B : Type} (f : A -> B) (a : A) : B => f a
+  def what {A B : Type} (a : A) (f : A -> B) : B => how (fn g => g a) f
+}
