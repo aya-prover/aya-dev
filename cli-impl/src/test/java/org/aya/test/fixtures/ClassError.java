@@ -10,10 +10,14 @@ public interface ClassError {
     """;
 
   @Language("Aya") String testNotFullyApplied = """
-    inductive Nat | O | S Nat
     class Kontainer
-    | walue : Nat
-
+    | walue : ISet
     def what : Kontainer => new Kontainer
+    """;
+
+  @Language("Aya") String testUnknownMember = """
+    open class Kontainer
+    | walue : Set
+    def what (k : Kontainer) => k.ummm
     """;
 }

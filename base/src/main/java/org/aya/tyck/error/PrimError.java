@@ -42,7 +42,7 @@ public sealed interface PrimError extends TyckError {
     }
 
     @Override public @NotNull Doc hint(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Did you mean: "), Doc.code("0"), Doc.plain("or"), Doc.code("1"));
+      return Doc.sep(Doc.english("Did you mean:"), Doc.code("0"), Doc.plain("or"), Doc.code("1"));
     }
   }
 }

@@ -22,7 +22,7 @@ In file $FILE:2:22 ->
   2 │   def test (a : Nat) => a 1
     │                         ╰─╯
 
-Error: Unable to apply the expression
+Error: Unable to accept the expression
          a 1
        because the type of what you applied is not a Pi/Path type, but instead:
          Nat
@@ -90,7 +90,7 @@ In file $FILE:2:16 ->
     │                   ╰╯
 
 Error: The point `2` does not live in interval
-note: Did you mean:  `0` or `1`
+note: Did you mean: `0` or `1`
 
 1 error(s), 0 warning(s).
 Let's learn from that.

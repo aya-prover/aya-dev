@@ -269,8 +269,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           yield fail(expr.data(), BadTypeError.appOnNonPi(state, expr, e.actual));
         }
       }
-      // TODO: what is resolvedVar used for?
-      case Expr.Proj(var p, var ix, var resolvedVar, var _) -> {
+      case Expr.Proj(var p, var ix, _, _) -> {
         var result = synthesize(p);
         var wellP = result.wellTyped();
 

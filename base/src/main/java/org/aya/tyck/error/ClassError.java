@@ -25,4 +25,17 @@ public interface ClassError extends TyckError {
       return Doc.sep(Doc.english("Unable to new an incomplete class type:"), Doc.code(problemExpr.data().toDoc(options)));
     }
   }
+
+  record UnknownMember(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull String name
+  ) implements TyckError {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(
+        Doc.english("Unknown member"),
+        Doc.code(name),
+        Doc.english("projected")
+      );
+    }
+  }
 }

@@ -10,15 +10,29 @@ Error: Unable to new a non-class type: `A`
 Let's learn from that.
 
 NotFullyApplied:
-In file $FILE:5:28 ->
+In file $FILE:3:28 ->
 
-  3 │   | walue : Nat
-  4 │   
-  5 │   def what : Kontainer => new Kontainer
+  1 │   class Kontainer
+  2 │   | walue : ISet
+  3 │   def what : Kontainer => new Kontainer
     │                               ╰───────╯
 
 Error: Unable to new an incomplete class type: `Kontainer`
 
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+UnknownMember:
+In file $FILE:3:30 ->
+
+  1 │   open class Kontainer
+  2 │   | walue : Set
+  3 │   def what (k : Kontainer) => k.ummm
+    │                                 ╰──╯
+
+Error: Unknown member `ummm` projected
+
+Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 

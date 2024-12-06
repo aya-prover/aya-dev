@@ -45,7 +45,7 @@ public record BadTypeError(
 
   public static @NotNull BadTypeError
   appOnNonPi(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
-    return new BadTypeError(expr, actualType, Doc.plain("apply"),
+    return new BadTypeError(expr, actualType, Doc.plain("accept"),
       Doc.english("of what you applied"), _ -> Doc.english("Pi/Path type"), state);
   }
 

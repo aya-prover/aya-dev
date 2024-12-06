@@ -20,13 +20,13 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface MetaVarProblem extends Problem {
+public sealed interface MetaVarError extends Problem {
   @NotNull MetaCall term();
   @Override default @NotNull Severity level() { return Severity.ERROR; }
   @Override default @NotNull SourcePos sourcePos() { return term().ref().pos(); }
 
   record BadSpineError(@Override @NotNull MetaCall term, TyckState state, Term rhs)
-    implements MetaVarProblem, Stateful {
+    implements MetaVarError, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The following spine is not in pattern fragment:"),
@@ -41,7 +41,7 @@ public sealed interface MetaVarProblem extends Problem {
     @Override @NotNull MetaCall term,
     @Override @NotNull TyckState state,
     @Override @NotNull Term solution
-  ) implements MetaVarProblem, Stateful {
+  ) implements MetaVarError, Stateful {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
         Doc.par(1, switch (term.ref().req()) {
@@ -63,7 +63,7 @@ public sealed interface MetaVarProblem extends Problem {
     @Override @NotNull MetaCall term,
     @NotNull Term solved,
     @NotNull Seq<LocalVar> allowed
-  ) implements MetaVarProblem {
+  ) implements MetaVarError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The solution"),
@@ -76,7 +76,7 @@ public sealed interface MetaVarProblem extends Problem {
     }
   }
 
-  record RecursionError(@Override @NotNull MetaCall term, @NotNull Term sol) implements MetaVarProblem {
+  record RecursionError(@Override @NotNull MetaCall term, @NotNull Term sol) implements MetaVarError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.sep(
