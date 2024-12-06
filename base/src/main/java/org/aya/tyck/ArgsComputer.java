@@ -6,14 +6,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.LicitError;
 import org.aya.util.Pair;
@@ -80,14 +78,11 @@ public class ArgsComputer {
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
         case MetaCall(var ref, var metaArgs) -> {
-          var req = ref.req().asDepTypeReq(tycker::whnf);
-          if (req == null) throw new ExprTycker.NotPi(acc.type());
-          var argJdg = tycker.synthesize(arg.arg());
-          var codMeta = new MetaVar(ref.name() + "_cod", ref.pos(), ref.ctxSize() + 1, req, false);
-          var cod = new MetaCall(codMeta, metaArgs.appended(argJdg.wellTyped()));
-          tycker.solve(ref, new DepTypeTerm(DTKind.Pi,
-            argJdg.type(), new Closure.Jit(t ->
-            new MetaCall(codMeta, metaArgs.appended(t)))));
+          var pi = ref.asDt(tycker::whnf, "", "_cod", DTKind.Pi, metaArgs);
+          if (pi == null) throw new ExprTycker.NotPi(acc.type());
+          var argJdg = tycker.inherit(arg.arg(), pi.param());
+          var cod = pi.body().apply(argJdg.wellTyped());
+          tycker.solve(ref, pi);
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
         }
         case Term otherwise -> throw new ExprTycker.NotPi(otherwise);
