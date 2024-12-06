@@ -98,6 +98,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
         }
+        case MetaCall(var metaRef, var metaArgs) -> {
+          var pi = metaRef.asDt(this::whnf, "_dom", "_cod", DTKind.Pi, metaArgs);
+          if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+          solve(metaRef, pi);
+          var core = subscoped(ref, pi.param(), () ->
+            inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped()).bind(ref);
+          yield new Jdg.Default(new LamTerm(core), pi);
+        }
         default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
       case Expr.Hole hole -> {
@@ -277,19 +285,26 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var wellP = result.wellTyped();
 
         yield ix.fold(iix -> {
-          if (!(whnf(result.type()) instanceof DepTypeTerm(
-            DTKind kind, Term param, Closure body
-          ) && kind == DTKind.Sigma)) {
-            return fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
+          if (iix != ProjTerm.INDEX_FST && iix != ProjTerm.INDEX_SND) {
+            return fail(expr.data(), new ClassError.ProjIxError(expr, iix));
           }
-
-          var ty = switch (iix) {
-            case ProjTerm.INDEX_FST -> param;
-            case ProjTerm.INDEX_SND -> body.apply(ProjTerm.fst(wellP));
-            default -> null;
+          return switch (whnf(result.type())) {
+            case MetaCall(var ref, var metaArgs) -> {
+              var sigma = ref.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma, metaArgs);
+              if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
+              solve(ref, sigma);
+              if (iix == ProjTerm.INDEX_FST) {
+                yield new Jdg.Default(ProjTerm.fst(wellP), sigma.param());
+              } else {
+                yield new Jdg.Default(ProjTerm.snd(wellP), sigma.body().apply(ProjTerm.fst(wellP)));
+              }
+            }
+            case DepTypeTerm(var kind, var param, var body) when kind == DTKind.Sigma -> {
+              var ty = iix == ProjTerm.INDEX_FST ? param : body.apply(ProjTerm.fst(wellP));
+              yield new Jdg.Default(ProjTerm.make(wellP, iix == ProjTerm.INDEX_FST), ty);
+            }
+            default -> fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
           };
-          if (ty == null) return fail(expr.data(), new ClassError.ProjIxError(expr, iix));
-          return new Jdg.Default(ProjTerm.make(wellP, iix == ProjTerm.INDEX_FST), ty);
         }, member -> {
           // TODO: MemberCall
           throw new UnsupportedOperationException("TODO");

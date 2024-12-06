@@ -24,8 +24,10 @@ import java.util.function.UnaryOperator;
 /**
  * @author re-xyr, kiva, ice1000
  */
-public record DepTypeTerm(@NotNull DTKind kind, @NotNull Term param,
-                          @NotNull Closure body) implements StableWHNF, Formation {
+public record DepTypeTerm(
+  @NotNull DTKind kind, @NotNull Term param,
+  @NotNull Closure body
+) implements StableWHNF, Formation {
   public @NotNull DepTypeTerm update(@NotNull Term param, @NotNull Closure body) {
     return param == this.param && body == this.body ? this : new DepTypeTerm(kind, param, body);
   }
@@ -177,16 +179,6 @@ public record DepTypeTerm(@NotNull DTKind kind, @NotNull Term param,
           // See https://github.com/agda/cubical/pull/910#issuecomment-1233113020
           ? SortTerm.ISet : Panic.unreachable();
   }
-
-  // public @NotNull LamTerm coe(@NotNull CoeTerm coe, @NotNull LamTerm.Param varI) {
-  //   var M = new LamTerm.Param(new LocalVar("f"), true);
-  //   var a = new LamTerm.Param(new LocalVar("a"), param.explicit());
-  //   var arg = AppTerm.make(coe.inverse(new LamTerm(varI, param.type()).rename()), new Arg<>(a.toTerm(), true));
-  //   var cover = CoeTerm.cover(varI, param, body, a.toTerm(), coe.s()).rename();
-  //   return new LamTerm(M, new LamTerm(a,
-  //     AppTerm.make(coe.recoe(cover),
-  //       new Arg<>(AppTerm.make(M.toTerm(), new Arg<>(arg, param.explicit())), true))));
-  // }
 
   public static @NotNull Term substBody(@NotNull Term pi, @NotNull SeqView<Term> args) {
     for (var arg : args) {

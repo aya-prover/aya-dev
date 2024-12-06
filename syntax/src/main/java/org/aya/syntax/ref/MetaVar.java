@@ -5,7 +5,11 @@ package org.aya.syntax.ref;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.term.DTKind;
+import org.aya.generic.term.SortKind;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -13,6 +17,8 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 /**
  * if the <code>args</code> of the {@link MetaCall} is larger than ctxSize,
@@ -38,8 +44,20 @@ public record MetaVar(
     return new MetaCall(typed, args);
   }
 
+  public @Nullable DepTypeTerm
+  asDt(UnaryOperator<Term> whnf, String dom, String cod, DTKind kind, ImmutableSeq<Term> args) {
+    var newReq = req.asDepTypeReq(whnf);
+    if (newReq == null) return null;
+    var domMeta = new MetaVar(name + dom, pos, ctxSize, newReq, false);
+    var codMeta = new MetaVar(name + cod, pos, ctxSize + 1, Misc.IsType, false);
+    var domDT = new MetaCall(domMeta, args);
+    var codDT = new Closure.Jit(t -> new MetaCall(codMeta, args.appended(t)));
+    return new DepTypeTerm(kind, domDT, codDT);
+  }
+
   public sealed interface Requirement extends AyaDocile {
     Requirement bind(SeqView<LocalVar> vars);
+    default @Nullable Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) { return this; }
   }
   public enum Misc implements Requirement {
     Whatever,
@@ -52,6 +70,10 @@ public record MetaVar(
       };
     }
     @Override public Misc bind(SeqView<LocalVar> vars) { return this; }
+    @Override public @NotNull Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {
+      if (this == Whatever) return IsType;
+      else return this;
+    }
   }
   /**
    * @param type hopefully in the closed context.
@@ -63,6 +85,12 @@ public record MetaVar(
     }
     @Override public OfType bind(SeqView<LocalVar> vars) {
       return new OfType(type.bindTele(vars));
+    }
+    @Override public @Nullable Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {
+      if (!(whnf.apply(type) instanceof SortTerm sort) || sort.kind() == SortKind.ISet) {
+        return null;
+      }
+      return this;
     }
   }
   /**
