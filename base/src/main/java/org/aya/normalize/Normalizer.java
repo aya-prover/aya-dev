@@ -111,6 +111,10 @@ public final class Normalizer implements UnaryOperator<Term> {
           case null, default -> defaultValue;
         };
       }
+      case MatchTerm matchTerm -> {
+        var result = tryUnfoldClauses(matchTerm.clauses(), matchTerm.discriminant(), 0, false);
+        yield result.isEmpty() ? defaultValue : result.get();
+      }
       default -> defaultValue;
     };
   }

@@ -73,7 +73,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
 
   public record Worker(
     @NotNull ClauseTycker parent,
-    @NotNull ImmutableSeq<LocalVar> vars,
+    @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull Signature signature,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
     @NotNull ImmutableSeq<LocalVar> elims,
@@ -94,14 +94,14 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
       lhsResult = lhsResult.map(cl -> new LhsResult(cl.localCtx, cl.type, cl.allBinds,
         cl.freePats.map(TypeEraser::erase),
         cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
-      return parent.checkAllRhs(vars, lhsResult);
+      return parent.checkAllRhs(teleVars, lhsResult);
     }
     private @Nullable ImmutableIntSeq computeIndices() {
       return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
-        vars::indexOf);
+        teleVars::indexOf);
     }
     public @NotNull TyckResult checkNoClassify() {
-      return parent.checkAllRhs(vars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
+      return parent.checkAllRhs(teleVars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
     }
   }
 

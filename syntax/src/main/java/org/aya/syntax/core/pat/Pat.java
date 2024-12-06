@@ -228,7 +228,7 @@ public sealed interface Pat {
     @Override public @NotNull Pat descentTerm(@NotNull IndexedFunction<Term, Term> op, MutableIntValue bindCount) {
       var type = op.apply(bindCount.get(), this.type);
 
-      // TODO: what about solution? The bindCount may be incorrect if the Meta is not solved!
+      // TODO: what about the solution? The bindCount may be incorrect if the Meta is not fully solved!
       var solution = this.solution.get();
       if (solution != null) {
         solution = solution.descentTerm(op, bindCount);

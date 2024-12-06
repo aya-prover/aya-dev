@@ -28,8 +28,10 @@ import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
+import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.AppTycker;
 import org.aya.tyck.tycker.Unifiable;
@@ -142,6 +144,20 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var results = ImmutableTreeSeq.from(arrayBlock.exprList().map(
           element -> inherit(element, elementTy).wellTyped()));
         yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
+      }
+      case Expr.Match(var discriminant, var clauses) -> {
+        var wellArgs = discriminant.map(this::synthesize);
+        var telescope = new AbstractTele.Locns(
+          wellArgs.map(x -> new Param(LocalVar.IGNORED.name(), x.type(), true)),
+          type);
+        var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
+        var clauseTycker = new ClauseTycker.Worker(
+          new ClauseTycker(this),
+          // always nameless
+          ImmutableSeq.fill(discriminant.size(), LocalVar.IGNORED),
+          signature, clauses, ImmutableSeq.empty(), true);
+        var wellClauses = clauseTycker.check(expr.sourcePos()).wellTyped();
+        yield new Jdg.Default(new MatchTerm(wellArgs.map(Jdg::wellTyped), wellClauses), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
