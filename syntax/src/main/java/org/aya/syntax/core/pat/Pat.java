@@ -87,8 +87,9 @@ public sealed interface Pat {
    */
   @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind);
 
-  enum Absurd implements Pat {
-    INSTANCE;
+  enum Misc implements Pat {
+    Absurd,
+    UntypedBind;
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }

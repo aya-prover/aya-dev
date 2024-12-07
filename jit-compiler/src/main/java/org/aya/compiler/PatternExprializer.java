@@ -14,7 +14,7 @@ import static org.aya.compiler.AyaSerializer.CLASS_PAT;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {
-  public static final @NotNull String CLASS_PAT_ABSURD = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Absurd.class));
+  public static final @NotNull String CLASS_PAT_MISC = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Misc.class));
   public static final @NotNull String CLASS_PAT_BIND = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Bind.class));
   public static final @NotNull String CLASS_PAT_CON = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.Con.class));
   public static final @NotNull String CLASS_PAT_INT = ExprializeUtils.makeSub(CLASS_PAT, ExprializeUtils.getJavaRef(Pat.ShapedInt.class));
@@ -43,7 +43,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
 
   @Override protected @NotNull String doSerialize(@NotNull Pat term) {
     return switch (term) {
-      case Pat.Absurd _ -> ExprializeUtils.getInstance(CLASS_PAT_ABSURD);
+      case Pat.Misc misc -> ExprializeUtils.makeEnum(CLASS_PAT_MISC, misc);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
       // but the meta solver will eat all LocalVar so that it will be happy.
       case Pat.Bind bind -> ExprializeUtils.makeNew(CLASS_PAT_BIND,

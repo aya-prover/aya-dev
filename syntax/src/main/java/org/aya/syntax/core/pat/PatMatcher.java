@@ -45,14 +45,19 @@ public final class PatMatcher {
 
   /**
    * Match {@param term} against to {@param pat}
-   *
+   * <p>
    * Produces substitution of corresponding bindings of {@param pat} in {@link #matched} if success
    */
   private void match(@NotNull Pat pat, @NotNull Term term) throws Failure {
     switch (pat) {
       // We stuck on absurd patterns, as if this is reached, the term must have an empty type,
       // which we should be expecting to refute, not to compute on it.
-      case Pat.Absurd _ -> throw new Failure(State.Stuck);
+      case Pat.Misc misc -> {
+        switch (misc) {
+          case Absurd -> throw new Failure(State.Stuck);
+          case UntypedBind -> onMatchBind(term);
+        }
+      }
       case Pat.Bind _ -> onMatchBind(term);
       case Pat.Con con -> {
         switch (pre.apply(term)) {
@@ -65,9 +70,9 @@ public final class PatMatcher {
           default -> throw new Failure(State.Stuck);
         }
       }
-      case Pat.Tuple (var l, var r) -> {
+      case Pat.Tuple(var l, var r) -> {
         switch (pre.apply(term)) {
-          case TupTerm (var ll, var rr) -> {
+          case TupTerm(var ll, var rr) -> {
             match(l, ll);
             match(r, rr);
           }
@@ -141,8 +146,7 @@ public final class PatMatcher {
       if (inferMeta) {
         var bindsMetas = doSolveMeta(pat, meta);
         bindsMetas.forEach(this::onMatchBind);
-      }
-      else throw new Failure(State.Stuck);
+      } else throw new Failure(State.Stuck);
     } else {
       match(pat, maybeMeta);
     }
