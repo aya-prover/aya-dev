@@ -213,10 +213,17 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       // let open Foo using (bar) in
       //   body
       case Expr.LetOpen letOpen -> Doc.vcat(
-        Doc.sep(Doc.styled(KEYWORD, "let"), stmt(letOpen.openCmd()), Doc.styled(KEYWORD, "in")),
+        Doc.sep(KW_LET, stmt(letOpen.openCmd()), KW_IN),
         Doc.indent(2, term(Outer.Free, letOpen.body()))
       );
       case Expr.New neu -> Doc.sep(KW_NEW, term(Outer.Free, neu.classCall()));
+      case Expr.Match match -> {
+        var deltaDoc = match.discriminant().map(x -> term(Outer.Free, x));
+        var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
+        var clauseDoc = visitClauses(match.clauses());
+
+        yield Doc.cblock(prefix, 2, clauseDoc);
+      }
     };
   }
 

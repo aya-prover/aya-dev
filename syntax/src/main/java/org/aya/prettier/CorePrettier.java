@@ -201,6 +201,13 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
       case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
+      case MatchTerm(var discriminant, var clauses) -> {
+        var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
+        var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
+        var clauseDoc = visitClauses(clauses, ImmutableSeq.fill(discriminant.size(), true).view());
+
+        yield Doc.cblock(prefix, 2, clauseDoc);
+      }
     };
   }
 

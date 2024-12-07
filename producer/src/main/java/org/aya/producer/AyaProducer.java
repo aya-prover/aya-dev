@@ -537,16 +537,15 @@ public record AyaProducer(
       return new WithPos<>(pos, new Expr.BinOpSeq(tail.toImmutableSeq()));
     }
     if (node.is(PROJ_EXPR)) return new WithPos<>(pos, buildProj(expr(node.child(EXPR)), node.child(PROJ_FIX)));
-    // if (node.is(MATCH_EXPR)) {
-    //   var clauses = node.child(CLAUSES);
-    //   var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
-    //   var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
-    //   return new Expr.Match(
-    //     sourcePosOf(node),
-    //     node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq(),
-    //     bare.concat(barred).toImmutableSeq()
-    //   );
-    // }
+    if (node.is(MATCH_EXPR)) {
+      var clauses = node.child(CLAUSES);
+      var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
+      var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
+      return new WithPos<>(pos, new Expr.Match(
+        node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq(),
+        bare.concat(barred).toImmutableSeq()
+      ));
+    }
     if (node.is(ARROW_EXPR)) {
       var exprs = node.childrenOfType(EXPR).toImmutableSeq();
       if (!exprs.sizeEquals(2)) {
