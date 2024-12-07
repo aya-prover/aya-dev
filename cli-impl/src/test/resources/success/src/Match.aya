@@ -12,3 +12,9 @@ def test-0 : test 0 = 0 => refl
 def test-1 : test 1 = 1 => refl
 def test-2 : test 2 = 114514 => refl
 def test-4 : test 3 = 114514 => refl
+
+def saveCoverage (a b : Nat) : Nat => match (a, b) {
+| (c, d) => c + d
+}
+
+def saveCoverage-0 : saveCoverage 2 5 = 7 => refl

@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.Shaped;
@@ -264,7 +265,15 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       matchings.map(x -> {
         var pats = serializer.serializeToImmutableSeq(CLASS_PAT, x.patterns());
         var bindCount = Integer.toString(x.bindCount());
-        var body = doSerialize(x.body());
+        var localTerms = ImmutableSeq.fill(x.bindCount(), LocalTerm::new);
+        var tmpSerializer = new TermExprializer(nameGen, ImmutableSeq.empty(), true);
+        var serLocalTerms = localTerms.map(tmpSerializer::serialize);
+        var body = withMany(serLocalTerms, vars -> {
+          // 0th term for index 0, so it is de bruijn index order instead of telescope order
+          var freeBody = x.body().instantiateAll(SeqView.narrow(vars.view()));
+          return doSerialize(freeBody);
+        });
+
         return makeNew(CLASS_MATCHING, SOURCE_POS_SER, pats, bindCount, body);
       }));
   }
@@ -273,12 +282,16 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   // (A : Type) : Pi(^0, IdxClosure(^1))
   // (A : Type) : Pi(^0, JitClosure(_ -> ^1))
 
-  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
-    var bind = new LocalVar(subst);
-    this.binds.put(bind, subst);
-    var result = continuation.apply(new FreeTerm(bind));
-    this.binds.remove(bind);
+  private @NotNull String withMany(@NotNull ImmutableSeq<String> subst, @NotNull Function<ImmutableSeq<FreeTerm>, String> continuation) {
+    var binds = subst.map(LocalVar::new);
+    binds.forEachWith(subst, this.binds::put);
+    var result = continuation.apply(binds.map(FreeTerm::new));
+    binds.forEach(this.binds::remove);
     return result;
+  }
+
+  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
+    return withMany(ImmutableSeq.of(subst), xs -> continuation.apply(xs.getFirst()));
   }
 
   private @NotNull String serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {

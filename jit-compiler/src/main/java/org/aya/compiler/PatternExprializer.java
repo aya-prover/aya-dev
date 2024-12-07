@@ -61,7 +61,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
         serializeTerm(shapedInt.type()));
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.Tuple(var l, var r) -> ExprializeUtils.makeNew(CLASS_PAT_TUPLE,
-        serializeToImmutableSeq(CLASS_PAT, ImmutableSeq.of(l, r)));
+        doSerialize(l), doSerialize(r));
     };
   }
 
