@@ -5,10 +5,7 @@ package org.aya.unify;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.prettier.FindUsage;
-import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.core.term.LamTerm;
-import org.aya.syntax.core.term.SortTerm;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.ref.LocalCtx;
@@ -125,7 +122,9 @@ public final class Unifier extends TermComparator {
         return null;
       }
     }
-    return type;
+    if (type != null) return type;
+    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return ty;
+    return ErrorTerm.typeOf(meta);
   }
 
   /**
