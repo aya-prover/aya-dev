@@ -60,6 +60,7 @@ public interface AyaSerializer {
     import org.aya.syntax.core.term.xtt.*;
     import org.aya.util.error.Panic;
     import org.aya.util.binop.Assoc;
+    import org.aya.util.error.SourcePos;
 
     import java.util.function.Supplier;
     import kala.collection.immutable.ImmutableSeq;

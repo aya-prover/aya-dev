@@ -53,6 +53,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_CASTTERM = ExprializeUtils.getJavaRef(ClassCastTerm.class);
   public static final String CLASS_CLSCALL = ExprializeUtils.getJavaRef(ClassCall.class);
   public static final String CLASS_CLOSURE = ExprializeUtils.getJavaRef(Closure.class);
+  public static final String CLASS_MATCHTERM = ExprializeUtils.getJavaRef(MatchTerm.class);
+  public static final String CLASS_MATCHING = ExprializeUtils.getJavaRef(Term.Matching.class);
 
   /**
    * Terms that should be instantiated
@@ -248,9 +250,23 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         serializeClosureToImmutableSeq(rember),
         serializeClosureToImmutableSeq(forgor)
       );
-      case MatchTerm matchTerm -> throw new UnsupportedOperationException("TODO");
+      case MatchTerm matchTerm -> ExprializeUtils.makeNew(CLASS_MATCHTERM,
+        serializeToImmutableSeq(CLASS_TERM, matchTerm.discriminant()),
+        serializeMatching(matchTerm.clauses())
+      );
       case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
+  }
+
+  private @NotNull String serializeMatching(@NotNull ImmutableSeq<Term.Matching> matchings) {
+    var serializer = new PatternExprializer(this.nameGen, false);
+    return makeImmutableSeq(CLASS_MATCHING,
+      matchings.map(x -> {
+        var pats = serializer.serializeToImmutableSeq(CLASS_PAT, x.patterns());
+        var bindCount = Integer.toString(x.bindCount());
+        var body = doSerialize(x.body());
+        return makeNew(CLASS_MATCHING, SOURCE_POS_SER, pats, bindCount, body);
+      }));
   }
 
   // def f (A : Type) : Fn (a : A) -> A
@@ -279,6 +295,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       else return serializeConst(appliedBody);
     });
   }
+
   private @NotNull String serializeConst(Term appliedBody) {
     return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
   }
