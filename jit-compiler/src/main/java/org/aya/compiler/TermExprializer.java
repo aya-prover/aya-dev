@@ -54,7 +54,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_CLSCALL = ExprializeUtils.getJavaRef(ClassCall.class);
   public static final String CLASS_CLOSURE = ExprializeUtils.getJavaRef(Closure.class);
   public static final String CLASS_MATCHTERM = ExprializeUtils.getJavaRef(MatchTerm.class);
-  public static final String CLASS_MATCHING = ExprializeUtils.getJavaRef(Term.Matching.class);
+  public static final String CLASS_MATCHING = ExprializeUtils.makeSub(CLASS_TERM, getJavaRef(Term.Matching.class));
 
   /**
    * Terms that should be instantiated
