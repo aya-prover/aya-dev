@@ -44,6 +44,7 @@ public record MetaVar(
     return new MetaCall(typed, args);
   }
 
+  /** @see MetaCall#asDt(UnaryOperator, String, String, DTKind) */
   public @Nullable DepTypeTerm
   asDt(UnaryOperator<Term> whnf, String dom, String cod, DTKind kind, ImmutableSeq<Term> args) {
     var newReq = req.asDepTypeReq(whnf);

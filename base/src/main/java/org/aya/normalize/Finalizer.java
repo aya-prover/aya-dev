@@ -34,6 +34,10 @@ public interface Finalizer {
     @Override public @NotNull Term zonk(@NotNull Term term) { return doZonk(term); }
   }
 
+  /**
+   * The terminology "Zonk" is borrowed from GHC,
+   * see <a href="https://stackoverflow.com/a/31890743/7083401">StackOverflow</a>.
+   */
   record Zonk<T extends Problematic & Stateful>(
     @NotNull T delegate, @NotNull MutableSinglyLinkedList<Term> stack,
     @NotNull MutableList<MetaVar> alreadyReported

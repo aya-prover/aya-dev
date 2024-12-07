@@ -116,7 +116,7 @@ public final class TyckState {
 
   public @NotNull Term computeSolution(@NotNull MetaCall meta, @NotNull UnaryOperator<Term> f) {
     return solutions.getOption(meta.ref())
-      .map(sol -> f.apply(MetaCall.app(meta.ref(), sol, meta.args())))
+      .map(sol -> f.apply(MetaCall.app(sol, meta.args(), meta.ref().ctxSize())))
       .getOrDefault(meta);
   }
 

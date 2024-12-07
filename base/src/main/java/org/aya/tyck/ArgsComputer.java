@@ -14,6 +14,7 @@ import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.LicitError;
+import org.aya.util.Ordering;
 import org.aya.util.Pair;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -77,13 +78,13 @@ public class ArgsComputer {
           var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
-        case MetaCall(var ref, var metaArgs) -> {
+        case MetaCall metaCall -> {
           // dom is solved immediately by the `inherit` below
-          var pi = ref.asDt(tycker::whnf, "", "_cod", DTKind.Pi, metaArgs);
+          var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
           if (pi == null) throw new ExprTycker.NotPi(acc.type());
           var argJdg = tycker.inherit(arg.arg(), pi.param());
           var cod = pi.body().apply(argJdg.wellTyped());
-          tycker.solve(ref, pi);
+          tycker.unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
         }
         case Term otherwise -> throw new ExprTycker.NotPi(otherwise);
