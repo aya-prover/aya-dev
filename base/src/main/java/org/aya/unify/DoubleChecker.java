@@ -2,12 +2,14 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
-import org.aya.syntax.core.term.*;
 import org.aya.generic.term.DTKind;
+import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.BadExprError;
 import org.aya.tyck.tycker.Contextful;
@@ -54,6 +56,12 @@ public record DoubleChecker(
         default -> failF(new BadExprError(preterm, unifier.pos, expected));
       };
       case TupTerm _ -> failF(new BadExprError(preterm, unifier.pos, expected));
+      case MetaCall(var ref, var args) when !(ref.req() instanceof MetaVar.OfType) -> {
+        var newMeta = new MetaCall(new MetaVar(
+          ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType(expected), false), args);
+        unifier.compare(preterm, newMeta, null);
+        yield true;
+      }
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
     };
   }

@@ -98,10 +98,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
         }
-        case MetaCall(var metaRef, var metaArgs) -> {
-          var pi = metaRef.asDt(this::whnf, "_dom", "_cod", DTKind.Pi, metaArgs);
+        case MetaCall metaCall -> {
+          var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
           if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
-          solve(metaRef, pi);
+          unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
           var core = subscoped(ref, pi.param(), () ->
             inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped()).bind(ref);
           yield new Jdg.Default(new LamTerm(core), pi);
@@ -289,10 +289,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
             return fail(expr.data(), new ClassError.ProjIxError(expr, iix));
           }
           return switch (whnf(result.type())) {
-            case MetaCall(var ref, var metaArgs) -> {
-              var sigma = ref.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma, metaArgs);
+            case MetaCall metaCall -> {
+              var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
               if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
-              solve(ref, sigma);
+              unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, sigma, null);
               if (iix == ProjTerm.INDEX_FST) {
                 yield new Jdg.Default(ProjTerm.fst(wellP), sigma.param());
               } else {
