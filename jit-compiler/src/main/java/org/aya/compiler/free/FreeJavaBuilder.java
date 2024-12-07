@@ -11,40 +11,44 @@ import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
 public interface FreeJavaBuilder {
-  interface FreeClass {
+  interface ClassBuilder {
     void buildNestedClass(
       CompiledAya compiledAya,
       @NotNull String name,
       @NotNull ClassDesc superclass,
-      @NotNull Consumer<FreeClass> builder
+      @NotNull Consumer<ClassBuilder> builder
     );
 
     void buildMethod(
       @NotNull ClassDesc returnType,
       @NotNull String name,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull Consumer<FreeCode> builder
+      @NotNull Consumer<CodeBuilder> builder
     );
 
     void buildConstructor(
       @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
-      @NotNull ImmutableSeq<Consumer<FreeExpr>> superConArgs,
+      @NotNull ImmutableSeq<Consumer<ExprBuilder>> superConArgs,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull Consumer<FreeClass> builder
+      @NotNull Consumer<ClassBuilder> builder
     );
   }
 
-  interface FreeCode {
-    void makeVar(@NotNull String name, @Nullable Consumer<FreeExpr> initializer);
+  interface CodeBuilder {
+    void makeVar(@NotNull String name, @Nullable FreeJava initializer);
     void refVar(@NotNull String name);
+
+    void ifNotTrue(@NotNull FreeJava notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
+    void ifTrue(@NotNull FreeJava theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
+    void ifInstanceOf(@NotNull FreeJava lhs, @NotNull ClassDesc rhs, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
   }
 
-  interface FreeExpr {
+  interface ExprBuilder {
     /**
      * A {@code new} expression, the class should have only one (public) constructor.
      */
-    void newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<Consumer<FreeExpr>> args);
+    @NotNull FreeJava newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<Consumer<ExprBuilder>> args);
   }
 
-  void buildClass(CompiledAya compiledAya, ClassDesc className, ClassDesc superclass, Consumer<FreeClass> builder);
+  void buildClass(CompiledAya compiledAya, ClassDesc className, ClassDesc superclass, Consumer<ClassBuilder> builder);
 }
