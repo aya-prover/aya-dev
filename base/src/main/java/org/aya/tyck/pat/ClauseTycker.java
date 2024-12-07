@@ -11,6 +11,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.pat.TypeEraser;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
@@ -90,6 +91,9 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         }
       }
 
+      lhsResult = lhsResult.map(cl -> new LhsResult(cl.localCtx, cl.type, cl.allBinds,
+        cl.freePats.map(TypeEraser::erase),
+        cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
       return parent.checkAllRhs(vars, lhsResult);
     }
     private @Nullable ImmutableIntSeq computeIndices() {
