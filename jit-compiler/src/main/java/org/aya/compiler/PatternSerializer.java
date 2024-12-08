@@ -212,7 +212,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     }));
 
     // -1 ..= unit.size()
-    var range = IntRange.closed(-1, unit.size()).collect(ImmutableSeq.factory());
+    var range = IntRange.closed(-1, unit.size()).collect(ImmutableIntSeq.factory());
     buildSwitch(VARIABLE_STATE, range, state -> {
       switch (state) {
         case -1 -> onMismatch.accept(this);

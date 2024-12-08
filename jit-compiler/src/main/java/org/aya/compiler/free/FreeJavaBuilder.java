@@ -3,52 +3,109 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.compiler.free.data.FieldData;
+import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
+import java.util.function.ObjIntConsumer;
 
 public interface FreeJavaBuilder {
   interface ClassBuilder {
     void buildNestedClass(
       CompiledAya compiledAya,
       @NotNull String name,
-      @NotNull ClassDesc superclass,
+      @NotNull Class<?> superclass,
       @NotNull Consumer<ClassBuilder> builder
     );
 
-    void buildMethod(
+    @NotNull MethodData buildMethod(
       @NotNull ClassDesc returnType,
       @NotNull String name,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull Consumer<CodeBuilder> builder
+      @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
     );
 
     void buildConstructor(
       @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
-      @NotNull ImmutableSeq<Consumer<ExprBuilder>> superConArgs,
+      @NotNull ImmutableSeq<FreeJava> superConArgs,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull Consumer<ClassBuilder> builder
+      @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    );
+
+    @NotNull FieldData buildConstantField(
+      @NotNull ClassDesc returnType,
+      @NotNull String name
     );
   }
 
   interface CodeBuilder {
-    void makeVar(@NotNull String name, @Nullable FreeJava initializer);
-    void refVar(@NotNull String name);
+    @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJava initializer);
 
-    void ifNotTrue(@NotNull FreeJava notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
-    void ifTrue(@NotNull FreeJava theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
-    void ifInstanceOf(@NotNull FreeJava lhs, @NotNull ClassDesc rhs, @NotNull Consumer<CodeBuilder> thenBlock, @NotNull Consumer<CodeBuilder> elseBlock);
-  }
+    void ifNotTrue(@NotNull FreeJava notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+    void ifTrue(@NotNull FreeJava theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+    void ifInstanceOf(@NotNull FreeJava lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+    void ifNull(@NotNull FreeJava isNull, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
 
-  interface ExprBuilder {
+    /**
+     * Construct a code block that can jump out
+     */
+    void breakable(@NotNull Consumer<CodeBuilder> innerBlock);
+    void breakOut();
+
+    /**
+     * Build a switch statement on int
+     */
+    void switchCase(
+      @NotNull FreeJava elim,
+      @NotNull ImmutableIntSeq cases,
+      @NotNull ObjIntConsumer<CodeBuilder> branch,
+      @NotNull Consumer<CodeBuilder> defaultCase
+    );
+
+    void returnWith(@NotNull FreeJava expr);
+
+    // region expr
+
     /**
      * A {@code new} expression, the class should have only one (public) constructor.
      */
-    @NotNull FreeJava newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<Consumer<ExprBuilder>> args);
+    @NotNull FreeJava newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args);
+    @NotNull FreeJava refVar(@NotNull LocalVariable name);
+
+    /** Invoke a (non-interface) method on {@param owner} */
+    @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args);
+
+    /** Invoke a static method */
+    @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull ImmutableSeq<FreeJava> args);
+
+    @NotNull FreeJava refField(@NotNull FieldData field);
+    @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner);
+
+    // endregion expr
   }
 
-  void buildClass(CompiledAya compiledAya, ClassDesc className, ClassDesc superclass, Consumer<ClassBuilder> builder);
+  void buildClass(
+    @NotNull CompiledAya compiledAya,
+    @NotNull ClassDesc className,
+    @NotNull Class<?> superclass,
+    @NotNull Consumer<ClassBuilder> builder
+  );
+
+  /**
+   * Find a method with given information
+   */
+  @NotNull MethodData resolve(
+    @NotNull ClassDesc owner,
+    @NotNull String name,
+    @NotNull ClassDesc returnType,
+    @NotNull ImmutableSeq<ClassDesc> paramType
+  );
 }
