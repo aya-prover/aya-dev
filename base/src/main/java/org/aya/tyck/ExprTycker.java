@@ -156,7 +156,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           // always nameless
           ImmutableSeq.fill(discriminant.size(), LocalVar.IGNORED),
           signature, clauses, ImmutableSeq.empty(), true);
-        var wellClauses = clauseTycker.check(expr.sourcePos()).wellTyped();
+        var wellClauses = clauseTycker.check(expr.sourcePos())
+          .wellTyped()
+          .map(WithPos::data);
         yield new Jdg.Default(new MatchTerm(wellArgs.map(Jdg::wellTyped), wellClauses), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));

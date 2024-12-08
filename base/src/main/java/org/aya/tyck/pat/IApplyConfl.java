@@ -4,8 +4,8 @@ package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Modifier;
-import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
@@ -15,6 +15,7 @@ import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -39,7 +40,7 @@ import java.util.function.UnaryOperator;
  * This one is translatable to a purely functional programming language.
  */
 public record IApplyConfl(
-  @NotNull FnDef def, @NotNull ImmutableSeq<Term.Matching> matchings,
+  @NotNull FnDef def, @NotNull ImmutableSeq<WithPos<Term.Matching>> matchings,
   boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull ExprTycker tycker
 ) {
   public IApplyConfl(@NotNull FnDef def, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
@@ -54,7 +55,7 @@ public record IApplyConfl(
   private void apply(int i, PatMatcher chillMatcher) {
     var matching = matchings.get(i);
     var ctx = new MapLocalCtx();
-    var cases = new PatToTerm.Monadic(ctx).list(matching.patterns().view());
+    var cases = new PatToTerm.Monadic(ctx).list(matching.data().patterns().view());
     if (cases.sizeEquals(1)) return;
     if (cases.isEmpty()) Panic.unreachable();
     tycker.setLocalCtx(ctx);
@@ -62,8 +63,8 @@ public record IApplyConfl(
     cases.forEach(args -> doCompare(chillMatcher, args, matching, nth));
   }
 
-  private void doCompare(PatMatcher chillMatcher, ImmutableSeq<Term> args, Term.Matching matching, int nth) {
-    var currentClause = chillMatcher.apply(matching, args).get();
+  private void doCompare(PatMatcher chillMatcher, ImmutableSeq<Term> args, WithPos<Term.Matching> matching, int nth) {
+    var currentClause = chillMatcher.apply(matching.data(), args).get();
     var anoNormalized = tycker.whnf(new FnCall(new FnDef.Delegate(def.ref()), 0, args));
     tycker.unifyTermReported(anoNormalized, currentClause, def.result().instantiateTele(args.view()),
       sourcePos, comparison -> new ClausesProblem.Conditions(

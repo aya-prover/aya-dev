@@ -18,7 +18,6 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -179,13 +178,12 @@ public sealed interface Term extends Serializable, AyaDocile
   }
 
   record Matching(
-    @NotNull SourcePos sourcePos,
     @NotNull ImmutableSeq<Pat> patterns,
     int bindCount, @NotNull Term body
   ) {
     public @NotNull Matching update(@NotNull ImmutableSeq<Pat> patterns, @NotNull Term body) {
       return body == body() && patterns.sameElements(patterns(), true) ? this
-        : new Matching(sourcePos, patterns, bindCount, body);
+        : new Matching(patterns, bindCount, body);
     }
 
     public @NotNull Matching descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {

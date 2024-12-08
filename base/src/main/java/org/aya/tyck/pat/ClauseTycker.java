@@ -41,7 +41,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
     boolean hasLhsError
   ) {
-    public @NotNull ImmutableSeq<Term.Matching> wellTyped() {
+    public @NotNull ImmutableSeq<WithPos<Term.Matching>> wellTyped() {
       return clauses.flatMap(Pat.Preclause::lift);
     }
   }
