@@ -41,3 +41,25 @@ Warning: The modifier overlap is redundant, ignored.
 
 That looks right!
 
+IgnorePragma:
+In file $FILE:1:1 ->
+
+  1 │   @thisWillNeverBeARealPragma
+    │    ╰────────────────────────╯
+  2 │   def id {A : Type} (a : A) => a
+
+Warning: Unrecognized pragma `thisWillNeverBeARealPragma` will be ignored.
+
+That looks right!
+
+IgnoreSuppressed:
+In file $FILE:1:10 ->
+
+  1 │   @suppress(thisWillNeverBeARealWarning)
+    │             ╰─────────────────────────╯
+  2 │   def id {A : Type} (a : A) => a
+
+Warning: Unrecognized warning `thisWillNeverBeARealWarning` will be ignored.
+
+That looks right!
+

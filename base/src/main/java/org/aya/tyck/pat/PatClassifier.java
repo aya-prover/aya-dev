@@ -10,12 +10,12 @@ import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.generic.State;
+import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
@@ -177,9 +177,9 @@ public record PatClassifier(
 
   public static int[] firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull Reporter reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
+    @NotNull Problematic reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
   ) {
-    return ClassifierUtil.firstMatchDomination(clauses, (pos, i) -> reporter.report(
+    return ClassifierUtil.firstMatchDomination(clauses, (pos, i) -> reporter.fail(
       new ClausesProblem.FMDomination(i, pos)), classes);
   }
 

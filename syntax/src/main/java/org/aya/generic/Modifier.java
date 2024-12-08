@@ -5,6 +5,10 @@ package org.aya.generic;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Modifiers have semantics in core, and are boolean-valued.
+ * If a "modifier"-like thing is only for surface or type checking,
+ * it should be an annotation.
+ *
  * @author kiva
  */
 public enum Modifier {
@@ -31,7 +35,5 @@ public enum Modifier {
 
   public final @NotNull String keyword;
 
-  Modifier(@NotNull String keyword) {
-    this.keyword = keyword;
-  }
+  Modifier(@NotNull String keyword) { this.keyword = keyword; }
 }

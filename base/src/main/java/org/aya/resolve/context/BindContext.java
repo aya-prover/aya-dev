@@ -24,13 +24,8 @@ public record BindContext(
   @NotNull String name,
   @NotNull LocalVar ref
 ) implements Context {
-  @Override public @NotNull Context parent() {
-    return parent;
-  }
-
-  @Override public @NotNull Reporter reporter() {
-    return parent.reporter();
-  }
+  @Override public @NotNull Context parent() { return parent; }
+  @Override public @NotNull Reporter reporter() { return parent.reporter(); }
 
   @Override public @NotNull Path underlyingFile() {
     return parent.underlyingFile();

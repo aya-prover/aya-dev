@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt.decl;
 
+import org.aya.generic.Suppress;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.syntax.concrete.stmt.BindBlock;
 import org.aya.syntax.concrete.stmt.Stmt;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+
 /**
  * Concrete telescopic definition, corresponding to {@link TyckDef}.
  *
@@ -24,6 +27,7 @@ public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
   permits ClassDecl, TeleDecl {
   public @NotNull DeclInfo info;
   public boolean isExample;
+  public EnumSet<Suppress> suppresses = EnumSet.noneOf(Suppress.class);
 
   public final @NotNull BindBlock bindBlock() { return info.bindBlock(); }
   public final @NotNull SourcePos entireSourcePos() { return info.entireSourcePos(); }

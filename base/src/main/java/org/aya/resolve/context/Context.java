@@ -63,7 +63,7 @@ public interface Context extends Problematic {
   }
 
   default void reportAll(@NotNull SeqLike<Problem> problems) {
-    problems.forEach(x -> reporter().report(x));
+    problems.forEach(this::fail);
   }
 
   /**

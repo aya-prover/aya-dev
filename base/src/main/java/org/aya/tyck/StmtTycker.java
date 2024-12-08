@@ -3,6 +3,7 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
@@ -38,6 +39,7 @@ import org.aya.unify.Synthesizer;
 import org.aya.util.error.Panic;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -45,7 +47,7 @@ import java.util.Objects;
 import static org.aya.tyck.tycker.TeleTycker.loadTele;
 
 public record StmtTycker(
-  @NotNull Reporter reporter,
+  @NotNull SuppressingReporter reporter,
   @NotNull ShapeFactory shapeFactory,
   @NotNull PrimFactory primFactory
 ) implements Problematic {
@@ -53,7 +55,25 @@ public record StmtTycker(
     return new ExprTycker(new TyckState(shapeFactory, primFactory),
       new MapLocalCtx(), new LocalLet(), reporter);
   }
-  public @NotNull TyckDef check(Decl predecl) {
+  public StmtTycker(
+    @NotNull Reporter reporter,
+    @NotNull ShapeFactory shapeFactory,
+    @NotNull PrimFactory primFactory
+  ) {
+    this(new SuppressingReporter(reporter, MutableList.create()), shapeFactory, primFactory);
+  }
+  public void suppress(@NotNull Decl decl) {
+    decl.suppresses.forEach(suppress -> {
+      switch (suppress) {
+        case Shadowing -> {
+          // Handled in resolving
+        }
+        case MostGeneralSolution -> reporter.suppress(MetaVarError.DidSomethingBad.class);
+      }
+    });
+  }
+  public @NotNull TyckDef check(@NotNull Decl predecl) {
+    suppress(predecl);
     ExprTycker tycker = null;
     if (predecl instanceof TeleDecl decl) {
       if (decl.ref().signature == null) tycker = checkHeader(decl);
@@ -123,6 +143,7 @@ public record StmtTycker(
   }
 
   public ExprTycker checkHeader(@NotNull TeleDecl decl) {
+    suppress(decl);
     var tycker = mkTycker();
     switch (decl) {
       case DataCon con -> checkKitsune(con, tycker);

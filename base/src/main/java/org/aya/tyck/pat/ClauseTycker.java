@@ -86,7 +86,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
           signature.params().view(), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
-          var usages = PatClassifier.firstMatchDomination(clauses, parent.reporter(), classes);
+          var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           // refinePatterns(lhsResults, usages, classes);
         }
       }

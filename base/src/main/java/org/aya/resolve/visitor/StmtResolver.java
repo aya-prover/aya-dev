@@ -140,7 +140,7 @@ public interface StmtResolver {
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, SeqView<TyckOrder> refs) {
     // check self-reference
     if (decl instanceof TyckOrder.Head head && refs.contains(head)) {
-      info.opSet().reporter.report(new TyckOrderError.SelfReference(head.unit()));
+      info.opSet().fail(new TyckOrderError.SelfReference(head.unit()));
       throw new Context.ResolvingInterruptedException();
     }
 

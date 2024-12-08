@@ -18,13 +18,14 @@ import kala.function.BooleanObjBiFunction;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
+import org.aya.generic.Suppress;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.AyaPsiTokenType;
-import org.aya.producer.error.BadModifierWarn;
+import org.aya.producer.error.BadXWarn;
 import org.aya.producer.error.ModifierProblem;
 import org.aya.producer.error.ParseError;
 import org.aya.syntax.concrete.Expr;
@@ -276,6 +277,27 @@ public record AyaProducer(
     return new DeclParseData(node, info, nameOrInfix.map(x -> x.name.data()).getOrNull(), modifier);
   }
 
+  private void pragma(GenericNode<?> node, Decl decl) {
+    node.childrenOfType(PRAGMA).forEach(pragma -> {
+      var nameToken = pragma.child(ID);
+      var name = nameToken.tokenText().toString();
+      var argsNode = pragma.peekChild(COMMA_SEP);
+      var args = argsNode != null ? argsNode.childrenOfType(ID) : SeqView.<GenericNode<?>>empty();
+      switch (name) {
+        case "suppress" -> args.forEach(arg -> {
+          for (var suppress : Suppress.values()) {
+            if (arg.tokenText().contentEquals(suppress.name())) {
+              decl.suppresses.add(suppress);
+              return;
+            }
+          }
+          reporter.report(new BadXWarn.BadWarnWarn(sourcePosOf(arg), arg.tokenText().toString()));
+        });
+        default -> reporter.report(new BadXWarn.BadPragmaWarn(sourcePosOf(nameToken), name));
+      }
+    });
+  }
+
   public @Nullable FnDecl fnDecl(@NotNull GenericNode<?> node) {
     var info = declInfo(node, ModifierParser.FN_FILTER);
     var name = info.checkName(this);
@@ -291,7 +313,7 @@ public record AyaProducer(
     var inline = info.modifier.misc(ModifierParser.CModifier.Inline);
     var overlap = info.modifier.misc(ModifierParser.CModifier.Overlap);
     if (dynamite instanceof FnBody.BlockBody && inline != null) {
-      reporter.report(new BadModifierWarn(inline, Modifier.Inline));
+      reporter.report(new BadXWarn.BadModifierWarn(inline, Modifier.Inline));
     }
     if (dynamite instanceof FnBody.ExprBody && overlap != null) {
       reporter.report(new ModifierProblem(overlap, ModifierParser.CModifier.Overlap, ModifierProblem.Reason.Duplicative));
@@ -300,6 +322,7 @@ public record AyaProducer(
     var ty = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());
     var fnDecl = new FnDecl(info.info, fnMods, name, tele, ty, dynamite);
     if (info.modifier.isExample()) fnDecl.isExample = true;
+    pragma(node, fnDecl);
     return fnDecl;
   }
 
@@ -340,6 +363,7 @@ public record AyaProducer(
     var decl = new DataDecl(info.info, name, tele, ty, body);
     if (info.modifier.isExample()) decl.isExample = true;
     giveMeOpen(info.modifier, decl, additional);
+    pragma(node, decl);
     return decl;
   }
 
@@ -360,6 +384,7 @@ public record AyaProducer(
     var members = node.childrenOfType(CLASS_MEMBER).mapIndexed(this::classMember).toImmutableSeq();
     var decl = new ClassDecl(name, info.info, members);
     giveMeOpen(info.modifier, decl, additional);
+    pragma(node, decl);
     return decl;
   }
 

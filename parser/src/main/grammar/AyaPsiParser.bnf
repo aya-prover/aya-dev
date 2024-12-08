@@ -158,7 +158,7 @@ private stmt_with_recover ::= !(<<eof>>) stmt {
 private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_IMPORT | KW_MODULE | DOC_COMMENT | KW_PUBLIC
                      | KW_DEF | KW_CLASS | KW_PRIM | KW_DATA | KW_VARIABLE
-                     | declModifier
+                     | declModifier | AT
 
 private repl ::= REPL_COMMAND? expr
 
@@ -197,9 +197,9 @@ bindBlock ::= (tighters | loosers)+
 tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
-fnDecl ::= declModifier*
+fnDecl ::= pragma* declModifier*
  KW_DEF declNameOrInfix
- tele* type? fnBody bindBlock? { pin=2 }
+ tele* type? fnBody bindBlock? { pin=3 }
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | elims? barredClause*
@@ -220,9 +220,10 @@ declModifier ::= KW_PRIVATE
                | KW_OVERLAP
                | KW_PARTIAL
                | KW_OPEN
+pragma ::= AT ID (LPAREN <<commaSep ID>> RPAREN)?
 
 classDecl
-  ::= declModifier*
+  ::= pragma* declModifier*
       KW_CLASS declNameOrInfix (KW_EXTENDS <<commaSep weakId>>)?
       bindBlock?
       (BAR classMember)*
@@ -235,9 +236,9 @@ classMember
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataDecl ::= declModifier*
+dataDecl ::= pragma* declModifier*
  KW_DATA declNameOrInfix?
- tele* type? bindBlock? dataBody* { pin=2 }
+ tele* type? bindBlock? dataBody* { pin=3 }
 
 dataBody ::= BAR (dataConClause | dataCon) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"

@@ -23,7 +23,7 @@ public interface Problematic {
   }
 
   default @NotNull Jdg fail(@NotNull AyaDocile expr, @NotNull Term type, @NotNull Problem prob) {
-    reporter().report(prob);
+    fail(prob);
     return new Jdg.Default(new ErrorTerm(expr), type);
   }
 
