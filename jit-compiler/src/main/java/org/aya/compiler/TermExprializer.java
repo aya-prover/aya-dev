@@ -251,9 +251,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         serializeClosureToImmutableSeq(rember),
         serializeClosureToImmutableSeq(forgor)
       );
-      case MatchTerm matchTerm -> ExprializeUtils.makeNew(CLASS_MATCHTERM,
-        serializeToImmutableSeq(CLASS_TERM, matchTerm.discriminant()),
-        serializeMatching(matchTerm.clauses())
+      case MatchTerm(var discr, var clauses) -> ExprializeUtils.makeNew(CLASS_MATCHTERM,
+        serializeToImmutableSeq(CLASS_TERM, discr),
+        serializeMatching(clauses)
       );
       case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
@@ -274,7 +274,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           return doSerialize(freeBody);
         });
 
-        return makeNew(CLASS_MATCHING, SOURCE_POS_SER, pats, bindCount, body);
+        return makeNew(CLASS_MATCHING, pats, bindCount, body);
       }));
   }
 

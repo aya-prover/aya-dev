@@ -5,7 +5,6 @@ package org.aya.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprializeUtils {
@@ -56,8 +55,6 @@ public interface ExprializeUtils {
   static @NotNull String isNull(@NotNull String term) {
     return term + " == null";
   }
-
-  @NotNull String SOURCE_POS_SER = makeSub(getJavaRef(SourcePos.class), "SER");
 
   static @NotNull String getInstance(@NotNull String defName) {
     return defName + "." + AyaSerializer.STATIC_FIELD_INSTANCE;
