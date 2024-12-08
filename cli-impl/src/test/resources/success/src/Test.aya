@@ -60,6 +60,7 @@ module Issue1181 {
 module Issue1185 {
   open Issue1181 hiding (what)
   def erm {A B : Type} (f : Sig A ** B) => how (fn t => t.1) f
+  @suppress(MostGeneralSolution)
   def sigma {A B : Type} (f : Sig A ** B) => how (fn t => t.2) f
 }
 

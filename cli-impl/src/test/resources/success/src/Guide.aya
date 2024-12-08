@@ -4,6 +4,7 @@ open import prelude hiding (++)
 variable n m o : Nat
 variable A B : Type
 
+@suppress(MostGeneralSolution)
 def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
   => Path (fn i => Vec (+-assoc i) A)
     (xs ++ (ys ++ zs))
