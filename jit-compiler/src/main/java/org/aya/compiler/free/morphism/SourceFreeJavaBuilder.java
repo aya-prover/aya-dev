@@ -17,7 +17,7 @@ import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public record SourceFreeJavaBuilder(@NotNull SourceBuilder builder) implements FreeJavaBuilder {
+public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implements FreeJavaBuilder<String> {
   // convert "Ljava/lang/Object;" to "java.lang.Object"
   public static @NotNull String toClassRef(@NotNull ClassDesc className) {
     // TODO: this won't work well with array
@@ -96,14 +96,15 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder builder) implements F
   }
 
   @Override
-  public void buildClass(
+  public @NotNull String buildClass(
     @NotNull CompiledAya compiledAya,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<ClassBuilder> builder
   ) {
-    this.builder.buildClass(className.displayName(), superclass, false, () ->
-      builder.accept(new SourceClassBuilder(className, this.builder)));
+    sourceBuilder.buildClass(className.displayName(), superclass, false, () ->
+      builder.accept(new SourceClassBuilder(className, sourceBuilder)));
+    return sourceBuilder.builder().toString();
   }
 
   @Override
