@@ -49,18 +49,7 @@ Error: Unable to solve the type of this literal:
        I'm confused about the following candidates:
          `Nat`, `Nat2`
 
-In file $FILE:5:17 ->
-
-  3 │   open inductive Option (A : Type)
-  4 │     | some A
-  5 │   def test => some 114514
-    │                    ╰────╯
-
-Error: Unsolved meta A
-       in `Option ?A`
-       in `Option ?A`
-
-3 error(s), 0 warning(s).
+2 error(s), 0 warning(s).
 Let's learn from that.
 
 Daylily:
@@ -193,16 +182,7 @@ Error: Unable to solve the type of this literal:
        I'm confused about the following candidates:
          `List`, `List2`
 
-In file $FILE:6:4 ->
-
-  4 │   
-  5 │   def good : List Unit => [ ]
-  6 │   def bad => [ unit ]
-    │       ╰─╯
-
-Error: Unsolved meta _
-
-3 error(s), 0 warning(s).
+2 error(s), 0 warning(s).
 Let's learn from that.
 
 NonPattern:

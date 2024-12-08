@@ -2,11 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.generic.Renamer;
-import org.aya.normalize.Finalizer;
-import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
@@ -53,12 +50,5 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     nameGen.unbindName(var);
     state.removeConnection(var);
     return result;
-  }
-
-  public @NotNull Term zonk(Term t) {
-    return new Finalizer.Zonk<>(this).zonk(t);
-  }
-  public ImmutableSeq<Param> zonk(ImmutableSeq<Param> tele) {
-    return tele.map(wp -> wp.descent(this::zonk));
   }
 }

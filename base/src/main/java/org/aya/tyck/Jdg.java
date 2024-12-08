@@ -2,11 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.SeqView;
 import kala.value.LazyValue;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -15,10 +13,8 @@ public sealed interface Jdg {
   @NotNull Term wellTyped();
   @NotNull Term type();
 
-  default @NotNull Jdg bindTele(@NotNull SeqView<LocalVar> vars) { return map(t -> t.bindTele(vars)); }
-
   /**
-   * @apiNote the mapper {@param f} may not executed immediately, so make sure that {@param f} is pure.
+   * @apiNote the mapper {@param f} may not execute immediately, so make sure that {@param f} is pure.
    */
   @NotNull Jdg map(@NotNull UnaryOperator<Term> f);
   default Jdg lift(int lift) { return map(t -> t.elevate(lift)); }

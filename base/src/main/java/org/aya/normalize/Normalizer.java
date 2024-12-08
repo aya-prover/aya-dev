@@ -44,82 +44,129 @@ public final class Normalizer implements UnaryOperator<Term> {
   private boolean usePostTerm = false;
   public Normalizer(@NotNull TyckState state) { this.state = state; }
 
-  @Override public Term apply(Term term) {
-    if (term instanceof StableWHNF || term instanceof FreeTerm) return term;
-    // ConCall for point constructors are always in WHNF
-    if (term instanceof ConCall con && !con.ref().hasEq()) return con;
-    var postTerm = term.descent(this);
-    // descent may change the java type of term, i.e. beta reduce,
-    // and can also reduce the subterms. We intend to return the reduction
-    // result when it beta reduces, so keep `postTerm` both when in NF mode or
-    // the term is not a call term.
-    var defaultValue = usePostTerm || term instanceof BetaRedex ? postTerm : term;
+  @SuppressWarnings("UnnecessaryContinue") @Override public Term apply(Term term) {
+    while (true) {
+      if (term instanceof StableWHNF || term instanceof FreeTerm) return term;
+      // ConCall for point constructors are always in WHNF
+      if (term instanceof ConCall con && !con.ref().hasEq()) return con;
+      var descentedTerm = term.descent(this);
+      // descent may change the java type of term, i.e. beta reduce,
+      // and can also reduce the subterms. We intend to return the reduction
+      // result when it beta reduces, so keep `descentedTerm` both when in NF mode or
+      // the term is not a call term.
+      var defaultValue = usePostTerm || term instanceof BetaRedex ? descentedTerm : term;
 
-    return switch (postTerm) {
-      case StableWHNF _, FreeTerm _ -> postTerm;
-      case BetaRedex app -> {
-        var result = app.make(this);
-        yield result == app ? defaultValue : apply(result);
-      }
-      case FnCall(var fn, int ulift, var args) -> switch (fn) {
-        case JitFn instance -> {
-          var result = instance.invoke(() -> defaultValue, args);
-          if (defaultValue != result) yield apply(result.elevate(ulift));
-          yield result;
+      switch (descentedTerm) {
+        case StableWHNF _, FreeTerm _ -> {
+          return descentedTerm;
         }
-        case FnDef.Delegate delegate -> {
-          FnDef core = delegate.core();
-          if (core == null) yield defaultValue;
-          if (!isOpaque(core)) yield switch (core.body()) {
-            case Either.Left(var body) -> apply(body.instantiateTele(args.view()));
-            case Either.Right(var clauses) -> {
-              var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
-                args, ulift, core.is(Modifier.Overlap));
-              // we may get stuck
-              if (result.isEmpty()) yield defaultValue;
-              yield apply(result.get());
+        case BetaRedex app -> {
+          var result = app.make(this);
+          if (result == app) return defaultValue;
+          term = result;
+          continue;
+        }
+        case FnCall(var fn, int ulift, var args) -> {
+          switch (fn) {
+            case JitFn instance -> {
+              var result = instance.invoke(() -> defaultValue, args);
+              if (defaultValue != result) {
+                term = result.elevate(ulift);
+                continue;
+              }
+              return result;
             }
-          };
-          yield defaultValue;
+            case FnDef.Delegate delegate -> {
+              FnDef core = delegate.core();
+              if (core == null) return defaultValue;
+              if (!isOpaque(core)) switch (core.body()) {
+                case Either.Left(var body): {
+                  term = body.instantiateTele(args.view());
+                  continue;
+                }
+                case Either.Right(var clauses): {
+                  var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
+                    args, ulift, core.is(Modifier.Overlap));
+                  // we may get stuck
+                  if (result.isEmpty()) return defaultValue;
+                  term = result.get();
+                  continue;
+                }
+              }
+              return defaultValue;
+            }
+          }
         }
-      };
-      case RuleReducer reduceRule -> {
-        var result = reduceRule.rule().apply(reduceRule.args());
-        if (result != null) yield apply(result);
-        // We can't handle it, try to delegate to FnCall
-        yield switch (reduceRule) {
-          case RuleReducer.Fn fn -> apply(fn.toFnCall());
-          case RuleReducer.Con _ -> postTerm;
-        };
-      }
-      case ConCall(var head, _) when !head.ref().hasEq() -> postTerm;
-      case ConCall call when call.conArgs().getLast() instanceof DimTerm dim ->
-        call.head().ref().equality(call.args(), dim == DimTerm.I0);
-      case PrimCall prim -> state.primFactory.unfold(prim, state);
-      case MetaPatTerm meta -> meta.inline(this);
-      case MetaCall meta -> state.computeSolution(meta, this);
-      case MetaLitTerm meta -> meta.inline(this);
-      case CoeTerm coe -> {
-        var r = coe.r();
-        var s = coe.s();
-        var A = coe.type();
-        if (state.isConnected(r, s)) yield LamTerm.ID;
+        case RuleReducer reduceRule -> {
+          var result = reduceRule.rule().apply(reduceRule.args());
+          if (result != null) {
+            term = result;
+            continue;
+          }
+          // We can't handle it, try to delegate to FnCall
+          switch (reduceRule) {
+            case RuleReducer.Fn fn -> {
+              term = fn.toFnCall();
+              continue;
+            }
+            case RuleReducer.Con _ -> {
+              return descentedTerm;
+            }
+          }
+        }
+        case ConCall(var head, _) when !head.ref().hasEq() -> {
+          return descentedTerm;
+        }
+        case ConCall call when call.conArgs().getLast() instanceof DimTerm dim -> {
+          return call.head().ref().equality(call.args(), dim == DimTerm.I0);
+        }
+        case PrimCall prim -> {
+          return state.primFactory.unfold(prim, state);
+        }
+        case MetaPatTerm meta -> {
+          return meta.inline(this);
+        }
+        case MetaCall meta -> {
+          return state.computeSolution(meta, this);
+        }
+        case MetaLitTerm meta -> {
+          return meta.inline(this);
+        }
+        case CoeTerm coe -> {
+          var r = coe.r();
+          var s = coe.s();
+          var A = coe.type();
+          if (state.isConnected(r, s)) return LamTerm.ID;
 
-        var i = new LocalVar("i");
-        yield switch (apply(A.apply(i))) {
-          case DepTypeTerm dep -> apply(dep.coe(i, coe));
-          case SortTerm _ -> LamTerm.ID;
-          // TODO: when the data is not indexed, also return ID
-          case DataCall data when data.args().isEmpty() -> LamTerm.ID;
-          case null, default -> defaultValue;
-        };
+          var i = new LocalVar("i");
+          switch (apply(A.apply(i))) {
+            case DepTypeTerm dep -> {
+              term = dep.coe(i, coe);
+              continue;
+            }
+            case SortTerm _ -> {
+              return LamTerm.ID;
+            }
+            // TODO: when the data is not indexed, also return ID
+            case DataCall data when data.args().isEmpty() -> {
+              return LamTerm.ID;
+            }
+            case null, default -> {
+              return defaultValue;
+            }
+          }
+        }
+        case MatchTerm matchTerm -> {
+          var result = tryUnfoldClauses(matchTerm.clauses().view(), matchTerm.discriminant(), 0, false);
+          if (result.isEmpty()) return defaultValue;
+          term = result.get();
+          continue;
+        }
+        default -> {
+          return defaultValue;
+        }
       }
-      case MatchTerm matchTerm -> {
-        var result = tryUnfoldClauses(matchTerm.clauses().view(), matchTerm.discriminant(), 0, false);
-        yield result.isEmpty() ? defaultValue : result.get();
-      }
-      default -> defaultValue;
-    };
+    }
   }
 
   private boolean isOpaque(@NotNull FnDef fn) {
