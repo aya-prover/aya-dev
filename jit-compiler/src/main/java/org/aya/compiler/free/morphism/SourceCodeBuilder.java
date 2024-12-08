@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
+import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeJava;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.data.FieldData;
@@ -15,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.IntFunction;
-import java.util.function.ObjIntConsumer;
+import java.util.function.*;
 
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
@@ -150,5 +148,18 @@ public record SourceCodeBuilder(@NotNull ClassDesc owner,
   @Override
   public @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner) {
     return new SourceFreeJava(getExpr(owner) + "." + field.name());
+  }
+
+  // We just hope user will not pass non-variable captures
+  @Override
+  public @NotNull FreeJava mkLambda(
+    @NotNull ImmutableSeq<FreeJava> captures,
+    @NotNull MethodData method,
+    @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
+  ) {
+    var name = ImmutableSeq.fill(method.paramTypes().size(), _ ->
+      sourceBuilder.nameGen().nextName());
+    var ap = new SourceArgumentProvider.Lambda(captures.map(SourceCodeBuilder::getExpr), name);
+    return new SourceFreeJava("(" + name.joinToString(", ") + ") -> " + builder.apply(ap));
   }
 }

@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.IntFunction;
+import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 
-public interface FreeJavaBuilder {
+public interface FreeJavaBuilder<Carrier> {
   interface ClassBuilder {
     void buildNestedClass(
       CompiledAya compiledAya,
@@ -89,10 +89,16 @@ public interface FreeJavaBuilder {
     @NotNull FreeJava refField(@NotNull FieldData field);
     @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner);
 
+    @NotNull FreeJava mkLambda(
+      @NotNull ImmutableSeq<FreeJava> captures,
+      @NotNull MethodData method,
+      @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
+    );
+
     // endregion expr
   }
 
-  void buildClass(
+  @NotNull Carrier buildClass(
     @NotNull CompiledAya compiledAya,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
