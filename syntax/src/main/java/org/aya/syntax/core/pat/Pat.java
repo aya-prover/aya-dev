@@ -276,10 +276,10 @@ public sealed interface Pat {
     @NotNull ImmutableSeq<Pat> pats,
     int bindCount, @Nullable WithPos<T> expr
   ) {
-    public static @NotNull Option<Term.Matching> lift(@NotNull Preclause<Term> clause) {
+    public static @NotNull Option<WithPos<Term.Matching>> lift(@NotNull Preclause<Term> clause) {
       if (clause.expr == null) return Option.none();
-      var match = new Term.Matching(clause.sourcePos, clause.pats, clause.bindCount, clause.expr.data());
-      return Option.some(match);
+      var match = new Term.Matching(clause.pats, clause.bindCount, clause.expr.data());
+      return Option.some(new WithPos<>(clause.sourcePos, match));
     }
   }
 }

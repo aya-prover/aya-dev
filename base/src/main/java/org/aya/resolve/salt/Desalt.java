@@ -14,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
-public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Expr> {
+public final class Desalt implements PosedUnaryOperator<Expr> {
+  private final @NotNull ResolveInfo info;
+  public Desalt(@NotNull ResolveInfo info) { this.info = info; }
   private @Nullable Integer levelVar(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.BinOpSeq _ -> levelVar(expr.descent(this));
@@ -24,21 +26,29 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
   }
 
   @Override public @NotNull Expr apply(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
-    if (expr instanceof Expr.App(var f, var args)) {
-      if (f.data() instanceof Expr.RawSort(SortKind kind) && kind != SortKind.ISet) {
-        if (args.sizeEquals(1)) {
-          var arg = args.getFirst();
-          if (arg.explicit() && arg.name() == null) {
-            // in case of [Type {foo = 0}], report at tyck stage
-            var level = levelVar(new WithPos<>(sourcePos, arg.arg().data()));
-            if (level != null) {
-              return switch (kind) {
+    switch (expr) {
+      case Expr.App(var f, var args) -> {
+        if (f.data() instanceof Expr.RawSort(SortKind kind) && kind != SortKind.ISet) {
+          if (args.sizeEquals(1)) {
+            var arg = args.getFirst();
+            if (arg.explicit() && arg.name() == null) {
+              // in case of [Type {foo = 0}], report at tyck stage
+              var level = levelVar(new WithPos<>(sourcePos, arg.arg().data()));
+              if (level != null) return switch (kind) {
                 case Type, Set -> new Expr.Sort(kind, level);
                 default -> Panic.unreachable();
               };
             }
           }
         }
+      }
+      case Expr.Match match -> {
+        return match.update(
+          match.discriminant().map(e -> e.descent(this)),
+          match.clauses().map(clause -> clause.descent(this, pattern))
+        );
+      }
+      default -> {
       }
     }
 
@@ -61,9 +71,7 @@ public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Ex
       case Expr.LetOpen letOpen -> apply(letOpen.body());
     };
   }
-
-  public @NotNull PosedUnaryOperator<Pattern> pattern() { return new Pat(); }
-
+  public @NotNull PosedUnaryOperator<Pattern> pattern = new Pat();
   private class Pat implements PosedUnaryOperator<Pattern> {
     @Override public Pattern apply(SourcePos sourcePos, Pattern pattern) {
       return switch (pattern) {

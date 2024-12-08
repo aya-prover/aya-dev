@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.Shaped;
@@ -53,6 +54,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   public static final String CLASS_CASTTERM = ExprializeUtils.getJavaRef(ClassCastTerm.class);
   public static final String CLASS_CLSCALL = ExprializeUtils.getJavaRef(ClassCall.class);
   public static final String CLASS_CLOSURE = ExprializeUtils.getJavaRef(Closure.class);
+  public static final String CLASS_MATCHTERM = ExprializeUtils.getJavaRef(MatchTerm.class);
+  public static final String CLASS_MATCHING = ExprializeUtils.makeSub(CLASS_TERM, getJavaRef(Term.Matching.class));
 
   /**
    * Terms that should be instantiated
@@ -248,20 +251,47 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         serializeClosureToImmutableSeq(rember),
         serializeClosureToImmutableSeq(forgor)
       );
+      case MatchTerm(var discr, var clauses) -> ExprializeUtils.makeNew(CLASS_MATCHTERM,
+        serializeToImmutableSeq(CLASS_TERM, discr),
+        serializeMatching(clauses)
+      );
       case NewTerm(var classCall) -> ExprializeUtils.makeNew(CLASS_NEW, doSerialize(classCall));
     };
+  }
+
+  private @NotNull String serializeMatching(@NotNull ImmutableSeq<Term.Matching> matchings) {
+    var serializer = new PatternExprializer(this.nameGen, false);
+    return makeImmutableSeq(CLASS_MATCHING,
+      matchings.map(x -> {
+        var pats = serializer.serializeToImmutableSeq(CLASS_PAT, x.patterns());
+        var bindCount = Integer.toString(x.bindCount());
+        var localTerms = ImmutableSeq.fill(x.bindCount(), LocalTerm::new);
+        var tmpSerializer = new TermExprializer(nameGen, ImmutableSeq.empty(), true);
+        var serLocalTerms = localTerms.map(tmpSerializer::serialize);
+        var body = withMany(serLocalTerms, vars -> {
+          // 0th term for index 0, so it is de bruijn index order instead of telescope order
+          var freeBody = x.body().instantiateAll(SeqView.narrow(vars.view()));
+          return doSerialize(freeBody);
+        });
+
+        return makeNew(CLASS_MATCHING, pats, bindCount, body);
+      }));
   }
 
   // def f (A : Type) : Fn (a : A) -> A
   // (A : Type) : Pi(^0, IdxClosure(^1))
   // (A : Type) : Pi(^0, JitClosure(_ -> ^1))
 
-  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
-    var bind = new LocalVar(subst);
-    this.binds.put(bind, subst);
-    var result = continuation.apply(new FreeTerm(bind));
-    this.binds.remove(bind);
+  private @NotNull String withMany(@NotNull ImmutableSeq<String> subst, @NotNull Function<ImmutableSeq<FreeTerm>, String> continuation) {
+    var binds = subst.map(LocalVar::new);
+    binds.forEachWith(subst, this.binds::put);
+    var result = continuation.apply(binds.map(FreeTerm::new));
+    binds.forEach(this.binds::remove);
     return result;
+  }
+
+  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
+    return withMany(ImmutableSeq.of(subst), xs -> continuation.apply(xs.getFirst()));
   }
 
   private @NotNull String serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
@@ -278,6 +308,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       else return serializeConst(appliedBody);
     });
   }
+
   private @NotNull String serializeConst(Term appliedBody) {
     return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
   }

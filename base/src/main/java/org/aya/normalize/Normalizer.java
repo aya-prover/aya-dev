@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.control.Either;
@@ -23,6 +24,7 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -71,7 +73,8 @@ public final class Normalizer implements UnaryOperator<Term> {
           if (!isOpaque(core)) yield switch (core.body()) {
             case Either.Left(var body) -> apply(body.instantiateTele(args.view()));
             case Either.Right(var clauses) -> {
-              var result = tryUnfoldClauses(clauses, args, ulift, core.is(Modifier.Overlap));
+              var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
+                args, ulift, core.is(Modifier.Overlap));
               // we may get stuck
               if (result.isEmpty()) yield defaultValue;
               yield apply(result.get());
@@ -111,6 +114,10 @@ public final class Normalizer implements UnaryOperator<Term> {
           case null, default -> defaultValue;
         };
       }
+      case MatchTerm matchTerm -> {
+        var result = tryUnfoldClauses(matchTerm.clauses().view(), matchTerm.discriminant(), 0, false);
+        yield result.isEmpty() ? defaultValue : result.get();
+      }
       default -> defaultValue;
     };
   }
@@ -120,7 +127,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   }
 
   public @NotNull Option<Term> tryUnfoldClauses(
-    @NotNull ImmutableSeq<Term.Matching> clauses, @NotNull ImmutableSeq<Term> args,
+    @NotNull SeqView<Term.Matching> clauses, @NotNull ImmutableSeq<Term> args,
     int ulift, boolean orderIndependent
   ) {
     for (var matchy : clauses) {

@@ -29,6 +29,7 @@ import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,13 +154,6 @@ public class CorePrettier extends BasePrettier<Term> {
       case PrimCall prim -> visitCoreCalls(prim.ref(), prim.args(), outer, optionImplicit());
       case ProjTerm projTerm ->
         Doc.cat(term(Outer.ProjHead, projTerm.of()), PROJ, Doc.plain(String.valueOf(projTerm.index())));
-      // case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
-      //     Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
-      //   Doc.vcat(match.clauses().view()
-      //     .map(clause -> Doc.sep(Doc.symbol("|"),
-      //       Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
-      //       Doc.symbol("=>"), term(Outer.Free, clause.body())))
-      //     .toImmutableSeq()));
       case DepTypeTerm depType -> {
         // Try to omit the Pi keyword
         if (depType.kind() == DTKind.Pi) {
@@ -201,6 +195,13 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
       case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
+      case MatchTerm(var discriminant, var clauses) -> {
+        var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
+        var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
+        var clauseDoc = visitClauses(clauses.view(), ImmutableSeq.fill(discriminant.size(), true).view());
+
+        yield Doc.cblock(prefix, 2, clauseDoc);
+      }
     };
   }
 
@@ -270,13 +271,13 @@ public class CorePrettier extends BasePrettier<Term> {
           defVar(def.ref()),
           visitTele(tele),
           HAS_TYPE,
-          term(Outer.Free, def.result().instantiateTeleVar(tele.view().map(x -> x.ref())))
+          term(Outer.Free, def.result().instantiateTeleVar(tele.view().map(ParamLike::ref)))
         });
         var line1sep = Doc.sepNonEmpty(line1);
         yield def.body().fold(
           term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instantiateTele(subst))),
           clauses -> Doc.vcat(line1sep,
-            Doc.nest(2, visitClauses(clauses, tele.view().map(ParamLike::explicit)))));
+            Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit)))));
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         defVar(field.ref()),
@@ -351,10 +352,10 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private @NotNull Doc visitClauses(
-    @NotNull ImmutableSeq<Term.Matching> clauses,
+    @NotNull SeqView<Term.Matching> clauses,
     @NotNull SeqView<Boolean> licits
   ) {
-    return Doc.vcat(clauses.view().map(matching -> visitClause(matching, licits)));
+    return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
   public @NotNull Doc visitParam(@NotNull Param param, @NotNull Outer outer) {

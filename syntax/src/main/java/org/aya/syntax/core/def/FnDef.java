@@ -8,6 +8,7 @@ import org.aya.generic.Modifier;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -16,12 +17,12 @@ import java.util.function.Function;
 public record FnDef(
   @NotNull DefVar<FnDef, FnDecl> ref,
   @NotNull EnumSet<Modifier> modifiers,
-  @NotNull Either<Term, ImmutableSeq<Term.Matching>> body
+  @NotNull Either<Term, ImmutableSeq<WithPos<Term.Matching>>> body
 ) implements TopLevelDef {
   public FnDef { ref.initialize(this); }
 
-  public static <T> Function<Either<Term, ImmutableSeq<Term.Matching>>, T>
-  factory(Function<Either<Term, ImmutableSeq<Term.Matching>>, T> function) {
+  public static <T> Function<Either<Term, ImmutableSeq<WithPos<Term.Matching>>>, T>
+  factory(Function<Either<Term, ImmutableSeq<WithPos<Term.Matching>>>, T> function) {
     return function;
   }
 

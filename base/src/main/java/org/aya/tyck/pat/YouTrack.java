@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
-import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
@@ -17,10 +16,9 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.UnaryOperator;
 
 /**
  * YouTrack checks confluence.
@@ -31,22 +29,21 @@ public record YouTrack(
   @NotNull ImmutableSeq<Param> telescope,
   @NotNull ExprTycker tycker, @NotNull SourcePos pos
 ) {
-  private record Info(int ix, @NotNull Term.Matching matching) { }
+  private record Info(int ix, @NotNull WithPos<Term.Matching> matching) { }
   private void unifyClauses(
-    Term result, PatMatcher prebuiltMatcher,
-    Info lhsInfo, Info rhsInfo,
+    Term result, Info lhsInfo, Info rhsInfo,
     MutableSet<ClausesProblem.Domination> doms
   ) {
     var ctx = tycker.localCtx();
     var unifyResult = PatUnify.unifyPat(
-      lhsInfo.matching.patterns().view(),
-      rhsInfo.matching.patterns().view(), ctx,
+      lhsInfo.matching.data().patterns().view(),
+      rhsInfo.matching.data().patterns().view(), ctx,
       MutableList.create(), MutableList.create());
     var unify = unifyResult.unify();
     domination(ctx, unify.rhsSubst(), lhsInfo.ix, rhsInfo.ix, rhsInfo.matching, doms);
     domination(ctx, unify.lhsSubst(), rhsInfo.ix, lhsInfo.ix, lhsInfo.matching, doms);
-    var lhsTerm = lhsInfo.matching.body().instantiateTele(unify.lhsSubst().view());
-    var rhsTerm = rhsInfo.matching.body().instantiateTele(unify.rhsSubst().view());
+    var lhsTerm = lhsInfo.matching.data().body().instantiateTele(unify.lhsSubst().view());
+    var rhsTerm = rhsInfo.matching.data().body().instantiateTele(unify.rhsSubst().view());
     // // TODO: Currently all holes at this point are in an ErrorTerm
     // if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaCall hole) {
     //   hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
@@ -62,7 +59,7 @@ public record YouTrack(
 
   private void domination(
     LocalCtx ctx, Seq<Term> subst,
-    int lhsIx, int rhsIx, Term.Matching matching,
+    int lhsIx, int rhsIx, WithPos<Term.Matching> matching,
     MutableSet<ClausesProblem.Domination> doms
   ) {
     if (subst.allMatch(dom -> dom instanceof FreeTerm(var ref) && ctx.contains(ref)))
@@ -73,7 +70,6 @@ public record YouTrack(
     @NotNull ClauseTycker.TyckResult clauses, @NotNull Term type,
     @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> mct
   ) {
-    var prebuildMatcher = new PatMatcher(false, UnaryOperator.identity());
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
       var contents = results.cls()
@@ -82,7 +78,7 @@ public record YouTrack(
       for (int i = 1, size = contents.size(); i < size; i++) {
         var ix = i;
         tycker.subscoped(() -> {
-          unifyClauses(type, prebuildMatcher, contents.get(ix - 1), contents.get(ix), doms);
+          unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
           return null;
         });
       }

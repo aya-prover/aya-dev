@@ -216,7 +216,11 @@ public class TyckTest {
     System.out.println(sortResult.debuggerOnlyToString());
   }
 
-  public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }
+  public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {
+    public TyckDef find(@NotNull String name) {
+      return defs.find(x -> x.ref().name().equals(name)).get();
+    }
+  }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {
     var moduleLoader = SyntaxTestUtil.moduleLoader();

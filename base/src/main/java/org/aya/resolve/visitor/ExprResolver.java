@@ -194,6 +194,13 @@ public record ExprResolver(
           letOpen.sourcePos(), letOpen.useHide());
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
+      case Expr.Match match -> {
+        var discriminant = match.discriminant().map(x -> x.descent(this));
+        // FIXME: #clause enters Where.FnPattern and Where.FnBody, does it matter?
+        var clauses = match.clauses().map(this::clause);
+        yield match.update(discriminant, clauses);
+      }
+
       case Expr newExpr -> newExpr.descent(this);
     };
   }

@@ -11,6 +11,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -56,10 +57,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
       case Either.Right(var clauses) -> {
         var ser = new PatternSerializer(this.sourceBuilder, argTerms, onStuckCon, onStuckCon);
-        ser.serialize(clauses.map(matching -> new PatternSerializer.Matching(
-          matching.bindCount(), matching.patterns(), (s, bindSize) ->
-          s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
-        )));
+        ser.serialize(clauses.view()
+          .map(WithPos::data)
+          .map(matching -> new PatternSerializer.Matching(
+            matching.bindCount(), matching.patterns(), (s, bindSize) ->
+            s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
+          ))
+          .toImmutableSeq());
       }
     }
   }

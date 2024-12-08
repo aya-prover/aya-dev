@@ -557,6 +557,32 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
+  record Match(
+    @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+    @NotNull ImmutableSeq<Pattern.Clause> clauses
+  ) implements Expr {
+    public @NotNull Match update(
+      @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+      @NotNull ImmutableSeq<Pattern.Clause> clauses
+    ) {
+      return this.discriminant.sameElements(discriminant, true)
+        && this.clauses.sameElements(clauses, true)
+        ? this
+        : new Match(discriminant, clauses);
+    }
+
+    @Override
+    public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(discriminant.map(x -> x.descent(f)), clauses.map(x -> x.descent(f)));
+    }
+
+    @Override
+    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      discriminant.forEach(f::accept);
+      // TODO: what about clauses?
+    }
+  }
+
   static @NotNull WithPos<Expr> buildPi(@NotNull SourcePos sourcePos, @NotNull SeqView<Param> params, @NotNull WithPos<Expr> body) {
     return buildNested(sourcePos, params, body, (a, b) -> new DepType(DTKind.Pi, a, b));
   }
