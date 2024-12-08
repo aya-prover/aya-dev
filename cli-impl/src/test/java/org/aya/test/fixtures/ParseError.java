@@ -12,7 +12,13 @@ public interface ParseError {
     inline def id {A : Type} A : A
     | a => a
     """;
-  @Language("Aya") String testOverlapOnExpr = """
-    overlap def id {A : Type} (a : A) => a
+  @Language("Aya") String testOverlapOnExpr = "overlap def id {A : Type} (a : A) => a";
+  @Language("Aya") String testIgnorePragma = """
+    @thisWillNeverBeARealPragma
+    def id {A : Type} (a : A) => a
+    """;
+  @Language("Aya") String testIgnoreSuppressed = """
+    @suppress(thisWillNeverBeARealWarning)
+    def id {A : Type} (a : A) => a
     """;
 }

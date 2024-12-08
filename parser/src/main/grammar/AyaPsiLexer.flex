@@ -56,10 +56,10 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 // Identifier, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/\[\]a-zA-Z_\u2200-\u22FF]
+AYA_SIMPLE_LETTER = [~!#$%\^&*+=<>?/\[\]a-zA-Z_\u2200-\u22FF]
 AYA_UNICODE = [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]
 AYA_LETTER = {AYA_SIMPLE_LETTER} | {AYA_UNICODE}
-AYA_LETTER_FOLLOW = {AYA_LETTER} | [0-9'|-]
+AYA_LETTER_FOLLOW = {AYA_LETTER} | [0-9'@|-]
 REPL_COMMAND = : {AYA_LETTER_FOLLOW}+
 ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \/\\ | \\\/
 

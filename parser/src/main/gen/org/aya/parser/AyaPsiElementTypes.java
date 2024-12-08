@@ -73,6 +73,7 @@ public interface AyaPsiElementTypes {
   IElementType PATTERN = new AyaPsiElementType("PATTERN");
   IElementType PATTERNS = new AyaPsiElementType("PATTERNS");
   IElementType PI_EXPR = new AyaPsiElementType("PI_EXPR");
+  IElementType PRAGMA = new AyaPsiElementType("PRAGMA");
   IElementType PRIM_DECL = new AyaPsiElementType("PRIM_DECL");
   IElementType PRIM_NAME = new AyaPsiElementType("PRIM_NAME");
   IElementType PROJ_EXPR = new AyaPsiElementType("PROJ_EXPR");

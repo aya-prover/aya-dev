@@ -21,8 +21,7 @@ public record ModifierProblem(
     Duplicative
   }
 
-  @Override
-  public @NotNull Doc describe(@NotNull PrettierOptions options) {
+  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.sep(
       Doc.english("The modifier"),
       Doc.styled(BasePrettier.KEYWORD, modifier.keyword),
