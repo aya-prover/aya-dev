@@ -29,7 +29,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern()));
+    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern));
   }
 
   /**
