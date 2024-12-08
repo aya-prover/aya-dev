@@ -50,7 +50,7 @@ public record StmtBinder(@NotNull ResolveInfo info) {
     }
 
     // make compiler happy 😥
-    info.opSet().reporter.report(
+    info.opSet().fail(
       new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();
   }

@@ -107,8 +107,7 @@ public class ReplCompiler {
     try {
       var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
       compiler.start();
-      var owner = compiler.libraryOwner();
-      importModule(owner);
+      importModule(compiler.libraryOwner());
     } catch (LibraryConfigData.BadConfig bad) {
       reporter.reportString("Cannot load malformed library: " + bad.getMessage(), Problem.Severity.ERROR);
     }
