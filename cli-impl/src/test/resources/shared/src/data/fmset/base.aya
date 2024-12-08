@@ -14,6 +14,7 @@ overlap def infixr ++ (xs ys : FMSet A) : FMSet A
 | comm x y xs' i, _ => comm x y (xs' ++ ys) i
 tighter :] =
 
+@suppress(MostGeneralSolution)
 def ++-assoc {xs ys zs : FMSet A} : xs ++ (ys ++ zs) = (xs ++ ys) ++ zs elim xs
 | [] => refl
 | x :] xs' => pmap (x :]) ++-assoc

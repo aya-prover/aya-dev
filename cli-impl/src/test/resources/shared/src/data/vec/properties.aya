@@ -5,6 +5,7 @@ open import data::vec::base using (Vec, :>, [], ++, vmap)
 variable A B : Type
 variable n m o : Nat
 
+@suppress(MostGeneralSolution)
 def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
   : Path (\i => Vec (+-assoc i) A)
     (xs ++ (ys ++ zs))
