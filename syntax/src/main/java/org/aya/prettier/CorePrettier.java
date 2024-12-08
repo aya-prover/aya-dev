@@ -154,13 +154,6 @@ public class CorePrettier extends BasePrettier<Term> {
       case PrimCall prim -> visitCoreCalls(prim.ref(), prim.args(), outer, optionImplicit());
       case ProjTerm projTerm ->
         Doc.cat(term(Outer.ProjHead, projTerm.of()), PROJ, Doc.plain(String.valueOf(projTerm.index())));
-      // case MatchTerm match -> Doc.cblock(Doc.sep(Doc.styled(KEYWORD, "match"),
-      //     Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
-      //   Doc.vcat(match.clauses().view()
-      //     .map(clause -> Doc.sep(Doc.symbol("|"),
-      //       Doc.commaList(clause.patterns().map(p -> pat(p, Outer.Free))),
-      //       Doc.symbol("=>"), term(Outer.Free, clause.body())))
-      //     .toImmutableSeq()));
       case DepTypeTerm depType -> {
         // Try to omit the Pi keyword
         if (depType.kind() == DTKind.Pi) {

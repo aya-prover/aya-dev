@@ -123,13 +123,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.Proj expr -> Doc.cat(term(Outer.ProjHead, expr.tup().data()), PROJ,
         Doc.plain(expr.ix().fold(Objects::toString, QualifiedID::join)));
-      // case Expr.Match match ->
-      //   Doc.cblock(Doc.cat(Doc.styled(KEYWORD, "match"), Doc.commaList(match.discriminant().map(t -> term(Outer.Free, t)))), 2,
-      //     Doc.vcat(match.clauses().view()
-      //       .map(clause -> Doc.sep(Doc.symbol("|"),
-      //         patterns(clause.patterns),
-      //         clause.expr.map(t -> Doc.cat(Doc.symbol("=>"), term(Outer.Free, t))).getOrDefault(Doc.empty())))
-      //       .toImmutableSeq()));
       case Expr.Unresolved expr -> Doc.plain(expr.name().join());
       case Expr.Ref expr -> {
         var ref = expr.var();
