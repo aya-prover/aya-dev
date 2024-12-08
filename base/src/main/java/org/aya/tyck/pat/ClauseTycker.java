@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
+import org.aya.normalize.Finalizer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
@@ -36,7 +37,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
-public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problematic, Stateful {
+public final class ClauseTycker implements Problematic, Stateful {
+  private final @NotNull ExprTycker exprTycker;
+  private final Finalizer.Zonk<ClauseTycker> zonker = new Finalizer.Zonk<>(this);
+  public ClauseTycker(@NotNull ExprTycker exprTycker) { this.exprTycker = exprTycker; }
+
   public record TyckResult(
     @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
     boolean hasLhsError
@@ -122,7 +127,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
     // inline terms in rhsResult
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
       preclause.sourcePos(),
-      preclause.pats().map(p -> p.descentTerm(exprTycker::zonk)),
+      preclause.pats().map(p -> p.descentTerm(zonker::zonk)),
       preclause.bindCount(), preclause.expr()
     ));
 
@@ -208,7 +213,7 @@ public record ClauseTycker(@NotNull ExprTycker exprTycker) implements Problemati
         // now exprTycker has all substitutions that PatternTycker introduced.
         wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
         exprTycker.solveMetas();
-        wellBody = exprTycker.zonk(wellBody);
+        wellBody = zonker.zonk(wellBody);
 
         // bind all pat bindings
         var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();

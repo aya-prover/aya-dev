@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
 import org.aya.syntax.core.term.MetaPatTerm;
+import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
@@ -47,6 +49,11 @@ public interface Finalizer {
     }
     @Override public @NotNull TyckState state() { return delegate.state(); }
     @Override public @NotNull Reporter reporter() { return delegate.reporter(); }
+
+    public ImmutableSeq<Param> zonk(ImmutableSeq<Param> tele) {
+      return tele.map(wp -> wp.descent(this::zonk));
+    }
+
     public @NotNull Term zonk(@NotNull Term term) {
       stack.push(term);
       var result = doZonk(term);

@@ -9,6 +9,7 @@ import kala.control.Option;
 import org.aya.generic.Modifier;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
+import org.aya.normalize.Finalizer;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
@@ -95,8 +96,9 @@ public record StmtTycker(
             var expectedType = signature.result().instantiateTeleVar(teleVars.view());
             var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
-            var resultTerm = tycker.zonk(result).bindTele(teleVars.view());
-            fnRef.signature = fnRef.signature.descent(tycker::zonk);
+            var zonker = new Finalizer.Zonk<>(tycker);
+            var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
+            fnRef.signature = fnRef.signature.descent(zonker::zonk);
             yield factory.apply(Either.left(resultTerm));
           }
           case FnBody.BlockBody(var clauses, var elims, _) -> {
@@ -155,7 +157,8 @@ public record StmtTycker(
         if (result == null) result = new WithPos<>(data.sourcePos(), new Expr.Sort(SortKind.Type, 0));
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
-        signature = signature.descent(tycker::zonk);
+        var zonker = new Finalizer.Zonk<>(tycker);
+        signature = signature.descent(zonker::zonk);
         var sort = SortTerm.Type0;
         if (signature.result() instanceof SortTerm userSort) sort = userSort;
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
@@ -172,7 +175,8 @@ public record StmtTycker(
         // For ExprBody, they will be zonked later
         if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
           tycker.solveMetas();
-          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(tycker::zonk);
+          var zonker = new Finalizer.Zonk<>(tycker);
+          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(zonker::zonk);
           if (fnRef.signature.params().isEmpty() && cls.isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
@@ -192,8 +196,9 @@ public record StmtTycker(
     assert result != null; // See AyaProducer
     var signature = teleTycker.checkSignature(member.telescope, result);
     tycker.solveMetas();
+    var zonker = new Finalizer.Zonk<>(tycker);
     signature = signature.pusheen(tycker::whnf)
-      .descent(tycker::zonk)
+      .descent(zonker::zonk)
       .bindTele(
         tycker.state.classThis.pop(),
         new Param("self", classCall, false),
@@ -289,10 +294,11 @@ public record StmtTycker(
 
     // the result will refer to the telescope of con if it has patterns,
     // the path result may also refer to it, so we need to bind both
-    var boundDataCall = (DataCall) tycker.zonk(freeDataCall).bindTele(selfBinds);
-    if (boundaries != null) boundaries = (EqTerm) tycker.zonk(boundaries).bindTele(selfBinds);
+    var zonker = new Finalizer.Zonk<>(tycker);
+    var boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
+    if (boundaries != null) boundaries = (EqTerm) zonker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var wholeSig = new AbstractTele.Locns(tycker.zonk(selfTele), new TupTerm(
+    var wholeSig = new AbstractTele.Locns(zonker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       boundDataCall, boundariesWithDummy))
@@ -336,7 +342,8 @@ public record StmtTycker(
       DepTypeTerm.makePi(core.telescope.view().map(Param::type), core.result),
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
-    primRef.signature = tele.descent(tycker::zonk);
+    var zonker = new Finalizer.Zonk<>(tycker);
+    primRef.signature = tele.descent(zonker::zonk);
     tycker.solveMetas();
     tycker.setLocalCtx(new MapLocalCtx());
   }

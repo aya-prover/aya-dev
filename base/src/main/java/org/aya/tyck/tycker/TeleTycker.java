@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
+import org.aya.normalize.Finalizer;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Param;
@@ -127,7 +128,8 @@ public sealed interface TeleTycker extends Contextful {
     public @NotNull Jdg checkInlineCode(@NotNull ImmutableSeq<Expr.Param> params, @NotNull WithPos<Expr> expr) {
       checkSignature(params, expr);
       tycker.solveMetas();
-      return this.result.map(tycker()::zonk);
+      var zonker = new Finalizer.Zonk<>(tycker);
+      return result.map(zonker::zonk);
     }
     @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
       if (!isResult) return tycker.ty(typeExpr);
