@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -21,8 +20,6 @@ import org.aya.util.error.WithPos;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
-
 /**
  * YouTrack checks confluence.
  *
@@ -34,8 +31,7 @@ public record YouTrack(
 ) {
   private record Info(int ix, @NotNull WithPos<Term.Matching> matching) { }
   private void unifyClauses(
-    Term result, PatMatcher prebuiltMatcher,
-    Info lhsInfo, Info rhsInfo,
+    Term result, Info lhsInfo, Info rhsInfo,
     MutableSet<ClausesProblem.Domination> doms
   ) {
     var ctx = tycker.localCtx();
@@ -74,7 +70,6 @@ public record YouTrack(
     @NotNull ClauseTycker.TyckResult clauses, @NotNull Term type,
     @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> mct
   ) {
-    var prebuildMatcher = new PatMatcher(false, UnaryOperator.identity());
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
     mct.forEach(results -> {
       var contents = results.cls()
@@ -83,7 +78,7 @@ public record YouTrack(
       for (int i = 1, size = contents.size(); i < size; i++) {
         var ix = i;
         tycker.subscoped(() -> {
-          unifyClauses(type, prebuildMatcher, contents.get(ix - 1), contents.get(ix), doms);
+          unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
           return null;
         });
       }
