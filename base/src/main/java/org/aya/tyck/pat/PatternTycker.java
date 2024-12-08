@@ -126,7 +126,7 @@ public class PatternTycker implements Problematic, Stateful {
         if (selection != null) {
           foundError(new PatternProblem.PossiblePat(pattern, selection));
         }
-        yield Pat.Absurd.INSTANCE;
+        yield Pat.Misc.Absurd;
       }
       case Pattern.Tuple(var l, var r) -> {
         if (!(exprTycker.whnf(type) instanceof DepTypeTerm(var kind, var lT, var rT) && kind == DTKind.Sigma)) {

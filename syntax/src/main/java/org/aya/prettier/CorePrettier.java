@@ -245,8 +245,11 @@ public class CorePrettier extends BasePrettier<Term> {
           optionImplicit());
         yield conDoc(outer, licit, conDoc, con.args().isEmpty());
       }
-      case Pat.Absurd _ -> Doc.bracedUnless(PAT_ABSURD, licit);
-      case Pat.Tuple (var l, var r) -> Doc.licit(licit,
+      case Pat.Misc misc -> switch (misc) {
+        case Absurd -> Doc.bracedUnless(PAT_ABSURD, licit);
+        case UntypedBind -> Doc.bracedUnless(linkDef(LocalVar.IGNORED), licit);
+      };
+      case Pat.Tuple(var l, var r) -> Doc.licit(licit,
         Doc.commaList(pat(l, true, Outer.Free), pat(r, true, Outer.Free)));
       case Pat.ShapedInt lit -> Doc.bracedUnless(lit.repr() == 0
           ? linkLit(0, lit.zero(), CON)

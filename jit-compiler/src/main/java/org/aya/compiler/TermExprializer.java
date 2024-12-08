@@ -194,11 +194,11 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case SortTerm sort when sort.equals(SortTerm.ISet) -> ExprializeUtils.makeSub(
         ExprializeUtils.getJavaRef(SortTerm.class), "ISet");
       case SortTerm(var kind, var ulift) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaRef(SortTerm.class),
-        ExprializeUtils.makeSub(CLASS_SORTKIND, kind.name()),
+        ExprializeUtils.makeEnum(CLASS_SORTKIND, kind),
         Integer.toString(ulift));
       case DepTypeTerm(var kind, var param, var body) -> ExprializeUtils.makeNew(
         ExprializeUtils.getJavaRef(DepTypeTerm.class),
-        ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(DTKind.class), kind.name()),
+        ExprializeUtils.makeEnum(ExprializeUtils.getJavaRef(DTKind.class), kind),
         doSerialize(param),
         serializeClosure(body)
       );

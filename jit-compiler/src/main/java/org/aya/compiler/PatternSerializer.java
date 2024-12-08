@@ -68,7 +68,15 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Once continuation) {
     switch (pat) {
-      case Pat.Absurd _ -> buildIfElse("Panic.unreachable()", State.Stuck, continuation);
+      case Pat.Misc misc -> {
+        switch (misc) {
+          case Absurd -> buildIfElse("Panic.unreachable()", State.Stuck, continuation);
+          case UntypedBind -> {
+            onMatchBind(term);
+            continuation.run();
+          }
+        }
+      }
       case Pat.Bind _ -> {
         onMatchBind(term);
         continuation.run();

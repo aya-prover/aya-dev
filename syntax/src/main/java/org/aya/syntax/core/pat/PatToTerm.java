@@ -22,8 +22,12 @@ public interface PatToTerm {
   record Unary(@NotNull Consumer<Pat.Bind> freshCallback) implements Function<Pat, Term> {
     @Override public Term apply(Pat pat) {
       return switch (pat) {
-        // We expect this to be never used
-        case Pat.Absurd _ -> SortTerm.Type0;
+        case Pat.Misc misc -> switch (misc) {
+          // We expect this to be never used, but this needs to not panic because
+          // absurd clauses need to finish type checking
+          case Absurd -> SortTerm.Type0;
+          case UntypedBind -> Panic.unreachable();
+        };
         case Pat.Bind bind -> {
           freshCallback.accept(bind);
           yield new FreeTerm(bind.bind());
@@ -59,7 +63,7 @@ public interface PatToTerm {
 
     @Override public ImmutableSeq<Term> apply(Pat pat) {
       return switch (pat) {
-        case Pat.Absurd _, Pat.Meta _ -> Panic.unreachable();
+        case Pat.Misc _, Pat.Meta _ -> Panic.unreachable();
         case Pat.ShapedInt si -> ImmutableSeq.of(si.toTerm());
         case Pat.Bind bind -> {
           ctx.put(bind.bind(), bind.type());

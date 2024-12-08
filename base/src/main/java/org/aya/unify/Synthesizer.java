@@ -3,10 +3,10 @@
 package org.aya.unify;
 
 import org.aya.generic.Renamer;
+import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.ConCall;
@@ -122,7 +122,9 @@ public record Synthesizer(
       case DimTyTerm _ -> SortTerm.ISet;
       case MetaLitTerm mlt -> mlt.type();
       case StringTerm _ -> state().primFactory.getCall(PrimDef.ID.STRING);
-      case ClassCall classCall -> throw new UnsupportedOperationException("TODO");
+      case ClassCall classCall -> classCall.ref().members().view()
+        .drop(classCall.args().size())
+        .foldLeft(SortTerm.Type0, (acc, mem) -> DepTypeTerm.lubSigma(acc, mem.type()));
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
     };
