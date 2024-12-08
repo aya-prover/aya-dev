@@ -150,6 +150,11 @@ public record SourceCodeBuilder(@NotNull ClassDesc owner,
     return new SourceFreeJava(getExpr(owner) + "." + field.name());
   }
 
+  @Override
+  public @NotNull FreeJava refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+    return new SourceFreeJava(toClassRef(enumClass) + "." + enumName);
+  }
+
   // We just hope user will not pass non-variable captures
   @Override
   public @NotNull FreeJava mkLambda(

@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 
+@SuppressWarnings("unused")
 public interface FreeJavaBuilder<Carrier> {
   interface ClassBuilder {
     void buildNestedClass(
@@ -88,6 +89,14 @@ public interface FreeJavaBuilder<Carrier> {
 
     @NotNull FreeJava refField(@NotNull FieldData field);
     @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner);
+
+    @NotNull FreeJava refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
+
+    default @NotNull FreeJava refEnum(@NotNull Enum<?> value) {
+      var cd = FreeUtils.fromClass(value.getClass());
+      var name = value.name();
+      return refEnum(cd, name);
+    }
 
     @NotNull FreeJava mkLambda(
       @NotNull ImmutableSeq<FreeJava> captures,
