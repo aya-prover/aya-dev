@@ -1,5 +1,40 @@
 # Early changelog
 
+## v0.35
+
+Breaking changes:
+
+- Σ types are now binary rather than n-ary, and compilation is correctly implemented now
+
+Major new features:
+
+- Pattern matching expressions are now supported (since the locally nameless rewrite), in its most basic form (no dependent pattern matching yet).
+- Pragma syntax is implemented, with `suppress` for suppressing warnings. You can now suppress only one warning: `@suppress(MostGeneralSolution)` for the "solving with not the most general solution" warning.
+- JIT-compiled binaries are used right after being generated, even in the same library.
+- Projection expressions are now type-checked (yes, we forgor).
+
+Minor new features & user-visible bug fixes:
+
+- Add `--no-prelude` flag to disable loading the prelude.
+- When JIT-compiling a constant function, substitution of that function will be a constant function too.
+- Now clauses and return types of functions are correctly pretty printed, no more de Bruijn indices shown to the user.
+- Self-recursive function signatures are now correctly reported as errors.
+- Cubical `coe` on pi, sigma, un-parameterized inductive types, and sorts are correctly normalized.
+- Fix a long-standing bug of binary application term normalization.
+- Libraries with user goals in them will not be JIT-compiled.
+- The standard library has sum type and a couple of new lemmas on vectors now.
+- A bunch of error reports are implemented.
+- The "unsolved meta" error now is reported only once per meta.
+- Improved type checker to handle more meta-typed terms.
+
+Internal changes:
+
+- No longer replace `MatchException` with `RuntimeException` because we are on Java 21 now.
+- Update the Nix flake file.
+- Code from jit-class branch is mostly cherry-picked to main.
+- Pi and Sigma core terms are now combined and lots of code is shared.
+- The APIs for implementing `hcom` (interval equality) is ready.
+
 ## v0.34
 
 Semi-breaking changes:
