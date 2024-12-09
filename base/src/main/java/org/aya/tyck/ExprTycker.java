@@ -95,12 +95,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           }
         }
         case EqTerm eq -> {
+          Closure.Locns core = null;
           try (var ignored = subscope(ref, DimTyTerm.INSTANCE)) {
-            var core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
-            checkBoundaries(eq, core, body.sourcePos(), msg ->
-              new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-            yield new Jdg.Default(new LamTerm(core), eq);
+            core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
           }
+          checkBoundaries(eq, core, body.sourcePos(), msg ->
+            new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+          yield new Jdg.Default(new LamTerm(core), eq);
         }
         case MetaCall metaCall -> {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
