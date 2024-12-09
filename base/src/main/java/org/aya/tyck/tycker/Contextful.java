@@ -23,10 +23,10 @@ import java.util.function.Supplier;
 /**
  * Indicating something is {@link LocalCtx}ful.<br/>
  * Whenever you want to introduce some bind, make sure you are modifying
- * the {@link LocalCtx} that you own it, i.e. obtained from {@link Contextful#subscoped}.
+ * the {@link LocalCtx} that you own it, i.e. obtained from {@link Contextful#subscope}.
  * In fact, this is the rule of ownership 🦀🦀🦀.<br/>
  *
- * @see #subscoped(Supplier)
+ * @see #subscope()
  * @see #localCtx()
  */
 public interface Contextful {
