@@ -8,10 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeJava;
-import org.aya.compiler.free.FreeJavaBuilder;
-import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
@@ -53,11 +50,11 @@ public final class TermExprializer extends AbstractExprializer<Term> {
    */
   private final boolean allowLocalTerm;
 
-  public TermExprializer(@NotNull FreeJavaBuilder.ExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates) {
+  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates) {
     this(builder, instantiates, false);
   }
 
-  public TermExprializer(@NotNull FreeJavaBuilder.ExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates, boolean allowLocalTer) {
+  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates, boolean allowLocalTer) {
     super(builder);
     this.instantiates = instantiates;
     this.allowLocalTerm = allowLocalTer;
@@ -65,7 +62,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private TermExprializer(
-    @NotNull FreeJavaBuilder.ExprBuilder builder,
+    @NotNull FreeExprBuilder builder,
     @NotNull MutableLinkedHashMap<LocalVar, FreeJava> newBinds,
     boolean allowLocalTerm
   ) {

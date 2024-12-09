@@ -3,21 +3,17 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeJava;
-import org.aya.compiler.free.FreeJavaBuilder;
-import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
 public abstract class AbstractExprializer<T> {
-  protected final @NotNull FreeJavaBuilder.ExprBuilder builder;
+  protected final @NotNull FreeExprBuilder builder;
 
-  protected AbstractExprializer(@NotNull FreeJavaBuilder.ExprBuilder builder) { this.builder = builder; }
+  protected AbstractExprializer(@NotNull FreeExprBuilder builder) { this.builder = builder; }
 
   public final @NotNull FreeJava makeImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
     return makeImmutableSeq(Constants.IMMSEQ, typeName, terms);
@@ -55,7 +51,14 @@ public abstract class AbstractExprializer<T> {
     );
   }
 
+  /**
+   * Actually perform serialization, unlike {@link #serialize}
+   * which will perform some initialization after a {@code T} is obtained.
+   */
   protected abstract @NotNull FreeJava doSerialize(@NotNull T term);
 
+  /**
+   * Prepare and perform {@link #doSerialize}
+   */
   public abstract @NotNull FreeJava serialize(T unit);
 }

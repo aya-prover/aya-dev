@@ -5,10 +5,7 @@ package org.aya.compiler.free.morphism;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.AbstractSerializer;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeJava;
-import org.aya.compiler.free.FreeJavaBuilder;
-import org.aya.compiler.free.FreeJavaResolver;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldData;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.compile.CompiledAya;
@@ -35,7 +32,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
 
   public record SourceClassBuilder(@NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
                                    @NotNull SourceBuilder sourceBuilder)
-    implements FreeJavaBuilder.ClassBuilder {
+    implements FreeClassBuilder {
     @Override
     public @NotNull FreeJavaResolver resolver() {
       return parent;
@@ -46,7 +43,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
       CompiledAya compiledAya,
       @NotNull String name,
       @NotNull Class<?> superclass,
-      @NotNull Consumer<ClassBuilder> builder
+      @NotNull Consumer<FreeClassBuilder> builder
     ) {
       this.sourceBuilder.buildClass(owner.nested(name).displayName(), superclass, true, () ->
         builder.accept(this));
@@ -56,7 +53,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
       @NotNull String returnType,
       @NotNull String name,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+      @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
     ) {
       var params = paramTypes.map(x ->
         new AbstractSerializer.JitParam(this.sourceBuilder.nameGen().nextName(), toClassRef(x))
@@ -73,7 +70,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
       @NotNull ClassDesc returnType,
       @NotNull String name,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+      @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
     ) {
       buildMethod(toClassRef(returnType), name, paramTypes, builder);
       return new MethodData.Default(this.owner, name, returnType, paramTypes, false);
@@ -84,7 +81,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
       @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
       @NotNull ImmutableSeq<FreeJava> superConArgs,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
-      @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+      @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
     ) {
       buildMethod("/* constructor */", toClassName(this.owner), paramTypes, (ap, cb) -> {
         ((SourceCodeBuilder) cb).sourceBuilder()
@@ -108,7 +105,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     @NotNull CompiledAya compiledAya,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull Consumer<FreeClassBuilder> builder
   ) {
     sourceBuilder.buildClass(className.displayName(), superclass, false, () ->
       builder.accept(new SourceClassBuilder(this, className, sourceBuilder)));

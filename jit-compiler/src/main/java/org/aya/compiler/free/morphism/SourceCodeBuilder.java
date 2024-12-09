@@ -6,10 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeJava;
-import org.aya.compiler.free.FreeJavaBuilder;
-import org.aya.compiler.free.FreeJavaResolver;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldData;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodData;
@@ -25,7 +22,7 @@ public record SourceCodeBuilder(
   @NotNull SourceFreeJavaBuilder parent,
   @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
-) implements FreeJavaBuilder.CodeBuilder, FreeJavaBuilder.ExprBuilder {
+) implements FreeCodeBuilder, FreeExprBuilder {
   public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJava> args) {
     return args.view().map(x -> ((SourceFreeJava) x).expr()).joinToString(", ");
   }
@@ -51,16 +48,16 @@ public record SourceCodeBuilder(
   @Override
   public void ifNotTrue(
     @NotNull FreeJava notTrue,
-    @NotNull Consumer<FreeJavaBuilder.CodeBuilder> thenBlock,
-    @Nullable Consumer<FreeJavaBuilder.CodeBuilder> elseBlock
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     buildIf("! (" + getExpr(notTrue) + ")", thenBlock, elseBlock);
   }
 
   private void buildIf(
     @NotNull String condition,
-    @NotNull Consumer<FreeJavaBuilder.CodeBuilder> thenBlock,
-    @Nullable Consumer<FreeJavaBuilder.CodeBuilder> elseBlock
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     sourceBuilder.buildIfElse(condition,
       () -> thenBlock.accept(this),
@@ -72,8 +69,8 @@ public record SourceCodeBuilder(
   @Override
   public void ifTrue(
     @NotNull FreeJava theTrue,
-    @NotNull Consumer<FreeJavaBuilder.CodeBuilder> thenBlock,
-    @Nullable Consumer<FreeJavaBuilder.CodeBuilder> elseBlock
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     buildIf(getExpr(theTrue), thenBlock, elseBlock);
   }
@@ -82,8 +79,8 @@ public record SourceCodeBuilder(
   public void ifInstanceOf(
     @NotNull FreeJava lhs,
     @NotNull ClassDesc rhs,
-    @NotNull BiConsumer<FreeJavaBuilder.CodeBuilder, LocalVariable> thenBlock,
-    @Nullable Consumer<FreeJavaBuilder.CodeBuilder> elseBlock
+    @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     var name = sourceBuilder.nameGen().nextName();
     buildIf(getExpr(lhs) + " instanceof " + toClassRef(rhs) + name,
@@ -94,14 +91,14 @@ public record SourceCodeBuilder(
   @Override
   public void ifNull(
     @NotNull FreeJava isNull,
-    @NotNull Consumer<FreeJavaBuilder.CodeBuilder> thenBlock,
-    @Nullable Consumer<FreeJavaBuilder.CodeBuilder> elseBlock
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     buildIf(ExprializeUtils.isNull(getExpr(isNull)), thenBlock, elseBlock);
   }
 
   @Override
-  public void breakable(@NotNull Consumer<FreeJavaBuilder.CodeBuilder> innerBlock) {
+  public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
     sourceBuilder.appendLine("do {");
     sourceBuilder.runInside(() -> innerBlock.accept(this));
     sourceBuilder.appendLine("} while (false);");
@@ -116,8 +113,8 @@ public record SourceCodeBuilder(
   public void switchCase(
     @NotNull FreeJava elim,
     @NotNull ImmutableIntSeq cases,
-    @NotNull ObjIntConsumer<FreeJavaBuilder.CodeBuilder> branch,
-    @NotNull Consumer<FreeJavaBuilder.CodeBuilder> defaultCase
+    @NotNull ObjIntConsumer<FreeCodeBuilder> branch,
+    @NotNull Consumer<FreeCodeBuilder> defaultCase
   ) {
     sourceBuilder.buildSwitch(getExpr(elim), cases,
       i -> branch.accept(this, i),
