@@ -106,9 +106,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
           if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
           unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
-          var core = subscoped(ref, pi.param(), () ->
-            inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped()).bind(ref);
-          yield new Jdg.Default(new LamTerm(core), pi);
+          try (var ignored = subscope(ref, pi.param())) {
+            var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), pi);
+          }
         }
         default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
@@ -222,8 +223,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private @Nullable Closure makeClosurePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod, @NotNull Term core) {
     var ref = new FreeTerm(new LocalVar("i"));
-    var wellTyped = subscoped(ref.name(), DimTyTerm.INSTANCE, () ->
-      unifyTyReported(eq.appA(ref), cod.apply(ref), expr));
+    var wellTyped = false;
+    try (var ignored = subscope(ref.name(), DimTyTerm.INSTANCE)) {
+      wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
+    }
     if (!wellTyped) return null;
     if (expr.data() instanceof Expr.WithTerm with)
       addWithTerm(with, expr.sourcePos(), eq);
@@ -243,8 +246,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
-        yield subscoped(param.ref(), wellParam, () ->
-          new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref())));
+        try (var ignored = subscope(param.ref(), wellParam)) {
+          yield new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref()));
+        }
       }
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
@@ -470,10 +474,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
 
-    return subscoped(() -> {
+    try (var ignored = subscope()) {
       localLet.put(let.bind().bindName(), definedAsResult);
       return checker.apply(let.body());
-    });
+    }
   }
 
   /// region Overrides and public APIs
