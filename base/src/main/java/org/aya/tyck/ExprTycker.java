@@ -478,7 +478,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
-  @Contract(mutates = "this") public <R> R subscoped(@NotNull Supplier<R> action) {
+  @Deprecated @Contract(mutates = "this") public <R> R subscoped(@NotNull Supplier<R> action) {
     var derived = localCtx().derive();
     var parentCtx = setLocalCtx(derived);
     var parentDef = setLocalLet(localLet.derive());
@@ -488,13 +488,55 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     derived.extractLocal().forEach(state::removeConnection);
     return result;
   }
-  @Contract(mutates = "this")
+  @Deprecated @Contract(mutates = "this")
   public <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
     var parentCtx = setLocalCtx(localCtx().derive1(var, type));
     var result = action.get();
     setLocalCtx(parentCtx);
     state.removeConnection(var);
     return result;
+  }
+
+  private final class SubscopedVar implements AutoCloseable {
+    private final @NotNull LocalCtx parentCtx;
+    private final @NotNull LocalVar var;
+
+    public SubscopedVar(@NotNull LocalVar var, @NotNull Term type) {
+      this.var = var;
+      this.parentCtx = setLocalCtx(localCtx().derive1(var, type));
+    }
+
+    @Override
+    public void close() {
+      setLocalCtx(parentCtx);
+      state.removeConnection(var);
+    }
+  }
+
+  private final class SubscopedNoVar implements AutoCloseable {
+    private final @NotNull LocalCtx parentCtx;
+    private final @NotNull LocalLet parentDef;
+
+    public SubscopedNoVar() {
+      var derived = localCtx().derive();
+      this.parentCtx = setLocalCtx(derived);
+      this.parentDef = setLocalLet(localLet.derive());
+    }
+
+    @Override
+    public void close() {
+      setLocalCtx(parentCtx);
+      setLocalLet(parentDef);
+      localCtx().extractLocal().forEach(state::removeConnection);
+    }
+  }
+
+  public @NotNull AutoCloseable subscope() {
+    return new SubscopedNoVar();
+  }
+
+  public @NotNull AutoCloseable subscope(@NotNull LocalVar var, @NotNull Term type) {
+    return new SubscopedVar(var, type);
   }
 
   public @NotNull LocalLet localLet() { return localLet; }
