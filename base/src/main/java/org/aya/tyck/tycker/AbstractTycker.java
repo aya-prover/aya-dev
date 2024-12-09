@@ -15,8 +15,6 @@ import org.aya.unify.TermComparator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits ExprTycker, TermComparator {
   public final @NotNull TyckState state;
   private @NotNull LocalCtx localCtx;
@@ -44,29 +42,20 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   }
 
   public @NotNull SubscopedVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
-    return new SubscopedVar(type, nameGen);
+    var var = nameGen.bindName(type);
+    var parentCtx = setLocalCtx(localCtx.derive1(var, type));
+    return new SubscopedVar(var, nameGen, parentCtx, this);
   }
 
-  public final class SubscopedVar implements AutoCloseable {
-    private final @NotNull LocalCtx parentCtx;
-    private final @NotNull LocalVar var;
-    private final @NotNull Renamer nameGen;
-
-    public SubscopedVar(@NotNull Term type, @NotNull Renamer nameGen) {
-      this.nameGen = nameGen;
-      this.var = nameGen.bindName(type);
-      this.parentCtx = setLocalCtx(localCtx.derive1(var, type));
+  public record SubscopedVar(
+    @NotNull LocalVar var, @NotNull Renamer nameGen,
+    @NotNull LocalCtx parentCtx,
+    @NotNull AbstractTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+        tycker.setLocalCtx(parentCtx);
+        nameGen.unbindName(var);
+        tycker.state.removeConnection(var);
+      }
     }
-
-    public @NotNull LocalVar var() {
-      return var;
-    }
-
-    @Override
-    public void close() {
-      setLocalCtx(parentCtx);
-      nameGen.unbindName(var);
-      state.removeConnection(var);
-    }
-  }
 }

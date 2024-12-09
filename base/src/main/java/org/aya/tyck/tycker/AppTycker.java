@@ -72,9 +72,7 @@ public record AppTycker<Ex extends Exception>(
   }
 
   @SuppressWarnings("unchecked")
-  public @NotNull Jdg checkDefApplication(
-    @NotNull DefVar<?, ?> defVar
-  ) throws Ex {
+  public @NotNull Jdg checkDefApplication(@NotNull DefVar<?, ?> defVar) throws Ex {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
