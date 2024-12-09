@@ -483,10 +483,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  @Deprecated public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
-    return super.subscoped(type, action, nameGen);
-  }
-
   public @NotNull SubscopedVar subscope(@NotNull Term type) {
     return super.subscope(type, nameGen);
   }

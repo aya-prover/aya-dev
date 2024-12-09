@@ -42,15 +42,6 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }
-  @Deprecated public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
-    var var = nameGen.bindName(type);
-    var parentCtx = setLocalCtx(localCtx.derive1(var, type));
-    var result = action.apply(var);
-    setLocalCtx(parentCtx);
-    nameGen.unbindName(var);
-    state.removeConnection(var);
-    return result;
-  }
 
   public @NotNull SubscopedVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
     return new SubscopedVar(type, nameGen);
