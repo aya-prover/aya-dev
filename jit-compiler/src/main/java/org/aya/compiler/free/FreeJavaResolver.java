@@ -36,7 +36,7 @@ public interface FreeJavaResolver {
   ) {
     try {
       var field = owner.getField(name);
-      return resolve(FreeUtils.fromClass(owner), name, FreeUtils.fromClass(field.getType()));
+      return resolve(FreeUtil.fromClass(owner), name, FreeUtil.fromClass(field.getType()));
     } catch (NoSuchFieldException e) {
       throw new Panic(e);
     }
@@ -59,10 +59,10 @@ public interface FreeJavaResolver {
     var reallyFound = found.getFirst();
 
     return resolve(
-      FreeUtils.fromClass(owner),
+      FreeUtil.fromClass(owner),
       name,
-      FreeUtils.fromClass(reallyFound.getReturnType()),
-      ImmutableSeq.from(reallyFound.getParameterTypes()).map(FreeUtils::fromClass),
+      FreeUtil.fromClass(reallyFound.getReturnType()),
+      ImmutableSeq.from(reallyFound.getParameterTypes()).map(FreeUtil::fromClass),
       reallyFound.getDeclaringClass().isInterface()
     );
   }

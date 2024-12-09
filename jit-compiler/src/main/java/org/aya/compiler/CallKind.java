@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
-import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.FnCall;
@@ -17,8 +17,8 @@ public enum CallKind {
   public final @NotNull ClassDesc refType;
 
   CallKind(@NotNull Class<?> callType, @NotNull Class<?> refType) {
-    this.callType = FreeUtils.fromClass(callType);
-    this.refType = FreeUtils.fromClass(refType);
+    this.callType = FreeUtil.fromClass(callType);
+    this.refType = FreeUtil.fromClass(refType);
   }
 
   public static @NotNull CallKind from(@NotNull Callable call) {

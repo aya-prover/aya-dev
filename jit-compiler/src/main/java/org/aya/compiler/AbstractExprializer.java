@@ -20,7 +20,7 @@ public abstract class AbstractExprializer<T> {
   }
 
   public final @NotNull FreeJava makeImmutableSeq(@NotNull MethodData con, @NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
-    var args = builder.mkArray(FreeUtils.fromClass(typeName), terms.size(), terms);
+    var args = builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms);
     return builder.invoke(con, ImmutableSeq.of(args));
   }
 

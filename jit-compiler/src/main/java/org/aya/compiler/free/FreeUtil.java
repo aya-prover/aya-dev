@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public final class FreeUtils {
-  private FreeUtils() { }
+public final class FreeUtil {
+  private FreeUtil() { }
 
   public static @NotNull ClassDesc fromClass(@NotNull Class<?> clazz) {
     return ClassDesc.ofDescriptor(clazz.descriptorString());

@@ -20,13 +20,13 @@ import java.util.function.UnaryOperator;
 public final class Constants {
   private Constants() { }
 
-  public static final @NotNull ClassDesc CD_Term = FreeUtils.fromClass(Term.class);
-  public static final @NotNull ClassDesc CD_Seq = FreeUtils.fromClass(Seq.class);
-  public static final @NotNull ClassDesc CD_ImmutableSeq = FreeUtils.fromClass(ImmutableSeq.class);
+  public static final @NotNull ClassDesc CD_Term = FreeUtil.fromClass(Term.class);
+  public static final @NotNull ClassDesc CD_Seq = FreeUtil.fromClass(Seq.class);
+  public static final @NotNull ClassDesc CD_ImmutableSeq = FreeUtil.fromClass(ImmutableSeq.class);
 
   // Term -> Term
   public static final @NotNull MethodData CLOSURE = new MethodData.Default(
-    FreeUtils.fromClass(UnaryOperator.class),
+    FreeUtil.fromClass(UnaryOperator.class),
     "apply",
     CD_Term, ImmutableSeq.of(CD_Term),
     true
@@ -34,7 +34,7 @@ public final class Constants {
 
   // () -> Term
   public static final @NotNull MethodData THUNK = new MethodData.Default(
-    FreeUtils.fromClass(Supplier.class),
+    FreeUtil.fromClass(Supplier.class),
     "get",
     CD_Term, ImmutableSeq.empty(),
     true
@@ -49,15 +49,15 @@ public final class Constants {
   );
 
   public static final @NotNull MethodData IMMTREESEQ = new MethodData.Default(
-    FreeUtils.fromClass(ImmutableTreeSeq.class),
+    FreeUtil.fromClass(ImmutableTreeSeq.class),
     "from",
-    FreeUtils.fromClass(ImmutableTreeSeq.class),
+    FreeUtil.fromClass(ImmutableTreeSeq.class),
     ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
     false
   );
 
   public static final @NotNull MethodData BETAMAKE = new MethodData.Default(
-    FreeUtils.fromClass(BetaRedex.class),
+    FreeUtil.fromClass(BetaRedex.class),
     "make",
     CD_Term, ImmutableSeq.empty(),
     true
@@ -74,17 +74,17 @@ public final class Constants {
    * @see Reducible#invoke(Supplier, Seq)
    */
   public static final @NotNull MethodData REDUCIBLE_INVOKE = new MethodData.Default(
-    FreeUtils.fromClass(Reducible.class), "invoke",
-    CD_Term, ImmutableSeq.of(FreeUtils.fromClass(Supplier.class), CD_Seq), true
+    FreeUtil.fromClass(Reducible.class), "invoke",
+    CD_Term, ImmutableSeq.of(FreeUtil.fromClass(Supplier.class), CD_Seq), true
   );
 
   /**
    * @see Closure#mkConst(Term)
    */
   public static final @NotNull MethodData CLOSURE_MKCONST = new MethodData.Default(
-    FreeUtils.fromClass(Closure.class),
+    FreeUtil.fromClass(Closure.class),
     "mkConst",
-    FreeUtils.fromClass(Closure.class),
+    FreeUtil.fromClass(Closure.class),
     ImmutableSeq.of(CD_Term),
     true
   );

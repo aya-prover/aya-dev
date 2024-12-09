@@ -268,7 +268,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return new MethodData.Default(
       owner, METHOD_INVOKE,
       Constants.CD_Term,
-      SeqView.of(FreeUtils.fromClass(Supplier.class)).appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term))
+      SeqView.of(FreeUtil.fromClass(Supplier.class)).appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term))
         .toImmutableSeq(), false
     );
   }

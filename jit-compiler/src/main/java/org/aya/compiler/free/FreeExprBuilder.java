@@ -20,7 +20,7 @@ public interface FreeExprBuilder {
   @NotNull FreeJava mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args);
 
   default @NotNull FreeJava mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJava> args) {
-    return mkNew(FreeUtils.fromClass(className), args);
+    return mkNew(FreeUtil.fromClass(className), args);
   }
 
   @NotNull FreeJava refVar(@NotNull LocalVariable name);
@@ -37,7 +37,7 @@ public interface FreeExprBuilder {
   @NotNull FreeJava refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
 
   default @NotNull FreeJava refEnum(@NotNull Enum<?> value) {
-    var cd = FreeUtils.fromClass(value.getClass());
+    var cd = FreeUtil.fromClass(value.getClass());
     var name = value.name();
     return refEnum(cd, name);
   }
