@@ -85,6 +85,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.CHANGE_PP_WIDTH,
       ReplCommands.TOGGLE_UNICODE,
       ReplCommands.CHANGE_CWD,
+      ReplCommands.UNIMPORT,
       ReplCommands.SHOW_CWD,
       ReplCommands.SHOW_PROPERTY,
       ReplCommands.SHOW_MODULE_PATHS,

@@ -60,6 +60,7 @@ import java.nio.file.Path;
 public class ReplCompiler {
   public final @NotNull CountingReporter reporter;
   public final @NotNull ImmutableSeq<Path> modulePaths;
+  public final @NotNull MutableList<ResolveInfo> imports = MutableList.create();
   private final @NotNull SourceFileLocator locator;
   private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;
@@ -68,7 +69,6 @@ public class ReplCompiler {
   private final @NotNull GenericAyaFile.Factory fileManager;
   private final @NotNull AyaBinOpSet opSet;
   private final @NotNull TyckState tcState;
-  private final @NotNull MutableList<ResolveInfo> imports = MutableList.create();
 
   public ReplCompiler(
     @NotNull ImmutableSeq<Path> modulePaths,

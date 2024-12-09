@@ -102,6 +102,16 @@ public interface ReplCommands {
     }
   };
 
+  @NotNull Command UNIMPORT = new Command(ImmutableSeq.of("unimport"), "Remove an imported module from the context") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var index = repl.replCompiler.imports.indexWhere(ii ->
+        ii.modulePath().toString().equals(code.code));
+      if (index < 0) return Result.err("Cannot find module after name `" + code.code + "`", true);
+      repl.replCompiler.imports.removeAt(index);
+      return Result.ok("Removed module `" + code.code + "`", true);
+    }
+  };
+
   @NotNull Command CHANGE_CWD = new Command(ImmutableSeq.of("cd"), "Change current working directory") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Path path) {
       if (!Files.isDirectory(path)) return Result.err("cd: no such file or directory: " + path, true);
