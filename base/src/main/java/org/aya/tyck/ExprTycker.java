@@ -89,16 +89,18 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
         case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
           // unifyTyReported(param, dom, expr);
-          var core = subscoped(ref, dom, () ->
-            inherit(body, cod.apply(new FreeTerm(ref))).wellTyped()).bind(ref);
-          yield new Jdg.Default(new LamTerm(core), type);
+          try (var ignored = subscope(ref, dom)) {
+            var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), type);
+          }
         }
         case EqTerm eq -> {
-          var core = subscoped(ref, DimTyTerm.INSTANCE, () ->
-            inherit(body, eq.appA(new FreeTerm(ref))).wellTyped()).bind(ref);
-          checkBoundaries(eq, core, body.sourcePos(), msg ->
-            new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-          yield new Jdg.Default(new LamTerm(core), eq);
+          try (var ignored = subscope(ref, DimTyTerm.INSTANCE)) {
+            var core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
+            checkBoundaries(eq, core, body.sourcePos(), msg ->
+              new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+            yield new Jdg.Default(new LamTerm(core), eq);
+          }
         }
         case MetaCall metaCall -> {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
@@ -531,11 +533,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
-  public @NotNull AutoCloseable subscope() {
+  public @NotNull SubscopedNoVar subscope() {
     return new SubscopedNoVar();
   }
 
-  public @NotNull AutoCloseable subscope(@NotNull LocalVar var, @NotNull Term type) {
+  public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
     return new SubscopedVar(var, type);
   }
 
