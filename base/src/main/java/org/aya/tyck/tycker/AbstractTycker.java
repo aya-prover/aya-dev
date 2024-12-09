@@ -42,7 +42,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }
-  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
+  @Deprecated public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
     var var = nameGen.bindName(type);
     var parentCtx = setLocalCtx(localCtx.derive1(var, type));
     var result = action.apply(var);
@@ -50,5 +50,32 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     nameGen.unbindName(var);
     state.removeConnection(var);
     return result;
+  }
+
+  public @NotNull SubscopedVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
+    return new SubscopedVar(type, nameGen);
+  }
+
+  public final class SubscopedVar implements AutoCloseable {
+    private final @NotNull LocalCtx parentCtx;
+    private final @NotNull LocalVar var;
+    private final @NotNull Renamer nameGen;
+
+    public SubscopedVar(@NotNull Term type, @NotNull Renamer nameGen) {
+      this.nameGen = nameGen;
+      this.var = nameGen.bindName(type);
+      this.parentCtx = setLocalCtx(localCtx.derive1(var, type));
+    }
+
+    public @NotNull LocalVar var() {
+      return var;
+    }
+
+    @Override
+    public void close() {
+      setLocalCtx(parentCtx);
+      nameGen.unbindName(var);
+      state.removeConnection(var);
+    }
   }
 }

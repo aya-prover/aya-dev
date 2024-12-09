@@ -467,6 +467,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return super.subscoped(type, action, nameGen);
   }
 
+  public @NotNull SubscopedVar subscope(@NotNull Term type) {
+    return super.subscope(type, nameGen);
+  }
+
   public @NotNull FailureData getFailure() {
     var failure = this.failure;
     assert failure != null;

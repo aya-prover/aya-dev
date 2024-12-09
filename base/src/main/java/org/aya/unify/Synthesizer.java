@@ -79,8 +79,12 @@ public record Synthesizer(
       case AppTerm(var f, var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
       case DepTypeTerm(var kind, var piParam, var body) -> {
         if (!(trySynth(piParam) instanceof SortTerm pSort)) yield null;
-        var bTy = tycker.subscoped(piParam, param ->
-          trySynth(body.apply(param)), renamer);
+
+        Term bTy;
+        try (var scope = tycker.subscope(piParam, renamer)) {
+          var param = scope.var();
+          bTy = trySynth(body.apply(param));
+        }
 
         if (!(bTy instanceof SortTerm bSort)) yield null;
         yield switch (kind) {
