@@ -199,23 +199,31 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         });
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(DimTyTerm.INSTANCE, var ->
-          compare(
-            lbody.apply(var),
-            rbody.apply(var),
-            eq.appA(new FreeTerm(var))
-          ));
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
+          try (var scope = subscope(DimTyTerm.INSTANCE)) {
+            var var = scope.var();
+            yield compare(
+              lbody.apply(var),
+              rbody.apply(var),
+              eq.appA(new FreeTerm(var))
+            );
+          }
+        }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
       case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> subscoped(pi.param(), var ->
-          compare(
-            lbody.apply(var),
-            rbody.apply(var),
-            pi.body().apply(var)
-          ));
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
+          try (var scope = subscope(pi.param())) {
+            var var = scope.var();
+            yield compare(
+              lbody.apply(var),
+              rbody.apply(var),
+              pi.body().apply(var)
+            );
+          }
+        }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
         default -> compare(lhs, rhs, null);
@@ -285,8 +293,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(rhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
         if (!compare(coe.r(), rR, DimTyTerm.INSTANCE)) yield null;
         if (!compare(coe.s(), rS, DimTyTerm.INSTANCE)) yield null;
-        if (!subscoped(DimTyTerm.INSTANCE, var ->
-          compare(coe.type().apply(var), rType.apply(var), null))) yield null;
+        boolean tyResult;
+        try (var scope = subscope(DimTyTerm.INSTANCE)) {
+          var var = scope.var();
+          tyResult = compare(coe.type().apply(var), rType.apply(var), null);
+        }
+        if (!tyResult) yield null;
         yield coe.family();
       }
       case ProjTerm(var lof, var ldx) -> {
@@ -353,20 +365,22 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
   private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull DepTypeTerm type) {
-    return subscoped(type.param(), var -> {
+    try (var scope = subscope(type.param())) {
+      var var = scope.var();
       var lhsBody = lambda.body().apply(var);
       var rhsBody = AppTerm.make(rhs, new FreeTerm(var));
       return compare(lhsBody, rhsBody, type.body().apply(var));
-    });
+    }
   }
 
   private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull EqTerm type) {
-    return subscoped(DimTyTerm.INSTANCE, var -> {
+    try (var scope = subscope(DimTyTerm.INSTANCE)) {
+      var var = scope.var();
       var lhsBody = lambda.body().apply(var);
       var free = new FreeTerm(var);
       var rhsBody = AppTerm.make(rhs, free);
       return compare(lhsBody, rhsBody, type.appA(free));
-    });
+    }
   }
 
   private @Nullable Term compareMany(
@@ -401,7 +415,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull Function<LocalVar, R> continuation
   ) {
     if (!compare(lTy, rTy, null)) return onFailed.get();
-    return subscoped(lTy, continuation);
+    try (var scope = subscope(lTy)) {
+      var var = scope.var();
+      return continuation.apply(var);
+    }
   }
 
   private boolean sortLt(@NotNull SortTerm l, @NotNull SortTerm r) {
@@ -454,8 +471,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           compare(lBody.apply(var), rBody.apply(var), null));
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
-        var tyResult = subscoped(DimTyTerm.INSTANCE, var ->
-          compare(A.apply(var), B.apply(var), null));
+        var tyResult = false;
+        try (var scope = subscope(DimTyTerm.INSTANCE)) {
+          var var = scope.var();
+          tyResult = compare(A.apply(var), B.apply(var), null);
+        }
         if (!tyResult) yield false;
         yield compare(a0, b0, A.apply(DimTerm.I0)) && compare(a1, b1, A.apply(DimTerm.I1));
       }
@@ -463,7 +483,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
+  @Deprecated public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
     return super.subscoped(type, action, nameGen);
   }
 
