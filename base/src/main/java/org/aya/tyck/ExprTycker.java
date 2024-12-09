@@ -489,20 +489,17 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     @NotNull LocalVar var,
     @NotNull ExprTycker tycker
   ) implements AutoCloseable {
-    @Override
-    public void close() {
+    @Override public void close() {
       tycker.setLocalCtx(parentCtx);
       tycker.state.removeConnection(var);
     }
   }
 
   public record SubscopedNoVar(
-    @NotNull LocalCtx parentCtx,
-    @NotNull LocalLet parentDef,
+    @NotNull LocalCtx parentCtx, @NotNull LocalLet parentDef,
     @NotNull ExprTycker tycker
   ) implements AutoCloseable {
-    @Override
-    public void close() {
+    @Override public void close() {
       tycker.setLocalCtx(parentCtx);
       tycker.setLocalLet(parentDef);
       tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
@@ -511,14 +508,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public @NotNull SubscopedNoVar subscope() {
     return new SubscopedNoVar(
-      this.setLocalCtx(this.localCtx().derive()),
-      this.setLocalLet(this.localLet().derive()),
+      setLocalCtx(localCtx().derive()),
+      setLocalLet(localLet().derive()),
       this
     );
   }
 
   public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
-    return new SubscopedVar(this.setLocalCtx(this.localCtx().derive1(var, type)), var, this);
+    return new SubscopedVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
   }
 
   public @NotNull LocalLet localLet() { return localLet; }

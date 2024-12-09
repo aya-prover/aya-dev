@@ -293,13 +293,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(rhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
         if (!compare(coe.r(), rR, DimTyTerm.INSTANCE)) yield null;
         if (!compare(coe.s(), rS, DimTyTerm.INSTANCE)) yield null;
-        boolean tyResult;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
-          tyResult = compare(coe.type().apply(var), rType.apply(var), null);
+          var tyResult = compare(coe.type().apply(var), rType.apply(var), null);
+          yield tyResult ? coe.family() : null;
         }
-        if (!tyResult) yield null;
-        yield coe.family();
       }
       case ProjTerm(var lof, var ldx) -> {
         // Since {lhs} and {rhs} are whnf, at this point, {lof} is unable to evaluate.
@@ -349,7 +347,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
       }
       // We already compare arguments in compareApprox, if we arrive here,
-      // it means their arguments don't match (even the ref don't match),
+      // it means their arguments don't match (even the refs match),
       // so we are unable to do more if we can't normalize them.
       case FnCall _, PrimCall _ -> null;
 
