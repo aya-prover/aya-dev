@@ -3,6 +3,7 @@
 package org.aya.cli.interactive;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.function.CheckedFunction;
 import kala.value.MutableValue;
@@ -20,6 +21,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
+import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.FileModuleLoader;
@@ -58,6 +60,7 @@ import java.nio.file.Path;
 public class ReplCompiler {
   public final @NotNull CountingReporter reporter;
   public final @NotNull ImmutableSeq<Path> modulePaths;
+  public final @NotNull MutableList<ResolveInfo> imports = MutableList.create();
   private final @NotNull SourceFileLocator locator;
   private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;
@@ -93,7 +96,7 @@ public class ReplCompiler {
   private @NotNull ExprResolver.LiterateResolved
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
     var ctx = new EmptyContext(reporter, Path.of("dummy")).derive("dummy");
-    var resolveInfo = new ResolveInfo(ctx, primFactory, shapeFactory, opSet);
+    var resolveInfo = makeResolveInfo(ctx);
     return expr.descent(new Desalt(resolveInfo));
   }
 
@@ -115,7 +118,11 @@ public class ReplCompiler {
 
   private void importModule(@NotNull LibraryOwner owner) {
     owner.librarySources()
-      .map(src -> src.resolveInfo().get().thisModule())
+      .map(src -> {
+        var info = src.resolveInfo().get();
+        imports.append(info);
+        return info.thisModule();
+      })
       .filterIsInstance(PhysicalModuleContext.class)
       .forEach(mod -> context.importModuleContext(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE));
     owner.libraryDeps().forEach(this::importModule);
@@ -147,7 +154,7 @@ public class ReplCompiler {
       return programOrExpr.map(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
-          var resolveInfo = new ResolveInfo(context.fork(), primFactory, shapeFactory, opSet);
+          var resolveInfo = makeResolveInfo(context.fork());
           loader.resolveModule(resolveInfo, program, loader);
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
@@ -165,6 +172,13 @@ public class ReplCompiler {
       reporter.reportString(e.getMessage());
       return Either.left(ImmutableSeq.empty());
     }
+  }
+
+  private @NotNull ResolveInfo makeResolveInfo(@NotNull ModuleContext ctx) {
+    var resolveInfo = new ResolveInfo(ctx, primFactory, shapeFactory, opSet);
+    imports.forEach(ii -> resolveInfo.imports().put(
+      ii.modulePath().asName(), new ResolveInfo.ImportInfo(ii, false)));
+    return resolveInfo;
   }
 
   public @Nullable AnyVar parseToAnyVar(@NotNull String text) {

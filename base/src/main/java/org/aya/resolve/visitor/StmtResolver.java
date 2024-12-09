@@ -145,7 +145,7 @@ public interface StmtResolver {
     }
 
     info.depGraph().sucMut(decl).appendAll(refs
-      .filter(unit -> TyckUnit.needTyck(unit, info.thisModule().modulePath())));
+      .filter(unit -> TyckUnit.needTyck(unit, info.modulePath())));
   }
 
   /** @param decl is unmodified */

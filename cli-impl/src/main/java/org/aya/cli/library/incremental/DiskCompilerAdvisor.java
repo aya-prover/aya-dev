@@ -166,7 +166,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var coreMod = CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
     return doLoadCompiledCore(
       coreMod, resolveInfo.reporter(),
-      resolveInfo.thisModule().modulePath(), file.underlyingFile(), libraryRoot,
+      resolveInfo.modulePath(), file.underlyingFile(), libraryRoot,
       recurseLoader, resolveInfo.primFactory()
     );
   }

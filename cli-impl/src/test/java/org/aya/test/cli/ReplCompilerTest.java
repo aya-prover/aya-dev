@@ -10,6 +10,7 @@ import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
@@ -29,7 +30,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ReplCompilerTest {
   public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), new ThrowingReporter(AyaPrettierOptions.debug()), null);
 
-  @BeforeEach public void setup() { compiler.getContext().clear(); }
+  @BeforeEach public void setup() {
+    compiler.getContext().clear();
+    compiler.imports.clear();
+  }
 
   @Test public void library() throws IOException {
     compiler.loadToContext(Paths.get("../ide-lsp", "src", "test", "resources", "lsp-test-lib"));
@@ -46,6 +50,12 @@ public class ReplCompilerTest {
       compiler.getContext().giveMeHint(ImmutableSeq.of("Nat")));
     assertEquals(ImmutableSeq.of("Nat", "suc", "zero"),
       compiler.getContext().giveMeHint(ImmutableSeq.of("Nat", "Core")));
+
+    assertTrue(compiler.imports.anyMatch(ii -> ii.modulePath().toString().equals("Nat::Core")));
+
+    // The code below tests that the shape is correctly loaded, for #1174
+    compile("open Nat::Core");
+    assertInstanceOf(DataCall.class, compiler.computeType("114514", NormalizeMode.NULL));
   }
 
   @Test public void simpleExpr() { compile("Set"); }

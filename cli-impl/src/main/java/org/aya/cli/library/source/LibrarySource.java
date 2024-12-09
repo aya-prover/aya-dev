@@ -55,7 +55,7 @@ public record LibrarySource(
 
   public @NotNull ModulePath moduleName() {
     var info = resolveInfo.get();
-    if (info != null) return info.thisModule().modulePath();
+    if (info != null) return info.modulePath();
     var display = displayPath();
     var displayNoExt = display.resolveSibling(AyaFiles.stripAyaSourcePostfix(display.getFileName().toString()));
     return new ModulePath(IntRange.closedOpen(0, displayNoExt.getNameCount())

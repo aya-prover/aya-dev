@@ -18,6 +18,7 @@ import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.util.binop.OpDecl;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String}
  *                     cause we can re-export a module inside another module without import it.
  */
-@Debug.Renderer(text = "thisModule.modulePath().toString()")
+@Debug.Renderer(text = "modulePath().toString()")
 public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull PrimFactory primFactory,
@@ -70,6 +71,8 @@ public record ResolveInfo(
   public ExprTycker newTycker() { return newTycker(opSet.reporter); }
   public ExprTycker newTycker(@NotNull Reporter reporter) { return new ExprTycker(makeTyckState(), reporter); }
   public @NotNull TyckState makeTyckState() { return new TyckState(shapeFactory, primFactory); }
+
+  public @NotNull ModulePath modulePath() { return thisModule.modulePath(); }
 
   public record ImportInfo(@NotNull ResolveInfo resolveInfo, boolean reExport) { }
   public record OpRenameInfo(
