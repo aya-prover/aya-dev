@@ -43,14 +43,12 @@ import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -89,13 +87,16 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
         case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
           // unifyTyReported(param, dom, expr);
-          var core = subscoped(ref, dom, () ->
-            inherit(body, cod.apply(new FreeTerm(ref))).wellTyped()).bind(ref);
-          yield new Jdg.Default(new LamTerm(core), type);
+          try (var ignored = subscope(ref, dom)) {
+            var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), type);
+          }
         }
         case EqTerm eq -> {
-          var core = subscoped(ref, DimTyTerm.INSTANCE, () ->
-            inherit(body, eq.appA(new FreeTerm(ref))).wellTyped()).bind(ref);
+          Closure.Locns core;
+          try (var ignored = subscope(ref, DimTyTerm.INSTANCE)) {
+            core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
+          }
           checkBoundaries(eq, core, body.sourcePos(), msg ->
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
           yield new Jdg.Default(new LamTerm(core), eq);
@@ -104,9 +105,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
           if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
           unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
-          var core = subscoped(ref, pi.param(), () ->
-            inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped()).bind(ref);
-          yield new Jdg.Default(new LamTerm(core), pi);
+          try (var ignored = subscope(ref, pi.param())) {
+            var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), pi);
+          }
         }
         default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
       };
@@ -220,8 +222,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   private @Nullable Closure makeClosurePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod, @NotNull Term core) {
     var ref = new FreeTerm(new LocalVar("i"));
-    var wellTyped = subscoped(ref.name(), DimTyTerm.INSTANCE, () ->
-      unifyTyReported(eq.appA(ref), cod.apply(ref), expr));
+    var wellTyped = false;
+    try (var ignored = subscope(ref.name(), DimTyTerm.INSTANCE)) {
+      wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
+    }
     if (!wellTyped) return null;
     if (expr.data() instanceof Expr.WithTerm with)
       addWithTerm(with, expr.sourcePos(), eq);
@@ -241,8 +245,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
-        yield subscoped(param.ref(), wellParam, () ->
-          new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref())));
+        try (var ignored = subscope(param.ref(), wellParam)) {
+          yield new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref()));
+        }
       }
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
@@ -468,33 +473,49 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
 
-    return subscoped(() -> {
+    try (var ignored = subscope()) {
       localLet.put(let.bind().bindName(), definedAsResult);
       return checker.apply(let.body());
-    });
+    }
   }
 
   /// region Overrides and public APIs
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
-  @Contract(mutates = "this") public <R> R subscoped(@NotNull Supplier<R> action) {
-    var derived = localCtx().derive();
-    var parentCtx = setLocalCtx(derived);
-    var parentDef = setLocalLet(localLet.derive());
-    var result = action.get();
-    setLocalCtx(parentCtx);
-    setLocalLet(parentDef);
-    derived.extractLocal().forEach(state::removeConnection);
-    return result;
+
+  public record SubscopedVar(
+    @NotNull LocalCtx parentCtx,
+    @NotNull LocalVar var,
+    @NotNull ExprTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+      tycker.setLocalCtx(parentCtx);
+      tycker.state.removeConnection(var);
+    }
   }
-  @Contract(mutates = "this")
-  public <R> R subscoped(@NotNull LocalVar var, @NotNull Term type, @NotNull Supplier<R> action) {
-    var parentCtx = setLocalCtx(localCtx().derive1(var, type));
-    var result = action.get();
-    setLocalCtx(parentCtx);
-    state.removeConnection(var);
-    return result;
+
+  public record SubscopedNoVar(
+    @NotNull LocalCtx parentCtx, @NotNull LocalLet parentDef,
+    @NotNull ExprTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+      tycker.setLocalCtx(parentCtx);
+      tycker.setLocalLet(parentDef);
+      tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
+    }
+  }
+
+  public @NotNull SubscopedNoVar subscope() {
+    return new SubscopedNoVar(
+      setLocalCtx(localCtx().derive()),
+      setLocalLet(localLet().derive()),
+      this
+    );
+  }
+
+  public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
+    return new SubscopedVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
   }
 
   public @NotNull LocalLet localLet() { return localLet; }

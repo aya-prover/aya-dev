@@ -77,10 +77,9 @@ public record YouTrack(
           .map(matching -> new Info(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
         var ix = i;
-        tycker.subscoped(() -> {
+        try (var ignored = tycker.subscope()) {
           unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
-          return null;
-        });
+        }
       }
     });
     doms.forEach(tycker::fail);

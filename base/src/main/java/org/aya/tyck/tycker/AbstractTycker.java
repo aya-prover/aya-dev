@@ -15,8 +15,6 @@ import org.aya.unify.TermComparator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits ExprTycker, TermComparator {
   public final @NotNull TyckState state;
   private @NotNull LocalCtx localCtx;
@@ -42,13 +40,22 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }
-  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action, @NotNull Renamer nameGen) {
+
+  public @NotNull SubscopedVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
     var var = nameGen.bindName(type);
     var parentCtx = setLocalCtx(localCtx.derive1(var, type));
-    var result = action.apply(var);
-    setLocalCtx(parentCtx);
-    nameGen.unbindName(var);
-    state.removeConnection(var);
-    return result;
+    return new SubscopedVar(var, nameGen, parentCtx, this);
   }
+
+  public record SubscopedVar(
+    @NotNull LocalVar var, @NotNull Renamer nameGen,
+    @NotNull LocalCtx parentCtx,
+    @NotNull AbstractTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+        tycker.setLocalCtx(parentCtx);
+        nameGen.unbindName(var);
+        tycker.state.removeConnection(var);
+      }
+    }
 }

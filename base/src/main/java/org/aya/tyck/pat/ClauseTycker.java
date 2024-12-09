@@ -155,7 +155,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean isFn
   ) {
     var tycker = newPatternTycker(indices, signature.params().view());
-    return exprTycker.subscoped(() -> {
+    try (var ignored = exprTycker.subscope()) {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
       if (isFn && !clause.patterns.anyMatch(p -> hasAbsurdity(p.term().data())) && clause.expr.isEmpty()) {
@@ -182,7 +182,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         allBinds.size(), patResult.newBody());
       return new LhsResult(ctx, resultTerm, allBinds,
         patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
-    });
+    }
   }
 
   /**
@@ -194,7 +194,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> teleBinds,
     @NotNull LhsResult result
   ) {
-    return exprTycker.subscoped(() -> {
+    try (var ignored = exprTycker.subscope()) {
       var clause = result.clause;
       var bodyExpr = clause.expr();
       Term wellBody;
@@ -223,7 +223,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       return new Pat.Preclause<>(clause.sourcePos(), clause.pats(), bindCount,
         wellBody == null ? null : WithPos.dummy(wellBody));
-    });
+    }
   }
 
   private static final class TermInline implements UnaryOperator<Term> {
