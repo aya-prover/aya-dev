@@ -503,7 +503,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return result;
   }
 
-  private final class SubscopedVar implements AutoCloseable {
+  public final class SubscopedVar implements AutoCloseable {
     private final @NotNull LocalCtx parentCtx;
     private final @NotNull LocalVar var;
 
@@ -519,7 +519,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
-  private final class SubscopedNoVar implements AutoCloseable {
+  public final class SubscopedNoVar implements AutoCloseable {
     private final @NotNull LocalCtx parentCtx;
     private final @NotNull LocalLet parentDef;
 
