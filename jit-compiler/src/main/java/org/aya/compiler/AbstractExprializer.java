@@ -7,6 +7,7 @@ import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeJava;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +19,13 @@ public abstract class AbstractExprializer<T> {
 
   protected AbstractExprializer(@NotNull FreeJavaBuilder.ExprBuilder builder) { this.builder = builder; }
 
-  @SafeVarargs public final @NotNull FreeJava makeAppNew(@NotNull Class<?> className, T... terms) {
-    var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
-    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+  public final @NotNull FreeJava makeImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
+    return makeImmutableSeq(Constants.IMMSEQ, typeName, terms);
   }
 
-  public final @NotNull FreeJava makeImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
+  public final @NotNull FreeJava makeImmutableSeq(@NotNull MethodData con, @NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
     var args = builder.mkArray(FreeUtils.fromClass(typeName), terms.size(), terms);
-    return builder.invoke(Constants.IMMSEQ, ImmutableSeq.of(args));
+    return builder.invoke(con, ImmutableSeq.of(args));
   }
 
   public final @NotNull FreeJava serializeToImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<T> terms) {

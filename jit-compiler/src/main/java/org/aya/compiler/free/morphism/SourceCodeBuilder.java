@@ -184,6 +184,16 @@ public record SourceCodeBuilder(
   }
 
   @Override
+  public @NotNull FreeJava iconst(boolean b) {
+    return new SourceFreeJava(Boolean.toString(b));
+  }
+
+  @Override
+  public @NotNull FreeJava aconst(@NotNull String value) {
+    return new SourceFreeJava(ExprializeUtils.makeString(value));
+  }
+
+  @Override
   public @NotNull FreeJava mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJava> initializer) {
     assert initializer.isEmpty() || initializer.sizeEquals(length);
     var init = initializer.isEmpty() ? "" : "{" + toArgs(initializer) + "}";

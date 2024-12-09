@@ -4,7 +4,7 @@ package org.aya.compiler.free;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.FieldData;
+import kala.collection.immutable.ImmutableTreeSeq;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.core.Closure;
@@ -45,6 +45,14 @@ public final class Constants {
     CD_ImmutableSeq,
     "from",
     CD_ImmutableSeq, ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
+    true
+  );
+
+  public static final @NotNull MethodData IMMTREESEQ = new MethodData.Default(
+    FreeUtils.fromClass(ImmutableTreeSeq.class),
+    "from",
+    FreeUtils.fromClass(ImmutableTreeSeq.class),
+    ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
     false
   );
 

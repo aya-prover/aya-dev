@@ -120,6 +120,10 @@ public interface FreeJavaBuilder<Carrier> {
 
     @NotNull FreeJava iconst(int i);
 
+    @NotNull FreeJava iconst(boolean b);
+
+    @NotNull FreeJava aconst(@NotNull String value);
+
     @NotNull FreeJava mkArray(
       @NotNull ClassDesc type, int length,
       @NotNull ImmutableSeq<FreeJava> initializer
