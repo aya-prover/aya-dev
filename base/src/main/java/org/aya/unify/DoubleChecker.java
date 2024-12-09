@@ -12,6 +12,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.BadExprError;
+import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Contextful;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
@@ -37,22 +38,37 @@ public record DoubleChecker(
       case DepTypeTerm(var kind, var pParam, var pBody) -> switch (kind) {
         case Pi -> {
           if (!(whnf(expected) instanceof SortTerm expectedTy)) yield Panic.unreachable();
-          yield synthesizer.inheritPiDom(pParam, expectedTy) && subscoped(pParam, param ->
-            inherit(pBody.apply(param), expectedTy));
+          var b = synthesizer.inheritPiDom(pParam, expectedTy);
+          try (var scope = subscope(pParam)) {
+            var param = scope.var();
+            yield b && inherit(pBody.apply(param), expectedTy);
+          }
         }
-        case Sigma -> inherit(pParam, expected) && subscoped(pParam, param ->
-          inherit(pBody.apply(param), expected));
+        case Sigma -> {
+          var b = inherit(pParam, expected);
+          try (var scope = subscope(pParam)) {
+            var param = scope.var();
+            yield b && inherit(pBody.apply(param), expected);
+          }
+        }
       };
       case TupTerm(var lhs, var rhs) when whnf(expected) instanceof
         DepTypeTerm(var kind, var lhsT, var rhsTClos) && kind == DTKind.Sigma ->
         inherit(lhs, lhsT) && inherit(rhs, rhsTClos.apply(lhs));
       case LamTerm(var body) -> switch (whnf(expected)) {
-        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> subscoped(dom, param ->
-          inherit(body.apply(param), cod.apply(param)));
-        case EqTerm eq -> subscoped(DimTyTerm.INSTANCE, param -> {
-          // TODO: check boundaries
-          return inherit(body.apply(param), eq.A().apply(param));
-        });
+        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
+          try (var scope = subscope(dom)) {
+            var param = scope.var();
+            yield inherit(body.apply(param), cod.apply(param));
+          }
+        }
+        case EqTerm eq -> {
+          try (var scope = subscope(DimTyTerm.INSTANCE)) {
+            // TODO: check boundaries
+            var param = scope.var();
+            yield inherit(body.apply(param), eq.A().apply(param));
+          }
+        }
         default -> failF(new BadExprError(preterm, unifier.pos, expected));
       };
       case TupTerm _ -> failF(new BadExprError(preterm, unifier.pos, expected));
@@ -74,7 +90,8 @@ public record DoubleChecker(
   @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) { return unifier.setLocalCtx(ctx); }
   @Override public @NotNull TyckState state() { return unifier.state(); }
   @Override public @NotNull Reporter reporter() { return unifier.reporter(); }
-  public <R> R subscoped(@NotNull Term type, @NotNull Function<LocalVar, R> action) {
-    return unifier.subscoped(type, action);
+
+  public AbstractTycker.@NotNull SubscopedVar subscope(@NotNull Term type) {
+    return unifier.subscope(type);
   }
 }
