@@ -43,14 +43,12 @@ import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -95,7 +93,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           }
         }
         case EqTerm eq -> {
-          Closure.Locns core = null;
+          Closure.Locns core;
           try (var ignored = subscope(ref, DimTyTerm.INSTANCE)) {
             core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
           }
@@ -486,46 +484,41 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
 
-  public final class SubscopedVar implements AutoCloseable {
-    private final @NotNull LocalCtx parentCtx;
-    private final @NotNull LocalVar var;
-
-    public SubscopedVar(@NotNull LocalVar var, @NotNull Term type) {
-      this.var = var;
-      this.parentCtx = setLocalCtx(localCtx().derive1(var, type));
-    }
-
+  public record SubscopedVar(
+    @NotNull LocalCtx parentCtx,
+    @NotNull LocalVar var,
+    @NotNull ExprTycker tycker
+  ) implements AutoCloseable {
     @Override
     public void close() {
-      setLocalCtx(parentCtx);
-      state.removeConnection(var);
+      tycker.setLocalCtx(parentCtx);
+      tycker.state.removeConnection(var);
     }
   }
 
-  public final class SubscopedNoVar implements AutoCloseable {
-    private final @NotNull LocalCtx parentCtx;
-    private final @NotNull LocalLet parentDef;
-
-    public SubscopedNoVar() {
-      var derived = localCtx().derive();
-      this.parentCtx = setLocalCtx(derived);
-      this.parentDef = setLocalLet(localLet.derive());
-    }
-
+  public record SubscopedNoVar(
+    @NotNull LocalCtx parentCtx,
+    @NotNull LocalLet parentDef,
+    @NotNull ExprTycker tycker
+  ) implements AutoCloseable {
     @Override
     public void close() {
-      setLocalCtx(parentCtx);
-      setLocalLet(parentDef);
-      localCtx().extractLocal().forEach(state::removeConnection);
+      tycker.setLocalCtx(parentCtx);
+      tycker.setLocalLet(parentDef);
+      tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
     }
   }
 
   public @NotNull SubscopedNoVar subscope() {
-    return new SubscopedNoVar();
+    return new SubscopedNoVar(
+      this.setLocalCtx(this.localCtx().derive()),
+      this.setLocalLet(this.localLet().derive()),
+      this
+    );
   }
 
   public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
-    return new SubscopedVar(var, type);
+    return new SubscopedVar(this.setLocalCtx(this.localCtx().derive1(var, type)), var, this);
   }
 
   public @NotNull LocalLet localLet() { return localLet; }
