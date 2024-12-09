@@ -117,7 +117,7 @@ public class LspTest {
     logTime(time);
     assertNotNull(advisor.lastJob);
     var actualInDep = advisor.newlyCompiled.view()
-      .map(r -> r.thisModule().modulePath().toString())
+      .map(r -> r.modulePath().toString())
       .toImmutableSeq();
     var actual = advisor.lastCompiled()
       .map(s -> s.moduleName().module().joinToString(Constants.SCOPE_SEPARATOR))

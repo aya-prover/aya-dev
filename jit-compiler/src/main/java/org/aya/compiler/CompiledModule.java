@@ -114,14 +114,14 @@ public record CompiledModule(
     var exports = ctx.exports().symbols().keysView();
 
     var imports = resolveInfo.imports().view().map((k, v) ->
-      new SerImport(v.resolveInfo().thisModule().modulePath(),
+      new SerImport(v.resolveInfo().modulePath(),
         k.ids(), v.reExport())).toImmutableSeq();
     var serExport = ImmutableSet.from(exports);
     var reExports = ImmutableMap.from(resolveInfo.reExports().view()
       .map((k, v) -> Tuple.of(
         resolveInfo.imports()
           .get(k)   // should not fail
-          .resolveInfo().thisModule().modulePath(),
+          .resolveInfo().modulePath(),
         SerUseHide.from(v))));
     var serOps = ImmutableMap.from(serialization.serOps);
     record RenameData(boolean reExport, QName name, SerRenamedOp renamed) { }

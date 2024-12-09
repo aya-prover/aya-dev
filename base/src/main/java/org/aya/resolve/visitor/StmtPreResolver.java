@@ -181,6 +181,6 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     return ctx;
   }
   private void setupModule(ModuleContext ctx, DefVar<?, ?> ref) {
-    ref.module = new QPath(ctx.modulePath(), resolveInfo.thisModule().modulePath().size());
+    ref.module = new QPath(ctx.modulePath(), resolveInfo.modulePath().size());
   }
 }
