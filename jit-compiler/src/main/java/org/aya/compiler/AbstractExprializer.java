@@ -3,23 +3,59 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeJava;
+import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.FreeUtils;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ClassDesc;
+
 public abstract class AbstractExprializer<T> {
-  protected final @NotNull NameGenerator nameGen;
+  protected final @NotNull FreeJavaBuilder.ExprBuilder builder;
 
-  protected AbstractExprializer(@NotNull NameGenerator nameGen) { this.nameGen = nameGen; }
+  protected AbstractExprializer(@NotNull FreeJavaBuilder.ExprBuilder builder) { this.builder = builder; }
 
-  @SafeVarargs protected final @NotNull String makeAppNew(@NotNull String className, T... terms) {
-    return ImmutableSeq.from(terms).joinToString(ExprializeUtils.SEP,
-      "new " + className + "(", ").make()", this::doSerialize);
+  @SafeVarargs public final @NotNull FreeJava makeAppNew(@NotNull Class<?> className, T... terms) {
+    var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
+    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
-  protected @NotNull String serializeToImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<T> terms) {
-    return ExprializeUtils.makeImmutableSeq(typeName, terms.map(this::doSerialize));
+  public final @NotNull FreeJava makeImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
+    var args = builder.mkArray(FreeUtils.fromClass(typeName), terms.size(), terms);
+    return builder.invoke(Constants.IMMSEQ, ImmutableSeq.of(args));
   }
 
-  protected abstract @NotNull String doSerialize(@NotNull T term);
+  public final @NotNull FreeJava serializeToImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<T> terms) {
+    return makeImmutableSeq(typeName, terms.map(this::doSerialize));
+  }
 
-  public abstract @NotNull String serialize(T unit);
+  public final @NotNull FreeJava getInstance(@NotNull ClassDesc def) {
+    return builder.refField(builder.resolver().resolve(def, AyaSerializer.STATIC_FIELD_INSTANCE, def));
+  }
+
+  /**
+   * Return the reference to the {@code INSTANCE} field of the compiled class to {@param def}
+   */
+  public final @NotNull FreeJava getInstance(@NotNull AnyDef def) {
+    return getInstance(NameSerializer.getClassDesc(def));
+  }
+
+  public final @NotNull FreeJava getRef(@NotNull CallKind callType, @NotNull FreeJava call) {
+    return builder.refField(builder.resolver().resolve(callType.callType, AyaSerializer.FIELD_INSTANCE, callType.refType), call);
+  }
+
+  public final @NotNull FreeJava getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
+    return builder.refField(builder.resolver().resolve(
+      NameSerializer.getClassDesc(def),
+      AyaSerializer.FIELD_EMPTYCALL,
+      callType.callType)
+    );
+  }
+
+  protected abstract @NotNull FreeJava doSerialize(@NotNull T term);
+
+  public abstract @NotNull FreeJava serialize(T unit);
 }

@@ -4,14 +4,25 @@ package org.aya.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeJava;
+import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.data.MethodData;
+import org.aya.generic.stmt.Reducible;
 import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -21,8 +32,11 @@ import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.lang.constant.ClassDesc;
+import java.util.Objects;
+import java.util.function.*;
 
 import static org.aya.compiler.AyaSerializer.*;
 import static org.aya.compiler.ExprializeUtils.*;
@@ -60,39 +74,50 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   /**
    * Terms that should be instantiated
    */
-  private final @NotNull ImmutableSeq<String> instantiates;
-  private final @NotNull MutableMap<LocalVar, String> binds;
+  private final @NotNull ImmutableSeq<FreeJava> instantiates;
+  private final @NotNull MutableLinkedHashMap<LocalVar, FreeJava> binds;
 
   /**
    * Whether allow LocalTerm, false in default (in order to report unexpected LocalTerm)
    */
   private final boolean allowLocalTerm;
 
-  public TermExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> instantiates) {
+  public TermExprializer(@NotNull FreeJavaBuilder.ExprBuilder nameGen, @NotNull ImmutableSeq<FreeJava> instantiates) {
     this(nameGen, instantiates, false);
   }
 
-  public TermExprializer(@NotNull NameGenerator nameGen, @NotNull ImmutableSeq<String> instantiates, boolean allowLocalTer) {
+  public TermExprializer(@NotNull FreeJavaBuilder.ExprBuilder nameGen, @NotNull ImmutableSeq<FreeJava> instantiates, boolean allowLocalTer) {
     super(nameGen);
     this.instantiates = instantiates;
     this.allowLocalTerm = allowLocalTer;
-    this.binds = MutableMap.create();
+    this.binds = MutableLinkedHashMap.of();
   }
 
-  private @NotNull String serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
+  private TermExprializer(
+    @NotNull FreeJavaBuilder.ExprBuilder builder,
+    @NotNull MutableLinkedHashMap<LocalVar, FreeJava> newBinds,
+    boolean allowLocalTerm
+  ) {
+    super(builder);
+    this.instantiates = ImmutableSeq.empty();
+    this.binds = newBinds;
+    this.allowLocalTerm = allowLocalTerm;
+  }
+
+  private @NotNull FreeJava serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
-      case IntegerOps.ConRule conRule ->
-        ExprializeUtils.makeNew(CLASS_INT_CONRULE, ExprializeUtils.getInstance(NameSerializer.getClassRef(conRule.ref())),
-          doSerialize(conRule.zero())
-        );
-      case IntegerOps.FnRule fnRule -> ExprializeUtils.makeNew(CLASS_INT_FNRULE,
-        ExprializeUtils.getInstance(NameSerializer.getClassRef(fnRule.ref())),
-        ExprializeUtils.makeSub(CLASS_FNRULE_KIND, fnRule.kind().toString())
-      );
-      case ListOps.ConRule conRule -> ExprializeUtils.makeNew(CLASS_LIST_CONRULE,
-        ExprializeUtils.getInstance(NameSerializer.getClassRef(conRule.ref())),
+      case IntegerOps.ConRule conRule -> builder.mkNew(IntegerOps.ConRule.class, ImmutableSeq.of(
+        getInstance(conRule.ref()),
+        doSerialize(conRule.zero())
+      ));
+      case IntegerOps.FnRule fnRule -> builder.mkNew(IntegerOps.FnRule.class, ImmutableSeq.of(
+        getInstance(fnRule.ref()),
+        builder.refEnum(fnRule.kind())
+      ));
+      case ListOps.ConRule conRule -> builder.mkNew(ListOps.ConRule.class, ImmutableSeq.of(
+        getInstance(conRule.ref()),
         doSerialize(conRule.empty())
-      );
+      ));
       default -> Panic.unreachable();
     };
   }
@@ -101,36 +126,47 @@ public final class TermExprializer extends AbstractExprializer<Term> {
    * This code requires that {@link FnCall}, {@link RuleReducer.Fn} and {@link RuleReducer.Con}
    * {@code ulift} is the second parameter, {@code args.get(i)} is the {@code i + 3}th parameter
    *
-   * @param fixed whether {@param reducible} has fixed `invoke`
+   * @param reducibleType the ref class of {@param reducible}, used when {@param fixed} is true
+   * @param fixed         whether {@param reducible} has fixed `invoke`,
+   *                      i.e. {@link JitFn} does but {@link org.aya.generic.stmt.Shaped.Applicable} doesn't.
    */
-  private @NotNull String buildReducibleCall(
-    @NotNull String reducible,
-    @NotNull String callName,
+  private @NotNull FreeJava buildReducibleCall(
+    @Nullable ClassDesc reducibleType,
+    @NotNull FreeJava reducible,
+    @NotNull Class<?> callName,
     int ulift,
     @NotNull ImmutableSeq<ImmutableSeq<Term>> args,
     boolean fixed
   ) {
     var seredArgs = args.map(x -> x.map(this::doSerialize));
-    var seredSeq = seredArgs.map(x -> ExprializeUtils.makeImmutableSeq(CLASS_TERM, x));
+    var seredSeq = seredArgs.map(x -> makeImmutableSeq(Term.class, x));
     var flatArgs = seredArgs.flatMap(x -> x);
 
-    var callArgs = new String[seredSeq.size() + 2];
+    var callArgs = new FreeJava[seredSeq.size() + 2];
     callArgs[0] = reducible;
-    callArgs[1] = "0"; // elevate later
+    callArgs[1] = builder.iconst(0); // elevate later
     for (var i = 0; i < seredSeq.size(); ++i) {
       callArgs[i + 2] = seredSeq.get(i);
     }
 
-    var elevate = ulift > 0 ? ".elevate(" + ulift + ")" : "";
-    var onStuck = makeThunk(ExprializeUtils.makeNew(callName, callArgs));
-    var finalArgs = fixed
-      ? flatArgs.view().prepended(onStuck).joinToString()
-      : onStuck + ", " + ExprializeUtils.makeImmutableSeq(CLASS_TERM, flatArgs);
+    UnaryOperator<FreeJava> doElevate = free -> ulift == 0
+      ? free
+      : builder.invoke(Constants.ELEVATE, free, ImmutableSeq.of(builder.iconst(ulift)));
+    var onStuck = makeThunk(te -> te.builder.mkNew(callName, ImmutableArray.Unsafe.wrap(callArgs)));
+    var finalInvocation = fixed
+      ? builder.invoke(
+      resolveInvoke(Objects.requireNonNull(reducibleType), flatArgs.size()),
+      reducible,
+      flatArgs.view().prepended(onStuck).toImmutableSeq())
+      : builder.invoke(Constants.REDUCIBLE_INVOKE, reducible, ImmutableSeq.of(
+        onStuck,
+        makeImmutableSeq(Term.class, flatArgs)
+      ));
 
-    return reducible + ".invoke(" + finalArgs + ")" + elevate;
+    return doElevate.apply(finalInvocation);
   }
 
-  @Override protected @NotNull String doSerialize(@NotNull Term term) {
+  @Override protected @NotNull FreeJava doSerialize(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         // It is possible that we meet bind here,
@@ -144,61 +180,67 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       }
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
-        ExprializeUtils.getEmptyCallTerm(NameSerializer.getClassRef(call.ref()));
-      case ClassCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_CLSCALL,
-        getInstance(NameSerializer.getClassRef(ref)),
-        Integer.toString(ulift),
-        serializeClosureToImmutableSeq(args)
-      );
-      case MemberCall(var of, var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_MEMCALL,
+        getCallInstance(CallKind.from(call), call.ref());
+      case ClassCall(var ref, var ulift, var args) -> {
+        //   ExprializeUtils.makeNew(CLASS_CLSCALL,
+        //   getInstance(NameSerializer.getClassRef(ref)),
+        //   Integer.toString(ulift),
+        //   serializeClosureToImmutableSeq(args)
+        // );
+        throw new UnsupportedOperationException("TODO");
+      }
+      case MemberCall(var of, var ref, var ulift, var args) -> builder.mkNew(MemberCall.class, ImmutableSeq.of(
         doSerialize(of),
-        ExprializeUtils.getInstance(NameSerializer.getClassRef(ref)),
-        Integer.toString(ulift),
-        serializeToImmutableSeq(CLASS_TERM, args)
-      );
-      case AppTerm appTerm -> makeAppNew(CLASS_APPTERM, appTerm.fun(), appTerm.arg());
+        getInstance(ref),
+        builder.iconst(ulift),
+        serializeToImmutableSeq(Term.class, args)
+      ));
+      case AppTerm appTerm -> makeAppNew(AppTerm.class, appTerm.fun(), appTerm.arg());
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
-      case LocalTerm(var index) -> ExprializeUtils.makeNew(CLASS_LOCALTERM, Integer.toString(index));
-      case LamTerm lamTerm -> ExprializeUtils.makeNew(CLASS_LAMTERM, serializeClosure(lamTerm.body()));
-      case DataCall(var ref, var ulift, var args) -> ExprializeUtils.makeNew(CLASS_DATACALL,
-        ExprializeUtils.getInstance(NameSerializer.getClassRef(ref)),
-        Integer.toString(ulift),
-        serializeToImmutableSeq(CLASS_TERM, args)
-      );
-      case ConCall(var head, var args) -> ExprializeUtils.makeNew(CLASS_CONCALL,
-        ExprializeUtils.getInstance(NameSerializer.getClassRef(head.ref())),
-        serializeToImmutableSeq(CLASS_TERM, head.ownerArgs()),
-        Integer.toString(head.ulift()),
-        serializeToImmutableSeq(CLASS_TERM, args)
-      );
+      case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
+      case LamTerm lamTerm -> builder.mkNew(LamTerm.class, ImmutableSeq.of(serializeClosure(lamTerm.body())));
+      case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
+        getInstance(ref),
+        builder.iconst(ulift),
+        serializeToImmutableSeq(Term.class, args)
+      ));
+      case ConCall(var head, var args) -> builder.mkNew(ConCall.class, ImmutableSeq.of(
+        getInstance(head.ref()),
+        serializeToImmutableSeq(Term.class, head.ownerArgs()),
+        builder.iconst(head.ulift()),
+        serializeToImmutableSeq(Term.class, args)
+      ));
       case FnCall call -> {
-        var ref = switch (call.ref()) {
-          case JitFn jit -> ExprializeUtils.getInstance(NameSerializer.getClassRef(jit));
-          case FnDef.Delegate def -> ExprializeUtils.getInstance(getClassRef(def.ref));
+        var refClass = switch (call.ref()) {
+          case JitFn jit -> NameSerializer.getClassDesc(jit);
+          case FnDef.Delegate def -> NameSerializer.getClassDesc(AnyDef.fromVar(def.ref));
         };
 
+        var ref = getInstance(refClass);
         var args = call.args();
-        yield buildReducibleCall(ref, CLASS_FNCALL, call.ulift(), ImmutableSeq.of(args), true);
+        yield buildReducibleCall(refClass, ref, FnCall.class, call.ulift(), ImmutableSeq.of(args), true);
       }
       case RuleReducer.Con conRuler -> buildReducibleCall(
+        null,
         serializeApplicable(conRuler.rule()),
-        CLASS_RULE_CON, conRuler.ulift(),
+        RuleReducer.Con.class, conRuler.ulift(),
         ImmutableSeq.of(conRuler.ownerArgs(), conRuler.conArgs()),
         false
       );
       case RuleReducer.Fn fnRuler -> buildReducibleCall(
+        null,
         serializeApplicable(fnRuler.rule()),
-        CLASS_RULE_FN, fnRuler.ulift(),
+        RuleReducer.Fn.class, fnRuler.ulift(),
         ImmutableSeq.of(fnRuler.args()),
         false
       );
-      case SortTerm sort when sort.equals(SortTerm.Type0) -> ExprializeUtils.makeSub(
-        ExprializeUtils.getJavaRef(SortTerm.class), "Type0");
-      case SortTerm sort when sort.equals(SortTerm.ISet) -> ExprializeUtils.makeSub(
-        ExprializeUtils.getJavaRef(SortTerm.class), "ISet");
-      case SortTerm(var kind, var ulift) -> ExprializeUtils.makeNew(ExprializeUtils.getJavaRef(SortTerm.class),
-        ExprializeUtils.makeEnum(CLASS_SORTKIND, kind),
-        Integer.toString(ulift));
+      // TODO: make the resolving const
+      case SortTerm sort when sort.equals(SortTerm.Type0) ->
+        builder.refField(builder.resolver().resolve(SortTerm.class, "Type0"));
+      case SortTerm sort when sort.equals(SortTerm.ISet) ->
+        builder.refField(builder.resolver().resolve(SortTerm.class, "ISet"));
+      case SortTerm(var kind, var ulift) ->
+        builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), builder.iconst(ulift)));
       case DepTypeTerm(var kind, var param, var body) -> ExprializeUtils.makeNew(
         ExprializeUtils.getJavaRef(DepTypeTerm.class),
         ExprializeUtils.makeEnum(ExprializeUtils.getJavaRef(DTKind.class), kind),
@@ -282,38 +324,81 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   // (A : Type) : Pi(^0, IdxClosure(^1))
   // (A : Type) : Pi(^0, JitClosure(_ -> ^1))
 
-  private @NotNull String withMany(@NotNull ImmutableSeq<String> subst, @NotNull Function<ImmutableSeq<FreeTerm>, String> continuation) {
-    var binds = subst.map(LocalVar::new);
-    binds.forEachWith(subst, this.binds::put);
-    var result = continuation.apply(binds.map(FreeTerm::new));
-    binds.forEach(this.binds::remove);
-    return result;
+  private @NotNull FreeJava withMany(
+    @NotNull ImmutableSeq<FreeJava> subst,
+    @NotNull Function<ImmutableSeq<FreeTerm>, FreeJava> continuation
+  ) {
+
   }
 
-  private @NotNull String with(@NotNull String subst, @NotNull Function<FreeTerm, String> continuation) {
-    return withMany(ImmutableSeq.of(subst), xs -> continuation.apply(xs.getFirst()));
+  private @NotNull MethodData resolveInvoke(@NotNull ClassDesc owner, int argc) {
+    return new MethodData.Default(
+      owner, METHOD_INVOKE,
+      Constants.CD_Term,
+      SeqView.of(FreeUtils.fromClass(Supplier.class)).appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term))
+        .toImmutableSeq(), false
+    );
   }
 
-  private @NotNull String serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
-    return makeImmutableSeq(CLASS_CLOSURE, cls.map(this::serializeClosure));
-  }
+  // TODO: unify with makeClosure
+  private @NotNull FreeJava makeThunk(@NotNull Function<TermExprializer, FreeJava> cont) {
+    var binds = MutableLinkedHashMap.from(this.binds);
+    var entries = binds.toImmutableSeq();
+    return builder.mkLambda(entries.map(Tuple2::component2), Constants.THUNK, ap -> {
+      var captured = entries.mapIndexed((i, tup) ->
+        Tuple.of(tup.component1(), ap.capture(i)));
 
-  private @NotNull String serializeClosure(@NotNull Closure body) {
-    var param = nameGen.nextName();
-    return with(param, t -> {
-      if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
-      var appliedBody = body.apply(t);
-      if (FindUsage.free(appliedBody, t.name()) > 0)
-        return makeNew(CLASS_JITLAMTERM, param + " -> " + doSerialize(appliedBody));
-      else return serializeConst(appliedBody);
+      return cont.apply(new TermExprializer(this.builder, MutableLinkedHashMap.from(captured), this.allowLocalTerm));
     });
   }
 
-  private @NotNull String serializeConst(Term appliedBody) {
-    return CLASS_CLOSURE + ".mkConst(" + doSerialize(appliedBody) + ")";
+  private @NotNull FreeJava makeClosure(@NotNull BiFunction<TermExprializer, FreeJava, FreeJava> cont) {
+    var binds = MutableLinkedHashMap.from(this.binds);
+    var entries = binds.toImmutableSeq();
+    return builder.mkLambda(entries.map(Tuple2::component2), Constants.CLOSURE, ap -> {
+      var captured = entries.mapIndexed((i, tup) ->
+        Tuple.of(tup.component1(), ap.capture(i)));
+
+      return cont.apply(
+        new TermExprializer(this.builder, MutableLinkedHashMap.from(captured), this.allowLocalTerm),
+        ap.arg(0)
+      );
+    });
   }
 
-  @Override public @NotNull String serialize(Term unit) {
+  private @NotNull FreeJava with(
+    @NotNull LocalVar var,
+    @NotNull FreeJava subst,
+    @NotNull Supplier<FreeJava> continuation
+  ) {
+    this.binds.put(var, subst);
+    var result = continuation.get();
+    this.binds.remove(var);
+    return result;
+  }
+
+  private @NotNull FreeJava serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
+    return makeImmutableSeq(Closure.class, cls.map(this::serializeClosure));
+  }
+
+  private @NotNull FreeJava serializeClosure(@NotNull Closure body) {
+    if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
+
+    var var = new LocalVar("<jit>");
+    var appliedBody = body.apply(var);
+    if (FindUsage.free(appliedBody, var) == 0) return serializeConst(appliedBody);
+
+    var closure = makeClosure((te, arg) ->
+      te.with(var, arg, () -> te.doSerialize(appliedBody)));
+
+    return builder.mkNew(Closure.Jit.class, ImmutableSeq.of(closure));
+  }
+
+  private @NotNull FreeJava serializeConst(Term appliedBody) {
+    return builder.invoke(Constants.CLOSURE_MKCONST, ImmutableSeq.of(doSerialize(appliedBody)));
+  }
+
+  @Override public @NotNull FreeJava serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instantiateTeleVar(vars.view());

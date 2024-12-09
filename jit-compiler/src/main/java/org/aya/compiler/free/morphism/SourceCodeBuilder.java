@@ -9,6 +9,7 @@ import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeJava;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.FreeJavaResolver;
 import org.aya.compiler.free.data.FieldData;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodData;
@@ -20,14 +21,22 @@ import java.util.function.*;
 
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
-public record SourceCodeBuilder(@NotNull ClassDesc owner,
-                                @NotNull SourceBuilder sourceBuilder) implements FreeJavaBuilder.CodeBuilder {
+public record SourceCodeBuilder(
+  @NotNull SourceFreeJavaBuilder parent,
+  @NotNull ClassDesc owner,
+  @NotNull SourceBuilder sourceBuilder
+) implements FreeJavaBuilder.CodeBuilder, FreeJavaBuilder.ExprBuilder {
   public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJava> args) {
     return args.view().map(x -> ((SourceFreeJava) x).expr()).joinToString(", ");
   }
 
   public static @NotNull String getExpr(@NotNull FreeJava expr) {
     return ((SourceFreeJava) expr).expr();
+  }
+
+  @Override
+  public @NotNull FreeJavaResolver resolver() {
+    return parent;
   }
 
   @Override
@@ -121,7 +130,7 @@ public record SourceCodeBuilder(@NotNull ClassDesc owner,
   }
 
   @Override
-  public @NotNull FreeJava newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args) {
+  public @NotNull FreeJava mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args) {
     return new SourceFreeJava(ExprializeUtils.makeNew(toClassRef(className), toArgs(args)));
   }
 
@@ -155,6 +164,7 @@ public record SourceCodeBuilder(@NotNull ClassDesc owner,
     return new SourceFreeJava(toClassRef(enumClass) + "." + enumName);
   }
 
+  // FIXME: dont do this
   // We just hope user will not pass non-variable captures
   @Override
   public @NotNull FreeJava mkLambda(
@@ -166,5 +176,17 @@ public record SourceCodeBuilder(@NotNull ClassDesc owner,
       sourceBuilder.nameGen().nextName());
     var ap = new SourceArgumentProvider.Lambda(captures.map(SourceCodeBuilder::getExpr), name);
     return new SourceFreeJava("(" + name.joinToString(", ") + ") -> " + builder.apply(ap));
+  }
+
+  @Override
+  public @NotNull FreeJava iconst(int i) {
+    return new SourceFreeJava(Integer.toString(i));
+  }
+
+  @Override
+  public @NotNull FreeJava mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJava> initializer) {
+    assert initializer.isEmpty() || initializer.sizeEquals(length);
+    var init = initializer.isEmpty() ? "" : "{" + toArgs(initializer) + "}";
+    return new SourceFreeJava("new " + toClassRef(type) + "[" + length + "]" + init);
   }
 }

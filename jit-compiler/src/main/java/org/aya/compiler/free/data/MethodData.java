@@ -12,11 +12,14 @@ public interface MethodData {
     @Override @NotNull ClassDesc owner,
     @Override @NotNull String name,
     @Override @NotNull ClassDesc returnType,
-    @Override @NotNull ImmutableSeq<ClassDesc> paramTypes
+    @Override @NotNull ImmutableSeq<ClassDesc> paramTypes,
+    @Override boolean isInterface
   ) implements MethodData { }
 
   @NotNull ClassDesc owner();
   @NotNull String name();
   @NotNull ClassDesc returnType();
   @NotNull ImmutableSeq<ClassDesc> paramTypes();
+
+  boolean isInterface();
 }

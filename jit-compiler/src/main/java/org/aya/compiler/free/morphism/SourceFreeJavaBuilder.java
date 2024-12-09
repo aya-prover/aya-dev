@@ -8,6 +8,7 @@ import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeJava;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.FreeJavaResolver;
 import org.aya.compiler.free.data.FieldData;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.compile.CompiledAya;
@@ -17,7 +18,8 @@ import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implements FreeJavaBuilder<String> {
+public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
+  implements FreeJavaBuilder<String>, FreeJavaResolver {
   // convert "Ljava/lang/Object;" to "java.lang.Object"
   public static @NotNull String toClassRef(@NotNull ClassDesc className) {
     // TODO: this won't work well with array
@@ -31,8 +33,14 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implem
     return name.substring(name.lastIndexOf('$') + 1);
   }
 
-  public record SourceClassBuilder(@NotNull ClassDesc owner, @NotNull SourceBuilder sourceBuilder)
+  public record SourceClassBuilder(@NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
+                                   @NotNull SourceBuilder sourceBuilder)
     implements FreeJavaBuilder.ClassBuilder {
+    @Override
+    public @NotNull FreeJavaResolver resolver() {
+      return parent;
+    }
+
     @Override
     public void buildNestedClass(
       CompiledAya compiledAya,
@@ -56,7 +64,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implem
 
       this.sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
         new SourceArgumentProvider(params.map(AbstractSerializer.JitParam::name)),
-        new SourceCodeBuilder(this.owner, this.sourceBuilder)
+        new SourceCodeBuilder(parent, this.owner, this.sourceBuilder)
       ));
     }
 
@@ -68,7 +76,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implem
       @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
     ) {
       buildMethod(toClassRef(returnType), name, paramTypes, builder);
-      return new MethodData.Default(this.owner, name, returnType, paramTypes);
+      return new MethodData.Default(this.owner, name, returnType, paramTypes, false);
     }
 
     @Override
@@ -103,7 +111,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implem
     @NotNull Consumer<ClassBuilder> builder
   ) {
     sourceBuilder.buildClass(className.displayName(), superclass, false, () ->
-      builder.accept(new SourceClassBuilder(className, sourceBuilder)));
+      builder.accept(new SourceClassBuilder(this, className, sourceBuilder)));
     return sourceBuilder.builder().toString();
   }
 
@@ -112,8 +120,14 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder) implem
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
-    @NotNull ImmutableSeq<ClassDesc> paramType
+    @NotNull ImmutableSeq<ClassDesc> paramType,
+    boolean isInterface
   ) {
-    return new MethodData.Default(owner, name, returnType, paramType);
+    return new MethodData.Default(owner, name, returnType, paramType, isInterface);
+  }
+
+  @Override
+  public @NotNull FieldData resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
+    return new FieldData.Default(owner, returnType, name);
   }
 }

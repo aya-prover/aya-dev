@@ -8,10 +8,13 @@ import org.aya.compiler.free.data.FieldData;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodData;
 import org.aya.syntax.compile.CompiledAya;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,6 +23,8 @@ import java.util.function.ObjIntConsumer;
 @SuppressWarnings("unused")
 public interface FreeJavaBuilder<Carrier> {
   interface ClassBuilder {
+    @NotNull FreeJavaResolver resolver();
+
     void buildNestedClass(
       CompiledAya compiledAya,
       @NotNull String name,
@@ -48,6 +53,8 @@ public interface FreeJavaBuilder<Carrier> {
   }
 
   interface CodeBuilder {
+    @NotNull FreeJavaResolver resolver();
+
     @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJava initializer);
 
     void ifNotTrue(@NotNull FreeJava notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
@@ -72,13 +79,20 @@ public interface FreeJavaBuilder<Carrier> {
     );
 
     void returnWith(@NotNull FreeJava expr);
+  }
 
-    // region expr
+  interface ExprBuilder {
+    @NotNull FreeJavaResolver resolver();
 
     /**
      * A {@code new} expression, the class should have only one (public) constructor.
      */
-    @NotNull FreeJava newObject(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args);
+    @NotNull FreeJava mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args);
+
+    default @NotNull FreeJava mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJava> args) {
+      return mkNew(FreeUtils.fromClass(className), args);
+    }
+
     @NotNull FreeJava refVar(@NotNull LocalVariable name);
 
     /** Invoke a (non-interface) method on {@param owner} */
@@ -104,7 +118,12 @@ public interface FreeJavaBuilder<Carrier> {
       @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
     );
 
-    // endregion expr
+    @NotNull FreeJava iconst(int i);
+
+    @NotNull FreeJava mkArray(
+      @NotNull ClassDesc type, int length,
+      @NotNull ImmutableSeq<FreeJava> initializer
+    );
   }
 
   @NotNull Carrier buildClass(
@@ -112,15 +131,5 @@ public interface FreeJavaBuilder<Carrier> {
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<ClassBuilder> builder
-  );
-
-  /**
-   * Find a method with given information
-   */
-  @NotNull MethodData resolve(
-    @NotNull ClassDesc owner,
-    @NotNull String name,
-    @NotNull ClassDesc returnType,
-    @NotNull ImmutableSeq<ClassDesc> paramType
   );
 }
