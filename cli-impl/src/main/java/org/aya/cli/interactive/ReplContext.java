@@ -69,11 +69,11 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, this.modulePath().derive(extraName));
+    return new ReplContext(reporter, this, modulePath().derive(extraName));
   }
 
   @Override public @NotNull ReplContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, this.modulePath().derive(extraName));
+    return new ReplContext(reporter, this, modulePath().derive(extraName));
   }
 
   @Override public void setDownstream(@Nullable ReplContext downstream) {

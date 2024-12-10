@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
+/**
+ * Overrides the {@link #reporter} of {@link #parent}.
+ *
+ * @see org.aya.resolve.error.NameProblem.UnqualifiedNameNotFoundError#didYouMean
+ */
 public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporter) implements Context {
   @Override public @NotNull Context parent() { return parent; }
   @Override public @NotNull Reporter reporter() { return reporter; }
@@ -26,8 +31,7 @@ public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporte
   }
 
   @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
+    @NotNull String name, @NotNull SourcePos sourcePos
   ) {
     return null;
   }
