@@ -123,8 +123,9 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
-        var resolvedCtx = resolveTopLevelDecl(decl, context);
-        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
+        var ctx = resolveTopLevelDecl(decl, context);
+        var innerCtx = ctx.derive(decl.ref().name(), supress(context.reporter(), decl));
+        yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
