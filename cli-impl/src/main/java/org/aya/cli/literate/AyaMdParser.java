@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -72,10 +72,9 @@ public class AyaMdParser extends BaseMdParser {
           var startFrom = lineIndex + sourceSpan.getColumnIndex();
           var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
           assert sourcePos != null;
-          // FIXME[hoshino]: The sourcePos here contains the beginning and trailing '`'
-          yield CodeOptions.analyze(inlineCode, sourcePos);
+          yield CodeOptions.analyze(inlineCode, sourcePos.shrink(1, 1));
         }
-        throw new Panic("SourceSpans");
+        yield Panic.unreachable();
       }
       default -> super.mapNode(node);
     };
