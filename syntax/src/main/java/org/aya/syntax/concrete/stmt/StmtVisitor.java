@@ -153,14 +153,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Expr.Do du -> du.binds().forEach(bind -> visitVarDecl(pos, bind.var(), noType));
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
-      // case Expr.New neu -> neu.fields().view().forEach((field) -> {
-      //   // TODO: type for `field.bindings()`
-      //   var acc1 = field.bindings().forEach((a, binding) -> visitVarDecl(a, binding.data(), binding.sourcePos(), noType()));
-      //   var fieldRef = field.resolvedField().get();
-      //   return fieldRef != null ? visitVarRef(acc1, fieldRef, field.name().sourcePos(), lazyType(fieldRef)) : acc1;
-      // });
-      // case Expr.Match match -> match.clauses().forEach(clause -> clause.patterns.forEach(ac,
-      //   (a, p) -> visit(a, p.term())));
+      case Expr.Match match -> match.clauses().forEach(clause -> clause.patterns.forEach(
+        t -> visitPattern(t.term())));
       default -> { }
     }
 
