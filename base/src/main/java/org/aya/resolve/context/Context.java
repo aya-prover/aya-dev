@@ -202,8 +202,16 @@ public interface Context extends Problematic {
     return derive(new ModulePath(ImmutableSeq.of(extraName)));
   }
 
+  default @NotNull PhysicalModuleContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
+    return derive(new ModulePath(ImmutableSeq.of(extraName)), reporter);
+  }
+
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
     return new PhysicalModuleContext(this, this.modulePath().derive(extraName));
+  }
+
+  default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
+    return new PhysicalModuleContext(reporter, this, this.modulePath().derive(extraName));
   }
 
   class ResolvingInterruptedException extends InterruptException {
