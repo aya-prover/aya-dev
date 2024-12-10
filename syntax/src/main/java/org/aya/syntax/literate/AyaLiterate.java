@@ -18,12 +18,22 @@ import org.jetbrains.annotations.Nullable;
  * @author hoshino
  */
 public interface AyaLiterate {
-  @NotNull InterestingLanguage<AyaVisibleCodeBlock> VISIBLE_AYA = InterestingLanguage.of("aya"::equalsIgnoreCase,
-    AyaVisibleCodeBlock::new);
-  @NotNull InterestingLanguage<AyaHiddenCodeBlock> HIDDEN_AYA = InterestingLanguage.of("aya-hidden"::equalsIgnoreCase,
-    AyaHiddenCodeBlock::new);
-  @NotNull ImmutableSeq<InterestingLanguage<?>> AYA = ImmutableSeq.of(VISIBLE_AYA, HIDDEN_AYA);
+  /**
+   * Languages recognized by `.aya.md` compiler.
+   */
+  @NotNull ImmutableSeq<InterestingLanguage<?>> LANGUAGES = ImmutableSeq.of(
+    InterestingLanguage.of("aya"::equalsIgnoreCase,
+      AyaVisibleCodeBlock::new),
+    InterestingLanguage.of("aya-hidden"::equalsIgnoreCase,
+      AyaHiddenCodeBlock::new),
+    InterestingLanguage.of("aya-lexer"::equalsIgnoreCase,
+      AyaLexerCodeBlock::new));
 
+  /**
+   * An instance of an Aya code block contains a code block that is intended to be type checked.
+   * So, if we do not intend to type check it, even if the language is Aya, we should not
+   * extend this class.
+   */
   class AyaCodeBlock extends Literate.CodeBlock {
     public AyaCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
       super(language, code, sourcePos);
@@ -42,6 +52,12 @@ public interface AyaLiterate {
     }
 
     @Override public @NotNull Doc toDoc() { return Doc.empty(); }
+  }
+
+  final class AyaLexerCodeBlock extends Literate.CodeBlock {
+    public AyaLexerCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
+      super(language, code, sourcePos);
+    }
   }
 
   record TyckResult(Term wellTyped, Term type) { }

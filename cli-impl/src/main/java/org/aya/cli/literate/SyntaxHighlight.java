@@ -53,27 +53,30 @@ public record SyntaxHighlight(
     var prettier = new SyntaxHighlight(currentFileModule, MutableList.create());
     program.forEach(prettier);
     if (sourceFile.isDefined()) {
-      var file = sourceFile.get();
-      var lexer = AyaParserDefinitionBase.createLexer(false);
-      lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
-      var addition = lexer.allTheWayDown().view()
-        .mapNotNull(token -> {
-          var tokenType = token.type();
-          if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
-            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Keyword);
-          else if (ParserDefBase.COMMENTS.contains(tokenType))
-            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Comment);
-          else if (SPECIAL_SYMBOL.contains(tokenType))
-            return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.SpecialSymbol);
-          if (tokenType == TokenType.WHITE_SPACE) {
-            var text = token.range().substring(file.sourceCode());
-            return new Lit(AyaProducer.sourcePosOf(token, file), text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
-          }
-          return null;
-        }).toImmutableSeq();
+      var addition = lexicalHighlight(sourceFile.get());
       prettier.info.appendAll(addition);
     }
     return prettier.info.toImmutableSeq();
+  }
+
+  public static @NotNull ImmutableSeq<@NotNull Lit> lexicalHighlight(@NotNull SourceFile file) {
+    var lexer = AyaParserDefinitionBase.createLexer(false);
+    lexer.reset(file.sourceCode(), 0, file.sourceCode().length(), 0);
+    return lexer.allTheWayDown().view()
+      .mapNotNull(token -> {
+        var tokenType = token.type();
+        if (AyaParserDefinitionBase.KEYWORDS.contains(tokenType))
+          return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Keyword);
+        else if (ParserDefBase.COMMENTS.contains(tokenType))
+          return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.Comment);
+        else if (SPECIAL_SYMBOL.contains(tokenType))
+          return new Lit(AyaProducer.sourcePosOf(token, file), LitKind.SpecialSymbol);
+        if (tokenType == TokenType.WHITE_SPACE) {
+          var text = token.range().substring(file.sourceCode());
+          return new Lit(AyaProducer.sourcePosOf(token, file), text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
+        }
+        return null;
+      }).toImmutableSeq();
   }
 
   @Override public void
@@ -129,7 +132,7 @@ public record SyntaxHighlight(
   }
 
   private @NotNull HighlightInfo linkRef(@NotNull SourcePos sourcePos, @NotNull AnyVar var, @Nullable AyaDocile type) {
-    if (var instanceof LocalVar(var _, var _, GenerateKind.Generalized(var origin)))
+    if (var instanceof LocalVar(_, _, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
     return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
   }

@@ -37,3 +37,11 @@ It probably always false, I think.
 ```aya
   false
 ```
+
+This is an Aya code block with only lexer-highlighting:
+
+```aya-lexer
+def goofy => ???
+// keywords that don't exist
+coinductive Stream (A : Type) : Type
+```

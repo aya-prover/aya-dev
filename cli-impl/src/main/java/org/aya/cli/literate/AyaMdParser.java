@@ -26,11 +26,10 @@ import java.util.function.Function;
 
 public class AyaMdParser extends BaseMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
-    super(file, reporter, AyaLiterate.AYA);
+    super(file, reporter, AyaLiterate.LANGUAGES);
   }
 
-  @Override
-  protected @NotNull Parser.Builder parserBuilder() {
+  @Override protected @NotNull Parser.Builder parserBuilder() {
     return super.parserBuilder()
       .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
       .customDelimiterProcessor(InlineMath.Processor.INSTANCE)
