@@ -3,7 +3,6 @@
 package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.control.Option;
 import org.aya.generic.Modifier;
@@ -61,14 +60,11 @@ public record StmtTycker(
     @NotNull ShapeFactory shapeFactory,
     @NotNull PrimFactory primFactory
   ) {
-    this(new SuppressingReporter(reporter, MutableList.create()), shapeFactory, primFactory);
+    this(new SuppressingReporter(reporter), shapeFactory, primFactory);
   }
   public void suppress(@NotNull Decl decl) {
     decl.suppresses.forEach(suppress -> {
       switch (suppress) {
-        case Shadowing -> {
-          // Handled in resolving
-        }
         case MostGeneralSolution -> reporter.suppress(MetaVarError.DidSomethingBad.class);
       }
     });

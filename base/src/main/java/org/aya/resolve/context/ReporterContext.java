@@ -2,9 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.mutable.MutableList;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -13,13 +14,23 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 /**
- * @author re-xyr
- * @apiNote in each file's dependency tree there should be one and only one EmptyContext which is also the tree root.
- * @implNote EmptyContext is the context storing the underlying file, and its Reporter in the resolving stage.
+ * Overrides the {@link #reporter} of {@link #parent}.
+ *
+ * @see org.aya.resolve.error.NameProblem.UnqualifiedNameNotFoundError#didYouMean
  */
-public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingFile) implements Context {
-  @Override public @Nullable Context parent() { return null; }
-  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(
+public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporter) implements Context {
+  @Override public @NotNull Context parent() { return parent; }
+  @Override public @NotNull Reporter reporter() { return reporter; }
+
+  @Override public @NotNull Path underlyingFile() {
+    return parent.underlyingFile();
+  }
+
+  @Override public MutableList<LocalVar> collect(@NotNull MutableList<LocalVar> container) {
+    return parent.collect(container);
+  }
+
+  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
     @NotNull String name, @NotNull SourcePos sourcePos
   ) {
     return null;
@@ -30,15 +41,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
     @NotNull String name,
     @NotNull SourcePos sourcePos
   ) {
-    return null;
-  }
-
-  @Override public @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
-    return new PhysicalModuleContext(reporter, this, extraName);
-  }
-
-  @Override public @NotNull ModulePath modulePath() {
-    throw new UnsupportedOperationException();
+    return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
   @Override public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {

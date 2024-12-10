@@ -23,6 +23,7 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.RepoLike;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +34,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   private boolean modified = true;
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
-  public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
-    super(parent, name);
+  public ReplContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath name) {
+    super(reporter, parent, name);
   }
 
   @Override public void importSymbol(
@@ -67,12 +68,12 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName) {
-    return new ReplContext(this, this.modulePath().derive(extraName));
+  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
+    return new ReplContext(reporter, this, modulePath().derive(extraName));
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull String extraName) {
-    return new ReplContext(this, this.modulePath().derive(extraName));
+  @Override public @NotNull ReplContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
+    return new ReplContext(reporter, this, modulePath().derive(extraName));
   }
 
   @Override public void setDownstream(@Nullable ReplContext downstream) {
@@ -80,7 +81,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   public @NotNull ReplContext fork() {
-    var kid = derive(":theKid");
+    var kid = derive(":theKid", reporter);
     fork(kid);
     return kid;
   }

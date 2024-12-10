@@ -18,7 +18,7 @@ public record QPath(@NotNull ModulePath module, int fileModuleSize) implements S
   }
 
   public QPath {
-    assert 0 < fileModuleSize && fileModuleSize <= module.module().size();
+    assert 0 < fileModuleSize && fileModuleSize <= module.module().size() : "fileModuleSize = " + fileModuleSize;
   }
 
   public @NotNull ModulePath fileModule() {

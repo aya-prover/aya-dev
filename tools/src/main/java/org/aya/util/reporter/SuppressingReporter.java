@@ -9,6 +9,10 @@ public record SuppressingReporter(
   @NotNull Reporter reporter,
   @NotNull MutableList<Class<? extends Problem>> suppressed
 ) implements Reporter {
+  public SuppressingReporter(@NotNull Reporter reporter) {
+    this(reporter, MutableList.create());
+  }
+
   @Override public void report(@NotNull Problem problem) {
     if (suppressed.contains(problem.getClass())) return;
     reporter.report(problem);

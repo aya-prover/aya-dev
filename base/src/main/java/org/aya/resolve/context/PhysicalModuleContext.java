@@ -10,13 +10,17 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * For: file modules, inductive/classes/etc. as modules
+ *
  * @author re-xyr
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
+  public final @NotNull Reporter reporter;
   public final @NotNull Context parent;
   public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
@@ -26,11 +30,13 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath modulePath) {
+  public PhysicalModuleContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath modulePath) {
+    this.reporter = reporter;
     this.parent = parent;
     this.modulePath = modulePath;
   }
 
+  @Override public @NotNull Reporter reporter() { return reporter; }
   @Override public void importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport modExport,

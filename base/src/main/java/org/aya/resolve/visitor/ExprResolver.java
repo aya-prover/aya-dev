@@ -115,10 +115,6 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-//      case Expr.Match match -> {
-//        var clauses = match.clauses().map(this::apply);
-//        yield match.update(match.discriminant().map(this), clauses);
-//      }
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
         mCtx.update(ctx -> bindAs(lam.ref(), ctx));
@@ -182,10 +178,7 @@ public record ExprResolver(
         // resolve body
         var newBody = let.body().descent(enter(ctx.bind(letBind.bindName())));
 
-        yield let.update(
-          letBind.update(telescope, result, definedAs),
-          newBody
-        );
+        yield let.update(letBind.update(telescope, result, definedAs), newBody);
       }
       case Expr.LetOpen letOpen -> {
         var context = new NoExportContext(ctx);
