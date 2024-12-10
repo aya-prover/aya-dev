@@ -9,7 +9,6 @@ import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.context.ReporterContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -124,8 +123,8 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       }
       case FnDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var hijackedCtx = new ReporterContext(ctx, suppress(context.reporter(), decl));
-        yield new ResolvingStmt.TopDecl(decl, hijackedCtx);
+        var innerCtx = ctx.derive(decl.ref().name(), suppress(context.reporter(), decl));
+        yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();

@@ -10,7 +10,6 @@ import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.ReporterContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
@@ -202,7 +201,7 @@ public interface NameProblem extends Problem {
 
     public @NotNull ImmutableSeq<String> didYouMean() {
       var ctx = context;
-      while (ctx instanceof BindContext || ctx instanceof ReporterContext) ctx = ctx.parent();
+      while (ctx instanceof BindContext) ctx = ctx.parent();
       var possible = MutableList.<String>create();
       if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
         if (mod.symbols().containsKey(name)) {

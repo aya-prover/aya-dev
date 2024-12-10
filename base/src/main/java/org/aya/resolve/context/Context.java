@@ -211,7 +211,7 @@ public interface Context extends Problematic {
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
-    return new PhysicalModuleContext(reporter, this, this.modulePath().derive(extraName));
+    return new PhysicalModuleContext(reporter, this, modulePath().derive(extraName));
   }
 
   class ResolvingInterruptedException extends InterruptException {
