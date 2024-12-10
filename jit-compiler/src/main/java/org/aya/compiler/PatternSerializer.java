@@ -253,13 +253,16 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
           mBuilder,
           clause.patterns.view(),
           argNames.view(),
-          Once.of(builder1 -> updateState(builder1, jumpCode))
+          Once.of(builder1 -> {
+            updateState(builder1, jumpCode);
+            builder1.breakOut();
+          })
         );
       });
     });
 
     // check if stuck
-    builder.ifTrue(builder.exprBuilder().refVar(isStuck), onStuck, null);
+    builder.ifTrue(isStuck.ref(), onStuck, null);
 
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
