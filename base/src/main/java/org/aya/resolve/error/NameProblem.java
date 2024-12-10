@@ -63,18 +63,13 @@ public interface NameProblem extends Problem {
     }
   }
 
-  record DuplicateExportError(
-    @NotNull String name,
-    @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem {
+  record DuplicateExportError(@NotNull String name, @Override @NotNull SourcePos sourcePos) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
         Doc.code(name),
         Doc.english("being exported clashes with another exported definition with the same name"));
     }
-
-    @Override @NotNull public Severity level() { return Severity.ERROR; }
   }
 
   record DuplicateModNameError(
