@@ -3,9 +3,9 @@
 package org.aya.tyck.tycker;
 
 import org.aya.generic.AyaDocile;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.tyck.Jdg;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;

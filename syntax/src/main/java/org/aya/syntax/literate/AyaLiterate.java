@@ -8,7 +8,7 @@ import org.aya.literate.parser.InterestingLanguage;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
 import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.Jdg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -60,15 +60,13 @@ public interface AyaLiterate {
     }
   }
 
-  record TyckResult(Term wellTyped, Term type) { }
-
   /**
    * Aya inline code. For code blocks, see {@link AyaVisibleCodeBlock} and {@link AyaHiddenCodeBlock}
    */
   final class AyaInlineCode extends Literate.InlineCode {
     public @Nullable ImmutableSeq<Expr.Param> params;
     public @Nullable WithPos<Expr> expr;
-    public @Nullable TyckResult tyckResult;
+    public @Nullable Jdg tyckResult;
     public final @NotNull CodeOptions options;
 
     public AyaInlineCode(@NotNull String code, @NotNull SourcePos sourcePos, @NotNull CodeOptions options) {

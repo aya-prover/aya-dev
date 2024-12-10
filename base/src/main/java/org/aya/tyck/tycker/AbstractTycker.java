@@ -4,11 +4,11 @@ package org.aya.tyck.tycker;
 
 import kala.value.LazyValue;
 import org.aya.generic.Renamer;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.Jdg;
 import org.aya.tyck.TyckState;
 import org.aya.unify.Synthesizer;
 import org.aya.unify.TermComparator;
