@@ -4,7 +4,6 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.ModuleContext;
@@ -125,8 +124,8 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       }
       case FnDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = new ReporterContext(ctx, supress(context.reporter(), decl));
-        yield new ResolvingStmt.TopDecl(decl, innerCtx);
+        var hijackedCtx = new ReporterContext(ctx, suppress(context.reporter(), decl));
+        yield new ResolvingStmt.TopDecl(decl, hijackedCtx);
       }
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
@@ -147,14 +146,12 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     };
   }
 
-  private static Reporter supress(@NotNull Reporter reporter, @NotNull Decl decl) {
+  private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
     if (decl.suppresses.isEmpty()) return reporter;
-    var r = new SuppressingReporter(reporter, MutableList.create());
+    var r = new SuppressingReporter(reporter);
     decl.suppresses.forEach(suppress -> {
       switch (suppress) {
-        case Shadowing -> {
-          r.suppress(NameProblem.ShadowingWarn.class);
-        }
+        case Shadowing -> r.suppress(NameProblem.ShadowingWarn.class);
       }
     });
     return r;
@@ -175,7 +172,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     @NotNull Function<D, SeqView<Child>> childrenGet,
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
-    var innerCtx = context.derive(decl.ref().name(), supress(context.reporter(), decl));
+    var innerCtx = context.derive(decl.ref().name(), suppress(context.reporter(), decl));
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
     context.importModule(

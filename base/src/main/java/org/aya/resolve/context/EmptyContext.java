@@ -25,8 +25,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
     return null;
   }
 
-  @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(
+  @Override public @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
@@ -42,8 +41,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
+  @Override public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return null;
   }
 }

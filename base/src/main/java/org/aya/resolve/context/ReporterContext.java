@@ -32,8 +32,7 @@ public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporte
     return null;
   }
 
-  @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(
+  @Override public @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
@@ -41,8 +40,7 @@ public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporte
     return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
-  @Override
-  public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
+  @Override public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return null;
   }
 }
