@@ -108,7 +108,7 @@ public class BaseMdParser {
         var language = codeBlock.getInfo();
         var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
         yield languages.find(p -> p.test(language))
-          .map(factory -> (Literate) factory.create(language, code.literal, code.pos.get()))
+          .map(factory -> (Literate) factory.create(code.literal, code.pos.get()))
           .getOrElse(() -> {
             var fence = codeBlock.getFenceCharacter();
             var raw = Doc.nest(codeBlock.getFenceIndent(), Doc.vcat(

@@ -35,28 +35,28 @@ public interface AyaLiterate {
    * extend this class.
    */
   class AyaCodeBlock extends Literate.CodeBlock {
-    public AyaCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
-      super(language, code, sourcePos);
+    public AyaCodeBlock(@NotNull String code, @Nullable SourcePos sourcePos) {
+      super("Aya", code, sourcePos);
     }
   }
 
   final class AyaVisibleCodeBlock extends AyaCodeBlock {
-    public AyaVisibleCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
-      super(language, code, sourcePos);
+    public AyaVisibleCodeBlock(@NotNull String code, @Nullable SourcePos sourcePos) {
+      super(code, sourcePos);
     }
   }
 
   final class AyaHiddenCodeBlock extends AyaCodeBlock {
-    public AyaHiddenCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
-      super(language, code, sourcePos);
+    public AyaHiddenCodeBlock(@NotNull String code, @Nullable SourcePos sourcePos) {
+      super(code, sourcePos);
     }
 
     @Override public @NotNull Doc toDoc() { return Doc.empty(); }
   }
 
   final class AyaLexerCodeBlock extends Literate.CodeBlock {
-    public AyaLexerCodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
-      super(language, code, sourcePos);
+    public AyaLexerCodeBlock(@NotNull String code, @Nullable SourcePos sourcePos) {
+      super("Aya", code, sourcePos);
     }
   }
 
