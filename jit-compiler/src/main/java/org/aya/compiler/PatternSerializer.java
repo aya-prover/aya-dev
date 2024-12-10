@@ -8,10 +8,9 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJava;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.free.data.LocalVariable;
-import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -24,8 +23,6 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import static org.aya.compiler.AyaSerializer.*;
 
 /**
  * We do not serialize meta solve, it is annoying
@@ -61,13 +58,13 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private @UnknownNullability LocalVariable subMatchState;
   private @UnknownNullability LocalVariable isStuck;
 
-  private final @NotNull ImmutableSeq<FreeJava> argNames;
+  private final @NotNull ImmutableSeq<FreeJavaExpr> argNames;
   private final @NotNull Consumer<FreeCodeBuilder> onStuck;
   private final @NotNull Consumer<FreeCodeBuilder> onMismatch;
   private int bindCount = 0;
 
   public PatternSerializer(
-    @NotNull ImmutableSeq<FreeJava> argNames,
+    @NotNull ImmutableSeq<FreeJavaExpr> argNames,
     @NotNull Consumer<FreeCodeBuilder> onStuck,
     @NotNull Consumer<FreeCodeBuilder> onMismatch
   ) {
@@ -81,7 +78,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private void doSerialize(
     @NotNull FreeCodeBuilder builder,
     @NotNull Pat pat,
-    @NotNull FreeJava term,
+    @NotNull FreeJavaExpr term,
     @NotNull Once onMatchSucc
   ) {
     switch (pat) {
@@ -152,7 +149,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
    */
   private void multiStage(
     @NotNull FreeCodeBuilder builder,
-    @NotNull FreeJava term,
+    @NotNull FreeJavaExpr term,
     @NotNull ImmutableSeq<BiConsumer<FreeCodeBuilder, LocalVariable>> preContinuation,
     @NotNull Once continuation
   ) {
@@ -189,7 +186,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private void doSerialize(
     @NotNull FreeCodeBuilder builder,
     @NotNull SeqView<Pat> pats,
-    @NotNull SeqView<FreeJava> terms,
+    @NotNull SeqView<FreeJavaExpr> terms,
     @NotNull Once continuation
   ) {
     if (pats.isEmpty()) {
@@ -220,7 +217,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     builder.updateVar(matchState, builder.exprBuilder().iconst(state));
   }
 
-  private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJava term) {
+  private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
     builder.updateArray(builder.exprBuilder().refVar(result), bindCount++, term);
   }
 

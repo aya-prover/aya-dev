@@ -5,4 +5,4 @@ package org.aya.compiler.free;
 /**
  * An expression representation of each morphism from free java
  */
-public interface FreeJava { }
+public interface FreeJavaExpr { }

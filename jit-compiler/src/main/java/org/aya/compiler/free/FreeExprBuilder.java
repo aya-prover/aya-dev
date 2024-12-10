@@ -20,60 +20,61 @@ public interface FreeExprBuilder {
   /**
    * A {@code new} expression, the class should have only one (public) constructor.
    */
-  @NotNull FreeJava mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJava> args);
+  @NotNull FreeJavaExpr mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
-  default @NotNull FreeJava mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJava> args) {
+  default @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return mkNew(FreeUtil.fromClass(className), args);
   }
 
-  @NotNull FreeJava refVar(@NotNull LocalVariable name);
+  @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name);
 
   /** Invoke a (non-interface) method on {@param owner} */
-  @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args);
+  @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
   /** Invoke a static method */
-  @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJava> args);
+  @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
-  @NotNull FreeJava refField(@NotNull FieldRef field);
-  @NotNull FreeJava refField(@NotNull FieldRef field, @NotNull FreeJava owner);
+  @NotNull FreeJavaExpr refField(@NotNull FieldRef field);
 
-  @NotNull FreeJava refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
+  @NotNull FreeJavaExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner);
 
-  default @NotNull FreeJava refEnum(@NotNull Enum<?> value) {
+  @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
+
+  default @NotNull FreeJavaExpr refEnum(@NotNull Enum<?> value) {
     var cd = FreeUtil.fromClass(value.getClass());
     var name = value.name();
     return refEnum(cd, name);
   }
 
-  @NotNull FreeJava mkLambda(
-    @NotNull ImmutableSeq<FreeJava> captures,
+  @NotNull FreeJavaExpr mkLambda(
+    @NotNull ImmutableSeq<FreeJavaExpr> captures,
     @NotNull MethodRef method,
-    @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
+    @NotNull Function<ArgumentProvider.Lambda, FreeJavaExpr> builder
   );
 
-  @NotNull FreeJava iconst(int i);
+  @NotNull FreeJavaExpr iconst(int i);
 
-  @NotNull FreeJava iconst(boolean b);
+  @NotNull FreeJavaExpr iconst(boolean b);
 
-  @NotNull FreeJava aconst(@NotNull String value);
+  @NotNull FreeJavaExpr aconst(@NotNull String value);
 
-  @NotNull FreeJava aconstNull();
+  @NotNull FreeJavaExpr aconstNull();
 
   /**
    * Construct an array with given type and have length {@param length}
    *
    * @param initializer the initializer, the size is either {@code 0} or {@param length}, 0-length means don't initialize
    */
-  @NotNull FreeJava mkArray(
+  @NotNull FreeJavaExpr mkArray(
     @NotNull ClassDesc type, int length,
-    @NotNull ImmutableSeq<FreeJava> initializer
+    @NotNull ImmutableSeq<FreeJavaExpr> initializer
   );
 
-  @NotNull FreeJava getArray(@NotNull FreeJava array, int index);
+  @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index);
 
-  @NotNull FreeJava checkcast(@NotNull FreeJava obj, @NotNull ClassDesc as);
+  @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as);
 
-  default FreeJava checkcast(@NotNull FreeJava obj, @NotNull Class<?> as) {
+  default FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull Class<?> as) {
     return checkcast(obj, FreeUtil.fromClass(as));
   }
 }

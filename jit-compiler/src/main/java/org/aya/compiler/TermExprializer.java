@@ -42,19 +42,19 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   /**
    * Terms that should be instantiated
    */
-  private final @NotNull ImmutableSeq<FreeJava> instantiates;
-  private final @NotNull MutableLinkedHashMap<LocalVar, FreeJava> binds;
+  private final @NotNull ImmutableSeq<FreeJavaExpr> instantiates;
+  private final @NotNull MutableLinkedHashMap<LocalVar, FreeJavaExpr> binds;
 
   /**
    * Whether allow LocalTerm, false in default (in order to report unexpected LocalTerm)
    */
   private final boolean allowLocalTerm;
 
-  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates) {
+  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJavaExpr> instantiates) {
     this(builder, instantiates, false);
   }
 
-  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJava> instantiates, boolean allowLocalTer) {
+  public TermExprializer(@NotNull FreeExprBuilder builder, @NotNull ImmutableSeq<FreeJavaExpr> instantiates, boolean allowLocalTer) {
     super(builder);
     this.instantiates = instantiates;
     this.allowLocalTerm = allowLocalTer;
@@ -63,7 +63,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
   private TermExprializer(
     @NotNull FreeExprBuilder builder,
-    @NotNull MutableLinkedHashMap<LocalVar, FreeJava> newBinds,
+    @NotNull MutableLinkedHashMap<LocalVar, FreeJavaExpr> newBinds,
     boolean allowLocalTerm
   ) {
     super(builder);
@@ -72,7 +72,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull FreeJava serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
+  private @NotNull FreeJavaExpr serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
       case IntegerOps.ConRule conRule -> builder.mkNew(IntegerOps.ConRule.class, ImmutableSeq.of(
         getInstance(conRule.ref()),
@@ -98,9 +98,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
    * @param fixed         whether {@param reducible} has fixed `invoke`,
    *                      i.e. {@link JitFn} does but {@link org.aya.generic.stmt.Shaped.Applicable} doesn't.
    */
-  private @NotNull FreeJava buildReducibleCall(
+  private @NotNull FreeJavaExpr buildReducibleCall(
     @Nullable ClassDesc reducibleType,
-    @NotNull FreeJava reducible,
+    @NotNull FreeJavaExpr reducible,
     @NotNull Class<?> callName,
     int ulift,
     @NotNull ImmutableSeq<ImmutableSeq<Term>> args,
@@ -110,14 +110,14 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     var seredSeq = seredArgs.map(x -> makeImmutableSeq(Term.class, x));
     var flatArgs = seredArgs.flatMap(x -> x);
 
-    var callArgs = new FreeJava[seredSeq.size() + 2];
+    var callArgs = new FreeJavaExpr[seredSeq.size() + 2];
     callArgs[0] = reducible;
     callArgs[1] = builder.iconst(0); // elevate later
     for (var i = 0; i < seredSeq.size(); ++i) {
       callArgs[i + 2] = seredSeq.get(i);
     }
 
-    UnaryOperator<FreeJava> doElevate = free -> ulift == 0
+    UnaryOperator<FreeJavaExpr> doElevate = free -> ulift == 0
       ? free
       : builder.invoke(Constants.ELEVATE, free, ImmutableSeq.of(builder.iconst(ulift)));
     var onStuck = makeThunk(te -> te.builder.mkNew(callName, ImmutableArray.Unsafe.wrap(callArgs)));
@@ -134,7 +134,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return doElevate.apply(finalInvocation);
   }
 
-  @Override protected @NotNull FreeJava doSerialize(@NotNull Term term) {
+  @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         // It is possible that we meet bind here,
@@ -274,7 +274,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   // TODO: unify with makeClosure
-  private @NotNull FreeJava makeThunk(@NotNull Function<TermExprializer, FreeJava> cont) {
+  private @NotNull FreeJavaExpr makeThunk(@NotNull Function<TermExprializer, FreeJavaExpr> cont) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
     return builder.mkLambda(entries.map(Tuple2::component2), Constants.THUNK, ap -> {
@@ -285,7 +285,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     });
   }
 
-  private @NotNull FreeJava makeClosure(@NotNull BiFunction<TermExprializer, FreeJava, FreeJava> cont) {
+  private @NotNull FreeJavaExpr makeClosure(@NotNull BiFunction<TermExprializer, FreeJavaExpr, FreeJavaExpr> cont) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
     return builder.mkLambda(entries.map(Tuple2::component2), Constants.CLOSURE, ap -> {
@@ -299,14 +299,14 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     });
   }
 
-  private @NotNull FreeJava serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
+  private @NotNull FreeJavaExpr serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
     return makeImmutableSeq(Closure.class, cls.map(this::serializeClosure));
   }
 
-  private @NotNull FreeJava with(
+  private @NotNull FreeJavaExpr with(
     @NotNull LocalVar var,
-    @NotNull FreeJava subst,
-    @NotNull Supplier<FreeJava> continuation
+    @NotNull FreeJavaExpr subst,
+    @NotNull Supplier<FreeJavaExpr> continuation
   ) {
     this.binds.put(var, subst);
     var result = continuation.get();
@@ -314,7 +314,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return result;
   }
 
-  private @NotNull FreeJava serializeClosure(@NotNull Closure body) {
+  private @NotNull FreeJavaExpr serializeClosure(@NotNull Closure body) {
     if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
 
     var var = new LocalVar("<jit>");
@@ -327,16 +327,16 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return builder.mkNew(Closure.Jit.class, ImmutableSeq.of(closure));
   }
 
-  private @NotNull FreeJava serializeConst(Term appliedBody) {
+  private @NotNull FreeJavaExpr serializeConst(Term appliedBody) {
     return builder.invoke(Constants.CLOSURE_MKCONST, ImmutableSeq.of(doSerialize(appliedBody)));
   }
 
-  private @NotNull FreeJava makeAppNew(@NotNull Class<?> className, Term... terms) {
+  private @NotNull FreeJavaExpr makeAppNew(@NotNull Class<?> className, Term... terms) {
     var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
     return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
-  @Override public @NotNull FreeJava serialize(Term unit) {
+  @Override public @NotNull FreeJavaExpr serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instantiateTeleVar(vars.view());

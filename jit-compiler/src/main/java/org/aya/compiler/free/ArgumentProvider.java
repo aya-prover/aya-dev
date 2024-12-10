@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ArgumentProvider {
   interface Lambda extends ArgumentProvider {
-    @NotNull FreeJava capture(int nth);
+    @NotNull FreeJavaExpr capture(int nth);
   }
 
-  @NotNull FreeJava arg(int nth);
+  @NotNull FreeJavaExpr arg(int nth);
 }

@@ -79,14 +79,14 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     @Override
     public void buildConstructor(
       @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
-      @NotNull ImmutableSeq<FreeJava> superConArgs,
+      @NotNull ImmutableSeq<FreeJavaExpr> superConArgs,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
       @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
     ) {
       buildMethod("/* constructor */", toClassName(this.owner), paramTypes, (ap, cb) -> {
         ((SourceCodeBuilder) cb).sourceBuilder()
           .appendLine("super("
-            + superConArgs.map(x -> ((SourceFreeJava) x).expr()).joinToString(", ")
+                      + superConArgs.map(x -> ((SourceFreeJavaExpr) x).expr()).joinToString(", ")
             + ");");
 
         builder.accept(ap, cb);

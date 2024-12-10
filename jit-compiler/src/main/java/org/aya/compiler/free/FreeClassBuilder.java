@@ -31,7 +31,7 @@ public interface FreeClassBuilder {
 
   void buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
-    @NotNull ImmutableSeq<FreeJava> superConArgs,
+    @NotNull ImmutableSeq<FreeJavaExpr> superConArgs,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   );

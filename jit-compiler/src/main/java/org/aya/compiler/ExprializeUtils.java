@@ -5,10 +5,7 @@ package org.aya.compiler;
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeJava;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
 
 public interface ExprializeUtils {
   String SEP = ", ";
