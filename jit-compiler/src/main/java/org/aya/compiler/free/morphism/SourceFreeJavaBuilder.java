@@ -6,8 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.AbstractSerializer;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldData;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,14 +66,14 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     }
 
     @Override
-    public @NotNull MethodData buildMethod(
+    public @NotNull MethodRef buildMethod(
       @NotNull ClassDesc returnType,
       @NotNull String name,
       @NotNull ImmutableSeq<ClassDesc> paramTypes,
       @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
     ) {
       buildMethod(toClassRef(returnType), name, paramTypes, builder);
-      return new MethodData.Default(this.owner, name, returnType, paramTypes, false);
+      return new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
     }
 
     @Override
@@ -94,9 +94,9 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     }
 
     @Override
-    public @NotNull FieldData buildConstantField(@NotNull ClassDesc returnType, @NotNull String name) {
+    public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name) {
       sourceBuilder.buildConstantField(toClassRef(returnType), name, null);
-      return new FieldData.Default(this.owner, returnType, name);
+      return new FieldRef.Default(this.owner, returnType, name);
     }
   }
 
@@ -113,18 +113,18 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
   }
 
   @Override
-  public @NotNull MethodData resolve(
+  public @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
     @NotNull ImmutableSeq<ClassDesc> paramType,
     boolean isInterface
   ) {
-    return new MethodData.Default(owner, name, returnType, paramType, isInterface);
+    return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
   }
 
   @Override
-  public @NotNull FieldData resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
-    return new FieldData.Default(owner, returnType, name);
+  public @NotNull FieldRef resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
+    return new FieldRef.Default(owner, returnType, name);
   }
 }

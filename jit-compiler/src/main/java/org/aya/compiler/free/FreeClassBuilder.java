@@ -3,8 +3,8 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.FieldData;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ public interface FreeClassBuilder {
     @NotNull Consumer<FreeClassBuilder> builder
   );
 
-  @NotNull MethodData buildMethod(
+  @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
@@ -36,7 +36,7 @@ public interface FreeClassBuilder {
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   );
 
-  @NotNull FieldData buildConstantField(
+  @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name
   );

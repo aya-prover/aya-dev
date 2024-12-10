@@ -7,4 +7,8 @@ import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 
 public record SourceFreeJava(@NotNull String expr) implements FreeJava, LocalVariable {
+  @Override
+  public @NotNull FreeJava ref() {
+    return this;
+  }
 }

@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
@@ -176,14 +176,14 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         serializeToImmutableSeq(Term.class, args)
       ));
       case FnCall call -> {
-        var refClass = switch (call.ref()) {
-          case JitFn jit -> NameSerializer.getClassDesc(jit);
-          case FnDef.Delegate def -> NameSerializer.getClassDesc(AnyDef.fromVar(def.ref));
+        var anyDef = switch (call.ref()) {
+          case JitFn jit -> jit;
+          case FnDef.Delegate def -> AnyDef.fromVar(def.ref);
         };
 
-        var ref = getInstance(refClass);
+        var ref = getInstance(anyDef);
         var args = call.args();
-        yield buildReducibleCall(refClass, ref, FnCall.class, call.ulift(), ImmutableSeq.of(args), true);
+        yield buildReducibleCall(NameSerializer.getClassDesc(anyDef), ref, FnCall.class, call.ulift(), ImmutableSeq.of(args), true);
       }
       case RuleReducer.Con conRuler -> buildReducibleCall(
         null,
@@ -264,8 +264,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     };
   }
 
-  private @NotNull MethodData resolveInvoke(@NotNull ClassDesc owner, int argc) {
-    return new MethodData.Default(
+  private @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
+    return new MethodRef.Default(
       owner, METHOD_INVOKE,
       Constants.CD_Term,
       SeqView.of(FreeUtil.fromClass(Supplier.class)).appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term))

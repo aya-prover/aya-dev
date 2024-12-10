@@ -4,7 +4,7 @@ package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.core.def.AnyDef;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public abstract class AbstractExprializer<T> {
     return makeImmutableSeq(Constants.IMMSEQ, typeName, terms);
   }
 
-  public final @NotNull FreeJava makeImmutableSeq(@NotNull MethodData con, @NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
+  public final @NotNull FreeJava makeImmutableSeq(@NotNull MethodRef con, @NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJava> terms) {
     var args = builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms);
     return builder.invoke(con, ImmutableSeq.of(args));
   }
@@ -28,18 +28,19 @@ public abstract class AbstractExprializer<T> {
     return makeImmutableSeq(typeName, terms.map(this::doSerialize));
   }
 
-  public final @NotNull FreeJava getInstance(@NotNull ClassDesc def) {
-    return builder.refField(builder.resolver().resolve(def, AyaSerializer.STATIC_FIELD_INSTANCE, def));
-  }
-
   /**
    * Return the reference to the {@code INSTANCE} field of the compiled class to {@param def}
    */
   public final @NotNull FreeJava getInstance(@NotNull AnyDef def) {
-    return getInstance(NameSerializer.getClassDesc(def));
+    return getInstance(builder, def);
   }
 
-  public final @NotNull FreeJava getRef(@NotNull CallKind callType, @NotNull FreeJava call) {
+  public static @NotNull FreeJava getInstance(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
+    var desc = NameSerializer.getClassDesc(def);
+    return builder.refField(builder.resolver().resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
+  }
+
+  public static @NotNull FreeJava getRef(@NotNull FreeExprBuilder builder, @NotNull CallKind callType, @NotNull FreeJava call) {
     return builder.refField(builder.resolver().resolve(callType.callType, AyaSerializer.FIELD_INSTANCE, callType.refType), call);
   }
 
@@ -49,6 +50,18 @@ public abstract class AbstractExprializer<T> {
       AyaSerializer.FIELD_EMPTYCALL,
       callType.callType)
     );
+  }
+
+  public static @NotNull ImmutableSeq<FreeJava> fromSeq(
+    @NotNull FreeExprBuilder builder,
+    @NotNull ClassDesc elementType,
+    @NotNull FreeJava theSeq,
+    int size
+  ) {
+    return ImmutableSeq.fill(size, idx -> {
+      var result = builder.invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(idx)));
+      return builder.checkcast(result, elementType);
+    });
   }
 
   /**

@@ -6,11 +6,22 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJava;
+import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.generic.State;
 import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.TupTerm;
+import org.aya.syntax.core.term.call.ConCallLike;
+import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
+import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -24,17 +35,19 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
   }
 
-  public final static class Once implements Runnable {
-    public static @NotNull Once of(@NotNull Runnable run) { return new Once(run); }
-    private final @NotNull Runnable run;
+  // Just for checking
+  public final static class Once implements Consumer<FreeCodeBuilder> {
+    public static @NotNull Once of(@NotNull Consumer<FreeCodeBuilder> run) { return new Once(run); }
+    private final @NotNull Consumer<FreeCodeBuilder> run;
     private boolean dirty = false;
 
-    public Once(@NotNull Runnable run) { this.run = run; }
+    public Once(@NotNull Consumer<FreeCodeBuilder> run) { this.run = run; }
 
-    @Override public void run() {
+    @Override
+    public void accept(FreeCodeBuilder freeClassBuilder) {
       if (dirty) throw new Panic("Once");
       dirty = true;
-      this.run.run();
+      this.run.accept(freeClassBuilder);
     }
   }
 
@@ -43,22 +56,21 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  public static final @NotNull String VARIABLE_RESULT = "result";
-  public static final @NotNull String VARIABLE_STATE = "matchState";
-  public static final @NotNull String VARIABLE_SUBSTATE = "subMatchState";
+  private @UnknownNullability LocalVariable result;
+  private @UnknownNullability LocalVariable matchState;
+  private @UnknownNullability LocalVariable subMatchState;
+  private @UnknownNullability LocalVariable isStuck;
 
-  private final @NotNull ImmutableSeq<String> argNames;
-  private final @NotNull Consumer<SourceBuilder> onStuck;
-  private final @NotNull Consumer<SourceBuilder> onMismatch;
+  private final @NotNull ImmutableSeq<FreeJava> argNames;
+  private final @NotNull Consumer<FreeCodeBuilder> onStuck;
+  private final @NotNull Consumer<FreeCodeBuilder> onMismatch;
   private int bindCount = 0;
 
   public PatternSerializer(
-    @NotNull SourceBuilder builder,
-    @NotNull ImmutableSeq<String> argNames,
-    @NotNull Consumer<SourceBuilder> onStuck,
-    @NotNull Consumer<SourceBuilder> onMismatch
+    @NotNull ImmutableSeq<FreeJava> argNames,
+    @NotNull Consumer<FreeCodeBuilder> onStuck,
+    @NotNull Consumer<FreeCodeBuilder> onMismatch
   ) {
-    super(builder);
     this.argNames = argNames;
     this.onStuck = onStuck;
     this.onMismatch = onMismatch;
@@ -66,164 +78,197 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   /// region Serializing
 
-  private void doSerialize(@NotNull Pat pat, @NotNull String term, @NotNull Once continuation) {
+  private void doSerialize(
+    @NotNull FreeCodeBuilder builder,
+    @NotNull Pat pat,
+    @NotNull FreeJava term,
+    @NotNull Once onMatchSucc
+  ) {
     switch (pat) {
       case Pat.Misc misc -> {
         switch (misc) {
-          case Absurd -> buildIfElse("Panic.unreachable()", State.Stuck, continuation);
+          case Absurd -> buildPanic(builder);
           case UntypedBind -> {
-            onMatchBind(term);
-            continuation.run();
+            onMatchBind(builder, term);
+            onMatchSucc.accept(builder);
           }
         }
       }
       case Pat.Bind _ -> {
-        onMatchBind(term);
-        continuation.run();
+        onMatchBind(builder, term);
+        onMatchSucc.accept(builder);
       }
+
       // TODO: match IntegerTerm / ListTerm first
-      case Pat.Con con -> multiStage(term, ImmutableSeq.of(
-        // mTerm -> solveMeta(con, mTerm),
-        mTerm -> buildIfInstanceElse(mTerm, CLASS_CONCALLLIKE, State.Stuck, mmTerm ->
-          buildIfElse(ExprializeUtils.getCallInstance(mmTerm) + " == " + ExprializeUtils.getInstance(NameSerializer.getClassRef(con.ref())),
-            State.Mismatch, () -> {
-              var conArgsTerm = buildLocalVar(TYPE_IMMTERMSEQ,
-                nameGen().nextName(), mmTerm + ".conArgs()");
-              doSerialize(con.args().view(), SourceBuilder.fromSeq(conArgsTerm, con.args().size()).view(),
-                Once.of(() -> buildUpdate(VARIABLE_SUBSTATE, "true")));
-            }))
-      ), continuation);
+      case Pat.Con con -> builder.ifInstanceOf(term, FreeUtil.fromClass(ConCallLike.class),
+        (builder1, conTerm) -> {
+          builder1.ifRefEqual(
+            AbstractExprializer.getRef(builder1.exprBuilder(), CallKind.Con, conTerm.ref()),
+            AbstractExprializer.getInstance(builder1.exprBuilder(), con.ref()),
+            builder2 -> {
+              var conArgsTerm = builder2.exprBuilder().invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
+              var conArgs = AbstractExprializer.fromSeq(
+                builder2.exprBuilder(),
+                Constants.CD_Term,
+                conArgsTerm,
+                con.args().size()
+              );
+
+              doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
+            }, null /* mismatch, do nothing */
+          );
+        }, this::onStuck);
       case Pat.Meta _ -> Panic.unreachable();
-      case Pat.ShapedInt shapedInt -> multiStage(term, ImmutableSeq.of(
+      case Pat.ShapedInt shapedInt -> multiStage(builder, term, ImmutableSeq.of(
         // mTerm -> solveMeta(shapedInt, mTerm),
-        mTerm -> matchInt(shapedInt, mTerm),
-        // do nothing on success, [doSerialize] sets subMatchState, and we will invoke [continuation] when [subMatchState = true]
-        mTerm -> doSerialize(shapedInt.constructorForm(), mTerm, Once.of(() -> { }))
-      ), continuation);
-      case Pat.Tuple(var l, var r) -> multiStage(term, ImmutableSeq.of(
-        // mTerm -> solveMeta(tuple, mTerm),
-        mTerm -> buildIfInstanceElse(mTerm, CLASS_TUPLE, State.Stuck, mmTerm ->
-          doSerialize(l, mmTerm + ".lhs()", Once.of(() ->
-            doSerialize(r, mmTerm + ".rhs()", Once.of(() -> { })))))
-      ), continuation);
+        (builder0, mTerm) ->
+          matchInt(builder0, shapedInt, mTerm),
+        (builder0, mTerm) ->
+          doSerialize(builder0, shapedInt.constructorForm(), builder.exprBuilder().refVar(mTerm),
+            // There will a sequence of [subMatchState = true] if there are a lot of [Pat.ShapedInt],
+            // but our optimizer will fix them
+            Once.of(builder1 -> updateSubstate(builder1, true)))
+      ), onMatchSucc);
+      case Pat.Tuple(var l, var r) -> {
+        builder.ifInstanceOf(term, FreeUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+          var lhs = builder0.exprBuilder().invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
+          doSerialize(builder0, l, lhs, Once.of(builder1 -> {
+            var rhs = builder0.exprBuilder().invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
+            doSerialize(builder1, r, rhs, onMatchSucc);
+          }));
+        }, this::onStuck);
+      }
     }
   }
 
   /**
    * Generate multi case matching, these local variable are available:
-   * <ul>
-   *   <li>{@link #VARIABLE_SUBSTATE}: the state of multi case matching, false means last check failed</li>
-   *   <li>{@code tmpName}: this name is generated, they are the first argument of continuation.
-   *   {@param preContinuation} may change the term be matched
-   *   </li>
-   * </ul>
    * <p>
    * Note that {@param preContinuation}s should not invoke {@param continuation}!
    *
    * @param term            the expression be matched, not always a variable reference
-   * @param preContinuation matching cases
+   * @param preContinuation matching cases, only the last one can invoke multiStage
    * @param continuation    on match success
    */
   private void multiStage(
-    @NotNull String term,
-    @NotNull ImmutableSeq<Consumer<String>> preContinuation,
+    @NotNull FreeCodeBuilder builder,
+    @NotNull FreeJava term,
+    @NotNull ImmutableSeq<BiConsumer<FreeCodeBuilder, LocalVariable>> preContinuation,
     @NotNull Once continuation
   ) {
-    var tmpName = nameGen().nextName();
-    buildUpdate(VARIABLE_SUBSTATE, "false");
-    buildLocalVar(CLASS_TERM, tmpName, term);
+    updateSubstate(builder, false);
+    var tmpName = builder.makeVar(Term.class, term);
 
     for (var pre : preContinuation) {
-      buildIf("! " + VARIABLE_SUBSTATE, () -> pre.accept(tmpName));
+      builder.ifNotTrue(builder.exprBuilder().refVar(subMatchState), builder0 -> {
+        pre.accept(builder0, tmpName);
+      }, null);
     }
 
-    buildIf(VARIABLE_SUBSTATE, continuation);
+    builder.ifTrue(builder.exprBuilder().refVar(subMatchState), continuation, null);
   }
 
-  private void matchInt(@NotNull Pat.ShapedInt pat, @NotNull String term) {
-    buildIfInstanceElse(term, TermExprializer.CLASS_INTEGER, intTerm ->
-      buildIf(pat.repr() + " == " + intTerm + ".repr()", () ->
+  private void matchInt(@NotNull FreeCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
+    builder.ifInstanceOf(builder.exprBuilder().refVar(term), FreeUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+      var intTermRepr = builder0.exprBuilder().invoke(
+        Constants.INT_REPR,
+        builder0.exprBuilder().refVar(intTerm),
+        ImmutableSeq.empty()
+      );
+
+      builder0.ifIntEqual(intTermRepr, pat.repr(), builder1 -> {
         // Pat.ShapedInt provides no binds
-        buildUpdate(VARIABLE_SUBSTATE, "true")), null);
+        updateSubstate(builder1, true);
+      }, null);
+    }, null);
   }
 
   /**
    * @apiNote {@code pats.sizeEquals(terms)}
    */
-  private void doSerialize(@NotNull SeqView<Pat> pats, @NotNull SeqView<String> terms, @NotNull Once continuation) {
+  private void doSerialize(
+    @NotNull FreeCodeBuilder builder,
+    @NotNull SeqView<Pat> pats,
+    @NotNull SeqView<FreeJava> terms,
+    @NotNull Once continuation
+  ) {
     if (pats.isEmpty()) {
-      continuation.run();
+      continuation.accept(builder);
       return;
     }
 
     var pat = pats.getFirst();
     var term = terms.getFirst();
-    doSerialize(pat, term, Once.of(() -> doSerialize(pats.drop(1), terms.drop(1), continuation)));
+    doSerialize(builder, pat, term,
+      Once.of(builder0 -> doSerialize(builder0, pats.drop(1), terms.drop(1), continuation)));
   }
 
   /// endregion Serializing
 
   /// region Java Source Code Generate API
 
-  private void buildIfInstanceElse(
-    @NotNull String term,
-    @NotNull String type,
-    @NotNull State state,
-    @NotNull Consumer<String> continuation
-  ) {
-    buildIfInstanceElse(term, type, continuation, () -> updateState(-state.ordinal()));
+  private void onStuck(@NotNull FreeCodeBuilder builder) {
+    builder.updateVar(isStuck, builder.exprBuilder().iconst(true));
+    builder.breakOut();
   }
 
-  private void buildIfElse(@NotNull String condition, @NotNull State state, @NotNull Runnable continuation) {
-    buildIfElse(condition, continuation, () -> updateState(-state.ordinal()));
+  private void updateSubstate(@NotNull FreeCodeBuilder builder, boolean state) {
+    builder.updateVar(subMatchState, builder.exprBuilder().iconst(state));
   }
 
-  private void updateState(int state) {
-    buildUpdate(VARIABLE_STATE, Integer.toString(state));
+  private void updateState(@NotNull FreeCodeBuilder builder, int state) {
+    builder.updateVar(matchState, builder.exprBuilder().iconst(state));
   }
 
-  private void onMatchBind(@NotNull String term) {
-    appendLine(VARIABLE_RESULT + ".set(" + bindCount++ + ", " + term + ");");
+  private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJava term) {
+    builder.updateArray(builder.exprBuilder().refVar(result), bindCount++, term);
   }
 
   /// endregion Java Source Code Generate API
 
-  @Override public PatternSerializer serialize(@NotNull ImmutableSeq<Matching> unit) {
+  @Override public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
-      onMismatch.accept(this);
+      onMismatch.accept(builder);
       return this;
     }
+
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int maxBindSize = bindSize.max();
 
-    buildLocalVar(CLASS_MUTSEQ + "<" + CLASS_TERM + ">", VARIABLE_RESULT, CLASS_MUTSEQ + ".fill(" + maxBindSize + ", (" + CLASS_TERM + ") null)");
-    buildLocalVar("int", VARIABLE_STATE, "0");
-    buildLocalVar("boolean", VARIABLE_SUBSTATE, "false");
+    // var result = new Term[maxBindCount];
+    result = builder.makeVar(Constants.CD_Term.arrayType(),
+      builder.exprBuilder().mkArray(Constants.CD_Term, maxBindSize, ImmutableSeq.empty()));
 
-    buildGoto(() -> unit.forEachIndexed((idx, clause) -> {
-      var jumpCode = idx + 1;
-      bindCount = 0;
-      doSerialize(
-        clause.patterns().view(),
-        argNames.view(),
-        Once.of(() -> updateState(jumpCode)));
+    // whether the matching is stuck
+    isStuck = builder.makeVar(ConstantDescs.CD_Boolean, builder.exprBuilder().iconst(false));
+    // whether the match success or mismatch, 0 implies mismatch
+    matchState = builder.makeVar(ConstantDescs.CD_int, builder.exprBuilder().iconst(0));
+    subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.exprBuilder().iconst(false));
 
-      buildIf(VARIABLE_STATE + " > 0", this::buildBreak);
-    }));
+    builder.breakable(mBuilder -> {
+      unit.forEachIndexed((idx, clause) -> {
+        var jumpCode = idx + 1;
+        bindCount = 0;
+        doSerialize(
+          mBuilder,
+          clause.patterns.view(),
+          argNames.view(),
+          Once.of(builder1 -> updateState(builder1, jumpCode))
+        );
+      });
+    });
 
-    // -1 ..= unit.size()
-    var range = IntRange.closed(-1, unit.size()).collect(ImmutableIntSeq.factory());
-    buildSwitch(VARIABLE_STATE, range, state -> {
-      switch (state) {
-        case -1 -> onMismatch.accept(this);
-        case 0 -> onStuck.accept(this);
-        default -> {
-          assert state > 0;
-          var realIdx = state - 1;
-          unit.get(realIdx).onSucc.accept(this, bindSize.get(realIdx));
-        }
-      }
-    }, () -> buildPanic(null));
+    // check if stuck
+    builder.ifTrue(builder.exprBuilder().refVar(isStuck), onStuck, null);
+
+    // 0 ..= unit.size()
+    var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
+    builder.switchCase(builder.exprBuilder().refVar(matchState), range, (mBuilder, i) -> {
+      if (i == 0) onMismatch.accept(mBuilder);
+      assert i > 0;
+      var realIdx = i - 1;
+      unit.get(realIdx).onSucc.accept(this, bindSize.get(realIdx));
+    }, this::buildPanic);
 
     return this;
   }

@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.ClassDef;
@@ -35,7 +36,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
     buildReturn(FIELD_MEMBERS);
   }
 
-  @Override public AbstractSerializer<ClassDef> serialize(ClassDef unit) {
+  @Override public AbstractSerializer<ClassDef> serialize(@NotNull FreeCodeBuilder builder, ClassDef unit) {
     buildFramework(unit, () ->
       buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), CLASS_JITMEMBERS + "[]", true,
         () -> buildMembers(unit)));

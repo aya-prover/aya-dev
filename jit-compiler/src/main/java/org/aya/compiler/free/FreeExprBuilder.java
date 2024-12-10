@@ -3,14 +3,17 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.FieldData;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.Function;
 
+/**
+ * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
+ */
 public interface FreeExprBuilder {
   @NotNull FreeJavaResolver resolver();
 
@@ -26,13 +29,13 @@ public interface FreeExprBuilder {
   @NotNull FreeJava refVar(@NotNull LocalVariable name);
 
   /** Invoke a (non-interface) method on {@param owner} */
-  @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args);
+  @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args);
 
   /** Invoke a static method */
-  @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull ImmutableSeq<FreeJava> args);
+  @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJava> args);
 
-  @NotNull FreeJava refField(@NotNull FieldData field);
-  @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner);
+  @NotNull FreeJava refField(@NotNull FieldRef field);
+  @NotNull FreeJava refField(@NotNull FieldRef field, @NotNull FreeJava owner);
 
   @NotNull FreeJava refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
 
@@ -44,7 +47,7 @@ public interface FreeExprBuilder {
 
   @NotNull FreeJava mkLambda(
     @NotNull ImmutableSeq<FreeJava> captures,
-    @NotNull MethodData method,
+    @NotNull MethodRef method,
     @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
   );
 
@@ -54,8 +57,23 @@ public interface FreeExprBuilder {
 
   @NotNull FreeJava aconst(@NotNull String value);
 
+  @NotNull FreeJava aconstNull();
+
+  /**
+   * Construct an array with given type and have length {@param length}
+   *
+   * @param initializer the initializer, the size is either {@code 0} or {@param length}, 0-length means don't initialize
+   */
   @NotNull FreeJava mkArray(
     @NotNull ClassDesc type, int length,
     @NotNull ImmutableSeq<FreeJava> initializer
   );
+
+  @NotNull FreeJava getArray(@NotNull FreeJava array, int index);
+
+  @NotNull FreeJava checkcast(@NotNull FreeJava obj, @NotNull ClassDesc as);
+
+  default FreeJava checkcast(@NotNull FreeJava obj, @NotNull Class<?> as) {
+    return checkcast(obj, FreeUtil.fromClass(as));
+  }
 }

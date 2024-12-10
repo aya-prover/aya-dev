@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -57,7 +58,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
       case Either.Right(var clauses) -> {
         var ser = new PatternSerializer(this.sourceBuilder, argTerms, onStuckCon, onStuckCon);
-        ser.serialize(clauses.view()
+        ser.serialize(null, clauses.view()
           .map(WithPos::data)
           .map(matching -> new PatternSerializer.Matching(
             matching.bindCount(), matching.patterns(), (s, bindSize) ->
@@ -91,7 +92,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     }
   }
 
-  @Override public FnSerializer serialize(FnDef unit) {
+  @Override public FnSerializer serialize(@NotNull FreeCodeBuilder builder, FnDef unit) {
     var argsTerm = "args";
     var onStuckTerm = "onStuck";
     var onStuckParam = new JitParam(onStuckTerm, TYPE_STUCK);

@@ -14,12 +14,23 @@ import java.util.function.ObjIntConsumer;
 
 public interface FreeCodeBuilder {
   @NotNull FreeJavaResolver resolver();
+  @NotNull FreeExprBuilder exprBuilder();
 
   @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJava initializer);
+
+  default LocalVariable makeVar(@NotNull Class<?> type, @Nullable FreeJava initializer) {
+    return makeVar(FreeUtil.fromClass(type), initializer);
+  }
+
+  void updateVar(@NotNull LocalVariable var, @NotNull FreeJava update);
+
+  void updateArray(@NotNull FreeJava array, int idx, @NotNull FreeJava update);
 
   void ifNotTrue(@NotNull FreeJava notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
   void ifTrue(@NotNull FreeJava theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
   void ifInstanceOf(@NotNull FreeJava lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
+  void ifIntEqual(@NotNull FreeJava lhs, int rhs, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
+  void ifRefEqual(@NotNull FreeJava lhs, @NotNull FreeJava rhs, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
   void ifNull(@NotNull FreeJava isNull, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 
   /**
@@ -27,6 +38,11 @@ public interface FreeCodeBuilder {
    */
   void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock);
   void breakOut();
+
+  /**
+   * Turns an expression to a statement
+   */
+  void exec(@NotNull FreeJava expr);
 
   /**
    * Build a switch statement on int

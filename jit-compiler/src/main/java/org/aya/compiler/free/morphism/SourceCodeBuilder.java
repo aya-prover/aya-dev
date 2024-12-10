@@ -7,9 +7,9 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldData;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +31,15 @@ public record SourceCodeBuilder(
     return ((SourceFreeJava) expr).expr();
   }
 
+  public static @NotNull String getExpr(@NotNull LocalVariable expr) {
+    return ((SourceFreeJava) expr).expr();
+  }
+
+  @Override
+  public @NotNull FreeExprBuilder exprBuilder() {
+    return this;
+  }
+
   @Override
   public @NotNull FreeJavaResolver resolver() {
     return parent;
@@ -43,6 +52,16 @@ public record SourceCodeBuilder(
 
     sourceBuilder.buildLocalVar(toClassRef(type), name, mInitializer);
     return new SourceFreeJava(name);
+  }
+
+  @Override
+  public void updateVar(@NotNull LocalVariable var, @NotNull FreeJava update) {
+    sourceBuilder.buildUpdate(getExpr(var), getExpr(update));
+  }
+
+  @Override
+  public void updateArray(@NotNull FreeJava array, int idx, @NotNull FreeJava update) {
+    sourceBuilder.buildUpdate(getExpr(array) + "[" + idx + "]", getExpr(update));
   }
 
   @Override
@@ -89,6 +108,26 @@ public record SourceCodeBuilder(
   }
 
   @Override
+  public void ifIntEqual(
+    @NotNull FreeJava lhs,
+    int rhs,
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
+  ) {
+    buildIf(getExpr(lhs) + " == " + rhs, thenBlock, elseBlock);
+  }
+
+  @Override
+  public void ifRefEqual(
+    @NotNull FreeJava lhs,
+    @NotNull FreeJava rhs,
+    @NotNull Consumer<FreeCodeBuilder> thenBlock,
+    @Nullable Consumer<FreeCodeBuilder> elseBlock
+  ) {
+    buildIf(getExpr(lhs) + " == " + getExpr(rhs), thenBlock, elseBlock);
+  }
+
+  @Override
   public void ifNull(
     @NotNull FreeJava isNull,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
@@ -107,6 +146,11 @@ public record SourceCodeBuilder(
   @Override
   public void breakOut() {
     sourceBuilder.buildBreak();
+  }
+
+  @Override
+  public void exec(@NotNull FreeJava expr) {
+    sourceBuilder.appendLine(getExpr(expr) + ";");
   }
 
   @Override
@@ -133,26 +177,26 @@ public record SourceCodeBuilder(
 
   @Override
   public @NotNull FreeJava refVar(@NotNull LocalVariable name) {
-    return (SourceFreeJava) name;
+    return name.ref();
   }
 
   @Override
-  public @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args) {
+  public @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull FreeJava owner, @NotNull ImmutableSeq<FreeJava> args) {
     return new SourceFreeJava(getExpr(owner) + "." + method.name() + "(" + toArgs(args) + ")");
   }
 
   @Override
-  public @NotNull FreeJava invoke(@NotNull MethodData method, @NotNull ImmutableSeq<FreeJava> args) {
+  public @NotNull FreeJava invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJava> args) {
     return new SourceFreeJava(toClassRef(method.owner()) + "." + method.name() + "(" + toArgs(args) + ")");
   }
 
   @Override
-  public @NotNull FreeJava refField(@NotNull FieldData field) {
+  public @NotNull FreeJava refField(@NotNull FieldRef field) {
     return new SourceFreeJava(toClassRef(field.owner()) + "." + field.name());
   }
 
   @Override
-  public @NotNull FreeJava refField(@NotNull FieldData field, @NotNull FreeJava owner) {
+  public @NotNull FreeJava refField(@NotNull FieldRef field, @NotNull FreeJava owner) {
     return new SourceFreeJava(getExpr(owner) + "." + field.name());
   }
 
@@ -166,7 +210,7 @@ public record SourceCodeBuilder(
   @Override
   public @NotNull FreeJava mkLambda(
     @NotNull ImmutableSeq<FreeJava> captures,
-    @NotNull MethodData method,
+    @NotNull MethodRef method,
     @NotNull Function<ArgumentProvider.Lambda, FreeJava> builder
   ) {
     var name = ImmutableSeq.fill(method.paramTypes().size(), _ ->
@@ -191,9 +235,24 @@ public record SourceCodeBuilder(
   }
 
   @Override
+  public @NotNull FreeJava aconstNull() {
+    return new SourceFreeJava("null");
+  }
+
+  @Override
   public @NotNull FreeJava mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJava> initializer) {
     assert initializer.isEmpty() || initializer.sizeEquals(length);
     var init = initializer.isEmpty() ? "" : "{" + toArgs(initializer) + "}";
     return new SourceFreeJava("new " + toClassRef(type) + "[" + length + "]" + init);
+  }
+
+  @Override
+  public @NotNull FreeJava getArray(@NotNull FreeJava array, int index) {
+    return new SourceFreeJava(getExpr(array) + "[" + index + "]");
+  }
+
+  @Override
+  public FreeJava checkcast(@NotNull FreeJava obj, @NotNull ClassDesc as) {
+    return new SourceFreeJava("((" + toClassRef(as) + ")" + getExpr(obj) + ")");
   }
 }

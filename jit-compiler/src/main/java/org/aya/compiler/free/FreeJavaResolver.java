@@ -3,8 +3,8 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.FieldData;
-import org.aya.compiler.free.data.MethodData;
+import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,7 @@ public interface FreeJavaResolver {
   /**
    * Find a method with given information
    */
-  @NotNull MethodData resolve(
+  @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
@@ -24,13 +24,13 @@ public interface FreeJavaResolver {
     boolean isInterface
   );
 
-  @NotNull FieldData resolve(
+  @NotNull FieldRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType
   );
 
-  default @NotNull FieldData resolve(
+  default @NotNull FieldRef resolve(
     @NotNull Class<?> owner,
     @NotNull String name
   ) {
@@ -45,7 +45,7 @@ public interface FreeJavaResolver {
   /**
    * Find the only method with given name
    */
-  default @NotNull MethodData resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
+  default @NotNull MethodRef resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
     if (name.equals(ConstantDescs.INIT_NAME)) {
       throw new Panic("use ExprBuilder#newObject instead");
     }

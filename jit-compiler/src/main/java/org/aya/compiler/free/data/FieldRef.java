@@ -6,12 +6,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public interface FieldData {
+public interface FieldRef {
   record Default(
     @NotNull ClassDesc owner,
     @NotNull ClassDesc returnType,
     @NotNull String name
-  ) implements FieldData { }
+  ) implements FieldRef {
+  }
 
   @NotNull ClassDesc owner();
   @NotNull ClassDesc returnType();

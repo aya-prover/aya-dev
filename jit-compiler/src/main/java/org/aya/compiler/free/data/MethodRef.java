@@ -7,14 +7,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public interface MethodData {
+public interface MethodRef {
   record Default(
     @Override @NotNull ClassDesc owner,
     @Override @NotNull String name,
     @Override @NotNull ClassDesc returnType,
     @Override @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @Override boolean isInterface
-  ) implements MethodData { }
+  ) implements MethodRef {
+  }
 
   @NotNull ClassDesc owner();
   @NotNull String name();
