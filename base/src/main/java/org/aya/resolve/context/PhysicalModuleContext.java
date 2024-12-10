@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * For: file modules, inductive/classes/etc. as modules
+ *
  * @author re-xyr
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
