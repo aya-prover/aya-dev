@@ -77,7 +77,8 @@ public class AyaMdParserTest {
     } else {
       var expAyaFile = file(expPath);
 
-      assertLinesMatch(expAyaFile.sourceCode().lines(), actualCode.lines());
+      // Have to trim because trailing newlines are usually deleted by vcs
+      assertLinesMatch(expAyaFile.sourceCode().trim().lines(), actualCode.trim().lines());
     }
   }
 
