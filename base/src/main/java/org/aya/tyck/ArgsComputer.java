@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;

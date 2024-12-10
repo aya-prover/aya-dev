@@ -20,13 +20,13 @@ import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.tyck.Jdg;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
@@ -90,7 +90,7 @@ public record LiterateData(
       if (c.options.mode() == CodeOptions.NormalizeMode.NULL) {
         var jdg = simpleVar(c.expr.data());
         if (jdg != null) {
-          c.tyckResult = new AyaLiterate.TyckResult(jdg.wellTyped(), jdg.type());
+          c.tyckResult = jdg;
           return;
         }
       }
@@ -98,10 +98,7 @@ public record LiterateData(
       var teleTycker = new TeleTycker.InlineCode(tycker);
       var result = teleTycker.checkInlineCode(c.params, c.expr);
       var normalizer = new Normalizer(tycker.state);
-      c.tyckResult = new AyaLiterate.TyckResult(
-        normalizer.normalize(result.wellTyped(), c.options.mode()),
-        normalizer.normalize(result.type(), c.options.mode())
-      );
+      c.tyckResult = result.map(t -> normalizer.normalize(t, c.options.mode()));
     });
   }
 

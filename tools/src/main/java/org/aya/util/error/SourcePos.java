@@ -133,8 +133,7 @@ public record SourcePos(
     return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';
   }
 
-  @Override
-  public int hashCode() {
+  @Override public int hashCode() {
     // the equals() returns true in tests, so hashCode() should
     // be a constant according to JLS
     if (Global.UNITE_SOURCE_POS) return 0;
@@ -147,5 +146,9 @@ public record SourcePos(
   public @NotNull SourcePos coalesceLeft() {
     return new SourcePos(file, tokenStartIndex, tokenStartIndex - 1,
       startLine, startColumn, startLine, startColumn);
+  }
+  public @NotNull SourcePos shrink(int leftIncrease, int rightDecrease) {
+    return new SourcePos(file, tokenStartIndex + leftIncrease, tokenEndIndex - rightDecrease,
+      startLine, startColumn + leftIncrease, endLine, endColumn - rightDecrease);
   }
 }

@@ -42,7 +42,10 @@ public interface FaithfulPrettier {
     return highlightInRange;
   }
 
-  default @NotNull Doc doHighlight(@NotNull StringSlice raw, int base, @NotNull ImmutableSeq<HighlightInfo> highlights) {
+  default @NotNull Doc doHighlight(
+    @NotNull StringSlice raw, int base,
+    @NotNull ImmutableSeq<? extends HighlightInfo> highlights
+  ) {
     var docs = MutableList.<Doc>create();
 
     for (var current : highlights) {

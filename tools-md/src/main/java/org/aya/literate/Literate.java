@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -82,6 +82,10 @@ public interface Literate extends Docile {
     public final @Nullable SourcePos sourcePos;
     public @Nullable Doc highlighted = null;
 
+    /**
+     * @param language  used as the `class` attribute of the code block
+     * @param sourcePos without '```\n' and '\n```'
+     */
     public CodeBlock(@NotNull String language, @NotNull String code, @Nullable SourcePos sourcePos) {
       this.language = language;
       this.code = code;

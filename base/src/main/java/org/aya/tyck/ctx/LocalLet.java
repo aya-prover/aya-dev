@@ -4,8 +4,8 @@ package org.aya.tyck.ctx;
 
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.control.Option;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.tyck.Jdg;
 import org.aya.util.Scoped;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
