@@ -199,7 +199,7 @@ public interface Context extends Problematic {
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
-    return derive(new ModulePath(ImmutableSeq.of(extraName)));
+    return derive(extraName, reporter());
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
@@ -207,7 +207,7 @@ public interface Context extends Problematic {
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
-    return new PhysicalModuleContext(this, this.modulePath().derive(extraName));
+    return derive(extraName, reporter());
   }
 
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {

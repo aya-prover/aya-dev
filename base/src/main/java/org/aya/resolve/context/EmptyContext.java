@@ -35,7 +35,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
   }
 
   @Override public @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
-    return new PhysicalModuleContext(this, extraName);
+    return new PhysicalModuleContext(reporter, this, extraName);
   }
 
   @Override public @NotNull ModulePath modulePath() {

@@ -28,12 +28,6 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath modulePath) {
-    this.reporter = parent.reporter();
-    this.parent = parent;
-    this.modulePath = modulePath;
-  }
-
   public PhysicalModuleContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath modulePath) {
     this.reporter = reporter;
     this.parent = parent;

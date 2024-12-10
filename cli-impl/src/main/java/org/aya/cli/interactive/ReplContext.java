@@ -34,7 +34,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
   public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
-    super(parent, name);
+    super(parent.reporter(), parent, name);
   }
 
   @Override public void importSymbol(
