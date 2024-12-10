@@ -5,6 +5,7 @@ package org.aya.tyck;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
+import org.aya.prettier.BasePrettier;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
@@ -13,6 +14,7 @@ import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.tyck.error.ClassError;
 import org.aya.tyck.error.LicitError;
 import org.aya.util.Ordering;
 import org.aya.util.Pair;
@@ -58,9 +60,14 @@ public class ArgsComputer {
 
   private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
     if (param.type() instanceof ClassCall clazz) {
-      // TODO: type checking
-      return new FreeTerm(tycker.state.classThis.peek());
-    } else return tycker.mockTerm(param, pos);
+      // TODO: resolve instance
+      var thises = tycker.state.classThis;
+      if (thises.isNotEmpty()) return new FreeTerm(thises.peek());
+      tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
+      return new ErrorTerm(opt -> BasePrettier.refVar(clazz.ref()));
+    } else {
+      return tycker.mockTerm(param, pos);
+    }
   }
 
   static @NotNull Jdg generateApplication(

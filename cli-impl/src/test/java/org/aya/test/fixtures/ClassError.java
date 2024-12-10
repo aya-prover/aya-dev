@@ -24,4 +24,9 @@ public interface ClassError {
   @Language("Aya") String testSigmaCon = "def bruh : Type => (ISet, Set)";
   @Language("Aya") String testSigmaAcc = "def bruh (A : Type) : Type => A.1";
   @Language("Aya") String testSigmaProj = "def bruh (A : Sig Type ** ISet) : Set => A.3";
+
+  @Language("Aya") String testInstNotFound = """
+    open class Ok | A : Type
+    def test => A
+    """;
 }
