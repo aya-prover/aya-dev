@@ -17,7 +17,6 @@ import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.AbstractTycker;
@@ -138,11 +137,6 @@ public record Synthesizer(
     };
   }
 
-  public @NotNull Term mkFree(@NotNull Term type) {
-    var param = LocalVar.generate(Renamer.nameOf(type));
-    localCtx().put(param, type);
-    return new FreeTerm(param);
-  }
   @Override public @NotNull TyckState state() { return tycker.state; }
   @Override public @NotNull LocalCtx localCtx() { return tycker.localCtx(); }
   @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) {

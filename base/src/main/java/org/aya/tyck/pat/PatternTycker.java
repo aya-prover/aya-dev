@@ -10,6 +10,7 @@ import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
+import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.concrete.Expr;
@@ -22,7 +23,6 @@ import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -484,14 +484,6 @@ public class PatternTycker implements Problematic, Stateful {
   /// region Helper
   private @NotNull Pat randomPat(Term param) {
     return new Pat.Bind(nameGen.bindName(param), param);
-  }
-
-  /**
-   * Generate names for core telescope
-   */
-  private @NotNull SeqView<Param> generateNames(@NotNull ImmutableSeq<Term> telescope) {
-    return telescope.view().mapIndexed((_, t) ->
-      new Param(nameGen.bindName(exprTycker.whnf(t)).name(), t, true));
   }
 
   /// endregion Helper
