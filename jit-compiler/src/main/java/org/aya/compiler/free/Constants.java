@@ -79,7 +79,7 @@ public final class Constants {
    * @see Seq#get(int)
    */
   public static final @NotNull MethodRef SEQ_GET = new MethodRef.Default(
-    FreeUtil.fromClass(Seq.class), "get", ConstantDescs.CD_Object,
+    CD_Seq, "get", ConstantDescs.CD_Object,
     ImmutableSeq.of(ConstantDescs.CD_int),
     true
   );

@@ -5,6 +5,10 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
@@ -12,6 +16,9 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.constant.ConstantDescs;
+import java.util.function.Consumer;
 
 import static org.aya.compiler.AyaSerializer.CLASS_SEQ;
 import static org.aya.compiler.AyaSerializer.CLASS_TERM;
@@ -24,14 +31,45 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   public static final String TYPE_TERMSEQ = CLASS_SEQ + "<" + CLASS_TERM + ">";
 
   protected JitTeleSerializer(
-    @NotNull SourceBuilder builder,
-    @NotNull Class<?> superClass
+    @NotNull Class<? extends JitTele> superClass
   ) {
-    super(builder, superClass);
+    super(superClass);
   }
 
-  protected void buildFramework(@NotNull T unit, @NotNull Runnable continuation) {
-    super.buildFramework(unit, () -> {
+  @Override
+  protected void buildConstructor(
+    @NotNull FreeClassBuilder builder,
+    T unit,
+    @NotNull FieldRef fieldInstance,
+    @NotNull Consumer<FreeCodeBuilder> fieldInit
+  ) {
+    var tele = def.telescope();
+    var size = tele.size();
+    var licit = tele.view().map(Param::explicit).map(Object::toString);
+    var names = tele.view().map(Param::name).map(x -> "\"" + x + "\"");
+
+    buildSuperCall(ImmutableSeq.of(
+      Integer.toString(size),
+      ExprializeUtils.makeArrayFrom("boolean", licit.toImmutableSeq()),
+      ExprializeUtils.makeArrayFrom("java.lang.String", names.toImmutableArray())
+    ).appendedAll(ext));
+  }
+
+  @Override
+  protected void buildFramework(
+    @NotNull FreeClassBuilder builder,
+    @NotNull T unit,
+    @NotNull Consumer<FreeClassBuilder> continuation
+  ) {
+    super.buildFramework(builder, unit, nestBuilder -> {
+      nestBuilder.buildMethod(
+        Constants.CD_Term,
+        METHOD_TELESCOPE,
+        ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
+        (ap, cb) -> {
+          var i = ap.arg(0);
+          var teleArgs = ap.arg(1);
+        });
       var iTerm = "i";
       var teleArgsTerm = "teleArgs";
       buildMethod(METHOD_TELESCOPE, ImmutableSeq.of(
@@ -51,19 +89,6 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   protected boolean shouldBuildEmptyCall(@NotNull T unit) {
     return unit.telescope().isEmpty();
   }
-  protected void buildConstructor(@NotNull T def, @NotNull ImmutableSeq<String> ext) {
-    var tele = def.telescope();
-    var size = tele.size();
-    var licit = tele.view().map(Param::explicit).map(Object::toString);
-    var names = tele.view().map(Param::name).map(x -> "\"" + x + "\"");
-
-    buildSuperCall(ImmutableSeq.of(
-      Integer.toString(size),
-      ExprializeUtils.makeArrayFrom("boolean", licit.toImmutableSeq()),
-      ExprializeUtils.makeArrayFrom("java.lang.String", names.toImmutableArray())
-    ).appendedAll(ext));
-  }
-
   /**
    * @see JitTele#telescope(int, Term...)
    */

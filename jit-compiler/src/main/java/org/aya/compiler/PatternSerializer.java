@@ -56,21 +56,20 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   private @UnknownNullability LocalVariable result;
   private @UnknownNullability LocalVariable matchState;
   private @UnknownNullability LocalVariable subMatchState;
-  private @UnknownNullability LocalVariable isStuck;
 
   private final @NotNull ImmutableSeq<FreeJavaExpr> argNames;
-  private final @NotNull Consumer<FreeCodeBuilder> onStuck;
-  private final @NotNull Consumer<FreeCodeBuilder> onMismatch;
+  private final @NotNull Consumer<FreeCodeBuilder> onFailed;
+  private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternSerializer(
     @NotNull ImmutableSeq<FreeJavaExpr> argNames,
-    @NotNull Consumer<FreeCodeBuilder> onStuck,
-    @NotNull Consumer<FreeCodeBuilder> onMismatch
+    @NotNull Consumer<FreeCodeBuilder> onFailed,
+    boolean isOverlap
   ) {
     this.argNames = argNames;
-    this.onStuck = onStuck;
-    this.onMismatch = onMismatch;
+    this.onFailed = onFailed;
+    this.isOverlap = isOverlap;
   }
 
   /// region Serializing
@@ -205,8 +204,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   /// region Java Source Code Generate API
 
   private void onStuck(@NotNull FreeCodeBuilder builder) {
-    builder.updateVar(isStuck, builder.exprBuilder().iconst(true));
-    builder.breakOut();
+    if (!isOverlap) builder.breakOut();
   }
 
   private void updateSubstate(@NotNull FreeCodeBuilder builder, boolean state) {
@@ -225,7 +223,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
   @Override public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
-      onMismatch.accept(builder);
+      onFailed.accept(builder);
       return this;
     }
 
@@ -235,9 +233,6 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     // var result = new Term[maxBindCount];
     result = builder.makeVar(Constants.CD_Term.arrayType(),
       builder.exprBuilder().mkArray(Constants.CD_Term, maxBindSize, ImmutableSeq.empty()));
-
-    // whether the matching is stuck
-    isStuck = builder.makeVar(ConstantDescs.CD_Boolean, builder.exprBuilder().iconst(false));
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.exprBuilder().iconst(0));
     subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.exprBuilder().iconst(false));
@@ -258,13 +253,10 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       });
     });
 
-    // check if stuck
-    builder.ifTrue(isStuck.ref(), onStuck, null);
-
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
     builder.switchCase(builder.exprBuilder().refVar(matchState), range, (mBuilder, i) -> {
-      if (i == 0) onMismatch.accept(mBuilder);
+      if (i == 0) onFailed.accept(mBuilder);
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, bindSize.get(realIdx));
