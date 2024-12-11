@@ -372,9 +372,14 @@ public class LibraryCompiler {
       var moduleName = file.moduleName();
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
+      var startTime = System.currentTimeMillis();
       var mod = moduleLoader.load(moduleName);
       if (mod == null || file.resolveInfo().get() == null)
         throw new Panic("Unable to load module: " + moduleName);
+      var time = System.currentTimeMillis() - startTime;
+      // Print those who have taken too long
+      if (time > 1500) reporter.reportNest("Done in " + StringUtil.timeToString(
+        time), LibraryOwner.DEFAULT_INDENT + 2);
     }
   }
 

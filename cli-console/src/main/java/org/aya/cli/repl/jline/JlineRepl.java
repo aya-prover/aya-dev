@@ -68,9 +68,11 @@ public final class JlineRepl extends AyaRepl {
       ))
       .variable(LineReader.HISTORY_FILE, AyaHome.ayaHome().resolve("history"))
       .variable(LineReader.SECONDARY_PROMPT_PATTERN, "| ")
+      .variable(LineReader.INSERT_CLOSE_PAREN, true)
+      .variable(LineReader.INSERT_CLOSE_SQUARE, true)
       .build();
     prettyPrintWidth = widthOf(terminal);
-    terminal.handle(Terminal.Signal.WINCH, signal -> prettyPrintWidth = widthOf(terminal));
+    terminal.handle(Terminal.Signal.WINCH, _ -> prettyPrintWidth = widthOf(terminal));
   }
 
   private int widthOf(@NotNull Terminal terminal) {
