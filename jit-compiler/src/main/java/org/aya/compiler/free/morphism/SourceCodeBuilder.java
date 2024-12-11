@@ -35,15 +35,8 @@ public record SourceCodeBuilder(
     return ((SourceFreeJavaExpr) expr).expr();
   }
 
-  @Override
-  public @NotNull FreeExprBuilder exprBuilder() {
-    return this;
-  }
-
-  @Override
-  public @NotNull FreeJavaResolver resolver() {
-    return parent;
-  }
+  @Override public @NotNull FreeExprBuilder exprBuilder() { return this; }
+  @Override public @NotNull FreeJavaResolver resolver() { return parent; }
 
   @Override
   public @NotNull SourceFreeJavaExpr makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
@@ -75,8 +68,7 @@ public record SourceCodeBuilder(
     sourceBuilder.buildUpdate(getExpr(owner) + "." + field.name(), getExpr(update));
   }
 
-  @Override
-  public void ifNotTrue(
+  @Override public void ifNotTrue(
     @NotNull FreeJavaExpr notTrue,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
     @Nullable Consumer<FreeCodeBuilder> elseBlock
@@ -96,8 +88,7 @@ public record SourceCodeBuilder(
         : () -> elseBlock.accept(this));
   }
 
-  @Override
-  public void ifTrue(
+  @Override public void ifTrue(
     @NotNull FreeJavaExpr theTrue,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
     @Nullable Consumer<FreeCodeBuilder> elseBlock
@@ -105,8 +96,7 @@ public record SourceCodeBuilder(
     buildIf(getExpr(theTrue), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifInstanceOf(
+  @Override public void ifInstanceOf(
     @NotNull FreeJavaExpr lhs,
     @NotNull ClassDesc rhs,
     @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock,
@@ -118,8 +108,7 @@ public record SourceCodeBuilder(
       elseBlock);
   }
 
-  @Override
-  public void ifIntEqual(
+  @Override public void ifIntEqual(
     @NotNull FreeJavaExpr lhs,
     int rhs,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
@@ -128,8 +117,7 @@ public record SourceCodeBuilder(
     buildIf(getExpr(lhs) + " == " + rhs, thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifRefEqual(
+  @Override public void ifRefEqual(
     @NotNull FreeJavaExpr lhs,
     @NotNull FreeJavaExpr rhs,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
@@ -147,20 +135,15 @@ public record SourceCodeBuilder(
     buildIf(ExprializeUtils.isNull(getExpr(isNull)), thenBlock, elseBlock);
   }
 
-  @Override
-  public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
+  @Override public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
     sourceBuilder.appendLine("do {");
     sourceBuilder.runInside(() -> innerBlock.accept(this));
     sourceBuilder.appendLine("} while (false);");
   }
 
-  @Override
-  public void breakOut() {
-    sourceBuilder.buildBreak();
-  }
+  @Override public void breakOut() { sourceBuilder.buildBreak(); }
 
-  @Override
-  public void exec(@NotNull FreeJavaExpr expr) {
+  @Override public void exec(@NotNull FreeJavaExpr expr) {
     sourceBuilder.appendLine(getExpr(expr) + ";");
   }
 
@@ -230,23 +213,19 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr("(" + name.joinToString(", ") + ") -> " + builder.apply(ap));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr iconst(int i) {
+  @Override public @NotNull FreeJavaExpr iconst(int i) {
     return new SourceFreeJavaExpr(Integer.toString(i));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr iconst(boolean b) {
+  @Override public @NotNull FreeJavaExpr iconst(boolean b) {
     return new SourceFreeJavaExpr(Boolean.toString(b));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr aconst(@NotNull String value) {
+  @Override public @NotNull FreeJavaExpr aconst(@NotNull String value) {
     return new SourceFreeJavaExpr(ExprializeUtils.makeString(value));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr aconstNull() {
+  @Override public @NotNull FreeJavaExpr aconstNull() {
     return new SourceFreeJavaExpr("null");
   }
 
@@ -257,13 +236,11 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr("new " + toClassRef(type) + "[" + length + "]" + init);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
+  @Override public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
     return new SourceFreeJavaExpr(getExpr(array) + "[" + index + "]");
   }
 
-  @Override
-  public FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  @Override public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
     return new SourceFreeJavaExpr("((" + toClassRef(as) + ")" + getExpr(obj) + ")");
   }
 }

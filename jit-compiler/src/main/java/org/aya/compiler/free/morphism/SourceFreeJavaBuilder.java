@@ -33,10 +33,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
   public record SourceClassBuilder(@NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
                                    @NotNull SourceBuilder sourceBuilder)
     implements FreeClassBuilder {
-    @Override
-    public @NotNull FreeJavaResolver resolver() {
-      return parent;
-    }
+    @Override public @NotNull FreeJavaResolver resolver() { return parent; }
 
     @Override
     public void buildNestedClass(
