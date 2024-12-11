@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
 import org.aya.generic.Nested;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
@@ -428,8 +429,8 @@ public sealed interface Expr extends AyaDocile {
      *
      * @param generator {@code x * y} part above
      * @param binds     {@code x <- [1, 2, 3], y <- [4, 5, 6]} part above
-     * @param names     the bind ({@code >>=}) function, it is {@link org.aya.generic.Constants#monadBind} in default,
-     *                  the pure ({@code return}) function, it is {@link org.aya.generic.Constants#functorPure} in default
+     * @param names     the bind ({@code >>=}) function, it is {@link Constants#monadBind} in default,
+     *                  the pure ({@code return}) function, it is {@link Constants#functorPure} in default
      * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
      * it will be desugared to {@code do x <- [1, 2, 3], y <- [4, 5, 6], return x * y}
      */
@@ -457,16 +458,16 @@ public sealed interface Expr extends AyaDocile {
     /**
      * helper constructor, also find constructor calls easily in IDE
      */
-    public static Expr.Array newList(@NotNull ImmutableSeq<WithPos<Expr>> exprs) {
-      return new Expr.Array(Either.right(new ElementList(exprs)));
+    public static Array newList(@NotNull ImmutableSeq<WithPos<Expr>> exprs) {
+      return new Array(Either.right(new ElementList(exprs)));
     }
 
-    public static Expr.Array newGenerator(
+    public static Array newGenerator(
       @NotNull WithPos<Expr> generator,
       @NotNull ImmutableSeq<DoBind> bindings,
       @NotNull ListCompNames names
     ) {
-      return new Expr.Array(Either.left(new CompBlock(generator, bindings, names)));
+      return new Array(Either.left(new CompBlock(generator, bindings, names)));
     }
   }
 
@@ -510,11 +511,11 @@ public sealed interface Expr extends AyaDocile {
   record LetBind(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar bindName,
-    @NotNull ImmutableSeq<Expr.Param> telescope,
+    @NotNull ImmutableSeq<Param> telescope,
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs
   ) implements SourceNode {
-    public @NotNull LetBind update(@NotNull ImmutableSeq<Expr.Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
+    public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs);
     }
@@ -559,27 +560,31 @@ public sealed interface Expr extends AyaDocile {
 
   record Match(
     @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
-    @NotNull ImmutableSeq<Pattern.Clause> clauses
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull ImmutableSeq<LocalVar> asBindings, boolean isElim,
+    @Nullable WithPos<Expr> returns
   ) implements Expr {
     public @NotNull Match update(
       @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
-      @NotNull ImmutableSeq<Pattern.Clause> clauses
+      @NotNull ImmutableSeq<Pattern.Clause> clauses,
+      @Nullable WithPos<Expr> returns
     ) {
       return this.discriminant.sameElements(discriminant, true)
-        && this.clauses.sameElements(clauses, true)
-        ? this
-        : new Match(discriminant, clauses);
+        && this.clauses.sameElements(clauses, true) && this.returns == returns
+        ? this : new Match(discriminant, clauses, asBindings, isElim, returns);
     }
 
-    @Override
-    public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(discriminant.map(x -> x.descent(f)), clauses.map(x -> x.descent(f)));
+    @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(discriminant.map(x -> x.descent(f)),
+        clauses.map(x -> x.descent(f)),
+        returns != null ? returns.descent(f) : null);
     }
 
-    @Override
-    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(f::accept);
-      // TODO: what about clauses?
+      // TODO: what about the patterns
+      clauses.forEach(clause -> clause.forEach(f, (_, _) -> {}));
+      f.accept(returns);
     }
   }
 

@@ -566,9 +566,22 @@ public record AyaProducer(
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
+      var isElim = node.peekChild(KW_ELIM) != null;
+      var matchType = node.peekChild(MATCH_TYPE);
+      ImmutableSeq<LocalVar> asBindings = ImmutableSeq.empty();
+      WithPos<Expr> returns = null;
+      if (matchType != null) {
+        matchType.child(COMMA_SEP).childrenOfType(WEAK_ID)
+          .map(this::weakId)
+          .map(LocalVar::from)
+          .toImmutableSeq();
+        var returnsNode = node.peekChild(EXPR);
+        if (returnsNode != null) returns = expr(returnsNode);
+      }
       return new WithPos<>(pos, new Expr.Match(
         node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq(),
-        bare.concat(barred).toImmutableSeq()
+        bare.concat(barred).toImmutableSeq(), asBindings, isElim,
+        returns
       ));
     }
     if (node.is(ARROW_EXPR)) {

@@ -148,7 +148,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           element -> inherit(element, elementTy).wellTyped()));
         yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
       }
-      case Expr.Match(var discriminant, var clauses) -> {
+      case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
         var wellArgs = discriminant.map(this::synthesize);
         var telescope = new AbstractTele.Locns(
           wellArgs.map(x -> new Param(LocalVar.IGNORED.name(), x.type(), true)),
