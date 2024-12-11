@@ -97,14 +97,10 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
 
   protected abstract @NotNull Class<?> callClass();
 
-  /**
-   * @param fieldInit the initializer for constant fields, should be invoked right after super call
-   * @see org.aya.syntax.compile.JitDef
-   */
   protected abstract void buildConstructor(
     @NotNull FreeClassBuilder builder,
     T unit,
     @NotNull FieldRef fieldInstance,
-    @NotNull Consumer<FreeCodeBuilder> fieldInit
+    @NotNull Consumer<FreeCodeBuilder> cont
   );
 }

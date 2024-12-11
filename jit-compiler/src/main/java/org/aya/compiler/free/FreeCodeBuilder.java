@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
@@ -14,14 +15,19 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 public interface FreeCodeBuilder {
-  @NotNull FreeJavaResolver resolver();
-  @NotNull FreeExprBuilder exprBuilder();
+  @NotNull FreeClassBuilder currentClass();
+
+  default @NotNull FreeExprBuilder exprBuilder() {
+    return currentClass().exprBuilder();
+  }
 
   @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer);
 
   default LocalVariable makeVar(@NotNull Class<?> type, @Nullable FreeJavaExpr initializer) {
     return makeVar(FreeUtil.fromClass(type), initializer);
   }
+
+  void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs);
 
   void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update);
 

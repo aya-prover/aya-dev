@@ -60,6 +60,8 @@ public interface FreeExprBuilder {
 
   @NotNull FreeJavaExpr aconstNull();
 
+  @NotNull FreeJavaExpr thisRef();
+
   /**
    * Construct an array with given type and have length {@param length}
    *

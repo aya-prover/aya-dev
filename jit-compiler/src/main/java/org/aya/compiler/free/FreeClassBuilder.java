@@ -13,8 +13,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public interface FreeClassBuilder {
-  @NotNull FreeJavaResolver resolver();
-
   void buildNestedClass(
     CompiledAya compiledAya,
     @NotNull String name,
@@ -30,8 +28,6 @@ public interface FreeClassBuilder {
   );
 
   void buildConstructor(
-    @NotNull ImmutableSeq<ClassDesc> superConParamTypes,
-    @NotNull ImmutableSeq<FreeJavaExpr> superConArgs,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   );
@@ -40,4 +36,7 @@ public interface FreeClassBuilder {
     @NotNull ClassDesc returnType,
     @NotNull String name
   );
+
+  @NotNull FreeJavaResolver resolver();
+  @NotNull FreeExprBuilder exprBuilder();
 }

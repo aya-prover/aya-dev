@@ -176,4 +176,11 @@ public final class Constants {
     ImmutableSeq.empty(),
     false
   );
+
+  /**
+   * @see org.aya.syntax.telescope.JitTele#JitTele(int, boolean[], String[])
+   */
+  public static final @NotNull ImmutableSeq<ClassDesc> JIT_TELE_CON_PARAMS = ImmutableSeq.of(
+    ConstantDescs.CD_int, ConstantDescs.CD_boolean.arrayType(), ConstantDescs.CD_String.arrayType()
+  );
 }
