@@ -5,6 +5,7 @@ package org.aya.compiler;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.BooleanConsumer;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.generic.State;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.ConDef;
@@ -62,7 +63,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     buildIfElse(is0Term, () -> continuation.accept(true), () -> continuation.accept(false));
   }
 
-  @Override public ConSerializer serialize(ConDef unit) {
+  @Override public ConSerializer serialize(@NotNull FreeCodeBuilder builder, ConDef unit) {
     var argsTerm = "args";
     var is0Term = "is0";
 

@@ -3,45 +3,37 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractSerializer<T> implements SourceBuilder {
+public abstract class AbstractSerializer<T> {
   public record JitParam(@NotNull String name, @NotNull String type) { }
 
-  protected final @NotNull SourceBuilder sourceBuilder;
-
-  protected AbstractSerializer(@NotNull SourceBuilder builder) {
-    assert builder != this : "Dont do this";
-    this.sourceBuilder = builder;
+  protected AbstractSerializer() {
   }
 
-  @Override public @NotNull StringBuilder builder() { return sourceBuilder.builder(); }
-  @Override public @NotNull NameGenerator nameGen() { return sourceBuilder.nameGen(); }
-  @Override public int indent() {
-    return sourceBuilder.indent();
-  }
-
-  @Override public void runInside(@NotNull Runnable runnable) {
-    sourceBuilder.runInside(runnable);
-  }
   /**
    * the implementation should keep {@link SourceBuilder#indent} after invocation.
    */
-  public abstract AbstractSerializer<T> serialize(T unit);
+  public abstract AbstractSerializer<T> serialize(@NotNull FreeCodeBuilder builder, T unit);
 
-  public String result() { return builder().toString(); }
-
-  protected @NotNull String serializeTermUnderTele(@NotNull Term term, @NotNull String argsTerm, int size) {
+  protected @NotNull FreeJavaExpr serializeTermUnderTele(@NotNull Term term, @NotNull String argsTerm, int size) {
     return serializeTermUnderTele(term, SourceBuilder.fromSeq(argsTerm, size));
   }
 
-  protected @NotNull String serializeTermUnderTele(@NotNull Term term, @NotNull ImmutableSeq<String> argTerms) {
+  protected @NotNull FreeJavaExpr serializeTermUnderTele(@NotNull Term term, @NotNull ImmutableSeq<String> argTerms) {
     return new TermExprializer(sourceBuilder.nameGen(), argTerms)
       .serialize(term);
   }
 
-  protected @NotNull String serializeTerm(@NotNull Term term) {
+  protected @NotNull FreeJavaExpr serializeTerm(@NotNull Term term) {
     return serializeTermUnderTele(term, ImmutableSeq.empty());
+  }
+
+  protected final void buildPanic(@NotNull FreeCodeBuilder builder) {
+    builder.exec(builder.exprBuilder().invoke(Constants.PANIC, ImmutableSeq.empty()));
   }
 }

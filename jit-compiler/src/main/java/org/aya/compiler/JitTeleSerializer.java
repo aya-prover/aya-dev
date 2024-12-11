@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
@@ -68,7 +69,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
    */
   protected void buildTelescope(@NotNull T unit, @NotNull String iTerm, @NotNull String teleArgsTerm) {
     var tele = unit.telescope();
-    buildSwitch(iTerm, IntRange.closedOpen(0, tele.size()).collect(ImmutableSeq.factory()), kase ->
+    buildSwitch(iTerm, IntRange.closedOpen(0, tele.size()).collect(ImmutableIntSeq.factory()), kase ->
       buildReturn(serializeTermUnderTele(tele.get(kase).type(), teleArgsTerm, kase)), () -> buildPanic(null));
   }
 

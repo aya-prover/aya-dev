@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.constant.ClassDesc;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -95,6 +96,14 @@ public interface NameSerializer {
    */
   static @NotNull String getClassRef(@NotNull AnyDef def) {
     return getClassRef(def.qualifiedName());
+  }
+
+  static @NotNull String getClassName(@NotNull AnyDef def) {
+    return getClassName(def.qualifiedName());
+  }
+
+  static @NotNull ClassDesc getClassDesc(@NotNull AnyDef def) {
+    return ClassDesc.of(getClassName(def));
   }
 
   static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {

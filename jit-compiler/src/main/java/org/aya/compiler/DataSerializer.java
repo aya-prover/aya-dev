@@ -5,6 +5,7 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.DataDef;
@@ -25,7 +26,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  @Override public DataSerializer serialize(DataDef unit) {
+  @Override public DataSerializer serialize(@NotNull FreeCodeBuilder builder, DataDef unit) {
     buildFramework(unit, () -> buildMethod("constructors", ImmutableSeq.empty(),
       CLASS_JITCON + "[]", true,
       () -> buildConstructors(unit)));

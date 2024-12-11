@@ -3,10 +3,12 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static org.aya.compiler.AyaSerializer.CLASS_PANIC;
 import static org.aya.compiler.ExprializeUtils.getJavaRef;
@@ -133,15 +135,21 @@ public interface SourceBuilder {
   default void buildConstantField(
     @NotNull String type,
     @NotNull String name,
-    @NotNull String value
+    @Nullable String value
   ) {
-    appendLine("public static final " + type + " " + name + " = " + value + ";");
+    if (value != null) {
+      value = " = " + value;
+    } else {
+      value = "";
+    }
+
+    appendLine("public static final " + type + " " + name + value + ";");
   }
 
-  default <R> void buildSwitch(
+  default void buildSwitch(
     @NotNull String term,
-    @NotNull ImmutableSeq<R> cases,
-    @NotNull Consumer<R> continuation,
+    @NotNull ImmutableIntSeq cases,
+    @NotNull IntConsumer continuation,
     @NotNull Runnable defaultCase
   ) {
     if (cases.isEmpty()) {
@@ -150,11 +158,11 @@ public interface SourceBuilder {
     }
     appendLine("switch (" + term + ") {");
     runInside(() -> {
-      for (var kase : cases) {
+      cases.forEach(kase -> {
         appendLine("case " + kase + " -> {");
         runInside(() -> continuation.accept(kase));
         appendLine("}");
-      }
+      });
 
       appendLine("default -> {");
       runInside(defaultCase);

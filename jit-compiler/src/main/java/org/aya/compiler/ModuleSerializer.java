@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;
@@ -40,22 +41,22 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
   private void doSerialize(@NotNull TyckDef unit) {
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(this, shapeFactory)
-        .serialize(teleDef);
+        .serialize(null, teleDef);
       case DataDef dataDef -> {
-        new DataSerializer(this, shapeFactory).serialize(dataDef);
+        new DataSerializer(this, shapeFactory).serialize(null, dataDef);
         serializeCons(dataDef, this);
       }
       case ConDef conDef -> new ConSerializer(this)
-        .serialize(conDef);
+        .serialize(null, conDef);
       case PrimDef primDef -> new PrimSerializer(this)
-        .serialize(primDef);
+        .serialize(null, primDef);
       case ClassDef classDef -> {
         new ClassSerializer(this)
-          .serialize(classDef);
+          .serialize(null, classDef);
         serializeMems(classDef, this);
       }
       case MemberDef memberDef -> new MemberSerializer(this)
-        .serialize(memberDef);
+        .serialize(null, memberDef);
     }
   }
 
@@ -64,7 +65,7 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
       IterableUtil.forEach(unit.defs, this::appendLine, this::doSerialize));
   }
 
-  @Override public ModuleSerializer serialize(ModuleResult unit) {
+  @Override public ModuleSerializer serialize(@NotNull FreeCodeBuilder builder, ModuleResult unit) {
     doSerialize(unit);
 
     return this;

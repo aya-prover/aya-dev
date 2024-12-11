@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.ref.ModulePath;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,8 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
     appendLine("package " + getModulePackageReference(path, PACKAGE_SEPARATOR) + ";");
   }
 
-  @Override public @NotNull FileSerializer serialize(ModuleSerializer.ModuleResult unit) {
+  @Override
+  public @NotNull FileSerializer serialize(@NotNull FreeCodeBuilder builder, ModuleSerializer.ModuleResult unit) {
     assert unit.name().isFileModule();
     buildPackage(unit.name().module());
     appendLine();
@@ -29,7 +31,7 @@ public class FileSerializer extends AbstractSerializer<ModuleSerializer.ModuleRe
     appendLine();
 
     new ModuleSerializer(this, shapeFactory)
-      .serialize(unit);
+      .serialize(null, unit);
 
     return this;
   }

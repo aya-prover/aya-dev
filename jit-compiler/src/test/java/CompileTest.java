@@ -98,7 +98,7 @@ public class CompileTest {
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
     return new FileSerializer(result.info.shapeFactory())
-      .serialize(new ModuleSerializer.ModuleResult(
+      .serialize(null, new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
       .result();
   }

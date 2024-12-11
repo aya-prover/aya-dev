@@ -3,6 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.MemberDef;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
     ));
   }
 
-  @Override public AbstractSerializer<MemberDef> serialize(MemberDef unit) {
+  @Override public AbstractSerializer<MemberDef> serialize(@NotNull FreeCodeBuilder builder, MemberDef unit) {
     buildFramework(unit, () -> { });
     return this;
   }
