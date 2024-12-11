@@ -87,7 +87,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
       if (shouldBuildEmptyCall(unit)) {
         var fieldEmptyCall = nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL);
         emptyCalInit = cb ->
-          cb.updateField(fieldEmptyCall, buildEmptyCall(cb.exprBuilder(), def));
+          cb.updateField(fieldEmptyCall, buildEmptyCall(cb, def));
       }
 
       buildConstructor(nestBuilder, unit, fieldInstance, emptyCalInit);

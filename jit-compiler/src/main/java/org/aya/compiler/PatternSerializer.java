@@ -99,12 +99,12 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       case Pat.Con con -> builder.ifInstanceOf(term, FreeUtil.fromClass(ConCallLike.class),
         (builder1, conTerm) -> {
           builder1.ifRefEqual(
-            AbstractExprializer.getRef(builder1.exprBuilder(), CallKind.Con, conTerm.ref()),
-            AbstractExprializer.getInstance(builder1.exprBuilder(), con.ref()),
+            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
+            AbstractExprializer.getInstance(builder1, con.ref()),
             builder2 -> {
-              var conArgsTerm = builder2.exprBuilder().invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
+              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
               var conArgs = AbstractExprializer.fromSeq(
-                builder2.exprBuilder(),
+                builder2,
                 Constants.CD_Term,
                 conArgsTerm,
                 con.args().size()
@@ -120,16 +120,16 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
         (builder0, mTerm) ->
           matchInt(builder0, shapedInt, mTerm),
         (builder0, mTerm) ->
-          doSerialize(builder0, shapedInt.constructorForm(), builder.exprBuilder().refVar(mTerm),
+          doSerialize(builder0, shapedInt.constructorForm(), builder.refVar(mTerm),
             // There will a sequence of [subMatchState = true] if there are a lot of [Pat.ShapedInt],
             // but our optimizer will fix them
             Once.of(builder1 -> updateSubstate(builder1, true)))
       ), onMatchSucc);
       case Pat.Tuple(var l, var r) -> {
         builder.ifInstanceOf(term, FreeUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
-          var lhs = builder0.exprBuilder().invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
+          var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
           doSerialize(builder0, l, lhs, Once.of(builder1 -> {
-            var rhs = builder0.exprBuilder().invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
+            var rhs = builder0.invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
             doSerialize(builder1, r, rhs, onMatchSucc);
           }));
         }, this::onStuck);
@@ -156,19 +156,19 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     var tmpName = builder.makeVar(Term.class, term);
 
     for (var pre : preContinuation) {
-      builder.ifNotTrue(builder.exprBuilder().refVar(subMatchState), builder0 -> {
+      builder.ifNotTrue(builder.refVar(subMatchState), builder0 -> {
         pre.accept(builder0, tmpName);
       }, null);
     }
 
-    builder.ifTrue(builder.exprBuilder().refVar(subMatchState), continuation, null);
+    builder.ifTrue(builder.refVar(subMatchState), continuation, null);
   }
 
   private void matchInt(@NotNull FreeCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
-    builder.ifInstanceOf(builder.exprBuilder().refVar(term), FreeUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
-      var intTermRepr = builder0.exprBuilder().invoke(
+    builder.ifInstanceOf(builder.refVar(term), FreeUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+      var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
-        builder0.exprBuilder().refVar(intTerm),
+        builder0.refVar(intTerm),
         ImmutableSeq.empty()
       );
 
@@ -208,15 +208,15 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
   }
 
   private void updateSubstate(@NotNull FreeCodeBuilder builder, boolean state) {
-    builder.updateVar(subMatchState, builder.exprBuilder().iconst(state));
+    builder.updateVar(subMatchState, builder.iconst(state));
   }
 
   private void updateState(@NotNull FreeCodeBuilder builder, int state) {
-    builder.updateVar(matchState, builder.exprBuilder().iconst(state));
+    builder.updateVar(matchState, builder.iconst(state));
   }
 
   private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
-    builder.updateArray(builder.exprBuilder().refVar(result), bindCount++, term);
+    builder.updateArray(builder.refVar(result), bindCount++, term);
   }
 
   /// endregion Java Source Code Generate API
@@ -232,10 +232,10 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
     // var result = new Term[maxBindCount];
     result = builder.makeVar(Constants.CD_Term.arrayType(),
-      builder.exprBuilder().mkArray(Constants.CD_Term, maxBindSize, ImmutableSeq.empty()));
+      builder.mkArray(Constants.CD_Term, maxBindSize, ImmutableSeq.empty()));
     // whether the match success or mismatch, 0 implies mismatch
-    matchState = builder.makeVar(ConstantDescs.CD_int, builder.exprBuilder().iconst(0));
-    subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.exprBuilder().iconst(false));
+    matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
+    subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.iconst(false));
 
     builder.breakable(mBuilder -> {
       unit.forEachIndexed((idx, clause) -> {
@@ -255,7 +255,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
 
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
-    builder.switchCase(builder.exprBuilder().refVar(matchState), range, (mBuilder, i) -> {
+    builder.switchCase(builder.refVar(matchState), range, (mBuilder, i) -> {
       if (i == 0) onFailed.accept(mBuilder);
       assert i > 0;
       var realIdx = i - 1;

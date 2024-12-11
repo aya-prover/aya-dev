@@ -18,15 +18,10 @@ import java.util.function.Consumer;
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder)
-  implements FreeClassBuilder {
+  implements FreeClassBuilder, FreeJavaResolver {
   @Override
   public @NotNull FreeJavaResolver resolver() {
-    return new SourceFreeJavaBase(sourceBuilder);
-  }
-
-  @Override
-  public @NotNull FreeExprBuilder exprBuilder() {
-    return new SourceFreeJavaBase(sourceBuilder);
+    return this;
   }
 
   @Override
@@ -83,5 +78,21 @@ public record SourceClassBuilder(
   public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name) {
     sourceBuilder.buildConstantField(SourceFreeJavaBuilder.toClassRef(returnType), name, null);
     return new FieldRef.Default(this.owner, returnType, name);
+  }
+
+  @Override
+  public @NotNull MethodRef resolve(
+    @NotNull ClassDesc owner,
+    @NotNull String name,
+    @NotNull ClassDesc returnType,
+    @NotNull ImmutableSeq<ClassDesc> paramType,
+    boolean isInterface
+  ) {
+    return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
+  }
+
+  @Override
+  public @NotNull FieldRef resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
+    return new FieldRef.Default(owner, returnType, name);
   }
 }

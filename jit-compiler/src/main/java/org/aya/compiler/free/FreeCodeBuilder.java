@@ -14,13 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
-public interface FreeCodeBuilder {
-  @NotNull FreeClassBuilder currentClass();
-
-  default @NotNull FreeExprBuilder exprBuilder() {
-    return currentClass().exprBuilder();
-  }
-
+public interface FreeCodeBuilder extends FreeExprBuilder {
   @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer);
 
   default LocalVariable makeVar(@NotNull Class<?> type, @Nullable FreeJavaExpr initializer) {

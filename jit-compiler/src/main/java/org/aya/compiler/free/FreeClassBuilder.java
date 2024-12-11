@@ -38,5 +38,4 @@ public interface FreeClassBuilder {
   );
 
   @NotNull FreeJavaResolver resolver();
-  @NotNull FreeExprBuilder exprBuilder();
 }

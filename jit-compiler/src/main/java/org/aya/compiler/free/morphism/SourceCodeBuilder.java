@@ -23,6 +23,15 @@ public record SourceCodeBuilder(
   @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
 ) implements FreeCodeBuilder {
+  @Override
+  public @NotNull FreeJavaResolver resolver() {
+    return parent;
+  }
+
+  public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return args.view().map(x -> ((SourceFreeJavaExpr) x).expr()).joinToString(", ");
+  }
+
   public static @NotNull String getExpr(@NotNull FreeJavaExpr expr) {
     return ((SourceFreeJavaExpr) expr).expr();
   }
@@ -33,11 +42,6 @@ public record SourceCodeBuilder(
 
   @Override public @NotNull FreeExprBuilder exprBuilder() { return this; }
   @Override public @NotNull FreeJavaResolver resolver() { return parent; }
-  @Override
-  public @NotNull FreeClassBuilder currentClass() {
-    return parent;
-  }
-
   @Override
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     sourceBuilder.appendLine("super("
@@ -169,5 +173,96 @@ public record SourceCodeBuilder(
   @Override
   public void returnWith(@NotNull FreeJavaExpr expr) {
     sourceBuilder.buildReturn(((SourceFreeJavaExpr) expr).expr());
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return new SourceFreeJavaExpr(ExprializeUtils.makeNew(toClassRef(className), toArgs(args)));
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
+    return name.ref();
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return new SourceFreeJavaExpr(getExpr(owner) + "." + method.name() + "(" + toArgs(args) + ")");
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return new SourceFreeJavaExpr(toClassRef(method.owner()) + "." + method.name() + "(" + toArgs(args) + ")");
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr refField(@NotNull FieldRef field) {
+    return new SourceFreeJavaExpr(toClassRef(field.owner()) + "." + field.name());
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
+    return new SourceFreeJavaExpr(getExpr(owner) + "." + field.name());
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+    return new SourceFreeJavaExpr(toClassRef(enumClass) + "." + enumName);
+  }
+
+  // FIXME: dont do this
+  // We just hope user will not pass non-variable captures
+  @Override
+  public @NotNull FreeJavaExpr mkLambda(
+    @NotNull ImmutableSeq<FreeJavaExpr> captures,
+    @NotNull MethodRef method,
+    @NotNull Function<ArgumentProvider.Lambda, FreeJavaExpr> builder
+  ) {
+    var name = ImmutableSeq.fill(method.paramTypes().size(), _ ->
+      sourceBuilder.nameGen().nextName());
+    var ap = new SourceArgumentProvider.Lambda(captures.map(SourceCodeBuilder::getExpr), name);
+    return new SourceFreeJavaExpr("(" + name.joinToString(", ") + ") -> " + builder.apply(ap));
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr iconst(int i) {
+    return new SourceFreeJavaExpr(Integer.toString(i));
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr iconst(boolean b) {
+    return new SourceFreeJavaExpr(Boolean.toString(b));
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr aconst(@NotNull String value) {
+    return new SourceFreeJavaExpr(ExprializeUtils.makeString(value));
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr aconstNull() {
+    return new SourceFreeJavaExpr("null");
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr thisRef() {
+    return new SourceFreeJavaExpr("this");
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJavaExpr> initializer) {
+    assert initializer.isEmpty() || initializer.sizeEquals(length);
+    var init = initializer.isEmpty() ? "" : "{" + toArgs(initializer) + "}";
+    return new SourceFreeJavaExpr("new " + toClassRef(type) + "[" + length + "]" + init);
+  }
+
+  @Override
+  public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
+    return new SourceFreeJavaExpr(getExpr(array) + "[" + index + "]");
+  }
+
+  @Override
+  public FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+    return new SourceFreeJavaExpr("((" + toClassRef(as) + ")" + getExpr(obj) + ")");
   }
 }

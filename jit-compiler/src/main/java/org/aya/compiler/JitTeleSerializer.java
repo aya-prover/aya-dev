@@ -38,18 +38,22 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     super(superClass);
   }
 
-  protected @NotNull ImmutableSeq<FreeJavaExpr> buildSuperCallArgs(@NotNull FreeCodeBuilder builder, T unit) {
+  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+    return Constants.JIT_TELE_CON_PARAMS;
+  }
+
+  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, T unit) {
     var tele = unit.telescope();
     var size = tele.size();
-    var sizeExpr = builder.exprBuilder().iconst(size);
+    var sizeExpr = builder.iconst(size);
     var licit = tele.view().map(Param::explicit)
-      .map(x -> builder.exprBuilder().iconst(x))
+      .map(x -> builder.iconst(x))
       .toImmutableSeq();
-    var licitExpr = builder.exprBuilder().mkArray(ConstantDescs.CD_Boolean, licit.size(), licit);
+    var licitExpr = builder.mkArray(ConstantDescs.CD_Boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
-      .map(x -> builder.exprBuilder().aconst(x))
+      .map(x -> builder.aconst(x))
       .toImmutableSeq();
-    var namesExpr = builder.exprBuilder().mkArray(ConstantDescs.CD_String, names.size(), names);
+    var namesExpr = builder.mkArray(ConstantDescs.CD_String, names.size(), names);
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }
 
@@ -61,8 +65,8 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     @NotNull Consumer<FreeCodeBuilder> cont
   ) {
     builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) -> {
-      buildSuperCallArgs(cb, unit);
-      cb.updateField(fieldInstance, cb.exprBuilder().thisRef());
+      cb.invokeSuperCon(superConParams(), superConArgs(cb, unit));
+      cb.updateField(fieldInstance, cb.thisRef());
       cont.accept(cb);
     });
   }
@@ -114,7 +118,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
       IntRange.closedOpen(0, tele.size()).collect(ImmutableIntSeq.factory()),
       (cb, kase) -> {
         var result = serializeTermUnderTele(
-          cb.exprBuilder(),
+          cb,
           Constants.CD_Term,
           tele.get(kase).type(),
           teleArgsTerm, kase
@@ -130,7 +134,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
    */
   protected void buildResult(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull FreeJavaExpr teleArgsTerm) {
     var result = serializeTermUnderTele(
-      builder.exprBuilder(),
+      builder,
       Constants.CD_Term,
       unit.result(),
       teleArgsTerm,
