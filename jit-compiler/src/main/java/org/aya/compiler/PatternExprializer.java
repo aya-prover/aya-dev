@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.syntax.core.pat.Pat;
@@ -12,9 +11,6 @@ import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
-
-import static org.aya.compiler.AyaSerializer.CLASS_PAT;
-import static org.aya.compiler.AyaSerializer.CLASS_TERM;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {
   private final boolean allowLocalTerm;

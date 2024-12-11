@@ -3,87 +3,137 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.Annotation;
+import java.lang.constant.ClassDesc;
+import java.util.function.Consumer;
 
 import static org.aya.compiler.AyaSerializer.FIELD_EMPTYCALL;
 import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<T> {
-  public static final String CLASS_METADATA = ExprializeUtils.getJavaRef(CompiledAya.class);
-
   protected final @NotNull Class<?> superClass;
 
-  protected JitDefSerializer(@NotNull SourceBuilder builder, @NotNull Class<?> superClass) {
-    super(builder);
+  protected JitDefSerializer(@NotNull Class<?> superClass) {
     this.superClass = superClass;
+  }
+
+  private static @NotNull CompiledAya mkCompiledAya(
+    @NotNull String[] module,
+    int fileModuleSize,
+    @NotNull String name,
+    int assoc,
+    int shape,
+    @NotNull CodeShape.GlobalId[] recognition
+  ) {
+    return new CompiledAya() {
+      @Override
+      public Class<? extends Annotation> annotationType() {
+        return CompiledAya.class;
+      }
+
+      @Override
+      public @NotNull String[] module() {
+        return module;
+      }
+      @Override
+      public int fileModuleSize() {
+        return fileModuleSize;
+      }
+
+      @Override
+      public @NotNull String name() {
+        return name;
+      }
+      @Override
+      public int assoc() {
+        return assoc;
+      }
+      @Override
+      public int shape() {
+        return shape;
+      }
+
+      @Override
+      public @NotNull CodeShape.GlobalId[] recognition() {
+        return recognition;
+      }
+    };
   }
 
   /**
    * @see CompiledAya
    */
-  protected void buildMetadata(@NotNull T unit) {
+  protected @NotNull CompiledAya buildMetadata(@NotNull T unit) {
     var ref = unit.ref();
     var module = ref.module;
     var assoc = ref.assoc();
     var assocIdx = assoc == null ? -1 : assoc.ordinal();
     assert module != null;
-    appendLine("@" + CLASS_METADATA + "(");
-    var modPath = module.module().module();
-    appendMetadataRecord("module", ExprializeUtils.makeHalfArrayFrom(modPath.view().map(ExprializeUtils::makeString)), true);
-    // Assumption: module.take(fileModule.size).equals(fileModule)
-    appendMetadataRecord("fileModuleSize", Integer.toString(module.fileModuleSize()), false);
-    appendMetadataRecord("name", ExprializeUtils.makeString(ref.name()), false);
-    appendMetadataRecord("assoc", Integer.toString(assocIdx), false);
-    buildShape(unit);
-
-    appendLine(")");
+    return mkCompiledAya(
+      module.module().module().toArray(String.class),
+      module.fileModuleSize(),
+      ref.name(),
+      assocIdx,
+      buildShape(),
+      buildRecognition()
+    );
   }
 
-  protected void buildShape(T unit) {
-    appendMetadataRecord("shape", "-1", false);
-    appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(ImmutableSeq.empty()), false);
+  protected int buildShape() {
+    return -1;
   }
 
-  protected void appendMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
-    var prepend = isFirst ? "" : ", ";
-    appendLine(prepend + name + " = " + value);
+  protected CodeShape.GlobalId[] buildRecognition() {
+    return new CodeShape.GlobalId[0];
   }
 
-  public void buildInstance(@NotNull String className) {
-    buildConstantField(className, STATIC_FIELD_INSTANCE, ExprializeUtils.makeNew(className));
-  }
-
-  public void buildSuperCall(@NotNull ImmutableSeq<String> args) {
-    appendLine("super(" + args.joinToString(", ") + ");");
+  protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull ClassDesc className) {
+    return builder.buildConstantField(className, STATIC_FIELD_INSTANCE);
   }
 
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
 
-  protected void buildFramework(@NotNull T unit, @NotNull Runnable continuation) {
+  protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
+    return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
+  }
+
+  protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
     var className = javifyClassName(unit.ref());
-    buildMetadata(unit);
-    buildInnerClass(className, superClass, () -> {
-      buildInstance(className);
-      appendLine();
-      // empty return type for constructor
-      buildMethod(className, ImmutableSeq.empty(), "/*constructor*/", false, () -> buildConstructor(unit));
-      appendLine();
+    var metadata = buildMetadata(unit);
+    builder.buildNestedClass(metadata, className, superClass, nestBuilder -> {
+      var def = AnyDef.fromVar(unit.ref());
+      var fieldInstance = buildInstance(nestBuilder, NameSerializer.getClassDesc(def));
+      Consumer<FreeCodeBuilder> emptyCalInit = _ -> { };
       if (shouldBuildEmptyCall(unit)) {
-        buildConstantField(callClass(), FIELD_EMPTYCALL, ExprializeUtils.makeNew(
-          callClass(), ExprializeUtils.getInstance(className)));
+        var fieldEmptyCall = nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL);
+        emptyCalInit = cb ->
+          cb.updateField(fieldEmptyCall, buildEmptyCall(cb.exprBuilder(), def));
       }
-      appendLine();
-      continuation.run();
+
+      buildConstructor(nestBuilder, unit, fieldInstance, emptyCalInit);
+      continuation.accept(nestBuilder);
     });
   }
 
-  protected abstract @NotNull String callClass();
+  protected abstract @NotNull Class<?> callClass();
 
   /**
+   * @param fieldInit the initializer for constant fields, should be invoked right after super call
    * @see org.aya.syntax.compile.JitDef
    */
-  protected abstract void buildConstructor(T unit);
+  protected abstract void buildConstructor(
+    @NotNull FreeClassBuilder builder,
+    T unit,
+    @NotNull FieldRef fieldInstance,
+    @NotNull Consumer<FreeCodeBuilder> fieldInit
+  );
 }

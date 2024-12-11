@@ -3,6 +3,7 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,10 @@ public interface FreeCodeBuilder {
   void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update);
 
   void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update);
+
+  void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr update);
+
+  void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update);
 
   void ifNotTrue(@NotNull FreeJavaExpr notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 

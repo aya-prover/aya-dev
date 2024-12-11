@@ -65,6 +65,17 @@ public record SourceCodeBuilder(
   }
 
   @Override
+  public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr update) {
+    var fieldRef = toClassRef(field.owner()) + "." + field.name();
+    sourceBuilder.buildUpdate(fieldRef, getExpr(update));
+  }
+
+  @Override
+  public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update) {
+    sourceBuilder.buildUpdate(getExpr(owner) + "." + field.name(), getExpr(update));
+  }
+
+  @Override
   public void ifNotTrue(
     @NotNull FreeJavaExpr notTrue,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,

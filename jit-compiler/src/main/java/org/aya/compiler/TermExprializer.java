@@ -36,7 +36,6 @@ import static org.aya.compiler.AyaSerializer.*;
  * Build the "constructor form" of {@link Term}, but in Java.
  */
 public final class TermExprializer extends AbstractExprializer<Term> {
-  public static final String CLASS_INTEGER = ExprializeUtils.getJavaRef(IntegerTerm.class);
   public static final String CLASS_MEMCALL = ExprializeUtils.getJavaRef(MemberCall.class);
 
   /**

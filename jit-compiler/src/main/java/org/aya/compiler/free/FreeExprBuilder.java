@@ -18,7 +18,7 @@ public interface FreeExprBuilder {
   @NotNull FreeJavaResolver resolver();
 
   /**
-   * A {@code new} expression, the class should have only one (public) constructor.
+   * A {@code new} expression, the class should have only one (public) constructor with parameter count {@code args.size()}.
    */
   @NotNull FreeJavaExpr mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
