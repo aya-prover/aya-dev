@@ -142,7 +142,9 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     var programOrTerm = replCompiler.compileToContext(line, config.normalizeMode);
     return Command.Output.stdout(programOrTerm.fold(
       program -> config.quiet ? Doc.empty() :
-        Doc.vcat(program.view().filterIsInstance(TopLevelDef.class).map(this::render)),
+        Doc.vcat(program.view()
+          .filterIsInstance(TopLevelDef.class)
+          .map(this::render)),
       this::render
     ));
   }
