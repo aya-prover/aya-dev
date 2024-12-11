@@ -35,37 +35,13 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
     @NotNull CodeShape.GlobalId[] recognition
   ) {
     return new CompiledAya() {
-      @Override
-      public Class<? extends Annotation> annotationType() {
-        return CompiledAya.class;
-      }
-
-      @Override
-      public @NotNull String[] module() {
-        return module;
-      }
-      @Override
-      public int fileModuleSize() {
-        return fileModuleSize;
-      }
-
-      @Override
-      public @NotNull String name() {
-        return name;
-      }
-      @Override
-      public int assoc() {
-        return assoc;
-      }
-      @Override
-      public int shape() {
-        return shape;
-      }
-
-      @Override
-      public @NotNull CodeShape.GlobalId[] recognition() {
-        return recognition;
-      }
+      @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
+      @Override public @NotNull String[] module() { return module; }
+      @Override public int fileModuleSize() { return fileModuleSize; }
+      @Override public @NotNull String name() { return name; }
+      @Override public int assoc() { return assoc; }
+      @Override public int shape() { return shape; }
+      @Override public @NotNull CodeShape.GlobalId[] recognition() { return recognition; }
     };
   }
 
@@ -88,13 +64,8 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
     );
   }
 
-  protected int buildShape() {
-    return -1;
-  }
-
-  protected CodeShape.GlobalId[] buildRecognition() {
-    return new CodeShape.GlobalId[0];
-  }
+  protected int buildShape() { return -1; }
+  protected CodeShape.GlobalId[] buildRecognition() { return new CodeShape.GlobalId[0]; }
 
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull ClassDesc className) {
     return builder.buildConstantField(className, STATIC_FIELD_INSTANCE);

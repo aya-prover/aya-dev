@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractSerializer<T> {
   public record JitParam(@NotNull String name, @NotNull String type) { }
 
-  protected AbstractSerializer() {
-  }
+  protected AbstractSerializer() { }
 
   /**
    * the implementation should keep {@link SourceBuilder#indent} after invocation.
