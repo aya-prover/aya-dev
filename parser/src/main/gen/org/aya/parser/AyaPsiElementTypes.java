@@ -65,6 +65,7 @@ public interface AyaPsiElementTypes {
   IElementType LIT_STRING_EXPR = new AyaPsiElementType("LIT_STRING_EXPR");
   IElementType LOOSERS = new AyaPsiElementType("LOOSERS");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
+  IElementType MATCH_TYPE = new AyaPsiElementType("MATCH_TYPE");
   IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");
   IElementType MODULE = new AyaPsiElementType("MODULE");
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
@@ -155,6 +156,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");
   IElementType KW_PROP = new AyaPsiTokenType("Prop");
   IElementType KW_PUBLIC = new AyaPsiTokenType("public");
+  IElementType KW_RETURNS = new AyaPsiTokenType("returns");
   IElementType KW_SELF = new AyaPsiTokenType("self");
   IElementType KW_SET = new AyaPsiTokenType("Set");
   IElementType KW_SIGMA = new AyaPsiTokenType("Sig");
