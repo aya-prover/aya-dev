@@ -118,16 +118,18 @@ public class TestRunner {
          var stream = new PrintStream(output, true, StandardCharsets.UTF_8)) {
       var reporter = CountingReporter.delegate(new StreamReporter(stream));
       var compiler = new SingleFileCompiler(reporter, flags(), LOCATOR);
+      System.out.print("Running: ");
       for (var field : fixturesClass.getDeclaredFields()) {
         var name = field.getName();
         if (!name.startsWith("test")) continue;
-        System.out.println("Running " + name.substring(4));
+        System.out.print(name.substring(4) + ", ");
         stream.println(name.substring(4) + ":");
         var code = (String) field.get(null);
         runSingleCase(code, compiler);
         compiler.reporter.clear();
         stream.println();
       }
+      System.out.println("Done!");
       return output.toString(StandardCharsets.UTF_8);
     }
   }
