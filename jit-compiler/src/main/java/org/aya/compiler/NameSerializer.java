@@ -102,6 +102,10 @@ public interface NameSerializer {
     return getClassName(def.qualifiedName());
   }
 
+  static @NotNull ClassDesc getClassDesc(@NotNull DefVar<?, ?> def) {
+    return getClassDesc(AnyDef.fromVar(def));
+  }
+
   static @NotNull ClassDesc getClassDesc(@NotNull AnyDef def) {
     return ClassDesc.of(getClassName(def));
   }

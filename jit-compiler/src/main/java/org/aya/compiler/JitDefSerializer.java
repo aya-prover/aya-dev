@@ -59,13 +59,13 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
       module.fileModuleSize(),
       ref.name(),
       assocIdx,
-      buildShape(),
-      buildRecognition()
+      buildShape(unit),
+      buildRecognition(unit)
     );
   }
 
-  protected int buildShape() { return -1; }
-  protected CodeShape.GlobalId[] buildRecognition() { return new CodeShape.GlobalId[0]; }
+  protected int buildShape(T unit) { return -1; }
+  protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
 
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull ClassDesc className) {
     return builder.buildConstantField(className, STATIC_FIELD_INSTANCE);

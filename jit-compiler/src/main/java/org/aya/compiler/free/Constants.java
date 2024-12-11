@@ -29,6 +29,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_Seq = FreeUtil.fromClass(Seq.class);
   public static final @NotNull ClassDesc CD_ImmutableSeq = FreeUtil.fromClass(ImmutableSeq.class);
   public static final @NotNull ClassDesc CD_MutableSeq = FreeUtil.fromClass(MutableSeq.class);
+  public static final @NotNull ClassDesc CD_Thunk = FreeUtil.fromClass(Supplier.class);
 
   // Term -> Term
   public static final @NotNull MethodRef CLOSURE = new MethodRef.Default(

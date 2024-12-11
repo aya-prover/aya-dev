@@ -90,6 +90,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   /**
+   * TODO: remove {@param fixed}, it is used by FnCall only
+   * <p>
    * This code requires that {@link FnCall}, {@link RuleReducer.Fn} and {@link RuleReducer.Con}
    * {@code ulift} is the second parameter, {@code args.get(i)} is the {@code i + 3}th parameter
    *
@@ -122,7 +124,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     var onStuck = makeThunk(te -> te.builder.mkNew(callName, ImmutableArray.Unsafe.wrap(callArgs)));
     var finalInvocation = fixed
       ? builder.invoke(
-      resolveInvoke(Objects.requireNonNull(reducibleType), flatArgs.size()),
+      FnSerializer.resolveInvoke(Objects.requireNonNull(reducibleType), flatArgs.size()),
       reducible,
       flatArgs.view().prepended(onStuck).toImmutableSeq())
       : builder.invoke(Constants.REDUCIBLE_INVOKE, reducible, ImmutableSeq.of(
@@ -261,15 +263,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case MatchTerm(var discr, var clauses) -> throw new UnsupportedOperationException("TODO");
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
     };
-  }
-
-  private @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
-    return new MethodRef.Default(
-      owner, METHOD_INVOKE,
-      Constants.CD_Term,
-      SeqView.of(FreeUtil.fromClass(Supplier.class)).appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term))
-        .toImmutableSeq(), false
-    );
   }
 
   // TODO: unify with makeClosure

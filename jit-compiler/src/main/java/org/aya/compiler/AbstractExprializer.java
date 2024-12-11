@@ -58,10 +58,17 @@ public abstract class AbstractExprializer<T> {
     @NotNull FreeJavaExpr theSeq,
     int size
   ) {
-    return ImmutableSeq.fill(size, idx -> {
-      var result = builder.invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(idx)));
-      return builder.checkcast(result, elementType);
-    });
+    return ImmutableSeq.fill(size, idx -> makeSeqGet(builder, elementType, theSeq, idx));
+  }
+
+  public static @NotNull FreeJavaExpr makeSeqGet(
+    @NotNull FreeExprBuilder builder,
+    @NotNull ClassDesc elementType,
+    @NotNull FreeJavaExpr theSeq,
+    int size
+  ) {
+    var result = builder.invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
+    return builder.checkcast(result, elementType);
   }
 
   /**

@@ -3,10 +3,7 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeExprBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.*;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +17,7 @@ public abstract class AbstractSerializer<T> {
   /**
    * the implementation should keep {@link SourceBuilder#indent} after invocation.
    */
-  public abstract AbstractSerializer<T> serialize(@NotNull FreeCodeBuilder builder, T unit);
+  public abstract AbstractSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
 
   protected @NotNull FreeJavaExpr serializeTermUnderTele(
     @NotNull FreeExprBuilder builder,

@@ -7,15 +7,15 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
+import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.call.FnCall;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   public FnSerializer(@NotNull ShapeFactory shapeFactory) {
     super(JitFn.class);
     this.shapeFactory = shapeFactory;
+  }
+
+  public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
+    return new MethodRef.Default(
+      owner, "invoke", Constants.CD_Term, ImmutableSeq.of(Constants.CD_Thunk)
+      .appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term)), false
+    );
   }
 
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
@@ -67,24 +74,35 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull FreeJavaExpr onStuckTerm,
     @NotNull ImmutableSeq<FreeJavaExpr> argTerms
   ) {
-    Consumer<SourceBuilder> onStuckCon = s -> s.buildReturn(onStuckTerm + ".get()");
+    Consumer<FreeCodeBuilder> onStuckCon = cb ->
+      cb.returnWith(builder.invoke(Constants.THUNK, onStuckTerm, ImmutableSeq.empty()));
 
     if (unit.is(Modifier.Opaque)) {
-      onStuckCon.accept(this);
+      onStuckCon.accept(builder);
       return;
     }
 
     switch (unit.body()) {
-      case Either.Left(var expr) -> buildReturn(serializeTermUnderTele(expr, argTerms));
+      case Either.Left(var expr) -> {
+        var result = serializeTermUnderTele(builder, expr, argTerms);
+        builder.returnWith(result);
+      }
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(this.sourceBuilder, argTerms, onStuckCon, onStuckCon);
-        ser.serialize(null, clauses.view()
+        var ser = new PatternSerializer(argTerms, onStuckCon, unit.is(Modifier.Overlap));
+        ser.serialize(builder, clauses.view()
           .map(WithPos::data)
           .map(matching -> new PatternSerializer.Matching(
-            matching.bindCount(), matching.patterns(), (s, bindSize) ->
-            s.buildReturn(serializeTermUnderTele(matching.body(), PatternSerializer.VARIABLE_RESULT, bindSize))
-          ))
-          .toImmutableSeq());
+              matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
+              var result = serializeTermUnderTele(
+                builder0,
+                Constants.CD_Term,
+                matching.body(),
+                patSer.result.ref(),
+                bindSize
+              );
+              builder0.returnWith(result);
+            })
+          ).toImmutableSeq());
       }
     }
   }
@@ -92,29 +110,33 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   /**
    * Build vararg `invoke`
    */
-  private void buildInvoke(FnDef unit, @NotNull String onStuckTerm, @NotNull String argsTerm) {
+  private void buildInvoke(
+    @NotNull FreeCodeBuilder builder,
+    @NotNull FnDef unit,
+    @NotNull FreeJavaExpr onStuckTerm,
+    @NotNull FreeJavaExpr argsTerm
+  ) {
     var teleSize = unit.telescope().size();
+    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
+    var result = builder.invoke(
+      resolveInvoke(NameSerializer.getClassDesc(unit.ref()), teleSize),
+      builder.thisRef(),
+      args
+    );
 
-    buildReturn(SourceBuilder.fromSeq(argsTerm, teleSize).view()
-      .prepended(onStuckTerm)
-      .joinToString(", ", "this.invoke(", ")"));
+    builder.returnWith(result);
   }
 
   @Override protected @NotNull Class<?> callClass() { return FnCall.class; }
-  @Override protected void buildShape(FnDef unit) {
-    var maybe = shapeFactory.find(TyckAnyDef.make(unit));
-    if (maybe.isEmpty()) {
-      super.buildShape(unit);
-    } else {
-      var recog = maybe.get();
-      appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
-      appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(Seq.empty()), false);
-    }
+
+  @Override
+  protected int buildShape(FnDef unit) {
+    var shapeMaybe = shapeFactory.find(TyckAnyDef.make(unit));
+    if (shapeMaybe.isEmpty()) return super.buildShape(unit);
+    return shapeMaybe.get().shape().ordinal();
   }
 
-  @Override public FnSerializer serialize(@NotNull FreeCodeBuilder builder, FnDef unit) {
-    var argsTerm = "args";
-    var onStuckTerm = "onStuck";
+  @Override public FnSerializer serialize(@NotNull FreeClassBuilder builder, FnDef unit) {
     var onStuckParam = FreeUtil.fromClass(Supplier.class);
     var fullParam = FreezableMutableList.<ClassDesc>create();
     fullParam.append(onStuckParam);
@@ -137,7 +159,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         ImmutableSeq.of(onStuckParam, Constants.CD_Seq),
         (ap, cb) -> {
-
+          buildInvoke(cb, unit, ap.arg(0), ap.arg(1));
         }
       );
     });

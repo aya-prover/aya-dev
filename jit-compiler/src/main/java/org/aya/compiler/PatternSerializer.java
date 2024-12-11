@@ -5,6 +5,7 @@ package org.aya.compiler;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeCodeBuilder;
@@ -29,7 +30,7 @@ import java.util.function.Consumer;
  */
 public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<PatternSerializer.Matching>> {
   @FunctionalInterface
-  public interface SuccessContinuation extends BiConsumer<PatternSerializer, Integer> {
+  public interface SuccessContinuation extends TriConsumer<PatternSerializer, FreeCodeBuilder, Integer> {
   }
 
   // Just for checking
@@ -53,9 +54,9 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  private @UnknownNullability LocalVariable result;
-  private @UnknownNullability LocalVariable matchState;
-  private @UnknownNullability LocalVariable subMatchState;
+  @UnknownNullability LocalVariable result;
+  @UnknownNullability LocalVariable matchState;
+  @UnknownNullability LocalVariable subMatchState;
 
   private final @NotNull ImmutableSeq<FreeJavaExpr> argNames;
   private final @NotNull Consumer<FreeCodeBuilder> onFailed;
