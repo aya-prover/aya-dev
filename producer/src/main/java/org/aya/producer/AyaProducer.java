@@ -531,8 +531,7 @@ public record AyaProducer(
     if (node.is(LIT_INT_EXPR)) try {
       return new WithPos<>(pos, new Expr.LitInt(node.tokenText().toInt()));
     } catch (NumberFormatException ignored) {
-      reporter.report(new ParseError(pos, "Unsupported integer literal `" + node.tokenText() + "`"));
-      throw new ParsingInterruptedException();
+      throw new Panic("Failed to decode integer literal `" + node.tokenText() + "`");
     }
     if (node.is(LIT_STRING_EXPR)) {
       var text = node.tokenText();
@@ -581,8 +580,8 @@ public record AyaProducer(
           .map(LocalVar::from)
           .toImmutableSeq();
         if (matchType.peekChild(KW_AS) != null && !discr.sizeEquals(asBindings)) {
-          reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-bindings but "
-            + discr.size() + " discriminants"));
+          reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-binding(s) but "
+            + discr.size() + " discriminant(s)"));
           throw new ParsingInterruptedException();
         }
         var returnsNode = node.peekChild(EXPR);
@@ -789,7 +788,8 @@ public record AyaProducer(
       return new Pattern.List(
         patterns.map(pat -> {
           if (!pat.explicit()) {    // [ {a} ] is disallowed
-            reporter.report(new ParseError(pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
+            reporter.report(new ParseError(
+              pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
           }
           return pat.term();
         }).toImmutableSeq());
