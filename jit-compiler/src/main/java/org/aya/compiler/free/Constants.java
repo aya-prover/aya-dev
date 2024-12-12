@@ -6,8 +6,11 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Reducible;
+import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -183,5 +186,11 @@ public final class Constants {
    */
   public static final @NotNull ImmutableSeq<ClassDesc> JIT_TELE_CON_PARAMS = ImmutableSeq.of(
     ConstantDescs.CD_int, ConstantDescs.CD_boolean.arrayType(), ConstantDescs.CD_String.arrayType()
+  );
+
+  public static final @NotNull FieldRef JITDATA_CONS = new FieldRef.Default(
+    FreeUtil.fromClass(JitData.class),
+    FreeUtil.fromClass(JitCon.class).arrayType(),
+    "constructors"
   );
 }

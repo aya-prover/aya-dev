@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -33,6 +34,10 @@ public abstract class AbstractExprializer<T> {
    */
   public final @NotNull FreeJavaExpr getInstance(@NotNull AnyDef def) {
     return getInstance(builder, def);
+  }
+
+  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {
+    return getInstance(builder, AnyDef.fromVar(def.ref()));
   }
 
   public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {

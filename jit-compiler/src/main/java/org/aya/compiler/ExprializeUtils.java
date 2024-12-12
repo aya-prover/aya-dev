@@ -24,14 +24,6 @@ public interface ExprializeUtils {
     }
   }
 
-  static @NotNull String makeImmutableSeq(@NotNull String typeName, @NotNull ImmutableSeq<String> terms) {
-    return makeImmutableSeq(typeName, terms, AyaSerializer.CLASS_IMMSEQ);
-  }
-
-  static @NotNull String makeThunk(@NotNull String value) {
-    return "() -> " + value;
-  }
-
   static @NotNull String makeArrayFrom(@NotNull String type, @NotNull ImmutableSeq<String> elements) {
     return "new " + type + "[] " + makeHalfArrayFrom(elements);
   }
@@ -44,10 +36,6 @@ public interface ExprializeUtils {
     return superClass + "." + sub;
   }
 
-  static @NotNull String makeEnum(@NotNull String enumClass, @NotNull Enum<?> value) {
-    return makeSub(enumClass, value.toString());
-  }
-
   static @NotNull String makeString(@NotNull String raw) {
     return "\"" + StringUtil.escapeStringCharacters(raw) + "\"";
   }
@@ -58,14 +46,6 @@ public interface ExprializeUtils {
 
   static @NotNull String getInstance(@NotNull String defName) {
     return defName + "." + AyaSerializer.STATIC_FIELD_INSTANCE;
-  }
-
-  static @NotNull String getCallInstance(@NotNull String term) {
-    return term + "." + AyaSerializer.FIELD_INSTANCE + "()";
-  }
-
-  static @NotNull String getEmptyCallTerm(@NotNull String term) {
-    return term + "." + AyaSerializer.FIELD_EMPTYCALL;
   }
 
   /**

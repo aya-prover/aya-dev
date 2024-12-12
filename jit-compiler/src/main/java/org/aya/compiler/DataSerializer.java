@@ -5,69 +5,96 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.*;
 import org.aya.primitive.ShapeFactory;
+import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.AyaSerializer.CLASS_DATACALL;
-import static org.aya.compiler.NameSerializer.getClassRef;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
   private final @NotNull ShapeFactory shapeFactory;
 
-  public DataSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
-    super(builder, JitData.class);
+  public DataSerializer(@NotNull ShapeFactory shapeFactory) {
+    super(JitData.class);
     this.shapeFactory = shapeFactory;
   }
 
-  @Override public DataSerializer serialize(@NotNull FreeCodeBuilder builder, DataDef unit) {
-    buildFramework(unit, () -> buildMethod("constructors", ImmutableSeq.empty(),
-      CLASS_JITCON + "[]", true,
-      () -> buildConstructors(unit)));
+  @Override public DataSerializer serialize(@NotNull FreeClassBuilder builder, DataDef unit) {
+    buildFramework(builder, unit, builder0 -> {
+      builder0.buildMethod(
+        FreeUtil.fromClass(JitCon.class).arrayType(),
+        "constructors",
+        ImmutableSeq.empty(), (_, cb) -> {
+          buildConstructors(cb, unit);
+        });
+    });
+
     return this;
   }
 
-  @Override protected @NotNull String callClass() { return CLASS_DATACALL; }
-  @Override protected void buildShape(DataDef unit) {
+  @Override protected @NotNull Class<?> callClass() { return DataCall.class; }
+  @Override protected int buildShape(DataDef unit) {
     var maybe = shapeFactory.find(TyckAnyDef.make(unit));
     if (maybe.isEmpty()) {
-      super.buildShape(unit);
-      return;
+      return super.buildShape(unit);
     }
-    var recog = maybe.get();
-    appendMetadataRecord("shape", Integer.toString(recog.shape().ordinal()), false);
 
+    return maybe.get().shape().ordinal();
+  }
+
+  @Override
+  protected CodeShape.GlobalId[] buildRecognition(DataDef unit) {
+    var maybe = shapeFactory.find(TyckAnyDef.make(unit));
+    if (maybe.isEmpty()) {
+      return super.buildRecognition(unit);
+    }
+
+    var recog = maybe.get();
     // The capture is one-to-one
     var flipped = ImmutableMap.from(recog.captures().view()
       .map((k, v) -> Tuple.<DefVar<?, ?>, CodeShape.GlobalId>of(((TyckAnyDef<?>) v).ref, k)));
-    var capture = unit.body.map(x -> ExprializeUtils.makeSub(CLASS_GLOBALID, flipped.get(x.ref).toString()));
-    appendMetadataRecord("recognition", ExprializeUtils.makeHalfArrayFrom(capture), false);
+    var capture = unit.body.map(x -> flipped.get(x.ref));
+    return capture.toArray(CodeShape.GlobalId.class);
   }
 
-  @Override protected void buildConstructor(DataDef unit) {
-    buildConstructor(unit, ImmutableSeq.of(Integer.toString(unit.body.size())));
+  @Override
+  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+    return super.superConParams().appended(ConstantDescs.CD_int);
   }
+
+  @Override
+  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, DataDef unit) {
+    return super.superConArgs(builder, unit).appended(builder.iconst(unit.body.size()));
+  }
+
 
   /**
    * @see JitData#constructors()
    */
-  private void buildConstructors(DataDef unit) {
-    var cRef = "this.constructors";
+  private void buildConstructors(@NotNull FreeCodeBuilder builder, DataDef unit) {
+    var cons = Constants.JITDATA_CONS;
+    var consRef = builder.refField(cons, builder.thisRef());
+
     if (unit.body.isEmpty()) {
-      buildReturn(cRef);
+      builder.returnWith(consRef);
       return;
     }
 
-    buildIf(ExprializeUtils.isNull(cRef + "[0]"), () ->
-      unit.body.forEachIndexed((idx, con) ->
-        buildUpdate(cRef + "[" + idx + "]", ExprializeUtils.getInstance(getClassRef(con.ref)))));
+    builder.ifNull(builder.getArray(consRef, 0), cb -> {
+      unit.body.forEachIndexed((idx, con) -> {
+        builder.updateArray(consRef, idx, AbstractExprializer.getInstance(builder, con));
+      });
+    }, null);
 
-    buildReturn(cRef);
+    builder.returnWith(consRef);
   }
 }

@@ -106,13 +106,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(
     @NotNull FreeCodeBuilder builder,
     @NotNull FnDef unit,
+    @NotNull MethodRef invokeMethod,
     @NotNull FreeJavaExpr onStuckTerm,
     @NotNull FreeJavaExpr argsTerm
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
     var result = builder.invoke(
-      resolveInvoke(NameSerializer.getClassDesc(unit.ref()), teleSize),
+      invokeMethod,
       builder.thisRef(),
       args.prepended(onStuckTerm)
     );
@@ -136,7 +137,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     fullParam.appendAll(ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term));
 
     buildFramework(builder, unit, builder0 -> {
-      builder0.buildMethod(
+      var fixedInvoke = builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
         fullParam.freeze(),
@@ -152,7 +153,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         ImmutableSeq.of(onStuckParam, Constants.CD_Seq),
         (ap, cb) ->
-          buildInvoke(cb, unit, ap.arg(0), ap.arg(1))
+          buildInvoke(cb, unit, fixedInvoke, ap.arg(0), ap.arg(1))
       );
     });
 
