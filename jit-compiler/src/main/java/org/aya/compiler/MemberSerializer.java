@@ -3,27 +3,47 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
+import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.MemberDef;
+import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.call.MemberCall;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 import static org.aya.compiler.NameSerializer.getClassRef;
 
 public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
-  public MemberSerializer(@NotNull SourceBuilder builder) { super(builder, JitMember.class); }
-  @Override protected @NotNull String callClass() { return TermExprializer.CLASS_MEMCALL; }
+  public MemberSerializer() { super(JitMember.class); }
+  @Override protected @NotNull Class<?> callClass() { return MemberCall.class; }
 
-  @Override protected void buildConstructor(MemberDef unit) {
-    buildConstructor(unit, ImmutableSeq.of(
-      ExprializeUtils.getInstance(getClassRef(unit.classRef())),
-      Integer.toString(unit.index()),
-      serializeTerm(unit.type())
+  @Override
+  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+    return super.superConParams().appendedAll(ImmutableSeq.of(
+      FreeUtil.fromClass(JitClass.class),
+      ConstantDescs.CD_int,
+      FreeUtil.fromClass(SortTerm.class)
     ));
   }
 
-  @Override public AbstractSerializer<MemberDef> serialize(@NotNull FreeCodeBuilder builder, MemberDef unit) {
-    buildFramework(unit, () -> { });
+  @Override
+  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, MemberDef unit) {
+    return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
+      AbstractExprializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
+      builder.iconst(unit.index()),
+      serializeTerm(builder, unit.type())
+    ));
+  }
+
+  @Override public MemberSerializer serialize(@NotNull FreeClassBuilder builder, MemberDef unit) {
+    buildFramework(builder, unit, _ -> { });
     return this;
   }
 }
