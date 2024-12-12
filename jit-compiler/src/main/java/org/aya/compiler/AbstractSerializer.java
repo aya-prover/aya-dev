@@ -36,11 +36,7 @@ public abstract class AbstractSerializer<B, T> {
       .serialize(term);
   }
 
-  protected @NotNull FreeJavaExpr serializeTerm(@NotNull Term term) {
-    return serializeTermUnderTele(term, ImmutableSeq.empty());
-  }
-
-  protected final void buildPanic(@NotNull FreeCodeBuilder builder) {
-    builder.exec(builder.exprBuilder().invoke(Constants.PANIC, ImmutableSeq.empty()));
+  protected @NotNull FreeJavaExpr serializeTerm(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
+    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
   }
 }

@@ -10,8 +10,10 @@ import kala.control.Result;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Reducible;
+import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.Term;
@@ -217,6 +219,12 @@ public final class Constants {
     FreeUtil.fromClass(JitData.class),
     FreeUtil.fromClass(JitCon.class).arrayType(),
     "constructors"
+  );
+
+  public static final @NotNull FieldRef JITCLASS_MEMS = new FieldRef.Default(
+    FreeUtil.fromClass(JitClass.class),
+    FreeUtil.fromClass(JitMember.class).arrayType(),
+    "members"
   );
 
   /**

@@ -3,7 +3,10 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.ClassDef;
@@ -13,33 +16,41 @@ import org.jetbrains.annotations.NotNull;
 import static org.aya.compiler.ExprializeUtils.getJavaRef;
 import static org.aya.compiler.NameSerializer.getClassRef;
 
-public final class ClassSerializer extends JitDefSerializer<ClassDef> {
-  public static final String CLASS_JITMEMBERS = getJavaRef(JitMember.class);
-  public static final String CLASS_CLASSCALL = getJavaRef(ClassCall.class);
-  public static final String FIELD_MEMBERS = "members";
-  public static final String METHOD_MEMBARS = "membars";
+public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
+  public ClassSerializer() { super(JitClass.class); }
 
-  public ClassSerializer(@NotNull SourceBuilder builder) { super(builder, JitClass.class); }
-  @Override protected @NotNull String callClass() { return CLASS_CLASSCALL; }
-  @Override protected void buildConstructor(ClassDef unit) { buildSuperCall(ImmutableSeq.empty()); }
-
+  @Override protected @NotNull Class<?> callClass() { return ClassCall.class; }
   @Override protected boolean shouldBuildEmptyCall(@NotNull ClassDef unit) {
     return true;
   }
 
-  private void buildMembers(ClassDef unit) {
-    buildIf(FIELD_MEMBERS + " == null", () ->
-      buildUpdate(FIELD_MEMBERS, ExprializeUtils.makeArrayFrom(CLASS_JITMEMBERS, unit.members().map(mem ->
-        ExprializeUtils.getInstance(getClassRef(mem.ref())))
-      )));
+  // TODO: unify with DataSerializer#buildConstructors
+  private void buildMembers(@NotNull FreeCodeBuilder builder, ClassDef unit) {
+    var mems = Constants.JITCLASS_MEMS;
+    var memsRef = builder.refField(mems, builder.thisRef());
 
-    buildReturn(FIELD_MEMBERS);
+    if (unit.members().isEmpty()) {
+      builder.returnWith(memsRef);
+      return;
+    }
+
+    builder.ifNull(builder.getArray(memsRef, 0), cb -> {
+      unit.members().forEachIndexed((idx, con) -> {
+        cb.updateArray(memsRef, idx, AbstractExprializer.getInstance(builder, con));
+      });
+    }, null);
+
+    builder.returnWith(memsRef);
   }
 
-  @Override public AbstractSerializer<ClassDef> serialize(@NotNull FreeCodeBuilder builder, ClassDef unit) {
-    buildFramework(unit, () ->
-      buildMethod(METHOD_MEMBARS, ImmutableSeq.empty(), CLASS_JITMEMBERS + "[]", true,
-        () -> buildMembers(unit)));
+  @Override public ClassSerializer serialize(@NotNull FreeClassBuilder builder, ClassDef unit) {
+    buildFramework(builder, unit, builder0 -> {
+      builder0.buildMethod(
+        FreeUtil.fromClass(JitMember.class).arrayType(),
+        "membars",
+        ImmutableSeq.empty(),
+        (ap, cb) -> buildMembers(cb, unit));
+    });
 
     return this;
   }

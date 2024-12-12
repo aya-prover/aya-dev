@@ -84,7 +84,7 @@ public final class PatternSerializer extends AbstractSerializer<FreeCodeBuilder,
     switch (pat) {
       case Pat.Misc misc -> {
         switch (misc) {
-          case Absurd -> buildPanic(builder);
+          case Absurd -> AyaSerializer.buildPanic(builder);
           case UntypedBind -> {
             onMatchBind(builder, term);
             onMatchSucc.accept(builder);
@@ -261,7 +261,7 @@ public final class PatternSerializer extends AbstractSerializer<FreeCodeBuilder,
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, this::buildPanic);
+    }, AyaSerializer::buildPanic);
 
     return this;
   }

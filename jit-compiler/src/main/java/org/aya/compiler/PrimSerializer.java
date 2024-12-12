@@ -3,23 +3,37 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.core.def.PrimDef;
+import org.aya.syntax.core.term.call.PrimCall;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.constant.ClassDesc;
 
 import static org.aya.compiler.AyaSerializer.CLASS_PRIMCALL;
 
 public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
-  public PrimSerializer(@NotNull AbstractSerializer<?> parent) {
-    super(parent, JitPrim.class);
+  public PrimSerializer() {
+    super(JitPrim.class);
   }
-  @Override protected @NotNull String callClass() { return CLASS_PRIMCALL; }
-  @Override protected void buildConstructor(PrimDef unit) {
-    super.buildConstructor(unit, ImmutableSeq.of("org.aya.syntax.core.def.PrimDef.ID." + unit.id.name()));
+  @Override protected @NotNull Class<?> callClass() { return PrimCall.class; }
+
+  @Override
+  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+    return super.superConParams().appended(FreeUtil.fromClass(PrimDef.ID.class));
   }
-  @Override public PrimSerializer serialize(@NotNull FreeCodeBuilder builder, PrimDef unit) {
-    buildFramework(unit, () -> { });
+
+  @Override
+  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, PrimDef unit) {
+    return super.superConArgs(builder, unit).appended(builder.refEnum(unit.id));
+  }
+
+  @Override public PrimSerializer serialize(@NotNull FreeClassBuilder builder, PrimDef unit) {
+    buildFramework(builder, unit, _ -> { });
     return this;
   }
 }

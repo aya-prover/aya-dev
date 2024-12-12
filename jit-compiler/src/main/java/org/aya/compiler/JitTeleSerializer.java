@@ -125,7 +125,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
 
         cb.returnWith(result);
       },
-      this::buildPanic);
+      AyaSerializer::buildPanic);
   }
 
   /**

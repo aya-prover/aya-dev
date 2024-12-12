@@ -3,6 +3,7 @@
 package org.aya.syntax.compile;
 
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;

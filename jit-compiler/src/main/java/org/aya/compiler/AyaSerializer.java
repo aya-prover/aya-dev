@@ -7,12 +7,15 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.*;
 import org.aya.util.error.Panic;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
@@ -69,4 +72,8 @@ public interface AyaSerializer {
     import kala.collection.Seq;
     import kala.control.Result;
     """;
+
+  static void buildPanic(@NotNull FreeCodeBuilder builder) {
+    builder.exec(builder.invoke(Constants.PANIC, ImmutableSeq.empty()));
+  }
 }
