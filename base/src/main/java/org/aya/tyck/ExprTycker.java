@@ -150,9 +150,25 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       }
       case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
         var wellArgs = discriminant.map(this::synthesize);
+        var wellArgTerms = wellArgs.map(Jdg::wellTyped);
+        Term storedTy;
+        // Type check the type annotation
+        if (returns != null) {
+          if (asBindings.isEmpty()) {
+            unifyTyReported(type, storedTy = ty(returns), returns);
+          } else {
+            try (var ignored = subscope()) {
+              asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
+              storedTy = ty(returns).bindTele(asBindings.view());
+            }
+            unifyTyReported(type, storedTy = storedTy.instantiateTele(wellArgTerms.view()), returns);
+          }
+        } else {
+          storedTy = type;
+        }
         var telescope = new AbstractTele.Locns(
-          wellArgs.map(x -> new Param(LocalVar.IGNORED.name(), x.type(), true)),
-          type);
+          wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
+          storedTy);
         var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
         var clauseTycker = new ClauseTycker.Worker(
           new ClauseTycker(this),
@@ -162,7 +178,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var wellClauses = clauseTycker.check(expr.sourcePos())
           .wellTyped()
           .map(WithPos::data);
-        yield new Jdg.Default(new MatchTerm(wellArgs.map(Jdg::wellTyped), wellClauses), type);
+        yield new Jdg.Default(new MatchTerm(wellArgTerms, storedTy, wellClauses), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
