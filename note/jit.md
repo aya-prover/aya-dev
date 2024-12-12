@@ -9,7 +9,7 @@ Jit Unit 是一个需要被编译的单位, 它包括:
 
 ## Class Structure
 
-所有 Jit Unit 都会被编译成一个 class, 它们之间的包含结构通过嵌套类的方式保留.
+所有 Jit Unit 都会被编译成一个 class.
 
 示例: `class-structure.aya`
 
@@ -26,18 +26,22 @@ def inc (n : Nat) : Nat => S n
 ```java
 public final class class$45structure {
   public static final class class$45structure$Nat extends JitData {
-    public static final class class$45structure$Nat$O extends JitCon { /* ... */
-    }
-
-    public static final class class$45structure$Nat$S extends JitCon { /* ... */
-    }
     // ...
+  }
+
+  public static final class class$45structure$Nat$O extends JitCon { /* ... */
+  }
+
+  public static final class class$45structure$Nat$S extends JitCon { /* ... */
   }
 
   public static final class class$45structure$inc extends JitFn { /* ... */
   }
 }
 ```
+
+注意到 `Nat` 的构造子在序列化在外层, 并且所有 Jit Unit 的类名都有一个所在模块的前缀.
+这是由于某些技术问题, 所有子模块的内容都会序列化到文件模块内.
 
 > 关于编译结果中的类名部分，参见 [Name Mapping](#name-mapping) 章节
 
