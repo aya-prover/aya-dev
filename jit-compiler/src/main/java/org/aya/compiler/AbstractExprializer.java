@@ -16,11 +16,20 @@ public abstract class AbstractExprializer<T> {
 
   protected AbstractExprializer(@NotNull FreeExprBuilder builder) { this.builder = builder; }
 
-  public final @NotNull FreeJavaExpr makeImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJavaExpr> terms) {
-    return makeImmutableSeq(Constants.IMMSEQ, typeName, terms);
+  public static @NotNull FreeJavaExpr makeImmutableSeq(
+    @NotNull FreeExprBuilder builder,
+    @NotNull Class<?> typeName,
+    @NotNull ImmutableSeq<FreeJavaExpr> terms
+  ) {
+    return makeImmutableSeq(builder, Constants.IMMSEQ, typeName, terms);
   }
 
-  public final @NotNull FreeJavaExpr makeImmutableSeq(@NotNull MethodRef con, @NotNull Class<?> typeName, @NotNull ImmutableSeq<FreeJavaExpr> terms) {
+  public static @NotNull FreeJavaExpr makeImmutableSeq(
+    @NotNull FreeExprBuilder builder,
+    @NotNull MethodRef con,
+    @NotNull Class<?> typeName,
+    @NotNull ImmutableSeq<FreeJavaExpr> terms
+  ) {
     var args = builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms);
     return builder.invoke(con, ImmutableSeq.of(args));
   }

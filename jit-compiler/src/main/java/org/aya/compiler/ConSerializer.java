@@ -4,78 +4,112 @@ package org.aya.compiler;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.BooleanConsumer;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.generic.State;
+import kala.control.Result;
+import org.aya.compiler.free.*;
 import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatMatcher;
+import org.aya.syntax.core.term.call.ConCall;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.AyaSerializer.*;
-import static org.aya.compiler.NameSerializer.getClassRef;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.function.BiConsumer;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
-  public static final String CLASS_STATE = ExprializeUtils.getJavaRef(State.class);
-  public static final String CLASS_PATMATCHER = ExprializeUtils.getJavaRef(PatMatcher.class);
-
-  public ConSerializer(@NotNull SourceBuilder other) {
-    super(other, JitCon.class);
+  public ConSerializer() {
+    super(JitCon.class);
   }
 
-  @Override protected @NotNull String callClass() { return CLASS_CONCALL; }
-  @Override protected void buildConstructor(ConDef unit) {
-    var hasEq = unit.equality != null;
-    buildConstructor(unit, ImmutableSeq.of(
-      ExprializeUtils.getInstance(NameSerializer.getClassRef(unit.dataRef)),
-      Integer.toString(unit.selfTele.size()),
-      Boolean.toString(hasEq)));
+  @Override protected @NotNull Class<?> callClass() { return ConCall.class; }
+
+  @Override
+  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+    return super.superConParams().appendedAll(ImmutableSeq.of(
+      FreeUtil.fromClass(JitData.class),
+      ConstantDescs.CD_int, ConstantDescs.CD_boolean
+    ));
   }
 
-  private void buildIsAvailable(ConDef unit, @NotNull String argsTerm) {
-    String matchResult;
-    var termSeq = argsTerm + ".toImmutableSeq()";
+  @Override
+  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, ConDef unit) {
+    return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
+      AbstractExprializer.getInstance(builder, unit.dataRef),
+      builder.iconst(unit.selfTele.size()),
+      builder.iconst(unit.equality != null)
+    ));
+  }
+
+  /**
+   * @see JitCon#isAvailable(Seq)
+   */
+  private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull FreeJavaExpr argsTerm) {
+    FreeJavaExpr matchResult;
+    var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm, ImmutableSeq.empty());
     if (unit.pats.isEmpty()) {
       // not indexed data type, this constructor is always available
-      matchResult = CLASS_RESULT + ".ok(" + termSeq + ")";
+      matchResult = builder.invoke(Constants.RESULT_OK, ImmutableSeq.of(termSeq));
     } else {
-      var patsTerm = unit.pats.map(x -> new PatternExprializer(nameGen(), true).serialize(x));
-      var patsSeq = ExprializeUtils.makeImmutableSeq(CLASS_PAT, patsTerm, CLASS_IMMSEQ);
-      var matcherTerm = ExprializeUtils.makeNew(CLASS_PATMATCHER, "true", "x -> x");
-      matchResult = matcherTerm + ".apply(" + patsSeq + ", " + termSeq + ")";
+      // It is too stupid to serialize pat meta solving, so we just call PatMatcher
+      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true).serialize(x));
+      var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
+      var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
+      var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
+        builder.iconst(true), id
+      ));
+
+      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm, ImmutableSeq.of(
+        patsSeq, termSeq
+      ));
     }
 
-    buildReturn(matchResult);
+    builder.returnWith(matchResult);
   }
 
   /**
    * @see ConDefLike#equality(Seq, boolean)
    */
-  private void buildEquality(ConDef unit, @NotNull String argsTerm, @NotNull String is0Term) {
+  private void buildEquality(
+    @NotNull FreeCodeBuilder builder,
+    ConDef unit,
+    @NotNull FreeJavaExpr argsTerm,
+    @NotNull FreeJavaExpr is0Term
+  ) {
     var eq = unit.equality;
     assert eq != null;
-    BooleanConsumer continuation = b -> {
+    BiConsumer<FreeCodeBuilder, Boolean> continuation = (cb, b) -> {
       var side = b ? eq.a() : eq.b();
-      buildReturn(serializeTermUnderTele(side, argsTerm, unit.telescope().size()));
+      cb.returnWith(serializeTermUnderTele(cb, side, argsTerm, unit.telescope().size()));
     };
 
-    buildIfElse(is0Term, () -> continuation.accept(true), () -> continuation.accept(false));
+    builder.ifTrue(is0Term,
+      then -> continuation.accept(then, true),
+      otherwise -> continuation.accept(otherwise, false));
   }
 
-  @Override public ConSerializer serialize(@NotNull FreeCodeBuilder builder, ConDef unit) {
-    var argsTerm = "args";
-    var is0Term = "is0";
+  @Override public ConSerializer serialize(@NotNull FreeClassBuilder builder0, ConDef unit) {
+    buildFramework(builder0, unit, builder -> {
+      builder.buildMethod(
+        FreeUtil.fromClass(Result.class),
+        "isAvailable",
+        ImmutableSeq.of(Constants.CD_Seq),
+        (ap, builder1) ->
+          buildIsAvailable(builder1, unit, ap.arg(0)));
 
-    buildFramework(unit, () -> {
-      buildMethod("isAvailable",
-        ImmutableSeq.of(new JitParam(argsTerm, TYPE_TERMSEQ)),
-        CLASS_RESULT + "<" + TYPE_IMMTERMSEQ + ", " + CLASS_STATE + ">", true,
-        () -> buildIsAvailable(unit, argsTerm));
-      appendLine();
-      if (unit.equality != null) buildMethod("equality",
-        ImmutableSeq.of(new JitParam(argsTerm, TYPE_TERMSEQ), new JitParam(is0Term, "boolean")),
-        CLASS_TERM, true, () -> buildEquality(unit, argsTerm, is0Term));
+      if (unit.equality != null) {
+        builder.buildMethod(
+          Constants.CD_Term,
+          "equality",
+          ImmutableSeq.of(Constants.CD_Seq, ConstantDescs.CD_boolean),
+          (ap, cb) -> {
+            var argsTerm = ap.arg(0);
+            var is0Term = ap.arg(1);
+            buildEquality(cb, unit, argsTerm, is0Term);
+          });
+      }
     });
 
     return this;

@@ -88,7 +88,6 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
               matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
               var result = serializeTermUnderTele(
                 builder0,
-                Constants.CD_Term,
                 matching.body(),
                 patSer.result.ref(),
                 bindSize

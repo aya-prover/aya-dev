@@ -6,12 +6,14 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
+import kala.control.Result;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCallLike;
@@ -33,6 +35,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_ImmutableSeq = FreeUtil.fromClass(ImmutableSeq.class);
   public static final @NotNull ClassDesc CD_MutableSeq = FreeUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = FreeUtil.fromClass(Supplier.class);
+  public static final @NotNull ClassDesc CD_Result = FreeUtil.fromClass(Result.class);
 
   // Term -> Term
   public static final @NotNull MethodRef CLOSURE = new MethodRef.Default(
@@ -86,6 +89,13 @@ public final class Constants {
     CD_Seq, "get", ConstantDescs.CD_Object,
     ImmutableSeq.of(ConstantDescs.CD_int),
     true
+  );
+
+  /**
+   * @see Seq#toImmutableSeq()
+   */
+  public static final @NotNull MethodRef SEQ_TOIMMSEQ = new MethodRef.Default(
+    CD_Seq, "toImmutableSeq", CD_ImmutableSeq, ImmutableSeq.empty(), true
   );
 
   public static final @NotNull MethodRef IMMTREESEQ = new MethodRef.Default(
@@ -182,6 +192,21 @@ public final class Constants {
   );
 
   /**
+   * @see Result#ok(Object)
+   */
+  public static final @NotNull MethodRef RESULT_OK = new MethodRef.Default(
+    CD_Result, "ok",
+    CD_Result, ImmutableSeq.of(ConstantDescs.CD_Object),
+    true
+  );
+
+  public static final @NotNull MethodRef RESULT_ERR = new MethodRef.Default(
+    CD_Result, "err",
+    CD_Result, ImmutableSeq.of(ConstantDescs.CD_Object),
+    true
+  );
+
+  /**
    * @see org.aya.syntax.telescope.JitTele#JitTele(int, boolean[], String[])
    */
   public static final @NotNull ImmutableSeq<ClassDesc> JIT_TELE_CON_PARAMS = ImmutableSeq.of(
@@ -192,5 +217,24 @@ public final class Constants {
     FreeUtil.fromClass(JitData.class),
     FreeUtil.fromClass(JitCon.class).arrayType(),
     "constructors"
+  );
+
+  /**
+   * @see UnaryOperator#identity()
+   */
+  public static final @NotNull MethodRef CLOSURE_ID = new MethodRef.Default(
+    FreeUtil.fromClass(UnaryOperator.class),
+    "identity",
+    FreeUtil.fromClass(UnaryOperator.class),
+    ImmutableSeq.empty(),
+    true
+  );
+
+  /**
+   * @see PatMatcher#apply(ImmutableSeq, ImmutableSeq)
+   */
+  public static final @NotNull MethodRef PATMATCHER_APPLY = new MethodRef.Default(
+    FreeUtil.fromClass(PatMatcher.class), "apply",
+    CD_Result, ImmutableSeq.of(CD_ImmutableSeq, CD_ImmutableSeq), false
   );
 }

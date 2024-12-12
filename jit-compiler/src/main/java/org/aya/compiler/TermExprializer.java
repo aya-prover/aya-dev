@@ -245,7 +245,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(type)
       ));
       case ListTerm(var repr, var nil, var cons, var type) -> builder.mkNew(ListTerm.class, ImmutableSeq.of(
-        makeImmutableSeq(Constants.IMMTREESEQ, Term.class, repr.map(this::doSerialize)),
+        makeImmutableSeq(builder, Constants.IMMTREESEQ, Term.class, repr.map(this::doSerialize)),
         getInstance(nil),
         getInstance(cons),
         doSerialize(type)

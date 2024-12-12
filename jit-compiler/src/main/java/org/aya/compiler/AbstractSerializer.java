@@ -7,8 +7,6 @@ import org.aya.compiler.free.*;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.constant.ClassDesc;
-
 // TODO: remove this abstraction
 public abstract class AbstractSerializer<B, T> {
   public record JitParam(@NotNull String name, @NotNull String type) { }
@@ -22,12 +20,11 @@ public abstract class AbstractSerializer<B, T> {
 
   protected @NotNull FreeJavaExpr serializeTermUnderTele(
     @NotNull FreeExprBuilder builder,
-    @NotNull ClassDesc elementType,
     @NotNull Term term,
     @NotNull FreeJavaExpr argsTerm,
     int size
   ) {
-    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, elementType, argsTerm, size));
+    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
   }
 
   protected @NotNull FreeJavaExpr serializeTermUnderTele(

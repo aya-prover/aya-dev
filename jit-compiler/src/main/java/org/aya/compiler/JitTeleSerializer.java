@@ -119,7 +119,6 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
       (cb, kase) -> {
         var result = serializeTermUnderTele(
           cb,
-          Constants.CD_Term,
           tele.get(kase).type(),
           teleArgsTerm, kase
         );
@@ -135,7 +134,6 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   protected void buildResult(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull FreeJavaExpr teleArgsTerm) {
     var result = serializeTermUnderTele(
       builder,
-      Constants.CD_Term,
       unit.result(),
       teleArgsTerm,
       unit.telescope().size()
