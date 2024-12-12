@@ -91,7 +91,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
     builder.ifNull(builder.getArray(consRef, 0), cb -> {
       unit.body.forEachIndexed((idx, con) -> {
-        builder.updateArray(consRef, idx, AbstractExprializer.getInstance(builder, con));
+        cb.updateArray(consRef, idx, AbstractExprializer.getInstance(builder, con));
       });
     }, null);
 
