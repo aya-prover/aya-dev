@@ -22,7 +22,6 @@ import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
@@ -117,7 +116,7 @@ public record ExprResolver(
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
       case Expr.Lambda lam -> {
         var mCtx = MutableValue.create(ctx);
-        mCtx.update(ctx -> bindAs(lam.ref(), ctx));
+        mCtx.update(ctx -> ctx.bind(lam.ref()));
         yield lam.update(lam.body().descent(enter(mCtx.get())));
       }
       case Expr.DepType depType -> {
@@ -189,9 +188,16 @@ public record ExprResolver(
       }
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(x -> x.descent(this));
-        // FIXME: #clause enters Where.FnPattern and Where.FnBody, does it matter?
+        var returnsCtx = ctx;
+        for (var binding : match.asBindings()) returnsCtx = returnsCtx.bind(binding);
+        var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;
+
+        // Requires exhaustiveness check, therefore must need the full data body
+        enter(Where.FnPattern);
         var clauses = match.clauses().map(this::clause);
-        yield match.update(discriminant, clauses);
+        exit();
+
+        yield match.update(discriminant, clauses, returns);
       }
 
       case Expr newExpr -> newExpr.descent(this);
@@ -232,8 +238,6 @@ public record ExprResolver(
     ctx.set(resolver.context());
     return result;
   }
-
-  private static Context bindAs(@NotNull LocalVar as, @NotNull Context ctx) { return ctx.bind(as); }
 
   @Contract(mutates = "param2")
   public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {

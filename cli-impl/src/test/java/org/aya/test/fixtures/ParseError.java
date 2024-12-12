@@ -21,4 +21,17 @@ public interface ParseError {
     @suppress(thisWillNeverBeARealWarning)
     def id {A : Type} (a : A) => a
     """;
+  @Language("Aya") String testMatchElim = "def test => match elim Type {}";
+  @Language("Aya") String testMatchNumMismatch = "def test => match e as a, b returns Type {}";
+  @Language("Aya") String testImplicitTuplePat = """
+    def test (Sig Type ** Type) : Type
+    | ({a}, b) => a
+    """;
+  @Language("Aya") String testImplicitListPat = """
+    open import data::list::base
+    open import arith::nat::base
+    def test (List Nat) : Nat
+    | [{a}] => a
+    | _ => 0
+    """;
 }

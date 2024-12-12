@@ -531,8 +531,7 @@ public record AyaProducer(
     if (node.is(LIT_INT_EXPR)) try {
       return new WithPos<>(pos, new Expr.LitInt(node.tokenText().toInt()));
     } catch (NumberFormatException ignored) {
-      reporter.report(new ParseError(pos, "Unsupported integer literal `" + node.tokenText() + "`"));
-      throw new ParsingInterruptedException();
+      throw new Panic("Failed to decode integer literal `" + node.tokenText() + "`");
     }
     if (node.is(LIT_STRING_EXPR)) {
       var text = node.tokenText();
@@ -566,22 +565,37 @@ public record AyaProducer(
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
+      var isElim = node.peekChild(KW_ELIM) != null;
+      var discr = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
+      if (isElim && !discr.allMatch(e -> e.data() instanceof Expr.Unresolved)) {
+        reporter.report(new ParseError(pos, "Elimination match must be on variables"));
+        throw new ParsingInterruptedException();
+      }
+      var matchType = node.peekChild(MATCH_TYPE);
+      ImmutableSeq<LocalVar> asBindings = ImmutableSeq.empty();
+      WithPos<Expr> returns = null;
+      if (matchType != null) {
+        asBindings = matchType.child(COMMA_SEP).childrenOfType(WEAK_ID)
+          .map(this::weakId)
+          .map(LocalVar::from)
+          .toImmutableSeq();
+        if (matchType.peekChild(KW_AS) != null && !discr.sizeEquals(asBindings)) {
+          reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-binding(s) but "
+            + discr.size() + " discriminant(s)"));
+          throw new ParsingInterruptedException();
+        }
+        var returnsNode = node.peekChild(EXPR);
+        if (returnsNode != null) returns = expr(returnsNode);
+      }
       return new WithPos<>(pos, new Expr.Match(
-        node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq(),
-        bare.concat(barred).toImmutableSeq()
+        discr,
+        bare.concat(barred).toImmutableSeq(), asBindings, isElim,
+        returns
       ));
     }
     if (node.is(ARROW_EXPR)) {
       var exprs = node.childrenOfType(EXPR).toImmutableSeq();
-      if (!exprs.sizeEquals(2)) {
-        reporter.report(new ParseError(pos, exprs.joinToString(
-          ",",
-          "In an arrow expr, I see " + exprs.size() + " expr(s): [",
-          "], but I need 2.",
-          GenericNode::tokenText
-        )));
-        throw new ParsingInterruptedException();
-      }
+      assert exprs.sizeEquals(2);
       var expr0 = exprs.get(0);
       var to = expr(exprs.get(1));
       var paramPos = sourcePosOf(expr0);
@@ -774,7 +788,8 @@ public record AyaProducer(
       return new Pattern.List(
         patterns.map(pat -> {
           if (!pat.explicit()) {    // [ {a} ] is disallowed
-            reporter.report(new ParseError(pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
+            reporter.report(new ParseError(
+              pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
           }
           return pat.term();
         }).toImmutableSeq());

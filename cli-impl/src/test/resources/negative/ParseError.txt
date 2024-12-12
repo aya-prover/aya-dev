@@ -63,3 +63,52 @@ Warning: Unrecognized warning `thisWillNeverBeARealWarning` will be ignored.
 
 That looks right!
 
+MatchElim:
+In file $FILE:1:12 ->
+
+  1 │   def test => match elim Type {}
+    │               ╰────────────────╯
+
+Error: Elimination match must be on variables
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+MatchNumMismatch:
+In file $FILE:1:12 ->
+
+  1 │   def test => match e as a, b returns Type {}
+    │               ╰─────────────────────────────╯
+
+Error: I see 2 as-binding(s) but 1 discriminant(s)
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+ImplicitTuplePat:
+In file $FILE:2:3 ->
+
+  1 │   def test (Sig Type ** Type) : Type
+  2 │   | ({a}, b) => a
+    │      ╰─╯
+
+Error: Implicit pattern is not allowed here.
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+ImplicitListPat:
+In file $FILE:4:3 ->
+
+  2 │   open import arith::nat::base
+  3 │   def test (List Nat) : Nat
+  4 │   | [{a}] => a
+    │      ╰─╯
+
+Error: Implicit elements in a list pattern is disallowed
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+

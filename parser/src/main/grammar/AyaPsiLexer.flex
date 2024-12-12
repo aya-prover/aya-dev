@@ -140,6 +140,7 @@ BLOCK_COMMENT_END   = "*/"
   "ISet"                { return KW_ISET; }
   "as"                  { return KW_AS; }
   "match"               { return KW_MATCH; }
+  "returns"             { return KW_RETURNS; }
   "classifying"         { return KW_CLASSIFIYING; }
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }

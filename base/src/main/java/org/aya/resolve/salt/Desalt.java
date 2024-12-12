@@ -45,7 +45,8 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.Match match -> {
         return match.update(
           match.discriminant().map(e -> e.descent(this)),
-          match.clauses().map(clause -> clause.descent(this, pattern))
+          match.clauses().map(clause -> clause.descent(this, pattern)),
+          match.returns() != null ? match.returns().descent(this) : null
         );
       }
       default -> {
