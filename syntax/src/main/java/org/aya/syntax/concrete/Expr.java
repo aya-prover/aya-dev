@@ -575,8 +575,12 @@ public sealed interface Expr extends AyaDocile {
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return descent(f, (_, p) -> p);
+    }
+
+    public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
       return update(discriminant.map(x -> x.descent(f)),
-        clauses.map(x -> x.descent(f)),
+        clauses.map(x -> x.descent(f, g)),
         returns != null ? returns.descent(f) : null);
     }
 
@@ -584,7 +588,7 @@ public sealed interface Expr extends AyaDocile {
       discriminant.forEach(f::accept);
       // TODO: what about the patterns
       clauses.forEach(clause -> clause.forEach(f, (_, _) -> {}));
-      f.accept(returns);
+      if (returns != null) f.accept(returns);
     }
   }
 
