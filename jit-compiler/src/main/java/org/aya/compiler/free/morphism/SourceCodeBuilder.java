@@ -23,11 +23,6 @@ public record SourceCodeBuilder(
   @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
 ) implements FreeCodeBuilder {
-  @Override
-  public @NotNull FreeJavaResolver resolver() {
-    return parent;
-  }
-
   public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJavaExpr> args) {
     return args.view().map(x -> ((SourceFreeJavaExpr) x).expr()).joinToString(", ");
   }
@@ -40,8 +35,8 @@ public record SourceCodeBuilder(
     return ((SourceFreeJavaExpr) expr).expr();
   }
 
-  @Override public @NotNull FreeExprBuilder exprBuilder() { return this; }
   @Override public @NotNull FreeJavaResolver resolver() { return parent; }
+
   @Override
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     sourceBuilder.appendLine("super("

@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public abstract class AbstractSerializer<T> {
+// TODO: remove this abstraction
+public abstract class AbstractSerializer<B, T> {
   public record JitParam(@NotNull String name, @NotNull String type) { }
 
   protected AbstractSerializer() { }
@@ -17,7 +18,7 @@ public abstract class AbstractSerializer<T> {
   /**
    * the implementation should keep {@link SourceBuilder#indent} after invocation.
    */
-  public abstract AbstractSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
+  public abstract AbstractSerializer<B, T> serialize(@NotNull B builder, T unit);
 
   protected @NotNull FreeJavaExpr serializeTermUnderTele(
     @NotNull FreeExprBuilder builder,

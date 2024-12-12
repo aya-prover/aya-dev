@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 /**
  * We do not serialize meta solve, it is annoying
  */
-public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<PatternSerializer.Matching>> {
+public final class PatternSerializer extends AbstractSerializer<FreeCodeBuilder, ImmutableSeq<PatternSerializer.Matching>> {
   @FunctionalInterface
   public interface SuccessContinuation extends TriConsumer<PatternSerializer, FreeCodeBuilder, Integer> {
   }
@@ -260,7 +260,7 @@ public final class PatternSerializer extends AbstractSerializer<ImmutableSeq<Pat
       if (i == 0) onFailed.accept(mBuilder);
       assert i > 0;
       var realIdx = i - 1;
-      unit.get(realIdx).onSucc.accept(this, bindSize.get(realIdx));
+      unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
     }, this::buildPanic);
 
     return this;

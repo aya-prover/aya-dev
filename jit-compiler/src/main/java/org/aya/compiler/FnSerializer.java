@@ -2,20 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
-import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
-import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
-import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.call.FnCall;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +22,7 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.aya.compiler.AyaSerializer.*;
-
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
-  public static final String TYPE_STUCK = CLASS_SUPPLIER + "<" + CLASS_TERM + ">";
 
   private final @NotNull ShapeFactory shapeFactory;
   public FnSerializer(@NotNull ShapeFactory shapeFactory) {
@@ -121,7 +114,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     var result = builder.invoke(
       resolveInvoke(NameSerializer.getClassDesc(unit.ref()), teleSize),
       builder.thisRef(),
-      args
+      args.prepended(onStuckTerm)
     );
 
     builder.returnWith(result);
@@ -158,9 +151,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         Constants.CD_Term,
         "invoke",
         ImmutableSeq.of(onStuckParam, Constants.CD_Seq),
-        (ap, cb) -> {
-          buildInvoke(cb, unit, ap.arg(0), ap.arg(1));
-        }
+        (ap, cb) ->
+          buildInvoke(cb, unit, ap.arg(0), ap.arg(1))
       );
     });
 

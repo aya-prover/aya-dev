@@ -19,7 +19,7 @@ import static org.aya.compiler.AyaSerializer.FIELD_EMPTYCALL;
 import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
-public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<T> {
+public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<FreeClassBuilder, T> {
   protected final @NotNull Class<?> superClass;
 
   protected JitDefSerializer(@NotNull Class<?> superClass) {
