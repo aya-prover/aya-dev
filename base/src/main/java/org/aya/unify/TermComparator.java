@@ -3,6 +3,7 @@
 package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
@@ -39,10 +40,17 @@ import java.util.function.UnaryOperator;
 public abstract sealed class TermComparator extends AbstractTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected @NotNull Ordering cmp;
-  // If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
-  private boolean solveMeta = true;
   private @Nullable FailureData failure = null;
   final @NotNull Renamer nameGen = new Renamer();
+
+  private enum MetaStrategy {
+    Default,
+    Trying,
+    NonInjective
+  }
+  private @NotNull TermComparator.MetaStrategy strategy = MetaStrategy.Default;
+  private final MutableList<TyckState.Eqn> weWillSee = MutableList.create();
+  private boolean stuckOnMeta = false;
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -74,13 +82,30 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return ErrorTerm.typeOf(meta);
   }
 
+  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
+    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
+  }
+
   protected @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
     if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
-    var result = !solveMeta ? null : doSolveMeta(meta, whnf(rhs), type);
-    if (result == null) fail(meta, rhs);
-    return result;
+    return switch (strategy) {
+      case Default -> {
+        var result = doSolveMeta(meta, whnf(rhs), type);
+        if (result == null) fail(meta, rhs);
+        yield result;
+      }
+      case Trying -> {
+        weWillSee.append(createEqn(meta, rhs, type));
+        // This is a bit sus
+        yield type != null ? type : ErrorTerm.typeOf(meta);
+      }
+      case NonInjective -> {
+        stuckOnMeta = true;
+        yield null;
+      }
+    };
   }
 
   /// region Utilities
@@ -101,7 +126,17 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * so don't forget to reset the {@link #failure} after first failure.
    */
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
-    return switch (new Pair<>(lhs, rhs)) {
+    var wantFinalize = false;
+    switch (strategy) {
+      case Default -> {
+        wantFinalize = true;
+        strategy = MetaStrategy.Trying;
+        assert weWillSee.isEmpty();
+      }
+      case Trying -> { }
+      case NonInjective -> { }
+    }
+    var result = switch (new Pair<>(lhs, rhs)) {
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
@@ -116,6 +151,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       }
       default -> null;
     };
+    if (wantFinalize) {
+      strategy = MetaStrategy.Default;
+      if (stuckOnMeta) {
+        for (var eqn : weWillSee) state.addEqn(eqn);
+      } else {
+        for (var eqn : weWillSee) checkEqn(eqn);
+      }
+      weWillSee.clear();
+    }
+    return result;
   }
 
   /**
@@ -292,11 +337,24 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         new Synthesizer(this).synthDontNormalize(freezeHoles(form)) : null;
     return switch (lhs) {
       case AppTerm(var f, var a) -> {
-        if (!(rhs instanceof AppTerm(var g, var b))) yield null;
-        var fTy = compareUntyped(f, g);
-        if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
-        if (!compare(a, b, param)) yield null;
-        yield body.apply(a);
+        var prev = strategy;
+        switch (strategy) {
+          case Default, Trying -> strategy = MetaStrategy.NonInjective;
+          case NonInjective -> { }
+        }
+        try {
+          if (!(rhs instanceof AppTerm(var g, var b))) yield null;
+          var fTy = compareUntyped(f, g);
+          if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
+          if (!compare(a, b, param)) yield null;
+          yield body.apply(a);
+        } finally {
+          strategy = prev;
+          // TODO: this is wrong, needs to be rewritten using exceptions
+          if (stuckOnMeta) {
+            // state.addEqn(createEqn(lhs, rhs, null));
+          }
+        }
       }
       case PAppTerm(var f, var a, _, _) -> {
         if (!(rhs instanceof PAppTerm(var g, var b, _, _))) yield null;
