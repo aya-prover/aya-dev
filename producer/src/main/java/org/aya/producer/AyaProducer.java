@@ -575,7 +575,8 @@ public record AyaProducer(
       ImmutableSeq<LocalVar> asBindings = ImmutableSeq.empty();
       WithPos<Expr> returns = null;
       if (matchType != null) {
-        asBindings = matchType.child(COMMA_SEP).childrenOfType(WEAK_ID)
+        var commaSep = matchType.peekChild(COMMA_SEP);
+        if (commaSep != null) asBindings = commaSep.childrenOfType(WEAK_ID)
           .map(this::weakId)
           .map(LocalVar::from)
           .toImmutableSeq();
@@ -584,7 +585,7 @@ public record AyaProducer(
             + discr.size() + " discriminant(s)"));
           throw new ParsingInterruptedException();
         }
-        var returnsNode = node.peekChild(EXPR);
+        var returnsNode = matchType.peekChild(EXPR);
         if (returnsNode != null) returns = expr(returnsNode);
       }
       return new WithPos<>(pos, new Expr.Match(

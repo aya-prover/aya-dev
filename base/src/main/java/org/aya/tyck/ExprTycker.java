@@ -440,11 +440,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         // Type check the type annotation
         Term type;
         if (asBindings.isEmpty()) type = ty(returns);
-        else {
-          try (var ignored = subscope()) {
-            asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
-            type = ty(returns).bindTele(asBindings.view());
-          }
+        else try (var ignored = subscope()) {
+          asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
+          type = ty(returns).bindTele(asBindings.view());
         }
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
