@@ -10,6 +10,7 @@ import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.DataDefLike;
@@ -150,7 +151,6 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       }
       case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
         var wellArgs = discriminant.map(this::synthesize);
-        var wellArgTerms = wellArgs.map(Jdg::wellTyped);
         Term storedTy;
         // Type check the type annotation
         if (returns != null) {
@@ -161,28 +161,36 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
               asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
               storedTy = ty(returns).bindTele(asBindings.view());
             }
-            unifyTyReported(type, storedTy = storedTy.instantiateTele(wellArgTerms.view()), returns);
+            unifyTyReported(type, storedTy.instantiateTele(wellArgs.view().map(Jdg::wellTyped)), returns);
           }
         } else {
           storedTy = type;
         }
-        var telescope = new AbstractTele.Locns(
-          wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
-          storedTy);
-        var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
-        var clauseTycker = new ClauseTycker.Worker(
-          new ClauseTycker(this),
-          // always nameless
-          ImmutableSeq.fill(discriminant.size(), LocalVar.IGNORED),
-          signature, clauses, ImmutableSeq.empty(), true);
-        var wellClauses = clauseTycker.check(expr.sourcePos())
-          .wellTyped()
-          .map(WithPos::data);
-        yield new Jdg.Default(new MatchTerm(wellArgTerms, storedTy, wellClauses), type);
+        yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, storedTy), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
+  }
+
+  private @NotNull MatchTerm match(
+    ImmutableSeq<WithPos<Expr>> discriminant, @NotNull SourcePos exprPos,
+    ImmutableSeq<Pattern.Clause> clauses, ImmutableSeq<Jdg> wellArgs, Term type
+  ) {
+    var telescope = new AbstractTele.Locns(
+      wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
+      type);
+    var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
+    var clauseTycker = new ClauseTycker.Worker(
+      new ClauseTycker(this),
+      // always nameless
+      ImmutableSeq.fill(discriminant.size(), LocalVar.IGNORED),
+      signature, clauses, ImmutableSeq.empty(), true);
+    var wellClauses = clauseTycker.check(exprPos)
+      .wellTyped()
+      .map(WithPos::data);
+    var wellTerms = wellArgs.map(Jdg::wellTyped);
+    return new MatchTerm(wellTerms, type.instantiateTele(wellTerms.view()), wellClauses);
   }
 
   /**
@@ -425,6 +433,20 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         }
 
         yield new Jdg.Default(new NewTerm(call), call);
+      }
+      case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
+        var wellArgs = discriminant.map(this::synthesize);
+        if (returns == null) yield fail(expr.data(), new MatchMissingReturnsError(expr));
+        // Type check the type annotation
+        Term type;
+        if (asBindings.isEmpty()) type = ty(returns);
+        else {
+          try (var ignored = subscope()) {
+            asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
+            type = ty(returns).bindTele(asBindings.view());
+          }
+        }
+        yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
       case Expr.Unresolved _ -> Panic.unreachable();
       default -> fail(expr.data(), new NoRuleError(expr, null));
