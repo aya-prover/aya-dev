@@ -57,11 +57,27 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   /**
    * Trying to solve {@param meta} with {@param rhs}
    *
-   * @param rhs in whnf
+   * @param rhs in whnf, must not be the same meta as {@param meta}
    */
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
+  /** The "flex-flex" case with identical meta ref */
+  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+    if (meta.args().size() != rMeta.args().size()) return null;
+    for (var i = 0; i < meta.args().size(); i++) {
+      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
+        return null;
+      }
+    }
+    if (type != null) return type;
+    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return ty;
+    return ErrorTerm.typeOf(meta);
+  }
+
   protected @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
+      return sameMeta(meta, type, rMeta);
+
     var result = !solveMeta ? null : doSolveMeta(meta, whnf(rhs), type);
     if (result == null) fail(meta, rhs);
     return result;
