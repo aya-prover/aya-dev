@@ -130,10 +130,7 @@ public record Synthesizer(
         .foldLeft(SortTerm.Type0, (acc, mem) -> DepTypeTerm.lubSigma(acc, mem.type()));
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
-      // FIXME: remove this todo before merge
-      //        In old aya, MatchTerm in Synthesizer will be unfold and the body is synthesized if possible,
-      //        however, in new aya, the argument of [#synthesize] is whnfed, which means [matchTerm] cannot be unfolded.
-      case MatchTerm matchTerm -> ErrorTerm.typeOf(matchTerm);
+      case MatchTerm match -> match.returns();
     };
   }
 

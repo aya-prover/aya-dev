@@ -69,3 +69,17 @@ module Issue1187 {
   def FunExt (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = g
   def FunExt' (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = (fn a => g a)
 }
+
+module Issue1194 {
+  def inheritMode (a : Nat) : Nat => match a { _ => 1 }
+  def synthMode (a : Nat) : Nat =>
+   match a returns Nat -> Nat { _ => fn x => x } 1
+
+  def depTy (a : Nat) (P : Nat -> Type)
+     (bc : P 0)
+     (ic : ∀ n -> P (suc n)) : P (a + a) =>
+   match a + a as x returns P x {
+    | 0 => bc
+    | suc n => ic n
+   }
+}
