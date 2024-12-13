@@ -16,6 +16,7 @@ import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassName;
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceClassBuilder(
@@ -59,8 +60,8 @@ public record SourceClassBuilder(
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
     buildMetadata(compiledAya);
-    this.sourceBuilder.buildClass(owner.nested(name).displayName(), superclass, true, () ->
-      builder.accept(this));
+    this.sourceBuilder.buildClass(name, superclass, true, () ->
+      builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
 
   private void buildMethod(
@@ -97,7 +98,7 @@ public record SourceClassBuilder(
   ) {
     buildMethod(
       "/* constructor */",
-      SourceFreeJavaBuilder.toClassName(this.owner),
+      toClassName(this.owner),
       paramTypes,
       builder);
   }

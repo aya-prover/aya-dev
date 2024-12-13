@@ -132,7 +132,7 @@ public interface NameSerializer {
    */
   static @NotNull String javifyClassName(@NotNull SeqView<String> ids) {
     return ids.map(NameSerializer::javify)
-      .joinToString("$", "$", "");
+      .joinToString("_", "_", "");
   }
 
   ImmutableSeq<String> keywords = ImmutableSeq.of(
@@ -148,11 +148,11 @@ public interface NameSerializer {
    * Note that the result may not be used for class name, see {@link #javifyClassName}
    */
   static @NotNull String javify(String name) {
-    if (keywords.contains(name)) return "_$" + name;
+    if (keywords.contains(name)) return "_" + name;
     return name.codePoints().flatMap(x ->
-        x == '$' ? "$$".chars()
+        x == '_' ? "__".chars()
           : Character.isJavaIdentifierPart(x) ? IntStream.of(x)
-            : ("$" + x).chars())
+            : ("_" + x).chars())
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
       .toString();
   }
