@@ -10,6 +10,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.BindContext;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.ReporterContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
@@ -62,18 +63,13 @@ public interface NameProblem extends Problem {
     }
   }
 
-  record DuplicateExportError(
-    @NotNull String name,
-    @Override @NotNull SourcePos sourcePos
-  ) implements NameProblem {
+  record DuplicateExportError(@NotNull String name, @Override @NotNull SourcePos sourcePos) implements Error {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("The name"),
         Doc.code(name),
         Doc.english("being exported clashes with another exported definition with the same name"));
     }
-
-    @Override @NotNull public Severity level() { return Severity.ERROR; }
   }
 
   record DuplicateModNameError(
@@ -201,7 +197,7 @@ public interface NameProblem extends Problem {
 
     public @NotNull ImmutableSeq<String> didYouMean() {
       var ctx = context;
-      while (ctx instanceof BindContext bindCtx) ctx = bindCtx.parent();
+      while (ctx instanceof BindContext || ctx instanceof ReporterContext) ctx = ctx.parent();
       var possible = MutableList.<String>create();
       if (ctx instanceof ModuleContext moduleContext) moduleContext.modules().forEach((modName, mod) -> {
         if (mod.symbols().containsKey(name)) {

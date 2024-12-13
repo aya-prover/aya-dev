@@ -69,3 +69,29 @@ module Issue1187 {
   def FunExt (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = g
   def FunExt' (f g : A -> B) (p : ∀ a -> f a = g a) => (fn a => f a) = (fn a => g a)
 }
+
+module Issue1194 {
+  def inheritMode (a : Nat) : Nat => match a { _ => 1 }
+  def synthMode (a : Nat) : Nat =>
+   match a returns Nat -> Nat { _ => fn x => x } 1
+
+  def depTy (a : Nat) (P : Nat -> Type)
+     (bc : P 0)
+     (ic : ∀ n -> P (suc n)) : P (a + a) =>
+   match a + a as x returns P x {
+    | 0 => bc
+    | suc n => ic n
+   }
+}
+
+module PullRequest1213 {
+  open inductive Store (n : Nat) | make
+
+  def nonInjective Nat Nat : Nat => 0
+  def the (A : Type) (x : A) : A => x
+
+  def test => let
+    | x : Nat := _
+    | y := the (Store (nonInjective 1 114)) (make {nonInjective x 514})
+    in the (Store (the _ 2)) (make {the _ x})
+}

@@ -17,6 +17,7 @@ import org.aya.tyck.tycker.Problematic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,12 +199,22 @@ public interface Context extends Problematic {
     return new BindContext(this, name, ref);
   }
 
+  @ApiStatus.NonExtendable
   default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
-    return derive(new ModulePath(ImmutableSeq.of(extraName)));
+    return derive(extraName, reporter());
   }
 
+  default @NotNull PhysicalModuleContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
+    return derive(new ModulePath(ImmutableSeq.of(extraName)), reporter);
+  }
+
+  @ApiStatus.NonExtendable
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
-    return new PhysicalModuleContext(this, this.modulePath().derive(extraName));
+    return derive(extraName, reporter());
+  }
+
+  default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
+    return new PhysicalModuleContext(reporter, this, modulePath().derive(extraName));
   }
 
   class ResolvingInterruptedException extends InterruptException {

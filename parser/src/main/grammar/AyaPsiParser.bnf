@@ -68,6 +68,7 @@
     KW_HIDING = 'hiding'
     KW_MODULE = 'module'
     KW_MATCH = 'match'
+    KW_RETURNS = 'returns'
     KW_VARIABLE = 'variable'
     KW_DEF = 'def'
     KW_CLASS = 'class'
@@ -288,7 +289,7 @@ piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 lambdaExpr ::= KW_LAMBDA teleBinderUntyped (IMPLIES expr)?
-matchExpr ::= KW_MATCH exprList clauses
+matchExpr ::= KW_MATCH KW_ELIM? exprList matchType? clauses
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 selfExpr ::= KW_SELF (AT qualifiedId)?
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
@@ -299,6 +300,8 @@ letBindBlock ::= letBind | (BAR letBind)+
 letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
 
 doBlockContent ::= doBinding | expr
+
+matchType ::= (KW_AS <<commaSep weakId>>)? KW_RETURNS expr
 
 argument ::= atomExArgument
            | tupleImArgument

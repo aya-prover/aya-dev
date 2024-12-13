@@ -45,10 +45,7 @@ public interface CountingReporter extends Reporter {
     return new Delegated(reporter);
   }
 
-  record Delegated(
-    @NotNull Reporter delegated,
-    int @NotNull [] count
-  ) implements CountingReporter {
+  record Delegated(@NotNull Reporter delegated, int @NotNull [] count) implements CountingReporter {
     public Delegated(@NotNull Reporter delegated) {
       this(delegated, new int[Problem.Severity.class.getEnumConstants().length]);
     }

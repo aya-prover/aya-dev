@@ -9,6 +9,7 @@ import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.ReporterContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -21,6 +22,8 @@ import org.aya.syntax.ref.QPath;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
+import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,8 +123,9 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
-        var resolvedCtx = resolveTopLevelDecl(decl, context);
-        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
+        var ctx = resolveTopLevelDecl(decl, context);
+        var hijackedCtx = new ReporterContext(ctx, suppress(context.reporter(), decl));
+        yield new ResolvingStmt.TopDecl(decl, hijackedCtx);
       }
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
@@ -142,6 +146,17 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     };
   }
 
+  private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
+    if (decl.suppresses.isEmpty()) return reporter;
+    var r = new SuppressingReporter(reporter);
+    decl.suppresses.forEach(suppress -> {
+      switch (suppress) {
+        case Shadowing -> r.suppress(NameProblem.ShadowingWarn.class);
+      }
+    });
+    return r;
+  }
+
   /**
    * pre-resolve children of {@param decl}
    *
@@ -157,7 +172,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     @NotNull Function<D, SeqView<Child>> childrenGet,
     @NotNull BiConsumer<Child, ModuleContext> childResolver
   ) {
-    var innerCtx = context.derive(decl.ref().name());
+    var innerCtx = context.derive(decl.ref().name(), suppress(context.reporter(), decl));
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
     context.importModule(

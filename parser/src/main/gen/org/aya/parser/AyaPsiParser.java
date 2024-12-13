@@ -1384,6 +1384,38 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // (KW_AS <<commaSep weakId>>)? KW_RETURNS expr
+  public static boolean matchType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchType")) return false;
+    if (!nextTokenIs(b, "<match type>", KW_AS, KW_RETURNS)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, MATCH_TYPE, "<match type>");
+    r = matchType_0(b, l + 1);
+    r = r && consumeToken(b, KW_RETURNS);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (KW_AS <<commaSep weakId>>)?
+  private static boolean matchType_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchType_0")) return false;
+    matchType_0_0(b, l + 1);
+    return true;
+  }
+
+  // KW_AS <<commaSep weakId>>
+  private static boolean matchType_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchType_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_AS);
+    r = r && commaSep(b, l + 1, AyaPsiParser::weakId);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
   public static boolean memberModifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "memberModifier")) return false;
@@ -2420,17 +2452,33 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // KW_MATCH exprList clauses
+  // KW_MATCH KW_ELIM? exprList matchType? clauses
   public static boolean matchExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matchExpr")) return false;
     if (!nextTokenIsSmart(b, KW_MATCH)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_MATCH);
+    r = r && matchExpr_1(b, l + 1);
     r = r && exprList(b, l + 1);
+    r = r && matchExpr_3(b, l + 1);
     r = r && clauses(b, l + 1);
     exit_section_(b, m, MATCH_EXPR, r);
     return r;
+  }
+
+  // KW_ELIM?
+  private static boolean matchExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchExpr_1")) return false;
+    consumeTokenSmart(b, KW_ELIM);
+    return true;
+  }
+
+  // matchType?
+  private static boolean matchExpr_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchExpr_3")) return false;
+    matchType(b, l + 1);
+    return true;
   }
 
   public static boolean letExpr(PsiBuilder b, int l) {

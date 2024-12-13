@@ -55,7 +55,11 @@ public interface ExprTyckError {
     inductive Y | con : X
     """;
 
-  @Language("Aya") String testNoRule = """
-    def x => "114514"
+  @Language("Aya") String testNoRule = "def x => \"114514\"";
+
+  @Language("Aya") String testMatchMissingReturns = """
+    open import arith::nat::base
+    def test (a : Nat) : Nat =>
+        match a { _ => fn x => x } 1
     """;
 }

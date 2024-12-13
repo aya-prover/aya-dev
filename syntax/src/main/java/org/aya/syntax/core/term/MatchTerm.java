@@ -9,25 +9,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public record MatchTerm(
-  @NotNull ImmutableSeq<Term> discriminant,
+  @NotNull ImmutableSeq<Term> discriminant, @NotNull Term returns,
   @NotNull ImmutableSeq<Term.Matching> clauses
 ) implements Term {
   public @NotNull MatchTerm update(
-    @NotNull ImmutableSeq<Term> discriminant,
+    @NotNull ImmutableSeq<Term> discriminant, @NotNull Term returns,
     @NotNull ImmutableSeq<Term.Matching> clauses
   ) {
     return this.discriminant.sameElements(discriminant, true)
+      && this.returns == returns
       && this.clauses.sameElements(clauses, true)
       ? this
-      : new MatchTerm(discriminant, clauses);
+      : new MatchTerm(discriminant, returns, clauses);
   }
 
-  @Override
-  public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(discriminant.map(x -> f.apply(0, x)), clauses.map(clause ->
-      clause.descent(
-        t -> f.apply(clause.bindCount(), t),
-        UnaryOperator.identity())
-    ));
+  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+    return update(
+      discriminant.map(x -> f.apply(0, x)),
+      f.apply(0, returns), clauses.map(clause ->
+        clause.descent(
+          t -> f.apply(clause.bindCount(), t),
+          UnaryOperator.identity())
+      ));
   }
 }

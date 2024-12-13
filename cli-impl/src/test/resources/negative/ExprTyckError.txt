@@ -218,3 +218,34 @@ Error: Unsolved meta _
 2 error(s), 0 warning(s).
 Let's learn from that.
 
+MatchMissingReturns:
+In file $FILE:3:4 ->
+
+  1 │   open import arith::nat::base
+  2 │   def test (a : Nat) : Nat =>
+  3 │       match a { _ => fn x => x } 1
+    │       ╰────────────────────────╯
+
+Error: The match expression here is in a spot where the return type is required.
+       Try adding `returns` followed by a type after the expression being 
+       matched.
+
+In file $FILE:3:4 ->
+
+  1 │   open import arith::nat::base
+  2 │   def test (a : Nat) : Nat =>
+  3 │       match a { _ => fn x => x } 1
+    │       ╰──────────────────────────╯
+
+Error: The following application is not good:
+         match a {
+          | _ ⇒ \ x ⇒ x
+        } 1
+       because the type of what you applied is not a Pi/Path type, but instead:
+         <type of `match a {
+          | _ ⇒ \ x ⇒ x
+        }`>
+
+2 error(s), 0 warning(s).
+Let's learn from that.
+

@@ -201,10 +201,6 @@ public sealed interface Pattern extends AyaDocile {
         : new Clause(sourcePos, pats, body);
     }
 
-    public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(patterns, expr.map(x -> x.descent(f)));
-    }
-
     public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
       return update(patterns.map(p -> p.descent(x -> x.descent(g))), expr.map(x -> x.descent(f)));
     }

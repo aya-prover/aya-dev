@@ -222,9 +222,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    *
    * @return true if exported successfully, otherwise (when there already exist a symbol with the same name) false.
    */
-  default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
-    return true;
-  }
+  default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) { return true; }
 
   default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
     importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos);
