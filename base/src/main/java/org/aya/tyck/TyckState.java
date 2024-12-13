@@ -104,6 +104,9 @@ public final class TyckState {
         reporter.report(new MetaVarError.CannotSolveEquations(frozenEqns));
         return;
       } else postSimplificationSize = frozenEqns.size();
+      if (postSimplificationSize > 200) {
+        System.out.println("Hi");
+      }
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       if (frozenEqns.isNotEmpty()) for (var eqn : frozenEqns) {
         if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);

@@ -352,14 +352,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return switch (lhs) {
       case AppTerm(var f, var a) -> {
         var prev = strategy;
-        switch (strategy) {
-          case Default, Trying -> strategy = MetaStrategy.NonInjective;
-          case NonInjective -> { }
-        }
+        var wasTrying = strategy == MetaStrategy.Trying;
         try {
+          switch (strategy) {
+            case Default, Trying -> strategy = MetaStrategy.NonInjective;
+            case NonInjective -> { }
+          }
           if (!(rhs instanceof AppTerm(var g, var b))) yield null;
           var fTy = compareUntyped(f, g);
           if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
+          strategy = wasTrying ? MetaStrategy.Trying : MetaStrategy.Default;
           if (!doCompare(a, b, param)) yield null;
           yield body.apply(a);
         } catch (StuckOnMeta e) {
