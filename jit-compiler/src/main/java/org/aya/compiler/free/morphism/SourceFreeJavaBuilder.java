@@ -4,7 +4,6 @@ package org.aya.compiler.free.morphism;
 
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
-import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -27,7 +26,6 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
 
   @Override
   public @NotNull String buildClass(
-    @NotNull CompiledAya compiledAya,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

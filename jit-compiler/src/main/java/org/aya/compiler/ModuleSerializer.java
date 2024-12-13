@@ -3,19 +3,21 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;
-import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static org.aya.compiler.NameSerializer.javifyClassName;
+import java.lang.constant.ClassDesc;
+
+import static org.aya.compiler.NameSerializer.getReference;
 
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
  */
-public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.ModuleResult> {
+public final class ModuleSerializer<Carrier> {
   public record ModuleResult(
     @NotNull QPath name,
     @NotNull ImmutableSeq<TopLevelDef> defs
@@ -23,51 +25,47 @@ public final class ModuleSerializer extends AbstractSerializer<ModuleSerializer.
 
   private final @NotNull ShapeFactory shapeFactory;
 
-  public ModuleSerializer(@NotNull SourceBuilder builder, @NotNull ShapeFactory shapeFactory) {
-    super(builder);
+  public ModuleSerializer(@NotNull ShapeFactory shapeFactory) {
     this.shapeFactory = shapeFactory;
   }
 
-  private void serializeCons(@NotNull DataDef dataDef, @NotNull SourceBuilder serializer) {
-    var ser = new ConSerializer(serializer);
-    IterableUtil.forEach(dataDef.body, ser::appendLine, ser::serialize);
+  private void serializeCons(@NotNull FreeClassBuilder builder, @NotNull DataDef dataDef) {
+    var ser = new ConSerializer();
+    dataDef.body.forEach(con -> ser.serialize(builder, con));
   }
 
-  private void serializeMems(@NotNull ClassDef classDef, @NotNull SourceBuilder serializer) {
-    var ser = new MemberSerializer(serializer);
-    IterableUtil.forEach(classDef.members(), ser::appendLine, ser::serialize);
+  private void serializeMems(@NotNull FreeClassBuilder builder, @NotNull ClassDef classDef) {
+    var ser = new MemberSerializer();
+    classDef.members().forEach(mem -> ser.serialize(builder, mem));
   }
 
-  private void doSerialize(@NotNull TyckDef unit) {
+  private void doSerialize(@NotNull FreeClassBuilder builder, @NotNull TyckDef unit) {
     switch (unit) {
-      case FnDef teleDef -> new FnSerializer(this, shapeFactory)
-        .serialize(null, teleDef);
+      case FnDef teleDef -> new FnSerializer(shapeFactory)
+        .serialize(builder, teleDef);
       case DataDef dataDef -> {
-        new DataSerializer(this, shapeFactory).serialize(null, dataDef);
-        serializeCons(dataDef, this);
+        new DataSerializer(shapeFactory).serialize(builder, dataDef);
+        serializeCons(builder, dataDef);
       }
-      case ConDef conDef -> new ConSerializer(this)
-        .serialize(null, conDef);
-      case PrimDef primDef -> new PrimSerializer(this)
-        .serialize(null, primDef);
+      case ConDef conDef -> new ConSerializer()
+        .serialize(builder, conDef);
+      case PrimDef primDef -> new PrimSerializer()
+        .serialize(builder, primDef);
       case ClassDef classDef -> {
-        new ClassSerializer(this)
-          .serialize(null, classDef);
-        serializeMems(classDef, this);
+        new ClassSerializer()
+          .serialize(builder, classDef);
+        serializeMems(builder, classDef);
       }
-      case MemberDef memberDef -> new MemberSerializer(this)
-        .serialize(null, memberDef);
+      case MemberDef memberDef -> new MemberSerializer()
+        .serialize(builder, memberDef);
     }
   }
 
-  private void doSerialize(ModuleResult unit) {
-    buildClass(javifyClassName(unit.name, null), null, false, () ->
-      IterableUtil.forEach(unit.defs, this::appendLine, this::doSerialize));
-  }
+  public Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
+    var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
 
-  @Override public ModuleSerializer serialize(@NotNull FreeCodeBuilder builder, ModuleResult unit) {
-    doSerialize(unit);
-
-    return this;
+    return builder.buildClass(desc, Object.class, cb -> {
+      unit.defs.forEach(def -> doSerialize(cb, def));
+    });
   }
 }

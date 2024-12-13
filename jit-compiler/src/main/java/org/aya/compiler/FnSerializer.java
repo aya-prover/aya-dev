@@ -23,8 +23,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
-
   private final @NotNull ShapeFactory shapeFactory;
+
   public FnSerializer(@NotNull ShapeFactory shapeFactory) {
     super(JitFn.class);
     this.shapeFactory = shapeFactory;

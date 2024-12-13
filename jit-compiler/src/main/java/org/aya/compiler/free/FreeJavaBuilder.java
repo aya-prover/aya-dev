@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public interface FreeJavaBuilder<Carrier> {
   @NotNull Carrier buildClass(
-    @NotNull CompiledAya compiledAya,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

@@ -31,6 +31,7 @@ public record SourceClassBuilder(
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
+    // TODO: build annotation
     this.sourceBuilder.buildClass(owner.nested(name).displayName(), superclass, true, () ->
       builder.accept(this));
   }
