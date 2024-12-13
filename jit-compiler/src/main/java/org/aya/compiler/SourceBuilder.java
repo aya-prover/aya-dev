@@ -107,17 +107,13 @@ public interface SourceBuilder {
     appendLine("throw new " + CLASS_PANIC + "(" + message + ");");
   }
 
-  default void buildInnerClass(@NotNull String className, @Nullable Class<?> superClass, @NotNull Runnable continuation) {
-    buildClass(className, superClass, true, continuation);
-  }
-
   default void buildClass(
     @NotNull String className,
-    @Nullable Class<?> superClass,
+    @Nullable String superClass,
     boolean isStatic,
     @NotNull Runnable continuation
   ) {
-    var ext = superClass == null ? "" : "extends " + getJavaRef(superClass);
+    var ext = superClass == null ? "" : "extends " + superClass;
 
     appendLine("public " + (isStatic ? "static" : "") + " final class " + className + " " + ext + " {");
     runInside(continuation);

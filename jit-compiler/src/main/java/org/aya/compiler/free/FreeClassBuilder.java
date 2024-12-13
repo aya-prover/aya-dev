@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface FreeClassBuilder {
   void buildNestedClass(
@@ -34,7 +35,8 @@ public interface FreeClassBuilder {
 
   @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
-    @NotNull String name
+    @NotNull String name,
+    @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   );
 
   @NotNull FreeJavaResolver resolver();

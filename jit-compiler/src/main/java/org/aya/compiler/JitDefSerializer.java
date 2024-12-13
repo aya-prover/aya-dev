@@ -68,19 +68,15 @@ public abstract class JitDefSerializer<T extends TyckDef> {
   protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
 
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull ClassDesc className) {
-    return builder.buildConstantField(className, STATIC_FIELD_INSTANCE);
+    return builder.buildConstantField(className, STATIC_FIELD_INSTANCE, b ->
+      b.mkNew(className, ImmutableSeq.empty()));
   }
 
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
 
   protected abstract @NotNull Class<?> callClass();
 
-  protected abstract void buildConstructor(
-    @NotNull FreeClassBuilder builder,
-    T unit,
-    @NotNull FieldRef fieldInstance,
-    @NotNull Consumer<FreeCodeBuilder> cont
-  );
+  protected abstract void buildConstructor(@NotNull FreeClassBuilder builder, T unit);
 
   protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
@@ -91,19 +87,16 @@ public abstract class JitDefSerializer<T extends TyckDef> {
     var metadata = buildMetadata(unit);
     builder.buildNestedClass(metadata, className, superClass, nestBuilder -> {
       var def = AnyDef.fromVar(unit.ref());
-      var fieldInstance = buildInstance(nestBuilder, NameSerializer.getClassDesc(def));
-      Consumer<FreeCodeBuilder> emptyCalInit = _ -> { };
+      buildInstance(nestBuilder, NameSerializer.getClassDesc(def));
       if (shouldBuildEmptyCall(unit)) {
-        var fieldEmptyCall = nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL);
-        emptyCalInit = cb ->
-          cb.updateField(fieldEmptyCall, buildEmptyCall(cb, def));
+        nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL, cb ->
+          buildEmptyCall(cb, def));
       }
 
-      buildConstructor(nestBuilder, unit, fieldInstance, emptyCalInit);
+      buildConstructor(nestBuilder, unit);
       continuation.accept(nestBuilder);
     });
   }
 
   public abstract @NotNull JitDefSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
-
 }

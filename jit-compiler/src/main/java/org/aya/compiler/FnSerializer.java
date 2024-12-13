@@ -68,7 +68,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull ImmutableSeq<FreeJavaExpr> argTerms
   ) {
     Consumer<FreeCodeBuilder> onStuckCon = cb ->
-      cb.returnWith(builder.invoke(Constants.THUNK, onStuckTerm, ImmutableSeq.empty()));
+      cb.returnWith(AyaSerializer.getThunk(cb, onStuckTerm));
 
     if (unit.is(Modifier.Opaque)) {
       onStuckCon.accept(builder);

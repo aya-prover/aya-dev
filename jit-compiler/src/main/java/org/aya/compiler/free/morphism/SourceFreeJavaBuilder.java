@@ -40,7 +40,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
     sourceBuilder.appendLine("package " + className.packageName() + ";");
-    sourceBuilder.buildClass(className.displayName(), superclass, false, () ->
+    sourceBuilder.buildClass(className.displayName(), toClassRef(FreeUtil.fromClass(superclass)), false, () ->
       builder.accept(new SourceClassBuilder(this, className, sourceBuilder)));
     return sourceBuilder.builder().toString();
   }

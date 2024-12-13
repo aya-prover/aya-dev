@@ -33,7 +33,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     var licit = tele.view().map(Param::explicit)
       .map(builder::iconst)
       .toImmutableSeq();
-    var licitExpr = builder.mkArray(ConstantDescs.CD_Boolean, licit.size(), licit);
+    var licitExpr = builder.mkArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
       .map(builder::aconst)
       .toImmutableSeq();
@@ -42,16 +42,9 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   }
 
   @Override
-  protected void buildConstructor(
-    @NotNull FreeClassBuilder builder,
-    T unit,
-    @NotNull FieldRef fieldInstance,
-    @NotNull Consumer<FreeCodeBuilder> cont
-  ) {
+  protected void buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
     builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
       cb.invokeSuperCon(superConParams(), superConArgs(cb, unit));
-      cb.updateField(fieldInstance, cb.thisRef());
-      cont.accept(cb);
     });
   }
 
@@ -109,7 +102,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
 
         cb.returnWith(result);
       },
-      AyaSerializer::buildPanic);
+      AyaSerializer::returnPanic);
   }
 
   /**

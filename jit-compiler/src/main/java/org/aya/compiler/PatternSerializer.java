@@ -84,7 +84,7 @@ public final class PatternSerializer {
     switch (pat) {
       case Pat.Misc misc -> {
         switch (misc) {
-          case Absurd -> AyaSerializer.buildPanic(builder);
+          case Absurd -> AyaSerializer.execPanic(builder);
           case UntypedBind -> {
             onMatchBind(builder, term);
             onMatchSucc.accept(builder);
@@ -217,7 +217,10 @@ public final class PatternSerializer {
   }
 
   private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
-    builder.updateArray(builder.refVar(result), bindCount++, term);
+    builder.invoke(Constants.MUTSEQ_SET, result.ref(), ImmutableSeq.of(
+      builder.iconst(bindCount++),
+      term
+    ));
   }
 
   /// endregion Java Source Code Generate API
@@ -231,9 +234,13 @@ public final class PatternSerializer {
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int maxBindSize = bindSize.max();
 
-    // var result = new Term[maxBindCount];
-    result = builder.makeVar(Constants.CD_Term.arrayType(),
-      builder.mkArray(Constants.CD_Term, maxBindSize, ImmutableSeq.empty()));
+    // var result = MutableSeq.fill(maxBindCount, null);
+    result = builder.makeVar(Constants.CD_MutableSeq,
+      builder.invoke(Constants.MUTSEQ, ImmutableSeq.of(
+        builder.iconst(maxBindSize),
+        builder.aconstNull()
+      ))
+    );
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
     subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.iconst(false));
@@ -261,11 +268,11 @@ public final class PatternSerializer {
         onFailed.accept(mBuilder);
         return;
       }
-      
+
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, AyaSerializer::buildPanic);
+    }, AyaSerializer::returnPanic);
 
     return this;
   }

@@ -15,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import static org.aya.compiler.free.morphism.SourceCodeBuilder.getExpr;
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassName;
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
@@ -60,7 +62,7 @@ public record SourceClassBuilder(
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
     buildMetadata(compiledAya);
-    this.sourceBuilder.buildClass(name, superclass, true, () ->
+    this.sourceBuilder.buildClass(name, toClassRef(FreeUtil.fromClass(superclass)), true, () ->
       builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
 
@@ -76,7 +78,7 @@ public record SourceClassBuilder(
 
     this.sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
       new SourceArgumentProvider(params.map(SourceBuilder.JitParam::name)),
-      new SourceCodeBuilder(this, this.owner, this.sourceBuilder)
+      new SourceCodeBuilder(this, this.sourceBuilder)
     ));
   }
 
@@ -104,8 +106,13 @@ public record SourceClassBuilder(
   }
 
   @Override
-  public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name) {
-    sourceBuilder.buildConstantField(toClassRef(returnType), name, null);
+  public @NotNull FieldRef buildConstantField(
+    @NotNull ClassDesc returnType,
+    @NotNull String name,
+    @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
+  ) {
+    sourceBuilder.buildConstantField(toClassRef(returnType), name,
+      getExpr(initializer.apply(new SourceCodeBuilder(this, sourceBuilder))));
     return new FieldRef.Default(this.owner, returnType, name);
   }
 

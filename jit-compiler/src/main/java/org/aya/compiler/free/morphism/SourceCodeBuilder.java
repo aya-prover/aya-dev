@@ -20,7 +20,6 @@ import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceCodeBuilder(
   @NotNull SourceClassBuilder parent,
-  @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
 ) implements FreeCodeBuilder {
   public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJavaExpr> args) {
@@ -220,7 +219,7 @@ public record SourceCodeBuilder(
     var name = ImmutableSeq.fill(method.paramTypes().size(), _ ->
       sourceBuilder.nameGen().nextName());
     var ap = new SourceArgumentProvider.Lambda(captures.map(SourceCodeBuilder::getExpr), name);
-    return new SourceFreeJavaExpr("(" + name.joinToString(", ") + ") -> " + builder.apply(ap));
+    return new SourceFreeJavaExpr("(" + name.joinToString(", ") + ") -> " + getExpr(builder.apply(ap)));
   }
 
   @Override
@@ -253,10 +252,13 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJavaExpr> initializer) {
-    assert initializer.isEmpty() || initializer.sizeEquals(length);
-    var init = initializer.isEmpty() ? "" : mkHalfArray(initializer.map(SourceCodeBuilder::getExpr));
-    return new SourceFreeJavaExpr("new " + toClassRef(type) + "[" + length + "]" + init);
+  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
+    assert initializer == null || initializer.sizeEquals(length);
+    var hasInit = initializer != null;
+    var init = hasInit ? mkHalfArray(initializer.map(SourceCodeBuilder::getExpr)) : "";
+    var arrayIndicator = hasInit ? "[]" : "[" + length + "]";
+
+    return new SourceFreeJavaExpr("new " + toClassRef(type) + arrayIndicator + init);
   }
 
   @Override
@@ -265,7 +267,7 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
     return new SourceFreeJavaExpr("((" + toClassRef(as) + ")" + getExpr(obj) + ")");
   }
 }
