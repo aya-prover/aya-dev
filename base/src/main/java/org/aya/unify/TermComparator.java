@@ -4,6 +4,7 @@ package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.function.CheckedSupplier;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
@@ -50,7 +51,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
   private @NotNull TermComparator.MetaStrategy strategy = MetaStrategy.Default;
   private final MutableList<TyckState.Eqn> weWillSee = MutableList.create();
-  private boolean stuckOnMeta = false;
+  private static class StuckOnMeta extends Exception { }
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -86,7 +87,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
-  protected @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  private @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type)
+    throws StuckOnMeta {
     if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
@@ -101,10 +103,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // This is a bit sus
         yield type != null ? type : ErrorTerm.typeOf(meta);
       }
-      case NonInjective -> {
-        stuckOnMeta = true;
-        yield null;
-      }
+      case NonInjective -> throw new StuckOnMeta();
     };
   }
 
@@ -125,7 +124,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * For lossy comparisons, when we fail, we will need to compare them again later,
    * so don't forget to reset the {@link #failure} after first failure.
    */
-  private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
+  private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) throws StuckOnMeta {
     var wantFinalize = false;
     switch (strategy) {
       case Default -> {
@@ -153,11 +152,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
     if (wantFinalize) {
       strategy = MetaStrategy.Default;
-      if (stuckOnMeta) {
-        for (var eqn : weWillSee) state.addEqn(eqn);
-      } else {
-        for (var eqn : weWillSee) checkEqn(eqn);
-      }
+      for (var eqn : weWillSee) checkEqn(eqn);
       weWillSee.clear();
     }
     return result;
@@ -166,15 +161,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   /**
    * Compare the arguments of two callable ONLY, this method will NOT try to normalize and then compare (while the old project does).
    */
-  private @Nullable Term compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) {
+  private @Nullable Term compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) throws StuckOnMeta {
     if (!lhs.ref().equals(rhs.ref())) return null;
     return compareMany(lhs.args(), rhs.args(),
       lhs.ref().signature().lift(Math.min(lhs.ulift(), rhs.ulift())));
   }
 
-  private <R> R swapped(@NotNull Supplier<R> callback) {
+  private <R> R swapped(@NotNull CheckedSupplier<R, StuckOnMeta> callback) throws StuckOnMeta {
     cmp = cmp.invert();
-    var result = callback.get();
+    var result = callback.getChecked();
     cmp = cmp.invert();
     return result;
   }
@@ -185,6 +180,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * @return true if they are 'the same' under {@param type}, false otherwise.
    */
   public boolean compare(@NotNull Term preLhs, @NotNull Term preRhs, @Nullable Term type) {
+    try {
+      return doCompare(preLhs, preRhs, type);
+    } catch (StuckOnMeta e) {
+      return Panic.unreachable();
+    }
+  }
+
+  private boolean doCompare(@NotNull Term preLhs, @NotNull Term preRhs, @Nullable Term type) throws StuckOnMeta {
     if (preLhs == preRhs || preLhs instanceof ErrorTerm || preRhs instanceof ErrorTerm) return true;
     if (checkApproxResult(type, compareApprox(preLhs, preRhs))) return true;
     failure = null;
@@ -207,10 +210,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
-      return swapped(() -> doCompare(rhs, lhs, type));
+      return swapped(() -> compareNullableType(rhs, lhs, type));
     }
 
-    return doCompare(lhs, rhs, type);
+    return compareNullableType(lhs, rhs, type);
   }
 
   /**
@@ -221,7 +224,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    *            if there is a {@link MetaCall} then it must be lhs.
    *            Reason: we case on lhs.
    */
-  private boolean doCompare(Term lhs, Term rhs, @Nullable Term type) {
+  private boolean compareNullableType(Term lhs, Term rhs, @Nullable Term type) throws StuckOnMeta {
     var result = type == null
       ? compareUntyped(lhs, rhs) != null
       : doCompareTyped(lhs, rhs, type);
@@ -243,7 +246,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * @param type the whnf type.
    * @return whether they are 'the same' and their types are {@param type}
    */
-  private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
+  private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) throws StuckOnMeta {
     return switch (whnf(type)) {
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
       case ErrorTerm _ -> true;
@@ -305,7 +308,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    *
    * @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
    */
-  private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) {
+  private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) throws StuckOnMeta {
     {
       var result = compareApprox(preLhs, preRhs);
       if (result != null) return whnf(result);
@@ -330,7 +333,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return null;
   }
 
-  private @Nullable Term doCompareUntyped(@NotNull Term lhs, @NotNull Term rhs) {
+  private @Nullable Term doCompareUntyped(@NotNull Term lhs, @NotNull Term rhs) throws StuckOnMeta {
     if (lhs instanceof Formation form)
       return doCompareType(form, rhs) ?
         // It's going to be used in the synthesizer, so we freeze it first
@@ -348,12 +351,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
           if (!compare(a, b, param)) yield null;
           yield body.apply(a);
+        } catch (StuckOnMeta e) {
+          state.addEqn(createEqn((MetaCall) lhs, rhs, null));
+          // This is a bit sus
+          yield ErrorTerm.typeOf(lhs);
         } finally {
           strategy = prev;
-          // TODO: this is wrong, needs to be rewritten using exceptions
-          if (stuckOnMeta) {
-            // state.addEqn(createEqn(lhs, rhs, null));
-          }
         }
       }
       case PAppTerm(var f, var a, _, _) -> {
@@ -459,7 +462,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull ImmutableSeq<Term> list,
     @NotNull ImmutableSeq<Term> rist,
     @NotNull AbstractTele types
-  ) {
+  ) throws StuckOnMeta {
     assert list.sizeEquals(rist);
     assert rist.sizeEquals(types.telescopeSize());
     var argsCum = new Term[types.telescopeSize()];
@@ -533,7 +536,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * Compare two type formation
    * Note: don't confuse with {@link TermComparator#doCompareTyped(Term, Term, Term)}
    */
-  private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs) {
+  private boolean doCompareType(@NotNull Formation preLhs, @NotNull Term preRhs) throws StuckOnMeta {
     if (preLhs.getClass() != preRhs.getClass()) return false;
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs) != null;
@@ -575,6 +578,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   @ApiStatus.Internal public boolean checkEqn(@NotNull TyckState.Eqn eqn) {
     if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
-    else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;
+    else try {
+      return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;
+    } catch (StuckOnMeta e) {
+      return Panic.unreachable();
+    }
   }
 }
