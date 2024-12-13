@@ -3,6 +3,7 @@
 package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
@@ -39,10 +40,12 @@ import java.util.function.UnaryOperator;
 public abstract sealed class TermComparator extends AbstractTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected @NotNull Ordering cmp;
-  // If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
-  private boolean solveMeta = true;
   private @Nullable FailureData failure = null;
   final @NotNull Renamer nameGen = new Renamer();
+
+  // If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
+  private boolean solveMeta = true;
+  private final MutableList<TyckState.Eqn> weWillSee = MutableList.create();
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -61,10 +64,37 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    */
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
+  /** The "flex-flex" case with identical meta ref */
+  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+    if (meta.args().size() != rMeta.args().size()) return null;
+    for (var i = 0; i < meta.args().size(); i++) {
+      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
+        return null;
+      }
+    }
+    if (type != null) return type;
+    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return ty;
+    // Honestly, this is a bit sus
+    return ErrorTerm.typeOf(meta);
+  }
+
+  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
+    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
+  }
+
   protected @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
-    var result = !solveMeta ? null : doSolveMeta(meta, whnf(rhs), type);
-    if (result == null) fail(meta, rhs);
-    return result;
+    rhs = whnf(rhs);
+    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
+      return sameMeta(meta, type, rMeta);
+
+    if (solveMeta) {
+      var result = doSolveMeta(meta, rhs, type);
+      if (result == null) fail(meta, rhs);
+      return result;
+    } else {
+      weWillSee.append(createEqn(meta, rhs, type));
+      return ErrorTerm.typeOf(meta);
+    }
   }
 
   /// region Utilities
@@ -85,6 +115,28 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * so don't forget to reset the {@link #failure} after first failure.
    */
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
+    var prev = solveMeta;
+    solveMeta = false;
+    var result = compareCalls(lhs, rhs);
+    // Four possibilities: was/was not already in trying mode,
+    // and the trying was success/failed.
+    if (result != null) {
+      // If we are on the top level, check all the equations
+      if (prev) for (var eqn : weWillSee) {
+        if (!checkEqn(eqn)) {
+          weWillSee.clear();
+          return null;
+        }
+      }
+    }
+    // No matter we succeed or fail, if we are at the top of a trying call stack,
+    // we clear the pending list.
+    if (prev) weWillSee.clear();
+    solveMeta = prev;
+    return result;
+  }
+
+  private @Nullable Term compareCalls(@NotNull Term lhs, @NotNull Term rhs) {
     return switch (new Pair<>(lhs, rhs)) {
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
@@ -96,7 +148,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // TODO: type info?
         if (!compare(lMem.of(), rMem.of(), null)) yield null;
         yield compareMany(lMem.args(), rMem.args(),
-          lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
+            lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
       }
       default -> null;
     };
@@ -254,7 +306,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     var lhs = whnf(preLhs);
     var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs)) {
-      var result = compareApprox(lhs, rhs);
+      var result = compareCalls(lhs, rhs);
       if (result != null) return whnf(result);
     }
 

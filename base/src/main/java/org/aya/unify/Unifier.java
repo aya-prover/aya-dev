@@ -5,7 +5,10 @@ package org.aya.unify;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.prettier.FindUsage;
-import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.LamTerm;
+import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.ref.LocalCtx;
@@ -31,17 +34,11 @@ public final class Unifier extends TermComparator {
     this.allowDelay = allowDelay;
   }
 
-  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
-    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
-  }
-
   public @NotNull Unifier derive(@NotNull SourcePos pos, Ordering ordering) {
     return new Unifier(state, localCtx().derive(), reporter, pos, ordering, allowDelay);
   }
 
   @Override protected @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
-    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
-      return sameMeta(meta, type, rMeta);
     // Assumption: rhs is in whnf
     var spine = meta.args();
 
@@ -112,19 +109,6 @@ public final class Unifier extends TermComparator {
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
     return returnType;
-  }
-
-  /** The "flex-flex" case with identical meta ref */
-  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
-    if (meta.args().size() != rMeta.args().size()) return null;
-    for (var i = 0; i < meta.args().size(); i++) {
-      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
-        return null;
-      }
-    }
-    if (type != null) return type;
-    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return ty;
-    return ErrorTerm.typeOf(meta);
   }
 
   /**
