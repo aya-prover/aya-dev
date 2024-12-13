@@ -3,16 +3,20 @@
 package org.aya.compiler.free.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
@@ -23,6 +27,30 @@ public record SourceClassBuilder(
     return this;
   }
 
+  private void buildMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
+    var prepend = isFirst ? "" : ", ";
+    sourceBuilder.appendLine(prepend + name + " = " + value);
+  }
+
+  private void buildMetadata(@NotNull CompiledAya compiledAya) {
+    sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(CompiledAya.class)) + "(");
+    sourceBuilder.runInside(() -> {
+      buildMetadataRecord("module", SourceCodeBuilder.mkHalfArray(
+        ImmutableSeq.from(compiledAya.module()).map(ExprializeUtils::makeString)
+      ), true);
+      buildMetadataRecord("fileModuleSize", Integer.toString(compiledAya.fileModuleSize()), false);
+      buildMetadataRecord("name", ExprializeUtils.makeString(compiledAya.name()), false);
+      buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
+      buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
+      buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(
+        ImmutableSeq.from(compiledAya.recognition()).map(x ->
+          SourceCodeBuilder.makeRefEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name())
+        )
+      ), false);
+    });
+    sourceBuilder.appendLine(")");
+  }
+
   @Override
   public void buildNestedClass(
     CompiledAya compiledAya,
@@ -30,7 +58,7 @@ public record SourceClassBuilder(
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    // TODO: build annotation
+    buildMetadata(compiledAya);
     this.sourceBuilder.buildClass(owner.nested(name).displayName(), superclass, true, () ->
       builder.accept(this));
   }
@@ -42,7 +70,7 @@ public record SourceClassBuilder(
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
     var params = paramTypes.map(x ->
-      new SourceBuilder.JitParam(this.sourceBuilder.nameGen().nextName(), SourceFreeJavaBuilder.toClassRef(x))
+      new SourceBuilder.JitParam(this.sourceBuilder.nameGen().nextName(), toClassRef(x))
     );
 
     this.sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
@@ -58,7 +86,7 @@ public record SourceClassBuilder(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
-    buildMethod(SourceFreeJavaBuilder.toClassRef(returnType), name, paramTypes, builder);
+    buildMethod(toClassRef(returnType), name, paramTypes, builder);
     return new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
   }
 
@@ -76,7 +104,7 @@ public record SourceClassBuilder(
 
   @Override
   public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name) {
-    sourceBuilder.buildConstantField(SourceFreeJavaBuilder.toClassRef(returnType), name, null);
+    sourceBuilder.buildConstantField(toClassRef(returnType), name, null);
     return new FieldRef.Default(this.owner, returnType, name);
   }
 

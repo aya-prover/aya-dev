@@ -24,7 +24,7 @@ public record SourceCodeBuilder(
   @NotNull SourceBuilder sourceBuilder
 ) implements FreeCodeBuilder {
   public static @NotNull String toArgs(@NotNull ImmutableSeq<FreeJavaExpr> args) {
-    return args.view().map(x -> ((SourceFreeJavaExpr) x).expr()).joinToString(", ");
+    return args.view().map(SourceCodeBuilder::getExpr).joinToString(", ");
   }
 
   public static @NotNull String getExpr(@NotNull FreeJavaExpr expr) {
@@ -200,9 +200,13 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr(getExpr(owner) + "." + field.name());
   }
 
+  public static @NotNull String makeRefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+    return toClassRef(enumClass) + "." + enumName;
+  }
+
   @Override
   public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
-    return new SourceFreeJavaExpr(toClassRef(enumClass) + "." + enumName);
+    return new SourceFreeJavaExpr(makeRefEnum(enumClass, enumName));
   }
 
   // FIXME: dont do this
@@ -244,10 +248,14 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr("this");
   }
 
+  public static @NotNull String mkHalfArray(@NotNull ImmutableSeq<String> elems) {
+    return elems.joinToString(", ", "{ ", " }");
+  }
+
   @Override
   public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJavaExpr> initializer) {
     assert initializer.isEmpty() || initializer.sizeEquals(length);
-    var init = initializer.isEmpty() ? "" : "{" + toArgs(initializer) + "}";
+    var init = initializer.isEmpty() ? "" : mkHalfArray(initializer.map(SourceCodeBuilder::getExpr));
     return new SourceFreeJavaExpr("new " + toClassRef(type) + "[" + length + "]" + init);
   }
 
