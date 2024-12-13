@@ -4,6 +4,7 @@ package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableStack;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
@@ -45,7 +46,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   // If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
   private boolean solveMeta = true;
-  private final MutableList<TyckState.Eqn> weWillSee = MutableList.create();
+  private final MutableStack<MutableList<TyckState.Eqn>> weWillSee = MutableStack.create();
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -92,7 +93,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       if (result == null) fail(meta, rhs);
       return result;
     } else {
-      weWillSee.append(createEqn(meta, rhs, type));
+      weWillSee.peek().append(createEqn(meta, rhs, type));
       return type != null ? type : ErrorTerm.typeOf(meta);
     }
   }
@@ -117,22 +118,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
     var prev = solveMeta;
     solveMeta = false;
+    weWillSee.push(MutableList.create());
     var result = compareCalls(lhs, rhs);
+    var weWillSeeThisTime = weWillSee.pop();
     solveMeta = prev;
-    // Four possibilities: was/was not already in trying mode,
-    // and the trying was success/failed.
     if (result != null) {
-      // If we are on the top level, check all the equations
-      if (prev) for (var eqn : weWillSee) {
-        if (!state.solveEqn(reporter, eqn, true)) {
-          weWillSee.clear();
-          return null;
-        }
+      for (var eqn : weWillSeeThisTime) {
+        // Make sure to call `solveEqn` on a fresh Unifier to have the correct `localCtx`
+        if (!state.solveEqn(reporter, eqn, true)) return null;
       }
     }
-    // No matter we succeed or fail, if we are at the top of a trying call stack,
-    // we clear the pending list.
-    if (prev) weWillSee.clear();
     return result;
   }
 
