@@ -16,15 +16,15 @@ public class MiscTest {
   public static final @NotNull QName NAME = new QName(SUB, "urusai");
 
   @Test public void test0() {
-    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514",
+    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka._114514",
       NameSerializer.getClassRef(TOP, null));
-    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$shinji",
+    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka._114514._114514_shinji",
       NameSerializer.getClassRef(TOP, "shinji"));
-    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514",
+    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka._114514",
       NameSerializer.getClassRef(SUB, null));
-    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$hentai$shinji",
+    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka._114514._114514_hentai_shinji",
       NameSerializer.getClassRef(SUB, "shinji"));
-    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka.$114514.$114514$hentai$urusai",
+    assertEquals(AyaSerializer.PACKAGE_BASE + ".baka._114514._114514_hentai_urusai",
       NameSerializer.getClassRef(NAME.module(), NAME.name()));
   }
 }
