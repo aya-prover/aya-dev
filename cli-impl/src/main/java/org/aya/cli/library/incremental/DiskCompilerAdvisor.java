@@ -8,7 +8,6 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.compiler.CompiledModule;
-import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.compiler.NameSerializer;
 import org.aya.primitive.PrimFactory;

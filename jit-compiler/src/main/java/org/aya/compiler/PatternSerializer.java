@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 /**
  * We do not serialize meta solve, it is annoying
  */
-public final class PatternSerializer extends AbstractSerializer<FreeCodeBuilder, ImmutableSeq<PatternSerializer.Matching>> {
+public final class PatternSerializer {
   @FunctionalInterface
   public interface SuccessContinuation extends TriConsumer<PatternSerializer, FreeCodeBuilder, Integer> {
   }
@@ -222,7 +222,7 @@ public final class PatternSerializer extends AbstractSerializer<FreeCodeBuilder,
 
   /// endregion Java Source Code Generate API
 
-  @Override public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
+  public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
       onFailed.accept(builder);
       return this;

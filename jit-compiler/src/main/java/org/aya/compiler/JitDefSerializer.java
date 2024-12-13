@@ -19,7 +19,7 @@ import static org.aya.compiler.AyaSerializer.FIELD_EMPTYCALL;
 import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.NameSerializer.javifyClassName;
 
-public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerializer<FreeClassBuilder, T> {
+public abstract class JitDefSerializer<T extends TyckDef> {
   protected final @NotNull Class<?> superClass;
 
   protected JitDefSerializer(@NotNull Class<?> superClass) {
@@ -73,6 +73,15 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
 
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
 
+  protected abstract @NotNull Class<?> callClass();
+
+  protected abstract void buildConstructor(
+    @NotNull FreeClassBuilder builder,
+    T unit,
+    @NotNull FieldRef fieldInstance,
+    @NotNull Consumer<FreeCodeBuilder> cont
+  );
+
   protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
   }
@@ -95,12 +104,6 @@ public abstract class JitDefSerializer<T extends TyckDef> extends AbstractSerial
     });
   }
 
-  protected abstract @NotNull Class<?> callClass();
+  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
 
-  protected abstract void buildConstructor(
-    @NotNull FreeClassBuilder builder,
-    T unit,
-    @NotNull FieldRef fieldInstance,
-    @NotNull Consumer<FreeCodeBuilder> cont
-  );
 }

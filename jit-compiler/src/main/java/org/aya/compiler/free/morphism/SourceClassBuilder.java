@@ -3,7 +3,6 @@
 package org.aya.compiler.free.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.AbstractSerializer;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;

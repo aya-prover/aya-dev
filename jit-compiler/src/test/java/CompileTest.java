@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.FileSerializer;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.compiler.NameGenerator;
 import org.aya.compiler.TermExprializer;

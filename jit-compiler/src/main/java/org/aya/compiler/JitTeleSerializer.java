@@ -5,14 +5,9 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
-import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.telescope.JitTele;
@@ -22,19 +17,8 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.function.Consumer;
 
-import static org.aya.compiler.AyaSerializer.CLASS_SEQ;
-import static org.aya.compiler.AyaSerializer.CLASS_TERM;
-
 public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSerializer<T> {
-  public static final String CLASS_JITCON = ExprializeUtils.getJavaRef(JitCon.class);
-  public static final String CLASS_GLOBALID = ExprializeUtils.makeSub(ExprializeUtils.getJavaRef(CodeShape.class), ExprializeUtils.getJavaRef(CodeShape.GlobalId.class));
-  public static final String METHOD_TELESCOPE = "telescope";
-  public static final String METHOD_RESULT = "result";
-  public static final String TYPE_TERMSEQ = CLASS_SEQ + "<" + CLASS_TERM + ">";
-
-  protected JitTeleSerializer(
-    @NotNull Class<? extends JitTele> superClass
-  ) {
+  protected JitTeleSerializer(@NotNull Class<? extends JitTele> superClass) {
     super(superClass);
   }
 
@@ -47,11 +31,11 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     var size = tele.size();
     var sizeExpr = builder.iconst(size);
     var licit = tele.view().map(Param::explicit)
-      .map(x -> builder.iconst(x))
+      .map(builder::iconst)
       .toImmutableSeq();
     var licitExpr = builder.mkArray(ConstantDescs.CD_Boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
-      .map(x -> builder.aconst(x))
+      .map(builder::aconst)
       .toImmutableSeq();
     var namesExpr = builder.mkArray(ConstantDescs.CD_String, names.size(), names);
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
@@ -64,7 +48,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     @NotNull FieldRef fieldInstance,
     @NotNull Consumer<FreeCodeBuilder> cont
   ) {
-    builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) -> {
+    builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
       cb.invokeSuperCon(superConParams(), superConArgs(cb, unit));
       cb.updateField(fieldInstance, cb.thisRef());
       cont.accept(cb);
@@ -80,7 +64,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     super.buildFramework(builder, unit, nestBuilder -> {
       nestBuilder.buildMethod(
         Constants.CD_Term,
-        METHOD_TELESCOPE,
+        "telescope",
         ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
         (ap, cb) -> {
           var i = ap.arg(0);
@@ -90,7 +74,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
 
       nestBuilder.buildMethod(
         Constants.CD_Term,
-        METHOD_RESULT,
+        "result",
         ImmutableSeq.of(Constants.CD_Seq),
         (ap, cb) -> {
           var teleArgs = ap.arg(0);
@@ -140,5 +124,27 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     );
 
     builder.returnWith(result);
+  }
+
+  public static @NotNull FreeJavaExpr serializeTermUnderTele(
+    @NotNull FreeExprBuilder builder,
+    @NotNull Term term,
+    @NotNull FreeJavaExpr argsTerm,
+    int size
+  ) {
+    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
+  }
+
+  public static @NotNull FreeJavaExpr serializeTermUnderTele(
+    @NotNull FreeExprBuilder builder,
+    @NotNull Term term,
+    @NotNull ImmutableSeq<FreeJavaExpr> argTerms
+  ) {
+    return new TermExprializer(builder, argTerms)
+      .serialize(term);
+  }
+
+  public static @NotNull FreeJavaExpr serializeTerm(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
+    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
   }
 }
