@@ -4,7 +4,6 @@ package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Try;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.generic.Renamer;
@@ -143,8 +142,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         strategy = MetaStrategy.Trying;
         assert weWillSee.isEmpty();
       }
-      case Trying -> { }
-      case NonInjective -> { }
+      case Trying, NonInjective -> { }
     }
     var result = switch (new Pair<>(lhs, rhs)) {
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
@@ -264,16 +262,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case ClassCall classCall -> {
         if (classCall.args().size() == classCall.ref().members().size()) yield true;
         // TODO: skip comparing fields that already have impl specified in the type
-        yield classCall.ref().members().allMatch(member -> {
+        for (var member : classCall.ref().members()) {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
           var ty = member.signature().inst(ImmutableSeq.of(lhs));
           var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
           var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
-          // TODO: replace with allMatchChecked
-          return Try.of(() -> doCompare(lproj, rproj, ty.makePi(ImmutableSeq.empty())))
-            .getOrThrow();
-        });
+          if (!doCompare(lproj, rproj, ty.makePi(ImmutableSeq.empty())))
+            yield false;
+        }
+        yield true;
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
@@ -406,8 +404,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case IntegerTerm(var lepr, _, _, var ty) -> rhs instanceof IntegerTerm rInt && lepr == rInt.repr() ? ty : null;
       case ListTerm list -> switch (rhs) {
         case ListTerm rist -> {
-          if (!list.compareUntyped(rist, (l, r) ->
-            Try.of(() -> doCompare(l, r, null)).getOrThrow())) yield null;
+          if (!list.repr().sizeEquals(rist.repr())) yield null;
+          for (var i = 0; i < list.repr().size(); i++) {
+            if (!doCompare(list.repr().get(i), rist.repr().get(i), null)) yield null;
+          }
           yield list.type();
         }
         case ConCall rCon -> compareUntyped(list.constructorForm(), rCon);
