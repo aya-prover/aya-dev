@@ -89,12 +89,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   private @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type)
     throws StuckOnMeta {
+    rhs = whnf(rhs);
     if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
     return switch (strategy) {
       case Default -> {
-        var result = doSolveMeta(meta, whnf(rhs), type);
+        var result = doSolveMeta(meta, rhs, type);
         if (result == null) fail(meta, rhs);
         yield result;
       }
