@@ -28,7 +28,10 @@ public interface FreeExprBuilder {
 
   @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name);
 
-  /** Invoke a (non-interface) method on {@param owner} */
+  /**
+   * Invoke a (non-interface) method on {@param owner}.
+   * Remember to {@link FreeCodeBuilder#exec(FreeJavaExpr)} if you do not need the result!
+   */
   @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
   /** Invoke a static method */
@@ -58,7 +61,7 @@ public interface FreeExprBuilder {
 
   @NotNull FreeJavaExpr aconst(@NotNull String value);
 
-  @NotNull FreeJavaExpr aconstNull();
+  @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type);
 
   @NotNull FreeJavaExpr thisRef();
 

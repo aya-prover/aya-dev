@@ -217,10 +217,12 @@ public final class PatternSerializer {
   }
 
   private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
-    builder.invoke(Constants.MUTSEQ_SET, result.ref(), ImmutableSeq.of(
-      builder.iconst(bindCount++),
-      term
-    ));
+    builder.exec(
+      builder.invoke(Constants.MUTSEQ_SET, result.ref(), ImmutableSeq.of(
+        builder.iconst(bindCount++),
+        term
+      ))
+    );
   }
 
   /// endregion Java Source Code Generate API
@@ -238,7 +240,7 @@ public final class PatternSerializer {
     result = builder.makeVar(Constants.CD_MutableSeq,
       builder.invoke(Constants.MUTSEQ, ImmutableSeq.of(
         builder.iconst(maxBindSize),
-        builder.aconstNull()
+        builder.aconstNull(Constants.CD_Term)
       ))
     );
     // whether the match success or mismatch, 0 implies mismatch

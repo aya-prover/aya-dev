@@ -5,6 +5,9 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.ModuleSerializer;
 import org.aya.compiler.NameGenerator;
 import org.aya.compiler.TermExprializer;
+import org.aya.compiler.free.morphism.SourceClassBuilder;
+import org.aya.compiler.free.morphism.SourceCodeBuilder;
+import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
@@ -27,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.constant.ConstantDescs;
 import java.nio.file.Path;
 
 import static org.aya.compiler.NameSerializer.getClassName;
@@ -82,9 +86,11 @@ public class CompileTest {
   }
 
   @Test public void serLam() {
+    var fjb = SourceFreeJavaBuilder.create();
+    var dummy = new SourceCodeBuilder(new SourceClassBuilder(fjb, ConstantDescs.CD_Object, fjb.sourceBuilder()), fjb.sourceBuilder());
     // \ t. (\0. 0 t)
     var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Locns(new AppTerm(new LocalTerm(0), t)))));
-    var out = new TermExprializer(new NameGenerator(), ImmutableSeq.empty())
+    var out = new TermExprializer(dummy, ImmutableSeq.empty())
       .serialize(lam);
 
     System.out.println(out);
@@ -96,10 +102,9 @@ public class CompileTest {
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
-    return new FileSerializer(result.info.shapeFactory())
-      .serialize(null, new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
-      .result();
+    return new ModuleSerializer<String>(result.info.shapeFactory())
+      .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
+        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
   }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {

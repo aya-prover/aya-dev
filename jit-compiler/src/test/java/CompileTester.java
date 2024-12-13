@@ -24,7 +24,7 @@ public class CompileTester {
   public CompileTester(@NotNull String code) throws IOException {
     var root = Paths.get("build/tmp/testGenerated");
     var genDir = root.resolve(AyaSerializer.PACKAGE_BASE);
-    FileUtil.writeString(baka = genDir.resolve("$baka.java"), code);
+    FileUtil.writeString(baka = genDir.resolve("_baka.java"), code);
     cl = new URLClassLoader(new URL[]{root.toUri().toURL()});
   }
 

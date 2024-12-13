@@ -11,6 +11,10 @@ import java.util.function.Consumer;
 
 public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
   implements FreeJavaBuilder<String> {
+  public static @NotNull SourceFreeJavaBuilder create() {
+    return new SourceFreeJavaBuilder(new SourceBuilder.Default());
+  }
+
   // convert "Ljava/lang/Object;" to "java.lang.Object"
   public static @NotNull String toClassRef(@NotNull ClassDesc className) {
     var arrayDepth = 0;

@@ -238,8 +238,8 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public @NotNull FreeJavaExpr aconstNull() {
-    return new SourceFreeJavaExpr("null");
+  public @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type) {
+    return new SourceFreeJavaExpr("((" + toClassRef(type) + ") null)");
   }
 
   @Override
