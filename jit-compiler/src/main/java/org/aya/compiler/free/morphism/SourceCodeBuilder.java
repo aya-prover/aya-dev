@@ -109,7 +109,7 @@ public record SourceCodeBuilder(
     @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
     var name = sourceBuilder.nameGen().nextName();
-    buildIf(getExpr(lhs) + " instanceof " + toClassRef(rhs) + name,
+    buildIf(getExpr(lhs) + " instanceof " + toClassRef(rhs) + " " + name,
       cb -> thenBlock.accept(cb, new SourceFreeJavaExpr(name)),
       elseBlock);
   }

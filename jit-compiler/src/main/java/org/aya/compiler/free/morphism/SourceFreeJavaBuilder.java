@@ -13,9 +13,18 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
   implements FreeJavaBuilder<String> {
   // convert "Ljava/lang/Object;" to "java.lang.Object"
   public static @NotNull String toClassRef(@NotNull ClassDesc className) {
-    // TODO: this won't work well with array
-    var name = className.displayName();
-    return className.packageName() + "." + name.replace('$', '.');
+    var arrayDepth = 0;
+    ClassDesc baseType = className;
+    while (baseType.isArray()) {
+      baseType = baseType.componentType();
+      arrayDepth += 1;
+    }
+
+    var arrayPostfix = "[]".repeat(arrayDepth);
+    var name = baseType.displayName();
+    var packageName = baseType.packageName();
+    var prefix = packageName.isEmpty() ? "" : packageName + ".";
+    return prefix + name.replace('$', '.') + arrayPostfix;
   }
 
   // convert "Ljava/lang/Object;" to "Object"

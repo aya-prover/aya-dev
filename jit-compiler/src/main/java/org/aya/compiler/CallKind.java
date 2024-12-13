@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
 
-import org.aya.compiler.free.FreeUtils;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.FnDefLike;

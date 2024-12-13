@@ -16,6 +16,21 @@ public abstract class AbstractExprializer<T> {
 
   protected AbstractExprializer(@NotNull FreeExprBuilder builder) { this.builder = builder; }
 
+  public @NotNull FreeJavaExpr makeImmutableSeq(
+    @NotNull Class<?> typeName,
+    @NotNull ImmutableSeq<FreeJavaExpr> terms
+  ) {
+    return makeImmutableSeq(builder, typeName, terms);
+  }
+
+  public @NotNull FreeJavaExpr serializeToImmutableSeq(
+    @NotNull Class<?> typeName,
+    @NotNull ImmutableSeq<T> terms
+  ) {
+    var sered = terms.map(this::doSerialize);
+    return makeImmutableSeq(typeName, sered);
+  }
+
   public static @NotNull FreeJavaExpr makeImmutableSeq(
     @NotNull FreeExprBuilder builder,
     @NotNull Class<?> typeName,
@@ -32,10 +47,6 @@ public abstract class AbstractExprializer<T> {
   ) {
     var args = builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms);
     return builder.invoke(con, ImmutableSeq.of(args));
-  }
-
-  public final @NotNull FreeJavaExpr serializeToImmutableSeq(@NotNull Class<?> typeName, @NotNull ImmutableSeq<T> terms) {
-    return makeImmutableSeq(typeName, terms.map(this::doSerialize));
   }
 
   /**
@@ -55,7 +66,10 @@ public abstract class AbstractExprializer<T> {
   }
 
   public static @NotNull FreeJavaExpr getRef(@NotNull FreeExprBuilder builder, @NotNull CallKind callType, @NotNull FreeJavaExpr call) {
-    return builder.refField(builder.resolver().resolve(callType.callType, AyaSerializer.FIELD_INSTANCE, callType.refType), call);
+    return builder.invoke(builder.resolver().resolve(
+      callType.callType, AyaSerializer.FIELD_INSTANCE,
+      callType.refType, ImmutableSeq.empty(), true
+    ), call, ImmutableSeq.empty());
   }
 
   public final @NotNull FreeJavaExpr getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {

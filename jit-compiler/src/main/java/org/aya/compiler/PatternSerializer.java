@@ -257,7 +257,11 @@ public final class PatternSerializer {
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
     builder.switchCase(builder.refVar(matchState), range, (mBuilder, i) -> {
-      if (i == 0) onFailed.accept(mBuilder);
+      if (i == 0) {
+        onFailed.accept(mBuilder);
+        return;
+      }
+      
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
