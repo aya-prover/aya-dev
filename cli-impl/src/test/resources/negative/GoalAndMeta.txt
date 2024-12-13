@@ -191,8 +191,8 @@ In file $FILE:9:3 ->
   6 │       def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
   7 │         => Path (fn i => Vec (+-assoc i) A)
   8 │         (xs ++ (ys ++ zs))
-    │          ╰──────────────╯ ?a n A m o xs ys zs 0 >= n, ?b n A m o xs ys zs 0 >= m,
-                                ?c n A m o xs ys zs 0 >= o
+    │          ╰──────────────╯ ?b n A m o xs ys zs 0 >= m, ?c n A m o xs ys zs 0 >= o,
+                                ?a n A m o xs ys zs 0 >= n
   9 │         ((xs ++ ys) ++ zs)
     │          ╰──────────────╯
     │          ╰──────────────╯ ?a n A m o xs ys zs 1 >= n, ?b n A m o xs ys zs 1 >= m,
@@ -208,9 +208,9 @@ In file $FILE:9:22 ->
   7 │       def ++-assoc' (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
   8 │       : Path (fn i ⇒ Vec (+-assoc i) A)
   9 │         (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
-    │          ╰──────────────╯    ╰──────────────╯ ?a n A m o xs ys zs 0 >= n, ?b
-                                                    n A m o xs ys zs 0 >= m, ?c n A
-                                                    m o xs ys zs 0 >= o
+    │          ╰──────────────╯    ╰──────────────╯ ?b n A m o xs ys zs 0 >= m, ?c
+                                                    n A m o xs ys zs 0 >= o, ?a n A
+                                                    m o xs ys zs 0 >= n
     │                             ╰──────────────╯ ?a n A m o xs ys zs 1 >= n, ?b n
                                                    A m o xs ys zs 1 >= m, ?c n A
                                                    m o xs ys zs 1 >= o
