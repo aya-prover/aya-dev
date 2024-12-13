@@ -4,6 +4,8 @@ package org.aya.unify;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Try;
+import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
@@ -29,12 +31,10 @@ import org.aya.util.Pair;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -51,7 +51,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
   private @NotNull TermComparator.MetaStrategy strategy = MetaStrategy.Default;
   private final MutableList<TyckState.Eqn> weWillSee = MutableList.create();
-  private static class StuckOnMeta extends Exception { }
+  private static class StuckOnMeta extends Exception {
+    public final MetaVar blocker;
+    public StuckOnMeta(MetaVar blocker) { this.blocker = blocker; }
+  }
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -71,10 +74,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
   /** The "flex-flex" case with identical meta ref */
-  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) throws StuckOnMeta {
     if (meta.args().size() != rMeta.args().size()) return null;
     for (var i = 0; i < meta.args().size(); i++) {
-      if (!compare(meta.args().get(i), rMeta.args().get(i), null)) {
+      if (!doCompare(meta.args().get(i), rMeta.args().get(i), null)) {
         return null;
       }
     }
@@ -84,7 +87,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
-    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
+    return createEqn(lhs, rhs, lhs.ref(), type);
+  }
+
+  public @NotNull TyckState.Eqn createEqn(
+    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull MetaVar blocking, @Nullable Term type
+  ) {
+    return new TyckState.Eqn(lhs, rhs, type, blocking, cmp, pos, localCtx().clone());
   }
 
   private @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type)
@@ -104,7 +114,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // This is a bit sus
         yield type != null ? type : ErrorTerm.typeOf(meta);
       }
-      case NonInjective -> throw new StuckOnMeta();
+      case NonInjective -> throw new StuckOnMeta(meta.ref());
     };
   }
 
@@ -145,7 +155,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(MemberCall lMem, MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield null;
         // TODO: type info?
-        if (!compare(lMem.of(), rMem.of(), null)) yield null;
+        if (!doCompare(lMem.of(), rMem.of(), null)) yield null;
         yield compareMany(lMem.args(), rMem.args(),
           lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
       }
@@ -234,9 +244,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
-  private boolean checkApproxResult(@Nullable Term type, Term approxResult) {
+  private boolean checkApproxResult(@Nullable Term type, Term approxResult) throws StuckOnMeta {
     if (approxResult != null) {
-      if (type != null) compare(approxResult, type, null);
+      if (type != null) doCompare(approxResult, type, null);
       return true;
     } else return false;
   }
@@ -260,14 +270,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           var ty = member.signature().inst(ImmutableSeq.of(lhs));
           var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
           var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
-          return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
+          // TODO: replace with allMatchChecked
+          return Try.of(() -> doCompare(lproj, rproj, ty.makePi(ImmutableSeq.empty())))
+            .getOrThrow();
         });
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
           try (var scope = subscope(DimTyTerm.INSTANCE)) {
             var var = scope.var();
-            yield compare(
+            yield doCompare(
               lbody.apply(var),
               rbody.apply(var),
               eq.appA(new FreeTerm(var))
@@ -276,13 +288,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
-        default -> compare(lhs, rhs, null);
+        default -> doCompare(lhs, rhs, null);
       };
       case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
           try (var scope = subscope(pi.param())) {
             var var = scope.var();
-            yield compare(
+            yield doCompare(
               lbody.apply(var),
               rbody.apply(var),
               pi.body().apply(var)
@@ -291,14 +303,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
-        default -> compare(lhs, rhs, null);
+        default -> doCompare(lhs, rhs, null);
       };
       // Sigma types
       case DepTypeTerm(_, var lTy, var rTy) -> {
         var lProj = ProjTerm.fst(lhs);
         var rProj = ProjTerm.fst(rhs);
-        if (!compare(lProj, rProj, lTy)) yield false;
-        yield compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj));
+        if (!doCompare(lProj, rProj, lTy)) yield false;
+        yield doCompare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -350,10 +362,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           if (!(rhs instanceof AppTerm(var g, var b))) yield null;
           var fTy = compareUntyped(f, g);
           if (!(fTy instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield null;
-          if (!compare(a, b, param)) yield null;
+          if (!doCompare(a, b, param)) yield null;
           yield body.apply(a);
         } catch (StuckOnMeta e) {
-          state.addEqn(createEqn((MetaCall) lhs, rhs, null));
+          state.addEqn(createEqn(lhs, rhs, e.blocker, null));
           // This is a bit sus
           yield ErrorTerm.typeOf(lhs);
         } finally {
@@ -364,16 +376,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(rhs instanceof PAppTerm(var g, var b, _, _))) yield null;
         var fTy = compareUntyped(f, g);
         if (!(fTy instanceof EqTerm eq)) yield null;
-        if (!compare(a, b, DimTyTerm.INSTANCE)) yield null;
+        if (!doCompare(a, b, DimTyTerm.INSTANCE)) yield null;
         yield eq.appA(a);
       }
       case CoeTerm coe -> {
         if (!(rhs instanceof CoeTerm(var rType, var rR, var rS))) yield null;
-        if (!compare(coe.r(), rR, DimTyTerm.INSTANCE)) yield null;
-        if (!compare(coe.s(), rS, DimTyTerm.INSTANCE)) yield null;
+        if (!doCompare(coe.r(), rR, DimTyTerm.INSTANCE)) yield null;
+        if (!doCompare(coe.s(), rS, DimTyTerm.INSTANCE)) yield null;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
-          var tyResult = compare(coe.type().apply(var), rType.apply(var), null);
+          var tyResult = doCompare(coe.type().apply(var), rType.apply(var), null);
           yield tyResult ? coe.family() : null;
         }
       }
@@ -395,7 +407,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case ListTerm list -> switch (rhs) {
         case ListTerm rist -> {
           if (!list.compareUntyped(rist, (l, r) ->
-            compare(l, r, null))) yield null;
+            Try.of(() -> doCompare(l, r, null)).getOrThrow())) yield null;
           yield list.type();
         }
         case ConCall rCon -> compareUntyped(list.constructorForm(), rCon);
@@ -433,29 +445,31 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private @Nullable Term compareMetaLitWithLit(@NotNull MetaLitTerm lhs, Object repr, @NotNull Term rhsType) {
+  private @Nullable Term compareMetaLitWithLit(
+    @NotNull MetaLitTerm lhs, Object repr, @NotNull Term rhsType
+  ) throws StuckOnMeta {
     if (!Objects.equals(lhs.repr(), repr)) return null;
-    if (compare(lhs.type(), rhsType, null)) return lhs.type();
+    if (doCompare(lhs.type(), rhsType, null)) return lhs.type();
     return null;
   }
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
-  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull DepTypeTerm type) {
+  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull DepTypeTerm type) throws StuckOnMeta {
     try (var scope = subscope(type.param())) {
       var var = scope.var();
       var lhsBody = lambda.body().apply(var);
       var rhsBody = AppTerm.make(rhs, new FreeTerm(var));
-      return compare(lhsBody, rhsBody, type.body().apply(var));
+      return doCompare(lhsBody, rhsBody, type.body().apply(var));
     }
   }
 
-  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull EqTerm type) {
+  private boolean compareLambda(@NotNull LamTerm lambda, @NotNull Term rhs, @NotNull EqTerm type) throws StuckOnMeta {
     try (var scope = subscope(DimTyTerm.INSTANCE)) {
       var var = scope.var();
       var lhsBody = lambda.body().apply(var);
       var free = new FreeTerm(var);
       var rhsBody = AppTerm.make(rhs, free);
-      return compare(lhsBody, rhsBody, type.appA(free));
+      return doCompare(lhsBody, rhsBody, type.appA(free));
     }
   }
 
@@ -472,7 +486,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       var l = list.get(i);
       var r = rist.get(i);
       var ty = types.telescope(i, argsCum);
-      if (!compare(l, r, ty)) return null;
+      if (!doCompare(l, r, ty)) return null;
       argsCum[i] = l;
     }
 
@@ -488,12 +502,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull Term lTy,
     @NotNull Term rTy,
     @NotNull Supplier<R> onFailed,
-    @NotNull Function<LocalVar, R> continuation
-  ) {
-    if (!compare(lTy, rTy, null)) return onFailed.get();
+    @NotNull CheckedFunction<LocalVar, R, StuckOnMeta> continuation
+  ) throws StuckOnMeta {
+    if (!doCompare(lTy, rTy, null)) return onFailed.get();
     try (var scope = subscope(lTy)) {
       var var = scope.var();
-      return continuation.apply(var);
+      return continuation.applyChecked(var);
     }
   }
 
@@ -544,16 +558,17 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(DimTyTerm _, DimTyTerm _) -> true;
       case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) ->
         lK == rK && compareTypeWith(lParam, rParam, () -> false, var ->
-          compare(lBody.apply(var), rBody.apply(var), null));
+          doCompare(lBody.apply(var), rBody.apply(var), null));
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = false;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
-          tyResult = compare(A.apply(var), B.apply(var), null);
+          tyResult = doCompare(A.apply(var), B.apply(var), null);
         }
         if (!tyResult) yield false;
-        yield compare(a0, b0, A.apply(DimTerm.I0)) && compare(a1, b1, A.apply(DimTerm.I1));
+        yield doCompare(a0, b0, A.apply(DimTerm.I0)) &&
+          doCompare(a1, b1, A.apply(DimTerm.I1));
       }
       default -> throw noRules(preLhs);
     };
@@ -576,13 +591,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Maybe you're looking for {@link #compare} instead. */
-  @ApiStatus.Internal public boolean checkEqn(@NotNull TyckState.Eqn eqn) {
-    if (state.solutions.containsKey(eqn.lhs().ref()))
-      return compare(eqn.lhs(), eqn.rhs(), eqn.type());
-    else try {
-      return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;
-    } catch (StuckOnMeta e) {
-      return Panic.unreachable();
-    }
+  private boolean checkEqn(@NotNull TyckState.Eqn eqn) {
+    var child = new Unifier(state, eqn.localCtx(), reporter, eqn.pos(), eqn.cmp(), true);
+    return child.compare(eqn.lhs(), eqn.rhs(), eqn.type());
   }
 }

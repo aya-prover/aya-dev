@@ -89,7 +89,7 @@ public final class TyckState {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;
-    return unifier.checkEqn(eqn);
+    return unifier.compare(eqn.lhs, eqn.rhs, eqn.type);
   }
 
   public void solveMetas(@NotNull Reporter reporter) {
@@ -128,7 +128,7 @@ public final class TyckState {
       if (solutions.containsKey(v)) {
         eqns.retainIf(eqn -> {
           // If the blocking meta is solved, we can check again
-          if (eqn.lhs.ref() == v) {
+          if (eqn.blocking == v) {
             solveEqn(reporter, eqn, true);
             return false;
           } else return true;
@@ -165,9 +165,8 @@ public final class TyckState {
   }
 
   public record Eqn(
-    @NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type,
-    @NotNull Ordering cmp, @NotNull SourcePos pos,
-    @NotNull LocalCtx localCtx
+    @NotNull Term lhs, @NotNull Term rhs, @Nullable Term type, @NotNull MetaVar blocking,
+    @NotNull Ordering cmp, @NotNull SourcePos pos, @NotNull LocalCtx localCtx
   ) implements AyaDocile {
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Doc.stickySep(lhs.toDoc(options), Doc.symbol(cmp.symbol), rhs.toDoc(options));
