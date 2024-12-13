@@ -90,7 +90,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
       otherwise -> continuation.accept(otherwise, false));
   }
 
-  @Override public ConSerializer serialize(@NotNull FreeClassBuilder builder0, ConDef unit) {
+  @Override public @NotNull ConSerializer serialize(@NotNull FreeClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
       builder.buildMethod(
         FreeUtil.fromClass(Result.class),

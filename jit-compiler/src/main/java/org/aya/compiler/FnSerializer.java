@@ -129,7 +129,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return shapeMaybe.get().shape().ordinal();
   }
 
-  @Override public FnSerializer serialize(@NotNull FreeClassBuilder builder, FnDef unit) {
+  @Override public @NotNull FnSerializer serialize(@NotNull FreeClassBuilder builder, FnDef unit) {
     var onStuckParam = FreeUtil.fromClass(Supplier.class);
     var fullParam = FreezableMutableList.<ClassDesc>create();
     fullParam.append(onStuckParam);

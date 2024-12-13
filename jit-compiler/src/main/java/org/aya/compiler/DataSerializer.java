@@ -28,7 +28,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  @Override public DataSerializer serialize(@NotNull FreeClassBuilder builder, DataDef unit) {
+  @Override public @NotNull DataSerializer serialize(@NotNull FreeClassBuilder builder, DataDef unit) {
     buildFramework(builder, unit, builder0 -> {
       builder0.buildMethod(
         FreeUtil.fromClass(JitCon.class).arrayType(),

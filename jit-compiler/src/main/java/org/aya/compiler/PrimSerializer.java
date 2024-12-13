@@ -32,7 +32,7 @@ public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
     return super.superConArgs(builder, unit).appended(builder.refEnum(unit.id));
   }
 
-  @Override public PrimSerializer serialize(@NotNull FreeClassBuilder builder, PrimDef unit) {
+  @Override public @NotNull PrimSerializer serialize(@NotNull FreeClassBuilder builder, PrimDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }

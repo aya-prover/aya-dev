@@ -42,7 +42,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
     ));
   }
 
-  @Override public MemberSerializer serialize(@NotNull FreeClassBuilder builder, MemberDef unit) {
+  @Override public @NotNull MemberSerializer serialize(@NotNull FreeClassBuilder builder, MemberDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }

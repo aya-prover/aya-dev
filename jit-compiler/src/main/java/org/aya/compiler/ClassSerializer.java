@@ -43,7 +43,7 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
     builder.returnWith(memsRef);
   }
 
-  @Override public ClassSerializer serialize(@NotNull FreeClassBuilder builder, ClassDef unit) {
+  @Override public @NotNull ClassSerializer serialize(@NotNull FreeClassBuilder builder, ClassDef unit) {
     buildFramework(builder, unit, builder0 -> {
       builder0.buildMethod(
         FreeUtil.fromClass(JitMember.class).arrayType(),
