@@ -39,6 +39,8 @@ public interface SourceBuilder {
     }
   }
 
+  record JitParam(@NotNull String name, @NotNull String type) { }
+
   @NotNull StringBuilder builder();
   int indent();
   @NotNull NameGenerator nameGen();
@@ -173,7 +175,7 @@ public interface SourceBuilder {
 
   default void buildMethod(
     @NotNull String name,
-    @NotNull ImmutableSeq<AbstractSerializer.JitParam> params,
+    @NotNull ImmutableSeq<JitParam> params,
     @NotNull String returnType,
     boolean override,
     @NotNull Runnable continuation

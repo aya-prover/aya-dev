@@ -42,11 +42,11 @@ public record SourceClassBuilder(
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
     var params = paramTypes.map(x ->
-      new AbstractSerializer.JitParam(this.sourceBuilder.nameGen().nextName(), SourceFreeJavaBuilder.toClassRef(x))
+      new SourceBuilder.JitParam(this.sourceBuilder.nameGen().nextName(), SourceFreeJavaBuilder.toClassRef(x))
     );
 
     this.sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
-      new SourceArgumentProvider(params.map(AbstractSerializer.JitParam::name)),
+      new SourceArgumentProvider(params.map(SourceBuilder.JitParam::name)),
       new SourceCodeBuilder(this, this.owner, this.sourceBuilder)
     ));
   }
