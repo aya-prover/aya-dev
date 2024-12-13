@@ -83,3 +83,15 @@ module Issue1194 {
     | suc n => ic n
    }
 }
+
+module PullRequest1213 {
+  open inductive Store (n : Nat) | make
+
+  def nonInjective Nat Nat : Nat => 0
+  def the (A : Type) (x : A) : A => x
+
+  def test => let
+    | x : Nat := _
+    | y := the (Store (nonInjective 1 114)) (make {nonInjective x 514})
+    in the (Store (the _ 2)) (make {the _ x})
+}
