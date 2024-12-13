@@ -93,7 +93,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       return result;
     } else {
       weWillSee.append(createEqn(meta, rhs, type));
-      return ErrorTerm.typeOf(meta);
+      return type != null ? type : ErrorTerm.typeOf(meta);
     }
   }
 
@@ -118,12 +118,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     var prev = solveMeta;
     solveMeta = false;
     var result = compareCalls(lhs, rhs);
+    solveMeta = prev;
     // Four possibilities: was/was not already in trying mode,
     // and the trying was success/failed.
     if (result != null) {
       // If we are on the top level, check all the equations
       if (prev) for (var eqn : weWillSee) {
-        if (!checkEqn(eqn)) {
+        if (!state.solveEqn(reporter, eqn, true)) {
           weWillSee.clear();
           return null;
         }
@@ -132,7 +133,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     // No matter we succeed or fail, if we are at the top of a trying call stack,
     // we clear the pending list.
     if (prev) weWillSee.clear();
-    solveMeta = prev;
     return result;
   }
 
@@ -549,7 +549,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
   }
 
-  /** Maybe you're looking for {@link #compare} instead. */
+  /** Maybe you're looking for {@link #compare} or {@link TyckState#solveEqn} instead. */
   @ApiStatus.Internal public boolean checkEqn(@NotNull TyckState.Eqn eqn) {
     if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
