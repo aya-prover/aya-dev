@@ -156,8 +156,8 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
-        case MatchTerm matchTerm -> {
-          var result = tryUnfoldClauses(matchTerm.clauses().view(), matchTerm.discriminant(), 0, false);
+        case MatchTerm(var discr, _, var clauses) -> {
+          var result = tryUnfoldClauses(clauses.view(), discr, 0, false);
           if (result.isEmpty()) return defaultValue;
           term = result.get();
           continue;

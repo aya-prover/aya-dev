@@ -17,8 +17,7 @@ public record MatchTerm(
     return this.discriminant.sameElements(discriminant, true)
       && this.returns == returns
       && this.clauses.sameElements(clauses, true)
-      ? this
-      : new MatchTerm(discriminant, returns, clauses);
+      ? this : new MatchTerm(discriminant, returns, clauses);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
