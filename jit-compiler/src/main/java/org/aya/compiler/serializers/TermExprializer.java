@@ -259,9 +259,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeClosureToImmutableSeq(rember),
           serializeClosureToImmutableSeq(forgor)
         ));
-      case MatchTerm(var discr, var ty, var clauses) -> {
-        throw new UnsupportedOperationException("TODO");
-      }
+      case MatchTerm(var discr, var ty, var clauses) ->
+        // TODO
+        builder.aconstNull(Constants.CD_Term);
 
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
     };

@@ -45,6 +45,8 @@ public class CompileTest {
       def plus (a b : Nat) : Nat elim a
       | O => b
       | S n => S (plus n b)
+      
+      def what : Nat -> Nat => fn n => plus n 1
       """); // .filter(x -> x instanceof FnDef || x instanceof DataDef);
 
     var code = serializeFrom(result);
