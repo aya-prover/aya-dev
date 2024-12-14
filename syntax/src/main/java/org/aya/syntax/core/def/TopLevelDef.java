@@ -13,13 +13,13 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface TopLevelDef extends TyckDef permits ClassDef, DataDef, FnDef, PrimDef {
   @Override default @NotNull ImmutableSeq<Param> telescope() {
     var signature = ref().signature;
-    assert signature != null;
+    assert signature != null : ref().name();
     return signature.params();
   }
 
   @Override default @NotNull Term result() {
     var signature = ref().signature;
-    assert signature != null;
+    assert signature != null : ref().name();
     return signature.result();
   }
 }

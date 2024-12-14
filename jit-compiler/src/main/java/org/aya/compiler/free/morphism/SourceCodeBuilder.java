@@ -5,10 +5,7 @@ package org.aya.compiler.free.morphism;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeJavaResolver;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
@@ -237,13 +234,20 @@ public record SourceCodeBuilder(
     sourceBuilder.appendLine();
   }
 
-  @Override
-  public @NotNull SourceFreeJavaExpr.Cont mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  private @NotNull SourceFreeJavaExpr.Cont mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return () -> {
       sourceBuilder.append("new " + toClassRef(className) + "(");
       appendArgs(args);
       sourceBuilder.append(")");
     };
+  }
+
+  @Override public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return mkNew(conRef.owner(), args);
+  }
+
+  @Override public @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+    return mkNew(FreeUtil.fromClass(className), args);
   }
 
   @Override public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {

@@ -9,11 +9,16 @@ import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface FreeClassBuilder {
+  static @NotNull MethodRef makeConstructorRef(@NotNull ClassDesc owner, @NotNull ImmutableSeq<ClassDesc> parameterTypes) {
+    return new MethodRef.Default(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
+  }
+
   void buildNestedClass(
     CompiledAya compiledAya,
     @NotNull String name,
@@ -28,7 +33,7 @@ public interface FreeClassBuilder {
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   );
 
-  void buildConstructor(
+  @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   );

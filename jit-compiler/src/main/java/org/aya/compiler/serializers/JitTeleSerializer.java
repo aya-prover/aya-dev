@@ -7,6 +7,7 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -41,10 +42,9 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }
 
-  @Override protected void buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
-    builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
-      cb.invokeSuperCon(superConParams(), superConArgs(cb, unit));
-    });
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+      cb.invokeSuperCon(superConParams(), superConArgs(cb, unit)));
   }
 
   @Override protected void buildFramework(

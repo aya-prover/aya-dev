@@ -8,6 +8,7 @@ import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -15,7 +16,6 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
-import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.serializers.AyaSerializer.FIELD_EMPTYCALL;
@@ -70,16 +70,16 @@ public abstract class JitDefSerializer<T extends TyckDef> {
   protected int buildShape(T unit) { return -1; }
   protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
 
-  protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull ClassDesc className) {
-    return builder.buildConstantField(className, STATIC_FIELD_INSTANCE, b ->
-      b.mkNew(className, ImmutableSeq.empty()));
+  protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull MethodRef con) {
+    return builder.buildConstantField(con.owner(), STATIC_FIELD_INSTANCE, b ->
+      b.mkNew(con, ImmutableSeq.empty()));
   }
 
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
 
   protected abstract @NotNull Class<?> callClass();
 
-  protected abstract void buildConstructor(@NotNull FreeClassBuilder builder, T unit);
+  protected abstract @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, T unit);
 
   protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
@@ -90,13 +90,13 @@ public abstract class JitDefSerializer<T extends TyckDef> {
     var metadata = buildMetadata(unit);
     builder.buildNestedClass(metadata, className, superClass, nestBuilder -> {
       var def = AnyDef.fromVar(unit.ref());
-      buildInstance(nestBuilder, NameSerializer.getClassDesc(def));
+      var con = buildConstructor(nestBuilder, unit);
+      buildInstance(nestBuilder, con);
       if (shouldBuildEmptyCall(unit)) {
         nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL, cb ->
           buildEmptyCall(cb, def));
       }
 
-      buildConstructor(nestBuilder, unit);
       continuation.accept(nestBuilder);
     });
   }

@@ -9,6 +9,7 @@ import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 /**
@@ -18,12 +19,24 @@ public interface FreeExprBuilder {
   @NotNull FreeJavaResolver resolver();
 
   /**
+   * A {@code new} expression on specified constructor.
+   */
+  @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args);
+
+  /**
    * A {@code new} expression, the class should have only one (public) constructor with parameter count {@code args.size()}.
    */
-  @NotNull FreeJavaExpr mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args);
-
   default @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
-    return mkNew(FreeUtil.fromClass(className), args);
+    var first = Arrays.stream(className.getConstructors())
+      .filter(c -> c.getParameterCount() == args.size())
+      .findFirst().get();
+
+    var desc = FreeUtil.fromClass(className);
+    var conRef = FreeClassBuilder.makeConstructorRef(desc,
+      Arrays.stream(first.getParameterTypes())
+      .map(FreeUtil::fromClass)
+      .collect(ImmutableSeq.factory()));
+    return mkNew(conRef, args);
   }
 
   @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name);

@@ -88,7 +88,7 @@ public record SourceClassBuilder(
     return new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
   }
 
-  @Override public void buildConstructor(
+  @Override public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
@@ -97,6 +97,8 @@ public record SourceClassBuilder(
       toClassName(this.owner),
       paramTypes,
       builder);
+
+    return FreeClassBuilder.makeConstructorRef(this.owner, paramTypes);
   }
 
   @Override public @NotNull FieldRef buildConstantField(
