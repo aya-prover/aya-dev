@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
@@ -117,9 +116,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       callArgs[i + 2] = seredSeq.get(i);
     }
 
-    UnaryOperator<FreeJavaExpr> doElevate = free -> ulift == 0
-      ? free
-      : builder.invoke(Constants.ELEVATE, free, ImmutableSeq.of(builder.iconst(ulift)));
     var onStuck = makeThunk(te -> te.builder.mkNew(callName, ImmutableArray.Unsafe.wrap(callArgs)));
     var finalInvocation = fixed
       ? builder.invoke(
@@ -131,7 +127,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         makeImmutableSeq(Term.class, flatArgs)
       ));
 
-    return doElevate.apply(finalInvocation);
+    return ulift == 0
+      ? finalInvocation
+      : builder.invoke(Constants.ELEVATE, finalInvocation, ImmutableSeq.of(builder.iconst(ulift)));
   }
 
   @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Term term) {

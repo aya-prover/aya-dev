@@ -137,8 +137,7 @@ public record SourceCodeBuilder(
     buildIf(getExpr(lhs) + " == " + getExpr(rhs), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifNull(
+  @Override public void ifNull(
     @NotNull FreeJavaExpr isNull,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
     @Nullable Consumer<FreeCodeBuilder> elseBlock
