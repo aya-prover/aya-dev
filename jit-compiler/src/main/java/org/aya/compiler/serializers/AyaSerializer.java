@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-import static org.aya.compiler.ExprializeUtils.getJavaRef;
+import static org.aya.compiler.serializers.ExprializeUtil.getJavaRef;
 
 public interface AyaSerializer {
   String PACKAGE_BASE = "AYA";

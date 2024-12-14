@@ -1,9 +1,12 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeExprBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.AnyDef;
@@ -15,9 +18,9 @@ import java.lang.annotation.Annotation;
 import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
-import static org.aya.compiler.AyaSerializer.FIELD_EMPTYCALL;
-import static org.aya.compiler.AyaSerializer.STATIC_FIELD_INSTANCE;
-import static org.aya.compiler.NameSerializer.javifyClassName;
+import static org.aya.compiler.serializers.AyaSerializer.FIELD_EMPTYCALL;
+import static org.aya.compiler.serializers.AyaSerializer.STATIC_FIELD_INSTANCE;
+import static org.aya.compiler.serializers.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> {
   protected final @NotNull Class<?> superClass;

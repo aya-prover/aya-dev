@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.FreeClassBuilder;
@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
-
-import static org.aya.compiler.NameSerializer.getClassRef;
 
 public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   public MemberSerializer() { super(JitMember.class); }

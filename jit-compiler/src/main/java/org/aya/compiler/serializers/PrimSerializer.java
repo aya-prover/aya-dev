@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.FreeClassBuilder;
@@ -13,8 +13,6 @@ import org.aya.syntax.core.term.call.PrimCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
-
-import static org.aya.compiler.AyaSerializer.CLASS_PRIMCALL;
 
 public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
   public PrimSerializer() {

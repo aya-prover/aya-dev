@@ -7,6 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import org.aya.compiler.serializers.AyaSerializer;
+import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;

@@ -2,12 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.ModuleSerializer;
-import org.aya.compiler.NameGenerator;
-import org.aya.compiler.TermExprializer;
 import org.aya.compiler.free.morphism.SourceClassBuilder;
 import org.aya.compiler.free.morphism.SourceCodeBuilder;
 import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
+import org.aya.compiler.serializers.ModuleSerializer;
+import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
@@ -33,7 +32,7 @@ import java.io.IOException;
 import java.lang.constant.ConstantDescs;
 import java.nio.file.Path;
 
-import static org.aya.compiler.NameSerializer.getClassName;
+import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 public class CompileTest {
   @Test public void test0() {

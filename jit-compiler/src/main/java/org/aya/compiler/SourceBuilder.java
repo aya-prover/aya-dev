@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import static org.aya.compiler.AyaSerializer.CLASS_PANIC;
-import static org.aya.compiler.ExprializeUtils.getJavaRef;
-import static org.aya.compiler.ExprializeUtils.makeString;
+import static org.aya.compiler.serializers.AyaSerializer.CLASS_PANIC;
+import static org.aya.compiler.serializers.ExprializeUtil.makeString;
 
 public interface SourceBuilder {
   final class Default implements SourceBuilder {

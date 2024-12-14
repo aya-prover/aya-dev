@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -18,7 +18,7 @@ import java.lang.constant.ClassDesc;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static org.aya.compiler.AyaSerializer.PACKAGE_BASE;
+import static org.aya.compiler.serializers.AyaSerializer.PACKAGE_BASE;
 
 public interface NameSerializer {
   String PATH_SEPARATOR = File.separator;

@@ -1,8 +1,8 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
-import org.aya.compiler.AyaSerializer;
-import org.aya.compiler.NameSerializer;
+import org.aya.compiler.serializers.AyaSerializer;
+import org.aya.compiler.serializers.NameSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
 import org.aya.util.FileUtil;

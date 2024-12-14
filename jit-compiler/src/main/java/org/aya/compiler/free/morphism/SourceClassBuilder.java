@@ -3,11 +3,11 @@
 package org.aya.compiler.free.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +39,10 @@ public record SourceClassBuilder(
     sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(CompiledAya.class)) + "(");
     sourceBuilder.runInside(() -> {
       buildMetadataRecord("module", SourceCodeBuilder.mkHalfArray(
-        ImmutableSeq.from(compiledAya.module()).map(ExprializeUtils::makeString)
+        ImmutableSeq.from(compiledAya.module()).map(ExprializeUtil::makeString)
       ), true);
       buildMetadataRecord("fileModuleSize", Integer.toString(compiledAya.fileModuleSize()), false);
-      buildMetadataRecord("name", ExprializeUtils.makeString(compiledAya.name()), false);
+      buildMetadataRecord("name", ExprializeUtil.makeString(compiledAya.name()), false);
       buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
       buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
       buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(

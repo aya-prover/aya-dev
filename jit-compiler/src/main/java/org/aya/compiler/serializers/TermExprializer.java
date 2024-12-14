@@ -1,15 +1,15 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeExprBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
@@ -28,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.Objects;
-import java.util.function.*;
-
-import static org.aya.compiler.AyaSerializer.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.

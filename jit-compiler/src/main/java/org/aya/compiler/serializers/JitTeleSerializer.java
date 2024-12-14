@@ -1,12 +1,11 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;

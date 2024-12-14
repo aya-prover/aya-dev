@@ -4,17 +4,23 @@ package org.aya.compiler.free.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.ExprializeUtils;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.ArgumentProvider;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeJavaResolver;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.serializers.ExprializeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
@@ -137,7 +143,7 @@ public record SourceCodeBuilder(
     @NotNull Consumer<FreeCodeBuilder> thenBlock,
     @Nullable Consumer<FreeCodeBuilder> elseBlock
   ) {
-    buildIf(ExprializeUtils.isNull(getExpr(isNull)), thenBlock, elseBlock);
+    buildIf(ExprializeUtil.isNull(getExpr(isNull)), thenBlock, elseBlock);
   }
 
   @Override public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
@@ -171,7 +177,7 @@ public record SourceCodeBuilder(
 
   @Override
   public @NotNull FreeJavaExpr mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
-    return new SourceFreeJavaExpr(ExprializeUtils.makeNew(toClassRef(className), toArgs(args)));
+    return new SourceFreeJavaExpr(ExprializeUtil.makeNew(toClassRef(className), toArgs(args)));
   }
 
   @Override
@@ -234,7 +240,7 @@ public record SourceCodeBuilder(
 
   @Override
   public @NotNull FreeJavaExpr aconst(@NotNull String value) {
-    return new SourceFreeJavaExpr(ExprializeUtils.makeString(value));
+    return new SourceFreeJavaExpr(ExprializeUtil.makeString(value));
   }
 
   @Override

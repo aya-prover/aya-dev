@@ -9,4 +9,5 @@ module aya.compiler {
   exports org.aya.compiler.free;
   exports org.aya.compiler.free.data;
   exports org.aya.compiler.free.morphism;
+  exports org.aya.compiler.serializers;
 }
