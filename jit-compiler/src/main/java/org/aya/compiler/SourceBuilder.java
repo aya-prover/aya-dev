@@ -130,6 +130,7 @@ public final class SourceBuilder {
 
   public void append(@NotNull String string) {
     if (isLineBegin) fillIndent();
+    isLineBegin = false;
     builder.append(string);
   }
 
@@ -170,7 +171,7 @@ public final class SourceBuilder {
         appendLine("}");
       });
 
-      appendLine("public -> {");
+      appendLine("default -> {");
       runInside(publicCase);
       appendLine("}");
     });

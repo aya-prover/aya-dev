@@ -83,6 +83,7 @@ public record SourceCodeBuilder(
     sourceBuilder.append("[" + idx + "]");
     sourceBuilder.append(" = ");
     appendExpr(update);
+    sourceBuilder.append(";");
     sourceBuilder.appendLine();
   }
 
