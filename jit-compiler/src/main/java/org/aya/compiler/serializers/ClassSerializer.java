@@ -7,13 +7,14 @@ import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
-public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
+public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   public ClassSerializer() { super(JitClass.class); }
 
   @Override protected @NotNull Class<?> callClass() { return ClassCall.class; }
@@ -50,5 +51,10 @@ public final class ClassSerializer extends JitTeleSerializer<ClassDef> {
     });
 
     return this;
+  }
+
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, ClassDef unit) {
+    return builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) ->
+      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
   }
 }
