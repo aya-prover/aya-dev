@@ -17,8 +17,8 @@ These are currently not accepted:
 
 - PRs adding new language features without prior consent,
   because we have our own plans and accepting a PR means maintaining it.
-  We refer to [Lean FAQ](https://leanprover.github.io/lean4/doc/faq.html)
-  "Are pull requests welcome?" to explain the rationale.
+  We refer to [Lean4 contribution guidelines](https://github.com/leanprover/lean4/blob/master/CONTRIBUTING.md)
+  to explain the rationale.
 - Feature proposals -- but please do share your ideas!
   We do not guarantee anything yet, so suggested features
   probably won't be considered.
@@ -39,16 +39,16 @@ You are encouraged to:
 
 You are not allowed to:
 
-- Push to the main branch, except for a few exceptions.
-  Merging your PR into the main branch is wholly handled by the @bors bot.
-- Force-push to the main branch. This is strictly prohibited. No exception.
+- Push/force-push to the main branch. We have disabled it for the repository,
+  and the only way to push code to the main branch is by merging PRs.
+  The merging process is wholly handled by the GitHub Web UI ("auto-merge").
 - Perform other destructive and/or irreversible actions on the organization or repository settings without the maintainers' consent.
 
 Your responsibility:
 
 - PRs should be up to the contribution standard.
   - Your code should be properly formatted and linted.
-  - Commit messages should follow the format `KEYWORD: detailed message ....`.
+  - Commit messages should follow the format `keyword: detailed message ....`.
   - Please do not include overly fragmented commits; amending you commit and force-pushing to your PR branch is accepted and encouraged.
 - Please be collaborative and open to others' comments and review.
   - When submitting your PR and issues, make sure to include proper tags and milestones (if applicable).
@@ -62,7 +62,7 @@ Your responsibility:
 
 Maintainers are the collaborators that are either sponsored by PLCT or declared to be a maintainer by other maintainers' consensus.
 
-Current maintainers: @ice1000, @imkiva, @Glavo, @re-xyr
+Current maintainers: @ice1000, @HoshinoTented
 
 Maintainers should:
 
