@@ -8,9 +8,9 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.compiler.CompiledModule;
-import org.aya.compiler.FileSerializer;
-import org.aya.compiler.ModuleSerializer;
-import org.aya.compiler.NameSerializer;
+import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
+import org.aya.compiler.serializers.ModuleSerializer;
+import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -99,7 +99,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var coreDir = computeBaseDir(libraryRoot);
     cl.addURL(coreDir);
-    cl.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(mod)));
+    cl.loadClass(NameSerializer.getModuleClassName(QPath.fileLevel(mod)));
     return compiledAya.toResolveInfo(recurseLoader, context, cl, primFactory);
   }
 
@@ -128,11 +128,10 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ImmutableSeq<TyckDef> defs,
     @NotNull ModuleLoader recurseLoader
   ) throws IOException, ClassNotFoundException {
-    var javaCode = new FileSerializer(resolveInfo.shapeFactory())
-      .serialize(new ModuleSerializer.ModuleResult(
+    var javaCode = new ModuleSerializer<String>(resolveInfo.shapeFactory())
+      .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
-        defs.filterIsInstance(TopLevelDef.class)))
-      .result();
+        defs.filterIsInstance(TopLevelDef.class)));
     var libraryRoot = file.owner().outDir();
     var baseDir = computeBaseDir(libraryRoot).toAbsolutePath();
     var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,

@@ -1,11 +1,10 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package org.aya.compiler.serializers;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
@@ -14,24 +13,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.constant.ClassDesc;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static org.aya.compiler.AyaSerializer.PACKAGE_BASE;
+import static org.aya.compiler.serializers.AyaSerializer.PACKAGE_BASE;
 
 public interface NameSerializer {
-  String PATH_SEPARATOR = File.separator;
-  String PACKAGE_SEPARATOR = ".";
-  String NEST_CLASS_SEPARATOR = ".";
-  String CLASS_NAME_SEPARATOR = "$";
+  char MAGIC_CHAR = '_';
 
   enum NameType {
     // class reference in java source code, i.e. "foo.bar.nestClass"
-    ClassReference(PACKAGE_SEPARATOR, NEST_CLASS_SEPARATOR),
+    ClassReference(".", "."),
     // class name that used for loading class, i.e. "foo.bar$nestClass"
-    ClassName(PACKAGE_SEPARATOR, CLASS_NAME_SEPARATOR),
+    ClassName(".", "$"),
     // class path that used for finding class file, i.e. "foo/bar$nestClass"
-    ClassPath(PATH_SEPARATOR, CLASS_NAME_SEPARATOR);
+    ClassPath(File.separator, "$");
 
     public final @NotNull String packageSeparator;
     public final @NotNull String classNameSeparator;
@@ -64,10 +61,6 @@ public interface NameSerializer {
     return prefix + type.classNameSeparator + javifyClassName(module, name);
   }
 
-  static @NotNull String getClassRef(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, NameType.ClassReference);
-  }
-
   static @NotNull String getClassName(@NotNull QName name) {
     return getClassName(name.module(), name.name());
   }
@@ -76,25 +69,16 @@ public interface NameSerializer {
     return getReference(module, name, NameType.ClassName);
   }
 
-  static @NotNull String getModuleReference(@NotNull QPath module) {
-    return getClassRef(module, null);
+  static @NotNull String getModuleClassName(@NotNull QPath module) {
+    return getClassName(module, null);
   }
 
-  static @NotNull String getClassRef(@NotNull QName name) {
-    return getClassRef(name.module(), name.name());
+  static @NotNull String getClassName(@NotNull AnyDef def) {
+    return getClassName(def.qualifiedName());
   }
 
-  static @NotNull String getClassRef(@NotNull DefVar<?, ?> ref) {
-    return getClassRef(TyckAnyDef.make(ref.core));
-  }
-
-  /**
-   * Obtain the java qualified name of certain {@link AnyDef def}
-   *
-   * @see #getReference(QPath, String, NameType)
-   */
-  static @NotNull String getClassRef(@NotNull AnyDef def) {
-    return getClassRef(def.qualifiedName());
+  static @NotNull ClassDesc getClassDesc(@NotNull AnyDef def) {
+    return ClassDesc.of(getClassName(def));
   }
 
   static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {
@@ -110,16 +94,16 @@ public interface NameSerializer {
   }
 
   /**
-   * Generate a java friendly class name of {@param ids}, this function should be one-to-one
+   * Generate a java friendly class name of {@param ids}
    *
    * @param ids the qualified id that may refer to a {@link org.aya.syntax.concrete.stmt.ModuleName module}
-   *            or {@link org.aya.syntax.concrete.stmt.QualifiedID definition},
+   *            or a {@link org.aya.syntax.concrete.stmt.QualifiedID definition},
    *            note that {@link org.aya.syntax.concrete.stmt.ModuleName.ThisRef} should
    *            be replaced with the name of the file level module.
    */
   static @NotNull String javifyClassName(@NotNull SeqView<String> ids) {
     return ids.map(NameSerializer::javify)
-      .joinToString("$", "$", "");
+      .joinToString(String.valueOf(MAGIC_CHAR), String.valueOf(MAGIC_CHAR), "");
   }
 
   ImmutableSeq<String> keywords = ImmutableSeq.of(
@@ -135,11 +119,13 @@ public interface NameSerializer {
    * Note that the result may not be used for class name, see {@link #javifyClassName}
    */
   static @NotNull String javify(String name) {
-    if (keywords.contains(name)) return "_$" + name;
+    if (keywords.contains(name)) return MAGIC_CHAR + name;
     return name.codePoints().flatMap(x ->
-        x == '$' ? "$$".chars()
-          : Character.isJavaIdentifierPart(x) ? IntStream.of(x)
-            : ("$" + x).chars())
+        x == MAGIC_CHAR
+          ? String.valueOf(MAGIC_CHAR).repeat(2).chars()
+          : Character.isJavaIdentifierPart(x)
+            ? IntStream.of(x)
+            : (String.valueOf(MAGIC_CHAR) + x).chars())
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
       .toString();
   }

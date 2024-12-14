@@ -24,12 +24,11 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
     return ImmutableArray.Unsafe.wrap(membars());
   }
 
-  @Override
-  public final @NotNull Term telescope(int i, @NotNull Seq<Term> teleArgs) {
+  @Override public final @NotNull Term telescope(int i, @NotNull Seq<Term> teleArgs) {
     return ClassDefLike.super.telescope(i, teleArgs);
   }
 
   @Override public final @NotNull Term result(Seq<Term> teleArgs) {
-    return result(teleArgs.size());
+    return ClassDefLike.super.result(teleArgs.size());
   }
 }

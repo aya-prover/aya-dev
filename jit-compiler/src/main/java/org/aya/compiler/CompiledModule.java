@@ -7,6 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
+import org.aya.compiler.serializers.AyaSerializer;
+import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
@@ -50,7 +52,7 @@ public record CompiledModule(
   public record DeState(@NotNull ClassLoader loader) {
     public @NotNull Class<?> topLevelClass(@NotNull ModulePath name) {
       try {
-        return loader.loadClass(NameSerializer.getModuleReference(QPath.fileLevel(name)));
+        return loader.loadClass(NameSerializer.getModuleClassName(QPath.fileLevel(name)));
       } catch (ClassNotFoundException e) {
         throw new Panic(e);
       }

@@ -1,8 +1,8 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
-import org.aya.compiler.AyaSerializer;
-import org.aya.compiler.NameSerializer;
+import org.aya.compiler.serializers.AyaSerializer;
+import org.aya.compiler.serializers.NameSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
 import org.aya.util.FileUtil;
@@ -24,7 +24,7 @@ public class CompileTester {
   public CompileTester(@NotNull String code) throws IOException {
     var root = Paths.get("build/tmp/testGenerated");
     var genDir = root.resolve(AyaSerializer.PACKAGE_BASE);
-    FileUtil.writeString(baka = genDir.resolve("$baka.java"), code);
+    FileUtil.writeString(baka = genDir.resolve("_baka.java"), code);
     cl = new URLClassLoader(new URL[]{root.toUri().toURL()});
   }
 
@@ -36,7 +36,7 @@ public class CompileTester {
       var options = List.of("--enable-preview", "--release", "21");
       var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
       task.call();
-      var fqName = NameSerializer.getClassRef(DumbModuleLoader.DUMB_MODULE_NAME, null);
+      var fqName = NameSerializer.getModuleClassName(DumbModuleLoader.DUMB_MODULE_NAME);
       cl.loadClass(fqName);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
