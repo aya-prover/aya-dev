@@ -60,9 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-[xy.r@outlook.com](mailto:xy.r@outlook.com), 
-[imkiva@islovely.icu](mailto:imkiva@islovely.icu) or
-[ice1000kotlin@foxmail.com](mailto:ice1000kotlin@foxmail.com).
+[ice1000kotlin@foxmail.com](mailto:ice1000kotlin@foxmail.com) (only one person at the moment).
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
