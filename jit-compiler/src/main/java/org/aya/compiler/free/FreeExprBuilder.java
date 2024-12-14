@@ -39,7 +39,10 @@ public interface FreeExprBuilder {
     return mkNew(conRef, args);
   }
 
-  @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name);
+  // TODO: inline this
+  default @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
+    return name.ref();
+  }
 
   /**
    * Invoke a (non-interface) method on {@param owner}.
