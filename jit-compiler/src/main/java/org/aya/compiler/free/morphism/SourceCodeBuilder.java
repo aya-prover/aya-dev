@@ -92,20 +92,6 @@ public record SourceCodeBuilder(
     sourceBuilder.appendLine();
   }
 
-  @Override public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr update) {
-    var fieldRef = toClassRef(field.owner()) + "." + field.name();
-    buildUpdate(fieldRef, update);
-  }
-
-  @Override
-  public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update) {
-    appendExpr(owner);
-    sourceBuilder.append("." + field.name() + " = ");
-    appendExpr(update);
-    sourceBuilder.append(";");
-    sourceBuilder.appendLine();
-  }
-
   private void buildIf(
     @NotNull Runnable condition,
     @NotNull Consumer<FreeCodeBuilder> thenBlock,

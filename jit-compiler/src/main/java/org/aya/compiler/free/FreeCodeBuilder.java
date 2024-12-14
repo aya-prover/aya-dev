@@ -27,10 +27,6 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
 
   void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update);
 
-  void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr update);
-
-  void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update);
-
   void ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 
   void ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);

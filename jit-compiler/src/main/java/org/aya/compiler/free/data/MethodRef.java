@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 public interface MethodRef {
   record Default(
@@ -23,4 +24,8 @@ public interface MethodRef {
   @NotNull ImmutableSeq<ClassDesc> paramTypes();
 
   boolean isInterface();
+
+  default boolean isConstructor() {
+    return name().equals(ConstantDescs.INIT_NAME);
+  }
 }
