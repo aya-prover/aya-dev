@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
+import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 
 public interface ArgumentProvider {
@@ -9,5 +10,5 @@ public interface ArgumentProvider {
     @NotNull FreeJavaExpr capture(int nth);
   }
 
-  @NotNull FreeJavaExpr arg(int nth);
+  @NotNull LocalVariable arg(int nth);
 }

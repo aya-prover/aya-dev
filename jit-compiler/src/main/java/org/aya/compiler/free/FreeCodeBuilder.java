@@ -31,9 +31,9 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
 
   void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update);
 
-  void ifNotTrue(@NotNull FreeJavaExpr notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
+  void ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 
-  void ifTrue(@NotNull FreeJavaExpr theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
+  void ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 
   void ifInstanceOf(@NotNull FreeJavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock);
 
@@ -58,7 +58,7 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
    * Build a switch statement on int
    */
   void switchCase(
-    @NotNull FreeJavaExpr elim,
+    @NotNull LocalVariable elim,
     @NotNull ImmutableIntSeq cases,
     @NotNull ObjIntConsumer<FreeCodeBuilder> branch,
     @NotNull Consumer<FreeCodeBuilder> defaultCase

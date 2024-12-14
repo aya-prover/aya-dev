@@ -13,59 +13,57 @@ import java.util.function.IntConsumer;
 import static org.aya.compiler.serializers.AyaSerializer.CLASS_PANIC;
 import static org.aya.compiler.serializers.ExprializeUtil.makeString;
 
-public interface SourceBuilder {
-  final class Default implements SourceBuilder {
-    private final @NotNull StringBuilder builder;
-    private int indent;
-    private final @NotNull NameGenerator nameGenerator;
+public final class SourceBuilder {
+  public final @NotNull StringBuilder builder;
+  public final @NotNull NameGenerator nameGen;
+  private int indent;
+  private boolean isLineBegin;
+  
+  public SourceBuilder() {
+    this.builder = new StringBuilder();
+    this.nameGen = new NameGenerator();
+    this.indent = 0;
+    this.isLineBegin = true;
+  }
+  
+  public record JitParam(@NotNull String name, @NotNull String type) { }
 
-    public Default() {
-      this(new StringBuilder(), 0, new NameGenerator());
-    }
-
-    public Default(@NotNull StringBuilder builder, int indent, @NotNull NameGenerator nameGenerator) {
-      this.builder = builder;
-      this.indent = indent;
-      this.nameGenerator = nameGenerator;
-    }
-    @Override public @NotNull StringBuilder builder() { return builder; }
-    @Override public int indent() { return indent; }
-    @Override public @NotNull NameGenerator nameGen() { return nameGenerator; }
-    @Override public void runInside(@NotNull Runnable runnable) {
-      indent++;
-      runnable.run();
-      indent--;
-    }
+  private void assertLineBegin() {
+    assert isLineBegin;
   }
 
-  record JitParam(@NotNull String name, @NotNull String type) { }
+  public void runInside(@NotNull Runnable runnable) {
+    indent++;
+    runnable.run();
+    indent--;
+  }
 
-  @NotNull StringBuilder builder();
-  int indent();
-  @NotNull NameGenerator nameGen();
 
-  default void fillIndent() {
+  public int indent() {
+    return this.indent;
+  }
+
+  private void fillIndent() {
+    assertLineBegin();
     if (indent() == 0) return;
-    builder().append("  ".repeat(indent()));
+    builder.append("  ".repeat(indent()));
   }
 
-  void runInside(@NotNull Runnable runnable);
-
-  default @NotNull String buildLocalVar(@NotNull String type, @NotNull String name, @Nullable String initial) {
+  public @NotNull String buildLocalVar(@NotNull String type, @NotNull String name, @Nullable String initial) {
     var update = initial == null ? "" : " = " + initial;
     appendLine(type + " " + name + update + ";");
     return name;
   }
 
-  default void buildUpdate(@NotNull String lhs, @NotNull String rhs) {
+  public void buildUpdate(@NotNull String lhs, @NotNull String rhs) {
     appendLine(lhs + " = " + rhs + ";");
   }
 
-  default void buildIf(@NotNull String condition, @NotNull Runnable onSucc) {
+  public void buildIf(@NotNull String condition, @NotNull Runnable onSucc) {
     buildIfElse(condition, onSucc, null);
   }
 
-  default void buildIfElse(@NotNull String condition, @NotNull Runnable onSucc, @Nullable Runnable onFailed) {
+  public void buildIfElse(@NotNull String condition, @NotNull Runnable onSucc, @Nullable Runnable onFailed) {
     appendLine("if (" + condition + ") {");
     runInside(onSucc);
     if (onFailed == null) appendLine("}");
@@ -81,32 +79,33 @@ public interface SourceBuilder {
    *
    * @param onSucc the argument is a local variable that has type {@param type} and identical equal to {@param term};
    */
-  default void buildIfInstanceElse(
+  public void buildIfInstanceElse(
     @NotNull String term,
     @NotNull String type,
     @NotNull Consumer<String> onSucc,
     @Nullable Runnable onFailed
   ) {
-    String name = nameGen().nextName();
+    String name = nameGen.nextName();
     buildIfElse(term + " instanceof " + type + " " + name,
       () -> onSucc.accept(name),
       onFailed);
   }
 
-  default void buildGoto(@NotNull Runnable continuation) {
+  public void buildGoto(@NotNull Runnable continuation) {
     appendLine("do {");
     runInside(continuation);
     appendLine("} while (false);");
   }
-  default void buildBreak() { appendLine("break;"); }
-  default void buildReturn(@NotNull String retWith) { appendLine("return " + retWith + ";"); }
-  default void buildComment(@NotNull String comment) { appendLine("// " + comment); }
-  default void buildPanic(@Nullable String message) {
+
+  public void buildBreak() { appendLine("break;"); }
+  public void buildReturn(@NotNull String retWith) { appendLine("return " + retWith + ";"); }
+  public void buildComment(@NotNull String comment) { appendLine("// " + comment); }
+  public void buildPanic(@Nullable String message) {
     message = message == null ? "" : makeString(message);
     appendLine("throw new " + CLASS_PANIC + "(" + message + ");");
   }
 
-  default void buildClass(
+  public void buildClass(
     @NotNull String className,
     @Nullable String superClass,
     boolean isStatic,
@@ -123,13 +122,23 @@ public interface SourceBuilder {
     return ImmutableSeq.fill(size, idx -> term + ".get(" + idx + ")");
   }
 
-  default void appendLine(@NotNull String string) {
+  public void appendLine(@NotNull String string) {
     fillIndent();
-    builder().append(string);
-    builder().append('\n');
+    builder.append(string);
+    appendLine();
   }
-  default void appendLine() { builder().append('\n'); }
-  default void buildConstantField(
+
+  public void append(@NotNull String string) {
+    if (isLineBegin) fillIndent();
+    builder.append(string);
+  }
+
+  public void appendLine() {
+    builder.append('\n');
+    isLineBegin = true;
+  }
+
+  public void buildConstantField(
     @NotNull String type,
     @NotNull String name,
     @Nullable String value
@@ -143,14 +152,14 @@ public interface SourceBuilder {
     appendLine("public static final " + type + " " + name + value + ";");
   }
 
-  default void buildSwitch(
+  public void buildSwitch(
     @NotNull String term,
     @NotNull ImmutableIntSeq cases,
     @NotNull IntConsumer continuation,
-    @NotNull Runnable defaultCase
+    @NotNull Runnable publicCase
   ) {
     if (cases.isEmpty()) {
-      defaultCase.run();
+      publicCase.run();
       return;
     }
     appendLine("switch (" + term + ") {");
@@ -161,14 +170,14 @@ public interface SourceBuilder {
         appendLine("}");
       });
 
-      appendLine("default -> {");
-      runInside(defaultCase);
+      appendLine("public -> {");
+      runInside(publicCase);
       appendLine("}");
     });
     appendLine("}");
   }
 
-  default void buildMethod(
+  public void buildMethod(
     @NotNull String name,
     @NotNull ImmutableSeq<JitParam> params,
     @NotNull String returnType,

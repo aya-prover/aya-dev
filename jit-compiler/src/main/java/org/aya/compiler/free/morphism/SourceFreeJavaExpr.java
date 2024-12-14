@@ -6,9 +6,15 @@ import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 
-public record SourceFreeJavaExpr(@NotNull String expr) implements FreeJavaExpr, LocalVariable {
-  @Override
-  public @NotNull FreeJavaExpr ref() {
-    return this;
+public sealed interface SourceFreeJavaExpr extends FreeJavaExpr {
+  record BlackBox(@NotNull String expr) implements SourceFreeJavaExpr, LocalVariable {
+    @Override public @NotNull FreeJavaExpr ref() {
+      return this;
+    }
+  }
+
+  // A {@link Cont} should be used in a {@link SourceCodeBuilder} who constructs it.
+  @FunctionalInterface
+  non-sealed interface Cont extends SourceFreeJavaExpr, Runnable {
   }
 }

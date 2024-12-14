@@ -7,9 +7,11 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
@@ -257,35 +259,34 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeClosureToImmutableSeq(rember),
           serializeClosureToImmutableSeq(forgor)
         ));
-      case MatchTerm(var discr, var ty, var clauses) -> throw new UnsupportedOperationException("TODO");
+      case MatchTerm(var discr, var ty, var clauses) -> {
+        throw new UnsupportedOperationException("TODO");
+      }
+
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
     };
   }
 
-  // TODO: unify with makeClosure
-  private @NotNull FreeJavaExpr makeThunk(@NotNull Function<TermExprializer, FreeJavaExpr> cont) {
+  private @NotNull FreeJavaExpr makeLambda(
+    @NotNull MethodRef lambdaType,
+    @NotNull BiFunction<ArgumentProvider, TermExprializer, FreeJavaExpr> cont
+  ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
-    return builder.mkLambda(entries.map(Tuple2::component2), Constants.THUNK, ap -> {
-      var captured = entries.mapIndexed((i, tup) ->
-        Tuple.of(tup.component1(), ap.capture(i)));
-
-      return cont.apply(new TermExprializer(this.builder, MutableLinkedHashMap.from(captured), this.allowLocalTerm));
+    return builder.mkLambda(entries.map(Tuple2::component2), lambdaType, (ap, builder) -> {
+      var captured = entries.mapIndexed((i, tup) -> Tuple.of(tup.component1(), ap.capture(i)));
+      var result = cont.apply(ap, new TermExprializer(this.builder, MutableLinkedHashMap.from(captured), this.allowLocalTerm));
+      builder.returnWith(result);
     });
   }
 
-  private @NotNull FreeJavaExpr makeClosure(@NotNull BiFunction<TermExprializer, FreeJavaExpr, FreeJavaExpr> cont) {
-    var binds = MutableLinkedHashMap.from(this.binds);
-    var entries = binds.toImmutableSeq();
-    return builder.mkLambda(entries.map(Tuple2::component2), Constants.CLOSURE, ap -> {
-      var captured = entries.mapIndexed((i, tup) ->
-        Tuple.of(tup.component1(), ap.capture(i)));
+  // TODO: unify with makeClosure
+  private @NotNull FreeJavaExpr makeThunk(@NotNull Function<TermExprializer, FreeJavaExpr> cont) {
+    return makeLambda(Constants.THUNK, (_, te) -> cont.apply(te));
+  }
 
-      return cont.apply(
-        new TermExprializer(this.builder, MutableLinkedHashMap.from(captured), this.allowLocalTerm),
-        ap.arg(0)
-      );
-    });
+  private @NotNull FreeJavaExpr makeClosure(@NotNull BiFunction<TermExprializer, FreeJavaExpr, FreeJavaExpr> cont) {
+    return makeLambda(Constants.CLOSURE, (ap, te) -> cont.apply(te, ap.arg(0).ref()));
   }
 
   private @NotNull FreeJavaExpr serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {

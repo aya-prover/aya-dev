@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
 import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.ConDef;
@@ -26,16 +27,14 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   @Override protected @NotNull Class<?> callClass() { return ConCall.class; }
 
-  @Override
-  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+  @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
       FreeUtil.fromClass(JitData.class),
       ConstantDescs.CD_int, ConstantDescs.CD_boolean
     ));
   }
 
-  @Override
-  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, ConDef unit) {
+  @Override protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, ConDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprializer.getInstance(builder, unit.dataRef),
       builder.iconst(unit.selfTele.size()),
@@ -46,9 +45,9 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   /**
    * @see JitCon#isAvailable(Seq)
    */
-  private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull FreeJavaExpr argsTerm) {
+  private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
     FreeJavaExpr matchResult;
-    var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm, ImmutableSeq.empty());
+    var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm.ref(), ImmutableSeq.empty());
     if (unit.pats.isEmpty()) {
       // not indexed data type, this constructor is always available
       matchResult = builder.invoke(Constants.RESULT_OK, ImmutableSeq.of(termSeq));
@@ -75,14 +74,14 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   private void buildEquality(
     @NotNull FreeCodeBuilder builder,
     ConDef unit,
-    @NotNull FreeJavaExpr argsTerm,
-    @NotNull FreeJavaExpr is0Term
+    @NotNull LocalVariable argsTerm,
+    @NotNull LocalVariable is0Term
   ) {
     var eq = unit.equality;
     assert eq != null;
     BiConsumer<FreeCodeBuilder, Boolean> continuation = (cb, b) -> {
       var side = b ? eq.a() : eq.b();
-      cb.returnWith(serializeTermUnderTele(cb, side, argsTerm, unit.telescope().size()));
+      cb.returnWith(serializeTermUnderTele(cb, side, argsTerm.ref(), unit.telescope().size()));
     };
 
     builder.ifTrue(is0Term,

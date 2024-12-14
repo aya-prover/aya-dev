@@ -17,7 +17,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.aya.compiler.free.morphism.SourceCodeBuilder.getExpr;
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassName;
 import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
@@ -25,10 +24,7 @@ public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder)
   implements FreeClassBuilder, FreeJavaResolver {
-  @Override
-  public @NotNull FreeJavaResolver resolver() {
-    return this;
-  }
+  @Override public @NotNull FreeJavaResolver resolver() { return this; }
 
   private void buildMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
     var prepend = isFirst ? "" : ", ";
@@ -73,17 +69,16 @@ public record SourceClassBuilder(
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
     var params = paramTypes.map(x ->
-      new SourceBuilder.JitParam(this.sourceBuilder.nameGen().nextName(), toClassRef(x))
+      new SourceBuilder.JitParam(sourceBuilder.nameGen.nextName(), toClassRef(x))
     );
 
-    this.sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
+    sourceBuilder.buildMethod(name, params, returnType, false, () -> builder.accept(
       new SourceArgumentProvider(params.map(SourceBuilder.JitParam::name)),
-      new SourceCodeBuilder(this, this.sourceBuilder)
+      new SourceCodeBuilder(this, sourceBuilder)
     ));
   }
 
-  @Override
-  public @NotNull MethodRef buildMethod(
+  @Override public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
@@ -93,8 +88,7 @@ public record SourceClassBuilder(
     return new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
   }
 
-  @Override
-  public void buildConstructor(
+  @Override public void buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
@@ -105,19 +99,22 @@ public record SourceClassBuilder(
       builder);
   }
 
-  @Override
-  public @NotNull FieldRef buildConstantField(
+  @Override public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   ) {
-    sourceBuilder.buildConstantField(toClassRef(returnType), name,
-      getExpr(initializer.apply(new SourceCodeBuilder(this, sourceBuilder))));
+    sourceBuilder.append("public static final " + toClassRef(returnType) + " " + name + " = ");
+    var codeBuilder = new SourceCodeBuilder(this, sourceBuilder); 
+    var initValue = initializer.apply(codeBuilder);
+    codeBuilder.appendExpr(initValue);
+    sourceBuilder.append(";");
+    sourceBuilder.appendLine();
+    
     return new FieldRef.Default(this.owner, returnType, name);
   }
 
-  @Override
-  public @NotNull MethodRef resolve(
+  @Override public @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,

@@ -157,12 +157,12 @@ public final class PatternSerializer {
     var tmpName = builder.makeVar(Term.class, term);
 
     for (var pre : preContinuation) {
-      builder.ifNotTrue(builder.refVar(subMatchState), builder0 -> {
+      builder.ifNotTrue(subMatchState, builder0 -> {
         pre.accept(builder0, tmpName);
       }, null);
     }
 
-    builder.ifTrue(builder.refVar(subMatchState), continuation, null);
+    builder.ifTrue(subMatchState, continuation, null);
   }
 
   private void matchInt(@NotNull FreeCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
@@ -265,7 +265,7 @@ public final class PatternSerializer {
 
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
-    builder.switchCase(builder.refVar(matchState), range, (mBuilder, i) -> {
+    builder.switchCase(matchState, range, (mBuilder, i) -> {
       if (i == 0) {
         onFailed.accept(mBuilder);
         return;

@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.control.Either;
-import kala.control.Option;
 import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
@@ -26,6 +25,7 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
@@ -88,8 +88,8 @@ public final class Normalizer implements UnaryOperator<Term> {
                   var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
                     args, ulift, core.is(Modifier.Overlap));
                   // we may get stuck
-                  if (result.isEmpty()) return defaultValue;
-                  term = result.get();
+                  if (result == null) return defaultValue;
+                  term = result;
                   continue;
                 }
               }
@@ -158,8 +158,8 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case MatchTerm(var discr, _, var clauses) -> {
           var result = tryUnfoldClauses(clauses.view(), discr, 0, false);
-          if (result.isEmpty()) return defaultValue;
-          term = result.get();
+          if (result == null) return defaultValue;
+          term = result;
           continue;
         }
         default -> {
@@ -173,7 +173,7 @@ public final class Normalizer implements UnaryOperator<Term> {
     return opaque.contains(fn.ref()) || fn.is(Modifier.Opaque) || fn.is(Modifier.Partial);
   }
 
-  public @NotNull Option<Term> tryUnfoldClauses(
+  public @Nullable Term tryUnfoldClauses(
     @NotNull SeqView<Term.Matching> clauses, @NotNull ImmutableSeq<Term> args,
     int ulift, boolean orderIndependent
   ) {
@@ -181,14 +181,14 @@ public final class Normalizer implements UnaryOperator<Term> {
       var matcher = new PatMatcher(false, this);
       switch (matcher.apply(matchy.patterns(), args)) {
         case Result.Err(var st) -> {
-          if (!orderIndependent && st == Stuck) return Option.none();
+          if (!orderIndependent && st == Stuck) return null;
         }
         case Result.Ok(var subst) -> {
-          return Option.some(matchy.body().elevate(ulift).instantiateTele(subst.view()));
+          return matchy.body().elevate(ulift).instantiateTele(subst.view());
         }
       }
     }
-    return Option.none();
+    return null;
   }
 
   private class Full implements UnaryOperator<Term> {

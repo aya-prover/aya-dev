@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -40,15 +41,13 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }
 
-  @Override
-  protected void buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
+  @Override protected void buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
     builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
       cb.invokeSuperCon(superConParams(), superConArgs(cb, unit));
     });
   }
 
-  @Override
-  protected void buildFramework(
+  @Override protected void buildFramework(
     @NotNull FreeClassBuilder builder,
     @NotNull T unit,
     @NotNull Consumer<FreeClassBuilder> continuation
@@ -78,15 +77,14 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     });
   }
 
-  @Override
-  protected boolean shouldBuildEmptyCall(@NotNull T unit) {
+  @Override protected boolean shouldBuildEmptyCall(@NotNull T unit) {
     return unit.telescope().isEmpty();
   }
 
   /**
    * @see JitTele#telescope(int, Term...)
    */
-  protected void buildTelescope(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull FreeJavaExpr iTerm, @NotNull FreeJavaExpr teleArgsTerm) {
+  protected void buildTelescope(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull LocalVariable iTerm, @NotNull LocalVariable teleArgsTerm) {
     var tele = unit.telescope();
 
     builder.switchCase(
@@ -96,7 +94,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
         var result = serializeTermUnderTele(
           cb,
           tele.get(kase).type(),
-          teleArgsTerm, kase
+          teleArgsTerm.ref(), kase
         );
 
         cb.returnWith(result);
@@ -107,11 +105,11 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   /**
    * @see JitTele#result
    */
-  protected void buildResult(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull FreeJavaExpr teleArgsTerm) {
+  protected void buildResult(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull LocalVariable teleArgsTerm) {
     var result = serializeTermUnderTele(
       builder,
       unit.result(),
-      teleArgsTerm,
+      teleArgsTerm.ref(),
       unit.telescope().size()
     );
 

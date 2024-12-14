@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.control.Either;
 import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
@@ -39,11 +40,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
     var flag = 0;
-
-    for (var mody : modies) {
-      flag |= 1 << mody.ordinal();
-    }
-
+    for (var mody : modies) flag |= 1 << mody.ordinal();
     return flag;
   }
 
@@ -64,11 +61,12 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(
     @NotNull FreeCodeBuilder builder,
     @NotNull FnDef unit,
-    @NotNull FreeJavaExpr onStuckTerm,
-    @NotNull ImmutableSeq<FreeJavaExpr> argTerms
+    @NotNull LocalVariable onStuckTerm,
+    @NotNull ImmutableSeq<LocalVariable> argTerms
   ) {
     Consumer<FreeCodeBuilder> onStuckCon = cb ->
-      cb.returnWith(AyaSerializer.getThunk(cb, onStuckTerm));
+      cb.returnWith(AyaSerializer.getThunk(cb, onStuckTerm.ref()));
+    var argExprs = argTerms.map(LocalVariable::ref);
 
     if (unit.is(Modifier.Opaque)) {
       onStuckCon.accept(builder);
@@ -77,11 +75,11 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
     switch (unit.body()) {
       case Either.Left(var expr) -> {
-        var result = serializeTermUnderTele(builder, expr, argTerms);
+        var result = serializeTermUnderTele(builder, expr, argExprs);
         builder.returnWith(result);
       }
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(argTerms, onStuckCon, unit.is(Modifier.Overlap));
+        var ser = new PatternSerializer(argExprs, onStuckCon, unit.is(Modifier.Overlap));
         ser.serialize(builder, clauses.view()
           .map(WithPos::data)
           .map(matching -> new PatternSerializer.Matching(
@@ -102,19 +100,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   /**
    * Build vararg `invoke`
    */
-  private void buildInvoke(
-    @NotNull FreeCodeBuilder builder,
-    @NotNull FnDef unit,
-    @NotNull MethodRef invokeMethod,
-    @NotNull FreeJavaExpr onStuckTerm,
-    @NotNull FreeJavaExpr argsTerm
-  ) {
+  private void buildInvoke(@NotNull FreeCodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable onStuckTerm, @NotNull LocalVariable argsTerm) {
     var teleSize = unit.telescope().size();
-    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
+    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
     var result = builder.invoke(
       invokeMethod,
       builder.thisRef(),
-      args.prepended(onStuckTerm)
+      args.prepended(onStuckTerm.ref())
     );
 
     builder.returnWith(result);
@@ -142,7 +134,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         fullParam.freeze(),
         (ap, cb) -> {
           var onStuck = ap.arg(0);
-          var args = ImmutableSeq.fill(unit.telescope().size(), i -> ap.arg(i + 1));
+          var args = ImmutableSeq.fill(unit.telescope().size(),
+            i -> ap.arg(i + 1));
           buildInvoke(cb, unit, onStuck, args);
         }
       );
@@ -152,7 +145,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         ImmutableSeq.of(onStuckParam, Constants.CD_Seq),
         (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke, ap.arg(0), ap.arg(1))
+          buildInvoke(cb, unit, fixedInvoke,
+            ap.arg(0), ap.arg(1))
       );
     });
 

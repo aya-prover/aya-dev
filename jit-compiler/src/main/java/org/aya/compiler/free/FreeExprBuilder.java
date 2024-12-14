@@ -9,7 +9,7 @@ import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 
 /**
  * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
@@ -52,7 +52,7 @@ public interface FreeExprBuilder {
   @NotNull FreeJavaExpr mkLambda(
     @NotNull ImmutableSeq<FreeJavaExpr> captures,
     @NotNull MethodRef method,
-    @NotNull Function<ArgumentProvider.Lambda, FreeJavaExpr> builder
+    @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> builder
   );
 
   @NotNull FreeJavaExpr iconst(int i);

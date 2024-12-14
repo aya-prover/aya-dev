@@ -8,21 +8,16 @@ import org.aya.compiler.free.FreeJavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 public record SourceArgumentProvider(@NotNull ImmutableSeq<String> names) implements ArgumentProvider {
-  @Override
-  public @NotNull SourceFreeJavaExpr arg(int nth) {
-    return new SourceFreeJavaExpr(names.get(nth));
+  @Override public @NotNull SourceFreeJavaExpr.BlackBox arg(int nth) {
+    return new SourceFreeJavaExpr.BlackBox(names.get(nth));
   }
 
-  record Lambda(@NotNull ImmutableSeq<String> captures,
+  record Lambda(@NotNull ImmutableSeq<FreeJavaExpr> captures,
                 @NotNull ImmutableSeq<String> names) implements ArgumentProvider.Lambda {
-    @Override
-    public @NotNull FreeJavaExpr capture(int nth) {
-      return new SourceFreeJavaExpr(captures.get(nth));
-    }
+    @Override public @NotNull FreeJavaExpr capture(int nth) { return captures.get(nth); }
 
-    @Override
-    public @NotNull FreeJavaExpr arg(int nth) {
-      return new SourceFreeJavaExpr(names.get(nth));
+    @Override public @NotNull SourceFreeJavaExpr.BlackBox arg(int nth) {
+      return new SourceFreeJavaExpr.BlackBox(names.get(nth));
     }
   }
 }
