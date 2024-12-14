@@ -367,7 +367,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           yield fail(expr.data(), new NoRuleError(expr, null));
         }
         if (defs.sizeGreaterThan(1)) {
-          var type = freshMeta("_ty" + integer + "'", expr.sourcePos(), MetaVar.Misc.IsType, false);
+          var type = freshMeta(integer + "_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), integer, defs, type), type);
         }
         var match = defs.getFirst();

@@ -177,17 +177,13 @@ public sealed interface Term extends Serializable, AyaDocile
     return descent(t -> t.doElevate(level));
   }
 
-  record Matching(
-    @NotNull ImmutableSeq<Pat> patterns,
-    int bindCount, @NotNull Term body
-  ) {
-    public @NotNull Matching update(@NotNull ImmutableSeq<Pat> patterns, @NotNull Term body) {
-      return body == body() && patterns.sameElements(patterns(), true) ? this
-        : new Matching(patterns, bindCount, body);
+  record Matching(@NotNull ImmutableSeq<Pat> patterns, int bindCount, @NotNull Term body) {
+    public @NotNull Matching update(@NotNull Term body) {
+      return body == body() ? this : new Matching(patterns, bindCount, body);
     }
 
-    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f, @NotNull UnaryOperator<Pat> g) {
-      return update(patterns.map(g), f.apply(body));
+    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f) {
+      return update(f.apply(body));
     }
 
     public void forEach(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {

@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 public interface Constants {
   @NotNull @NonNls String ANONYMOUS_PREFIX = "_";
-  @NotNull @NonNls String GENERATED_POSTFIX = "'";
   @NotNull @NonNls String SCOPE_SEPARATOR = "::";
   @NotNull Pattern SCOPE_SEPARATOR_PATTERN = Pattern.compile(SCOPE_SEPARATOR);
   @NotNull @NonNls String AYA_POSTFIX = ".aya";

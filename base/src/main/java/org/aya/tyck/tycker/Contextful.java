@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
-import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
@@ -17,8 +16,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 /**
  * Indicating something is {@link LocalCtx}ful.<br/>
@@ -60,15 +57,15 @@ public interface Contextful {
     return new MetaCall(new MetaVar(name, pos, args.size(), req.bind(vars.view()), isUser), args);
   }
 
+  /** @see org.aya.syntax.ref.MetaVar#asDt */
   default @NotNull Term generatePi(Expr.@NotNull Lambda expr, SourcePos sourcePos) {
     var param = expr.param();
     return generatePi(sourcePos, param.ref().name());
   }
 
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {
-    var genName = name + Constants.GENERATED_POSTFIX;
-    var domain = freshMeta(genName + "ty", pos, MetaVar.Misc.IsType, false);
-    var codomain = freshMeta(genName + "ret", pos, MetaVar.Misc.IsType, false);
+    var domain = freshMeta(name + "ty", pos, MetaVar.Misc.IsType, false);
+    var codomain = freshMeta(name + "ret", pos, MetaVar.Misc.IsType, false);
     return new DepTypeTerm(DTKind.Pi, domain, Closure.mkConst(codomain));
   }
 }
