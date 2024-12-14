@@ -53,7 +53,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
         builder.iconst(shapedInt.repr()),
         getInstance(shapedInt.zero()),
         getInstance(shapedInt.suc()),
-        serializeTerm(shapedInt.toTerm())
+        serializeTerm(shapedInt.type())
       ));
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.Tuple(var l, var r) -> builder.mkNew(Pat.Tuple.class, ImmutableSeq.of(

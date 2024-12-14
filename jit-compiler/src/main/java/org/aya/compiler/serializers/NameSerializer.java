@@ -5,7 +5,6 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
@@ -21,19 +20,15 @@ import java.util.stream.IntStream;
 import static org.aya.compiler.serializers.AyaSerializer.PACKAGE_BASE;
 
 public interface NameSerializer {
-  String PATH_SEPARATOR = File.separator;
-  String PACKAGE_SEPARATOR = ".";
-  String NEST_CLASS_SEPARATOR = ".";
-  String CLASS_NAME_SEPARATOR = "$";
   char MAGIC_CHAR = '_';
 
   enum NameType {
     // class reference in java source code, i.e. "foo.bar.nestClass"
-    ClassReference(PACKAGE_SEPARATOR, NEST_CLASS_SEPARATOR),
+    ClassReference(".", "."),
     // class name that used for loading class, i.e. "foo.bar$nestClass"
-    ClassName(PACKAGE_SEPARATOR, CLASS_NAME_SEPARATOR),
+    ClassName(".", "$"),
     // class path that used for finding class file, i.e. "foo/bar$nestClass"
-    ClassPath(PATH_SEPARATOR, CLASS_NAME_SEPARATOR);
+    ClassPath(File.separator, "$");
 
     public final @NotNull String packageSeparator;
     public final @NotNull String classNameSeparator;
@@ -66,10 +61,6 @@ public interface NameSerializer {
     return prefix + type.classNameSeparator + javifyClassName(module, name);
   }
 
-  static @NotNull String getClassRef(@NotNull QPath module, @Nullable String name) {
-    return getReference(module, name, NameType.ClassReference);
-  }
-
   static @NotNull String getClassName(@NotNull QName name) {
     return getClassName(name.module(), name.name());
   }
@@ -78,8 +69,8 @@ public interface NameSerializer {
     return getReference(module, name, NameType.ClassName);
   }
 
-  static @NotNull String getModuleReference(@NotNull QPath module) {
-    return getClassRef(module, null);
+  static @NotNull String getModuleClassName(@NotNull QPath module) {
+    return getClassName(module, null);
   }
 
   static @NotNull String getClassName(@NotNull AnyDef def) {
@@ -128,7 +119,7 @@ public interface NameSerializer {
    * Note that the result may not be used for class name, see {@link #javifyClassName}
    */
   static @NotNull String javify(String name) {
-    if (keywords.contains(name)) return "_" + name;
+    if (keywords.contains(name)) return MAGIC_CHAR + name;
     return name.codePoints().flatMap(x ->
         x == MAGIC_CHAR
           ? String.valueOf(MAGIC_CHAR).repeat(2).chars()

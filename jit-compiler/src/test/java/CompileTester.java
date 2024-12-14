@@ -36,7 +36,7 @@ public class CompileTester {
       var options = List.of("--enable-preview", "--release", "21");
       var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
       task.call();
-      var fqName = NameSerializer.getClassRef(DumbModuleLoader.DUMB_MODULE_NAME, null);
+      var fqName = NameSerializer.getModuleClassName(DumbModuleLoader.DUMB_MODULE_NAME);
       cl.loadClass(fqName);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
