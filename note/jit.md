@@ -11,7 +11,7 @@ Jit Unit 是一个需要被编译的单位, 它包括:
 
 所有 Jit Unit 都会被编译成一个 class.
 
-示例: `class-structure.aya`
+示例: `test/class-structure.aya`
 
 ```aya
 inductive Nat
@@ -21,21 +21,25 @@ inductive Nat
 def inc (n : Nat) : Nat => S n 
 ```
 
-编译输出: `class$45structure.java`
+> 注意这里的 test 是一个 aya 级别的目录, 也就是说需要用 `test::class-structor` 来引用这个 aya 模块.
+
+编译输出: `AYA/test/class_45structure.java`
 
 ```java
-public final class class$45structure {
-  public static final class class$45structure$Nat extends JitData {
+package AYA.test;
+
+public final class _class_45structure {
+  public static final class _class_45structure_Nat extends JitData {
     // ...
   }
 
-  public static final class class$45structure$Nat$O extends JitCon { /* ... */
+  public static final class _class_45structure_Nat_O extends JitCon { /* ... */
   }
 
-  public static final class class$45structure$Nat$S extends JitCon { /* ... */
+  public static final class _class_45structure_Nat_S extends JitCon { /* ... */
   }
 
-  public static final class class$45structure$inc extends JitFn { /* ... */
+  public static final class _class_45structure_inc extends JitFn { /* ... */
   }
 }
 ```
@@ -59,13 +63,14 @@ public final class class$45structure {
 ## Name Mapping
 
 > ![WARNING]
-> 这个章节仅适用于编译到 Java 源代码的编译器实现.
+> 这个章节仅适用于编译到 Java 源代码的编译器实现.  
+> 编译到 Bytecode 的编译器实现需要处理的情况更少, 仅需要处理属于非法文件字符(如路径分隔符)的情况.
 
 由于需要在 Java 编译器的限制, 并不是所有合法的 aya 符号名在 Java 中都合法, 因此需要对符号名进行转义.
 
-* 对于是关键字的符号名, 将它转义成 `_$<keyword>`. 如 `new` 转义成 `_$new`
-* 对于符号名中的每个 `$`, 将它转义成 `$$`.
-* 对于符号名中的每个不合法的 Java 符号名 code point, 将它转义成 `$<code point>`. 如 `+` 转义成 `$43`.
+* 对于是关键字的符号名, 将它转义成 `_<keyword>`. 如 `new` 转义成 `_new`
+* 对于符号名中的每个 `_`, 将它转义成 `__`.
+* 对于符号名中的每个不合法的 Java 符号名 code point, 将它转义成 `_<code point>`. 如 `+` 转义成 `_43`.
 
 ## 模式匹配
 
@@ -110,7 +115,7 @@ public Term invoke(Supplier<Term> onStuck, Term arg0, Term arg1) {
 
     if (!subMatchState) {
       if (arg0 instanceof ConCallLike var0) {
-        if (Nat$O.INSTANCE.ref() == var0.ref()) {
+        if (Nat_O.INSTANCE.ref() == var0.ref()) {
           // 匹配: b
           // b 是一个 Pat.Bind, 匹配总是成功
           result[0] = var1;
@@ -145,7 +150,7 @@ public Term invoke(Supplier<Term> onStuck, Term arg0, Term arg1) {
     }
     case 2 -> {
       // | S a, b => S (plus a b)
-      return new ConCall(Nat$S.INSTANCE, 0, ImmutableSeq.of(plus.invoke(
+      return new ConCall(Nat_S.INSTANCE, 0, ImmutableSeq.of(plus.invoke(
         () -> new FnCall(/* ... */),
         result[0], result[1]
       )));
