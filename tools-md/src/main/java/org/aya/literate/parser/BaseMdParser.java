@@ -18,6 +18,7 @@ import org.aya.pretty.doc.Style;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
+import org.intellij.markdown.MarkdownElementType;
 import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.MarkdownTokenTypes;
 import org.intellij.markdown.ast.ASTNode;
@@ -159,10 +160,6 @@ public class BaseMdParser {
   protected @NotNull Literate mapNode(@NotNull ASTNode node) {
     var type = node.getType();
 
-    if (type == MarkdownTokenTypes.TEXT) {
-      return new Literate.Raw(Doc.plain(getTextInNode(node)));
-    }
-
     if (type == MarkdownTokenTypes.EOL || type == MarkdownTokenTypes.HARD_LINE_BREAK) {
       return new Literate.Raw(Doc.line());
     }
@@ -243,9 +240,8 @@ public class BaseMdParser {
 
       if (langInfo.isDefined()) {
         wellCode = languages.find(p -> p.test(langInfo.get()))
-          .map(factory -> {
-            return factory.create(code.literal(), code.sourcePos());
-          });
+          .map(factory ->
+            factory.create(code.literal(), code.sourcePos()));
       }
 
       return wellCode.getOrElse(() -> {
@@ -291,6 +287,11 @@ public class BaseMdParser {
       return flatten(mapChildren(node));
     }
 
+    // fallback
+    if (type instanceof MarkdownElementType mdTy && mdTy.isToken()) {
+      return new Literate.Raw(Doc.plain(getTextInNode(node)));
+    }
+
     var pos = fromNode(node);
     reporter.report(new UnsupportedMarkdown(pos, node.getType().toString()));
     return new Literate.Unsupported(mapChildren(node));
@@ -298,17 +299,21 @@ public class BaseMdParser {
 
   protected class StripSurrounding {
     private final @NotNull ASTNode first, last;
+    private final boolean isEmpty;
 
     public StripSurrounding(@NotNull ASTNode node, int count) {
       this(node, count, count);
     }
 
     public StripSurrounding(@NotNull ASTNode node, int startCount, int endCount) {
+      var lastIdx = node.getChildren().size() - endCount - 1;
+      isEmpty = lastIdx < startCount;
       first = node.getChildren().get(startCount);
-      last = node.getChildren().get(node.getChildren().size() - endCount - 1);
+      last = node.getChildren().get(lastIdx);
     }
 
     public @NotNull String literal() {
+      if (isEmpty) return "";
       return file.sourceCode().substring(first.getStartOffset(), last.getEndOffset());
     }
 

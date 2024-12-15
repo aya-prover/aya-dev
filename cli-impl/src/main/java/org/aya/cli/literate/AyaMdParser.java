@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
 import org.aya.literate.parser.BaseMdParser;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.literate.AyaBacktickParser;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.literate.CodeOptions;
@@ -48,11 +50,44 @@ public class AyaMdParser extends BaseMdParser {
       var attrSet = node.getChildren().getLast();
       var code = new StripSurrounding(node, 1, 2);
       assert attrSet.getType() == AyaBacktickParser.ATTR_SET;
-      var attr = CodeOptions.parseAttrSet(attrSet, this::getTextInNode);
+      var attr = parseAttrSet(attrSet);
       return new AyaLiterate.AyaInlineCode(code.literal(), code.sourcePos(), attr);
     }
 
     return super.mapNode(node);
   }
 
+  public @NotNull CodeOptions parseAttrSet(ASTNode attrSet) {
+    var dist = new AyaPrettierOptions();
+    var mode = CodeOptions.NormalizeMode.NULL;
+    var show = CodeOptions.ShowCode.Core;
+    for (var attr : attrSet.getChildren()) {
+      if (attr.getType() != AyaBacktickParser.ATTR) continue;
+      var key = getTextInNode(attr.getChildren().getFirst());
+      var value = getTextInNode(attr.getChildren().getLast());
+      if ("mode".equalsIgnoreCase(key)) {
+        mode = cbt(attr, value, CodeOptions.NormalizeMode.values(), CodeOptions.NormalizeMode.NULL);
+        continue;
+      }
+      if ("show".equalsIgnoreCase(key)) {
+        show = cbt(attr, value, CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
+        continue;
+      }
+      var cbt = cbt(attr, key, AyaPrettierOptions.Key.values(), null);
+      if (cbt != null) {
+        var isTrue = "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
+        dist.map.put(cbt, isTrue);
+        continue;
+      }
+      reporter.report(new AttrWarn.UnknownKey(fromNode(attr), key));
+    }
+    return new CodeOptions(mode, dist, show);
+  }
+
+  private <E extends Enum<E>> E cbt(@NotNull ASTNode attr, @NotNull String userVal, E[] values, E otherwise) {
+    for (var val : values)
+      if (StringUtil.containsIgnoreCase(val.name(), userVal)) return val;
+    reporter.report(new AttrWarn.UnknownValue(fromNode(attr), userVal, values));
+    return otherwise;
+  }
 }

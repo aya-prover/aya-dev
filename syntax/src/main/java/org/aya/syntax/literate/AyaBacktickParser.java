@@ -41,7 +41,6 @@ public class AyaBacktickParser extends BacktickParser {
   private static final @NotNull TokenSet WHITESPACE =
     TokenSet.create(MarkdownTokenTypes.WHITE_SPACE, MarkdownTokenTypes.EOL);
 
-  // copy from BacktickParser
   @Override public @NotNull ParsingResult parse(@NotNull TokensCache tokens, @NotNull List<IntRange> rangesToGlue) {
     var result = new SequentialParser.ParsingResultBuilder();
     var delegateIndices = new RangesListBuilder();
@@ -51,48 +50,7 @@ public class AyaBacktickParser extends BacktickParser {
       if (BACKTICKS.contains(iterator.getType())) {
         var endIterator = findOfSize(iterator.advance(), iterator.getLength());
         if (endIterator != null) {
-          var codeSpanNode = new SequentialParser.Node(new IntRange(iterator.getIndex(), endIterator.getIndex() + 1),
-            MarkdownElementTypes.CODE_SPAN);
-
-          // parse aya code attr here
-          var attrIt = endIterator.advance();
-          if (attrIt.getType() == MarkdownTokenTypes.LPAREN) {
-            attrIt = attrIt.advance();
-
-            var wellNodes = MutableList.<SequentialParser.Node>create();
-            boolean isSuccess = false;
-
-            while (attrIt.getType() != null) {
-              if (attrIt.getType() == MarkdownTokenTypes.RPAREN) {
-                isSuccess = true;
-                break;
-              }
-
-              var attr = parseAttr(attrIt);
-              if (attr != null) {
-                wellNodes.appendAll(attr.getParsedNodes());
-                attrIt = attr.getIteratorPosition().advance();
-              } else break;
-            }
-
-            if (attrIt.getType() == null) {
-              isSuccess = false;
-            }
-
-            var beginIndex = codeSpanNode.getRange().getStart();
-            var attrBeginIndex = codeSpanNode.getRange().getEndInclusive();
-            var endIndex = attrIt.getIndex() + 1;
-
-            if (isSuccess) {
-              result.withNode(new SequentialParser.Node(new IntRange(beginIndex, endIndex), AYA_CODE_SPAN))
-                .withNode(codeSpanNode)
-                .withNode(new SequentialParser.Node(new IntRange(attrBeginIndex, endIndex), ATTR_SET));
-              iterator = attrIt.advance();
-            } else {
-              result.withNode(codeSpanNode);
-              iterator = endIterator.advance();
-            }
-          }
+          iterator = parseAyaCode(iterator, endIterator, result).advance();
 
           continue;
         }
@@ -103,6 +61,51 @@ public class AyaBacktickParser extends BacktickParser {
     }
 
     return result.withFurtherProcessing(delegateIndices.get());
+  }
+  private TokensCache.@NotNull Iterator parseAyaCode(TokensCache.Iterator iterator, TokensCache.Iterator endIterator, ParsingResultBuilder result) {
+    var codeSpanNode = new Node(new IntRange(iterator.getIndex(), endIterator.getIndex() + 1),
+      MarkdownElementTypes.CODE_SPAN);
+
+    // parse aya code attr here
+    var attrIt = endIterator.advance();
+    if (attrIt.getType() == MarkdownTokenTypes.LPAREN) {
+      attrIt = attrIt.advance();
+
+      var wellNodes = MutableList.<Node>create();
+      boolean isSuccess = false;
+
+      while (attrIt.getType() != null) {
+        if (attrIt.getType() == MarkdownTokenTypes.RPAREN) {
+          isSuccess = true;
+          break;
+        }
+
+        var attr = parseAttr(attrIt);
+        if (attr != null) {
+          wellNodes.appendAll(attr.getParsedNodes());
+          attrIt = attr.getIteratorPosition().advance();
+        } else break;
+      }
+
+      if (attrIt.getType() == null) {
+        isSuccess = false;
+      }
+
+      var beginIndex = codeSpanNode.getRange().getStart();
+      var attrBeginIndex = codeSpanNode.getRange().getEndInclusive();
+      var endIndex = attrIt.getIndex() + 1;
+
+      if (isSuccess) {
+        result.withNode(new Node(new IntRange(beginIndex, endIndex), AYA_CODE_SPAN))
+          .withNode(codeSpanNode)
+          .withNode(new Node(new IntRange(attrBeginIndex, endIndex), ATTR_SET));
+        return attrIt;
+      } else {
+        result.withNode(codeSpanNode);
+        return endIterator;
+      }
+    }
+    return iterator;
   }
 
   private @Nullable LocalParsingResult parseAttr(@NotNull TokensCache.Iterator iterator) {
