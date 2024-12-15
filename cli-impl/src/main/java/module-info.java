@@ -2,15 +2,15 @@ module aya.cli.impl {
   requires transitive aya.parser.ij;
   requires transitive aya.base;
 
-  requires aya.ij.parsing.core;
   requires com.google.gson;
   requires aya.md;
   requires aya.producer;
   requires aya.compiler;
-  requires org.jetbrains.annotations;
   requires org.commonmark;
   requires java.compiler;
   requires jdk.compiler;
+  requires aya.jb.md;
+  requires org.jetbrains.annotations;
 
   exports org.aya.cli.interactive;
   exports org.aya.cli.library.incremental;

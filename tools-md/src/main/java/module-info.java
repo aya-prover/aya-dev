@@ -12,6 +12,4 @@ module aya.md {
 
   exports org.aya.literate;
   exports org.aya.literate.parser;
-  exports org.aya.literate.frontmatter;
-  exports org.aya.literate.math;
 }
