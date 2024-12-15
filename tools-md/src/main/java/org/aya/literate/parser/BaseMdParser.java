@@ -203,7 +203,7 @@ public class BaseMdParser {
 
     if (type == MarkdownElementTypes.IMAGE) {
       var inner = node.childOfType(MarkdownElementTypes.INLINE_LINK);
-      var data = mapInlineLink(node);
+      var data = mapInlineLink(inner);
       return new Literate.Image(data.destination, data.children);
     }
 
@@ -288,7 +288,7 @@ public class BaseMdParser {
     }
 
     // fallback
-    if (type instanceof MarkdownElementType mdTy && mdTy.isToken()) {
+    if (type == MarkdownTokenTypes.WHITE_SPACE || type instanceof MarkdownElementType mdTy && mdTy.isToken()) {
       return new Literate.Raw(Doc.plain(getTextInNode(node)));
     }
 
@@ -317,8 +317,8 @@ public class BaseMdParser {
       return file.sourceCode().substring(first.getStartOffset(), last.getEndOffset());
     }
 
-    public @NotNull SourcePos sourcePos() {
-      return fromNodes(Seq.of(first, last));
+    public @Nullable SourcePos sourcePos() {
+      return isEmpty ? null : fromNodes(Seq.of(first, last));
     }
   }
 
@@ -381,7 +381,7 @@ public class BaseMdParser {
       start = Math.min(start, node.getStartOffset());
       end = Math.max(end, node.getEndOffset());
     }
-    return SourcePos.of(new TextRange(start, end), file, true);
+    return SourcePos.of(new TextRange(start, end), file, false);
   }
   /// endregion Helper
 }

@@ -155,11 +155,11 @@ public record SourcePos(
       startLine, startColumn + leftIncrease, endLine, endColumn - rightDecrease);
   }
 
-  public static @NotNull SourcePos of(@NotNull TextRange range, @NotNull SourceFile file, boolean crossLine) {
+  public static @NotNull SourcePos of(@NotNull TextRange range, @NotNull SourceFile file, boolean singleLine) {
     var start = StringUtil.offsetToLineColumn(file.sourceCode(), range.getStartOffset());
     var length = range.getLength();
     var endOffset = range.getEndOffset() - (length == 0 ? 0 : 1);
-    var end = crossLine || length == 0
+    var end = singleLine || length == 0
       ? LineColumn.of(start.line, start.column + length - 1)
       : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
     return new SourcePos(file, range.getStartOffset(), endOffset,

@@ -98,7 +98,8 @@ public class AyaBacktickParser extends BacktickParser {
       if (isSuccess) {
         result.withNode(new Node(new IntRange(beginIndex, endIndex), AYA_CODE_SPAN))
           .withNode(codeSpanNode)
-          .withNode(new Node(new IntRange(attrBeginIndex, endIndex), ATTR_SET));
+          .withNode(new Node(new IntRange(attrBeginIndex, endIndex), ATTR_SET))
+          .withNodes(wellNodes.asJava());
         return attrIt;
       } else {
         result.withNode(codeSpanNode);

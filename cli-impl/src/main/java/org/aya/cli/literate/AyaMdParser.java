@@ -19,6 +19,7 @@ import org.intellij.markdown.parser.sequentialparsers.impl.BacktickParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class AyaMdParser extends BaseMdParser {
@@ -48,10 +49,10 @@ public class AyaMdParser extends BaseMdParser {
   @Override protected @NotNull Literate mapNode(@NotNull ASTNode node) {
     if (node.getType() == AyaBacktickParser.AYA_CODE_SPAN) {
       var attrSet = node.getChildren().getLast();
-      var code = new StripSurrounding(node, 1, 2);
+      var code = new StripSurrounding(node.getChildren().getFirst(), 1, 1);
       assert attrSet.getType() == AyaBacktickParser.ATTR_SET;
       var attr = parseAttrSet(attrSet);
-      return new AyaLiterate.AyaInlineCode(code.literal(), code.sourcePos(), attr);
+      return new AyaLiterate.AyaInlineCode(code.literal(), Objects.requireNonNull(code.sourcePos()), attr);
     }
 
     return super.mapNode(node);
