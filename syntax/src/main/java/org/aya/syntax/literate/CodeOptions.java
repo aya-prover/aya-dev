@@ -7,7 +7,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Language;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
-import org.commonmark.node.Code;
+import org.intellij.markdown.ast.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public record CodeOptions(
@@ -15,7 +15,7 @@ public record CodeOptions(
   @NotNull PrettierOptions options,
   @NotNull ShowCode showCode
 ) {
-  public static @NotNull Literate analyze(@NotNull Code code, @NotNull SourcePos sourcePos) {
+  public static @NotNull Literate analyze(@NotNull ASTNode code, @NotNull SourcePos sourcePos) {
     return code.getFirstChild() instanceof CodeAttrProcessor.Attr attr
       ? new AyaLiterate.AyaInlineCode(code.getLiteral(), sourcePos, attr.options)
       : new Literate.Raw(Doc.code(Language.Builtin.Plain, Doc.plain(code.getLiteral())));

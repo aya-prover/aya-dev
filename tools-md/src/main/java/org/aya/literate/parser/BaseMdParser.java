@@ -23,14 +23,15 @@ import org.intellij.markdown.MarkdownTokenTypes;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.ast.ASTUtilKt;
 import org.intellij.markdown.ext.blocks.frontmatter.FrontMatterHeaderProvider;
-import org.intellij.markdown.flavours.gfm.GFMConstraints;
-import org.intellij.markdown.flavours.gfm.GFMElementTypes;
-import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor;
-import org.intellij.markdown.flavours.gfm.GFMMarkerProcessor;
+import org.intellij.markdown.flavours.gfm.*;
 import org.intellij.markdown.parser.MarkdownParser;
 import org.intellij.markdown.parser.MarkerProcessor;
 import org.intellij.markdown.parser.MarkerProcessorFactory;
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider;
+import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager;
+import org.intellij.markdown.parser.sequentialparsers.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,14 @@ public class BaseMdParser {
   protected final @NotNull SourceFile file;
   protected final @NotNull Reporter reporter;
   protected final @NotNull ImmutableSeq<InterestingLanguage<?>> languages;
+  protected final @NotNull MutableList<SequentialParser> sequentialParsers = MutableList.of(
+    new AutolinkParser(Seq.of(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
+    new BacktickParser(),
+    new MathParser(),
+    new ImageParser(),
+    new InlineLinkParser(),
+    new ReferenceLinkParser(),
+    new EmphasisLikeParser(new EmphStrongDelimiterParser(), new StrikeThroughDelimiterParser()));
 
   public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage<?>> lang) {
     this.file = file;
@@ -55,6 +64,13 @@ public class BaseMdParser {
 
   public @NotNull Literate parseLiterate() {
     var flavour = new GFMFlavourDescriptor() {
+      @Override public @NotNull SequentialParserManager getSequentialParserManager() {
+        return new SequentialParserManager() {
+          @Override public @NotNull Seq<SequentialParser> getParserSequence() {
+            return sequentialParsers;
+          }
+        };
+      }
       @Override public @NotNull MarkerProcessorFactory getMarkerProcessorFactory() {
         return holder -> new GFMMarkerProcessor(holder, GFMConstraints.Companion.getBASE()) {
           @Override protected @NotNull ArrayList<MarkerBlockProvider<StateInfo>> initMarkerBlockProviders() {
