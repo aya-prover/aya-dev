@@ -27,7 +27,7 @@ Consider the following example:
 def test1 {A B : Type 0} {a : A} {b : B} => wow A B a b
 ```
 
-Observe the elaborated term of `test1`: `test1`(show:core mode:full)\
+Observe the elaborated term of `test1`: `test1`(show:"core" mode:"full")\
 Consider another example:
 
 ```aya
