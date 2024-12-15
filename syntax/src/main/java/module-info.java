@@ -1,14 +1,11 @@
 module aya.syntax {
-  requires transitive aya.ij.parsing.core;
   requires transitive aya.md;
   requires transitive aya.pretty;
   requires transitive aya.util.more;
   requires transitive aya.util;
-  requires transitive kala.base;
-  requires transitive kala.collection;
 
-  requires static org.jetbrains.annotations;
-  requires org.commonmark;
+  requires aya.jb.md;
+  requires org.jetbrains.annotations;
 
   exports org.aya.generic;
   exports org.aya.prettier;

@@ -11,9 +11,9 @@ import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.FlclLanguage;
 import org.aya.parser.FlclParserDefinition;
 import org.aya.parser.FlclPsiElementTypes;
-import org.aya.producer.AyaProducer;
 import org.aya.producer.ParserUtil;
 import org.aya.util.error.SourceFile;
+import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public record FlclParser(
   }
 
   private @NotNull FlclToken computeToken(TextRange range, FlclToken.Type key) {
-    return new FlclToken(AyaProducer.sourcePosOf(range, file, true), key);
+    return new FlclToken(SourcePos.of(range, file, true), key);
   }
 
   private static class FlclFleetParser extends DefaultPsiParser {

@@ -2,39 +2,35 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
-import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
+import com.intellij.openapi.util.text.StringUtil;
 import org.aya.literate.Literate;
 import org.aya.literate.LiterateConsumer;
-import org.aya.literate.frontmatter.YamlFrontMatter;
-import org.aya.literate.math.InlineMath;
-import org.aya.literate.math.MathBlock;
 import org.aya.literate.parser.BaseMdParser;
-import org.aya.pretty.doc.Doc;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.literate.AyaBacktickParser;
 import org.aya.syntax.literate.AyaLiterate;
-import org.aya.syntax.literate.CodeAttrProcessor;
 import org.aya.syntax.literate.CodeOptions;
-import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.Reporter;
-import org.commonmark.node.Code;
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
+import org.intellij.markdown.ast.ASTNode;
+import org.intellij.markdown.parser.MarkerProcessor;
+import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider;
+import org.intellij.markdown.parser.sequentialparsers.impl.BacktickParser;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class AyaMdParser extends BaseMdParser {
   public AyaMdParser(@NotNull SourceFile file, @NotNull Reporter reporter) {
     super(file, reporter, AyaLiterate.LANGUAGES);
+    var index = sequentialParsers.indexWhere(parser -> parser instanceof BacktickParser);
+    sequentialParsers.set(index, new AyaBacktickParser());
   }
 
-  @Override protected @NotNull Parser.Builder parserBuilder() {
-    return super.parserBuilder()
-      .customDelimiterProcessor(CodeAttrProcessor.INSTANCE)
-      .customDelimiterProcessor(InlineMath.Processor.INSTANCE)
-      .customBlockParserFactory(MathBlock.FACTORY)
-      .customBlockParserFactory(YamlFrontMatter.FACTORY);
+  @Override protected void addProviders(ArrayList<MarkerBlockProvider<MarkerProcessor.StateInfo>> providers) {
+    super.addProviders(providers);
   }
 
   /**
@@ -50,32 +46,50 @@ public class AyaMdParser extends BaseMdParser {
     );
   }
 
-  protected @NotNull Literate mapNode(@NotNull Node node) {
-    return switch (node) {
-      case InlineMath math -> new Literate.Math(true, mapChildren(math));
-      case MathBlock math -> {
-        var formula = stripTrailingNewline(math.literal, math).literal();
-        yield new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(formula))));
+  @Override protected @NotNull Literate mapNode(@NotNull ASTNode node) {
+    if (node.getType() == AyaBacktickParser.AYA_CODE_SPAN) {
+      var attrSet = node.getChildren().getLast();
+      var code = new StripSurrounding(node.getChildren().getFirst(), 1, 1);
+      assert attrSet.getType() == AyaBacktickParser.ATTR_SET;
+      var attr = parseAttrSet(attrSet);
+      return new AyaLiterate.AyaInlineCode(code.literal(), Objects.requireNonNull(code.sourcePos()), attr);
+    }
+
+    return super.mapNode(node);
+  }
+
+  public @NotNull CodeOptions parseAttrSet(ASTNode attrSet) {
+    var dist = new AyaPrettierOptions();
+    var mode = CodeOptions.NormalizeMode.NULL;
+    var show = CodeOptions.ShowCode.Core;
+    for (var attr : attrSet.getChildren()) {
+      if (attr.getType() != AyaBacktickParser.ATTR) continue;
+      var key = getTextInNode(attr.getChildren().getFirst());
+      // It should be key, colon, double_quote, value, double_quote
+      var value = getTextInNode(attr.getChildren().get(attr.getChildren().size() - 2));
+      if ("mode".equalsIgnoreCase(key)) {
+        mode = cbt(attr, value, CodeOptions.NormalizeMode.values(), CodeOptions.NormalizeMode.NULL);
+        continue;
       }
-      case YamlFrontMatter yaml -> {
-        var mark = Doc.plain(String.valueOf(yaml.fenceChar).repeat(yaml.fenceLength));
-        var matter = Doc.vcat(mark, Doc.escaped(yaml.literal), mark, Doc.line());
-        var doc = yaml.fenceIndent > 0 ? Doc.hang(yaml.fenceIndent, matter) : matter;
-        yield new Literate.Raw(doc);
+      if ("show".equalsIgnoreCase(key)) {
+        show = cbt(attr, value, CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
+        continue;
       }
-      case Code inlineCode -> {
-        var spans = inlineCode.getSourceSpans();
-        if (spans != null && spans.size() == 1) {
-          var sourceSpan = spans.getFirst();
-          var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
-          var startFrom = lineIndex + sourceSpan.getColumnIndex();
-          var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
-          assert sourcePos != null;
-          yield CodeOptions.analyze(inlineCode, sourcePos.shrink(1, 1));
-        }
-        yield Panic.unreachable();
+      var cbt = cbt(attr, key, AyaPrettierOptions.Key.values(), null);
+      if (cbt != null) {
+        var isTrue = "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
+        dist.map.put(cbt, isTrue);
+        continue;
       }
-      default -> super.mapNode(node);
-    };
+      reporter.report(new AttrWarn.UnknownKey(fromNode(attr), key));
+    }
+    return new CodeOptions(mode, dist, show);
+  }
+
+  private <E extends Enum<E>> E cbt(@NotNull ASTNode attr, @NotNull String userVal, E[] values, E otherwise) {
+    for (var val : values)
+      if (StringUtil.containsIgnoreCase(val.name(), userVal)) return val;
+    reporter.report(new AttrWarn.UnknownValue(fromNode(attr), userVal, values));
+    return otherwise;
   }
 }

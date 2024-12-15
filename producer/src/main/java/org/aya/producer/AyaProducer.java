@@ -4,7 +4,6 @@ package org.aya.producer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -941,7 +940,8 @@ public record AyaProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    return sourcePosOf(node.range(), file, isTerminalNode(node));
+    @NotNull TextRange range = node.range();
+    return SourcePos.of(range, file, isTerminalNode(node));
   }
 
   public static boolean isTerminalNode(@NotNull GenericNode<?> node) {
@@ -949,17 +949,6 @@ public record AyaProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull FlexLexer.Token token, @NotNull SourceFile file) {
-    return sourcePosOf(token.range(), file, true);
-  }
-
-  public static @NotNull SourcePos sourcePosOf(@NotNull TextRange range, @NotNull SourceFile file, boolean isTerminal) {
-    var start = StringUtil.offsetToLineColumn(file.sourceCode(), range.getStartOffset());
-    var length = range.getLength();
-    var endOffset = range.getEndOffset() - (length == 0 ? 0 : 1);
-    var end = isTerminal || length == 0
-      ? LineColumn.of(start.line, start.column + length - 1)
-      : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
-    return new SourcePos(file, range.getStartOffset(), endOffset,
-      start.line + 1, start.column, end.line + 1, end.column);
+    return SourcePos.of(token.range(), file, true);
   }
 }

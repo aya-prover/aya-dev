@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -89,31 +89,14 @@ public class MarkdownTest {
       ~~~markdown
       ~~~
       ```
-      """, """
-      ```markdown
-      ~~~markdown
-      ~~~
-      ```
       """);
     parse(false, """
       ~~~markdown
       ```markdown
       ```
       ~~~
-      """, """
-      ~~~markdown
-      ```markdown
-      ```
-      ~~~
       """);
     parse(false, """
-      ```markdown
-      ~~~markdown
-      ~~~~markdown
-      ~~~~
-      ~~~
-      ```
-      """, """
       ```markdown
       ~~~markdown
       ~~~~markdown
@@ -123,11 +106,6 @@ public class MarkdownTest {
       """);
     // If md is itself interesting, this is OK.
     parse(true, """
-      ~~~markdown
-      ```markdown
-      ```
-      ~~~
-      """, """
       ~~~markdown
       ```markdown
       ```
@@ -147,6 +125,9 @@ public class MarkdownTest {
       """);
   }
 
+  public void parse(boolean mdIsInteresting, @NotNull @Language("Markdown") String input) {
+    parse(mdIsInteresting, input, input);
+  }
   public void parse(boolean mdIsInteresting, @NotNull @Language("Markdown") String input, @NotNull @Language("Markdown") String expected) {
     var lit = parse(input, mdIsInteresting ? ImmutableSeq.of(InterestingLanguage.of("markdown")) : ImmutableSeq.empty());
     assertEquals(expected, lit.toDoc().renderToMd());

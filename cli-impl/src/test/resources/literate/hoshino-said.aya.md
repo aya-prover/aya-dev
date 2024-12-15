@@ -4,7 +4,7 @@
 variable Hoshino : Type
 ```
 
-So, `Hoshino -> Hoshino`{} is a thing.
+So, `Hoshino -> Hoshino`() is a thing.
 
 ```aya
 inductive Nat | O | S Nat
@@ -19,7 +19,7 @@ def funExt (A B : Type) (f g : A -> B) (p : Fn (a : A) -> f a = g a) : f = g =>
 def pinv {a b : A} (p : a = b) : b = a => coe 0 1 (\i => p i = a) refl
 ```
 
-Example: `1 = 1`{mode=NF}.
+Example: `1 = 1`(mode:"full").
 
 + Aya module names are separated by `::`, not `.`.
 + Aya infers the module names automagically, using the same rule as of Haskell.

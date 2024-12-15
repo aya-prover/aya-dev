@@ -2,146 +2,324 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate.parser;
 
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.primitive.IntObjTuple2;
-import kala.value.LazyValue;
-import kala.value.MutableValue;
+import kala.control.Option;
 import org.aya.literate.Literate;
 import org.aya.literate.UnsupportedMarkdown;
 import org.aya.pretty.backend.md.MdStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
-import org.aya.util.error.Panic;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
-import org.aya.util.more.StringUtil;
 import org.aya.util.reporter.Reporter;
-import org.commonmark.node.*;
-import org.commonmark.parser.IncludeSourceSpans;
-import org.commonmark.parser.Parser;
-import org.jetbrains.annotations.Contract;
+import org.intellij.markdown.MarkdownElementType;
+import org.intellij.markdown.MarkdownElementTypes;
+import org.intellij.markdown.MarkdownTokenTypes;
+import org.intellij.markdown.ast.ASTNode;
+import org.intellij.markdown.ast.ASTUtilKt;
+import org.intellij.markdown.ext.blocks.frontmatter.FrontMatterHeaderProvider;
+import org.intellij.markdown.flavours.gfm.*;
+import org.intellij.markdown.parser.MarkdownParser;
+import org.intellij.markdown.parser.MarkerProcessor;
+import org.intellij.markdown.parser.MarkerProcessorFactory;
+import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider;
+import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager;
+import org.intellij.markdown.parser.sequentialparsers.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+
 public class BaseMdParser {
   /** For empty line that end with \n, the index points to \n */
-  protected final @NotNull ImmutableIntSeq linesIndex;
   protected final @NotNull SourceFile file;
   protected final @NotNull Reporter reporter;
   protected final @NotNull ImmutableSeq<InterestingLanguage<?>> languages;
+  protected final @NotNull MutableList<SequentialParser> sequentialParsers = MutableList.of(
+    new AutolinkParser(Seq.of(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
+    new BacktickParser(),
+    new MathParser(),
+    new ImageParser(),
+    new InlineLinkParser(),
+    new ReferenceLinkParser(),
+    new EmphasisLikeParser(new EmphStrongDelimiterParser(), new StrikeThroughDelimiterParser()));
 
   public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage<?>> lang) {
-    this.linesIndex = StringUtil.indexedLines(file.sourceCode())
-      .mapToInt(ImmutableIntSeq.factory(), IntObjTuple2::component1);
     this.file = file;
     this.reporter = reporter;
     this.languages = lang;
   }
 
   /// region Entry
-
-  protected @NotNull Parser.Builder parserBuilder() {
-    return Parser.builder()
-      .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
-      .postProcessor(FillCodeBlock.INSTANCE);
+  protected void addProviders(ArrayList<MarkerBlockProvider<MarkerProcessor.StateInfo>> providers) {
+    providers.addFirst(new FrontMatterHeaderProvider());
   }
 
   public @NotNull Literate parseLiterate() {
-    return mapNode(parserBuilder().build().parse(file.sourceCode()));
+    var flavour = new GFMFlavourDescriptor() {
+      @Override public @NotNull SequentialParserManager getSequentialParserManager() {
+        return new SequentialParserManager() {
+          @Override public @NotNull Seq<SequentialParser> getParserSequence() {
+            return sequentialParsers;
+          }
+        };
+      }
+      @Override public @NotNull MarkerProcessorFactory getMarkerProcessorFactory() {
+        return holder -> new GFMMarkerProcessor(holder, GFMConstraints.Companion.getBASE()) {
+          @Override protected @NotNull ArrayList<MarkerBlockProvider<StateInfo>> initMarkerBlockProviders() {
+            var providers = super.initMarkerBlockProviders();
+            addProviders(providers);
+            return providers;
+          }
+        };
+      }
+    };
+    var parser = new MarkdownParser(flavour);
+    return mapNode(parser.buildMarkdownTreeFromString(file.sourceCode()));
   }
 
   /// endregion Entry
 
   /// region Parsing
 
-  protected @NotNull ImmutableSeq<Literate> mapChildren(@NotNull Node parent) {
-    Node next;
+  protected @NotNull ImmutableSeq<Literate> mapChildren(@NotNull ASTNode parent) {
+    return mapChildren(parent.getChildren().view());
+  }
+
+  public static final TokenSet NATURAL_EOL = TokenSet.create(
+    MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.BLOCK_QUOTE,
+    MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK,
+    MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.UNORDERED_LIST,
+    GFMElementTypes.TABLE, GFMElementTypes.BLOCK_MATH,
+    FrontMatterHeaderProvider.FRONT_MATTER_HEADER
+  );
+  protected @NotNull ImmutableSeq<Literate> mapChildren(@NotNull SeqView<ASTNode> nodes) {
     var children = MutableList.<Literate>create();
-    for (var node = parent.getFirstChild(); node != null; node = next) {
-      if (children.isNotEmpty() && node instanceof Paragraph) {
-        children.append(new Literate.Raw(Doc.line()));
+    var wantToSkipEol = false;
+    for (var child : nodes) {
+      if (NATURAL_EOL.contains(child.getType())) wantToSkipEol = true;
+      else {
+        if (wantToSkipEol && child.getType() == MarkdownTokenTypes.EOL) {
+          wantToSkipEol = false;
+          continue;
+        }
       }
-      next = node.getNext();
-      children.append(mapNode(node));
+
+      children.append(mapNode(child));
     }
+
     return children.toImmutableSeq();
   }
 
-  protected record StripTrailing(LazyValue<SourcePos> pos, String literal) {}
-  protected @NotNull StripTrailing stripTrailingNewline(@NotNull String literal, @NotNull Block owner) {
-    var spans = owner.getSourceSpans();
-    if (spans != null && spans.size() >= 2) {   // always contains '```' and '```'
-      var inner = ImmutableSeq.from(spans).view().drop(1).dropLast(1).toImmutableSeq();
-      // remove the last line break if not empty
-      if (!literal.isEmpty())
-        literal = literal.substring(0, literal.length() - 1);
-      return new StripTrailing(LazyValue.of(() -> fromSourceSpans(inner)), literal);
-    }
-    throw new Panic("SourceSpans");
+  private static final @NotNull ImmutableSeq<IElementType> HEADINGS = ImmutableSeq.of(
+    MarkdownElementTypes.ATX_1,
+    MarkdownElementTypes.ATX_2,
+    MarkdownElementTypes.ATX_3,
+    MarkdownElementTypes.ATX_4,
+    MarkdownElementTypes.ATX_5,
+    MarkdownElementTypes.ATX_6
+  );
+
+  private static Option<ASTNode> peekChild(@NotNull ASTNode node, @NotNull IElementType type) {
+    return Option.ofNullable(node.findChildOfType(type));
   }
 
-  protected @NotNull Literate mapNode(@NotNull Node node) {
-    return switch (node) {
-      case Text text -> new Literate.Raw(Doc.plain(text.getLiteral()));
-      case Emphasis emphasis -> new Literate.Many(Style.italic(), mapChildren(emphasis));
-      case HardLineBreak _, SoftLineBreak _ -> new Literate.Raw(Doc.line());
-      case StrongEmphasis emphasis -> new Literate.Many(Style.bold(), mapChildren(emphasis));
-      case Paragraph p -> new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(p));
-      case BlockQuote b -> new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(b));
-      case Heading h -> new Literate.Many(new MdStyle.GFM.Heading(h.getLevel()), mapChildren(h));
-      case Link h -> new Literate.HyperLink(h.getDestination(), h.getTitle(), mapChildren(h));
-      case Image h -> new Literate.Image(h.getDestination(), mapChildren(h));
-      case ListItem item -> flatten(collectChildren(item.getFirstChild())
-        // .flatMap(p -> p instanceof Paragraph ? collectChildren(p.getFirstChild()) : SeqView.of(p))
-        .flatMap(this::mapChildren)
-        .toImmutableSeq());
-      case OrderedList ordered -> new Literate.List(mapChildren(ordered), true);
-      case BulletList bullet -> new Literate.List(mapChildren(bullet), false);
-      case Document d -> flatten(mapChildren(d));
-      case HtmlBlock html when html.getLiteral().startsWith("<!--") -> new Literate.Raw(Doc.empty());
-      case ThematicBreak t -> new Literate.Many(MdStyle.GFM.ThematicBreak, mapChildren(t));
-      case FencedCodeBlock codeBlock -> {
-        var language = codeBlock.getInfo();
-        var code = stripTrailingNewline(codeBlock.getLiteral(), codeBlock);
-        yield languages.find(p -> p.test(language))
-          .map(factory -> (Literate) factory.create(code.literal, code.pos.get()))
-          .getOrElse(() -> {
-            var fence = codeBlock.getFenceCharacter();
-            var raw = Doc.nest(codeBlock.getFenceIndent(), Doc.vcat(
-              Doc.escaped(fence.repeat(codeBlock.getOpeningFenceLength()) + language),
-              Doc.escaped(code.literal),
-              Doc.escaped(fence.repeat(codeBlock.getClosingFenceLength())),
-              Doc.empty()
-            ));
-            return new Literate.Raw(raw);
-          });
+  @NotNull protected String getTextInNode(@NotNull ASTNode node) {
+    return ASTUtilKt.getTextInNode(node, file.sourceCode()).toString();
+  }
+
+  private static int isHeading(@NotNull ASTNode node) {
+    return HEADINGS.indexOf(node.getType());
+  }
+
+  protected record InlineLinkData(@Nullable String title, @NotNull String destination,
+                                  @NotNull ImmutableSeq<Literate> children) { }
+
+  protected @NotNull InlineLinkData mapInlineLink(@NotNull ASTNode node) {
+    var childNode = node.childOfType(MarkdownElementTypes.LINK_TEXT);
+    var destinationNode = node.childOfType(MarkdownElementTypes.LINK_DESTINATION);
+
+    var titleNode = peekChild(node, MarkdownElementTypes.LINK_TITLE);
+    var titleTextNode = titleNode.map(x -> x.childOfType(MarkdownTokenTypes.TEXT));
+
+    var destination = getTextInNode(destinationNode);
+    var title = titleTextNode.map(this::getTextInNode);
+    var children = childNode.childrenWithoutSurrounding(1);
+
+    return new InlineLinkData(title.getOrNull(), destination, mapChildren(children));
+  }
+
+  protected @NotNull Literate mapNode(@NotNull ASTNode node) {
+    var type = node.getType();
+
+    if (type == MarkdownTokenTypes.EOL || type == MarkdownTokenTypes.HARD_LINE_BREAK) {
+      return new Literate.Raw(Doc.line());
+    }
+
+    // do not confuse with MarkdownTokenTypes.EMPH
+    if (type == MarkdownElementTypes.EMPH) {
+      return new Literate.Many(Style.italic(), mapChildren(
+        node.childrenWithoutSurrounding(1))
+      );
+    }
+
+    if (type == MarkdownElementTypes.STRONG) {
+      return new Literate.Many(Style.italic(), mapChildren(
+        node.childrenWithoutSurrounding(2))
+      );
+    }
+
+    if (type == MarkdownElementTypes.PARAGRAPH) {
+      return new Literate.Many(MdStyle.GFM.Paragraph, mapChildren(node));
+    }
+
+    if (type == MarkdownElementTypes.BLOCK_QUOTE) {
+      return new Literate.Many(MdStyle.GFM.BlockQuote, mapChildren(node));
+    }
+
+    var i = isHeading(node);
+    if (i != -1) {
+      var atxContent = node.childOfType(MarkdownTokenTypes.ATX_CONTENT);
+      // 1-based headings
+      return new Literate.Many(new MdStyle.GFM.Heading(i + 1),
+        mapChildren(atxContent.getChildren().view()
+          .dropWhile(it -> it.getType() == MarkdownTokenTypes.WHITE_SPACE)
+        )
+      );
+    }
+
+    if (type == MarkdownElementTypes.INLINE_LINK) {
+      var data = mapInlineLink(node);
+      return new Literate.HyperLink(data.destination, data.title, data.children);
+    }
+
+    if (type == MarkdownElementTypes.IMAGE) {
+      var inner = node.childOfType(MarkdownElementTypes.INLINE_LINK);
+      var data = mapInlineLink(inner);
+      return new Literate.Image(data.destination, data.children);
+    }
+
+    if (type == MarkdownElementTypes.HTML_BLOCK) {
+      var content = getTextInNode(node);
+      if (content.startsWith("<!--")) {
+        return new Literate.Raw(Doc.empty());
       }
-      case Code inlineCode -> {
-        var spans = inlineCode.getSourceSpans();
-        if (spans != null && spans.size() == 1) {
-          var sourceSpan = spans.getFirst();
-          var lineIndex = linesIndex.get(sourceSpan.getLineIndex());
-          var startFrom = lineIndex + sourceSpan.getColumnIndex();
-          var sourcePos = fromSourceSpans(file, startFrom, Seq.of(sourceSpan));
-          assert sourcePos != null;
-          // FIXME[hoshino]: The sourcePos here contains the beginning and trailing '`'
-          yield new Literate.InlineCode(inlineCode.getLiteral(), sourcePos);
-        }
-        throw new Panic("SourceSpans");
+    }
+
+    if (type == MarkdownElementTypes.LIST_ITEM) {
+      // not exactly the same as the old one, just hope there is no bugs
+      return flatten(mapChildren(node.getChildren().view().drop(1)));
+    }
+
+    if (type == MarkdownElementTypes.UNORDERED_LIST) {
+      return new Literate.List(mapChildren(node), false);
+    }
+
+    if (type == MarkdownElementTypes.ORDERED_LIST) {
+      return new Literate.List(mapChildren(node), true);
+    }
+
+    if (type == MarkdownTokenTypes.HORIZONTAL_RULE) {
+      return new Literate.Many(MdStyle.GFM.ThematicBreak, ImmutableSeq.empty());
+    }
+
+    if (type == MarkdownElementTypes.CODE_FENCE) {
+      var langInfo = peekChild(node, MarkdownTokenTypes.FENCE_LANG).map(this::getTextInNode);
+      var code = new StripSurrounding(node,
+        langInfo.isDefined() ? 3 : 2, 2);
+
+      var wellCode = Option.<Literate>none();
+
+      if (langInfo.isDefined()) {
+        wellCode = languages.find(p -> p.test(langInfo.get()))
+          .map(factory ->
+            factory.create(code.literal(), code.sourcePos()));
       }
-      default -> {
-        var spans = node.getSourceSpans();
-        if (spans == null) throw new Panic("SourceSpans");
-        var pos = fromSourceSpans(Seq.from(spans));
-        if (pos == null) throw new UnsupportedOperationException("TODO: Which do the nodes have not source spans?");
-        reporter.report(new UnsupportedMarkdown(pos, node.getClass().getSimpleName()));
-        yield new Literate.Unsupported(mapChildren(node));
-      }
-    };
+
+      return wellCode.getOrElse(() -> {
+        var fence = getTextInNode(node.childOfType(MarkdownTokenTypes.CODE_FENCE_START));
+        var raw = Doc.vcat(
+          Doc.escaped(fence + langInfo.getOrDefault("")),
+          Doc.escaped(code.literal()),
+          Doc.escaped(fence),
+          Doc.empty()
+        );
+        return new Literate.Raw(raw);
+      });
+    }
+
+    if (type == MarkdownElementTypes.CODE_SPAN) {
+      var content = new StripSurrounding(node, 1);
+      return new Literate.InlineCode(content.literal(), content.sourcePos());
+    }
+
+    if (type == GFMElementTypes.INLINE_MATH) {
+      var content = new StripSurrounding(node, 1).literal();
+      return new Literate.Math(true, ImmutableSeq.of(new Literate.Raw(Doc.plain(content))));
+    }
+
+    if (type == GFMElementTypes.BLOCK_MATH) {
+      var content = new StripSurrounding(node, 1).literal();
+      return new Literate.Math(false, ImmutableSeq.of(new Literate.Raw(Doc.plain(content))));
+    }
+
+    if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER) {
+      return new Literate.Many(null, mapChildren(node));
+    }
+
+    if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER_DELIMITER) {
+      return new Literate.Raw(Doc.plain(getTextInNode(node)));
+    }
+
+    if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER_CONTENT) {
+      return new Literate.Raw(Doc.escaped(getTextInNode(node)));
+    }
+
+    if (type == MarkdownElementTypes.MARKDOWN_FILE) {
+      return flatten(mapChildren(node));
+    }
+
+    // fallback
+    if (type == MarkdownTokenTypes.WHITE_SPACE || type instanceof MarkdownElementType mdTy && mdTy.isToken()) {
+      return new Literate.Raw(Doc.plain(getTextInNode(node)));
+    }
+
+    var pos = fromNode(node);
+    reporter.report(new UnsupportedMarkdown(pos, node.getType().toString()));
+    return new Literate.Unsupported(mapChildren(node));
+  }
+
+  protected class StripSurrounding {
+    private final @NotNull ASTNode first, last;
+    private final boolean isEmpty;
+
+    public StripSurrounding(@NotNull ASTNode node, int count) {
+      this(node, count, count);
+    }
+
+    public StripSurrounding(@NotNull ASTNode node, int startCount, int endCount) {
+      var lastIdx = node.getChildren().size() - endCount - 1;
+      isEmpty = lastIdx < startCount;
+      first = node.getChildren().get(startCount);
+      last = node.getChildren().get(lastIdx);
+    }
+
+    public @NotNull String literal() {
+      if (isEmpty) return "";
+      return file.sourceCode().substring(first.getStartOffset(), last.getEndOffset());
+    }
+
+    public @Nullable SourcePos sourcePos() {
+      return isEmpty ? null : fromNodes(Seq.of(first, last));
+    }
   }
 
   protected Literate flatten(@NotNull Seq<Literate> children) {
@@ -149,16 +327,9 @@ public class BaseMdParser {
       : new Literate.Many(null, children.toImmutableSeq());
   }
 
-  protected static @NotNull SeqView<Node> collectChildren(@NotNull Node firstChild) {
-    var itemStore = MutableValue.create(firstChild);
-    return Seq.generateUntilNull(() -> itemStore.updateAndGet(Node::getNext))
-      .view().prepended(firstChild);
-  }
-
   /// endregion Parsing
 
   /// region Helper
-
 
   /**
    * Replacing non-code content with whitespaces, keep the source pos of code parts.
@@ -194,46 +365,23 @@ public class BaseMdParser {
     return builder.toString();
   }
 
-  public @Nullable SourcePos fromSourceSpans(@NotNull Seq<SourceSpan> sourceSpans) {
-    if (sourceSpans.isEmpty()) return null;
-    var startFrom = linesIndex.get(sourceSpans.getFirst().getLineIndex());
-
-    return fromSourceSpans(file, startFrom, sourceSpans);
+  public @NotNull SourcePos fromNode(@NotNull ASTNode node) {
+    return fromNodes(Seq.of(node));
   }
 
   /**
-   * Build a {@link SourcePos} from a list of {@link SourceSpan}
+   * Build a {@link SourcePos} from a list of {@link ASTNode}
    *
-   * @param startFrom   the SourcePos should start from. (inclusive)
-   * @param sourceSpans a not null, continuous source span sequence
-   * @return null if an empty sourceSpans
-   * @see FillCodeBlock
+   * @param ranges a non-empty, continuous source span sequence
    */
-  @Contract(pure = true) public static @Nullable SourcePos
-  fromSourceSpans(@NotNull SourceFile file, int startFrom, @NotNull Seq<SourceSpan> sourceSpans) {
-    if (sourceSpans.isEmpty()) return null;
-
-    var it = sourceSpans.iterator();
-    var beginSpan = it.next();
-    var endLine = beginSpan.getLineIndex();
-    var endColumn = beginSpan.getLength() - 1;
-    var totalLength = beginSpan.getLength();
-
-    // TODO: SeqView?
-    while (it.hasNext()) {
-      var curSpan = it.next();
-
-      endLine = curSpan.getLineIndex();
-      endColumn = curSpan.getColumnIndex();
-      // 1 is for line separator
-      totalLength += 1 + curSpan.getLength();
+  public @NotNull SourcePos fromNodes(@NotNull Seq<ASTNode> ranges) {
+    assert ranges.isNotEmpty();
+    int start = Integer.MAX_VALUE, end = 0;
+    for (var node : ranges) {
+      start = Math.min(start, node.getStartOffset());
+      end = Math.max(end, node.getEndOffset());
     }
-
-    return new SourcePos(file,
-      startFrom, startFrom + totalLength - 1,
-      beginSpan.getLineIndex() + 1, beginSpan.getColumnIndex(),
-      endLine + 1, endColumn);
+    return SourcePos.of(new TextRange(start, end), file, false);
   }
-
   /// endregion Helper
 }

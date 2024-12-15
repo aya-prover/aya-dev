@@ -115,5 +115,7 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
   + The command and argument parsing framework is in `tools-repl`.
     It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
   + The literate-markdown related infrastructure is in `tools-md`.
-    It offers commonmark extensions for literate mode of any language with a highlighter.
+    It offers [JetBrains/markdown] extensions for literate mode of any language with a highlighter.
 + `[latest version]` is what you see on this badge ![maven].
+
+[JetBrains/markdown]: https://github.com/JetBrains/markdown
