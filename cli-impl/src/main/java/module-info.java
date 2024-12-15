@@ -6,7 +6,6 @@ module aya.cli.impl {
   requires aya.md;
   requires aya.producer;
   requires aya.compiler;
-  requires org.commonmark;
   requires java.compiler;
   requires jdk.compiler;
   requires aya.jb.md;

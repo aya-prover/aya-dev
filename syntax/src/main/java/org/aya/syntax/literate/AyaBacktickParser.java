@@ -5,8 +5,6 @@ package org.aya.syntax.literate;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.mutable.MutableList;
 import kotlin.ranges.IntRange;
-import org.commonmark.node.CustomNode;
-import org.commonmark.node.Delimited;
 import org.intellij.markdown.MarkdownElementType;
 import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.MarkdownTokenTypes;
@@ -27,13 +25,6 @@ public class AyaBacktickParser extends BacktickParser {
   public static final @NotNull MarkdownElementType ATTR = new MarkdownElementType("ATTR", false);
   public static final @NotNull MarkdownElementType ATTR_SET = new MarkdownElementType("ATTR_SET", false);
   public static final @NotNull MarkdownElementType AYA_CODE_SPAN = new MarkdownElementType("AYA_CODE_SPAN", false);
-
-  public static class Attr extends CustomNode implements Delimited {
-    public final @NotNull CodeOptions options;
-    public Attr(@NotNull CodeOptions options) { this.options = options; }
-    @Override public String getOpeningDelimiter() { return "{"; }
-    @Override public String getClosingDelimiter() { return "}"; }
-  }
 
   private static final @NotNull TokenSet BACKTICKS =
     TokenSet.create(MarkdownTokenTypes.BACKTICK, MarkdownTokenTypes.ESCAPED_BACKTICKS);

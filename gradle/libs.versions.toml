@@ -16,8 +16,6 @@ picocli = "4.7.6"
 aya-upstream = "0.0.31"
 # https://github.com/jline/jline3
 jline = "3.27.1"
-# https://github.com/commonmark/commonmark-java
-commonmark = "0.24.0"
 # https://junit.org/junit5
 junit = "5.11.3"
 hamcrest = "2.2"
@@ -61,7 +59,6 @@ junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", ver
 hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
 
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
-commonmark = { group = "org.commonmark", name = "commonmark", version.ref = "commonmark" }
 
 manifold-delegate-runtime = { group = "systems.manifold", name = "manifold-delegation-rt", version.ref = "manifold" }
 manifold-delegate-codegen = { group = "systems.manifold", name = "manifold-delegation", version.ref = "manifold" }

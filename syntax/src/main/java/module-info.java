@@ -4,7 +4,6 @@ module aya.syntax {
   requires transitive aya.util.more;
   requires transitive aya.util;
 
-  requires org.commonmark;
   requires aya.jb.md;
   requires org.jetbrains.annotations;
 

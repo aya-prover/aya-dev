@@ -7,7 +7,6 @@ dependencies {
   api(libs.gson)
   implementation(project(":producer"))
   implementation(project(":jit-compiler"))
-  implementation(libs.commonmark)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
   testImplementation(project(":cli-console"))

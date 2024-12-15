@@ -3,7 +3,6 @@ module aya.md {
   requires aya.util.more;
   requires transitive aya.pretty;
 
-  requires org.commonmark;
   requires static org.jetbrains.annotations;
   requires kala.collection.primitive;
 
