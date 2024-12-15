@@ -131,7 +131,7 @@ public class BaseMdParser {
     return Option.ofNullable(node.findChildOfType(type));
   }
 
-  private @NotNull String getTextInNode(@NotNull ASTNode node) {
+  @NotNull protected String getTextInNode(@NotNull ASTNode node) {
     return ASTUtilKt.getTextInNode(node, file.sourceCode()).toString();
   }
 

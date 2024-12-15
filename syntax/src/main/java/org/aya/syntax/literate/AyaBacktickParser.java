@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.literate;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.mutable.MutableList;
 import kotlin.ranges.IntRange;
@@ -56,10 +55,6 @@ public class AyaBacktickParser extends BacktickParser {
             MarkdownElementTypes.CODE_SPAN);
 
           // parse aya code attr here
-          // does the parser parse the content of new IntRange(iterator.getIndex(), endIterator.getIndex() + 1) after `result.withNode` ?
-          // ideally yes, but I am looking up how to do it
-          // I think the link parser builds nested ASTs. We can learn
-          // org.intellij.markdown.parser.sequentialparsers.SequentialParser.ParsingResultBuilder.withOtherParsingResult
           var attrIt = endIterator.advance();
           if (attrIt.getType() == MarkdownTokenTypes.LPAREN) {
             attrIt = attrIt.advance();
@@ -124,36 +119,5 @@ public class AyaBacktickParser extends BacktickParser {
     return new LocalParsingResult(iterator,
       List.of(new SequentialParser.Node(new IntRange(beginIndex, endIndex + 1), ATTR))
     );
-  }
-
-  // var dist = new AyaPrettierOptions();
-  // var mode = NormalizeMode.NULL;
-  // var show = CodeOptions.ShowCode.Core;
-  // for (var s : DELIM.split(content.toString())) {
-  //   if (s.isBlank()) continue;
-  //   var attribute = EQ.split(s, 2);
-  //   if (attribute.length > 1) {
-  //     var key = attribute[0];
-  //     var val = attribute[1];
-  //     if ("mode".equalsIgnoreCase(key)) {
-  //       mode = cbt(val, NormalizeMode.values(), NormalizeMode.NULL);
-  //       continue;
-  //     }
-  //     if ("show".equalsIgnoreCase(key)) {
-  //       show = cbt(val, CodeOptions.ShowCode.values(), CodeOptions.ShowCode.Core);
-  //       continue;
-  //     }
-  //     var cbt = cbt(key, AyaPrettierOptions.Key.values(), null);
-  //     if (cbt != null) {
-  //       var isTrue = val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes");
-  //       dist.map.put(cbt, isTrue);
-  //       continue;
-  //     }
-  //   }
-
-  private <E extends Enum<E>> E cbt(@NotNull String key, E[] values, E otherwise) {
-    for (var val : values)
-      if (StringUtil.containsIgnoreCase(val.name(), key)) return val;
-    return otherwise;
   }
 }
