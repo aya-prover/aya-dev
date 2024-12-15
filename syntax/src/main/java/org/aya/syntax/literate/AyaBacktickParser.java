@@ -104,12 +104,10 @@ public class AyaBacktickParser extends BacktickParser {
           .withNode(new Node(new IntRange(attrBeginIndex, endIndex), ATTR_SET))
           .withNodes(wellNodes.asJava());
         return attrIt;
-      } else {
-        result.withNode(codeSpanNode);
-        return endIterator;
       }
     }
-    return iterator;
+    result.withNode(codeSpanNode);
+    return endIterator;
   }
 
   private @NotNull TokensCache.Iterator skipWS(@NotNull TokensCache.Iterator it) {
