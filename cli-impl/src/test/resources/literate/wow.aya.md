@@ -34,11 +34,11 @@ Consider another example:
 def test2 {A B : Type 0} {a : A} {b : B} => wow A B a a
 ```
 
-Observe the elaborated term of `test2`: `test2`(show:core mode:full)\
-Showing the implicit arguments: `test2`(show:core mode:full implicitArgs:true)
-Showing the implicit patterns: `test2`(show:core mode:full implicitPats:true)
-Showing the lambda types: `test2`(show:core mode:full implicitArgs:true lambdaTypes:true)
-Default: `test2`(show:core mode:full)
+Observe the elaborated term of `test2`: `test2`(show:"core" mode:"full")\
+Showing the implicit arguments: `test2`(show:"core" mode:"full" implicitArgs:"true")
+Showing the implicit patterns: `test2`(show:"core" mode:"full" implicitPats:"true")
+Showing the lambda types: `test2`(show:"core" mode:"full" implicitArgs:"true" lambdaTypes:"true")
+Default: `test2`(show:"core" mode:"full")
 
-Using unknown attribute key: `test2`(hi:hello)
-Using unknown attribute value: `test2`(mode:nf)
+Using unknown attribute key: `test2`(hi:"hello")
+Using unknown attribute value: `test2`(mode:"nf")

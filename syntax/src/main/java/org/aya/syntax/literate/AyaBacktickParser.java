@@ -56,7 +56,8 @@ public class AyaBacktickParser extends BacktickParser {
 
   /**
    * Parse Aya Code Attr
-   * @param iterator the iterator which points to the first token of code span
+   *
+   * @param iterator    the iterator which points to the first token of code span
    * @param endIterator the iterator which points to the last token of code span
    * @return the iterator used for next parsing loop
    */
@@ -123,7 +124,13 @@ public class AyaBacktickParser extends BacktickParser {
     iterator = skipWS(iterator.advance());
     if (iterator.getType() != MarkdownTokenTypes.COLON) return null;
     iterator = skipWS(iterator.advance());
+
+    // Must be consecutive
+    if (iterator.getType() != MarkdownTokenTypes.DOUBLE_QUOTE) return null;
+    iterator = iterator.advance();
     if (iterator.getType() != MarkdownTokenTypes.TEXT) return null;
+    iterator = iterator.advance();
+    if (iterator.getType() != MarkdownTokenTypes.DOUBLE_QUOTE) return null;
     var endIndex = iterator.getIndex();
     return new LocalParsingResult(iterator,
       List.of(new SequentialParser.Node(new IntRange(beginIndex, endIndex + 1), ATTR))

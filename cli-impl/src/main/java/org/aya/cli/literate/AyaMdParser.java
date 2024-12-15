@@ -65,7 +65,8 @@ public class AyaMdParser extends BaseMdParser {
     for (var attr : attrSet.getChildren()) {
       if (attr.getType() != AyaBacktickParser.ATTR) continue;
       var key = getTextInNode(attr.getChildren().getFirst());
-      var value = getTextInNode(attr.getChildren().getLast());
+      // It should be key, colon, double_quote, value, double_quote
+      var value = getTextInNode(attr.getChildren().get(attr.getChildren().size() - 2));
       if ("mode".equalsIgnoreCase(key)) {
         mode = cbt(attr, value, CodeOptions.NormalizeMode.values(), CodeOptions.NormalizeMode.NULL);
         continue;
