@@ -260,7 +260,7 @@ public sealed interface Doc extends Docile {
   }
 
   static @NotNull Doc code(@NotNull String code) {
-    return code(Language.Builtin.Aya, plain(code));
+    return code(Language.Builtin.Plain, plain(code));
   }
 
   static @NotNull Doc code(@NotNull Doc code) {
