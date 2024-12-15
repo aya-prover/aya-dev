@@ -100,15 +100,18 @@ public class AyaBacktickParser extends BacktickParser {
     return iterator;
   }
 
+  private @NotNull TokensCache.Iterator skipWS(@NotNull TokensCache.Iterator it) {
+    while (WHITESPACE.contains(it.getType())) it = it.advance();
+    return it;
+  }
+
   private @Nullable LocalParsingResult parseAttr(@NotNull TokensCache.Iterator iterator) {
     while (WHITESPACE.contains(iterator.getType())) iterator = iterator.advance();
     if (iterator.getType() != MarkdownTokenTypes.TEXT) return null;
     var beginIndex = iterator.getIndex();
-    iterator = iterator.advance();
-    while (WHITESPACE.contains(iterator.getType())) iterator = iterator.advance();
+    iterator = skipWS(iterator.advance());
     if (iterator.getType() != MarkdownTokenTypes.COLON) return null;
-    iterator = iterator.advance();
-    while (WHITESPACE.contains(iterator.getType())) iterator = iterator.advance();
+    iterator = skipWS(iterator.advance());
     if (iterator.getType() != MarkdownTokenTypes.TEXT) return null;
     var endIndex = iterator.getIndex();
     return new LocalParsingResult(iterator,
