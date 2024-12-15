@@ -62,10 +62,6 @@ subprojects {
   val proj = this@subprojects
   val isSnapshot = proj.version.toString().endsWith("SNAPSHOT")
   val isRelease = !isSnapshot
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
 
   apply {
     plugin("java")
