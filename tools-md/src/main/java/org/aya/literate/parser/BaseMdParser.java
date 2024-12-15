@@ -97,7 +97,7 @@ public class BaseMdParser {
   public static final TokenSet NATURAL_EOL = TokenSet.create(
     MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.BLOCK_QUOTE,
     MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK,
-    MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.UNORDERED_LIST,
+    MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.UNORDERED_LIST, MarkdownElementTypes.LIST_ITEM,
     GFMElementTypes.TABLE, GFMElementTypes.BLOCK_MATH,
     FrontMatterHeaderProvider.FRONT_MATTER_HEADER
   );
