@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
 import org.aya.pretty.error.LineColSpan;
 import org.aya.pretty.error.Span;
@@ -150,5 +153,16 @@ public record SourcePos(
   public @NotNull SourcePos shrink(int leftIncrease, int rightDecrease) {
     return new SourcePos(file, tokenStartIndex + leftIncrease, tokenEndIndex - rightDecrease,
       startLine, startColumn + leftIncrease, endLine, endColumn - rightDecrease);
+  }
+
+  public static @NotNull SourcePos of(@NotNull TextRange range, @NotNull SourceFile file, boolean crossLine) {
+    var start = StringUtil.offsetToLineColumn(file.sourceCode(), range.getStartOffset());
+    var length = range.getLength();
+    var endOffset = range.getEndOffset() - (length == 0 ? 0 : 1);
+    var end = crossLine || length == 0
+      ? LineColumn.of(start.line, start.column + length - 1)
+      : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
+    return new SourcePos(file, range.getStartOffset(), endOffset,
+      start.line + 1, start.column, end.line + 1, end.column);
   }
 }

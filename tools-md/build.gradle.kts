@@ -4,6 +4,7 @@ dependencies {
   api(project(":tools-kala"))
   api(libs.annotations)
   api(libs.commonmark)
+  api(libs.aya.jbmd.ext)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
 }

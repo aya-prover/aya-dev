@@ -13,7 +13,7 @@ kala = "0.76.0"
 # https://picocli.info
 picocli = "4.7.6"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util/
-build-util = "0.0.29"
+aya-upstream = "0.0.31"
 # https://github.com/jline/jline3
 jline = "3.27.1"
 # https://github.com/commonmark/commonmark-java
@@ -36,12 +36,13 @@ jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
 [libraries]
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 
-aya-ij-core = { group = "org.aya-prover.upstream", name = "ij-parsing-core", version.ref = "build-util" }
-aya-ij-text = { group = "org.aya-prover.upstream", name = "ij-util-text", version.ref = "build-util" }
-aya-ij-wrapper = { group = "org.aya-prover.upstream", name = "ij-parsing-wrapper", version.ref = "build-util" }
-aya-lsp-protocol = { group = "org.aya-prover.upstream", name = "javacs-protocol", version.ref = "build-util" }
-aya-build-util = { group = "org.aya-prover.upstream", name = "build-util", version.ref = "build-util" }
-aya-build-jflex = { group = "org.aya-prover.upstream", name = "build-util-jflex", version.ref = "build-util" }
+aya-ij-core = { group = "org.aya-prover.upstream", name = "ij-parsing-core", version.ref = "aya-upstream" }
+aya-ij-text = { group = "org.aya-prover.upstream", name = "ij-util-text", version.ref = "aya-upstream" }
+aya-ij-wrapper = { group = "org.aya-prover.upstream", name = "ij-parsing-wrapper", version.ref = "aya-upstream" }
+aya-lsp-protocol = { group = "org.aya-prover.upstream", name = "javacs-protocol", version.ref = "aya-upstream" }
+aya-build-util = { group = "org.aya-prover.upstream", name = "build-util", version.ref = "aya-upstream" }
+aya-build-jflex = { group = "org.aya-prover.upstream", name = "build-util-jflex", version.ref = "aya-upstream" }
+aya-jbmd-ext = { group = "org.aya-prover.upstream", name = "jb-md-ij", version.ref = "aya-upstream" }
 
 kala-base = { group = "org.glavo.kala", name = "kala-base", version.ref = "kala" }
 kala-collection = { group = "org.glavo.kala", name = "kala-collection", version.ref = "kala" }
