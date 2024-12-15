@@ -53,6 +53,13 @@ public class AyaBacktickParser extends BacktickParser {
 
     return result.withFurtherProcessing(delegateIndices.get());
   }
+
+  /**
+   * Parse Aya Code Attr
+   * @param iterator the iterator which points to the first token of code span
+   * @param endIterator the iterator which points to the last token of code span
+   * @return the iterator used for next parsing loop
+   */
   private TokensCache.@NotNull Iterator parseAyaCode(TokensCache.Iterator iterator, TokensCache.Iterator endIterator, ParsingResultBuilder result) {
     var codeSpanNode = new Node(new IntRange(iterator.getIndex(), endIterator.getIndex() + 1),
       MarkdownElementTypes.CODE_SPAN);
@@ -66,6 +73,7 @@ public class AyaBacktickParser extends BacktickParser {
       boolean isSuccess = false;
 
       while (attrIt.getType() != null) {
+        // in loop, attrIt is last token not be consumed
         if (attrIt.getType() == MarkdownTokenTypes.RPAREN) {
           isSuccess = true;
           break;
@@ -74,9 +82,12 @@ public class AyaBacktickParser extends BacktickParser {
         var attr = parseAttr(attrIt);
         if (attr != null) {
           wellNodes.appendAll(attr.getParsedNodes());
-          attrIt = attr.getIteratorPosition().advance();
+          attrIt = skipWS(attr.getIteratorPosition().advance());
         } else break;
       }
+
+      // if isSuccess, then attrIt is RPARAEN
+      // otherwise, everything can happen
 
       if (attrIt.getType() == null) {
         isSuccess = false;
@@ -106,7 +117,7 @@ public class AyaBacktickParser extends BacktickParser {
   }
 
   private @Nullable LocalParsingResult parseAttr(@NotNull TokensCache.Iterator iterator) {
-    while (WHITESPACE.contains(iterator.getType())) iterator = iterator.advance();
+    iterator = skipWS(iterator);
     if (iterator.getType() != MarkdownTokenTypes.TEXT) return null;
     var beginIndex = iterator.getIndex();
     iterator = skipWS(iterator.advance());
