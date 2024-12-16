@@ -4,30 +4,21 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldRef;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.CompiledAya;
-import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
-import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.serializers.AyaSerializer.FIELD_EMPTYCALL;
-import static org.aya.compiler.serializers.AyaSerializer.STATIC_FIELD_INSTANCE;
 import static org.aya.compiler.serializers.NameSerializer.javifyClassName;
 
-public abstract class JitDefSerializer<T extends TyckDef> {
-  protected final @NotNull Class<?> superClass;
-  protected final @NotNull MatchyRecorder recorder;
-
+public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSerializer<T> {
   protected JitDefSerializer(@NotNull Class<?> superClass, @NotNull MatchyRecorder recorder) {
-    this.superClass = superClass;
-    this.recorder = recorder;
+    super(superClass, recorder);
   }
 
   private static @NotNull CompiledAya mkCompiledAya(
@@ -68,56 +59,31 @@ public abstract class JitDefSerializer<T extends TyckDef> {
   protected int buildShape(T unit) { return -1; }
   protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
 
-  protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder, @NotNull MethodRef con) {
-    return builder.buildConstantField(con.owner(), STATIC_FIELD_INSTANCE, b ->
-      b.mkNew(con, ImmutableSeq.empty()));
-  }
-
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
 
   protected abstract @NotNull Class<?> callClass();
 
-  protected abstract @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, T unit);
-
-  protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
+  protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
   }
 
+  @Override
+  protected @NotNull String className(T unit) {
+    return javifyClassName(unit.ref());
+  }
+
   protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
-    var className = javifyClassName(unit.ref());
     var metadata = buildMetadata(unit);
-    builder.buildNestedClass(metadata, className, superClass, nestBuilder -> {
-      var def = AnyDef.fromVar(unit.ref());
-      var con = buildConstructor(nestBuilder, unit);
-      buildInstance(nestBuilder, con);
+    super.buildFramework(metadata, builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
         nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL, cb ->
-          buildEmptyCall(cb, def));
+          buildEmptyCall(cb, unit));
       }
 
       continuation.accept(nestBuilder);
     });
   }
 
+  @Override
   public abstract @NotNull JitDefSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
-
-  public @NotNull FreeJavaExpr serializeTermUnderTele(
-    @NotNull FreeExprBuilder builder, @NotNull Term term,
-    @NotNull FreeJavaExpr argsTerm, int size
-  ) {
-    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
-  }
-
-  public @NotNull FreeJavaExpr serializeTermUnderTele(
-    @NotNull FreeExprBuilder builder,
-    @NotNull Term term,
-    @NotNull ImmutableSeq<FreeJavaExpr> argTerms
-  ) {
-    return new TermExprializer(builder, argTerms, recorder)
-      .serialize(term);
-  }
-
-  public @NotNull FreeJavaExpr serializeTerm(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
-    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
-  }
 }

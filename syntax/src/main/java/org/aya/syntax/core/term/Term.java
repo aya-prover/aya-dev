@@ -133,6 +133,7 @@ public sealed interface Term extends Serializable, AyaDocile
    * Also, {@param f} should preserve {@link Closure} (with possible change of the implementation).
    * @apiNote Note that {@link Term}s provided by {@param f} might contain {@link LocalTerm},
    * therefore your {@param f} should be able to handle them.
+   * Also, {@code descent} on a JIT Term may be restricted, only bindings are accessible.
    */
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
