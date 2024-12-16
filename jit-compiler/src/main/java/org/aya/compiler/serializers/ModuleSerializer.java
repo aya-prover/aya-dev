@@ -27,10 +27,8 @@ public final class ModuleSerializer<Carrier> {
 
   public static class MatchyRecorder {
     public final @NotNull MutableList<Matchy> todoMatchies = MutableList.create();
-    public int matchyCount = 0;
     public void addMatchy(Matchy clauses) {
       todoMatchies.append(clauses);
-      matchyCount++;
     }
   }
 
@@ -80,7 +78,7 @@ public final class ModuleSerializer<Carrier> {
       unit.defs.forEach(def -> doSerialize(cb, def));
       while (recorder.todoMatchies.isNotEmpty()) {
         var matchy = recorder.todoMatchies.removeLast();
-        matchy.serialize(cb);
+        // TODO: serialize matchy
       }
     });
   }

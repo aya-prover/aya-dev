@@ -7,6 +7,6 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface MatchyLike permits JitMatchy, Matchy {
+public sealed interface MatchyLike extends AnyDef permits JitMatchy, Matchy {
   @NotNull Term type(@NotNull MatchCall data);
 }

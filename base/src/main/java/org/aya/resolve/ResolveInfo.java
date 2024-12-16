@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @param thisModule   context of the underlying module
+ * @param thisModule   context of the underlying module, must be a file module
  * @param primFactory  globally shared prim definition data
  * @param shapeFactory shapes local to this module
  * @param opSet        operators local to this module
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * @param imports      importing information, it only contains the modules that is explicitly imported, 
  *                     should not be confused with the {@code import} in {@link ModuleContext#importModuleContext}
  * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String}
- *                     cause we can re-export a module inside another module without import it.
+ *                     because we can re-export a module inside another module without import it.
  */
 @Debug.Renderer(text = "modulePath().toString()")
 public record ResolveInfo(
@@ -68,11 +68,13 @@ public record ResolveInfo(
     this(thisModule, primFactory, shapeFactory, opSet,
       MutableMap.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
   }
-  public ExprTycker newTycker() { return newTycker(opSet.reporter); }
-  public ExprTycker newTycker(@NotNull Reporter reporter) { return new ExprTycker(makeTyckState(), reporter); }
   public @NotNull TyckState makeTyckState() { return new TyckState(shapeFactory, primFactory); }
-
   public @NotNull ModulePath modulePath() { return thisModule.modulePath(); }
+
+  public ExprTycker newTycker() { return newTycker(opSet.reporter); }
+  public ExprTycker newTycker(@NotNull Reporter reporter) {
+    return new ExprTycker(makeTyckState(), reporter, modulePath());
+  }
 
   public record ImportInfo(@NotNull ResolveInfo resolveInfo, boolean reExport) { }
   public record OpRenameInfo(

@@ -133,7 +133,10 @@ public record SourcePos(
   }
 
   @Override public String toString() {
-    return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + startLine + "," + startColumn + "-" + endLine + "," + endColumn + ']';
+    return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + lineColumnString() + ']';
+  }
+  public @NotNull String lineColumnString() {
+    return startLine + ":" + startColumn + "-" + endLine + ":" + endColumn;
   }
 
   @Override public int hashCode() {

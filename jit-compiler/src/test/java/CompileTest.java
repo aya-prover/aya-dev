@@ -91,7 +91,7 @@ public class CompileTest {
     var dummy = new SourceCodeBuilder(new SourceClassBuilder(fjb, ConstantDescs.CD_Object, fjb.sourceBuilder()), fjb.sourceBuilder());
     // \ t. (\0. 0 t)
     var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Locns(new AppTerm(new LocalTerm(0), t)))));
-    var out = new TermExprializer(dummy, ImmutableSeq.empty())
+    var out = new TermExprializer(dummy, ImmutableSeq.empty(), new ModuleSerializer.MatchyRecorder())
       .serialize(lam);
 
     System.out.println(out);

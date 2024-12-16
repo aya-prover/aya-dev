@@ -219,7 +219,7 @@ public class ReplCompiler {
     if (jdg == null) try (var delayedReporter = new DelayedReporter(reporter)) {
       tcState.clearTmp();
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
-      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter));
+      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter, context.modulePath()));
       jdg = tycker.checkInlineCode(desugar.params(), desugar.expr());
     }
     return new Normalizer(tcState).normalize(isType ? jdg.type() : jdg.wellTyped(), mode);

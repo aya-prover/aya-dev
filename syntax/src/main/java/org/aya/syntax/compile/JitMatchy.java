@@ -8,6 +8,10 @@ import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public non-sealed interface JitMatchy extends MatchyLike {
-  @Nullable Term invoke(@NotNull Seq<@NotNull Term> captures, @NotNull Seq<@NotNull Term> args);
+public non-sealed abstract class JitMatchy extends JitDef implements MatchyLike {
+  protected JitMatchy() {
+    super(-1, new boolean[0], new String[0]);
+  }
+
+  abstract @Nullable Term invoke(@NotNull Seq<@NotNull Term> captures, @NotNull Seq<@NotNull Term> args);
 }
