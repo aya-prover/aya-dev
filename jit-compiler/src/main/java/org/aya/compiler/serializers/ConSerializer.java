@@ -53,7 +53,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
       matchResult = builder.invoke(Constants.RESULT_OK, ImmutableSeq.of(termSeq));
     } else {
       // It is too stupid to serialize pat meta solving, so we just call PatMatcher
-      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true).serialize(x));
+      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
       var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
       var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
       var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
