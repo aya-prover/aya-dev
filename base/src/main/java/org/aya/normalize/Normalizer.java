@@ -44,6 +44,10 @@ public final class Normalizer implements UnaryOperator<Term> {
   private boolean usePostTerm = false;
   public Normalizer(@NotNull TyckState state) { this.state = state; }
 
+  /**
+   * This function is tail-recursion optimized.
+   * To tail-recursively call `apply`, assign `term` with the result and `continue`.
+   */
   @SuppressWarnings("UnnecessaryContinue") @Override public Term apply(Term term) {
     while (true) {
       if (term instanceof StableWHNF || term instanceof FreeTerm) return term;
@@ -66,36 +70,32 @@ public final class Normalizer implements UnaryOperator<Term> {
           term = result;
           continue;
         }
-        case FnCall(var fn, int ulift, var args) -> {
-          switch (fn) {
-            case JitFn instance -> {
-              var result = instance.invoke(() -> defaultValue, args);
-              if (defaultValue != result) {
-                term = result.elevate(ulift);
-                continue;
-              }
-              return result;
+        case FnCall(JitFn instance, int ulift, var args) -> {
+          var result = instance.invoke(() -> defaultValue, args);
+          if (defaultValue != result) {
+            term = result.elevate(ulift);
+            continue;
+          }
+          return result;
+        }
+        case FnCall(FnDef.Delegate delegate, int ulift, var args) -> {
+          FnDef core = delegate.core();
+          if (core == null) return defaultValue;
+          if (!isOpaque(core)) switch (core.body()) {
+            case Either.Left(var body): {
+              term = body.instantiateTele(args.view());
+              continue;
             }
-            case FnDef.Delegate delegate -> {
-              FnDef core = delegate.core();
-              if (core == null) return defaultValue;
-              if (!isOpaque(core)) switch (core.body()) {
-                case Either.Left(var body): {
-                  term = body.instantiateTele(args.view());
-                  continue;
-                }
-                case Either.Right(var clauses): {
-                  var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
-                    args, ulift, core.is(Modifier.Overlap));
-                  // we may get stuck
-                  if (result == null) return defaultValue;
-                  term = result;
-                  continue;
-                }
-              }
-              return defaultValue;
+            case Either.Right(var clauses): {
+              var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
+                args, ulift, core.is(Modifier.Overlap));
+              // we may get stuck
+              if (result == null) return defaultValue;
+              term = result;
+              continue;
             }
           }
+          return defaultValue;
         }
         case RuleReducer reduceRule -> {
           var result = reduceRule.rule().apply(reduceRule.args());
