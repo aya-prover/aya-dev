@@ -56,7 +56,7 @@ public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
       var realIdx = ownerArgsSize + i;
       var name = telescopeNames[realIdx];
       var licit = telescopeLicit[realIdx];
-      var type = telescope(realIdx, args).instantiateTele(args.view());
+      var type = telescope(realIdx, args).instTele(args.view());
       var bind = new LocalVar(name, SourcePos.NONE, GenerateKind.Basic.Tyck);
       args.append(new FreeTerm(bind));
       tele.append(new Param(name, type, licit));

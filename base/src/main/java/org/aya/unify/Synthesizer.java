@@ -7,10 +7,7 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.call.Callable;
-import org.aya.syntax.core.term.call.ClassCall;
-import org.aya.syntax.core.term.call.ConCall;
-import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
@@ -108,7 +105,7 @@ public record Synthesizer(
         .elevate(teleCall.ulift());
 
       case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
-        type.instantiateTele(args.view());
+        type.instTele(args.view());
       case MetaCall meta -> {
         if (!state().solutions.containsKey(meta.ref())) yield null;
         yield trySynth(whnf(meta));
@@ -130,7 +127,7 @@ public record Synthesizer(
         .foldLeft(SortTerm.Type0, (acc, mem) -> DepTypeTerm.lubSigma(acc, mem.type()));
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
-      case MatchTerm match -> match.returns();
+      case MatchCall match -> match.clauses().type(match);
     };
   }
 

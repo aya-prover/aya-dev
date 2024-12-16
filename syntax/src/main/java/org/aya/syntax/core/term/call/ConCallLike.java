@@ -40,7 +40,7 @@ public sealed interface ConCallLike extends Callable.Tele permits ConCall, RuleR
       return update(ownerArgs.map(term -> term.bindTele(tele)));
     }
     public @NotNull Head instantiateTele(@NotNull SeqView<Term> inst) {
-      return update(ownerArgs.map(term -> term.instantiateTele(inst)));
+      return update(ownerArgs.map(term -> term.instTele(inst)));
     }
   }
 

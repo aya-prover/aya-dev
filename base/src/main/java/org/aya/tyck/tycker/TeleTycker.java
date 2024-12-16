@@ -101,7 +101,7 @@ public sealed interface TeleTycker extends Contextful {
     var tele = MutableList.<LocalVar>create();
 
     binds.forEachWith(signature.params(), (ref, param) -> {
-      tycker.localCtx().put(ref, param.type().instantiateTeleVar(tele.view()));
+      tycker.localCtx().put(ref, param.type().instTeleVar(tele.view()));
       tele.append(ref);
     });
   }

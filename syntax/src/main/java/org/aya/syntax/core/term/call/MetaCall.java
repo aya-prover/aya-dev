@@ -27,14 +27,14 @@ public record MetaCall(
   public static @NotNull Term app(Term rhs, ImmutableSeq<Term> args, int ctxSize) {
     var directArgs = args.sliceView(0, ctxSize);
     var restArgs = args.sliceView(ctxSize, args.size());
-    return AppTerm.make(rhs.instantiateTele(directArgs), restArgs);
+    return AppTerm.make(rhs.instTele(directArgs), restArgs);
   }
   public static @NotNull Term appType(MetaCall call, Term rhsType) {
     var ref = call.ref;
     var args = call.args;
     var directArgs = args.sliceView(0, ref.ctxSize());
     var restArgs = args.sliceView(ref.ctxSize(), args.size());
-    return DepTypeTerm.substBody(rhsType.instantiateTele(directArgs), restArgs);
+    return DepTypeTerm.substBody(rhsType.instTele(directArgs), restArgs);
   }
 
   public @NotNull MetaCall asPiDom(@NotNull SortTerm result) {

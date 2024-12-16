@@ -341,7 +341,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private <T> T onTyck(@NotNull Supplier<T> block) {
-    currentParam = currentParam.descent(t -> t.instantiateTele(paramSubst.view().map(Jdg::wellTyped)));
+    currentParam = currentParam.descent(t -> t.instTele(paramSubst.view().map(Jdg::wellTyped)));
     var result = block.get();
     telescope = telescope.drop(1);
     return result;
@@ -451,7 +451,7 @@ public class PatternTycker implements Problematic, Stateful {
 
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
       case Result.Ok(var subst) -> new Selection(
-        (DataCall) dataCall.replaceTeleFrom(name.selfTeleSize(), subst.view()),
+        (DataCall) dataCall.instTeleFrom(name.selfTeleSize(), subst.view()),
         subst, new ConCallLike.Head(name, dataCall.ulift(), subst));
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body

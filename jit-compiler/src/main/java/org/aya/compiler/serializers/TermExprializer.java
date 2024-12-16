@@ -259,7 +259,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeClosureToImmutableSeq(rember),
           serializeClosureToImmutableSeq(forgor)
         ));
-      case MatchTerm(var discr, var ty, var clauses) ->
+      case MatchCall match ->
         // TODO
         builder.aconstNull(Constants.CD_Term);
 
@@ -329,7 +329,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   @Override public @NotNull FreeJavaExpr serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
-    unit = unit.instantiateTeleVar(vars.view());
+    unit = unit.instTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
 
     return doSerialize(unit);

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @see BetaRedex#make(java.util.function.UnaryOperator)
  */
-public sealed interface Callable extends Term permits Callable.Tele, MetaCall {
+public sealed interface Callable extends Term permits MatchCall, Callable.Tele, MetaCall {
   @NotNull ImmutableSeq<@NotNull Term> args();
 
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, IndexedFunction<Term, Term> f) {

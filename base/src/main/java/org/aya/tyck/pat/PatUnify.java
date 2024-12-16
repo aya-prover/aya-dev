@@ -65,15 +65,15 @@ public record PatUnify(
   private @NotNull Term visitAs(@NotNull LocalVar as, Pat rhs) {
     if (rhs instanceof Pat.Bind(var bind, var ty)) {
       var fresh = new FreeTerm(new LocalVar(as.name() + bind.name()));
-      ctx.put(fresh.name(), ty.instantiateTele(rhsSubst.view()));
+      ctx.put(fresh.name(), ty.instTele(rhsSubst.view()));
       lhsSubst.append(fresh);
       rhsSubst.append(fresh);
       return fresh;
     } else {
-      var e = PatToTerm.visit(rhs).instantiateTele(rhsSubst.view());
+      var e = PatToTerm.visit(rhs).instTele(rhsSubst.view());
       lhsSubst.append(e);
       rhs.consumeBindings((v, ty) -> {
-        ctx.put(v, ty.instantiateTele(rhsSubst.view()));
+        ctx.put(v, ty.instTele(rhsSubst.view()));
         rhsSubst.append(new FreeTerm(v));
       });
       return e;

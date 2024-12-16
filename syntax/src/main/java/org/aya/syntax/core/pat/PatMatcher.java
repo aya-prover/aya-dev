@@ -123,7 +123,7 @@ public final class PatMatcher {
   ) {
     try {
       matchMany(matching.patterns(), terms);
-      return Result.ok(matching.body().instantiateTele(matched.freeze().view()));
+      return Result.ok(matching.body().instTele(matched.freeze().view()));
     } catch (Failure e) {
       return Result.err(e.reason);
     }
