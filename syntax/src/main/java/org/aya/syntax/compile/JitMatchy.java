@@ -13,5 +13,9 @@ public non-sealed abstract class JitMatchy extends JitDef implements MatchyLike 
     super(-1, new boolean[0], new String[0]);
   }
 
-  abstract @Nullable Term invoke(@NotNull Seq<@NotNull Term> captures, @NotNull Seq<@NotNull Term> args);
+  /** @return null if stuck */
+  public abstract @Nullable Term invoke(
+    @NotNull Seq<@NotNull Term> captures,
+    @NotNull Seq<@NotNull Term> args
+  );
 }

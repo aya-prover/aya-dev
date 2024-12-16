@@ -4,7 +4,9 @@ package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.JitMatchy;
@@ -18,8 +20,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   public record MatchyData(
     @NotNull Matchy matchy,
     int argsSize, int capturesSize
-  ) {
-  }
+  ) { }
 
   public MatchySerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
     super(JitMatchy.class, recorder);
@@ -32,8 +33,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     });
   }
 
-  @Override
-  protected @NotNull String className(MatchyData unit) {
+  @Override protected @NotNull String className(MatchyData unit) {
     return "";
   }
 

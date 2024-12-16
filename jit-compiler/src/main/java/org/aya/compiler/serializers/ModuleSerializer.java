@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;
@@ -26,9 +27,9 @@ public final class ModuleSerializer<Carrier> {
   ) { }
 
   public static class MatchyRecorder {
-    public final @NotNull MutableList<Matchy> todoMatchies = MutableList.create();
-    public void addMatchy(Matchy clauses) {
-      todoMatchies.append(clauses);
+    public final @NotNull MutableList<MatchyData> todoMatchies = MutableList.create();
+    public void addMatchy(Matchy clauses, int argsSize, int captureSize) {
+      todoMatchies.append(new MatchyData(clauses, argsSize, captureSize));
     }
   }
 
@@ -78,7 +79,8 @@ public final class ModuleSerializer<Carrier> {
       unit.defs.forEach(def -> doSerialize(cb, def));
       while (recorder.todoMatchies.isNotEmpty()) {
         var matchy = recorder.todoMatchies.removeLast();
-        // TODO: serialize matchy
+        new MatchySerializer(recorder)
+          .serialize(cb, matchy);
       }
     });
   }

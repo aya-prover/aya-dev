@@ -31,8 +31,8 @@ public record MatchCall(
       case Matchy matchy -> matchy.descent(f);
     };
     return this.args.sameElements(newArgs, true)
-         && this.captures.sameElements(newCaptures, true)
-         && this.ref == newClauses
+      && this.captures.sameElements(newCaptures, true)
+      && this.ref == newClauses
       ? this : new MatchCall(newClauses, newArgs, newCaptures);
   }
 }

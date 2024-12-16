@@ -23,6 +23,7 @@ import org.aya.syntax.ref.*;
 import org.aya.util.Arg;
 import org.aya.util.BinOpElem;
 import org.aya.util.binop.Assoc;
+import org.aya.util.error.Panic;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +117,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
           ? BooleanSeq.fill(size, true)
           : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
       case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
+      case Matchy _ -> Panic.unreachable();
     };
   }
 
