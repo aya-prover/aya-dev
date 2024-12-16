@@ -10,6 +10,14 @@ import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * For JIT-compiled matchies, we do not need to {@link #descent} into the clauses,
+ * because all we need actually is to descent the {@link #captures},
+ * like for find-usages in the meta resolution, just counting the captures is enough.
+ * I don't have a strong proof of this but I am reasonably confident.
+ * For non-JIT compiled matchies, we do need to descent into the body because we
+ * need to solve the metas inside them.
+ */
 public record MatchCall(
   @NotNull MatchyLike ref,
   @Override @NotNull ImmutableSeq<Term> args,

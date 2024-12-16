@@ -42,7 +42,12 @@ public sealed interface Closure extends UnaryOperator<Term> {
     @Override public @NotNull Closure.Locns toLocns() { return new Locns(term); }
   }
 
-  // NbE !!!!!!
+  /**
+   * We do sometimes need to {@link #descent} into the body immediately,
+   * because sometimes descent have side-effects. An example is find-usages in meta resolution,
+   * it relies on descent and counting the number of free vars along the way.
+   * So it is important to immediately descent into the body, which we do so using {@link #toLocns()}.
+   */
   record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {
     @Override public @NotNull Closure.Locns toLocns() {
       var antiMatter = new LocalVar("matter");
