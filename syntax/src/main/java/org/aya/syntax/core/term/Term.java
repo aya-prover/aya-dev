@@ -53,19 +53,10 @@ public sealed interface Term extends Serializable, AyaDocile
     return new Closure.Locns(bindAt(var, 0));
   }
 
-  /**
-   * You might not want to call this method! Use {@link #bindTele} instead.
-   *
-   * @see #instantiateAll(SeqView)
-   * @see #instantiateTele(SeqView)
-   */
-  private @NotNull Term bindAll(@NotNull SeqView<LocalVar> vars) {
-    if (vars.isEmpty()) return this;
-    return vars.foldLeftIndexed(this, (idx, acc, var) -> acc.bindAt(var, idx));
-  }
-
   default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
-    return bindAll(teleVars.reversed());
+    if (teleVars.isEmpty()) return this;
+    return teleVars.reversed().foldLeftIndexed(this,
+      (idx, acc, var) -> acc.bindAt(var, idx));
   }
 
   /**
@@ -91,7 +82,7 @@ public sealed interface Term extends Serializable, AyaDocile
    */
   @ApiStatus.Internal
   default @NotNull Term instantiate(Term arg) {
-    return replaceAllFrom(0, ImmutableSeq.of(arg));
+    return replaceTeleFrom(0, SeqView.of(arg));
   }
 
   /**
@@ -102,30 +93,11 @@ public sealed interface Term extends Serializable, AyaDocile
    * Without this method, we need to reverse the list.
    */
   default @NotNull Term instantiateTele(@NotNull SeqView<Term> tele) {
-    return instantiateAll(tele.reversed());
+    return replaceTeleFrom(0, tele);
   }
 
   default @NotNull Term instantiateTeleVar(@NotNull SeqView<LocalVar> teleVars) {
-    return instantiateAllVars(teleVars.reversed());
-  }
-
-  /**
-   * Instantiate {@code 0..args.size() - 1} with {@param args}.
-   * You might not want to call this method! Use {@link #instantiateTele} instead.
-   *
-   * @see #instantiateTele(SeqView)
-   */
-  default @NotNull Term instantiateAll(@NotNull SeqView<Term> args) {
-    return replaceAllFrom(0, args.toImmutableSeq());
-  }
-
-  /**
-   * You might not want to call this method! Use {@link #instantiateTeleVar} instead.
-   *
-   * @see #instantiateTeleVar(SeqView)
-   */
-  default @NotNull Term instantiateAllVars(@NotNull SeqView<LocalVar> args) {
-    return instantiateAll(args.map(FreeTerm::new));
+    return instantiateTele(teleVars.map(FreeTerm::new));
   }
 
   /**
