@@ -21,8 +21,8 @@ import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
-  public ConSerializer() {
-    super(JitCon.class);
+  public ConSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitCon.class, recorder);
   }
 
   @Override protected @NotNull Class<?> callClass() { return ConCall.class; }
@@ -60,9 +60,8 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
         builder.iconst(true), id
       ));
 
-      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm, ImmutableSeq.of(
-        patsSeq, termSeq
-      ));
+      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
+        ImmutableSeq.of(patsSeq, termSeq));
     }
 
     builder.returnWith(matchResult);

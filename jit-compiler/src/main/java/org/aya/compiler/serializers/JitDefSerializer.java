@@ -3,16 +3,15 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeExprBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -24,17 +23,16 @@ import static org.aya.compiler.serializers.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> {
   protected final @NotNull Class<?> superClass;
+  protected final @NotNull MatchyRecorder recorder;
 
-  protected JitDefSerializer(@NotNull Class<?> superClass) {
+  protected JitDefSerializer(@NotNull Class<?> superClass, @NotNull MatchyRecorder recorder) {
     this.superClass = superClass;
+    this.recorder = recorder;
   }
 
   private static @NotNull CompiledAya mkCompiledAya(
-    @NotNull String[] module,
-    int fileModuleSize,
-    @NotNull String name,
-    int assoc,
-    int shape,
+    @NotNull String[] module, int fileModuleSize,
+    @NotNull String name, int assoc, int shape,
     @NotNull CodeShape.GlobalId[] recognition
   ) {
     return new CompiledAya() {
@@ -102,4 +100,24 @@ public abstract class JitDefSerializer<T extends TyckDef> {
   }
 
   public abstract @NotNull JitDefSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
+
+  public @NotNull FreeJavaExpr serializeTermUnderTele(
+    @NotNull FreeExprBuilder builder, @NotNull Term term,
+    @NotNull FreeJavaExpr argsTerm, int size
+  ) {
+    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
+  }
+
+  public @NotNull FreeJavaExpr serializeTermUnderTele(
+    @NotNull FreeExprBuilder builder,
+    @NotNull Term term,
+    @NotNull ImmutableSeq<FreeJavaExpr> argTerms
+  ) {
+    return new TermExprializer(builder, argTerms, recorder)
+      .serialize(term);
+  }
+
+  public @NotNull FreeJavaExpr serializeTerm(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
+    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
+  }
 }

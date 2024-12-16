@@ -23,20 +23,18 @@ import java.lang.constant.ConstantDescs;
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
   private final @NotNull ShapeFactory shapeFactory;
 
-  public DataSerializer(@NotNull ShapeFactory shapeFactory) {
-    super(JitData.class);
+  public DataSerializer(@NotNull ShapeFactory shapeFactory, ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitData.class, recorder);
     this.shapeFactory = shapeFactory;
   }
 
   @Override public @NotNull DataSerializer serialize(@NotNull FreeClassBuilder builder, DataDef unit) {
-    buildFramework(builder, unit, builder0 -> {
-      builder0.buildMethod(
-        FreeUtil.fromClass(JitCon.class).arrayType(),
-        "constructors",
-        ImmutableSeq.empty(), (_, cb) -> {
-          buildConstructors(cb, unit);
-        });
-    });
+    buildFramework(builder, unit, builder0 -> builder0.buildMethod(
+      FreeUtil.fromClass(JitCon.class).arrayType(),
+      "constructors",
+      ImmutableSeq.empty(), (_, cb) -> {
+        buildConstructors(cb, unit);
+      }));
 
     return this;
   }
@@ -75,7 +73,6 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
   protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, DataDef unit) {
     return super.superConArgs(builder, unit).appended(builder.iconst(unit.body.size()));
   }
-
 
   /**
    * @see JitData#constructors()

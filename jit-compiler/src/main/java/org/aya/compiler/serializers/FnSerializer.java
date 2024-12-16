@@ -26,8 +26,8 @@ import java.util.function.Supplier;
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
 
-  public FnSerializer(@NotNull ShapeFactory shapeFactory) {
-    super(JitFn.class);
+  public FnSerializer(@NotNull ShapeFactory shapeFactory, ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitFn.class, recorder);
     this.shapeFactory = shapeFactory;
   }
 

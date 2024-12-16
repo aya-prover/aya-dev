@@ -19,7 +19,7 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
 public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
-  public MemberSerializer() { super(JitMember.class); }
+  public MemberSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) { super(JitMember.class, recorder); }
   @Override protected @NotNull Class<?> callClass() { return MemberCall.class; }
 
   @Override
