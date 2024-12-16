@@ -51,8 +51,7 @@ public record SourceClassBuilder(
     sourceBuilder.appendLine(")");
   }
 
-  @Override
-  public void buildNestedClass(
+  @Override public void buildNestedClass(
     @Nullable CompiledAya compiledAya,
     @NotNull String name,
     @NotNull Class<?> superclass,
@@ -127,8 +126,8 @@ public record SourceClassBuilder(
     return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
   }
 
-  @Override
-  public @NotNull FieldRef resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
+  @Override public @NotNull FieldRef
+  resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
     return new FieldRef.Default(owner, returnType, name);
   }
 }

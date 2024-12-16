@@ -26,15 +26,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     super(JitMatchy.class, recorder);
   }
 
-  @Override
-  protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, MatchyData unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, MatchyData unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty());
     });
   }
 
   @Override protected @NotNull String className(MatchyData unit) {
-    return "";
+    return NameSerializer.javifyClassName(unit.matchy.qualifiedPath(), unit.matchy.name());
   }
 
   /**
@@ -76,8 +75,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     builder.returnWith(result);
   }
 
-  @Override
-  public @NotNull ClassTargetSerializer<MatchyData> serialize(@NotNull FreeClassBuilder builder0, MatchyData unit) {
+  @Override public @NotNull ClassTargetSerializer<MatchyData>
+  serialize(@NotNull FreeClassBuilder builder0, MatchyData unit) {
     buildFramework(null, builder0, unit, builder -> {
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq

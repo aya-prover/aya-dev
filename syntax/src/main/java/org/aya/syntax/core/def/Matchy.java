@@ -25,8 +25,11 @@ public record Matchy(
   }
 
   @Override public @NotNull QName qualifiedName() {
-    var module = module();
-    return new QName(new QPath(module, module().size()), name());
+    return new QName(qualifiedPath(), name());
+  }
+
+  public @NotNull QPath qualifiedPath() {
+    return new QPath(fileModule, fileModule.size());
   }
 
   public @NotNull Matchy update(@NotNull Term returnTypeBound, @NotNull ImmutableSeq<Term.Matching> clauses) {

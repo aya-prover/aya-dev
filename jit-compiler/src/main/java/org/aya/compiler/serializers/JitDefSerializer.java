@@ -3,7 +3,10 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeExprBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.TyckDef;
@@ -12,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
-
-import static org.aya.compiler.serializers.AyaSerializer.FIELD_EMPTYCALL;
-import static org.aya.compiler.serializers.NameSerializer.javifyClassName;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSerializer<T> {
   protected JitDefSerializer(@NotNull Class<?> superClass, @NotNull MatchyRecorder recorder) {
@@ -67,17 +67,17 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
   }
 
-  @Override
-  protected @NotNull String className(T unit) {
-    return javifyClassName(unit.ref());
+  @Override protected @NotNull String className(T unit) {
+    return NameSerializer.javifyClassName(unit.ref());
   }
 
   protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
     var metadata = buildMetadata(unit);
     super.buildFramework(metadata, builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
-        nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()), FIELD_EMPTYCALL, cb ->
-          buildEmptyCall(cb, unit));
+        nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()),
+          AyaSerializer.FIELD_EMPTYCALL, cb ->
+            buildEmptyCall(cb, unit));
       }
 
       continuation.accept(nestBuilder);
