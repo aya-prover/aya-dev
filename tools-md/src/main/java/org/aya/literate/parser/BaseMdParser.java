@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class BaseMdParser {
   /** For empty line that end with \n, the index points to \n */
@@ -258,7 +259,7 @@ public class BaseMdParser {
 
     if (type == MarkdownElementTypes.CODE_SPAN) {
       var content = new StripSurrounding(node, 1);
-      return new Literate.InlineCode(content.literal(), content.sourcePos());
+      return new Literate.InlineCode(content.literal(), Objects.requireNonNull(content.sourcePos()));
     }
 
     if (type == GFMElementTypes.INLINE_MATH) {
