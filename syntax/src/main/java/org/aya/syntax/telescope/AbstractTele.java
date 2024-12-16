@@ -9,9 +9,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import kala.tuple.Tuple2;
+import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
@@ -110,9 +110,9 @@ public interface AbstractTele {
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      return telescope.get(i).type().instantiateTele(teleArgs.sliceView(0, i));
+      return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
-    @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instantiateTele(teleArgs.view()); }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instTele(teleArgs.view()); }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
     }
@@ -141,9 +141,9 @@ public interface AbstractTele {
       var view = preArgs.view();
       var cope = telescope.view()
         .drop(preArgs.size())
-        .mapIndexed((idx, p) -> p.descent(t -> t.replaceTeleFrom(idx, view)))
+        .mapIndexed((idx, p) -> p.descent(t -> t.instTeleFrom(idx, view)))
         .toImmutableSeq();
-      var result = this.result.replaceTeleFrom(cope.size(), view);
+      var result = this.result.instTeleFrom(cope.size(), view);
       return new Locns(cope, result);
     }
   }

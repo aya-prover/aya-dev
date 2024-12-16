@@ -66,7 +66,7 @@ public record IApplyConfl(
   private void doCompare(PatMatcher chillMatcher, ImmutableSeq<Term> args, WithPos<Term.Matching> matching, int nth) {
     var currentClause = chillMatcher.apply(matching.data(), args).get();
     var anoNormalized = tycker.whnf(new FnCall(new FnDef.Delegate(def.ref()), 0, args));
-    tycker.unifyTermReported(anoNormalized, currentClause, def.result().instantiateTele(args.view()),
+    tycker.unifyTermReported(anoNormalized, currentClause, def.result().instTele(args.view()),
       sourcePos, comparison -> new ClausesProblem.Conditions(
         sourcePos, matching.sourcePos(), nth, args, new UnifyInfo(tycker.state), comparison));
   }

@@ -146,7 +146,7 @@ public record CallResolver(
   @Override public void accept(@NotNull Term.Matching matching) {
     this.currentClause.set(matching);
     var vars = Pat.collectVariables(matching.patterns().view()).component1();
-    visitTerm(matching.body().instantiateTeleVar(vars.view()));
+    visitTerm(matching.body().instTeleVar(vars.view()));
     this.currentClause.set(null);
   }
 

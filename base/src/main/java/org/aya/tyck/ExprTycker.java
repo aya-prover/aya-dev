@@ -14,12 +14,14 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.DataDefLike;
+import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
@@ -161,7 +163,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
               asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
               storedTy = ty(returns).bindTele(asBindings.view());
             }
-            unifyTyReported(type, storedTy.instantiateTele(wellArgs.view().map(Jdg::wellTyped)), returns);
+            unifyTyReported(type, storedTy.instTele(wellArgs.view().map(Jdg::wellTyped)), returns);
           }
         } else {
           storedTy = type;
@@ -173,7 +175,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
-  private @NotNull MatchTerm match(
+  private @NotNull MatchCall match(
     ImmutableSeq<WithPos<Expr>> discriminant, @NotNull SourcePos exprPos,
     ImmutableSeq<Pattern.Clause> clauses, ImmutableSeq<Jdg> wellArgs, Term type
   ) {
@@ -189,8 +191,19 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()
       .map(WithPos::data);
+
+    // Find free occurrences
+    var usages = new FreeCollector();
+    wellClauses.forEach(clause -> usages.apply(clause.body()));
+    usages.apply(type);
+
+    // Bind the free occurrences and spawn the lifted clauses as a definition
+    var captures = usages.collected();
+    var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()), wellClauses
+      .map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
+
     var wellTerms = wellArgs.map(Jdg::wellTyped);
-    return new MatchTerm(wellTerms, type.instantiateTele(wellTerms.view()), wellClauses);
+    return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));
   }
 
   /**

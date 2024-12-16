@@ -12,6 +12,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
@@ -88,7 +89,7 @@ public class CorePrettier extends BasePrettier<Term> {
         var pair = LamTerm.unlam(lam, nameGen);
         var params = pair.params();
         var paramRef = params.view().<Term>map(FreeTerm::new);
-        var body = pair.body().instantiateTele(paramRef);
+        var body = pair.body().instTele(paramRef);
         Doc bodyDoc;
         // Syntactic eta-contraction
         if (body instanceof Callable.Tele call) {
@@ -195,19 +196,26 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
       case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
-      case MatchTerm(var discriminant, _, var clauses) -> {
+      case MatchCall(Matchy clauses, var discriminant, var captures) -> {
         var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
-        var clauseDoc = visitClauses(clauses.view(), ImmutableSeq.fill(discriminant.size(), true).view());
+        var clauseDoc = visitClauses(clauses.clauses().view().map(clause ->
+            clause.update(clause.body().instTeleFrom(clause.bindCount(), captures.view()))),
+          ImmutableSeq.fill(discriminant.size(), true).view());
 
         yield Doc.cblock(prefix, 2, clauseDoc);
+      }
+      case MatchCall(JitMatchy _, var discriminant, var captures) -> {
+        var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
+        var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
+        yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
     };
   }
 
   private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.Unpi pair, Doc kw, Doc operator) {
     var params = pair.names().zip(pair.params(), RichParam::ofExplicit);
-    var body = pair.body().instantiateTeleVar(params.view().map(ParamLike::ref));
+    var body = pair.body().instTeleVar(params.view().map(ParamLike::ref));
     var teleDoc = visitTele(params, body, FindUsage::free);
     var cod = term(Outer.Codomain, body);
     var doc = Doc.sep(kw, teleDoc, operator, cod);
@@ -271,11 +279,11 @@ public class CorePrettier extends BasePrettier<Term> {
           defVar(def.ref()),
           visitTele(tele),
           HAS_TYPE,
-          term(Outer.Free, def.result().instantiateTeleVar(tele.view().map(ParamLike::ref)))
+          term(Outer.Free, def.result().instTeleVar(tele.view().map(ParamLike::ref)))
         });
         var line1sep = Doc.sepNonEmpty(line1);
         yield def.body().fold(
-          term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instantiateTele(subst))),
+          term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst))),
           clauses -> Doc.vcat(line1sep,
             Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit)))));
       }
@@ -313,7 +321,7 @@ public class CorePrettier extends BasePrettier<Term> {
             // i: nth param
             // p: the param
             // instantiate reference to data tele
-            return p.descent(t -> t.replaceTeleFrom(i, dataArgs));
+            return p.descent(t -> t.instTeleFrom(i, dataArgs));
           })), con.coerce));
 
         yield Doc.vcat(Doc.sepNonEmpty(line1),
@@ -346,7 +354,7 @@ public class CorePrettier extends BasePrettier<Term> {
   private @NotNull Doc visitClause(@NotNull Term.Matching clause, @NotNull SeqView<Boolean> licits) {
     var patSubst = Pat.collectRichBindings(clause.patterns().view());
     var lhsWithoutBar = visitClauseLhs(licits, clause);
-    var rhs = term(Outer.Free, clause.body().instantiateTele(patSubst.view().map(RichParam::toTerm)));
+    var rhs = term(Outer.Free, clause.body().instTele(patSubst.view().map(RichParam::toTerm)));
 
     return Doc.sep(BAR, lhsWithoutBar, FN_DEFINED_AS, rhs);
   }
@@ -369,7 +377,7 @@ public class CorePrettier extends BasePrettier<Term> {
     var richTele = MutableList.<ParamLike<Term>>create();
 
     for (var param : tele) {
-      var freeTy = param.type().instantiateTeleVar(richTele.view()
+      var freeTy = param.type().instTeleVar(richTele.view()
         .map(ParamLike::ref));
       richTele.append(new RichParam(LocalVar.generate(param.name(), SourcePos.SER), freeTy, param.explicit()));
     }

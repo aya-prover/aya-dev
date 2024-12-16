@@ -168,7 +168,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      var resultTerm = signature.result().instantiateTele(patResult.paramSubstObj()).descent(new TermInline());
+      var resultTerm = signature.result().instTele(patResult.paramSubstObj()).descent(new TermInline());
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:

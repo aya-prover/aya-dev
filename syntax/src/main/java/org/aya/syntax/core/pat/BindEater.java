@@ -29,7 +29,7 @@ public record BindEater(
       // which should not contain meta pattern
       case Pat.Meta _ -> throw new Panic("I don't like holes :(");
       case Pat.Bind bind -> {
-        var realType = bind.type().instantiateTele(inst());
+        var realType = bind.type().instTele(inst());
         var meta = new Pat.Meta(MutableValue.create(), bind.bind().name(), realType, bind.bind().definition());
         // yummy yummy
         mouth.append(PatToTerm.visit(meta));

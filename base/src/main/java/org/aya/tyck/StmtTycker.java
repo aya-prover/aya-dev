@@ -89,7 +89,7 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // In the ordering, we guarantee that expr bodied fn are always checked as a whole
             assert tycker != null;
-            var expectedType = signature.result().instantiateTeleVar(teleVars.view());
+            var expectedType = signature.result().instTeleVar(teleVars.view());
             var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
             var zonker = new Finalizer.Zonk<>(tycker);

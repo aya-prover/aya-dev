@@ -42,8 +42,8 @@ public record YouTrack(
     var unify = unifyResult.unify();
     domination(ctx, unify.rhsSubst(), lhsInfo.ix, rhsInfo.ix, rhsInfo.matching, doms);
     domination(ctx, unify.lhsSubst(), rhsInfo.ix, lhsInfo.ix, lhsInfo.matching, doms);
-    var lhsTerm = lhsInfo.matching.data().body().instantiateTele(unify.lhsSubst().view());
-    var rhsTerm = rhsInfo.matching.data().body().instantiateTele(unify.rhsSubst().view());
+    var lhsTerm = lhsInfo.matching.data().body().instTele(unify.lhsSubst().view());
+    var rhsTerm = rhsInfo.matching.data().body().instTele(unify.rhsSubst().view());
     // // TODO: Currently all holes at this point are in an ErrorTerm
     // if (lhsTerm instanceof ErrorTerm error && error.description() instanceof MetaCall hole) {
     //   hole.ref().conditions.append(Tuple.of(lhsSubst, rhsTerm));
@@ -51,7 +51,7 @@ public record YouTrack(
     // if (rhsTerm instanceof ErrorTerm error && error.description() instanceof MetaCall hole) {
     //   hole.ref().conditions.append(Tuple.of(rhsSubst, lhsTerm));
     // }
-    result = tycker.whnf(result.instantiateTele(unifyResult.args().view()));
+    result = tycker.whnf(result.instTele(unifyResult.args().view()));
     tycker.unifyTermReported(lhsTerm, rhsTerm, result, pos, comparison ->
       new ClausesProblem.Confluence(pos, rhsInfo.ix + 1, lhsInfo.ix + 1,
         comparison, new UnifyInfo(tycker.state), rhsInfo.matching.sourcePos(), lhsInfo.matching.sourcePos()));

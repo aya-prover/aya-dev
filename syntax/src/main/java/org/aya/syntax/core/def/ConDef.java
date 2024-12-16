@@ -50,7 +50,7 @@ public final class ConDef extends SubLevelDef {
     @Override public @NotNull Term equality(Seq<Term> args, boolean is0) {
       var equality = core().equality;
       assert equality != null;
-      return (is0 ? equality.a() : equality.b()).instantiateTele(args.view());
+      return (is0 ? equality.a() : equality.b()).instTele(args.view());
     }
     @Override public int selfTeleSize() { return core().selfTele.size(); }
     @Override public int ownerTeleSize() { return core().ownerTele.size(); }

@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LocalTerm, MatchTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
+  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);
@@ -53,10 +53,19 @@ public sealed interface Term extends Serializable, AyaDocile
     return new Closure.Locns(bindAt(var, 0));
   }
 
-  default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
+  /**
+   * Used nontrivially for pattern match expressions, where the clauses are lifted to a global definition,
+   * so after binding the pattern-introduced variables, we need to bind all the free vars,
+   * which will be indexed from the bindCount, rather than 0.
+   */
+  default @NotNull Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
     if (teleVars.isEmpty()) return this;
     return teleVars.reversed().foldLeftIndexed(this,
-      (idx, acc, var) -> acc.bindAt(var, idx));
+      (idx, acc, var) -> acc.bindAt(var, depth + idx));
+  }
+
+  default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
+    return bindTele(0, teleVars);
   }
 
   /**
@@ -70,9 +79,9 @@ public sealed interface Term extends Serializable, AyaDocile
 
   /**
    * @see #replaceAllFrom(int, ImmutableSeq)
-   * @see #instantiateTele(SeqView)
+   * @see #instTele(SeqView)
    */
-  default @NotNull Term replaceTeleFrom(int from, @NotNull SeqView<Term> tele) {
+  default @NotNull Term instTeleFrom(int from, @NotNull SeqView<Term> tele) {
     return replaceAllFrom(from, tele.reversed().toImmutableSeq());
   }
 
@@ -82,7 +91,7 @@ public sealed interface Term extends Serializable, AyaDocile
    */
   @ApiStatus.Internal
   default @NotNull Term instantiate(Term arg) {
-    return replaceTeleFrom(0, SeqView.of(arg));
+    return instTeleFrom(0, SeqView.of(arg));
   }
 
   /**
@@ -92,12 +101,12 @@ public sealed interface Term extends Serializable, AyaDocile
    * now it becomes {@code P 114514 tt false}.
    * Without this method, we need to reverse the list.
    */
-  default @NotNull Term instantiateTele(@NotNull SeqView<Term> tele) {
-    return replaceTeleFrom(0, tele);
+  default @NotNull Term instTele(@NotNull SeqView<Term> tele) {
+    return instTeleFrom(0, tele);
   }
 
-  default @NotNull Term instantiateTeleVar(@NotNull SeqView<LocalVar> teleVars) {
-    return instantiateTele(teleVars.map(FreeTerm::new));
+  default @NotNull Term instTeleVar(@NotNull SeqView<LocalVar> teleVars) {
+    return instTele(teleVars.map(FreeTerm::new));
   }
 
   /**

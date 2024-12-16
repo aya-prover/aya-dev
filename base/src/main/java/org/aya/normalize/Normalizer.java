@@ -9,7 +9,9 @@ import kala.control.Either;
 import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -27,6 +29,7 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 import static org.aya.generic.State.Stuck;
@@ -83,12 +86,12 @@ public final class Normalizer implements UnaryOperator<Term> {
           if (core == null) return defaultValue;
           if (!isOpaque(core)) switch (core.body()) {
             case Either.Left(var body): {
-              term = body.instantiateTele(args.view());
+              term = body.instTele(args.view());
               continue;
             }
             case Either.Right(var clauses): {
               var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
-                args, ulift, core.is(Modifier.Overlap));
+                args, core.is(Modifier.Overlap), ulift);
               // we may get stuck
               if (result == null) return defaultValue;
               term = result;
@@ -156,8 +159,15 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
-        case MatchTerm(var discr, _, var clauses) -> {
-          var result = tryUnfoldClauses(clauses.view(), discr, 0, false);
+        case MatchCall(Matchy clauses, var discr, var captures) -> {
+          var result = tryUnfoldClauses(clauses.clauses().view(), discr, false, (discrSubst, body) ->
+            body.instTele(captures.view().concat(discrSubst)));
+          if (result == null) return defaultValue;
+          term = result;
+          continue;
+        }
+        case MatchCall(JitMatchy fn, var discr, var captures) -> {
+          var result = fn.invoke(captures, discr);
           if (result == null) return defaultValue;
           term = result;
           continue;
@@ -175,7 +185,7 @@ public final class Normalizer implements UnaryOperator<Term> {
 
   public @Nullable Term tryUnfoldClauses(
     @NotNull SeqView<Term.Matching> clauses, @NotNull ImmutableSeq<Term> args,
-    int ulift, boolean orderIndependent
+    boolean orderIndependent, BiFunction<ImmutableSeq<Term>, Term, Term> onSuccess
   ) {
     for (var matchy : clauses) {
       var matcher = new PatMatcher(false, this);
@@ -184,11 +194,19 @@ public final class Normalizer implements UnaryOperator<Term> {
           if (!orderIndependent && st == Stuck) return null;
         }
         case Result.Ok(var subst) -> {
-          return matchy.body().elevate(ulift).instantiateTele(subst.view());
+          return onSuccess.apply(subst, matchy.body());
         }
       }
     }
     return null;
+  }
+
+  public @Nullable Term tryUnfoldClauses(
+    @NotNull SeqView<Term.Matching> clauses, @NotNull ImmutableSeq<Term> args,
+    boolean orderIndependent, int ulift
+  ) {
+    return tryUnfoldClauses(clauses, args, orderIndependent, (subst, body) ->
+      body.elevate(ulift).instTele(subst.view()));
   }
 
   private class Full implements UnaryOperator<Term> {
