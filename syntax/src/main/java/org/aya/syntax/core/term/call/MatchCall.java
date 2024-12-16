@@ -9,7 +9,7 @@ import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 public record MatchCall(
-  @NotNull MatchyLike clauses,
+  @NotNull MatchyLike ref,
   @Override @NotNull ImmutableSeq<Term> args,
   @Override @NotNull ImmutableSeq<Term> captures
 ) implements Callable {
@@ -19,7 +19,7 @@ public record MatchCall(
   ) {
     return this.args.sameElements(args, true)
       && this.captures.sameElements(captures, true)
-      ? this : new MatchCall(clauses, args, captures);
+      ? this : new MatchCall(ref, args, captures);
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {

@@ -16,11 +16,10 @@ import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.FnDef;
-import org.aya.syntax.core.def.Matchy;
+import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.TyckInternal;
@@ -271,18 +270,18 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeClosureToImmutableSeq(rember),
           serializeClosureToImmutableSeq(forgor)
         ));
-      case MatchCall(Matchy clauses, var args, var captures) -> {
-        recorder.addMatchy(clauses);
-        // TODO
-        yield builder.aconstNull(Constants.CD_Term);
-      }
-      case MatchCall(JitMatchy clauses, var args, var captures) -> {
-        // TODO
-        yield builder.aconstNull(Constants.CD_Term);
-      }
-
+      case MatchCall(var ref, var args, var captures) -> builder.mkNew(MatchCall.class, ImmutableSeq.of(
+        getInstance(ref),
+        serializeToImmutableSeq(Term.class, args),
+        serializeToImmutableSeq(Closure.class, captures)
+      ));
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
     };
+  }
+
+  private FreeJavaExpr getInstance(MatchyLike matchy) {
+    // recorder.addMatchy(clauses);
+    return builder.aconstNull(Constants.CD_Term);
   }
 
   private @NotNull FreeJavaExpr makeLambda(
