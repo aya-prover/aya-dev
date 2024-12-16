@@ -28,7 +28,7 @@ public class RenderOptionsTest {
     assertEquals("`hello'", opt.render(RenderOptions.OutputTarget.ANSI16, doc, opts));
     assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.LaTeX, doc, opts));
     assertEquals("\\texttt{hello}", opt.render(RenderOptions.OutputTarget.KaTeX, doc, opts));
-    assertEquals("<code class=\"Aya\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, opts));
+    assertEquals("<code class=\"\">hello</code>", opt.render(RenderOptions.OutputTarget.HTML, doc, opts));
     assertEquals("`hello`", opt.render(RenderOptions.OutputTarget.Plain, doc, opts));
   }
 }
