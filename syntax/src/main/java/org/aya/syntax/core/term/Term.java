@@ -163,8 +163,8 @@ public sealed interface Term extends Serializable, AyaDocile
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }
 
-    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f) {
-      return update(f.apply(body));
+    public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
+      return update(f.apply(bindCount, body));
     }
 
     public void forEach(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {

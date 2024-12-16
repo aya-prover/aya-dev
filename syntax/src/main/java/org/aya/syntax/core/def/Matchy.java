@@ -3,6 +3,7 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.ref.ModulePath;
@@ -26,6 +27,17 @@ public record Matchy(
   @Override public @NotNull QName qualifiedName() {
     var module = module();
     return new QName(new QPath(module, module().size()), name());
+  }
+
+  public @NotNull Matchy update(@NotNull Term returnTypeBound, @NotNull ImmutableSeq<Term.Matching> clauses) {
+    if (this.returnTypeBound == returnTypeBound && this.clauses.sameElements(clauses, true)) return this;
+    return new Matchy(returnTypeBound, fileModule, name, clauses);
+  }
+
+  public @NotNull Matchy descent(@NotNull IndexedFunction<Term, Term> f) {
+    return update(
+      returnTypeBound.descent(f),
+      clauses.map(x -> x.descent(f)));
   }
 
   @Override public @NotNull ModulePath module() { return fileModule; }
