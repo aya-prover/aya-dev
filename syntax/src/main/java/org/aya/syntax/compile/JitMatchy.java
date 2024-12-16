@@ -6,7 +6,8 @@ import kala.collection.Seq;
 import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public non-sealed interface JitMatchy extends MatchyLike {
-  @NotNull Term invoke(@NotNull Seq<@NotNull Term> captures, @NotNull Seq<@NotNull Term> args);
+  @Nullable Term invoke(@NotNull Seq<@NotNull Term> captures, @NotNull Seq<@NotNull Term> args);
 }

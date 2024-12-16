@@ -4,12 +4,12 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
-import org.aya.syntax.core.def.Matchy;
+import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 public record MatchCall(
-  @NotNull Matchy clauses,
+  @NotNull MatchyLike clauses,
   @Override @NotNull ImmutableSeq<Term> args,
   @Override @NotNull ImmutableSeq<Term> captures
 ) implements Callable {

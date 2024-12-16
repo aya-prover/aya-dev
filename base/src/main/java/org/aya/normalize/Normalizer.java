@@ -9,7 +9,9 @@ import kala.control.Either;
 import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -157,9 +159,15 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
-        case MatchCall(var clauses, var discr, var captures) -> {
+        case MatchCall(Matchy clauses, var discr, var captures) -> {
           var result = tryUnfoldClauses(clauses.clauses().view(), discr, false, (discrSubst, body) ->
             body.instTele(captures.view().concat(discrSubst)));
+          if (result == null) return defaultValue;
+          term = result;
+          continue;
+        }
+        case MatchCall(JitMatchy fn, var discr, var captures) -> {
+          var result = fn.invoke(captures, discr);
           if (result == null) return defaultValue;
           term = result;
           continue;

@@ -12,6 +12,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
@@ -195,7 +196,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case RuleReducer.Fn fn -> term(outer, fn.toFnCall());
       case ClassCastTerm classCastTerm -> term(outer, classCastTerm.subterm());
-      case MatchCall(var clauses, var discriminant, var captures) -> {
+      case MatchCall(Matchy clauses, var discriminant, var captures) -> {
         var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         var clauseDoc = visitClauses(clauses.clauses().view().map(clause ->
@@ -203,6 +204,11 @@ public class CorePrettier extends BasePrettier<Term> {
           ImmutableSeq.fill(discriminant.size(), true).view());
 
         yield Doc.cblock(prefix, 2, clauseDoc);
+      }
+      case MatchCall(JitMatchy _, var discriminant, var captures) -> {
+        var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
+        var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
+        yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
     };
   }
