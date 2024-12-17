@@ -15,7 +15,6 @@ public class AyaPrettierOptions extends PrettierOptions {
     InlineMetas,
     ShowImplicitArgs,
     ShowImplicitPats,
-    ShowLambdaTypes,
   }
 
   @Override public void reset() {
@@ -24,12 +23,6 @@ public class AyaPrettierOptions extends PrettierOptions {
   }
 
   @Contract(pure = true, value = "->new") public static @NotNull AyaPrettierOptions debug() {
-    var map = informative();
-    map.map.put(Key.ShowLambdaTypes, true);
-    return map;
-  }
-
-  @Contract(pure = true, value = "->new") public static @NotNull AyaPrettierOptions informative() {
     var map = pretty();
     map.map.put(Key.ShowImplicitArgs, true);
     return map;

@@ -65,6 +65,6 @@ public class RedBlackTreeTest {
     Profiler.profileMany(5, () ->
       normalizer.normalize(tree_sortNat.invoke(() -> null, args), CodeOptions.NormalizeMode.FULL));
 
-    System.out.println(sortResult.debuggerOnlyToString());
+    System.out.println(sortResult.easyToString());
   }
 }

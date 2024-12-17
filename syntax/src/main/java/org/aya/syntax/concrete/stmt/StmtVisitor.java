@@ -13,9 +13,11 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,15 @@ public interface StmtVisitor extends Consumer<Stmt> {
     @NotNull SourcePos pos, @NotNull AnyVar var,
     @NotNull LazyValue<@Nullable Term> type
   ) { visitVar(pos, var, type); }
+
+  @ApiStatus.NonExtendable
+  default void visitLocalVarDecl(@NotNull LocalVar var, @NotNull LazyValue<@Nullable Term> type) {
+    visitVarDecl(var.definition(), var, type);
+  }
+  @ApiStatus.NonExtendable
+  default void visitParamDecl(Expr.@NotNull Param param) {
+    visitLocalVarDecl(param.ref(), withTermType(param));
+  }
 
   private @Nullable Term varType(@Nullable AnyVar var) {
     if (var instanceof AnyDefVar defVar) {
@@ -85,7 +96,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visit(decl.bindBlock());
         visitVarDecl(decl.sourcePos(), decl.ref(), lazyType(decl.ref()));
         if (decl instanceof TeleDecl tele)
-          tele.telescope.forEach(p -> visitVarDecl(p.sourcePos(), p.ref(), withTermType(p)));
+          tele.telescope.forEach(this::visitParamDecl);
       }
     }
   }
@@ -128,29 +139,26 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visitVarRef(con.resolved().sourcePos(), AnyDef.toVar(resolvedVar),
           LazyValue.of(() -> TyckDef.defType(resolvedVar)));
       }
-      case Pattern.Bind bind -> visitVarDecl(pos, bind.bind(), LazyValue.of(bind.type()));
-      case Pattern.As as -> visitVarDecl(as.as().definition(), as.as(), LazyValue.of(as.type()));
+      case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), LazyValue.of(bind.type()));
+      case Pattern.As as -> visitLocalVarDecl(as.as(), LazyValue.of(as.type()));
       default -> { }
     }
 
     pat.forEach(this::visitPattern);
   }
 
-  default void visitParamDecl(Expr.@NotNull Param param) {
-    visitVarDecl(param.sourcePos(), param.ref(), withTermType(param));
-  }
   private void visitExpr(@NotNull WithPos<Expr> expr) { visitExpr(expr.sourcePos(), expr.data()); }
   default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
       case Expr.Ref ref -> visitVarRef(pos, ref.var(), withTermType(ref));
-      case Expr.Lambda lam -> visitParamDecl(lam.param());
+      case Expr.Lambda lam -> visitLocalVarDecl(lam.ref(), noType);
       case Expr.DepType depType -> visitParamDecl(depType.param());
       case Expr.Array array -> array.arrayBlock().forEach(
-        left -> left.binds().forEach(bind -> visitVarDecl(bind.sourcePos(), bind.var(), noType)),
+        left -> left.binds().forEach(bind -> visitLocalVarDecl(bind.var(), noType)),
         _ -> { }
       );
-      case Expr.Let let -> visitVarDecl(let.bind().sourcePos(), let.bind().bindName(), noType);
-      case Expr.Do du -> du.binds().forEach(bind -> visitVarDecl(pos, bind.var(), noType));
+      case Expr.Let let -> visitLocalVarDecl(let.bind().bindName(), noType);
+      case Expr.Do du -> du.binds().forEach(bind -> visitLocalVarDecl(bind.var(), noType));
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
       case Expr.Match match -> match.clauses().forEach(clause -> clause.patterns.forEach(

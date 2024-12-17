@@ -65,7 +65,7 @@ public class CompileTest {
       var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
 
       var mResult = plus.invoke(() -> zero, ImmutableSeq.of(two, three));
-      System.out.println(mResult.debuggerOnlyToString());
+      System.out.println(mResult.easyToString());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
