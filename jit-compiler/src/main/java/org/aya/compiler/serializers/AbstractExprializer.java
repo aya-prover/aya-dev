@@ -63,9 +63,12 @@ public abstract class AbstractExprializer<T> {
     return getInstance(builder, AnyDef.fromVar(def.ref()));
   }
 
-  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
-    var desc = NameSerializer.getClassDesc(def);
+  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull ClassDesc desc) {
     return builder.refField(builder.resolver().resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
+  }
+
+  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
+    return getInstance(builder, NameSerializer.getClassDesc(def));
   }
 
   public static @NotNull FreeJavaExpr getRef(@NotNull FreeExprBuilder builder, @NotNull CallKind callType, @NotNull FreeJavaExpr call) {

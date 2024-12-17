@@ -7,11 +7,13 @@ import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
+import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.serializers.AyaSerializer.STATIC_FIELD_INSTANCE;
@@ -26,6 +28,22 @@ public abstract class ClassTargetSerializer<T> {
     this.recorder = recorder;
   }
 
+  public static @NotNull CompiledAya mkCompiledAya(
+    @NotNull String[] module, int fileModuleSize,
+    @NotNull String name, int assoc, int shape,
+    @NotNull CodeShape.GlobalId[] recognition
+  ) {
+    return new CompiledAya() {
+      @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
+      @Override public @NotNull String[] module() { return module; }
+      @Override public int fileModuleSize() { return fileModuleSize; }
+      @Override public @NotNull String name() { return name; }
+      @Override public int assoc() { return assoc; }
+      @Override public int shape() { return shape; }
+      @Override public @NotNull CodeShape.GlobalId[] recognition() { return recognition; }
+    };
+  }
+
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder) {
     return builder.buildConstantField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
       b.mkNew(thisConstructor, ImmutableSeq.empty()));
@@ -35,14 +53,15 @@ public abstract class ClassTargetSerializer<T> {
 
   protected abstract @NotNull String className(T unit);
 
+  protected abstract @NotNull CompiledAya buildMetadata(T unit);
+
   protected void buildFramework(
-    @Nullable CompiledAya metadata,
     @NotNull FreeClassBuilder builder,
     @NotNull T unit,
     @NotNull Consumer<FreeClassBuilder> continuation
   ) {
     var className = className(unit);
-    builder.buildNestedClass(metadata, className, superClass, nestBuilder -> {
+    builder.buildNestedClass(buildMetadata(unit), className, superClass, nestBuilder -> {
       thisConstructor = buildConstructor(nestBuilder, unit);
       buildInstance(nestBuilder);
 

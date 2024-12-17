@@ -7,11 +7,12 @@ import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Reducible;
 import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public abstract non-sealed class JitFn extends JitDef implements FnDefLike, Reducible {
+public abstract non-sealed class JitFn extends JitTele implements FnDefLike, Reducible {
   public final int modifiers;
 
   protected JitFn(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, int modifiers) {

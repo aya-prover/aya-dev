@@ -273,7 +273,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case MatchCall(var ref, var args, var captures) -> {
         if (ref instanceof Matchy matchy) recorder.addMatchy(matchy, args.size(), captures.size());
         yield builder.mkNew(MatchCall.class, ImmutableSeq.of(
-          getInstance(ref),
+          getInstance(builder, NameSerializer.getClassDesc(ref)),
           serializeToImmutableSeq(Term.class, args),
           serializeToImmutableSeq(Term.class, captures)
         ));

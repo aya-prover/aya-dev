@@ -15,7 +15,10 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.syntax.compile.*;
+import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -57,16 +60,16 @@ public record CompiledModule(
 
     public @NotNull JitDef resolve(@NotNull QName name) {
       try {
-        return getJitDef(loader.loadClass(NameSerializer.getClassName(name)));
+        return (JitDef) getJitDef(loader.loadClass(NameSerializer.getClassName(name)));
       } catch (ClassNotFoundException e) {
         throw new Panic(e);
       }
     }
-    private static JitDef getJitDef(Class<?> clazz) {
+    private static Object getJitDef(Class<?> clazz) {
       try {
         var fieldInstance = clazz.getField(AyaSerializer.STATIC_FIELD_INSTANCE);
         fieldInstance.setAccessible(true);
-        return (JitDef) fieldInstance.get(null);
+        return fieldInstance.get(null);
       } catch (NoSuchFieldException | IllegalAccessException e) {
         throw new Panic(e);
       }
@@ -176,9 +179,9 @@ public record CompiledModule(
     @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
-      var jitDef = DeState.getJitDef(jitClass);
-      // Do nothing for JitMatchy because they are anonymous
-      if (jitDef instanceof JitMatchy) continue;
+      var object = DeState.getJitDef(jitClass);
+      // Not all JitUnit are JitDef, see JitMatchy
+      if (!(object instanceof JitDef jitDef)) continue;
       var metadata = jitDef.metadata();
       if (jitDef instanceof JitPrim || isExported(jitDef.name()))
         export(context, jitDef.name(), new CompiledVar(jitDef));

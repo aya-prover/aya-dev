@@ -4,9 +4,10 @@ package org.aya.syntax.compile;
 
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.PrimDefLike;
+import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
 
-public abstract non-sealed class JitPrim extends JitDef implements PrimDefLike {
+public abstract non-sealed class JitPrim extends JitTele implements PrimDefLike {
   public final PrimDef.ID id;
   @Override public PrimDef.@NotNull ID id() { return id; }
   protected JitPrim(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, PrimDef.ID id) {

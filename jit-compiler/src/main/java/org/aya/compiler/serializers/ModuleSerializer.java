@@ -8,6 +8,7 @@ import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
+import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
@@ -75,13 +76,11 @@ public final class ModuleSerializer<Carrier> {
   public Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
 
-    return builder.buildClass(desc, Object.class, cb -> {
+    return builder.buildClass(desc, JitUnit.class, cb -> {
       unit.defs.forEach(def -> doSerialize(cb, def));
-      while (recorder.todoMatchies.isNotEmpty()) {
-        var matchy = recorder.todoMatchies.removeLast();
-        new MatchySerializer(recorder)
-          .serialize(cb, matchy);
-      }
+      var matchySerializer = new MatchySerializer(recorder);
+      while (recorder.todoMatchies.isNotEmpty()) matchySerializer
+        .serialize(cb, recorder.todoMatchies.removeLast());
     });
   }
 }

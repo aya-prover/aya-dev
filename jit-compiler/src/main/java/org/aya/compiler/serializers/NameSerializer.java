@@ -5,6 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
@@ -79,6 +80,10 @@ public interface NameSerializer {
 
   static @NotNull ClassDesc getClassDesc(@NotNull AnyDef def) {
     return ClassDesc.of(getClassName(def));
+  }
+
+  static @NotNull ClassDesc getClassDesc(@NotNull MatchyLike def) {
+    return ClassDesc.of(getClassName(def.qualifiedName()));
   }
 
   static @NotNull String javifyClassName(@NotNull QPath path, @Nullable String name) {

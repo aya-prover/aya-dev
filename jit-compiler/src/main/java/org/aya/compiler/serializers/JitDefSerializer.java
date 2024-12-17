@@ -21,25 +21,10 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     super(superClass, recorder);
   }
 
-  private static @NotNull CompiledAya mkCompiledAya(
-    @NotNull String[] module, int fileModuleSize,
-    @NotNull String name, int assoc, int shape,
-    @NotNull CodeShape.GlobalId[] recognition
-  ) {
-    return new CompiledAya() {
-      @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
-      @Override public @NotNull String[] module() { return module; }
-      @Override public int fileModuleSize() { return fileModuleSize; }
-      @Override public @NotNull String name() { return name; }
-      @Override public int assoc() { return assoc; }
-      @Override public int shape() { return shape; }
-      @Override public @NotNull CodeShape.GlobalId[] recognition() { return recognition; }
-    };
-  }
-
   /**
    * @see CompiledAya
    */
+  @Override
   protected @NotNull CompiledAya buildMetadata(@NotNull T unit) {
     var ref = unit.ref();
     var module = ref.module;
@@ -72,8 +57,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   }
 
   protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
-    var metadata = buildMetadata(unit);
-    super.buildFramework(metadata, builder, unit, nestBuilder -> {
+    super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
         nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()),
           AyaSerializer.FIELD_EMPTYCALL, cb ->

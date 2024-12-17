@@ -5,9 +5,10 @@ package org.aya.syntax.compile;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.SortTerm;
+import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
 
-public abstract non-sealed class JitMember extends JitDef implements MemberDefLike {
+public abstract non-sealed class JitMember extends JitTele implements MemberDefLike {
   public final @NotNull JitClass classRef;
   public final int index;
 

@@ -9,8 +9,10 @@ import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
+import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -32,7 +34,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override protected @NotNull String className(MatchyData unit) {
-    return NameSerializer.javifyClassName(unit.matchy.qualifiedPath(), unit.matchy.name());
+    return NameSerializer.javifyClassName(unit.matchy.qualifiedName().module(), unit.matchy.qualifiedName().name());
   }
 
   /**
@@ -65,16 +67,25 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
   /** @see JitMatchy#type */
   private void buildType(@NotNull FreeCodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
-    var unit = data.matchy;
     var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), data.capturesSize);
     var argSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), data.argsSize);
     var result = serializeTermUnderTele(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
     builder.returnWith(result);
   }
 
+  @Override protected @NotNull CompiledAya buildMetadata(@NotNull MatchyData unit) {
+    var qname = unit.matchy.qualifiedName();
+    return mkCompiledAya(
+      qname.module().module().module().toArray(new String[0]),
+      qname.module().fileModuleSize(),
+      qname.name(),
+      -1, -1, new CodeShape.GlobalId[0]
+    );
+  }
+
   @Override public @NotNull ClassTargetSerializer<MatchyData>
   serialize(@NotNull FreeClassBuilder builder0, MatchyData unit) {
-    buildFramework(null, builder0, unit, builder -> {
+    buildFramework(builder0, unit, builder -> {
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq
       ), (ap, cb) -> {
