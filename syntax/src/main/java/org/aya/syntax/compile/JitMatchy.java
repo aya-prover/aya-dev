@@ -6,9 +6,7 @@ import kala.collection.Seq;
 import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.QName;
-import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public non-sealed abstract class JitMatchy extends JitUnit implements MatchyLike {
   protected JitMatchy() {
@@ -16,7 +14,7 @@ public non-sealed abstract class JitMatchy extends JitUnit implements MatchyLike
   }
 
   /** @return null if stuck */
-  public abstract @Nullable Term invoke(
+  public abstract @NotNull Term invoke(
     @NotNull Seq<@NotNull Term> captures,
     @NotNull Seq<@NotNull Term> args
   );

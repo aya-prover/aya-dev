@@ -10,10 +10,7 @@ import kala.control.Result;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.JitClass;
-import org.aya.syntax.compile.JitCon;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitMember;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.Term;
@@ -255,5 +252,15 @@ public final class Constants {
   public static final @NotNull MethodRef PATMATCHER_APPLY = new MethodRef.Default(
     FreeUtil.fromClass(PatMatcher.class), "apply",
     CD_Result, ImmutableSeq.of(CD_ImmutableSeq, CD_ImmutableSeq), false
+  );
+
+  /**
+   * @see org.aya.syntax.compile.JitMatchy#invoke(Seq, Seq)
+   */
+  public static final @NotNull MethodRef MATCHY_INVOKE = new MethodRef.Default(
+    FreeUtil.fromClass(JitMatchy.class),
+    "invoke",
+    CD_Term, ImmutableSeq.of(CD_Seq, CD_Seq),
+    false
   );
 }
