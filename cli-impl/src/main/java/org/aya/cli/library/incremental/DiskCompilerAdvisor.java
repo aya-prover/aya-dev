@@ -157,8 +157,8 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
       "--enable-preview", "--release", "21");
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
-    task.call();
-    if (Global.DELETE_JIT_JAVA_SOURCE) Files.delete(javaSrcPath);
+    var compileSuccess = task.call();
+    if (Global.DELETE_JIT_JAVA_SOURCE || !compileSuccess) Files.delete(javaSrcPath);
     var coreFile = file.compiledCorePath();
 
     // save compiled core and load compiled ResolveInfo
