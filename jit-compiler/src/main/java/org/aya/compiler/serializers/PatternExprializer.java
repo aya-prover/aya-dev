@@ -5,6 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
@@ -14,19 +15,24 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {
   private final boolean allowLocalTerm;
+  private final @NotNull MatchyRecorder recorder;
 
-  PatternExprializer(@NotNull FreeExprBuilder builder, boolean allowLocalTerm) {
+  PatternExprializer(
+    @NotNull FreeExprBuilder builder, boolean allowLocalTerm,
+    @NotNull MatchyRecorder recorder
+  ) {
     super(builder);
     this.allowLocalTerm = allowLocalTerm;
+    this.recorder = recorder;
   }
 
   private @NotNull FreeJavaExpr serializeTerm(@NotNull Term term) {
-    return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm)
+    return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder)
       .serialize(term);
   }
 
   private @NotNull FreeJavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
-    var termSer = new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm);
+    var termSer = new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
       getInstance(head.ref()),

@@ -25,9 +25,9 @@ import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
-import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.IApplyConfl;
@@ -47,20 +47,17 @@ import java.util.Objects;
 import static org.aya.tyck.tycker.TeleTycker.loadTele;
 
 public record StmtTycker(
-  @NotNull SuppressingReporter reporter,
-  @NotNull ShapeFactory shapeFactory,
-  @NotNull PrimFactory primFactory
+  @NotNull SuppressingReporter reporter, @NotNull ModulePath fileModule,
+  @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
 ) implements Problematic {
   private @NotNull ExprTycker mkTycker() {
-    return new ExprTycker(new TyckState(shapeFactory, primFactory),
-      new MapLocalCtx(), new LocalLet(), reporter);
+    return new ExprTycker(new TyckState(shapeFactory, primFactory), reporter, fileModule);
   }
   public StmtTycker(
-    @NotNull Reporter reporter,
-    @NotNull ShapeFactory shapeFactory,
-    @NotNull PrimFactory primFactory
+    @NotNull Reporter reporter, @NotNull ModulePath fileModule,
+    @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
   ) {
-    this(new SuppressingReporter(reporter), shapeFactory, primFactory);
+    this(new SuppressingReporter(reporter), fileModule, shapeFactory, primFactory);
   }
   public void suppress(@NotNull Decl decl) {
     decl.suppresses.forEach(suppress -> {

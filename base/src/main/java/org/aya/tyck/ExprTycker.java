@@ -59,22 +59,24 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
   public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
   private @NotNull LocalLet localLet;
+  private final @NotNull ModulePath fileModule;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
     withTerms.add(new WithPos<>(pos, with));
     with.theCoreType().set(type);
   }
 
-  public ExprTycker(
+  private ExprTycker(
     @NotNull TyckState state, @NotNull LocalCtx ctx, @NotNull LocalLet let,
-    @NotNull Reporter reporter
+    @NotNull Reporter reporter, @NotNull ModulePath fileModule
   ) {
     super(state, ctx, reporter);
     this.localLet = let;
+    this.fileModule = fileModule;
   }
 
-  public ExprTycker(@NotNull TyckState state, @NotNull Reporter reporter) {
-    this(state, new MapLocalCtx(), new LocalLet(), reporter);
+  public ExprTycker(@NotNull TyckState state, @NotNull Reporter reporter, @NotNull ModulePath fileModule) {
+    this(state, new MapLocalCtx(), new LocalLet(), reporter, fileModule);
   }
 
   public void solveMetas() {
@@ -199,8 +201,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     // Bind the free occurrences and spawn the lifted clauses as a definition
     var captures = usages.collected();
-    var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()), wellClauses
-      .map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
+    var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
+      fileModule, "match-" + exprPos.lineColumnString(),
+      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
     return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));

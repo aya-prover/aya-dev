@@ -127,7 +127,7 @@ public record Synthesizer(
         .foldLeft(SortTerm.Type0, (acc, mem) -> DepTypeTerm.lubSigma(acc, mem.type()));
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
-      case MatchCall match -> match.clauses().type(match);
+      case MatchCall(var ref, var args, var captures) -> ref.type(captures, args);
     };
   }
 

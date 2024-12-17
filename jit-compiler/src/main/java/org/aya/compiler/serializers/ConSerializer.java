@@ -21,8 +21,8 @@ import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
-  public ConSerializer() {
-    super(JitCon.class);
+  public ConSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitCon.class, recorder);
   }
 
   @Override protected @NotNull Class<?> callClass() { return ConCall.class; }
@@ -53,16 +53,15 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
       matchResult = builder.invoke(Constants.RESULT_OK, ImmutableSeq.of(termSeq));
     } else {
       // It is too stupid to serialize pat meta solving, so we just call PatMatcher
-      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true).serialize(x));
+      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
       var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
       var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
       var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
         builder.iconst(true), id
       ));
 
-      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm, ImmutableSeq.of(
-        patsSeq, termSeq
-      ));
+      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
+        ImmutableSeq.of(patsSeq, termSeq));
     }
 
     builder.returnWith(matchResult);

@@ -15,13 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 
 public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
-  public PrimSerializer() {
-    super(JitPrim.class);
+  public PrimSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitPrim.class, recorder);
   }
   @Override protected @NotNull Class<?> callClass() { return PrimCall.class; }
 
-  @Override
-  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+  @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appended(FreeUtil.fromClass(PrimDef.ID.class));
   }
 

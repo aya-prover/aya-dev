@@ -15,7 +15,9 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
 public final class ClassSerializer extends JitDefSerializer<ClassDef> {
-  public ClassSerializer() { super(JitClass.class); }
+  public ClassSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
+    super(JitClass.class, recorder);
+  }
 
   @Override protected @NotNull Class<?> callClass() { return ClassCall.class; }
   @Override protected boolean shouldBuildEmptyCall(@NotNull ClassDef unit) {

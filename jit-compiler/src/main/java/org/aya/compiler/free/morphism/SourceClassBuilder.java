@@ -11,6 +11,7 @@ import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
@@ -50,14 +51,13 @@ public record SourceClassBuilder(
     sourceBuilder.appendLine(")");
   }
 
-  @Override
-  public void buildNestedClass(
-    CompiledAya compiledAya,
+  @Override public void buildNestedClass(
+    @Nullable CompiledAya compiledAya,
     @NotNull String name,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    buildMetadata(compiledAya);
+    if (compiledAya != null) buildMetadata(compiledAya);
     this.sourceBuilder.buildClass(name, toClassRef(FreeUtil.fromClass(superclass)), true, () ->
       builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
@@ -126,8 +126,8 @@ public record SourceClassBuilder(
     return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
   }
 
-  @Override
-  public @NotNull FieldRef resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
+  @Override public @NotNull FieldRef
+  resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
     return new FieldRef.Default(owner, returnType, name);
   }
 }

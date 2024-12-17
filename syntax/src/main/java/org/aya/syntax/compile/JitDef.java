@@ -3,7 +3,6 @@
 package org.aya.syntax.compile;
 
 import kala.collection.immutable.ImmutableArray;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @implNote every definition should be annotated by {@link CompiledAya}
  */
-public abstract sealed class JitDef extends JitTele implements AnyDef permits JitClass, JitCon, JitData, JitFn, JitMember, JitPrim {
+public abstract sealed class JitDef extends JitTele implements AnyDef permits JitClass, JitCon, JitData, JitFn, JitMatchy, JitMember, JitPrim {
   private CompiledAya metadata;
 
   protected JitDef(int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames) {
@@ -45,9 +44,9 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
    */
   @Override public @NotNull QName qualifiedName() {
     var module = module();
-    return new QName(new QPath(module, metadata.fileModuleSize()), metadata.name());
+    return new QName(new QPath(module, metadata.fileModuleSize()), name());
   }
-  @Override public @NotNull String name() { return metadata().name(); }
+  @Override public @NotNull String name() { return metadata.name(); }
   @Override public @Nullable Assoc assoc() {
     var idx = metadata().assoc();
     if (idx == -1) return null;

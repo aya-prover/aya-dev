@@ -5,7 +5,10 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.core.def.TyckDef;
@@ -19,8 +22,11 @@ import java.lang.constant.ConstantDescs;
 import java.util.function.Consumer;
 
 public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSerializer<T> {
-  protected JitTeleSerializer(@NotNull Class<? extends JitTele> superClass) {
-    super(superClass);
+  protected JitTeleSerializer(
+    @NotNull Class<? extends JitTele> superClass,
+    @NotNull ModuleSerializer.MatchyRecorder recorder
+  ) {
+    super(superClass, recorder);
   }
 
   protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
@@ -114,27 +120,5 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     );
 
     builder.returnWith(result);
-  }
-
-  public static @NotNull FreeJavaExpr serializeTermUnderTele(
-    @NotNull FreeExprBuilder builder,
-    @NotNull Term term,
-    @NotNull FreeJavaExpr argsTerm,
-    int size
-  ) {
-    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
-  }
-
-  public static @NotNull FreeJavaExpr serializeTermUnderTele(
-    @NotNull FreeExprBuilder builder,
-    @NotNull Term term,
-    @NotNull ImmutableSeq<FreeJavaExpr> argTerms
-  ) {
-    return new TermExprializer(builder, argTerms)
-      .serialize(term);
-  }
-
-  public static @NotNull FreeJavaExpr serializeTerm(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
-    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
   }
 }

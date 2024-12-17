@@ -133,6 +133,7 @@ public sealed interface Term extends Serializable, AyaDocile
    * Also, {@param f} should preserve {@link Closure} (with possible change of the implementation).
    * @apiNote Note that {@link Term}s provided by {@param f} might contain {@link LocalTerm},
    * therefore your {@param f} should be able to handle them.
+   * Also, {@code descent} on a JIT Term may be restricted, only bindings are accessible.
    */
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
@@ -163,8 +164,8 @@ public sealed interface Term extends Serializable, AyaDocile
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }
 
-    public @NotNull Matching descent(@NotNull UnaryOperator<Term> f) {
-      return update(f.apply(body));
+    public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
+      return update(f.apply(bindCount, body));
     }
 
     public void forEach(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {

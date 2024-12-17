@@ -15,10 +15,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitPrim;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -106,8 +103,7 @@ public record CompiledModule(
 
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
-      // TODO[kiva]: how to reach here?
-      throw new UnsupportedOperationException();
+      return Panic.unreachable();
     }
 
     var serialization = new Serialization(resolveInfo, MutableMap.create());
@@ -181,6 +177,8 @@ public record CompiledModule(
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var jitDef = DeState.getJitDef(jitClass);
+      // Do nothing for JitMatchy because they are anonymous
+      if (jitDef instanceof JitMatchy) continue;
       var metadata = jitDef.metadata();
       if (jitDef instanceof JitPrim || isExported(jitDef.name()))
         export(context, jitDef.name(), new CompiledVar(jitDef));

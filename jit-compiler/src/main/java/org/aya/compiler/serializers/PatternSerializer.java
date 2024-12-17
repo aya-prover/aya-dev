@@ -98,23 +98,21 @@ public final class PatternSerializer {
 
       // TODO: match IntegerTerm / ListTerm first
       case Pat.Con con -> builder.ifInstanceOf(term, FreeUtil.fromClass(ConCallLike.class),
-        (builder1, conTerm) -> {
-          builder1.ifRefEqual(
-            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
-            AbstractExprializer.getInstance(builder1, con.ref()),
-            builder2 -> {
-              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
-              var conArgs = AbstractExprializer.fromSeq(
-                builder2,
-                Constants.CD_Term,
-                conArgsTerm,
-                con.args().size()
-              );
+        (builder1, conTerm) -> builder1.ifRefEqual(
+          AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
+          AbstractExprializer.getInstance(builder1, con.ref()),
+          builder2 -> {
+            var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
+            var conArgs = AbstractExprializer.fromSeq(
+              builder2,
+              Constants.CD_Term,
+              conArgsTerm,
+              con.args().size()
+            );
 
-              doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
-            }, null /* mismatch, do nothing */
-          );
-        }, this::onStuck);
+            doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
+          }, null /* mismatch, do nothing */
+        ), this::onStuck);
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.ShapedInt shapedInt -> multiStage(builder, term, ImmutableSeq.of(
         // mTerm -> solveMeta(shapedInt, mTerm),
@@ -126,7 +124,7 @@ public final class PatternSerializer {
             // but our optimizer will fix them
             Once.of(builder1 -> updateSubstate(builder1, true)))
       ), onMatchSucc);
-      case Pat.Tuple(var l, var r) -> {
+      case Pat.Tuple(var l, var r) ->
         builder.ifInstanceOf(term, FreeUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
           doSerialize(builder0, l, lhs, Once.of(builder1 -> {
@@ -134,7 +132,6 @@ public final class PatternSerializer {
             doSerialize(builder1, r, rhs, onMatchSucc);
           }));
         }, this::onStuck);
-      }
     }
   }
 
@@ -157,9 +154,8 @@ public final class PatternSerializer {
     var tmpName = builder.makeVar(Term.class, term);
 
     for (var pre : preContinuation) {
-      builder.ifNotTrue(subMatchState, builder0 -> {
-        pre.accept(builder0, tmpName);
-      }, null);
+      builder.ifNotTrue(subMatchState, builder0 ->
+        pre.accept(builder0, tmpName), null);
     }
 
     builder.ifTrue(subMatchState, continuation, null);
@@ -247,21 +243,19 @@ public final class PatternSerializer {
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
     subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.iconst(false));
 
-    builder.breakable(mBuilder -> {
-      unit.forEachIndexed((idx, clause) -> {
-        var jumpCode = idx + 1;
-        bindCount = 0;
-        doSerialize(
-          mBuilder,
-          clause.patterns.view(),
-          argNames.view(),
-          Once.of(builder1 -> {
-            updateState(builder1, jumpCode);
-            builder1.breakOut();
-          })
-        );
-      });
-    });
+    builder.breakable(mBuilder -> unit.forEachIndexed((idx, clause) -> {
+      var jumpCode = idx + 1;
+      bindCount = 0;
+      doSerialize(
+        mBuilder,
+        clause.patterns.view(),
+        argNames.view(),
+        Once.of(builder1 -> {
+          updateState(builder1, jumpCode);
+          builder1.breakOut();
+        })
+      );
+    }));
 
     // 0 ..= unit.size()
     var range = IntRange.closed(0, unit.size()).collect(ImmutableIntSeq.factory());
