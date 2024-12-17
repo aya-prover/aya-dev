@@ -216,7 +216,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   private class Full implements UnaryOperator<Term> {
     { usePostTerm = true; }
 
-    @Override public Term apply(Term term) { return Normalizer.this.apply(term).descent(this); }
+    @Override public Term apply(Term term) { return Normalizer.this.apply(term); }
   }
 
   /**
