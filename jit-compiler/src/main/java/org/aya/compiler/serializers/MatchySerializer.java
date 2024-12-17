@@ -58,12 +58,12 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var argExprs = args.map(LocalVariable::ref);
 
     Consumer<FreeCodeBuilder> onFailed = b -> {
-      b.mkNew(MatchCall.class, ImmutableSeq.of(
+      var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
         AbstractExprializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
         AbstractExprializer.makeImmutableSeq(b, Term.class, captureExprs),
         AbstractExprializer.makeImmutableSeq(b, Term.class, argExprs)
       ));
-      b.returnWith(b.aconstNull(Constants.CD_Term));
+      b.returnWith(result);
     };
 
     if (args.isEmpty()) {
