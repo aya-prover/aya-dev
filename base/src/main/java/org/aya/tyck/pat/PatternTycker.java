@@ -252,13 +252,13 @@ public class PatternTycker implements Problematic, Stateful {
   private @NotNull PushTelescope pushTelescope(@NotNull WithPos<Expr> body) {
     var wellTyped = MutableList.<Pat>create();
 
-    while (currentParam != null && body.data() instanceof Expr.Lambda lam) {
+    while (currentParam != null && body.data() instanceof Expr.Lambda(var ref, var newBody)) {
       // good, we can use the parameter of [lam] as pattern
-      var pat = new Pattern.Bind(lam.param().ref());
+      var pat = new Pattern.Bind(ref);
       wellTyped.append(tyckPattern(body.replace(pat)));
 
       // update state
-      body = lam.body();
+      body = newBody;
       moveNext();
     }
 
