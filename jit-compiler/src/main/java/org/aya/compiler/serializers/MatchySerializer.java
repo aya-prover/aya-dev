@@ -18,6 +18,7 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
 public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.MatchyData> {
@@ -40,10 +41,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return NameSerializer.javifyClassName(unit.matchy.qualifiedName().module(), unit.matchy.qualifiedName().name());
   }
 
-  public static @NotNull MethodRef resolveInvoke(@NotNull MatchyLike owner, int capturec, int argc) {
-    var ownerName = NameSerializer.getClassDesc(owner);
+  public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
     return new MethodRef.Default(
-      ownerName, "invoke",
+      owner, "invoke",
       Constants.CD_Term, ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
       false
     );
@@ -92,10 +92,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     @NotNull FreeCodeBuilder builder, @NotNull MatchyData data,
     @NotNull LocalVariable captures, @NotNull LocalVariable args
   ) {
-    var unit = data.matchy;
     var capturec = data.capturesSize;
     int argc = data.argsSize;
-    var invokeRef = resolveInvoke(data.matchy, capturec, argc);
+    var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
     var invokeExpr = builder.invoke(invokeRef, builder.thisRef(),
       AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
         .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
@@ -128,7 +127,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
         (ap, cb) -> {
-          var captures = ImmutableSeq.fill(capturec, i -> ap.arg(i));
+          var captures = ImmutableSeq.fill(capturec, ap::arg);
           var args = ImmutableSeq.fill(argc, i -> ap.arg(i + capturec));
           buildInvoke(cb, unit, captures, args);
         });

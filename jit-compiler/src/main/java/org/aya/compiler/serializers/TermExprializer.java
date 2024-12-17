@@ -124,12 +124,10 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<FreeJavaExpr> captures
   ) {
     return builder.invoke(
-      Constants.MATCHY_INVOKE,
+      MatchySerializer.resolveInvoke(matchyClass, captures.size(), args.size()),
       getInstance(builder, matchyClass),
-      ImmutableSeq.of(
-        makeImmutableSeq(Term.class, captures),
-        makeImmutableSeq(Term.class, args)
-      ));
+      captures.appendedAll(args)
+    );
   }
 
   @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Term term) {
@@ -185,7 +183,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         ));
         yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
-      case RuleReducer.Fn (var rule, int ulift, var args) -> {
+      case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
           serializeApplicable(rule),
           builder.iconst(ulift),
