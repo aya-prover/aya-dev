@@ -9,6 +9,7 @@ import org.aya.syntax.ref.QPath;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
+// TODO: make a module a JitUnit?
 public abstract class JitUnit {
   private CompiledAya metadata;
 
