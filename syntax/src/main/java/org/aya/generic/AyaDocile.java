@@ -22,5 +22,9 @@ public interface AyaDocile /*extends Docile*/ {
     return toDoc(AyaPrettierOptions.debug()).debugRender();
   }
 
+  default @NotNull String prettyToString() {
+    return toDoc(AyaPrettierOptions.pretty()).debugRender();
+  }
+
   @NotNull Doc toDoc(@NotNull PrettierOptions options);
 }

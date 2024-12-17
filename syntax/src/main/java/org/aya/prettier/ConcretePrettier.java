@@ -106,7 +106,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var telescope = pair.component1();
         var body = pair.component2().data();
         var prelude = MutableList.of(LAMBDA);
-        var docTele = telescope.map(this::lambdaParam);
+        var docTele = telescope.map(BasePrettier::varDoc);
 
         prelude.appendAll(docTele);
         if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
