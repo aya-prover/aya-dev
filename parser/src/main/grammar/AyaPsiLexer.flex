@@ -162,7 +162,8 @@ BLOCK_COMMENT_END   = "*/"
   ")"                   { return RPAREN; }
   "["                   { return LARRAY; }
   "]"                   { return RARRAY; }
-  "{?"                  { return LGOAL; }
+  // Support Spanish because it's cute
+  "{?"|"{¿"             { return LGOAL; }
   "?}"                  { return RGOAL; }
   "@"                   { return AT; }
   "_"                   { return CALM_FACE; }
