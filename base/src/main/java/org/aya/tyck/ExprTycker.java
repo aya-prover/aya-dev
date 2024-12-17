@@ -202,7 +202,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // Bind the free occurrences and spawn the lifted clauses as a definition
     var captures = usages.collected();
     var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
-      fileModule, "match-" + exprPos.lineColumnString(),
+      new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
       wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);

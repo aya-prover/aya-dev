@@ -18,12 +18,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * @implNote every definition should be annotated by {@link CompiledAya}
  */
-public abstract sealed class JitDef extends JitTele implements AnyDef permits JitClass, JitCon, JitData, JitFn, JitMatchy, JitMember, JitPrim {
+public abstract sealed class JitDef implements AnyDef permits JitClass, JitTele {
   private CompiledAya metadata;
-
-  protected JitDef(int telescopeSize, boolean[] telescopeLicit, String[] telescopeNames) {
-    super(telescopeSize, telescopeLicit, telescopeNames);
-  }
 
   public @NotNull CompiledAya metadata() {
     if (metadata == null) metadata = getClass().getAnnotation(CompiledAya.class);
@@ -38,6 +34,7 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
   @Override public @NotNull ModulePath module() {
     return new ModulePath(ImmutableArray.Unsafe.wrap(metadata().module()));
   }
+
   /**
    * @implNote use {@link #metadata} after {@link #metadata()} being called is safe,
    * because {@link #metadata} is initialized in {@link #metadata()}.
@@ -46,6 +43,7 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
     var module = module();
     return new QName(new QPath(module, metadata.fileModuleSize()), name());
   }
+
   @Override public @NotNull String name() { return metadata.name(); }
   @Override public @Nullable Assoc assoc() {
     var idx = metadata().assoc();
@@ -58,5 +56,6 @@ public abstract sealed class JitDef extends JitTele implements AnyDef permits Ji
     if (assoc == null) return null;
     return new OpInfo(name(), assoc);
   }
-  @Override public @NotNull JitTele signature() { return this; }
+
+  @Override public abstract @NotNull JitTele signature();
 }

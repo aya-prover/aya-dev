@@ -4,12 +4,13 @@ package org.aya.syntax.telescope;
 
 import kala.collection.ArraySeq;
 import kala.collection.SeqView;
+import org.aya.syntax.compile.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A Jit telescope, which is efficient when instantiating parameters/result, but not friendly with DeBruijn Index.
  */
-public abstract class JitTele implements AbstractTele {
+public abstract sealed class JitTele extends JitDef implements AbstractTele permits JitCon, JitData, JitFn, JitMember, JitPrim {
   public final int telescopeSize;
   public final boolean[] telescopeLicit;
   public final String[] telescopeNames;
@@ -26,4 +27,5 @@ public abstract class JitTele implements AbstractTele {
   @Override public @NotNull SeqView<String> namesView() {
     return ArraySeq.wrap(telescopeNames).view();
   }
+  @Override public @NotNull JitTele signature() { return this; }
 }

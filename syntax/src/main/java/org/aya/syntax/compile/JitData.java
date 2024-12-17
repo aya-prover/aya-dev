@@ -6,9 +6,10 @@ import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
+import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
 
-public abstract non-sealed class JitData extends JitDef implements DataDefLike {
+public abstract non-sealed class JitData extends JitTele implements DataDefLike {
   protected final JitCon @NotNull [] constructors;
 
   protected JitData(int telescopeSize, boolean[] telescopeLicit, String[] telescopeName, int conAmount) {

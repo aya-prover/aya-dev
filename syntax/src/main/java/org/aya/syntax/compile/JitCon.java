@@ -14,11 +14,12 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.JitTele;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public abstract non-sealed class JitCon extends JitDef implements ConDefLike {
+public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
   public final JitData dataType;
   private final boolean hasEq;
   private final int selfTeleSize;

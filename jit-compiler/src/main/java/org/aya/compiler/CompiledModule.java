@@ -176,9 +176,9 @@ public record CompiledModule(
     @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
+      // Not all JitUnit are JitDef, see JitMatchy
+      if (!JitDef.class.isAssignableFrom(jitClass)) continue;
       var jitDef = DeState.getJitDef(jitClass);
-      // Do nothing for JitMatchy because they are anonymous
-      if (jitDef instanceof JitMatchy) continue;
       var metadata = jitDef.metadata();
       if (jitDef instanceof JitPrim || isExported(jitDef.name()))
         export(context, jitDef.name(), new CompiledVar(jitDef));

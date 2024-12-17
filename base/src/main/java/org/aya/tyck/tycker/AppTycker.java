@@ -7,10 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.compile.JitCon;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.compile.JitPrim;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.*;
@@ -57,7 +54,7 @@ public record AppTycker<Ex extends Exception>(
     this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
   }
 
-  public @NotNull Jdg checkCompiledApplication(@NotNull AbstractTele def) throws Ex {
+  public @NotNull Jdg checkCompiledApplication(@NotNull JitDef def) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();
@@ -67,6 +64,7 @@ public record AppTycker<Ex extends Exception>(
       case JitData data -> checkDataCall(data);
       case JitPrim prim -> checkPrimCall(prim);
       case JitCon con -> checkConCall(con);
+      // TODO: checkClassCall
       default -> throw new Panic(def.getClass().getCanonicalName());
     };
   }

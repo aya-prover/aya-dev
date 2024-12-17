@@ -17,25 +17,16 @@ import java.util.function.UnaryOperator;
 
 public record Matchy(
   @NotNull Term returnTypeBound,
-  @Override @NotNull ModulePath fileModule,
-  @Override @NotNull String name,
+  @Override @NotNull QName qualifiedName,
   @NotNull ImmutableSeq<Term.Matching> clauses
 ) implements MatchyLike {
   @Override public @NotNull Term type(@NotNull Seq<Term> captures, @NotNull Seq<Term> args) {
     return returnTypeBound.instTele(captures.view().concat(args));
   }
 
-  @Override public @NotNull QName qualifiedName() {
-    return new QName(qualifiedPath(), name());
-  }
-
-  public @NotNull QPath qualifiedPath() {
-    return new QPath(fileModule, fileModule.size());
-  }
-
   public @NotNull Matchy update(@NotNull Term returnTypeBound, @NotNull ImmutableSeq<Term.Matching> clauses) {
     if (this.returnTypeBound == returnTypeBound && this.clauses.sameElements(clauses, true)) return this;
-    return new Matchy(returnTypeBound, fileModule, name, clauses);
+    return new Matchy(returnTypeBound, qualifiedName, clauses);
   }
 
   public @NotNull Matchy descent(@NotNull UnaryOperator<Term> f) {
@@ -43,9 +34,4 @@ public record Matchy(
       returnTypeBound.descent(f),
       clauses.map(x -> x.update(f.apply(x.body()))));
   }
-
-  @Override public @NotNull ModulePath module() { return fileModule; }
-  @Override public @NotNull AbstractTele signature() { return Panic.unreachable(); }
-  @Override public Assoc assoc() { return Panic.unreachable(); }
-  @Override public OpInfo opInfo() { return Panic.unreachable(); }
 }

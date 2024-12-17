@@ -20,6 +20,7 @@ import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.ref.*;
+import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Arg;
 import org.aya.util.BinOpElem;
 import org.aya.util.binop.Assoc;
@@ -116,8 +117,8 @@ public abstract class BasePrettier<Term extends AyaDocile> {
         : inner.ref.signature == null
           ? BooleanSeq.fill(size, true)
           : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
-      case JitDef jit -> MutableBooleanList.from(jit.telescopeLicit);
-      case Matchy _ -> Panic.unreachable();
+      case JitTele jit -> MutableBooleanList.from(jit.telescopeLicit);
+      default -> Panic.unreachable();
     };
   }
 
