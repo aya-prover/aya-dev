@@ -139,6 +139,7 @@ public record ExprResolver(
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sanity check";
+              introduceDependencies(generalized);
               var param = owner.toExpr(false, generalized.toLocal());
               allowedGeneralizes.put(generalized, param);
               addReference(owner);
@@ -258,9 +259,46 @@ public record ExprResolver(
     });
   }
 
+  private void introduceDependencies(@NotNull GeneralizedVar var) {
+    if (allowedGeneralizes.containsKey(var)) return;
+
+    var dependencies = getDependencies(var);
+    for (var dep : dependencies) {
+      introduceDependencies(dep);
+    }
+
+    var owner = var.owner;
+    assert owner != null : "GeneralizedVar owner should not be null";
+    var param = owner.toExpr(false, var.toLocal());
+    allowedGeneralizes.put(var, param);
+    addReference(owner);
+  }
+
+  private @NotNull ImmutableSeq<GeneralizedVar> getDependencies(@NotNull GeneralizedVar var) {
+    var collector = new GeneralizedVarCollector();
+    var.owner.type.descent(collector);
+    return collector.getCollected();
+  }
+
+  private static class GeneralizedVarCollector implements PosedUnaryOperator<Expr> {
+    private final MutableList<GeneralizedVar> collected = MutableList.create();
+
+    @Override
+    public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
+      if (expr instanceof Expr.Ref ref && ref.var() instanceof GeneralizedVar gvar) {
+        collected.append(gvar);
+      }
+      return expr.descent(this);
+    }
+
+    public ImmutableSeq<GeneralizedVar> getCollected() {
+      return collected.toImmutableSeq();
+    }
+  }
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
+      introduceDependencies(gvar);
       var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
     }
