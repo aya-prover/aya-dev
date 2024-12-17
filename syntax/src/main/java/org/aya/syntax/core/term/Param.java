@@ -4,11 +4,12 @@ package org.aya.syntax.core.term;
 
 import kala.collection.SeqView;
 import org.aya.generic.AyaDocile;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public record Param(@NotNull String name, @NotNull Term type, boolean explicit) 
   }
 
   @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-    return new CorePrettier(options).visitParam(this, BasePrettier.Outer.Free);
+    return new RichParam(new LocalVar(this.name(), SourcePos.NONE, GenerateKind.Basic.Pretty),
+      this.type(), this.explicit()).toDoc(options);
   }
 }

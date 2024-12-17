@@ -249,10 +249,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return justType(new Arg<>(sayori.type(), sayori.explicit()), outer);
   }
 
-  private Doc mutableListNames(
-    MutableList<? extends ParamLike<?>> names,
-    ParamLike<?> param
-  ) {
+  private Doc mutableListNames(MutableList<? extends ParamLike<?>> names, ParamLike<?> param) {
     // We HAVE TO collect the results, since {names} is mutable, therefore {names.view()} becomes mutable.
     var namesDocs = names.view().map(ParamLike::nameDoc)
       .toImmutableSeq();

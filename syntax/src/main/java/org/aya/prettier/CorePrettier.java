@@ -26,7 +26,7 @@ import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
@@ -48,7 +48,7 @@ import static org.aya.prettier.Tokens.*;
  * @see ConcretePrettier
  */
 public class CorePrettier extends BasePrettier<Term> {
-  private static final @NotNull LocalVar SELF = LocalVar.generate("self");
+  private static final @NotNull LocalVar SELF = new LocalVar("self", SourcePos.NONE, Basic.Pretty);
   private final Renamer nameGen = new Renamer();
 
   public CorePrettier(@NotNull PrettierOptions options) { super(options); }
@@ -359,17 +359,8 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.sep(BAR, lhsWithoutBar, FN_DEFINED_AS, rhs);
   }
 
-  private @NotNull Doc visitClauses(
-    @NotNull SeqView<Term.Matching> clauses,
-    @NotNull SeqView<Boolean> licits
-  ) {
+  private @NotNull Doc visitClauses(@NotNull SeqView<Term.Matching> clauses, @NotNull SeqView<Boolean> licits) {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
-  }
-
-  public @NotNull Doc visitParam(@NotNull Param param, @NotNull Outer outer) {
-    return justType(
-      new RichParam(new LocalVar(param.name(), SourcePos.SER, GenerateKind.Basic.Tyck), param.type(), param.explicit()),
-      outer);
   }
 
   /// region Name Generating
@@ -377,9 +368,9 @@ public class CorePrettier extends BasePrettier<Term> {
     var richTele = MutableList.<ParamLike<Term>>create();
 
     for (var param : tele) {
-      var freeTy = param.type().instTeleVar(richTele.view()
-        .map(ParamLike::ref));
-      richTele.append(new RichParam(LocalVar.generate(param.name(), SourcePos.SER), freeTy, param.explicit()));
+      var freeTy = param.type().instTeleVar(richTele.view().map(ParamLike::ref));
+      richTele.append(new RichParam(new LocalVar(
+        param.name(), SourcePos.NONE, Basic.Pretty), freeTy, param.explicit()));
     }
 
     return richTele.toImmutableSeq();
