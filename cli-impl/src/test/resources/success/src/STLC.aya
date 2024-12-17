@@ -76,18 +76,11 @@ def function_canoninal_form
 def shift_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A) (B : Ty) (i : Nat)
   : hasType (take i G ++ [ B ] ++ drop i G) (shift tm i) A
-// hasType (take i G ++ [ B ] ++ drop i G) (shift (Lam t) i) (Arrow A B)
-// = hasType (take i G ++ [ B ] ++ drop i G) (Lam (shift t (suc i)) (Arrow A B)
-// hasType (A :< (take i G ++ [ B ] ++ drop i G)) (shift t (suc i)) B
-// We can see that:
-// let G' := (A :< (take i G ++ [ B ] ++ drop i G))
-// take (suc i) G' = A :< (take i G)
-// drop (suc i) G' = [ B ] ++ drop i G
-| Lam_hasType lhT, C, _ => {??}
-| App_hasType A' fhT ahT, _, _ => {??}
-| Var_hasType eqG, _, _ => {??}
+| Lam_hasType lhT, C, _ => Lam_hasType (shift_preservation lhT C (suc i))
+| App_hasType A' fhT ahT, C, _ => App_hasType A' (shift_preservation fhT C i) (shift_preservation ahT C i)
 | True_hasType, _, _ => True_hasType
 | False_hasType, _, _ => False_hasType
+| Var_hasType eqG, _, _ => {??}
 
 def inst_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A)
