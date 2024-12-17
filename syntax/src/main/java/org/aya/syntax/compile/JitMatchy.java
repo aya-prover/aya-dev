@@ -5,7 +5,6 @@ package org.aya.syntax.compile;
 import kala.collection.Seq;
 import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ public non-sealed abstract class JitMatchy extends JitDef implements MatchyLike 
     super(-1, new boolean[0], new String[0]);
   }
 
-  /** @see MatchyLike#type(MatchCall) */
+  /** @see MatchyLike#type */
   @Override public @NotNull Term result(Seq<Term> teleArgs) {
     return Panic.unreachable();
   }

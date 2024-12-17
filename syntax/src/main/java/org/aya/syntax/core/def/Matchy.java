@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
 import org.aya.syntax.ref.QPath;
@@ -21,8 +21,8 @@ public record Matchy(
   @Override @NotNull String name,
   @NotNull ImmutableSeq<Term.Matching> clauses
 ) implements MatchyLike {
-  @Override public @NotNull Term type(@NotNull MatchCall data) {
-    return returnTypeBound.instTele(data.captures().view().concat(data.args()));
+  @Override public @NotNull Term type(@NotNull Seq<Term> captures, @NotNull Seq<Term> args) {
+    return returnTypeBound.instTele(captures.view().concat(args));
   }
 
   @Override public @NotNull QName qualifiedName() {

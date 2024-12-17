@@ -11,7 +11,6 @@ import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
-import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -64,9 +63,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       .serialize(builder, matching);
   }
 
-  /**
-   * @see JitMatchy#type(MatchCall)
-   */
+  /** @see JitMatchy#type */
   private void buildType(@NotNull FreeCodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
     var unit = data.matchy;
     var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), data.capturesSize);
