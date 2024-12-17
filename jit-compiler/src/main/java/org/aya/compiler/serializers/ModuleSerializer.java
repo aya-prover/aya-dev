@@ -77,11 +77,9 @@ public final class ModuleSerializer<Carrier> {
 
     return builder.buildClass(desc, Object.class, cb -> {
       unit.defs.forEach(def -> doSerialize(cb, def));
-      while (recorder.todoMatchies.isNotEmpty()) {
-        var matchy = recorder.todoMatchies.removeLast();
-        new MatchySerializer(recorder)
-          .serialize(cb, matchy);
-      }
+      var matchySerializer = new MatchySerializer(recorder);
+      while (recorder.todoMatchies.isNotEmpty()) matchySerializer
+        .serialize(cb, recorder.todoMatchies.removeLast());
     });
   }
 }
