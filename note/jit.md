@@ -1,15 +1,16 @@
 # Jit Specification
 
-## Jit Unit
+## 编译单元
 
-Jit Unit 是一个需要被编译的单位, 它包括:
-
+编译单元包括:
 * 任何 Def
 * 顶级模块/子模块
+* 其他序列化单元, 如 [MatchyLike](../syntax/src/main/java/org/aya/syntax/core/def/MatchyLike.java)
 
 ## Class Structure
 
-所有 Jit Unit 都会被编译成一个 class.
+所有编译单元都会被编译成一个 class, 除了模块, 其他编译单元都带有一个 `CompiledAya` 用来保存元数据,
+参见 [Metadata](#metadata).
 
 示例: `test/class-structure.aya`
 
@@ -29,22 +30,33 @@ def inc (n : Nat) : Nat => S n
 package AYA.test;
 
 public final class _class_45structure {
+  @CompiledAya(
+    module = {"test", "class-structure"},
+    fileModuleSize = 2,
+    name = "Nat",
+    assoc = -1,
+    shape = -1,
+    recognition = {}
+  )
   public static final class _class_45structure_Nat extends JitData {
     // ...
   }
 
+  @CompiledAya( /* ... */)
   public static final class _class_45structure_Nat_O extends JitCon { /* ... */
   }
 
+  @CompiledAya( /* ... */)
   public static final class _class_45structure_Nat_S extends JitCon { /* ... */
   }
 
+  @CompiledAya( /* ... */)
   public static final class _class_45structure_inc extends JitFn { /* ... */
   }
 }
 ```
 
-注意到 `Nat` 的构造子在序列化在外层, 并且所有 Jit Unit 的类名都有一个所在模块的前缀.
+注意到 `Nat` 的构造子在序列化在外层, 并且所有编译单元的类名都有一个所在模块的前缀.
 这是由于某些技术问题, 所有子模块的内容都会序列化到文件模块内.
 
 > 关于编译结果中的类名部分，参见 [Name Mapping](#name-mapping) 章节
@@ -53,7 +65,7 @@ public final class _class_45structure {
 
 ## Metadata
 
-除了基类要求实现的各种方法, 这些类还需要带有 `@CompiledAya` 注解, 以提供其他信息, 如:
+除了基类要求实现的各种方法, 部分类还需要带有 `@CompiledAya` 注解, 以提供其他信息, 如:
 
 * 在 aya 中的符号名
 * shape 信息
@@ -137,12 +149,8 @@ public Term invoke(Supplier<Term> onStuck, Term arg0, Term arg1) {
 
   // 根据 matchState 决定行为
   switch (matchState) {
-    case -1 -> {
-      return onStuck.get();
-    }
     case 0 -> {
-      // 由于有 pattern classifier, 这个 case 是不可达的.
-      return Panic.unreachable();
+      return onStuck.get();
     }
     case 1 -> {
       // | 0, b => b
