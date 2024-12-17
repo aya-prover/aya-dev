@@ -37,7 +37,7 @@ import java.util.function.UnaryOperator;
  *
  * @author kiva, ice1000, HoshinoTented
  */
-@Debug.Renderer(text = "PatToTerm.visit(this).debuggerOnlyToString()")
+@Debug.Renderer(text = "PatToTerm.visit(this).easyToString()")
 public sealed interface Pat {
   default @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) { return this; }
   default @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) { return this; }

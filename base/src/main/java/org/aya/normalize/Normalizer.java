@@ -53,10 +53,13 @@ public final class Normalizer implements UnaryOperator<Term> {
    */
   @SuppressWarnings("UnnecessaryContinue") @Override public Term apply(Term term) {
     while (true) {
-      if (term instanceof StableWHNF || term instanceof FreeTerm) return term;
-      // ConCall for point constructors are always in WHNF
-      if (term instanceof ConCall con && !con.ref().hasEq()) return con;
+      var alreadyWHNF = term instanceof StableWHNF ||
+        term instanceof FreeTerm ||
+        // ConCall for point constructors are always in WHNF
+        (term instanceof ConCall con && !con.ref().hasEq());
+      if (alreadyWHNF && !usePostTerm) return term;
       var descentedTerm = term.descent(this);
+      if (alreadyWHNF && usePostTerm) return descentedTerm;
       // descent may change the java type of term, i.e. beta reduce,
       // and can also reduce the subterms. We intend to return the reduction
       // result when it beta reduces, so keep `descentedTerm` both when in NF mode or
