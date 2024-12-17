@@ -13,7 +13,6 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSerializer<T> {
