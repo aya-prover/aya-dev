@@ -22,6 +22,10 @@ Goal: Goal of type
         (Normalized: Nat)
       Context:
         a : Nat
+      You are trying:
+        a
+      It has type:
+        Nat
 
 0 error(s), 0 warning(s).
 Let's learn from that.

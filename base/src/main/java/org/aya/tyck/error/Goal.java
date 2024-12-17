@@ -3,7 +3,9 @@
 package org.aya.tyck.error;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
@@ -17,16 +19,17 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public record Goal(
   @Override @NotNull TyckState state, @NotNull MetaCall hole,
-  @NotNull LocalCtx ctx, @NotNull ImmutableSeq<LocalVar> scope
+  @Nullable Jdg filling, @NotNull LocalCtx ctx, @NotNull ImmutableSeq<LocalVar> scope
 ) implements Problem, Stateful {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
     var result = meta.req() instanceof MetaVar.OfType(var type) ? freezeHoles(MetaCall.appType(hole, type))
       : new ErrorTerm(_ -> Doc.plain("???"));
-    var doc = Doc.vcatNonEmpty(
+    var lines = MutableList.of(
       Doc.english("Goal of type"),
       Doc.par(1, result.toDoc(options)),
       Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"),
@@ -44,8 +47,17 @@ public record Goal(
       //   : Doc.empty()
     );
     var metas = state.solutions;
-    return !metas.containsKey(meta) ? doc :
-      Doc.vcat(Doc.plain("Candidate exists:"), Doc.par(1, metas.get(meta).toDoc(options)), doc);
+    if (metas.containsKey(meta)) {
+      lines.insert(0, Doc.par(1, metas.get(meta).toDoc(options)));
+      lines.insert(0, Doc.plain("Candidate exists:"));
+    }
+    if (filling != null) {
+      lines.append(Doc.english("You are trying:"));
+      lines.append(Doc.par(1, filling.wellTyped().toDoc(options)));
+      lines.append(Doc.english("It has type:"));
+      lines.append(Doc.par(1, filling.type().toDoc(options)));
+    }
+    return Doc.vcatNonEmpty(lines);
   }
   private @NotNull Doc renderScopeVar(@NotNull PrettierOptions options, Term arg) {
     var paramDoc = freezeHoles(arg).toDoc(options);

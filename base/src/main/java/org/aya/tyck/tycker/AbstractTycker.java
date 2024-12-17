@@ -15,6 +15,11 @@ import org.aya.unify.TermComparator;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Whenever you want to introduce some bind, make sure you are modifying
+ * the {@link LocalCtx} that you own it, i.e. obtained from {@link AbstractTycker#subscope}.
+ * In fact, this is the rule of ownership 🦀🦀🦀.<br/>
+ */
 public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits ExprTycker, TermComparator {
   public final @NotNull TyckState state;
   private @NotNull LocalCtx localCtx;
@@ -53,9 +58,9 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     @NotNull AbstractTycker tycker
   ) implements AutoCloseable {
     @Override public void close() {
-        tycker.setLocalCtx(parentCtx);
-        nameGen.unbindName(var);
-        tycker.state.removeConnection(var);
-      }
+      tycker.setLocalCtx(parentCtx);
+      nameGen.unbindName(var);
+      tycker.state.removeConnection(var);
     }
+  }
 }

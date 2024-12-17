@@ -122,8 +122,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(),
           new MetaVar.OfType(type), hole.explicit());
         hole.solution().set(freshHole);
+        Jdg filling = null;
+        if (hole.filling() != null) filling = synthesize(hole.filling());
         userHoles.append(new WithPos<>(expr.sourcePos(), hole));
-        if (hole.explicit()) fail(new Goal(state, freshHole, localCtx().clone(), hole.accessibleLocal()));
+        if (hole.explicit()) fail(new Goal(state, freshHole, filling, localCtx().clone(), hole.accessibleLocal()));
         yield new Jdg.Default(freshHole, type);
       }
       case Expr.LitInt(var end) -> {
@@ -279,7 +281,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
-        if (hole.explicit()) fail(new Goal(state, meta, localCtx().clone(), hole.accessibleLocal()));
+        Jdg filling = null;
+        if (hole.filling() != null) filling = synthesize(hole.filling());
+        if (hole.explicit()) fail(new Goal(state, meta, filling, localCtx().clone(), hole.accessibleLocal()));
         yield meta;
       }
       case Expr.Sort(var kind, var lift) -> new SortTerm(kind, lift);

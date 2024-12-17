@@ -9,7 +9,7 @@ import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.generic.stmt.Reducible;
+import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -19,6 +19,7 @@ import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCallLike;
+import org.aya.syntax.core.term.call.RuleReducer;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.util.error.Panic;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -43,7 +45,7 @@ public final class Constants {
   public static final @NotNull MethodRef CLOSURE = new MethodRef.Default(
     FreeUtil.fromClass(UnaryOperator.class),
     "apply",
-    CD_Term, ImmutableSeq.of(CD_Term),
+    ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
   );
 
@@ -51,7 +53,14 @@ public final class Constants {
   public static final @NotNull MethodRef THUNK = new MethodRef.Default(
     FreeUtil.fromClass(Supplier.class),
     "get",
-    CD_Term, ImmutableSeq.empty(),
+    ConstantDescs.CD_Object, ImmutableSeq.empty(),
+    true
+  );
+
+  public static final @NotNull MethodRef FUNCTION = new MethodRef.Default(
+    FreeUtil.fromClass(Function.class),
+    "apply",
+    ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
   );
 
@@ -123,11 +132,13 @@ public final class Constants {
   );
 
   /**
-   * @see Reducible#invoke(Supplier, Seq)
+   * @see RuleReducer#make()
    */
-  public static final @NotNull MethodRef REDUCIBLE_INVOKE = new MethodRef.Default(
-    FreeUtil.fromClass(Reducible.class), "invoke",
-    CD_Term, ImmutableSeq.of(FreeUtil.fromClass(Supplier.class), CD_Seq), true
+  public static final @NotNull MethodRef RULEREDUCER_MAKE = new MethodRef.Default(
+    FreeUtil.fromClass(RuleReducer.class),
+    "make",
+    CD_Term, ImmutableSeq.empty(),
+    true
   );
 
   /**

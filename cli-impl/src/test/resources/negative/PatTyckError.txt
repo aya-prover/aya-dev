@@ -96,7 +96,7 @@ In file $FILE:3:8 ->
     │           ╰╯
 
 Error: There is no pattern for the parameter
-         ^2
+         (_ : A)
 
 1 error(s), 0 warning(s).
 Let's learn from that.
@@ -112,7 +112,7 @@ In file $FILE:3:11 ->
 Error: There are too many implicit patterns:
          y
        should be an explicit pattern matched against
-         ^2
+         (_ : A)
 
 1 error(s), 0 warning(s).
 Let's learn from that.
@@ -192,7 +192,7 @@ In file $FILE:2:22 ->
     │                         ╰╯
 
 Error: There is no pattern for the parameter
-         Nat
+         (_ : Nat)
 
 In file $FILE:2:24 ->
 

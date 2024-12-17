@@ -74,12 +74,16 @@ public final class Normalizer implements UnaryOperator<Term> {
           continue;
         }
         case FnCall(JitFn instance, int ulift, var args) -> {
-          var result = instance.invoke(() -> defaultValue, args);
-          if (defaultValue != result) {
+          var result = instance.invoke(args);
+          if (result instanceof FnCall resultCall &&
+            resultCall.ref() == instance &&
+            resultCall.args().sameElements(args, true)
+          ) {
+            return defaultValue;
+          } else {
             term = result.elevate(ulift);
             continue;
           }
-          return result;
         }
         case FnCall(FnDef.Delegate delegate, int ulift, var args) -> {
           FnDef core = delegate.core();
@@ -101,8 +105,8 @@ public final class Normalizer implements UnaryOperator<Term> {
           return defaultValue;
         }
         case RuleReducer reduceRule -> {
-          var result = reduceRule.rule().apply(reduceRule.args());
-          if (result != null) {
+          var result = reduceRule.make();
+          if (result != reduceRule) {
             term = result;
             continue;
           }

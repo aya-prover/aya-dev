@@ -15,6 +15,8 @@ public sealed interface GenerateKind {
      * This LocalVar is generated for tyck, should not alive after tyck
      */
     Tyck,
+    /** Generated in the pretty printers */
+    Pretty,
   }
 
   record Generalized(@NotNull GeneralizedVar origin) implements GenerateKind { }
