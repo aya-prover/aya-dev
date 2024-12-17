@@ -80,7 +80,7 @@ def shift_preservation
 | App_hasType A' fhT ahT, C, _ => App_hasType A' (shift_preservation fhT C i) (shift_preservation ahT C i)
 | True_hasType, _, _ => True_hasType
 | False_hasType, _, _ => False_hasType
-| Var_hasType eqG, _, _ => {??}
+| Var_hasType eqG, C, _ => {??}
 
 def inst_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A)
