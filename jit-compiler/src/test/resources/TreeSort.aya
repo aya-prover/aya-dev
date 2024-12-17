@@ -46,13 +46,12 @@ def balanceRight Color (RBTree A) A (RBTree A) : RBTree A
     rbNode red (rbNode black l v b) y (rbNode black c z d)
 | c, l, v, b => rbNode c l v b
 
-def insert_lemma (dec_le : Decider A) (a a1 : A) (c : Color) (l1 l2 : RBTree A) (b : Bool) : RBTree A elim b
-| True => balanceRight c l1 a1 (insert a l2 dec_le)
-| False => balanceLeft c (insert a l1 dec_le) a1 l2
-
 def insert (a : A) (node : RBTree A) (dec_le : Decider A) : RBTree A elim node
 | rbLeaf => rbNode red rbLeaf a rbLeaf
-| rbNode c l1 a1 l2 => insert_lemma dec_le a a1 c l1 l2 (dec_le a1 a)
+| rbNode c l1 a1 l2 => match dec_le a1 a
+  { True => balanceRight c l1 a1 (insert a l2 dec_le)
+  | False => balanceLeft c (insert a l1 dec_le) a1 l2
+  }
 
 private def aux (ls : List A) (r : RBTree A) (dec_le : Decider A) : RBTree A elim ls
 | [] => r
