@@ -22,8 +22,8 @@ import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
-  @NotNull SourceBuilder sourceBuilder)
-  implements FreeClassBuilder, FreeJavaResolver {
+  @NotNull SourceBuilder sourceBuilder
+) implements FreeClassBuilder, FreeJavaResolver {
   @Override public @NotNull FreeJavaResolver resolver() { return this; }
 
   private void buildMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
