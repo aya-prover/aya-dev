@@ -275,7 +275,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         yield builder.mkNew(MatchCall.class, ImmutableSeq.of(
           getInstance(ref),
           serializeToImmutableSeq(Term.class, args),
-          serializeToImmutableSeq(Closure.class, captures)
+          serializeToImmutableSeq(Term.class, captures)
         ));
       }
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));

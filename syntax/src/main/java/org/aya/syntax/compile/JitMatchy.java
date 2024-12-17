@@ -5,12 +5,24 @@ package org.aya.syntax.compile;
 import kala.collection.Seq;
 import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MatchCall;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public non-sealed abstract class JitMatchy extends JitDef implements MatchyLike {
   protected JitMatchy() {
     super(-1, new boolean[0], new String[0]);
+  }
+
+  /** @see MatchyLike#type(MatchCall) */
+  @Override public @NotNull Term result(Seq<Term> teleArgs) {
+    return Panic.unreachable();
+  }
+
+  /** Lifted match does not even have a well-defined telescope */
+  @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+    return Panic.unreachable();
   }
 
   /** @return null if stuck */
