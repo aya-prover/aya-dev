@@ -28,6 +28,16 @@ def rev' (buf xs : List A) : List A elim xs
 
 def rev (xs : List A) : List A => rev' [ ] xs
 
+def take (n : Nat) (xs : List A) : List A
+| _, [ ] => [ ]
+| 0, _ :< _ =>  [ ]
+| suc n, x :< xs => x :< (take n xs)
+
+def drop (n : Nat) (xs : List A) : List A
+| 0, _ => xs
+| suc n, [ ] => [ ]
+| suc n, x :< xs => drop n xs
+
 def infixl !! (List A) Nat : Maybe A
 | [ ], _ => Nothing
 | x :< _, 0 => Just x
