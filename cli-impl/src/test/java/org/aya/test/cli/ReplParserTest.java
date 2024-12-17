@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public class ReplParserTest {
-  public static final AyaParserImpl AYA_GK_PARSER = new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.informative()));
+  public static final AyaParserImpl AYA_GK_PARSER = new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.debug()));
 
   @Test public void issue358() {
     var sucZero = AYA_GK_PARSER.repl("suc zero").getRightValue().data();

@@ -30,12 +30,12 @@ public class PrettierTest {
       def plus (a b : Nat) : Nat
         | 0, c => c
         | S c, 0 => S (plus c 0)
-        | S c, S d => S (plus c (S d))""", fnPlus.debuggerOnlyToString());
+        | S c, S d => S (plus c (S d))""", fnPlus.easyToString());
     // no new line at the end!!
     assertEquals("""
       def swap (a : Nat) : Nat => match a {
         | 0 => 1
         | S _ => 0
-      }""", fnSwap.debuggerOnlyToString());
+      }""", fnSwap.easyToString());
   }
 }

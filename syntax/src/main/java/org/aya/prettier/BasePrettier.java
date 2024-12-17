@@ -36,14 +36,6 @@ import java.util.function.ToIntBiFunction;
 import static org.aya.prettier.Tokens.KW_PRIM;
 
 public abstract class BasePrettier<Term extends AyaDocile> {
-  public static @NotNull Doc argDoc(@NotNull PrettierOptions options, @NotNull Arg<? extends AyaDocile> self) {
-    return BasePrettier.arg((_, d) -> d.toDoc(options), self, Outer.Free);
-  }
-
-  public static @NotNull Doc argsDoc(@NotNull PrettierOptions options, @NotNull SeqView<Arg<? extends AyaDocile>> self) {
-    return Doc.commaList(self.map(t -> argDoc(options, t)));
-  }
-
   public static @NotNull Doc coreArgsDoc(@NotNull PrettierOptions options, @NotNull SeqView<? extends AyaDocile> self) {
     return Doc.commaList(self.map(t -> t.toDoc(options)));
   }
@@ -265,11 +257,6 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     var namesDocs = names.view().map(ParamLike::nameDoc)
       .toImmutableSeq();
     return param.toDoc(Doc.sep(namesDocs), options);
-  }
-
-  @NotNull Doc lambdaParam(@NotNull ParamLike<?> param) {
-    return options.map.get(AyaPrettierOptions.Key.ShowLambdaTypes) ? param.toDoc(options)
-      : Doc.bracedUnless(param.nameDoc(), param.explicit());
   }
 
   protected boolean optionImplicit() {

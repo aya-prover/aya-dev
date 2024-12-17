@@ -56,13 +56,13 @@ public record Synthesizer(
 
   public @NotNull Term synth(@NotNull Term term) {
     var result = trySynth(term);
-    assert result != null : term.debuggerOnlyToString() + " : " + term.getClass();
+    assert result != null : term.easyToString() + " : " + term.getClass();
     return result;
   }
 
   public @NotNull Term synthDontNormalize(@NotNull Term term) {
     var result = synthesize(term);
-    assert result != null : term.debuggerOnlyToString() + " : " + term.getClass();
+    assert result != null : term.easyToString() + " : " + term.getClass();
     return result;
   }
 

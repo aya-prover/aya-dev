@@ -4,6 +4,7 @@ package org.aya.compiler.free;
 
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
@@ -11,6 +12,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public interface FreeJavaBuilder<Carrier> {
   @NotNull Carrier buildClass(
+    @Nullable CompiledAya metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

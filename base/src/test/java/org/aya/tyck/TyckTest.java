@@ -213,7 +213,7 @@ public class TyckTest {
     assertNotNull(sortResult);
 
     System.out.println("Done in " + (endTime - beginTime));
-    System.out.println(sortResult.debuggerOnlyToString());
+    System.out.println(sortResult.easyToString());
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {

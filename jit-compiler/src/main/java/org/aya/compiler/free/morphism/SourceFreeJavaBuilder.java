@@ -2,11 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism;
 
+import kala.collection.Seq;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.serializers.ExprializeUtil;
+import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
@@ -39,15 +43,25 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     return name.substring(name.lastIndexOf('$') + 1);
   }
 
-  @Override
-  public @NotNull String buildClass(
+  public static final @NotNull Seq<String> warningsToSuppress = Seq.of(
+    "unchecked", "rawtypes", "NullableProblems", "SwitchStatementWithTooFewBranches",
+    "CodeBlock2Expr", "unused", "ConstantValue", "RedundantCast", "UnusedAssignment",
+    "DataFlowIssue", "LoopStatementThatDoesntLoop", "UnnecessaryLocalVariable"
+  );
+  @Override public @NotNull String buildClass(
+    @Nullable CompiledAya metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
     sourceBuilder.appendLine("package " + className.packageName() + ";");
-    sourceBuilder.buildClass(className.displayName(), toClassRef(FreeUtil.fromClass(superclass)), false, () ->
-      builder.accept(new SourceClassBuilder(this, className, sourceBuilder)));
+    var cb = new SourceClassBuilder(this, className, sourceBuilder);
+    if (metadata != null) cb.buildMetadata(metadata);
+    cb.sourceBuilder().appendLine(warningsToSuppress.joinToString(", ",
+      "@SuppressWarnings(value = {", "})", ExprializeUtil::makeString));
+    sourceBuilder.buildClass(className.displayName(),
+      toClassRef(FreeUtil.fromClass(superclass)), false, () ->
+        builder.accept(cb));
     return sourceBuilder.builder.toString();
   }
 }

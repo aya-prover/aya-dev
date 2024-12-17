@@ -28,7 +28,7 @@ import static org.aya.producer.ModifierParser.ModifierGroup.*;
  * 1. Availability. Whether a modifier is usable (can occur) in a declaration.
  * 2. Presence. Whether a modifier is present (is specified) in a declaration.
  *
- * @author Hoshino Tened
+ * @author Hoshino Tented
  */
 public record ModifierParser(@NotNull Reporter reporter) {
   public enum ModifierGroup {

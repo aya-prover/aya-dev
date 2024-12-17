@@ -59,8 +59,7 @@ public interface Contextful {
 
   /** @see org.aya.syntax.ref.MetaVar#asDt */
   default @NotNull Term generatePi(Expr.@NotNull Lambda expr, SourcePos sourcePos) {
-    var param = expr.param();
-    return generatePi(sourcePos, param.ref().name());
+    return generatePi(sourcePos, expr.ref().name());
   }
 
   private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {

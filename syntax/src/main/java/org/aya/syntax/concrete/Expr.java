@@ -142,8 +142,8 @@ public sealed interface Expr extends AyaDocile {
   record Lambda(
     @NotNull LocalVar ref,
     @Override @NotNull WithPos<Expr> body
-  ) implements Expr, Nested<Param, Expr, Lambda> {
-    @Override public @NotNull Param param() { return new Param(ref.definition(), ref, true); }
+  ) implements Expr, Nested<LocalVar, Expr, Lambda> {
+    @Override public @NotNull LocalVar param() { return ref; }
     public @NotNull Lambda update(@NotNull WithPos<Expr> body) {
       return body == body() ? this : new Lambda(ref, body);
     }

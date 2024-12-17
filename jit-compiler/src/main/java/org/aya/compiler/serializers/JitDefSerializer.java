@@ -31,10 +31,8 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     var assoc = ref.assoc();
     var assocIdx = assoc == null ? -1 : assoc.ordinal();
     assert module != null;
-    return mkCompiledAya(
-      module.module().module().toArray(String.class),
-      module.fileModuleSize(),
-      ref.name(),
+    return new CompiledAyaImpl(
+      module, ref.name(),
       assocIdx,
       buildShape(unit),
       buildRecognition(unit)

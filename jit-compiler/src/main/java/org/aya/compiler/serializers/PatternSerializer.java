@@ -241,7 +241,7 @@ public final class PatternSerializer {
     );
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
-    subMatchState = builder.makeVar(ConstantDescs.CD_Boolean, builder.iconst(false));
+    subMatchState = builder.makeVar(ConstantDescs.CD_boolean, builder.iconst(false));
 
     builder.breakable(mBuilder -> unit.forEachIndexed((idx, clause) -> {
       var jumpCode = idx + 1;

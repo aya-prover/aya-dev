@@ -7,7 +7,6 @@ import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
@@ -20,8 +19,9 @@ public interface FreeClassBuilder {
     return new MethodRef.Default(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
   }
 
+  void buildMetadata(@NotNull CompiledAya compiledAya);
   void buildNestedClass(
-    @Nullable CompiledAya compiledAya,
+    @NotNull CompiledAya compiledAya,
     @NotNull String name,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

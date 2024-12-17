@@ -28,7 +28,7 @@ public record ComputeTypeResult(@NotNull URI uri, @Nullable String computed, @No
   }
 
   public static ComputeTypeResult good(@NotNull Params params, @NotNull WithPos<Term> type) {
-    return new ComputeTypeResult(params.uri, type.data().toDoc(AyaPrettierOptions.informative()).debugRender(),
+    return new ComputeTypeResult(params.uri, type.data().toDoc(AyaPrettierOptions.debug()).debugRender(),
       LspRange.toRange(type.sourcePos()));
   }
 }

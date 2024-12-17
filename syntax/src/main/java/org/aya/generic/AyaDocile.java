@@ -9,17 +9,15 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-@Debug.Renderer(text = "debuggerOnlyToString()")
+@Debug.Renderer(text = "toDoc(AyaPrettierOptions.debug()).debugRender()")
 public interface AyaDocile /*extends Docile*/ {
   /**
-   * Load PrettierOptions by using it explicitly so IDEA won't show cannot load blahblah
-   * in the debugger window.
-   *
-   * @apiNote This should not be used in any other place.
-   * @deprecated use {@link #toDoc(PrettierOptions)} instead
+   * Always prefer using {@link #toDoc(PrettierOptions)} instead,
+   * this method is intended for non-user-facing pretty printing,
+   * such as assertions, testing, etc.
    */
-  @Deprecated default @NotNull String debuggerOnlyToString() {
-    return toDoc(AyaPrettierOptions.debug()).debugRender();
+  default @NotNull String easyToString() {
+    return toDoc(AyaPrettierOptions.pretty()).debugRender();
   }
 
   @NotNull Doc toDoc(@NotNull PrettierOptions options);
