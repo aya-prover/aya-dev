@@ -7,9 +7,12 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
+import org.aya.syntax.compile.JitMatchy;
+import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.ref.MetaVar;
@@ -26,6 +29,13 @@ public interface Finalizer {
       case MetaCall meta -> state().computeSolution(meta, this::zonk);
       case MetaPatTerm meta -> meta.inline(this::zonk);
       case MetaLitTerm meta -> meta.inline(this::zonk);
+      case MatchCall match -> match.update(
+        match.args().map(this::zonk),
+        match.captures().map(this::zonk),
+        switch (match.ref()) {
+          case JitMatchy jit -> jit;
+          case Matchy matchy -> matchy.descent(this::zonk);
+        });
       default -> term.descent(this::zonk);
     };
   }

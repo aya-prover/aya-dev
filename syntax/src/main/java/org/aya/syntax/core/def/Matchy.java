@@ -3,7 +3,6 @@
 package org.aya.syntax.core.def;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.ref.ModulePath;
@@ -13,6 +12,8 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.UnaryOperator;
 
 public record Matchy(
   @NotNull Term returnTypeBound,
@@ -37,10 +38,10 @@ public record Matchy(
     return new Matchy(returnTypeBound, fileModule, name, clauses);
   }
 
-  public @NotNull Matchy descent(@NotNull IndexedFunction<Term, Term> f) {
+  public @NotNull Matchy descent(@NotNull UnaryOperator<Term> f) {
     return update(
       returnTypeBound.descent(f),
-      clauses.map(x -> x.descent(f)));
+      clauses.map(x -> x.update(f.apply(x.body()))));
   }
 
   @Override public @NotNull ModulePath module() { return fileModule; }
