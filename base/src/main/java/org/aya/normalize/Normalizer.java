@@ -53,10 +53,13 @@ public final class Normalizer implements UnaryOperator<Term> {
    */
   @SuppressWarnings("UnnecessaryContinue") @Override public Term apply(Term term) {
     while (true) {
-      if (term instanceof StableWHNF || term instanceof FreeTerm) return term;
-      // ConCall for point constructors are always in WHNF
-      if (term instanceof ConCall con && !con.ref().hasEq()) return con;
+      var alreadyWHNF = term instanceof StableWHNF ||
+        term instanceof FreeTerm ||
+        // ConCall for point constructors are always in WHNF
+        (term instanceof ConCall con && !con.ref().hasEq());
+      if (alreadyWHNF && !usePostTerm) return term;
       var descentedTerm = term.descent(this);
+      if (alreadyWHNF && usePostTerm) return descentedTerm;
       // descent may change the java type of term, i.e. beta reduce,
       // and can also reduce the subterms. We intend to return the reduction
       // result when it beta reduces, so keep `descentedTerm` both when in NF mode or
@@ -75,15 +78,11 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case FnCall(JitFn instance, int ulift, var args) -> {
           var result = instance.invoke(args);
-          if (result instanceof FnCall resultCall &&
-            resultCall.ref() == instance &&
-            resultCall.args().sameElements(args, true)
-          ) {
-            return defaultValue;
-          } else {
-            term = result.elevate(ulift);
-            continue;
-          }
+          if (result instanceof FnCall(var ref, _, var newArgs) &&
+            ref == instance && newArgs.sameElements(args, true)
+          ) return defaultValue;
+          term = result.elevate(ulift);
+          continue;
         }
         case FnCall(FnDef.Delegate delegate, int ulift, var args) -> {
           FnDef core = delegate.core();
@@ -172,7 +171,10 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case MatchCall(JitMatchy fn, var discr, var captures) -> {
           var result = fn.invoke(captures, discr);
-          if (result == null) return defaultValue;
+          if (result instanceof MatchCall(var ref, var newDiscr, var newCaptures) &&
+            ref == fn && newDiscr.sameElements(discr, true) &&
+            newCaptures.sameElements(captures, true)
+          ) return defaultValue;
           term = result;
           continue;
         }
@@ -216,7 +218,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   private class Full implements UnaryOperator<Term> {
     { usePostTerm = true; }
 
-    @Override public Term apply(Term term) { return Normalizer.this.apply(term).descent(this); }
+    @Override public Term apply(Term term) { return Normalizer.this.apply(term); }
   }
 
   /**

@@ -14,6 +14,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Link;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.style.AyaStyleKey;
+import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.decl.*;
@@ -109,7 +110,11 @@ public abstract class BasePrettier<Term extends AyaDocile> {
         : inner.ref.signature == null
           ? BooleanSeq.fill(size, true)
           : inner.ref.signature.params().mapToBooleanTo(MutableBooleanList.create(), Param::explicit);
-      case JitTele jit -> MutableBooleanList.from(jit.telescopeLicit);
+      case JitTele jit -> {
+        var rawLicit = MutableBooleanList.from(jit.telescopeLicit);
+        if (jit instanceof JitCon con) yield rawLicit.takeLast(con.selfTeleSize());
+        yield rawLicit;
+      }
       default -> Panic.unreachable();
     };
   }

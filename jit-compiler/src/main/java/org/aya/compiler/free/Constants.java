@@ -9,7 +9,6 @@ import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;

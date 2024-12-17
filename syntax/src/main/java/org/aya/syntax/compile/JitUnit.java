@@ -18,7 +18,7 @@ public abstract class JitUnit {
     return metadata;
   }
 
-  public @NotNull String name() { return metadata.name(); }
+  public @NotNull String name() { return metadata().name(); }
   public @NotNull ModulePath module() { return new ModulePath(rawModule()); }
 
   private @NotNull ImmutableArray<String> rawModule() {

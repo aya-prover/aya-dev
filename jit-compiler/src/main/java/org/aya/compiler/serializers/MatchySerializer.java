@@ -12,9 +12,13 @@ import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
+import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
 public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.MatchyData> {
@@ -37,15 +41,32 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return NameSerializer.javifyClassName(unit.matchy.qualifiedName().module(), unit.matchy.qualifiedName().name());
   }
 
-  /**
-   * @see JitMatchy#invoke(Seq, Seq)
-   */
-  private void buildInvoke(@NotNull FreeCodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
-    var unit = data.matchy;
-    int argc = data.argsSize;
-    Consumer<FreeCodeBuilder> onFailed = b -> b.returnWith(b.aconstNull(Constants.CD_Term));
+  public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
+    return new MethodRef.Default(
+      owner, "invoke",
+      Constants.CD_Term, ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
+      false
+    );
+  }
 
-    if (argc == 0) {
+  private void buildInvoke(
+    @NotNull FreeCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull ImmutableSeq<LocalVariable> captures, @NotNull ImmutableSeq<LocalVariable> args
+  ) {
+    var unit = data.matchy;
+    var captureExprs = captures.map(LocalVariable::ref);
+    var argExprs = args.map(LocalVariable::ref);
+
+    Consumer<FreeCodeBuilder> onFailed = b -> {
+      var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
+        AbstractExprializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
+        AbstractExprializer.makeImmutableSeq(b, Term.class, captureExprs),
+        AbstractExprializer.makeImmutableSeq(b, Term.class, argExprs)
+      ));
+      b.returnWith(result);
+    };
+
+    if (args.isEmpty()) {
       onFailed.accept(builder);
       return;
     }
@@ -54,15 +75,32 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
         (ps, cb, bindCount) -> {
           var resultSeq = AbstractExprializer.fromSeq(cb, Constants.CD_Term, ps.result.ref(), bindCount);
-          var captureSeq = AbstractExprializer.fromSeq(cb, Constants.CD_Term, captures.ref(), data.capturesSize);
-          var fullSeq = resultSeq.appendedAll(captureSeq);
+          var fullSeq = resultSeq.appendedAll(captureExprs);
           var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
           cb.returnWith(returns);
         })
     );
 
-    new PatternSerializer(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc), onFailed, false)
+    new PatternSerializer(argExprs, onFailed, false)
       .serialize(builder, matching);
+  }
+
+  /**
+   * @see JitMatchy#invoke(Seq, Seq)
+   */
+  private void buildInvoke(
+    @NotNull FreeCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull LocalVariable captures, @NotNull LocalVariable args
+  ) {
+    var capturec = data.capturesSize;
+    int argc = data.argsSize;
+    var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
+    var invokeExpr = builder.invoke(invokeRef, builder.thisRef(),
+      AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
+        .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
+    );
+
+    builder.returnWith(invokeExpr);
   }
 
   /** @see JitMatchy#type */
@@ -84,6 +122,16 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   @Override public @NotNull ClassTargetSerializer<MatchyData>
   serialize(@NotNull FreeClassBuilder builder0, MatchyData unit) {
     buildFramework(builder0, unit, builder -> {
+      var capturec = unit.capturesSize;
+      var argc = unit.argsSize;
+
+      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
+        (ap, cb) -> {
+          var captures = ImmutableSeq.fill(capturec, ap::arg);
+          var args = ImmutableSeq.fill(argc, i -> ap.arg(i + capturec));
+          buildInvoke(cb, unit, captures, args);
+        });
+
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq
       ), (ap, cb) -> {

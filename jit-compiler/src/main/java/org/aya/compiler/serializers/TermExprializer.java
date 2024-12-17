@@ -107,20 +107,27 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull FreeJavaExpr
-  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<Term> args) {
-    var argsExpr = args.map(this::doSerialize);
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     var invokeExpr = builder.invoke(
-      FnSerializer.resolveInvoke(defClass, args.size()),
-      getInstance(builder, defClass),
-      argsExpr
-    );
+      FnSerializer.resolveInvoke(defClass, args.size()), getInstance(builder, defClass), args);
 
     if (ulift != 0) {
-      assert ulift > 0;
-      invokeExpr = builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
-    }
+      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
+    } else return invokeExpr;
+  }
 
-    return invokeExpr;
+  // There is a chance I need to add lifting to match, so keep a function for us to
+  // add the if-else in it
+  private @NotNull FreeJavaExpr buildMatchyInvoke(
+    @NotNull ClassDesc matchyClass,
+    @NotNull ImmutableSeq<FreeJavaExpr> args,
+    @NotNull ImmutableSeq<FreeJavaExpr> captures
+  ) {
+    return builder.invoke(
+      MatchySerializer.resolveInvoke(matchyClass, captures.size(), args.size()),
+      getInstance(builder, matchyClass),
+      captures.appendedAll(args)
+    );
   }
 
   @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Term term) {
@@ -164,7 +171,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case FnCall(var ref, var ulift, var args) -> buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args);
+      case FnCall(var ref, var ulift, var args) -> buildFnInvoke(
+        NameSerializer.getClassDesc(ref), ulift,
+        args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
         var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
           serializeApplicable(rule),
@@ -174,7 +183,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         ));
         yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
-      case RuleReducer.Fn (var rule, int ulift, var args) -> {
+      case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
           serializeApplicable(rule),
           builder.iconst(ulift),
@@ -244,11 +253,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         ));
       case MatchCall(var ref, var args, var captures) -> {
         if (ref instanceof Matchy matchy) recorder.addMatchy(matchy, args.size(), captures.size());
-        yield builder.mkNew(MatchCall.class, ImmutableSeq.of(
-          getInstance(builder, NameSerializer.getClassDesc(ref)),
-          serializeToImmutableSeq(Term.class, args),
-          serializeToImmutableSeq(Term.class, captures)
-        ));
+        yield buildMatchyInvoke(NameSerializer.getClassDesc(ref),
+          args.map(this::doSerialize), captures.map(this::doSerialize));
       }
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
     };
