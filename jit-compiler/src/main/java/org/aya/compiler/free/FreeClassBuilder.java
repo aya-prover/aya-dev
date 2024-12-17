@@ -20,6 +20,7 @@ public interface FreeClassBuilder {
     return new MethodRef.Default(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
   }
 
+  void buildMetadata(@NotNull CompiledAya compiledAya);
   void buildNestedClass(
     @Nullable CompiledAya compiledAya,
     @NotNull String name,

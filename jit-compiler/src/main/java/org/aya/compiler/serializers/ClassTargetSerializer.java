@@ -9,8 +9,8 @@ import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.lang.annotation.Annotation;
@@ -28,20 +28,18 @@ public abstract class ClassTargetSerializer<T> {
     this.recorder = recorder;
   }
 
-  public static @NotNull CompiledAya mkCompiledAya(
-    @NotNull String[] module, int fileModuleSize,
-    @NotNull String name, int assoc, int shape,
-    @NotNull CodeShape.GlobalId[] recognition
-  ) {
-    return new CompiledAya() {
-      @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
-      @Override public @NotNull String[] module() { return module; }
-      @Override public int fileModuleSize() { return fileModuleSize; }
-      @Override public @NotNull String name() { return name; }
-      @Override public int assoc() { return assoc; }
-      @Override public int shape() { return shape; }
-      @Override public @NotNull CodeShape.GlobalId[] recognition() { return recognition; }
-    };
+  public record CompiledAyaImpl(
+    @Override @NotNull String[] module, @Override int fileModuleSize,
+    @Override @NotNull String name, @Override int assoc, @Override int shape,
+    @Override @NotNull CodeShape.GlobalId[] recognition
+  ) implements CompiledAya {
+    public CompiledAyaImpl(
+      @NotNull QPath path, @NotNull String name, int assoc, int shape,
+      @NotNull CodeShape.GlobalId[] recognition
+    ) {
+      this(path.module().module().toArray(new String[0]), path.fileModuleSize(), name, assoc, shape, recognition);
+    }
+    @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
   }
 
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder) {

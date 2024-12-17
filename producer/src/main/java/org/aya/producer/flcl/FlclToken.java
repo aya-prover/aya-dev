@@ -7,11 +7,7 @@ import kala.text.StringSlice;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public record FlclToken(
-  @NotNull SourcePos range,
-  @NotNull Type type
-) {
-
+public record FlclToken(@NotNull SourcePos range, @NotNull Type type) {
   public record File(
     @NotNull ImmutableSeq<FlclToken> tokens,
     @NotNull StringSlice sourceCode,

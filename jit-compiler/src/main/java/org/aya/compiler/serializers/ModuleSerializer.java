@@ -10,6 +10,7 @@ import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
+import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,8 +76,10 @@ public final class ModuleSerializer<Carrier> {
 
   public Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
+    var metadata = new ClassTargetSerializer.CompiledAyaImpl(unit.name,
+      "", -1, -1, new CodeShape.GlobalId[0]);
 
-    return builder.buildClass(desc, JitUnit.class, cb -> {
+    return builder.buildClass(metadata, desc, JitUnit.class, cb -> {
       unit.defs.forEach(def -> doSerialize(cb, def));
       var matchySerializer = new MatchySerializer(recorder);
       while (recorder.todoMatchies.isNotEmpty()) matchySerializer

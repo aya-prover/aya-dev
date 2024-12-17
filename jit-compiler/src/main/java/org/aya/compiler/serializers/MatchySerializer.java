@@ -75,10 +75,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
   @Override protected @NotNull CompiledAya buildMetadata(@NotNull MatchyData unit) {
     var qname = unit.matchy.qualifiedName();
-    return mkCompiledAya(
-      qname.module().module().module().toArray(new String[0]),
-      qname.module().fileModuleSize(),
-      qname.name(),
+    return new CompiledAyaImpl(
+      qname.module(), qname.name(),
       -1, -1, new CodeShape.GlobalId[0]
     );
   }

@@ -106,10 +106,8 @@ public final class SourceBuilder {
   }
 
   public void buildClass(
-    @NotNull String className,
-    @Nullable String superClass,
-    boolean isStatic,
-    @NotNull Runnable continuation
+    @NotNull String className, @Nullable String superClass,
+    boolean isStatic, @NotNull Runnable continuation
   ) {
     var ext = superClass == null ? "" : "extends " + superClass;
 
