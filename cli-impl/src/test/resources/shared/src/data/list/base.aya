@@ -1,6 +1,6 @@
 open import arith::nat::base
 open import relation::binary::path
-open import data::maybe using (Maybe, Just, Nothing)
+open import data::maybe using (Maybe, just, nothing)
 
 open inductive List (A : Type)
 | nil
@@ -39,8 +39,8 @@ def drop (n : Nat) (xs : List A) : List A
 | suc n, x :< xs => drop n xs
 
 def infixl !! (List A) Nat : Maybe A
-| [ ], _ => Nothing
-| x :< _, 0 => Just x
+| [ ], _ => nothing
+| x :< _, 0 => just x
 | _ :< xs, suc n => xs !! n
 tighter =
 
