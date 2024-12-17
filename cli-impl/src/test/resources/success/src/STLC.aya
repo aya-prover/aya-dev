@@ -1,0 +1,91 @@
+open import arith::nat
+open import arith::bool using (if-then-else)
+open import data::list::base
+open import data::maybe using (Maybe, Just, Nothing)
+open import relation::binary::path using (= , refl, transport)
+
+open inductive Tm
+| Lam Tm
+| App Tm Tm
+| Idx Nat
+| True | False
+
+open inductive Ty
+| Arrow Ty Ty
+| Bool
+
+def Gamma : Type => List Ty
+
+open inductive hasType Gamma Tm Ty
+| Γ, Lam t, Arrow A B => Lam_hasType (hasType (A :< Γ) t B)
+| Γ, App f a, B => App_hasType (A : Ty) (hasType Γ f (Arrow A B)) (hasType Γ a A)
+| Γ, Idx n, A => Var_hasType (Γ !! n = Just A)
+| _, True, Bool => True_hasType
+| _, False, Bool => False_hasType
+
+// shift all de-bruijn index in [t] which is greater than or equal to [from] with [offset],
+// this is required by instantiate a lambda or something that introduces binding.
+// Not all index should be offset, for example, the usage of lambda parameter, so we introduce [from].
+def shift (t : Tm) (from offset : Nat) : Tm elim t
+| Lam l => Lam (shift l (suc from) offset)
+| App f a => App (shift f from offset) (shift a from offset)
+| Idx i => if-then-else (minus (suc i) from =? 0)   // i < from
+    t
+    (Idx (i + offset))
+| True => True
+| False => False
+
+def shift1 (t : Tm) : Tm => shift t 0 1
+
+def inst (t : Tm) (i : Nat) (v : Tm) : Tm elim t
+| Lam lam => Lam (inst lam (suc i) (shift1 v))
+| App f a => App (inst f i v) (inst a i v)
+| Idx j => if-then-else (i =? j) v t
+| True => t
+| False => t
+
+def test-inst-0 : inst (Lam (Idx 0)) 0 True = Lam (Idx 0) => refl
+def test-inst-1 : inst (Lam (Idx 1)) 0 True = Lam True => refl
+
+def eval (t : Tm) : Tm
+| App (Lam l) a => inst l 0 a
+| _ => t
+
+def test-eval-0 : eval (App (Lam (Idx 0)) True) = True => refl
+def test-eval-1 : eval (App (Lam (Idx 1)) True) = (Idx 1) => refl
+
+open inductive value (t : Tm)
+| Lam _ => lamValue
+| True => trueValue
+| False => falseValue
+
+// small step
+open inductive infix —> Tm Tm
+| App f a, App f' a' => S_App0 (a = a') (f —> f')
+| App f a, App f' a' => S_App1 (f = f') (value f) (a —> a')
+| App (Lam l) a, t => S_App (value a) (t = inst l 0 a)
+
+def function_canoninal_form
+  {Γ : Gamma} {t : Tm} (value t)
+  {A B : Ty} (hasType Γ t (Arrow A B))
+  : Sig (l : Tm) ** (t = Lam l)
+| {_}, {Lam l}, lamValue, _ => (l, refl)
+| trueValue, ()
+| falseValue, ()
+
+def inst_preservation
+  {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A)
+  {v : Tm} {B : Ty} (hasType G v B)
+  (i : Nat) (G !! i = Just B)
+  : hasType G (inst tm i v) A
+| Lam_hasType l, vhT, i, eqG => {??}
+| App_hasType A fhT ahT, vhT, i, eqG => {??}
+| _, _, _, _ => {??}
+
+def preservation
+  {Γ : Gamma} {tm tm': Tm} {ty : Ty}
+  (p : hasType Γ tm ty) (s : tm —> tm'): hasType Γ tm' ty
+| App_hasType A fhT ahT, S_App0 eqa sf => App_hasType A (preservation fhT sf) (transport (fn a => hasType Γ a A) eqa ahT)
+| {_}, {_}, {_}, {B}, App_hasType A fhT ahT, S_App1 eqf vf sa =>
+  App_hasType A (transport (fn f => hasType Γ f (Arrow A B)) eqf fhT) (preservation ahT sa)
+| App_hasType A fhT ahT, S_App va eqInst => {??}
