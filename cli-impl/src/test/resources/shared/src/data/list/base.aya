@@ -1,5 +1,6 @@
 open import arith::nat::base
 open import relation::binary::path
+open import data::maybe using (Maybe, Just, Nothing)
 
 open inductive List (A : Type)
 | nil
@@ -26,3 +27,21 @@ def rev' (buf xs : List A) : List A elim xs
 | x :< xs' => rev' (x :< buf) xs'
 
 def rev (xs : List A) : List A => rev' [ ] xs
+
+def take (n : Nat) (xs : List A) : List A
+| _, [ ] => [ ]
+| 0, _ :< _ =>  [ ]
+| suc n, x :< xs => x :< (take n xs)
+
+def drop (n : Nat) (xs : List A) : List A
+| 0, _ => xs
+| suc n, [ ] => [ ]
+| suc n, x :< xs => drop n xs
+
+def infixl !! (List A) Nat : Maybe A
+| [ ], _ => Nothing
+| x :< _, 0 => Just x
+| _ :< xs, suc n => xs !! n
+tighter =
+
+def insert (n : Nat) (x : A) (xs : List A) : List A => take n xs ++ [ x ] ++ drop n xs

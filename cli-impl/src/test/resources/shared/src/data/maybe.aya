@@ -1,0 +1,14 @@
+open inductive Maybe (A : Type)
+| Just A | Nothing
+
+variable A B : Type
+
+def map (f : A -> B) (m : Maybe A) : Maybe B elim m
+| Just a => Just (f a)
+| Nothing => Nothing
+
+def join (mm : Maybe (Maybe A)) : Maybe A
+| Just (Just a) => Just a
+| _ => Nothing
+
+def infixl >>= (f : A -> Maybe B) (m : Maybe A) : Maybe B => join (map f m)
