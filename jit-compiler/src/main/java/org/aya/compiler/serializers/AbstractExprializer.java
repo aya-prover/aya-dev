@@ -105,6 +105,16 @@ public abstract class AbstractExprializer<T> {
     return builder.checkcast(result, elementType);
   }
 
+  public static @NotNull FreeJavaExpr makeFunctionApply(
+    @NotNull FreeExprBuilder builder,
+    @NotNull ClassDesc returnType,
+    @NotNull FreeJavaExpr theFunction,
+    @NotNull FreeJavaExpr theArg
+  ) {
+    var result = builder.invoke(Constants.FUNCTION, theFunction, ImmutableSeq.of(theArg));
+    return builder.checkcast(result, returnType);
+  }
+
   /**
    * Actually perform serialization, unlike {@link #serialize}
    * which will perform some initialization after a {@code T} is obtained.

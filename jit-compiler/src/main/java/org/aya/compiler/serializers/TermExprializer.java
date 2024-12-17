@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
@@ -15,9 +14,7 @@ import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
-import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
-import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.term.*;
@@ -28,10 +25,8 @@ import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -100,49 +95,32 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     };
   }
 
-  /**
-   * TODO: remove {@param fixed}, it is used by FnCall only
-   * <p>
-   * This code requires that {@link FnCall}, {@link RuleReducer.Fn} and {@link RuleReducer.Con}
-   * {@code ulift} is the second parameter, {@code args.get(i)} is the {@code i + 3}th parameter
-   *
-   * @param reducibleType the ref class of {@param reducible}, used when {@param fixed} is true
-   * @param fixed         whether {@param reducible} has fixed `invoke`,
-   *                      i.e. {@link JitFn} does but {@link org.aya.generic.stmt.Shaped.Applicable} doesn't.
-   */
-  private @NotNull FreeJavaExpr buildReducibleCall(
-    @Nullable ClassDesc reducibleType,
-    @NotNull FreeJavaExpr reducible,
-    @NotNull Class<?> callName,
-    int ulift,
-    @NotNull ImmutableSeq<ImmutableSeq<Term>> args,
-    boolean fixed
+  public static @NotNull FreeJavaExpr buildFnCall(
+    @NotNull FreeExprBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
+    int ulift, @NotNull ImmutableSeq<FreeJavaExpr> args
   ) {
-    var seredArgs = args.map(x -> x.map(this::doSerialize));
-    var seredSeq = seredArgs.map(x -> makeImmutableSeq(Term.class, x));
-    var flatArgs = seredArgs.flatMap(x -> x);
+    return builder.mkNew(callName, ImmutableSeq.of(
+      getInstance(builder, def),
+      builder.iconst(ulift),
+      AbstractExprializer.makeImmutableSeq(builder, Term.class, args)
+    ));
+  }
 
-    var callArgs = new FreeJavaExpr[seredSeq.size() + 2];
-    callArgs[0] = reducible;
-    callArgs[1] = builder.iconst(0); // elevate later
-    for (var i = 0; i < seredSeq.size(); ++i) {
-      callArgs[i + 2] = seredSeq.get(i);
+  private @NotNull FreeJavaExpr
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<Term> args) {
+    var argsExpr = args.map(this::doSerialize);
+    var invokeExpr = builder.invoke(
+      FnSerializer.resolveInvoke(defClass, args.size()),
+      getInstance(builder, defClass),
+      argsExpr
+    );
+
+    if (ulift != 0) {
+      assert ulift > 0;
+      invokeExpr = builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
     }
 
-    var onStuck = makeThunk(te -> te.builder.mkNew(callName, ImmutableArray.Unsafe.wrap(callArgs)));
-    var finalInvocation = fixed
-      ? builder.invoke(
-      FnSerializer.resolveInvoke(Objects.requireNonNull(reducibleType), flatArgs.size()),
-      reducible,
-      flatArgs.view().prepended(onStuck).toImmutableSeq())
-      : builder.invoke(Constants.REDUCIBLE_INVOKE, reducible, ImmutableSeq.of(
-        onStuck,
-        makeImmutableSeq(Term.class, flatArgs)
-      ));
-
-    return ulift == 0
-      ? finalInvocation
-      : builder.invoke(Constants.ELEVATE, finalInvocation, ImmutableSeq.of(builder.iconst(ulift)));
+    return invokeExpr;
   }
 
   @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Term term) {
@@ -186,30 +164,24 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case FnCall call -> {
-        var anyDef = switch (call.ref()) {
-          case JitFn jit -> jit;
-          case FnDef.Delegate def -> AnyDef.fromVar(def.ref);
-        };
-
-        var ref = getInstance(anyDef);
-        var args = call.args();
-        yield buildReducibleCall(NameSerializer.getClassDesc(anyDef), ref, FnCall.class, call.ulift(), ImmutableSeq.of(args), true);
+      case FnCall(var ref, var ulift, var args) -> buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args);
+      case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
+        var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
+          serializeApplicable(rule),
+          builder.iconst(ulift),
+          serializeToImmutableSeq(Term.class, ownerArgs),
+          serializeToImmutableSeq(Term.class, conArgs)
+        ));
+        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
-      case RuleReducer.Con conRuler -> buildReducibleCall(
-        null,
-        serializeApplicable(conRuler.rule()),
-        RuleReducer.Con.class, conRuler.ulift(),
-        ImmutableSeq.of(conRuler.ownerArgs(), conRuler.conArgs()),
-        false
-      );
-      case RuleReducer.Fn fnRuler -> buildReducibleCall(
-        null,
-        serializeApplicable(fnRuler.rule()),
-        RuleReducer.Fn.class, fnRuler.ulift(),
-        ImmutableSeq.of(fnRuler.args()),
-        false
-      );
+      case RuleReducer.Fn (var rule, int ulift, var args) -> {
+        var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
+          serializeApplicable(rule),
+          builder.iconst(ulift),
+          serializeToImmutableSeq(Term.class, args)
+        ));
+        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+      }
       // TODO: make the resolving const
       case SortTerm sort when sort.equals(SortTerm.Type0) ->
         builder.refField(builder.resolver().resolve(SortTerm.class, "Type0"));

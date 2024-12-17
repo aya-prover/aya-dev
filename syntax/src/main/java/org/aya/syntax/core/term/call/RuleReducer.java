@@ -12,6 +12,11 @@ import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface RuleReducer extends Callable.Tele {
+  @NotNull default Term make() {
+    var result = rule().apply(args());
+    return result == null ? this : result;
+  }
+
   @NotNull Shaped.Applicable<?> rule();
   @Override default @NotNull AnyDef ref() { return rule().ref(); }
 

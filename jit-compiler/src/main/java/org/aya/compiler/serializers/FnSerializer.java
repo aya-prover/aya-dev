@@ -3,9 +3,11 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.FreezableMutableList;
 import kala.control.Either;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.Constants;
+import org.aya.compiler.free.FreeClassBuilder;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.Modifier;
@@ -21,7 +23,6 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.EnumSet;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -61,11 +62,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(
     @NotNull FreeCodeBuilder builder,
     @NotNull FnDef unit,
-    @NotNull LocalVariable onStuckTerm,
     @NotNull ImmutableSeq<LocalVariable> argTerms
   ) {
-    Consumer<FreeCodeBuilder> onStuckCon = cb ->
-      cb.returnWith(AyaSerializer.getThunk(cb, onStuckTerm.ref()));
+    Consumer<FreeCodeBuilder> onStuckCon = cb -> {
+      var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms.map(LocalVariable::ref));
+      cb.returnWith(stuckTerm);
+    };
+
     var argExprs = argTerms.map(LocalVariable::ref);
 
     if (unit.is(Modifier.Opaque)) {
@@ -100,53 +103,42 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   /**
    * Build vararg `invoke`
    */
-  private void buildInvoke(@NotNull FreeCodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable onStuckTerm, @NotNull LocalVariable argsTerm) {
+  private void buildInvoke(@NotNull FreeCodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable argsTerm) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var result = builder.invoke(
-      invokeMethod,
-      builder.thisRef(),
-      args.prepended(onStuckTerm.ref())
-    );
-
+    var result = builder.invoke(invokeMethod, builder.thisRef(), args);
     builder.returnWith(result);
   }
 
   @Override protected @NotNull Class<?> callClass() { return FnCall.class; }
 
-  @Override
-  protected int buildShape(FnDef unit) {
+  @Override protected int buildShape(FnDef unit) {
     var shapeMaybe = shapeFactory.find(TyckAnyDef.make(unit));
     if (shapeMaybe.isEmpty()) return super.buildShape(unit);
     return shapeMaybe.get().shape().ordinal();
   }
 
   @Override public @NotNull FnSerializer serialize(@NotNull FreeClassBuilder builder, FnDef unit) {
-    var onStuckParam = FreeUtil.fromClass(Supplier.class);
-    var fullParam = FreezableMutableList.<ClassDesc>create();
-    fullParam.append(onStuckParam);
-    fullParam.appendAll(ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term));
+    var fullParam = ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term);
 
     buildFramework(builder, unit, builder0 -> {
       var fixedInvoke = builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        fullParam.freeze(),
+        fullParam,
         (ap, cb) -> {
-          var onStuck = ap.arg(0);
           var args = ImmutableSeq.fill(unit.telescope().size(),
-            i -> ap.arg(i + 1));
-          buildInvoke(cb, unit, onStuck, args);
+            ap::arg);
+          buildInvoke(cb, unit, args);
         }
       );
 
       builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        ImmutableSeq.of(onStuckParam, Constants.CD_Seq),
+        ImmutableSeq.of(Constants.CD_Seq),
         (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke,
-            ap.arg(0), ap.arg(1))
+          buildInvoke(cb, unit, fixedInvoke, ap.arg(0))
       );
     });
 
