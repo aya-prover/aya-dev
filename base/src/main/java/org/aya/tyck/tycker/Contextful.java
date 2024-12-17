@@ -19,11 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Indicating something is {@link LocalCtx}ful.<br/>
- * Whenever you want to introduce some bind, make sure you are modifying
- * the {@link LocalCtx} that you own it, i.e. obtained from {@link Contextful#subscope}.
- * In fact, this is the rule of ownership 🦀🦀🦀.<br/>
+ * Most of the useful methods are in {@link AbstractTycker}.
  *
- * @see #subscope()
  * @see #localCtx()
  */
 public interface Contextful {

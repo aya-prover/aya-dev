@@ -224,7 +224,9 @@ public class PatternTycker implements Problematic, Stateful {
         // Hif = pattern.explicit = false
         // Corollary : currentParam.explicit = true
         // too many implicit pattern!
-        foundError(new PatternProblem.TooManyImplicitPattern(pattern.term(), currentParam));
+        try (var ignored = instCurrentParam()) {
+          foundError(new PatternProblem.TooManyImplicitPattern(pattern.term(), currentParam));
+        }
         return null;
       }
     }
@@ -331,7 +333,9 @@ public class PatternTycker implements Problematic, Stateful {
       WithPos<Pattern> errorPattern = lastPat == null
         ? Objects.requireNonNull(outerPattern)
         : lastPat.term();
-      foundError(new PatternProblem.InsufficientPattern(errorPattern, currentParam));
+      try (var ignored = instCurrentParam()) {
+        foundError(new PatternProblem.InsufficientPattern(errorPattern, currentParam));
+      }
       return done(wellTyped, body);
     }
 
@@ -340,22 +344,27 @@ public class PatternTycker implements Problematic, Stateful {
     return done(wellTyped, body);
   }
 
-  private <T> T onTyck(@NotNull Supplier<T> block) {
+  private @NotNull Closer instCurrentParam() {
     currentParam = currentParam.descent(t -> t.instTele(paramSubst.view().map(Jdg::wellTyped)));
-    var result = block.get();
-    telescope = telescope.drop(1);
-    return result;
+    return CLOSER;
+  }
+
+  private final Closer CLOSER = new Closer();
+  private class Closer implements AutoCloseable {
+    @Override public void close() {
+      telescope = telescope.drop(1);
+    }
   }
 
   /**
    * Checking {@param pattern} with {@link PatternTycker#currentParam}
    */
   private @NotNull Pat tyckPattern(@NotNull WithPos<Pattern> pattern) {
-    return onTyck(() -> {
+    try (var ignored = instCurrentParam()) {
       var result = doTyck(pattern, currentParam.type());
       addArgSubst(result, currentParam.type());
       return result;
-    });
+    }
   }
 
   /**
@@ -364,7 +373,7 @@ public class PatternTycker implements Problematic, Stateful {
    * so that they can be inferred during {@link ClauseTycker}
    */
   private @NotNull Pat generatePattern() {
-    return onTyck(() -> {
+    try (var ignored = instCurrentParam()) {
       var type = currentParam.type();
       Pat pat;
       var freshVar = nameGen.bindName(currentParam.name());
@@ -380,7 +389,7 @@ public class PatternTycker implements Problematic, Stateful {
 
       addArgSubst(pat, currentParam.type());
       return pat;
-    });
+    }
   }
 
   private @NotNull ImmutableSeq<Pat> tyckInner(
