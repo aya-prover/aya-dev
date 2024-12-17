@@ -26,16 +26,16 @@ open inductive hasType Gamma Tm Ty
 // shift all de-bruijn index in [t] which is greater than or equal to [from] with [offset],
 // this is required by instantiate a lambda or something that introduces binding.
 // Not all index should be offset, for example, the usage of lambda parameter, so we introduce [from].
-def shift (t : Tm) (from offset : Nat) : Tm elim t
-| Lam l => Lam (shift l (suc from) offset)
-| App f a => App (shift f from offset) (shift a from offset)
+def shift (t : Tm) (from : Nat) : Tm elim t
+| Lam l => Lam (shift l (suc from))
+| App f a => App (shift f from) (shift a from)
 | Idx i => if-then-else (minus (suc i) from =? 0)   // i < from
     t
-    (Idx (i + offset))
+    (Idx (suc i))
 | True => True
 | False => False
 
-def shift1 (t : Tm) : Tm => shift t 0 1
+def shift1 (t : Tm) : Tm => shift t 0
 
 def inst (t : Tm) (i : Nat) (v : Tm) : Tm elim t
 | Lam lam => Lam (inst lam (suc i) (shift1 v))
@@ -73,12 +73,36 @@ def function_canoninal_form
 | trueValue, ()
 | falseValue, ()
 
+def shift_preservation
+  {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A) (B : Ty) (i : Nat)
+  : hasType (take i G ++ [ B ] ++ drop i G) (shift tm i) A
+// hasType (take i G ++ [ B ] ++ drop i G) (shift (Lam t) i) (Arrow A B)
+// = hasType (take i G ++ [ B ] ++ drop i G) (Lam (shift t (suc i)) (Arrow A B)
+// hasType (A :< (take i G ++ [ B ] ++ drop i G)) (shift t (suc i)) B
+// We can see that:
+// let G' := (A :< (take i G ++ [ B ] ++ drop i G))
+// take (suc i) G' = A :< (take i G)
+// drop (suc i) G' = [ B ] ++ drop i G
+| Lam_hasType lhT, C, _ => {??}
+| App_hasType A' fhT ahT, _, _ => {??}
+| Var_hasType eqG, _, _ => {??}
+| True_hasType, _, _ => True_hasType
+| False_hasType, _, _ => False_hasType
+
 def inst_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A)
   {v : Tm} {B : Ty} (hasType G v B)
   (i : Nat) (G !! i = Just B)
   : hasType G (inst tm i v) A
-| Lam_hasType l, vhT, i, eqG => {??}
+// I need:
+// * hasType (A :< G) (shift v 0) A
+// * hasType G (inst l (suc i) (shift v 0)) B
+// * inst_preservation lhT (?shT : hasType (A :< G) ?s B) (suc i) ((A :< G) !! (suc i) = Just A)
+//   : hasType (A :< G) (inst l (suc i) ?s) B
+//
+// I may have:
+// * ?shT : hasType (A :< G) (shift v 0 1) B
+| {_}, {Lam l}, Lam_hasType lhT, vhT, i, eqG => {?  ?}
 | App_hasType A fhT ahT, vhT, i, eqG => {??}
 | _, _, _, _ => {??}
 
