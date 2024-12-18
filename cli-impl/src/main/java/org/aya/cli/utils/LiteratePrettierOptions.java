@@ -43,7 +43,7 @@ public class LiteratePrettierOptions {
       .registerTypeAdapter(PrettierOptions.Key.class, (JsonDeserializer<PrettierOptions.Key>) (json, typeOfT, context) -> {
         try {
           return AyaPrettierOptions.Key.valueOf(json.getAsString());
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
           return null;
         }
       });

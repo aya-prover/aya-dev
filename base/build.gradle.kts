@@ -16,9 +16,12 @@ dependencies {
 }
 
 val genDir = file("src/main/gen")
+var javaVersion: Int by rootProject.ext
+
 val generateVersion = tasks.register<GenerateVersionTask>("generateVersion") {
   basePackage = "org.aya"
   outputDir = genDir.resolve("org/aya/prelude")
+  jdkVersion = javaVersion
 }
 
 idea.module.generatedSourceDirs.add(genDir)

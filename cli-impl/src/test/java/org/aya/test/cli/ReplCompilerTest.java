@@ -118,7 +118,7 @@ public class ReplCompilerTest {
       var ctx = compiler.getContext();
       return ctx.getMaybe(new QualifiedID(SourcePos.NONE,
         ImmutableSeq.of(Constants.SCOPE_SEPARATOR_PATTERN.split(name))));
-    } catch (Context.ResolvingInterruptedException ignored) {
+    } catch (Context.ResolvingInterruptedException _) {
       return null;
     }
   }

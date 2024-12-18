@@ -112,7 +112,7 @@ subprojects {
         BuildUtil.stripPreview(
           /* root = */ root.toPath(),
           /* classFile = */ it.toPath(),
-          /* forceJava21 = */ false,
+          /* forceJava21 = */ true,
           /* verbose = */ false,
         )
       }

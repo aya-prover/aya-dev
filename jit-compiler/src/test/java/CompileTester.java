@@ -3,6 +3,7 @@
 
 import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.compiler.serializers.NameSerializer;
+import org.aya.prelude.GeneratedVersion;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
 import org.aya.util.FileUtil;
@@ -33,7 +34,7 @@ public class CompileTester {
       var compiler = ToolProvider.getSystemJavaCompiler();
       var fileManager = compiler.getStandardFileManager(null, null, null);
       var compilationUnits = fileManager.getJavaFileObjects(baka);
-      var options = List.of("--enable-preview", "--release", "21");
+      var options = List.of("--enable-preview", "--release", GeneratedVersion.JDK_VERSION);
       var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
       task.call();
       var fqName = NameSerializer.getModuleClassName(DumbModuleLoader.DUMB_MODULE_NAME);

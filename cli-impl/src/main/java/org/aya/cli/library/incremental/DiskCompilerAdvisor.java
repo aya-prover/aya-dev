@@ -11,6 +11,7 @@ import org.aya.compiler.CompiledModule;
 import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.NameSerializer;
+import org.aya.prelude.GeneratedVersion;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -155,7 +156,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       classpath = classpath.appended(jlinkClassPath.toString());
     }
     var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
-      "--enable-preview", "--release", "21");
+      "--enable-preview", "--release", GeneratedVersion.JDK_VERSION);
     var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
     boolean compileSuccess = task.call();
     if (Global.DELETE_JIT_JAVA_SOURCE && compileSuccess) Files.delete(javaSrcPath);

@@ -187,7 +187,7 @@ public class ReplCompiler {
     try {
       if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
         return unresolved.var();
-    } catch (InterruptException ignored) {
+    } catch (InterruptException _) {
     }
     return null;
   }
@@ -197,7 +197,7 @@ public class ReplCompiler {
       var expr = parseExpr(text);
       if (expr == null) return null;
       return tyckAndNormalize(expr, true, mode);
-    } catch (InterruptException ignored) {
+    } catch (InterruptException _) {
       return null;
     }
   }

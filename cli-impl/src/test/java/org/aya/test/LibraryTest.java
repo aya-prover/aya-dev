@@ -59,7 +59,7 @@ public class LibraryTest {
   }
 
   // Use this test for additional compilation
-  public static void main() throws IOException {
+  public static void main(String... args) throws IOException {
     assertEquals(0, compile(DIR));
   }
 
