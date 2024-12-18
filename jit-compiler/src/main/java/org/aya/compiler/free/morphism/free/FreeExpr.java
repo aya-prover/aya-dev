@@ -14,6 +14,7 @@ import java.lang.constant.ClassDesc;
 public sealed interface FreeExpr extends FreeJavaExpr {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeExpr> args) implements FreeExpr { }
   record RefVariable(@NotNull FreeVariable var) implements FreeExpr { }
+  record RefCapture(int capture) implements FreeExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable FreeExpr owner,
                 @NotNull ImmutableSeq<FreeExpr> args) implements FreeExpr { }
   record RefField(@NotNull FieldRef fieldRef, @Nullable FreeExpr owner) implements FreeExpr { }

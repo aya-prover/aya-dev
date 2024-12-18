@@ -18,12 +18,13 @@ import java.util.function.Function;
 
 public record FreeClassBuilderImpl(
   @Nullable CompiledAya metadata,
-  @NotNull ClassDesc className,
+  @NotNull ClassDesc owner,
+  @Nullable String nested,
   @NotNull Class<?> superclass,
   @NotNull FreezableMutableList<FreeDecl> members
 ) implements FreeClassBuilder {
   public @NotNull FreeDecl.Clazz build() {
-    return new FreeDecl.Clazz(metadata, className, superclass, members.freeze());
+    return new FreeDecl.Clazz(metadata, owner, nested, superclass, members.freeze());
   }
 
   @Override
@@ -33,7 +34,7 @@ public record FreeClassBuilderImpl(
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    var classBuilder = new FreeClassBuilderImpl(compiledAya, className, superclass, FreezableMutableList.create());
+    var classBuilder = new FreeClassBuilderImpl(compiledAya, owner.nested(name), superclass, FreezableMutableList.create());
     builder.accept(classBuilder);
     members.append(classBuilder.build());
   }
@@ -42,7 +43,7 @@ public record FreeClassBuilderImpl(
     @NotNull MethodRef ref,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
-    var codeBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
+    var codeBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(ref.paramTypes().size()), ref.isConstructor(), false);
     builder.accept(new FreeArgumentProvider(ref.paramTypes().size()), codeBuilder);
     members.append(new FreeDecl.Method(ref, codeBuilder.build()));
   }
@@ -54,7 +55,7 @@ public record FreeClassBuilderImpl(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
-    var ref = new MethodRef.Default(this.className, name, returnType, paramTypes, false);
+    var ref = new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
     buildMethod(ref, builder);
     return ref;
   }
@@ -64,7 +65,7 @@ public record FreeClassBuilderImpl(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
-    var ref = FreeClassBuilder.makeConstructorRef(this.className, paramTypes);
+    var ref = FreeClassBuilder.makeConstructorRef(this.owner, paramTypes);
     buildMethod(ref, builder);
     return ref;
   }
@@ -75,7 +76,7 @@ public record FreeClassBuilderImpl(
     @NotNull String name,
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   ) {
-    var ref = new FieldRef.Default(this.className, returnType, name);
+    var ref = new FieldRef.Default(this.owner, returnType, name);
     var expr = (FreeExpr) initializer.apply(FreeExprBuilderImpl.INSTANCE);
     members.append(new FreeDecl.ConstantField(ref, expr));
     return ref;

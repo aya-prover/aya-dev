@@ -18,13 +18,13 @@ public record FreeArgumentProvider(int paramCount) implements ArgumentProvider {
     @Override
     public @NotNull FreeJavaExpr capture(int nth) {
       assert nth < captureCount;
-      return new FreeVariable(nth).ref();
+      return new FreeExpr.RefCapture(nth);
     }
 
     @Override
     public @NotNull LocalVariable arg(int nth) {
       assert nth + captureCount < paramCount;
-      return new FreeVariable(nth + captureCount);
+      return new FreeVariable(nth);
     }
   }
 }

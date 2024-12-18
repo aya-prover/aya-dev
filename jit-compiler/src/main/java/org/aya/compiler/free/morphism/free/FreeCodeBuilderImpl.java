@@ -54,8 +54,10 @@ public record FreeCodeBuilderImpl(
 
   @Override
   public @NotNull FreeVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
-    stmts.append(new FreeStmt.DeclareVariable(type));
-    return acquireVariable();
+    var theVar = acquireVariable();
+    stmts.append(new FreeStmt.DeclareVariable(type, theVar));
+    if (initializer != null) updateVar(theVar, initializer);
+    return theVar;
   }
 
   @Override

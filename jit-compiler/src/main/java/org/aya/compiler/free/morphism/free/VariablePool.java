@@ -7,9 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public class VariablePool {
   private int nextAvailable = 0;
 
-  public VariablePool() { }
-
-  private VariablePool(int nextAvailable) {
+  public VariablePool(int nextAvailable) {
     this.nextAvailable = nextAvailable;
   }
 

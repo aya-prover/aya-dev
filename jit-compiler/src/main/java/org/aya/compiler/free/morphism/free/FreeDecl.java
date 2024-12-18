@@ -14,10 +14,15 @@ import java.lang.constant.ClassDesc;
 public sealed interface FreeDecl {
   record Clazz(
     @Nullable CompiledAya metadata,
-    @NotNull ClassDesc name,
+    @NotNull ClassDesc owner,
+    @Nullable String nested,
     @NotNull Class<?> superclass,
     @NotNull ImmutableSeq<FreeDecl> members
-  ) implements FreeDecl { }
+  ) implements FreeDecl {
+    public @NotNull ClassDesc name() {
+      return nested != null ? owner.nested(nested) : owner;
+    }
+  }
 
   // Constructors also count as method, with method name "<init>".
   record Method(
