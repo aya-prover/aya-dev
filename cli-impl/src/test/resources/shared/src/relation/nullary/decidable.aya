@@ -1,0 +1,10 @@
+open import relation::binary::path using (=, refl)
+open import arith::bool using (Bool, true, false)
+open import relation::unary::negation using (neg)
+
+open inductive Reflect (P : Type) (b : Bool)
+| _, true  => reflect_true P
+| _, false => reflect_false (neg P)
+
+open inductive Decidable (A : Type)
+| infix because (does : Bool) (Reflect A does)
