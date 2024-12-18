@@ -1,4 +1,6 @@
 inductive Empty
 variable A : Type
 
+def ⊥ : Type => Empty
+
 def exfalso Empty : A | ()

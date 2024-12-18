@@ -1,6 +1,8 @@
 open import arith::nat::base
 open import data::list::base
 open import relation::binary::path
+open import relation::binary::nat_cmp
+open import relation::nullary::empty
 
 variable A B C : Type
 
@@ -52,3 +54,8 @@ def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim x
   | step2 : (rev ys ++ rev xs) ++ [ x ] = rev ys ++ (rev xs ++ [ x ]) := ++-assoc _ _ _
   | step3 : rev ys ++ rev' [ x ] xs = rev ys ++ (rev xs ++ [ x ]) := pmap (rev ys ++) (rev'-++ _ _)
   in step0 <=> step1 <=> step2 <=> pinv step3
+
+def ++-!!-l (i : Nat) (xs ys : List A) (i < length xs) : (xs ++ ys) !! i = xs !! i
+| _, [ ], _, p => exfalso (n<z→⊥ _ p)
+| 0, x :< xs', _, _ => refl
+| suc i', x :< xs', _, p => ++-!!-l i' xs' ys p
