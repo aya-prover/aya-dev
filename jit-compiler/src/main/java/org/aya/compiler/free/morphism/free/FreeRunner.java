@@ -199,41 +199,6 @@ public final class FreeRunner<Carrier> {
   }
 
   private @NotNull SubscopeHandle subscoped() {
-    // dont change captures!!
     return new SubscopeHandle(MutableMap.from(binding));
   }
-
-  // private static class ArgumentProvider implements ArgumentProvider {
-  //   public final @NotNull FreeRunner<?> runner;
-  //   public final @NotNull ArgumentProvider userAp;
-  //
-  //   private ArgumentProvider(@NotNull FreeRunner<?> runner, @NotNull ArgumentProvider userAp) {
-  //     this.runner = runner;
-  //     this.userAp = userAp;
-  //   }
-  //
-  //   @Override
-  //   public @NotNull LocalVariable arg(int nth) {
-  //     var exists = runner.binding.getOrNull(nth);
-  //     var userVar = userAp.arg(nth);
-  //     if (exists == null) runner.bindVar(nth, userVar);
-  //     assert exists == null || exists.equals(userVar);
-  //     return userVar;
-  //   }
-  //
-  //   public final static class Lambda extends ArgumentProvider implements ArgumentProvider.Lambda {
-  //     private Lambda(@NotNull FreeRunner<?> runner, @NotNull ArgumentProvider.Lambda userAp) {
-  //       super(runner, userAp);
-  //     }
-  //
-  //     @Override
-  //     public @NotNull FreeJavaExpr capture(int nth) {
-  //       var exists = runner.captures.getOrNull(nth);
-  //       var userCpature = ((ArgumentProvider.Lambda) userAp).capture(nth);
-  //       if (exists == null) runner.bindCapture(nth, userCpature);
-  //       assert exists == null || exists.equals(userCpature);
-  //       return userCpature;
-  //     }
-  //   }
-  // }
 }
