@@ -93,14 +93,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
         case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
           // unifyTyReported(param, dom, expr);
-          try (var ignored = subscope(ref, dom)) {
+          try (var _ = subscope(ref, dom)) {
             var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
             yield new Jdg.Default(new LamTerm(core), type);
           }
         }
         case EqTerm eq -> {
           Closure.Locns core;
-          try (var ignored = subscope(ref, DimTyTerm.INSTANCE)) {
+          try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
             core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
           }
           checkBoundaries(eq, core, body.sourcePos(), msg ->
@@ -111,7 +111,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
           if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
           unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
-          try (var ignored = subscope(ref, pi.param())) {
+          try (var _ = subscope(ref, pi.param())) {
             var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
             yield new Jdg.Default(new LamTerm(core), pi);
           }
@@ -163,7 +163,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           if (asBindings.isEmpty()) {
             unifyTyReported(type, storedTy = ty(returns), returns);
           } else {
-            try (var ignored = subscope()) {
+            try (var _ = subscope()) {
               asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
               storedTy = ty(returns).bindTele(asBindings.view());
             }
@@ -266,7 +266,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   private @Nullable Closure makeClosurePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod, @NotNull Term core) {
     var ref = new FreeTerm(new LocalVar("i"));
     var wellTyped = false;
-    try (var ignored = subscope(ref.name(), DimTyTerm.INSTANCE)) {
+    try (var _ = subscope(ref.name(), DimTyTerm.INSTANCE)) {
       wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
     }
     if (!wellTyped) return null;
@@ -290,7 +290,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.DepType(var kind, var param, var last) -> {
         var wellParam = ty(param.typeExpr());
         addWithTerm(param, param.sourcePos(), wellParam);
-        try (var ignored = subscope(param.ref(), wellParam)) {
+        try (var _ = subscope(param.ref(), wellParam)) {
           yield new DepTypeTerm(kind, wellParam, ty(last).bind(param.ref()));
         }
       }
@@ -460,7 +460,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         // Type check the type annotation
         Term type;
         if (asBindings.isEmpty()) type = ty(returns);
-        else try (var ignored = subscope()) {
+        else try (var _ = subscope()) {
           asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
           type = ty(returns).bindTele(asBindings.view());
         }
@@ -530,7 +530,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
 
-    try (var ignored = subscope()) {
+    try (var _ = subscope()) {
       localLet.put(let.bind().bindName(), definedAsResult);
       return checker.apply(let.body());
     }

@@ -224,7 +224,7 @@ public class PatternTycker implements Problematic, Stateful {
         // Hif = pattern.explicit = false
         // Corollary : currentParam.explicit = true
         // too many implicit pattern!
-        try (var ignored = instCurrentParam()) {
+        try (var _ = instCurrentParam()) {
           foundError(new PatternProblem.TooManyImplicitPattern(pattern.term(), currentParam));
         }
         return null;
@@ -333,7 +333,7 @@ public class PatternTycker implements Problematic, Stateful {
       WithPos<Pattern> errorPattern = lastPat == null
         ? Objects.requireNonNull(outerPattern)
         : lastPat.term();
-      try (var ignored = instCurrentParam()) {
+      try (var _ = instCurrentParam()) {
         foundError(new PatternProblem.InsufficientPattern(errorPattern, currentParam));
       }
       return done(wellTyped, body);
@@ -360,7 +360,7 @@ public class PatternTycker implements Problematic, Stateful {
    * Checking {@param pattern} with {@link PatternTycker#currentParam}
    */
   private @NotNull Pat tyckPattern(@NotNull WithPos<Pattern> pattern) {
-    try (var ignored = instCurrentParam()) {
+    try (var _ = instCurrentParam()) {
       var result = doTyck(pattern, currentParam.type());
       addArgSubst(result, currentParam.type());
       return result;
@@ -373,7 +373,7 @@ public class PatternTycker implements Problematic, Stateful {
    * so that they can be inferred during {@link ClauseTycker}
    */
   private @NotNull Pat generatePattern() {
-    try (var ignored = instCurrentParam()) {
+    try (var _ = instCurrentParam()) {
       var type = currentParam.type();
       Pat pat;
       var freshVar = nameGen.bindName(currentParam.name());

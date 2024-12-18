@@ -42,15 +42,15 @@
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
-[Java 21]: https://jdk.java.net/21
+[Java 22]: https://jdk.java.net/22
 [1lab]: https://1lab.dev
 
 ## Contributing to Aya
 
 > [!IMPORTANT]
 >
-> Since you need [Java 21] to set this project up, in case your choice
-> of IDE is IntelliJ IDEA, version 2023.3 or higher is required.
+> Since you need [Java 22] to set this project up, in case your choice
+> of IDE is IntelliJ IDEA, version 2024.2 or higher is required.
 
 + Questions or concerns are welcomed in the discussion area.
   We will try our best to answer your questions, but please be nice.

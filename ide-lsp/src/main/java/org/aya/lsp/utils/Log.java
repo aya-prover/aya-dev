@@ -49,7 +49,7 @@ public class Log {
       Files.writeString(LOG_FILE, format,
         StandardCharsets.UTF_8,
         StandardOpenOption.APPEND);
-    } catch (IOException ignored) {
+    } catch (IOException _) {
     }
   }
 }

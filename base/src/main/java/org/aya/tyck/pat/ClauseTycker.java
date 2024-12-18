@@ -155,7 +155,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean isFn
   ) {
     var tycker = newPatternTycker(indices, signature.params().view());
-    try (var ignored = exprTycker.subscope()) {
+    try (var _ = exprTycker.subscope()) {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
       if (isFn && !clause.patterns.anyMatch(p -> hasAbsurdity(p.term().data())) && clause.expr.isEmpty()) {
@@ -194,7 +194,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> teleBinds,
     @NotNull LhsResult result
   ) {
-    try (var ignored = exprTycker.subscope()) {
+    try (var _ = exprTycker.subscope()) {
       var clause = result.clause;
       var bodyExpr = clause.expr();
       Term wellBody;

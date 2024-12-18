@@ -77,7 +77,7 @@ public record YouTrack(
           .map(matching -> new Info(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
         var ix = i;
-        try (var ignored = tycker.subscope()) {
+        try (var _ = tycker.subscope()) {
           unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
         }
       }

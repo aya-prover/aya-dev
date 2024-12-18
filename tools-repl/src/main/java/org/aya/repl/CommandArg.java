@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -70,7 +70,7 @@ public interface CommandArg {
         if (input.trim().isEmpty()) throw new IllegalArgumentException("Empty input");
         try {
           return createLeft.apply(leftArg.parse(input));
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
           return createRight.apply(rightArg.parse(input));
         }
       });
@@ -81,7 +81,7 @@ public interface CommandArg {
     if (trimName.isEmpty()) throw new IllegalArgumentException("Empty enum value");
     try {
       return Enum.valueOf(enumClass, trimName);
-    } catch (IllegalArgumentException ignored) {
+    } catch (IllegalArgumentException _) {
       var one = Seq.of(enumClass.getEnumConstants())
         .findFirst(n -> n.name().toLowerCase().startsWith(trimName.toLowerCase()));
       if (one.isEmpty()) throw new IllegalArgumentException("No such enum constant: " + name);

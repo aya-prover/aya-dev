@@ -32,12 +32,12 @@ public interface Repl {
         printResult(result.output());
         return result.continueRepl();
       } else printResult(eval(line));
-      // } catch (InterruptException ignored) {
+      // } catch (InterruptException _) {
       // ^ already caught by `eval`
-    } catch (EndOfFileException ignored) {
+    } catch (EndOfFileException _) {
       // user send ctrl-d
       return false;
-    } catch (UserInterruptException ignored) {
+    } catch (UserInterruptException _) {
       // user send ctrl-c
     } catch (Throwable e) {
       var stackTrace = new StringWriter();

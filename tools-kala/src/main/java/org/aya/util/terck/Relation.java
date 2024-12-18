@@ -35,7 +35,7 @@ public sealed interface Relation extends Docile, Selector.Candidate<Relation> {
     return switch (this) {
       case Decrease d when d.size == 0 -> Doc.plain("  =");
       case Decrease d -> Doc.plain((d.usable ? " " : "!") + "-" + d.size);
-      case Unknown ignored -> Doc.plain("  ?");
+      case Unknown _ -> Doc.plain("  ?");
     };
   }
 

@@ -529,7 +529,7 @@ public record AyaProducer(
     }
     if (node.is(LIT_INT_EXPR)) try {
       return new WithPos<>(pos, new Expr.LitInt(node.tokenText().toInt()));
-    } catch (NumberFormatException ignored) {
+    } catch (NumberFormatException _) {
       throw new Panic("Failed to decode integer literal `" + node.tokenText() + "`");
     }
     if (node.is(LIT_STRING_EXPR)) {
