@@ -178,8 +178,8 @@ public final class FreeRunner<Carrier> {
   }
 
   private class SubscopeHandle implements AutoCloseable {
-    private final @NotNull MutableMap<Integer, LocalVariable> oldBinding = binding;
-    private final @NotNull MutableArray<FreeJavaExpr> oldCapture = captures;
+    private final @UnknownNullability MutableMap<Integer, LocalVariable> oldBinding = binding;
+    private final @UnknownNullability MutableArray<FreeJavaExpr> oldCapture = captures;
 
     public SubscopeHandle(
       @NotNull MutableMap<Integer, LocalVariable> newScope,
