@@ -24,6 +24,7 @@ Major new features:
 - The pattern matching errors now have variable names, instead of de Bruijn indices.
 - Aya now supports Spanish. In addition to `{? x ?}`, you can also use `{¿ x ?}`.
 - Inactive maintainers are removed from related files.
+- Aya is now bundled with Java 22.
 
 Minor new features & user-visible bug fixes:
 
