@@ -5,14 +5,14 @@
 project = "0.36.0"
 
 # https://openjdk.org/
-java = "21"
-
+java = "22"
 # https://github.com/JetBrains/java-annotations
 annotations = "26.0.1"
+# https://github.com/Glavo/kala-common
 kala = "0.76.0"
 # https://picocli.info
 picocli = "4.7.6"
-# https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util/
+# https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
 aya-upstream = "0.0.31"
 # https://github.com/jline/jline3
 jline = "3.28.0"

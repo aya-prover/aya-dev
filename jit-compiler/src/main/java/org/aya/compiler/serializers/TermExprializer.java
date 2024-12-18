@@ -156,7 +156,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case AppTerm appTerm -> makeAppNew(AppTerm.class, appTerm.fun(), appTerm.arg());
+      case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
       case LamTerm lamTerm -> builder.mkNew(LamTerm.class, ImmutableSeq.of(serializeClosure(lamTerm.body())));
