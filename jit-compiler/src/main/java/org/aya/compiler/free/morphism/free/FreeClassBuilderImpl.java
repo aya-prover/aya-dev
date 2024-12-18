@@ -5,8 +5,8 @@ package org.aya.compiler.free.morphism.free;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ public record FreeClassBuilderImpl(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
-    var ref = new MethodRef.Default(className(), name, returnType, paramTypes, false);
+    var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, builder);
     return ref;
   }
@@ -80,14 +80,9 @@ public record FreeClassBuilderImpl(
     @NotNull String name,
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   ) {
-    var ref = new FieldRef.Default(className(), returnType, name);
+    var ref = new FieldRef(className(), returnType, name);
     var expr = (FreeExpr) initializer.apply(FreeExprBuilderImpl.INSTANCE);
     members.append(new FreeDecl.ConstantField(ref, expr));
     return ref;
-  }
-
-  @Override
-  public @NotNull FreeJavaResolver resolver() {
-    throw new UnsupportedOperationException("deprecated");
   }
 }

@@ -3,8 +3,8 @@
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,29 +12,29 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.Arrays;
 
-public interface FreeJavaResolver {
+public final class FreeJavaResolver {
   /**
    * Find a method with given information
    */
-  default @NotNull MethodRef resolve(
+  public static @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
     @NotNull ImmutableSeq<ClassDesc> paramType,
     boolean isInterface
   ) {
-    return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
+    return new MethodRef(owner, name, returnType, paramType, isInterface);
   }
 
-  default @NotNull FieldRef resolve(
+  public static @NotNull FieldRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType
   ) {
-    return new FieldRef.Default(owner, returnType, name);
+    return new FieldRef(owner, returnType, name);
   }
 
-  default @NotNull FieldRef resolve(
+  public static @NotNull FieldRef resolve(
     @NotNull Class<?> owner,
     @NotNull String name
   ) {
@@ -49,7 +49,7 @@ public interface FreeJavaResolver {
   /**
    * Find the only method with given name
    */
-  default @NotNull MethodRef resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
+  public static @NotNull MethodRef resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
     if (name.equals(ConstantDescs.INIT_NAME)) {
       throw new Panic("use ExprBuilder#newObject instead");
     }

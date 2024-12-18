@@ -9,7 +9,6 @@ import kala.value.MutableValue;
 import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeJavaResolver;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
@@ -156,11 +155,6 @@ public record FreeCodeBuilderImpl(
   }
 
   @Override
-  public @NotNull FreeJavaResolver resolver() {
-    return FreeExprBuilderImpl.INSTANCE.resolver();
-  }
-
-  @Override
   public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return FreeExprBuilderImpl.INSTANCE.mkNew(conRef, args);
   }
@@ -226,7 +220,7 @@ public record FreeCodeBuilderImpl(
   }
 
   @Override
-  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJavaExpr> initializer) {
+  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
     return FreeExprBuilderImpl.INSTANCE.mkArray(type, length, initializer);
   }
 

@@ -6,10 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeExprBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
@@ -193,9 +190,9 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       }
       // TODO: make the resolving const
       case SortTerm sort when sort.equals(SortTerm.Type0) ->
-        builder.refField(builder.resolver().resolve(SortTerm.class, "Type0"));
+        builder.refField(FreeJavaResolver.resolve(SortTerm.class, "Type0"));
       case SortTerm sort when sort.equals(SortTerm.ISet) ->
-        builder.refField(builder.resolver().resolve(SortTerm.class, "ISet"));
+        builder.refField(FreeJavaResolver.resolve(SortTerm.class, "ISet"));
       case SortTerm(var kind, var ulift) ->
         builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), builder.iconst(ulift)));
       case DepTypeTerm(var kind, var param, var body) -> builder.mkNew(DepTypeTerm.class, ImmutableSeq.of(

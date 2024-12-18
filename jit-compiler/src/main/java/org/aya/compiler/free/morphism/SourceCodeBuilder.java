@@ -40,8 +40,6 @@ public record SourceCodeBuilder(
     return ((SourceFreeJavaExpr.BlackBox) expr).expr();
   }
 
-  @Override public @NotNull FreeJavaResolver resolver() { return parent; }
-
   @Override
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     sourceBuilder.append("super(");

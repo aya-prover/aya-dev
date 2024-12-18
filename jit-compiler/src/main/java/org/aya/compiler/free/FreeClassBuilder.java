@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 public interface FreeClassBuilder {
   static @NotNull MethodRef makeConstructorRef(@NotNull ClassDesc owner, @NotNull ImmutableSeq<ClassDesc> parameterTypes) {
-    return new MethodRef.Default(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
+    return new MethodRef(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
   }
 
   void buildNestedClass(
@@ -43,6 +43,4 @@ public interface FreeClassBuilder {
     @NotNull String name,
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   );
-
-  @NotNull FreeJavaResolver resolver();
 }

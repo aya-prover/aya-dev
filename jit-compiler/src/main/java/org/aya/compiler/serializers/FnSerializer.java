@@ -8,8 +8,8 @@ import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -33,7 +33,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
-    return new MethodRef.Default(
+    return new MethodRef(
       owner, "invoke", Constants.CD_Term, ImmutableSeq.of(Constants.CD_Thunk)
       .appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term)), false
     );
