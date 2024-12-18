@@ -5,8 +5,8 @@ package org.aya.compiler.free.morphism;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.repr.CodeShape;
@@ -23,9 +23,7 @@ import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
-) implements FreeClassBuilder, FreeJavaResolver {
-  @Override public @NotNull FreeJavaResolver resolver() { return this; }
-
+) implements FreeClassBuilder {
   private void buildMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
     var prepend = isFirst ? "" : ", ";
     sourceBuilder.appendLine(prepend + name + " = " + value);
@@ -84,7 +82,7 @@ public record SourceClassBuilder(
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
     buildMethod(toClassRef(returnType), name, paramTypes, builder);
-    return new MethodRef.Default(this.owner, name, returnType, paramTypes, false);
+    return new MethodRef(this.owner, name, returnType, paramTypes, false);
   }
 
   @Override public @NotNull MethodRef buildConstructor(
@@ -111,22 +109,7 @@ public record SourceClassBuilder(
     codeBuilder.appendExpr(initValue);
     sourceBuilder.append(";");
     sourceBuilder.appendLine();
-    
-    return new FieldRef.Default(this.owner, returnType, name);
-  }
 
-  @Override public @NotNull MethodRef resolve(
-    @NotNull ClassDesc owner,
-    @NotNull String name,
-    @NotNull ClassDesc returnType,
-    @NotNull ImmutableSeq<ClassDesc> paramType,
-    boolean isInterface
-  ) {
-    return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
-  }
-
-  @Override public @NotNull FieldRef
-  resolve(@NotNull ClassDesc owner, @NotNull String name, @NotNull ClassDesc returnType) {
-    return new FieldRef.Default(owner, returnType, name);
+    return new FieldRef(this.owner, returnType, name);
   }
 }

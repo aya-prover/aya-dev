@@ -17,8 +17,6 @@ import java.util.function.BiConsumer;
  * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
  */
 public interface FreeExprBuilder {
-  @NotNull FreeJavaResolver resolver();
-
   /**
    * A {@code new} expression on specified constructor.
    */

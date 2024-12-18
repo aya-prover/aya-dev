@@ -8,6 +8,7 @@ import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
@@ -18,11 +19,6 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
   public static final @NotNull FreeExprBuilderImpl INSTANCE = new FreeExprBuilderImpl();
 
   private FreeExprBuilderImpl() { }
-
-  @Override
-  public @NotNull FreeJavaResolver resolver() {
-    return FreeJavaBuilderImpl.INSTANCE;
-  }
 
   @Override
   public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
@@ -97,7 +93,7 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
   }
 
   @Override
-  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @NotNull ImmutableSeq<FreeJavaExpr> initializer) {
+  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
     return new FreeExpr.Array(type, length, assertFreeExpr(initializer));
   }
 
