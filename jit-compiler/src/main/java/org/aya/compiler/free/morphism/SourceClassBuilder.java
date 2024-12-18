@@ -31,7 +31,7 @@ public record SourceClassBuilder(
     sourceBuilder.appendLine(prepend + name + " = " + value);
   }
 
-  @Override public void buildMetadata(@NotNull CompiledAya compiledAya) {
+  public void buildMetadata(@NotNull CompiledAya compiledAya) {
     sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(CompiledAya.class)) + "(");
     sourceBuilder.runInside(() -> {
       buildMetadataRecord("module", SourceCodeBuilder.mkHalfArray(
