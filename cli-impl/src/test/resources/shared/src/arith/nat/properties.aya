@@ -1,5 +1,6 @@
 open import arith::nat::base
 open import relation::nullary::empty
+open import relation::nullary::decidable using (Decidable, yes, no, map as dec_map)
 open import relation::binary::path
 
 private def diag Nat : Type
@@ -14,3 +15,9 @@ private def suc-inj Nat : Nat
 
 def s=s {m n : Nat} (p : suc m = suc n) : m = n => (\i => suc-inj (p i))
 
+overlap def infix =? (a b : Nat) : Decidable (a = b)
+| zero, zero => yes refl
+| zero, suc _ => no (fn p => z≠s p)
+| suc _, zero => no (fn p => z≠s (pinv p))
+| suc a, suc b => dec_map (pmap suc) s=s (a =? b)
+looser + *

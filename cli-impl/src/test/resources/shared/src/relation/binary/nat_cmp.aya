@@ -1,0 +1,78 @@
+open import arith::nat using (Nat, zero, suc, z≠s, subTrunc, =?, +)
+open import arith::bool using (Bool, true, false)
+open import relation::unary::negation using (neg)
+open import relation::nullary::empty using (⊥, exfalso)
+open import relation::binary::path
+open import relation::nullary::decidable using (Decidable, yes, no, because, reflect_true, reflect_false, map as dec_map)
+open import data::sum using (Sum, inl, inr)
+
+def infix <= (a b : Nat) : Type => subTrunc a b = 0
+
+def infix < (a b : Nat) : Type => (suc a) <= b
+
+def infix >= (a b : Nat) : Type => subTrunc b a = 0
+
+def infix > (a b : Nat) : Type => a >= (suc b)
+
+def n<z→⊥ {n : Nat} (eq : n < 0) : ⊥ => exfalso (z≠s (pinv eq))
+
+def s<s {a b : Nat} (p : suc a < suc b) : a < b => p
+def s<=s {a b : Nat} (p : suc a <= suc b) : a <= b => p
+
+def n<=n (n : Nat) : n <= n
+| 0 => refl
+| suc n => n<=n n
+
+def n<=s {a b : Nat} (p : a <= b) : a <= suc b elim a b
+| zero, _ => refl
+| suc a, zero => exfalso (sn<=z p)
+| suc a, suc b => n<=s p
+
+def infix <=? (a b : Nat) : Decidable (a <= b) => subTrunc a b =? 0
+
+def infix <? (a b : Nat) : Decidable (a < b) => (suc a) <=? b
+
+def n<=z {n : Nat} (p : n <= 0) : n = 0 => p
+def sn<=z {n : Nat} (p : suc n <= 0) : ⊥ => z≠s (pinv (n<=z p))
+
+def <=-trans {a b c : Nat} (p : a <= b) (q : b <= c) : a <= c elim a b c
+| zero, _, _ => refl
+| suc a, zero, _ => exfalso (sn<=z p)
+| suc a, suc b, zero => exfalso (sn<=z q)
+| suc a, suc b, suc c => <=-trans (s<=s p) (s<=s q)
+
+private def some-lemma (a b : Nat) (p : subTrunc a b = 0) (np : neg (subTrunc (suc a) b = 0)) : a = b
+| 0, 0, _, _ => refl
+| 0, suc b, _, _ => exfalso (np p)
+| suc a, 0, p, _ => exfalso (z≠s (pinv p))
+| suc a, suc b, _, _ => pmap suc (some-lemma a b p np)
+
+def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
+  match a <? b {
+  | _ because reflect_true p => inl p
+  | _ because reflect_false np => inr (some-lemma _ _ p np)
+  }
+
+def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
+| {_}, {0}, np => refl
+| {0}, {suc b}, np => exfalso (np refl)
+| {suc a}, {suc b}, np => s<=s (¬<→>= {a} {b} (fn p => np p))
+
+def <=-with-≠ {a b : Nat} (p : a <= b) (q : neg (a = b)) : a < b => match <=-case p {
+| inl proof => proof
+| inr eq => exfalso (q eq)
+}
+
+def <→s {a b : Nat} (p : a < b) : Sig (n : Nat) ** b = suc n elim a b
+| _, 0 => exfalso (n<z→⊥ p)
+| _, suc b => (b, refl)
+
+def a-b+b=a (a b : Nat) (p : b <= a) : subTrunc a b + b = a
+| 0, _, _ => n<=z p
+| suc a', 0, _ => refl
+| suc a', suc b', _ => pmap suc (a-b+b=a a' b' (s<=s p))
+
+def suc-sub {a b : Nat} (p : b < (suc a)) : subTrunc (suc a) b = suc (subTrunc a b) elim a b
+| _, zero => refl
+| zero, suc b => exfalso (n<z→⊥ (s<s {b} {0} p))
+| suc a, suc b => suc-sub p
