@@ -3,25 +3,26 @@
 package org.aya.compiler.free.morphism.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableArray;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class FreeRunner<Carrier> {
   private final @NotNull FreeJavaBuilder<Carrier> runner;
-  private @NotNull MutableMap<Integer, LocalVariable> binding;
-  private @NotNull MutableList<FreeJavaExpr> captures;
+  private @UnknownNullability MutableMap<Integer, LocalVariable> binding;
+  private @UnknownNullability MutableArray<FreeJavaExpr> captures;
 
   public FreeRunner(@NotNull FreeJavaBuilder<Carrier> runner) {
     this.runner = runner;
-    this.binding = MutableMap.create();
-    this.captures = MutableList.create();
+    this.binding = null;
+    this.captures = null;
   }
 
   public Carrier runFree(@NotNull FreeDecl.Clazz free) {
@@ -34,7 +35,7 @@ public final class FreeRunner<Carrier> {
   }
 
   private void runFree(@NotNull FreeClassBuilder builder, @NotNull FreeDecl free) {
-    try (var _ = subscoped()) {
+    try (var _ = new SubscopeHandle(MutableMap.create(), MutableArray.create(0))) {
       switch (free) {
         case FreeDecl.Clazz(var metadata, _, var nested, var superclass, var members) -> {
           assert metadata != null && nested != null;
@@ -82,7 +83,7 @@ public final class FreeRunner<Carrier> {
 
         // run captures outside of subscope!
         // brand new scope! the lambda body lives in a difference place to the current scope
-        try (var _ = new SubscopeHandle(MutableMap.create(), captureExprs.size())) {
+        try (var _ = new SubscopeHandle(MutableMap.create(), MutableArray.create(captureExprs.size()))) {
           yield builder.mkLambda(captureExprs, methodRef, (ap, cb) ->
             runFree(new ArgumentProviderWrapper.Lambda(this, ap), cb, body));
         }
@@ -108,21 +109,31 @@ public final class FreeRunner<Carrier> {
       case FreeStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
       case FreeStmt.Exec exec -> builder.exec(runFree(builder, exec.expr()));
       case FreeStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
-        Consumer<FreeCodeBuilder> thenBlock = cb -> runFree(ap, cb, thenBody);
+        Consumer<FreeCodeBuilder> thenBlock = cb -> {
+          try (var _ = subscoped()) {
+            runFree(ap, cb, thenBody);
+          }
+        };
         Consumer<FreeCodeBuilder> elseBlock = elseBody != null
-          ? cb -> runFree(ap, cb, elseBody)
-          : null;
+          ? cb -> {
+          try (var _ = subscoped()) {
+            runFree(ap, cb, elseBody);
+          }
+        } : null;
 
         switch (cond) {
           case FreeStmt.Condition.IsFalse(var isFalse) -> builder.ifNotTrue(isFalse, thenBlock, elseBlock);
           case FreeStmt.Condition.IsTrue(var isTrue) -> builder.ifTrue(isTrue, thenBlock, elseBlock);
-          case FreeStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) ->
+          case FreeStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
+            var asTerm = as.get();
+            assert asTerm != null;
             builder.ifInstanceOf(runFree(builder, lhs), rhs, (cb, var) -> {
               try (var _ = subscoped()) {
-                bindVar(as.index(), var);
-                thenBlock.accept(cb);
+                bindVar(asTerm.index(), var);
+                runFree(ap, cb, thenBody);      // prevent unnecessary subscoping
               }
             }, elseBlock);
+          }
           case FreeStmt.Condition.IsIntEqual(var lhs, var rhs) ->
             builder.ifIntEqual(runFree(builder, lhs), rhs, thenBlock, elseBlock);
           case FreeStmt.Condition.IsNull(var ref) -> builder.ifNull(runFree(builder, ref), thenBlock, elseBlock);
@@ -168,11 +179,14 @@ public final class FreeRunner<Carrier> {
 
   private class SubscopeHandle implements AutoCloseable {
     private final @NotNull MutableMap<Integer, LocalVariable> oldBinding = binding;
-    private final @NotNull MutableList<FreeJavaExpr> oldCapture = captures;
+    private final @NotNull MutableArray<FreeJavaExpr> oldCapture = captures;
 
-    public SubscopeHandle(@NotNull MutableMap<Integer, LocalVariable> newScope, int captureCount) {
+    public SubscopeHandle(
+      @NotNull MutableMap<Integer, LocalVariable> newScope,
+      @NotNull MutableArray<FreeJavaExpr> newCaptures
+    ) {
       binding = newScope;
-      captures = MutableList.fill(captureCount, (FreeJavaExpr) null);
+      captures = newCaptures;
     }
 
     @Override
@@ -183,7 +197,8 @@ public final class FreeRunner<Carrier> {
   }
 
   private @NotNull SubscopeHandle subscoped() {
-    return new SubscopeHandle(MutableMap.from(binding), 0);
+    // dont change captures!!
+    return new SubscopeHandle(MutableMap.from(binding), captures);
   }
 
   private static class ArgumentProviderWrapper implements ArgumentProvider {

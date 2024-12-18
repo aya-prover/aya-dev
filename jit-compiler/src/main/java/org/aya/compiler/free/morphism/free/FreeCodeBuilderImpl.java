@@ -5,6 +5,7 @@ package org.aya.compiler.free.morphism.free;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.FreezableMutableList;
+import kala.value.MutableValue;
 import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
@@ -95,8 +96,12 @@ public record FreeCodeBuilderImpl(
 
   @Override
   public void ifInstanceOf(@NotNull FreeJavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
-    var var = acquireVariable();
-    buildIf(new FreeStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, var), b -> thenBlock.accept(b, var), elseBlock);
+    var varHolder = MutableValue.<FreeVariable>create();
+    buildIf(new FreeStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
+      var asTerm = ((FreeCodeBuilderImpl) b).acquireVariable();
+      varHolder.set(asTerm);
+      thenBlock.accept(b, asTerm);
+    }, elseBlock);
   }
 
   @Override
