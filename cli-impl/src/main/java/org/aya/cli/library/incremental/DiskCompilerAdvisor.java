@@ -8,7 +8,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.compiler.CompiledModule;
-import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
+import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.NameSerializer;
 import org.aya.prelude.GeneratedVersion;

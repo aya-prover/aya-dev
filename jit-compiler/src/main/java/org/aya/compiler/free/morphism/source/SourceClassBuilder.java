@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism;
+package org.aya.compiler.free.morphism.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.SourceBuilder;
@@ -17,8 +17,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassName;
-import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
+import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassName;
+import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
