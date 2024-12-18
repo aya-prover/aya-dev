@@ -19,14 +19,15 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class CompileTester {
+  public static Path GEN_DIR = Paths.get("build/tmp/testGenerated");
+
   private final Path baka;
   public final ClassLoader cl;
 
   public CompileTester(@NotNull String code) throws IOException {
-    var root = Paths.get("build/tmp/testGenerated");
-    var genDir = root.resolve(AyaSerializer.PACKAGE_BASE);
+    var genDir = GEN_DIR.resolve(AyaSerializer.PACKAGE_BASE);
     FileUtil.writeString(baka = genDir.resolve("_baka.java"), code);
-    cl = new URLClassLoader(new URL[]{root.toUri().toURL()});
+    cl = new URLClassLoader(new URL[]{GEN_DIR.toUri().toURL()});
   }
 
   public void compile() {

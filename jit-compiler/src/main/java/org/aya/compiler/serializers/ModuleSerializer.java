@@ -21,7 +21,7 @@ import static org.aya.compiler.serializers.NameSerializer.getReference;
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
  */
-public final class ModuleSerializer<Carrier> {
+public final class ModuleSerializer {
   /** Input to the module serializer. */
   public record ModuleResult(
     @NotNull QPath name,
@@ -33,6 +33,15 @@ public final class ModuleSerializer<Carrier> {
     public void addMatchy(Matchy clauses, int argsSize, int captureSize) {
       todoMatchies.append(new MatchyData(clauses, argsSize, captureSize));
     }
+  }
+
+  public static <Carrier> Carrier serialize(
+    @NotNull ShapeFactory factory,
+    @NotNull FreeJavaBuilder<Carrier> builder,
+    @NotNull ModuleResult unit
+  ) {
+    return new ModuleSerializer(factory)
+      .serialize(builder, unit);
   }
 
   private final @NotNull ShapeFactory shapeFactory;
@@ -74,7 +83,7 @@ public final class ModuleSerializer<Carrier> {
     }
   }
 
-  public Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
+  public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.CompiledAyaImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);

@@ -103,7 +103,7 @@ public class CompileTest {
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
-    return new ModuleSerializer<String>(result.info.shapeFactory())
+    return new ModuleSerializer(result.info.shapeFactory())
       .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
   }

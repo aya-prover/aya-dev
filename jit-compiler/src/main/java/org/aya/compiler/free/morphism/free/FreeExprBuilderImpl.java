@@ -21,7 +21,7 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
 
   @Override
   public @NotNull FreeJavaResolver resolver() {
-    throw new UnsupportedOperationException("TODO");
+    return FreeJavaBuilderImpl.INSTANCE;
   }
 
   @Override
@@ -64,7 +64,7 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
     var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
     // [captures.size()..]th parameters are lambda arguments
-    var lambdaBodyBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(capturec + argc), false, false);
+    var lambdaBodyBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(), false, false);
     builder.accept(new FreeArgumentProvider.Lambda(capturec, argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 

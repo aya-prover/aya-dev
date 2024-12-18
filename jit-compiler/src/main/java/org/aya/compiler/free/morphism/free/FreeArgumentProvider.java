@@ -11,7 +11,7 @@ public record FreeArgumentProvider(int paramCount) implements ArgumentProvider {
   @Override
   public @NotNull LocalVariable arg(int nth) {
     assert nth < paramCount;
-    return new FreeVariable(nth);
+    return new FreeVariable.Arg(nth);
   }
 
   record Lambda(int captureCount, int paramCount) implements ArgumentProvider.Lambda {
@@ -24,7 +24,7 @@ public record FreeArgumentProvider(int paramCount) implements ArgumentProvider {
     @Override
     public @NotNull LocalVariable arg(int nth) {
       assert nth + captureCount < paramCount;
-      return new FreeVariable(nth);
+      return new FreeVariable.Arg(nth);
     }
   }
 }

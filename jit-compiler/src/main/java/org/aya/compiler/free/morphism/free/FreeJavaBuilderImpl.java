@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
-public enum FreeJavaBuilderImpl implements FreeJavaBuilder<FreeDecl.Clazz> {
+public enum FreeJavaBuilderImpl implements FreeJavaBuilder<FreeDecl.Clazz>, FreeJavaResolver {
   INSTANCE;
 
   @Override
