@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-public interface FreeStmt {
-  record DeclareVariable(@NotNull ClassDesc type) implements FreeStmt { }
+public sealed interface FreeStmt {
+  record DeclareVariable(@NotNull ClassDesc type, @NotNull FreeVariable theVar) implements FreeStmt { }
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
                @NotNull ImmutableSeq<FreeExpr> superConArgs) implements FreeStmt { }
   record SetVariable(@NotNull FreeVariable var, @NotNull FreeExpr update) implements FreeStmt { }

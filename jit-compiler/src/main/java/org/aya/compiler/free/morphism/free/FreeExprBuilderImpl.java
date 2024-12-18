@@ -60,10 +60,12 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
     @NotNull MethodRef method,
     @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> builder
   ) {
+    var capturec = captures.size();
+    var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
     // [captures.size()..]th parameters are lambda arguments
-    var lambdaBodyBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(), false, false);
-    builder.accept(new FreeArgumentProvider.Lambda(captures.size(), method.paramTypes().size()), lambdaBodyBuilder);
+    var lambdaBodyBuilder = new FreeCodeBuilderImpl(FreezableMutableList.create(), new VariablePool(capturec + argc), false, false);
+    builder.accept(new FreeArgumentProvider.Lambda(capturec, argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
     return new FreeExpr.Lambda(assertFreeExpr(captures), method, lambdaBody);
