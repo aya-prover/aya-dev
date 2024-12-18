@@ -4,6 +4,7 @@ package org.aya.compiler.free.morphism.free;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.value.MutableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public sealed interface FreeStmt {
     record IsFalse(@NotNull FreeVariable var) implements Condition { }
     record IsTrue(@NotNull FreeVariable var) implements Condition { }
     record IsInstanceOf(@NotNull FreeExpr lhs, @NotNull ClassDesc rhs,
-                        @NotNull FreeVariable asTerm) implements Condition { }
+                        @NotNull MutableValue<FreeVariable> asTerm) implements Condition { }
     record IsIntEqual(@NotNull FreeExpr lhs, int rhs) implements Condition { }
     record IsRefEqual(@NotNull FreeExpr lhs, @NotNull FreeExpr rhs) implements Condition { }
     record IsNull(@NotNull FreeExpr ref) implements Condition { }
