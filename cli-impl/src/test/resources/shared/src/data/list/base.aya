@@ -28,11 +28,13 @@ def rev' (buf xs : List A) : List A elim xs
 
 def rev (xs : List A) : List A => rev' [ ] xs
 
+@suppress(Shadowing)
 def take (n : Nat) (xs : List A) : List A
 | _, [ ] => [ ]
 | 0, _ :< _ =>  [ ]
 | suc n, x :< xs => x :< (take n xs)
 
+@suppress(Shadowing)
 def drop (n : Nat) (xs : List A) : List A
 | 0, _ => xs
 | suc n, [ ] => [ ]
