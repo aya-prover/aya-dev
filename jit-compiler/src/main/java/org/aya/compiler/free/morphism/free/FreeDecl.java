@@ -19,7 +19,7 @@ public sealed interface FreeDecl {
     @NotNull Class<?> superclass,
     @NotNull ImmutableSeq<FreeDecl> members
   ) implements FreeDecl {
-    public @NotNull ClassDesc name() {
+    public @NotNull ClassDesc className() {
       return nested != null ? owner.nested(nested) : owner;
     }
   }

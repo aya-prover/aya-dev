@@ -16,19 +16,23 @@ public interface FreeJavaResolver {
   /**
    * Find a method with given information
    */
-  @NotNull MethodRef resolve(
+  default @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
     @NotNull ImmutableSeq<ClassDesc> paramType,
     boolean isInterface
-  );
+  ) {
+    return new MethodRef.Default(owner, name, returnType, paramType, isInterface);
+  }
 
-  @NotNull FieldRef resolve(
+  default @NotNull FieldRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType
-  );
+  ) {
+    return new FieldRef.Default(owner, returnType, name);
+  }
 
   default @NotNull FieldRef resolve(
     @NotNull Class<?> owner,

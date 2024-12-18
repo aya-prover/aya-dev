@@ -129,7 +129,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ImmutableSeq<TyckDef> defs,
     @NotNull ModuleLoader recurseLoader
   ) throws IOException, ClassNotFoundException {
-    var javaCode = new ModuleSerializer<String>(resolveInfo.shapeFactory())
+    var javaCode = new ModuleSerializer(resolveInfo.shapeFactory())
       .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)));

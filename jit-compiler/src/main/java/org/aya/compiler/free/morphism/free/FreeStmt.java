@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 
 public sealed interface FreeStmt {
-  record DeclareVariable(@NotNull ClassDesc type, @NotNull FreeVariable theVar) implements FreeStmt { }
+  record DeclareVariable(@NotNull ClassDesc type, @NotNull FreeVariable.Local theVar) implements FreeStmt { }
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
                @NotNull ImmutableSeq<FreeExpr> superConArgs) implements FreeStmt { }
   record SetVariable(@NotNull FreeVariable var, @NotNull FreeExpr update) implements FreeStmt { }
@@ -21,7 +21,7 @@ public sealed interface FreeStmt {
     record IsFalse(@NotNull FreeVariable var) implements Condition { }
     record IsTrue(@NotNull FreeVariable var) implements Condition { }
     record IsInstanceOf(@NotNull FreeExpr lhs, @NotNull ClassDesc rhs,
-                        @NotNull MutableValue<FreeVariable> asTerm) implements Condition { }
+                        @NotNull MutableValue<FreeVariable.Local> asTerm) implements Condition { }
     record IsIntEqual(@NotNull FreeExpr lhs, int rhs) implements Condition { }
     record IsRefEqual(@NotNull FreeExpr lhs, @NotNull FreeExpr rhs) implements Condition { }
     record IsNull(@NotNull FreeExpr ref) implements Condition { }

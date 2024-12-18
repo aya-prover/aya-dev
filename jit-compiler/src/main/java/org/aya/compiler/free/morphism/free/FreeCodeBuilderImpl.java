@@ -49,8 +49,8 @@ public record FreeCodeBuilderImpl(
     return (FreeVariable) var;
   }
 
-  public @NotNull FreeVariable acquireVariable() {
-    return new FreeVariable(pool.acquire());
+  public @NotNull FreeVariable.Local acquireVariable() {
+    return new FreeVariable.Local(pool.acquire());
   }
 
   @Override
@@ -96,7 +96,7 @@ public record FreeCodeBuilderImpl(
 
   @Override
   public void ifInstanceOf(@NotNull FreeJavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
-    var varHolder = MutableValue.<FreeVariable>create();
+    var varHolder = MutableValue.<FreeVariable.Local>create();
     buildIf(new FreeStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
       var asTerm = ((FreeCodeBuilderImpl) b).acquireVariable();
       varHolder.set(asTerm);
@@ -157,7 +157,7 @@ public record FreeCodeBuilderImpl(
 
   @Override
   public @NotNull FreeJavaResolver resolver() {
-    throw new UnsupportedOperationException("TODO");
+    return FreeExprBuilderImpl.INSTANCE.resolver();
   }
 
   @Override
