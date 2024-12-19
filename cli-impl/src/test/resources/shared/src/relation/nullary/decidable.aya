@@ -8,3 +8,10 @@ open inductive Reflect (P : Type) (b : Bool)
 
 open inductive Decidable (A : Type)
 | infix because (does : Bool) (Reflect A does)
+
+def yes {P : Type} (p : P) : Decidable P => true because (reflect_true p)
+def no {P : Type} (np : neg P) : Decidable P => false because (reflect_false np)
+
+def map {P Q : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) : Decidable Q elim d
+| true because (reflect_true p) => yes (f p)
+| false because (reflect_false np) => no (fn q => np (g q))

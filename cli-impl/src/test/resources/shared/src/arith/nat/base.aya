@@ -36,10 +36,3 @@ overlap def infixl * Nat Nat : Nat
 | m, 0 => 0
 | suc m, n => n + m * n
 tighter +
-
-overlap def infix =? Nat Nat : Bool
-| zero, zero => true
-| zero, suc _ => false
-| suc _, zero => false
-| suc a, suc b => a =? b
-looser + *
