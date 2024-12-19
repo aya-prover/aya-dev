@@ -24,18 +24,20 @@ def infix <=? (a b : Nat) : Decidable (a <= b) => subTrunc a b =? 0
 def infix <? (a b : Nat) : Decidable (a < b) => (suc a) <=? b
 
 def n<=z {n : Nat} (p : n <= 0) : n = 0 => p
+def sn<=z {n : Nat} (p : suc n <= 0) : ⊥ => z≠s (pinv (n<=z p))
 
-def <=-case {a b : Nat} (a <= b) : Sum (a < b) (a = b) =>
+private def some-lemma (a b : Nat) (p : subTrunc a b = 0) (np : neg (subTrunc (suc a) b = 0)) : a = b
+| 0, 0, _, _ => refl
+| 0, suc b, _, _ => exfalso (np p)
+| suc a, 0, p, _ => exfalso (z≠s (pinv p))
+| suc a, suc b, _, _ => pmap suc (some-lemma a b p np)
+
+def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
   match a <? b {
   | _ because reflect_true p => inl p
-  // a o- b = 0
-  // suc a o- b != 0
-  // suc a o- b = suc ?
-  | _ because reflect_false np => match a =? b {
-    | true because reflect_true p => inr p
-    | false because reflect_false np => {??}
-    }
+  | _ because reflect_false np => inr (some-lemma _ _ p np)
   }
+
 
 def a-b+b=a (a b : Nat) (p : b <= a) : subTrunc a b + b = a
 | 0, _, _ => n<=z p

@@ -66,11 +66,23 @@ def ++-!!-l (i : Nat) (xs ys : List A) (i < length xs) : (xs ++ ys) !! i = xs !!
 | 0, x :< xs', _, _ => refl
 | suc i', x :< xs', _, p => ++-!!-l i' xs' ys p
 
+def split-lemma (i : Nat) (xs : List A) (i <= length xs) : xs = take i xs ++ drop i xs
+| 0, _, _ => refl
+| suc i, [ ], p => exfalso (sn<=z p)
+| suc i, x :< xs, p => pmap (x :<) (split-lemma i xs (s<=s p))
+
 def take<=length (i : Nat) (xs : List A) (i <= length xs)
   : length (take i xs) = i
 | 0, _, _ => refl
 | suc i, [ ], p => exfalso (n<z→⊥ p)
 | suc i, x :< xs, p => pmap suc (take<=length _ _ (s<=s p))
+
+def take-!! (i : Nat) (xs : List A) (n : Nat) (i<xs : i <= length xs) (n<i : n < i)
+  : xs !! n = take i xs !! n => transport
+    (fn l => l !! n = take i xs !! n) (pinv (split-lemma i xs i<xs))
+    (++-!!-l _ _ _ (transport
+      (fn l => n < length l) (pinv (take<=length i xs i<xs))
+      {??}))
 
 def drop<=length (i : Nat) (xs : List A)
   : length (drop i xs) = subTrunc (length xs) i

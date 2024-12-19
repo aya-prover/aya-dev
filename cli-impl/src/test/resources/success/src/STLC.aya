@@ -1,9 +1,9 @@
 open import arith::nat
 open import data::list::base
-open import data::list::properties using (insert<=length)
+open import data::list::properties using (insert<=length, ++-!!-l, take<=length)
 open import data::maybe using (Maybe, just, nothing)
 open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else)
-open import relation::binary::path using (= , refl, transport)
+open import relation::binary::path using (= , refl, transport, <=>, pinv)
 open import relation::binary::nat_cmp using (<=, <?)
 
 open inductive Tm
@@ -82,11 +82,16 @@ def shift_preservation
 | App_hasType A' fhT ahT, C, _, _ => App_hasType A' (shift_preservation fhT C i p) (shift_preservation ahT C i p)
 | True_hasType, _, _, _ => True_hasType
 | False_hasType, _, _, _ => False_hasType
-| {G}, {Idx n}, Var_hasType eqG, C, _, p =>
+| {G}, {Idx n}, Var_hasType eqG, C, i, p =>
   match n <? i as b returns
     hasType (take i G ++ [ C ] ++ drop i G) (if-then-else b (Idx n) (Idx (suc n))) A {
-  | _ because reflect_true _ => Var_hasType {??}
-  | _ because reflect_false _ => {??}
+  | _ because reflect_true n<i =>
+    let
+    | myGoal! : (take i G ++ (C :< drop i G)) !! n = G !! n := ++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)
+    in Var_hasType {??}
+
+    //Var_hasType (pinv (++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)) <=> eqG)
+  | _ because reflect_false np => {??}
   }
 
 def inst_preservation
