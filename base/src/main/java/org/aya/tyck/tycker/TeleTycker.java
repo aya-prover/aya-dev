@@ -79,6 +79,7 @@ public sealed interface TeleTycker extends Contextful {
   static void bindTele(ImmutableSeq<LocalVar> binds, MutableSeq<Param> tele) {
     final var lastIndex = tele.size() - 1;
     // fix some param, say [p]
+    // we skip the last parameter, which need no binds
     for (int i = lastIndex - 1; i >= 0; i--) {
       var p = binds.get(i);
       // for any other param that is able to refer to [p]
