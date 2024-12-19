@@ -1,8 +1,10 @@
 open import arith::nat
-open import arith::bool using (if-then-else)
 open import data::list::base
+open import data::list::properties using (insert<=length)
 open import data::maybe using (Maybe, just, nothing)
+open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else)
 open import relation::binary::path using (= , refl, transport)
+open import relation::binary::nat_cmp using (<=, <?)
 
 open inductive Tm
 | Lam Tm
@@ -29,7 +31,7 @@ open inductive hasType Gamma Tm Ty
 def shift (t : Tm) (from : Nat) : Tm elim t
 | Lam l => Lam (shift l (suc from))
 | App f a => App (shift f from) (shift a from)
-| Idx i => if-then-else (minus (suc i) from =? 0)   // i < from
+| Idx i => if-then-else (subTrunc (suc i) from =? 0)   // i < from
     t
     (Idx (suc i))
 | True => True
@@ -74,17 +76,17 @@ def function_canoninal_form
 | falseValue, ()
 
 def shift_preservation
-  {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A) (B : Ty) (i : Nat)
+  {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A) (B : Ty) (i : Nat) (p : i <= length G)
   : hasType (take i G ++ [ B ] ++ drop i G) (shift tm i) A
-| Lam_hasType lhT, C, _ => Lam_hasType (shift_preservation lhT C (suc i))
-| App_hasType A' fhT ahT, C, _ => App_hasType A' (shift_preservation fhT C i) (shift_preservation ahT C i)
-| True_hasType, _, _ => True_hasType
-| False_hasType, _, _ => False_hasType
-| {G}, {Idx n}, Var_hasType eqG, C, _ =>
-  match (minus (suc n) i =? 0) as b returns
+| Lam_hasType lhT, C, _, _ => Lam_hasType (shift_preservation lhT C (suc i) p)
+| App_hasType A' fhT ahT, C, _, _ => App_hasType A' (shift_preservation fhT C i p) (shift_preservation ahT C i p)
+| True_hasType, _, _, _ => True_hasType
+| False_hasType, _, _, _ => False_hasType
+| {G}, {Idx n}, Var_hasType eqG, C, _, p =>
+  match n <? i as b returns
     hasType (take i G ++ [ C ] ++ drop i G) (if-then-else b (Idx n) (Idx (suc n))) A {
-  | true => {??}
-  | false => {??}
+  | _ because reflect_true _ => Var_hasType {??}
+  | _ because reflect_false _ => {??}
   }
 
 def inst_preservation

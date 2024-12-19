@@ -1,6 +1,7 @@
-open import relation::binary::path using (=, refl)
+open import data::sum using (Sum, inl, inr)
 open import arith::bool using (Bool, true, false)
 open import relation::unary::negation using (neg)
+open import relation::binary::path using (=, refl)
 
 open inductive Reflect (P : Type) (b : Bool)
 | _, true  => reflect_true P
@@ -15,3 +16,11 @@ def no {P : Type} (np : neg P) : Decidable P => false because (reflect_false np)
 def map {P Q : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) : Decidable Q elim d
 | true because (reflect_true p) => yes (f p)
 | false because (reflect_false np) => no (fn q => np (g q))
+
+def if-then-else {A P : Type} (d : Decidable P) (then else : A) : A elim d
+| true because _ => then
+| false because _ => else
+
+def LEM {P : Type} (d : Decidable P) : Sum P (neg P)
+| _ because reflect_true p => inl p
+| _ because reflect_false np => inr np
