@@ -5,6 +5,7 @@ package org.aya.syntax.compile;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
+import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.syntax.core.def.ConDefLike;
@@ -18,11 +19,13 @@ import org.aya.syntax.telescope.JitTele;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
   public final JitData dataType;
   private final boolean hasEq;
   private final int selfTeleSize;
+  private @UnknownNullability ImmutableSeq<Param> selfTele;
 
   protected JitCon(
     int telescopeSize, boolean[] telescopeLicit, String[] telescopeName,
@@ -48,21 +51,33 @@ public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
   @Override public int selfTeleSize() { return selfTeleSize; }
   @Override public int ownerTeleSize() { return telescopeSize - selfTeleSize; }
   @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
-    var ownerArgsSize = ownerArgs.size();
-    var args = MutableArrayList.<Term>create(telescopeSize);
-    args.appendAll(ownerArgs);
-    var tele = MutableArrayList.<Param>create(selfTeleSize);
+    if (selfTele == null) {
+      var ownerTeleSize = ownerTeleSize();
+      var fullTele = MutableArrayList.<FreeTerm>create(telescopeSize);
+      for (int i = 0; i < ownerTeleSize; ++i) {
+        fullTele.append(new FreeTerm(new LocalVar("JitCon" + i)));
+      }
 
-    for (var i = 0; i < selfTeleSize; ++i) {
-      var realIdx = ownerArgsSize + i;
-      var name = telescopeNames[realIdx];
-      var licit = telescopeLicit[realIdx];
-      var type = telescope(realIdx, args).instTele(args.view());
-      var bind = new LocalVar(name, SourcePos.NONE, GenerateKind.Basic.Tyck);
-      args.append(new FreeTerm(bind));
-      tele.append(new Param(name, type, licit));
+      var selfTele = MutableArrayList.<Param>create(selfTeleSize);
+
+      for (int i = 0; i < selfTeleSize; ++i) {
+        var realIdx = ownerTeleSize + i;
+        var name = telescopeNames[realIdx];
+        var licit = telescopeLicit[realIdx];
+        var type = telescope(realIdx, Seq.narrow(fullTele));
+        selfTele.append(new Param(name, type, licit));
+        fullTele.append(new FreeTerm(new LocalVar("JitCon" + realIdx)));
+      }
+
+      // now bind all free variable
+      selfTele.replaceAllIndexed((i, p) ->
+        p.descent(type ->
+          type.bindTele(fullTele.view().map(FreeTerm::name)
+            .slice(0, ownerTeleSize + i))));
+
+      this.selfTele = selfTele.toImmutableSeq();
     }
 
-    return tele.toImmutableSeq();
+    return Param.substTele(selfTele.view(), ownerArgs.view()).toImmutableSeq();
   }
 }

@@ -20,6 +20,12 @@ public sealed interface ConDefLike extends AnyDef permits JitCon, ConDef.Delegat
   @NotNull Term equality(Seq<Term> args, boolean is0);
   int selfTeleSize();
   int ownerTeleSize();
+
+  /**
+   * Returns the telescope introduced by the constructor, data telescope/pattern binds telescope is not included.
+   *
+   * @return A telescope which has {@link #ownerTeleSize} many de-bruijn indices are free
+   */
   @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs);
 
   @SuppressWarnings("unchecked") static @NotNull ConDefLike from(@NotNull AnyDefVar var) {
