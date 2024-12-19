@@ -1,4 +1,5 @@
 open import arith::nat::base
+open import arith::bool using (Bool, true, false)
 open import data::list::base
 open import relation::binary::path
 open import relation::binary::nat_cmp
@@ -10,6 +11,10 @@ variable A B C : Type
 def length-map (f : A -> B) (l : List A) : length (map f l) = length l elim l
 | [ ] => refl
 | x :< xs => pmap suc (length-map f xs)
+
+def length-++ (xs ys : List A) : length (xs ++ ys) = length xs + length ys elim xs
+| [ ] => refl
+| x :< xs' => pmap suc (length-++ _ _)
 
 def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
 | [ ] => refl
@@ -57,14 +62,37 @@ def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim x
   in step0 <=> step1 <=> step2 <=> pinv step3
 
 def ++-!!-l (i : Nat) (xs ys : List A) (i < length xs) : (xs ++ ys) !! i = xs !! i
-| _, [ ], _, p => exfalso (n<z→⊥ _ p)
+| _, [ ], _, p => exfalso (n<z→⊥ p)
 | 0, x :< xs', _, _ => refl
 | suc i', x :< xs', _, p => ++-!!-l i' xs' ys p
+
+def take<=length (i : Nat) (xs : List A) (i <= length xs)
+  : length (take i xs) = i
+| 0, _, _ => refl
+| suc i, [ ], p => exfalso (n<z→⊥ p)
+| suc i, x :< xs, p => pmap suc (take<=length _ _ (s<=s p))
+
+def drop<=length (i : Nat) (xs : List A)
+  : length (drop i xs) = subTrunc (length xs) i
+| _, [ ] => refl
+| 0, x :< xs => refl
+| suc i, x :< xs => drop<=length i xs
 
 def insert<length
   (i : Nat) (x : A) (xs : List A) (p : i <= length xs)
   : length (insert i x xs) = length xs + 1
   => match i <=? length xs {
-  | true because p< => {??}
-  | false because np< => {??}
+  // length (take i xs) + length (drop i xs) = length xs
+  // length (drop i xs) + length (take i xs) = length xs
+  | _ because (reflect_true _) => let
+    | myGoal! : length (drop i xs) + length (take i xs) = length xs := transport
+        (fn a => a + length (take i xs) = length xs) (pinv (drop<=length _ _))
+        (transport
+          (fn a => (subTrunc (length xs) i + a = length xs)) (pinv (take<=length _ _ p))
+          (a-b+b=a _ _ p))
+    | BanGDream : length (take i xs) + length (drop i xs) = length xs := transport (fn lhs => lhs = length xs) +-comm myGoal!
+    | haruhikage : suc (length (take i xs) + length (drop i xs)) = suc (length xs) := pmap suc BanGDream
+    | nande : length (take i xs ++ (x :< drop i xs)) = suc (length (take i xs) + length (drop i xs)) := length-++ _ _
+    in nande <=> haruhikage
+  | _ because (reflect_false np<) => exfalso (np< p)
   }
