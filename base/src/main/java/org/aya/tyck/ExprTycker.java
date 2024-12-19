@@ -190,7 +190,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
       // always nameless
-      ImmutableSeq.fill(discriminant.size(), LocalVar.IGNORED),
+      ImmutableSeq.fill(discriminant.size(), i -> new LocalVar("match" + i)),
       signature, clauses, ImmutableSeq.empty(), true);
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()
