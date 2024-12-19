@@ -1,4 +1,5 @@
 open import arith::nat using (Nat, zero, suc, z≠s, subTrunc, =?, +)
+open import arith::bool using (Bool, true, false)
 open import relation::unary::negation using (neg)
 open import relation::nullary::empty using (⊥, exfalso)
 open import relation::binary::path
@@ -31,8 +32,8 @@ def <=-case {a b : Nat} (a <= b) : Sum (a < b) (a = b) =>
   // suc a o- b != 0
   // suc a o- b = suc ?
   | _ because reflect_false np => match a =? b {
-    | _ because reflect_true p => inr p
-    | _ because reflect_false np => {??}
+    | true because reflect_true p => inr p
+    | false because reflect_false np => {??}
     }
   }
 
