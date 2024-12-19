@@ -78,12 +78,10 @@ def drop<=length (i : Nat) (xs : List A)
 | 0, x :< xs => refl
 | suc i, x :< xs => drop<=length i xs
 
-def insert<length
+def insert<=length
   (i : Nat) (x : A) (xs : List A) (p : i <= length xs)
   : length (insert i x xs) = length xs + 1
   => match i <=? length xs {
-  // length (take i xs) + length (drop i xs) = length xs
-  // length (drop i xs) + length (take i xs) = length xs
   | _ because (reflect_true _) => let
     | myGoal! : length (drop i xs) + length (take i xs) = length xs := transport
         (fn a => a + length (take i xs) = length xs) (pinv (drop<=length _ _))
