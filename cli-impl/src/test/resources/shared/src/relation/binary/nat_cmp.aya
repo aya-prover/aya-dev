@@ -1,7 +1,8 @@
-open import arith::nat using (Nat, zero, suc, z≠s, subTrunc)
+open import arith::nat using (Nat, zero, suc, z≠s, subTrunc, =?)
 open import relation::unary::negation using (neg)
 open import relation::nullary::empty using (exfalso)
 open import relation::binary::path
+open import relation::nullary::decidable using (Decidable, yes, no, map as dec_map)
 
 def infix <= (a b : Nat) : Type => subTrunc a b = 0
 
@@ -14,3 +15,7 @@ def infix > (a b : Nat) : Type => a >= (suc b)
 def n<z→⊥ (n : Nat) : neg (n < 0) => fn eq => exfalso (z≠s (pinv eq))
 
 def s<s (a b : Nat) (p : suc a < suc b) : a < b => p
+
+def infix <=? (a b : Nat) : Decidable (a <= b) => subTrunc a b =? 0
+
+def infix <? (a b : Nat) : Decidable (a < b) => (suc a) <=? b

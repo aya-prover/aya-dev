@@ -1,7 +1,7 @@
 open import arith::nat
 open import arith::bool using (if-then-else)
 open import data::list::base
-open import data::maybe using (Maybe, Just, Nothing)
+open import data::maybe using (Maybe, just, nothing)
 open import relation::binary::path using (= , refl, transport)
 
 open inductive Tm
@@ -19,7 +19,7 @@ def Gamma : Type => List Ty
 open inductive hasType Gamma Tm Ty
 | Γ, Lam t, Arrow A B => Lam_hasType (hasType (A :< Γ) t B)
 | Γ, App f a, B => App_hasType (A : Ty) (hasType Γ f (Arrow A B)) (hasType Γ a A)
-| Γ, Idx n, A => Var_hasType (Γ !! n = Just A)
+| Γ, Idx n, A => Var_hasType (Γ !! n = just A)
 | _, True, Bool => True_hasType
 | _, False, Bool => False_hasType
 
@@ -90,12 +90,12 @@ def shift_preservation
 def inst_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A)
   {v : Tm} {B : Ty} (hasType G v B)
-  (i : Nat) (G !! i = Just B)
+  (i : Nat) (G !! i = just B)
   : hasType G (inst tm i v) A
 // I need:
 // * hasType (A :< G) (shift v 0) A
 // * hasType G (inst l (suc i) (shift v 0)) B
-// * inst_preservation lhT (?shT : hasType (A :< G) ?s B) (suc i) ((A :< G) !! (suc i) = Just A)
+// * inst_preservation lhT (?shT : hasType (A :< G) ?s B) (suc i) ((A :< G) !! (suc i) = just A)
 //   : hasType (A :< G) (inst l (suc i) ?s) B
 //
 // I may have:
