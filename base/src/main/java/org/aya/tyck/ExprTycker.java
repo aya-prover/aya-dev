@@ -297,9 +297,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
         var result = synthesize(expr);
-        if (!(result.type() instanceof SortTerm))
-          fail(expr.data(), BadTypeError.doNotLike(state, expr, result.type(),
+        if (!(result.type() instanceof SortTerm)) {
+          fail(BadTypeError.doNotLike(state, expr, result.type(),
             _ -> Doc.plain("type")));
+          yield new ErrorTerm(expr.data());
+        }
         yield result.wellTyped();
       }
     };
