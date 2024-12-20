@@ -59,7 +59,7 @@ public class BaseMdParser {
     this.languages = lang;
   }
 
-  /// region Entry
+  // region Entry
   protected void addProviders(ArrayList<MarkerBlockProvider<MarkerProcessor.StateInfo>> providers) {
     providers.addFirst(new FrontMatterHeaderProvider());
   }
@@ -86,11 +86,9 @@ public class BaseMdParser {
     var parser = new MarkdownParser(flavour);
     return mapNode(parser.buildMarkdownTreeFromString(file.sourceCode()));
   }
+  // endregion Entry
 
-  /// endregion Entry
-
-  /// region Parsing
-
+  // region Parsing
   protected @NotNull ImmutableSeq<Literate> mapChildren(@NotNull ASTNode parent) {
     return mapChildren(parent.getChildren().view());
   }
@@ -328,9 +326,9 @@ public class BaseMdParser {
       : new Literate.Many(null, children.toImmutableSeq());
   }
 
-  /// endregion Parsing
+  // endregion Parsing
 
-  /// region Helper
+  // region Helper
 
   /**
    * Replacing non-code content with whitespaces, keep the source pos of code parts.
@@ -384,5 +382,5 @@ public class BaseMdParser {
     }
     return SourcePos.of(new TextRange(start, end), file, false);
   }
-  /// endregion Helper
+  // endregion Helper
 }

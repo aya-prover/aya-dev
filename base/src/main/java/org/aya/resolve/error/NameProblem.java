@@ -181,6 +181,12 @@ public interface NameProblem extends Problem {
     @NotNull String name,
     @Override @NotNull SourcePos sourcePos
   ) implements Error {
+    /// To prevent {@link StackOverflowError} because the default [#toString]
+    /// will pretty print the [#context], whose [Context#reporter()] might be a
+    /// [org.aya.util.reporter.CollectingReporter], which might pretty print this
+    /// very error, which includes that context again.
+    @Override public String toString() { return ""; }
+
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var head = Doc.sep(
         Doc.english("The name"),

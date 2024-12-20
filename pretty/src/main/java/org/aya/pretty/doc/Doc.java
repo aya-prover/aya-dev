@@ -124,15 +124,11 @@ public sealed interface Doc extends Docile {
   /** The empty document; conceptually the unit of 'Cat' */
   enum Empty implements Doc { INSTANCE }
 
-  /**
-   * A plain text line without '\n'. which may be escaped by backend.
-   */
+  /// A plain text line without `\n`. which may be escaped by backend.
   record PlainText(@NotNull String text) implements Doc { }
 
-  /**
-   * Already escaped text, which will not be escaped by backend.
-   * Callers should be responsible for escaping the text (like '\n').
-   */
+  /// Already escaped text, which will not be escaped by backend.
+  /// Callers should be responsible for escaping the text (like `\n`).
   record EscapedText(@NotNull String text) implements Doc { }
 
   /**
@@ -140,12 +136,10 @@ public sealed interface Doc extends Docile {
    */
   record SpecialSymbol(@NotNull String text) implements Doc { }
 
-  /**
-   * A clickable text line without '\n'.
-   *
-   * @param id   The id of the doc itself.
-   * @param href The id of jump target when clicked.
-   */
+  /// A clickable text line without `\n`.
+  ///
+  /// @param id   The id of the doc itself.
+  /// @param href The id of jump target when clicked.
   record HyperLinked(
     @NotNull Doc doc, @NotNull Link href,
     @Nullable Link id, @Nullable String hover
@@ -381,25 +375,21 @@ public sealed interface Doc extends Docile {
     return new FlatAlt(defaultDoc, preferWhenFlattened);
   }
 
-  /**
-   * Layout a document depending on which column it starts at.
-   * {@link Doc#align(Doc)} is implemented in terms of {@code column}.
-   *
-   * @param docBuilder document generator when current position provided
-   * @return column action document
-   */
+  /// Layout a document depending on which column it starts at.
+  /// [#align(Doc)] is implemented in terms of `column`.
+  ///
+  /// @param docBuilder document generator when current position provided
+  /// @return column action document
   @Contract("_ -> new")
   static @NotNull Doc column(@NotNull IntFunction<Doc> docBuilder) {
     return new Column(docBuilder);
   }
 
-  /**
-   * Layout a document depending on the current 'nest'-ing level.
-   * {@link Doc#align(Doc)} is implemented in terms of {@code nesting}.
-   *
-   * @param docBuilder document generator when current nest level provided
-   * @return nest level action document
-   */
+  /// Layout a document depending on the current [#nest]-ing level.
+  /// [#align(Doc)] is implemented in terms of `nesting`.
+  ///
+  /// @param docBuilder document generator when current nest level provided
+  /// @return nest level action document
   @Contract("_ -> new")
   static @NotNull Doc nesting(@NotNull IntFunction<Doc> docBuilder) {
     return new Nesting(docBuilder);
@@ -575,7 +565,7 @@ public sealed interface Doc extends Docile {
    * Plain text document. Backend will escape the text if it
    * contains offending characters.
    *
-   * @param text text that may not contain '\n'
+   * @param text text that may not contain `\n`
    * @return text document of the whole text
    */
   @Contract("_ -> new") static @NotNull Doc plain(String text) {
@@ -583,18 +573,16 @@ public sealed interface Doc extends Docile {
     return new PlainText(text);
   }
 
-  /**
-   * Already escaped text that will be rendered as-is.
-   * Callers should be responsible for escaping offending characters (like '\n', '<', etc.)
-   * depending on the backend. Use with care as this may result in invalid output format.
-   * <p>
-   * Note that this is not the same as {@link Doc#code} or {@link Doc#codeBlock}.
-   * Although in most cases code segments are treated as "already escaped" text
-   * that will be rendered as-is. But for HTML, code segments is still escaped because
-   * they are placed in `<code>` and `<pre>`.
-   *
-   * @param text text that will be rendered as-is.
-   */
+  /// Already escaped text that will be rendered as-is.
+  /// Callers should be responsible for escaping offending characters (like `\n`, `<`, etc.)
+  /// depending on the backend. Use with care as this may result in invalid output format.
+  ///
+  /// Note that this is not the same as [#code] or [#codeBlock].
+  /// Although in most cases code segments are treated as "already escaped" text
+  /// that will be rendered as-is. But for HTML, code segments is still escaped because
+  /// they are placed in `<code>` and `<pre>`.
+  ///
+  /// @param text text that will be rendered as-is.
   @Contract("_ -> new") static @NotNull Doc escaped(String text) {
     return new EscapedText(text);
   }

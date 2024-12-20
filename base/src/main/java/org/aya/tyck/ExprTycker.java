@@ -538,7 +538,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
-  /// region Overrides and public APIs
+  // region Overrides and public APIs
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
@@ -583,7 +583,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     this.localLet = let;
     return old;
   }
-  /// endregion Overrides and public APIs
+  // endregion Overrides and public APIs
 
   protected static final class NotPi extends Exception {
     public final @NotNull Term actual;

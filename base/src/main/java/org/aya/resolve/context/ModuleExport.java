@@ -20,10 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-/**
- * ModuleExport stores symbols that imports from another module.
- * Any module should NOT export ambiguous symbol/module, they should be solved before they are exported.
- */
+/// ModuleExport stores symbols that imports from another module.
+/// Any module should NOT export ambiguous symbol/module, they should be solved before they are exported.
 public record ModuleExport(
   @NotNull MutableMap<String, AnyDefVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
@@ -34,22 +32,19 @@ public record ModuleExport(
     this(MutableMap.from(that.symbols), MutableMap.from(that.modules));
   }
 
-  /**
-   * @implSpec In case of qualified renaming, only the module is renamed, for example (pseudocode):
-   * <pre>
-   *   module foo {
-   *     module bar {
-   *       data A
-   *     }
-   *   }
-   *
-   *   open import foo using (bar::A as B)
-   *   // only module [bar::A] is renamed, the name [B] can not be used as the type, but only
-   *   // the accessor of its constructors.
-   * </pre>
-   * Well, the cost to also rename the type is not very expensive, we just need to make a new {@link ModuleExport}
-   * to store that symbol, but I am 2 lazy 😭😭😭😭.
-   */
+  /// @implSpec In case of qualified renaming, only the module is renamed, for example (pseudocode):
+  /// ```
+  ///   module foo {
+  ///     module bar {
+  ///       data A
+  ///     }
+  ///   }
+  ///   open import foo using (bar::A as B)
+  ///   // only module [bar::A] is renamed, the name [B] can not be used as the type, but only
+  ///   // the accessor of its constructors.
+  /// ```
+  /// Well, the cost to also rename the type is not very expensive, we just need to make a new [ModuleExport]
+  /// to store that symbol, but I am 2 lazy 😭😭😭😭.
   @Contract(pure = true)
   @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
     final ModuleExport newModule;
@@ -137,8 +132,7 @@ public record ModuleExport(
     return modules.put(componentName, module).isEmpty();
   }
 
-  /// region Helper Methods for Mapping/Filtering
-
+  // region Helper Methods for Mapping/Filtering
   private @Nullable ExportUnit get(@NotNull ModuleName component, @NotNull String name) {
     var symbol = component == ModuleName.This ? symbols.getOrNull(name) : null;
     var module = modules.getOrNull(component.resolve(name));
@@ -166,7 +160,7 @@ public record ModuleExport(
     }
   }
 
-  /// endregion
+  // endregion
 
   /**
    * @param result the new module export if success, the old module export if failed.

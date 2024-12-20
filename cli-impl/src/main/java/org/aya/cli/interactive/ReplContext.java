@@ -116,7 +116,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     }
   }
 
-  /// region Rebuild Module Tree
+  // region Rebuild Module Tree
 
   public record ModuleTrie(@NotNull ImmutableMap<String, ModuleTrie> children, boolean inhabited) { }
 
@@ -200,5 +200,5 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       }));
   }
 
-  /// endregion Rebuild Module Tree
+  // endregion Rebuild Module Tree
 }
