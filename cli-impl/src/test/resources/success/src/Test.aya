@@ -95,3 +95,8 @@ module PullRequest1213 {
     | y := the (Store (nonInjective 1 114)) (make {nonInjective x 514})
     in the (Store (the _ 2)) (make {the _ x})
 }
+
+module Issue1232 {
+  def - : Nat => 1
+  def --> : Nat => 1
+}
