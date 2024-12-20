@@ -336,9 +336,7 @@ public sealed interface Doc extends Docile {
     return wrap("{", "}", doc);
   }
 
-  /**
-   * Either `{ defaultDoc }` or `{\nflatDoc\n}`
-   */
+  /// Either `{ defaultDoc }` or `{\nflatDoc\n}`
   static @NotNull Doc flatAltBracedBlock(Doc defaultDoc, Doc flatDoc) {
     return flatAlt(
       stickySep(Doc.symbol("{"), defaultDoc, Doc.symbol("}")),
@@ -353,13 +351,11 @@ public sealed interface Doc extends Docile {
     return wrap("(", ")", doc);
   }
 
-  /**
-   * Return conditional {@link Doc#empty()}
-   *
-   * @param cond      condition
-   * @param otherwise otherwise
-   * @return {@link Empty} when {@code cond} is true, otherwise {@code otherwise}
-   */
+  /// Return conditional [#empty()]
+  ///
+  /// @param cond      condition
+  /// @param otherwise otherwise
+  /// @return [Empty] when `cond` is true, otherwise `otherwise`
   static @NotNull Doc emptyIf(boolean cond, Supplier<@NotNull Doc> otherwise) {
     return cond ? empty() : otherwise.get();
   }
@@ -373,15 +369,13 @@ public sealed interface Doc extends Docile {
     return Empty.INSTANCE;
   }
 
-  /**
-   * By default, flatAlt renders as {@param defaultDoc}. However, when 'group'-ed,
-   * {@param preferWhenFlattened} will be preferred, with {@param defaultDoc} as
-   * the fallback for the case when {@param preferWhenFlattened} doesn't fit.
-   *
-   * @param defaultDoc          default document
-   * @param preferWhenFlattened document selected when flattened
-   * @return alternative document
-   */
+  /// By default, flatAlt renders as {@param defaultDoc}. However, when 'group'-ed,
+  /// {@param preferWhenFlattened} will be preferred, with {@param defaultDoc} as
+  /// the fallback for the case when {@param preferWhenFlattened} doesn't fit.
+  ///
+  /// @param defaultDoc          default document
+  /// @param preferWhenFlattened document selected when flattened
+  /// @return alternative document
   @Contract("_, _ -> new")
   static @NotNull Doc flatAlt(@NotNull Doc defaultDoc, @NotNull Doc preferWhenFlattened) {
     return new FlatAlt(defaultDoc, preferWhenFlattened);
@@ -422,60 +416,54 @@ public sealed interface Doc extends Docile {
     return new PageWidth(docBuilder);
   }
 
-  /**
-   * lays out the document {@param doc} with the current nesting level
-   * (indentation of the following lines) increased by {@param indent}.
-   * Negative values are allowed, and decrease the nesting level accordingly.
-   * <p>
-   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
-   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
-   *
-   * @param indent indentation of the following lines
-   * @param doc    the document to lay out
-   * @return indented document
-   */
+  /// lays out the document {@param doc} with the current nesting level
+  /// (indentation of the following lines) increased by {@param indent}.
+  /// Negative values are allowed, and decrease the nesting level accordingly.
+  ///
+  /// For differences between [#hang(int,Doc)], [#indent(int,Doc)]
+  /// and [#nest(int,Doc)], see unit tests in file "DocStringPrinterTest.java".
+  ///
+  /// @param indent indentation of the following lines
+  /// @param doc    the document to lay out
+  /// @return indented document
   @Contract("_, _ -> new")
   static @NotNull Doc nest(int indent, @NotNull Doc doc) {
     return indent == 0 || doc.isEmpty() ? doc : new Nest(indent, doc);
   }
 
-  /**
-   * align lays out the document {@param doc} with the nesting level set to the
-   * current column. It is used for example to implement {@link Doc#hang(int, Doc)}.
-   * <p>
-   * As an example, we will put a document right above another one, regardless of
-   * the current nesting level. Without 'align'-ment, the second line is put simply
-   * below everything we've had so far,
-   * <p>
-   * If we add an 'align' to the mix, the @'vsep'@'s contents all start in the
-   * same column,
-   *
-   * @param doc document to be aligned
-   * @return aligned document
-   */
+  /// align lays out the document {@param doc} with the nesting level set to the
+  /// current column. It is used for example to implement [#hang(int,Doc)].
+  ///
+  /// As an example, we will put a document right above another one, regardless of
+  /// the current nesting level. Without [#align]-ment, the second line is put simply
+  /// below everything we've had so far,
+  ///
+  /// If we add an [#align] to the mix, the `vsep`s contents all start in the
+  /// same column,
+  ///
+  /// @param doc document to be aligned
+  /// @return aligned document
   @Contract("_ -> new")
   static @NotNull Doc align(@NotNull Doc doc) {
     // note: nesting might be negative
     return column(k -> nesting(i -> nest(k - i, doc)));
   }
 
-  /**
-   * hang lays out the document {@param doc} with a nesting level set to the
-   * /current column/ plus {@param deltaNest}.
-   * Negative values are allowed, and decrease the nesting level accordingly.
-   * <p>
-   * This differs from {@link Doc#nest(int, Doc)}, which is based on
-   * the /current nesting level/ plus {@code indent}.
-   * When you're not sure, try the more efficient 'nest' first. In our
-   * example, this would yield
-   * <p>
-   * For differences between {@link Doc#hang(int, Doc)}, {@link Doc#indent(int, Doc)}
-   * and {@link Doc#nest(int, Doc)}, see unit tests in file "DocStringPrinterTest.java".
-   *
-   * @param deltaNest change of nesting level, relative to the start of the first line
-   * @param doc       document to indent
-   * @return hang-ed document
-   */
+  /// hang lays out the document {@param doc} with a nesting level set to the
+  /// _current column_ plus {@param deltaNest}.
+  /// Negative values are allowed, and decrease the nesting level accordingly.
+  ///
+  /// This differs from [#nest(int,Doc)], which is based on
+  /// the _current nesting level_ plus `indent`.
+  /// When you're not sure, try the more efficient 'nest' first. In our
+  /// example, this would yield
+  ///
+  /// For differences between [#hang(int,Doc)], [#indent(int,Doc)]
+  /// and [#nest(int,Doc)], see unit tests in file `DocStringPrinterTest.java`.
+  ///
+  /// @param deltaNest change of nesting level, relative to the start of the first line
+  /// @param doc       document to indent
+  /// @return hang-ed document
   @Contract("_, _ -> new")
   static @NotNull Doc hang(int deltaNest, @NotNull Doc doc) {
     return align(nest(deltaNest, doc));
@@ -513,41 +501,37 @@ public sealed interface Doc extends Docile {
     return nest(indent, cat(spaces(indent), doc));
   }
 
-  /**
-   * Concat {@param left}, {@param delim} and {@param right}, with
-   * {@param left} occupying at least {@param minBeforeDelim} length.
-   * The "R" in method name stands for "right", which means the delim is placed near the right.
-   * <p>
-   * This behaves like {@code printf("%-*s%s%s", minBeforeDelim, left, delim, right);}
-   * For example:
-   * <pre>
-   *   var doc = split(8, plain("Help"), plain(":"), english("Show the help message"));
-   *   assertEquals("Help    :Show the help message", doc.commonRender());
-   * </pre>
-   *
-   * @param minBeforeDelim The minimum length before {@param delim}
-   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
-   */
+  /// Concat {@param left}, {@param delim} and {@param right}, with
+  /// {@param left} occupying at least {@param minBeforeDelim} length.
+  /// The "R" in method name stands for "right", which means the delim is placed near the right.
+  ///
+  /// This behaves like `printf("%-*s%s%s", minBeforeDelim, left, delim, right);`
+  /// For example:
+  /// ```java
+  /// var doc = split(8, plain("Help"), plain(":"), english("Show the help message"));
+  /// assertEquals("Help    :Show the help message", doc.commonRender());
+  ///```
+  ///
+  /// @param minBeforeDelim The minimum length before {@param delim}
+  /// @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
   static @NotNull Doc splitR(int minBeforeDelim, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
     var alignedMiddle = column(k -> nesting(i -> indent(minBeforeDelim - k + i, delim)));
     return Doc.cat(left, alignedMiddle, Doc.align(right));
   }
 
-  /**
-   * Concat {@param left}, {@param delim} and {@param right}, with
-   * {@param left} and {@param delim} occupying at least {@param minBeforeRight} length.
-   * The "L" in method name stands for "left", which means the delim is placed near the left.
-   * <p>
-   * This behaves like {@code printf("%*s%s", minBeforeRight, (left ++ delim), right);}
-   * For example:
-   * <pre>
-   *   var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
-   *   assertEquals("Help:   Show the help message", doc.commonRender());
-   * </pre>
-   *
-   * @param minBeforeRight The minimum length before {@param right}
-   * @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
-   */
+  /// Concat {@param left}, {@param delim} and {@param right}, with
+  /// {@param left} and {@param delim} occupying at least {@param minBeforeRight} length.
+  /// The "L" in method name stands for "left", which means the delim is placed near the left.
+  ///
+  /// This behaves like `printf("%*s%s", minBeforeRight,(left ++ delim), right);`
+  /// For example:
+  /// ```java
+  /// var doc = splitR(8, plain("Help"), plain(":"), english("Show the help message"));
+  /// assertEquals("Help:   Show the help message", doc.commonRender());
+  ///```
+  ///
+  /// @param minBeforeRight The minimum length before {@param right}
+  /// @apiNote {@param left}, {@param delim}, {@param right} should all be 1-line documents
   static @NotNull Doc splitL(int minBeforeRight, @NotNull Doc left, @NotNull Doc delim, @NotNull Doc right) {
     var alignedRight = column(k -> nesting(i -> indent(minBeforeRight - k + i, Doc.align(right))));
     return Doc.cat(left, delim, alignedRight);
@@ -563,14 +547,12 @@ public sealed interface Doc extends Docile {
     return Doc.vcat(vs);
   }
 
-  /**
-   * Creates a C-style indented block of statements.
-   * <pre>
-   *   prefix {
-   *   [indent]block
-   *   }
-   * </pre>
-   */
+  /// Creates a C-style indented block of statements.
+  /// ```
+  ///   prefix {
+  ///   [indent]block
+  ///   }
+  /// ```
   @Contract("_, _, _ -> new")
   static @NotNull Doc cblock(@NotNull Doc prefix, int indent, @NotNull Doc block) {
     if (block.isEmpty()) return prefix;
@@ -626,10 +608,8 @@ public sealed interface Doc extends Docile {
     );
   }
 
-  /**
-   * @param symbol '\n' not allowed!
-   * @return special symbol
-   */
+  /// @param symbol `\n` not allowed!
+  /// @return special symbol
   @Contract("_ -> new") static @NotNull Doc symbol(String symbol) {
     assert !symbol.contains("\n");
     return new SpecialSymbol(symbol);
@@ -702,19 +682,17 @@ public sealed interface Doc extends Docile {
     return join(ONE_WS, docs);
   }
 
-  /**
-   * fillSep concatenates the documents {@param docs} horizontally with a space
-   * as long as it fits the page, then inserts a 'line' and continues doing that
-   * for all documents in {@param docs}.
-   * 'line' means that if 'group'-ed, the documents
-   * are separated with a 'space' instead of newlines. Use {@link Doc#cat}
-   * if you do not want a 'space'.
-   * <p>
-   * Let's print some words to fill the line:
-   *
-   * @param docs documents to separate
-   * @return separated documents
-   */
+  /// fillSep concatenates the documents {@param docs} horizontally with a space
+  /// as long as it fits the page, then inserts a [#line] and continues doing that
+  /// for all documents in {@param docs}.
+  /// [#line] means that if `group`-ed, the documents
+  /// are separated with a `space` instead of newlines. Use [#cat]
+  /// if you do not want a `space`.
+  ///
+  /// Let's print some words to fill the line:
+  ///
+  /// @param docs documents to separate
+  /// @return separated documents
   @Contract("_ -> new") static @NotNull Doc sep(Doc @NotNull ... docs) {
     return join(ALT_WS, docs);
   }
@@ -748,7 +726,7 @@ public sealed interface Doc extends Docile {
 
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
-    // See https://github.com/ice1000/aya-prover/issues/753
+    // See https://github.com/aya-prover/aya-prover-proto/issues/753
     var cache = docs.toImmutableSeq();
     if (cache.isEmpty()) return empty();
     var first = cache.getFirst();

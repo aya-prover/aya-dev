@@ -7,7 +7,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
 import org.aya.generic.Nested;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
@@ -72,11 +71,9 @@ public sealed interface Expr extends AyaDocile {
     public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(typeExpr); }
   }
 
-  /**
-   * @param filling  the inner expr of goal
-   * @param explicit whether the hole is a type-directed programming goal or
-   *                 a to-be-solved by tycking hole.
-   */
+  /// @param filling  the inner expr of goal
+  /// @param explicit whether the hole is a type-directed programming goal or
+  ///                                                 a to-be-solved by tycking hole.
   record Hole(
     boolean explicit,
     @Nullable WithPos<Expr> filling,
@@ -104,12 +101,10 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  /**
-   * It is possible that {@code seq.size() == 1}, cause BinOpSeq also represents a scope of operator sequence,
-   * for example: the {@code (+)} in {@code f (+)} will be recognized as argument instead of a function call.
-   *
-   * @param seq
-   */
+  /// It is possible that `seq.size() == 1`, cause BinOpSeq also represents a scope of operator sequence,
+  /// for example: the `(+)` in `f (+)` will be recognized as argument instead of a function call.
+  ///
+  /// @param seq input to the binop parser
   record BinOpSeq(@NotNull ImmutableSeq<NamedArg> seq) implements Expr, Sugar {
     public @NotNull BinOpSeq update(@NotNull ImmutableSeq<NamedArg> seq) {
       return seq.sameElements(seq(), true) ? this : new BinOpSeq(seq);
@@ -372,12 +367,10 @@ public sealed interface Expr extends AyaDocile {
     public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(expr); }
   }
 
-  /**
-   * <h1>Array Expr</h1>
-   *
-   * @param arrayBlock <code>[ x | x <- [ 1, 2, 3 ] ]</code> (left) or <code>[ 1, 2, 3 ]</code> (right)
-   * @apiNote empty array <code>[]</code> should be a right (an empty expr seq)
-   */
+  /// # Array Expr
+  ///
+  /// @param arrayBlock `[ x | x <- [ 1, 2, 3 ]]` (left) or `[ 1, 2, 3 ]` (right)
+  /// @apiNote empty array `[]` should be a right (an empty expr seq)
   record Array(@NotNull Either<CompBlock, ElementList> arrayBlock) implements Expr {
     public @NotNull Array update(@NotNull Either<CompBlock, ElementList> arrayBlock) {
       var equal = arrayBlock.bifold(this.arrayBlock, false,
@@ -421,19 +414,17 @@ public sealed interface Expr extends AyaDocile {
       }
     }
 
-    /**
-     * <h1>Array Comp(?)</h1>
-     * <p>
-     * The (half?) primary part of {@link Array}<br/>
-     * For example: {@code [x * y | x <- [1, 2, 3], y <- [4, 5, 6]]}
-     *
-     * @param generator {@code x * y} part above
-     * @param binds     {@code x <- [1, 2, 3], y <- [4, 5, 6]} part above
-     * @param names     the bind ({@code >>=}) function, it is {@link Constants#monadBind} in default,
-     *                  the pure ({@code return}) function, it is {@link Constants#functorPure} in default
-     * @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
-     * it will be desugared to {@code do x <- [1, 2, 3], y <- [4, 5, 6], return x * y}
-     */
+    /// # Array Comp(?)
+    ///
+    /// The (half?) primary part of [Array]
+    /// For example: `[x * y | x <- [1, 2, 3], y <- [4, 5, 6]]`
+    ///
+    /// @param generator `x * y` part above
+    /// @param binds     `x <- [1, 2, 3], y <- [4, 5, 6]` part above
+    /// @param names     the bind (`>>=`) function, it is [#monadBind] in default,
+    ///                                                                     the pure (`return`) function, it is [#functorPure] in default
+    /// @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
+    /// it will be desugared to `do x <- [1, 2, 3], y <- [4, 5, 6], return x * y`
     public record CompBlock(
       @NotNull WithPos<Expr> generator,
       @NotNull ImmutableSeq<DoBind> binds,
@@ -471,24 +462,19 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  /**
-   * <h1>Let Expression</h1>
-   *
-   * <pre>
-   *   let
-   *     f (x : X) : G := g
-   *   in expr
-   * </pre>
-   * <p>
-   * where:
-   * <ul>
-   *   <li>{@link LetBind#bindName} = f</li>
-   *   <li>{@link LetBind#telescope} = (x : X)</li>
-   *   <li>{@link LetBind#result} = G</li>
-   *   <li>{@link LetBind#definedAs} = g</li>
-   *   <li>{@link Let#body} = expr</li>
-   * </ul>
-   */
+  /// # Let Expression
+  /// ```
+  ///   let
+  ///     f (x : X) : G := g
+  ///   in expr
+  ///```
+  /// where:
+  ///
+  /// - [LetBind#bindName] = `f`
+  /// - [LetBind#telescope] = `(x : X)`
+  /// - [LetBind#result] = `G`
+  /// - [LetBind#definedAs] = `g`
+  /// - [#body] = `expr`
   record Let(
     @NotNull LetBind bind,
     @NotNull WithPos<Expr> body
@@ -530,8 +516,8 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  // I think a new type is better than `Either<LetBind, Open> bind` in `Expr.Let`.
-  // Being desugared after resolving.
+  /// I think a new type is better than `Either<LetBind, Open> bind` in `Expr.Let`.
+  /// Being desugared after resolving.
   record LetOpen(
     @NotNull SourcePos sourcePos,
     @NotNull ModuleName.Qualified componentName,
@@ -587,7 +573,7 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(f::accept);
       // TODO: what about the patterns
-      clauses.forEach(clause -> clause.forEach(f, (_, _) -> {}));
+      clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
     }
   }

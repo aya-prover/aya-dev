@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.terck;
 
@@ -10,16 +10,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * A call matrix for a call `f --> g` has dimensions `arity(g) * arity(f)`.
- * Each row corresponds to one argument in the call to `g` (the codomain).
- * Each column corresponds to one formal argument of caller `f` (the domain).
- *
- * @param cols domain tele size
- * @param rows codomain telescope size
- * @author kiva
- * @see Relation
- */
+/// A call matrix for a call `f --> g` has dimensions `arity(g) × arity(f)`.
+/// Each row corresponds to one argument in the call to `g` (the codomain).
+/// Each column corresponds to one formal argument of caller `f` (the domain).
+///
+/// @param cols domain tele size
+/// @param rows codomain telescope size
+/// @author kiva
+/// @see Relation
 @Debug.Renderer(text = "toDoc().debugRender()")
 public record CallMatrix<Callable, Def>(
   @NotNull Callable callable,
