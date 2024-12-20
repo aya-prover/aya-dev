@@ -96,6 +96,11 @@ module PullRequest1213 {
     in the (Store (the _ 2)) (make {the _ x})
 }
 
+module What {
+  open inductive Wrap (A : Type) | wrap A
+  def what (A : Type) (w : Wrap) : w = w => refl
+}
+
 module Issue1232 {
   def - : Nat => 1
   def --> : Nat => 1

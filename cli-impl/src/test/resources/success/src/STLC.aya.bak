@@ -1,6 +1,6 @@
 open import arith::nat
 open import data::list::base
-open import data::list::properties using (insert<=length, ++-!!-l, take<=length)
+open import data::list::properties using (insert<=length, ++-!!-l, take<=length, take-!!)
 open import data::maybe using (Maybe, just, nothing)
 open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else)
 open import relation::binary::path using (= , refl, transport, <=>, pinv)
@@ -87,10 +87,9 @@ def shift_preservation
     hasType (take i G ++ [ C ] ++ drop i G) (if-then-else b (Idx n) (Idx (suc n))) A {
   | _ because reflect_true n<i =>
     let
-    | myGoal! : (take i G ++ (C :< drop i G)) !! n = G !! n := ++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)
-    in Var_hasType {??}
-
-    //Var_hasType (pinv (++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)) <=> eqG)
+    | myGoal! : (take i G ++ (C :< drop i G)) !! n = (take i G) !! n := ++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)
+    | myGoal!! : (take i G ++ (C :< drop i G)) !! n = G !! n := myGoal! <=> (pinv (take-!! _ _ _ p n<i))
+    in Var_hasType (myGoal!! <=> eqG)
   | _ because reflect_false np => {??}
   }
 
