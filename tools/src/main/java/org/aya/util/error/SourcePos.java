@@ -110,6 +110,9 @@ public record SourcePos(
 
   public boolean belongsToSomeFile() { return this != SourcePos.NONE && file.isSomeFile(); }
   public int linesOfCode() { return endLine - startLine + 1; }
+  public boolean oneLinear() {
+    return startLine == endLine;
+  }
 
   public @NotNull SourcePos sourcePosForSubExpr(@NotNull SeqView<SourcePos> params) {
     return sourcePosForSubExpr(file, params);
@@ -153,9 +156,16 @@ public record SourcePos(
     return new SourcePos(file, tokenStartIndex, tokenStartIndex - 1,
       startLine, startColumn, startLine, startColumn);
   }
-  public @NotNull SourcePos shrink(int leftIncrease, int rightDecrease) {
-    return new SourcePos(file, tokenStartIndex + leftIncrease, tokenEndIndex - rightDecrease,
-      startLine, startColumn + leftIncrease, endLine, endColumn - rightDecrease);
+
+  public enum NowLoc {
+    Shot, Start, End, Between, None,
+  }
+
+  public @NotNull NowLoc nowLoc(int currentLine) {
+    if (currentLine == startLine) return oneLinear() ? NowLoc.Shot : NowLoc.Start;
+    if (currentLine == endLine) return NowLoc.End;
+    if (currentLine > startLine && currentLine < endLine) return NowLoc.Between;
+    return NowLoc.None;
   }
 
   public static @NotNull SourcePos of(@NotNull TextRange range, @NotNull SourceFile file, boolean singleLine) {
