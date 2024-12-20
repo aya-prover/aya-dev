@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * Tyck for {@link Pattern}'s, the left hand side of one clause.
@@ -55,17 +54,14 @@ import java.util.function.Supplier;
 public class PatternTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
   private final boolean allowImplicit;
-  /**
-   * A bound telescope (i.e. all the reference to the former parameter are LocalTerm)
-   */
+  /// A bound telescope (i.e. all the reference to the former parameter are
+  /// [org.aya.syntax.core.term.LocalTerm])
   private @NotNull SeqView<Param> telescope;
 
   /** Substitution for parameter, in the same order as parameter */
   private final @NotNull MutableList<Jdg> paramSubst;
 
-  /**
-   * Substitution for `as` pattern
-   */
+  /// Substitution for `as` pattern
   private final @NotNull LocalLet asSubst;
 
   private @UnknownNullability Param currentParam = null;
@@ -490,14 +486,11 @@ public class PatternTycker implements Problematic, Stateful {
     };
   }
 
-  /// region Helper
   private @NotNull Pat randomPat(Term param) {
     return new Pat.Bind(nameGen.bindName(param), param);
   }
 
-  /// endregion Helper
-  /// region Error Reporting
-
+  // region Error Reporting
   @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }
   @Override public @NotNull TyckState state() { return exprTycker.state; }
 
@@ -511,6 +504,5 @@ public class PatternTycker implements Problematic, Stateful {
     hasError = true;
     if (problem != null) fail(problem);
   }
-
-  /// endregion Error Reporting
+  // endregion Error Reporting
 }

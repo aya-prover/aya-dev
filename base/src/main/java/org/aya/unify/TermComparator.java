@@ -98,7 +98,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
   }
 
-  /// region Utilities
+  // region Utilities
   private void fail(@NotNull Term lhs, @NotNull Term rhs) {
     if (failure == null) {
       failure = new FailureData(lhs, rhs);
@@ -108,7 +108,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @NotNull Panic noRules(@NotNull Term term) {
     return new Panic(term.getClass() + ": " + term.toDoc(AyaPrettierOptions.debug()).debugRender());
   }
-  /// endregion Utilities
+  // endregion Utilities
 
   /**
    * Compare arguments ONLY.

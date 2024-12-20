@@ -62,4 +62,10 @@ public interface ExprTyckError {
     def test (a : Nat) : Nat =>
         match a { _ => fn x => x } 1
     """;
+
+  @Language("Aya") String testIssue1238 = """
+    open import relation::binary::path
+    open inductive Wrap (A : Type) | wrap A
+    def what (A : Type) (w : Wrap) : w = w => refl
+    """;
 }

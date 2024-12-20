@@ -73,7 +73,7 @@ public final class PatternSerializer {
     this.isOverlap = isOverlap;
   }
 
-  /// region Serializing
+  // region Serializing
 
   private void doSerialize(
     @NotNull FreeCodeBuilder builder,
@@ -195,11 +195,9 @@ public final class PatternSerializer {
     doSerialize(builder, pat, term,
       Once.of(builder0 -> doSerialize(builder0, pats.drop(1), terms.drop(1), continuation)));
   }
+  // endregion Serializing
 
-  /// endregion Serializing
-
-  /// region Java Source Code Generate API
-
+  // region Java Source Code Generate API
   private void onStuck(@NotNull FreeCodeBuilder builder) {
     if (!isOverlap) builder.breakOut();
   }
@@ -220,8 +218,7 @@ public final class PatternSerializer {
       ))
     );
   }
-
-  /// endregion Java Source Code Generate API
+  // endregion Java Source Code Generate API
 
   public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {

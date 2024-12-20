@@ -363,7 +363,7 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  /// region Name Generating
+  // region Name Generation
   private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull SeqLike<Param> tele) {
     var richTele = MutableList.<ParamLike<Term>>create();
 
@@ -379,5 +379,5 @@ public class CorePrettier extends BasePrettier<Term> {
   private @NotNull LocalVar generateName(@Nullable Term whty) {
     return nameGen.bindName(whty);
   }
-  /// endregion Name Generating
+  // endregion Name Generating
 }

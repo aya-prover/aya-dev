@@ -32,16 +32,14 @@ public record AppTycker<Ex extends Exception>(
   int argsCount, int lift,
   @NotNull Factory<Ex> makeArgs
 ) implements Stateful {
-  /**
-   * <pre>
-   * Signature (0th param) --------> Argument Parser (this interface)
-   *                                        |
-   *                                  [ arguments ]
-   *                                        |
-   *                                        v
-   * Well-typed Call (result) <---- Factory (1st param)
-   * </pre>
-   */
+  /// ```
+  /// Signature (0th param) --------> Argument Parser (this interface)
+  ///                                        |
+  ///                                    arguments
+  ///                                        |
+  ///                                        v
+  /// Well-typed Call (result) <---- Factory (1st param)
+  /// ```
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
     CheckedBiFunction<AbstractTele, BiFunction<Term[], Term, Jdg>, Jdg, Ex> {

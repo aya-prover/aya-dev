@@ -11,25 +11,23 @@ import org.aya.util.binop.OpDecl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A well-typed generic definition,
- * it can be a core def (like {@link DataDef}) or a compiled def (like {@link JitData}).<br/>
- * We have four "def-chain"s, take {@link ConDef} as an example:
- * <pre>
- *  TyckDef             TyckAnyDef   <-----   AnyDef   ----->  JitTeleDef
- *     |                    |                   |                  |
- *     v                    v                   v                  v
- *   ConDef  <- - -  ConDef.Delegate <----- ConDefLike ----->    JitCon
- * </pre>
- * where the arrows mean "is superclass of".<br/>
- * <ul>
- *   <li>The first chain is "core def" chain, which are well-typed definition</li>
- *   <li>The second chain is "local def" chain, which may refer to a not yet tycked definition, i.e. tyck a recursive function</li>
- *   <li>The third chain is "generic def" chain</li>
- *   <li>The fourth chain is "complied def" chain, which are well-typed, compiled definition</li>
- * </ul>
- * Note that {@link ConDef.Delegate} <b>contains</b> a {@link ConDef} rather than a super class of.
- */
+/// A well-typed generic definition,
+/// it can be a core def (like [DataDef]) or a compiled def (like [JitData]).
+/// We have four "def-chain"s, take [ConDef] as an example:
+/// ```
+///  TyckDef             TyckAnyDef   <-----   AnyDef   ----->  JitTeleDef
+///     |                    |                   |                  |
+///     v                    v                   v                  v
+///   ConDef  <- - -  ConDef.Delegate <----- ConDefLike ----->    JitCon
+/// ```
+/// where the arrows mean "is superclass of".
+///
+/// - The first chain is "core def" chain, which are well-typed definition
+/// - The second chain is "local def" chain, which may refer to a not yet tycked definition, i.e. tyck a recursive function
+/// - The third chain is "generic def" chain
+/// - The fourth chain is "complied def" chain, which are well-typed, compiled definition
+///
+/// Note that [ConDef.Delegate] **contains** a [ConDef] rather than a super class of.
 public sealed interface AnyDef extends OpDecl
   permits JitDef, ClassDefLike, ConDefLike, DataDefLike, FnDefLike, MemberDefLike, PrimDefLike, TyckAnyDef {
   /**
@@ -37,9 +35,7 @@ public sealed interface AnyDef extends OpDecl
    */
   @NotNull ModulePath fileModule();
 
-  /**
-   * Returns which module this def lives in, have the same prefix as {@link #fileModule()}
-   */
+  /// Returns which module this def lives in, have the same prefix as [#fileModule()]
   @NotNull ModulePath module();
   @NotNull String name();
   @Nullable Assoc assoc();

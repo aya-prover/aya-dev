@@ -297,9 +297,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case Expr.Let let -> checkLet(let, e -> lazyJdg(ty(e))).wellTyped();
       default -> {
         var result = synthesize(expr);
-        if (!(result.type() instanceof SortTerm))
-          fail(expr.data(), BadTypeError.doNotLike(state, expr, result.type(),
+        if (!(result.type() instanceof SortTerm)) {
+          fail(BadTypeError.doNotLike(state, expr, result.type(),
             _ -> Doc.plain("type")));
+          yield new ErrorTerm(expr.data());
+        }
         yield result.wellTyped();
       }
     };
@@ -536,7 +538,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
-  /// region Overrides and public APIs
+  // region Overrides and public APIs
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
@@ -581,7 +583,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     this.localLet = let;
     return old;
   }
-  /// endregion Overrides and public APIs
+  // endregion Overrides and public APIs
 
   protected static final class NotPi extends Exception {
     public final @NotNull Term actual;

@@ -205,7 +205,7 @@ public class HighlighterTester {
 
   static Seq<HighlightInfo.LitKind> ignored = Seq.of(HighlightInfo.LitKind.Eol, HighlightInfo.LitKind.Whitespace);
 
-  /// region Helper
+  // region Helper
 
   private static @NotNull SourcePos mockPos(int start, int end) {
     return new SourcePos(SourceFile.NONE, start, end, 0, 0, 0, 0);
@@ -253,5 +253,5 @@ public class HighlighterTester {
 
   @Contract(" -> null")
   public static @Nullable ExpectedHighlightInfo whatever() { return null; }
-  /// endregion
+  // endregion
 }

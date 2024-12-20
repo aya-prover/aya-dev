@@ -11,12 +11,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-/**
- * This interface represents a name to some module,
- * which can be a relative `{@link ThisRef}` or a qualified name `{@link Qualified}`.
- * <p/>
- * This name should be used in a local scope instead of a global scope (like a path to a module).
- */
+/// This interface represents a name to some module,
+/// which can be a relative [ThisRef] or a qualified name [Qualified].
+///
+/// This name should be used in a local scope instead of a global scope (like a path to a module).
 public sealed interface ModuleName extends Serializable {
   enum ThisRef implements ModuleName {
     Obj;
@@ -49,7 +47,7 @@ public sealed interface ModuleName extends Serializable {
   @NotNull ModuleName concat(@NotNull ModuleName path);
   @NotNull String toString();
 
-  /// region static
+  // region static
 
   @NotNull ModuleName.ThisRef This = ThisRef.Obj;
 
@@ -76,5 +74,5 @@ public sealed interface ModuleName extends Serializable {
     return new Qualified(ids);
   }
 
-  /// endregion
+  // endregion
 }
