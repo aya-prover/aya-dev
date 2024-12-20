@@ -77,7 +77,7 @@ public interface OperatorError extends Problem {
   record Circular(@NotNull ImmutableSeq<BinOpSet.BinOP> items) implements OperatorError {
     @Override public @NotNull SourcePos sourcePos() {
       return items.view().map(BinOpSet.BinOP::firstBind)
-        .max(Comparator.comparingInt(SourcePos::endLine));
+        .max(Comparator.comparingInt(SourcePos::tokenEndIndex));
     }
 
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
