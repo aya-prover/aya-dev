@@ -13,6 +13,8 @@ public class SyntaxTest {
     var res = SyntaxTestUtil.parse("""
       import Prelude
       module MyMod {}
+      open MyMod using (foo)
+      open Prelude hiding (bar)
       prim I
       def foo (f : Type -> Type 0) (a : Type 0) =>
         [ f a ]
@@ -23,8 +25,8 @@ public class SyntaxTest {
       | S n => FZ
       | S n => FS (Fin n)
       def infixl + Nat Nat : Nat
-      | 0, a => a
-      | S a, b => S (a + b)
+      | 0, [ a ] => a
+      | S a, b as b' => S (a + b')
       def infixl +' Nat Nat : Nat => fn a b =>
         let open Nat in
         let n := a + b in n
