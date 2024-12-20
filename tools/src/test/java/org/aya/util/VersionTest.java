@@ -16,6 +16,7 @@ public class VersionTest {
       new Version("2", "4", "3")
     ).sorted();
     assertEquals("2.1", versions.get(0).toString());
+    assertEquals("2.1.0", versions.get(0).getLongString());
     assertEquals("2.2", versions.get(1).toString());
     assertEquals("3.3.3", versions.getLast().toString());
   }

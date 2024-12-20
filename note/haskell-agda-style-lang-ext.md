@@ -34,7 +34,7 @@ Well, maybe it's not a negative impact, but it prevents big customers
 (such as Mathematicians looking for a tool to formalize math) from choosing the language.
 At least, we don't want this to happen to our language.
 
-## `org.aya.util.Decision`
+## Decision
 
 So, we will not introduce any "feature" flags, and will have only one base library.
 This language will be one language, its features are its features.
