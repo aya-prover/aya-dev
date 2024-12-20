@@ -167,6 +167,17 @@ public class TyckTest {
       """).defs.isNotEmpty());
   }
 
+  @Test
+  public void testVariableDefinition() {
+    var result = tyck("""
+      prim I prim Path
+      variable A : Type
+      variable a : A
+      def infix = (a b : A) => Path (\\i => A) a b
+    """).defs;
+    assertTrue(result.isNotEmpty());
+  }
+
   @SuppressWarnings("unchecked") private static <T extends AnyDef> T
   getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
     return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());
