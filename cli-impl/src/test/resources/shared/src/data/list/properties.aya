@@ -1,6 +1,7 @@
 open import arith::nat::base
 open import arith::bool using (Bool, true, false)
 open import data::list::base
+open import data::maybe using (just, nothing, nothing≠just)
 open import relation::binary::path
 open import relation::binary::nat_cmp
 open import relation::nullary::empty
@@ -61,15 +62,28 @@ def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim x
   | step3 : rev ys ++ rev' [ x ] xs = rev ys ++ (rev xs ++ [ x ]) := pmap (rev ys ++) (rev'-++ _ _)
   in step0 <=> step1 <=> step2 <=> pinv step3
 
+def !!→length (i : Nat) (xs : List A) (v : A) (xs !! i = just v) : i < length xs
+| 0, [ ], _, p => exfalso (nothing≠just p)
+| 0, _ :< _, _, p => refl
+| suc i, [ ], _, p => exfalso (nothing≠just p)
+| suc i, x :< xs, _, p => !!→length i xs _ p
+
+def !!>=length (i : Nat) (xs : List A) (length xs <= i) : xs !! i = nothing
+| _, [ ], p => refl
+| 0, _ :< _, p => exfalso (sn<=z p)
+| suc i, x :< xs, p => !!>=length i xs (s<=s p)
+
 def ++-!!-l (i : Nat) (xs ys : List A) (i < length xs) : (xs ++ ys) !! i = xs !! i
 | _, [ ], _, p => exfalso (n<z→⊥ p)
 | 0, x :< xs', _, _ => refl
 | suc i', x :< xs', _, p => ++-!!-l i' xs' ys p
 
-//def ++-!!-r (i : Nat) (xs ys : List) : (ys !! (subTrunc i (length xs))) = (xs ++ ys) !! i
-//| _, _, [ ] => {??}
-//| 0, _, x :< xs' => {??}
-//| suc i', _, x :< xs' => {??}
+def ++-!!-r (i : Nat) (xs ys : List A) (length xs <= i) : (ys !! (subTrunc i (length xs))) = (xs ++ ys) !! i
+| _, _, [ ], p => pinv (!!>=length i xs p)
+| 0, [ ], y :< ys', _ => refl
+| 0, _ :< _, y :< ys', p => exfalso (sn<=z p)
+| suc i', [ ], y :< ys', _ => refl
+| suc i', _ :< xs', y :< ys', p => ++-!!-r i' xs' (y :< ys') (s<=s p)
 
 def split-lemma (i : Nat) (xs : List A) (i <= length xs) : xs = take i xs ++ drop i xs
 | 0, _, _ => refl

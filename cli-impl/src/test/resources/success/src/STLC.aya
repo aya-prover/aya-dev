@@ -1,10 +1,10 @@
 open import arith::nat
 open import data::list::base
-open import data::list::properties using (insert<=length, ++-!!-l, take<=length, take-!!)
-open import data::maybe using (Maybe, just, nothing)
+open import data::list::properties using (insert<=length, ++-!!-l, ++-!!-r, take<=length, take-!!, split-lemma)
+open import data::maybe using (Maybe, just, nothing, just-inj)
 open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else)
-open import relation::binary::path using (= , refl, transport, <=>, pinv)
-open import relation::binary::nat_cmp using (<=, <?)
+open import relation::binary::path using (= , refl, transport, <=>, pinv, pmap, coe)
+open import relation::binary::nat_cmp using (<=, <?, ¬<→>=, n<=s, suc-sub, n<=n, <=-trans)
 
 open inductive Tm
 | Lam Tm
@@ -19,9 +19,9 @@ open inductive Ty
 def Gamma : Type => List Ty
 
 open inductive hasType Gamma Tm Ty
-| Γ, Lam t, Arrow A B => Lam_hasType (hasType (A :< Γ) t B)
-| Γ, App f a, B => App_hasType (A : Ty) (hasType Γ f (Arrow A B)) (hasType Γ a A)
-| Γ, Idx n, A => Var_hasType (Γ !! n = just A)
+| G, Lam t, Arrow A B => Lam_hasType (hasType (A :< G) t B)
+| G, App f a, B => App_hasType (A : Ty) (hasType G f (Arrow A B)) (hasType G a A)
+| G, Idx n, A => Var_hasType (G !! n = just A)
 | _, True, Bool => True_hasType
 | _, False, Bool => False_hasType
 
@@ -68,8 +68,8 @@ open inductive infix —> Tm Tm
 | App (Lam l) a, t => S_App (value a) (t = inst l 0 a)
 
 def function_canoninal_form
-  {Γ : Gamma} {t : Tm} (value t)
-  {A B : Ty} (hasType Γ t (Arrow A B))
+  {G : Gamma} {t : Tm} (value t)
+  {A B : Ty} (hasType G t (Arrow A B))
   : Sig (l : Tm) ** (t = Lam l)
 | {_}, {Lam l}, lamValue, _ => (l, refl)
 | trueValue, ()
@@ -90,7 +90,29 @@ def shift_preservation
     | myGoal! : (take i G ++ (C :< drop i G)) !! n = (take i G) !! n := ++-!!-l n (take i G) _ (transport (fn l => subTrunc (suc n) l = 0) (pinv (take<=length _ _ p)) n<i)
     | myGoal!! : (take i G ++ (C :< drop i G)) !! n = G !! n := myGoal! <=> (pinv (take-!! _ _ _ p n<i))
     in Var_hasType (myGoal!! <=> eqG)
-  | _ because reflect_false np => {??}
+  | _ because reflect_false np =>
+    let
+    | i<=n : i <= n := ¬<→>= np
+    | i<=sn : i <= suc n := n<=s i<=n
+    | i=takei : i = length (take i G) := pinv (take<=length i G p)
+    | takei<=i : length (take i G) <= i := transport (fn l => l <= i) i=takei (n<=n i)
+    | myGoal! : (take i G ++ drop i G) !! n = G !! n := pmap (!! n) (pinv (split-lemma i G p))
+    | myGoal!! : (take i G ++ (C :< drop i G)) !! suc n = (C :< drop i G) !! (subTrunc (suc n) (length (take i G))) :=
+      pinv (++-!!-r (suc n) (take i G) (C :< drop i G) (transport (fn l => l <= (suc n)) i=takei i<=sn))
+    | myGoal!!! : (C :< drop i G) !! (subTrunc (suc n) (length (take i G))) = (C :< drop i G) !! (subTrunc (suc n) i):=
+      pmap (fn l => (C :< drop i G) !! (subTrunc (suc n) l)) (pinv i=takei)
+    | myGoal!!!! : (C :< drop i G) !! (subTrunc (suc n) i) = drop i G !! subTrunc n i :=
+      pmap ((C :< drop i G) !!) (suc-sub i<=n)
+    | myGoal!!!!! : drop i G !! subTrunc n i = drop i G !! subTrunc n (length (take i G)) :=
+      pmap (fn l => drop i G !! subTrunc n l) i=takei
+    in Var_hasType (
+      myGoal!!
+      <=> myGoal!!!
+      <=> myGoal!!!!
+      <=> myGoal!!!!!
+      <=> (++-!!-r n (take i G) (drop i G) (<=-trans takei<=i i<=n))
+      <=> myGoal!
+      <=> eqG)
   }
 
 def inst_preservation
@@ -98,22 +120,23 @@ def inst_preservation
   {v : Tm} {B : Ty} (hasType G v B)
   (i : Nat) (G !! i = just B)
   : hasType G (inst tm i v) A
-// I need:
-// * hasType (A :< G) (shift v 0) A
-// * hasType G (inst l (suc i) (shift v 0)) B
-// * inst_preservation lhT (?shT : hasType (A :< G) ?s B) (suc i) ((A :< G) !! (suc i) = just A)
-//   : hasType (A :< G) (inst l (suc i) ?s) B
-//
-// I may have:
-// * ?shT : hasType (A :< G) (shift v 0 1) B
-| {_}, {Lam l}, Lam_hasType lhT, vhT, i, eqG => {?  ?}
-| App_hasType A fhT ahT, vhT, i, eqG => {??}
-| _, _, _, _ => {??}
+| {G}, {Lam l}, {Arrow A C}, Lam_hasType lhT, vhT, i, eqG =>
+  Lam_hasType (inst_preservation lhT (shift_preservation vhT _ 0 refl) (suc i) eqG)
+| App_hasType A fhT ahT, vhT, i, eqG => App_hasType _ (inst_preservation fhT vhT i eqG) (inst_preservation ahT vhT i eqG)
+| {G}, {Idx n}, Var_hasType eqV, vhT, i, eqG => match i =? n as d returns hasType G (if-then-else d v (Idx n)) A {
+  | _ because reflect_true p =>
+    let
+    | A=B : A = B := just-inj (pinv eqV <=> (transport (fn j => G !! j = just B) p eqG))
+    in coe 0 1 (fn i => hasType G v (pinv A=B i)) vhT
+  | _ because reflect_false np => Var_hasType eqV
+  }
+| True_hasType, _, _, _ => True_hasType
+| False_hasType, _, _, _ => False_hasType
 
 def preservation
-  {Γ : Gamma} {tm tm': Tm} {ty : Ty}
-  (p : hasType Γ tm ty) (s : tm —> tm'): hasType Γ tm' ty
-| App_hasType A fhT ahT, S_App0 eqa sf => App_hasType A (preservation fhT sf) (transport (fn a => hasType Γ a A) eqa ahT)
+  {G : Gamma} {tm tm': Tm} {ty : Ty}
+  (p : hasType G tm ty) (s : tm —> tm'): hasType G tm' ty
+| App_hasType A fhT ahT, S_App0 eqa sf => App_hasType A (preservation fhT sf) (transport (fn a => hasType G a A) eqa ahT)
 | {_}, {_}, {_}, {B}, App_hasType A fhT ahT, S_App1 eqf vf sa =>
-  App_hasType A (transport (fn f => hasType Γ f (Arrow A B)) eqf fhT) (preservation ahT sa)
+  App_hasType A (transport (fn f => hasType G f (Arrow A B)) eqf fhT) (preservation ahT sa)
 | App_hasType A fhT ahT, S_App va eqInst => {??}
