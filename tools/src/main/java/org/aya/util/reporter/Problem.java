@@ -5,14 +5,13 @@ package org.aya.util.reporter;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Tuple;
 import org.aya.pretty.backend.terminal.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
-import org.aya.pretty.error.PrettyError;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.error.pretty.PrettyError;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,8 +57,7 @@ public interface Problem {
   ) {
     var sourcePos = sourcePos();
     return new PrettyError(
-      sourcePos.file().display(),
-      sourcePos.toSpan(),
+      sourcePos,
       brief(options),
       prettyErrorConf,
       inlineHints(options).stream()
@@ -68,7 +66,7 @@ public interface Problem {
         .entrySet()
         .stream()
         .sorted(Map.Entry.comparingByKey())
-        .map(kv -> Tuple.of(kv.getKey().toSpan(), Doc.commaList(kv.getValue())))
+        .map(kv -> new PrettyError.PosDoc(kv.getKey(), Doc.commaList(kv.getValue())))
         .collect(ImmutableSeq.factory())
     );
   }

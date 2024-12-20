@@ -1,15 +1,14 @@
 // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.pretty.error;
+package org.aya.util.error.pretty;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
-import kala.tuple.Tuple3;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.SourcePos.NowLoc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,12 +18,15 @@ import java.util.Comparator;
  * @author kiva
  */
 public record PrettyError(
-  @NotNull String filePath,
-  @NotNull Span errorRange,
+  @NotNull SourcePos errorRange,
   @NotNull Doc brief,
   @NotNull FormatConfig formatConfig,
-  @NotNull ImmutableSeq<Tuple2<Span, Doc>> inlineHints
+  @NotNull ImmutableSeq<PosDoc> inlineHints
 ) implements Docile {
+  public record PosDoc(
+    @NotNull SourcePos pos,
+    @NotNull Doc doc
+  ) { }
 
   public record FormatConfig(
     @NotNull Option<Character> vbarForHints,
@@ -86,14 +88,13 @@ public record PrettyError(
   }
 
   public @NotNull Doc toDoc(@NotNull PrettyErrorConfig config) {
-    var primary = errorRange.normalize(config);
+    var primary = errorRange;
     var hints = inlineHints.view()
-      .map(kv -> Tuple.of(kv.component1().normalize(config), kv.component2()))
-      .filter(kv -> kv.component1().startLine() == kv.component1().endLine())
+      .filter(kv -> kv.pos.oneLinear())
       .toImmutableSeq(); // TODO: multiline inline hints?
-    var allRange = hints.map(Tuple2::component1).foldLeft(primary, Span.Data::union);
+    var allRange = hints.map(PosDoc::pos).foldLeft(primary, SourcePos::union);
     return Doc.vcat(
-      Doc.plain("In file " + filePath + ":" + primary.startLine() + ":" + primary.startCol() + " ->"),
+      Doc.plain("In file " + errorRange.file().display() + ":" + primary.startLine() + ":" + primary.startColumn() + " ->"),
       Doc.empty(),
       Doc.hang(2, visualizeCode(config, allRange, primary, hints)),
       Doc.empty(),
@@ -140,12 +141,13 @@ public record PrettyError(
       });
       underlines.append(Doc.indent(indent, hint));
       notes.append(line.note);
-      if (line.loc == Span.NowLoc.Start || line.loc == Span.NowLoc.End)
+      if (line.loc == NowLoc.Start || line.loc == NowLoc.End)
         startOrEnd = line;
     }
   }
 
-  record HintLine(Doc note, Span.NowLoc loc, int startCol, int endCol, int allocIndent) {}
+  record PreHint(Doc doc, SourcePos pos, int allocIndent) { }
+  record HintLine(Doc note, NowLoc loc, int startCol, int endCol, int allocIndent) { }
 
   private static final int INDENT_FACTOR = 2;
 
@@ -188,7 +190,7 @@ public record PrettyError(
     var rest = codeIndent - vbarUsedIndent;
     // commit code
     if (!continued) {
-      var codeDoc = (startOrEnd == null || startOrEnd.loc != Span.NowLoc.End)
+      var codeDoc = (startOrEnd == null || startOrEnd.loc != NowLoc.End)
         ? Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, currentCode))
         : Doc.cat(vbar, formatConfig.lineNoSepDoc(), Doc.indent(rest * INDENT_FACTOR - 1, currentCode));
       builder.add(currentLine, codeDoc);
@@ -208,7 +210,7 @@ public record PrettyError(
   }
 
   private @NotNull Doc renderStartEndHint(@NotNull HintLine startOrEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
-    return startOrEnd.loc == Span.NowLoc.Start
+    return startOrEnd.loc == NowLoc.Start
       ? Doc.cat(vbar, formatConfig.beginCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost)
       : Doc.cat(vbar, formatConfig.endCornerDoc(), formatConfig.underlineBodyDoc(rest * INDENT_FACTOR - 1), almost);
   }
@@ -219,7 +221,8 @@ public record PrettyError(
       : Doc.cat(vbar, Doc.indent(rest * INDENT_FACTOR, almost));
   }
 
-  private Tuple2<Integer, Doc> computeMultilineVBar(@NotNull ImmutableSeq<HintLine> between) {
+  record VBar(int last, Doc doc) { }
+  private VBar computeMultilineVBar(@NotNull ImmutableSeq<HintLine> between) {
     int last = 0;
     var vbar = Doc.empty();
     for (var the : between) {
@@ -227,7 +230,7 @@ public record PrettyError(
       vbar = Doc.cat(vbar, Doc.indent(level * INDENT_FACTOR, formatConfig.lineNoSepDoc()));
       last = the.endCol;
     }
-    return Tuple.of(last, vbar);
+    return new VBar(last, vbar);
   }
 
   private void renderHints(
@@ -237,17 +240,17 @@ public record PrettyError(
     @NotNull ImmutableSeq<HintLine> hintLines
   ) {
     var between = hintLines.view()
-      .filter(h -> h.loc == Span.NowLoc.Between)
+      .filter(h -> h.loc == NowLoc.Between)
       .sorted(Comparator.comparingInt(a -> a.allocIndent))
       .toImmutableSeq();
-    var others = hintLines.filter(h -> h.loc != Span.NowLoc.Between);
+    var others = hintLines.filter(h -> h.loc != NowLoc.Between);
     var vbar = computeMultilineVBar(between);
-    renderHints(false, false, currentLine, codeIndent, vbar.component1(), vbar.component2(), currentCode, builder, others);
+    renderHints(false, false, currentLine, codeIndent, vbar.last, vbar.doc, currentCode, builder, others);
   }
 
   private @NotNull Doc visualizeCode(
-    @NotNull PrettyErrorConfig config, @NotNull Span.Data fullRange,
-    @NotNull Span.Data primaryRange, @NotNull ImmutableSeq<Tuple2<Span.Data, Doc>> hints
+    @NotNull PrettyErrorConfig config, @NotNull SourcePos fullRange,
+    @NotNull SourcePos primaryRange, @NotNull ImmutableSeq<PosDoc> hints
   ) {
     int startLine = fullRange.startLine();
     int endLine = fullRange.endLine();
@@ -257,7 +260,8 @@ public record PrettyError(
     int linenoWidth = Math.max(widthOfLineNumber(startLine), widthOfLineNumber(endLine)) + 1;
 
     // collect lines from (startLine - SHOW_MORE_LINE) to (endLine + SHOW_MORE_LINE)
-    var lines = errorRange.input()
+    var lines = errorRange.file()
+      .sourceCode()
       .lines()
       .skip(Math.max(startLine - 1 - showMore, 0))
       .limit(endLine - startLine + 1 + showMore)
@@ -268,11 +272,11 @@ public record PrettyError(
     final int maxLineNo = minLineNo + lines.size();
 
     // allocate hint nest
-    var alloc = MutableList.<Tuple3<Span.Data, Doc, Integer>>create();
-    alloc.append(Tuple.of(primaryRange, Doc.empty(), 0));
+    var alloc = MutableList.<PreHint>create();
+    alloc.append(new PreHint(Doc.empty(), primaryRange, 0));
     hints.view()
-      .filter(kv -> kv.component1().startLine() >= minLineNo && kv.component1().endLine() <= maxLineNo)
-      .mapIndexed((i, kv) -> Tuple.of(kv.component1(), kv.component2(), i + 1))
+      .filter(kv -> kv.pos.startLine() >= minLineNo && kv.pos.endLine() <= maxLineNo)
+      .mapIndexed((i, kv) -> new PreHint(kv.doc, kv.pos, i + 1))
       .forEach(alloc::append);
 
     int codeIndent = alloc.size();
@@ -284,11 +288,12 @@ public record PrettyError(
       final var currentCode = Doc.plain(line);
 
       var hintLines = alloc.view()
-        .mapNotNull(note -> switch (note.component1().nowLoc(currentLine)) {
-          case Shot -> new HintLine(note.component2(), Span.NowLoc.Shot, note.component1().startCol(), note.component1().endCol(), note.component3());
-          case Start -> new HintLine(Doc.empty(), Span.NowLoc.Start, 0, note.component1().startCol(), note.component3());
-          case End -> new HintLine(note.component2(), Span.NowLoc.End, 0, note.component1().endCol(), note.component3());
-          case Between -> new HintLine(Doc.empty(), Span.NowLoc.Between, 0, 0, note.component3());
+        .mapNotNull(note -> switch (note.pos.nowLoc(currentLine)) {
+          case Shot ->
+            new HintLine(note.doc, NowLoc.Shot, note.pos.startColumn(), note.pos.endColumn(), note.allocIndent);
+          case Start -> new HintLine(Doc.empty(), NowLoc.Start, 0, note.pos.startColumn(), note.allocIndent);
+          case End -> new HintLine(note.doc, NowLoc.End, 0, note.pos.endColumn(), note.allocIndent);
+          case Between -> new HintLine(Doc.empty(), NowLoc.Between, 0, 0, note.allocIndent);
           case None -> null;
         })
         .sorted(Comparator.comparingInt(a -> a.startCol))
