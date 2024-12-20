@@ -86,4 +86,8 @@ public interface ScopeError {
     public open A
     public open B
     """;
+  @Language("Aya") String testUnknownProjMem = """
+    open class Cls | A : Type
+    def test (c : Cls) => c.B
+    """;
 }
