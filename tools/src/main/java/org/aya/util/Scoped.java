@@ -12,30 +12,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-/**
- * A map-like container that has a scope structure,
- * this is designed to be growable, but not shrinkable or modify existing record.
- *
- * @param <This> the <b>final</b>(at least, final for user) type that implemented this interface
- */
+/// A map-like container that has a scope structure,
+/// this is designed to be growable, but not shrinkable or modify existing record.
+///
+/// @param <This> the **final** (at least, final for user) type that implemented this interface
 public interface Scoped<K, V, This extends Scoped<K, V, This>> {
   @Contract(pure = true) @Nullable This parent();
 
-  /**
-   * @return this object
-   * @implSpec {@code self() == this}
-   */
+  /// @return this object
+  /// @implSpec `self() == this`
   @Contract("-> this") @NotNull This self();
 
-  /**
-   * @return new {@link This} object, which {@link #parent()} is <code>this</code> object
-   */
+  /// @return new [This] object, which [#parent()] is `this` object
   @Contract("-> new") @NotNull This derive();
 
-  /**
-   * Fold from bottom, you may treat a {@link Scoped} as a telescope, then
-   * this method is exactly {@code foldRight}.
-   */
+  /// Fold from bottom, you may treat a [Scoped] as a telescope, then
+  /// this method is exactly `foldRight`.
   default <R> R fold(R acc, BiFunction<This, R, R> folder) {
     @Nullable var scope = self();
     while (scope != null) {
