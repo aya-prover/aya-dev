@@ -16,6 +16,7 @@ public class SyntaxTest {
       open MyMod using (foo)
       open Prelude hiding (bar)
       prim I
+      variable i : I
       def foo (f : Type -> Type 0) (a : Type 0) =>
         [ f a ]
       def foo2 => ↑↑ foo
@@ -25,12 +26,14 @@ public class SyntaxTest {
       | S n => FZ
       | S n => FS (Fin n)
       def infixl + Nat Nat : Nat
-      | 0, [ a ] => a
+      | 0, a => a
       | S a, b as b' => S (a + b')
+      def patternFeatures : Nat
+      | [ a::b ] => 1
+      | (a, b) => 1
       def infixl +' Nat Nat : Nat => fn a b =>
         let open Nat in
         let n := a + b in n
-      tighter + looser +
       open class Cat
       | A : Type
       open class Monoid
@@ -39,6 +42,22 @@ public class SyntaxTest {
       """);
     for (var stmt : res) {
       assertNotNull(stmt.toDoc(AyaPrettierOptions.debug()).debugRender());
+    }
+  }
+
+  @Test public void test1() {
+    var moduleLoader = SyntaxTestUtil.moduleLoader();
+    var stmts = SyntaxTestUtil.parse("""
+      open inductive Nat | O | S Nat
+      def infixl + Nat Nat : Nat
+      | 0, a => a
+      | S a, b => S (a + b)
+      def infixl +' => + looser +
+      def infixl +'' => + tighter +
+      """);
+    moduleLoader.resolve(stmts);
+    for (var stmt : stmts) {
+      assertNotNull(stmt.easyToString());
     }
   }
 }
