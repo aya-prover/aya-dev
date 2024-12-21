@@ -13,11 +13,12 @@ import org.aya.generic.State;
 import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.core.Jdg;
-import org.aya.syntax.core.def.ConDef;
-import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.PatToTerm;
@@ -156,10 +157,10 @@ public class PatternTycker implements Problematic, Stateful {
 
         // report after tyRef.set, the error message requires it
         if (whnf(type) instanceof DataCall call) {
-          var unimportedCon = call.ref().body()
-            .filter(con -> con.name().equals(bind.name()));
+          var unimportedCon = collectConNames(call.ref())
+            .anyMatch(it -> it.equals(bind.name()));
 
-          if (unimportedCon.isNotEmpty()) {
+          if (unimportedCon) {
             fail(new PatternProblem.UnimportedConName(pattern.replace(bindPat)));
           }
         }
@@ -475,6 +476,17 @@ public class PatternTycker implements Problematic, Stateful {
         // Here, name != null, and is not in the list of checked body
         foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
         yield null;
+      }
+    };
+  }
+
+  private static @NotNull SeqView<String> collectConNames(@NotNull DataDefLike call) {
+    return switch (call) {
+      case JitData jitData -> jitData.body().view().map(AnyDef::name);
+      case DataDef.Delegate delegate -> {
+        // the core may be unchecked!
+        var concrete = (DataDecl) delegate.ref.concrete;
+        yield concrete.body.view().map(it -> it.ref.name());
       }
     };
   }

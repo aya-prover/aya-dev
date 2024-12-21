@@ -130,6 +130,11 @@ public sealed interface PatternProblem extends Problem {
     @Override @NotNull WithPos<Pattern.Bind> pattern
   ) implements PatternProblem {
     @Override
+    public @NotNull Severity level() {
+      return Severity.WARN;
+    }
+
+    @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.english("The binding name:"),
