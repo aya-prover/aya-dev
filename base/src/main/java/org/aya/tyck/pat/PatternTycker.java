@@ -282,7 +282,7 @@ public class PatternTycker implements Problematic, Stateful {
       patterns = patterns.drop(1);
       lastPat = currentPat;
 
-      if (!currentPat.explicit() || !allowImplicit) {
+      if (!currentPat.explicit() && !allowImplicit) {
         foundError(new PatternProblem.ImplicitDisallowed(currentPat.term()));
       }
 
