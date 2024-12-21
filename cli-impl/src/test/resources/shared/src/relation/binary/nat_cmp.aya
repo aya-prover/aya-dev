@@ -58,6 +58,11 @@ def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
 | {0}, {suc b}, np => exfalso (np refl)
 | {suc a}, {suc b}, np => s<=s (¬<→>= {a} {b} (fn p => np p))
 
+def <=-with-≠ {a b : Nat} (p : a <= b) (q : neg (a = b)) : a < b => match <=-case p {
+| inl proof => proof
+| inr eq => exfalso (q eq)
+}
+
 def <→s {a b : Nat} (p : a < b) : Sig (n : Nat) ** b = suc n elim a b
 | _, 0 => exfalso (n<z→⊥ p)
 | _, suc b => (b, refl)
@@ -71,5 +76,3 @@ def suc-sub {a b : Nat} (p : b < (suc a)) : subTrunc (suc a) b = suc (subTrunc a
 | _, zero => refl
 | zero, suc b => exfalso (n<z→⊥ (s<s {b} {0} p))
 | suc a, suc b => suc-sub p
-
-def lt_intersect : {a b c : Nat} (a <= b) (a < c) : b < c
