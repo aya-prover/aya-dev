@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import kala.collection.mutable.MutableList;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Pattern;
@@ -9,6 +10,7 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -80,15 +82,21 @@ public sealed interface PatternProblem extends Problem {
 
   record TupleNonSig(
     @Override @NotNull WithPos<Pattern> pattern,
-    @NotNull Term type
+    @NotNull Stateful stateful, @NotNull Term type
   ) implements PatternProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.vcat(
+      var typeDoc = type.toDoc(options);
+      var lines = MutableList.of(
         Doc.english("The tuple pattern"),
         Doc.par(1, pattern.data().toDoc(options)),
-        Doc.english("splits only on sigma types, while the actual type"),
-        Doc.par(1, type.toDoc(options)),
-        Doc.english("does not look like one"));
+        Doc.english("splits only on sigma types, while the actual type is not:"),
+        Doc.par(1, typeDoc));
+      var normalizedDoc = stateful.fullNormalize(type).toDoc(options);
+      if (!typeDoc.equals(normalizedDoc)) {
+        lines.append(Doc.english("Normalized:"));
+        lines.append(Doc.par(1, normalizedDoc));
+      }
+      return Doc.vcat(lines);
     }
   }
 
@@ -122,6 +130,21 @@ public sealed interface PatternProblem extends Problem {
         Doc.english("Pattern matching with"),
         Doc.styled(BasePrettier.KEYWORD, "elim"),
         Doc.english("is not compatible with implicit patterns.")
+      );
+    }
+  }
+
+  record UnimportedConName(
+    @Override @NotNull WithPos<Pattern.Bind> pattern
+  ) implements PatternProblem {
+    @Override public @NotNull Severity level() { return Severity.WARN; }
+
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.vcat(
+        Doc.english("You wrote the following pattern:"),
+        Doc.par(1, Doc.plain(pattern.data().bind().name())),
+        Doc.english("It sounds like you are trying to match with a constructor that is not in scope, " +
+          "so it will be treated as a variable pattern.")
       );
     }
   }

@@ -36,6 +36,15 @@ public interface PatTyckError {
      | unit y => a
     """;
 
+  @Language("Aya") String testTupleOnNonSigma = """
+    def test (a' : Type) : Type
+     | (a, b) => a
+
+    def Alias => Type
+    def test2 (a' : Alias) : Type
+     | (a, b) => a
+    """;
+
   @Language("Aya") String testBadLiteral = """
     open inductive Test | t
     def not-conf Test : Test
@@ -105,5 +114,21 @@ public interface PatTyckError {
   @Language("Aya") String testImplicitPatWithElim = """
     def foo (A : Type) A : A elim A
     | _, {a} => a
+    """;
+
+  @Language("Aya") String testUnimportedCon = """
+    open import arith::bool using (Bool)
+    
+    def not (b : Bool) : Bool
+    | true => Bool::false
+    | false => Bool::true
+    
+    @suppress(UnimportedCon, UnreachableClause)
+    def don't-care (b : Bool) : Bool
+    | true => Bool::false
+    | false => Bool::true
+    
+    inductive RealCase (b : Bool)
+    | true => real_true
     """;
 }

@@ -71,6 +71,36 @@ Error: Cannot split on a non-inductive type
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+TupleOnNonSigma:
+In file $FILE:2:3 ->
+
+  1 │   def test (a' : Type) : Type
+  2 │    | (a, b) => a
+    │      ╰────╯
+  3 │   
+
+Error: The tuple pattern
+         (a, b)
+       splits only on sigma types, while the actual type is not:
+         Type 0
+
+In file $FILE:6:3 ->
+
+  4 │   def Alias => Type
+  5 │   def test2 (a' : Alias) : Type
+  6 │    | (a, b) => a
+    │      ╰────╯
+
+Error: The tuple pattern
+         (a, b)
+       splits only on sigma types, while the actual type is not:
+         Alias
+       Normalized:
+         Type 0
+
+2 error(s), 0 warning(s).
+Let's learn from that.
+
 BadLiteral:
 In file $FILE:3:2 ->
 
@@ -269,4 +299,52 @@ Error: Pattern matching with elim is not compatible with implicit patterns.
 
 1 error(s), 0 warning(s).
 Let's learn from that.
+
+UnimportedCon:
+In file $FILE:4:2 ->
+
+  2 │   
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+    │     ╰──╯
+
+Warning: You wrote the following pattern:
+           true
+         It sounds like you are trying to match with a constructor that is not 
+         in scope, so it will be treated as a variable pattern.
+
+In file $FILE:5:2 ->
+
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+  5 │   | false => Bool::true
+    │     ╰───╯
+
+Warning: You wrote the following pattern:
+           false
+         It sounds like you are trying to match with a constructor that is not 
+         in scope, so it will be treated as a variable pattern.
+
+In file $FILE:5:2 ->
+
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+  5 │   | false => Bool::true
+    │     ╰─────────────────╯
+
+Warning: The 2nd clause is dominated by the other clauses, hence unreachable
+
+In file $FILE:13:2 ->
+
+  11 │   
+  12 │   inductive RealCase (b : Bool)
+  13 │   | true => real_true
+     │     ╰──╯
+
+Warning: You wrote the following pattern:
+           true
+         It sounds like you are trying to match with a constructor that is not 
+         in scope, so it will be treated as a variable pattern.
+
+That looks right!
 
