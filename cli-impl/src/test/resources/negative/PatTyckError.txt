@@ -270,3 +270,40 @@ Error: Pattern matching with elim is not compatible with implicit patterns.
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+UnimportedCon:
+In file $FILE:4:2 ->
+
+  2 │   
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+    │     ╰──╯
+
+Error: The binding name:
+         true
+       is equal to an un-imported constructor of:
+         Bool
+
+In file $FILE:5:2 ->
+
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+  5 │   | false => Bool::true
+    │     ╰───╯
+
+Error: The binding name:
+         false
+       is equal to an un-imported constructor of:
+         Bool
+
+In file $FILE:5:2 ->
+
+  3 │   def not (b : Bool) : Bool
+  4 │   | true => Bool::false
+  5 │   | false => Bool::true
+    │     ╰─────────────────╯
+
+Warning: The 2nd clause is dominated by the other clauses, hence unreachable
+
+2 error(s), 1 warning(s).
+Let's learn from that.
+

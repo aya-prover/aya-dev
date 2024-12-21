@@ -106,4 +106,12 @@ public interface PatTyckError {
     def foo (A : Type) A : A elim A
     | _, {a} => a
     """;
+
+  @Language("Aya") String testUnimportedCon = """
+    open import arith::bool using (Bool)
+    
+    def not (b : Bool) : Bool
+    | true => Bool::false
+    | false => Bool::true
+    """;
 }
