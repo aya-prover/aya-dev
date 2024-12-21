@@ -101,4 +101,9 @@ public interface PatTyckError {
     // Should be skipped by the orga tycker
     def test => wrap
     """;
+
+  @Language("Aya") String testImplicitPatWithElim = """
+    def foo (A : Type) A : A elim A
+    | _, {a} => a
+    """;
 }

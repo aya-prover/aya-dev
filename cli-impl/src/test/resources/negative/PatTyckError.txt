@@ -258,3 +258,15 @@ Error: There is no pattern for the parameter
 2 error(s), 0 warning(s).
 Let's learn from that.
 
+ImplicitPatWithElim:
+In file $FILE:2:5 ->
+
+  1 │   def foo (A : Type) A : A elim A
+  2 │   | _, {a} => a
+    │        ╰─╯
+
+Error: Pattern matching with elim is not compatible with implicit patterns.
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
