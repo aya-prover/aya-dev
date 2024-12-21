@@ -334,12 +334,12 @@ In file $FILE:5:2 ->
 
 Warning: The 2nd clause is dominated by the other clauses, hence unreachable
 
-In file $FILE:8:2 ->
+In file $FILE:13:2 ->
 
-  6 │   
-  7 │   inductive RealCase (b : Bool)
-  8 │   | true => real_true
-    │     ╰──╯
+  11 │   
+  12 │   inductive RealCase (b : Bool)
+  13 │   | true => real_true
+     │     ╰──╯
 
 Warning: You wrote the following pattern:
            true

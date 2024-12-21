@@ -123,6 +123,11 @@ public interface PatTyckError {
     | true => Bool::false
     | false => Bool::true
     
+    @suppress(UnimportedCon, UnreachableClause)
+    def don't-care (b : Bool) : Bool
+    | true => Bool::false
+    | false => Bool::true
+    
     inductive RealCase (b : Bool)
     | true => real_true
     """;

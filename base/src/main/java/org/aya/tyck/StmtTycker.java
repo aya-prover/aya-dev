@@ -71,13 +71,13 @@ public record StmtTycker(
     });
   }
   public @Nullable TyckDef check(@NotNull Decl predecl) {
-    suppress(predecl);
     ExprTycker tycker = null;
     if (predecl instanceof TeleDecl decl) {
       if (decl.ref().signature == null) tycker = checkHeader(decl);
     }
 
-    return switch (predecl) {
+    suppress(predecl);
+    var core = switch (predecl) {
       case FnDecl fnDecl -> {
         var fnRef = fnDecl.ref;
         assert fnRef.signature != null;
@@ -141,6 +141,8 @@ public record StmtTycker(
         yield new DataDef(data.ref, data.body.map(kon -> kon.ref.core));
       }
     };
+    reporter.clearSuppress();
+    return core;
   }
 
   public ExprTycker checkHeader(@NotNull TeleDecl decl) {
@@ -181,6 +183,7 @@ public record StmtTycker(
         }
       }
     }
+    reporter.clearSuppress();
     return tycker;
   }
   private void checkMember(@NotNull ClassMember member, @NotNull ExprTycker tycker) {

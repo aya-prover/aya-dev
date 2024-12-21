@@ -21,4 +21,6 @@ public record SuppressingReporter(
   public void suppress(@NotNull Class<? extends Problem> problem) {
     suppressed.add(problem);
   }
+
+  public void clearSuppress() { suppressed.clear(); }
 }
