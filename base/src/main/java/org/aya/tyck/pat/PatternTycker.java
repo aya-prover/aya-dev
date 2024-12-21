@@ -147,9 +147,23 @@ public class PatternTycker implements Problematic, Stateful {
         var typeRecog = state().shapeFactory.find(conCore.dataRef()).getOrNull();
         yield new Pat.Con(conCore, patterns, realCon.conHead);
       }
-      case Pattern.Bind(var bind, var tyRef) -> {
+      case Pattern.Bind bindPat -> {
+        var bind = bindPat.bind();
+        var tyRef = bindPat.type();
+
         exprTycker.localCtx().put(bind, type);
         tyRef.set(type);
+
+        // report after tyRef.set, the error message requires it
+        if (whnf(type) instanceof DataCall call) {
+          var unimportedCon = call.ref().body()
+            .filter(con -> con.name().equals(bind.name()));
+
+          if (unimportedCon.isNotEmpty()) {
+            fail(new PatternProblem.UnimportedConName(pattern.replace(bindPat)));
+          }
+        }
+
         yield new Pat.Bind(bind, type);
       }
       case Pattern.CalmFace.INSTANCE ->

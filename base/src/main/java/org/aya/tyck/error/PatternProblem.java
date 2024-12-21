@@ -126,6 +126,20 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
+  record UnimportedConName(
+    @Override @NotNull WithPos<Pattern.Bind> pattern
+  ) implements PatternProblem {
+    @Override
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.vcat(
+        Doc.english("The binding name:"),
+        Doc.par(1, Doc.plain(pattern.data().bind().name())),
+        Doc.english("is equal to an un-imported constructor of:"),
+        Doc.par(1, pattern.data().type().get().toDoc(options))
+      );
+    }
+  }
+
   record TooManyImplicitPattern(
     @Override @NotNull WithPos<Pattern> pattern,
     @NotNull Param param
