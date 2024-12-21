@@ -296,7 +296,7 @@ public record ExprResolver(
     if (result instanceof GeneralizedVar gvar) {
       introduceDependencies(gvar);
       var gened = allowedGeneralizes.getOrNull(gvar);
-      if (gened != null) return gened.ref();
+      //if (gened != null) return gened.ref();
     }
 
     return result;
