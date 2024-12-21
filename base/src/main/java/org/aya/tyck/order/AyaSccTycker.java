@@ -150,13 +150,14 @@ public record AyaSccTycker(
   private void checkBody(@NotNull TyckOrder order, @NotNull TyckUnit stmt) {
     if (stmt instanceof Decl decl) {
       var def = tycker.check(decl);
-      if (!decl.isExample) {
+      if (!decl.isExample && def != null) {
         // In case I'm not an example, remember me and recognize my shape
         wellTyped.append(def);
         tycker.shapeFactory().bonjour(def);
       }
     }
-    if (reporter.anyError()) throw new SccTyckingFailed(ImmutableSeq.of(order));
+    if (reporter.anyError())
+      throw new SccTyckingFailed(ImmutableSeq.of(order));
   }
 
   /**

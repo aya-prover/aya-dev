@@ -34,4 +34,5 @@ public interface ParseError {
     | [{a}] => a
     | _ => 0
     """;
+  @Language("Aya") String testIncorrectReturn = "def lt_intersect : {A : Type} : A";
 }

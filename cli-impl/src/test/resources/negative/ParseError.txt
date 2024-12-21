@@ -112,3 +112,15 @@ Error: Implicit elements in a list pattern is disallowed
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+IncorrectReturn:
+In file $FILE:1:17 ->
+
+  1 │   def lt_intersect : {A : Type} : A
+    │                    ╰╯
+
+Error: The return type syntax is incorrect.
+
+Parsing interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+

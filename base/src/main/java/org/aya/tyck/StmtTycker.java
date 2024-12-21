@@ -41,8 +41,7 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 
 import static org.aya.tyck.tycker.TeleTycker.loadTele;
 
@@ -66,7 +65,7 @@ public record StmtTycker(
       }
     });
   }
-  public @NotNull TyckDef check(@NotNull Decl predecl) {
+  public @Nullable TyckDef check(@NotNull Decl predecl) {
     suppress(predecl);
     ExprTycker tycker = null;
     if (predecl instanceof TeleDecl decl) {
@@ -123,7 +122,9 @@ public record StmtTycker(
           }
         };
       }
-      case DataCon _, PrimDecl _, ClassMember _ -> Objects.requireNonNull(predecl.ref().core);   // see checkHeader
+      // see checkHeader, if the tycking headers of these things fail,
+      // we might have null cores, which is why the return type is nullable
+      case DataCon _, PrimDecl _, ClassMember _ -> predecl.ref().core;
       case ClassDecl clazz -> {
         for (var member : clazz.members) checkHeader(member);
         // TODO: store signature here?
@@ -233,6 +234,9 @@ public record StmtTycker(
       // do not do coverage check
       var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, null,
         new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
+      if (lhsResult.hasError()) {
+        return;
+      }
       wellPats = lhsResult.clause().pats();
       tycker.setLocalCtx(lhsResult.localCtx());
       lhsResult.addLocalLet(ownerBinds, tycker);

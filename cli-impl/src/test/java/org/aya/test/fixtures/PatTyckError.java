@@ -94,7 +94,11 @@ public interface PatTyckError {
     | test2 => test1
     """;
 
-  @Language("Aya") String testNewRepoIssue384 = """
-    def test : Type
+  @Language("Aya") String testNewRepoIssue384 = "def test : Type";
+  @Language("Aya") String testNewRepoIssue1245 = """
+    open inductive Wrap (A B : Type)
+    | _ => wrap B
+    // Should be skipped by the orga tycker
+    def test => wrap
     """;
 }

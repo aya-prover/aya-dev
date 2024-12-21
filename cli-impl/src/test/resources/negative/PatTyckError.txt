@@ -234,3 +234,27 @@ Error: The empty pattern-matching function test does not have a telescope
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+NewRepoIssue1245:
+In file $FILE:2:2 ->
+
+  1 │   open inductive Wrap (A B : Type)
+  2 │   | _ => wrap B
+    │     ╰╯
+  3 │   // Should be skipped by the orga tycker
+
+Error: There is no pattern for the parameter
+         (B : Type 0)
+
+In file $FILE:2:2 ->
+
+  1 │   open inductive Wrap (A B : Type)
+  2 │   | _ => wrap B
+    │     ╰╯
+  3 │   // Should be skipped by the orga tycker
+
+Error: There is no pattern for the parameter
+         (B : Type 0)
+
+2 error(s), 0 warning(s).
+Let's learn from that.
+
