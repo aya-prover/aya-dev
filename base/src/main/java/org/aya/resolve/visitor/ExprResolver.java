@@ -139,7 +139,6 @@ public record ExprResolver(
               // Ordered set semantics. Do not expect too many generalized vars.
               var owner = generalized.owner;
               assert owner != null : "Sanity check";
-              introduceDependencies(generalized);
               var param = owner.toExpr(false, generalized.toLocal());
               allowedGeneralizes.put(generalized, param);
               addReference(owner);
