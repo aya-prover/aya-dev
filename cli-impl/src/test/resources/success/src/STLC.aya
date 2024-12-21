@@ -1,10 +1,11 @@
 open import arith::nat
 open import data::list::base
-open import data::list::properties using (insert<=length, ++-!!-l, ++-!!-r, take<=length, take-!!, split-lemma)
+open import data::list::properties using (insert<=length, ++-!!-l, ++-!!-r, take<=length, take-!!, split-lemma, ++-assoc)
 open import data::maybe using (Maybe, just, nothing, just-inj)
-open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else)
+open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else, ifd)
+open import relation::unary::negation using (neg)
 open import relation::binary::path using (= , refl, transport, <=>, pinv, pmap, coe)
-open import relation::binary::nat_cmp using (<=, <?, ¬<→>=, n<=s, suc-sub, n<=n, <=-trans)
+open import relation::binary::nat_cmp using (<, <?, <=, <?, ¬<→>=, n<=s, suc-sub, n<=n, <=-trans, <→s)
 
 open inductive Tm
 | Lam Tm
@@ -36,6 +37,21 @@ def shift (t : Tm) (from : Nat) : Tm elim t
     (Idx (suc i))
 | True => True
 | False => False
+
+open inductive not_refer_to (tm : Tm) (i : Nat)
+| Lam t, _ => Lam_nrt (not_refer_to t (suc i))
+| App f a, _ => App_nrt (not_refer_to f i) (not_refer_to a i)
+| Idx idx, _ => Var_nrt (neg (i = idx))
+| True, _ => True_nrt
+| False, _ => False_nrt
+
+// shift all index since [gap] back, this operation requires term [tm] has no reference to [gap].
+def shiftBack (t : Tm) (gap : Nat) (nrt : not_refer_to t gap) : Tm elim t nrt
+| Lam l, Lam_nrt p => Lam (shiftBack l (suc gap) p)
+| App f a, App_nrt pf pa => App (shiftBack f gap pf) (shiftBack a gap pa)
+| Idx idx, Var_nrt plt => ifd (gap <? idx) (fn p => Idx ((<→s p).1)) (fn np => t)
+| _, True_nrt => True
+| _, False_nrt => False
 
 def shift1 (t : Tm) : Tm => shift t 0
 
@@ -132,6 +148,33 @@ def inst_preservation
   }
 | True_hasType, _, _, _ => True_hasType
 | False_hasType, _, _, _ => False_hasType
+
+def shiftBack_weakening
+  {G : Gamma} {tm : Tm} {ty : Ty}
+  {n : Nat} (nrt : not_refer_to tm n)
+  (leq : n <= length G)
+  {A : Ty} (tmhT : hasType (insert n A G) tm ty)
+  : hasType (take n G ++ drop n G) (shiftBack tm n nrt) ty
+| {G}, {Lam t}, {Arrow dom cod}, {n}, Lam_nrt nrt, _, Lam_hasType thT =>
+  Lam_hasType (shiftBack_weakening {dom :< G} nrt leq thT)
+| App_nrt pf pa, _, App_hasType _ fhT ahT =>
+  App_hasType _ (shiftBack_weakening pf leq fhT) (shiftBack_weakening pa leq ahT)
+| {G}, {Idx idx}, Var_nrt neq, _, Var_hasType vhT =>
+  match n <? idx as d returns
+    hasType (take n G ++ drop n G) (ifd d (fn p => Idx ((<→s p).1)) (fn np => Idx idx)) ty {
+  | _ because reflect_true p =>
+    let
+    | myGoal : (take n G ++ ([ A ] ++ drop n G)) !! idx = drop n G !! (subTrunc idx (suc n)) := pinv (++-assoc (take n G) ([ A ]) (drop n G)) <=> {??}
+    in {??}
+  | _ because reflect_false np => {??}
+  }
+| True_nrt, _, _ => True_hasType
+| False_nrt, _, _ => False_hasType
+
+def inst_preservation0
+  {G : Gamma} {tm : Tm} {A B : Ty} (hasType (A :< G) tm B)
+  {v : Tm} (hasType G v A)
+  : hasType G (inst tm 0 v) A => {??}
 
 def preservation
   {G : Gamma} {tm tm': Tm} {ty : Ty}

@@ -24,3 +24,7 @@ def if-then-else {A P : Type} (d : Decidable P) (then else : A) : A elim d
 def LEM {P : Type} (d : Decidable P) : Sum P (neg P)
 | _ because reflect_true p => inl p
 | _ because reflect_false np => inr np
+
+def ifd {A P : Type} (d : Decidable P) (then : P -> A) (else : neg P -> A) : A elim d
+| _ because reflect_true p => then p
+| _ because reflect_false np => else np
