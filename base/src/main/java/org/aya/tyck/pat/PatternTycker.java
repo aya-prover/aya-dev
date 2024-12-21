@@ -128,7 +128,7 @@ public class PatternTycker implements Problematic, Stateful {
       case Pattern.Tuple(var l, var r) -> {
         if (!(exprTycker.whnf(type) instanceof DepTypeTerm(var kind, var lT, var rT) && kind == DTKind.Sigma)) {
           var frozen = freezeHoles(type);
-          yield withError(new PatternProblem.TupleNonSig(pattern, frozen), frozen);
+          yield withError(new PatternProblem.TupleNonSig(pattern, this, frozen), frozen);
         }
         var lhs = doTyck(l, lT);
         yield new Pat.Tuple(lhs, doTyck(r, rT.apply(PatToTerm.visit(lhs))));
@@ -158,8 +158,7 @@ public class PatternTycker implements Problematic, Stateful {
         // report after tyRef.set, the error message requires it
         if (whnf(type) instanceof DataCall call) {
           var unimportedCon = collectConNames(call.ref())
-            .anyMatch(it -> it.equals(bind.name()));
-
+            .anyMatch(it -> it.equalsIgnoreCase(bind.name()));
           if (unimportedCon) {
             fail(new PatternProblem.UnimportedConName(pattern.replace(bindPat)));
           }

@@ -278,10 +278,10 @@ In file $FILE:4:2 ->
   4 │   | true => Bool::false
     │     ╰──╯
 
-Warning: The binding name:
+Warning: You wrote the following pattern:
            true
-         is equal to an un-imported constructor of:
-           Bool
+         It sounds like you are trying to match with a constructor that is not 
+         in scope,so it will be treated as a variable pattern.
 
 In file $FILE:5:2 ->
 
@@ -290,10 +290,10 @@ In file $FILE:5:2 ->
   5 │   | false => Bool::true
     │     ╰───╯
 
-Warning: The binding name:
+Warning: You wrote the following pattern:
            false
-         is equal to an un-imported constructor of:
-           Bool
+         It sounds like you are trying to match with a constructor that is not 
+         in scope,so it will be treated as a variable pattern.
 
 In file $FILE:5:2 ->
 
@@ -311,10 +311,10 @@ In file $FILE:8:2 ->
   8 │   | true => real_true
     │     ╰──╯
 
-Warning: The binding name:
+Warning: You wrote the following pattern:
            true
-         is equal to an un-imported constructor of:
-           Bool
+         It sounds like you are trying to match with a constructor that is not 
+         in scope,so it will be treated as a variable pattern.
 
 That looks right!
 
