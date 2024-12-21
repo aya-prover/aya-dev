@@ -4,5 +4,7 @@ package org.aya.generic;
 
 public enum Suppress {
   Shadowing,
+  UnimportedCon,
+  UnreachableClause,
   MostGeneralSolution;
 }

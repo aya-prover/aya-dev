@@ -62,6 +62,11 @@ public record StmtTycker(
     decl.suppresses.forEach(suppress -> {
       switch (suppress) {
         case MostGeneralSolution -> reporter.suppress(MetaVarError.DidSomethingBad.class);
+        case UnimportedCon -> reporter.suppress(PatternProblem.UnimportedConName.class);
+        case UnreachableClause -> {
+          reporter.suppress(ClausesProblem.FMDomination.class);
+          reporter.suppress(ClausesProblem.Domination.class);
+        }
       }
     });
   }

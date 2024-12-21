@@ -143,7 +143,7 @@ public sealed interface PatternProblem extends Problem {
       return Doc.vcat(
         Doc.english("You wrote the following pattern:"),
         Doc.par(1, Doc.plain(pattern.data().bind().name())),
-        Doc.english("It sounds like you are trying to match with a constructor that is not in scope," +
+        Doc.english("It sounds like you are trying to match with a constructor that is not in scope, " +
           "so it will be treated as a variable pattern.")
       );
     }

@@ -36,6 +36,15 @@ public interface PatTyckError {
      | unit y => a
     """;
 
+  @Language("Aya") String testTupleOnNonSigma = """
+    def test (a' : Type) : Type
+     | (a, b) => a
+
+    def Alias => Type
+    def test2 (a' : Alias) : Type
+     | (a, b) => a
+    """;
+
   @Language("Aya") String testBadLiteral = """
     open inductive Test | t
     def not-conf Test : Test
