@@ -1,11 +1,11 @@
 open import arith::nat
 open import data::list::base
-open import data::list::properties using (insert<=length, ++-!!-l, ++-!!-r, take<=length, take-!!, split-lemma, ++-assoc)
+open import data::list::properties using (insert<=length, ++-!!-l, ++-!!-r, take<=length, take-!!, split-lemma, ++-assoc, length-++)
 open import data::maybe using (Maybe, just, nothing, just-inj)
 open import relation::nullary::decidable using (Decidable, because, reflect_true, reflect_false, if-then-else, ifd)
 open import relation::unary::negation using (neg)
 open import relation::binary::path using (= , refl, transport, <=>, pinv, pmap, coe)
-open import relation::binary::nat_cmp using (<, <?, <=, <?, ¬<→>=, n<=s, suc-sub, n<=n, <=-trans, <→s)
+open import relation::binary::nat_cmp using (<, <?, <=, <?, ¬<→>=, n<=s, suc-sub, n<=n, <=-trans, <→s, <=-with-≠)
 
 open inductive Tm
 | Lam Tm
@@ -81,7 +81,7 @@ open inductive value (t : Tm)
 open inductive infix —> Tm Tm
 | App f a, App f' a' => S_App0 (a = a') (f —> f')
 | App f a, App f' a' => S_App1 (f = f') (value f) (a —> a')
-| App (Lam l) a, t => S_App (value a) (t = inst l 0 a)
+| App (Lam l) a, t => S_App (value a) (t = (inst l 0 a))
 
 def function_canoninal_form
   {G : Gamma} {t : Tm} (value t)
@@ -90,6 +90,9 @@ def function_canoninal_form
 | {_}, {Lam l}, lamValue, _ => (l, refl)
 | trueValue, ()
 | falseValue, ()
+
+def ++-!!-r' {A : Type} (i : Nat) (xs ys : List A) (pleq : length xs <= i) {n : Nat} (peq : length xs = n) : ys !! (subTrunc i n) = (xs ++ ys) !! i
+  => transport (fn l => ys !! (subTrunc i l) = (xs ++ ys) !! i) peq (++-!!-r i xs ys pleq)
 
 def shift_preservation
   {G : Gamma} {tm : Tm} {A : Ty} (hasType G tm A) (B : Ty) (i : Nat) (p : i <= length G)
@@ -159,17 +162,46 @@ def shiftBack_weakening
   Lam_hasType (shiftBack_weakening {dom :< G} nrt leq thT)
 | App_nrt pf pa, _, App_hasType _ fhT ahT =>
   App_hasType _ (shiftBack_weakening pf leq fhT) (shiftBack_weakening pa leq ahT)
-| {G}, {Idx idx}, Var_nrt neq, _, Var_hasType vhT =>
+| {G}, {Idx idx}, {ty}, Var_nrt neq, _, Var_hasType vhT =>
   match n <? idx as d returns
     hasType (take n G ++ drop n G) (ifd d (fn p => Idx ((<→s p).1)) (fn np => Idx idx)) ty {
   | _ because reflect_true p =>
     let
-    | myGoal : (take n G ++ ([ A ] ++ drop n G)) !! idx = drop n G !! (subTrunc idx (suc n)) := pinv (++-assoc (take n G) ([ A ]) (drop n G)) <=> {??}
-    in {??}
-  | _ because reflect_false np => {??}
+    | taken=n : length (take n G) = n := take<=length n G leq
+    | taken<idx : length (take n G) < idx := transport (fn m => m < idx) (pinv taken=n) p
+    | myGoal! : (take n G ++ ([ A ] ++ drop n G)) !! idx = ((take n G ++ [ A ]) ++ drop n G) !! idx := pmap (!! idx) (pinv (++-assoc _ _ _))
+    | myGoal!! : ((take n G ++ [ A ]) ++ drop n G) !! idx = drop n G !! (subTrunc idx (suc n)) :=
+      pinv (++-!!-r' idx (take n G ++ [ A ]) (drop n G) (transport
+          (fn l => l <= idx) (pinv (length-++ (take n G) [ A ]))
+          taken<idx)
+        (length-++ (take n G) [ A ] <=> pmap suc (taken=n)))
+    | myGoal : (take n G ++ ([ A ] ++ drop n G)) !! idx = drop n G !! (subTrunc idx (suc n)) :=
+      myGoal! <=> myGoal!!
+    | vhT' : drop n G !! (subTrunc idx (suc n)) = just ty := (pinv myGoal) <=> vhT
+    | dec_idx : Nat := (<→s p).1
+    | proof_dec_idx : idx = suc dec_idx := (<→s p).2
+    | myGoal!!! : (take n G ++ drop n G) !! dec_idx = drop n G !! (subTrunc dec_idx n) :=
+      pinv (++-!!-r' dec_idx (take n G) (drop n G) (transport (fn i => suc (length (take n G)) <= i) proof_dec_idx taken<idx) taken=n)
+    in Var_hasType (myGoal!!! <=> pmap (fn i => drop n G !! (subTrunc i (suc n))) (pinv proof_dec_idx) <=> vhT')
+  | _ because reflect_false np =>
+    let
+    | taken=n : length (take n G) = n := take<=length n G leq
+    | idx<=n : idx <= n := ¬<→>= np
+    | idx<n : idx < n := <=-with-≠ idx<=n (fn p => neq (pinv p))
+    | myGoal : (take n G ++ drop n G) !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (fn l => idx < l) (pinv taken=n) idx<n)
+    | myGoal! : insert n A G !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (fn l => idx < l) (pinv taken=n) idx<n)
+    in Var_hasType (myGoal <=> pinv myGoal! <=> vhT)
   }
-| True_nrt, _, _ => True_hasType
-| False_nrt, _, _ => False_hasType
+| True_nrt, _, True_hasType => True_hasType
+| False_nrt, _, False_hasType => False_hasType
+
+def shift_not_refer_to {tm : Tm} {i : Nat} (nrt : not_refer_to tm i) (j : Nat) : not_refer_to (shift tm j) (suc i + j)
+| Lam_nrt nrt, j => Lam_nrt {??}
+| _, _ => {??}
+
+def inst_not_refer_to (tm : Tm) (i : Nat) (v : Tm) (vnrt : not_refer_to v i) : not_refer_to (inst tm i v) i
+| Lam l, i, v, vnrt => {??}
+| _, _, _, _ => {??}
 
 def inst_preservation0
   {G : Gamma} {tm : Tm} {A B : Ty} (hasType (A :< G) tm B)
