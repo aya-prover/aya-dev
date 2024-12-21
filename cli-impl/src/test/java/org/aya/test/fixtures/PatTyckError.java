@@ -113,5 +113,8 @@ public interface PatTyckError {
     def not (b : Bool) : Bool
     | true => Bool::false
     | false => Bool::true
+    
+    inductive RealCase (b : Bool)
+    | true => real_true
     """;
 }

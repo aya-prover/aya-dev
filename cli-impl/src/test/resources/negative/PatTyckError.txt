@@ -278,10 +278,10 @@ In file $FILE:4:2 ->
   4 │   | true => Bool::false
     │     ╰──╯
 
-Error: The binding name:
-         true
-       is equal to an un-imported constructor of:
-         Bool
+Warning: The binding name:
+           true
+         is equal to an un-imported constructor of:
+           Bool
 
 In file $FILE:5:2 ->
 
@@ -290,10 +290,10 @@ In file $FILE:5:2 ->
   5 │   | false => Bool::true
     │     ╰───╯
 
-Error: The binding name:
-         false
-       is equal to an un-imported constructor of:
-         Bool
+Warning: The binding name:
+           false
+         is equal to an un-imported constructor of:
+           Bool
 
 In file $FILE:5:2 ->
 
@@ -304,6 +304,17 @@ In file $FILE:5:2 ->
 
 Warning: The 2nd clause is dominated by the other clauses, hence unreachable
 
-2 error(s), 1 warning(s).
-Let's learn from that.
+In file $FILE:8:2 ->
+
+  6 │   
+  7 │   inductive RealCase (b : Bool)
+  8 │   | true => real_true
+    │     ╰──╯
+
+Warning: The binding name:
+           true
+         is equal to an un-imported constructor of:
+           Bool
+
+That looks right!
 
