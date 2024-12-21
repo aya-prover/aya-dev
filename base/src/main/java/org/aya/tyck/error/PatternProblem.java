@@ -116,6 +116,16 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
+  record ImplicitDisallowed(
+    @Override @NotNull WithPos<Pattern> pattern
+  ) implements PatternProblem {
+
+    @Override
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.english("Pattern matching with eliminator is not compatible with implicit patterns.");
+    }
+  }
+
   record TooManyImplicitPattern(
     @Override @NotNull WithPos<Pattern> pattern,
     @NotNull Param param
