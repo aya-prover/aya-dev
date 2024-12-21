@@ -860,7 +860,12 @@ public record AyaProducer(
   }
 
   public @NotNull WithPos<Expr> type(@NotNull GenericNode<?> node) {
-    return expr(node.child(EXPR));
+    var child = node.peekChild(EXPR);
+    if (child == null) {
+      reporter.report(new ParseError(sourcePosOf(node), "The return type syntax is incorrect."));
+      throw new ParsingInterruptedException();
+    }
+    return expr(child);
   }
 
   public @Nullable WithPos<Expr> typeOrNull(@Nullable GenericNode<?> node) {
