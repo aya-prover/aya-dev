@@ -265,8 +265,7 @@ In file $FILE:2:5 ->
   2 │   | _, {a} => a
     │        ╰─╯
 
-Error: Pattern matching with eliminator is not compatible with implicit 
-       patterns.
+Error: Pattern matching with elim is not compatible with implicit patterns.
 
 1 error(s), 0 warning(s).
 Let's learn from that.

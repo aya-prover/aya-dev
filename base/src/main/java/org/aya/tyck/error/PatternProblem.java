@@ -116,13 +116,13 @@ public sealed interface PatternProblem extends Problem {
     }
   }
 
-  record ImplicitDisallowed(
-    @Override @NotNull WithPos<Pattern> pattern
-  ) implements PatternProblem {
-
-    @Override
-    public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.english("Pattern matching with eliminator is not compatible with implicit patterns.");
+  record ImplicitDisallowed(@Override @NotNull WithPos<Pattern> pattern) implements PatternProblem {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(
+        Doc.english("Pattern matching with"),
+        Doc.styled(BasePrettier.KEYWORD, "elim"),
+        Doc.english("is not compatible with implicit patterns.")
+      );
     }
   }
 
