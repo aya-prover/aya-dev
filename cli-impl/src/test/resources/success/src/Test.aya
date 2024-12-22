@@ -100,3 +100,8 @@ module Issue1232 {
   def - : Nat => 1
   def --> : Nat => 1
 }
+
+module Issue1249 {
+  variable A B : Type
+  def transp (p : A = B) (a : A) : B => coe 0 1 p a
+}
