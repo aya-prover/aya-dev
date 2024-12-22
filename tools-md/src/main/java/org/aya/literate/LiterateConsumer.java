@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -13,10 +13,11 @@ public interface LiterateConsumer extends Consumer<Literate> {
   @MustBeInvokedByOverriders
   default void accept(@NotNull Literate literate) {
     switch (literate) {
-      case Literate.Many many -> many.children().forEach(this);
-      case Literate.List items -> items.items().forEach(this);
+      case Literate.Many(_, var children) -> children.forEach(this);
+      case Literate.FrontMatter(var children) -> children.forEach(this);
+      case Literate.List(var items, _) -> items.forEach(this);
       case Literate.Unsupported(var children) -> children.forEach(this);
-      default -> {}
+      default -> { }
     }
   }
 

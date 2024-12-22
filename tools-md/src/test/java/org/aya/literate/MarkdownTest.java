@@ -81,6 +81,21 @@ public class MarkdownTest {
       """);
   }
 
+  @Test public void frontMatter() {
+    assertInstanceOf(Literate.FrontMatter.class, parse("""
+      ---
+      title: "Hello, World!"
+      ---
+      """, ImmutableSeq.empty()));
+    var many = assertInstanceOf(Literate.Many.class, parse("""
+      ---
+      title: "Hello, World!"
+      ---
+      # Content
+      """, ImmutableSeq.empty()));
+    assertInstanceOf(Literate.FrontMatter.class, many.children().get(0));
+  }
+
   @Test public void markdownInMarkdown() {
     // The code block is treated as plain text if the language is not interesting.
     // Arbitrary nesting level of markdown is supported.

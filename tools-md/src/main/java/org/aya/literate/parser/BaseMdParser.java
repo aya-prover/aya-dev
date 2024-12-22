@@ -271,7 +271,7 @@ public class BaseMdParser {
     }
 
     if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER) {
-      return new Literate.Many(null, mapChildren(node));
+      return new Literate.FrontMatter(mapChildren(node));
     }
 
     if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER_DELIMITER) {

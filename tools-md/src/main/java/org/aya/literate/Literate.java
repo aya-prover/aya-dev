@@ -53,6 +53,12 @@ public interface Literate extends Docile {
     }
   }
 
+  record FrontMatter(@NotNull ImmutableSeq<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.cat(this.children().map(Literate::toDoc));
+    }
+  }
+
   class InlineCode implements Literate {
     /**
      * The content of this inline code
