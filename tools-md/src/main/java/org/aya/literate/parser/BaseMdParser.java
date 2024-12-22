@@ -160,7 +160,7 @@ public class BaseMdParser {
     var type = node.getType();
 
     if (type == MarkdownTokenTypes.EOL || type == MarkdownTokenTypes.HARD_LINE_BREAK) {
-      return new Literate.Raw(Doc.line());
+      return Literate.EOL;
     }
 
     // do not confuse with MarkdownTokenTypes.EMPH

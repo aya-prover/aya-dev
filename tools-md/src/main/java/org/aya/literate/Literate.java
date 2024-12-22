@@ -17,6 +17,7 @@ public interface Literate extends Docile {
   default @Nullable FrontMatter findFrontMatter() { return null; }
 
   record Raw(@NotNull Doc toDoc) implements Literate { }
+  @NotNull Raw EOL = new Raw(Doc.line());
 
   record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements Literate {
     @Override public @NotNull Doc toDoc() {

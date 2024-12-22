@@ -122,9 +122,10 @@ public record LiterateData(
       if (frontMatter != null) {
         frontMatter.children().append(label);
       } else {
-        literate = new Literate.Many(null, ImmutableSeq.of(
-          new Literate.FrontMatter(MutableList.of(
-            label)), literate));
+        var delimiter = new Literate.Raw(Doc.plain("---"));
+        frontMatter = new Literate.FrontMatter(MutableList.of(
+          delimiter, Literate.EOL, label, Literate.EOL, delimiter));
+        literate = new Literate.Many(null, ImmutableSeq.of(frontMatter, literate));
       }
     }
     var prettier = new LiterateFaithfulPrettier(problems, highlights, options);
