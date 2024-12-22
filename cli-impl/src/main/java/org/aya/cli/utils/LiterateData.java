@@ -4,6 +4,7 @@ package org.aya.cli.utils;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateFaithfulPrettier;
@@ -102,15 +103,35 @@ public record LiterateData(
     });
   }
 
+  public record InjectedFrontMatter(
+    @Nullable String datetimeKey,
+    @NotNull String datetimeValue
+  ) { }
   public static @NotNull Doc toDoc(
     @NotNull GenericAyaFile ayaFile,
     @Nullable ModulePath currentFileModule,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
+    @NotNull InjectedFrontMatter injected,
     @NotNull PrettierOptions options
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(currentFileModule, Option.some(ayaFile.codeFile()), program);
     var literate = ayaFile.literate();
+    if (injected.datetimeKey != null) {
+      var frontMatter = literate.findFrontMatter();
+      var label = new Literate.Raw(Doc.plain(injected.datetimeKey + ": " + injected.datetimeValue));
+      if (frontMatter != null) {
+        // They must be non-empty because the front matter starts with a ---
+        var secondLast = frontMatter.children().size() - 2;
+        frontMatter.children().insert(secondLast, label);
+        frontMatter.children().insert(secondLast, Literate.EOL);
+      } else {
+        var delimiter = new Literate.Raw(Doc.plain("---"));
+        frontMatter = new Literate.FrontMatter(MutableList.of(
+          delimiter, Literate.EOL, label, Literate.EOL, delimiter));
+        literate = new Literate.Many(null, ImmutableSeq.of(frontMatter, literate));
+      }
+    }
     var prettier = new LiterateFaithfulPrettier(problems, highlights, options);
     prettier.accept(literate);
     return literate.toDoc();

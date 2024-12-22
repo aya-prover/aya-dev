@@ -3,6 +3,7 @@
 package org.aya.literate;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.pretty.doc.*;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +14,10 @@ import org.jetbrains.annotations.Nullable;
  * @see LiterateConsumer
  */
 public interface Literate extends Docile {
-  record Raw(@NotNull Doc toDoc) implements Literate {
-  }
+  default @Nullable FrontMatter findFrontMatter() { return null; }
+
+  record Raw(@NotNull Doc toDoc) implements Literate { }
+  @NotNull Raw EOL = new Raw(Doc.line());
 
   record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements Literate {
     @Override public @NotNull Doc toDoc() {
@@ -51,6 +54,16 @@ public interface Literate extends Docile {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return style == null ? child : Doc.styled(style, child);
     }
+    @Override public @Nullable FrontMatter findFrontMatter() {
+      return children.view().filterIsInstance(FrontMatter.class).getFirstOrNull();
+    }
+  }
+
+  record FrontMatter(@NotNull MutableList<Literate> children) implements Literate {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.cat(this.children().map(Literate::toDoc));
+    }
+    @Override public @NotNull FrontMatter findFrontMatter() { return this; }
   }
 
   class InlineCode implements Literate {

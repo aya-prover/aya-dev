@@ -77,8 +77,12 @@ public record LibrarySource(
     }
   }
 
-  public @NotNull Doc pretty(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) throws IOException {
-    return LiterateData.toDoc(this, moduleName(), program.get(), problems, options);
+  public @NotNull Doc pretty(
+    @NotNull ImmutableSeq<Problem> problems,
+    @NotNull LiterateData.InjectedFrontMatter frontMatter,
+    @NotNull PrettierOptions options
+  ) throws IOException {
+    return LiterateData.toDoc(this, moduleName(), program.get(), problems, frontMatter, options);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {

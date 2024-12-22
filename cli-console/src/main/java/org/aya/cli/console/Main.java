@@ -106,25 +106,23 @@ public class Main extends MainArgs implements Callable<Integer> {
     return compiler.compile(filePath, null);
   }
 
-  private @Nullable CompilerFlags.PrettyInfo
-  computePrettyInfo(
+  private @Nullable CompilerFlags.PrettyInfo computePrettyInfo(
     @Nullable Path outputPath,
     RenderOptions renderOptions, AyaPrettierOptions prettierOptions
   ) {
-    return prettyStage == null
-      ? (outputPath != null ? CompilerFlags.prettyInfoFromOutput(
-      outputPath, renderOptions, prettyNoCodeStyle, prettyInlineCodeStyle, prettySSR) : null)
-      : new CompilerFlags.PrettyInfo(
-        asciiOnly,
-        prettyNoCodeStyle,
-        prettyInlineCodeStyle,
-        prettySSR,
-        prettyStage,
-        prettyFormat,
-        prettierOptions,
-        renderOptions,
-        prettyDir
-      );
+    if (prettyStage == null)
+      return outputPath != null ? CompilerFlags.prettyInfoFromOutput(
+        outputPath, renderOptions, prettyNoCodeStyle, prettyInlineCodeStyle, prettySSR) : null;
+    return new CompilerFlags.PrettyInfo(
+      asciiOnly,
+      prettyNoCodeStyle,
+      prettyInlineCodeStyle,
+      prettySSR,
+      prettyStage,
+      prettyFormat,
+      prettierOptions, renderOptions,
+      datetimeFrontMatterKey, datetimeFrontMatterValue, prettyDir
+    );
   }
 
   private @NotNull RenderOptions createRenderOptions(@NotNull ReplConfig replConfig) {
@@ -132,7 +130,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     switch (prettyColor) {
       case emacs -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.Emacs;
       case intellij -> renderOptions.colorScheme = RenderOptions.ColorSchemeName.IntelliJ;
-      case null -> {}
+      case null -> { }
     }
     return renderOptions;
   }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.more;
 
@@ -7,6 +7,9 @@ import kala.collection.mutable.MutableList;
 import kala.tuple.primitive.IntObjTuple2;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 public interface StringUtil {
   /** <a href="https://github.com/JetBrains/Arend/blob/39b14869ac5abdcee7bbee0efa06d5a6f86c4069/cli/src/main/java/org/arend/frontend/library/TimedLibraryManager.java#L21-L31">Arend</a> */
   static @NotNull String timeToString(long time) {
@@ -14,6 +17,10 @@ public interface StringUtil {
     if (time < 60000) return time / 1000 + ("." + (time / 100 % 10)) + "s";
     var seconds = time / 1000;
     return (seconds / 60) + "m" + (seconds % 60) + "s";
+  }
+
+  static @NotNull String timeInGitFormat() {
+    return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss X"));
   }
 
   /**

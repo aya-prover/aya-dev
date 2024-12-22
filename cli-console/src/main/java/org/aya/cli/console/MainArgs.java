@@ -81,6 +81,10 @@ public class MainArgs {
   public PrettyFormat prettyFormat;
   @Option(names = {"--pretty-dir"}, description = "Specify output directory of pretty printing.")
   public String prettyDir;
+  @Option(names = {"--datetime-front-matter-key"}, description = "If set, add datetime in the front matter using the value as YAML key.")
+  public String datetimeFrontMatterKey;
+  @Option(names = {"--datetime-front-matter"}, description = "Overwrites the datetime in the front matter.")
+  public String datetimeFrontMatterValue;
   @Option(names = {"--pretty-color"}, description = "The color theme of pretty printing." + CANDIDATES, defaultValue = "emacs")
   public PredefinedStyle prettyColor;
   @Option(names = {"--pretty-no-code-style"}, description = "Do not include default highlight styles.")

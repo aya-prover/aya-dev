@@ -160,7 +160,7 @@ public class BaseMdParser {
     var type = node.getType();
 
     if (type == MarkdownTokenTypes.EOL || type == MarkdownTokenTypes.HARD_LINE_BREAK) {
-      return new Literate.Raw(Doc.line());
+      return Literate.EOL;
     }
 
     // do not confuse with MarkdownTokenTypes.EMPH
@@ -271,7 +271,7 @@ public class BaseMdParser {
     }
 
     if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER) {
-      return new Literate.Many(null, mapChildren(node));
+      return new Literate.FrontMatter(MutableList.from(mapChildren(node)));
     }
 
     if (type == FrontMatterHeaderProvider.FRONT_MATTER_HEADER_DELIMITER) {

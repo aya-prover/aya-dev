@@ -52,7 +52,7 @@ public class LibraryGraphTest {
       libRoot.resolve("src"),
       libRoot.resolve("build"),
       libRoot.resolve("build/out"),
-      new LibraryConfig.LibraryLiterateConfig(new LiteratePrettierOptions(), "11.4.5.14", libRoot.resolve("literate")),
+      new LibraryConfig.LibraryLiterateConfig(new LiteratePrettierOptions(), null, "11.4.5.14", libRoot.resolve("literate")),
       ImmutableSeq.empty()
     );
   }

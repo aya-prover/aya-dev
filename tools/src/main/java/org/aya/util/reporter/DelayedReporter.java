@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022 Yinsen (Tesla) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -22,7 +22,5 @@ public record DelayedReporter(
     problems.clear();
   }
 
-  @Override public void close() {
-    reportNow();
-  }
+  @Override public void close() { reportNow(); }
 }
