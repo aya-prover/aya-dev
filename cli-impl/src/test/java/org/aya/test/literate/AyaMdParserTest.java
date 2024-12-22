@@ -3,6 +3,7 @@
 package org.aya.test.literate;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
@@ -14,6 +15,7 @@ import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
+import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.test.TestRunner;
 import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
@@ -24,6 +26,7 @@ import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -84,10 +87,7 @@ public class AyaMdParserTest {
     }
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"hoshino-said", "wow", "test", "heading", "compiler-output"})
-  public void testHighlight(String caseName) throws IOException {
-    var oneCase = new Case(caseName);
+  private static @NotNull LiterateTestCase initLiterateTestCase(Case oneCase) throws IOException {
     var mdFile = new SingleAyaFile.CodeAyaFile(file(oneCase.mdFile()));
 
     var reporter = new BufferReporter();
@@ -98,11 +98,23 @@ public class AyaMdParserTest {
     var info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
+    return new LiterateTestCase(reporter, literate, stmts);
+  }
+  private record LiterateTestCase(
+    BufferReporter reporter, SingleAyaFile.MarkdownAyaFile literate,
+    ImmutableSeq<Stmt> stmts
+  ) { }
 
-    var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", StringUtil.timeInGitFormat());
-    var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(),
+  @ParameterizedTest
+  @ValueSource(strings = {"hoshino-said", "wow", "test", "heading", "compiler-output"})
+  public void testHighlight(String caseName) throws IOException {
+    var oneCase = new Case(caseName);
+    var data = initLiterateTestCase(oneCase);
+
+    var defaultFM = new LiterateData.InjectedFrontMatter(null, StringUtil.timeInGitFormat());
+    var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
-    reporter.problems().clear();
+    data.reporter().problems().clear();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
     var expectedMd = doc.renderToAyaMd();
@@ -129,6 +141,15 @@ public class AyaMdParserTest {
     assertFalse(actualTexInlinedStyle.isEmpty());
     assertFalse(actualTexWithHeader.isEmpty());
     assertFalse(actualTexButKa.isEmpty());
+  }
+
+  @Test public void testTime() throws IOException {
+    var oneCase = new Case("heading");
+    var data = initLiterateTestCase(oneCase);
+    var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", StringUtil.timeInGitFormat());
+    var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
+      defaultFM, AyaPrettierOptions.pretty()).toDoc();
+    assertTrue(doc.renderToMd().startsWith("---\nlastUpdated: "));
   }
 
   private @NotNull String trim(@NotNull String input) {
