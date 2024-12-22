@@ -30,6 +30,7 @@ import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
@@ -222,8 +223,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // Try coercive subtyping for (Path A ...) into (I -> A)
     if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
       if (whnf(resultType) instanceof EqTerm eq) {
-        var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
-        if (closure == null) return makeErrorResult(type, result);
+        if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
+        var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
+          : new Closure.Jit(i -> new PAppTerm(result.wellTyped(), i, eq.a(), eq.b()));
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }
@@ -232,8 +234,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       if (whnf(resultType) instanceof DepTypeTerm(
         var kind, var dom, var cod
       ) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
-        var closure = makeClosurePiPath(expr, eq, cod, result.wellTyped());
-        if (closure == null) return makeErrorResult(type, result);
+        if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
+        var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
+          : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
         checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
         return new Jdg.Default(new LamTerm(closure), eq);
@@ -263,18 +266,17 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return new Jdg.Default(new ErrorTerm(result.wellTyped()), type);
   }
 
-  private @Nullable Closure makeClosurePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod, @NotNull Term core) {
+  /// @return true if the coercion is successful
+  private boolean isConvertiblePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod) {
     var ref = new FreeTerm(new LocalVar("i"));
     var wellTyped = false;
     try (var _ = subscope(ref.name(), DimTyTerm.INSTANCE)) {
       wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
     }
-    if (!wellTyped) return null;
+    if (!wellTyped) return false;
     if (expr.data() instanceof Expr.WithTerm with)
       addWithTerm(with, expr.sourcePos(), eq);
-    return core instanceof LamTerm(var clo) ? clo
-      // This is kinda unsafe but it should be fine
-      : new Closure.Jit(i -> new AppTerm(core, i));
+    return true;
   }
 
   public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
