@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.cli.library.LibraryCompiler;
@@ -74,7 +75,7 @@ public class LibraryTest {
       true, false, false, false, CliEnums.PrettyStage.literate,
       CliEnums.PrettyFormat.html, AyaPrettierOptions.pretty(), new RenderOptions(), null
     );
-    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, ImmutableSeq.empty(), null);
+    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, SeqView.empty(), null);
   }
 
   @Test public void testInMemoryAndPrim() throws IOException {

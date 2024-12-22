@@ -38,8 +38,9 @@ public final class SingleFileCompiler {
     ayaParser = new AyaParserImpl(reporter);
     fileManager = new SingleAyaFile.Factory(reporter);
     loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter,
-      flags.modulePaths().view().map(path ->
-        new FileModuleLoader(locator, path, reporter, ayaParser, fileManager)).toImmutableSeq()));
+      flags.modulePaths().map(path ->
+          new FileModuleLoader(locator, path, reporter, ayaParser, fileManager))
+        .toImmutableSeq()));
   }
 
   public <E extends IOException> int compile(

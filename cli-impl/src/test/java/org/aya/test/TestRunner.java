@@ -4,7 +4,7 @@ package org.aya.test;
 
 import com.intellij.openapi.util.text.Strings;
 import kala.collection.Seq;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.SeqView;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleFileCompiler;
 import org.aya.test.fixtures.*;
@@ -141,7 +141,7 @@ public class TestRunner {
   }
 
   public static @NotNull CompilerFlags flags() {
-    var modulePaths = ImmutableSeq.of(DEFAULT_TEST_DIR.resolve("shared/src"));
+    var modulePaths = SeqView.of(DEFAULT_TEST_DIR.resolve("shared/src"));
     return new CompilerFlags(CompilerFlags.Message.ASCII,
       false, false, null, modulePaths, null);
   }
