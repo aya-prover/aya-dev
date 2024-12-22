@@ -11,6 +11,7 @@ import org.aya.cli.single.SingleFileCompiler;
 import org.aya.cli.utils.LiterateData;
 import org.aya.generic.Constants;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
@@ -144,12 +145,18 @@ public class AyaMdParserTest {
   }
 
   @Test public void testTime() throws IOException {
-    var oneCase = new Case("heading");
+    var doc = lastUpdatedTest("heading");
+    assertTrue(doc.renderToMd().startsWith("---\nlastUpdated: "));
+    doc = lastUpdatedTest("frontmatter");
+    assertTrue(doc.renderToMd().startsWith("---\ntitle: Twitter\nlastUpdated: "));
+  }
+
+  private static @NotNull Doc lastUpdatedTest(String caseName) throws IOException {
+    var oneCase = new Case(caseName);
     var data = initLiterateTestCase(oneCase);
     var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", StringUtil.timeInGitFormat());
-    var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
+    return data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
-    assertTrue(doc.renderToMd().startsWith("---\nlastUpdated: "));
   }
 
   private @NotNull String trim(@NotNull String input) {

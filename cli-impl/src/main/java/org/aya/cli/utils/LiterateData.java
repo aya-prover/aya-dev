@@ -121,7 +121,10 @@ public record LiterateData(
       var frontMatter = literate.findFrontMatter();
       var label = new Literate.Raw(Doc.plain(injected.datetimeKey + ": " + injected.datetimeValue));
       if (frontMatter != null) {
-        frontMatter.children().append(label);
+        // They must be non-empty because the front matter starts with a ---
+        var secondLast = frontMatter.children().size() - 2;
+        frontMatter.children().insert(secondLast, label);
+        frontMatter.children().insert(secondLast, Literate.EOL);
       } else {
         var delimiter = new Literate.Raw(Doc.plain("---"));
         frontMatter = new Literate.FrontMatter(MutableList.of(
