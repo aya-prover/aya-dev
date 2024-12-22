@@ -99,7 +99,7 @@ public class AyaMdParserTest {
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
 
-    var defaultFM = new LiterateData.InjectedFrontMatter(null, StringUtil.timeInGitFormat());
+    var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", StringUtil.timeInGitFormat());
     var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
     reporter.problems().clear();
