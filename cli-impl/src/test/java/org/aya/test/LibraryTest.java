@@ -73,7 +73,7 @@ public class LibraryTest {
   private static @NotNull CompilerFlags makeFlagsForPretty() {
     var prettyInfo = new CompilerFlags.PrettyInfo(
       true, false, false, false, CliEnums.PrettyStage.literate,
-      CliEnums.PrettyFormat.html, AyaPrettierOptions.pretty(), new RenderOptions(), null
+      CliEnums.PrettyFormat.html, AyaPrettierOptions.pretty(), new RenderOptions(), null, null, null
     );
     return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, SeqView.empty(), null);
   }
