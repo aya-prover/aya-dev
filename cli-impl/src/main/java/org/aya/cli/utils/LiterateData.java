@@ -129,7 +129,7 @@ public record LiterateData(
         var delimiter = new Literate.Raw(Doc.plain("---"));
         frontMatter = new Literate.FrontMatter(MutableList.of(
           delimiter, Literate.EOL, label, Literate.EOL, delimiter));
-        literate = new Literate.Many(null, ImmutableSeq.of(frontMatter, literate));
+        literate = new Literate.Many(null, ImmutableSeq.of(frontMatter, Literate.EOL, literate));
       }
     }
     var prettier = new LiterateFaithfulPrettier(problems, highlights, options);
