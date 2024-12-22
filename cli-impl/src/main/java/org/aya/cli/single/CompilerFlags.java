@@ -32,7 +32,7 @@ public record CompilerFlags(
       CliEnums.detectFormat(outputFile),
       AyaPrettierOptions.pretty(),
       renderOptions,
-      null);
+      null, null);
     return null;
   }
 
@@ -45,6 +45,7 @@ public record CompilerFlags(
     @NotNull CliEnums.PrettyFormat prettyFormat,
     @NotNull PrettierOptions prettierOptions,
     @NotNull RenderOptions renderOptions,
+    @Nullable String datetimeFrontMatterKey,
     @Nullable String prettyDir
   ) {
     public @NotNull RenderOptions.DefaultSetup backendOpts(boolean headerCode) {

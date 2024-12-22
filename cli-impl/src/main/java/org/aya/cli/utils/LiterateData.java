@@ -4,6 +4,7 @@ package org.aya.cli.utils;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.cli.literate.AyaMdParser;
 import org.aya.cli.literate.LiterateFaithfulPrettier;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public record LiterateData(
   @NotNull Literate literate,
@@ -107,10 +110,23 @@ public record LiterateData(
     @Nullable ModulePath currentFileModule,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
+    @Nullable String datetimeFrontMatterKey,
     @NotNull PrettierOptions options
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(currentFileModule, Option.some(ayaFile.codeFile()), program);
     var literate = ayaFile.literate();
+    if (datetimeFrontMatterKey != null) {
+      var datetime = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss X"));
+      var frontMatter = literate.findFrontMatter();
+      var label = new Literate.Raw(Doc.plain(datetimeFrontMatterKey + ": " + datetime));
+      if (frontMatter != null) {
+        frontMatter.children().append(label);
+      } else {
+        literate = new Literate.Many(null, ImmutableSeq.of(
+          new Literate.FrontMatter(MutableList.of(
+            label)), literate));
+      }
+    }
     var prettier = new LiterateFaithfulPrettier(problems, highlights, options);
     prettier.accept(literate);
     return literate.toDoc();

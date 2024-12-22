@@ -171,6 +171,9 @@ public class LibraryCompiler {
     var litPretty = litConfig.pretty();
     var prettierOptions = litPretty != null ? litPretty.prettierOptions : cmdPretty.prettierOptions();
     var renderOptions = litPretty != null ? litPretty.renderOptions : cmdPretty.renderOptions();
+    var datetimeFrontMatterKey = cmdPretty.datetimeFrontMatterKey() != null
+      ? cmdPretty.datetimeFrontMatterKey()
+      : litConfig.datetimeFrontMatterKey();
     // always use the backend options from the command line, like output format, server-side rendering, etc.
     var outputTarget = cmdPretty.prettyFormat().target;
     var setup = cmdPretty.backendOpts(true).then(new RenderOptions.BackendSetup() {
@@ -187,7 +190,7 @@ public class LibraryCompiler {
     // THE BIG GAME
     modified.forEachChecked(src -> {
       // reportNest(STR."[Pretty] \{QualifiedID.join(src.moduleName())}");
-      var doc = src.pretty(ImmutableSeq.empty(), prettierOptions);
+      var doc = src.pretty(ImmutableSeq.empty(), datetimeFrontMatterKey, prettierOptions);
       var text = renderOptions.render(outputTarget, doc, setup);
       var outputFileName = AyaFiles.stripAyaSourcePostfix(src.displayPath().toString()) + outputTarget.fileExt;
       var outputFile = outputDir.resolve(outputFileName);

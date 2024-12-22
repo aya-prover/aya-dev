@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.json.LibraryConfig.LibraryLiterateConfig;
 import org.aya.cli.utils.LiteratePrettierOptions;
 import org.aya.generic.Constants;
 import org.aya.prelude.GeneratedVersion;
@@ -38,9 +39,9 @@ public final class LibraryConfigData {
       if (linkPrefix == null) linkPrefix = "/";
     }
 
-    public @NotNull LibraryConfig.LibraryLiterateConfig asConfig(@NotNull Path outputPath) {
+    public @NotNull LibraryLiterateConfig asConfig(@Nullable String datetimeFrontMatterKey, @NotNull Path outputPath) {
       checkDeserialization();
-      return new LibraryConfig.LibraryLiterateConfig(pretty, linkPrefix, outputPath);
+      return new LibraryLiterateConfig(pretty, datetimeFrontMatterKey, linkPrefix, outputPath);
     }
   }
 
@@ -48,6 +49,7 @@ public final class LibraryConfigData {
   public String name;
   public String group;
   public String version;
+  public String datetimeFrontMatterKey;
   public LibraryLiterateConfigData literate;
   public Map<String, LibraryDependencyData> dependency;
 
@@ -67,16 +69,15 @@ public final class LibraryConfigData {
 
   private @NotNull LibraryConfig asConfig(
     @NotNull Path libraryRoot,
-    @Nullable LibraryConfig.LibraryLiterateConfig literateConfig,
+    @Nullable LibraryLiterateConfig literateConfig,
     @NotNull Function<String, Path> buildRootGen
   ) {
     checkDeserialization(libraryRoot.resolve(Constants.AYA_JSON));
     var buildRoot = FileUtil.canonicalize(buildRootGen.apply(version));
-    if (literateConfig == null) literateConfig = literate.asConfig(buildRoot.resolve("pretty"));
+    if (literateConfig == null) literateConfig = literate.asConfig(datetimeFrontMatterKey,
+      buildRoot.resolve("pretty"));
     return new LibraryConfig(
-      Version.create(ayaVersion),
-      name,
-      version,
+      Version.create(ayaVersion), name, version,
       libraryRoot,
       libraryRoot.resolve("src"),
       buildRoot,
@@ -109,7 +110,7 @@ public final class LibraryConfigData {
 
   public static @NotNull LibraryConfig fromDependencyRoot(
     @NotNull Path dependencyRoot,
-    @Nullable LibraryConfig.LibraryLiterateConfig literateConfig,
+    @Nullable LibraryLiterateConfig literateConfig,
     @NotNull Function<String, Path> buildRoot
   ) throws IOException, BadConfig {
     var canonicalPath = FileUtil.canonicalize(dependencyRoot);

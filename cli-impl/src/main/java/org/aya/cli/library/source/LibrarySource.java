@@ -22,6 +22,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -77,8 +78,12 @@ public record LibrarySource(
     }
   }
 
-  public @NotNull Doc pretty(@NotNull ImmutableSeq<Problem> problems, @NotNull PrettierOptions options) throws IOException {
-    return LiterateData.toDoc(this, moduleName(), program.get(), problems, options);
+  public @NotNull Doc pretty(
+    @NotNull ImmutableSeq<Problem> problems,
+    @Nullable String datetimeFrontMatterKey,
+    @NotNull PrettierOptions options
+  ) throws IOException {
+    return LiterateData.toDoc(this, moduleName(), program.get(), problems, datetimeFrontMatterKey, options);
   }
 
   @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {

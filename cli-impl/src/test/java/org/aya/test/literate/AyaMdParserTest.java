@@ -97,7 +97,8 @@ public class AyaMdParserTest {
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
 
-    var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(), AyaPrettierOptions.pretty()).toDoc();
+    var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(),
+      null, AyaPrettierOptions.pretty()).toDoc();
     reporter.problems().clear();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();

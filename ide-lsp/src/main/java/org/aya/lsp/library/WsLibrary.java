@@ -45,7 +45,7 @@ public record WsLibrary(
       folder,
       folder.resolve("build"),
       folder.resolve("build"),
-      new LibraryConfig.LibraryLiterateConfig(null, "/", folder.resolve("build")),
+      new LibraryConfig.LibraryLiterateConfig(null, null, "/", folder.resolve("build")),
       ImmutableSeq.empty()
     );
   }

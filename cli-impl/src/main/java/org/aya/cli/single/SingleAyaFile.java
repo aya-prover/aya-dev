@@ -64,7 +64,8 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
-      var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(), flags.prettierOptions());
+      var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(),
+        flags.datetimeFrontMatterKey(), flags.prettierOptions());
       var text = renderOptions.render(out, d, flags.backendOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
@@ -75,9 +76,9 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   @VisibleForTesting default @NotNull Doc toDoc(
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
-    @NotNull PrettierOptions options
+    @Nullable String datetimeFrontMatterKey, @NotNull PrettierOptions options
   ) throws IOException {
-    return LiterateData.toDoc(this, null, program, problems, options);
+    return LiterateData.toDoc(this, null, program, problems, datetimeFrontMatterKey, options);
   }
 
   private void doWrite(
