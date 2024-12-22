@@ -66,12 +66,15 @@ public class LibraryTest {
   @Test public void testLiterate() throws IOException {
     FileUtil.deleteRecursively(DIR.resolve("build"));
     // Full rebuild
+    assertEquals(0, compile(makeFlagsForPretty(), DIR));
+  }
+
+  private static @NotNull CompilerFlags makeFlagsForPretty() {
     var prettyInfo = new CompilerFlags.PrettyInfo(
       true, false, false, false, CliEnums.PrettyStage.literate,
-      CliEnums.PrettyFormat.html, new AyaPrettierOptions(), new RenderOptions(), null
+      CliEnums.PrettyFormat.html, AyaPrettierOptions.pretty(), new RenderOptions(), null
     );
-    var flags = new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, ImmutableSeq.empty(), null);
-    assertEquals(0, compile(flags, DIR));
+    return new CompilerFlags(CompilerFlags.Message.ASCII, false, false, prettyInfo, ImmutableSeq.empty(), null);
   }
 
   @Test public void testInMemoryAndPrim() throws IOException {

@@ -834,11 +834,10 @@ public record AyaProducer(
   }
 
   public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
-    var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
-    var teles = lambdaTelescope(node.childrenOfType(LAMBDA_TELE).map(x -> x));
-    var result = typeOrHole(node.peekChild(TYPE), pos);
+    var teles = lambdaTelescope(node.childrenOfType(LAMBDA_TELE));
+    var result = typeOrHole(node.peekChild(TYPE), bind.sourcePos());
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
