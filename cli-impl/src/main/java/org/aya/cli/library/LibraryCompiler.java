@@ -13,6 +13,7 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
+import org.aya.cli.utils.LiterateData;
 import org.aya.generic.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
@@ -171,9 +172,12 @@ public class LibraryCompiler {
     var litPretty = litConfig.pretty();
     var prettierOptions = litPretty != null ? litPretty.prettierOptions : cmdPretty.prettierOptions();
     var renderOptions = litPretty != null ? litPretty.renderOptions : cmdPretty.renderOptions();
-    var datetimeFrontMatterKey = cmdPretty.datetimeFrontMatterKey() != null
-      ? cmdPretty.datetimeFrontMatterKey()
-      : litConfig.datetimeFrontMatterKey();
+    var datetimeFMKey = cmdPretty.datetimeFrontMatterKey();
+    var datetimeFMValue = cmdPretty.datetimeFrontMatterValue();
+    if (datetimeFMKey == null) datetimeFMKey = litConfig.datetimeFrontMatterKey();
+    if (datetimeFMValue != null) datetimeFMKey = "date";
+    datetimeFMValue = StringUtil.timeInGitFormat();
+    var frontMatter = new LiterateData.InjectedFrontMatter(datetimeFMKey, datetimeFMValue);
     // always use the backend options from the command line, like output format, server-side rendering, etc.
     var outputTarget = cmdPretty.prettyFormat().target;
     var setup = cmdPretty.backendOpts(true).then(new RenderOptions.BackendSetup() {
@@ -190,7 +194,7 @@ public class LibraryCompiler {
     // THE BIG GAME
     modified.forEachChecked(src -> {
       // reportNest(STR."[Pretty] \{QualifiedID.join(src.moduleName())}");
-      var doc = src.pretty(ImmutableSeq.empty(), datetimeFrontMatterKey, prettierOptions);
+      var doc = src.pretty(ImmutableSeq.empty(), frontMatter, prettierOptions);
       var text = renderOptions.render(outputTarget, doc, setup);
       var outputFileName = AyaFiles.stripAyaSourcePostfix(src.displayPath().toString()) + outputTarget.fileExt;
       var outputFile = outputDir.resolve(outputFileName);

@@ -22,6 +22,7 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
+import org.aya.util.more.StringUtil;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.Problem;
@@ -64,8 +65,11 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
 
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
+      var value = flags.datetimeFrontMatterValue();
+      if (value == null) value = StringUtil.timeInGitFormat();
+      var frontMatter = new LiterateData.InjectedFrontMatter(flags.datetimeFrontMatterKey(), value);
       var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(),
-        flags.datetimeFrontMatterKey(), flags.prettierOptions());
+        frontMatter, flags.prettierOptions());
       var text = renderOptions.render(out, d, flags.backendOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);
     } else {
@@ -76,9 +80,9 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
   @VisibleForTesting default @NotNull Doc toDoc(
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
-    @Nullable String datetimeFrontMatterKey, @NotNull PrettierOptions options
+    @NotNull LiterateData.InjectedFrontMatter frontMatter, @NotNull PrettierOptions options
   ) throws IOException {
-    return LiterateData.toDoc(this, null, program, problems, datetimeFrontMatterKey, options);
+    return LiterateData.toDoc(this, null, program, problems, frontMatter, options);
   }
 
   private void doWrite(

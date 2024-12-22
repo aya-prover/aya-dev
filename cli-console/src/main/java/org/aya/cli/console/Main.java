@@ -121,7 +121,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       prettyStage,
       prettyFormat,
       prettierOptions, renderOptions,
-      datetimeFrontMatterKey, prettyDir
+      datetimeFrontMatterKey, datetimeFrontMatterValue, prettyDir
     );
   }
 

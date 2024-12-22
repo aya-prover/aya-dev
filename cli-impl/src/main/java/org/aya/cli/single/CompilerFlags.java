@@ -32,10 +32,11 @@ public record CompilerFlags(
       CliEnums.detectFormat(outputFile),
       AyaPrettierOptions.pretty(),
       renderOptions,
-      null, null);
+      null, null, null);
     return null;
   }
 
+  /// @param datetimeFrontMatterValue see {@link org.aya.cli.utils.LiterateData.InjectedFrontMatter}
   public record PrettyInfo(
     boolean ascii,
     boolean prettyNoCodeStyle,
@@ -46,6 +47,7 @@ public record CompilerFlags(
     @NotNull PrettierOptions prettierOptions,
     @NotNull RenderOptions renderOptions,
     @Nullable String datetimeFrontMatterKey,
+    @Nullable String datetimeFrontMatterValue,
     @Nullable String prettyDir
   ) {
     public @NotNull RenderOptions.DefaultSetup backendOpts(boolean headerCode) {

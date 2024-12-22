@@ -37,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 
 public record LiterateData(
   @NotNull Literate literate,
@@ -105,20 +103,23 @@ public record LiterateData(
     });
   }
 
+  public record InjectedFrontMatter(
+    @Nullable String datetimeKey,
+    @NotNull String datetimeValue
+  ) { }
   public static @NotNull Doc toDoc(
     @NotNull GenericAyaFile ayaFile,
     @Nullable ModulePath currentFileModule,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ImmutableSeq<Problem> problems,
-    @Nullable String datetimeFrontMatterKey,
+    @NotNull InjectedFrontMatter injected,
     @NotNull PrettierOptions options
   ) throws IOException {
     var highlights = SyntaxHighlight.highlight(currentFileModule, Option.some(ayaFile.codeFile()), program);
     var literate = ayaFile.literate();
-    if (datetimeFrontMatterKey != null) {
-      var datetime = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss X"));
+    if (injected.datetimeKey != null) {
       var frontMatter = literate.findFrontMatter();
-      var label = new Literate.Raw(Doc.plain(datetimeFrontMatterKey + ": " + datetime));
+      var label = new Literate.Raw(Doc.plain(injected.datetimeKey + ": " + injected.datetimeValue));
       if (frontMatter != null) {
         frontMatter.children().append(label);
       } else {

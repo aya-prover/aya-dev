@@ -7,6 +7,7 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.single.SingleAyaFile;
 import org.aya.cli.single.SingleFileCompiler;
+import org.aya.cli.utils.LiterateData;
 import org.aya.generic.Constants;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.primitive.PrimFactory;
@@ -17,6 +18,7 @@ import org.aya.test.TestRunner;
 import org.aya.util.FileUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
+import org.aya.util.more.StringUtil;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.ThrowingReporter;
@@ -97,8 +99,9 @@ public class AyaMdParserTest {
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
 
+    var defaultFM = new LiterateData.InjectedFrontMatter(null, StringUtil.timeInGitFormat());
     var doc = literate.toDoc(stmts, reporter.problems().toImmutableSeq(),
-      null, AyaPrettierOptions.pretty()).toDoc();
+      defaultFM, AyaPrettierOptions.pretty()).toDoc();
     reporter.problems().clear();
     // save some coverage
     var actualTexInlinedStyle = doc.renderToTeX();
