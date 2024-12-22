@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
-import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
 import org.aya.prettier.AyaPrettierOptions;
@@ -18,7 +18,7 @@ public record CompilerFlags(
   boolean interruptedTrace,
   boolean remake,
   @Nullable CompilerFlags.PrettyInfo prettyInfo,
-  @NotNull SeqLike<Path> modulePaths,
+  @NotNull SeqView<Path> modulePaths,
   @Nullable Path outputFile
 ) {
   public static @Nullable CompilerFlags.PrettyInfo prettyInfoFromOutput(

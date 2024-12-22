@@ -539,7 +539,7 @@ public record AyaProducer(
     }
     if (node.is(ULIFT_ATOM)) {
       var expr = expr(node.child(EXPR));
-      var lifts = node.childrenOfType(ULIFT_PREFIX).collect(Collectors.summingInt(kw -> {
+      int lifts = node.childrenOfType(ULIFT_PREFIX).collect(Collectors.summingInt(kw -> {
         var text = kw.tokenText();
         if ("ulift".contentEquals(text)) return 1;
         else return text.length();
@@ -872,8 +872,7 @@ public record AyaProducer(
     if (node == null) return null;
     var child = node.peekChild(EXPR);
     if (child == null) {
-      reporter.report(new ParseError(sourcePosOf(node), "Expect the return type expression"));
-      return null;
+      return error(node, "Expect the return type expression");
     }
     return expr(child);
   }

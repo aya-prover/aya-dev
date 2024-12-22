@@ -157,7 +157,7 @@ public class PatternTycker implements Problematic, Stateful {
 
         // report after tyRef.set, the error message requires it
         if (whnf(type) instanceof DataCall call) {
-          var unimportedCon = collectConNames(call.ref())
+          var unimportedCon = collectNoParamConNames(call.ref())
             .anyMatch(it -> it.equalsIgnoreCase(bind.name()));
           if (unimportedCon) {
             fail(new PatternProblem.UnimportedConName(pattern.replace(bindPat)));
@@ -479,13 +479,17 @@ public class PatternTycker implements Problematic, Stateful {
     };
   }
 
-  private static @NotNull SeqView<String> collectConNames(@NotNull DataDefLike call) {
+  private static @NotNull SeqView<String> collectNoParamConNames(@NotNull DataDefLike call) {
     return switch (call) {
-      case JitData jitData -> jitData.body().view().map(AnyDef::name);
+      case JitData jitData -> jitData.body().view()
+        .filter(it -> it.selfTeleSize() == 0)
+        .map(AnyDef::name);
       case DataDef.Delegate delegate -> {
         // the core may be unchecked!
         var concrete = (DataDecl) delegate.ref.concrete;
-        yield concrete.body.view().map(it -> it.ref.name());
+        yield concrete.body.view()
+          .filter(it -> it.telescope.isEmpty())
+          .map(it -> it.ref.name());
       }
     };
   }
