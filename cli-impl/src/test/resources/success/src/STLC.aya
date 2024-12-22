@@ -114,15 +114,15 @@ def shift_preservation
     | i<=n : i <= n := ¬<→>= np
     | i<=sn : i <= suc n := n<=s i<=n
     | i=takei : i = length (take i G) := pinv (take<=length i G p)
-    | takei<=i : length (take i G) <= i := transport (fn l => l <= i) i=takei (n<=n i)
+    | takei<=i : length (take i G) <= i := transport (<= i) i=takei (n<=n i)
     | myGoal! : (take i G ++ drop i G) !! n = G !! n := pmap (!! n) (pinv (split-lemma i G p))
     | myGoal!! : (take i G ++ (C :< drop i G)) !! suc n = (C :< drop i G) !! (subTrunc (suc n) (length (take i G))) :=
-      pinv (++-!!-r (suc n) (take i G) (C :< drop i G) (transport (fn l => l <= (suc n)) i=takei i<=sn))
-    | myGoal!!! : (C :< drop i G) !! (subTrunc (suc n) (length (take i G))) = (C :< drop i G) !! (subTrunc (suc n) i):=
+      pinv (++-!!-r (suc n) (take i G) (C :< drop i G) (transport (<= suc n) i=takei i<=sn))
+    | myGoal!!! : _ !! (subTrunc (suc n) (length (take i G))) = _ !! (subTrunc (suc n) i):=
       pmap (fn l => (C :< drop i G) !! (subTrunc (suc n) l)) (pinv i=takei)
-    | myGoal!!!! : (C :< drop i G) !! (subTrunc (suc n) i) = drop i G !! subTrunc n i :=
+    | myGoal!!!! : _ !! (subTrunc (suc n) i) = drop i G !! subTrunc n i :=
       pmap ((C :< drop i G) !!) (suc-sub i<=n)
-    | myGoal!!!!! : drop i G !! subTrunc n i = drop i G !! subTrunc n (length (take i G)) :=
+    | myGoal!!!!! : _ !! subTrunc n i = _ !! subTrunc n (length (take i G)) :=
       pmap (fn l => drop i G !! subTrunc n l) i=takei
     in Var_hasType (
       myGoal!!
@@ -168,7 +168,7 @@ def shiftBack_weakening
   | _ because reflect_true p =>
     let
     | taken=n : length (take n G) = n := take<=length n G leq
-    | taken<idx : length (take n G) < idx := transport (fn m => m < idx) (pinv taken=n) p
+    | taken<idx : length (take n G) < idx := transport (< idx) (pinv taken=n) p
     | myGoal! : (take n G ++ ([ A ] ++ drop n G)) !! idx = ((take n G ++ [ A ]) ++ drop n G) !! idx := pmap (!! idx) (pinv (++-assoc _ _ _))
     | myGoal!! : ((take n G ++ [ A ]) ++ drop n G) !! idx = drop n G !! (subTrunc idx (suc n)) :=
       pinv (++-!!-r' idx (take n G ++ [ A ]) (drop n G) (transport
@@ -181,37 +181,37 @@ def shiftBack_weakening
     | dec_idx : Nat := (<→s p).1
     | proof_dec_idx : idx = suc dec_idx := (<→s p).2
     | myGoal!!! : (take n G ++ drop n G) !! dec_idx = drop n G !! (subTrunc dec_idx n) :=
-      pinv (++-!!-r' dec_idx (take n G) (drop n G) (transport (fn i => suc (length (take n G)) <= i) proof_dec_idx taken<idx) taken=n)
+      pinv (++-!!-r' dec_idx (take n G) (drop n G) (transport (suc (length (take n G)) <=) proof_dec_idx taken<idx) taken=n)
     in Var_hasType (myGoal!!! <=> pmap (fn i => drop n G !! (subTrunc i (suc n))) (pinv proof_dec_idx) <=> vhT')
   | _ because reflect_false np =>
     let
     | taken=n : length (take n G) = n := take<=length n G leq
     | idx<=n : idx <= n := ¬<→>= np
     | idx<n : idx < n := <=-with-≠ idx<=n (fn p => neq (pinv p))
-    | myGoal : (take n G ++ drop n G) !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (fn l => idx < l) (pinv taken=n) idx<n)
-    | myGoal! : insert n A G !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (fn l => idx < l) (pinv taken=n) idx<n)
+    | myGoal : (take n G ++ drop n G) !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (idx <) (pinv taken=n) idx<n)
+    | myGoal! : insert n A G !! idx = take n G !! idx := ++-!!-l idx _ _ (transport (idx <) (pinv taken=n) idx<n)
     in Var_hasType (myGoal <=> pinv myGoal! <=> vhT)
   }
 | True_nrt, _, True_hasType => True_hasType
 | False_nrt, _, False_hasType => False_hasType
 
-def shift_not_refer_to {tm : Tm} {i : Nat} (nrt : not_refer_to tm i) (j : Nat) : not_refer_to (shift tm j) (suc i + j)
-| Lam_nrt nrt, j => Lam_nrt {??}
-| _, _ => {??}
-
-def inst_not_refer_to (tm : Tm) (i : Nat) (v : Tm) (vnrt : not_refer_to v i) : not_refer_to (inst tm i v) i
-| Lam l, i, v, vnrt => {??}
-| _, _, _, _ => {??}
-
-def inst_preservation0
-  {G : Gamma} {tm : Tm} {A B : Ty} (hasType (A :< G) tm B)
-  {v : Tm} (hasType G v A)
-  : hasType G (inst tm 0 v) A => {??}
-
-def preservation
-  {G : Gamma} {tm tm': Tm} {ty : Ty}
-  (p : hasType G tm ty) (s : tm —> tm'): hasType G tm' ty
-| App_hasType A fhT ahT, S_App0 eqa sf => App_hasType A (preservation fhT sf) (transport (fn a => hasType G a A) eqa ahT)
-| {_}, {_}, {_}, {B}, App_hasType A fhT ahT, S_App1 eqf vf sa =>
-  App_hasType A (transport (fn f => hasType G f (Arrow A B)) eqf fhT) (preservation ahT sa)
-| App_hasType A fhT ahT, S_App va eqInst => {??}
+//def shift_not_refer_to {tm : Tm} {i : Nat} (nrt : not_refer_to tm i) (j : Nat) : not_refer_to (shift tm j) (suc i + j)
+//| Lam_nrt nrt, j => Lam_nrt {??}
+//| _, _ => {??}
+//
+//def inst_not_refer_to (tm : Tm) (i : Nat) (v : Tm) (vnrt : not_refer_to v i) : not_refer_to (inst tm i v) i
+//| Lam l, i, v, vnrt => {??}
+//| _, _, _, _ => {??}
+//
+//def inst_preservation0
+//  {G : Gamma} {tm : Tm} {A B : Ty} (hasType (A :< G) tm B)
+//  {v : Tm} (hasType G v A)
+//  : hasType G (inst tm 0 v) A => {??}
+//
+//def preservation
+//  {G : Gamma} {tm tm': Tm} {ty : Ty}
+//  (p : hasType G tm ty) (s : tm —> tm'): hasType G tm' ty
+//| App_hasType A fhT ahT, S_App0 eqa sf => App_hasType A (preservation fhT sf) (transport (fn a => hasType G a A) eqa ahT)
+//| {_}, {_}, {_}, {B}, App_hasType A fhT ahT, S_App1 eqf vf sa =>
+//  App_hasType A (transport (fn f => hasType G f (Arrow A B)) eqf fhT) (preservation ahT sa)
+//| App_hasType A fhT ahT, S_App va eqInst => {??}
