@@ -459,11 +459,11 @@ public record AyaProducer(
     return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toImmutableSeq();
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> lambdaTelescope(SeqView<? extends GenericNode<?>> telescope) {
-    return telescope.flatMap(this::lambdaTele).toImmutableSeq();
+  public @NotNull ImmutableSeq<Expr.Param> typedTelescope(SeqView<? extends GenericNode<?>> telescope) {
+    return telescope.flatMap(this::typedTele).toImmutableSeq();
   }
 
-  public @NotNull ImmutableSeq<Expr.Param> lambdaTele(@NotNull GenericNode<?> node) {
+  public @NotNull ImmutableSeq<Expr.Param> typedTele(@NotNull GenericNode<?> node) {
     var teleParamName = node.peekChild(TELE_PARAM_NAME);
     if (teleParamName != null) return lambdaTeleLit(teleParamName, sourcePosOf(node));
     return licit(node.child(LICIT), LAMBDA_TELE_BINDER, this::lambdaTeleBinder);
@@ -610,7 +610,7 @@ public record AyaProducer(
       telescope(node.childrenOfType(TELE)).view(),
       expr(node.child(EXPR)));
     if (node.is(FORALL_EXPR)) return Expr.buildPi(pos,
-      lambdaTelescope(node.childrenOfType(LAMBDA_TELE)).view(),
+      typedTelescope(node.childrenOfType(LAMBDA_TELE)).view(),
       expr(node.child(EXPR)));
     if (node.is(SIGMA_EXPR)) return Expr.buildSigma(pos,
       telescope(node.childrenOfType(TELE)).view(),
@@ -746,6 +746,7 @@ public record AyaProducer(
       child = child.child(COMMA_SEP);
       var patterns = patterns(child);
       Pattern pat;
+      var entirePos = sourcePosOf(child);
       if (patterns.sizeEquals(1)) {
         pat = newBinOPScope(patterns.getFirst().term(), explicit);
       } else {
@@ -758,10 +759,10 @@ public record AyaProducer(
           reporter.report(new ParseError(pos, "Implicit pattern is not allowed here."));
         });
 
-        pat = Expr.buildTupPat(sourcePosOf(child), patterns.map(Arg::term).view()).data();
+        pat = Expr.buildTupPat(entirePos, patterns.map(Arg::term).view()).data();
       }
 
-      return new Arg<>(new WithPos<>(sourcePosOf(node), pat), explicit);
+      return new Arg<>(new WithPos<>(entirePos, pat), explicit);
     });
 
     return new Arg<>(atomPattern(node.childrenView().getFirst()), true);
@@ -836,7 +837,7 @@ public record AyaProducer(
   public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
-    var teles = lambdaTelescope(node.childrenOfType(LAMBDA_TELE));
+    var teles = typedTelescope(node.childrenOfType(LAMBDA_TELE));
     var result = typeOrHole(node.peekChild(TYPE), bind.sourcePos());
     var body = expr(node.child(EXPR));
 
