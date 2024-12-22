@@ -1,0 +1,18 @@
+open import data::unit
+open import data::maybe::base
+open import relation::nullary::empty
+open import relation::binary::path
+
+variable A : Type
+
+private def maybe-diag (m : Maybe A) : Type
+| just a => Unit
+| nothing => Empty
+
+def nothing≠just {A : Type} {a : A} (p : nothing = just a) : ⊥ => coe 0 1 (fn i => maybe-diag ((pinv p) i)) tt
+
+private def just-wrap {A : Type} (v : A) (m : Maybe A) : A elim m
+| nothing => v
+| just a => a
+
+def just-inj {A : Type} {a b : A} (p : just a = just b) : a = b => fn i => just-wrap a (p i)

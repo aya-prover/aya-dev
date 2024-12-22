@@ -12,9 +12,9 @@ overlap def infixl + Nat Nat : Nat
 | a, suc b => suc (a + b)
 tighter =
 
-def subTrunc (x y : Nat) : Nat
+overlap def subTrunc (x y : Nat) : Nat
+| 0, _ => 0
 | n, 0 => n
-| 0, suc _ => 0
 | suc n, suc m => subTrunc n m
 
 overlap def +-comm : a + b = b + a elim a b
@@ -36,10 +36,3 @@ overlap def infixl * Nat Nat : Nat
 | m, 0 => 0
 | suc m, n => n + m * n
 tighter +
-
-overlap def infix =? Nat Nat : Bool
-| zero, zero => true
-| zero, suc _ => false
-| suc _, zero => false
-| suc a, suc b => a =? b
-looser + *

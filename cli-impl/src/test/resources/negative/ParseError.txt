@@ -88,11 +88,11 @@ Parsing interrupted due to:
 Let's learn from that.
 
 ImplicitTuplePat:
-In file $FILE:2:3 ->
+In file $FILE:2:4 ->
 
   1 │   def test (Sig Type ** Type) : Type
   2 │   | ({a}, b) => a
-    │      ╰─╯
+    │       ╰╯
 
 Error: Implicit pattern is not allowed here.
 
@@ -100,12 +100,12 @@ Error: Implicit pattern is not allowed here.
 Let's learn from that.
 
 ImplicitListPat:
-In file $FILE:4:3 ->
+In file $FILE:4:4 ->
 
   2 │   open import arith::nat::base
   3 │   def test (List Nat) : Nat
   4 │   | [{a}] => a
-    │      ╰─╯
+    │       ╰╯
 
 Error: Implicit elements in a list pattern is disallowed
 

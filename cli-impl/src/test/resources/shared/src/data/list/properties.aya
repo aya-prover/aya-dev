@@ -1,12 +1,21 @@
 open import arith::nat::base
+open import arith::bool using (Bool, true, false)
 open import data::list::base
+open import data::maybe using (just, nothing, nothing≠just)
 open import relation::binary::path
+open import relation::binary::nat_cmp
+open import relation::nullary::empty
+open import relation::nullary::decidable hiding (map)
 
 variable A B C : Type
 
 def length-map (f : A -> B) (l : List A) : length (map f l) = length l elim l
 | [ ] => refl
 | x :< xs => pmap suc (length-map f xs)
+
+def length-++ (xs ys : List A) : length (xs ++ ys) = length xs + length ys elim xs
+| [ ] => refl
+| x :< xs' => pmap suc (length-++ _ _)
 
 def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
 | [ ] => refl
@@ -52,3 +61,65 @@ def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim x
   | step2 : (rev ys ++ rev xs) ++ [ x ] = rev ys ++ (rev xs ++ [ x ]) := ++-assoc _ _ _
   | step3 : rev ys ++ rev' [ x ] xs = rev ys ++ (rev xs ++ [ x ]) := pmap (rev ys ++) (rev'-++ _ _)
   in step0 <=> step1 <=> step2 <=> pinv step3
+
+def !!→length (i : Nat) (xs : List A) (v : A) (xs !! i = just v) : i < length xs
+| 0, [ ], _, p => exfalso (nothing≠just p)
+| 0, _ :< _, _, p => refl
+| suc i, [ ], _, p => exfalso (nothing≠just p)
+| suc i, x :< xs, _, p => !!→length i xs _ p
+
+def !!>=length (i : Nat) (xs : List A) (length xs <= i) : xs !! i = nothing
+| _, [ ], p => refl
+| 0, _ :< _, p => exfalso (sn<=z p)
+| suc i, x :< xs, p => !!>=length i xs (s<=s p)
+
+def ++-!!-l (i : Nat) (xs ys : List A) (i < length xs) : (xs ++ ys) !! i = xs !! i
+| _, [ ], _, p => exfalso (n<z→⊥ p)
+| 0, x :< xs', _, _ => refl
+| suc i', x :< xs', _, p => ++-!!-l i' xs' ys p
+
+def ++-!!-r (i : Nat) (xs ys : List A) (length xs <= i) : (ys !! (subTrunc i (length xs))) = (xs ++ ys) !! i
+| _, _, [ ], p => pinv (!!>=length i xs p)
+| 0, [ ], y :< ys', _ => refl
+| 0, _ :< _, y :< ys', p => exfalso (sn<=z p)
+| suc i', [ ], y :< ys', _ => refl
+| suc i', _ :< xs', y :< ys', p => ++-!!-r i' xs' (y :< ys') (s<=s p)
+
+def split-lemma (i : Nat) (xs : List A) (i <= length xs) : xs = take i xs ++ drop i xs
+| 0, _, _ => refl
+| suc i, [ ], p => exfalso (sn<=z p)
+| suc i, x :< xs, p => pmap (x :<) (split-lemma i xs (s<=s p))
+
+def take<=length (i : Nat) (xs : List A) (i <= length xs)
+  : length (take i xs) = i
+| 0, _, _ => refl
+| suc i, [ ], p => exfalso (n<z→⊥ p)
+| suc i, x :< xs, p => pmap suc (take<=length _ _ (s<=s p))
+
+def take-!! (i : Nat) (xs : List A) (n : Nat) (i<=xs : i <= length xs) (n<i : n < i)
+  : xs !! n = take i xs !! n => transport
+    (fn l => l !! n = take i xs !! n) (pinv (split-lemma i xs i<=xs))
+    (++-!!-l _ _ _ (transport (fn l => n < l) (pinv (take<=length i xs i<=xs)) n<i))
+
+def drop<=length (i : Nat) (xs : List A)
+  : length (drop i xs) = subTrunc (length xs) i
+| _, [ ] => refl
+| 0, x :< xs => refl
+| suc i, x :< xs => drop<=length i xs
+
+def insert<=length
+  (i : Nat) (x : A) (xs : List A) (p : i <= length xs)
+  : length (insert i x xs) = length xs + 1
+  => match i <=? length xs {
+  | _ because (reflect_true _) => let
+    | myGoal! : length (drop i xs) + length (take i xs) = length xs := transport
+        (fn a => a + length (take i xs) = length xs) (pinv (drop<=length _ _))
+        (transport
+          (fn a => (subTrunc (length xs) i + a = length xs)) (pinv (take<=length _ _ p))
+          (a-b+b=a _ _ p))
+    | BanGDream : length (take i xs) + length (drop i xs) = length xs := transport (fn lhs => lhs = length xs) +-comm myGoal!
+    | haruhikage : suc (length (take i xs) + length (drop i xs)) = suc (length xs) := pmap suc BanGDream
+    | nande : length (take i xs ++ (x :< drop i xs)) = suc (length (take i xs) + length (drop i xs)) := length-++ _ _
+    in nande <=> haruhikage
+  | _ because (reflect_false np<) => exfalso (np< p)
+  }

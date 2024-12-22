@@ -72,11 +72,11 @@ Error: Cannot split on a non-inductive type
 Let's learn from that.
 
 TupleOnNonSigma:
-In file $FILE:2:3 ->
+In file $FILE:2:4 ->
 
   1 │   def test (a' : Type) : Type
   2 │    | (a, b) => a
-    │      ╰────╯
+    │       ╰──╯
   3 │   
 
 Error: The tuple pattern
@@ -84,12 +84,12 @@ Error: The tuple pattern
        splits only on sigma types, while the actual type is not:
          Type 0
 
-In file $FILE:6:3 ->
+In file $FILE:6:4 ->
 
   4 │   def Alias => Type
   5 │   def test2 (a' : Alias) : Type
   6 │    | (a, b) => a
-    │      ╰────╯
+    │       ╰──╯
 
 Error: The tuple pattern
          (a, b)
@@ -132,12 +132,12 @@ Error: There is no pattern for the parameter
 Let's learn from that.
 
 TooManyPattern:
-In file $FILE:3:11 ->
+In file $FILE:3:12 ->
 
   1 │   open import arith::bool::base
   2 │   def ifElse {A : Type} (b : Bool) A A : A
   3 │   | true, x, {y} => x
-    │              ╰─╯
+    │               ╰╯
 
 Error: There are too many implicit patterns:
          y
@@ -289,11 +289,11 @@ Error: There is no pattern for the parameter
 Let's learn from that.
 
 ImplicitPatWithElim:
-In file $FILE:2:5 ->
+In file $FILE:2:6 ->
 
   1 │   def foo (A : Type) A : A elim A
   2 │   | _, {a} => a
-    │        ╰─╯
+    │         ╰╯
 
 Error: Pattern matching with elim is not compatible with implicit patterns.
 
