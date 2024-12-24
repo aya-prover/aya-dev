@@ -46,7 +46,8 @@ public record ExprResolver(
   boolean allowGeneralizing,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
-  @NotNull MutableStack<Where> where
+  @NotNull MutableStack<Where> where,
+  @NotNull VariableDependencyCollector collector
 ) implements PosedUnaryOperator<Expr> {
   public record LiterateResolved(
     ImmutableSeq<Expr.Param> params,
@@ -70,7 +71,8 @@ public record ExprResolver(
   }
 
   public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
-    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
+    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(),
+      new VariableDependencyCollector(ctx.reporter()));
   }
 
   public void resetRefs() { reference.clear(); }
@@ -78,7 +80,7 @@ public record ExprResolver(
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where);
+    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where, collector);
   }
 
   /**
@@ -86,7 +88,7 @@ public record ExprResolver(
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where);
+    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where, collector);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -261,7 +263,7 @@ public record ExprResolver(
   private void introduceDependencies(@NotNull GeneralizedVar var) {
     if (allowedGeneralizes.containsKey(var)) return;
 
-    var dependencies = getDependencies(var);
+    var dependencies = collector.getDependencies(var);
     for (var dep : dependencies) {
       introduceDependencies(dep);
     }
@@ -273,27 +275,6 @@ public record ExprResolver(
     addReference(owner);
   }
 
-  private @NotNull ImmutableSeq<GeneralizedVar> getDependencies(@NotNull GeneralizedVar var) {
-    var collector = new GeneralizedVarCollector();
-    var.owner.type.descent(collector);
-    return collector.getCollected();
-  }
-
-  private static class GeneralizedVarCollector implements PosedUnaryOperator<Expr> {
-    private final MutableList<GeneralizedVar> collected = MutableList.create();
-
-    @Override
-    public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
-      if (expr instanceof Expr.Ref ref && ref.var() instanceof GeneralizedVar gvar) {
-        collected.append(gvar);
-      }
-      return expr.descent(this);
-    }
-
-    public ImmutableSeq<GeneralizedVar> getCollected() {
-      return collected.toImmutableSeq();
-    }
-  }
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
@@ -308,7 +289,7 @@ public record ExprResolver(
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
     var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
-      MutableStack.create());
+      MutableStack.create(), collector);
     resolver.enter(initial);
     return resolver;
   }
