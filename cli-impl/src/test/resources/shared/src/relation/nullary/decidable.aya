@@ -14,8 +14,8 @@ def yes {P : Type} (p : P) : Decidable P => true because (reflect_true p)
 def no {P : Type} (np : neg P) : Decidable P => false because (reflect_false np)
 
 def map {P Q : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) : Decidable Q elim d
-| true because (reflect_true p) => yes (f p)
-| false because (reflect_false np) => no (fn q => np (g q))
+| _ because (reflect_true p) => yes (f p)
+| _ because (reflect_false np) => no (fn q => np (g q))
 
 def if-then-else {A P : Type} (d : Decidable P) (then else : A) : A elim d
 | true because _ => then

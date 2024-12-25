@@ -116,7 +116,7 @@ def insert<=length
         (fn a => a + length (take i xs) = length xs) (pinv (drop<=length _ _))
         (transport
           (fn a => (subTrunc (length xs) i + a = length xs)) (pinv (take<=length _ _ p))
-          (a-b+b=a _ _ p))
+          (a-b+b=a p))
     | BanGDream : length (take i xs) + length (drop i xs) = length xs := transport (fn lhs => lhs = length xs) +-comm myGoal!
     | haruhikage : suc (length (take i xs) + length (drop i xs)) = suc (length xs) := pmap suc BanGDream
     | nande : length (take i xs ++ (x :< drop i xs)) = suc (length (take i xs) + length (drop i xs)) := length-++ _ _
