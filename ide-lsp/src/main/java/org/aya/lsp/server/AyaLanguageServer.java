@@ -92,19 +92,25 @@ public class AyaLanguageServer implements LanguageServer {
     return libraries.view();
   }
 
-  public void registerLibrary(@NotNull Path path) {
+  /// @return the libraries that are actually loaded
+  public SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
-    if (!tryAyaLibrary(path)) mockLibraries(path);
+    var tryLoad = tryAyaLibrary(path);
+    if (tryLoad != null) return tryLoad;
+    return SeqView.narrow(mockLibraries(path).view());
   }
 
-  private boolean tryAyaLibrary(@Nullable Path path) {
-    if (path == null) return false;
+  /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
+  /// or possibly malformed config files), and nonempty if successfully loaded.
+  private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@Nullable Path path) {
+    if (path == null) return null;
     var ayaJson = path.resolve(Constants.AYA_JSON);
     if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
     try {
       var config = LibraryConfigData.fromLibraryRoot(path);
       var owner = DiskLibraryOwner.from(config);
       libraries.append(owner);
+      return SeqView.of(owner);
     } catch (IOException e) {
       var s = new StringWriter();
       e.printStackTrace(new PrintWriter(s));
@@ -112,13 +118,14 @@ public class AyaLanguageServer implements LanguageServer {
     } catch (LibraryConfigData.BadConfig bad) {
       client.showMessage(new ShowMessageParams(MessageType.Error, "Cannot load malformed library: " + bad.getMessage()));
     }
-    // stop retrying and mocking
-    return true;
+    // Do not mock because there is meant to be a library, but it's bad
+    return SeqView.empty();
   }
 
-  private void mockLibraries(@NotNull Path path) {
-    libraries.appendAll(AyaFiles.collectAyaSourceFiles(path, 1)
-      .map(WsLibrary::mock));
+  private ImmutableSeq<WsLibrary> mockLibraries(@NotNull Path path) {
+    var mocked = AyaFiles.collectAyaSourceFiles(path, 1).map(WsLibrary::mock);
+    libraries.appendAll(mocked);
+    return mocked;
   }
 
   @Override public void initialized() {
@@ -132,7 +139,7 @@ public class AyaLanguageServer implements LanguageServer {
 
   @Override public InitializeResult initialize(InitializeParams params) {
     var cap = new ServerCapabilities();
-    cap.textDocumentSync = 0;
+    cap.textDocumentSync = DocumentSyncKind.None;
     var workOps = new ServerCapabilities.WorkspaceFoldersOptions(true, true);
     var workCap = new ServerCapabilities.WorkspaceServerCapabilities(workOps);
     cap.completionProvider = new ServerCapabilities.CompletionOptions(
@@ -274,7 +281,7 @@ public class AyaLanguageServer implements LanguageServer {
               Log.d("Created new file: %s, mocked a library %s for it", newSrc, mock.mockConfig().name());
               libraries.append(mock);
             }
-            default -> {}
+            default -> { }
           }
         }
         case FileChangeType.Deleted -> {
@@ -284,7 +291,7 @@ public class AyaLanguageServer implements LanguageServer {
           switch (src.owner()) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
             case WsLibrary owner -> libraries.removeIf(o -> o == owner);
-            default -> {}
+            default -> { }
           }
         }
       }
