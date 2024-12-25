@@ -73,7 +73,7 @@ public sealed interface Expr extends AyaDocile {
 
   /// @param filling  the inner expr of goal
   /// @param explicit whether the hole is a type-directed programming goal or
-  ///                                                 a to-be-solved by tycking hole.
+  ///                 a to-be-solved by tycking hole.
   record Hole(
     boolean explicit,
     @Nullable WithPos<Expr> filling,
@@ -422,7 +422,7 @@ public sealed interface Expr extends AyaDocile {
     /// @param generator `x * y` part above
     /// @param binds     `x <- [1, 2, 3], y <- [4, 5, 6]` part above
     /// @param names     the bind (`>>=`) function, it is [#monadBind] in default,
-    ///                                                                     the pure (`return`) function, it is [#functorPure] in default
+    ///                  the pure (`return`) function, it is [#functorPure] in default
     /// @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
     /// it will be desugared to `do x <- [1, 2, 3], y <- [4, 5, 6], return x * y`
     public record CompBlock(
@@ -570,9 +570,11 @@ public sealed interface Expr extends AyaDocile {
         returns != null ? returns.descent(f) : null);
     }
 
+    /// Patterns will be visited externally, so we don't need to visit them here.
+    ///
+    /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(f::accept);
-      // TODO: what about the patterns
       clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
     }

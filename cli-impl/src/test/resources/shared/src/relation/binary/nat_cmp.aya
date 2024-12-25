@@ -41,22 +41,24 @@ def <=-trans {a b c : Nat} (p : a <= b) (q : b <= c) : a <= c elim a b c
 | suc a, suc b, zero => exfalso (sn<=z q)
 | suc a, suc b, suc c => <=-trans (s<=s p) (s<=s q)
 
-private def some-lemma (a b : Nat) (p : subTrunc a b = 0) (np : neg (subTrunc (suc a) b = 0)) : a = b
-| 0, 0, _, _ => refl
-| 0, suc b, _, _ => exfalso (np p)
-| suc a, 0, p, _ => exfalso (z≠s (pinv p))
-| suc a, suc b, _, _ => pmap suc (some-lemma a b p np)
+private def some-lemma {a b : Nat} (p : subTrunc a b = 0) (np : neg (subTrunc (suc a) b = 0)) : a = b elim a b
+| 0, 0 => refl
+| 0, suc b => exfalso (np p)
+| suc a, 0 => exfalso (z≠s (pinv p))
+| suc a, suc b => pmap suc (some-lemma p np)
 
+@suppress(Shadowing)
 def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
   match a <? b {
   | _ because reflect_true p => inl p
-  | _ because reflect_false np => inr (some-lemma _ _ p np)
+  | _ because reflect_false np => inr (some-lemma p np)
   }
 
+@suppress(Shadowing)
 def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
 | {_}, {0}, np => refl
 | {0}, {suc b}, np => exfalso (np refl)
-| {suc a}, {suc b}, np => s<=s (¬<→>= {a} {b} (fn p => np p))
+| {suc a}, {suc b}, np => s<=s (¬<→>= np)
 
 def <=-with-≠ {a b : Nat} (p : a <= b) (q : neg (a = b)) : a < b => match <=-case p {
 | inl proof => proof
@@ -67,10 +69,10 @@ def <→s {a b : Nat} (p : a < b) : Sig (n : Nat) ** b = suc n elim a b
 | _, 0 => exfalso (n<z→⊥ p)
 | _, suc b => (b, refl)
 
-def a-b+b=a (a b : Nat) (p : b <= a) : subTrunc a b + b = a
-| 0, _, _ => n<=z p
-| suc a', 0, _ => refl
-| suc a', suc b', _ => pmap suc (a-b+b=a a' b' (s<=s p))
+def a-b+b=a {a b : Nat} (p : b <= a) : subTrunc a b + b = a elim a b
+| 0, _ => n<=z p
+| suc a', 0 => refl
+| suc a', suc b' => pmap suc (a-b+b=a (s<=s p))
 
 def suc-sub {a b : Nat} (p : b < (suc a)) : subTrunc (suc a) b = suc (subTrunc a b) elim a b
 | _, zero => refl
