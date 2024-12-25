@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -22,9 +22,9 @@ import java.nio.file.Path;
  */
 public record DiskLibraryOwner(
   @NotNull SourceFileLocator locator,
-  @NotNull MutableList<Path> modulePathMut,
-  @NotNull MutableList<LibraryOwner> libraryDepsMut,
-  @NotNull MutableList<LibrarySource> librarySourcesMut,
+  @Override @NotNull MutableList<Path> modulePathMut,
+  @Override @NotNull MutableList<LibraryOwner> libraryDepsMut,
+  @Override @NotNull MutableList<LibrarySource> librarySourcesMut,
   @NotNull LibraryConfig underlyingLibrary
 ) implements MutableLibraryOwner {
   private static @Nullable LibraryConfig depConfig(@NotNull LibraryConfig config, @NotNull LibraryDependency dep) throws IOException {
@@ -45,7 +45,7 @@ public record DiskLibraryOwner(
   public static @NotNull DiskLibraryOwner from(@NotNull LibraryConfig config) throws IOException {
     var srcRoot = config.librarySrcRoot();
     var locator = new SourceFileLocator.Module(SeqView.of(srcRoot));
-    var owner = new DiskLibraryOwner(locator, MutableList.create(),
+    var owner = new DiskLibraryOwner(locator, MutableList.of(srcRoot),
       MutableList.create(), MutableList.create(), config);
     owner.librarySourcesMut.appendAll(AyaFiles.collectAyaSourceFiles(srcRoot)
       .map(p -> LibrarySource.create(owner, p)));
