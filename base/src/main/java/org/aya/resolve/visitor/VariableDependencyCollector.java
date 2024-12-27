@@ -54,13 +54,13 @@ public final class VariableDependencyCollector {
 
     var deps = collectReferences(var);
     dependencies.put(var, deps);
-    visiting.remove(var);
 
     // Recursively register dependencies
     for (var dep : deps) {
       registerVariable(dep);
     }
 
+    visiting.remove(var);
     visited.add(var);
   }
 
