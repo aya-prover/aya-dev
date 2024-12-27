@@ -335,7 +335,7 @@ public record AyaProducer(
     var elims = node.childrenOfType(WEAK_ID)
       .map(this::weakId)
       .toImmutableSeq();
-    return new FnBody.BlockBody(body, null, elims);
+    return new FnBody.BlockBody(body, elims);
   }
 
   private void giveMeOpen(@NotNull ModifierParser.Modifiers modiSet, @NotNull Decl decl, @NotNull MutableList<Stmt> additional) {
@@ -359,7 +359,8 @@ public record AyaProducer(
     var name = info.checkName(this);
     if (name == null) return null;
     var ty = typeOrNull(node.peekChild(TYPE));
-    var decl = new DataDecl(info.info, name, tele, ty, body);
+    // FIXME: parse elims
+    var decl = new DataDecl(info.info, name, tele, ty, ImmutableSeq.empty(), body);
     if (info.modifier.isExample()) decl.isExample = true;
     giveMeOpen(info.modifier, decl, additional);
     pragma(node, decl);

@@ -27,19 +27,36 @@ public sealed interface FnBody {
     }
   }
 
-  /**
-   * @param elims NotNull after resolving
-   */
-  record BlockBody(
-    @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @Nullable ImmutableSeq<LocalVar> elims,
-    @NotNull ImmutableSeq<WithPos<String>> rawElims
-  ) implements FnBody {
-    @Override public BlockBody map(@NotNull PosedUnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g) {
-      return new BlockBody(clauses.map(g), elims, rawElims);
+  record BlockBody(@NotNull MatchBody<Pattern.Clause> inner) implements FnBody {
+    public BlockBody(
+      @NotNull ImmutableSeq<Pattern.Clause> clauses,
+      @NotNull ImmutableSeq<WithPos<String>> rawElims
+    ) {
+      this(new MatchBody<>(clauses, rawElims));
     }
+
+    public @NotNull ImmutableSeq<Pattern.Clause> clauses() {
+      return inner.clauses;
+    }
+
+    public @Nullable ImmutableSeq<LocalVar> elims() {
+      return inner.elims();
+    }
+
+    public @NotNull ImmutableSeq<WithPos<String>> rawElims() {
+      return inner.rawElims;
+    }
+
+    public @NotNull BlockBody map(@NotNull UnaryOperator<Pattern.Clause> f) {
+      return new BlockBody(inner.descent(f));
+    }
+
+    @Override public BlockBody map(@NotNull PosedUnaryOperator<Expr> f, @NotNull UnaryOperator<Pattern.Clause> g) {
+      return new BlockBody(inner.descent(g));
+    }
+
     @Override public void forEach(@NotNull PosedConsumer<Expr> f, @NotNull Consumer<Pattern.Clause> g) {
-      clauses.forEach(g);
+      clauses().forEach(g);
     }
   }
 }
