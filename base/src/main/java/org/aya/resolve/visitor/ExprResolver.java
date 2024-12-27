@@ -263,11 +263,13 @@ public record ExprResolver(
   private void introduceDependencies(@NotNull GeneralizedVar var) {
     if (allowedGeneralizes.containsKey(var)) return;
 
+    // Introduce dependencies first
     var dependencies = collector.getDependencies(var);
     for (var dep : dependencies) {
       introduceDependencies(dep);
     }
 
+    // Now introduce the variable itself
     var owner = var.owner;
     assert owner != null : "GeneralizedVar owner should not be null";
     var param = owner.toExpr(false, var.toLocal());
@@ -278,11 +280,11 @@ public record ExprResolver(
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
+      // Ensure all dependencies are introduced
       introduceDependencies(gvar);
       var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
     }
-
     return result;
   }
 
