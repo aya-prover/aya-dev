@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.value.MutableValue;
 import org.aya.generic.stmt.TyckOrder;
 import org.aya.generic.stmt.TyckUnit;
@@ -39,8 +40,54 @@ public interface StmtResolver {
       case ResolvingStmt.GenStmt(var variables) -> {
         var resolver = new ExprResolver(info.thisModule(), false);
         resolver.enter(Where.Head);
+
+        // First pass: register all variables to detect cycles
+        for (var variable : variables.variables) {
+          resolver.collector().registerVariable(variable);
+        }
+
+        // Second pass: handle dependencies and references
+        var ownerRefs = MutableList.<TyckOrder>create();
+        for (var variable : variables.variables) {
+          var owner = variable.owner;
+          assert owner != null : "GeneralizedVar owner should not be null";
+          
+          // Add to allowedGeneralizes
+          var param = owner.toExpr(false, variable.toLocal());
+          resolver.allowedGeneralizes().put(variable, param);
+
+          // Collect owner reference if it's a TyckUnit
+          if (owner instanceof TyckUnit unit) {
+            var ref = new TyckOrder.Head(unit);
+            if (!ownerRefs.contains(ref)) ownerRefs.append(ref);
+          }
+
+          // Handle dependencies
+          var deps = resolver.collector().getDependencies(variable);
+          for (var dep : deps) {
+            if (!resolver.allowedGeneralizes().containsKey(dep)) {
+              var depOwner = dep.owner;
+              assert depOwner != null : "GeneralizedVar owner should not be null";
+              var depParam = depOwner.toExpr(false, dep.toLocal());
+              resolver.allowedGeneralizes().put(dep, depParam);
+            }
+            
+            // Add dependency owner reference if it's a TyckUnit
+            if (dep.owner instanceof TyckUnit depUnit) {
+              var ref = new TyckOrder.Head(depUnit);
+              if (!ownerRefs.contains(ref)) ownerRefs.append(ref);
+            }
+          }
+        }
+
+        // Add collected references to resolver
+        ownerRefs.forEach(resolver.reference()::append);
+
+        // Process the statement itself
         variables.descentInPlace(resolver, (_, p) -> p);
-        addReferences(info, new TyckOrder.Head(variables), resolver);
+
+        // Do not add the GenStmt itself to TyckOrder as it's not a TyckUnit
+        // So we skip calling addReferences for the GenStmt
       }
     }
   }
