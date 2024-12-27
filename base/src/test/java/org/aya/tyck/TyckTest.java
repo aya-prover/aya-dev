@@ -176,9 +176,12 @@ public class TyckTest {
       open inductive K | kk
       open inductive G (k : K) | gg
       open inductive F (A : Type) (k : K) (n : G k) | ff
+      open inductive N (b : A) (c : A) | nn
       variable k : K
       variable n : G k
       variable xs : F A k n
+      variable b c : A
+      variable d : N b c
       def infix = (a b : A) => Path (\\i => A) a b
     """).defs;
     assertTrue(result.isNotEmpty());
