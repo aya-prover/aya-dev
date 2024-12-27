@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static org.aya.prettier.Tokens.*;
 
@@ -340,10 +341,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         yield Doc.cat(Doc.sepNonEmpty(prelude),
           switch (decl.body) {
             case FnBody.ExprBody(var expr) -> Doc.cat(Doc.spaced(FN_DEFINED_AS), term(Outer.Free, expr));
-            case FnBody.BlockBody(var clauses, var elims, var raw) -> Doc.vcat(
-              Doc.cat(Doc.spaced(KW_ELIM),
-                Doc.commaList(elims == null ? raw.map(name -> Doc.plain(name.data())) : elims.map(BasePrettier::varDoc))),
-              Doc.nest(2, visitClauses(clauses)));
+            case FnBody.BlockBody(var inner) -> visitMatchBody(inner, cls -> Doc.nest(2, visitClauses(cls)));
           },
           visitBindBlock(decl.bindBlock())
         );
@@ -355,8 +353,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         prelude.append(visitTele(decl.telescope));
         appendResult(prelude, decl.result);
         yield Doc.cat(Doc.sepNonEmpty(prelude),
-          Doc.emptyIf(decl.body.isEmpty(), () -> Doc.cat(Doc.line(), Doc.nest(2, Doc.vcat(
-            decl.body.view().map(this::decl))))),
+          visitMatchBody(decl.body, cons ->
+            Doc.nest(2, Doc.vcat(cons.map(this::decl)))),
           visitBindBlock(decl.bindBlock())
         );
       }
@@ -425,6 +423,22 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       KW_TIGHTER, Doc.commaList(tighters.view().map(BasePrettier::defVar)),
       KW_LOOSER, Doc.commaList(loosers.view().map(BasePrettier::defVar))
     )))));
+  }
+
+  /// @param prettier invoked when the clauses is not empty
+  private <Cls> @NotNull Doc visitMatchBody(@NotNull MatchBody<Cls> body, @NotNull Function<ImmutableSeq<Cls>, Doc> prettier) {
+    Doc elimLine = Doc.empty();
+
+    if (body.rawElims.isNotEmpty()) {
+      var elim = body.elims();
+      var elimList = elim == null
+        ? body.rawElims.map(x -> Doc.plain(x.data()))
+        : elim.map(BasePrettier::varDoc);
+      elimLine = Doc.sep(KW_ELIM, Doc.sep(elimList));
+    }
+
+    var clauses = Doc.emptyIf(body.clauses.isEmpty(), () -> prettier.apply(body.clauses));
+    return Doc.vcatNonEmpty(elimLine, clauses);
   }
 
   private @NotNull Doc visitLetBind(@NotNull Expr.LetBind letBind) {

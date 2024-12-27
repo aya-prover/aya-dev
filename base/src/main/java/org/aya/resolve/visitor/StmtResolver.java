@@ -57,23 +57,14 @@ public interface StmtResolver {
         // Generalized works for simple bodies and signatures
         var resolver = resolveDeclSignature(info, new ExprResolver(ctx, true), decl, where);
         switch (decl.body) {
-          case FnBody.BlockBody(var cls, var elims, var rawElims) -> {
-            assert elims == null;
+          case FnBody.BlockBody body -> {
+            assert body.elims() == null;
             // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
             insertGeneralizedVars(decl, resolver);
-            var finalElims = rawElims.map(elim -> {
-              var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
-              if (!(result instanceof LocalVar localVar)) {
-                return resolver.ctx().reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(resolver.ctx(),
-                  elim.data(), elim.sourcePos()));
-              }
-              // result is LocalVar -> result in telescope
-              return localVar;
-            });
-
+            resolveElim(resolver, body.inner());
             var clausesResolver = resolver.deriveRestrictive();
             clausesResolver.reference().append(new TyckOrder.Head(decl));
-            decl.body = new FnBody.BlockBody(cls.map(clausesResolver::clause), finalElims, rawElims);
+            decl.body = body.map(clausesResolver::clause);
             addReferences(info, new TyckOrder.Body(decl), clausesResolver);
           }
           case FnBody.ExprBody(var expr) -> {
@@ -87,6 +78,7 @@ public interface StmtResolver {
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
         var resolver = resolveDeclSignature(info, new ExprResolver(ctx, true), data, Where.Head);
         insertGeneralizedVars(data, resolver);
+        resolveElim(resolver, data.body);
         data.body.forEach(con -> {
           var bodyResolver = resolver.deriveRestrictive();
           var mCtx = MutableValue.create(resolver.ctx());
@@ -98,8 +90,9 @@ public interface StmtResolver {
           addReferences(info, new TyckOrder.Head(con), bodyResolver);
           // No body no body but you!
         });
+
         addReferences(info, new TyckOrder.Body(data), resolver.reference().view()
-          .concat(data.body.map(TyckOrder.Body::new)));
+          .concat(data.body.clauses.map(TyckOrder.Body::new)));
       }
       case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
         var resolver = new ExprResolver(ctx, false);
@@ -171,5 +164,28 @@ public interface StmtResolver {
 
   private static void insertGeneralizedVars(@NotNull TeleDecl decl, @NotNull ExprResolver resolver) {
     decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
+  }
+
+  private static <Cls> void resolveElim(@NotNull ExprResolver resolver, @NotNull MatchBody<Cls> body) {
+    if (body.elims() != null) {
+      // TODO: panic or just return?
+      return;
+    }
+
+    if (body.rawElims.isEmpty()) {
+      return;
+    }
+
+    var resolved = body.rawElims.map(elim -> {
+      var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
+      if (!(result instanceof LocalVar localVar)) {
+        return resolver.ctx().reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(resolver.ctx(),
+          elim.data(), elim.sourcePos()));
+      }
+      // result is LocalVar -> result in telescope
+      return localVar;
+    });
+
+    body.resolve(resolved);
   }
 }

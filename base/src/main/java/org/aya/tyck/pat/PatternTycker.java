@@ -487,7 +487,7 @@ public class PatternTycker implements Problematic, Stateful {
       case DataDef.Delegate delegate -> {
         // the core may be unchecked!
         var concrete = (DataDecl) delegate.ref.concrete;
-        yield concrete.body.view()
+        yield concrete.body.clauses.view()
           .filter(it -> it.telescope.isEmpty())
           .map(it -> it.ref.name());
       }
