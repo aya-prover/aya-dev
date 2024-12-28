@@ -434,11 +434,11 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       var elimList = elim == null
         ? body.rawElims.map(x -> Doc.plain(x.data()))
         : elim.map(BasePrettier::varDoc);
-      elimLine = Doc.sep(KW_ELIM, Doc.sep(elimList));
+      elimLine = Doc.cat(Doc.spaced(KW_ELIM), Doc.sep(elimList));
     }
 
     var clauses = Doc.emptyIf(body.clauses.isEmpty(), () -> prettier.apply(body.clauses));
-    return Doc.vcatNonEmpty(elimLine, clauses);
+    return Doc.vcat(elimLine, clauses);
   }
 
   private @NotNull Doc visitLetBind(@NotNull Expr.LetBind letBind) {

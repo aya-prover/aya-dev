@@ -239,7 +239,9 @@ classMember
 
 dataDecl ::= pragma* declModifier*
  KW_DATA declNameOrInfix?
- tele* type? bindBlock? dataBody* { pin=3 }
+ tele* type? bindBlock? elimDataBody { pin=3 }
+
+elimDataBody ::= elims? dataBody*
 
 dataBody ::= BAR (dataConClause | dataCon) {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"

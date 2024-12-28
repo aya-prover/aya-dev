@@ -25,6 +25,9 @@ public class SyntaxTest {
       open inductive Fin Nat
       | S n => FZ
       | S n => FS (Fin n)
+      open inductive Vec (A : Type) (n : Nat) elim n
+      | O => vnil
+      | S m => vcons A (Vec A m)
       def infixl + Nat Nat : Nat
       | 0, a => a
       | S a, b as b' => S (a + b')

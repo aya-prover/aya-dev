@@ -41,7 +41,7 @@ public class MatchBody<Clause> {
   }
 
   public void resolve(@NotNull ImmutableSeq<LocalVar> elims) {
-    assert this.elims != null;
+    assert this.elims == null;
     this.elims = elims;
   }
 

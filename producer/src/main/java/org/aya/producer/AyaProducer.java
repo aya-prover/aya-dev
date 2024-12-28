@@ -353,18 +353,26 @@ public record AyaProducer(
   }
 
   public @Nullable DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
-    var body = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
+    var body = node.peekChild(ELIM_DATA_BODY);
+    if (body == null) return error(body, "Expect data body");
     var tele = telescope(node.childrenOfType(TELE));
     var info = declInfo(node, ModifierParser.DECL_FILTER);
     var name = info.checkName(this);
     if (name == null) return null;
     var ty = typeOrNull(node.peekChild(TYPE));
-    // FIXME: parse elims
-    var decl = new DataDecl(info.info, name, tele, ty, ImmutableSeq.empty(), body);
+    var decl = new DataDecl(info.info, name, tele, ty, elimDataBody(body));
     if (info.modifier.isExample()) decl.isExample = true;
     giveMeOpen(info.modifier, decl, additional);
     pragma(node, decl);
     return decl;
+  }
+
+  public @NotNull MatchBody<DataCon> elimDataBody(@NotNull GenericNode<?> node) {
+    var elims = node.childrenOfType(WEAK_ID)
+      .map(this::weakId)
+      .toImmutableSeq();
+    var bodies = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
+    return new MatchBody<>(bodies, elims);
   }
 
   public @Nullable DataCon dataBody(@NotNull GenericNode<?> node) {

@@ -27,11 +27,10 @@ public final class DataDecl extends TeleDecl {
     @NotNull String name,
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @Nullable WithPos<Expr> result,
-    @NotNull ImmutableSeq<WithPos<String>> elims,
-    @NotNull ImmutableSeq<DataCon> body
+    @NotNull MatchBody<DataCon> body
   ) {
     super(info, telescope, result);
-    this.body = new MatchBody<>(body, elims);
+    this.body = body;
     this.ref = DefVar.concrete(this, name);
     body.forEach(con -> con.dataRef = ref);
   }

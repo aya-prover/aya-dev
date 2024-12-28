@@ -1,8 +1,8 @@
 open import prelude hiding (++)
 
-open inductive Vec Nat Type
-| 0, A => []
-| suc n, A => infixr :> A (Vec n A)
+open inductive Vec (n : Nat) (A : Type) elim n
+| 0 => []
+| suc n => infixr :> A (Vec n A)
 
 variable A B : Type
 variable n m o : Nat

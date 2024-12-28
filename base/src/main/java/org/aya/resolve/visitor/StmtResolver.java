@@ -172,10 +172,6 @@ public interface StmtResolver {
       return;
     }
 
-    if (body.rawElims.isEmpty()) {
-      return;
-    }
-
     var resolved = body.rawElims.map(elim -> {
       var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
       if (!(result instanceof LocalVar localVar)) {
