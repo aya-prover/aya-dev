@@ -101,14 +101,28 @@ public final class ClauseTycker implements Problematic, Stateful {
         cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
       return parent.checkAllRhs(teleVars, lhsResult);
     }
+
     private @Nullable ImmutableIntSeq computeIndices() {
-      return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
-        teleVars::indexOf);
+      return computeIndices(teleVars, elims);
     }
+
     public @NotNull TyckResult checkNoClassify() {
       return parent.checkAllRhs(teleVars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
     }
+
+    public static @Nullable ImmutableIntSeq computeIndices(
+      @NotNull ImmutableSeq<LocalVar> teleVars,
+      @NotNull ImmutableSeq<LocalVar> elims
+    ) {
+      return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
+        teleVars::indexOf);
+    }
   }
+
+  @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }
+  @Override public @NotNull TyckState state() { return exprTycker.state; }
+
+  // region tycking
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
     @Nullable ImmutableIntSeq indices, @NotNull Signature signature,
@@ -132,20 +146,6 @@ public final class ClauseTycker implements Problematic, Stateful {
     ));
 
     return new TyckResult(rhsResult, lhsError);
-  }
-
-  @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }
-  @Override public @NotNull TyckState state() { return exprTycker.state; }
-  private @NotNull PatternTycker newPatternTycker(
-    @Nullable ImmutableIntSeq indices,
-    @NotNull SeqView<Param> telescope
-  ) {
-    telescope = indices != null
-      ? telescope.mapIndexed((idx, p) -> indices.contains(idx) ? p.explicitize() : p.implicitize())
-      : telescope;
-
-    return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
-      new Renamer());
   }
 
   public @NotNull LhsResult checkLhs(
@@ -226,6 +226,36 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
+  // endregion tycking
+
+  // region util
+
+  private @NotNull PatternTycker newPatternTycker(
+    @Nullable ImmutableIntSeq indices,
+    @NotNull SeqView<Param> telescope
+  ) {
+    telescope = indices != null
+      ? telescope.mapIndexed((idx, p) -> indices.contains(idx) ? p.explicitize() : p.implicitize())
+      : telescope;
+
+    return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
+      new Renamer());
+  }
+
+  private static boolean hasAbsurdity(@NotNull Pattern term) {
+    return hasAbsurdity(term, MutableBooleanValue.create());
+  }
+
+  private static boolean hasAbsurdity(@NotNull Pattern term, @NotNull MutableBooleanValue b) {
+    if (term == Pattern.Absurd.INSTANCE) b.set(true);
+    else term.forEach((_, p) -> b.set(b.get() || hasAbsurdity(p, b)));
+    return b.get();
+  }
+
+  // endregion util
+
+  // region post tycking
+
   private static final class TermInline implements UnaryOperator<Term> {
     @Override public @NotNull Term apply(@NotNull Term term) {
       if (term instanceof MetaPatTerm metaPat) {
@@ -239,14 +269,6 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  private static boolean hasAbsurdity(@NotNull Pattern term) {
-    return hasAbsurdity(term, MutableBooleanValue.create());
-  }
-  private static boolean hasAbsurdity(@NotNull Pattern term, @NotNull MutableBooleanValue b) {
-    if (term == Pattern.Absurd.INSTANCE) b.set(true);
-    else term.forEach((_, p) -> b.set(b.get() || hasAbsurdity(p, b)));
-    return b.get();
-  }
 
   /**
    * Inline terms which in pattern
@@ -285,4 +307,6 @@ public final class ClauseTycker implements Problematic, Stateful {
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.newBody(), result.hasError());
   }
+
+  // endregion post tycking
 }

@@ -693,7 +693,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // pragma* declModifier*
   //  KW_DATA declNameOrInfix?
-  //  tele* type? bindBlock? dataBody*
+  //  tele* type? bindBlock? elimDataBody
   public static boolean dataDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl")) return false;
     boolean r, p;
@@ -706,7 +706,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, dataDecl_4(b, l + 1)) && r;
     r = p && report_error_(b, dataDecl_5(b, l + 1)) && r;
     r = p && report_error_(b, dataDecl_6(b, l + 1)) && r;
-    r = p && dataDecl_7(b, l + 1) && r;
+    r = p && elimDataBody(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -762,17 +762,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   private static boolean dataDecl_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "dataDecl_6")) return false;
     bindBlock(b, l + 1);
-    return true;
-  }
-
-  // dataBody*
-  private static boolean dataDecl_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "dataDecl_7")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!dataBody(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "dataDecl_7", c)) break;
-    }
     return true;
   }
 
@@ -860,6 +849,36 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = expr(b, l + 1, -1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  /* ********************************************************** */
+  // elims? dataBody*
+  public static boolean elimDataBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elimDataBody")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, ELIM_DATA_BODY, "<elim data body>");
+    r = elimDataBody_0(b, l + 1);
+    r = r && elimDataBody_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // elims?
+  private static boolean elimDataBody_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elimDataBody_0")) return false;
+    elims(b, l + 1);
+    return true;
+  }
+
+  // dataBody*
+  private static boolean elimDataBody_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elimDataBody_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!dataBody(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "elimDataBody_1", c)) break;
+    }
+    return true;
   }
 
   /* ********************************************************** */

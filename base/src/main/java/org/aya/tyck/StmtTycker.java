@@ -98,8 +98,11 @@ public record StmtTycker(
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
             yield factory.apply(Either.left(resultTerm));
           }
-          case FnBody.BlockBody(var clauses, var elims, _) -> {
+          case FnBody.BlockBody body -> {
+            var clauses = body.clauses();
+            var elims = body.elims();
             assert elims != null;
+
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker = mkTycker()),
@@ -137,8 +140,8 @@ public record StmtTycker(
       }
       case DataDecl data -> {
         assert data.ref.signature != null;
-        for (var kon : data.body) checkHeader(kon);
-        yield new DataDef(data.ref, data.body.map(kon -> kon.ref.core));
+        for (var kon : data.body.clauses) checkHeader(kon);
+        yield new DataDef(data.ref, data.body.clauses.map(kon -> kon.ref.core));
       }
     };
     reporter.clearSuppress();
@@ -174,11 +177,11 @@ public record StmtTycker(
         fnRef.signature = teleTycker.checkSignature(fn.telescope, result);
 
         // For ExprBody, they will be zonked later
-        if (fn.body instanceof FnBody.BlockBody(var cls, _, _)) {
+        if (fn.body instanceof FnBody.BlockBody body) {
           tycker.solveMetas();
           var zonker = new Finalizer.Zonk<>(tycker);
           fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(zonker::zonk);
-          if (fnRef.signature.params().isEmpty() && cls.isEmpty())
+          if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
       }
@@ -239,8 +242,11 @@ public record StmtTycker(
 
     var wellPats = ImmutableSeq.<Pat>empty();
     if (con.patterns.isNotEmpty()) {
+      var resolvedElim = dataRef.concrete.body.elims();
+      assert resolvedElim != null;
+      var indicies = ClauseTycker.Worker.computeIndices(ownerBinds, resolvedElim);
       // do not do coverage check
-      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, null,
+      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, indicies,
         new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
       if (lhsResult.hasError()) {
         return;

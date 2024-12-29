@@ -108,7 +108,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     return switch (predecl) {
       case DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.body.view(), (con, mCtx) -> {
+        var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx) -> {
           setupModule(mCtx, con.ref);
           mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.sourcePos());
         });

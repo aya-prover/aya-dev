@@ -20,14 +20,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DataDecl extends TeleDecl {
   public final @NotNull DefVar<DataDef, DataDecl> ref;
-  public final @NotNull ImmutableSeq<DataCon> body;
+  public final @NotNull MatchBody<DataCon> body;
 
   public DataDecl(
     @NotNull DeclInfo info,
     @NotNull String name,
     @NotNull ImmutableSeq<Expr.Param> telescope,
     @Nullable WithPos<Expr> result,
-    @NotNull ImmutableSeq<DataCon> body
+    @NotNull MatchBody<DataCon> body
   ) {
     super(info, telescope, result);
     this.body = body;

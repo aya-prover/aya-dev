@@ -106,7 +106,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Decl decl -> {
         if (decl instanceof TeleDecl tele) visitTelescopic(tele);
         switch (decl) {
-          case DataDecl data -> data.body.forEach(this);
+          case DataDecl data -> data.body.forEach(this::accept);
           case ClassDecl clazz -> clazz.members.forEach(this);
           case FnDecl fn -> {
             fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
