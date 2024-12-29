@@ -190,15 +190,6 @@ Error: Unable to solve the type of this literal:
 Let's learn from that.
 
 NonPattern:
-In file C:\Users\hoshino\Documents\Projects\project-aya\aya-dev\cli-impl\src\test\resources\shared\src\data\vec\base.aya:5:6 ->
-
-  3 │   open inductive Vec (n : Nat) (A : Type) elim n
-  4 │   | 0 => []
-  5 │   | suc n => infixr :> A (Vec n A)
-    │         ╰╯
-
-Warning: The name `n` shadows a previous local definition from outer scope
-
 In file $FILE:9:3 ->
 
   6 │       def ++-assoc-type (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
