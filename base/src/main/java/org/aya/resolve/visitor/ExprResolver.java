@@ -22,6 +22,7 @@ import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
@@ -29,6 +30,7 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves bindings.
@@ -194,7 +196,7 @@ public record ExprResolver(
 
         // Requires exhaustiveness check, therefore must need the full data body
         enter(Where.FnPattern);
-        var clauses = match.clauses().map(this::clause);
+        var clauses = match.clauses().map(x -> clause(ImmutableSeq.empty(), x));
         exit();
 
         yield match.update(discriminant, clauses, returns);
@@ -221,10 +223,11 @@ public record ExprResolver(
     addReference(defVar.concrete);
   }
 
-  public @NotNull Pattern.Clause clause(@NotNull Pattern.Clause clause) {
+  public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause) {
     var mCtx = MutableValue.create(ctx);
     enter(Where.FnPattern);
-    var pats = clause.patterns.map(pa -> pa.descent(pat -> resolvePattern(pat, mCtx)));
+    var pats = clause.patterns.map(pa ->
+      pa.descent(pat -> resolvePattern(pat, telescope, mCtx)));
     exit();
     enter(Where.FnBody);
     var body = clause.expr.map(x -> x.descent(enter(mCtx.get())));
@@ -232,8 +235,8 @@ public record ExprResolver(
     return clause.update(pats, body);
   }
 
-  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, MutableValue<Context> ctx) {
-    var resolver = new PatternResolver(ctx.get(), this::addReference);
+  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
+    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
     var result = pattern.descent(resolver);
     ctx.set(resolver.context());
     return result;
