@@ -13,7 +13,7 @@ def ++-assoc (xs : Vec n A) (ys : Vec m A) (zs : Vec o A)
 | [] => refl
 | x :> xs' => pmapd _ (\i => x :>) (++-assoc xs' ys zs)
 
-@suppress(Shadowing)
+
 def vmap-distrib-++ (f : A -> B) (xs : Vec n A) (ys : Vec m A) : vmap f (xs ++ ys) = vmap f xs ++ vmap f ys elim xs
 | [] => refl
 | x :> xs => pmap (f x :>) (vmap-distrib-++ f xs ys)
