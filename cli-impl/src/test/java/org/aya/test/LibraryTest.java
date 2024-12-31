@@ -47,7 +47,7 @@ public class LibraryTest {
   @ParameterizedTest
   @ValueSource(strings = {"success"})
   public void testOnDisk(@NotNull String libName) throws IOException {
-    var libRoot = TestRunner.DEFAULT_TEST_DIR.resolve(libName);
+    var libRoot = TestRunner.TEST_DIR.resolve(libName);
 
     FileUtil.deleteRecursively(libRoot.resolve("build"));
     // Full rebuild
@@ -143,7 +143,7 @@ public class LibraryTest {
     }
   }
 
-  public static final Path DIR = TestRunner.DEFAULT_TEST_DIR.resolve("success");
+  public static final Path DIR = TestRunner.TEST_DIR.resolve("success");
 
   private static int compile(@NotNull Path root) throws IOException {
     return compile(TestRunner.flags(), root);
