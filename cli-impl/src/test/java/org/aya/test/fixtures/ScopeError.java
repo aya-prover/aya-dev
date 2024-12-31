@@ -90,4 +90,17 @@ public interface ScopeError {
     open class Cls | A : Type
     def test (c : Cls) => c.B
     """;
+  @Language("Aya") String testLocalShadow = """
+    def test (A : Type) (a : A) : A =>
+      let | x : A := a
+          | x : A := a
+      in x
+    """;
+  @Language("Aya") String testLocalShadowSuppress = """
+    @suppress(LocalShadow)
+    def test (A : Type) (a : A) : A =>
+      let | x : A := a
+          | x : A := a
+      in x
+    """;
 }

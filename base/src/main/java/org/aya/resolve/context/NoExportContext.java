@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-/**
- * Used for `let open`
- */
+/// Used for `let open` and `example`
 public record NoExportContext(
   @NotNull Context parent,
   @NotNull ModuleSymbol<AnyVar> symbols,

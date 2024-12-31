@@ -47,14 +47,13 @@ private def some-lemma {a b : Nat} (p : subTrunc a b = 0) (np : neg (subTrunc (s
 | suc a, 0 => exfalso (z≠s (pinv p))
 | suc a, suc b => pmap suc (some-lemma p np)
 
-@suppress(Shadowing)
+
 def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
   match a <? b {
   | _ because reflect_true p => inl p
   | _ because reflect_false np => inr (some-lemma p np)
   }
 
-@suppress(Shadowing)
 def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
 | {_}, {0}, np => refl
 | {0}, {suc b}, np => exfalso (np refl)

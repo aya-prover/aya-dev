@@ -1,6 +1,5 @@
 open import prelude hiding (++)
 
-@suppress(Shadowing)
 open inductive Vec (n : Nat) (A : Type) elim n
 | 0 => []
 | suc n => infixr :> A (Vec n A)

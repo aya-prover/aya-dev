@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
@@ -10,10 +11,7 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.def.ConDefLike;
-import org.aya.syntax.ref.AnyDefVar;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.CompiledVar;
-import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.*;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
@@ -25,10 +23,12 @@ import java.util.function.Consumer;
 public class PatternResolver implements PosedUnaryOperator<Pattern> {
   // DIRTY!!
   private @NotNull Context context;
+  private final @NotNull ImmutableSeq<LocalVar> mercy;
   private final @NotNull Consumer<TyckUnit> parentAdd;
 
-  public PatternResolver(@NotNull Context context, @NotNull Consumer<TyckUnit> parentAdd) {
+  public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd) {
     this.context = context;
+    this.mercy = mercy;
     this.parentAdd = parentAdd;
   }
 
@@ -47,7 +47,7 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
         }
 
         // It is not a constructor, it is a bind
-        context = context.bind(bind.bind());
+        context = context.bind(bind.bind(), this::toWarn);
         yield bind;
       }
       case Pattern.QualifiedRef qref -> {
@@ -64,11 +64,15 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
         yield context.reportAndThrow(new NameProblem.QualifiedNameNotFoundError(qid.component(), qid.name(), pos));
       }
       case Pattern.As as -> {
-        context = context.bind(as.as());
+        context = context.bind(as.as(), this::toWarn);
         yield as;
       }
       default -> pat;
     };
+  }
+
+  private boolean toWarn(@Nullable AnyVar var) {
+    return var instanceof LocalVar && !mercy.contains(var);
   }
 
   private void addReference(@NotNull AnyDefVar defVar) {
