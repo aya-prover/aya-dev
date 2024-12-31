@@ -54,7 +54,7 @@ public class TestRunner {
     }
     for (var file : toCheck) {
       var name = file.toString();
-      var proc = new ProcessBuilder("git", "diff", name).start();
+      var proc = new ProcessBuilder("git", "diff", "--cached", name).start();
       var output = new String(proc.getInputStream().readAllBytes());
       assertTrue(output.isBlank(), output);
     }
