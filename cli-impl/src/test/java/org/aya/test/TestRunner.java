@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
-import com.intellij.openapi.util.text.Strings;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import org.aya.cli.single.CompilerFlags;
@@ -25,17 +24,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestRunner {
-  public static final @NotNull Path DEFAULT_TEST_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
-  public static final @NotNull Path TMP_FILE = DEFAULT_TEST_DIR.resolve("tmp.aya");
+  public static final @NotNull Path TEST_DIR = Paths.get("src", "test", "resources").toAbsolutePath();
+  private static final @NotNull Path FIXTURE_DIR = TEST_DIR.resolve("negative");
+  private static final @NotNull Path TMP_FILE = TEST_DIR.resolve("tmp.aya");
   public static final @NotNull SourceFileLocator LOCATOR = new SourceFileLocator() { };
   @BeforeAll public static void startDash() { Global.NO_RANDOM_NAME = true; }
 
   @Test public void negative() throws Exception {
-    Seq.of(
+    var toCheck = Seq.of(
       ParseError.class,
       ExprTyckError.class,
       GoalAndMeta.class,
@@ -45,7 +45,19 @@ public class TestRunner {
       TerckError.class,
       PatCohError.class,
       ClassError.class
-    ).forEachChecked(TestRunner::expectFixture);
+    ).mapNotNullChecked(TestRunner::expectFixture);
+    if (toCheck.isNotEmpty()) {
+      new ProcessBuilder("git", "add", FIXTURE_DIR.toString())
+        .inheritIO()
+        .start()
+        .waitFor();
+    }
+    for (var file : toCheck) {
+      var name = file.toString();
+      var proc = new ProcessBuilder("git", "diff", name).start();
+      var output = new String(proc.getInputStream().readAllBytes());
+      assertTrue(output.isBlank(), output);
+    }
     Files.deleteIfExists(TMP_FILE);
   }
 
@@ -60,55 +72,40 @@ public class TestRunner {
     new TestRunner().negative();
   }
 
-  private static String instantiateVars(String template) {
-    return template.replace("$FILE", TMP_FILE.toString());
-  }
-
-  private static String instantiateHoles(String template) {
+  private static String replaceFileName(String template) {
     return template.replace(TMP_FILE.toString(), "$FILE");
   }
 
-  private static void checkOutput(Path expectedOutFile, String hookOut) {
-    try {
-      var output = Strings.convertLineSeparators(hookOut);
-      var expected = instantiateVars(Strings.convertLineSeparators(
-        Files.readString(expectedOutFile, StandardCharsets.UTF_8)));
-      assertEquals(expected, output, expectedOutFile.getFileName().toString());
-    } catch (IOException e) {
-      fail("error reading file " + expectedOutFile.toAbsolutePath());
-    }
-  }
-
-  private static void expectFixture(Class<?> fixturesClass) throws IllegalAccessException, IOException {
-    var result = runFixtureClass(fixturesClass);
-    var expectedOutFile = DEFAULT_TEST_DIR
-      .resolve("negative")
-      .resolve(fixturesClass.getSimpleName() + ".txt");
+  /// @return not null for a file to check, null if we're good to go
+  private static Path expectFixture(Class<?> fixturesClass) throws IllegalAccessException, IOException, InterruptedException {
+    var result = replaceFileName(runFixtureClass(fixturesClass));
+    var expectedOutFile = FIXTURE_DIR.resolve(fixturesClass.getSimpleName() + ".txt");
     if (Files.exists(expectedOutFile)) {
-      checkOutput(expectedOutFile, result);
+      writeWorkflow(expectedOutFile, result);
+      return expectedOutFile;
     } else {
-      System.out.println(); // add line break after `--->`
-      generateWorkflow(expectedOutFile, result);
+      System.out.println(); // add line break before `NOTE`
+      writeWorkflow(expectedOutFile, result);
+      System.out.printf(Locale.getDefault(),
+        """
+          NOTE: write the following output to `%s`.
+          ----------------------------------------
+          %s
+          ----------------------------------------
+          """,
+        expectedOutFile.getFileName(),
+        result
+      );
     }
+    return null;
   }
 
-  private static void generateWorkflow(Path expectedOutFile, String hookOut) {
-    hookOut = instantiateHoles(hookOut);
+  private static void writeWorkflow(Path expectedOutFile, String hookOut) {
     try {
       FileUtil.writeString(expectedOutFile, hookOut);
     } catch (IOException e) {
       fail("error generating todo file " + expectedOutFile.toAbsolutePath());
     }
-    System.out.printf(Locale.getDefault(),
-      """
-        NOTE: write the following output to `%s`.
-        ----------------------------------------
-        %s
-        ----------------------------------------
-        """,
-      expectedOutFile.getFileName(),
-      hookOut
-    );
   }
 
   private static String runFixtureClass(Class<?> fixturesClass)
@@ -141,7 +138,7 @@ public class TestRunner {
   }
 
   public static @NotNull CompilerFlags flags() {
-    var modulePaths = SeqView.of(DEFAULT_TEST_DIR.resolve("shared/src"));
+    var modulePaths = SeqView.of(TEST_DIR.resolve("shared/src"));
     return new CompilerFlags(CompilerFlags.Message.ASCII,
       false, false, null, modulePaths, null);
   }
