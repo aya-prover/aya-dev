@@ -31,7 +31,7 @@ public record FlclParser(
 
   public @NotNull FlclToken.File computeAst() {
     var text = file.sourceCode();
-    var node = new MarkerNodeWrapper(text, new FlclFleetParser().parse(text));
+    var node = new MarkerNodeWrapper(new FlclFleetParser().parse(text), text);
     node.childrenOfType(FlclPsiElementTypes.RULE).forEach(rule -> {
       var idChildren = rule.childrenOfType(FlclPsiElementTypes.ID)
         .map(MarkerNodeWrapper::tokenText)
