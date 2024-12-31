@@ -303,3 +303,18 @@ Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+LocalShadow:
+In file $FILE:3:8 ->
+
+  1 │   def test (A : Type) (a : A) : A =>
+  2 │     let | x : A := a
+  3 │         | x : A := a
+    │           ╰╯
+
+Warning: The name `x` shadows a previous local definition from outer scope
+
+That looks right!
+
+LocalShadowSuppress:
+That looks right!
+

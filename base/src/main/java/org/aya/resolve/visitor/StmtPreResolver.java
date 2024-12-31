@@ -151,7 +151,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     var r = new SuppressingReporter(reporter);
     decl.suppresses.forEach(suppress -> {
       switch (suppress) {
-        case Shadowing -> r.suppress(NameProblem.ShadowingWarn.class);
+        case LocalShadow -> r.suppress(NameProblem.ShadowingWarn.class);
       }
     });
     return r;

@@ -54,7 +54,6 @@ def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
   | _ because reflect_false np => inr (some-lemma p np)
   }
 
-
 def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
 | {_}, {0}, np => refl
 | {0}, {suc b}, np => exfalso (np refl)
