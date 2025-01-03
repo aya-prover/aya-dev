@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -20,25 +20,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-/**
- * This is XTT-specific confluence check, very simple: we check for all combinations.
- * So, if we do
- * <pre>
- *   def infix + (a b : Int) : Int
- *   | zro i, zro j => u
- * </pre>
- * This thing will check the following:
- * <ul>
- *   <li><code>zro 0, zro 0</code></li>
- *   <li><code>zro 0, zro 1</code></li>
- *   <li><code>zro 1, zro 1</code></li>
- *   <li><code>zro 1, zro 0</code></li>
- * </ul>
- * In proper cubical type theory, we need to check <code>zro 0, zro j</code> and <code>zro i, zro 0</code>.
- * The latter looks like smaller number of checks, but honestly I don't know how to do it in terms of
- * pure patterns. The old version of Aya used a hack based on object identity, and I don't like it.
- * This one is translatable to a purely functional programming language.
- */
+/// This is XTT-specific confluence check, very simple: we check for all combinations.
+/// So, if we do
+/// ```
+/// def infix + (a b : Int) : Int
+/// | zro i, zro j => u
+///```
+/// This thing will check the following:
+///
+/// - `zro 0, zro 0`
+/// - `zro 0, zro 1`
+/// - `zro 1, zro 1`
+/// - `zro 1, zro 0`
+///
+/// In proper cubical type theory, we need to check `zro 0, zro j` and `zro i, zro 0`.
+/// The latter looks like smaller number of checks, but honestly I don't know how to do it in terms of
+/// pure patterns. The old version of Aya used a hack based on object identity, and I don't like it.
+/// This one is translatable to a purely functional programming language.
 public record IApplyConfl(
   @NotNull FnDef def, @NotNull ImmutableSeq<WithPos<Term.Matching>> matchings,
   boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull ExprTycker tycker

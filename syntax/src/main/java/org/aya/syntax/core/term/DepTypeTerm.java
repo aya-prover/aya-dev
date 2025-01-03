@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -137,10 +137,20 @@ public record DepTypeTerm(
 
     return new Unpi(params, names, term);
   }
+
   public record UnpiRaw(
     @NotNull ImmutableSeq<Param> params,
     @NotNull Term body
-  ) { }
+  ) {
+    public UnpiRaw(@NotNull Term body) {
+      this(ImmutableSeq.empty(), body);
+    }
+
+    public @NotNull Term makePi() {
+      return DepTypeTerm.makePi(params.view().map(Param::type), body);
+    }
+  }
+
   public static @NotNull UnpiRaw unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
     var params = MutableList.<Param>create();
     var i = 0;

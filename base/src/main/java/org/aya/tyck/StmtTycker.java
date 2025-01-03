@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -33,6 +33,7 @@ import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.IApplyConfl;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.YouTrack;
+import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.unify.Synthesizer;
@@ -105,8 +106,11 @@ public record StmtTycker(
 
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
-            var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker = mkTycker()),
-              teleVars, signature, clauses, elims, true);
+            tycker = mkTycker();
+            var unpi = DepTypeTerm.unpiDBI(signature.result(), tycker::whnf);
+            var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
+              signature.params(), unpi,
+              teleVars, elims, clauses, true);
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
             FnDef def;
@@ -180,7 +184,7 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody body) {
           tycker.solveMetas();
           var zonker = new Finalizer.Zonk<>(tycker);
-          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(zonker::zonk);
+          fnRef.signature = fnRef.signature.descent(zonker::zonk);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
@@ -244,9 +248,9 @@ public record StmtTycker(
     if (con.patterns.isNotEmpty()) {
       var resolvedElim = dataRef.concrete.body.elims();
       assert resolvedElim != null;
-      var indicies = ClauseTycker.Worker.computeIndices(ownerBinds, resolvedElim);
       // do not do coverage check
-      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, indicies,
+      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(
+        SignatureIterator.make(dataSig.params(), new DepTypeTerm.UnpiRaw(dataSig.result()), ownerBinds, resolvedElim),
         new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
       if (lhsResult.hasError()) {
         return;
