@@ -178,7 +178,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
       var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
-        allBinds.size(), patResult.newBody());
+        allBinds.size(), patIter.exprBody());
       return new LhsResult(ctx, sigIter.signature(), allBinds,
         patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
@@ -297,7 +297,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     // map in place 😱😱😱😱
     result.asSubst().subst().replaceAll((_, t) -> inlineTerm(t));
 
-    return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.newBody(), result.hasError());
+    return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }
 
   // endregion post tycking

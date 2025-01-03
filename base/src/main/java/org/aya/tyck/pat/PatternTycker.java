@@ -105,7 +105,6 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<Pat> wellTyped,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
-    @Nullable WithPos<Expr> newBody,
     boolean hasError
   ) {
     public @NotNull SeqView<Term> paramSubstObj() {
@@ -305,7 +304,7 @@ public class PatternTycker implements Problematic, Stateful {
       // find the next appropriate parameter
       var generated = nextParam(currentPat);
       if (generated == null) {
-        return done(wellTyped, patterns);
+        return done(wellTyped);
       }
 
       wellTyped.appendAll(generated);
@@ -317,7 +316,8 @@ public class PatternTycker implements Problematic, Stateful {
     var generated = findNextParam(null, p ->
       // the use of telescope is a kind of dirty.
       telescope.isFromPusheen() || p.explicit());
-    if (generated.kind == FindNextParam.Kind.Success) {
+    // what kind of parameter you found?
+    if (generated.kind == FindNextParam.Kind.Success && !telescope.isFromPusheen()) {
       // no you can't!
       WithPos<Pattern> errorPattern = lastPat == null
         ? Objects.requireNonNull(outerPattern)
@@ -325,14 +325,14 @@ public class PatternTycker implements Problematic, Stateful {
       try (var _ = instCurrentParam()) {
         foundError(new PatternProblem.InsufficientPattern(errorPattern, currentParam));
       }
-      return done(wellTyped, patterns);
+      return done(wellTyped);
     }
 
     // it is impossible that [generated.component2()] is [FindNextParam.TooManyImplicit]
-    assert generated.kind == FindNextParam.Kind.TooManyPattern;
+    assert generated.kind != FindNextParam.Kind.TooManyImplicit;
 
-    // [currentParam] = null
-    return done(wellTyped, patterns);
+    // [currentParam] = null or [telescope.isFromPusheen()]
+    return done(wellTyped);
   }
 
   private @NotNull Closer instCurrentParam() {
@@ -404,10 +404,9 @@ public class PatternTycker implements Problematic, Stateful {
     asSubst.put(as, new Jdg.Default(PatToTerm.visit(pattern), type));
   }
 
-  private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped, @NotNull PusheenIterator<?, WithPos<Expr>> iter) {
-    var lamPusheen = iter.body();
+  private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped) {
     var paramSubst = this.paramSubst.toImmutableSeq();
-    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst, asSubst, lamPusheen == null ? null : lamPusheen.body(), hasError);
+    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst, asSubst, hasError);
   }
 
   private record Selection(

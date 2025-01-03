@@ -27,7 +27,7 @@ public class PusheenIterator<T, R> implements Pusheenable<T, @Nullable Pusheenab
   @Override
   public @NotNull T peek() {
     if (peek != null) return peek;
-    if (iter.hasNext()) return peek = iter.next();
+    if (iter.hasNext()) return peek = postDoPeek(iter.next());
 
     var realPeek = postDoPeek(Objects.requireNonNull(cat).peek());
     peek = realPeek;

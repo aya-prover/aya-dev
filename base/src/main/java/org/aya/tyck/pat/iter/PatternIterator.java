@@ -13,4 +13,9 @@ public class PatternIterator extends PusheenIterator<Arg<WithPos<Pattern>>, With
   public PatternIterator(ImmutableSeq<Arg<WithPos<Pattern>>> patterns, @Nullable LambdaPusheen cat) {
     super(patterns.iterator(), cat);
   }
+
+  public @Nullable WithPos<Expr> exprBody() {
+    if (cat == null) return null;
+    return cat.body();
+  }
 }
