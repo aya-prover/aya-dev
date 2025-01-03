@@ -33,12 +33,9 @@ import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
-import org.aya.tyck.pat.iter.ConstPusheen;
-import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.AppTycker;
 import org.aya.tyck.tycker.Unifiable;
@@ -186,13 +183,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     ImmutableSeq<WithPos<Expr>> discriminant, @NotNull SourcePos exprPos,
     ImmutableSeq<Pattern.Clause> clauses, ImmutableSeq<Jdg> wellArgs, Term type
   ) {
-    var telescope = new AbstractTele.Locns(
-      wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
-      type);
+    var telescope = wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true));
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
-      new SignatureIterator(telescope.telescope(), new ConstPusheen<>(type), null),
+      telescope,
+      new DepTypeTerm.UnpiRaw(ImmutableSeq.empty(), type),
       ImmutableSeq.fill(discriminant.size(), i -> new LocalVar("match" + i)),
+      ImmutableSeq.empty(),
       clauses, true);
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()

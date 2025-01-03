@@ -4,8 +4,6 @@ package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableBooleanSeq;
-import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
 import org.aya.normalize.Finalizer;
@@ -15,19 +13,14 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.TypeEraser;
-import org.aya.syntax.core.term.ErrorTerm;
-import org.aya.syntax.core.term.MetaPatTerm;
-import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.PatternProblem;
-import org.aya.tyck.pat.iter.ConstPusheen;
 import org.aya.tyck.pat.iter.LambdaPusheen;
 import org.aya.tyck.pat.iter.PatternIterator;
 import org.aya.tyck.pat.iter.SignatureIterator;
@@ -39,8 +32,8 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
@@ -89,11 +82,11 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   public record Worker(
     @NotNull ClauseTycker parent,
-    @NotNull Signature signature,
+    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull DepTypeTerm.UnpiRaw unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    boolean canPushSignature,
     boolean isFn
   ) {
     public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
@@ -102,7 +95,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       if (lhsResult.noneMatch(r -> r.hasError)) {
         var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
           // TODO: max(lhsResult.signature.telescope by size)
-          null, parent.exprTycker, overallPos);
+          telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           // refinePatterns(lhsResults, usages, classes);
@@ -116,11 +109,9 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
 
     public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
-      if (canPushSignature) {
-
-      }
-
-      return parent.checkAllLhs(SignatureIterator.make(), clauses.view(), isFn);
+      return parent.checkAllLhs(() ->
+          SignatureIterator.make(telescope, unpi, teleVars, elims),
+        clauses.view(), isFn);
     }
 
     public @NotNull TyckResult checkNoClassify() {
@@ -134,10 +125,10 @@ public final class ClauseTycker implements Problematic, Stateful {
   // region tycking
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
-    @NotNull SignatureIterator sigIter,
+    @NotNull Supplier<SignatureIterator> sigIter,
     @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
   ) {
-    return clauses.map(c -> checkLhs(sigIter, c, isFn)).toImmutableSeq();
+    return clauses.map(c -> checkLhs(sigIter.get(), c, isFn)).toImmutableSeq();
   }
 
   public @NotNull TyckResult checkAllRhs(

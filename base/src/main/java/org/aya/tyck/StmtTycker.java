@@ -107,9 +107,10 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
             tycker = mkTycker();
+            var unpi = DepTypeTerm.unpiDBI(signature.result(), tycker::whnf);
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
-              SignatureIterator.make(tycker.state, signature.telescope(), teleVars, elims),
-              teleVars, clauses, true);
+              signature.params(), unpi,
+              teleVars, elims, clauses, true);
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
             FnDef def;
@@ -183,7 +184,7 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody body) {
           tycker.solveMetas();
           var zonker = new Finalizer.Zonk<>(tycker);
-          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(zonker::zonk);
+          fnRef.signature = fnRef.signature.descent(zonker::zonk);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
@@ -249,7 +250,7 @@ public record StmtTycker(
       assert resolvedElim != null;
       // do not do coverage check
       var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(
-        SignatureIterator.make(tycker.state, dataSig.telescope(), ownerBinds, resolvedElim),
+        SignatureIterator.make(dataSig.params(), new DepTypeTerm.UnpiRaw(dataSig.result()), ownerBinds, resolvedElim),
         new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
       if (lhsResult.hasError()) {
         return;

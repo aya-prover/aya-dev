@@ -5,12 +5,11 @@ package org.aya.tyck.pat.iter;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableBooleanSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.syntax.telescope.Signature;
-import org.aya.tyck.TyckState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,34 +17,37 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class SignatureIterator extends PusheenIterator<Param, Term> {
+  public static @NotNull Pusheenable<Param, @NotNull Term> makePusheen(@NotNull DepTypeTerm.UnpiRaw unpi) {
+    if (unpi.params().isEmpty()) {
+      return new ConstPusheen<>(unpi.body());
+    } else {
+      return new PiPusheen(unpi);
+    }
+  }
+
   public static @NotNull SignatureIterator make(
-    TyckState state,
-    @NotNull AbstractTele.Locns signature,
+    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull DepTypeTerm.UnpiRaw unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims
   ) {
     if (elims.isEmpty()) {
-      return make(state, signature);
+      return make(telescope, unpi);
     } else {
-      return make(signature, teleVars, elims);
+      assert telescope.size() == teleVars.size();
+      var bElims = teleVars.view()
+        .map(elims::contains)
+        .collect(ImmutableBooleanSeq.factory());
+
+      return new SignatureIterator(telescope, new ConstPusheen<>(unpi.makePi()), bElims);
     }
   }
 
-  public static @NotNull SignatureIterator make(@NotNull TyckState state, @NotNull AbstractTele.Locns signature) {
-    return new SignatureIterator(signature.telescope(), new PiPusheen(state, signature.result()), null);
-  }
-
   public static @NotNull SignatureIterator make(
-    @NotNull AbstractTele.Locns signature,
-    @NotNull ImmutableSeq<LocalVar> teleVars,
-    @NotNull ImmutableSeq<LocalVar> elims
+    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull DepTypeTerm.UnpiRaw unpi
   ) {
-    assert signature.telescope().size() == teleVars.size();
-    var bElims = teleVars.map(elims::contains)
-      .stream()
-      .collect(ImmutableBooleanSeq.factory());
-
-    return new SignatureIterator(signature.telescope(), new ConstPusheen<>(signature.result()), bElims);
+    return new SignatureIterator(telescope, makePusheen(unpi), null);
   }
 
   public final @Nullable ImmutableBooleanSeq elims;
