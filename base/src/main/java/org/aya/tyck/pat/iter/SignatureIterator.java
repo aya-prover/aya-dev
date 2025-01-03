@@ -18,8 +18,21 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class SignatureIterator extends PusheenIterator<Param, Term> {
+  public static @NotNull SignatureIterator make(
+    TyckState state,
+    @NotNull AbstractTele.Locns signature,
+    @NotNull ImmutableSeq<LocalVar> teleVars,
+    @NotNull ImmutableSeq<LocalVar> elims
+  ) {
+    if (elims.isEmpty()) {
+      return make(state, signature);
+    } else {
+      return make(signature, teleVars, elims);
+    }
+  }
+
   public static @NotNull SignatureIterator make(@NotNull TyckState state, @NotNull AbstractTele.Locns signature) {
-    return new SignatureIterator(signature.telescope().iterator(), new PiPusheen(state, signature.result()), null);
+    return new SignatureIterator(signature.telescope(), new PiPusheen(state, signature.result()), null);
   }
 
   public static @NotNull SignatureIterator make(
@@ -32,12 +45,16 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
       .stream()
       .collect(ImmutableBooleanSeq.factory());
 
-    return new SignatureIterator(signature.telescope().iterator(), new ConstPusheen<>(signature.result()), bElims);
+    return new SignatureIterator(signature.telescope(), new ConstPusheen<>(signature.result()), bElims);
   }
 
   public final @Nullable ImmutableBooleanSeq elims;
   private final @NotNull MutableList<Param> consumed = MutableList.create();
   private int teleIndex = 0;
+
+  public SignatureIterator(ImmutableSeq<Param> tele, @NotNull Pusheenable<Param, Term> cat, @Nullable ImmutableBooleanSeq elims) {
+    this(tele.iterator(), cat, elims);
+  }
 
   public SignatureIterator(Iterator<Param> iter, @NotNull Pusheenable<Param, Term> cat, @Nullable ImmutableBooleanSeq elims) {
     super(iter, cat);

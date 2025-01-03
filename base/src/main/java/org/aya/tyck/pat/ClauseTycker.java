@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableBooleanSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
@@ -20,11 +21,16 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.PatternProblem;
+import org.aya.tyck.pat.iter.ConstPusheen;
+import org.aya.tyck.pat.iter.LambdaPusheen;
+import org.aya.tyck.pat.iter.PatternIterator;
+import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.Panic;
@@ -61,7 +67,7 @@ public final class ClauseTycker implements Problematic, Stateful {
    */
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull Term type,
+    @NotNull AbstractTele.Locns newSignature,
     @NotNull ImmutableSeq<LocalVar> allBinds,
     @NotNull ImmutableSeq<Pat> freePats,
     @NotNull ImmutableSeq<Jdg> paramSubst,
@@ -69,6 +75,11 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull Pat.Preclause<Expr> clause,
     boolean hasError
   ) {
+    public @NotNull Term instType() {
+      // I guess we need not to inline this term even we did before. The [paramSubst] is already inlined.
+      return newSignature.result().instTele(paramSubst.view().map(Jdg::wellTyped));
+    }
+
     @Contract(mutates = "param2")
     public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
@@ -78,44 +89,42 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   public record Worker(
     @NotNull ClauseTycker parent,
-    @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull Signature signature,
-    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
+    @NotNull ImmutableSeq<Pattern.Clause> clauses,
+    boolean canPushSignature,
     boolean isFn
   ) {
     public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
-      var lhsResult = parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn);
+      var lhsResult = checkAllLhs();
 
       if (lhsResult.noneMatch(r -> r.hasError)) {
         var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
-          signature.params().view(), parent.exprTycker, overallPos);
+          // TODO: max(lhsResult.signature.telescope by size)
+          null, parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           // refinePatterns(lhsResults, usages, classes);
         }
       }
 
-      lhsResult = lhsResult.map(cl -> new LhsResult(cl.localCtx, cl.type, cl.allBinds,
+      lhsResult = lhsResult.map(cl -> new LhsResult(cl.localCtx, cl.newSignature, cl.allBinds,
         cl.freePats.map(TypeEraser::erase),
         cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
       return parent.checkAllRhs(teleVars, lhsResult);
     }
 
-    private @Nullable ImmutableIntSeq computeIndices() {
-      return computeIndices(teleVars, elims);
+    public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
+      if (canPushSignature) {
+
+      }
+
+      return parent.checkAllLhs(SignatureIterator.make(), clauses.view(), isFn);
     }
 
     public @NotNull TyckResult checkNoClassify() {
-      return parent.checkAllRhs(teleVars, parent.checkAllLhs(computeIndices(), signature, clauses.view(), isFn));
-    }
-
-    public static @Nullable ImmutableIntSeq computeIndices(
-      @NotNull ImmutableSeq<LocalVar> teleVars,
-      @NotNull ImmutableSeq<LocalVar> elims
-    ) {
-      return elims.isEmpty() ? null : elims.mapToInt(ImmutableIntSeq.factory(),
-        teleVars::indexOf);
+      return parent.checkAllRhs(teleVars, checkAllLhs());
     }
   }
 
@@ -125,10 +134,10 @@ public final class ClauseTycker implements Problematic, Stateful {
   // region tycking
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
-    @Nullable ImmutableIntSeq indices, @NotNull Signature signature,
+    @NotNull SignatureIterator sigIter,
     @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
   ) {
-    return clauses.map(c -> checkLhs(signature, indices, c, isFn)).toImmutableSeq();
+    return clauses.map(c -> checkLhs(sigIter, c, isFn)).toImmutableSeq();
   }
 
   public @NotNull TyckResult checkAllRhs(
@@ -149,12 +158,11 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   public @NotNull LhsResult checkLhs(
-    @NotNull Signature signature,
-    @Nullable ImmutableIntSeq indices,
+    @NotNull SignatureIterator sigIter,
     @NotNull Pattern.Clause clause,
     boolean isFn
   ) {
-    var tycker = newPatternTycker(indices, signature.params().view());
+    var tycker = newPatternTycker(sigIter, sigIter.elims != null);
     try (var _ = exprTycker.subscope()) {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
@@ -163,12 +171,12 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.fail(new PatternProblem.InvalidEmptyBody(clause));
       }
 
-      var patResult = tycker.tyck(clause.patterns.view(), null, clause.expr.getOrNull());
+      var patIter = new PatternIterator(clause.patterns, clause.expr.map(LambdaPusheen::new).getOrNull());
+      var patResult = tycker.tyck(patIter, null);
       var ctx = exprTycker.localCtx();   // No need to copy the context here
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      var resultTerm = signature.result().instTele(patResult.paramSubstObj()).descent(new TermInline());
       clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
 
       // It is safe to replace ctx:
@@ -180,7 +188,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
       var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
         allBinds.size(), patResult.newBody());
-      return new LhsResult(ctx, resultTerm, allBinds,
+      return new LhsResult(ctx, sigIter.signature(), allBinds,
         patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
   }
@@ -211,7 +219,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.setLocalCtx(result.localCtx);
         result.addLocalLet(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
-        wellBody = exprTycker.inherit(bodyExpr, result.type).wellTyped();
+        wellBody = exprTycker.inherit(bodyExpr, result.instType()).wellTyped();
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
@@ -230,15 +238,8 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   // region util
 
-  private @NotNull PatternTycker newPatternTycker(
-    @Nullable ImmutableIntSeq indices,
-    @NotNull SeqView<Param> telescope
-  ) {
-    telescope = indices != null
-      ? telescope.mapIndexed((idx, p) -> indices.contains(idx) ? p.explicitize() : p.implicitize())
-      : telescope;
-
-    return new PatternTycker(exprTycker, telescope, new LocalLet(), indices == null,
+  private @NotNull PatternTycker newPatternTycker(@NotNull SignatureIterator sigIter, boolean hasElim) {
+    return new PatternTycker(exprTycker, sigIter, new LocalLet(), !hasElim,
       new Renamer());
   }
 

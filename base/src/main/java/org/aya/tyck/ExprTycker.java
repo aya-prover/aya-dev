@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -37,6 +37,8 @@ import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
+import org.aya.tyck.pat.iter.ConstPusheen;
+import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.AppTycker;
 import org.aya.tyck.tycker.Unifiable;
@@ -187,12 +189,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var telescope = new AbstractTele.Locns(
       wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
       type);
-    var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
-      // always nameless
+      new SignatureIterator(telescope.telescope(), new ConstPusheen<>(type), null),
       ImmutableSeq.fill(discriminant.size(), i -> new LocalVar("match" + i)),
-      signature, clauses, ImmutableSeq.empty(), true);
+      clauses, true);
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()
       .map(WithPos::data);

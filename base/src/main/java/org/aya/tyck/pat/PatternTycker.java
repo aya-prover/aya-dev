@@ -9,7 +9,6 @@ import kala.control.Result;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
-import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
 import org.aya.generic.term.DTKind;
@@ -69,6 +68,9 @@ public class PatternTycker implements Problematic, Stateful {
   /// Substitution for `as` pattern
   private final @NotNull LocalLet asSubst;
 
+  /// Almost equivalent to {@code telescope.peek()}, but we may instantiate it.
+  ///
+  /// @see #instCurrentParam()
   private @UnknownNullability Param currentParam = null;
   private boolean hasError = false;
   private final @NotNull Renamer nameGen;
@@ -228,8 +230,8 @@ public class PatternTycker implements Problematic, Stateful {
   /// Find next param until the predicate success
   ///
   /// @return (generated implicit patterns, status)
-  /// @apiNote before call: {@link #currentParam} points to the last checked parameter
-  ///          after call: {@link #currentParam} points to the first unchecked parameter and {@param until} success on {@link #currentParam}
+  /// @apiNote before call: {@link #currentParam} is the last checked parameter
+  ///          after call: {@link #currentParam} is the first unchecked parameter which {@param until} success on
   private @NotNull Tuple2<ImmutableSeq<Pat>, FindNextParam> findNextParam(@Nullable WithPos<Pattern> pattern, @NotNull Predicate<Param> until) {
     var generatedPats = MutableList.<Pat>create();
 
@@ -290,13 +292,14 @@ public class PatternTycker implements Problematic, Stateful {
     // last user given pattern, that is, not aya generated
     @Nullable Arg<WithPos<Pattern>> lastPat = null;
 
-    // loop invariant: [patterns] points to the last checked pattern
+    // loop invariant: [patterns] points to the last checked pattern, same for [telescope]
     while (patterns.hasNext()) {
       var currentPat = patterns.peek();
       lastPat = currentPat;
 
       if (!currentPat.explicit() && !allowImplicit) {
         foundError(new PatternProblem.ImplicitDisallowed(currentPat.term()));
+        // TODO: return or continue tyck?
       }
 
       // find the next appropriate parameter
@@ -311,7 +314,9 @@ public class PatternTycker implements Problematic, Stateful {
     }
 
     // is there any explicit parameters?
-    var generated = findNextParam(null, Param::explicit);
+    var generated = findNextParam(null, p ->
+      // the use of telescope is a kind of dirty.
+      telescope.isFromPusheen() || p.explicit());
     if (generated.component2() == FindNextParam.Success) {
       // no you can't!
       WithPos<Pattern> errorPattern = lastPat == null
@@ -354,18 +359,16 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private @NotNull Pat doGeneratePattern(@NotNull Term type) {
-    Pat pat;
     var freshVar = nameGen.bindName(currentParam.name());
     if (exprTycker.whnf(type) instanceof DataCall dataCall) {
       // this pattern would be a Con, it can be inferred
       // TODO: I NEED A SOURCE POS!!
-      pat = new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, SourcePos.NONE);
+      return new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, SourcePos.NONE);
     } else {
       // If the type is not a DataCall, then the only available pattern is Pat.Bind
-      pat = new Pat.Bind(freshVar, type);
       exprTycker.localCtx().put(freshVar, type);
+      return new Pat.Bind(freshVar, type);
     }
-    return pat;
   }
 
   /**

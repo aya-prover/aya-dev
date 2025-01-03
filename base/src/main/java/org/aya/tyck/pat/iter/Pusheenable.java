@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
+/// <del>Some {@link #peek() head} can be extracted from a Pusheenable and leave the body alone</del>
+/// A Pusheenable is a functional list.
 public interface Pusheenable<T, R> extends Iterator<T> {
   @NotNull T peek();
 
