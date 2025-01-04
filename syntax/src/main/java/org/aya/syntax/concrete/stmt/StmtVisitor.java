@@ -77,11 +77,14 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, noType));
       case Command.Module m -> visitModuleDecl(m.sourcePos(), ModuleName.of(m.name()));
       case Command.Import i -> {
-        visitModuleRef(i.sourcePos(), i.path());
+        // Essentially `i.asName() != null` but fancier
+        var path = i.path();
         if (i.asName() instanceof WithPos(var pos, var asName)) {
+          visitModuleRef(i.sourcePos(), path);
           visitModuleDecl(pos, ModuleName.of(asName));
         } else {
-          // TODO: visitModuleDecl on the last element of i.path
+          if (i.sourcePosExceptLast() != SourcePos.NONE) visitModuleRef(i.sourcePosExceptLast(), path.dropLast(1));
+          visitModuleDecl(i.sourcePosLast(), ModuleName.of(path.last()));
         }
       }
       case Command.Open o when o.fromSugar() -> { }  // handled in `case Decl` or `case Command.Import`
