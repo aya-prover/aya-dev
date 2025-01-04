@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.compiler.free.*;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
@@ -25,22 +26,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
 public final class TermExprializer extends AbstractExprializer<Term> {
-  /**
-   * Terms that should be instantiated
-   */
+  public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
+  public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
+  /// Terms that should be instantiated
   private final @NotNull ImmutableSeq<FreeJavaExpr> instantiates;
   private final @NotNull MutableLinkedHashMap<LocalVar, FreeJavaExpr> binds;
 
-  /**
-   * Whether allow LocalTerm, false in default (in order to report unexpected LocalTerm)
-   */
+  /// Whether allow {@link LocalTerm}, false in default (in order to report unexpected LocalTerm)
   private final boolean allowLocalTerm;
   private final @NotNull MatchyRecorder recorder;
 
@@ -188,11 +186,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         ));
         yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
-      // TODO: make the resolving const
-      case SortTerm sort when sort.equals(SortTerm.Type0) ->
-        builder.refField(FreeJavaResolver.resolve(SortTerm.class, "Type0"));
-      case SortTerm sort when sort.equals(SortTerm.ISet) ->
-        builder.refField(FreeJavaResolver.resolve(SortTerm.class, "ISet"));
+      case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
+      case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
       case SortTerm(var kind, var ulift) ->
         builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), builder.iconst(ulift)));
       case DepTypeTerm(var kind, var param, var body) -> builder.mkNew(DepTypeTerm.class, ImmutableSeq.of(
@@ -269,11 +264,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         MutableLinkedHashMap.from(captured), this.allowLocalTerm, recorder));
       builder.returnWith(result);
     });
-  }
-
-  // TODO: unify with makeClosure
-  private @NotNull FreeJavaExpr makeThunk(@NotNull Function<TermExprializer, FreeJavaExpr> cont) {
-    return makeLambda(Constants.THUNK, (_, te) -> cont.apply(te));
   }
 
   private @NotNull FreeJavaExpr makeClosure(@NotNull BiFunction<TermExprializer, FreeJavaExpr, FreeJavaExpr> cont) {

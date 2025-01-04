@@ -1,11 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.ArgumentProvider;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
@@ -232,10 +235,6 @@ public record SourceCodeBuilder(
 
   @Override public @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return mkNew(FreeUtil.fromClass(className), args);
-  }
-
-  @Override public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
-    return name.ref();
   }
 
   @Override

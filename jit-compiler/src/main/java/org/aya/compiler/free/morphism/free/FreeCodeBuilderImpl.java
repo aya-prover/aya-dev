@@ -149,8 +149,7 @@ public record FreeCodeBuilderImpl(
     stmts.append(new FreeStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
   }
 
-  @Override
-  public void returnWith(@NotNull FreeJavaExpr expr) {
+  @Override public void returnWith(@NotNull FreeJavaExpr expr) {
     stmts.append(new FreeStmt.Return(assertFreeExpr(expr)));
   }
 
@@ -159,8 +158,7 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.mkNew(conRef, args);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
+  @Override public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
     return FreeExprBuilderImpl.INSTANCE.refVar(name);
   }
 

@@ -1,10 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,10 +34,7 @@ public final class FreeJavaResolver {
     return new FieldRef(owner, returnType, name);
   }
 
-  public static @NotNull FieldRef resolve(
-    @NotNull Class<?> owner,
-    @NotNull String name
-  ) {
+  public static @NotNull FieldRef resolve(@NotNull Class<?> owner, @NotNull String name) {
     try {
       var field = owner.getField(name);
       return resolve(FreeUtil.fromClass(owner), name, FreeUtil.fromClass(field.getType()));

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
@@ -38,7 +38,6 @@ public interface FreeExprBuilder {
     return mkNew(conRef, args);
   }
 
-  // TODO: inline this
   default @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
     return name.ref();
   }
