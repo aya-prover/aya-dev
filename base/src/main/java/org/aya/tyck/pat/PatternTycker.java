@@ -317,6 +317,12 @@ public class PatternTycker implements Problematic, Stateful {
       patterns.next();    // consume pattern
     }
 
+    // now: ! patterns.hasNext()
+    // or patterns.hasNext() && ! telescope.hasNext() && patterns.isFromPusheen()
+    // or patterns.hasNext() && telescope.hasNext() && patterns.isFromPusheen() && telescope.isFromPusheen()
+
+    // all not pusheen patterns have their parameters
+
     // is there any explicit parameters?
     var generated = findNextParam(null, p ->
         p.explicit()
