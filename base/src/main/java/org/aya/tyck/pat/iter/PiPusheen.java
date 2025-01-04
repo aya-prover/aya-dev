@@ -15,14 +15,18 @@ public final class PiPusheen implements Pusheenable<Param, @NotNull Term> {
   // the index of next param
   private int pusheenIdx = 0;
 
-  public PiPusheen(@NotNull DepTypeTerm.UnpiRaw unpi) {
+  public PiPusheen(@NotNull DepTypeTerm.Unpi unpi) {
     this.unpi = unpi.params();
     this.result = unpi.body();
   }
 
   @Override public @NotNull Param peek() { return unpi.get(pusheenIdx); }
   @Override public @NotNull Term body() {
-    return DepTypeTerm.makePi(unpi.sliceView(pusheenIdx, unpi.size()).map(Param::type), result);
+    return unpiBody().makePi();
+  }
+
+  public @NotNull DepTypeTerm.Unpi unpiBody() {
+    return new DepTypeTerm.Unpi(unpi.sliceView(pusheenIdx, unpi.size()).toImmutableSeq(), result);
   }
 
   @Override public boolean hasNext() { return pusheenIdx < unpi.size(); }

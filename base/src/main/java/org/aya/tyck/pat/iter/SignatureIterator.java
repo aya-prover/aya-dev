@@ -10,25 +10,24 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 public class SignatureIterator extends PusheenIterator<Param, Term> {
-  public static @NotNull Pusheenable<Param, @NotNull Term> makePusheen(@NotNull DepTypeTerm.UnpiRaw unpi) {
+  public static @NotNull Pusheenable<Param, @NotNull Term> makePusheen(@NotNull DepTypeTerm.Unpi unpi) {
     if (unpi.params().isEmpty()) {
       return new Const<>(unpi.body());
     } else {
       return new PiPusheen(unpi);
-
     }
   }
 
   public static @NotNull SignatureIterator make(
     @NotNull ImmutableSeq<Param> telescope,
-    @NotNull DepTypeTerm.UnpiRaw unpi,
+    @NotNull DepTypeTerm.Unpi unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims
   ) {
@@ -46,7 +45,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
 
   public static @NotNull SignatureIterator make(
     @NotNull ImmutableSeq<Param> telescope,
-    @NotNull DepTypeTerm.UnpiRaw unpi
+    @NotNull DepTypeTerm.Unpi unpi
   ) {
     return new SignatureIterator(telescope, makePusheen(unpi), null);
   }
@@ -65,7 +64,17 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
   }
 
   @Override public @NotNull Pusheenable<Param, Term> body() {
-    return Objects.requireNonNull(super.body());
+    return super.body();
+  }
+
+  /// Returns a unpi body respect to the {@link #body}. Therefore, it is possible that {@link DepTypeTerm.Unpi#body}
+  /// is a PiType if {@link #body} is {@link Pusheenable.Const}
+  public @NotNull DepTypeTerm.Unpi unpiBody() {
+    return switch (body()) {
+      case Pusheenable.Const(var konst) -> new DepTypeTerm.Unpi(konst);
+      case PiPusheen pipush -> pipush.unpiBody();
+      default -> Panic.unreachable();
+    };
   }
 
   @Override public Param next() {

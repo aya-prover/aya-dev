@@ -111,7 +111,7 @@ public record StmtTycker(
             var userTele = signature.params().take(userTeleSize);
             var pusheenTele = signature.params().drop(userTeleSize);
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
-              userTele, new DepTypeTerm.UnpiRaw(pusheenTele, signature.result()),
+              userTele, new DepTypeTerm.Unpi(pusheenTele, signature.result()),
               teleVars, elims, clauses, true);
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
@@ -254,7 +254,7 @@ public record StmtTycker(
       assert resolvedElim != null;
       // do not do coverage check
       var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(
-        SignatureIterator.make(dataSig.params(), new DepTypeTerm.UnpiRaw(dataSig.result()), ownerBinds, resolvedElim),
+        SignatureIterator.make(dataSig.params(), new DepTypeTerm.Unpi(dataSig.result()), ownerBinds, resolvedElim),
         new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
       if (lhsResult.hasError()) {
         return;

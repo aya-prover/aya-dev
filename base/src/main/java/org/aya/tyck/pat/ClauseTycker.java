@@ -16,7 +16,6 @@ import org.aya.syntax.core.pat.TypeEraser;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
@@ -51,16 +50,17 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /**
-   * @param paramSubst substitution for parameter, in the same order as parameter.
-   *                   See {@link PatternTycker#paramSubst}
-   * @param freePats   a free version of the patterns.
-   *                   In most cases you want to use {@code clause.pats} instead
-   * @param allBinds   all binders in the patterns
-   * @param asSubst    substitution of the {@code as} patterns
+   * @param unpiedResult the result according to the pattern tycking
+   * @param paramSubst   substitution for parameter, in the same order as parameter.
+   *                     See {@link PatternTycker#paramSubst}
+   * @param freePats     a free version of the patterns.
+   *                     In most cases you want to use {@code clause.pats} instead
+   * @param allBinds     all binders in the patterns
+   * @param asSubst      substitution of the {@code as} patterns
    */
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull AbstractTele.Locns newSignature,
+    @NotNull DepTypeTerm.Unpi unpiedResult,
     @NotNull ImmutableSeq<LocalVar> allBinds,
     @NotNull ImmutableSeq<Pat> freePats,
     @NotNull ImmutableSeq<Jdg> paramSubst,
@@ -69,12 +69,14 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean hasError
   ) {
     public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
-      return new LhsResult(localCtx, newSignature, allBinds, freePats.map(f), paramSubst, asSubst, clause, hasError);
+      return new LhsResult(localCtx, unpiedResult, allBinds,
+        freePats.map(f), paramSubst, asSubst, clause, hasError);
     }
 
-    public @NotNull Term instType() {
+    /// Returns the instantiated result type of this clause
+    public @NotNull Term instResult() {
       // We need not to inline this term even we did before. The [paramSubst] is already inlined.
-      return newSignature.result().instTele(paramSubst.view().map(Jdg::wellTyped));
+      return unpiedResult.makePi().instTele(paramSubst.view().map(Jdg::wellTyped));
     }
 
     @Contract(mutates = "param2")
@@ -87,7 +89,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   public record Worker(
     @NotNull ClauseTycker parent,
     @NotNull ImmutableSeq<Param> telescope,
-    @NotNull DepTypeTerm.UnpiRaw unpi,
+    @NotNull DepTypeTerm.Unpi unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
@@ -181,7 +183,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
       var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
         allBinds.size(), patIter.exprBody());
-      return new LhsResult(ctx, sigIter.signature(), allBinds,
+      return new LhsResult(ctx, sigIter.unpiBody(), allBinds,
         patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
   }
@@ -212,7 +214,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.setLocalCtx(result.localCtx);
         result.addLocalLet(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
-        wellBody = exprTycker.inherit(bodyExpr, result.instType()).wellTyped();
+        wellBody = exprTycker.inherit(bodyExpr, result.instResult()).wellTyped();
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
@@ -262,7 +264,6 @@ public final class ClauseTycker implements Problematic, Stateful {
       }
     }
   }
-
 
   /**
    * Inline terms which in pattern

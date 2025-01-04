@@ -187,7 +187,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
       telescope,
-      new DepTypeTerm.UnpiRaw(ImmutableSeq.empty(), type),
+      new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
       ImmutableSeq.fill(discriminant.size(), i -> new LocalVar("match" + i)),
       ImmutableSeq.empty(),
       clauses, true);

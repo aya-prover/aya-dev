@@ -112,19 +112,21 @@ public record DepTypeTerm(
     });
   }
 
-  public record Unpi(
+  @ForLSP
+  public record UnpiNamed(
     @NotNull Seq<Term> params,
     @NotNull Seq<LocalVar> names,
     @NotNull Term body
   ) { }
-  public static @NotNull Unpi unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  @ForLSP public static @NotNull UnpiNamed
+  unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre) {
     return unpi(kind, term, pre, new Renamer());
   }
-  @ForLSP public static @NotNull Unpi
+  @ForLSP public static @NotNull UnpiNamed
   unpi(@NotNull DepTypeTerm term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     return unpi(term.kind(), term, pre, nameGen);
   }
-  @ForLSP public static @NotNull Unpi
+  @ForLSP public static @NotNull UnpiNamed
   unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
@@ -135,14 +137,14 @@ public record DepTypeTerm(
       term = body.apply(var);
     }
 
-    return new Unpi(params, names, term);
+    return new UnpiNamed(params, names, term);
   }
 
-  public record UnpiRaw(
+  public record Unpi(
     @NotNull ImmutableSeq<Param> params,
     @NotNull Term body
   ) {
-    public UnpiRaw(@NotNull Term body) {
+    public Unpi(@NotNull Term body) {
       this(ImmutableSeq.empty(), body);
     }
 
@@ -151,7 +153,7 @@ public record DepTypeTerm(
     }
   }
 
-  public static @NotNull UnpiRaw unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  public static @NotNull Unpi unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
     var params = MutableList.<Param>create();
     var i = 0;
     while (pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
@@ -160,7 +162,7 @@ public record DepTypeTerm(
       term = body.toLocns().body();
     }
 
-    return new UnpiRaw(params.toImmutableSeq(), term);
+    return new Unpi(params.toImmutableSeq(), term);
   }
 
   public static @NotNull SortTerm lubPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) {
