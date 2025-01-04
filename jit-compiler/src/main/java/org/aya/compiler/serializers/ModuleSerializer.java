@@ -6,6 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
+import org.aya.compiler.free.morphism.free.FreeRunner;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
@@ -14,6 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.constant.ClassDesc;
 
@@ -34,15 +37,6 @@ public final class ModuleSerializer {
     public void addMatchy(Matchy clauses, int argsSize, int captureSize) {
       todoMatchies.append(new MatchyData(clauses, argsSize, captureSize));
     }
-  }
-
-  public static <Carrier> Carrier serialize(
-    @NotNull ShapeFactory factory,
-    @NotNull FreeJavaBuilder<Carrier> builder,
-    @NotNull ModuleResult unit
-  ) {
-    return new ModuleSerializer(factory)
-      .serialize(builder, unit);
   }
 
   private final @NotNull ShapeFactory shapeFactory;
@@ -85,9 +79,11 @@ public final class ModuleSerializer {
   }
 
   public String serializeWithBestBuilder(ModuleResult unit) {
-    return serialize(SourceFreeJavaBuilder.create(), unit);
+    var freeJava = serialize(FreeJavaBuilderImpl.INSTANCE, unit);
+    return new FreeRunner<>(SourceFreeJavaBuilder.create()).runFree(freeJava);
   }
 
+  @VisibleForTesting
   public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.CompiledAyaImpl(unit.name,
