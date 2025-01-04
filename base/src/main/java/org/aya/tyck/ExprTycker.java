@@ -190,8 +190,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
       ImmutableSeq.fill(discriminant.size(), i ->
         new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
-      ImmutableSeq.empty(),
-      clauses, true);
+      ImmutableSeq.empty(), clauses);
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()
       .map(WithPos::data);

@@ -2,7 +2,7 @@ open import prelude
 import data::vec::base as vec
 
 module Test1 {
-  open vec
+  open vec hiding (++)
   def unwrap (A : Type) (v : Vec 1 A) : A elim v
   | x :> [] => x
 
@@ -19,11 +19,11 @@ module Test4 {
   | 1 => fzero
   | suc n => fsucc (Fin n)
 
-  def exfalso (A : Type) (x : Fin 0) : A elim x | ()
+  def exfalsoFin (A : Type) (x : Fin 0) : A elim x | ()
 }
 
 module Test5 {
-  open vec
+  open vec hiding (++)
   open inductive MatchMe (n : Nat) (Vec n Nat)
   | suc n', v :> xs => matched
 
@@ -49,6 +49,8 @@ module PullRequest1268 {
   def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (d : D) D -> D
   | a, b, D => fn d => id D
 
+  // telescope: A a B b C
+  // unpi: D d0 -> d1
   def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a b
   | a => fn b D => id D
 }

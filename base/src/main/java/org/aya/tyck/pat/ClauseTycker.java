@@ -95,8 +95,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull DepTypeTerm.Unpi unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
-    @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    boolean isFn
+    @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
     public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
@@ -117,7 +116,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
       return parent.checkAllLhs(() ->
           SignatureIterator.make(telescope, unpi, teleVars, elims),
-        clauses.view(), isFn);
+        clauses.view(), unpi.params().size());
     }
 
     public @NotNull TyckResult checkNoClassify() {
@@ -132,9 +131,9 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
     @NotNull Supplier<SignatureIterator> sigIterFactory,
-    @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
+    @NotNull SeqView<Pattern.Clause> clauses, int userUnpiSize
   ) {
-    return clauses.map(c -> checkLhs(sigIterFactory.get(), c, isFn)).toImmutableSeq();
+    return clauses.map(c -> checkLhs(sigIterFactory.get(), c, true, userUnpiSize)).toImmutableSeq();
   }
 
   public @NotNull TyckResult checkAllRhs(
@@ -157,7 +156,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   public @NotNull LhsResult checkLhs(
     @NotNull SignatureIterator sigIter,
     @NotNull Pattern.Clause clause,
-    boolean isFn
+    boolean isFn, int userUnpiSize
   ) {
     var tycker = newPatternTycker(sigIter, sigIter.elims != null);
     try (var _ = exprTycker.subscope()) {
@@ -182,11 +181,9 @@ public final class ClauseTycker implements Problematic, Stateful {
       ctx = ctx.map(new TermInline());
 
       // fill missing patterns
-      var freeUnpiBody = sigIter.unpiBody();
-      var unpiParamSize = freeUnpiBody.params().size();
       // This is not a typo of "repl"
-      var instRepi = freeUnpiBody.makePi().instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
-      var instUnpiParam = DepTypeTerm.unpiDBI(instRepi, UnaryOperator.identity(), unpiParamSize);
+      var instRepi = sigIter.unpiBody().makePi().instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
+      var instUnpiParam = DepTypeTerm.unpiDBI(instRepi, UnaryOperator.identity(), userUnpiSize);
       var missingPats = instUnpiParam.params().mapIndexed((idx, x) ->
         // It would be nice if we have a SourcePos here
         new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck),
@@ -199,7 +196,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var newClause = new Pat.Preclause<>(clause.sourcePos,
         patWithTypeBound.component2(),
         allBinds.size(), patIter.exprBody());
-      return new LhsResult(ctx, instRepi, unpiParamSize, allBinds,
+      return new LhsResult(ctx, instRepi, userUnpiSize, allBinds,
         wellTypedPats,
         patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
