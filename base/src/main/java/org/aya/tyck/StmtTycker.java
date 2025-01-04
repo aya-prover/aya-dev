@@ -107,9 +107,11 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
             tycker = mkTycker();
-            var unpi = DepTypeTerm.unpiDBI(signature.result(), tycker::whnf);
+            var userTeleSize = fnDecl.telescope.size();
+            var userTele = signature.params().take(userTeleSize);
+            var pusheenTele = signature.params().drop(userTeleSize);
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
-              signature.params(), unpi,
+              userTele, new DepTypeTerm.UnpiRaw(pusheenTele, signature.result()),
               teleVars, elims, clauses, true);
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
@@ -184,7 +186,9 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody body) {
           tycker.solveMetas();
           var zonker = new Finalizer.Zonk<>(tycker);
-          fnRef.signature = fnRef.signature.descent(zonker::zonk);
+          // Pusheen must be in the header, because once we have the header,
+          // there will be defcalls to it,
+          fnRef.signature = fnRef.signature.descent(zonker::zonk).pusheen(tycker::whnf);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }

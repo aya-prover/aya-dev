@@ -68,6 +68,10 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull Pat.Preclause<Expr> clause,
     boolean hasError
   ) {
+    public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
+      return new LhsResult(localCtx, newSignature, allBinds, freePats.map(f), paramSubst, asSubst, clause, hasError);
+    }
+
     public @NotNull Term instType() {
       // We need not to inline this term even we did before. The [paramSubst] is already inlined.
       return newSignature.result().instTele(paramSubst.view().map(Jdg::wellTyped));
@@ -103,10 +107,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         }
       }
 
-      lhs = lhs.map(cl -> new LhsResult(cl.localCtx, cl.newSignature, cl.allBinds,
-        cl.freePats.map(TypeEraser::erase),
-        cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
-      return parent.checkAllRhs(teleVars, lhs);
+      return parent.checkAllRhs(teleVars, lhs.map(cl -> cl.mapPats(new TypeEraser())));
     }
 
     public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
