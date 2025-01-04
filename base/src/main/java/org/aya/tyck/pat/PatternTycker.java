@@ -30,8 +30,8 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.PatternProblem;
-import org.aya.tyck.pat.iter.ConstPusheen;
 import org.aya.tyck.pat.iter.PatternIterator;
+import org.aya.tyck.pat.iter.Pusheenable;
 import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
@@ -381,7 +381,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns,
     @NotNull WithPos<Pattern> outerPattern
   ) {
-    var sub = new PatternTycker(exprTycker, new SignatureIterator(telescope, new ConstPusheen<>(ErrorTerm.DUMMY), null), asSubst, nameGen);
+    var sub = new PatternTycker(exprTycker, new SignatureIterator(telescope, new Pusheenable.Const<>(ErrorTerm.DUMMY), null), asSubst, nameGen);
     var tyckResult = sub.tyck(new PatternIterator(patterns), outerPattern);
 
     hasError = hasError || sub.hasError;

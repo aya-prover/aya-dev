@@ -90,22 +90,23 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean isFn
   ) {
     public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
-      var lhsResult = checkAllLhs();
+      var lhs = checkAllLhs();
 
-      if (lhsResult.noneMatch(r -> r.hasError)) {
-        var classes = PatClassifier.classify(lhsResult.view().map(LhsResult::clause),
-          // TODO: max(lhsResult.signature.telescope by size)
+      if (lhs.noneMatch(r -> r.hasError)) {
+        var classes = PatClassifier.classify(
+          lhs.view().map(LhsResult::clause),
+          // TODO: max(lhs.signature.telescope by size)
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
-          // refinePatterns(lhsResults, usages, classes);
+          // refinePatterns(lhs, usages, classes);
         }
       }
 
-      lhsResult = lhsResult.map(cl -> new LhsResult(cl.localCtx, cl.newSignature, cl.allBinds,
+      lhs = lhs.map(cl -> new LhsResult(cl.localCtx, cl.newSignature, cl.allBinds,
         cl.freePats.map(TypeEraser::erase),
         cl.paramSubst, cl.asSubst, cl.clause, cl.hasError));
-      return parent.checkAllRhs(teleVars, lhsResult);
+      return parent.checkAllRhs(teleVars, lhs);
     }
 
     public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
@@ -125,10 +126,10 @@ public final class ClauseTycker implements Problematic, Stateful {
   // region tycking
 
   public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
-    @NotNull Supplier<SignatureIterator> sigIter,
+    @NotNull Supplier<SignatureIterator> sigIterFactory,
     @NotNull SeqView<Pattern.Clause> clauses, boolean isFn
   ) {
-    return clauses.map(c -> checkLhs(sigIter.get(), c, isFn)).toImmutableSeq();
+    return clauses.map(c -> checkLhs(sigIterFactory.get(), c, isFn)).toImmutableSeq();
   }
 
   public @NotNull TyckResult checkAllRhs(

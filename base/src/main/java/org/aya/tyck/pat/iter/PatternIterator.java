@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PatternIterator extends PusheenIterator<Arg<WithPos<Pattern>>, WithPos<Expr>> {
   public static final @NotNull Pusheenable<Arg<WithPos<Pattern>>, WithPos<Expr>> DUMMY =
-    new ConstPusheen<>(WithPos.dummy(new Expr.Error(Doc.empty())));
+    new Const<>(WithPos.dummy(new Expr.Error(Doc.empty())));
 
   public PatternIterator(@NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns) {
     super(patterns.iterator(), DUMMY);

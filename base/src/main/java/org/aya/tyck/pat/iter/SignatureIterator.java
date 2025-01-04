@@ -19,7 +19,7 @@ import java.util.Objects;
 public class SignatureIterator extends PusheenIterator<Param, Term> {
   public static @NotNull Pusheenable<Param, @NotNull Term> makePusheen(@NotNull DepTypeTerm.UnpiRaw unpi) {
     if (unpi.params().isEmpty()) {
-      return new ConstPusheen<>(unpi.body());
+      return new Const<>(unpi.body());
     } else {
       return new PiPusheen(unpi);
 
@@ -40,7 +40,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
         .map(elims::contains)
         .collect(ImmutableBooleanSeq.factory());
 
-      return new SignatureIterator(telescope, new ConstPusheen<>(unpi.makePi()), bElims);
+      return new SignatureIterator(telescope, new Const<>(unpi.makePi()), bElims);
     }
   }
 
