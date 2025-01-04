@@ -256,27 +256,6 @@ public class PatternTycker implements Problematic, Stateful {
     return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.Success);
   }
 
-  /**
-   * Find the next param against to {@param pattern}
-   *
-   * @return null if failed, i.e. too many pattern
-   * @apiNote after call: {@param currentParam} is an unchecked parameter, and {@code currentParam.explicit == pattern.explicit}
-   * @see #findNextParam(WithPos, Predicate)
-   */
-  private @Nullable ImmutableSeq<Pat> nextParam(@NotNull Arg<WithPos<Pattern>> pattern) {
-    var generated = findNextParam(pattern.term(), p -> p.explicit() == pattern.explicit());
-
-    return switch (generated.kind) {
-      case Success -> generated.generated;
-      case TooManyPattern -> {
-        // no more parameters
-        foundError(new PatternProblem.TooManyPattern(pattern.term()));
-        yield null;
-      }
-      case TooManyImplicit -> null;
-    };
-  }
-
   public @NotNull TyckResult tyck(
     @NotNull PatternIterator patterns,
     @Nullable WithPos<Pattern> outerPattern
@@ -286,8 +265,15 @@ public class PatternTycker implements Problematic, Stateful {
     @Nullable Arg<WithPos<Pattern>> lastPat = null;
 
     // loop invariant: [patterns] points to the last checked pattern, same for [telescope]
+    outer:
     while (patterns.hasNext()) {
       var currentPat = patterns.peek();
+
+      peekNextParam();      // update telescope.isFromPusheen()
+      if (patterns.isFromPusheen() && telescope.isFromPusheen()) {
+        break;
+      }
+
       lastPat = currentPat;
 
       if (!currentPat.explicit() && !allowImplicit) {
@@ -296,7 +282,28 @@ public class PatternTycker implements Problematic, Stateful {
       }
 
       // find the next appropriate parameter
-      var generated = nextParam(currentPat);
+      var fnp = findNextParam(currentPat.term(), p ->
+          p.explicit() == currentPat.explicit()
+        // || telescope.isFromPusheen() == patterns.isFromPusheen()
+        // ^this check implies the first one
+      );
+
+      ImmutableSeq<Pat> generated = null;
+
+      switch (fnp.kind) {
+        case Success -> generated = fnp.generated;
+        case TooManyPattern -> {
+          if (patterns.isFromPusheen()) {
+            // It is fine if a pusheen pattern mismatch
+            wellTyped.appendAll(fnp.generated);
+            break outer;
+          } else {
+            // no more parameters
+            foundError(new PatternProblem.TooManyPattern(currentPat.term()));
+          }
+        }
+      }
+
       if (generated == null) {
         return done(wellTyped);
       }
@@ -308,8 +315,10 @@ public class PatternTycker implements Problematic, Stateful {
 
     // is there any explicit parameters?
     var generated = findNextParam(null, p ->
-      // the use of telescope is a kind of dirty.
-      telescope.isFromPusheen() || p.explicit());
+        p.explicit()
+          || telescope.isFromPusheen()
+      // ^this check implies the first one
+    );
     // what kind of parameter you found?
     if (generated.kind == FindNextParam.Kind.Success && !telescope.isFromPusheen()) {
       // no you can't!
