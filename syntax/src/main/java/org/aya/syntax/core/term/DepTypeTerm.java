@@ -153,10 +153,12 @@ public record DepTypeTerm(
     }
   }
 
-  public static @NotNull Unpi unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  /// @param bound -1 for unlimited
+  public static @NotNull Unpi unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre, int bound) {
     var params = MutableList.<Param>create();
     var i = 0;
-    while (pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
+    while ((bound == -1 || i < bound)
+      && pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
       // Note: PatternTycker depends on the licit of unpi param, be careful to change it!
       params.append(new Param(Integer.toString(i++), param, true));
       term = body.toLocns().body();

@@ -49,23 +49,23 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /**
-   * @param unpiedResult the result according to the pattern tycking, the
-   *                     {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
-   *                     {@link org.aya.tyck.pat.iter.Pusheenable.Const}
-   * @param paramSubst   substitution for parameter, in the same ordeer as parameter.
-   *                     See {@link PatternTycker#paramSubst}.
-   * @param freePats     a free version of the patterns.
-   *                     In most cases you want to use {@code clause.pats} instead
-   * @param allBinds     all binders in the patterns
-   * @param asSubst      substitution of the {@code as} patterns
+   * @param result     the result according to the pattern tycking, the
+   *                   {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
+   *                   {@link org.aya.tyck.pat.iter.Pusheenable.Const}
+   * @param paramSubst substitution for parameter, in the same ordeer as parameter.
+   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #addLocalLet}
+   * @param freePats   a free version of the patterns.
+   *                   In most cases you want to use {@code clause.pats} instead
+   * @param allBinds   all binders in the patterns
+   * @param asSubst    substitution of the {@code as} patterns
    * @implNote If there are fewer pats than parameters, there will be some pats inserted,
    * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
-   * of the body, because we check the body against to {@link #unpiedResult}.
+   * of the body, because we check the body against to {@link #result}.
    * Then we apply the inserted pats to the body to complete it.
    */
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull DepTypeTerm.Unpi unpiedResult,
+    @NotNull Term result, int unpiParamSize,
     @NotNull ImmutableSeq<LocalVar> allBinds,
     @NotNull ImmutableSeq<Pat> freePats,
     @NotNull ImmutableSeq<Jdg> paramSubst,
@@ -74,24 +74,18 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean hasError
   ) {
     public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
-      return new LhsResult(localCtx, unpiedResult, allBinds,
+      return new LhsResult(localCtx, result, unpiParamSize, allBinds,
         freePats.map(f), paramSubst, asSubst, clause, hasError);
     }
 
     public @NotNull SeqView<Pat> unpiPats() {
-      return clause.pats().view().takeLast(unpiedResult.params().size());
-    }
-
-    /// Returns the instantiated result type of this clause
-    public @NotNull Term instResult() {
-      // We need not to inline this term even we did before. The [paramSubst] is already inlined.
-      return unpiedResult.makePi().instTele(paramSubst.view().map(Jdg::wellTyped));
+      return clause.pats().view().takeLast(unpiParamSize);
     }
 
     @Contract(mutates = "param2")
     public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
-      exprTycker.setLocalLet(new LocalLet(exprTycker.localLet(), asSubst.subst()));
+      exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
   }
 
@@ -180,25 +174,33 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       clause.hasError |= patResult.hasError();
       patResult = inline(patResult, ctx);
-      clause.patterns.view().map(it -> it.term().data()).forEach(TermInPatInline::apply);
+      clause.patterns.forEach(it -> TermInPatInline.apply(it.term().data()));
 
       // It is safe to replace ctx:
       // * telescope are well-typed and no Meta
       // * PatternTycker doesn't introduce any Meta term
       ctx = ctx.map(new TermInline());
-      var patWithTypeBound = Pat.collectVariables(patResult.wellTyped().view());
 
-      var unpiBody = sigIter.unpiBody();
       // fill missing patterns
-      var missingPats = unpiBody.params().mapIndexed((idx, x) ->
+      var freeUnpiBody = sigIter.unpiBody();
+      var unpiParamSize = freeUnpiBody.params().size();
+      // This is not a typo of "repl"
+      var instRepi = freeUnpiBody.makePi().instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
+      var instUnpiParam = DepTypeTerm.unpiDBI(instRepi, UnaryOperator.identity(), unpiParamSize);
+      var missingPats = instUnpiParam.params().mapIndexed((idx, x) ->
         // It would be nice if we have a SourcePos here
-        new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck), x.type()));
+        new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck),
+          x.type()));
+      
+      var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
+      var patWithTypeBound = Pat.collectVariables(wellTypedPats.view());
 
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
-      var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
+      var newClause = new Pat.Preclause<>(clause.sourcePos,
+        patWithTypeBound.component2(),
         allBinds.size(), patIter.exprBody());
-      return new LhsResult(ctx, sigIter.unpiBody(), allBinds,
-        patResult.wellTyped().appendedAll(missingPats),
+      return new LhsResult(ctx, instRepi, unpiParamSize, allBinds,
+        wellTypedPats,
         patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
   }
@@ -229,7 +231,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.setLocalCtx(result.localCtx);
         result.addLocalLet(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
-        wellBody = exprTycker.inherit(bodyExpr, result.instResult()).wellTyped();
+        wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
@@ -316,7 +318,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
     // map in place 😱😱😱😱
-    result.asSubst().subst().replaceAll((_, t) -> inlineTerm(t));
+    result.asSubst().let().replaceAll((_, t) -> inlineTerm(t));
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }

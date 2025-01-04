@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.ctx;
 
@@ -17,18 +17,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public record LocalLet(
   @Override @Nullable LocalLet parent,
-  @NotNull MutableLinkedHashMap<LocalVar, Jdg> subst
+  @NotNull MutableLinkedHashMap<LocalVar, Jdg> let
 ) implements Scoped<LocalVar, Jdg, LocalLet> {
   public LocalLet() { this(null, MutableLinkedHashMap.of()); }
   @Override public @NotNull LocalLet self() { return this; }
 
   @Override public @NotNull LocalLet derive() {
-    return new LocalLet(this, MutableLinkedHashMap.of());
+    return derive(MutableLinkedHashMap.of());
+  }
+
+  public @NotNull LocalLet derive(@NotNull MutableLinkedHashMap<LocalVar, Jdg> let) {
+    return new LocalLet(this, let);
   }
 
   @Override public @NotNull Option<Jdg> getLocal(@NotNull LocalVar key) {
-    return subst.getOption(key);
+    return let.getOption(key);
   }
 
-  @Override public void putLocal(@NotNull LocalVar key, @NotNull Jdg value) { subst.put(key, value); }
+  @Override public void putLocal(@NotNull LocalVar key, @NotNull Jdg value) { let.put(key, value); }
 }
