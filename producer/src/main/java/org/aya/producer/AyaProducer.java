@@ -35,6 +35,7 @@ import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.Arg;
+import org.aya.util.Pair;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.error.Panic;
@@ -113,12 +114,21 @@ public record AyaProducer(
       type(node.child(TYPE)));
   }
 
+  public @NotNull Pair<SourcePos, SourcePos> importQualifiedPos(@NotNull GenericNode<?> qualifiedId) {
+    var ids = qualifiedId.childrenOfType(WEAK_ID);
+    var prefix = ids.dropLast(1).toImmutableSeq();
+    var prefixPos = prefix.isEmpty() ? SourcePos.NONE : sourcePosOf(prefix.get(0)).union(sourcePosOf(prefix.getLast()));
+    return new Pair<>(prefixPos, sourcePosOf(ids.getLast()));
+  }
+
   public @NotNull Command.Import importCmd(@NotNull GenericNode<?> node) {
     var acc = node.peekChild(KW_PUBLIC);
     var asId = node.peekChild(WEAK_ID);
     var importMod = node.child(QUALIFIED_ID);
+    var importModPos = importQualifiedPos(importMod);
     return new Command.Import(
-      sourcePosOf(importMod),
+      importModPos.component1(),
+      importModPos.component2(),
       modulePath(importMod),
       asId == null ? null : weakId(asId),
       acc == null ? Stmt.Accessibility.Private : Stmt.Accessibility.Public
@@ -142,9 +152,12 @@ public record AyaProducer(
       false,
       openImport
     );
-    return openImport
-      ? ImmutableSeq.of(new Command.Import(namePos, modName, null, accessibility), open)
-      : ImmutableSeq.of(open);
+    if (openImport) {
+      var importPos = importQualifiedPos(modNameNode);
+      return ImmutableSeq.of(new Command.Import(importPos.component1(), importPos.component2(),
+        modName, null, accessibility), open);
+    }
+    return ImmutableSeq.of(open);
   }
 
   public UseHide hideList(SeqView<? extends GenericNode<?>> hideLists, UseHide.Strategy strategy) {

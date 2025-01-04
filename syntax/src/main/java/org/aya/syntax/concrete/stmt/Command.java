@@ -14,13 +14,19 @@ import org.jetbrains.annotations.Nullable;
 
 public sealed interface Command extends Stmt {
   default @Override void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) { }
-  /** @author re-xyr */
+  /// @param sourcePosExceptLast can be NONE if the entire import is one `weakId`
   record Import(
-    @Override @NotNull SourcePos sourcePos,
+    @NotNull SourcePos sourcePosExceptLast,
+    @NotNull SourcePos sourcePosLast,
     @NotNull ModulePath path,
     @Nullable WithPos<String> asName,
     @Override @NotNull Accessibility accessibility
-  ) implements Command { }
+  ) implements Command {
+    @Override public @NotNull SourcePos sourcePos() {
+      if (sourcePosExceptLast == SourcePos.NONE) return sourcePosLast;
+      return sourcePosExceptLast.union(sourcePosLast);
+    }
+  }
 
   /** @author re-xyr */
   record Open(
