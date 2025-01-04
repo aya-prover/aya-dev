@@ -41,10 +41,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   private final Finalizer.Zonk<ClauseTycker> zonker = new Finalizer.Zonk<>(this);
   public ClauseTycker(@NotNull ExprTycker exprTycker) { this.exprTycker = exprTycker; }
 
-  public record TyckResult(
-    @NotNull ImmutableSeq<Pat.Preclause<Term>> clauses,
-    boolean hasLhsError
-  ) {
+  public record TyckResult(@NotNull ImmutableSeq<Pat.Preclause<Term>> clauses, boolean hasLhsError) {
     public @NotNull ImmutableSeq<WithPos<Term.Matching>> wellTyped() {
       return clauses.flatMap(Pat.Preclause::lift);
     }
@@ -54,12 +51,16 @@ public final class ClauseTycker implements Problematic, Stateful {
    * @param unpiedResult the result according to the pattern tycking, the
    *                     {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
    *                     {@link org.aya.tyck.pat.iter.Pusheenable.Const}
-   * @param paramSubst   substitution for parameter, in the same order as parameter.
-   *                     See {@link PatternTycker#paramSubst}
+   * @param paramSubst   substitution for parameter, in the same ordeer as parameter.
+   *                     See {@link PatternTycker#paramSubst}.
    * @param freePats     a free version of the patterns.
    *                     In most cases you want to use {@code clause.pats} instead
    * @param allBinds     all binders in the patterns
    * @param asSubst      substitution of the {@code as} patterns
+   * @implNote If there are fewer pats than parameters, there will be some pats inserted,
+   * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
+   * of the body, because we check the body against to {@link #unpiedResult}.
+   * Then we apply the inserted pats to the body to complete it.
    */
   public record LhsResult(
     @NotNull LocalCtx localCtx,
@@ -74,6 +75,10 @@ public final class ClauseTycker implements Problematic, Stateful {
     public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
       return new LhsResult(localCtx, unpiedResult, allBinds,
         freePats.map(f), paramSubst, asSubst, clause, hasError);
+    }
+
+    public @NotNull SeqView<Pat> unpiPats() {
+      return clause.pats().view().takeLast(unpiedResult.params().size());
     }
 
     /// Returns the instantiated result type of this clause
@@ -104,7 +109,6 @@ public final class ClauseTycker implements Problematic, Stateful {
       if (lhs.noneMatch(r -> r.hasError)) {
         var classes = PatClassifier.classify(
           lhs.view().map(LhsResult::clause),
-          // TODO: max(lhs.signature.telescope by size)
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
@@ -222,12 +226,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         wellBody = zonker.zonk(wellBody);
 
         // fill missing patterns and eta body
-        var unpiPat = result.unpiedResult.params().mapIndexed((idx, x) ->
-          // It would be nice if we have a SourcePos for the LocalVar
-          new Pat.Bind(new LocalVar("unpi" + idx), x.type()));
-
-        var fullPats = result.clause.pats().view().concat(unpiPat);
-        wellBody = AppTerm.make(wellBody, unpiPat.view().map(PatToTerm::visit));
+        wellBody = AppTerm.make(wellBody, result.unpiPats().map(PatToTerm::visit));
 
         // bind all pat bindings
         var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();

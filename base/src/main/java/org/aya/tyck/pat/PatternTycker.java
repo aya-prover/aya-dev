@@ -236,7 +236,6 @@ public class PatternTycker implements Problematic, Stateful {
         // too many implicit
         try (var _ = instCurrentParam()) {
           assert pattern != null;
-          // FIXME: I am not sure if we should consume the parameter even we found a critical error.
           foundError(new PatternProblem.TooManyImplicitPattern(pattern, currentParam));
         }
 
@@ -282,10 +281,9 @@ public class PatternTycker implements Problematic, Stateful {
 
       // find the next appropriate parameter
       var fnp = findNextParam(currentPat.term(), p ->
-          p.explicit() == currentPat.explicit()
-        // || telescope.isFromPusheen() == patterns.isFromPusheen()
-        // ^this check implies the first one
-      );
+        p.explicit() == currentPat.explicit());
+      // || telescope.isFromPusheen() == patterns.isFromPusheen()
+      // ^this check implies the first one
 
       ImmutableSeq<Pat> generated = null;
 
@@ -326,10 +324,8 @@ public class PatternTycker implements Problematic, Stateful {
 
     // is there any explicit parameters?
     var generated = findNextParam(null, p ->
-        p.explicit()
-          || telescope.isFromPusheen()
-      // ^this check implies the first one
-    );
+      p.explicit() || telescope.isFromPusheen());
+    // ^this check implies the first one
 
     // what kind of parameter you found?
     if (generated.kind == FindNextParam.Kind.Success && !telescope.isFromPusheen()) {
@@ -420,8 +416,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped) {
-    var paramSubst = this.paramSubst.toImmutableSeq();
-    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst, asSubst, hasError);
+    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst.toImmutableSeq(), asSubst, hasError);
   }
 
   private record Selection(

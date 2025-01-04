@@ -30,7 +30,8 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
       ImmutableSeq.empty(), Indexed.indices(clauses)));
     var first = telescope.getFirst();
     var cls = classify1(subst, subst(subst, first),
-      clauses.mapIndexed((ix, it) -> new Indexed<>(normalize(it.pat().getFirst()), ix)), fuel);
+      clauses.mapIndexed((ix, it) ->
+        new Indexed<>(normalize(it.pat().getFirst()), ix)), fuel);
     return cls.flatMap(subclauses ->
       classifyN(add(subst, subclauses.term()),
         // Drop heads of both
