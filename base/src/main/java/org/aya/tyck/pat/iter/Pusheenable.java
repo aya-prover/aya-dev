@@ -10,6 +10,5 @@ import java.util.Iterator;
 /// A Pusheenable is a functional list.
 public interface Pusheenable<T, R> extends Iterator<T> {
   @NotNull T peek();
-
   @NotNull R body();
 }

@@ -69,7 +69,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean hasError
   ) {
     public @NotNull Term instType() {
-      // I guess we need not to inline this term even we did before. The [paramSubst] is already inlined.
+      // We need not to inline this term even we did before. The [paramSubst] is already inlined.
       return newSignature.result().instTele(paramSubst.view().map(Jdg::wellTyped));
     }
 

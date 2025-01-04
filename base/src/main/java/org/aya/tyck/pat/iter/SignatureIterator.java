@@ -22,6 +22,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
       return new ConstPusheen<>(unpi.body());
     } else {
       return new PiPusheen(unpi);
+
     }
   }
 
@@ -63,13 +64,11 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
     this.elims = elims;
   }
 
-  @Override
-  public @NotNull Pusheenable<Param, Term> body() {
+  @Override public @NotNull Pusheenable<Param, Term> body() {
     return Objects.requireNonNull(super.body());
   }
 
-  @Override
-  public Param next() {
+  @Override public Param next() {
     var theNext = super.next();
     consumed.append(theNext);
     return theNext;

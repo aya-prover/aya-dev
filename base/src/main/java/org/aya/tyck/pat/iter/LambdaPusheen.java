@@ -17,8 +17,7 @@ public final class LambdaPusheen implements Pusheenable<Arg<WithPos<Pattern>>, @
     this.body = body;
   }
 
-  @Override
-  public @NotNull Arg<WithPos<Pattern>> peek() {
+  @Override public @NotNull Arg<WithPos<Pattern>> peek() {
     if (peek != null) return peek;
 
     var bind = ((Expr.Lambda) body.data()).ref();
@@ -26,18 +25,10 @@ public final class LambdaPusheen implements Pusheenable<Arg<WithPos<Pattern>>, @
     return peek;
   }
 
-  @Override
-  public @NotNull WithPos<Expr> body() {
-    return body;
-  }
+  @Override public @NotNull WithPos<Expr> body() { return body; }
+  @Override public boolean hasNext() { return body.data() instanceof Expr.Lambda; }
 
-  @Override
-  public boolean hasNext() {
-    return body.data() instanceof Expr.Lambda;
-  }
-
-  @Override
-  public Arg<WithPos<Pattern>> next() {
+  @Override public Arg<WithPos<Pattern>> next() {
     if (peek == null) peek();
     body = ((Expr.Lambda) body.data()).body();
 

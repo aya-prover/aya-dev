@@ -6,23 +6,8 @@ import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public record ConstPusheen<T, R>(@NotNull R body) implements Pusheenable<T, R> {
-  @Override
-  public @NotNull T peek() {
-    return Panic.unreachable();
-  }
-
-  @Override
-  public R body() {
-    return body;
-  }
-
-  @Override
-  public boolean hasNext() {
-    return false;
-  }
-
-  @Override
-  public T next() {
-    return Panic.unreachable();
-  }
+  @Override public @NotNull T peek() { return Panic.unreachable(); }
+  @Override public @NotNull R body() { return body; }
+  @Override public boolean hasNext() { return false; }
+  @Override public T next() { return Panic.unreachable(); }
 }

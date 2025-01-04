@@ -13,7 +13,6 @@ import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
-import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.core.Jdg;
@@ -33,7 +32,6 @@ import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.pat.iter.ConstPusheen;
 import org.aya.tyck.pat.iter.PatternIterator;
-import org.aya.tyck.pat.iter.PusheenIterator;
 import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
@@ -106,11 +104,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
-  ) {
-    public @NotNull SeqView<Term> paramSubstObj() {
-      return paramSubst.view().map(Jdg::wellTyped);
-    }
-  }
+  ) { }
 
   /**
    * Tyck a {@param type} against {@param type}
@@ -298,7 +292,7 @@ public class PatternTycker implements Problematic, Stateful {
 
       if (!currentPat.explicit() && !allowImplicit) {
         foundError(new PatternProblem.ImplicitDisallowed(currentPat.term()));
-        // TODO: return or continue tyck?
+        return done(wellTyped);
       }
 
       // find the next appropriate parameter
@@ -342,9 +336,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private final Closer CLOSER = new Closer();
   private class Closer implements AutoCloseable {
-    @Override public void close() {
-      consumeParam();
-    }
+    @Override public void close() { consumeParam(); }
   }
 
   /**

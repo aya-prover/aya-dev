@@ -19,13 +19,11 @@ public class PusheenIterator<T, R> implements Pusheenable<T, Pusheenable<T, R>> 
     this.cat = cat;
   }
 
-  @Override
-  public boolean hasNext() {
+  @Override public boolean hasNext() {
     return peek != null || iter.hasNext() || cat.hasNext();
   }
 
-  @Override
-  public @NotNull T peek() {
+  @Override public @NotNull T peek() {
     if (peek != null) return peek;
     if (iter.hasNext()) return peek = postDoPeek(iter.next());
 
@@ -39,8 +37,7 @@ public class PusheenIterator<T, R> implements Pusheenable<T, Pusheenable<T, R>> 
     return peeked;
   }
 
-  @Override
-  public T next() {
+  @Override public T next() {
     if (peek == null) peek();
 
     if (fromPusheen) {
@@ -53,13 +50,8 @@ public class PusheenIterator<T, R> implements Pusheenable<T, Pusheenable<T, R>> 
     return result;
   }
 
-  @Override
-  public @NotNull Pusheenable<T, R> body() {
-    return cat;
-  }
+  @Override public @NotNull Pusheenable<T, R> body() { return cat; }
 
   ///  Whether the last element comes from {@link #cat}
-  public boolean isFromPusheen() {
-    return fromPusheen;
-  }
+  public boolean isFromPusheen() { return fromPusheen; }
 }
