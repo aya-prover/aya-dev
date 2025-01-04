@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
@@ -19,6 +19,7 @@ import org.aya.ide.LspPrimFactory;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.primitive.PrimFactory;
 import org.aya.util.FileUtil;
+import org.aya.util.error.Global;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,7 @@ public class LibraryTest {
 
   // Use this test for additional compilation
   public static void main(String... args) throws IOException {
+    Global.DELETE_JIT_JAVA_SOURCE = false;
     assertEquals(0, compile(DIR));
   }
 

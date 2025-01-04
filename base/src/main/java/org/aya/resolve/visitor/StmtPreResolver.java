@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -64,7 +64,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
           context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
         var mod = success.thisModule();
         var as = cmd.asName();
-        var importedName = as != null ? ModuleName.This.resolve(as) : modulePath.asName();
+        var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
         context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos());
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);

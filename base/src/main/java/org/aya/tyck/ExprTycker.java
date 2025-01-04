@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -33,7 +33,6 @@ import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
@@ -184,15 +183,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     ImmutableSeq<WithPos<Expr>> discriminant, @NotNull SourcePos exprPos,
     ImmutableSeq<Pattern.Clause> clauses, ImmutableSeq<Jdg> wellArgs, Term type
   ) {
-    var telescope = new AbstractTele.Locns(
-      wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true)),
-      type);
-    var signature = new Signature(telescope, discriminant.map(WithPos::sourcePos));
+    var telescope = wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true));
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
-      // always nameless
-      ImmutableSeq.fill(discriminant.size(), i -> new LocalVar("match" + i)),
-      signature, clauses, ImmutableSeq.empty(), true);
+      telescope,
+      new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
+      ImmutableSeq.fill(discriminant.size(), i ->
+        new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
+      ImmutableSeq.empty(), clauses);
     var wellClauses = clauseTycker.check(exprPos)
       .wellTyped()
       .map(WithPos::data);

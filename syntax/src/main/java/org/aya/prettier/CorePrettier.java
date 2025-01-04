@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -213,7 +213,7 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.Unpi pair, Doc kw, Doc operator) {
+  private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.UnpiNamed pair, Doc kw, Doc operator) {
     var params = pair.names().zip(pair.params(), RichParam::ofExplicit);
     var body = pair.body().instTeleVar(params.view().map(ParamLike::ref));
     var teleDoc = visitTele(params, body, FindUsage::free);

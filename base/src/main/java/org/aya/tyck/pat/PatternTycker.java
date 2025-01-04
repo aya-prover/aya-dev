@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -14,7 +14,6 @@ import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
-import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.core.Jdg;
@@ -24,10 +23,7 @@ import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
-import org.aya.syntax.core.term.DepTypeTerm;
-import org.aya.syntax.core.term.MetaPatTerm;
-import org.aya.syntax.core.term.Param;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.LocalVar;
@@ -35,6 +31,9 @@ import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.PatternProblem;
+import org.aya.tyck.pat.iter.PatternIterator;
+import org.aya.tyck.pat.iter.Pusheenable;
+import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.Arg;
@@ -48,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Tyck for {@link Pattern}'s, the left hand side of one clause.
@@ -57,7 +57,7 @@ public class PatternTycker implements Problematic, Stateful {
   private final boolean allowImplicit;
   /// A bound telescope (i.e. all the reference to the former parameter are
   /// [org.aya.syntax.core.term.LocalTerm])
-  private @NotNull SeqView<Param> telescope;
+  private final @NotNull SignatureIterator telescope;
 
   /** Substitution for parameter, in the same order as parameter */
   private final @NotNull MutableList<Jdg> paramSubst;
@@ -65,16 +65,19 @@ public class PatternTycker implements Problematic, Stateful {
   /// Substitution for `as` pattern
   private final @NotNull LocalLet asSubst;
 
+  /// Almost equivalent to {@code telescope.peek()}, but we may instantiate it.
+  ///
+  /// @see #instCurrentParam()
   private @UnknownNullability Param currentParam = null;
   private boolean hasError = false;
   private final @NotNull Renamer nameGen;
 
   /**
-   * @see #tyckInner(SeqView, SeqView, WithPos)
+   * @see #tyckInner(ImmutableSeq, ImmutableSeq, WithPos)
    */
   private PatternTycker(
     @NotNull ExprTycker tycker,
-    @NotNull SeqView<Param> tele,
+    @NotNull SignatureIterator tele,
     @NotNull LocalLet sub,
     @NotNull Renamer nameGen
   ) {
@@ -83,7 +86,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   public PatternTycker(
     @NotNull ExprTycker exprTycker,
-    @NotNull SeqView<Param> telescope,
+    @NotNull SignatureIterator telescope,
     @NotNull LocalLet asSubst,
     boolean allowImplicit,
     @NotNull Renamer nameGen
@@ -101,13 +104,8 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<Pat> wellTyped,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
-    @Nullable WithPos<Expr> newBody,
     boolean hasError
-  ) {
-    public @NotNull SeqView<Term> paramSubstObj() {
-      return paramSubst.view().map(Jdg::wellTyped);
-    }
-  }
+  ) { }
 
   /**
    * Tyck a {@param type} against {@param type}
@@ -140,8 +138,8 @@ public class PatternTycker implements Problematic, Stateful {
 
         // It is possible that `con.params()` is empty.
         var patterns = tyckInner(
-          conCore.selfTele(realCon.ownerArgs).view(),
-          con.params().view(),
+          conCore.selfTele(realCon.ownerArgs),
+          con.params(),
           pattern);
 
         // check if this Con is a ShapedCon
@@ -166,8 +164,7 @@ public class PatternTycker implements Problematic, Stateful {
 
         yield new Pat.Bind(bind, type);
       }
-      case Pattern.CalmFace.INSTANCE ->
-        new Pat.Meta(MutableValue.create(), Constants.ANONYMOUS_PREFIX, type, pattern.sourcePos());
+      case Pattern.CalmFace.INSTANCE -> doGeneratePattern(type, Constants.ANONYMOUS_PREFIX, pattern.sourcePos());
       case Pattern.Number(var number) -> {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
@@ -209,148 +206,146 @@ public class PatternTycker implements Problematic, Stateful {
     };
   }
 
-  private void moveNext() { currentParam = telescope.getFirstOrNull(); }
-
-  /**
-   * Find the next param against to {@param pattern}
-   *
-   * @return null if failed, i.e. too many pattern
-   * @apiNote after call: {@param currentParam} is an unchecked parameter, and {@code currentParam.explicit == pattern.explicit}
-   */
-  private @Nullable ImmutableSeq<Pat> nextParam(@NotNull Arg<WithPos<Pattern>> pattern) {
-    var generatedPats = MutableList.<Pat>create();
-
-    while (currentParam != null && pattern.explicit() != currentParam.explicit()) {
-      // Hwhile : pattern.explicit != currentParam.explicit
-      if (pattern.explicit()) {
-        // Hif : pattern.explicit = true
-        // Corollary : currentParam.explicit = false
-
-        // then generate pattern
-        generatedPats.append(generatePattern());
-        // [generatePattern] drops the first parameter
-        moveNext();
-      } else {
-        // Hif = pattern.explicit = false
-        // Corollary : currentParam.explicit = true
-        // too many implicit pattern!
-        try (var _ = instCurrentParam()) {
-          foundError(new PatternProblem.TooManyImplicitPattern(pattern.term(), currentParam));
-        }
-        return null;
-      }
-    }
-
-    // Hwhile : currentParam == null || pattern.explicit = currentParam.explicit
-
-    if (currentParam == null) {
-      // too many pattern
-      foundError(new PatternProblem.TooManyPattern(pattern.term()));
-      return null;
-    }
-
-    // Hwhile : pattern.explicit = currentParam.explicit
-    // good, this is the parameter we want!
-    return generatedPats.toImmutableSeq();
+  private void peekNextParam() {
+    if (telescope.hasNext()) currentParam = telescope.peek();
+    else currentParam = null;
   }
 
-  record PushTelescope(@NotNull ImmutableSeq<Pat> wellTyped, @NotNull WithPos<Expr> newBody) { }
+  private void consumeParam() {
+    telescope.next();
+  }
 
-  /**
-   * @apiNote requires: {@code currentParam} is not null and is an unchecked parameter, say, no well typed pat for it.
-   * after call: {@code currentParam} is an unchecked parameter if not null
-   * @implNote No need to report if too many parameter
-   */
-  private @NotNull PushTelescope pushTelescope(@NotNull WithPos<Expr> body) {
-    var wellTyped = MutableList.<Pat>create();
+  private record FindNextParam(@NotNull ImmutableSeq<Pat> generated, @NotNull Kind kind) {
+    public enum Kind {
+      Success, TooManyPattern, TooManyImplicit
+    }
+  }
 
-    while (currentParam != null && body.data() instanceof Expr.Lambda(var ref, var newBody)) {
-      // good, we can use the parameter of [lam] as pattern
-      var pat = new Pattern.Bind(ref);
-      wellTyped.append(tyckPattern(body.replace(pat)));
+  /// Find next param until the predicate success
+  ///
+  /// @return (generated implicit patterns, status)
+  /// @apiNote before call: {@link #currentParam} is the last checked parameter
+  ///          after call: {@link #currentParam} is the first unchecked parameter which {@param until} success on
+  private @NotNull FindNextParam findNextParam(@Nullable WithPos<Pattern> pattern, @NotNull Predicate<Param> until) {
+    var generatedPats = MutableList.<Pat>create();
 
-      // update state
-      body = newBody;
-      moveNext();
+    peekNextParam();
+    // loop invariant: currentParam is the first unchecked parameter if not null
+    while (currentParam != null && !until.test(currentParam)) {
+      if (currentParam.explicit()) {
+        // too many implicit
+        try (var _ = instCurrentParam()) {
+          assert pattern != null;
+          foundError(new PatternProblem.TooManyImplicitPattern(pattern, currentParam));
+        }
+
+        return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.TooManyImplicit);
+      } else {
+        // current param is implicit, generate pattern for it
+        generatedPats.append(generatePattern());
+        // we don't need to consume the parameter, cause [generatePattern] does.
+        // TODO: ^is it good?
+      }
+
+      // we consumed the last checked parameter, now look at next one
+      peekNextParam();
     }
 
-    // Hwhile : currentParam = null || body is not Expr.Lambda
-    return new PushTelescope(wellTyped.toImmutableSeq(), body);
+    // no more param
+    if (currentParam == null) {
+      return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.TooManyPattern);
+    }
+
+    return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.Success);
   }
 
   public @NotNull TyckResult tyck(
-    @NotNull SeqView<Arg<WithPos<Pattern>>> patterns,
-    @Nullable WithPos<Pattern> outerPattern,
-    @Nullable WithPos<Expr> body
+    @NotNull PatternIterator patterns,
+    @Nullable WithPos<Pattern> outerPattern
   ) {
-    assert currentParam == null : "this tycker is dirty";
     var wellTyped = MutableList.<Pat>create();
     // last user given pattern, that is, not aya generated
     @Nullable Arg<WithPos<Pattern>> lastPat = null;
 
-    moveNext();
+    // loop invariant: [patterns] points to the last checked pattern, same for [telescope]
+    outer:
+    while (patterns.hasNext()) {
+      var currentPat = patterns.peek();
 
-    // loop invariant: currentParam is the last unchecked parameter if not null
-    while (currentParam != null && patterns.isNotEmpty()) {
-      var currentPat = patterns.getFirst();
-      patterns = patterns.drop(1);
       lastPat = currentPat;
 
       if (!currentPat.explicit() && !allowImplicit) {
         foundError(new PatternProblem.ImplicitDisallowed(currentPat.term()));
+        return done(wellTyped);
       }
 
       // find the next appropriate parameter
-      var generated = nextParam(currentPat);
+      var fnp = findNextParam(currentPat.term(), p ->
+        p.explicit() == currentPat.explicit());
+      // || telescope.isFromPusheen() == patterns.isFromPusheen()
+      // ^this check implies the first one
+
+      ImmutableSeq<Pat> generated = null;
+
+      switch (fnp.kind) {
+        case Success -> generated = fnp.generated;
+        case TooManyPattern -> {
+          if (patterns.isFromPusheen()) {
+            // It is fine if a pusheen pattern mismatch
+            wellTyped.appendAll(fnp.generated);
+            break outer;
+          } else {
+            // no more parameters
+            foundError(new PatternProblem.TooManyPattern(currentPat.term()));
+          }
+        }
+      }
+
       if (generated == null) {
-        return done(wellTyped, body);
+        return done(wellTyped);
       }
 
       wellTyped.appendAll(generated);
+
+      // avoid unnecessary pusheen
+      if (patterns.isFromPusheen() && telescope.isFromPusheen()) {
+        break;
+      }
+
       wellTyped.append(tyckPattern(currentPat.term()));
-      moveNext();
+      patterns.next();    // consume pattern
     }
 
-    // Hwhile : currentParam == null || patterns.isEmpty()
-    // [currentParam] is the next unchecked parameter if not null (by loop invariant)
-    if (currentParam == null && patterns.isNotEmpty()) {
-      var pattern = patterns.getFirst();
-      // too many pattern
-      foundError(new PatternProblem.TooManyPattern(pattern.term()));
-    }
+    // now: ! patterns.hasNext()
+    // or patterns.hasNext() && ! telescope.hasNext() && patterns.isFromPusheen()
+    // or patterns.hasNext() && telescope.hasNext() && patterns.isFromPusheen() && telescope.isFromPusheen()
 
-    // the telescope may end with implicit parameters
-    // loop invariant: [currentParam] is the next unchecked parameter if not null
-    while (currentParam != null && !currentParam.explicit()) {
-      wellTyped.append(generatePattern());
-      // [currentParam] is checked!
-      moveNext();
-      // [currentParam] is unchecked if not null.
-    }
+    // all not pusheen patterns have their parameters
 
-    if (currentParam != null && body != null) {
-      var result = pushTelescope(body);
-      wellTyped.appendAll(result.wellTyped);
-      body = result.newBody;
-    }
+    // is there any explicit parameters?
+    var generated = findNextParam(null, p ->
+      p.explicit() || telescope.isFromPusheen());
+    // ^this check implies the first one
 
-    // [currentParam] is the next unchecked parameter if not null
-
-    if (currentParam != null) {
-      // too few patterns !
-      // the body does not have (enough) pattern, too sad
+    // what kind of parameter you found?
+    if (generated.kind == FindNextParam.Kind.Success && !telescope.isFromPusheen()) {
+      // no you can't!
       WithPos<Pattern> errorPattern = lastPat == null
         ? Objects.requireNonNull(outerPattern)
         : lastPat.term();
       try (var _ = instCurrentParam()) {
         foundError(new PatternProblem.InsufficientPattern(errorPattern, currentParam));
       }
-      return done(wellTyped, body);
+      return done(wellTyped);
     }
 
-    // [currentParam] = null
+    // it is impossible that [generated.kind] is [FindNextParam.TooManyImplicit]
+    assert generated.kind != FindNextParam.Kind.TooManyImplicit;
 
-    return done(wellTyped, body);
+    wellTyped.appendAll(generated.generated);
+
+    // [currentParam] = null or [telescope.isFromPusheen()]
+    return done(wellTyped);
   }
 
   private @NotNull Closer instCurrentParam() {
@@ -360,9 +355,7 @@ public class PatternTycker implements Problematic, Stateful {
 
   private final Closer CLOSER = new Closer();
   private class Closer implements AutoCloseable {
-    @Override public void close() {
-      telescope = telescope.drop(1);
-    }
+    @Override public void close() { consumeParam(); }
   }
 
   /**
@@ -376,6 +369,18 @@ public class PatternTycker implements Problematic, Stateful {
     }
   }
 
+  private @NotNull Pat doGeneratePattern(@NotNull Term type, @NotNull String name, @NotNull SourcePos pos) {
+    var freshVar = nameGen.bindName(name);
+    if (exprTycker.whnf(type) instanceof DataCall dataCall) {
+      // this pattern would be a Con, it can be inferred
+      return new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, pos);
+    } else {
+      // If the type is not a DataCall, then the only available pattern is Pat.Bind
+      exprTycker.localCtx().put(freshVar, type);
+      return new Pat.Bind(freshVar, type);
+    }
+  }
+
   /**
    * For every implicit parameter which is not explicitly (not user given pattern) matched,
    * we generate a MetaPat for each,
@@ -383,31 +388,20 @@ public class PatternTycker implements Problematic, Stateful {
    */
   private @NotNull Pat generatePattern() {
     try (var _ = instCurrentParam()) {
-      var type = currentParam.type();
-      Pat pat;
-      var freshVar = nameGen.bindName(currentParam.name());
-      if (exprTycker.whnf(type) instanceof DataCall dataCall) {
-        // this pattern would be a Con, it can be inferred
-        // TODO: I NEED A SOURCE POS!!
-        pat = new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, SourcePos.NONE);
-      } else {
-        // If the type is not a DataCall, then the only available pattern is Pat.Bind
-        pat = new Pat.Bind(freshVar, type);
-        exprTycker.localCtx().put(freshVar, type);
-      }
-
+      // TODO: I NEED A SOURCE POS!!
+      var pat = doGeneratePattern(currentParam.type(), currentParam.name(), SourcePos.NONE);
       addArgSubst(pat, currentParam.type());
       return pat;
     }
   }
 
   private @NotNull ImmutableSeq<Pat> tyckInner(
-    @NotNull SeqView<Param> telescope,
-    @NotNull SeqView<Arg<WithPos<Pattern>>> patterns,
+    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns,
     @NotNull WithPos<Pattern> outerPattern
   ) {
-    var sub = new PatternTycker(exprTycker, telescope, asSubst, nameGen);
-    var tyckResult = sub.tyck(patterns, outerPattern, null);
+    var sub = new PatternTycker(exprTycker, new SignatureIterator(telescope, new Pusheenable.Const<>(ErrorTerm.DUMMY), null), asSubst, nameGen);
+    var tyckResult = sub.tyck(new PatternIterator(patterns), outerPattern);
 
     hasError = hasError || sub.hasError;
     return tyckResult.wellTyped;
@@ -421,9 +415,8 @@ public class PatternTycker implements Problematic, Stateful {
     asSubst.put(as, new Jdg.Default(PatToTerm.visit(pattern), type));
   }
 
-  private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped, @Nullable WithPos<Expr> newBody) {
-    var paramSubst = this.paramSubst.toImmutableSeq();
-    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst, asSubst, newBody, hasError);
+  private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped) {
+    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst.toImmutableSeq(), asSubst, hasError);
   }
 
   private record Selection(

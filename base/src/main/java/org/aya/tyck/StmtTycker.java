@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -33,6 +33,7 @@ import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.pat.IApplyConfl;
 import org.aya.tyck.pat.PatClassifier;
 import org.aya.tyck.pat.YouTrack;
+import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.unify.Synthesizer;
@@ -105,8 +106,13 @@ public record StmtTycker(
 
             var signature = fnRef.signature;
             // we do not load signature here, so we need a fresh ExprTycker
-            var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker = mkTycker()),
-              teleVars, signature, clauses, elims, true);
+            tycker = mkTycker();
+            var userTeleSize = fnDecl.telescope.size();
+            var userTele = signature.params().take(userTeleSize);
+            var pusheenTele = signature.params().drop(userTeleSize);
+            var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
+              userTele, new DepTypeTerm.Unpi(pusheenTele, signature.result()),
+              teleVars, elims, clauses);
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
             FnDef def;
@@ -180,7 +186,9 @@ public record StmtTycker(
         if (fn.body instanceof FnBody.BlockBody body) {
           tycker.solveMetas();
           var zonker = new Finalizer.Zonk<>(tycker);
-          fnRef.signature = fnRef.signature.pusheen(tycker::whnf).descent(zonker::zonk);
+          // Pusheen must be in the header, because once we have the header,
+          // there will be defcalls to it,
+          fnRef.signature = fnRef.signature.descent(zonker::zonk).pusheen(tycker::whnf);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.sourcePos(), fn.ref));
         }
@@ -244,10 +252,10 @@ public record StmtTycker(
     if (con.patterns.isNotEmpty()) {
       var resolvedElim = dataRef.concrete.body.elims();
       assert resolvedElim != null;
-      var indicies = ClauseTycker.Worker.computeIndices(ownerBinds, resolvedElim);
       // do not do coverage check
-      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(dataSig, indicies,
-        new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false);
+      var lhsResult = new ClauseTycker(tycker = mkTycker()).checkLhs(
+        SignatureIterator.make(dataSig.params(), new DepTypeTerm.Unpi(dataSig.result()), ownerBinds, resolvedElim),
+        new Pattern.Clause(con.entireSourcePos(), con.patterns, Option.none()), false, 0);
       if (lhsResult.hasError()) {
         return;
       }

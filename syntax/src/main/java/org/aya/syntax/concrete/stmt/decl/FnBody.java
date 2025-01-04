@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt.decl;
 
@@ -9,6 +9,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.PosedConsumer;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.WithPos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,17 +36,14 @@ public sealed interface FnBody {
       this(new MatchBody<>(clauses, rawElims));
     }
 
-    public @NotNull ImmutableSeq<Pattern.Clause> clauses() {
+    @Contract(pure = true) public @NotNull ImmutableSeq<Pattern.Clause> clauses() {
       return inner.clauses;
     }
 
-    public @Nullable ImmutableSeq<LocalVar> elims() {
+    @Contract(pure = true) public @Nullable ImmutableSeq<LocalVar> elims() {
       return inner.elims();
     }
-
-    public @NotNull ImmutableSeq<WithPos<String>> rawElims() {
-      return inner.rawElims;
-    }
+    public @NotNull ImmutableSeq<WithPos<String>> rawElims() { return inner.rawElims; }
 
     public @NotNull BlockBody map(@NotNull UnaryOperator<Pattern.Clause> f) {
       return new BlockBody(inner.descent(f));

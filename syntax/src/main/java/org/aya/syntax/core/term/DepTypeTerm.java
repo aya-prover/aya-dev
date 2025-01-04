@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -112,19 +112,21 @@ public record DepTypeTerm(
     });
   }
 
-  public record Unpi(
+  @ForLSP
+  public record UnpiNamed(
     @NotNull Seq<Term> params,
     @NotNull Seq<LocalVar> names,
     @NotNull Term body
   ) { }
-  public static @NotNull Unpi unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  @ForLSP public static @NotNull UnpiNamed
+  unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre) {
     return unpi(kind, term, pre, new Renamer());
   }
-  @ForLSP public static @NotNull Unpi
+  @ForLSP public static @NotNull UnpiNamed
   unpi(@NotNull DepTypeTerm term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     return unpi(term.kind(), term, pre, nameGen);
   }
-  @ForLSP public static @NotNull Unpi
+  @ForLSP public static @NotNull UnpiNamed
   unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
@@ -135,21 +137,34 @@ public record DepTypeTerm(
       term = body.apply(var);
     }
 
-    return new Unpi(params, names, term);
+    return new UnpiNamed(params, names, term);
   }
-  public record UnpiRaw(
+
+  public record Unpi(
     @NotNull ImmutableSeq<Param> params,
     @NotNull Term body
-  ) { }
-  public static @NotNull UnpiRaw unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  ) {
+    public Unpi(@NotNull Term body) {
+      this(ImmutableSeq.empty(), body);
+    }
+
+    public @NotNull Term makePi() {
+      return DepTypeTerm.makePi(params.view().map(Param::type), body);
+    }
+  }
+
+  /// @param bound -1 for unlimited
+  public static @NotNull Unpi unpiDBI(@NotNull Term term, @NotNull UnaryOperator<Term> pre, int bound) {
     var params = MutableList.<Param>create();
     var i = 0;
-    while (pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
+    while ((bound == -1 || i < bound)
+      && pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
+      // Note: PatternTycker depends on the licit of unpi param, be careful to change it!
       params.append(new Param(Integer.toString(i++), param, true));
       term = body.toLocns().body();
     }
 
-    return new UnpiRaw(params.toImmutableSeq(), term);
+    return new Unpi(params.toImmutableSeq(), term);
   }
 
   public static @NotNull SortTerm lubPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) {

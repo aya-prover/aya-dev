@@ -1,13 +1,19 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core;
 
 import org.aya.tyck.TyckTest;
+import org.aya.util.error.Global;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PrettierTest {
+  @BeforeAll public static void setup() {
+    Global.NO_RANDOM_NAME = true;
+  }
+
   @Test public void clauses() {
     var result = TyckTest.tyck("""
       open inductive Nat | O | S Nat

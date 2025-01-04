@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
@@ -77,10 +77,9 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, noType));
       case Command.Module m -> visitModuleDecl(m.sourcePos(), ModuleName.of(m.name()));
       case Command.Import i -> {
-        var isAlsoDef = i.asName() == null;
         visitModuleRef(i.sourcePos(), i.path());
-        if (!isAlsoDef) {
-          visitModuleDecl(i.sourcePos(), ModuleName.of(i.asName()));
+        if (i.asName() instanceof WithPos(var pos, var asName)) {
+          visitModuleDecl(pos, ModuleName.of(asName));
         } else {
           // TODO: visitModuleDecl on the last element of i.path
         }

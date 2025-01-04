@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck.pat;
 
@@ -22,8 +22,7 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   );
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>>
-  classifyN(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> classifyN(
     @NotNull Subst subst, @NotNull SeqView<Param> telescope,
     @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
   ) {
@@ -31,7 +30,8 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
       ImmutableSeq.empty(), Indexed.indices(clauses)));
     var first = telescope.getFirst();
     var cls = classify1(subst, subst(subst, first),
-      clauses.mapIndexed((ix, it) -> new Indexed<>(normalize(it.pat().getFirst()), ix)), fuel);
+      clauses.mapIndexed((ix, it) ->
+        new Indexed<>(normalize(it.pat().getFirst()), ix)), fuel);
     return cls.flatMap(subclauses ->
       classifyN(add(subst, subclauses.term()),
         // Drop heads of both
@@ -41,8 +41,7 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
   }
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<Pair<Term, Term>>>
-  classify2(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<Pair<Term, Term>>> classify2(
     @NotNull Subst subst, @NotNull Param tele1, @NotNull Function<Term, Param> tele2,
     @NotNull ImmutableSeq<Indexed<Pair<Pat, Pat>>> clauses, int fuel
   ) {
