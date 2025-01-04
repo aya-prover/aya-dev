@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.free;
 
@@ -174,8 +174,7 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.invoke(method, args);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr refField(@NotNull FieldRef field) {
+  @Override public @NotNull FreeJavaExpr refField(@NotNull FieldRef field) {
     return FreeExprBuilderImpl.INSTANCE.refField(field);
   }
 
@@ -204,18 +203,15 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.iconst(b);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr aconst(@NotNull String value) {
+  @Override public @NotNull FreeJavaExpr aconst(@NotNull String value) {
     return FreeExprBuilderImpl.INSTANCE.aconst(value);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type) {
+  @Override public @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type) {
     return FreeExprBuilderImpl.INSTANCE.aconstNull(type);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr thisRef() {
+  @Override public @NotNull FreeJavaExpr thisRef() {
     return FreeExprBuilderImpl.INSTANCE.thisRef();
   }
 
@@ -224,13 +220,11 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.mkArray(type, length, initializer);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
+  @Override public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
     return FreeExprBuilderImpl.INSTANCE.getArray(array, index);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  @Override public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
     return FreeExprBuilderImpl.INSTANCE.checkcast(obj, as);
   }
 }

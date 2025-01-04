@@ -1,10 +1,13 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.free;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.ArgumentProvider;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeExprBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.util.function.BiConsumer;
 
-import static org.aya.compiler.free.morphism.free.FreeCodeBuilderImpl.*;
+import static org.aya.compiler.free.morphism.free.FreeCodeBuilderImpl.assertFreeExpr;
 
 public final class FreeExprBuilderImpl implements FreeExprBuilder {
   public static final @NotNull FreeExprBuilderImpl INSTANCE = new FreeExprBuilderImpl();
@@ -66,44 +69,24 @@ public final class FreeExprBuilderImpl implements FreeExprBuilder {
 
     return new FreeExpr.Lambda(assertFreeExpr(captures), method, lambdaBody);
   }
-
-  @Override
-  public @NotNull FreeJavaExpr iconst(int i) {
-    return new FreeExpr.Iconst(i);
-  }
-
-  @Override
-  public @NotNull FreeJavaExpr iconst(boolean b) {
-    return new FreeExpr.Bconst(b);
-  }
-
-  @Override
-  public @NotNull FreeJavaExpr aconst(@NotNull String value) {
-    return new FreeExpr.Sconst(value);
-  }
-
-  @Override
-  public @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type) {
-    return new FreeExpr.Null(type);
-  }
-
-  @Override
-  public @NotNull FreeJavaExpr thisRef() {
+  @Override public @NotNull FreeJavaExpr iconst(int i) { return new FreeExpr.Iconst(i); }
+  @Override public @NotNull FreeJavaExpr iconst(boolean b) { return new FreeExpr.Bconst(b); }
+  @Override public @NotNull FreeJavaExpr aconst(@NotNull String value) { return new FreeExpr.Sconst(value); }
+  @Override public @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type) { return new FreeExpr.Null(type); }
+  @Override public @NotNull FreeJavaExpr thisRef() {
     return FreeExpr.This.INSTANCE;
   }
 
   @Override
   public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
-    return new FreeExpr.Array(type, length, assertFreeExpr(initializer));
+    return new FreeExpr.Array(type, length, initializer == null ? null : assertFreeExpr(initializer));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
+  @Override public @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index) {
     return new FreeExpr.GetArray(assertFreeExpr(array), index);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  @Override public @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
     return new FreeExpr.CheckCast(assertFreeExpr(obj), as);
   }
 }

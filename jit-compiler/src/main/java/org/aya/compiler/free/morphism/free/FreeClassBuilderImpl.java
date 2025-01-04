@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.free;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +31,7 @@ public record FreeClassBuilderImpl(
     return nested == null ? parentOrThis : parentOrThis.nested(nested);
   }
 
-  @Override
-  public void buildNestedClass(
+  @Override public void buildNestedClass(
     @NotNull CompiledAya compiledAya,
     @NotNull String name,
     @NotNull Class<?> superclass,
@@ -52,8 +51,7 @@ public record FreeClassBuilderImpl(
     members.append(new FreeDecl.Method(ref, codeBuilder.build()));
   }
 
-  @Override
-  public @NotNull MethodRef buildMethod(
+  @Override public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
@@ -64,8 +62,7 @@ public record FreeClassBuilderImpl(
     return ref;
   }
 
-  @Override
-  public @NotNull MethodRef buildConstructor(
+  @Override public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
   ) {
@@ -74,8 +71,7 @@ public record FreeClassBuilderImpl(
     return ref;
   }
 
-  @Override
-  public @NotNull FieldRef buildConstantField(
+  @Override public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
