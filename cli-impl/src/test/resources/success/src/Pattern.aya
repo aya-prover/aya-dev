@@ -1,0 +1,54 @@
+open import prelude
+import data::vec::base as vec
+
+module Test1 {
+  open vec
+  def unwrap (A : Type) (v : Vec 1 A) : A elim v
+  | x :> [] => x
+
+  def length (A : Type) (n : Nat) (v : Vec n A) : Nat elim v
+  | [] => 0
+  | _ :> xs => suc (length _ _ xs)
+
+  def threeTimesAhThreeTimes (A : Type) (a : A) : Vec 3 A =>
+    a :> a :> a :> []
+}
+
+module Test4 {
+  open inductive Fin Nat
+  | 1 => fzero
+  | suc n => fsucc (Fin n)
+
+  def exfalso (A : Type) (x : Fin 0) : A elim x | ()
+}
+
+module Test5 {
+  open vec
+  open inductive MatchMe (n : Nat) (Vec n Nat)
+  | suc n', v :> xs => matched
+
+  def checkMe {n : Nat} (m : Nat) {v : Vec n Nat} (MatchMe n v) : Nat
+  | 0, matched => 0
+  | suc m, /* {vcons _ _} ,*/ matched => 0
+}
+
+module Issue630 {
+  open inductive INat (n : Nat)
+  | 0 => zro
+  | suc n' => +-one
+  | suc (suc n') => +-two
+
+  def yes {n : Nat} (a : INat n) (b : INat n) : Nat
+  | +-one, +-two => 0
+  | _, _ => 1
+}
+
+module PullRequest1268 {
+  def id (A : Type) : A -> A => fn a => a
+
+  def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (d : D) D -> D
+  | a, b, D => fn d => id D
+
+  def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a b
+  | a => fn b D => id D
+}

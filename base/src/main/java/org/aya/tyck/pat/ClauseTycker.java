@@ -51,7 +51,9 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /**
-   * @param unpiedResult the result according to the pattern tycking
+   * @param unpiedResult the result according to the pattern tycking, the
+   *                     {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
+   *                     {@link org.aya.tyck.pat.iter.Pusheenable.Const}
    * @param paramSubst   substitution for parameter, in the same order as parameter.
    *                     See {@link PatternTycker#paramSubst}
    * @param freePats     a free version of the patterns.
