@@ -229,11 +229,13 @@ public class PatternTycker implements Problematic, Stateful {
     var generatedPats = MutableList.<Pat>create();
 
     peekNextParam();
+    // loop invariant: currentParam is the first unchecked parameter if not null
     while (currentParam != null && !until.test(currentParam)) {
       if (currentParam.explicit()) {
         // too many implicit
         try (var _ = instCurrentParam()) {
           assert pattern != null;
+          // FIXME: I am not sure if we should consume the parameter even we found a critical error.
           foundError(new PatternProblem.TooManyImplicitPattern(pattern, currentParam));
         }
 
@@ -245,6 +247,7 @@ public class PatternTycker implements Problematic, Stateful {
         // TODO: ^is it good?
       }
 
+      // we consumed the last checked parameter, now look at next one
       peekNextParam();
     }
 
@@ -268,11 +271,6 @@ public class PatternTycker implements Problematic, Stateful {
     outer:
     while (patterns.hasNext()) {
       var currentPat = patterns.peek();
-
-      peekNextParam();      // update telescope.isFromPusheen()
-      if (patterns.isFromPusheen() && telescope.isFromPusheen()) {
-        break;
-      }
 
       lastPat = currentPat;
 
@@ -309,6 +307,12 @@ public class PatternTycker implements Problematic, Stateful {
       }
 
       wellTyped.appendAll(generated);
+
+      // avoid unnecessary pusheen
+      if (patterns.isFromPusheen() && telescope.isFromPusheen()) {
+        break;
+      }
+
       wellTyped.append(tyckPattern(currentPat.term()));
       patterns.next();    // consume pattern
     }
@@ -319,6 +323,7 @@ public class PatternTycker implements Problematic, Stateful {
           || telescope.isFromPusheen()
       // ^this check implies the first one
     );
+
     // what kind of parameter you found?
     if (generated.kind == FindNextParam.Kind.Success && !telescope.isFromPusheen()) {
       // no you can't!
@@ -331,7 +336,7 @@ public class PatternTycker implements Problematic, Stateful {
       return done(wellTyped);
     }
 
-    // it is impossible that [generated.component2()] is [FindNextParam.TooManyImplicit]
+    // it is impossible that [generated.kind] is [FindNextParam.TooManyImplicit]
     assert generated.kind != FindNextParam.Kind.TooManyImplicit;
 
     // [currentParam] = null or [telescope.isFromPusheen()]
