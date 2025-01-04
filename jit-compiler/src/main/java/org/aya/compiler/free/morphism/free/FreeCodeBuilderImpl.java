@@ -153,6 +153,10 @@ public record FreeCodeBuilderImpl(
     stmts.append(new FreeStmt.Return(assertFreeExpr(expr)));
   }
 
+  @Override public void unreachable() {
+    stmts.append(FreeStmt.Unreachable.INSTANCE);
+  }
+
   @Override
   public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return FreeExprBuilderImpl.INSTANCE.mkNew(conRef, args);
@@ -191,16 +195,8 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.mkLambda(captures, method, builder);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr iconst(int i) {
-    return FreeExprBuilderImpl.INSTANCE.iconst(i);
-  }
-
-  @Override
-  public @NotNull FreeJavaExpr iconst(boolean b) {
-    return FreeExprBuilderImpl.INSTANCE.iconst(b);
-  }
-
+  @Override public @NotNull FreeJavaExpr iconst(int i) { return FreeExprBuilderImpl.INSTANCE.iconst(i); }
+  @Override public @NotNull FreeJavaExpr iconst(boolean b) { return FreeExprBuilderImpl.INSTANCE.iconst(b); }
   @Override public @NotNull FreeJavaExpr aconst(@NotNull String value) {
     return FreeExprBuilderImpl.INSTANCE.aconst(value);
   }

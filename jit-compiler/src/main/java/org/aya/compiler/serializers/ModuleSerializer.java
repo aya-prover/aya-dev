@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
+import org.aya.compiler.free.morphism.free.FreeOptimizer;
 import org.aya.compiler.free.morphism.free.FreeRunner;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
@@ -80,6 +81,7 @@ public final class ModuleSerializer {
 
   public String serializeWithBestBuilder(ModuleResult unit) {
     var freeJava = serialize(FreeJavaBuilderImpl.INSTANCE, unit);
+    freeJava = FreeOptimizer.optimizeClass(freeJava);
     return new FreeRunner<>(SourceFreeJavaBuilder.create()).runFree(freeJava);
   }
 

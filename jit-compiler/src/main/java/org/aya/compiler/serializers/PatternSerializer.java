@@ -84,7 +84,7 @@ public final class PatternSerializer {
     switch (pat) {
       case Pat.Misc misc -> {
         switch (misc) {
-          case Absurd -> AyaSerializer.execPanic(builder);
+          case Absurd -> builder.unreachable();
           case UntypedBind -> {
             onMatchBind(builder, term);
             onMatchSucc.accept(builder);
@@ -264,7 +264,7 @@ public final class PatternSerializer {
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, AyaSerializer::returnPanic);
+    }, builder1 -> builder1.unreachable());
 
     return this;
   }
