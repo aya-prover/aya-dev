@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
@@ -8,6 +8,7 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ public sealed interface Command extends Stmt {
   record Import(
     @Override @NotNull SourcePos sourcePos,
     @NotNull ModulePath path,
-    @Nullable String asName,
+    @Nullable WithPos<String> asName,
     @Override @NotNull Accessibility accessibility
   ) implements Command { }
 

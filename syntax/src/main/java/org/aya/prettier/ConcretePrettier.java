@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -294,7 +294,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         var prelude = MutableList.of(KW_IMPORT, Doc.symbol(cmd.path().toString()));
         if (cmd.asName() != null) {
           prelude.append(KW_AS);
-          prelude.append(Doc.plain(cmd.asName()));
+          prelude.append(Doc.plain(cmd.asName().data()));
         }
         yield Doc.sep(prelude);
       }
