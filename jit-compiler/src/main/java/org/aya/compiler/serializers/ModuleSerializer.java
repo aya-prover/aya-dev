@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
@@ -81,6 +82,10 @@ public final class ModuleSerializer {
       case MemberDef memberDef -> new MemberSerializer(recorder)
         .serialize(builder, memberDef);
     }
+  }
+
+  public String serializeWithBestBuilder(ModuleResult unit) {
+    return serialize(SourceFreeJavaBuilder.create(), unit);
   }
 
   public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -8,7 +8,6 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.compiler.CompiledModule;
-import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.NameSerializer;
 import org.aya.prelude.GeneratedVersion;
@@ -130,7 +129,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ModuleLoader recurseLoader
   ) throws IOException, ClassNotFoundException {
     var javaCode = new ModuleSerializer(resolveInfo.shapeFactory())
-      .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
+      .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)));
     var libraryRoot = file.owner().outDir();
