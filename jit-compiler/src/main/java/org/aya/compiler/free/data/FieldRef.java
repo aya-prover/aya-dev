@@ -6,15 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public interface FieldRef {
-  record Default(
-    @NotNull ClassDesc owner,
-    @NotNull ClassDesc returnType,
-    @NotNull String name
-  ) implements FieldRef {
-  }
-
-  @NotNull ClassDesc owner();
-  @NotNull ClassDesc returnType();
-  @NotNull String name();
+public record FieldRef(
+  @NotNull ClassDesc owner,
+  @NotNull ClassDesc returnType,
+  @NotNull String name
+) {
 }

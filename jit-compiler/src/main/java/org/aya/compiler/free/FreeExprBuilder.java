@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
@@ -7,6 +7,7 @@ import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.Arrays;
@@ -16,8 +17,6 @@ import java.util.function.BiConsumer;
  * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
  */
 public interface FreeExprBuilder {
-  @NotNull FreeJavaResolver resolver();
-
   /**
    * A {@code new} expression on specified constructor.
    */
@@ -39,7 +38,9 @@ public interface FreeExprBuilder {
     return mkNew(conRef, args);
   }
 
-  @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name);
+  default @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
+    return name.ref();
+  }
 
   /**
    * Invoke a (non-interface) method on {@param owner}.
@@ -62,6 +63,12 @@ public interface FreeExprBuilder {
     return refEnum(cd, name);
   }
 
+  /**
+   * Make a lambda expression
+   *
+   * @param builder the builder for building the lambda body, you should use local variable comes from this and the
+   *                {@link ArgumentProvider.Lambda} ONLY, other variables introduced outside of the lambda is unavailable.
+   */
   @NotNull FreeJavaExpr mkLambda(
     @NotNull ImmutableSeq<FreeJavaExpr> captures,
     @NotNull MethodRef method,
@@ -85,7 +92,7 @@ public interface FreeExprBuilder {
    */
   @NotNull FreeJavaExpr mkArray(
     @NotNull ClassDesc type, int length,
-    @NotNull ImmutableSeq<FreeJavaExpr> initializer
+    @Nullable ImmutableSeq<FreeJavaExpr> initializer
   );
 
   @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index);

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
@@ -12,28 +12,29 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.Arrays;
 
-public interface FreeJavaResolver {
+public final class FreeJavaResolver {
   /**
    * Find a method with given information
    */
-  @NotNull MethodRef resolve(
+  public static @NotNull MethodRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType,
     @NotNull ImmutableSeq<ClassDesc> paramType,
     boolean isInterface
-  );
+  ) {
+    return new MethodRef(owner, name, returnType, paramType, isInterface);
+  }
 
-  @NotNull FieldRef resolve(
+  public static @NotNull FieldRef resolve(
     @NotNull ClassDesc owner,
     @NotNull String name,
     @NotNull ClassDesc returnType
-  );
-
-  default @NotNull FieldRef resolve(
-    @NotNull Class<?> owner,
-    @NotNull String name
   ) {
+    return new FieldRef(owner, returnType, name);
+  }
+
+  public static @NotNull FieldRef resolve(@NotNull Class<?> owner, @NotNull String name) {
     try {
       var field = owner.getField(name);
       return resolve(FreeUtil.fromClass(owner), name, FreeUtil.fromClass(field.getType()));
@@ -45,7 +46,7 @@ public interface FreeJavaResolver {
   /**
    * Find the only method with given name
    */
-  default @NotNull MethodRef resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
+  public static @NotNull MethodRef resolve(@NotNull Class<?> owner, @NotNull String name, int paramSize) {
     if (name.equals(ConstantDescs.INIT_NAME)) {
       throw new Panic("use ExprBuilder#newObject instead");
     }

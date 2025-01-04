@@ -1,11 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism;
+package org.aya.compiler.free.morphism.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.SourceBuilder;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.ArgumentProvider;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
@@ -19,7 +22,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
-import static org.aya.compiler.free.morphism.SourceFreeJavaBuilder.toClassRef;
+import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceCodeBuilder(
   @NotNull SourceClassBuilder parent,
@@ -39,8 +42,6 @@ public record SourceCodeBuilder(
   public static @NotNull String getExpr(@NotNull LocalVariable expr) {
     return ((SourceFreeJavaExpr.BlackBox) expr).expr();
   }
-
-  @Override public @NotNull FreeJavaResolver resolver() { return parent; }
 
   @Override
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
@@ -88,20 +89,6 @@ public record SourceCodeBuilder(
     sourceBuilder.append(lhs);
     sourceBuilder.append(" = ");
     appendExpr(rhs);
-    sourceBuilder.append(";");
-    sourceBuilder.appendLine();
-  }
-
-  @Override public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr update) {
-    var fieldRef = toClassRef(field.owner()) + "." + field.name();
-    buildUpdate(fieldRef, update);
-  }
-
-  @Override
-  public void updateField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner, @NotNull FreeJavaExpr update) {
-    appendExpr(owner);
-    sourceBuilder.append("." + field.name() + " = ");
-    appendExpr(update);
     sourceBuilder.append(";");
     sourceBuilder.appendLine();
   }
@@ -248,10 +235,6 @@ public record SourceCodeBuilder(
 
   @Override public @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return mkNew(FreeUtil.fromClass(className), args);
-  }
-
-  @Override public @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) {
-    return name.ref();
   }
 
   @Override

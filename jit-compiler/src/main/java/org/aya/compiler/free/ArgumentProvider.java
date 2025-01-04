@@ -5,6 +5,9 @@ package org.aya.compiler.free;
 import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The implementation should be pure (at least, same input same output, some kind of side effect is acceptable)
+ */
 public interface ArgumentProvider {
   interface Lambda extends ArgumentProvider {
     @NotNull FreeJavaExpr capture(int nth);

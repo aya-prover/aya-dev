@@ -7,12 +7,11 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.LocalVariable;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
-import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
@@ -42,7 +41,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
-    return new MethodRef.Default(
+    return new MethodRef(
       owner, "invoke",
       Constants.CD_Term, ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
       false

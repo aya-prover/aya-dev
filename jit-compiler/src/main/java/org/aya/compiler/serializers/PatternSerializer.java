@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -96,7 +96,6 @@ public final class PatternSerializer {
         onMatchSucc.accept(builder);
       }
 
-      // TODO: match IntegerTerm / ListTerm first
       case Pat.Con con -> builder.ifInstanceOf(term, FreeUtil.fromClass(ConCallLike.class),
         (builder1, conTerm) -> builder1.ifRefEqual(
           AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),

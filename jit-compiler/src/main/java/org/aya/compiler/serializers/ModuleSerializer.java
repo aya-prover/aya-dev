@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -6,6 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
+import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
+import org.aya.compiler.free.morphism.free.FreeRunner;
+import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
@@ -13,6 +16,7 @@ import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.constant.ClassDesc;
 
@@ -21,7 +25,7 @@ import static org.aya.compiler.serializers.NameSerializer.getReference;
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
  */
-public final class ModuleSerializer<Carrier> {
+public final class ModuleSerializer {
   /** Input to the module serializer. */
   public record ModuleResult(
     @NotNull QPath name,
@@ -74,7 +78,13 @@ public final class ModuleSerializer<Carrier> {
     }
   }
 
-  public Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
+  public String serializeWithBestBuilder(ModuleResult unit) {
+    var freeJava = serialize(FreeJavaBuilderImpl.INSTANCE, unit);
+    return new FreeRunner<>(SourceFreeJavaBuilder.create()).runFree(freeJava);
+  }
+
+  @VisibleForTesting
+  public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.CompiledAyaImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);

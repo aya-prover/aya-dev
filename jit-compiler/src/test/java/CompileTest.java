@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.morphism.SourceClassBuilder;
-import org.aya.compiler.free.morphism.SourceCodeBuilder;
-import org.aya.compiler.free.morphism.SourceFreeJavaBuilder;
+import org.aya.compiler.free.morphism.source.SourceClassBuilder;
+import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
+import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
@@ -103,7 +103,7 @@ public class CompileTest {
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
-    return new ModuleSerializer<String>(result.info.shapeFactory())
+    return new ModuleSerializer(result.info.shapeFactory())
       .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
   }

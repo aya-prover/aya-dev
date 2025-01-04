@@ -7,8 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
-import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.free.data.FieldRef;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -41,7 +41,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_Result = FreeUtil.fromClass(Result.class);
 
   // Term -> Term
-  public static final @NotNull MethodRef CLOSURE = new MethodRef.Default(
+  public static final @NotNull MethodRef CLOSURE = new MethodRef(
     FreeUtil.fromClass(UnaryOperator.class),
     "apply",
     ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
@@ -49,14 +49,14 @@ public final class Constants {
   );
 
   // () -> Term
-  public static final @NotNull MethodRef THUNK = new MethodRef.Default(
+  public static final @NotNull MethodRef THUNK = new MethodRef(
     FreeUtil.fromClass(Supplier.class),
     "get",
     ConstantDescs.CD_Object, ImmutableSeq.empty(),
     true
   );
 
-  public static final @NotNull MethodRef FUNCTION = new MethodRef.Default(
+  public static final @NotNull MethodRef FUNCTION = new MethodRef(
     FreeUtil.fromClass(Function.class),
     "apply",
     ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
@@ -64,7 +64,7 @@ public final class Constants {
   );
 
   // ImmutableSeq from(Object[])
-  public static final @NotNull MethodRef IMMSEQ = new MethodRef.Default(
+  public static final @NotNull MethodRef IMMSEQ = new MethodRef(
     CD_ImmutableSeq,
     "from",
     CD_ImmutableSeq, ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
@@ -74,7 +74,7 @@ public final class Constants {
   /**
    * @see MutableSeq#fill(int, Object)
    */
-  public static final @NotNull MethodRef MUTSEQ = new MethodRef.Default(
+  public static final @NotNull MethodRef MUTSEQ = new MethodRef(
     CD_MutableSeq,
     "fill",
     CD_MutableSeq, ImmutableSeq.of(ConstantDescs.CD_int, ConstantDescs.CD_Object),
@@ -84,7 +84,7 @@ public final class Constants {
   /**
    * @see MutableSeq#set(int, Object)
    */
-  public static final @NotNull MethodRef MUTSEQ_SET = new MethodRef.Default(
+  public static final @NotNull MethodRef MUTSEQ_SET = new MethodRef(
     CD_MutableSeq, "set", ConstantDescs.CD_void,
     ImmutableSeq.of(ConstantDescs.CD_int, ConstantDescs.CD_Object),
     true
@@ -95,7 +95,7 @@ public final class Constants {
    *
    * @see Seq#get(int)
    */
-  public static final @NotNull MethodRef SEQ_GET = new MethodRef.Default(
+  public static final @NotNull MethodRef SEQ_GET = new MethodRef(
     CD_Seq, "get", ConstantDescs.CD_Object,
     ImmutableSeq.of(ConstantDescs.CD_int),
     true
@@ -104,11 +104,11 @@ public final class Constants {
   /**
    * @see Seq#toImmutableSeq()
    */
-  public static final @NotNull MethodRef SEQ_TOIMMSEQ = new MethodRef.Default(
+  public static final @NotNull MethodRef SEQ_TOIMMSEQ = new MethodRef(
     CD_Seq, "toImmutableSeq", CD_ImmutableSeq, ImmutableSeq.empty(), true
   );
 
-  public static final @NotNull MethodRef IMMTREESEQ = new MethodRef.Default(
+  public static final @NotNull MethodRef IMMTREESEQ = new MethodRef(
     FreeUtil.fromClass(ImmutableTreeSeq.class),
     "from",
     FreeUtil.fromClass(ImmutableTreeSeq.class),
@@ -116,7 +116,7 @@ public final class Constants {
     false
   );
 
-  public static final @NotNull MethodRef BETAMAKE = new MethodRef.Default(
+  public static final @NotNull MethodRef BETAMAKE = new MethodRef(
     FreeUtil.fromClass(BetaRedex.class),
     "make",
     CD_Term, ImmutableSeq.empty(),
@@ -126,14 +126,14 @@ public final class Constants {
   /**
    * @see Term#elevate(int)
    */
-  public static final @NotNull MethodRef ELEVATE = new MethodRef.Default(
+  public static final @NotNull MethodRef ELEVATE = new MethodRef(
     CD_Term, "elevate", CD_Term, ImmutableSeq.of(ConstantDescs.CD_int), true
   );
 
   /**
    * @see RuleReducer#make()
    */
-  public static final @NotNull MethodRef RULEREDUCER_MAKE = new MethodRef.Default(
+  public static final @NotNull MethodRef RULEREDUCER_MAKE = new MethodRef(
     FreeUtil.fromClass(RuleReducer.class),
     "make",
     CD_Term, ImmutableSeq.empty(),
@@ -143,7 +143,7 @@ public final class Constants {
   /**
    * @see Closure#mkConst(Term)
    */
-  public static final @NotNull MethodRef CLOSURE_MKCONST = new MethodRef.Default(
+  public static final @NotNull MethodRef CLOSURE_MKCONST = new MethodRef(
     FreeUtil.fromClass(Closure.class),
     "mkConst",
     FreeUtil.fromClass(Closure.class),
@@ -154,7 +154,7 @@ public final class Constants {
   /**
    * @see Panic#unreachable()
    */
-  public static final @NotNull MethodRef PANIC = new MethodRef.Default(
+  public static final @NotNull MethodRef PANIC = new MethodRef(
     FreeUtil.fromClass(Panic.class),
     "unreachable",
     ConstantDescs.CD_Object,
@@ -162,7 +162,7 @@ public final class Constants {
     true
   );
 
-  public static final @NotNull MethodRef INT_REPR = new MethodRef.Default(
+  public static final @NotNull MethodRef INT_REPR = new MethodRef(
     FreeUtil.fromClass(IntegerTerm.class),
     "repr",
     ConstantDescs.CD_int,
@@ -173,7 +173,7 @@ public final class Constants {
   /**
    * @see ConCallLike#conArgs()
    */
-  public static final @NotNull MethodRef CONARGS = new MethodRef.Default(
+  public static final @NotNull MethodRef CONARGS = new MethodRef(
     FreeUtil.fromClass(ConCallLike.class),
     "conArgs",
     CD_ImmutableSeq,
@@ -184,7 +184,7 @@ public final class Constants {
   /**
    * @see TupTerm#lhs()
    */
-  public static final @NotNull MethodRef TUP_LHS = new MethodRef.Default(
+  public static final @NotNull MethodRef TUP_LHS = new MethodRef(
     FreeUtil.fromClass(TupTerm.class),
     "lhs",
     CD_Term,
@@ -195,7 +195,7 @@ public final class Constants {
   /**
    * @see TupTerm#rhs()
    */
-  public static final @NotNull MethodRef TUP_RHS = new MethodRef.Default(
+  public static final @NotNull MethodRef TUP_RHS = new MethodRef(
     FreeUtil.fromClass(TupTerm.class),
     "rhs",
     CD_Term,
@@ -206,13 +206,13 @@ public final class Constants {
   /**
    * @see Result#ok(Object)
    */
-  public static final @NotNull MethodRef RESULT_OK = new MethodRef.Default(
+  public static final @NotNull MethodRef RESULT_OK = new MethodRef(
     CD_Result, "ok",
     CD_Result, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
   );
 
-  public static final @NotNull MethodRef RESULT_ERR = new MethodRef.Default(
+  public static final @NotNull MethodRef RESULT_ERR = new MethodRef(
     CD_Result, "err",
     CD_Result, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
@@ -225,13 +225,13 @@ public final class Constants {
     ConstantDescs.CD_int, ConstantDescs.CD_boolean.arrayType(), ConstantDescs.CD_String.arrayType()
   );
 
-  public static final @NotNull FieldRef JITDATA_CONS = new FieldRef.Default(
+  public static final @NotNull FieldRef JITDATA_CONS = new FieldRef(
     FreeUtil.fromClass(JitData.class),
     FreeUtil.fromClass(JitCon.class).arrayType(),
     "constructors"
   );
 
-  public static final @NotNull FieldRef JITCLASS_MEMS = new FieldRef.Default(
+  public static final @NotNull FieldRef JITCLASS_MEMS = new FieldRef(
     FreeUtil.fromClass(JitClass.class),
     FreeUtil.fromClass(JitMember.class).arrayType(),
     "members"
@@ -240,7 +240,7 @@ public final class Constants {
   /**
    * @see UnaryOperator#identity()
    */
-  public static final @NotNull MethodRef CLOSURE_ID = new MethodRef.Default(
+  public static final @NotNull MethodRef CLOSURE_ID = new MethodRef(
     FreeUtil.fromClass(UnaryOperator.class),
     "identity",
     FreeUtil.fromClass(UnaryOperator.class),
@@ -251,7 +251,7 @@ public final class Constants {
   /**
    * @see PatMatcher#apply(ImmutableSeq, ImmutableSeq)
    */
-  public static final @NotNull MethodRef PATMATCHER_APPLY = new MethodRef.Default(
+  public static final @NotNull MethodRef PATMATCHER_APPLY = new MethodRef(
     FreeUtil.fromClass(PatMatcher.class), "apply",
     CD_Result, ImmutableSeq.of(CD_ImmutableSeq, CD_ImmutableSeq), false
   );
