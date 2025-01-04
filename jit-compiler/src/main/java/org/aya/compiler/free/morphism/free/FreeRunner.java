@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.free;
 
@@ -121,6 +121,7 @@ public final class FreeRunner<Carrier> {
   private void runFree(@NotNull ArgumentProvider ap, @NotNull FreeCodeBuilder builder, @NotNull FreeStmt free) {
     switch (free) {
       case FreeStmt.Break _ -> builder.breakOut();
+      case FreeStmt.Unreachable _ -> builder.unreachable();
       case FreeStmt.Breakable(var inner) -> builder.breakable(cb -> runFree(ap, cb, inner));
       case FreeStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
       case FreeStmt.Exec exec -> builder.exec(runFree(ap, builder, exec.expr()));
@@ -185,17 +186,8 @@ public final class FreeRunner<Carrier> {
 
   private class SubscopeHandle implements AutoCloseable {
     private final @UnknownNullability MutableMap<Integer, LocalVariable> oldBinding = binding;
-
-    public SubscopeHandle(
-      @NotNull MutableMap<Integer, LocalVariable> newScope
-    ) {
-      binding = newScope;
-    }
-
-    @Override
-    public void close() {
-      binding = oldBinding;
-    }
+    public SubscopeHandle(@NotNull MutableMap<Integer, LocalVariable> newScope) { binding = newScope; }
+    @Override public void close() { binding = oldBinding; }
   }
 
   private @NotNull SubscopeHandle subscoped() {

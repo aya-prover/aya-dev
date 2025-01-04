@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
@@ -60,4 +60,8 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
   );
 
   void returnWith(@NotNull FreeJavaExpr expr);
+
+  default void unreachable() {
+    returnWith(invoke(Constants.PANIC, ImmutableSeq.empty()));
+  }
 }

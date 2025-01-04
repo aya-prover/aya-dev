@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.free;
 
@@ -32,6 +32,7 @@ public sealed interface FreeStmt {
 
   record Breakable(@NotNull ImmutableSeq<FreeStmt> block) implements FreeStmt { }
   enum Break implements FreeStmt { INSTANCE }
+  enum Unreachable implements FreeStmt { INSTANCE }
 
   record Exec(@NotNull FreeExpr expr) implements FreeStmt { }
   record Switch(@NotNull FreeVariable elim, @NotNull ImmutableIntSeq cases,

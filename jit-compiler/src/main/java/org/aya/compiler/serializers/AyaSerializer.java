@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -22,16 +22,8 @@ public interface AyaSerializer {
   String FIELD_EMPTYCALL = "ourCall";
   String CLASS_PANIC = getJavaRef(Panic.class);
 
-  static void returnPanic(@NotNull FreeCodeBuilder builder) {
-    builder.returnWith(buildPanic(builder));
-  }
-
   static void execPanic(@NotNull FreeCodeBuilder builder) {
-    builder.exec(buildPanic(builder));
-  }
-
-  static @NotNull FreeJavaExpr buildPanic(@NotNull FreeExprBuilder builder) {
-    return builder.invoke(Constants.PANIC, ImmutableSeq.empty());
+    builder.exec(builder.invoke(Constants.PANIC, ImmutableSeq.empty()));
   }
 
   /**
