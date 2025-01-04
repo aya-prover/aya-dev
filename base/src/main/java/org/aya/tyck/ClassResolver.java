@@ -1,14 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.MapLike;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.resolve.context.Candidate;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
