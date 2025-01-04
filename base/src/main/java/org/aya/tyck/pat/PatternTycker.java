@@ -390,7 +390,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull WithPos<Pattern> outerPattern
   ) {
     var sub = new PatternTycker(exprTycker, new SignatureIterator(telescope, new ConstPusheen<>(ErrorTerm.DUMMY), null), asSubst, nameGen);
-    var tyckResult = sub.tyck(new PatternIterator(patterns, null), outerPattern);
+    var tyckResult = sub.tyck(new PatternIterator(patterns), outerPattern);
 
     hasError = hasError || sub.hasError;
     return tyckResult.wellTyped;

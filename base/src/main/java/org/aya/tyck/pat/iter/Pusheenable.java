@@ -11,5 +11,5 @@ import java.util.Iterator;
 public interface Pusheenable<T, R> extends Iterator<T> {
   @NotNull T peek();
 
-  R body();
+  @NotNull R body();
 }

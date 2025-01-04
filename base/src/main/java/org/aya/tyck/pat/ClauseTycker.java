@@ -162,7 +162,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.fail(new PatternProblem.InvalidEmptyBody(clause));
       }
 
-      var patIter = new PatternIterator(clause.patterns, clause.expr.map(LambdaPusheen::new).getOrNull());
+      var patIter = new PatternIterator(clause.patterns, clause.expr.isDefined() ? new LambdaPusheen(clause.expr.get()) : PatternIterator.DUMMY);
       var patResult = tycker.tyck(patIter, null);
       var ctx = exprTycker.localCtx();   // No need to copy the context here
 
