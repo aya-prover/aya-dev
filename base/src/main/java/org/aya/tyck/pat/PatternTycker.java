@@ -164,7 +164,7 @@ public class PatternTycker implements Problematic, Stateful {
 
         yield new Pat.Bind(bind, type);
       }
-      case Pattern.CalmFace.INSTANCE -> doGeneratePattern(type, Constants.ANONYMOUS_PREFIX);
+      case Pattern.CalmFace.INSTANCE -> doGeneratePattern(type, Constants.ANONYMOUS_PREFIX, pattern.sourcePos());
       case Pattern.Number(var number) -> {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
@@ -369,12 +369,11 @@ public class PatternTycker implements Problematic, Stateful {
     }
   }
 
-  private @NotNull Pat doGeneratePattern(@NotNull Term type, @NotNull String name) {
+  private @NotNull Pat doGeneratePattern(@NotNull Term type, @NotNull String name, @NotNull SourcePos pos) {
     var freshVar = nameGen.bindName(name);
     if (exprTycker.whnf(type) instanceof DataCall dataCall) {
       // this pattern would be a Con, it can be inferred
-      // TODO: I NEED A SOURCE POS!!
-      return new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, SourcePos.NONE);
+      return new Pat.Meta(MutableValue.create(), freshVar.name(), dataCall, pos);
     } else {
       // If the type is not a DataCall, then the only available pattern is Pat.Bind
       exprTycker.localCtx().put(freshVar, type);
@@ -389,7 +388,8 @@ public class PatternTycker implements Problematic, Stateful {
    */
   private @NotNull Pat generatePattern() {
     try (var _ = instCurrentParam()) {
-      var pat = doGeneratePattern(currentParam.type(), currentParam.name());
+      // TODO: I NEED A SOURCE POS!!
+      var pat = doGeneratePattern(currentParam.type(), currentParam.name(), SourcePos.NONE);
       addArgSubst(pat, currentParam.type());
       return pat;
     }
