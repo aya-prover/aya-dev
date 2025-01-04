@@ -15,6 +15,7 @@ import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.pat.TypeEraser;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
@@ -187,11 +188,18 @@ public final class ClauseTycker implements Problematic, Stateful {
       ctx = ctx.map(new TermInline());
       var patWithTypeBound = Pat.collectVariables(patResult.wellTyped().view());
 
+      var unpiBody = sigIter.unpiBody();
+      // fill missing patterns
+      var missingPats = unpiBody.params().mapIndexed((idx, x) ->
+        // It would be nice if we have a SourcePos here
+        new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck), x.type()));
+
       var allBinds = patWithTypeBound.component1().toImmutableSeq();
       var newClause = new Pat.Preclause<>(clause.sourcePos, patWithTypeBound.component2(),
         allBinds.size(), patIter.exprBody());
       return new LhsResult(ctx, sigIter.unpiBody(), allBinds,
-        patResult.wellTyped(), patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
+        patResult.wellTyped().appendedAll(missingPats),
+        patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
     }
   }
 
@@ -225,7 +233,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
-        // fill missing patterns and eta body
+        // eta body with inserted patterns
         wellBody = AppTerm.make(wellBody, result.unpiPats().map(PatToTerm::visit));
 
         // bind all pat bindings
