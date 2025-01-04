@@ -12,6 +12,7 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.pat.TypeEraser;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.ref.LocalCtx;
@@ -217,6 +218,14 @@ public final class ClauseTycker implements Problematic, Stateful {
         wellBody = exprTycker.inherit(bodyExpr, result.instResult()).wellTyped();
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
+
+        // fill missing patterns and eta body
+        var unpiPat = result.unpiedResult.params().mapIndexed((idx, x) ->
+          // It would be nice if we have a SourcePos for the LocalVar
+          new Pat.Bind(new LocalVar("unpi" + idx), x.type()));
+
+        var fullPats = result.clause.pats().view().concat(unpiPat);
+        wellBody = AppTerm.make(wellBody, unpiPat.view().map(PatToTerm::visit));
 
         // bind all pat bindings
         var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();
