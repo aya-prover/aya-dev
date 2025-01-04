@@ -29,13 +29,18 @@ public interface FreeOptimizer {
       case FreeStmt.Switch(var elim, var cases, var branch, var defaultCase) -> {
         branch = branch.map(it -> it.flatMap(FreeOptimizer::optimize));
         defaultCase = defaultCase.flatMap(FreeOptimizer::optimize);
-        var defaultPanic = defaultCase.sizeEquals(1) && defaultCase.getFirst() == FreeStmt.Unreachable.INSTANCE;
-        if (defaultPanic && branch.sizeEquals(1)) {
-          yield branch.getFirst();
+        if (branch.isEmpty()) yield defaultCase;
+        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == FreeStmt.Unreachable.INSTANCE) {
+          if (branch.sizeEquals(1)) {
+            yield branch.getFirst();
+          } else if (branch.sizeGreaterThan(1)) {
+            yield ImmutableSeq.of(new FreeStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
+          }
         }
         yield ImmutableSeq.of(new FreeStmt.Switch(elim, cases, branch, defaultCase));
       }
-      case FreeStmt.Breakable(var stmts) -> ImmutableSeq.of(new FreeStmt.Breakable(stmts.flatMap(FreeOptimizer::optimize)));
+      case FreeStmt.Breakable(var stmts) ->
+        ImmutableSeq.of(new FreeStmt.Breakable(stmts.flatMap(FreeOptimizer::optimize)));
       case FreeStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
         var newThenBlock = thenBlock.flatMap(FreeOptimizer::optimize);
         var newElseBlock = elseBlock == null ? null : elseBlock.flatMap(FreeOptimizer::optimize);

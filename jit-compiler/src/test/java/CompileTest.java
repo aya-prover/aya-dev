@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
@@ -104,7 +104,7 @@ public class CompileTest {
 
   public static @NotNull String serializeFrom(@NotNull TyckResult result) {
     return new ModuleSerializer(result.info.shapeFactory())
-      .serialize(SourceFreeJavaBuilder.create(), new ModuleSerializer.ModuleResult(
+      .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
   }
 
