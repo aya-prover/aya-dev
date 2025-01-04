@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import kala.value.MutableValue;
+import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
 import org.aya.generic.term.DTKind;
@@ -163,7 +164,7 @@ public class PatternTycker implements Problematic, Stateful {
 
         yield new Pat.Bind(bind, type);
       }
-      case Pattern.CalmFace.INSTANCE -> doGeneratePattern(type);
+      case Pattern.CalmFace.INSTANCE -> doGeneratePattern(type, Constants.ANONYMOUS_PREFIX);
       case Pattern.Number(var number) -> {
         var ty = whnf(type);
         if (ty instanceof DataCall dataCall) {
@@ -372,8 +373,8 @@ public class PatternTycker implements Problematic, Stateful {
     }
   }
 
-  private @NotNull Pat doGeneratePattern(@NotNull Term type) {
-    var freshVar = nameGen.bindName(currentParam.name());
+  private @NotNull Pat doGeneratePattern(@NotNull Term type, @NotNull String name) {
+    var freshVar = nameGen.bindName(name);
     if (exprTycker.whnf(type) instanceof DataCall dataCall) {
       // this pattern would be a Con, it can be inferred
       // TODO: I NEED A SOURCE POS!!
@@ -392,7 +393,7 @@ public class PatternTycker implements Problematic, Stateful {
    */
   private @NotNull Pat generatePattern() {
     try (var _ = instCurrentParam()) {
-      var pat = doGeneratePattern(currentParam.type());
+      var pat = doGeneratePattern(currentParam.type(), currentParam.name());
       addArgSubst(pat, currentParam.type());
       return pat;
     }
