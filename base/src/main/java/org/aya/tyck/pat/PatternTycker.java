@@ -345,6 +345,8 @@ public class PatternTycker implements Problematic, Stateful {
     // it is impossible that [generated.kind] is [FindNextParam.TooManyImplicit]
     assert generated.kind != FindNextParam.Kind.TooManyImplicit;
 
+    wellTyped.appendAll(generated.generated);
+
     // [currentParam] = null or [telescope.isFromPusheen()]
     return done(wellTyped);
   }
