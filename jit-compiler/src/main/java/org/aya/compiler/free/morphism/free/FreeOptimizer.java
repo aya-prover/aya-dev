@@ -27,6 +27,7 @@ public interface FreeOptimizer {
 
   static @NotNull ImmutableSeq<FreeStmt> optimizeBlock(ImmutableSeq<FreeStmt> block, boolean endOfBreakable) {
     if (!endOfBreakable) return block.flatMap(it -> optimize(it, false));
+    if (block.isEmpty()) return block;
     var exceptLast = block.view().dropLast(1).flatMap(it -> optimize(it, false));
     var last = optimize(block.getLast(), true);
     return exceptLast.concat(last).toImmutableSeq();
