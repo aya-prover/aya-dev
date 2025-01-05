@@ -33,6 +33,12 @@ public interface FreeOptimizer {
         if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == FreeStmt.Unreachable.INSTANCE) {
           if (branch.sizeEquals(1)) {
             yield branch.getFirst();
+          } else if (branch.sizeEquals(2)) {
+            yield ImmutableSeq.of(new FreeStmt.IfThenElse(
+              new FreeStmt.Condition.IsIntEqual(new FreeExpr.RefVariable(elim), cases.getFirst()),
+              branch.getFirst(),
+              branch.getLast()
+            ));
           } else if (branch.sizeGreaterThan(1)) {
             yield ImmutableSeq.of(new FreeStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
           }
