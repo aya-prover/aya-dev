@@ -1,11 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.compile;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
-import kala.collection.mutable.MutableList;
 import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.syntax.core.def.ConDefLike;
@@ -13,11 +12,9 @@ import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.error.Panic;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 
@@ -37,13 +34,14 @@ public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
     this.selfTeleSize = selfTeleSize;
   }
 
-  /**
-   * Whether this constructor is available of data type
-   *
-   * @param args the argument to the data type
-   * @return a match result, a sequence of substitution if success
-   */
-  public abstract @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull Seq<Term> args);
+  /// Whether this constructor is available of data type.
+  /// The default impl is for non-indexed constructors, where it's always available.
+  ///
+  /// @param args the argument to the data type
+  /// @return a match result, a sequence of substitution if success
+  public @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull ImmutableSeq<Term> args) {
+    return Result.ok(args);
+  }
 
   @Override public boolean hasEq() { return hasEq; }
   @Override public @NotNull Term equality(Seq<Term> args, boolean is0) { throw new Panic("Not an HIT"); }

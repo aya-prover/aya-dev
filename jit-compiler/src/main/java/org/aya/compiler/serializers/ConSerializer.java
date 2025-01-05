@@ -42,25 +42,21 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     ));
   }
 
-  /// @see JitCon#isAvailable(Seq)
+  /// @param unit must be indexed, otherwise it should use the default impl.
+  /// @see JitCon#isAvailable
   private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
     FreeJavaExpr matchResult;
     var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm.ref(), ImmutableSeq.empty());
-    if (unit.pats.isEmpty()) {
-      // not indexed data type, this constructor is always available
-      matchResult = builder.invoke(Constants.RESULT_OK, ImmutableSeq.of(termSeq));
-    } else {
-      // It is too stupid to serialize pat meta solving, so we just call PatMatcher
-      var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
-      var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
-      var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
-      var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
-        builder.iconst(true), id
-      ));
+    // It is too stupid to serialize pat meta solving, so we just call PatMatcher
+    var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
+    var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
+    var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
+    var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
+      builder.iconst(true), id
+    ));
 
-      matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
-        ImmutableSeq.of(patsSeq, termSeq));
-    }
+    matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
+      ImmutableSeq.of(patsSeq, termSeq));
 
     builder.returnWith(matchResult);
   }
@@ -88,10 +84,10 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   @Override public @NotNull ConSerializer serialize(@NotNull FreeClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
-      builder.buildMethod(
+      if (unit.pats.isNotEmpty()) builder.buildMethod(
         FreeUtil.fromClass(Result.class),
         "isAvailable",
-        ImmutableSeq.of(Constants.CD_Seq),
+        ImmutableSeq.of(Constants.CD_ImmutableSeq),
         (ap, builder1) ->
           buildIsAvailable(builder1, unit, ap.arg(0)));
 
