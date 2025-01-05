@@ -345,7 +345,8 @@ public record AyaProducer(
     if (expr != null) return new FnBody.ExprBody(expr(expr));
     var body = node.childrenOfType(BARRED_CLAUSE)
       .map(this::bareOrBarredClause).toImmutableSeq();
-    var elims = node.childrenOfType(WEAK_ID)
+    var elims = node.child(COMMA_SEP)
+      .childrenOfType(WEAK_ID)
       .map(this::weakId)
       .toImmutableSeq();
     return new FnBody.BlockBody(body, elims);
@@ -381,7 +382,8 @@ public record AyaProducer(
   }
 
   public @NotNull MatchBody<DataCon> elimDataBody(@NotNull GenericNode<?> node) {
-    var elims = node.childrenOfType(WEAK_ID)
+    var elims = node.child(COMMA_SEP)
+      .childrenOfType(WEAK_ID)
       .map(this::weakId)
       .toImmutableSeq();
     var bodies = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();

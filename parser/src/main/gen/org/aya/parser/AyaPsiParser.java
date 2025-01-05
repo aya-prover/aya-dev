@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 // This is a generated file. Not intended for manual editing.
@@ -882,7 +882,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_ELIM weakId+
+  // KW_ELIM <<commaSep weakId>>
   static boolean elims(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elims")) return false;
     if (!nextTokenIs(b, KW_ELIM)) return false;
@@ -890,24 +890,9 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, KW_ELIM);
     p = r; // pin = 1
-    r = r && elims_1(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::weakId);
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // weakId+
-  private static boolean elims_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "elims_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!weakId(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "elims_1", c)) break;
-    }
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

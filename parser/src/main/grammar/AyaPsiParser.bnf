@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+ * Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
@@ -205,7 +205,7 @@ private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | elims? barredClause*
 
-private elims ::= KW_ELIM weakId+ { pin=1 }
+private elims ::= KW_ELIM <<commaSep weakId>> { pin=1 }
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
