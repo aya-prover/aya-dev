@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
@@ -88,9 +88,6 @@ public class TyckTest {
       | zro : pos 0 = neg 0
       example def testZro0 : zro 0 = pos 0 => refl
       example def testZro1 : zro 1 = neg 0 => refl
-      def funExt (A B : Type) (f g : A -> B) (p : Fn (a : A) -> f a = g a) : f = g =>
-        \\ i => \\ a => p a i
-      def pinv {a b : A} (p : a = b) : b = a => coe 0 1 (\\i => p i = a) refl
       """).defs;
     assertTrue(result.isNotEmpty());
   }

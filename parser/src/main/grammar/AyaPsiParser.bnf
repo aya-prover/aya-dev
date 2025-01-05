@@ -205,7 +205,7 @@ private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | elims? barredClause*
 
-private elims ::= KW_ELIM <<commaSep weakId>> { pin=1 }
+elims ::= KW_ELIM <<commaSep weakId>> { pin=1 }
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.

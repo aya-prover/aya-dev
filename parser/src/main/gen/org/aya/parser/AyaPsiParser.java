@@ -883,11 +883,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // KW_ELIM <<commaSep weakId>>
-  static boolean elims(PsiBuilder b, int l) {
+  public static boolean elims(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elims")) return false;
     if (!nextTokenIs(b, KW_ELIM)) return false;
     boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
+    Marker m = enter_section_(b, l, _NONE_, ELIMS, null);
     r = consumeToken(b, KW_ELIM);
     p = r; // pin = 1
     r = r && commaSep(b, l + 1, AyaPsiParser::weakId);
