@@ -46,7 +46,7 @@ open inductive not_refer_to (tm : Tm) (i : Nat)
 | False, _ => False_nrt
 
 // shift all index since [gap] back, this operation requires term [tm] has no reference to [gap].
-def shiftBack (t : Tm) (gap : Nat) (nrt : not_refer_to t gap) : Tm elim t nrt
+def shiftBack (t : Tm) (gap : Nat) (nrt : not_refer_to t gap) : Tm elim t, nrt
 | Lam l, Lam_nrt p => Lam (shiftBack l (suc gap) p)
 | App f a, App_nrt pf pa => App (shiftBack f gap pf) (shiftBack a gap pa)
 | Idx idx, Var_nrt plt => ifd (gap <? idx) (fn p => Idx ((<→s p).1)) (fn np => t)

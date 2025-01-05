@@ -17,13 +17,13 @@ overlap def subTrunc (x y : Nat) : Nat
 | n, 0 => n
 | suc n, suc m => subTrunc n m
 
-overlap def +-comm : a + b = b + a elim a b
+overlap def +-comm : a + b = b + a elim a, b
 | 0, _ => refl
 | suc _, _ => pmap suc +-comm
 | _, 0 => refl
 | _, suc _ => pmap suc +-comm
 
-overlap def +-assoc : a + (b + c) = (a + b) + c elim a b c
+overlap def +-assoc : a + (b + c) = (a + b) + c elim a, b, c
 | 0, _, _ => refl
 | _, 0, _ => refl
 | _, _, 0 => refl

@@ -51,6 +51,6 @@ module PullRequest1268 {
 
   // telescope: A a B b C
   // unpi: D d0 -> d1
-  def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a b
+  def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a, b
   | a => fn b D => id D
 }
