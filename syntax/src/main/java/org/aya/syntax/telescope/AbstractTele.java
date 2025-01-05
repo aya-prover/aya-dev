@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.telescope;
 
@@ -15,26 +15,24 @@ import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Index-safe telescope
- */
+/// Index-safe telescope
 public interface AbstractTele {
-  /**
-   * @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
-   */
+  /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
   default @NotNull Term telescope(int i, Term[] teleArgs) {
     return telescope(i, ArraySeq.wrap(teleArgs));
   }
 
-  /**
-   * Get the type of {@param i}-th (count from {@code 0}) parameter.
-   *
-   * @param teleArgs the arguments to the former parameters
-   * @return the type of {@param i}-th parameter.
-   */
-  @NotNull Term telescope(int i, Seq<Term> teleArgs);
+  /// Get the type of {@param i}-th (count from `0`) parameter.
+  /// The default implementation is for empty telescope, because there are many such cases.
+  ///
+  /// @param teleArgs the arguments to the former parameters
+  /// @return the type of {@param i}-th parameter.
+  default @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+    return Panic.unreachable();
+  }
 
   /**
    * Get the result of this signature
