@@ -59,7 +59,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     @NotNull Consumer<FreeClassBuilder> continuation
   ) {
     super.buildFramework(builder, unit, nestBuilder -> {
-      nestBuilder.buildMethod(
+      if (unit.telescope().isNotEmpty()) nestBuilder.buildMethod(
         Constants.CD_Term,
         "telescope",
         ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
@@ -105,7 +105,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
 
         cb.returnWith(result);
       },
-      builder1 -> builder1.unreachable());
+      FreeCodeBuilder::unreachable);
   }
 
   /**
