@@ -55,10 +55,14 @@ public interface FreeOptimizer {
       }
       case FreeStmt.Breakable(var stmts) -> SeqView.of(new FreeStmt.Breakable(optimizeBlock(stmts, true)));
       case FreeStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
-        var newThenBlock = optimizeBlock(thenBlock, endOfBreakable);
-        var newElseBlock = elseBlock == null ? null : optimizeBlock(elseBlock, endOfBreakable);
-        yield SeqView.of(new FreeStmt.IfThenElse(cond, newThenBlock, newElseBlock));
+        thenBlock = optimizeBlock(thenBlock, endOfBreakable);
+        if (elseBlock != null) {
+          elseBlock = optimizeBlock(elseBlock, endOfBreakable);
+          if (elseBlock.isEmpty()) elseBlock = null;
+        }
+        yield SeqView.of(new FreeStmt.IfThenElse(cond, thenBlock, elseBlock));
       }
+      case FreeStmt.Break _ when endOfBreakable -> SeqView.empty();
       default -> SeqView.of(stmt);
     };
   }
