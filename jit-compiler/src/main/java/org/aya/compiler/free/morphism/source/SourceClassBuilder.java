@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.source;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.repr.CodeShape;
@@ -37,9 +37,11 @@ public record SourceClassBuilder(
       ), true);
       buildMetadataRecord("fileModuleSize", Integer.toString(compiledAya.fileModuleSize()), false);
       buildMetadataRecord("name", ExprializeUtil.makeString(compiledAya.name()), false);
-      buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
-      buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
-      buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(
+      if (compiledAya.assoc() != -1)
+        buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
+      if (compiledAya.shape() != -1)
+        buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
+      if (compiledAya.recognition().length != 0) buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(compiledAya.recognition()).map(x ->
           SourceCodeBuilder.makeRefEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name())
         )
@@ -104,7 +106,7 @@ public record SourceClassBuilder(
     @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
   ) {
     sourceBuilder.append("public static final " + toClassRef(returnType) + " " + name + " = ");
-    var codeBuilder = new SourceCodeBuilder(this, sourceBuilder); 
+    var codeBuilder = new SourceCodeBuilder(this, sourceBuilder);
     var initValue = initializer.apply(codeBuilder);
     codeBuilder.appendExpr(initValue);
     sourceBuilder.append(";");
