@@ -50,8 +50,8 @@ private def some-lemma {a b : Nat} (p : subTrunc a b = 0) (np : neg (subTrunc (s
 
 def <=-case {a b : Nat} (p : a <= b) : Sum (a < b) (a = b) =>
   match a <? b {
-  | _ because reflect_true p => inl p
-  | _ because reflect_false np => inr (some-lemma p np)
+  | _ because reflect_true q => inl q
+  | _ because reflect_false nq => inr (some-lemma p nq)
   }
 
 def ¬<→>= {a b : Nat} (np : neg (a < b)) : a >= b
