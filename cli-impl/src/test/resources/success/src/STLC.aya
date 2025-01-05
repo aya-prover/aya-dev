@@ -46,7 +46,7 @@ open inductive not_refer_to (tm : Tm) (i : Nat)
 | False, _ => False_nrt
 
 // shift all index since [gap] back, this operation requires term [tm] has no reference to [gap].
-def shiftBack (t : Tm) (gap : Nat) (nrt : not_refer_to t gap) : Tm elim t nrt
+def shiftBack (t : Tm) (gap : Nat) (nrt : not_refer_to t gap) : Tm elim t, nrt
 | Lam l, Lam_nrt p => Lam (shiftBack l (suc gap) p)
 | App f a, App_nrt pf pa => App (shiftBack f gap pf) (shiftBack a gap pa)
 | Idx idx, Var_nrt plt => ifd (gap <? idx) (fn p => Idx ((<→s p).1)) (fn np => t)
@@ -146,7 +146,7 @@ def inst_preservation
   | _ because reflect_true p =>
     let
     | A=B : A = B := just-inj (pinv eqV <=> (transport (fn j => G !! j = just B) p eqG))
-    in coe 0 1 (fn i => hasType G v (pinv A=B i)) vhT
+    in coe 0 1 (fn j => hasType G v (pinv A=B j)) vhT
   | _ because reflect_false np => Var_hasType eqV
   }
 | True_hasType, _, _, _ => True_hasType

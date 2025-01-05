@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.compile;
 
@@ -14,8 +14,8 @@ public @interface CompiledAya {
   int fileModuleSize();
   @NotNull String name();
   /** @return the index in the Assoc enum, -1 if null */
-  int assoc();
+  int assoc() default -1;
   /** @return the index in the AyaShape enum, -1 if null */
-  int shape();
-  @NotNull CodeShape.GlobalId[] recognition();
+  int shape() default -1;
+  @NotNull CodeShape.GlobalId[] recognition() default { };
 }

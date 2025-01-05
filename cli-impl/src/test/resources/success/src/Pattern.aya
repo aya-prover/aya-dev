@@ -6,9 +6,9 @@ module Test1 {
   def unwrap (A : Type) (v : Vec 1 A) : A elim v
   | x :> [] => x
 
-  def length (A : Type) (n : Nat) (v : Vec n A) : Nat elim v
+  def vec-length (A : Type) (n : Nat) (v : Vec n A) : Nat elim v
   | [] => 0
-  | _ :> xs => suc (length _ _ xs)
+  | _ :> xs => suc (vec-length _ _ xs)
 
   def threeTimesAhThreeTimes (A : Type) (a : A) : Vec 3 A =>
     a :> a :> a :> []
@@ -51,6 +51,7 @@ module PullRequest1268 {
 
   // telescope: A a B b C
   // unpi: D d0 -> d1
-  def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a b
+  @suppress(LocalShadow)
+  def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a, b
   | a => fn b D => id D
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 // This is a generated file. Not intended for manual editing.
@@ -41,6 +41,7 @@ public interface AyaPsiElementTypes {
   IElementType DO_BINDING = new AyaPsiElementType("DO_BINDING");
   IElementType DO_BLOCK_CONTENT = new AyaPsiElementType("DO_BLOCK_CONTENT");
   IElementType DO_EXPR = new AyaPsiElementType("DO_EXPR");
+  IElementType ELIMS = new AyaPsiElementType("ELIMS");
   IElementType ELIM_DATA_BODY = new AyaPsiElementType("ELIM_DATA_BODY");
   IElementType EXPR = new AyaPsiElementType("EXPR");
   IElementType FN_BODY = new AyaPsiElementType("FN_BODY");

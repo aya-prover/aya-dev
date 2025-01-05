@@ -43,6 +43,7 @@ def peirce-law=>double-neg-elim (pl : peirce-law) : double-neg-elim =>
   fn tyA ¬¬A =>
     pl tyA Empty (fn ¬A => exfalso (¬¬A ¬A))
 
+@suppress(MostGeneralSolution)
 def double-neg-elim=>LEM (dne : double-neg-elim) : LEM =>
   fn tyA => dne _ (fn ¬A+nA =>
     ¬A+nA (inr (fn A => ¬A+nA (inl A))))

@@ -1,5 +1,71 @@
 # Early changelog
 
+## v0.37
+
+Breaking changes:
+
+- The multi-variable version of `elim` now needs comma-separated names,
+  like `elim a b c` needs to be `elim a, b, c`.
+
+The JIT compiler now _optimizes_ the generated code, by first generating a Java AST,
+optimizes it, and then translate this Java AST into Java source.
+There are the following optimizations:
+
+1. For empty `telescope` and trivial `isAvailable`, they are no longer generated, and the default
+   implementation of these methods will be used. This should only make the code (much) smaller,
+   and generally more hot-code JIT friendly.
+2. `CompiledAya` metadata now has default values, and the code generator will use them.
+3. For `break` statements at the end of `do while` blocks, they are removed. This should make the
+   code faster, but turns out javac already optimizes this, so it only makes the code smaller.
+   But this is helpful for our own bytecode generator in the future.
+4. For `switch` statements with a `Panic.unreachable` default case, it merges with the last case,
+   because the unreachable-ness is guaranteed and very unlikely there's a bug that reaches it.
+   This should both make the code smaller and faster.
+5. After 3, `switch` with only one case is inlined, and `switch` with only two cases is turned into
+   an `if` statement. This should make the code much smaller, but not faster.
+
+In June, the compiled bytecode of the stdlib is 1.12MB, and after all these and some added definitions
+during this time, it's even smaller at 806KB. This is amazing.
+
+Other major new features:
+
+- Identifiers can begin with `-` now. This means `-` (minus) and `-->` (long arrow)
+  are now valid identifiers.
+- No-arg constructor pattern matching, when the constructor is out-of-scope,
+  will be understood as variable patterns. This is even more harmful in constructor patterns.
+  There will be a warning for this now.
+- SIT supports `elim`.
+
+Minor new features:
+
+- The library now has more stuff: `maybe`, more list functions, etc.
+- You can now use `--datetime-front-matter` and `--datetime-front-matter-key` to insert date time
+  info in the front matter of markdown output. If there is no front matter, Aya will make one,
+  and if there is, Aya will insert into it.
+- Patterns shadowing telescope will no longer trigger warnings.
+- The pattern type checker now handles more cases, see `Pattern.aya` in
+  `cli-impl/src/test/resources/success/src`.
+- The highlighter now handles `import` and `open` statements more robustly and smartly.
+  For `import a::b::c`, the `a::b` part will be considered a reference, and `c` is considered a definition,
+  because it introduces a module that can be used locally. If you do `import a::b::c as d` instead,
+  then the entire `a::b::c` part will be considered a reference, and `d` is considered a definition.
+
+Bugs fixed:
+
+- `JitCon.selfTele` was wrong.
+- `match` type checking.
+- `EqTerm` type checking now correctly handles `ErrorTerm`.
+- Subtyping from path to pi is now correctly implemented.
+- If con patterns have an error, Aya will no longer raise NPE.
+- Using implicit pattern with `elim` will no longer crash (but report error instead).
+
+Internal changes:
+
+- Use Markdown doc comments in a few places. Now `gradle javadoc` should no longer throw those warnings.
+- Move some code from `pretty` to `tools`. Now code coverage test will check `tools` too, and some unused classes are removed now.
+- `registerLibrary` returns registered libraries. This is so the IDE can watch file changes correctly, and changing non-project files will not cause a reload.
+- Negative tests are now checked using `git diff` rather than `assertEquals`. This generates much more readable error message.
+
 ## v0.36
 
 Major new features:
