@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -10,6 +10,7 @@ import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 public abstract class AbstractExprializer<T> {
   protected final @NotNull FreeExprBuilder builder;
@@ -39,14 +40,48 @@ public abstract class AbstractExprializer<T> {
     return makeImmutableSeq(builder, Constants.IMMSEQ, typeName, terms);
   }
 
+  /// @param con the factory function used for constructing an {@link ImmutableSeq}, usually it is {@link ImmutableSeq#of}.
+  ///                       This function may re-resolve the factory function to fixed size parameters one
+  ///                       with the name of {@param con}
+  ///                       in case {@param terms} is very small.
+  /// @see ImmutableSeq#of()
+  /// @see ImmutableSeq#of(Object)
+  /// @see ImmutableSeq#of(Object, Object)
+  /// @see ImmutableSeq#of(Object, Object, Object)
+  /// @see ImmutableSeq#of(Object, Object, Object, Object)
+  /// @see ImmutableSeq#of(Object, Object, Object, Object, Object)
+  /// @see ImmutableSeq#of(Object[])
   public static @NotNull FreeJavaExpr makeImmutableSeq(
     @NotNull FreeExprBuilder builder,
     @NotNull MethodRef con,
     @NotNull Class<?> typeName,
     @NotNull ImmutableSeq<FreeJavaExpr> terms
   ) {
-    var args = builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms);
-    return builder.invoke(con, ImmutableSeq.of(args));
+    ImmutableSeq<FreeJavaExpr> args;
+
+    if (terms.size() <= 5) {
+      String name = con.name();
+      ImmutableSeq<ClassDesc> params;
+
+      // re-resolve
+      if (terms.isEmpty()) {
+        name = Constants.NAME_EMPTY;
+        params = ImmutableSeq.empty();
+      } else {
+        params = ImmutableSeq.fill(terms.size(), ConstantDescs.CD_Object);
+      }
+
+      con = FreeJavaResolver.resolve(
+        con.owner(), name,
+        con.returnType(), params,
+        con.isInterface());
+
+      args = terms;
+    } else {
+      args = ImmutableSeq.of(builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms));
+    }
+
+    return builder.invoke(con, args);
   }
 
   /**
