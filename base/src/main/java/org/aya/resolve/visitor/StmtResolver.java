@@ -38,7 +38,8 @@ public interface StmtResolver {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl, info);
       case ResolvingStmt.ModStmt(var stmts) -> resolveStmt(stmts, info);
       case ResolvingStmt.GenStmt(var variables) -> {
-        var resolver = new ExprResolver(info.thisModule(), false);
+        // Create resolver with allowGeneralizing=true for variable declarations
+        var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
 
         // First pass: register all variables to detect cycles
