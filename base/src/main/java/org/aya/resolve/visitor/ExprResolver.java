@@ -280,10 +280,13 @@ public record ExprResolver(
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
-      // Ensure all dependencies are introduced
-      introduceDependencies(gvar);
       var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
+      if (!allowGeneralizing) {
+        ctx.reporter().report(new GeneralizedNotAvailableError(name.sourcePos(), gvar));
+        throw new Context.ResolvingInterruptedException();
+      }
+      introduceDependencies(gvar);
     }
     return result;
   }
