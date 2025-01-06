@@ -44,7 +44,7 @@ public abstract class AbstractExprializer<T> {
   ///                       This function may re-resolve the factory function to fixed size parameters one
   ///                       with the name of {@param con}
   ///                       in case {@param terms} is very small.
-  /// @see ImmutableSeq#of()
+  /// @see ImmutableSeq#empty()
   /// @see ImmutableSeq#of(Object)
   /// @see ImmutableSeq#of(Object, Object)
   /// @see ImmutableSeq#of(Object, Object, Object)
