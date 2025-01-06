@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free;
 
@@ -39,6 +39,8 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_MutableSeq = FreeUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = FreeUtil.fromClass(Supplier.class);
   public static final @NotNull ClassDesc CD_Result = FreeUtil.fromClass(Result.class);
+  public static final @NotNull String NAME_OF = "of";
+  public static final @NotNull String NAME_EMPTY = "empty";
 
   // Term -> Term
   public static final @NotNull MethodRef CLOSURE = new MethodRef(
@@ -63,10 +65,10 @@ public final class Constants {
     true
   );
 
-  // ImmutableSeq from(Object[])
+  /// @see ImmutableSeq#of(Object[])
   public static final @NotNull MethodRef IMMSEQ = new MethodRef(
     CD_ImmutableSeq,
-    "from",
+    NAME_OF,
     CD_ImmutableSeq, ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
     true
   );
@@ -110,7 +112,7 @@ public final class Constants {
 
   public static final @NotNull MethodRef IMMTREESEQ = new MethodRef(
     FreeUtil.fromClass(ImmutableTreeSeq.class),
-    "from",
+    NAME_OF,
     FreeUtil.fromClass(ImmutableTreeSeq.class),
     ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
     false

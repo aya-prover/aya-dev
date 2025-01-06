@@ -264,7 +264,7 @@ public final class PatternSerializer {
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, builder1 -> builder1.unreachable());
+    }, FreeCodeBuilder::unreachable);
 
     return this;
   }
