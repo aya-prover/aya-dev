@@ -331,8 +331,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
     if (info.suppressWarn != null) {
       var args = info.suppressWarn.args().view()
-        .map(x -> Doc.plain(x.data().name()))
-        .toImmutableSeq();
+        .map(x -> Doc.plain(x.data().name()));
 
       lines.append(doPragma(Doc.styled(KEYWORD, Constants.PRAGMA_SUPPRESS), Doc.commaList(args)));
     }

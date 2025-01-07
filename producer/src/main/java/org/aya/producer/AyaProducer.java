@@ -9,10 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableEnumSet;
-import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSet;
-import kala.collection.mutable.MutableSinglyLinkedList;
+import kala.collection.mutable.*;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
@@ -304,7 +301,7 @@ public record AyaProducer(
       switch (name) {
         case Constants.PRAGMA_SUPPRESS -> {
           // TODO: use MutableEnumSet
-          MutableSet<WithPos<Suppress>> sups = MutableSet.create();
+          MutableList<WithPos<Suppress>> sups = FreezableMutableList.create();
 
           for (var arg : args) {
             var resolved = Arrays.stream(Suppress.values())
@@ -315,11 +312,11 @@ public record AyaProducer(
             if (resolved == null) {
               reporter.report(new BadXWarn.BadWarnWarn(sourcePosOf(arg), arg.tokenText().toString()));
             } else {
-              sups.add(new WithPos<>(sourcePosOf(arg), resolved));
+              sups.append(new WithPos<>(sourcePosOf(arg), resolved));
             }
           }
 
-          decl.pragmaInfo.suppressWarn = new PragmaInfo.SuppressWarn(namePos, sups.toImmutableSet());
+          decl.pragmaInfo.suppressWarn = new PragmaInfo.SuppressWarn(namePos, sups.toImmutableSeq());
         }
         default -> reporter.report(new BadXWarn.BadPragmaWarn(namePos, name));
       }
