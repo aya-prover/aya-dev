@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -135,6 +135,18 @@ public record SyntaxHighlight(
     if (var instanceof LocalVar(_, _, GenerateKind.Generalized(var origin)))
       return linkRef(sourcePos, origin, type);
     return kindOf(var).toRef(sourcePos, BasePrettier.linkIdOf(currentFileModule, var), type);
+  }
+
+  private void visitPragma(@NotNull PragmaInfo pInfo) {
+    if (pInfo.suppressWarn != null) {
+      info.append(new Lit(pInfo.suppressWarn.sourcePos(), LitKind.Keyword));
+    }
+  }
+
+  @Override
+  public void accept(@NotNull Stmt stmt) {
+    if (stmt instanceof Decl decl) visitPragma(decl.pragmaInfo);
+    StmtVisitor.super.accept(stmt);
   }
 
   public static @NotNull DefKind kindOf(@NotNull AnyVar var) {

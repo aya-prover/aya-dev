@@ -147,8 +147,10 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
   }
 
   private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
-    var suppresses = decl.pragmaInfo.suppressWarn.args();
+    var suppressInfo = decl.pragmaInfo.suppressWarn;
+    if (suppressInfo == null) return reporter;
 
+    var suppresses = suppressInfo.args();
     if (suppresses.isEmpty()) return reporter;
     var r = new SuppressingReporter(reporter);
     suppresses.forEach(suppress -> {
@@ -156,6 +158,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         case LocalShadow -> r.suppress(NameProblem.ShadowingWarn.class);
       }
     });
+
     return r;
   }
 
