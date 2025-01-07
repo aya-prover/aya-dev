@@ -9,7 +9,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableEnumSet;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSet;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
@@ -46,6 +48,8 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -293,19 +297,31 @@ public record AyaProducer(
     node.childrenOfType(PRAGMA).forEach(pragma -> {
       var nameToken = pragma.child(ID);
       var name = nameToken.tokenText().toString();
+      var namePos = sourcePosOf(nameToken);
       var argsNode = pragma.peekChild(COMMA_SEP);
       var args = argsNode != null ? argsNode.childrenOfType(ID) : SeqView.<GenericNode<?>>empty();
+
       switch (name) {
-        case "suppress" -> args.forEach(arg -> {
-          for (var suppress : Suppress.values()) {
-            if (arg.tokenText().contentEquals(suppress.name())) {
-              decl.suppresses.add(suppress);
-              return;
+        case Constants.PRAGMA_SUPPRESS -> {
+          // TODO: use MutableEnumSet
+          MutableSet<WithPos<Suppress>> sups = MutableSet.create();
+
+          for (var arg : args) {
+            var resolved = Arrays.stream(Suppress.values())
+              .filter(x -> arg.tokenText().contentEquals(x.name()))
+              .findFirst()
+              .orElse(null);
+
+            if (resolved == null) {
+              reporter.report(new BadXWarn.BadWarnWarn(sourcePosOf(arg), arg.tokenText().toString()));
+            } else {
+              sups.add(new WithPos<>(sourcePosOf(arg), resolved));
             }
           }
-          reporter.report(new BadXWarn.BadWarnWarn(sourcePosOf(arg), arg.tokenText().toString()));
-        });
-        default -> reporter.report(new BadXWarn.BadPragmaWarn(sourcePosOf(nameToken), name));
+
+          decl.pragmaInfo.suppressWarn = new PragmaInfo.SuppressWarn(namePos, sups.toImmutableSet());
+        }
+        default -> reporter.report(new BadXWarn.BadPragmaWarn(namePos, name));
       }
     });
   }

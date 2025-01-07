@@ -7,6 +7,7 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableEnumSet;
 import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
 import org.aya.generic.Constants;
@@ -24,6 +25,7 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.IterableUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -320,8 +322,27 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     };
   }
 
+  private @NotNull Doc doPragma(@NotNull Doc name, @NotNull Doc args) {
+    return Doc.cat(AT, name, Doc.parened(args));
+  }
+
+  public @NotNull Doc pragma(@NotNull PragmaInfo info) {
+    var lines = MutableList.<Doc>create();
+
+    if (info.suppressWarn != null) {
+      var args = info.suppressWarn.args().view()
+        .map(x -> Doc.plain(x.data().name()))
+        .toImmutableSeq();
+
+      lines.append(doPragma(Doc.styled(KEYWORD, Constants.PRAGMA_SUPPRESS), Doc.commaList(args)));
+    }
+
+    return Doc.vcat(lines);
+  }
+
   public @NotNull Doc decl(@NotNull Decl predecl) {
-    return switch (predecl) {
+    var pragma = pragma(predecl.pragmaInfo);
+    var declDoc = switch (predecl) {
       case ClassDecl decl -> {
         var prelude = MutableList.of(KW_CLASS);
         prelude.append(defVar(decl.ref));
@@ -377,6 +398,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case PrimDecl primDecl -> primDoc(primDecl.ref);
     };
+
+    return Doc.vcatNonEmpty(pragma, declDoc);
   }
 
   private @NotNull MutableList<Doc> declPrelude(@NotNull Decl decl) {

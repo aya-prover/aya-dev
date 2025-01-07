@@ -60,8 +60,8 @@ public record StmtTycker(
     this(new SuppressingReporter(reporter), fileModule, shapeFactory, primFactory);
   }
   public void suppress(@NotNull Decl decl) {
-    decl.suppresses.forEach(suppress -> {
-      switch (suppress) {
+    decl.pragmaInfo.suppressWarn.args().forEach(suppress -> {
+      switch (suppress.data()) {
         case MostGeneralSolution -> reporter.suppress(MetaVarError.DidSomethingBad.class);
         case UnimportedCon -> reporter.suppress(PatternProblem.UnimportedConName.class);
         case UnreachableClause -> {
