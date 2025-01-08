@@ -7,6 +7,7 @@ variable Hoshino : Type
 So, `Hoshino -> Hoshino`() is a thing.
 
 ```aya
+@suppress(LocalShadow)
 inductive Nat | O | S Nat
 prim I : ISet
 prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type

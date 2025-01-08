@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
@@ -21,6 +21,7 @@ public class SyntaxTest {
         [ f a ]
       def foo2 => ↑↑ foo
       def bar (A : Type 0) : A -> A => fn x => {? x ?}
+      @suppress(LocalShadow)
       open inductive Nat | O | S Nat
       open inductive Fin Nat
       | S n => FZ

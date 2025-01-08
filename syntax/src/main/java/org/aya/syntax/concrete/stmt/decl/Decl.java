@@ -1,7 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt.decl;
 
+import kala.collection.mutable.MutableEnumSet;
+import kala.collection.mutable.MutableSet;
 import org.aya.generic.Suppress;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.syntax.concrete.stmt.BindBlock;
@@ -27,7 +29,8 @@ public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
   permits ClassDecl, TeleDecl {
   public @NotNull DeclInfo info;
   public boolean isExample;
-  public EnumSet<Suppress> suppresses = EnumSet.noneOf(Suppress.class);
+  public @NotNull PragmaInfo pragmaInfo = new PragmaInfo();
+  public @NotNull Object suppresses = null;
 
   public final @NotNull BindBlock bindBlock() { return info.bindBlock(); }
   public final @NotNull SourcePos entireSourcePos() { return info.entireSourcePos(); }

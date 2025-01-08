@@ -147,13 +147,18 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
   }
 
   private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
-    if (decl.suppresses.isEmpty()) return reporter;
+    var suppressInfo = decl.pragmaInfo.suppressWarn;
+    if (suppressInfo == null) return reporter;
+
+    var suppresses = suppressInfo.args();
+    if (suppresses.isEmpty()) return reporter;
     var r = new SuppressingReporter(reporter);
-    decl.suppresses.forEach(suppress -> {
-      switch (suppress) {
+    suppresses.forEach(suppress -> {
+      switch (suppress.data()) {
         case LocalShadow -> r.suppress(NameProblem.ShadowingWarn.class);
       }
     });
+
     return r;
   }
 
@@ -161,7 +166,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
    * pre-resolve children of {@param decl}
    *
    * @param decl          the top-level decl
-   * @param context       the context where {@paran decl} lives in
+   * @param context       the context where {@param decl} lives in
    * @param childrenGet   the children of {@param decl}
    * @param childResolver perform resolve on the child of {@param decl}
    * @return the module context of {@param decl}, it should be a sub-module of {@param context}

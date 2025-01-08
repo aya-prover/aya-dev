@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -29,6 +29,7 @@ public final class Tokens {
   public static final Doc LIST_LEFT = Doc.symbol("[");
   public static final Doc LIST_RIGHT = Doc.symbol("]");
   public static final Doc EQ = Doc.symbol("=");
+  public static final Doc AT = Doc.symbol("@");
 
   public static final Doc KW_DO = Doc.styled(KEYWORD, "do");
   public static final Doc KW_AS = Doc.styled(KEYWORD, "as");
