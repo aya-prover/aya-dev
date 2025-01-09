@@ -22,10 +22,6 @@ public record Param(@NotNull String name, @NotNull Term type, boolean explicit) 
     return tele.mapIndexed((idx, p) -> p.descent(ty -> ty.instTeleFrom(idx, subst)));
   }
 
-  public static @NotNull SeqView<Param> bindTele(@NotNull SeqView<Param> tele, @NotNull SeqView<LocalVar> vars) {
-    return tele.mapIndexed((idx, p) -> p.descent(t -> t.bindTele(idx, vars)));
-  }
-
   public boolean nameEq(@Nullable String otherName) { return name.equals(otherName); }
   // public @NotNull Arg<Term> toArg() { return new Arg<>(type, explicit); }
   public @NotNull Pat toFreshPat() { return new Pat.Bind(LocalVar.generate(name), type); }
