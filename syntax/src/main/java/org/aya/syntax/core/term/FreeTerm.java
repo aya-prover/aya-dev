@@ -16,8 +16,7 @@ public record FreeTerm(@NotNull LocalVar name) implements TyckInternal {
   //   return this;
   // }
 
-  @Override
-  public @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
+  @Override public @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
     var idx = vars.indexOf(this.name);
     if (idx == -1) return this;
 

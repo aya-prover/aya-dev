@@ -3,7 +3,6 @@
 package org.aya.syntax.core.term;
 
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.RichParam;
