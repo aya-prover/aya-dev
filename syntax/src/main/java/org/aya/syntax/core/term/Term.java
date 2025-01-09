@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -34,7 +34,16 @@ public sealed interface Term extends Serializable, AyaDocile
   }
 
   default @NotNull Term bindAt(@NotNull LocalVar var, int depth) {
-    return descent((i, t) -> t.bindAt(var, depth + i));
+    return bindAllFrom(ImmutableSeq.of(var), depth);
+  }
+
+  /// Bind all [LocalVar] since `fromDepth`,
+  /// the i-th [LocalVar] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
+  ///
+  /// @see #replaceAllFrom
+  default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
+    if (vars.isEmpty()) return this;
+    return descent((i, t) -> t.bindAllFrom(vars, fromDepth + i));
   }
 
   /**
@@ -60,17 +69,17 @@ public sealed interface Term extends Serializable, AyaDocile
    */
   default @NotNull Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
     if (teleVars.isEmpty()) return this;
-    return teleVars.reversed().foldLeftIndexed(this,
-      (idx, acc, var) -> acc.bindAt(var, depth + idx));
+    return bindAllFrom(teleVars.reversed().toImmutableSeq(), depth);
   }
 
   default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
     return bindTele(0, teleVars);
   }
 
-  /**
-   * Replacing indexes from {@code from} to {@code from + list.size()} (exclusive) with {@code list}
-   */
+  /// Replacing indexes from `from` to `from + list.size()` (exclusive) with `list`,
+  /// a [LocalTerm] with index `from + i` will be replaced by `list[i]` if possible.
+  ///
+  /// @see #bindAllFrom
   @ApiStatus.Internal
   default @NotNull Term replaceAllFrom(int from, @NotNull ImmutableSeq<Term> list) {
     if (list.isEmpty()) return this;

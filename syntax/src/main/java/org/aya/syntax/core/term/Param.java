@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.RichParam;
@@ -17,8 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 public record Param(@NotNull String name, @NotNull Term type, boolean explicit) implements AyaDocile {
-  public static @NotNull SeqView<Param> substTele(SeqView<Param> tele, SeqView<Term> subst) {
+  public static @NotNull SeqView<Param> instTele(SeqView<Param> tele, SeqView<Term> subst) {
     return tele.mapIndexed((idx, p) -> p.descent(ty -> ty.instTeleFrom(idx, subst)));
+  }
+
+  public static @NotNull SeqView<Param> bindTele(@NotNull SeqView<Param> tele, @NotNull SeqView<LocalVar> vars) {
+    return tele.mapIndexed((idx, p) -> p.descent(t -> t.bindTele(idx, vars)));
   }
 
   public boolean nameEq(@Nullable String otherName) { return name.equals(otherName); }
