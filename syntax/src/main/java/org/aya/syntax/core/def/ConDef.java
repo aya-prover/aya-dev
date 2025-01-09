@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
@@ -55,7 +55,7 @@ public final class ConDef extends SubLevelDef {
     @Override public int selfTeleSize() { return core().selfTele.size(); }
     @Override public int ownerTeleSize() { return core().ownerTele.size(); }
     @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
-      return Param.substTele(core().selfTele.view(), ownerArgs.view()).toImmutableSeq();
+      return Param.instTele(core().selfTele.view(), ownerArgs.view()).toImmutableSeq();
     }
 
     @Override public @NotNull DataDefLike dataRef() { return core().dataRef; }

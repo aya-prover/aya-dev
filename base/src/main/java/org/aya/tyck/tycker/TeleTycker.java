@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
@@ -77,19 +77,7 @@ public sealed interface TeleTycker extends Contextful {
    */
   @Contract(mutates = "param2")
   static void bindTele(ImmutableSeq<LocalVar> binds, MutableSeq<Param> tele) {
-    final var lastIndex = tele.size() - 1;
-    // fix some param, say [p]
-    // we skip the last parameter, which need no binds
-    for (int i = lastIndex - 1; i >= 0; i--) {
-      var p = binds.get(i);
-      // for any other param that is able to refer to [p]
-      for (int j = i + 1; j < tele.size(); j++) {
-        var og = tele.get(j);
-        // j - i is the human distance between [p] and [og]. However, we count from 0
-        int ii = i, jj = j;
-        tele.set(j, og.descent(x -> x.bindAt(p, jj - ii - 1)));
-      }
-    }
+    tele.replaceAllIndexed((i, p) -> p.descent(t -> t.bindTele(binds.sliceView(0, i))));
   }
 
   @Contract(mutates = "param3")
