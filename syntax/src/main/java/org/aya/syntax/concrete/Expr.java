@@ -1,12 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
 import org.aya.generic.Nested;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
@@ -18,6 +20,7 @@ import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.BinOpElem;
 import org.aya.util.ForLSP;
 import org.aya.util.error.*;
@@ -134,19 +137,61 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  record Lambda(
-    @NotNull LocalVar ref,
-    @Override @NotNull WithPos<Expr> body
-  ) implements Expr, Nested<LocalVar, Expr, Lambda> {
-    @Override public @NotNull LocalVar param() { return ref; }
-    public @NotNull Lambda update(@NotNull WithPos<Expr> body) {
-      return body == body() ? this : new Lambda(ref, body);
+  record Lambda(@NotNull Pattern.Clause clause) implements Expr {
+    public Lambda {
+      assert clause.patterns.isNotEmpty();
+    }
+
+    public Lambda(@NotNull SeqView<WithPos<Pattern>> patterns, @NotNull WithPos<Expr> body) {
+      this(new Pattern.Clause(SourcePos.NONE, patterns.map(Arg::ofExplicitly).toImmutableSeq(), Option.some(body)));
+    }
+
+    public Lambda(@NotNull LocalVar ref, @NotNull WithPos<Expr> body) {
+      this(SeqView.of(new WithPos<>(ref.definition(), new Pattern.Bind(ref))), body);
+    }
+
+    public @NotNull Lambda update(@NotNull Pattern.Clause clause) {
+      return clause == this.clause ? this : new Lambda(clause);
+    }
+
+    public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() {
+      return clause.patterns;
+    }
+
+    public @NotNull WithPos<Expr> body() {
+      return clause.expr.get();
+    }
+
+    public record Unlam(@NotNull LocalVar ref, @NotNull WithPos<Expr> body) { }
+
+    /// Transform this lambda to vanilla lambda, if the first pattern is a bind or meta.
+    public @Nullable Unlam unlam() {
+      var fst = patterns().getFirst().term();
+      var ref = switch (fst.data()) {
+        case Pattern.Bind bind -> bind.bind();
+        case Pattern.CalmFace _ -> LocalVar.generate(fst.sourcePos());
+        default -> null;
+      };
+
+      if (ref == null) return null;
+
+      var remainPats = patterns().drop(1);
+      WithPos<Expr> body = remainPats.isEmpty()
+        ? body()
+        : body().replace(new Lambda(clause.update(remainPats, clause.expr)));
+
+      return new Unlam(ref, body);
     }
 
     @Override public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(body.descent(f));
+      return descent(f, PosedUnaryOperator.identity());
     }
-    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(body); }
+
+    public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
+      return update(clause.descent(f, g));
+    }
+
+    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { clause.forEach(f, (_, _) -> { }); }
   }
 
   record BinTuple(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) implements Expr {
@@ -597,7 +642,9 @@ public sealed interface Expr extends AyaDocile {
   }
 
   static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<LocalVar> params, @NotNull WithPos<Expr> body) {
-    return buildNested(sourcePos, params, body, Lambda::new);
+    return new WithPos<>(sourcePos, new Lambda(
+      params.map(x -> new WithPos<Pattern>(x.definition(), new Pattern.Bind(x))),
+      body));
   }
 
   static @NotNull WithPos<Expr> buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull WithPos<Expr> body) {

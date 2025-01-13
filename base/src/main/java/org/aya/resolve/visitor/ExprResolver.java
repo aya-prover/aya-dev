@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -116,11 +116,7 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.Lambda lam -> {
-        var mCtx = MutableValue.create(ctx);
-        mCtx.update(ctx -> ctx.bind(lam.ref()));
-        yield lam.update(lam.body().descent(enter(mCtx.get())));
-      }
+      case Expr.Lambda lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(depType.param(), mCtx);
