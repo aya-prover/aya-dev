@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableTreeSet;
-import kala.control.Option;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
@@ -93,19 +92,18 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
       case Expr.Lambda lam -> {
-        var pats = lam.patterns();
         var body = lam.body();
 
         switch (whnf(type)) {
           case EqTerm eq -> {
-            var unlam = lam.unlam();
+            var unlam = lam.unlam(1);
 
             if (unlam == null) {
               // first pattern is not bind or meta
               throw new UnsupportedOperationException("TODO");
             }
 
-            var ref = unlam.ref();
+            var ref = unlam.binds().getFirst();
             body = unlam.body();
 
             Closure.Locns core;
@@ -116,12 +114,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
               new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
             yield new Jdg.Default(new LamTerm(core), eq);
           }
-          case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
-            // unifyTyReported(param, dom, expr);
-            try (var _ = subscope(ref, dom)) {
-              var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
-              yield new Jdg.Default(new LamTerm(core), type);
-            }
+          case DepTypeTerm dtTerm when dtTerm.kind() == DTKind.Pi -> {
+            var wellTyped = checkLam(expr.sourcePos(), lam, DepTypeTerm.unpiDBI(dtTerm, this::whnf, lam.clause().patterns.size()));
+            yield new Jdg.Default(wellTyped, dtTerm);
           }
           case MetaCall metaCall -> {
             var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
@@ -529,44 +524,36 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   }
 
   /// Tyck a [Expr.Lambda] against to {@param type}
-  ///
-  /// @param unpier provides the telescope of PiTerm, can be shorter than required
   private @NotNull Term checkLam(
     @NotNull SourcePos pos,
     @NotNull Expr.Lambda lam,
-    @NotNull Function<ImmutableSeq<LocalVar>, DepTypeTerm.Unpi> unpier
+    @NotNull DepTypeTerm.Unpi unpi
   ) {
-    // FIXME: unify with Expr.Lambda#unlam
-    var binds = lam.patterns().map(pat -> switch (pat.term().data()) {
-      case Pattern.Bind bindPat -> bindPat.bind();
-      case Pattern.CalmFace _ -> LocalVar.generate(Constants.ANONYMOUS_PREFIX, pat.term().sourcePos());
-      default -> null;
-    });
+    var unlam = lam.unlam(lam.clause().patterns.size());
 
     // is the lambda a vanilla version?
-    var isVanilla = binds.allMatch(Objects::nonNull);
-
-    if (isVanilla) {
-      var unpi = unpier.apply(binds);
-
+    if (unlam != null) {
+      var binds = unlam.binds();
       try (var _ = subscope()) {
         // load all binds
         binds.forEachWith(unpi.params(), (ref, param) ->
           localCtx().put(ref, param.type()));
 
         var paramSize = unpi.params().size();
+        var lamSize = lam.patterns().size();
 
         // check body
-        WithPos<Expr> realBody = paramSize == lam.patterns().size()
+        WithPos<Expr> realBody = paramSize == lamSize
           ? lam.body()
           // trigger a error report
           : new WithPos<>(pos, new Expr.Lambda(lam.clause().update(lam.clause().patterns.drop(paramSize), lam.clause().expr)));
+        // in case [paramSize] is lower than [lamSize]
+        var realResult = unpi.body().instTeleVar(binds.view().take(paramSize));
 
-        return inherit(realBody, unpi.body()).wellTyped();
+        return inherit(realBody, realResult).wellTyped();
       }
     } else {
       var teleVars = ImmutableSeq.fill(lam.patterns().size(), i -> LocalVar.generate("LambdaMatch" + i));
-      var unpi = unpier.apply(teleVars);
 
       var worker = new ClauseTycker.Worker(
         new ClauseTycker(this),

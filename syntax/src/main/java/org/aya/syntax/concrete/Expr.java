@@ -8,7 +8,6 @@ import kala.control.Either;
 import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
-import org.aya.generic.Constants;
 import org.aya.generic.Nested;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
@@ -28,6 +27,7 @@ import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -162,25 +162,26 @@ public sealed interface Expr extends AyaDocile {
       return clause.expr.get();
     }
 
-    public record Unlam(@NotNull LocalVar ref, @NotNull WithPos<Expr> body) { }
+    public record Unlam(@NotNull ImmutableSeq<LocalVar> binds, @NotNull WithPos<Expr> body) { }
 
-    /// Transform this lambda to vanilla lambda, if the first pattern is a bind or meta.
-    public @Nullable Unlam unlam() {
-      var fst = patterns().getFirst().term();
-      var ref = switch (fst.data()) {
+    public @Nullable Unlam unlam(int size) {
+      assert 0 < size && size <= patterns().size();
+
+      var pats = patterns().view().take(size).map(Arg::term);
+      var binds = pats.map(p -> switch (p.data()) {
         case Pattern.Bind bind -> bind.bind();
-        case Pattern.CalmFace _ -> LocalVar.generate(fst.sourcePos());
+        case Pattern.CalmFace _ -> LocalVar.generate(p.sourcePos());
         default -> null;
-      };
+      }).toImmutableSeq();
+      if (binds.anyMatch(Objects::isNull)) return null;
 
-      if (ref == null) return null;
-
-      var remainPats = patterns().drop(1);
-      WithPos<Expr> body = remainPats.isEmpty()
+      var remains = patterns().drop(size);
+      // make body
+      WithPos<Expr> body = remains.isEmpty()
         ? body()
-        : body().replace(new Lambda(clause.update(remainPats, clause.expr)));
+        : body().replace(new Lambda(clause.update(remains, clause.expr)));
 
-      return new Unlam(ref, body);
+      return new Unlam(binds, body);
     }
 
     @Override public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
