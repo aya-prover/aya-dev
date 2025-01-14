@@ -137,21 +137,18 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  record Lambda(@NotNull Pattern.Clause clause) implements Expr {
-    public Lambda {
+  record IrrefutableLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
+    public static boolean canBeBind(@NotNull Arg<WithPos<Pattern>> pat) {
+      var thePat = pat.term().data();
+      return thePat instanceof Pattern.Bind || thePat == Pattern.CalmFace.INSTANCE;
+    }
+
+    public IrrefutableLam {
       assert clause.patterns.isNotEmpty();
     }
 
-    public Lambda(@NotNull SeqView<WithPos<Pattern>> patterns, @NotNull WithPos<Expr> body) {
-      this(new Pattern.Clause(SourcePos.NONE, patterns.map(Arg::ofExplicitly).toImmutableSeq(), Option.some(body)));
-    }
-
-    public Lambda(@NotNull LocalVar ref, @NotNull WithPos<Expr> body) {
-      this(SeqView.of(new WithPos<>(ref.definition(), new Pattern.Bind(ref))), body);
-    }
-
-    public @NotNull Lambda update(@NotNull Pattern.Clause clause) {
-      return clause == this.clause ? this : new Lambda(clause);
+    public @NotNull IrrefutableLam update(@NotNull Pattern.Clause clause) {
+      return clause == this.clause ? this : new IrrefutableLam(clause);
     }
 
     public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() {
@@ -162,37 +159,30 @@ public sealed interface Expr extends AyaDocile {
       return clause.expr.get();
     }
 
-    public record Unlam(@NotNull ImmutableSeq<LocalVar> binds, @NotNull WithPos<Expr> body) { }
-
-    public @Nullable Unlam unlam(int size) {
-      assert 0 < size && size <= patterns().size();
-
-      var pats = patterns().view().take(size).map(Arg::term);
-      var binds = pats.map(p -> switch (p.data()) {
-        case Pattern.Bind bind -> bind.bind();
-        case Pattern.CalmFace _ -> LocalVar.generate(p.sourcePos());
-        default -> null;
-      }).toImmutableSeq();
-      if (binds.anyMatch(Objects::isNull)) return null;
-
-      var remains = patterns().drop(size);
-      // make body
-      WithPos<Expr> body = remains.isEmpty()
-        ? body()
-        : body().replace(new Lambda(clause.update(remains, clause.expr)));
-
-      return new Unlam(binds, body);
-    }
-
-    @Override public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull IrrefutableLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return descent(f, PosedUnaryOperator.identity());
     }
 
-    public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
+    public @NotNull IrrefutableLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
       return update(clause.descent(f, g));
     }
 
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { clause.forEach(f, (_, _) -> { }); }
+  }
+
+  record Lambda(
+    @NotNull LocalVar ref,
+    @Override @NotNull WithPos<Expr> body
+  ) implements Expr, Nested<LocalVar, Expr, Lambda> {
+    @Override public @NotNull LocalVar param() { return ref; }
+    public @NotNull Lambda update(@NotNull WithPos<Expr> body) {
+      return body == body() ? this : new Lambda(ref, body);
+    }
+
+    @Override public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(body.descent(f));
+    }
+    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(body); }
   }
 
   record BinTuple(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) implements Expr {
@@ -643,9 +633,7 @@ public sealed interface Expr extends AyaDocile {
   }
 
   static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<LocalVar> params, @NotNull WithPos<Expr> body) {
-    return new WithPos<>(sourcePos, new Lambda(
-      params.map(x -> new WithPos<Pattern>(x.definition(), new Pattern.Bind(x))),
-      body));
+    return buildNested(sourcePos, params, body, Lambda::new);
   }
 
   static @NotNull WithPos<Expr> buildLet(@NotNull SourcePos sourcePos, @NotNull SeqView<LetBind> binds, @NotNull WithPos<Expr> body) {

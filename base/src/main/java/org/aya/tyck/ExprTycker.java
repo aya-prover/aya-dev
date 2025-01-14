@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -91,45 +90,34 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    */
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
-      case Expr.Lambda lam -> {
-        var body = lam.body();
-
-        switch (whnf(type)) {
-          case EqTerm eq -> {
-            var unlam = lam.unlam(1);
-
-            if (unlam == null) {
-              // first pattern is not bind or meta
-              throw new UnsupportedOperationException("TODO");
-            }
-
-            var ref = unlam.binds().getFirst();
-            body = unlam.body();
-
-            Closure.Locns core;
-            try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
-              core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
-            }
-            checkBoundaries(eq, core, body.sourcePos(), msg ->
-              new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-            yield new Jdg.Default(new LamTerm(core), eq);
+      case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
+        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
+          // unifyTyReported(param, dom, expr);
+          try (var _ = subscope(ref, dom)) {
+            var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), type);
           }
-          case DepTypeTerm dtTerm when dtTerm.kind() == DTKind.Pi -> {
-            var wellTyped = checkLam(expr.sourcePos(), lam, DepTypeTerm.unpiDBI(dtTerm, this::whnf, lam.clause().patterns.size()));
-            yield new Jdg.Default(wellTyped, dtTerm);
-          }
-          case MetaCall metaCall -> {
-            var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
-            if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
-            unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
-            try (var _ = subscope(ref, pi.param())) {
-              var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
-              yield new Jdg.Default(new LamTerm(core), pi);
-            }
-          }
-          default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
         }
-      }
+        case EqTerm eq -> {
+          Closure.Locns core;
+          try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
+            core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
+          }
+          checkBoundaries(eq, core, body.sourcePos(), msg ->
+            new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+          yield new Jdg.Default(new LamTerm(core), eq);
+        }
+        case MetaCall metaCall -> {
+          var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
+          if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+          unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
+          try (var _ = subscope(ref, pi.param())) {
+            var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
+            yield new Jdg.Default(new LamTerm(core), pi);
+          }
+        }
+        default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+      };
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(),
           new MetaVar.OfType(type), hole.explicit());
@@ -521,58 +509,6 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     @NotNull AbstractTele params, @NotNull BiFunction<Term[], @Nullable Term, Jdg> k
   ) throws NotPi {
     return new ArgsComputer(this, pos, args, params).boot(k);
-  }
-
-  /// Tyck a [Expr.Lambda] against to {@param type}
-  private @NotNull Term checkLam(
-    @NotNull SourcePos pos,
-    @NotNull Expr.Lambda lam,
-    @NotNull DepTypeTerm.Unpi unpi
-  ) {
-    var unlam = lam.unlam(lam.clause().patterns.size());
-
-    // is the lambda a vanilla version?
-    if (unlam != null) {
-      var binds = unlam.binds();
-      try (var _ = subscope()) {
-        // load all binds
-        binds.forEachWith(unpi.params(), (ref, param) ->
-          localCtx().put(ref, param.type()));
-
-        var paramSize = unpi.params().size();
-        var lamSize = lam.patterns().size();
-
-        // check body
-        WithPos<Expr> realBody = paramSize == lamSize
-          ? lam.body()
-          // trigger a error report
-          : new WithPos<>(pos, new Expr.Lambda(lam.clause().update(lam.clause().patterns.drop(paramSize), lam.clause().expr)));
-        // in case [paramSize] is lower than [lamSize]
-        var realResult = unpi.body().instTeleVar(binds.view().take(paramSize));
-
-        return inherit(realBody, realResult).wellTyped();
-      }
-    } else {
-      var teleVars = ImmutableSeq.fill(lam.patterns().size(), i -> LocalVar.generate("LambdaMatch" + i));
-
-      var worker = new ClauseTycker.Worker(
-        new ClauseTycker(this),
-        unpi.params(),
-        new DepTypeTerm.Unpi(unpi.body()),
-        teleVars,
-        ImmutableSeq.empty(),
-        ImmutableSeq.of(lam.clause())
-      );
-
-      var clsResult = worker.check(pos);
-      if (clsResult.hasLhsError()) {
-        return new ErrorTerm(lam);
-      }
-
-      // TODO: optimize leading bindings
-      // TODO: make match call
-      throw new UnsupportedOperationException("TODO");
-    }
   }
 
   /**

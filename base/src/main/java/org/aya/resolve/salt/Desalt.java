@@ -1,11 +1,15 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.salt;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.value.primitive.MutableBooleanValue;
+import org.aya.generic.Constants;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
@@ -70,6 +74,37 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
+      case Expr.IrrefutableLam lam -> {
+        MutableBooleanValue isVanilla = MutableBooleanValue.create(true);
+        var lamTele = lam.patterns().mapIndexed((idx, pat) -> {
+          var name = switch (pat.term().data()) {
+            case Pattern.Bind(var bind, var _) -> bind.name();
+            case Pattern.CalmFace _ -> Constants.ANONYMOUS_PREFIX;
+            default -> {
+              isVanilla.set(false);
+              yield "IrrefutableLam" + idx;
+            }
+          };
+
+          return LocalVar.generate(name, pat.term().sourcePos());
+        });
+
+        WithPos<Expr> realBody;
+
+        if (isVanilla.get()) {
+          realBody = lam.body();
+        } else {
+          realBody = new WithPos<>(sourcePos, new Expr.Match(
+            lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
+            ImmutableSeq.of(lam.clause()),
+            ImmutableSeq.empty(),
+            false,
+            null
+          ));
+        }
+
+        yield apply(Expr.buildLam(sourcePos, lamTele.view(), realBody));
+      }
     };
   }
   public @NotNull PosedUnaryOperator<Pattern> pattern = new Pat();
