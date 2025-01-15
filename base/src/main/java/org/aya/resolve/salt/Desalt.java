@@ -10,12 +10,15 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
 public final class Desalt implements PosedUnaryOperator<Expr> {
@@ -75,25 +78,29 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
       case Expr.IrrefutableLam lam -> {
-        MutableBooleanValue isVanilla = MutableBooleanValue.create(true);
-        var lamTele = lam.patterns().mapIndexed((idx, pat) -> {
-          var name = switch (pat.term().data()) {
-            case Pattern.Bind(var bind, var _) -> bind.name();
-            case Pattern.CalmFace _ -> Constants.ANONYMOUS_PREFIX;
-            default -> {
-              isVanilla.set(false);
-              yield "IrrefutableLam" + idx;
-            }
-          };
+        var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.Refutable);
 
-          return LocalVar.generate(name, pat.term().sourcePos());
-        });
-
+        ImmutableSeq<LocalVar> lamTele;
         WithPos<Expr> realBody;
 
-        if (isVanilla.get()) {
+        if (isVanilla) {
+          // fn a _ c => ...
+          lamTele = lam.patterns().map(x -> ((Pattern.Refutable) x.term().data()).toLocalVar(x.term().sourcePos()));
           realBody = lam.body();
         } else {
+          lamTele = lam.patterns().mapIndexed((idx, pat) -> {
+            if (pat.term().data() instanceof Pattern.Refutable refutable) {
+              var bind = refutable.toLocalVar(pat.term().sourcePos());
+              // we need fresh bind, since [bind] may be used in the body.
+              return LocalVar.generate(bind.name(), bind.definition());
+            } else {
+              return LocalVar.generate("IrrefutableLam" + idx, pat.term().sourcePos());
+            }
+          });
+
+          // fn a' _ c' => match a', _, c' { a, _, (con c) => ... }
+          // the var with prime are renamed vars
+
           realBody = new WithPos<>(sourcePos, new Expr.Match(
             lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
             ImmutableSeq.of(lam.clause()),
