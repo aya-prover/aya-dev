@@ -115,11 +115,6 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.Lambda lam -> {
-        var mCtx = MutableValue.create(ctx);
-        mCtx.update(ctx -> ctx.bind(lam.ref()));
-        yield lam.update(lam.body().descent(enter(mCtx.get())));
-      }
       case Expr.IrrefutableLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
@@ -202,6 +197,8 @@ public record ExprResolver(
         yield match.update(discriminant, clauses, returns);
       }
 
+      // Expr.Lambda is a desugar target, which is produced after resolving.
+      case Expr.Lambda _ -> Panic.unreachable();
       case Expr newExpr -> newExpr.descent(this);
     };
   }
