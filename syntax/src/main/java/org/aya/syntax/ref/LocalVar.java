@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
+import org.aya.generic.Constants;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -19,6 +20,10 @@ public record LocalVar(
 
   public LocalVar(@NotNull String name, @NotNull SourcePos definition) {
     this(name, definition, GenerateKind.Basic.None);
+  }
+
+  public static @NotNull LocalVar generate(@NotNull SourcePos sourcePos) {
+    return generate(Constants.ANONYMOUS_PREFIX, sourcePos);
   }
 
   public static @NotNull LocalVar generate(@NotNull String name, @NotNull SourcePos sourcePos) {

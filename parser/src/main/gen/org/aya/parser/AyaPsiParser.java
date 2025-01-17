@@ -2425,14 +2425,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // KW_LAMBDA teleBinderUntyped (IMPLIES expr)?
+  // KW_LAMBDA patterns (IMPLIES expr)?
   public static boolean lambdaExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaExpr")) return false;
     if (!nextTokenIsSmart(b, KW_LAMBDA)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_LAMBDA);
-    r = r && teleBinderUntyped(b, l + 1);
+    r = r && patterns(b, l + 1);
     r = r && lambdaExpr_2(b, l + 1);
     exit_section_(b, m, LAMBDA_EXPR, r);
     return r;

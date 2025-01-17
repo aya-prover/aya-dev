@@ -662,9 +662,8 @@ public record AyaProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
-      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
-        .map(LocalVar::from);
-      return Expr.buildLam(pos, tele, result);
+      var tele = patterns(node.child(PATTERNS).child(COMMA_SEP));
+      return new WithPos<>(pos, new Expr.IrrefutableLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
