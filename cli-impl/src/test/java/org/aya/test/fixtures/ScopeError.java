@@ -103,4 +103,8 @@ public interface ScopeError {
           | x : A := a
       in x
     """;
+  @Language("Aya") String testCyclicDependency = """
+    variable A : B
+    variable B : A
+  """;
 }

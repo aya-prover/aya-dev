@@ -318,3 +318,6 @@ That looks right!
 LocalShadowSuppress:
 That looks right!
 
+CyclicDependency:
+That looks right!
+
