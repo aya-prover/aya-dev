@@ -115,7 +115,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
         yield checkParen(outer, visitLambda(dummyCls), Outer.BinOp);
       }
-      // TODO
       case Expr.IrrefutableLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
       case Expr.Hole expr -> {
         if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
@@ -492,13 +491,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   private @NotNull Doc visitLambda(@NotNull Pattern.Clause clause) {
     var prelude = MutableList.of(LAMBDA);
     prelude.append(clause(clause));
-    var body = clause.expr.get().data();
-
-    if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
-      prelude.append(FN_DEFINED_AS);
-      prelude.append(term(Outer.Free, body));
-    }
-
     return Doc.sep(prelude);
   }
 }

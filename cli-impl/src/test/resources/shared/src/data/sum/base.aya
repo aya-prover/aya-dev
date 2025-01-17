@@ -11,7 +11,7 @@ def Sum-rec
   (P : Type)
   (lrec : A -> P)
   (rrec : B -> P)
-  : P => Sum-ind e (fn _e => P) (fn a _p => lrec a) (fn b _p => rrec b)
+  : P => Sum-ind e (fn _ => P) (fn a, _ => lrec a) (fn b, _ => rrec b)
 
 def Sum-ind
   (e : Sum A B)

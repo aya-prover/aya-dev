@@ -281,7 +281,7 @@ In file $FILE:11:12 ->
      │               ╰───────────────────────────╯
 
 Error: Cannot check the expression
-         pmap (\ _ ⇒ x :> _) (++-assoc' _ _ _)
+         pmap (fn _ ⇒ x :> _) (++-assoc' _ _ _)
        of type
          (=) {?B A x n m o _ ys zs} (x :> ?a A x n m o _ ys zs) (x :> ?b A x n m
         o _ ys zs)

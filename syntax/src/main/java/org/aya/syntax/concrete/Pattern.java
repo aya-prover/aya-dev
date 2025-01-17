@@ -30,7 +30,13 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Pattern extends AyaDocile {
   void forEach(@NotNull PosedConsumer<@NotNull Pattern> f);
   interface Salt { }
+
+  /// Whether a [Pattern] can be a [Pattern.Bind], this is used by [Expr.IrrefutableLam] in desugarer.
+  ///
+  /// @see Pattern.Bind
+  /// @see Pattern.CalmFace
   interface Refutable {
+    /// Returns the [LocalVar] this [Pattern] introduced, with [SourcePos] {@param pos} if it doesn't have one.
     @NotNull LocalVar toLocalVar(@NotNull SourcePos pos);
   }
 
