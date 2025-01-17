@@ -30,7 +30,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves bindings.
@@ -116,6 +115,11 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
+      case Expr.Lambda lam -> {
+        var mCtx = MutableValue.create(ctx);
+        mCtx.update(ctx -> ctx.bind(lam.ref()));
+        yield lam.update(lam.body().descent(enter(mCtx.get())));
+      }
       case Expr.IrrefutableLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
@@ -231,6 +235,11 @@ public record ExprResolver(
     return clause.update(pats, body);
   }
 
+  /// Resolve a [Pattern]
+  ///
+  /// @param telescope the telescope of the clause which the {@param pattern} lives,
+  ///                                   it is safe to supply an [ImmutableSeq#empty()]
+  ///                                   if there is no telescope or the user cannot refer to it.
   public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
     var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
     var result = pattern.descent(resolver);

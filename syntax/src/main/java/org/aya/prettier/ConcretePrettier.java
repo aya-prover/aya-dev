@@ -7,8 +7,8 @@ import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableEnumSet;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import kala.range.primitive.IntRange;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -25,8 +25,8 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
-import org.aya.util.IterableUtil;
 import org.aya.util.binop.Assoc;
+import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -105,19 +105,18 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           optionImplicit());
       }
       case Expr.Lambda expr -> {
-        var pair = Nested.destructNested(WithPos.dummy(expr));
-        var telescope = pair.component1();
-        var body = pair.component2().data();
-        var prelude = MutableList.of(LAMBDA);
-        var docTele = telescope.map(BasePrettier::varDoc);
+        var unlam = Nested.destructNested(WithPos.dummy(expr));
+        var dummyCls = new Pattern.Clause(
+          SourcePos.NONE,
+          unlam.component1().map(x ->
+            Arg.ofExplicitly(WithPos.dummy(new Pattern.Bind(x)))),
+          Option.some(unlam.component2())
+        );
 
-        prelude.appendAll(docTele);
-        if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
-          prelude.append(FN_DEFINED_AS);
-          prelude.append(term(Outer.Free, body));
-        }
-        yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
+        yield checkParen(outer, visitLambda(dummyCls), Outer.BinOp);
       }
+      // TODO
+      case Expr.IrrefutableLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
       case Expr.Hole expr -> {
         if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
         var filling = expr.filling();
@@ -278,7 +277,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return Doc.join(delim, patterns.view().map(p -> pattern(p.map(WithPos::data), outer)));
   }
 
-  public Doc matchy(@NotNull Pattern.Clause match) {
+  public Doc clause(@NotNull Pattern.Clause match) {
     var doc = visitMaybeConPatterns(match.patterns, Outer.Free, Doc.plain(", "));
     return match.expr.map(e -> Doc.sep(doc, FN_DEFINED_AS, term(Outer.Free, e))).getOrDefault(doc);
   }
@@ -417,7 +416,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
     if (clauses.isEmpty()) return Doc.empty();
     return Doc.vcat(clauses.view()
-      .map(this::matchy)
+      .map(this::clause)
       .map(doc -> Doc.sep(BAR, doc)));
   }
 
@@ -488,5 +487,18 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     @NotNull Outer outer, boolean showImplicits
   ) {
     return visitCalls(assoc, fn, args.map(x -> new Arg<>(x.term().data(), x.explicit())), outer, showImplicits);
+  }
+
+  private @NotNull Doc visitLambda(@NotNull Pattern.Clause clause) {
+    var prelude = MutableList.of(LAMBDA);
+    prelude.append(clause(clause));
+    var body = clause.expr.get().data();
+
+    if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
+      prelude.append(FN_DEFINED_AS);
+      prelude.append(term(Outer.Free, body));
+    }
+
+    return Doc.sep(prelude);
   }
 }
