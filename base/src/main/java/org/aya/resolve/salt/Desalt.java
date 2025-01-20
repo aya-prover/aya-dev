@@ -73,19 +73,19 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
       case Expr.ClauseLam lam -> {
-        var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.Refutable);
+        var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.BindLike);
 
         ImmutableSeq<LocalVar> lamTele;
         WithPos<Expr> realBody;
 
         if (isVanilla) {
           // fn a _ c => ...
-          lamTele = lam.patterns().map(x -> ((Pattern.Refutable) x.term().data()).toLocalVar(x.term().sourcePos()));
+          lamTele = lam.patterns().map(x -> ((Pattern.BindLike) x.term().data()).toLocalVar(x.term().sourcePos()));
           realBody = lam.body();
         } else {
           lamTele = lam.patterns().mapIndexed((idx, pat) -> {
-            if (pat.term().data() instanceof Pattern.Refutable refutable) {
-              var bind = refutable.toLocalVar(pat.term().sourcePos());
+            if (pat.term().data() instanceof Pattern.BindLike bindLike) {
+              var bind = bindLike.toLocalVar(pat.term().sourcePos());
               // we need fresh bind, since [bind] may be used in the body.
               return LocalVar.generate(bind.name(), bind.definition());
             } else {

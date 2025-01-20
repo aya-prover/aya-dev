@@ -35,7 +35,7 @@ public sealed interface Pattern extends AyaDocile {
   ///
   /// @see Pattern.Bind
   /// @see Pattern.CalmFace
-  interface Refutable {
+  interface BindLike {
     /// Returns the [LocalVar] this [Pattern] introduced, with [SourcePos] {@param pos} if it doesn't have one.
     @NotNull LocalVar toLocalVar(@NotNull SourcePos pos);
   }
@@ -72,14 +72,12 @@ public sealed interface Pattern extends AyaDocile {
     @Override public @NotNull Pattern descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
   }
 
-  enum CalmFace implements Pattern, Refutable {
+  enum CalmFace implements Pattern, BindLike {
     INSTANCE;
 
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull Pattern descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
-    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) {
-      return LocalVar.generate(pos);
-    }
+    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) { return LocalVar.generate(pos); }
   }
 
   /**
@@ -88,13 +86,11 @@ public sealed interface Pattern extends AyaDocile {
   record Bind(
     @NotNull LocalVar bind,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
-  ) implements Pattern, Refutable {
+  ) implements Pattern, BindLike {
     public Bind(@NotNull LocalVar bind) { this(bind, MutableValue.create()); }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull Bind descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
-    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) {
-      return bind;
-    }
+    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) { return bind; }
   }
 
   record Con(
