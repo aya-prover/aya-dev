@@ -53,5 +53,5 @@ module PullRequest1268 {
   // unpi: D d0 -> d1
   @suppress(LocalShadow)
   def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a, b
-  | a => fn b, D => id D
+  | a => fn b D => id D
 }
