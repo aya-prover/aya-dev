@@ -2,13 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
+import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static org.aya.prettier.Tokens.*;
+
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.control.Option;
 import kala.range.primitive.IntRange;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -26,17 +31,10 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.binop.Assoc;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Function;
-
-import static org.aya.prettier.Tokens.*;
 
 /**
  * @author ice1000, kiva
@@ -105,15 +103,18 @@ public class ConcretePrettier extends BasePrettier<Expr> {
           optionImplicit());
       }
       case Expr.Lambda expr -> {
-        var unlam = Nested.destructNested(WithPos.dummy(expr));
-        var dummyCls = new Pattern.Clause(
-          SourcePos.NONE,
-          unlam.component1().map(x ->
-            Arg.ofExplicitly(WithPos.dummy(new Pattern.Bind(x)))),
-          Option.some(unlam.component2())
-        );
+        var pair = Nested.destructNested(WithPos.dummy(expr));
+        var telescope = pair.component1();
+        var body = pair.component2().data();
+        var prelude = MutableList.of(LAMBDA);
+        var docTele = telescope.map(BasePrettier::varDoc);
 
-        yield checkParen(outer, visitLambda(dummyCls), Outer.BinOp);
+        prelude.appendAll(docTele);
+        if (!(body instanceof Expr.Hole hole && !hole.explicit())) {
+          prelude.append(FN_DEFINED_AS);
+          prelude.append(term(Outer.Free, body));
+        }
+        yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
       }
       case Expr.IrrefutableLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
       case Expr.Hole expr -> {
@@ -490,7 +491,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   private @NotNull Doc visitLambda(@NotNull Pattern.Clause clause) {
     var prelude = MutableList.of(LAMBDA);
-    prelude.append(clause(clause));
+    var clauseDoc = clause(clause);
+    prelude.append(Doc.braced(clauseDoc));
     return Doc.sep(prelude);
   }
 }
