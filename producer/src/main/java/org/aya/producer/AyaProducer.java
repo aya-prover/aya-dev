@@ -2,6 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.producer;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static org.aya.parser.AyaPsiElementTypes.*;
+
 import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,7 +14,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.*;
+import kala.collection.mutable.FreezableMutableList;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
@@ -44,12 +51,6 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static org.aya.parser.AyaPsiElementTypes.*;
 
 /**
  * Working with GK parser:
@@ -654,7 +655,7 @@ public record AyaProducer(
     if (node.is(SIGMA_EXPR)) return Expr.buildSigma(pos,
       telescope(node.childrenOfType(TELE)).view(),
       expr(node.child(EXPR)));
-    if (node.is(LAMBDA_EXPR)) {
+    if (node.is(LAMBDA_0_EXPR)) {
       WithPos<Expr> result;
       var bodyExpr = node.peekChild(EXPR);
       if (bodyExpr == null) {
@@ -662,8 +663,20 @@ public record AyaProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
+      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
+        .map(LocalVar::from);
+      return Expr.buildLam(pos, tele, result);
+    }
+    if (node.is(LAMBDA_1_EXPR)) {
+      var result = expr(node.child(EXPR));
       var tele = patterns(node.child(PATTERNS).child(COMMA_SEP));
       return new WithPos<>(pos, new Expr.IrrefutableLam(new Pattern.Clause(pos, tele, Option.some(result))));
+    }
+    if (node.is(LAMBDA_2_EXPR)) {
+      var bodyExpr = node.peekChild(EXPR);
+      Option<WithPos<Expr>> result = bodyExpr == null ? Option.none() : Option.some(expr(bodyExpr));
+      var tele = unitPattern(node.child(UNIT_PATTERN));
+      return new WithPos<>(pos, new Expr.IrrefutableLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
     }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
