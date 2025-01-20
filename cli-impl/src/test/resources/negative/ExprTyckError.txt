@@ -46,7 +46,7 @@ In file $FILE:2:19 ->
     │                      ╰──────╯
 
 Error: The following abstraction is not good:
-         \ x ⇒ x
+         fn x ⇒ x
        because the type being expected is not a Pi/Path type, but instead:
          Type 0
 
@@ -225,11 +225,11 @@ In file $FILE:3:4 ->
 
 Error: The following application is not good:
          match a {
-          | _ ⇒ \ x ⇒ x
+          | _ ⇒ fn x ⇒ x
         } 1
        because the type of what you applied is not a Pi/Path type, but instead:
          <type of `match a {
-          | _ ⇒ \ x ⇒ x
+          | _ ⇒ fn x ⇒ x
         }`>
 
 2 error(s), 0 warning(s).

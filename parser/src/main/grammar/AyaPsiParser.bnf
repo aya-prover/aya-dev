@@ -136,7 +136,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|letExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|selfExpr|partialExpr|pathExpr") = expr
+  extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self|partial)Expr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -258,7 +258,9 @@ expr ::= newExpr
        | piExpr
        | forallExpr
        | sigmaExpr
-       | lambdaExpr
+       | lambda0Expr
+       | lambda1Expr
+       | lambda2Expr
        | matchExpr
        | letExpr
        | doExpr
@@ -286,14 +288,11 @@ idiomBlock ::= barred* expr
 newExpr ::= KW_NEW expr // newBody?
 appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
-projExpr ::= expr projFix
 piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
-lambdaExpr ::= KW_LAMBDA teleBinderUntyped (IMPLIES expr)?
-matchExpr ::= KW_MATCH KW_ELIM? exprList matchType? clauses
-doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 selfExpr ::= KW_SELF (AT qualifiedId)?
+
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
@@ -301,9 +300,16 @@ letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
 letBindBlock ::= letBind | (BAR letBind)+
 letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
 
+private lambdaBody ::= IMPLIES expr
+lambda0Expr ::= KW_LAMBDA teleBinderUntyped lambdaBody?
+lambda1Expr ::= KW_LAMBDA <<braced (patterns lambdaBody)>>
+lambda2Expr ::= KW_LAMBDA unitPattern lambdaBody?
+
 doBlockContent ::= doBinding | expr
+doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 
 matchType ::= (KW_AS <<commaSep weakId>>)? KW_RETURNS expr
+matchExpr ::= KW_MATCH KW_ELIM? exprList matchType? clauses
 
 argument ::= atomExArgument
            | tupleImArgument
@@ -315,6 +321,7 @@ namedImArgument ::= <<braced (weakId DEFINE_AS expr)>>
 projFix ::= DOT (NUMBER | projFixId)
 // kiva: Used in IntelliJ IDEA
 projFixId ::= qualifiedId
+projExpr ::= expr projFix
 
 clauses ::= <<braced (bareClause? barredClause*)>>
 
@@ -375,7 +382,7 @@ teleParamName ::= weakId {
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 
-// lambda tele is always named
+// named tele
 lambdaTele ::= teleParamName | <<licit lambdaTeleBinder>>
 
 lambdaTeleBinder ::= teleBinderTyped

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
@@ -30,6 +30,15 @@ import org.jetbrains.annotations.Nullable;
 public sealed interface Pattern extends AyaDocile {
   void forEach(@NotNull PosedConsumer<@NotNull Pattern> f);
   interface Salt { }
+
+  /// Whether a [Pattern] can be a [Pattern.Bind], this is used by [Expr.ClauseLam] in desugarer.
+  ///
+  /// @see Pattern.Bind
+  /// @see Pattern.CalmFace
+  interface BindLike {
+    /// Returns the [LocalVar] this [Pattern] introduced, with [SourcePos] {@param pos} if it doesn't have one.
+    @NotNull LocalVar toLocalVar(@NotNull SourcePos pos);
+  }
 
   @NotNull Pattern descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f);
 
@@ -63,11 +72,12 @@ public sealed interface Pattern extends AyaDocile {
     @Override public @NotNull Pattern descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
   }
 
-  enum CalmFace implements Pattern {
+  enum CalmFace implements Pattern, BindLike {
     INSTANCE;
 
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull Pattern descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
+    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) { return LocalVar.generate(pos); }
   }
 
   /**
@@ -76,10 +86,11 @@ public sealed interface Pattern extends AyaDocile {
   record Bind(
     @NotNull LocalVar bind,
     @ForLSP @NotNull MutableValue<@Nullable Term> type
-  ) implements Pattern {
+  ) implements Pattern, BindLike {
     public Bind(@NotNull LocalVar bind) { this(bind, MutableValue.create()); }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull Bind descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
+    @Override public @NotNull LocalVar toLocalVar(@NotNull SourcePos pos) { return bind; }
   }
 
   record Con(

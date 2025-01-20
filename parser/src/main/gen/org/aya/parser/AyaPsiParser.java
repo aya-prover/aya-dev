@@ -47,11 +47,11 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       PRIM_DECL, STMT),
     create_token_set_(APP_EXPR, ARRAY_ATOM, ARROW_EXPR, ATOM_EXPR,
       CALM_FACE_EXPR, DO_EXPR, EXPR, FORALL_EXPR,
-      GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_EXPR,
-      LET_EXPR, LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR,
-      MATCH_EXPR, NEW_EXPR, PI_EXPR, PROJ_EXPR,
-      REF_EXPR, SELF_EXPR, SIGMA_EXPR, TUPLE_ATOM,
-      ULIFT_ATOM, UNIV_EXPR),
+      GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_0_EXPR,
+      LAMBDA_1_EXPR, LAMBDA_2_EXPR, LET_EXPR, LITERAL,
+      LIT_INT_EXPR, LIT_STRING_EXPR, MATCH_EXPR, NEW_EXPR,
+      PI_EXPR, PROJ_EXPR, REF_EXPR, SELF_EXPR,
+      SIGMA_EXPR, TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
   };
 
   /* ********************************************************** */
@@ -1193,6 +1193,19 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // IMPLIES expr
+  static boolean lambdaBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaBody")) return false;
+    if (!nextTokenIs(b, IMPLIES)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IMPLIES);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // teleParamName | <<licit lambdaTeleBinder>>
   public static boolean lambdaTele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTele")) return false;
@@ -2241,15 +2254,17 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 1: PREFIX(piExpr)
   // 2: PREFIX(forallExpr)
   // 3: PREFIX(sigmaExpr)
-  // 4: ATOM(lambdaExpr)
-  // 5: ATOM(matchExpr)
-  // 6: PREFIX(letExpr)
-  // 7: ATOM(doExpr)
-  // 8: ATOM(selfExpr)
-  // 9: ATOM(atomExpr)
-  // 10: BINARY(arrowExpr)
-  // 11: POSTFIX(appExpr)
-  // 12: POSTFIX(projExpr)
+  // 4: ATOM(lambda0Expr)
+  // 5: ATOM(lambda1Expr)
+  // 6: ATOM(lambda2Expr)
+  // 7: ATOM(matchExpr)
+  // 8: PREFIX(letExpr)
+  // 9: ATOM(doExpr)
+  // 10: ATOM(selfExpr)
+  // 11: ATOM(atomExpr)
+  // 12: BINARY(arrowExpr)
+  // 13: POSTFIX(appExpr)
+  // 14: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2259,7 +2274,9 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = piExpr(b, l + 1);
     if (!r) r = forallExpr(b, l + 1);
     if (!r) r = sigmaExpr(b, l + 1);
-    if (!r) r = lambdaExpr(b, l + 1);
+    if (!r) r = lambda0Expr(b, l + 1);
+    if (!r) r = lambda1Expr(b, l + 1);
+    if (!r) r = lambda2Expr(b, l + 1);
     if (!r) r = matchExpr(b, l + 1);
     if (!r) r = letExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
@@ -2276,15 +2293,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 10 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 9);
+      if (g < 12 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 11);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
-      else if (g < 11 && appExpr_0(b, l + 1)) {
+      else if (g < 13 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
       }
-      else if (g < 12 && projFix(b, l + 1)) {
+      else if (g < 14 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
       }
@@ -2425,35 +2442,67 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // KW_LAMBDA teleBinderUntyped (IMPLIES expr)?
-  public static boolean lambdaExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr")) return false;
+  // KW_LAMBDA teleBinderUntyped lambdaBody?
+  public static boolean lambda0Expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda0Expr")) return false;
     if (!nextTokenIsSmart(b, KW_LAMBDA)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_LAMBDA);
     r = r && teleBinderUntyped(b, l + 1);
-    r = r && lambdaExpr_2(b, l + 1);
-    exit_section_(b, m, LAMBDA_EXPR, r);
+    r = r && lambda0Expr_2(b, l + 1);
+    exit_section_(b, m, LAMBDA_0_EXPR, r);
     return r;
   }
 
-  // (IMPLIES expr)?
-  private static boolean lambdaExpr_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_2")) return false;
-    lambdaExpr_2_0(b, l + 1);
+  // lambdaBody?
+  private static boolean lambda0Expr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda0Expr_2")) return false;
+    lambdaBody(b, l + 1);
     return true;
   }
 
-  // IMPLIES expr
-  private static boolean lambdaExpr_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambdaExpr_2_0")) return false;
+  // KW_LAMBDA <<braced (patterns lambdaBody)>>
+  public static boolean lambda1Expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda1Expr")) return false;
+    if (!nextTokenIsSmart(b, KW_LAMBDA)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, IMPLIES);
-    r = r && expr(b, l + 1, -1);
+    r = consumeTokenSmart(b, KW_LAMBDA);
+    r = r && braced(b, l + 1, AyaPsiParser::lambda1Expr_1_0);
+    exit_section_(b, m, LAMBDA_1_EXPR, r);
+    return r;
+  }
+
+  // patterns lambdaBody
+  private static boolean lambda1Expr_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda1Expr_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = patterns(b, l + 1);
+    r = r && lambdaBody(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // KW_LAMBDA unitPattern lambdaBody?
+  public static boolean lambda2Expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda2Expr")) return false;
+    if (!nextTokenIsSmart(b, KW_LAMBDA)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_LAMBDA);
+    r = r && unitPattern(b, l + 1);
+    r = r && lambda2Expr_2(b, l + 1);
+    exit_section_(b, m, LAMBDA_2_EXPR, r);
+    return r;
+  }
+
+  // lambdaBody?
+  private static boolean lambda2Expr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambda2Expr_2")) return false;
+    lambdaBody(b, l + 1);
+    return true;
   }
 
   // KW_MATCH KW_ELIM? exprList matchType? clauses
@@ -2492,7 +2541,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = letExpr_0(b, l + 1);
     p = r;
-    r = p && expr(b, l, 6);
+    r = p && expr(b, l, 8);
     exit_section_(b, l, m, LET_EXPR, r, p, null);
     return r || p;
   }

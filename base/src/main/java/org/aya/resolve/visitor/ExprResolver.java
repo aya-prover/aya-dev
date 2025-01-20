@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -30,7 +30,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves bindings.
@@ -116,11 +115,7 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.Lambda lam -> {
-        var mCtx = MutableValue.create(ctx);
-        mCtx.update(ctx -> ctx.bind(lam.ref()));
-        yield lam.update(lam.body().descent(enter(mCtx.get())));
-      }
+      case Expr.ClauseLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(depType.param(), mCtx);
@@ -202,6 +197,8 @@ public record ExprResolver(
         yield match.update(discriminant, clauses, returns);
       }
 
+      // Expr.Lambda is a desugar target, which is produced after resolving.
+      case Expr.Lambda _ -> Panic.unreachable();
       case Expr newExpr -> newExpr.descent(this);
     };
   }
@@ -235,6 +232,9 @@ public record ExprResolver(
     return clause.update(pats, body);
   }
 
+  /// Resolve a [Pattern]
+  ///
+  /// @param telescope the telescope of the clause which the {@param pattern} lives, can be [ImmutableSeq#empty()].
   public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
     var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
     var result = pattern.descent(resolver);

@@ -1,11 +1,13 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.salt;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
@@ -70,6 +72,41 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
+      case Expr.ClauseLam lam -> {
+        var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.BindLike);
+
+        ImmutableSeq<LocalVar> lamTele;
+        WithPos<Expr> realBody;
+
+        if (isVanilla) {
+          // fn a _ c => ...
+          lamTele = lam.patterns().map(x -> ((Pattern.BindLike) x.term().data()).toLocalVar(x.term().sourcePos()));
+          realBody = lam.body();
+        } else {
+          lamTele = lam.patterns().mapIndexed((idx, pat) -> {
+            if (pat.term().data() instanceof Pattern.BindLike bindLike) {
+              var bind = bindLike.toLocalVar(pat.term().sourcePos());
+              // we need fresh bind, since [bind] may be used in the body.
+              return LocalVar.generate(bind.name(), SourcePos.NONE);
+            } else {
+              return LocalVar.generate("IrrefutableLam" + idx, SourcePos.NONE);
+            }
+          });
+
+          // fn a' _ c' => match a', _, c' { a, _, (con c) => ... }
+          // the var with prime are renamed vars
+
+          realBody = new WithPos<>(sourcePos, new Expr.Match(
+            lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
+            ImmutableSeq.of(lam.clause()),
+            ImmutableSeq.empty(),
+            true,
+            null
+          ));
+        }
+
+        yield apply(Expr.buildLam(sourcePos, lamTele.view(), realBody));
+      }
     };
   }
   public @NotNull PosedUnaryOperator<Pattern> pattern = new Pat();
