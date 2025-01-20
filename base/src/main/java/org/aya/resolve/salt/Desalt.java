@@ -72,7 +72,7 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
-      case Expr.RawLam lam -> {
+      case Expr.ClauseLam lam -> {
         var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.Refutable);
 
         ImmutableSeq<LocalVar> lamTele;

@@ -74,7 +74,7 @@ public sealed interface Expr extends AyaDocile {
 
   /// @param filling  the inner expr of goal
   /// @param explicit whether the hole is a type-directed programming goal or
-  ///                 a to-be-solved by tycking hole.
+  ///                                 a to-be-solved by tycking hole.
   record Hole(
     boolean explicit,
     @Nullable WithPos<Expr> filling,
@@ -135,33 +135,28 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  record RawLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
+  record ClauseLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
     public static boolean canBeBind(@NotNull Arg<WithPos<Pattern>> pat) {
       var thePat = pat.term().data();
       return thePat instanceof Pattern.Bind || thePat == Pattern.CalmFace.INSTANCE;
     }
 
-    public RawLam {
+    public ClauseLam {
       assert clause.patterns.isNotEmpty();
     }
 
-    public @NotNull Expr.RawLam update(@NotNull Pattern.Clause clause) {
-      return clause == this.clause ? this : new RawLam(clause);
+    public @NotNull Expr.ClauseLam update(@NotNull Pattern.Clause clause) {
+      return clause == this.clause ? this : new ClauseLam(clause);
     }
 
-    public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() {
-      return clause.patterns;
-    }
+    public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() { return clause.patterns; }
+    public @NotNull WithPos<Expr> body() { return clause.expr.get(); }
 
-    public @NotNull WithPos<Expr> body() {
-      return clause.expr.get();
-    }
-
-    @Override public @NotNull Expr.RawLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.ClauseLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return descent(f, PosedUnaryOperator.identity());
     }
 
-    public @NotNull Expr.RawLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
+    public @NotNull Expr.ClauseLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
       return update(clause.descent(f, g));
     }
 
@@ -456,7 +451,7 @@ public sealed interface Expr extends AyaDocile {
     /// @param generator `x * y` part above
     /// @param binds     `x <- [1, 2, 3], y <- [4, 5, 6]` part above
     /// @param names     the bind (`>>=`) function, it is [#monadBind] in default,
-    ///                  the pure (`return`) function, it is [#functorPure] in default
+    ///                                   the pure (`return`) function, it is [#functorPure] in default
     /// @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
     /// it will be desugared to `do x <- [1, 2, 3], y <- [4, 5, 6], return x * y`
     public record CompBlock(

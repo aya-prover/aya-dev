@@ -31,7 +31,7 @@ public sealed interface Pattern extends AyaDocile {
   void forEach(@NotNull PosedConsumer<@NotNull Pattern> f);
   interface Salt { }
 
-  /// Whether a [Pattern] can be a [Pattern.Bind], this is used by [Expr.RawLam] in desugarer.
+  /// Whether a [Pattern] can be a [Pattern.Bind], this is used by [Expr.ClauseLam] in desugarer.
   ///
   /// @see Pattern.Bind
   /// @see Pattern.CalmFace
