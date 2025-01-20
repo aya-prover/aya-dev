@@ -664,19 +664,22 @@ public record AyaProducer(
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
       var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
-        .map(LocalVar::from);
-      return Expr.buildLam(pos, tele, result);
+        .map(LocalVar::from)
+        .map(v -> new WithPos<Pattern>(v.definition(), new Pattern.Bind(v)))
+        .map(Arg::ofExplicitly)
+        .toImmutableSeq();
+      return new WithPos<>(pos, new Expr.RawLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(LAMBDA_1_EXPR)) {
       var result = expr(node.child(EXPR));
       var tele = patterns(node.child(PATTERNS).child(COMMA_SEP));
-      return new WithPos<>(pos, new Expr.IrrefutableLam(new Pattern.Clause(pos, tele, Option.some(result))));
+      return new WithPos<>(pos, new Expr.RawLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(LAMBDA_2_EXPR)) {
       var bodyExpr = node.peekChild(EXPR);
       Option<WithPos<Expr>> result = bodyExpr == null ? Option.none() : Option.some(expr(bodyExpr));
       var tele = unitPattern(node.child(UNIT_PATTERN));
-      return new WithPos<>(pos, new Expr.IrrefutableLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
+      return new WithPos<>(pos, new Expr.RawLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
     }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);

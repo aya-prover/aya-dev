@@ -3,22 +3,17 @@
 package org.aya.resolve.salt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.primitive.MutableBooleanValue;
-import org.aya.generic.Constants;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.Arg;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
 public final class Desalt implements PosedUnaryOperator<Expr> {
@@ -77,7 +72,7 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
       case Expr.RawSort(var kind) -> new Expr.Sort(kind, 0);
       case Expr.LetOpen letOpen -> apply(letOpen.body());
-      case Expr.IrrefutableLam lam -> {
+      case Expr.RawLam lam -> {
         var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.Refutable);
 
         ImmutableSeq<LocalVar> lamTele;

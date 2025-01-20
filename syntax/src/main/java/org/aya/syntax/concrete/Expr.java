@@ -2,10 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Nested;
@@ -26,11 +29,6 @@ import org.aya.util.error.*;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
@@ -137,18 +135,18 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  record IrrefutableLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
+  record RawLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
     public static boolean canBeBind(@NotNull Arg<WithPos<Pattern>> pat) {
       var thePat = pat.term().data();
       return thePat instanceof Pattern.Bind || thePat == Pattern.CalmFace.INSTANCE;
     }
 
-    public IrrefutableLam {
+    public RawLam {
       assert clause.patterns.isNotEmpty();
     }
 
-    public @NotNull IrrefutableLam update(@NotNull Pattern.Clause clause) {
-      return clause == this.clause ? this : new IrrefutableLam(clause);
+    public @NotNull Expr.RawLam update(@NotNull Pattern.Clause clause) {
+      return clause == this.clause ? this : new RawLam(clause);
     }
 
     public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() {
@@ -159,11 +157,11 @@ public sealed interface Expr extends AyaDocile {
       return clause.expr.get();
     }
 
-    @Override public @NotNull IrrefutableLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    @Override public @NotNull Expr.RawLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return descent(f, PosedUnaryOperator.identity());
     }
 
-    public @NotNull IrrefutableLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
+    public @NotNull Expr.RawLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
       return update(clause.descent(f, g));
     }
 

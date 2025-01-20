@@ -115,7 +115,7 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.IrrefutableLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
+      case Expr.RawLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(depType.param(), mCtx);

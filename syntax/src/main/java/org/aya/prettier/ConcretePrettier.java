@@ -116,7 +116,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         }
         yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
       }
-      case Expr.IrrefutableLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
+      case Expr.RawLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
       case Expr.Hole expr -> {
         if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
         var filling = expr.filling();
