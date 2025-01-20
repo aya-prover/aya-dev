@@ -234,9 +234,7 @@ public record ExprResolver(
 
   /// Resolve a [Pattern]
   ///
-  /// @param telescope the telescope of the clause which the {@param pattern} lives,
-  ///                                   it is safe to supply an [ImmutableSeq#empty()]
-  ///                                   if there is no telescope or the user cannot refer to it.
+  /// @param telescope the telescope of the clause which the {@param pattern} lives, can be [ImmutableSeq#empty()].
   public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
     var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
     var result = pattern.descent(resolver);
