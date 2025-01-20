@@ -100,7 +100,7 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
             lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
             ImmutableSeq.of(lam.clause()),
             ImmutableSeq.empty(),
-            false,
+            true,
             null
           ));
         }

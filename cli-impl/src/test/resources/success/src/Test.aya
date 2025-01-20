@@ -107,8 +107,11 @@ module Issue1249 {
 }
 
 module Issue94 {
-  open inductive IsZero Nat
-  | zero => ack
   def absurd (A : Type) : Empty -> A => fn ()
-  def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
+  def obvious : Fn (a : Sig Nat ** Nat) -> Nat => fn { (a, b) => a + b }
 }
+
+// relies on match elim
+// open inductive IsZero Nat
+// | zero => ack
+// def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
