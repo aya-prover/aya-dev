@@ -87,9 +87,9 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
             if (pat.term().data() instanceof Pattern.BindLike bindLike) {
               var bind = bindLike.toLocalVar(pat.term().sourcePos());
               // we need fresh bind, since [bind] may be used in the body.
-              return LocalVar.generate(bind.name(), bind.definition());
+              return LocalVar.generate(bind.name(), SourcePos.NONE);
             } else {
-              return LocalVar.generate("IrrefutableLam" + idx, pat.term().sourcePos());
+              return LocalVar.generate("IrrefutableLam" + idx, SourcePos.NONE);
             }
           });
 
