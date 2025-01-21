@@ -6,13 +6,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Modifier;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
-import org.aya.syntax.compile.JitMatchy;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
@@ -25,9 +27,11 @@ import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -35,6 +39,8 @@ import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -271,92 +277,141 @@ public class CorePrettier extends BasePrettier<Term> {
     return switch (predef) {
       case PrimDef def -> primDoc(def.ref());
       case FnDef def -> {
-        var line1 = MutableList.of(KW_DEF);
-        def.modifiers().forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
-        var tele = enrich(def.telescope());
-        var subst = tele.view().<Term>map(p -> new FreeTerm(p.ref()));
-        line1.appendAll(new Doc[]{
-          defVar(def.ref()),
-          visitTele(tele),
-          HAS_TYPE,
-          term(Outer.Free, def.result().instTeleVar(tele.view().map(ParamLike::ref)))
-        });
-        var line1sep = Doc.sepNonEmpty(line1);
-        yield def.body().fold(
-          term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst))),
-          clauses -> Doc.vcat(line1sep,
-            Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit)))));
+        var absTele = TyckDef.defSignature(def);
+        yield visitFn(defVar(def.ref()), def.modifiers(), absTele,
+          (prefix, subst) -> def.body().fold(
+            term -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view()))),
+            clauses -> Doc.vcat(prefix,
+              Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), def.telescope().view().map(Param::explicit))))));
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         defVar(field.ref()),
         visitTele(enrich(field.telescope())),
         Doc.symbol(":"),
         term(Outer.Free, field.result()));
-      case ConDef con -> {
-        var doc = Doc.sepNonEmpty(coe(con.coerce),
-          defVar(con.ref()),
-          visitTele(enrich(con.selfTele)));
-        if (con.pats.isNotEmpty()) {
-          var pats = Doc.commaList(con.pats.view().map(pat -> pat(pat, true, Outer.Free)));
-          yield Doc.sep(Doc.symbol("|"), pats, Doc.symbol("=>"), doc);
-        } else {
-          yield Doc.sep(BAR, doc);
-        }
-      }
+      case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
       case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(KW_CLASS,
         defVar(def.ref()),
         Doc.nest(2, Doc.vcat(def.members().view().map(this::def)))));
-      case DataDef def -> {
-        var richDataTele = enrich(def.telescope());
-        var dataArgs = richDataTele.view().<Term>map(t -> new FreeTerm(t.ref()));
-
-        var line1 = MutableList.of(KW_DATA,
-          defVar(def.ref()),
-          visitTele(richDataTele),
-          HAS_TYPE,
-          term(Outer.Free, def.result()));
-        var cons = def.body.view().map(con ->
-          // we need to instantiate the tele of con, but we can't modify the CtorDef
-          visitCon(con.ref, enrich(con.selfTele.mapIndexed((i, p) -> {
-            // i: nth param
-            // p: the param
-            // instantiate reference to data tele
-            return p.descent(t -> t.instTeleFrom(i, dataArgs));
-          })), con.coerce));
-
-        yield Doc.vcat(Doc.sepNonEmpty(line1),
-          Doc.nest(2, Doc.vcat(cons)));
-      }
+      case DataDef def -> visitData(defVar(def.ref()), TyckDef.defSignature(def), dataLine -> {
+        var consDoc = def.body.view().map(this::def);
+        return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
+      });
     };
+  }
+
+  public @NotNull Doc def(@NotNull JitDef unit) {
+    var dummyVar = new CompiledVar(unit);
+
+    return switch (unit) {
+      case JitFn jitFn -> visitFn(defVar(dummyVar), jitFn.modifiers(), jitFn, (prefix, _) ->
+        Doc.sep(prefix, FN_DEFINED_AS, COMMENT_COMPILED_CODE));
+      case JitCon jitCon -> {
+        var dummyOwnerArgs = ImmutableSeq.<Term>fill(jitCon.ownerTeleSize(), i -> new FreeTerm(jitCon.telescopeName(i)));
+        var rhs = visitConRhs(defVar(dummyVar), true && false, jitCon.inst(dummyOwnerArgs));
+        yield Doc.sep(BAR, COMMENT_COMPILED_PATTERN, FN_DEFINED_AS, rhs);
+      }
+      case JitData jitData -> visitData(defVar(dummyVar), jitData, dataLine -> {
+        var consDoc = jitData.body().view().map(this::def);
+        return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
+      });
+      case JitClass jiClasst -> null;
+      case JitMember jitMember -> null;
+      case JitPrim jitPrim -> null;
+    };
+  }
+
+  private @NotNull Doc visitFn(
+    @NotNull Doc name,
+    @NotNull EnumSet<Modifier> modifiers,
+    @NotNull AbstractTele telescope,
+    @NotNull BiFunction<Doc, ImmutableSeq<Term>, Doc> cont
+  ) {
+    var line1 = MutableList.of(KW_DEF);
+    modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
+    line1.append(name);
+
+    var tele = enrich(telescope);
+    line1.append(visitTele(tele));
+
+    line1.append(HAS_TYPE);
+
+    var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
+    line1.append(term(Outer.Free, telescope.result(subst)));
+
+    var line1Doc = Doc.sepNonEmpty(line1);
+    return cont.apply(line1Doc, subst);
+  }
+
+  /// @param selfTele self tele of the constructor, unlike [JitCon], the data args/owner args should be supplied.
+  private @NotNull Doc visitConRhs(
+    @NotNull Doc name,
+    boolean coerce,
+    @NotNull AbstractTele selfTele
+  ) {
+    return Doc.sepNonEmpty(coe(coerce), name, visitTele(enrich(selfTele)));
   }
 
   private @NotNull Doc visitCon(
     @NotNull DefVar<ConDef, DataCon> ref,
-    @NotNull ImmutableSeq<ParamLike<Term>> richSelfTele,
-    boolean coerce
+    boolean coerce,
+    @NotNull ImmutableSeq<Param> rawSelfTele
   ) {
-    var doc = Doc.sepNonEmpty(coe(coerce), defVar(ref), visitTele(richSelfTele));
     var con = ref.core;
-    if (con.pats.isNotEmpty()) {
-      var pats = Doc.commaList(con.pats.view().map(pat -> pat(pat, true, Outer.Free)));
-      return Doc.sep(BAR, pats, FN_DEFINED_AS, doc);
+    var conName = defVar(ref);
+    var pats = con.pats;
+
+    if (pats.isNotEmpty()) {
+      var dataSig = con.dataRef.signature();
+      var licits = ImmutableSeq.fill(dataSig.telescopeSize(), dataSig::telescopeLicit).view();
+      return visitClause(pats, licits, ownerArgs -> {
+        var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs).toImmutableSeq();
+        return visitConRhs(conName, coerce, new AbstractTele.Locns(realSelfTele, ErrorTerm.DUMMY));
+      });
     } else {
-      return Doc.sep(BAR, doc);
+      var ownerArgs = con.ownerTele.<Term>map(Param::toFreshTerm);
+      var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs.view()).toImmutableSeq();
+      return Doc.sep(BAR, visitConRhs(conName, coerce, new AbstractTele.Locns(realSelfTele, ErrorTerm.DUMMY)));
     }
   }
 
-  public @NotNull Doc visitClauseLhs(@NotNull SeqView<Boolean> licits, @NotNull Term.Matching clause) {
-    var enrichPats = clause.patterns().zip(licits,
-      (pat, licit) -> pat(pat, licit, Outer.Free));
+  private @NotNull Doc visitData(
+    @NotNull Doc name,
+    @NotNull AbstractTele telescope,
+    @NotNull Function<Doc, Doc> cont
+  ) {
+    var richDataTele = enrich(telescope);
+    var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
+
+    var line1 = Doc.sepNonEmpty(KW_DATA,
+      name,
+      visitTele(richDataTele),
+      HAS_TYPE,
+      term(Outer.Free, telescope.result(dataArgs)));
+
+    return cont.apply(line1);
+  }
+
+  public @NotNull Doc visitClauseLhs(@NotNull ImmutableSeq<Pat> patterns, @NotNull SeqView<Boolean> licits) {
+    var enrichPats = patterns.zip(licits, (pat, licit) -> pat(pat, licit, Outer.Free));
     return Doc.commaList(enrichPats);
   }
 
-  private @NotNull Doc visitClause(@NotNull Term.Matching clause, @NotNull SeqView<Boolean> licits) {
-    var patSubst = Pat.collectRichBindings(clause.patterns().view());
-    var lhsWithoutBar = visitClauseLhs(licits, clause);
-    var rhs = term(Outer.Free, clause.body().instTele(patSubst.view().map(RichParam::toTerm)));
+  private @NotNull Doc visitClause(
+    @NotNull ImmutableSeq<Pat> patterns,
+    @NotNull SeqView<Boolean> licits,
+    @NotNull Function<SeqView<Term>, Doc> bodyCont
+  ) {
+    var patSubst = Pat.collectRichBindings(patterns.view());
+    var lhsWithoutBar = visitClauseLhs(patterns, licits);
+    var subst = patSubst.view().<Term>map(RichParam::toTerm);
+    var rhs = bodyCont.apply(subst);
 
     return Doc.sep(BAR, lhsWithoutBar, FN_DEFINED_AS, rhs);
+  }
+
+  private @NotNull Doc visitClause(@NotNull Term.Matching clause, @NotNull SeqView<Boolean> licits) {
+    return visitClause(clause.patterns(), licits, subst -> term(Outer.Free, clause.body().instTele(subst)));
   }
 
   private @NotNull Doc visitClauses(@NotNull SeqView<Term.Matching> clauses, @NotNull SeqView<Boolean> licits) {
@@ -364,6 +419,10 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   // region Name Generation
+  private @NotNull ImmutableSeq<Term> toTerm(@NotNull ImmutableSeq<ParamLike<Term>> params) {
+    return params.map(x -> new FreeTerm(x.ref()));
+  }
+
   private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull SeqLike<Param> tele) {
     var richTele = MutableList.<ParamLike<Term>>create();
 
@@ -371,6 +430,24 @@ public class CorePrettier extends BasePrettier<Term> {
       var freeTy = param.type().instTeleVar(richTele.view().map(ParamLike::ref));
       richTele.append(new RichParam(new LocalVar(
         param.name(), SourcePos.NONE, Basic.Pretty), freeTy, param.explicit()));
+    }
+
+    return richTele.toImmutableSeq();
+  }
+
+  private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele) {
+    var richTele = FreezableMutableList.<ParamLike<Term>>create();
+
+    for (var i = 0; i < tele.telescopeSize(); ++i) {
+      var binds = richTele.view()
+        .<Term>map(x -> new FreeTerm(x.ref()))
+        .toImmutableSeq();
+      var type = tele.telescope(i, binds);
+      richTele.append(new RichParam(
+        new LocalVar(tele.telescopeName(i), SourcePos.NONE, Basic.Pretty),
+        type,
+        tele.telescopeLicit(i))
+      );
     }
 
     return richTele.toImmutableSeq();

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.compile;
 
@@ -8,6 +8,8 @@ import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
 
 public abstract non-sealed class JitFn extends JitTele implements FnDefLike {
   public final int modifiers;
@@ -23,5 +25,17 @@ public abstract non-sealed class JitFn extends JitTele implements FnDefLike {
   abstract public @NotNull Term invoke(@NotNull Seq<@NotNull Term> args);
   @Override public boolean is(@NotNull Modifier mod) {
     return (modifiers & (1 << mod.ordinal())) != 0;
+  }
+
+  public @NotNull EnumSet<Modifier> modifiers() {
+    var set = EnumSet.noneOf(Modifier.class);
+
+    for (var modi : Modifier.values()) {
+      if (is(modi)) {
+        set.add(modi);
+      }
+    }
+
+    return set;
   }
 }

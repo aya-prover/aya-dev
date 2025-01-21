@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
@@ -13,6 +13,7 @@ import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
+import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
@@ -65,9 +66,14 @@ public interface ReplCommands {
         default -> {
         }
       }
+
       if (topLevel instanceof TyckAnyDef<?> tyckDef) {
         return new Command.Result(Output.stdout(repl.render(tyckDef.core())), true);
       }
+
+      if (topLevel instanceof JitDef jitDef) {
+      }
+
       return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
     }
   };

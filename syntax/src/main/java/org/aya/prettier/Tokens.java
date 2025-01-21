@@ -4,8 +4,7 @@ package org.aya.prettier;
 
 import org.aya.pretty.doc.Doc;
 
-import static org.aya.prettier.BasePrettier.KEYWORD;
-import static org.aya.prettier.BasePrettier.PRIM;
+import static org.aya.prettier.BasePrettier.*;
 
 public final class Tokens {
 
@@ -52,4 +51,7 @@ public final class Tokens {
   public static final Doc KW_IMPORT = Doc.styled(KEYWORD, "import");
   public static final Doc KW_INTERVAL = Doc.styled(PRIM, "I");
   public static final Doc KW_COE = Doc.styled(KEYWORD, "coe");
+
+  public static final Doc COMMENT_COMPILED_CODE = Doc.styled(COMMENT, "/* compiled code */");
+  public static final Doc COMMENT_COMPILED_PATTERN = Doc.styled(COMMENT, "/* compiled pattern */");
 }
