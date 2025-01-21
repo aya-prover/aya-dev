@@ -8,16 +8,14 @@ import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
 import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.ConDefLike;
-import org.aya.syntax.core.def.MemberDefLike;
-import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.def.*;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
 import org.jetbrains.annotations.NotNull;
@@ -67,14 +65,11 @@ public interface ReplCommands {
         }
       }
 
-      if (topLevel instanceof TyckAnyDef<?> tyckDef) {
-        return new Command.Result(Output.stdout(repl.render(tyckDef.core())), true);
-      }
-
-      if (topLevel instanceof JitDef jitDef) {
-      }
-
-      return Command.Result.ok(topLevel.name(), true);      // TODO: pretty print
+      return switch (topLevel) {
+        case JitDef jitDef -> new Result(Output.stdout(repl.render(jitDef)), true);
+        case TyckAnyDef<?> tyckDef -> new Result(Output.stdout(repl.render(tyckDef.core())), true);
+        default -> Result.ok(topLevel.name(), true);
+      };
     }
   };
 
