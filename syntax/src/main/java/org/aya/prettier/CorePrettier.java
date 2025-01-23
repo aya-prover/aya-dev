@@ -284,11 +284,7 @@ public class CorePrettier extends BasePrettier<Term> {
             clauses -> Doc.vcat(prefix,
               Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), def.telescope().view().map(Param::explicit))))));
       }
-      case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
-        defVar(field.ref()),
-        visitTele(enrich(field.telescope())),
-        Doc.symbol(":"),
-        term(Outer.Free, field.result()));
+      case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
       case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(KW_CLASS,
         defVar(def.ref()),
@@ -315,8 +311,8 @@ public class CorePrettier extends BasePrettier<Term> {
         var consDoc = jitData.body().view().map(this::def);
         return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
       });
+      case JitMember jitMember -> visitMember(defVar(dummyVar), jitMember);
       case JitClass jiClasst -> null;
-      case JitMember jitMember -> null;
       case JitPrim jitPrim -> null;
     };
   }
@@ -390,6 +386,20 @@ public class CorePrettier extends BasePrettier<Term> {
       term(Outer.Free, telescope.result(dataArgs)));
 
     return cont.apply(line1);
+  }
+
+  /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
+  private @NotNull Doc visitMember(
+    @NotNull Doc name,
+    @NotNull AbstractTele telescope
+  ) {
+    // TODO: should we pretty print the `self` parameter?
+    //       The use of `self` parameter still appears in other parameters.
+
+    var richTele = enrich(telescope);
+    var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
+
+    return Doc.sepNonEmpty(BAR, name, visitTele(richTele), HAS_TYPE, term(Outer.Free, telescope.result(binds)));
   }
 
   public @NotNull Doc visitClauseLhs(@NotNull ImmutableSeq<Pat> patterns, @NotNull SeqView<Boolean> licits) {

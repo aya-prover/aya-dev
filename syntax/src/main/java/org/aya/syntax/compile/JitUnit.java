@@ -3,14 +3,10 @@
 package org.aya.syntax.compile;
 
 import kala.collection.immutable.ImmutableArray;
-import org.aya.generic.AyaDocile;
-import org.aya.prettier.CorePrettier;
-import org.aya.pretty.doc.Doc;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.error.Panic;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 public abstract sealed class JitUnit permits JitDef, JitMatchy {
