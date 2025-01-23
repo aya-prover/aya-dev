@@ -8,6 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
+import kala.value.LazyValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Modifier;
 import org.aya.generic.Renamer;
@@ -395,11 +396,9 @@ public class CorePrettier extends BasePrettier<Term> {
   ) {
     // TODO: should we pretty print the `self` parameter?
     //       The use of `self` parameter still appears in other parameters.
+    var visitTele = visitTele(telescope);
 
-    var richTele = enrich(telescope);
-    var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
-
-    return Doc.sepNonEmpty(BAR, name, visitTele(richTele), HAS_TYPE, term(Outer.Free, telescope.result(binds)));
+    return Doc.sepNonEmpty(BAR, name, visitTele.tele, HAS_TYPE, visitTele.result.get());
   }
 
   public @NotNull Doc visitClauseLhs(@NotNull ImmutableSeq<Pat> patterns, @NotNull SeqView<Boolean> licits) {
@@ -429,22 +428,6 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   // region Name Generation
-  private @NotNull ImmutableSeq<Term> toTerm(@NotNull ImmutableSeq<ParamLike<Term>> params) {
-    return params.map(x -> new FreeTerm(x.ref()));
-  }
-
-  private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull SeqLike<Param> tele) {
-    var richTele = MutableList.<ParamLike<Term>>create();
-
-    for (var param : tele) {
-      var freeTy = param.type().instTeleVar(richTele.view().map(ParamLike::ref));
-      richTele.append(new RichParam(new LocalVar(
-        param.name(), SourcePos.NONE, Basic.Pretty), freeTy, param.explicit()));
-    }
-
-    return richTele.toImmutableSeq();
-  }
-
   private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele) {
     var richTele = FreezableMutableList.<ParamLike<Term>>create();
 
@@ -465,6 +448,18 @@ public class CorePrettier extends BasePrettier<Term> {
 
   private @NotNull LocalVar generateName(@Nullable Term whty) {
     return nameGen.bindName(whty);
+  }
+
+  record VisitTele(@NotNull Doc tele, @NotNull LazyValue<Doc> result) { }
+
+  private @NotNull VisitTele visitTele(@NotNull AbstractTele tele) {
+    var richTele = enrich(tele);
+    var teleDoc = visitTele(richTele);
+
+    return new VisitTele(teleDoc, LazyValue.of(() -> {
+      var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
+      return term(Outer.Free, tele.result(binds));
+    }));
   }
   // endregion Name Generating
 }
