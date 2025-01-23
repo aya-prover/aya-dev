@@ -287,9 +287,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
-      case ClassDef def -> Doc.vcat(Doc.sepNonEmpty(KW_CLASS,
-        defVar(def.ref()),
-        Doc.nest(2, Doc.vcat(def.members().view().map(this::def)))));
+      case ClassDef def -> visitClass(defVar(def.ref()), def.members().view().map(this::def));
       case DataDef def -> visitData(defVar(def.ref()), TyckDef.defSignature(def), dataLine -> {
         var consDoc = def.body.view().map(this::def);
         return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
@@ -299,22 +297,23 @@ public class CorePrettier extends BasePrettier<Term> {
 
   public @NotNull Doc def(@NotNull JitDef unit) {
     var dummyVar = new CompiledVar(unit);
+    var nameDoc = defVar(dummyVar);
 
     return switch (unit) {
-      case JitFn jitFn -> visitFn(defVar(dummyVar), jitFn.modifiers(), jitFn, (prefix, _) ->
+      case JitFn jitFn -> visitFn(nameDoc, jitFn.modifiers(), jitFn, (prefix, _) ->
         Doc.sep(prefix, FN_DEFINED_AS, COMMENT_COMPILED_CODE));
       case JitCon jitCon -> {
         var dummyOwnerArgs = ImmutableSeq.<Term>fill(jitCon.ownerTeleSize(), i -> new FreeTerm(jitCon.telescopeName(i)));
-        var rhs = visitConRhs(defVar(dummyVar), true && false, jitCon.inst(dummyOwnerArgs));
+        var rhs = visitConRhs(nameDoc, true && false, jitCon.inst(dummyOwnerArgs));
         yield Doc.sep(BAR, COMMENT_COMPILED_PATTERN, FN_DEFINED_AS, rhs);
       }
-      case JitData jitData -> visitData(defVar(dummyVar), jitData, dataLine -> {
+      case JitData jitData -> visitData(nameDoc, jitData, dataLine -> {
         var consDoc = jitData.body().view().map(this::def);
         return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
       });
-      case JitMember jitMember -> visitMember(defVar(dummyVar), jitMember);
-      case JitClass jiClasst -> null;
-      case JitPrim jitPrim -> null;
+      case JitMember jitMember -> visitMember(nameDoc, jitMember);
+      case JitClass jitClass -> visitClass(nameDoc, jitClass.members().view().map(this::def));
+      case JitPrim _ -> primDoc(dummyVar);
     };
   }
 
@@ -399,6 +398,13 @@ public class CorePrettier extends BasePrettier<Term> {
     var visitTele = visitTele(telescope);
 
     return Doc.sepNonEmpty(BAR, name, visitTele.tele, HAS_TYPE, visitTele.result.get());
+  }
+
+  private @NotNull Doc visitClass(
+    @NotNull Doc name,
+    @NotNull SeqView<Doc> members
+  ) {
+    return Doc.sepNonEmpty(KW_CLASS, name, Doc.nest(2, Doc.vcat(members)));
   }
 
   public @NotNull Doc visitClauseLhs(@NotNull ImmutableSeq<Pat> patterns, @NotNull SeqView<Boolean> licits) {

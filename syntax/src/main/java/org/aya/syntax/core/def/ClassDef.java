@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
@@ -28,10 +28,10 @@ public record ClassDef(
 ) implements TopLevelDef {
   public ClassDef { ref.initialize(this); }
   public static final class Delegate extends TyckAnyDef<ClassDef> implements ClassDefLike {
-    private final @NotNull LazyValue<ImmutableSeq<MemberDefLike>> members = LazyValue.of(() ->
+    private final @NotNull LazyValue<ImmutableSeq<MemberDef.Delegate>> members = LazyValue.of(() ->
       core().members.map(x -> new MemberDef.Delegate(x.ref())));
 
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
-    @Override public @NotNull ImmutableSeq<MemberDefLike> members() { return members.get(); }
+    @Override public @NotNull ImmutableSeq<MemberDef.Delegate> members() { return members.get(); }
   }
 }

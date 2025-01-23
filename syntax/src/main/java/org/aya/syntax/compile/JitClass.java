@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.compile;
 
@@ -20,7 +20,7 @@ public abstract non-sealed class JitClass extends JitDef implements ClassDefLike
 
   public abstract @NotNull JitMember[] membars();
 
-  @Override public final @NotNull ImmutableSeq<MemberDefLike> members() {
+  @Override public final @NotNull ImmutableSeq<JitMember> members() {
     return ImmutableArray.Unsafe.wrap(membars());
   }
 

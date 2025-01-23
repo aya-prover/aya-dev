@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
@@ -281,7 +281,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return coerce ? Doc.styled(KEYWORD, "coerce") : Doc.empty();
   }
 
-  static @NotNull Doc primDoc(DefVar<?, ?> ref) {
+  static @NotNull Doc primDoc(AnyDefVar ref) {
     return Doc.sep(KW_PRIM, refVar(ref));
   }
 

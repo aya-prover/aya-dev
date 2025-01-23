@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
@@ -10,7 +10,7 @@ import org.aya.syntax.core.term.*;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.Delegate {
-  @NotNull ImmutableSeq<MemberDefLike> members();
+  @NotNull ImmutableSeq<? extends MemberDefLike> members();
 
   default @NotNull Term telescope(int i, @NotNull Seq<Term> restriction) {
     var member = members().get(i);
