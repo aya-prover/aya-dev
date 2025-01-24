@@ -28,12 +28,14 @@ import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.Arg;
+import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -288,10 +290,15 @@ public class CorePrettier extends BasePrettier<Term> {
       case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
       case ClassDef def -> visitClass(defVar(def.ref()), def.members().view().map(this::def));
-      case DataDef def -> visitData(defVar(def.ref()), TyckDef.defSignature(def), dataLine -> {
-        var consDoc = def.body.view().map(this::def);
-        return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
-      });
+      case DataDef def -> visitData(new DataDef.Delegate(def.ref()));
+    };
+  }
+
+  public @NotNull Doc def(@NotNull AnyDef unit) {
+    return switch (unit) {
+      case JitDef jitDef -> def(jitDef);
+      case TyckAnyDef<?> tyckAnyDef -> def(tyckAnyDef.ref.core);
+      default -> Panic.unreachable();
     };
   }
 
@@ -307,10 +314,7 @@ public class CorePrettier extends BasePrettier<Term> {
         var rhs = visitConRhs(nameDoc, true && false, jitCon.inst(dummyOwnerArgs));
         yield Doc.sep(BAR, COMMENT_COMPILED_PATTERN, FN_DEFINED_AS, rhs);
       }
-      case JitData jitData -> visitData(nameDoc, jitData, dataLine -> {
-        var consDoc = jitData.body().view().map(this::def);
-        return Doc.vcat(dataLine, Doc.nest(2, Doc.vcat(consDoc)));
-      });
+      case JitData jitData -> visitData(jitData);
       case JitMember jitMember -> visitMember(nameDoc, jitMember);
       case JitClass jitClass -> visitClass(nameDoc, jitClass.members().view().map(this::def));
       case JitPrim _ -> primDoc(dummyVar);
@@ -372,10 +376,10 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private @NotNull Doc visitData(
-    @NotNull Doc name,
-    @NotNull AbstractTele telescope,
-    @NotNull Function<Doc, Doc> cont
+    @NotNull DataDefLike dataDef
   ) {
+    var name = defVar(AnyDef.toVar(dataDef));
+    var telescope = dataDef.signature();
     var richDataTele = enrich(telescope);
     var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
 
@@ -384,8 +388,9 @@ public class CorePrettier extends BasePrettier<Term> {
       visitTele(richDataTele),
       HAS_TYPE,
       term(Outer.Free, telescope.result(dataArgs)));
+    var consDoc = dataDef.body().view().map(this::def);
 
-    return cont.apply(line1);
+    return Doc.cat(line1, Doc.nest(2, Doc.vcat(consDoc)));
   }
 
   /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
