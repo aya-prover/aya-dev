@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.cli;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.interactive.ReplCompiler;
@@ -14,6 +19,7 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
@@ -21,11 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Paths;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class ReplCompilerTest {
   public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), new ThrowingReporter(AyaPrettierOptions.debug()), null);
@@ -37,9 +38,12 @@ public class ReplCompilerTest {
 
   @Test public void library() throws IOException {
     compiler.loadToContext(Paths.get("../ide-lsp", "src", "test", "resources", "lsp-test-lib"));
-    assertNotNull(findContext("Nat::Core::zero"));
-    assertNotNull(findContext("VecCore::vnil"));
     assertNotNull(findContext("VecCore:::>"));
+    assertNotNull(findContext("VecCore::vnil"));
+    var zero = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::zero"));
+    assertNotNull(zero);
+    assertEquals("| /* compiled pattern */ ⇒ zero",
+      zero.core().toDoc(AyaPrettierOptions.debug()).commonRender());
 
     // Don't be too harsh on the test lib structure, maybe we will change it
     var rootHints = compiler.getContext().giveMeHint(ImmutableSeq.empty());
