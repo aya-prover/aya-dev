@@ -54,6 +54,11 @@ public class ReplCompilerTest {
         | suc (_ : Nat)
       """.trim(), Nat.core().easyToString());
 
+    var refl = assertInstanceOf(CompiledVar.class, findContext("Path::refl"));
+    assertNotNull(refl);
+    assertEquals("def refl {A : Type 0} {a : A} : a = a => /* compiled code */",
+      refl.core().easyToString());
+
     // Don't be too harsh on the test lib structure, maybe we will change it
     var rootHints = compiler.getContext().giveMeHint(ImmutableSeq.empty());
     assertTrue(rootHints.contains("Nat"));
