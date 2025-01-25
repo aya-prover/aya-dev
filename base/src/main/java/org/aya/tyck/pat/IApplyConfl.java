@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import java.util.function.UnaryOperator;
+
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Modifier;
 import org.aya.syntax.core.def.FnDef;
@@ -17,8 +19,6 @@ import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.UnaryOperator;
 
 /// This is XTT-specific confluence check, very simple: we check for all combinations.
 /// So, if we do
@@ -42,7 +42,7 @@ public record IApplyConfl(
   boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull ExprTycker tycker
 ) {
   public IApplyConfl(@NotNull FnDef def, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
-    this(def, def.body().getRightValue(), def.is(Modifier.Overlap), pos, tycker);
+    this(def, def.body().getRightValue().clauses(), def.is(Modifier.Overlap), pos, tycker);
   }
   public void check() {
     // A matcher that does not normalize the arguments.

@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
+
+import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
+
+import static org.aya.generic.State.Stuck;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -10,6 +15,7 @@ import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitMatchy;
+import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.pat.PatMatcher;
@@ -28,11 +34,6 @@ import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
-
-import static org.aya.generic.State.Stuck;
 
 /**
  * Unlike in pre-v0.30 Aya, we use only one normalizer, only doing head reduction,
@@ -92,7 +93,7 @@ public final class Normalizer implements UnaryOperator<Term> {
               term = body.instTele(args.view());
               continue;
             }
-            case Either.Right(var clauses): {
+            case Either.Right(FnClauseBody(var clauses)): {
               var result = tryUnfoldClauses(clauses.view().map(WithPos::data),
                 args, core.is(Modifier.Overlap), ulift);
               // we may get stuck
