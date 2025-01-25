@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import kala.collection.Seq;
@@ -119,9 +118,7 @@ public record PatClassifier(
               Indexed.indices(Seq.wrapJava(i)).concat(binds)));
           var ml = MutableArrayList.<PatClass.One<Term, Pat>>create(classes.size() + 1);
           ml.appendAll(classes);
-          var maxInt = lits.max(Comparator.comparing(p -> p.pat().repr())).pat();
-          var onePlus = maxInt.map(x -> x + 1);
-          ml.append(simple(onePlus, binds));
+          ml.append(simple(param.toFreshPat(), binds));
           return ml.toImmutableSeq();
         }
 
