@@ -24,7 +24,6 @@ import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.error.WithPos;
 import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.CallMatrix;
 import org.aya.util.terck.Relation;
@@ -139,8 +138,8 @@ public record CallResolver(
   }
 
   public void check() {
-    var clauses = caller.body().getRightValue().clauses;
-    clauses.view().map(WithPos::data).forEach(this);
+    var clauses = caller.body().getRightValue().matchingsView();
+    clauses.forEach(this);
   }
 
   @Override public void accept(@NotNull Term.Matching matching) {

@@ -191,8 +191,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       ImmutableSeq.fill(discriminant.size(), i ->
         new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
       ImmutableSeq.empty(), clauses);
-    var wellClauses = clauseTycker.check(exprPos)
-      .wellTyped().clauses.map(WithPos::data);
+    var wellClauses = clauseTycker.check(exprPos).wellTyped().matchingsView();
 
     // Find free occurrences
     var usages = new FreeCollector();
@@ -203,7 +202,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var captures = usages.collected();
     var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
       new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
-      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
+      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view())))
+        .toImmutableSeq());
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
     return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));

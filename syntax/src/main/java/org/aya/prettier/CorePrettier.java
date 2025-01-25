@@ -36,7 +36,6 @@ import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,7 +285,7 @@ public class CorePrettier extends BasePrettier<Term> {
         yield switch (def.body()) {
           case Either.Left(var term) -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst)));
           case Either.Right(var body) -> Doc.vcat(line1sep,
-            Doc.nest(2, visitClauses(body.clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit))));
+            Doc.nest(2, visitClauses(body.matchingsView(), tele.view().map(ParamLike::explicit))));
         };
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),

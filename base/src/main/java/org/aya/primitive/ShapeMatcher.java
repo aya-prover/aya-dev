@@ -29,7 +29,6 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.util.Pair;
 import org.aya.util.RepoLike;
 import org.aya.util.error.Panic;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +125,7 @@ public record ShapeMatcher(
       case Pair(Either.Right(var clauseShapes), Either.Right(var body)) -> {
         var mode = def.is(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
         yield matchInside(() -> captures.put(shape.name(), def.ref()), () ->
-          matchMany(mode, clauseShapes, body.clauses.view().map(WithPos::data), this::matchClause));
+          matchMany(mode, clauseShapes, body.matchingsView(), this::matchClause));
       }
       default -> false;
     };

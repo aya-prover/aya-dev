@@ -30,7 +30,6 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +92,7 @@ public final class Normalizer implements UnaryOperator<Term> {
               continue;
             }
             case Either.Right(var body): {
-              var result = tryUnfoldClauses(body.clauses.view().map(WithPos::data),
+              var result = tryUnfoldClauses(body.matchingsView(),
                 args, core.is(Modifier.Overlap), ulift);
               // we may get stuck
               if (result == null) return defaultValue;
