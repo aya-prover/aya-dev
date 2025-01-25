@@ -43,7 +43,11 @@ public class ReplCompilerTest {
     var zero = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::zero"));
     assertNotNull(zero);
     assertEquals("| /* compiled pattern */ ⇒ zero",
-      zero.core().toDoc(AyaPrettierOptions.debug()).commonRender());
+      zero.core().easyToString());
+
+    var Nat = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::Nat"));
+    assertNotNull(Nat);
+    System.out.println(Nat.core().easyToString());
 
     // Don't be too harsh on the test lib structure, maybe we will change it
     var rootHints = compiler.getContext().giveMeHint(ImmutableSeq.empty());
