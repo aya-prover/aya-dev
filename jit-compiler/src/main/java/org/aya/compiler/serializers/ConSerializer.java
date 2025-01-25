@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.function.BiConsumer;
+
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
@@ -15,10 +19,6 @@ import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.call.ConCall;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.util.function.BiConsumer;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
   public ConSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
@@ -45,17 +45,15 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   /// @param unit must be indexed, otherwise it should use the default impl.
   /// @see JitCon#isAvailable
   private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
-    FreeJavaExpr matchResult;
     var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm.ref(), ImmutableSeq.empty());
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
     var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
     var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
     var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
-    var matcherTerm = builder.mkNew(PatMatcher.class, ImmutableSeq.of(
-      builder.iconst(true), id
-    ));
+    var matcherTerm = builder.mkNew(PatMatcher.InferMeta.class,
+      ImmutableSeq.of(id));
 
-    matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
+    var matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
       ImmutableSeq.of(patsSeq, termSeq));
 
     builder.returnWith(matchResult);
