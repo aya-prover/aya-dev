@@ -4,6 +4,7 @@ package org.aya.syntax.core.def;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.error.WithPos;
 import org.aya.util.tyck.pat.PatClass;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class FnClauseBody {
   public final ImmutableSeq<WithPos<Term.Matching>> clauses;
-  public ImmutableSeq<PatClass.Seq<Term>> classes;
+  public ImmutableSeq<PatClass.Seq<Term, Pat>> classes;
   public FnClauseBody(ImmutableSeq<WithPos<Term.Matching>> clauses) { this.clauses = clauses; }
   public @NotNull SeqView<Term.Matching> matchingsView() {
     return clauses.view().map(WithPos::data);

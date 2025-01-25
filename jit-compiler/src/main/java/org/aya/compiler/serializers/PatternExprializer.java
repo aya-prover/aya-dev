@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -51,7 +51,6 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
         serializeTerm(bind.type())
       ));
       case Pat.Con con -> builder.mkNew(Pat.Con.class, ImmutableSeq.of(
-        getInstance(con.ref()),
         serializeToImmutableSeq(Pat.class, con.args()),
         serializeConHead(con.head())
       ));
