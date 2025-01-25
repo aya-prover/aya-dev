@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
+
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.IntUnaryOperator;
+import java.util.function.UnaryOperator;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -26,11 +31,6 @@ import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.IntUnaryOperator;
-import java.util.function.UnaryOperator;
 
 /**
  * Patterns in the core syntax.
@@ -88,8 +88,8 @@ public sealed interface Pat {
   @NotNull Pat inline(@NotNull BiConsumer<LocalVar, Term> bind);
 
   enum Misc implements Pat {
-    Absurd,
-    UntypedBind;
+    Absurd;
+    // UntypedBind;
 
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) { }
     @Override public @NotNull Pat bind(MutableList<LocalVar> vars) { return this; }

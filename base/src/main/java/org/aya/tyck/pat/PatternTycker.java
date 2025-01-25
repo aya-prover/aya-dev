@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import java.util.Objects;
+import java.util.function.Predicate;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -45,9 +48,6 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-
-import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * Tyck for {@link Pattern}'s, the left hand side of one clause.
@@ -498,7 +498,7 @@ public class PatternTycker implements Problematic, Stateful {
       case ConDef.Delegate conDef -> {
         var pats = conDef.core().pats;
         if (pats.isNotEmpty()) {
-          var matcher = new PatMatcher(true, new Normalizer(state));
+          var matcher = new PatMatcher.InferMeta(new Normalizer(state));
           yield matcher.apply(pats, type.args());
         }
 

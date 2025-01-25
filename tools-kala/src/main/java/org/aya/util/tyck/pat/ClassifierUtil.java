@@ -2,16 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck.pat;
 
+import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSeq;
 import org.aya.util.Pair;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Function;
-import java.util.function.ObjIntConsumer;
 
 public interface ClassifierUtil<Subst, Term, Param, Pat> {
   Param subst(Subst subst, Param param);
@@ -55,17 +57,17 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         .map(args -> args.map(ls -> new Pair<>(subclauses.term(), ls))));
   }
 
-  static int[] firstMatchDomination(
+  static <T> MutableSeq<MutableList<PatClass<T>>> firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull ObjIntConsumer<SourcePos> report, @NotNull ImmutableSeq<? extends PatClass<?>> classes
+    @NotNull ObjIntConsumer<SourcePos> report, @NotNull ImmutableSeq<PatClass<T>> classes
   ) {
     // StackOverflow says they're initialized to zero
-    var numbers = new int[clauses.size()];
+    var numbers = MutableSeq.fill(clauses.size(), _ -> MutableList.<PatClass<T>>create());
     classes.forEach(results ->
-      numbers[results.cls().min()]++);
+      numbers.get(results.cls().min()).append(results));
     // ^ The minimum is not always the first one
-    for (int i = 0; i < numbers.length; i++)
-      if (0 == numbers[i]) report.accept(clauses.get(i).sourcePos(), i + 1);
+    for (int i = 0; i < numbers.size(); i++)
+      if (numbers.get(i).isEmpty()) report.accept(clauses.get(i).sourcePos(), i + 1);
     return numbers;
   }
 }

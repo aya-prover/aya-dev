@@ -46,11 +46,11 @@ public record IApplyConfl(
   }
   public void check() {
     // A matcher that does not normalize the arguments.
-    var chillMatcher = new PatMatcher(false, UnaryOperator.identity());
+    var chillMatcher = new PatMatcher.NoMeta(UnaryOperator.identity());
     for (int i = 0, size = matchings.size(); i < size; i++) apply(i, chillMatcher);
   }
 
-  private void apply(int i, PatMatcher chillMatcher) {
+  private void apply(int i, PatMatcher.NoMeta chillMatcher) {
     var matching = matchings.get(i);
     var ctx = new MapLocalCtx();
     var cases = new PatToTerm.Monadic(ctx).list(matching.data().patterns().view());
@@ -61,8 +61,8 @@ public record IApplyConfl(
     cases.forEach(args -> doCompare(chillMatcher, args, matching, nth));
   }
 
-  private void doCompare(PatMatcher chillMatcher, ImmutableSeq<Term> args, WithPos<Term.Matching> matching, int nth) {
-    var currentClause = chillMatcher.apply(matching.data(), args).get();
+  private void doCompare(PatMatcher.NoMeta chillMatcher, ImmutableSeq<Term> args, WithPos<Term.Matching> matching, int nth) {
+    var currentClause = chillMatcher.apply(matching.data(), args);
     var anoNormalized = tycker.whnf(new FnCall(new FnDef.Delegate(def.ref()), 0, args));
     tycker.unifyTermReported(anoNormalized, currentClause, def.result().instTele(args.view()),
       sourcePos, comparison -> new ClausesProblem.Conditions(

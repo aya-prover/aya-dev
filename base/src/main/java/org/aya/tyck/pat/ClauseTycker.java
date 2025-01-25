@@ -19,7 +19,6 @@ import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
-import org.aya.syntax.core.pat.TypeEraser;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
@@ -34,6 +33,7 @@ import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.error.Panic;
+import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -73,7 +73,6 @@ public final class ClauseTycker implements Problematic, Stateful {
    *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #addLocalLet}
    * @param freePats   a free version of the patterns.
    *                   In most cases you want to use {@code clause.pats} instead
-   * @param allBinds   all binders in the patterns
    * @param asSubst    substitution of the {@code as} patterns
    * @implNote If there are fewer pats than parameters, there will be some pats inserted,
    * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
@@ -83,22 +82,13 @@ public final class ClauseTycker implements Problematic, Stateful {
   public record LhsResult(
     @NotNull LocalCtx localCtx,
     @NotNull Term result, int unpiParamSize,
-    @NotNull ImmutableSeq<LocalVar> allBinds,
     @NotNull ImmutableSeq<Pat> freePats,
+    @Override @NotNull SourcePos sourcePos,
+    @Nullable WithPos<Expr> body,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
-    @NotNull Pat.Preclause<Expr> clause,
     boolean hasError
-  ) {
-    public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
-      return new LhsResult(localCtx, result, unpiParamSize, allBinds,
-        freePats.map(f), paramSubst, asSubst, clause, hasError);
-    }
-
-    public @NotNull SeqView<Pat> unpiPats() {
-      return clause.pats().view().takeLast(unpiParamSize);
-    }
-
+  ) implements SourceNode {
     @Contract(mutates = "param2")
     public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
@@ -122,18 +112,17 @@ public final class ClauseTycker implements Problematic, Stateful {
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
         classes = PatClassifier.classify(
-          lhs.view().map(LhsResult::clause),
+          lhs.view().map(LhsResult::freePats),
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
-          // refinePatterns(lhs, usages, classes);
+          // refine patterns
         }
       } else {
         classes = null;
       }
 
-      var map = lhs.map(cl -> cl.mapPats(new TypeEraser()));
-      var rhs = parent.checkAllRhs(teleVars, map, hasError);
+      var rhs = parent.checkAllRhs(teleVars, lhs, hasError);
       var wellTyped = new FnClauseBody(rhs.wellTyped());
       if (classes != null) {
         var absurds = rhs.absurdPrefixCount();
@@ -220,15 +209,9 @@ public final class ClauseTycker implements Problematic, Stateful {
           x.type()));
 
       var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
-      var patWithTypeBound = Pat.collectVariables(wellTypedPats.view());
-
-      var allBinds = patWithTypeBound.component1().toImmutableSeq();
-      var newClause = new Pat.Preclause<>(clause.sourcePos,
-        patWithTypeBound.component2(),
-        allBinds.size(), patIter.exprBody());
-      return new LhsResult(ctx, instRepi, userUnpiSize, allBinds,
-        wellTypedPats,
-        patResult.paramSubst(), patResult.asSubst(), newClause, patResult.hasError());
+      return new LhsResult(ctx, instRepi, userUnpiSize,
+        wellTypedPats, clause.sourcePos, patIter.exprBody(),
+        patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
     }
   }
 
@@ -242,17 +225,17 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull LhsResult result
   ) {
     try (var _ = exprTycker.subscope()) {
-      var clause = result.clause;
-      var bodyExpr = clause.expr();
+      var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;
+      var pats = result.freePats;
       if (bodyExpr == null) wellBody = null;
       else if (result.hasError) {
         // In case the patterns are malformed, do not check the body
         // as we bind local variables in the pattern checker,
         // and in case the patterns are malformed, some bindings may
         // not be added to the localCtx of tycker, causing assertion errors
-        wellBody = new ErrorTerm(result.clause.expr().data());
+        wellBody = new ErrorTerm(bodyExpr.data());
       } else {
         // the localCtx will be restored after exiting [subscoped]e
         exprTycker.setLocalCtx(result.localCtx);
@@ -262,16 +245,19 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
-        // eta body with inserted patterns
-        wellBody = AppTerm.make(wellBody, result.unpiPats().map(PatToTerm::visit));
-
         // bind all pat bindings
-        var patBindTele = Pat.collectVariables(result.clause.pats().view()).component1();
+        var patWithTypeBound = Pat.collectVariables(result.freePats.view());
+        pats = patWithTypeBound.component2();
+        var patBindTele = patWithTypeBound.component1();
+
         bindCount = patBindTele.size();
+
+        // eta body with inserted patterns
+        wellBody = AppTerm.make(wellBody, pats.view().takeLast(result.unpiParamSize).map(PatToTerm::visit));
         wellBody = wellBody.bindTele(patBindTele.view());
       }
 
-      return new Pat.Preclause<>(clause.sourcePos(), clause.pats(), bindCount,
+      return new Pat.Preclause<>(result.sourcePos, pats, bindCount,
         wellBody == null ? null : WithPos.dummy(wellBody));
     }
   }
