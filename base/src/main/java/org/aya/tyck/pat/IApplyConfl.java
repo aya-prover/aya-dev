@@ -46,7 +46,7 @@ public record IApplyConfl(
   }
   public void check() {
     // A matcher that does not normalize the arguments.
-    var chillMatcher = new PatMatcher(false, UnaryOperator.identity());
+    var chillMatcher = new PatMatcher.NoMeta(UnaryOperator.identity());
     for (int i = 0, size = matchings.size(); i < size; i++) apply(i, chillMatcher);
   }
 

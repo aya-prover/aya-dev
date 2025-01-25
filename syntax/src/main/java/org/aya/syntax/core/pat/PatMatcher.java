@@ -11,30 +11,21 @@ import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
-public final class PatMatcher extends MatcherBase {
-  private final boolean inferMeta;
+public abstract class PatMatcher extends MatcherBase {
   private final @NotNull FreezableMutableList<Term> matched = FreezableMutableList.create();
 
-  /**
-   * @param inferMeta whether infer the PatMetaTerm
-   */
-  public PatMatcher(boolean inferMeta, @NotNull UnaryOperator<Term> pre) {
-    super(pre);
-    this.inferMeta = inferMeta;
-  }
-
-  @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) {
-    onMatchBind(matched);
-  }
-  private void onMatchBind(@NotNull Term matched) { this.matched.append(matched); }
+  public PatMatcher(@NotNull UnaryOperator<Term> pre) { super(pre); }
+  @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) { onMatchBind(matched); }
+  protected void onMatchBind(@NotNull Term matched) { this.matched.append(matched); }
 
   /// @return a substitution of corresponding bindings of {@param pats} if success.
-  /// @apiNote The binding order is the same as [#collectVariables]
+  /// @apiNote The binding order is the same as [Pat#collectVariables]
   /// @see State
   public @NotNull Result<ImmutableSeq<Term>, State> apply(
     @NotNull ImmutableSeq<Pat> pats,
@@ -60,18 +51,6 @@ public final class PatMatcher extends MatcherBase {
     }
   }
 
-  @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) throws MatcherBase.Failure {
-    var maybeMeta = realSolution(term);
-    if (maybeMeta instanceof MetaPatTerm(var meta)) {
-      if (inferMeta) {
-        var bindsMetas = doSolveMeta(pat, meta);
-        bindsMetas.forEach(this::onMatchBind);
-      } else throw new MatcherBase.Failure(State.Stuck);
-    } else {
-      match(pat, maybeMeta);
-    }
-  }
-
   private static @NotNull Term realSolution(@NotNull MetaPatTerm term) {
     Pat pat = term.meta();
     while (pat instanceof Pat.Meta meta && meta.solution().get() instanceof Pat notNullPat) pat = notNullPat;
@@ -89,5 +68,25 @@ public final class PatMatcher extends MatcherBase {
     meta.solution().set(boroboroPat);
 
     return eater.mouth().toImmutableSeq();
+  }
+
+  public static final class InferMeta extends PatMatcher {
+    public InferMeta(@NotNull UnaryOperator<Term> pre) { super(pre); }
+    @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) throws MatcherBase.Failure {
+      var maybeMeta = realSolution(term);
+      if (maybeMeta instanceof MetaPatTerm(var meta)) {
+        var bindsMetas = doSolveMeta(pat, meta);
+        bindsMetas.forEach(this::onMatchBind);
+      } else {
+        match(pat, maybeMeta);
+      }
+    }
+  }
+
+  public static final class NoMeta extends PatMatcher {
+    public NoMeta(@NotNull UnaryOperator<Term> pre) { super(pre); }
+    @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) {
+      Panic.unreachable();
+    }
   }
 }

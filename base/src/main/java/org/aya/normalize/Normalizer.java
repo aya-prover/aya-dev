@@ -193,7 +193,7 @@ public final class Normalizer implements UnaryOperator<Term> {
     boolean orderIndependent, BiFunction<ImmutableSeq<Term>, Term, Term> onSuccess
   ) {
     for (var matchy : clauses) {
-      var matcher = new PatMatcher(false, this);
+      var matcher = new PatMatcher.NoMeta(this);
       switch (matcher.apply(matchy.patterns(), args)) {
         case Result.Err(var st) -> {
           if (!orderIndependent && st == Stuck) return null;
