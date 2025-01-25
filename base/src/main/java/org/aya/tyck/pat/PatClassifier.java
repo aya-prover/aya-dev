@@ -53,13 +53,13 @@ public record PatClassifier(
   }
 
   public static @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> classify(
-    @NotNull SeqView<? extends Pat.@NotNull Preclause<?>> clauses,
+    @NotNull SeqView<ImmutableSeq<Pat>> freePats,
     @NotNull SeqView<Param> telescope, @NotNull AbstractTycker tycker,
     @NotNull SourcePos pos
   ) {
     var classifier = new PatClassifier(tycker, pos);
-    var cl = classifier.classifyN(ImmutableSeq.empty(), telescope, clauses
-      .mapIndexed((i, clause) -> new Indexed<>(clause.pats().view(), i))
+    var cl = classifier.classifyN(ImmutableSeq.empty(), telescope, freePats
+      .mapIndexed((i, clause) -> new Indexed<>(clause.view(), i))
       .toImmutableSeq(), 4);
     var p = cl.partition(c -> c.cls().isEmpty());
     var missing = p.component1();

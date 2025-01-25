@@ -128,7 +128,8 @@ public record StmtTycker(
               if (!hasLhsError) {
                 var rawParams = signature.params();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
-                var classes = PatClassifier.classify(patResult.clauses().view(),
+                var classes = PatClassifier.classify(
+                  patResult.clauses().view().map(Pat.Preclause::pats),
                   rawParams.view(), tycker, fnDecl.sourcePos());
                 var absurds = patResult.absurdPrefixCount();
                 coreBody.classes = classes.map(cls -> cls.ignoreAbsurd(absurds));
@@ -271,14 +272,15 @@ public record StmtTycker(
       if (lhsResult.hasError()) {
         return;
       }
-      wellPats = lhsResult.clause().pats();
+      var patWithTypeBound = Pat.collectVariables(lhsResult.freePats().view());
+      wellPats = patWithTypeBound.component2();
       tycker.setLocalCtx(lhsResult.localCtx());
       lhsResult.addLocalLet(ownerBinds, tycker);
       // Here we don't use wellPats but instead a "freePats" because we want them to be bound
       freeDataCall = new DataCall(dataDef, 0, lhsResult.freePats().map(PatToTerm::visit));
 
       var allTypedBinds = Pat.collectBindings(wellPats.view());
-      ownerBinds = lhsResult.allBinds();
+      ownerBinds = patWithTypeBound.component1().toImmutableSeq();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
       ownerTelePos = ownerBinds.map(LocalVar::definition);
       ownerTele = allTypedBinds.map(Param::implicitize);
