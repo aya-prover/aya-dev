@@ -11,7 +11,6 @@ import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,16 +28,14 @@ public final class PatMatcher extends MatcherBase {
     this.inferMeta = inferMeta;
   }
 
-  @Override protected void onMatchBind(LocalVar bind, @NotNull Term matched) {
+  @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) {
     onMatchBind(matched);
   }
   private void onMatchBind(@NotNull Term matched) { this.matched.append(matched); }
 
-  /**
-   * @return a substitution of corresponding bindings of {@param pats} if success.
-   * @apiNote The binding order is the same as {@link Pat#collectVariables}
-   * @see State
-   */
+  /// @return a substitution of corresponding bindings of {@param pats} if success.
+  /// @apiNote The binding order is the same as [#collectVariables]
+  /// @see State
   public @NotNull Result<ImmutableSeq<Term>, State> apply(
     @NotNull ImmutableSeq<Pat> pats,
     @NotNull ImmutableSeq<Term> terms
@@ -63,7 +60,7 @@ public final class PatMatcher extends MatcherBase {
     }
   }
 
-  @Override protected void solve(@NotNull Pat pat, @NotNull MetaPatTerm term) throws MatcherBase.Failure {
+  @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) throws MatcherBase.Failure {
     var maybeMeta = realSolution(term);
     if (maybeMeta instanceof MetaPatTerm(var meta)) {
       if (inferMeta) {
@@ -75,7 +72,7 @@ public final class PatMatcher extends MatcherBase {
     }
   }
 
-  public static @NotNull Term realSolution(@NotNull MetaPatTerm term) {
+  private static @NotNull Term realSolution(@NotNull MetaPatTerm term) {
     Pat pat = term.meta();
     while (pat instanceof Pat.Meta meta && meta.solution().get() instanceof Pat notNullPat) pat = notNullPat;
     return PatToTerm.visit(pat);

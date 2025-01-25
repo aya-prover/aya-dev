@@ -12,7 +12,6 @@ import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +32,7 @@ public abstract class MatcherBase {
           // case UntypedBind -> onMatchBind(term);
         }
       }
-      case Pat.Bind(var bind, _) -> onMatchBind(bind, term);
+      case Pat.Bind bind -> onMatchBind(bind, term);
       case Pat.Con con -> {
         switch (pre.apply(term)) {
           case ConCallLike kon -> {
@@ -41,7 +40,7 @@ public abstract class MatcherBase {
             matchMany(con.args(), kon.conArgs());
             // ^ arguments for data should not be matched
           }
-          case MetaPatTerm metaPatTerm -> solve(pat, metaPatTerm);
+          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
@@ -51,7 +50,7 @@ public abstract class MatcherBase {
             match(l, ll);
             match(r, rr);
           }
-          case MetaPatTerm metaPatTerm -> solve(pat, metaPatTerm);
+          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
@@ -70,8 +69,8 @@ public abstract class MatcherBase {
       }
     }
   }
-  protected abstract void solve(@NotNull Pat pat, MetaPatTerm metaPatTerm) throws Failure;
-  protected abstract void onMatchBind(LocalVar bind, @NotNull Term matched);
+  protected abstract void onMetaPat(@NotNull Pat pat, MetaPatTerm metaPatTerm) throws Failure;
+  protected abstract void onMatchBind(Pat.Bind bind, @NotNull Term matched);
   /**
    * @see #match(Pat, Term)
    */
