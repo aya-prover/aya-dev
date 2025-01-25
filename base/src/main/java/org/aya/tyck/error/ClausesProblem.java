@@ -87,7 +87,7 @@ public sealed interface ClausesProblem extends Problem {
 
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<PatClass.Seq<Term>> errs
+    @NotNull ImmutableSeq<? extends PatClass.Seq<Term, ?>> errs
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var cases = Doc.vcat(errs.map(err ->

@@ -109,7 +109,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     public @NotNull WorkerResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
 
-      ImmutableSeq<PatClass.Seq<Term>> classes;
+      ImmutableSeq<PatClass.Seq<Term, Pat>> classes;
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
         classes = PatClassifier.classify(
@@ -124,6 +124,7 @@ public final class ClauseTycker implements Problematic, Stateful {
               var curCls = currentClasses.get(0);
               var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
               curLhs.asSubst.let().putAll(lets.let());
+              curLhs.freePatsStore.set(curCls.pat());
             }
           }
         }

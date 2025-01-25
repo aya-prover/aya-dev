@@ -145,13 +145,13 @@ public sealed interface Pat {
   }
 
   record Con(
-    @NotNull ConDefLike ref,
     @Override @NotNull ImmutableSeq<Pat> args,
     @NotNull ConCallLike.Head head
   ) implements Pat {
+    public @NotNull ConDefLike ref() { return head.ref(); }
     public @NotNull Con update(@NotNull ImmutableSeq<Pat> args, @NotNull ConCallLike.Head head) {
       return this.args.sameElements(args, true) && head == this.head
-        ? this : new Con(ref, args, head);
+        ? this : new Con(args, head);
     }
 
     @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
@@ -248,11 +248,11 @@ public sealed interface Pat {
       return update((DataCall) type.bindTele(vars.view()));
     }
     @Override public @NotNull Con makeZero() {
-      return new Pat.Con(zero, ImmutableSeq.empty(), makeHead(zero));
+      return new Pat.Con(ImmutableSeq.empty(), makeHead(zero));
     }
 
     @Override public @NotNull Con makeSuc(@NotNull Pat pat) {
-      return new Pat.Con(suc, ImmutableSeq.of(pat), makeHead(suc));
+      return new Pat.Con(ImmutableSeq.of(pat), makeHead(suc));
     }
     private ConCallLike.@NotNull Head makeHead(@NotNull ConDefLike conRef) {
       return new ConCallLike.Head(conRef, 0, ImmutableSeq.empty());

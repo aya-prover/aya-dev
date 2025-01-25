@@ -52,7 +52,7 @@ public record PatClassifier(
     return subst.appended(term);
   }
 
-  public static @NotNull ImmutableSeq<PatClass.Seq<Term>> classify(
+  public static @NotNull ImmutableSeq<PatClass.Seq<Term, Pat>> classify(
     @NotNull SeqView<ImmutableSeq<Pat>> freePats,
     @NotNull SeqView<Param> telescope, @NotNull AbstractTycker tycker,
     @NotNull SourcePos pos
@@ -68,7 +68,7 @@ public record PatClassifier(
     return p.component2();
   }
 
-  @Override public @NotNull ImmutableSeq<PatClass.One<Term>> classify1(
+  @Override public @NotNull ImmutableSeq<PatClass.One<Term, Pat>> classify1(
     @NotNull ImmutableSeq<Term> subst, @NotNull Param param,
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   ) {
@@ -94,7 +94,7 @@ public record PatClassifier(
             term -> new Param("2", rT.apply(term), true), matches, fuel);
           // ^ the licit shall not matter
           return classes.map(args -> new PatClass.One<>(new TupTerm(
-            args.term1(), args.term2()), args.cls()));
+            args.term1(), args.term2()), new Pat.Tuple(args.pat1(), args.pat2()), args.cls()));
         }
       }
       // THE BIG GAME
@@ -115,17 +115,17 @@ public record PatClassifier(
           // There is only literals and bind patterns, no constructor patterns
           var classes = ImmutableSeq.from(lits.collect(
               Collectors.groupingBy(i -> i.pat().repr())).values())
-            .map(i -> new PatClass.One<>(PatToTerm.visit(i.getFirst().pat()),
+            .map(i -> simple(i.getFirst().pat(),
               Indexed.indices(Seq.wrapJava(i)).concat(binds)));
-          var ml = MutableArrayList.<PatClass.One<Term>>create(classes.size() + 1);
+          var ml = MutableArrayList.<PatClass.One<Term, Pat>>create(classes.size() + 1);
           ml.appendAll(classes);
           var maxInt = lits.max(Comparator.comparing(p -> p.pat().repr())).pat();
-          var onePlus = maxInt.map(x -> x + 1).toTerm();
-          ml.append(new PatClass.One<>(onePlus, binds));
+          var onePlus = maxInt.map(x -> x + 1);
+          ml.append(simple(onePlus, binds));
           return ml.toImmutableSeq();
         }
 
-        var buffer = MutableList.<PatClass.One<Term>>create();
+        var buffer = MutableList.<PatClass.One<Term, Pat>>create();
         var missedCon = 0;
         // For all constructors,
         for (var con : body) {
@@ -147,23 +147,29 @@ public record PatClassifier(
             if (conTele.isEmpty() || fuel1 <= 0) {
               var err = new ErrorTerm(Doc.plain("..."), false);
               var missingCon = new ConCall(conHead, conTele.isEmpty() ? ImmutableSeq.empty() : ImmutableSeq.of(err));
-              buffer.append(new PatClass.One<>(missingCon, ImmutableIntSeq.empty()));
+              buffer.append(new PatClass.One<>(missingCon, Pat.Misc.Absurd, ImmutableIntSeq.empty()));
               continue;
             }
           }
           var classes = classifyN(subst, conTele.view(), matches, fuel1);
           buffer.appendAll(classes.map(args ->
-            new PatClass.One<>(new ConCall(conHead, args.term()), args.cls())));
+            new PatClass.One<>(new ConCall(conHead, args.term()),
+              new Pat.Con(args.pat(), conHead), args.cls())));
         }
         // If we missed all constructors, we combine the cases to a catch-all case
         if (missedCon >= body.size()) {
-          return ImmutableSeq.of(new PatClass.One<>(param.toFreshTerm(), ImmutableIntSeq.empty()));
+          var freshPat = param.toFreshPat();
+          return ImmutableSeq.of(simple(freshPat, ImmutableIntSeq.empty()));
         }
         return buffer.toImmutableSeq();
       }
       default -> { }
     }
-    return ImmutableSeq.of(new PatClass.One<>(param.toFreshTerm(), Indexed.indices(clauses)));
+    return ImmutableSeq.of(simple(param.toFreshPat(), Indexed.indices(clauses)));
+  }
+
+  private static PatClass.@NotNull One<Term, Pat> simple(Pat pat, @NotNull ImmutableIntSeq cls) {
+    return new PatClass.One<>(PatToTerm.visit(pat), pat, cls);
   }
 
   private static @Nullable Indexed<SeqView<Pat>> matches(

@@ -14,25 +14,30 @@ public interface PatClass {
     return cls().mapToObj(seq::get);
   }
 
-  record Two<T>(
-    @NotNull T term1, T term2,
+  record Two<A, B>(
+    @NotNull A term1, A term2,
+    @NotNull B pat1, B pat2,
     @Override @NotNull ImmutableIntSeq cls
   ) implements PatClass { }
 
-  record One<T>(@NotNull T term, @Override @NotNull ImmutableIntSeq cls) implements PatClass {
-    public @NotNull Two<T> pair(T term1) {
-      return new Two<>(term1, term, cls);
-    }
+  record One<A, B>(@NotNull A term, @NotNull B pat, @Override @NotNull ImmutableIntSeq cls) implements PatClass {
+    public @NotNull Two<A, B> pair(One<A, B> one) { return new Two<>(one.term, term, one.pat, pat, cls); }
   }
 
-  record Seq<T>(@NotNull ImmutableSeq<T> term, @Override @NotNull ImmutableIntSeq cls) implements PatClass {
-    public @NotNull Seq<T> prepend(T elem) {
-      return new Seq<>(term.prepended(elem), cls);
+  record Seq<A, B>(
+    @NotNull ImmutableSeq<A> term, @NotNull ImmutableSeq<B> pat,
+    @Override @NotNull ImmutableIntSeq cls
+  ) implements PatClass {
+    public Seq(@NotNull ImmutableIntSeq cls) {
+      this(ImmutableSeq.empty(), ImmutableSeq.empty(), cls);
+    }
+    public @NotNull Seq<A, B> prepend(One<A, B> one) {
+      return new Seq<>(term.prepended(one.term), pat.prepended(one.pat), cls);
     }
 
-    public @NotNull PatClass.Seq<T> ignoreAbsurd(@Nullable ImmutableIntSeq absurdPrefixCount) {
+    public @NotNull PatClass.Seq<A, B> ignoreAbsurd(@Nullable ImmutableIntSeq absurdPrefixCount) {
       if (absurdPrefixCount == null) return this;
-      return new Seq<>(term, cls.map(i -> i - absurdPrefixCount.get(i)));
+      return new Seq<>(term, pat, cls.map(i -> i - absurdPrefixCount.get(i)));
     }
   }
 }

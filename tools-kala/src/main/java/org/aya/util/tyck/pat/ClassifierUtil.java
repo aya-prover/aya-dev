@@ -19,17 +19,16 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
   Param subst(Subst subst, Param param);
   Pat normalize(Pat pat);
   Subst add(Subst subst, Term term);
-  @ApiStatus.Internal @NotNull ImmutableSeq<PatClass.One<Term>> classify1(
+  @ApiStatus.Internal @NotNull ImmutableSeq<PatClass.One<Term, Pat>> classify1(
     @NotNull Subst subst, @NotNull Param param,
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   );
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Seq<Term>> classifyN(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Seq<Term, Pat>> classifyN(
     @NotNull Subst subst, @NotNull SeqView<Param> telescope,
     @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
   ) {
-    if (telescope.isEmpty()) return ImmutableSeq.of(new PatClass.Seq<>(
-      ImmutableSeq.empty(), Indexed.indices(clauses)));
+    if (telescope.isEmpty()) return ImmutableSeq.of(new PatClass.Seq<>(Indexed.indices(clauses)));
     var first = telescope.getFirst();
     var cls = classify1(subst, subst(subst, first),
       clauses.mapIndexed((ix, it) ->
@@ -40,10 +39,10 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         telescope.drop(1),
         subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
-        .map(args -> args.prepend(subclauses.term())));
+        .map(args -> args.prepend(subclauses)));
   }
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Two<Term>> classify2(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Two<Term, Pat>> classify2(
     @NotNull Subst subst, @NotNull Param tele1, @NotNull Function<Term, Param> tele2,
     @NotNull ImmutableSeq<Indexed<Pair<Pat, Pat>>> clauses, int fuel
   ) {
@@ -54,7 +53,7 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         tele2.apply(subclauses.term()),
         subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().component2(), it.ix()))), fuel)
-        .map(args -> args.pair(subclauses.term())));
+        .map(args -> args.pair(subclauses)));
   }
 
   static <T extends PatClass> MutableSeq<MutableList<T>> firstMatchDomination(
