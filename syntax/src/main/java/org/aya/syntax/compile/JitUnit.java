@@ -9,7 +9,7 @@ import org.aya.syntax.ref.QPath;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
-public abstract sealed class JitUnit permits JitDef, JitMatchy {
+public abstract class JitUnit {
   private CompiledAya metadata;
 
   public @NotNull final CompiledAya metadata() {
