@@ -9,6 +9,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.value.MutableValue;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
 import org.aya.normalize.Finalizer;
@@ -66,14 +67,13 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /**
-   * @param result     the result according to the pattern tycking, the
-   *                   {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
-   *                   {@link org.aya.tyck.pat.iter.Pusheenable.Const}
-   * @param paramSubst substitution for parameter, in the same ordeer as parameter.
-   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #addLocalLet}
-   * @param freePats   a free version of the patterns.
-   *                   In most cases you want to use {@code clause.pats} instead
-   * @param asSubst    substitution of the {@code as} patterns
+   * @param result        the result according to the pattern tycking, the
+   *                      {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
+   *                      {@link org.aya.tyck.pat.iter.Pusheenable.Const}
+   * @param paramSubst    substitution for parameter, in the same ordeer as parameter.
+   *                      See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #dumpLocalLetTo}
+   * @param freePatsStore a free version of the patterns, see {@link #freePats()}
+   * @param asSubst       substitution of the {@code as} patterns
    * @implNote If there are fewer pats than parameters, there will be some pats inserted,
    * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
    * of the body, because we check the body against to {@link #result}.
@@ -82,15 +82,16 @@ public final class ClauseTycker implements Problematic, Stateful {
   public record LhsResult(
     @NotNull LocalCtx localCtx,
     @NotNull Term result, int unpiParamSize,
-    @NotNull ImmutableSeq<Pat> freePats,
+    @NotNull MutableValue<ImmutableSeq<Pat>> freePatsStore,
     @Override @NotNull SourcePos sourcePos,
     @Nullable WithPos<Expr> body,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
+    public @NotNull ImmutableSeq<Pat> freePats() { return freePatsStore.get(); }
     @Contract(mutates = "param2")
-    public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
       exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
@@ -117,8 +118,12 @@ public final class ClauseTycker implements Problematic, Stateful {
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           for (int i = 0; i < usages.size(); i++) {
-            if (usages.get(i).sizeEquals(1)) {
-              // refine
+            var currentClasses = usages.get(i);
+            if (currentClasses.sizeEquals(1)) {
+              var curLhs = lhs.get(i);
+              var curCls = currentClasses.get(0);
+              var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
+              curLhs.asSubst.let().putAll(lets.let());
             }
           }
         }
@@ -214,7 +219,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
       return new LhsResult(ctx, instRepi, userUnpiSize,
-        wellTypedPats, clause.sourcePos, patIter.exprBody(),
+        MutableValue.create(wellTypedPats), clause.sourcePos, patIter.exprBody(),
         patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
     }
   }
@@ -232,7 +237,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;
-      var pats = result.freePats;
+      var pats = result.freePats();
       if (bodyExpr == null) wellBody = null;
       else if (result.hasError) {
         // In case the patterns are malformed, do not check the body
@@ -243,14 +248,14 @@ public final class ClauseTycker implements Problematic, Stateful {
       } else {
         // the localCtx will be restored after exiting [subscoped]e
         exprTycker.setLocalCtx(result.localCtx);
-        result.addLocalLet(teleBinds, exprTycker);
+        result.dumpLocalLetTo(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
         wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
         wellBody = zonker.zonk(wellBody);
 
         // bind all pat bindings
-        var patWithTypeBound = Pat.collectVariables(result.freePats.view());
+        var patWithTypeBound = Pat.collectVariables(result.freePats().view());
         pats = patWithTypeBound.component2();
         var patBindTele = patWithTypeBound.component1();
 
