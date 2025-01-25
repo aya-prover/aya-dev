@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -76,9 +76,8 @@ public record YouTrack(
         .flatMapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
           .map(matching -> new Info(i, matching)));
       for (int i = 1, size = contents.size(); i < size; i++) {
-        var ix = i;
         try (var _ = tycker.subscope()) {
-          unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
+          unifyClauses(type, contents.get(i - 1), contents.get(i), doms);
         }
       }
     });

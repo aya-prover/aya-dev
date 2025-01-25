@@ -130,13 +130,13 @@ public record StmtTycker(
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
                 var classes = PatClassifier.classify(patResult.clauses().view(),
                   rawParams.view(), tycker, fnDecl.sourcePos());
-                coreBody.classes = classes;
+                var absurds = patResult.absurdPrefixCount();
+                coreBody.classes = classes.map(cls -> cls.ignoreAbsurd(absurds));
                 confluence.check(patResult, signature.result(), classes);
               }
             } else {
               var patResult = clauseTycker.check(fnDecl.entireSourcePos());
-              coreBody = new FnClauseBody(patResult.clauses());
-              coreBody.classes = patResult.classes();
+              coreBody = patResult.wellTyped();
               hasLhsError = patResult.hasLhsError();
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }

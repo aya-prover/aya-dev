@@ -192,8 +192,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
       ImmutableSeq.empty(), clauses);
     var wellClauses = clauseTycker.check(exprPos)
-      .clauses()
-      .map(WithPos::data);
+      .wellTyped().clauses.map(WithPos::data);
 
     // Find free occurrences
     var usages = new FreeCollector();
