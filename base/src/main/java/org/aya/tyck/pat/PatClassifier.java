@@ -1,6 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
+
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
@@ -8,6 +11,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.generic.term.DTKind;
@@ -34,9 +38,6 @@ import org.aya.util.tyck.pat.Indexed;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 public record PatClassifier(
   @NotNull AbstractTycker delegate, @NotNull SourcePos pos
@@ -175,9 +176,9 @@ public record PatClassifier(
     };
   }
 
-  public static int[] firstMatchDomination(
+  public static <T> MutableSeq<MutableList<PatClass<T>>> firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull Problematic reporter, @NotNull ImmutableSeq<? extends PatClass<?>> classes
+    @NotNull Problematic reporter, @NotNull ImmutableSeq<PatClass<T>> classes
   ) {
     return ClassifierUtil.firstMatchDomination(clauses, (pos, i) -> reporter.fail(
       new ClausesProblem.FMDomination(i, pos)), classes);

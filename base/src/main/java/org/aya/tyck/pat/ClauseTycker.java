@@ -126,7 +126,11 @@ public final class ClauseTycker implements Problematic, Stateful {
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
-          // refinePatterns(lhs, usages, classes);
+          for (int i = 0; i < usages.size(); i++) {
+            if (usages.get(i).sizeEquals(1)) {
+              // refine
+            }
+          }
         }
       } else {
         classes = null;
