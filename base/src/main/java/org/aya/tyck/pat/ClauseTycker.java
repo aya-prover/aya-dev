@@ -2,8 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntArray;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
 import org.aya.normalize.Finalizer;
@@ -11,6 +16,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.pat.TypeEraser;
@@ -31,11 +37,10 @@ import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.jetbrains.annotations.Nullable;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
@@ -45,6 +50,18 @@ public final class ClauseTycker implements Problematic, Stateful {
   public record TyckResult(@NotNull ImmutableSeq<Pat.Preclause<Term>> clauses, boolean hasLhsError) {
     public @NotNull ImmutableSeq<WithPos<Term.Matching>> wellTyped() {
       return clauses.flatMap(Pat.Preclause::lift);
+    }
+    /// @return null if there is no absurd pattern
+    public @Nullable ImmutableIntSeq absurdPrefixCount() {
+      var ints = new int[clauses.size()];
+      var count = 0;
+      for (int i = 0; i < clauses.size(); i++) {
+        var clause = clauses.get(i);
+        if (clause.expr() == null) count++;
+        ints[i] = count;
+      }
+      if (count == 0) return null;
+      return ImmutableIntArray.Unsafe.wrap(ints);
     }
   }
 
@@ -89,6 +106,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
+  public record WorkerResult(FnClauseBody wellTyped, boolean hasLhsError) { }
   public record Worker(
     @NotNull ClauseTycker parent,
     @NotNull ImmutableSeq<Param> telescope,
@@ -97,20 +115,31 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> elims,
     @NotNull ImmutableSeq<Pattern.Clause> clauses
   ) {
-    public @NotNull TyckResult check(@NotNull SourcePos overallPos) {
+    public @NotNull WorkerResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
 
-      if (lhs.noneMatch(r -> r.hasError)) {
-        var classes = PatClassifier.classify(
+      ImmutableSeq<PatClass<ImmutableSeq<Term>>> classes;
+      var hasError = lhs.anyMatch(LhsResult::hasError);
+      if (!hasError) {
+        classes = PatClassifier.classify(
           lhs.view().map(LhsResult::clause),
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           // refinePatterns(lhs, usages, classes);
         }
+      } else {
+        classes = null;
       }
 
-      return parent.checkAllRhs(teleVars, lhs.map(cl -> cl.mapPats(new TypeEraser())));
+      var map = lhs.map(cl -> cl.mapPats(new TypeEraser()));
+      var rhs = parent.checkAllRhs(teleVars, map, hasError);
+      var wellTyped = new FnClauseBody(rhs.wellTyped());
+      if (classes != null) {
+        var absurds = rhs.absurdPrefixCount();
+        wellTyped.classes = classes.map(cl -> cl.ignoreAbsurd(absurds));
+      }
+      return new WorkerResult(wellTyped, hasError);
     }
 
     public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
@@ -120,7 +149,8 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
 
     public @NotNull TyckResult checkNoClassify() {
-      return parent.checkAllRhs(teleVars, checkAllLhs());
+      var lhsResults = checkAllLhs();
+      return parent.checkAllRhs(teleVars, lhsResults, lhsResults.anyMatch(LhsResult::hasError));
     }
   }
 
@@ -138,9 +168,9 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   public @NotNull TyckResult checkAllRhs(
     @NotNull ImmutableSeq<LocalVar> vars,
-    @NotNull ImmutableSeq<LhsResult> lhsResults
+    @NotNull ImmutableSeq<LhsResult> lhsResults,
+    boolean lhsError
   ) {
-    var lhsError = lhsResults.anyMatch(LhsResult::hasError);
     var rhsResult = lhsResults.map(x -> checkRhs(vars, x));
 
     // inline terms in rhsResult
@@ -188,7 +218,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         // It would be nice if we have a SourcePos here
         new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck),
           x.type()));
-      
+
       var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
       var patWithTypeBound = Pat.collectVariables(wellTypedPats.view());
 

@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.primitive;
+
+import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableMap;
@@ -24,14 +29,8 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.util.Pair;
 import org.aya.util.RepoLike;
 import org.aya.util.error.Panic;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.function.BiPredicate;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
 
 /**
  * @author kiva
@@ -123,10 +122,10 @@ public record ShapeMatcher(
     return switch (new Pair<>(shape.body(), def.body())) {
       case Pair(Either.Left(var termShape), Either.Left(var term)) ->
         matchInside(() -> captures.put(shape.name(), def.ref()), () -> matchTerm(termShape, term));
-      case Pair(Either.Right(var clauseShapes), Either.Right(var clauses)) -> {
+      case Pair(Either.Right(var clauseShapes), Either.Right(var body)) -> {
         var mode = def.is(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
         yield matchInside(() -> captures.put(shape.name(), def.ref()), () ->
-          matchMany(mode, clauseShapes, clauses.view().map(WithPos::data), this::matchClause));
+          matchMany(mode, clauseShapes, body.matchingsView(), this::matchClause));
       }
       default -> false;
     };

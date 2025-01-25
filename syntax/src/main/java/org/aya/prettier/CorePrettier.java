@@ -2,11 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+import static org.aya.prettier.Tokens.*;
+
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Either;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
@@ -30,15 +36,9 @@ import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
-import static org.aya.prettier.Tokens.*;
 
 /**
  * It's the pretty printer.
@@ -205,7 +205,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
-      case MatchCall(JitMatchy _, var discriminant, var captures) -> {
+      case MatchCall(JitMatchy _, var discriminant, _) -> {
         var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
@@ -282,10 +282,11 @@ public class CorePrettier extends BasePrettier<Term> {
           term(Outer.Free, def.result().instTeleVar(tele.view().map(ParamLike::ref)))
         });
         var line1sep = Doc.sepNonEmpty(line1);
-        yield def.body().fold(
-          term -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst))),
-          clauses -> Doc.vcat(line1sep,
-            Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit)))));
+        yield switch (def.body()) {
+          case Either.Left(var term) -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst)));
+          case Either.Right(var body) -> Doc.vcat(line1sep,
+            Doc.nest(2, visitClauses(body.matchingsView(), tele.view().map(ParamLike::explicit))));
+        };
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),
         defVar(field.ref()),

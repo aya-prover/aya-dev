@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
+
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.EnumSet;
+import java.util.function.Consumer;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -8,21 +13,15 @@ import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.call.FnCall;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.util.EnumSet;
-import java.util.function.Consumer;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -83,19 +82,17 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       }
       case Either.Right(var clauses) -> {
         var ser = new PatternSerializer(argExprs, onStuckCon, unit.is(Modifier.Overlap));
-        ser.serialize(builder, clauses.view()
-          .map(WithPos::data)
-          .map(matching -> new PatternSerializer.Matching(
-              matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
-              var result = serializeTermUnderTele(
-                builder0,
-                matching.body(),
-                patSer.result.ref(),
-                bindSize
-              );
-              builder0.returnWith(result);
-            })
-          ).toImmutableSeq());
+        ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
+            matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
+            var result = serializeTermUnderTele(
+              builder0,
+              matching.body(),
+              patSer.result.ref(),
+              bindSize
+            );
+            builder0.returnWith(result);
+          })
+        ).toImmutableSeq());
       }
     }
   }

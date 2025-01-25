@@ -2,7 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import kala.collection.AbstractSeqView;
+import java.util.Comparator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
@@ -50,10 +53,6 @@ import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -192,9 +191,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       ImmutableSeq.fill(discriminant.size(), i ->
         new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
       ImmutableSeq.empty(), clauses);
-    var wellClauses = clauseTycker.check(exprPos)
-      .wellTyped()
-      .map(WithPos::data);
+    var wellClauses = clauseTycker.check(exprPos).wellTyped().matchingsView();
 
     // Find free occurrences
     var usages = new FreeCollector();
@@ -205,7 +202,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var captures = usages.collected();
     var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
       new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
-      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view()))));
+      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view())))
+        .toImmutableSeq());
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
     return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));
