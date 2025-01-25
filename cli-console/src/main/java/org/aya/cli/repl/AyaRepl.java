@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -19,14 +24,10 @@ import org.aya.repl.*;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.util.reporter.Problem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.builtins.Completers;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public static int start(
@@ -81,6 +82,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.CHANGE_NORM_MODE,
       ReplCommands.TOGGLE_PRETTY,
       ReplCommands.SHOW_TYPE,
+      ReplCommands.SHOW_MCT,
       ReplCommands.SHOW_INFO,
       ReplCommands.SHOW_PARSE_TREE,
       ReplCommands.CHANGE_PP_WIDTH,
@@ -150,11 +152,11 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     ));
   }
 
-  public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
+  @Contract(pure = true) public @NotNull Doc render(@NotNull AyaDocile ayaDocile) {
     return ayaDocile.toDoc(prettierOptions());
   }
 
-  public @NotNull AyaPrettierOptions prettierOptions() {
+  @Contract(pure = true) public @NotNull AyaPrettierOptions prettierOptions() {
     return config.literatePrettier.prettierOptions;
   }
 

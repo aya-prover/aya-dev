@@ -18,12 +18,10 @@ import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
 import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.core.def.AnyDef;
-import org.aya.syntax.core.def.ConDefLike;
-import org.aya.syntax.core.def.MemberDefLike;
-import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.def.*;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
+import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +49,21 @@ public interface ReplCommands {
       var type = repl.replCompiler.computeType(code.code(), repl.config.normalizeMode);
       return type != null ? new Result(Output.stdout(repl.render(type)), true)
         : Result.err("Failed to get expression type", true);
+    }
+  };
+
+  @NotNull Command SHOW_MCT = new Command(ImmutableSeq.of("case-tree"), "Show the case tree of a pattern-matching function") {
+    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
+      var resolved = repl.replCompiler.parseToAnyVar(code.code);
+      if (!(resolved instanceof AnyDefVar anyDefVar)) return Result.err("Not a valid reference", true);
+      if (!(anyDefVar instanceof DefVar<?, ?> defVar)) return Result.err("JIT-compiled defs are unsupported", true);
+      if (!(defVar.core instanceof FnDef fn)) return Result.err("Not a function", true);
+      if (!(fn.body() instanceof Either.Right(var body))) return Result.err("Not a pattern-matching function", true);
+      var classes = body.classes.map(cl ->
+        Doc.sep(Doc.commaList(cl.term().view().map(t -> t.toDoc(repl.prettierOptions()))),
+          Doc.symbol("=>"),
+          Doc.commaList(cl.cls().mapToObj(Doc::ordinal))));
+      return new Result(Output.stdout(Doc.vcat(classes)), true);
     }
   };
 
