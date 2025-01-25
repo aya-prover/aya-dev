@@ -2,12 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
+import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static org.aya.prettier.Tokens.*;
+
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableEnumSet;
 import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
 import org.aya.generic.Constants;
@@ -25,18 +30,11 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
-import org.aya.util.IterableUtil;
 import org.aya.util.binop.Assoc;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Function;
-
-import static org.aya.prettier.Tokens.*;
 
 /**
  * @author ice1000, kiva
@@ -118,6 +116,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         }
         yield checkParen(outer, Doc.sep(prelude), Outer.BinOp);
       }
+      case Expr.ClauseLam(var cls) -> checkParen(outer, visitLambda(cls), Outer.BinOp);
       case Expr.Hole expr -> {
         if (!expr.explicit()) yield Doc.symbol(Constants.ANONYMOUS_PREFIX);
         var filling = expr.filling();
@@ -278,7 +277,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     return Doc.join(delim, patterns.view().map(p -> pattern(p.map(WithPos::data), outer)));
   }
 
-  public Doc matchy(@NotNull Pattern.Clause match) {
+  public Doc clause(@NotNull Pattern.Clause match) {
     var doc = visitMaybeConPatterns(match.patterns, Outer.Free, Doc.plain(", "));
     return match.expr.map(e -> Doc.sep(doc, FN_DEFINED_AS, term(Outer.Free, e))).getOrDefault(doc);
   }
@@ -417,7 +416,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
   private Doc visitClauses(@NotNull ImmutableSeq<Pattern.Clause> clauses) {
     if (clauses.isEmpty()) return Doc.empty();
     return Doc.vcat(clauses.view()
-      .map(this::matchy)
+      .map(this::clause)
       .map(doc -> Doc.sep(BAR, doc)));
   }
 
@@ -488,5 +487,12 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     @NotNull Outer outer, boolean showImplicits
   ) {
     return visitCalls(assoc, fn, args.map(x -> new Arg<>(x.term().data(), x.explicit())), outer, showImplicits);
+  }
+
+  private @NotNull Doc visitLambda(@NotNull Pattern.Clause clause) {
+    var prelude = MutableList.of(LAMBDA);
+    var clauseDoc = clause(clause);
+    prelude.append(Doc.braced(clauseDoc));
+    return Doc.sep(prelude);
   }
 }

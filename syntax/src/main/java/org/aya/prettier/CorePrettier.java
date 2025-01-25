@@ -2,12 +2,19 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
+import java.util.EnumSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+import static org.aya.prettier.Tokens.*;
+
 import com.intellij.openapi.util.text.StringUtil;
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
+import kala.control.Either;
 import kala.value.LazyValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Modifier;
@@ -28,7 +35,6 @@ import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
-import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GenerateKind.Basic;
@@ -37,17 +43,9 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.Arg;
 import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.EnumSet;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
-import static org.aya.prettier.Tokens.*;
 
 /**
  * It's the pretty printer.
@@ -214,7 +212,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
-      case MatchCall(JitMatchy _, var discriminant, var captures) -> {
+      case MatchCall(JitMatchy _, var discriminant, _) -> {
         var deltaDoc = discriminant.map(x -> term(Outer.Free, x));
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
@@ -282,10 +280,11 @@ public class CorePrettier extends BasePrettier<Term> {
       case FnDef def -> {
         var absTele = TyckDef.defSignature(def);
         yield visitFn(defVar(def.ref()), def.modifiers(), absTele,
-          (prefix, subst) -> def.body().fold(
-            term -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view()))),
-            clauses -> Doc.vcat(prefix,
-              Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), def.telescope().view().map(Param::explicit))))));
+          (prefix, subst) -> switch (def.body()) {
+          case Either.Left(var term) -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view())));
+          case Either.Right(var body) -> Doc.vcat(prefix,
+            Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(ParamLike::explicit))));
+        });
       }
       case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
-import org.aya.syntax.core.pat.Pat;
+import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -17,7 +17,6 @@ import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
-import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,19 +65,13 @@ public record YouTrack(
       doms.add(new ClausesProblem.Domination(lhsIx + 1, rhsIx + 1, matching.sourcePos()));
   }
 
-  public void check(
-    @NotNull ClauseTycker.TyckResult clauses, @NotNull Term type,
-    @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> mct
-  ) {
+  public void check(@NotNull FnClauseBody body, @NotNull Term type) {
     var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
-    mct.forEach(results -> {
-      var contents = results.cls()
-        .flatMapToObj(i -> Pat.Preclause.lift(clauses.clauses().get(i))
-          .map(matching -> new Info(i, matching)));
+    body.classes.forEach(results -> {
+      var contents = results.cls().mapToObj(i -> new Info(i, body.clauses.get(i)));
       for (int i = 1, size = contents.size(); i < size; i++) {
-        var ix = i;
         try (var _ = tycker.subscope()) {
-          unifyClauses(type, contents.get(ix - 1), contents.get(ix), doms);
+          unifyClauses(type, contents.get(i - 1), contents.get(i), doms);
         }
       }
     });

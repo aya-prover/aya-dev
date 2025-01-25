@@ -1,6 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
+
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -18,16 +22,13 @@ import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.Arg;
 import org.aya.util.BinOpElem;
 import org.aya.util.ForLSP;
 import org.aya.util.error.*;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
@@ -72,8 +73,7 @@ public sealed interface Expr extends AyaDocile {
   }
 
   /// @param filling  the inner expr of goal
-  /// @param explicit whether the hole is a type-directed programming goal or
-  ///                 a to-be-solved by tycking hole.
+  /// @param explicit whether the hole is a type-directed programming goal or a to-be-solved by tycking hole.
   record Hole(
     boolean explicit,
     @Nullable WithPos<Expr> filling,
@@ -132,6 +132,34 @@ public sealed interface Expr extends AyaDocile {
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
+  }
+
+  record ClauseLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
+    public static boolean canBeBind(@NotNull Arg<WithPos<Pattern>> pat) {
+      var thePat = pat.term().data();
+      return thePat instanceof Pattern.Bind || thePat == Pattern.CalmFace.INSTANCE;
+    }
+
+    public ClauseLam {
+      assert clause.patterns.isNotEmpty();
+    }
+
+    public @NotNull Expr.ClauseLam update(@NotNull Pattern.Clause clause) {
+      return clause == this.clause ? this : new ClauseLam(clause);
+    }
+
+    public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns() { return clause.patterns; }
+    public @NotNull WithPos<Expr> body() { return clause.expr.get(); }
+
+    @Override public @NotNull Expr.ClauseLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return descent(f, PosedUnaryOperator.identity());
+    }
+
+    public @NotNull Expr.ClauseLam descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
+      return update(clause.descent(f, g));
+    }
+
+    @Override public void forEach(@NotNull PosedConsumer<Expr> f) { clause.forEach(f, (_, _) -> { }); }
   }
 
   record Lambda(

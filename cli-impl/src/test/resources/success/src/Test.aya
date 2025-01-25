@@ -105,3 +105,13 @@ module Issue1249 {
   variable A B : Type
   def transp (p : A = B) (a : A) : B => coe 0 1 p a
 }
+
+module Issue94 {
+  def absurd (A : Type) : Empty -> A => fn ()
+  def obvious : Fn (a : Sig Nat ** Nat) -> Nat => fn { (a, b) => a + b }
+}
+
+// relies on match elim
+// open inductive IsZero Nat
+// | zero => ack
+// def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }

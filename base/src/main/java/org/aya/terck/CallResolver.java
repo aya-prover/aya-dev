@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
+
+import java.util.function.Consumer;
 
 import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
@@ -22,13 +24,10 @@ import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.error.WithPos;
 import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.CallMatrix;
 import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
 
 /**
  * Resolve calls and build call graph of recursive functions,
@@ -139,8 +138,8 @@ public record CallResolver(
   }
 
   public void check() {
-    var clauses = caller.body().getRightValue();
-    clauses.view().map(WithPos::data).forEach(this);
+    var clauses = caller.body().getRightValue().matchingsView();
+    clauses.forEach(this);
   }
 
   @Override public void accept(@NotNull Term.Matching matching) {

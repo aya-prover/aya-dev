@@ -11,7 +11,7 @@ public final class Tokens {
   private Tokens() {
   }
 
-  public static final Doc LAMBDA = Doc.styled(KEYWORD, Doc.symbol("\\"));
+  public static final Doc LAMBDA = Doc.styled(KEYWORD, Doc.symbol("fn"));
   public static final Doc ARROW = Doc.symbol("->");
   public static final Doc LARROW = Doc.symbol("<-");
   public static final Doc FN_DEFINED_AS = Doc.symbol("=>");

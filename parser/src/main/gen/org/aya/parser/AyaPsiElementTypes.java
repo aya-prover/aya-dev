@@ -55,7 +55,9 @@ public interface AyaPsiElementTypes {
   IElementType IDIOM_ATOM = new AyaPsiElementType("IDIOM_ATOM");
   IElementType IDIOM_BLOCK = new AyaPsiElementType("IDIOM_BLOCK");
   IElementType IMPORT_CMD = new AyaPsiElementType("IMPORT_CMD");
-  IElementType LAMBDA_EXPR = new AyaPsiElementType("LAMBDA_EXPR");
+  IElementType LAMBDA_0_EXPR = new AyaPsiElementType("LAMBDA_0_EXPR");
+  IElementType LAMBDA_1_EXPR = new AyaPsiElementType("LAMBDA_1_EXPR");
+  IElementType LAMBDA_2_EXPR = new AyaPsiElementType("LAMBDA_2_EXPR");
   IElementType LAMBDA_TELE = new AyaPsiElementType("LAMBDA_TELE");
   IElementType LAMBDA_TELE_BINDER = new AyaPsiElementType("LAMBDA_TELE_BINDER");
   IElementType LET_BIND = new AyaPsiElementType("LET_BIND");
