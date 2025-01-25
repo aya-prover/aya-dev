@@ -165,10 +165,12 @@ public record PatClassifier(
       }
       default -> { }
     }
-    return ImmutableSeq.of(simple(param.toFreshPat(), Indexed.indices(clauses)));
+    return ImmutableSeq.of(simple(clauses.sizeEquals(1)
+      ? clauses.get(0).pat()
+      : param.toFreshPat(), Indexed.indices(clauses)));
   }
 
-  private static PatClass.@NotNull One<Term, Pat> simple(Pat pat, @NotNull ImmutableIntSeq cls) {
+  private static @NotNull PatClass.One<Term, Pat> simple(Pat pat, @NotNull ImmutableIntSeq cls) {
     return new PatClass.One<>(PatToTerm.visit(pat), pat, cls);
   }
 

@@ -2,14 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import kala.value.MutableValue;
+import kala.collection.mutable.MutableSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
 import org.aya.normalize.Finalizer;
@@ -67,13 +69,13 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /**
-   * @param result        the result according to the pattern tycking, the
-   *                      {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
-   *                      {@link org.aya.tyck.pat.iter.Pusheenable.Const}
-   * @param paramSubst    substitution for parameter, in the same ordeer as parameter.
-   *                      See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #dumpLocalLetTo}
-   * @param freePatsStore a free version of the patterns, see {@link #freePats()}
-   * @param asSubst       substitution of the {@code as} patterns
+   * @param result     the result according to the pattern tycking, the
+   *                   {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
+   *                   {@link org.aya.tyck.pat.iter.Pusheenable.Const}
+   * @param paramSubst substitution for parameter, in the same ordeer as parameter.
+   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #dumpLocalLetTo}
+   * @param freePats   a free version of the patterns, see {@link #freePats()}
+   * @param asSubst    substitution of the {@code as} patterns
    * @implNote If there are fewer pats than parameters, there will be some pats inserted,
    * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
    * of the body, because we check the body against to {@link #result}.
@@ -82,14 +84,13 @@ public final class ClauseTycker implements Problematic, Stateful {
   public record LhsResult(
     @NotNull LocalCtx localCtx,
     @NotNull Term result, int unpiParamSize,
-    @NotNull MutableValue<ImmutableSeq<Pat>> freePatsStore,
+    @NotNull ImmutableSeq<Pat> freePats,
     @Override @NotNull SourcePos sourcePos,
     @Nullable WithPos<Expr> body,
     @NotNull ImmutableSeq<Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
-    public @NotNull ImmutableSeq<Pat> freePats() { return freePatsStore.get(); }
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
@@ -124,8 +125,15 @@ public final class ClauseTycker implements Problematic, Stateful {
               var curLhs = lhs.get(i);
               var curCls = currentClasses.get(0);
               var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
-              lets.let().forEach(curLhs.asSubst::put);
-              curLhs.freePatsStore.set(curCls.pat());
+              var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
+              var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
+              newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
+              curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
+              var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
+              lets.let().let().forEach(curLhs.asSubst::put);
+              lhs.set(i, new LhsResult(
+                sibling, lets.apply(curLhs.result), curLhs.unpiParamSize, newPatterns,
+                curLhs.sourcePos, curLhs.body, paramSubst, curLhs.asSubst, curLhs.hasError));
             }
           }
         }
@@ -142,7 +150,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       return new WorkerResult(wellTyped, hasError);
     }
 
-    public @NotNull ImmutableSeq<LhsResult> checkAllLhs() {
+    public @NotNull MutableSeq<LhsResult> checkAllLhs() {
       return parent.checkAllLhs(() ->
           SignatureIterator.make(telescope, unpi, teleVars, elims),
         clauses.view(), unpi.params().size());
@@ -159,16 +167,17 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   // region tycking
 
-  public @NotNull ImmutableSeq<LhsResult> checkAllLhs(
+  public @NotNull MutableSeq<LhsResult> checkAllLhs(
     @NotNull Supplier<SignatureIterator> sigIterFactory,
     @NotNull SeqView<Pattern.Clause> clauses, int userUnpiSize
   ) {
-    return clauses.map(c -> checkLhs(sigIterFactory.get(), c, true, userUnpiSize)).toImmutableSeq();
+    return MutableSeq.from(clauses.map(c ->
+      checkLhs(sigIterFactory.get(), c, true, userUnpiSize)));
   }
 
   public @NotNull TyckResult checkAllRhs(
     @NotNull ImmutableSeq<LocalVar> vars,
-    @NotNull ImmutableSeq<LhsResult> lhsResults,
+    @NotNull Seq<LhsResult> lhsResults,
     boolean lhsError
   ) {
     var rhsResult = lhsResults.map(x -> checkRhs(vars, x));
@@ -189,6 +198,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     boolean isFn, int userUnpiSize
   ) {
     var tycker = newPatternTycker(sigIter, sigIter.elims != null);
+    // PatClassifier relies on the subscope behavior happened here
     try (var _ = exprTycker.subscope()) {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
@@ -221,7 +231,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
       return new LhsResult(ctx, instRepi, userUnpiSize,
-        MutableValue.create(wellTypedPats), clause.sourcePos, patIter.exprBody(),
+        wellTypedPats, clause.sourcePos, patIter.exprBody(),
         patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
     }
   }
