@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public abstract class PatMatcher extends MatcherBase {
-  private final @NotNull FreezableMutableList<Term> matched = FreezableMutableList.create();
+  protected final @NotNull FreezableMutableList<Term> matched = FreezableMutableList.create();
 
   public PatMatcher(@NotNull UnaryOperator<Term> pre) { super(pre); }
   @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) { onMatchBind(matched); }
@@ -34,18 +34,6 @@ public abstract class PatMatcher extends MatcherBase {
     try {
       matchMany(pats, terms);
       return Result.ok(matched.toImmutableSeq());
-    } catch (MatcherBase.Failure e) {
-      return Result.err(e.reason);
-    }
-  }
-
-  public @NotNull Result<Term, State> apply(
-    @NotNull Term.Matching matching,
-    @NotNull ImmutableSeq<Term> terms
-  ) {
-    try {
-      matchMany(matching.patterns(), terms);
-      return Result.ok(matching.body().instTele(matched.freeze().view()));
     } catch (MatcherBase.Failure e) {
       return Result.err(e.reason);
     }
@@ -85,8 +73,23 @@ public abstract class PatMatcher extends MatcherBase {
 
   public static final class NoMeta extends PatMatcher {
     public NoMeta(@NotNull UnaryOperator<Term> pre) { super(pre); }
-    @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) {
-      Panic.unreachable();
+    @Override protected void onMetaPat(@NotNull Pat pat, @NotNull MetaPatTerm term) throws Failure {
+      switch (realSolution(term)) {
+        case MetaPatTerm _ -> throw new Failure(State.Stuck);
+        case Term maybeMeta -> match(pat, maybeMeta);
+      }
+    }
+
+    public @NotNull Term apply(
+      @NotNull Term.Matching matching,
+      @NotNull ImmutableSeq<Term> terms
+    ) {
+      try {
+        matchMany(matching.patterns(), terms);
+        return matching.body().instTele(matched.freeze().view());
+      } catch (MatcherBase.Failure e) {
+        return Panic.unreachable();
+      }
     }
   }
 }

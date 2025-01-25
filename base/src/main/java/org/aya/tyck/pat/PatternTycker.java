@@ -498,7 +498,7 @@ public class PatternTycker implements Problematic, Stateful {
       case ConDef.Delegate conDef -> {
         var pats = conDef.core().pats;
         if (pats.isNotEmpty()) {
-          var matcher = new PatMatcher.NoMeta(new Normalizer(state));
+          var matcher = new PatMatcher.InferMeta(new Normalizer(state));
           yield matcher.apply(pats, type.args());
         }
 
