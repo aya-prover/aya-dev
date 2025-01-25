@@ -115,3 +115,23 @@ module Issue94 {
 // open inductive IsZero Nat
 // | zero => ack
 // def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
+
+module Issue243 {
+  open import data::vec using (Vec, [], :>)
+  open import data::maybe using (Maybe, just, nothing)
+  def last {A : Type} {n : Nat} (Vec (suc n) A) : A
+  | x :> [] => x
+  | _ :> xs => last xs
+
+  def MM (A : Type) => Maybe (Maybe A)
+  variable A : Type
+
+  def FF (MM A) : Type
+  | just nothing => Nat
+  | _ => suc zero = 1
+
+  def peigei (a : MM A) : FF a
+  | just (just _) => refl
+  | nothing => refl
+  | _ => 233
+}
