@@ -11,94 +11,28 @@ import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.TupTerm;
-import org.aya.syntax.core.term.call.ConCall;
-import org.aya.syntax.core.term.call.ConCallLike;
-import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.util.error.Panic;
+import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
-public final class PatMatcher {
+public final class PatMatcher extends MatcherBase {
   private final boolean inferMeta;
-  private final @NotNull UnaryOperator<Term> pre;
   private final @NotNull FreezableMutableList<Term> matched = FreezableMutableList.create();
 
   /**
    * @param inferMeta whether infer the PatMetaTerm
    */
   public PatMatcher(boolean inferMeta, @NotNull UnaryOperator<Term> pre) {
+    super(pre);
     this.inferMeta = inferMeta;
-    this.pre = pre;
   }
 
-  public static class Failure extends Throwable {
-    public final State reason;
-
-    private Failure(State reason) {
-      super(null, null, false, false);
-      this.reason = reason;
-    }
+  @Override protected void onMatchBind(LocalVar bind, @NotNull Term matched) {
+    onMatchBind(matched);
   }
-
-  /**
-   * Match {@param term} against to {@param pat}
-   * <p>
-   * Produces substitution of corresponding bindings of {@param pat} in {@link #matched} if success
-   */
-  private void match(@NotNull Pat pat, @NotNull Term term) throws Failure {
-    switch (pat) {
-      // We stuck on absurd patterns, as if this is reached, the term must have an empty type,
-      // which we should be expecting to refute, not to compute on it.
-      case Pat.Misc misc -> {
-        switch (misc) {
-          case Absurd -> throw new Failure(State.Stuck);
-          // case UntypedBind -> onMatchBind(term);
-        }
-      }
-      case Pat.Bind _ -> onMatchBind(term);
-      case Pat.Con con -> {
-        switch (pre.apply(term)) {
-          case ConCallLike kon -> {
-            if (!con.ref().equals(kon.ref())) throw new Failure(State.Mismatch);
-            matchMany(con.args(), kon.conArgs());
-            // ^ arguments for data should not be matched
-          }
-          case MetaPatTerm metaPatTerm -> solve(pat, metaPatTerm);
-          default -> throw new Failure(State.Stuck);
-        }
-      }
-      case Pat.Tuple(var l, var r) -> {
-        switch (pre.apply(term)) {
-          case TupTerm(var ll, var rr) -> {
-            match(l, ll);
-            match(r, rr);
-          }
-          case MetaPatTerm metaPatTerm -> solve(pat, metaPatTerm);
-          default -> throw new Failure(State.Stuck);
-        }
-      }
-      // You can't match with a tycking pattern!
-      case Pat.Meta _ -> throw new Panic("Illegal pattern: Pat.Meta");
-      case Pat.ShapedInt lit -> {
-        switch (pre.apply(term)) {
-          case IntegerTerm rit -> {
-            if (lit.repr() != rit.repr()) throw new Failure(State.Mismatch);
-          }
-          case ConCall con -> match(lit.constructorForm(), con);
-          // we only need to handle matching both literals, otherwise we just rematch it
-          // with constructor form to reuse the code as much as possible (like solving MetaPats).
-          case Term t -> match(lit.constructorForm(), t);
-        }
-      }
-    }
-  }
-
-  private void onMatchBind(@NotNull Term matched) {
-    this.matched.append(matched);
-  }
+  private void onMatchBind(@NotNull Term matched) { this.matched.append(matched); }
 
   /**
    * @return a substitution of corresponding bindings of {@param pats} if success.
@@ -112,7 +46,7 @@ public final class PatMatcher {
     try {
       matchMany(pats, terms);
       return Result.ok(matched.toImmutableSeq());
-    } catch (Failure e) {
+    } catch (MatcherBase.Failure e) {
       return Result.err(e.reason);
     }
   }
@@ -124,29 +58,18 @@ public final class PatMatcher {
     try {
       matchMany(matching.patterns(), terms);
       return Result.ok(matching.body().instTele(matched.freeze().view()));
-    } catch (Failure e) {
+    } catch (MatcherBase.Failure e) {
       return Result.err(e.reason);
     }
   }
 
-  /**
-   * @see #match(Pat, Term)
-   */
-  private void matchMany(
-    @NotNull ImmutableSeq<Pat> pats,
-    @NotNull ImmutableSeq<Term> terms
-  ) throws Failure {
-    assert pats.sizeEquals(terms) : "List size mismatch 😱";
-    pats.forEachWithChecked(terms, this::match);
-  }
-
-  private void solve(@NotNull Pat pat, @NotNull MetaPatTerm term) throws Failure {
+  @Override protected void solve(@NotNull Pat pat, @NotNull MetaPatTerm term) throws MatcherBase.Failure {
     var maybeMeta = realSolution(term);
     if (maybeMeta instanceof MetaPatTerm(var meta)) {
       if (inferMeta) {
         var bindsMetas = doSolveMeta(pat, meta);
         bindsMetas.forEach(this::onMatchBind);
-      } else throw new Failure(State.Stuck);
+      } else throw new MatcherBase.Failure(State.Stuck);
     } else {
       match(pat, maybeMeta);
     }
