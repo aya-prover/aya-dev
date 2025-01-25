@@ -109,7 +109,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     public @NotNull WorkerResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
 
-      ImmutableSeq<PatClass<ImmutableSeq<Term>>> classes;
+      ImmutableSeq<PatClass.Seq<Term>> classes;
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
         classes = PatClassifier.classify(

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class FnClauseBody {
   public final ImmutableSeq<WithPos<Term.Matching>> clauses;
-  public ImmutableSeq<PatClass<ImmutableSeq<Term>>> classes;
+  public ImmutableSeq<PatClass.Seq<Term>> classes;
   public FnClauseBody(ImmutableSeq<WithPos<Term.Matching>> clauses) { this.clauses = clauses; }
   public @NotNull SeqView<Term.Matching> matchingsView() {
     return clauses.view().map(WithPos::data);

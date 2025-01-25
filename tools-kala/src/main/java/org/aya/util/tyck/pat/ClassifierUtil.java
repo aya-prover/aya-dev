@@ -19,16 +19,16 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
   Param subst(Subst subst, Param param);
   Pat normalize(Pat pat);
   Subst add(Subst subst, Term term);
-  @ApiStatus.Internal @NotNull ImmutableSeq<PatClass<Term>> classify1(
+  @ApiStatus.Internal @NotNull ImmutableSeq<PatClass.One<Term>> classify1(
     @NotNull Subst subst, @NotNull Param param,
     @NotNull ImmutableSeq<Indexed<Pat>> clauses, int fuel
   );
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> classifyN(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Seq<Term>> classifyN(
     @NotNull Subst subst, @NotNull SeqView<Param> telescope,
     @NotNull ImmutableSeq<Indexed<SeqView<Pat>>> clauses, int fuel
   ) {
-    if (telescope.isEmpty()) return ImmutableSeq.of(new PatClass<>(
+    if (telescope.isEmpty()) return ImmutableSeq.of(new PatClass.Seq<>(
       ImmutableSeq.empty(), Indexed.indices(clauses)));
     var first = telescope.getFirst();
     var cls = classify1(subst, subst(subst, first),
@@ -40,10 +40,10 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         telescope.drop(1),
         subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().drop(1), it.ix()))), fuel)
-        .map(args -> args.map(ls -> ls.prepended(subclauses.term()))));
+        .map(args -> args.prepend(subclauses.term())));
   }
 
-  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass<Pair<Term, Term>>> classify2(
+  @ApiStatus.Internal default @NotNull ImmutableSeq<PatClass.Two<Term>> classify2(
     @NotNull Subst subst, @NotNull Param tele1, @NotNull Function<Term, Param> tele2,
     @NotNull ImmutableSeq<Indexed<Pair<Pat, Pat>>> clauses, int fuel
   ) {
@@ -54,15 +54,15 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         tele2.apply(subclauses.term()),
         subclauses.extract(clauses.map(it ->
           new Indexed<>(it.pat().component2(), it.ix()))), fuel)
-        .map(args -> args.map(ls -> new Pair<>(subclauses.term(), ls))));
+        .map(args -> args.pair(subclauses.term())));
   }
 
-  static <T> MutableSeq<MutableList<PatClass<T>>> firstMatchDomination(
+  static <T extends PatClass> MutableSeq<MutableList<T>> firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull ObjIntConsumer<SourcePos> report, @NotNull ImmutableSeq<PatClass<T>> classes
+    @NotNull ObjIntConsumer<SourcePos> report, @NotNull ImmutableSeq<T> classes
   ) {
     // StackOverflow says they're initialized to zero
-    var numbers = MutableSeq.fill(clauses.size(), _ -> MutableList.<PatClass<T>>create());
+    var numbers = MutableSeq.fill(clauses.size(), _ -> MutableList.<T>create());
     classes.forEach(results ->
       numbers.get(results.cls().min()).append(results));
     // ^ The minimum is not always the first one

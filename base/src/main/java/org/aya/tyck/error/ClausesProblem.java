@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -87,7 +87,7 @@ public sealed interface ClausesProblem extends Problem {
 
   record MissingCase(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<PatClass<ImmutableSeq<Term>>> errs
+    @NotNull ImmutableSeq<PatClass.Seq<Term>> errs
   ) implements ClausesProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var cases = Doc.vcat(errs.map(err ->
