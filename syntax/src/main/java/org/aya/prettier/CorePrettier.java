@@ -220,7 +220,7 @@ public class CorePrettier extends BasePrettier<Term> {
   private @NotNull Doc visitDT(@NotNull Outer outer, DepTypeTerm.UnpiNamed pair, Doc kw, Doc operator) {
     var params = pair.names().zip(pair.params(), RichParam::ofExplicit);
     var body = pair.body().instTeleVar(params.view().map(ParamLike::ref));
-    var teleDoc = visitTele(params, body, FindUsage::free);
+    var teleDoc = visitTele(params, body);
     var cod = term(Outer.Codomain, body);
     var doc = Doc.sep(kw, teleDoc, operator, cod);
     pair.names().forEach(nameGen::unbindName);
@@ -296,8 +296,8 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  @Override public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
-    return visitTele(telescope, null, FindUsage::free);
+  public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope, @Nullable Term body) {
+    return visitTele(telescope, body, FindUsage::free);
   }
 
   public @NotNull Doc def(@NotNull JitDef unit) {
@@ -337,11 +337,12 @@ public class CorePrettier extends BasePrettier<Term> {
     line1.append(name);
 
     var tele = enrich(telescope);
-    line1.append(visitTele(tele));
-    line1.append(HAS_TYPE);
-
     var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
-    line1.append(term(Outer.Free, telescope.result(subst)));
+    var result = telescope.result(subst);
+
+    line1.append(visitTele(tele, result));
+    line1.append(HAS_TYPE);
+    line1.append(term(Outer.Free, result));
 
     var line1Doc = Doc.sepNonEmpty(line1);
     return cont.apply(line1Doc, subst);
@@ -349,7 +350,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
   /// @param selfTele self tele of the constructor, unlike [JitCon], the data args/owner args should be supplied.
   private @NotNull Doc visitConRhs(@NotNull Doc name, boolean coerce, @NotNull AbstractTele selfTele) {
-    return Doc.sepNonEmpty(coe(coerce), name, visitTele(enrich(selfTele)));
+    return Doc.sepNonEmpty(coe(coerce), name, visitTele(enrich(selfTele), null));
   }
 
   private @NotNull Doc visitCon(
@@ -382,7 +383,7 @@ public class CorePrettier extends BasePrettier<Term> {
     var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
 
     var line1 = Doc.sepNonEmpty(KW_DATA, name,
-      visitTele(richDataTele),
+      visitTele(richDataTele, null),
       HAS_TYPE,
       term(Outer.Free, telescope.result(dataArgs)));
     var consDoc = dataDef.body().view().map(this::def);
@@ -454,7 +455,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
   private @NotNull VisitTele visitTele(@NotNull AbstractTele tele) {
     var richTele = enrich(tele);
-    var teleDoc = visitTele(richTele);
+    var teleDoc = visitTele(richTele, null);
 
     return new VisitTele(teleDoc, LazyValue.of(() -> {
       var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
