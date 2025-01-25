@@ -9,7 +9,7 @@ In file $FILE:10:0 ->
      │ ╰─────────────────╯
 
 Error: I'm unsure if there should be a case for constructor
-         | suc m ⇒ fsuc (_ : Fin+1 ^0)
+         | suc m ⇒ fsuc (_ : Fin+1 m)
        because I got stuck on the index unification of type
          Fin+1 m
 

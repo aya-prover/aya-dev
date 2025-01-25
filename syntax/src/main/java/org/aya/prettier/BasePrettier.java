@@ -1,6 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
+
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.ToIntBiFunction;
+
+import static org.aya.prettier.Tokens.KW_PRIM;
 
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -29,12 +35,6 @@ import org.aya.util.error.Panic;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.ToIntBiFunction;
-
-import static org.aya.prettier.Tokens.KW_PRIM;
 
 public abstract class BasePrettier<Term extends AyaDocile> {
   public static @NotNull Doc coreArgsDoc(@NotNull PrettierOptions options, @NotNull SeqView<? extends AyaDocile> self) {
@@ -191,11 +191,9 @@ public abstract class BasePrettier<Term extends AyaDocile> {
         ? Doc.parened(withEx) : withEx;
   }
 
-  /**
-   * Pretty-print a telescope in a dumb (but conservative) way.
-   *
-   * @see #visitTele(Seq, AyaDocile, Usage)
-   */
+  /// Pretty-print a telescope in a dumb (but conservative) way.
+  ///
+  /// @see #visitTele(Seq, AyaDocile, Usage)
   public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
     return visitTele(telescope, null, (_, _) -> 1);
   }
@@ -211,7 +209,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
    * @param altF7 a function for finding usages.
    * @see #visitTele(Seq)
    */
-  public @NotNull Doc visitTele(
+  public final @NotNull Doc visitTele(
     @NotNull Seq<? extends ParamLike<Term>> telescope,
     @Nullable Term body, @NotNull Usage<Term, LocalVar> altF7
   ) {
@@ -256,8 +254,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
 
   private Doc mutableListNames(MutableList<? extends ParamLike<?>> names, ParamLike<?> param) {
     // We HAVE TO collect the results, since {names} is mutable, therefore {names.view()} becomes mutable.
-    var namesDocs = names.view().map(ParamLike::nameDoc)
-      .toImmutableSeq();
+    var namesDocs = names.map(ParamLike::nameDoc);
     return param.toDoc(Doc.sep(namesDocs), options);
   }
 
@@ -281,7 +278,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     return coerce ? Doc.styled(KEYWORD, "coerce") : Doc.empty();
   }
 
-  static @NotNull Doc primDoc(DefVar<?, ?> ref) {
+  static @NotNull Doc primDoc(AnyDefVar ref) {
     return Doc.sep(KW_PRIM, refVar(ref));
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
@@ -28,7 +28,7 @@ public final class DataDef implements TopLevelDef {
 
   public static final class Delegate extends TyckAnyDef<DataDef> implements DataDefLike {
     public Delegate(@NotNull DefVar<DataDef, ?> ref) { super(ref); }
-    @Override public @NotNull ImmutableSeq<ConDefLike>
+    @Override public @NotNull ImmutableSeq<ConDef.Delegate>
     body() { return ref.core.body.map(x -> new ConDef.Delegate(x.ref)); }
   }
 }
