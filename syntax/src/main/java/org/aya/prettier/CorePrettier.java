@@ -340,7 +340,7 @@ public class CorePrettier extends BasePrettier<Term> {
     var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
     var result = telescope.result(subst);
 
-    line1.append(visitTele(tele, result));
+    line1.append(visitTele(tele));
     line1.append(HAS_TYPE);
     line1.append(term(Outer.Free, result));
 

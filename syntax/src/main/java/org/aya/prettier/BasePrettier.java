@@ -222,10 +222,10 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     for (int i = 1; i < telescope.size(); i++) {
       var param = telescope.get(i);
       if (!Objects.equals(param.type(), last.type())) {
-        if (body != null && names.sizeEquals(1)) {
+        if (names.sizeEquals(1)) {
           var ref = names.getFirst();
-          var used = telescope.sliceView(i, telescope.size())
-            .map(ParamLike::type).appended(body)
+          var prefix = telescope.sliceView(i, telescope.size()).map(ParamLike::type);
+          var used = (body == null ? prefix : prefix.appended(body))
             .anyMatch(p -> altF7.applyAsInt(p, ref.ref()) > 0);
           // We omit the name if there is no usage.
           if (!used) buf.append(justType(last, Outer.ProjHead));
