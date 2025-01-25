@@ -115,3 +115,10 @@ module Issue94 {
 // open inductive IsZero Nat
 // | zero => ack
 // def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
+
+module Issue243 {
+  open import data::vec
+  def last {A : Type} {n : Nat} (Vec (suc n) A) : A
+  | x :> [] => x
+  | _ :> xs => last xs
+}

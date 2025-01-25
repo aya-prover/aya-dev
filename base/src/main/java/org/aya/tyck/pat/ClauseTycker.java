@@ -125,6 +125,8 @@ public final class ClauseTycker implements Problematic, Stateful {
               var curLhs = lhs.get(i);
               var curCls = currentClasses.get(0);
               var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
+              if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
+                continue;
               var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
               var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
               newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
