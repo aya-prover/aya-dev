@@ -132,7 +132,7 @@ public record StmtTycker(
                   rawParams.view(), tycker, fnDecl.sourcePos());
                 var absurds = patResult.absurdPrefixCount();
                 coreBody.classes = classes.map(cls -> cls.ignoreAbsurd(absurds));
-                confluence.check(patResult, signature.result(), classes);
+                confluence.check(coreBody, signature.result());
               }
             } else {
               var patResult = clauseTycker.check(fnDecl.entireSourcePos());
