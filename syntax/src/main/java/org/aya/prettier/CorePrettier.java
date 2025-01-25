@@ -311,7 +311,14 @@ public class CorePrettier extends BasePrettier<Term> {
       case JitCon jitCon -> {
         var dummyOwnerArgs = ImmutableSeq.<Term>fill(jitCon.ownerTeleSize(), i -> new FreeTerm(jitCon.telescopeName(i)));
         var rhs = visitConRhs(nameDoc, true && false, jitCon.inst(dummyOwnerArgs));
-        yield Doc.sep(BAR, COMMENT_COMPILED_PATTERN, FN_DEFINED_AS, rhs);
+        var wholeClause = rhs;
+
+        if (jitCon.dataRef().signature().telescopeSize() > 0) {
+          // may have pattern, but we don't know!
+          wholeClause = Doc.sep(COMMENT_COMPILED_PATTERN, FN_DEFINED_AS, rhs);
+        }
+
+        yield Doc.sep(BAR, wholeClause);
       }
       case JitData jitData -> visitData(jitData);
       case JitMember jitMember -> visitMember(nameDoc, jitMember);
@@ -389,7 +396,7 @@ public class CorePrettier extends BasePrettier<Term> {
       term(Outer.Free, telescope.result(dataArgs)));
     var consDoc = dataDef.body().view().map(this::def);
 
-    return Doc.cat(line1, Doc.nest(2, Doc.vcat(consDoc)));
+    return Doc.vcat(line1, Doc.nest(2, Doc.vcat(consDoc)));
   }
 
   /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
