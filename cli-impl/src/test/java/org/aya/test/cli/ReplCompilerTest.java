@@ -21,6 +21,7 @@ import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
+import org.aya.util.error.Global;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ public class ReplCompilerTest {
   @BeforeEach public void setup() {
     compiler.getContext().clear();
     compiler.imports.clear();
+    Global.NO_RANDOM_NAME = true;
   }
 
   @Test public void library() throws IOException {
@@ -42,12 +44,15 @@ public class ReplCompilerTest {
     assertNotNull(findContext("VecCore::vnil"));
     var zero = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::zero"));
     assertNotNull(zero);
-    assertEquals("| /* compiled pattern */ ⇒ zero",
-      zero.core().easyToString());
+    assertEquals("| zero", zero.core().easyToString());
 
     var Nat = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::Nat"));
     assertNotNull(Nat);
-    System.out.println(Nat.core().easyToString());
+    assertEquals("""
+      inductive Nat : Type 0
+        | zero
+        | suc (_ : Nat)
+      """.trim(), Nat.core().easyToString());
 
     // Don't be too harsh on the test lib structure, maybe we will change it
     var rootHints = compiler.getContext().giveMeHint(ImmutableSeq.empty());

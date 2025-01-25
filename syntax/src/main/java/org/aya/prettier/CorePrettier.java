@@ -10,6 +10,7 @@ import java.util.function.UnaryOperator;
 import static org.aya.prettier.Tokens.*;
 
 import com.intellij.openapi.util.text.StringUtil;
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
@@ -41,7 +42,6 @@ import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.Arg;
-import org.aya.util.error.Panic;
 import org.aya.util.error.SourcePos;
 import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
@@ -63,10 +63,9 @@ public class CorePrettier extends BasePrettier<Term> {
     return switch (preterm) {
       case FreeTerm(var var) -> varDoc(var);
       case LocalTerm(var idx) -> Doc.plain("^" + idx);
-      case MetaCall term -> {
-        var name = term.ref();
+      case MetaCall(var name, var args) -> {
         var inner = Doc.cat(Doc.plain("?"), varDoc(name));
-        Function<Outer, Doc> factory = o -> visitCoreApp(null, inner, term.args().view(), o, optionImplicit());
+        Function<Outer, Doc> factory = o -> visitCoreApp(null, inner, args.view(), o, optionImplicit());
         if (options.map.get(AyaPrettierOptions.Key.InlineMetas)) yield factory.apply(outer);
         yield Doc.wrap(HOLE_LEFT, HOLE_RIGHT, factory.apply(Outer.Free));
       }
@@ -80,10 +79,8 @@ public class CorePrettier extends BasePrettier<Term> {
       case IntegerTerm shaped -> shaped.repr() == 0
         ? linkLit(0, shaped.zero(), CON)
         : linkLit(shaped.repr(), shaped.suc(), CON);
-      case ListTerm shaped -> {
-        var subterms = shaped.repr().map(x -> term(Outer.Free, x));
-        var nil = shaped.nil();
-        var cons = shaped.cons();
+      case ListTerm(var repr, var nil, var cons, _) -> {
+        var subterms = repr.map(x -> term(Outer.Free, x));
         yield Doc.sep(
           linkListLit(Doc.symbol("["), nil, CON),
           Doc.join(linkListLit(Doc.COMMA, cons, CON), subterms),
@@ -244,8 +241,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private @NotNull Doc visitAccessHead(@NotNull MemberCall term) {
-    return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."),
-      refVar(term.ref()));
+    return Doc.cat(term(Outer.ProjHead, term.of()), Doc.symbol("."), refVar(term.ref()));
   }
 
   public @NotNull Doc pat(@NotNull Pat pat, boolean licit, Outer outer) {
@@ -281,10 +277,10 @@ public class CorePrettier extends BasePrettier<Term> {
         var absTele = TyckDef.defSignature(def);
         yield visitFn(defVar(def.ref()), def.modifiers(), absTele,
           (prefix, subst) -> switch (def.body()) {
-          case Either.Left(var term) -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view())));
-          case Either.Right(var body) -> Doc.vcat(prefix,
-            Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(Param::explicit))));
-        });
+            case Either.Left(var term) -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view())));
+            case Either.Right(var body) -> Doc.vcat(prefix,
+              Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(Param::explicit))));
+          });
       }
       case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
@@ -297,8 +293,11 @@ public class CorePrettier extends BasePrettier<Term> {
     return switch (unit) {
       case JitDef jitDef -> def(jitDef);
       case TyckAnyDef<?> tyckAnyDef -> def(tyckAnyDef.ref.core);
-      default -> Panic.unreachable();
     };
+  }
+
+  @Override public @NotNull Doc visitTele(@NotNull Seq<? extends ParamLike<Term>> telescope) {
+    return visitTele(telescope, null, FindUsage::free);
   }
 
   public @NotNull Doc def(@NotNull JitDef unit) {
@@ -310,7 +309,7 @@ public class CorePrettier extends BasePrettier<Term> {
         Doc.sep(prefix, FN_DEFINED_AS, COMMENT_COMPILED_CODE));
       case JitCon jitCon -> {
         var dummyOwnerArgs = ImmutableSeq.<Term>fill(jitCon.ownerTeleSize(), i -> new FreeTerm(jitCon.telescopeName(i)));
-        var rhs = visitConRhs(nameDoc, true && false, jitCon.inst(dummyOwnerArgs));
+        var rhs = visitConRhs(nameDoc, false, jitCon.inst(dummyOwnerArgs));
         var wholeClause = rhs;
 
         if (jitCon.dataRef().signature().telescopeSize() > 0) {
@@ -339,7 +338,6 @@ public class CorePrettier extends BasePrettier<Term> {
 
     var tele = enrich(telescope);
     line1.append(visitTele(tele));
-
     line1.append(HAS_TYPE);
 
     var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
@@ -350,11 +348,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   /// @param selfTele self tele of the constructor, unlike [JitCon], the data args/owner args should be supplied.
-  private @NotNull Doc visitConRhs(
-    @NotNull Doc name,
-    boolean coerce,
-    @NotNull AbstractTele selfTele
-  ) {
+  private @NotNull Doc visitConRhs(@NotNull Doc name, boolean coerce, @NotNull AbstractTele selfTele) {
     return Doc.sepNonEmpty(coe(coerce), name, visitTele(enrich(selfTele)));
   }
 
@@ -381,16 +375,13 @@ public class CorePrettier extends BasePrettier<Term> {
     }
   }
 
-  private @NotNull Doc visitData(
-    @NotNull DataDefLike dataDef
-  ) {
+  private @NotNull Doc visitData(@NotNull DataDefLike dataDef) {
     var name = defVar(AnyDef.toVar(dataDef));
     var telescope = dataDef.signature();
     var richDataTele = enrich(telescope);
     var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
 
-    var line1 = Doc.sepNonEmpty(KW_DATA,
-      name,
+    var line1 = Doc.sepNonEmpty(KW_DATA, name,
       visitTele(richDataTele),
       HAS_TYPE,
       term(Outer.Free, telescope.result(dataArgs)));
@@ -400,10 +391,7 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
-  private @NotNull Doc visitMember(
-    @NotNull Doc name,
-    @NotNull AbstractTele telescope
-  ) {
+  private @NotNull Doc visitMember(@NotNull Doc name, @NotNull AbstractTele telescope) {
     // TODO: should we pretty print the `self` parameter?
     //       The use of `self` parameter still appears in other parameters.
     var visitTele = visitTele(telescope);
@@ -411,10 +399,7 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.sepNonEmpty(BAR, name, visitTele.tele, HAS_TYPE, visitTele.result.get());
   }
 
-  private @NotNull Doc visitClass(
-    @NotNull Doc name,
-    @NotNull SeqView<Doc> members
-  ) {
+  private @NotNull Doc visitClass(@NotNull Doc name, @NotNull SeqView<Doc> members) {
     return Doc.sepNonEmpty(KW_CLASS, name, Doc.nest(2, Doc.vcat(members)));
   }
 
@@ -449,9 +434,7 @@ public class CorePrettier extends BasePrettier<Term> {
     var richTele = FreezableMutableList.<ParamLike<Term>>create();
 
     for (var i = 0; i < tele.telescopeSize(); ++i) {
-      var binds = richTele.view()
-        .<Term>map(x -> new FreeTerm(x.ref()))
-        .toImmutableSeq();
+      var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
       var type = tele.telescope(i, binds);
       richTele.append(new RichParam(
         new LocalVar(tele.telescopeName(i), SourcePos.NONE, Basic.Pretty),
