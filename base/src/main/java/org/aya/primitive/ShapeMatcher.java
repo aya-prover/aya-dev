@@ -123,10 +123,10 @@ public record ShapeMatcher(
     return switch (new Pair<>(shape.body(), def.body())) {
       case Pair(Either.Left(var termShape), Either.Left(var term)) ->
         matchInside(() -> captures.put(shape.name(), def.ref()), () -> matchTerm(termShape, term));
-      case Pair(Either.Right(var clauseShapes), Either.Right(FnClauseBody(var clauses))) -> {
+      case Pair(Either.Right(var clauseShapes), Either.Right(var body)) -> {
         var mode = def.is(Modifier.Overlap) ? MatchMode.Sub : MatchMode.Eq;
         yield matchInside(() -> captures.put(shape.name(), def.ref()), () ->
-          matchMany(mode, clauseShapes, clauses.view().map(WithPos::data), this::matchClause));
+          matchMany(mode, clauseShapes, body.clauses.view().map(WithPos::data), this::matchClause));
       }
       default -> false;
     };

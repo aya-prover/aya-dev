@@ -3,7 +3,6 @@
 package org.aya.syntax.core.def;
 
 import java.util.EnumSet;
-import java.util.function.Function;
 
 import kala.control.Either;
 import org.aya.generic.Modifier;
@@ -18,11 +17,6 @@ public record FnDef(
   @NotNull Either<Term, FnClauseBody> body
 ) implements TopLevelDef {
   public FnDef { ref.initialize(this); }
-
-  public static <T> Function<Either<Term, FnClauseBody>, T>
-  factory(Function<Either<Term, FnClauseBody>, T> function) {
-    return function;
-  }
 
   public boolean is(@NotNull Modifier mod) { return modifiers.contains(mod); }
   public static final class Delegate extends TyckAnyDef<FnDef> implements FnDefLike {

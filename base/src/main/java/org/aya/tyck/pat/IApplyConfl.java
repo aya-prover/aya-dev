@@ -42,7 +42,7 @@ public record IApplyConfl(
   boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull ExprTycker tycker
 ) {
   public IApplyConfl(@NotNull FnDef def, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
-    this(def, def.body().getRightValue().clauses(), def.is(Modifier.Overlap), pos, tycker);
+    this(def, def.body().getRightValue().clauses, def.is(Modifier.Overlap), pos, tycker);
   }
   public void check() {
     // A matcher that does not normalize the arguments.

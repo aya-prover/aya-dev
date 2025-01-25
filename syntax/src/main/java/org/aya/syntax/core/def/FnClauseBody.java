@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.error.WithPos;
 
-public record FnClauseBody(
-  ImmutableSeq<WithPos<Term.Matching>> clauses
-) {
+public final class FnClauseBody {
+  public final ImmutableSeq<WithPos<Term.Matching>> clauses;
+  public FnClauseBody(ImmutableSeq<WithPos<Term.Matching>> clauses) { this.clauses = clauses; }
 }

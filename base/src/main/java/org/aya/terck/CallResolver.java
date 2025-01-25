@@ -139,7 +139,7 @@ public record CallResolver(
   }
 
   public void check() {
-    var clauses = caller.body().getRightValue().clauses();
+    var clauses = caller.body().getRightValue().clauses;
     clauses.view().map(WithPos::data).forEach(this);
   }
 

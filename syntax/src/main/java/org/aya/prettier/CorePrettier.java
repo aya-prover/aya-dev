@@ -285,8 +285,8 @@ public class CorePrettier extends BasePrettier<Term> {
         var line1sep = Doc.sepNonEmpty(line1);
         yield switch (def.body()) {
           case Either.Left(var term) -> Doc.sep(line1sep, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst)));
-          case Either.Right(FnClauseBody(var clauses)) -> Doc.vcat(line1sep,
-            Doc.nest(2, visitClauses(clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit))));
+          case Either.Right(var body) -> Doc.vcat(line1sep,
+            Doc.nest(2, visitClauses(body.clauses.view().map(WithPos::data), tele.view().map(ParamLike::explicit))));
         };
       }
       case MemberDef field -> Doc.sepNonEmpty(Doc.symbol("|"),

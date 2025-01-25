@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import static org.aya.tyck.tycker.TeleTycker.loadTele;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -44,8 +46,6 @@ import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static org.aya.tyck.tycker.TeleTycker.loadTele;
-
 public record StmtTycker(
   @NotNull SuppressingReporter reporter, @NotNull ModulePath fileModule,
   @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
@@ -85,8 +85,6 @@ public record StmtTycker(
       case FnDecl fnDecl -> {
         var fnRef = fnDecl.ref;
         assert fnRef.signature != null;
-
-        var factory = FnDef.factory(body -> new FnDef(fnRef, fnDecl.modifiers, body));
         var teleVars = fnDecl.telescope.map(Expr.Param::ref);
 
         yield switch (fnDecl.body) {
@@ -100,7 +98,7 @@ public record StmtTycker(
             var zonker = new Finalizer.Zonk<>(tycker);
             var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
-            yield factory.apply(Either.left(resultTerm));
+            yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
           case FnBody.BlockBody body -> {
             var clauses = body.clauses();
@@ -120,10 +118,12 @@ public record StmtTycker(
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
             FnDef def;
             ClauseTycker.TyckResult patResult;
+            FnClauseBody coreBody;
             if (orderIndependent) {
               // Order-independent.
               patResult = clauseTycker.checkNoClassify();
-              def = factory.apply(Either.right(patResult.wellTyped()));
+              coreBody = new FnClauseBody(patResult.wellTyped());
+              def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
               if (!patResult.hasLhsError()) {
                 var rawParams = signature.params();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
@@ -132,9 +132,13 @@ public record StmtTycker(
               }
             } else {
               patResult = clauseTycker.check(fnDecl.entireSourcePos());
-              def = factory.apply(Either.right(patResult.wellTyped()));
+              coreBody = new FnClauseBody(patResult.wellTyped());
+              def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }
-            if (!patResult.hasLhsError()) new IApplyConfl(def, tycker, fnDecl.sourcePos()).check();
+            if (!patResult.hasLhsError()) {
+              var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
+              hitConflChecker.check();
+            }
             yield def;
           }
         };
