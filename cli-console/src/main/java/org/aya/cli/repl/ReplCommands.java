@@ -2,28 +2,30 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.producer.AyaParserImpl;
 import org.aya.repl.Command;
 import org.aya.repl.CommandArg;
 import org.aya.repl.ReplUtil;
 import org.aya.syntax.compile.JitDef;
-import org.aya.syntax.core.def.*;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public interface ReplCommands {
   record Code(@NotNull String code) { }
@@ -65,11 +67,10 @@ public interface ReplCommands {
         }
       }
 
-      return switch (topLevel) {
-        case JitDef jitDef -> new Result(Output.stdout(repl.render(jitDef)), true);
-        case TyckAnyDef<?> tyckDef -> new Result(Output.stdout(repl.render(tyckDef.core())), true);
-        default -> Result.ok(topLevel.name(), true);
-      };
+      return new Result(Output.stdout((switch (topLevel) {
+        case JitDef jitDef -> repl.render(jitDef);
+        case TyckAnyDef<?> tyckDef -> repl.render(tyckDef.core());
+      })), true);
     }
   };
 
@@ -83,7 +84,7 @@ public interface ReplCommands {
   @NotNull Command SHOW_SHAPES = new Command(ImmutableSeq.of("debug-show-shapes"), "Show recognized shapes") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
       var discovered = repl.replCompiler.getShapeFactory().discovered;
-      return Result.ok(repl.renderDoc(Doc.vcat(discovered.mapTo(MutableList.create(),
+      return new Result(Output.stdout(Doc.vcat(discovered.mapTo(MutableList.create(),
         (def, recog) ->
           Doc.sep(BasePrettier.refVar(def),
             Doc.symbol("=>"),
@@ -99,7 +100,7 @@ public interface ReplCommands {
         return Result.err("Unable to load file or library: " + e.getLocalizedMessage(), true);
       }
       // SingleFileCompiler would print result to REPL.
-      return new Result(Output.empty(), true);
+      return new Result(Output.EMPTY, true);
     }
   };
 
@@ -119,7 +120,7 @@ public interface ReplCommands {
       repl.cwd = path;
       // for jline completer to work properly, but it does not have any effect actually
       System.setProperty("user.dir", path.toAbsolutePath().toString());
-      return new Result(Output.empty(), true);
+      return new Result(Output.EMPTY, true);
     }
   };
 

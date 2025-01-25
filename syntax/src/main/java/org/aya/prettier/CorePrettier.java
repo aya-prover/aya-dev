@@ -283,7 +283,7 @@ public class CorePrettier extends BasePrettier<Term> {
           (prefix, subst) -> switch (def.body()) {
           case Either.Left(var term) -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view())));
           case Either.Right(var body) -> Doc.vcat(prefix,
-            Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(ParamLike::explicit))));
+            Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(Param::explicit))));
         });
       }
       case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
