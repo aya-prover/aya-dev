@@ -41,7 +41,11 @@ public class ReplCompilerTest {
   @Test public void library() throws IOException {
     compiler.loadToContext(Paths.get("../ide-lsp", "src", "test", "resources", "lsp-test-lib"));
     assertNotNull(findContext("VecCore:::>"));
-    assertNotNull(findContext("VecCore::vnil"));
+
+    var vnil = assertInstanceOf(CompiledVar.class, findContext("VecCore::vnil"));
+    assertNotNull(vnil);
+    assertEquals("| /* compiled pattern */ => vnil", vnil.core().easyToString());
+
     var zero = assertInstanceOf(CompiledVar.class, findContext("Nat::Core::zero"));
     assertNotNull(zero);
     assertEquals("| zero", zero.core().easyToString());
