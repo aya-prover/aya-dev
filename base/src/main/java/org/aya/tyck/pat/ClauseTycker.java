@@ -118,12 +118,13 @@ public final class ClauseTycker implements Problematic, Stateful {
         if (clauses.isNotEmpty()) {
           var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
           for (int i = 0; i < usages.size(); i++) {
+            if (clauses.get(i).expr.isEmpty()) continue;
             var currentClasses = usages.get(i);
             if (currentClasses.sizeEquals(1)) {
               var curLhs = lhs.get(i);
               var curCls = currentClasses.get(0);
               var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
-              curLhs.asSubst.let().putAll(lets.let());
+              lets.let().forEach(curLhs.asSubst::put);
               curLhs.freePatsStore.set(curCls.pat());
             }
           }
