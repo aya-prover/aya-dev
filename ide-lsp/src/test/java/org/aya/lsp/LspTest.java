@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
@@ -15,16 +15,13 @@ import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.call.DataCall;
-import org.aya.util.FileUtil;
 import org.javacs.lsp.InitializeParams;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.TextDocumentIdentifier;
 import org.javacs.lsp.TextDocumentPositionParams;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.aya.lsp.tester.TestCommand.compile;
@@ -38,11 +35,6 @@ public class LspTest {
     var client = new LspTestClient();
     client.registerLibrary(libraryRoot);
     return client;
-  }
-
-  // FIXME: remove this after fixing the prim factory problem
-  @BeforeEach public void clearCore() throws IOException {
-    FileUtil.deleteRecursively(TEST_LIB.resolve("build"));
   }
 
   @Test public void testJustLoad() {
