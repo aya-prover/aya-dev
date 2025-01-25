@@ -37,8 +37,7 @@ public abstract sealed class JitDef extends JitUnit implements AnyDef, AyaDocile
 
   @Override public abstract @NotNull JitTele signature();
 
-  @Override
-  public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+  @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).def(this);
   }
 }
