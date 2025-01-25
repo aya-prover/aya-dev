@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
+
+import java.util.function.UnaryOperator;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
@@ -15,8 +17,6 @@ import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.UnaryOperator;
 
 /**
  *
@@ -55,7 +55,7 @@ public final class PatMatcher {
       case Pat.Misc misc -> {
         switch (misc) {
           case Absurd -> throw new Failure(State.Stuck);
-          case UntypedBind -> onMatchBind(term);
+          // case UntypedBind -> onMatchBind(term);
         }
       }
       case Pat.Bind _ -> onMatchBind(term);

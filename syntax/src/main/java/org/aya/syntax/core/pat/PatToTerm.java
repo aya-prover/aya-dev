@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
+import java.util.function.Function;
+
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -12,8 +14,6 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public interface PatToTerm {
   static @NotNull Term visit(@NotNull Pat pat) {
     return switch (pat) {
@@ -21,7 +21,7 @@ public interface PatToTerm {
         // We expect this to be never used, but this needs to not panic because
         // absurd clauses need to finish type checking
         case Absurd -> SortTerm.Type0;
-        case UntypedBind -> Panic.unreachable();
+        // case UntypedBind -> Panic.unreachable();
       };
       case Pat.Bind bind -> new FreeTerm(bind.bind());
       case Pat.Con con -> new ConCall(con.head(), con.args().map(PatToTerm::visit));

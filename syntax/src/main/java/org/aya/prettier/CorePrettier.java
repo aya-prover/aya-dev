@@ -259,7 +259,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case Pat.Misc misc -> switch (misc) {
         case Absurd -> Doc.bracedUnless(PAT_ABSURD, licit);
-        case UntypedBind -> Doc.bracedUnless(linkDef(LocalVar.IGNORED), licit);
+        // case UntypedBind -> Doc.bracedUnless(linkDef(LocalVar.IGNORED), licit);
       };
       case Pat.Tuple(var l, var r) -> Doc.licit(licit,
         Doc.commaList(pat(l, true, Outer.Free), pat(r, true, Outer.Free)));

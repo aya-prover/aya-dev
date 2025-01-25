@@ -89,11 +89,6 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
-    public @NotNull LhsResult mapPats(@NotNull UnaryOperator<Pat> f) {
-      return new LhsResult(localCtx, result, unpiParamSize, freePats.map(f),
-        sourcePos, body, paramSubst, asSubst, hasError);
-    }
-
     @Contract(mutates = "param2")
     public void addLocalLet(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
