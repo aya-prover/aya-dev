@@ -5,8 +5,10 @@ package org.aya.syntax.core.def;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.error.WithPos;
+import org.aya.util.tyck.pat.PatClass;
 
 public final class FnClauseBody {
   public final ImmutableSeq<WithPos<Term.Matching>> clauses;
+  public ImmutableSeq<PatClass<ImmutableSeq<Term>>> classes;
   public FnClauseBody(ImmutableSeq<WithPos<Term.Matching>> clauses) { this.clauses = clauses; }
 }

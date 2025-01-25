@@ -117,25 +117,30 @@ public record StmtTycker(
 
             var orderIndependent = fnDecl.modifiers.contains(Modifier.Overlap);
             FnDef def;
-            ClauseTycker.TyckResult patResult;
+            boolean hasLhsError;
             FnClauseBody coreBody;
             if (orderIndependent) {
               // Order-independent.
-              patResult = clauseTycker.checkNoClassify();
+              var patResult = clauseTycker.checkNoClassify();
               coreBody = new FnClauseBody(patResult.wellTyped());
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
-              if (!patResult.hasLhsError()) {
+              hasLhsError = patResult.hasLhsError();
+              if (!hasLhsError) {
                 var rawParams = signature.params();
                 var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
-                confluence.check(patResult, signature.result(),
-                  PatClassifier.classify(patResult.clauses().view(), rawParams.view(), tycker, fnDecl.sourcePos()));
+                var classes = PatClassifier.classify(patResult.clauses().view(),
+                  rawParams.view(), tycker, fnDecl.sourcePos());
+                coreBody.classes = classes;
+                confluence.check(patResult, signature.result(), classes);
               }
             } else {
-              patResult = clauseTycker.check(fnDecl.entireSourcePos());
-              coreBody = new FnClauseBody(patResult.wellTyped());
+              var patResult = clauseTycker.check(fnDecl.entireSourcePos());
+              coreBody = new FnClauseBody(patResult.clauses());
+              coreBody.classes = patResult.classes();
+              hasLhsError = patResult.hasLhsError();
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }
-            if (!patResult.hasLhsError()) {
+            if (!hasLhsError) {
               var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
               hitConflChecker.check();
             }
