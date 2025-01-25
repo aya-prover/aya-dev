@@ -155,16 +155,13 @@ public record PatClassifier(
         }
         // If we missed all constructors, we combine the cases to a catch-all case
         if (missedCon >= body.size()) {
-          var freshPat = param.toFreshPat();
-          return ImmutableSeq.of(simple(freshPat, ImmutableIntSeq.empty()));
+          return ImmutableSeq.of(simple(param.toFreshPat(), ImmutableIntSeq.empty()));
         }
         return buffer.toImmutableSeq();
       }
       default -> { }
     }
-    return ImmutableSeq.of(simple(clauses.sizeEquals(1)
-      ? clauses.get(0).pat()
-      : param.toFreshPat(), Indexed.indices(clauses)));
+    return ImmutableSeq.of(simple(param.toFreshPat(), Indexed.indices(clauses)));
   }
 
   private static @NotNull PatClass.One<Term, Pat> simple(Pat pat, @NotNull ImmutableIntSeq cls) {

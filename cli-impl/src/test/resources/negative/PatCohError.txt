@@ -710,7 +710,7 @@ In file $FILE:2:0 ->
     │ ╰─────────────────╯
 
 Error: Unhandled case:
-         1, 1, 1, x'''
+         x, x', x'', x'''
 
 1 error(s), 0 warning(s).
 Let's learn from that.
