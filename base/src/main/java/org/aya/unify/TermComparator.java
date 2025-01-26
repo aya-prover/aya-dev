@@ -1,6 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
+
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -32,11 +37,6 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 public abstract sealed class TermComparator extends AbstractTycker permits Unifier {
   protected final @NotNull SourcePos pos;
@@ -143,15 +143,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // TODO: type info?
         if (!compare(lMem.of(), rMem.of(), null)) yield null;
         yield compareMany(lMem.args(), rMem.args(),
-            lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
+          lMem.ref().signature().inst(ImmutableSeq.of(lMem.of())).lift(Math.min(lMem.ulift(), rMem.ulift())));
       }
       default -> null;
     };
   }
 
-  /**
-   * Compare the arguments of two callable ONLY, this method will NOT try to normalize and then compare (while the old project does).
-   */
+  /// Compare the arguments of two callable ONLY, this method will NOT try to
+  /// normalize and then compare (while the old version of Aya does).
   private @Nullable Term compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) {
     if (!lhs.ref().equals(rhs.ref())) return null;
     return compareMany(lhs.args(), rhs.args(),
@@ -165,11 +164,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
-  /**
-   * Compare two terms with the given {@param type} (if not null)
-   *
-   * @return true if they are 'the same' under {@param type}, false otherwise.
-   */
+  /// Compare two terms with the given {@param type} (if not null)
+  ///
+  /// @return true if they are 'the same' under {@param type}, false otherwise.
   public boolean compare(@NotNull Term preLhs, @NotNull Term preRhs, @Nullable Term type) {
     if (preLhs == preRhs || preLhs instanceof ErrorTerm || preRhs instanceof ErrorTerm) return true;
     if (checkApproxResult(type, compareApprox(preLhs, preRhs))) return true;
@@ -223,12 +220,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     } else return false;
   }
 
-  /**
-   * Compare whnf {@param lhs} and whnf {@param rhs} with {@param type} information
-   *
-   * @param type the whnf type.
-   * @return whether they are 'the same' and their types are {@param type}
-   */
+  /// Compare whnf {@param lhs} and whnf {@param rhs} with {@param type} information
+  ///
+  /// @param type the type in whnf.
+  /// @return whether they are 'the same' and their types are {@param type}
   private boolean doCompareTyped(@NotNull Term lhs, @NotNull Term rhs, @NotNull Term type) {
     return switch (whnf(type)) {
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
@@ -286,11 +281,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  /**
-   * Compare head-normalized {@param preLhs} and whnfed {@param preRhs} without type information.
-   *
-   * @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are 'the same', null otherwise.
-   */
+  /// Compare head-normalized {@param preLhs} and whnfed {@param preRhs} without type information.
+  ///
+  /// @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are _the same_, null otherwise.
   private @Nullable Term compareUntyped(@NotNull Term preLhs, @NotNull Term preRhs) {
     {
       var result = compareApprox(preLhs, preRhs);

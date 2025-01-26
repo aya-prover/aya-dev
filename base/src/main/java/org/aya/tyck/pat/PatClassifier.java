@@ -8,7 +8,6 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
@@ -38,6 +37,22 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/// Coverage checking & case tree generation. Part of the code is generalized and moved to [ClassifierUtil],
+/// which is reusable. The main subroutine of coverage checking is _splitting_, i.e. look at a list of clauses,
+/// group them by those who match the same constructor head, and recurse -- hence the name _classifier_.
+///
+/// Note that catch-all patterns will be put into all groups, and literals will have their special classification
+/// rules -- if you have very large literals, turning them into constructors and classify with the constructors will
+/// be very slow. For pure literal pattern matching, we will only split on literals, and ask for a catch-all.
+///
+/// There are 3 variants of this task:
+///
+/// * Look at a single pattern and split according to the head. This is [#classify1], and is language-specific
+///   (it depends on what type formers does a language have), so cannot be generalized.
+/// * Look at a list of patterns and split them monadically. This is [ClassifierUtil#classifyN],
+///   which simply calls [#classify1] and flatMap on the results, so it's language-independent, and is generalized.
+/// * Look at a pair of patterns and split them. This is [ClassifierUtil#classify2],
+///   which is just a special case of [#classifyN], but implemented for convenience of dealing with binary tuples.
 public record PatClassifier(
   @NotNull AbstractTycker delegate, @NotNull SourcePos pos
 ) implements ClassifierUtil<ImmutableSeq<Term>, Term, Param, Pat>, Stateful, Problematic {
@@ -112,14 +127,12 @@ public record PatClassifier(
         var binds = Indexed.indices(clauses.filter(cl -> cl.pat() instanceof Pat.Bind));
         if (clauses.isNotEmpty() && lits.size() + binds.size() == clauses.size()) {
           // There is only literals and bind patterns, no constructor patterns
+          // So we do not turn them into constructors, but split the literals directly
           var classes = ImmutableSeq.from(lits.collect(
               Collectors.groupingBy(i -> i.pat().repr())).values())
             .map(i -> simple(i.getFirst().pat(),
               Indexed.indices(Seq.wrapJava(i)).concat(binds)));
-          var ml = MutableArrayList.<PatClass.One<Term, Pat>>create(classes.size() + 1);
-          ml.appendAll(classes);
-          ml.append(simple(param.toFreshPat(), binds));
-          return ml.toImmutableSeq();
+          return classes.appended(simple(param.toFreshPat(), binds));
         }
 
         var buffer = MutableList.<PatClass.One<Term, Pat>>create();
