@@ -122,20 +122,8 @@ public final class ClauseTycker implements Problematic, Stateful {
             if (clauses.get(i).expr.isEmpty()) continue;
             var currentClasses = usages.get(i);
             if (currentClasses.sizeEquals(1)) {
-              var curLhs = lhs.get(i);
-              var curCls = currentClasses.get(0);
-              var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
-              if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
-                continue;
-              var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
-              var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
-              newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
-              curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
-              var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
-              lets.let().let().forEach(curLhs.asSubst::put);
-              lhs.set(i, new LhsResult(
-                sibling, lets.apply(curLhs.result), curLhs.unpiParamSize, newPatterns,
-                curLhs.sourcePos, curLhs.body, paramSubst, curLhs.asSubst, curLhs.hasError));
+              var newLhs = refinePattern(lhs.get(i), currentClasses.get(0));
+              if (newLhs != null) lhs.set(i, newLhs);
             }
           }
         }
@@ -150,6 +138,37 @@ public final class ClauseTycker implements Problematic, Stateful {
         wellTyped.classes = classes.map(cl -> cl.ignoreAbsurd(absurds));
       }
       return new WorkerResult(wellTyped, hasError);
+    }
+
+    /// When we realize (in first-match only) that a clause is only reachable for a single leaf in the case tree,
+    /// we try to specialize the patterns according to the case tree leaf. For example,
+    /// ```
+    /// f zero = body1
+    /// f x = body2
+    ///```
+    /// The `x` in the second case is only reachable for input `suc y`,
+    /// and we can realize this by inspecting the result of [PatClassifier#firstMatchDomination].
+    /// So, we can replace `x` with `suc y` to help computing the result type.
+    /// A more realistic motivating example can be found
+    /// [here](https://twitter.com/zornsllama/status/1465435870861926400).
+    ///
+    /// However, we cannot just simply replace the patterns -- the localCtx obtained by checking the patterns,
+    /// the result type [LhsResult#result], the types in the patterns, and [LhsResult#paramSubst],
+    /// all of these need to be changed accordingly.
+    /// This method performs these changes.
+    private @Nullable LhsResult refinePattern(LhsResult curLhs, PatClass.Seq<Term, Pat> curCls) {
+      var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
+      if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
+        return null;
+      var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
+      var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
+      newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
+      curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
+      var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
+      lets.let().let().forEach(curLhs.asSubst::put);
+      return new LhsResult(
+        sibling, lets.apply(curLhs.result), curLhs.unpiParamSize, newPatterns,
+        curLhs.sourcePos, curLhs.body, paramSubst, curLhs.asSubst, curLhs.hasError);
     }
 
     public @NotNull MutableSeq<LhsResult> checkAllLhs() {

@@ -46,6 +46,19 @@ import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/// Checks definitions. All the dirty telescope manipulation are here.
+/// This class glues the type checking of exprs and patterns together.
+///
+/// Note that we handle mutual recursions, so we support checking the _signature_ of a decl
+/// without checking its body. It is like checking forward declarations, but the forward
+/// declarations are just a part of the real decl. This is done in [#checkHeader].
+///
+/// For [PrimDef] and [ConDef], they only have headers. The body of a [DataDef] is the header
+/// of all of its [DataCon]s, but just checking the [DataCon]s themselves is not enough: they need to be
+/// put together and added to the [DataDef], so we can use them for exhaustiveness checking.
+///
+/// For [ClassDef] and [MemberDef], they both only have headers, because they don't allow mutual recursion.
+/// The header of a [ClassDef] is just all of its [ClassMember]s.
 public record StmtTycker(
   @NotNull SuppressingReporter reporter, @NotNull ModulePath fileModule,
   @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
@@ -241,11 +254,9 @@ public record StmtTycker(
     }
   }
 
-  /**
-   * Kitsune says kon!
-   *
-   * @apiNote invoke this method after loading the telescope of data!
-   */
+  /// Kitsune says kon! Checks the data constructor.
+  ///
+  /// @apiNote invoke this method after loading the telescope of data!
   private void checkKitsune(@NotNull DataCon con, @NotNull ExprTycker tycker) {
     var ref = con.ref;
     if (ref.core != null) return;
