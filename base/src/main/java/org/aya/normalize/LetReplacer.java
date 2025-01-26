@@ -9,6 +9,8 @@ import org.aya.syntax.core.term.Term;
 import org.aya.tyck.ctx.LocalLet;
 import org.jetbrains.annotations.NotNull;
 
+/// This implements [FreeTerm] substitution. The substitution object is represented using a
+/// [LocalLet] for convenience -- for the functionality we only need [LocalLet#contains] and [LocalLet#get].
 public record LetReplacer(@NotNull LocalLet let) implements UnaryOperator<Term> {
   @Override public Term apply(Term term) {
     return switch (term) {

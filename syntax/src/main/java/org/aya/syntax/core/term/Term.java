@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
+import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
@@ -22,10 +26,8 @@ import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
+/// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
+/// together with their overrides in [LocalTerm] and [FreeTerm].
 public sealed interface Term extends Serializable, AyaDocile
   permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
@@ -46,27 +48,23 @@ public sealed interface Term extends Serializable, AyaDocile
     return descent((i, t) -> t.bindAllFrom(vars, fromDepth + i));
   }
 
-  /**
-   * Corresponds to <emph>abstract</emph> operator in [MM 2004].
-   * However, <code>abstract</code> is a keyword in Java, so we can't
-   * use it as a method name.
-   * <pre>
-   * abstract :: Name → Expr → Scope
-   * </pre>
-   *
-   * @apiNote bind preserve the term former unless it's a {@link FreeTerm}.
-   * @see Closure#apply(Term)
-   * @see Closure#mkConst
-   */
+  /// Corresponds to _abstract_ operator in \[MM 2004\].
+  /// However, `abstract` is a keyword in Java, so we can't
+  /// use it as a method name.
+  /// ```haskell
+  /// abstract :: Name → Expr → Scope
+  /// ```
+  ///
+  /// @apiNote bind preserve the term former unless it's a [FreeTerm].
+  /// @see Closure#apply(Term)
+  /// @see Closure#mkConst
   default @NotNull Closure.Locns bind(@NotNull LocalVar var) {
     return new Closure.Locns(bindAt(var, 0));
   }
 
-  /**
-   * Used nontrivially for pattern match expressions, where the clauses are lifted to a global definition,
-   * so after binding the pattern-introduced variables, we need to bind all the free vars,
-   * which will be indexed from the bindCount, rather than 0.
-   */
+  /// Used nontrivially for pattern match expressions, where the clauses are lifted to a global definition,
+  /// so after binding the pattern-introduced variables, we need to bind all the free vars,
+  /// which will be indexed from the bindCount, rather than 0.
   default @NotNull Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
     if (teleVars.isEmpty()) return this;
     return bindAllFrom(teleVars.reversed().toImmutableSeq(), depth);
@@ -86,30 +84,25 @@ public sealed interface Term extends Serializable, AyaDocile
     return descent((i, t) -> t.replaceAllFrom(from + i, list));
   }
 
-  /**
-   * @see #replaceAllFrom(int, ImmutableSeq)
-   * @see #instTele(SeqView)
-   */
+  /// @see #replaceAllFrom(int, ImmutableSeq)
+  /// @see #instTele(SeqView)
   default @NotNull Term instTeleFrom(int from, @NotNull SeqView<Term> tele) {
     return replaceAllFrom(from, tele.reversed().toImmutableSeq());
   }
 
-  /**
-   * Corresponds to <emph>instantiate</emph> operator in [MM 2004].
-   * Could be called <code>apply</code> similar to Mini-TT.
-   */
+  /// Corresponds to _instantiate_ operator in \[MM 2004\].
+  /// Could be called `apply` similar to Mini-TT, but `apply` is used a lot as method name in Java.
   @ApiStatus.Internal
   default @NotNull Term instantiate(Term arg) {
     return instTeleFrom(0, SeqView.of(arg));
   }
 
-  /**
-   * Instantiate in telescope-order. For example:<br/>
-   * Consider a signature {@code (?2 : Nat) (?1 : Bool) (?0 : True) -> P ?2 ?0 ?1},
-   * we can instantiate the result {@code P ?2 ?0 ?1} by some argument {@code [ 114514 , false , tt ] },
-   * now it becomes {@code P 114514 tt false}.
-   * Without this method, we need to reverse the list.
-   */
+  /// Instantiate in telescope-order. For example:
+  ///
+  /// Consider a signature `(?2 : Nat) (?1 : Bool) (?0 : True) -> P ?2 ?0 ?1`,
+  /// we can instantiate the result `P ?2 ?0 ?1` by some argument `[ 114514 , false , tt ]`,
+  /// now it becomes `P 114514 tt false`.
+  /// Without this method, we need to reverse the list.
   default @NotNull Term instTele(@NotNull SeqView<Term> tele) {
     return instTeleFrom(0, tele);
   }
@@ -151,11 +144,9 @@ public sealed interface Term extends Serializable, AyaDocile
     return this.descent((_, t) -> f.apply(t));
   }
 
-  /**
-   * Lift the sort level of this term
-   *
-   * @param level level, should be non-negative
-   */
+  /// Lift the sort level of this term
+  ///
+  /// @param level level, should be non-negative
   @ApiStatus.NonExtendable
   default @NotNull Term elevate(int level) {
     assert level >= 0 : "level >= 0";
