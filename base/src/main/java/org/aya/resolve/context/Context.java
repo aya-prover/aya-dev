@@ -1,6 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
+
+import java.nio.file.Path;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
@@ -21,10 +25,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.file.Path;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * @author re-xyr
@@ -175,10 +175,7 @@ public interface Context extends Problematic {
     return iterate(c -> c.getModuleLocalMaybe(modName));
   }
 
-  default @NotNull Context bind(
-    @NotNull LocalVar ref,
-    @NotNull Predicate<@Nullable AnyVar> toWarn
-  ) {
+  default @NotNull Context bind(@NotNull LocalVar ref, @NotNull Predicate<@Nullable AnyVar> toWarn) {
     return bind(ref.name(), ref, toWarn);
   }
 
@@ -218,8 +215,6 @@ public interface Context extends Problematic {
   }
 
   class ResolvingInterruptedException extends InterruptException {
-    @Override public InterruptStage stage() {
-      return InterruptStage.Resolving;
-    }
+    @Override public InterruptStage stage() { return InterruptStage.Resolving; }
   }
 }
