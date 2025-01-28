@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.value.LazyValue;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
@@ -15,11 +16,15 @@ import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
 import org.glavo.classfile.ClassBuilder;
 import org.glavo.classfile.attribute.NestMembersAttribute;
+import org.glavo.classfile.constantpool.InvokeDynamicEntry;
+import org.glavo.classfile.constantpool.MethodHandleEntry;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
+import java.lang.constant.*;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,10 +32,14 @@ import java.util.function.Function;
 public final class AsmClassBuilder implements FreeClassBuilder {
   public final @NotNull ClassDesc owner;
   public final @NotNull ClassDesc ownerSuper;
-  public final @NotNull ClassBuilder writer;
+  public final @NotNull ClassBuilder writer;     // I am sorry
   public final @NotNull AsmOutputCollector collector;
   public final @NotNull MutableList<ClassDesc> nestedMembers = MutableList.create();
   public final @NotNull MutableMap<FieldRef, Function<FreeExprBuilder, FreeJavaExpr>> fieldInitializers = MutableLinkedHashMap.of();
+  private int lambdaCounter = 0;
+
+  /// @see java.lang.invoke.LambdaMetafactory#metafactory(MethodHandles.Lookup, String, MethodType, MethodType, MethodHandle, MethodType)
+  private final @NotNull LazyValue<MethodHandleEntry> lambdaBoostrapMethodHandle;
 
   public AsmClassBuilder(
     @NotNull ClassDesc owner,
@@ -42,6 +51,20 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     this.ownerSuper = ownerSuper;
     this.writer = writer;
     this.collector = collector;
+    this.lambdaBoostrapMethodHandle = LazyValue.of(() -> writer.constantPool().methodHandleEntry(MethodHandleDesc.ofMethod(
+      DirectMethodHandleDesc.Kind.STATIC,
+      FreeUtil.fromClass(LambdaMetafactory.class),
+      "metafactory",
+      MethodTypeDesc.of(
+        ConstantDescs.CD_CallSite,
+        ConstantDescs.CD_MethodHandles_Lookup,
+        ConstantDescs.CD_String,
+        ConstantDescs.CD_MethodType,
+        ConstantDescs.CD_MethodType,
+        ConstantDescs.CD_MethodHandle,
+        ConstantDescs.CD_MethodType
+      )
+    )));
   }
 
   @Override
@@ -61,7 +84,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     writer.withMethod(name, desc, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL).flagsMask(), mBuilder -> {
       var ap = new AsmArgumentProvider(paramTypes, false);
       mBuilder.withCode(cb -> {
-        var acb = new AsmCodeBuilder(cb, owner, ownerSuper, new VariablePool(paramTypes.size() + 1), null, true);
+        var acb = new AsmCodeBuilder(cb, this, new VariablePool(paramTypes.size() + 1), null, true);
         builder.accept(ap, acb);
       });
     });
@@ -83,6 +106,47 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     return ref;
   }
 
+  public @NotNull InvokeDynamicEntry makeLambda(
+    @NotNull ImmutableSeq<ClassDesc> captureTypes,
+    @NotNull MethodRef ref,
+    @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> builder
+  ) {
+    var pool = writer.constantPool();
+    var lambdaMethodName = "lambda$" + lambdaCounter++;
+    var fullParams = captureTypes.appendedAll(ref.paramTypes());
+
+    // the method type descriptor to the only abstract method of the functional interface
+    var interfaceMethodDesc = MethodTypeDesc.of(ref.returnType(), ref.paramTypes().asJava());
+    var lambdaMethodDesc = MethodTypeDesc.of(ref.returnType(), fullParams.asJava());
+
+    // create static method for lambda implementation
+    writer.withMethodBody(lambdaMethodName, lambdaMethodDesc, AccessFlags.ofMethod(AccessFlag.PRIVATE, AccessFlag.SYNTHETIC, AccessFlag.STATIC).flagsMask(), cb -> {
+      var apl = new AsmArgumentProvider.Lambda(captureTypes, ref.paramTypes());
+      builder.accept(apl, new AsmCodeBuilder(cb, this, new VariablePool(fullParams.size()), null, false));
+    });
+
+    // the method handle to the static lambda method
+    var lambdaMethodHandle = MethodHandleDesc.ofMethod(
+      DirectMethodHandleDesc.Kind.STATIC,
+      owner,
+      lambdaMethodName,
+      lambdaMethodDesc
+    );
+
+    var nameAndType = pool.nameAndTypeEntry(ref.name(), MethodTypeDesc.of(ref.owner(), captureTypes.asJava()));
+
+    // 0th: function signature with type parameters erased
+    // 1st: the function name to the lambda
+    // 2nd: function signature with type parameters substituted
+    var bsmEntry = pool.bsmEntry(lambdaBoostrapMethodHandle.get(), ImmutableSeq.of(
+      interfaceMethodDesc,
+      lambdaMethodHandle,
+      interfaceMethodDesc
+    ).map(pool::loadableConstantEntry).asJava());
+
+    return pool.invokeDynamicEntry(bsmEntry, nameAndType);
+  }
+
   public void postBuild() {
     if (nestedMembers.isNotEmpty()) {
       writer.with(NestMembersAttribute.of(nestedMembers.map(x -> writer.constantPool().classEntry(x)).asJava()));
@@ -90,7 +154,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
 
     if (fieldInitializers.isNotEmpty()) {
       writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
-        var acb = new AsmCodeBuilder(cb, owner, ownerSuper, new VariablePool(), null, false);
+        var acb = new AsmCodeBuilder(cb, this, new VariablePool(), null, false);
         fieldInitializers.forEach((fieldRef, init) -> {
           var expr = init.apply(acb);
           acb.loadExpr(expr);

@@ -30,8 +30,7 @@ import java.util.function.ObjIntConsumer;
 /// @param breaking the label that used for jumping out
 public record AsmCodeBuilder(
   @NotNull CodeBuilder writer,
-  @NotNull ClassDesc parent,
-  @NotNull ClassDesc parentSuper,
+  @NotNull AsmClassBuilder parent,
   @NotNull VariablePool pool,
   @Nullable Label breaking,
   boolean hasThis
@@ -57,7 +56,7 @@ public record AsmCodeBuilder(
   }
 
   public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
-    block.accept(new AsmCodeBuilder(innerWriter, parent, parentSuper, pool.copy(), breaking, hasThis));
+    block.accept(new AsmCodeBuilder(innerWriter, parent, pool.copy(), breaking, hasThis));
   }
 
   public void subscoped(@NotNull CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
@@ -79,7 +78,7 @@ public record AsmCodeBuilder(
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     invoke(
       InvokeKind.Special,
-      FreeJavaResolver.resolve(parentSuper, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
+      FreeJavaResolver.resolve(parent.ownerSuper, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
       thisRef(),
       superConArgs);
   }
@@ -277,9 +276,15 @@ public record AsmCodeBuilder(
   }
 
   @Override
-  public @NotNull AsmExpr mkLambda(@NotNull ImmutableSeq<FreeJavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> builder) {
-    // TODO: A BIG GAME!
-    return aconstNull(ConstantDescs.CD_Object);
+  public @NotNull AsmExpr mkLambda(@NotNull ImmutableSeq<FreeJavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> lamBody) {
+    var captureExprs = captures.map(this::assertExpr);
+    var captureTypes = captureExprs.map(AsmExpr::type);
+    var indy = parent.makeLambda(captureTypes, method, lamBody);
+
+    return AsmExpr.withType(method.owner(), builder -> {
+      captureExprs.reversed().forEach(t -> t.accept(builder));
+      builder.writer.invokedynamic(indy);
+    });
   }
 
   @Override
@@ -321,7 +326,7 @@ public record AsmCodeBuilder(
   @Override
   public @NotNull AsmExpr thisRef() {
     assert hasThis;
-    return AsmExpr.withType(parent, builder -> builder.writer.aload(0));
+    return AsmExpr.withType(parent.owner, builder -> builder.writer.aload(0));
   }
 
   @Override
