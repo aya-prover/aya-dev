@@ -173,8 +173,8 @@ public record ShapeMatcher(
 
   private boolean matchData(@NotNull DataShape shape, @NotNull DataDef data) {
     if (!matchTele(shape.tele(), data.telescope())) return false;
-    return matchInside(() -> captures.put(shape.name(), data.ref),
-      () -> matchMany(MatchMode.Eq, shape.cons(), data.body,
+    return matchInside(() -> captures.put(shape.name(), data.ref()),
+      () -> matchMany(MatchMode.Eq, shape.cons(), data.body(),
         (s, c) -> captureIfMatches(s, c, this::matchCon, ConDef::ref)));
   }
 

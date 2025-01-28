@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide;
+
+import java.util.Objects;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
@@ -12,9 +14,8 @@ import org.aya.ide.util.ModuleVar;
 import org.aya.ide.util.XY;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.concrete.stmt.decl.DataDecl;
-import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
@@ -23,8 +24,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 public interface Resolver {
   /** resolve a symbol by its qualified name in the whole library */
@@ -45,9 +44,9 @@ public interface Resolver {
   ) {
     var program = source.program().get();
     if (program == null) return SeqView.empty();
-    var collect = MutableList.<WithPos<AnyVar>>create();
-    program.view().forEach(new XYResolver(xy, collect));
-    return collect.view().mapNotNull(pos -> switch (pos.data()) {
+    var collect = new XYResolver(xy, MutableList.create());
+    program.view().forEach(collect);
+    return collect.collect.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> new WithPos<>(pos.sourcePos(), defVar);
       case LocalVar localVar -> new WithPos<>(pos.sourcePos(), localVar);
       case ModuleVar moduleVar -> new WithPos<>(pos.sourcePos(), moduleVar);
@@ -65,17 +64,18 @@ public interface Resolver {
 
   private static @NotNull SeqView<TyckDef> withChildren(@NotNull TyckDef def) {
     return switch (def) {
-      case DataDef data -> SeqView.<TyckDef>of(data).appendedAll(data.body);
-      // case ClassDef struct -> SeqView.<Def>of(struct).appendedAll(struct.members);
+      case DataDef data -> SeqView.<TyckDef>of(data).appendedAll(data.body());
+      case ClassDef struct -> SeqView.<TyckDef>of(struct).appendedAll(struct.members());
       default -> SeqView.of(def);
     };
   }
 
   static @NotNull SeqView<DefVar<?, ?>> withChildren(@NotNull Decl def) {
     return switch (def) {
-      case DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref).appendedAll(data.body.clauses.map(DataCon::ref));
-      // case ClassDecl struct ->
-      //   SeqView.<DefVar<?, ?>>of(struct.ref).appendedAll(struct.members.map(TeleDecl.ClassMember::ref));
+      case DataDecl data -> SeqView.<DefVar<?, ?>>of(data.ref)
+        .appendedAll(data.body.clauses.map(DataCon::ref));
+      case ClassDecl struct -> SeqView.<DefVar<?, ?>>of(struct.ref)
+        .appendedAll(struct.members.map(ClassMember::ref));
       default -> SeqView.of(def.ref());
     };
   }
@@ -110,12 +110,12 @@ public interface Resolver {
    * @author ice1000, kiva, wsx
    */
   record XYResolver(XY xy, MutableList<WithPos<AnyVar>> collect) implements StmtVisitor {
-    @Override
-    public void visitVar(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
+    @Override public void
+    visitVar(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
       if (xy.inside(pos)) collect.append(new WithPos<>(pos, var));
     }
-    @Override
-    public void visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
+    @Override public void
+    visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
       if (var instanceof LocalVar v && v.isGenerated()) return;
       StmtVisitor.super.visitVarDecl(pos, var, type);
     }

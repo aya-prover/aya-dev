@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
+
+import java.util.Objects;
 
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
@@ -10,8 +12,6 @@ import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-
-import java.util.Objects;
 
 public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef {
   public final @NotNull DefVar<Interface, ?> ref;
@@ -30,7 +30,7 @@ public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef 
 
   public static TyckAnyDef<?> make(TyckDef core) {
     return switch (core) {
-      case DataDef data -> new DataDef.Delegate(data.ref);
+      case DataDef data -> new DataDef.Delegate(data.ref());
       case FnDef fn -> new FnDef.Delegate(fn.ref());
       case PrimDef prim -> new PrimDef.Delegate(prim.ref);
       case ConDef con -> new ConDef.Delegate(con.ref);
