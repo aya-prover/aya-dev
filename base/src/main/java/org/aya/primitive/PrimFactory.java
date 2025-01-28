@@ -1,6 +1,13 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.primitive;
+
+import java.util.EnumMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import static org.aya.syntax.core.def.PrimDef.*;
+import static org.aya.syntax.core.term.SortTerm.Type0;
 
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableMap;
@@ -25,13 +32,6 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.EnumMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import static org.aya.syntax.core.def.PrimDef.*;
-import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
   private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
@@ -166,7 +166,7 @@ public class PrimFactory {
     ImmutableSeq.empty());
 
   public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
-    var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref);
+    var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref());
     definePrim(rst);
     return rst;
   }
