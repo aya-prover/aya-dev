@@ -1,6 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
@@ -35,10 +39,6 @@ import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SccTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * @author kiva
@@ -337,7 +337,7 @@ public class LibraryCompiler {
     static void clear(@NotNull PrimFactory factory, @NotNull Stmt stmt) {
       switch (stmt) {
         case Command.Module mod -> clear(factory, mod.contents());
-        case PrimDecl decl when decl.ref.core != null -> factory.clear(decl.ref.core.id);
+        case PrimDecl decl when decl.ref.core != null -> factory.clear(decl.ref.core.id());
         default -> { }
       }
     }

@@ -32,7 +32,7 @@ public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef 
     return switch (core) {
       case DataDef data -> new DataDef.Delegate(data.ref());
       case FnDef fn -> new FnDef.Delegate(fn.ref());
-      case PrimDef prim -> new PrimDef.Delegate(prim.ref);
+      case PrimDef prim -> new PrimDef.Delegate(prim.ref());
       case ConDef con -> new ConDef.Delegate(con.ref);
       case ClassDef classDef -> new ClassDef.Delegate(classDef.ref());
       case MemberDef memberDef -> new MemberDef.Delegate(memberDef.ref());
