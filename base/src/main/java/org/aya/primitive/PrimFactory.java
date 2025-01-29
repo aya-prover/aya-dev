@@ -7,6 +7,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static org.aya.syntax.core.def.PrimDef.*;
+import static org.aya.syntax.core.term.SortTerm.Set0;
 import static org.aya.syntax.core.term.SortTerm.Type0;
 
 import kala.collection.Map;
@@ -43,6 +44,7 @@ public class PrimFactory {
       stringConcat,
       intervalType,
       pathType,
+      partialType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
   }
@@ -128,6 +130,15 @@ public class PrimFactory {
 
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
+
+  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, _) -> {
+    throw new UnsupportedOperationException("TODO");
+  }, ref -> {
+    var paramR = new Param("r", DimTyTerm.INSTANCE, true);
+    var paramS = new Param("s", DimTyTerm.INSTANCE, true);
+    var paramA = new Param("A", Type0, true);
+    return new PrimDef(ref, ImmutableSeq.of(paramR, paramS, paramA), Set0, ID.PARTIAL);
+  }, ImmutableSeq.of(ID.I));
 
   /*
   private final @NotNull PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
