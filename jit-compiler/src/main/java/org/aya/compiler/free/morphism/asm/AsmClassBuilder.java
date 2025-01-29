@@ -73,15 +73,15 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     nestedMembers.append(className);
   }
 
-  @Override
   public @NotNull MethodRef buildMethod(
-    @NotNull ClassDesc returnType,
     @NotNull String name,
+    @NotNull AccessFlags flags,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
+    @NotNull ClassDesc returnType,
+    @NotNull BiConsumer<AsmArgumentProvider, AsmCodeBuilder> builder
   ) {
     var desc = MethodTypeDesc.of(returnType, paramTypes.asJava());
-    writer.withMethod(name, desc, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL).flagsMask(), mBuilder -> {
+    writer.withMethod(name, desc, flags.flagsMask(), mBuilder -> {
       var ap = new AsmArgumentProvider(paramTypes, false);
       mBuilder.withCode(cb -> {
         var acb = new AsmCodeBuilder(cb, this, new VariablePool(paramTypes.size() + 1), null, true);
@@ -93,8 +93,21 @@ public final class AsmClassBuilder implements FreeClassBuilder {
   }
 
   @Override
+  public @NotNull MethodRef buildMethod(
+    @NotNull ClassDesc returnType,
+    @NotNull String name,
+    @NotNull ImmutableSeq<ClassDesc> paramTypes,
+    @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
+  ) {
+    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder::accept);
+  }
+
+  @Override
   public @NotNull MethodRef buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder) {
-    return buildMethod(ConstantDescs.CD_void, ConstantDescs.INIT_NAME, paramTypes, builder);
+    return buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
+      builder.accept(ap, cb);
+      cb.writer().return_();
+    });
   }
 
   @Override
@@ -133,6 +146,8 @@ public final class AsmClassBuilder implements FreeClassBuilder {
       lambdaMethodDesc
     );
 
+    // name: the only abstract method of functional interface
+    // type: capture types -> functional interface
     var nameAndType = pool.nameAndTypeEntry(ref.name(), MethodTypeDesc.of(ref.owner(), captureTypes.asJava()));
 
     // 0th: function signature with type parameters erased
@@ -141,7 +156,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     var bsmEntry = pool.bsmEntry(lambdaBoostrapMethodHandle.get(), ImmutableSeq.of(
       interfaceMethodDesc,
       lambdaMethodHandle,
-      interfaceMethodDesc
+      interfaceMethodDesc   // just hope it doesn't cause any trouble
     ).map(pool::loadableConstantEntry).asJava());
 
     return pool.invokeDynamicEntry(bsmEntry, nameAndType);

@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.free.morphism.asm.AsmJavaBuilder;
+import org.aya.compiler.free.morphism.asm.AsmOutputCollector;
 import org.aya.compiler.free.morphism.source.SourceClassBuilder;
 import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
@@ -106,6 +108,22 @@ public class CompileTest {
     return new ModuleSerializer(result.info.shapeFactory())
       .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
+  }
+
+  @Test
+  public void testAsm() throws IOException {
+    var base = Path.of("src", "test", "build");
+    var result = tyck("""
+      open inductive Nat | zro | suc Nat
+      def plus (a b : Nat) : Nat
+      | zro, b => b
+      | suc a, b => suc (plus a b)
+      """);
+
+    new ModuleSerializer(result.info.shapeFactory())
+      .serialize(new AsmJavaBuilder<>(new AsmOutputCollector.Default()), new ModuleSerializer.ModuleResult(
+        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
+      .writeTo(base);
   }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {

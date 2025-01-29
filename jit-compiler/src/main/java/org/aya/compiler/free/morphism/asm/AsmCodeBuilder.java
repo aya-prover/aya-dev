@@ -185,7 +185,9 @@ public record AsmCodeBuilder(
 
   @Override
   public void switchCase(@NotNull LocalVariable elim, @NotNull ImmutableIntSeq cases, @NotNull ObjIntConsumer<FreeCodeBuilder> branch, @NotNull Consumer<FreeCodeBuilder> defaultCase) {
-
+    // FIXME: i don't know how to do this
+    loadExpr(mkNew(UnsupportedOperationException.class, ImmutableSeq.empty()));
+    writer.athrow();
   }
 
   @Override
@@ -217,7 +219,7 @@ public record AsmCodeBuilder(
       loadExpr(self);
     }
 
-    args.view().reversed().forEach(this::loadExpr);
+    args.forEach(this::loadExpr);
 
     switch (kind) {
       case Static -> writer.invokestatic(owner, name, desc, isInterface);
@@ -282,7 +284,7 @@ public record AsmCodeBuilder(
     var indy = parent.makeLambda(captureTypes, method, lamBody);
 
     return AsmExpr.withType(method.owner(), builder -> {
-      captureExprs.reversed().forEach(t -> t.accept(builder));
+      captureExprs.forEach(t -> t.accept(builder));
       builder.writer.invokedynamic(indy);
     });
   }
@@ -335,6 +337,8 @@ public record AsmCodeBuilder(
     var dup = AsmExpr.withType(arrayType, builder -> builder.writer.dup());
 
     return AsmExpr.withType(arrayType, builder -> {
+      builder.iconst(length).accept(builder);
+
       var kind = TypeKind.fromDescriptor(type.descriptorString());
       if (kind == TypeKind.ReferenceType) {
         builder.writer.anewarray(type);

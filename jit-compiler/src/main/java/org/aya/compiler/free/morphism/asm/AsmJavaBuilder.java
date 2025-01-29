@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public record AsmJavaBuilder(@NotNull AsmOutputCollector collector) implements FreeJavaBuilder<AsmOutputCollector> {
+public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) implements FreeJavaBuilder<C> {
   /// @param nestedName null if top level class
   /// @return the class descriptor
   public static @NotNull ClassDesc buildClass(
@@ -76,7 +76,7 @@ public record AsmJavaBuilder(@NotNull AsmOutputCollector collector) implements F
   }
 
   @Override
-  public @NotNull AsmOutputCollector buildClass(
+  public @NotNull C buildClass(
     @Nullable CompiledAya metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
