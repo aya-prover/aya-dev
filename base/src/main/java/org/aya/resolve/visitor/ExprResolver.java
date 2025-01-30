@@ -3,7 +3,9 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.value.MutableValue;
 import org.aya.generic.stmt.TyckOrder;
@@ -17,10 +19,7 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GeneralizedVar;
-import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.*;
 import org.aya.tyck.error.ClassError;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
@@ -42,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public record ExprResolver(
   @NotNull Context ctx,
   boolean allowGeneralizing,
-  @NotNull OverGeneralizer allowedGeneralizes,
+  @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where
 ) implements PosedUnaryOperator<Expr> {
@@ -63,12 +62,12 @@ public record ExprResolver(
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().allowedGeneralizes().valuesView().toImmutableSeq();
+    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq();
     return new LiterateResolved(view, inner);
   }
 
   public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
-    this(ctx, allowGeneralizing, new OverGeneralizer(ctx), MutableList.create(), MutableStack.create());
+    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
   }
 
   public void resetRefs() { reference.clear(); }
@@ -134,7 +133,9 @@ public record ExprResolver(
           case GeneralizedVar generalized -> {
             // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
             if (allowGeneralizing) {
-              yield allowedGeneralizes.register(generalized, this::addReference);
+              var param = generalized.toParam(false);
+              introduceDependencies(generalized, param);
+              yield param.ref();
             } else {
               yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
             }
@@ -208,6 +209,19 @@ public record ExprResolver(
     }
   }
 
+  /// @param collected ordered set, implemented as a list
+  private record StaticGenVarCollector(MutableList<GeneralizedVar> collected) implements PosedUnaryOperator<Expr> {
+    @Override public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
+      if (expr instanceof Expr.Ref ref) {
+        var var = ref.var();
+        if (var instanceof LocalVar local && local.generateKind() instanceof GenerateKind.Generalized(var origin)) {
+          if (!collected.contains(origin)) collected.append(origin);
+        }
+      }
+      return expr.descent(this);
+    }
+  }
+
   private void addReference(@NotNull GeneralizedVar defVar) { addReference(defVar.owner); }
   private void addReference(@NotNull DefVar<?, ?> defVar) { addReference(defVar.concrete); }
 
@@ -249,10 +263,23 @@ public record ExprResolver(
     });
   }
 
+  private void introduceDependencies(@NotNull GeneralizedVar var, @NotNull Expr.Param param) {
+    if (allowedGeneralizes.containsKey(var)) return;
+
+    // Introduce dependencies first
+    var.owner.dependencies.forEach(this::introduceDependencies);
+
+    // Now introduce the variable itself
+    var owner = var.owner;
+    assert owner != null : "GeneralizedVar owner should not be null";
+    allowedGeneralizes.put(var, param);
+    addReference(owner);
+  }
+
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
-      var gened = allowedGeneralizes.getParam(gvar);
+      var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
     }
 

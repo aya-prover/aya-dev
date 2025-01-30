@@ -5,7 +5,6 @@ package org.aya.resolve.visitor;
 import java.util.function.Consumer;
 
 import kala.collection.MapView;
-import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
@@ -39,15 +38,15 @@ import org.jetbrains.annotations.Nullable;
 public final class OverGeneralizer {
   private final @NotNull Context reporter;
   private final @NotNull MutableSet<GeneralizedVar> visiting = MutableSet.create();
+  private final @NotNull MutableSet<GeneralizedVar> visited = MutableSet.create();
   private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
-  private final @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes = MutableLinkedHashMap.of();
 
   public OverGeneralizer(@NotNull Context reporter) {
     this.reporter = reporter;
   }
 
-  public @NotNull LocalVar register(GeneralizedVar var, @NotNull Consumer<GeneralizedVar> onGenVarVisited) {
-    if (allowedGeneralizes.containsKey(var)) return allowedGeneralizes.get(var).ref();
+  public void register(GeneralizedVar var) {
+    if (visited.contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
     if (!visiting.add(var)) {
@@ -59,44 +58,11 @@ public final class OverGeneralizer {
     }
 
     currentPath.append(var);
-    var deps = collectReferences(var);
-
     // Recursively register dependencies
-    for (var dep : deps) register(dep, onGenVarVisited);
+    var.owner.dependencies.keysView().forEach(this::register);
 
     currentPath.removeLast();
     visiting.remove(var);
-    var param = var.toParam(false);
-    allowedGeneralizes.put(var, param);
-    onGenVarVisited.accept(var);
-    return param.ref();
-  }
-
-  public @NotNull MapView<GeneralizedVar, Expr.Param> allowedGeneralizes() {
-    return allowedGeneralizes.view();
-  }
-
-  public @Nullable Expr.Param getParam(@NotNull GeneralizedVar var) {
-    return allowedGeneralizes.getOrNull(var);
-  }
-
-  private @NotNull ImmutableSeq<GeneralizedVar> collectReferences(GeneralizedVar var) {
-    var type = var.owner.type;
-    var collector = new StaticGeneralizedVarCollector();
-    type.descent(collector);
-    return collector.collected.toImmutableSeq();
-  }
-
-  private static class StaticGeneralizedVarCollector implements PosedUnaryOperator<Expr> {
-    public final MutableList<GeneralizedVar> collected = MutableList.create();
-    @Override public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
-      if (expr instanceof Expr.Ref ref) {
-        var var = ref.var();
-        if (var instanceof LocalVar local && local.generateKind() instanceof GenerateKind.Generalized(var origin)) {
-          collected.append(origin);
-        }
-      }
-      return expr.descent(this);
-    }
+    visited.add(var);
   }
 }
