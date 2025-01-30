@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public record WithPos<T>(@NotNull SourcePos sourcePos, T data) implements SourceNode {
-  public static <U> WithPos<? extends U> narrow(@NotNull WithPos<U> value) { return value; }
-
   public static <T> @NotNull WithPos<T> dummy(@NotNull T data) {
     return new WithPos<>(SourcePos.NONE, data);
   }

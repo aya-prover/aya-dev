@@ -209,20 +209,6 @@ public record ExprResolver(
     }
   }
 
-  /// @param collected ordered set, implemented as a list
-  private record StaticGenVarCollector(MutableList<GeneralizedVar> collected) implements PosedUnaryOperator<Expr> {
-    @Override public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
-      if (expr instanceof Expr.Ref ref) {
-        var var = ref.var();
-        if (var instanceof LocalVar local && local.generateKind() instanceof GenerateKind.Generalized(var origin)) {
-          if (!collected.contains(origin)) collected.append(origin);
-        }
-      }
-      return expr.descent(this);
-    }
-  }
-
-  private void addReference(@NotNull GeneralizedVar defVar) { addReference(defVar.owner); }
   private void addReference(@NotNull DefVar<?, ?> defVar) { addReference(defVar.concrete); }
 
   public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause) {

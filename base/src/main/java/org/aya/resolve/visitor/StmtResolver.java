@@ -18,6 +18,7 @@ import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.error.Panic;
+import org.aya.util.error.PosedUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +41,7 @@ public interface StmtResolver {
       case ResolvingStmt.GenStmt(var variables) -> {
         var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
-        variables.descentInPlace(resolver, (_, p) -> p);
+        variables.descentInPlace(resolver, PosedUnaryOperator.identity());
         variables.dependencies = ImmutableMap.from(resolver.allowedGeneralizes().view());
         addReferences(info, new TyckOrder.Head(variables), resolver);
       }
