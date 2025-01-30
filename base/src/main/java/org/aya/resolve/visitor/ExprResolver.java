@@ -3,9 +3,7 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import kala.value.MutableValue;
 import org.aya.generic.stmt.TyckOrder;
@@ -44,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 public record ExprResolver(
   @NotNull Context ctx,
   boolean allowGeneralizing,
-  @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
+  @NotNull OverGeneralizer allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where
 ) implements PosedUnaryOperator<Expr> {
@@ -65,12 +63,12 @@ public record ExprResolver(
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq();
+    var view = resolver.allowedGeneralizes().allowedGeneralizeParams().toImmutableSeq();
     return new LiterateResolved(view, inner);
   }
 
   public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
-    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
+    this(ctx, allowGeneralizing, new OverGeneralizer(ctx), MutableList.create(), MutableStack.create());
   }
 
   public void resetRefs() { reference.clear(); }
@@ -136,13 +134,7 @@ public record ExprResolver(
           case GeneralizedVar generalized -> {
             // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
             if (allowGeneralizing) {
-              // Ordered set semantics. Do not expect too many generalized vars.
-              var owner = generalized.owner;
-              assert owner != null : "Sanity check";
-              var param = owner.toExpr(false, generalized.toLocal());
-              allowedGeneralizes.put(generalized, param);
-              addReference(owner);
-              yield param.ref();
+              yield allowedGeneralizes.register(generalized, this::addReference);
             } else {
               yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
             }
@@ -216,9 +208,8 @@ public record ExprResolver(
     }
   }
 
-  private void addReference(@NotNull DefVar<?, ?> defVar) {
-    addReference(defVar.concrete);
-  }
+  private void addReference(@NotNull GeneralizedVar defVar) { addReference(defVar.owner); }
+  private void addReference(@NotNull DefVar<?, ?> defVar) { addReference(defVar.concrete); }
 
   public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause) {
     var mCtx = MutableValue.create(ctx);
@@ -261,7 +252,7 @@ public record ExprResolver(
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
-      var gened = allowedGeneralizes.getOrNull(gvar);
+      var gened = allowedGeneralizes.getParam(gvar);
       if (gened != null) return gened.ref();
     }
 

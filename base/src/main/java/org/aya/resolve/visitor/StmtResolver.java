@@ -40,7 +40,7 @@ public interface StmtResolver {
         var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, (_, p) -> p);
-        variables.dependencies = resolver.allowedGeneralizes().keysView().toImmutableSeq();
+        variables.dependencies = resolver.allowedGeneralizes().allowedGeneralizeVars().toImmutableSeq();
         addReferences(info, new TyckOrder.Head(variables), resolver);
       }
     }
@@ -166,7 +166,7 @@ public interface StmtResolver {
   }
 
   private static void insertGeneralizedVars(@NotNull TeleDecl decl, @NotNull ExprResolver resolver) {
-    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
+    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().allowedGeneralizeParams());
   }
 
   private static <Cls> void resolveElim(@NotNull ExprResolver resolver, @NotNull MatchBody<Cls> body) {

@@ -2,19 +2,24 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
+import java.util.function.Consumer;
+
+import kala.collection.CollectionView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.PosedUnaryOperator;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.CyclicDependencyError;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
+import org.aya.util.error.PosedUnaryOperator;
 import org.aya.util.error.SourcePos;
-import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /// Collects dependency information for generalized variables using DFS on their types.
 ///
@@ -31,25 +36,25 @@ import org.jetbrains.annotations.NotNull;
 /// - Any reference to a variable out of scope is handled as an error in the resolver
 ///   if it’s not in the allowedGeneralizes map.
 public final class OverGeneralizer {
-  private final @NotNull Reporter reporter;
+  private final @NotNull Context reporter;
   private final @NotNull MutableSet<GeneralizedVar> visiting = MutableSet.create();
-  private final @NotNull MutableSet<GeneralizedVar> visited = MutableSet.create();
   private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
+  private final @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes = MutableLinkedHashMap.of();
 
-  public OverGeneralizer(@NotNull Reporter reporter) {
+  public OverGeneralizer(@NotNull Context reporter) {
     this.reporter = reporter;
   }
 
-  public void register(GeneralizedVar var) {
-    if (visited.contains(var)) return;
+  public @NotNull LocalVar register(GeneralizedVar var, @NotNull Consumer<GeneralizedVar> onGenVarVisited) {
+    if (allowedGeneralizes.containsKey(var)) return allowedGeneralizes.get(var).ref();
 
     // If var is already being visited in current DFS path, we found a cycle
     if (!visiting.add(var)) {
       // Find cycle start index
       var cycleStart = currentPath.indexOf(var);
       var cyclePath = currentPath.view().drop(cycleStart).appended(var);
-      reporter.report(new CyclicDependencyError(var.sourcePos(), var, cyclePath.toImmutableSeq()));
-      throw new Context.ResolvingInterruptedException();
+      visiting.clear();
+      reporter.reportAndThrow(new CyclicDependencyError(var.sourcePos(), var, cyclePath.toImmutableSeq()));
     }
 
     currentPath.append(var);
@@ -57,11 +62,26 @@ public final class OverGeneralizer {
     var.owner.dependencies = deps;
 
     // Recursively register dependencies
-    for (var dep : deps) register(dep);
+    for (var dep : deps) register(dep, onGenVarVisited);
 
     currentPath.removeLast();
     visiting.remove(var);
-    visited.add(var);
+    var param = var.toParam(false);
+    allowedGeneralizes.put(var, param);
+    onGenVarVisited.accept(var);
+    return param.ref();
+  }
+
+  public @NotNull CollectionView<Expr.Param> allowedGeneralizeParams() {
+    return allowedGeneralizes.valuesView();
+  }
+
+  public @NotNull CollectionView<GeneralizedVar> allowedGeneralizeVars() {
+    return allowedGeneralizes.keysView();
+  }
+
+  public @Nullable Expr.Param getParam(@NotNull GeneralizedVar var) {
+    return allowedGeneralizes.getOrNull(var);
   }
 
   private @NotNull ImmutableSeq<GeneralizedVar> collectReferences(GeneralizedVar var) {
@@ -78,6 +98,7 @@ public final class OverGeneralizer {
         var var = ref.var();
         if (var instanceof LocalVar local && local.generateKind() instanceof GenerateKind.Generalized(var origin)) {
           collected.append(origin);
+          collected.appendAll(origin.owner.dependencies);
         }
       }
       return expr.descent(this);
