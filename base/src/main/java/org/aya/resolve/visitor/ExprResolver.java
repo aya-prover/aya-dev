@@ -63,7 +63,7 @@ public record ExprResolver(
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().allowedGeneralizeParams().toImmutableSeq();
+    var view = resolver.allowedGeneralizes().allowedGeneralizes().valuesView().toImmutableSeq();
     return new LiterateResolved(view, inner);
   }
 

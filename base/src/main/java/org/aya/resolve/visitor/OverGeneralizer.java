@@ -4,7 +4,8 @@ package org.aya.resolve.visitor;
 
 import java.util.function.Consumer;
 
-import kala.collection.CollectionView;
+import kala.collection.MapView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
@@ -59,7 +60,6 @@ public final class OverGeneralizer {
 
     currentPath.append(var);
     var deps = collectReferences(var);
-    var.owner.dependencies = deps;
 
     // Recursively register dependencies
     for (var dep : deps) register(dep, onGenVarVisited);
@@ -72,12 +72,8 @@ public final class OverGeneralizer {
     return param.ref();
   }
 
-  public @NotNull CollectionView<Expr.Param> allowedGeneralizeParams() {
-    return allowedGeneralizes.valuesView();
-  }
-
-  public @NotNull CollectionView<GeneralizedVar> allowedGeneralizeVars() {
-    return allowedGeneralizes.keysView();
+  public @NotNull MapView<GeneralizedVar, Expr.Param> allowedGeneralizes() {
+    return allowedGeneralizes.view();
   }
 
   public @Nullable Expr.Param getParam(@NotNull GeneralizedVar var) {
@@ -98,7 +94,6 @@ public final class OverGeneralizer {
         var var = ref.var();
         if (var instanceof LocalVar local && local.generateKind() instanceof GenerateKind.Generalized(var origin)) {
           collected.append(origin);
-          collected.appendAll(origin.owner.dependencies);
         }
       }
       return expr.descent(this);

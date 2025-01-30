@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
@@ -24,7 +25,7 @@ public final class Generalize implements Stmt {
   public final @NotNull ImmutableSeq<GeneralizedVar> variables;
   public @NotNull WithPos<Expr> type;
   /// Late-initialized
-  public ImmutableSeq<GeneralizedVar> dependencies;
+  public ImmutableMap<GeneralizedVar, Expr.Param> dependencies;
 
   public Generalize(
     @NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables,

@@ -3,6 +3,7 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.MutableValue;
 import org.aya.generic.stmt.TyckOrder;
@@ -40,7 +41,7 @@ public interface StmtResolver {
         var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, (_, p) -> p);
-        variables.dependencies = resolver.allowedGeneralizes().allowedGeneralizeVars().toImmutableSeq();
+        variables.dependencies = ImmutableMap.from(resolver.allowedGeneralizes().allowedGeneralizes());
         addReferences(info, new TyckOrder.Head(variables), resolver);
       }
     }
@@ -166,7 +167,7 @@ public interface StmtResolver {
   }
 
   private static void insertGeneralizedVars(@NotNull TeleDecl decl, @NotNull ExprResolver resolver) {
-    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().allowedGeneralizeParams());
+    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().allowedGeneralizes().valuesView());
   }
 
   private static <Cls> void resolveElim(@NotNull ExprResolver resolver, @NotNull MatchBody<Cls> body) {
