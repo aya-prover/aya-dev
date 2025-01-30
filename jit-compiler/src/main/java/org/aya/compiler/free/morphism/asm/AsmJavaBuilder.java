@@ -18,6 +18,9 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/// Resources:
+/// * <a href="https://viewer.glavo.org/">ClassViewer</a>
+/// * <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html">Class File Specification</a>
 public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) implements FreeJavaBuilder<C> {
   /// @param nestedName null if top level class
   /// @return the class descriptor
