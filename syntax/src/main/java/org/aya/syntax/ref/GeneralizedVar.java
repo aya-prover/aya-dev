@@ -1,7 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.stmt.Generalize;
 import org.aya.util.error.SourceNode;
 import org.aya.util.error.SourcePos;
@@ -11,6 +12,8 @@ public final class GeneralizedVar implements AnyVar, SourceNode {
   public final @NotNull String name;
   public final @NotNull SourcePos sourcePos;
   public Generalize owner;
+  /// Late-initialized
+  public ImmutableSeq<GeneralizedVar> dependencies;
 
   public GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) {
     this.name = name;
