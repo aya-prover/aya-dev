@@ -12,8 +12,6 @@ public final class GeneralizedVar implements AnyVar, SourceNode {
   public final @NotNull String name;
   public final @NotNull SourcePos sourcePos;
   public Generalize owner;
-  /// Late-initialized
-  public ImmutableSeq<GeneralizedVar> dependencies;
 
   public GeneralizedVar(@NotNull String name, @NotNull SourcePos sourcePos) {
     this.name = name;

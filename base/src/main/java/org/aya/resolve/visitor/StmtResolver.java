@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -37,9 +37,10 @@ public interface StmtResolver {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl, info);
       case ResolvingStmt.ModStmt(var stmts) -> resolveStmt(stmts, info);
       case ResolvingStmt.GenStmt(var variables) -> {
-        var resolver = new ExprResolver(info.thisModule(), false);
+        var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, (_, p) -> p);
+        variables.dependencies = resolver.allowedGeneralizes().keysView().toImmutableSeq();
         addReferences(info, new TyckOrder.Head(variables), resolver);
       }
     }

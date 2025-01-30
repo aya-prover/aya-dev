@@ -16,9 +16,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /// Collects dependency information for generalized variables using DFS on their types.
 ///
 /// 1. A variable's type may reference other generalized variables; we record those as dependencies.
@@ -33,17 +30,17 @@ import java.util.Map;
 ///   confusion or potential cycles. So we do all dependency scans here, at declaration time.
 /// - Any reference to a variable out of scope is handled as an error in the resolver
 ///   if it’s not in the allowedGeneralizes map.
-public final class VariableDependencyCollector {
+public final class OverGeneralizer {
   private final @NotNull Reporter reporter;
   private final @NotNull MutableSet<GeneralizedVar> visiting = MutableSet.create();
   private final @NotNull MutableSet<GeneralizedVar> visited = MutableSet.create();
   private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
 
-  public VariableDependencyCollector(@NotNull Reporter reporter) {
+  public OverGeneralizer(@NotNull Reporter reporter) {
     this.reporter = reporter;
   }
 
-  public void registerVariable(GeneralizedVar var) {
+  public void register(GeneralizedVar var) {
     if (visited.contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
@@ -56,12 +53,11 @@ public final class VariableDependencyCollector {
     }
 
     currentPath.append(var);
-    var.dependencies = collectReferences(var);
+    var deps = collectReferences(var);
+    var.owner.dependencies = deps;
 
     // Recursively register dependencies
-    for (var dep : var.dependencies) {
-      registerVariable(dep);
-    }
+    for (var dep : deps) register(dep);
 
     currentPath.removeLast();
     visiting.remove(var);

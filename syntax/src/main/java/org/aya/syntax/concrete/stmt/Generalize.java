@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
@@ -23,6 +23,8 @@ public final class Generalize implements Stmt {
   public final @NotNull SourcePos sourcePos;
   public final @NotNull ImmutableSeq<GeneralizedVar> variables;
   public @NotNull WithPos<Expr> type;
+  /// Late-initialized
+  public ImmutableSeq<GeneralizedVar> dependencies;
 
   public Generalize(
     @NotNull SourcePos sourcePos, @NotNull ImmutableSeq<GeneralizedVar> variables,
