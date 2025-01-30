@@ -42,13 +42,7 @@ public interface StmtResolver {
         var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
 
-        // First pass: register all variables to detect cycles
-        for (var variable : variables.variables) {
-          resolver.collector().registerVariable(variable);
-        }
-
-        // Second pass: handle dependencies and references
-        var ownerRefs = MutableList.<TyckOrder>create();
+        // First pass: add all variables to context
         for (var variable : variables.variables) {
           var owner = variable.owner;
           assert owner != null : "GeneralizedVar owner should not be null";
@@ -56,6 +50,23 @@ public interface StmtResolver {
           // Add to allowedGeneralizes
           var param = owner.toExpr(false, variable.toLocal());
           resolver.allowedGeneralizes().put(variable, param);
+        }
+
+        // Second pass: resolve types
+        for (var variable : variables.variables) {
+          variable.owner.type = variable.owner.type.descent(resolver);
+        }
+
+        // Third pass: register variables to detect cycles
+        for (var variable : variables.variables) {
+          resolver.collector().registerVariable(variable);
+        }
+
+        // Fourth pass: handle dependencies and references
+        var ownerRefs = MutableList.<TyckOrder>create();
+        for (var variable : variables.variables) {
+          var owner = variable.owner;
+          assert owner != null : "GeneralizedVar owner should not be null";
 
           // Collect owner reference if it's a TyckUnit
           if (owner instanceof TyckUnit unit) {

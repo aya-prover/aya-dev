@@ -5,6 +5,8 @@ package org.aya.resolve.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
+import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.PosedUnaryOperator;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.CyclicDependencyError;
@@ -85,8 +87,11 @@ public final class VariableDependencyCollector {
 
     @Override
     public @NotNull Expr apply(@NotNull SourcePos pos, @NotNull Expr expr) {
-      if (expr instanceof Expr.Ref ref && ref.var() instanceof GeneralizedVar gvar) {
-        collected.append(gvar);
+      if (expr instanceof Expr.Ref ref) {
+        var var = ref.var();
+        if (var instanceof LocalVar localVar && localVar.generateKind() instanceof GenerateKind.Generalized gen) {
+          collected.append(gen.origin());
+        }
       }
       return expr.descent(this);
     }
