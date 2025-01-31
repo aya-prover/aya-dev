@@ -59,13 +59,12 @@ public interface StmtResolver {
       if (task.stmt instanceof Generalize gen) {
         var generalizer = new OvergrownGeneralizer(task);
         generalizer.currentPath.appendAll(gen.variables);
+        // Check loops
         task.generalizes.forEach((depGen, _) -> {
           generalizer.currentPath.append(depGen);
           depGen.owner.dependencies.forEach(generalizer::introduceDependencies);
           generalizer.currentPath.removeLast();
         });
-        generalizer.dependencyGeneralizes.putAll(task.generalizes);
-        gen.dependencies = ImmutableMap.from(generalizer.dependencyGeneralizes);
       }
     });
     todos.forEach(task -> {
@@ -129,7 +128,8 @@ public interface StmtResolver {
             addReferences(info, new TyckOrder.Head(decl), resolver);
           }
         }
-        return Option.some(new ResolveStmt(decl, resolver.allowedGeneralizes()));
+        if (resolver.allowedGeneralizes().isNotEmpty())
+          return Option.some(new ResolveStmt(decl, resolver.allowedGeneralizes()));
       }
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
         var resolver = resolveDeclSignature(info, new ExprResolver(ctx, true), data, Where.Head);
@@ -151,7 +151,8 @@ public interface StmtResolver {
 
         addReferences(info, new TyckOrder.Body(data), resolver.reference().view()
           .concat(data.body.clauses.map(TyckOrder.Body::new)));
-        return Option.some(new ResolveStmt(data, resolver.allowedGeneralizes()));
+        if (resolver.allowedGeneralizes().isNotEmpty())
+          return Option.some(new ResolveStmt(data, resolver.allowedGeneralizes()));
       }
       case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
         var resolver = new ExprResolver(ctx, false);
