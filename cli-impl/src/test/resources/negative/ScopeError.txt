@@ -318,3 +318,17 @@ That looks right!
 LocalShadowSuppress:
 That looks right!
 
+CyclicDependency:
+In file $FILE:1:11 ->
+
+  1 │     variable A : B
+    │              ╰╯
+  2 │     variable B : A
+
+Error: Cyclic dependency detected in variable declarations:
+       A → B → A
+
+Resolving interrupted due to:
+1 error(s), 0 warning(s).
+Let's learn from that.
+

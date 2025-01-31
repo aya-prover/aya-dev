@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public interface StmtResolver {
   static void resolveStmt(@NotNull ImmutableSeq<ResolvingStmt> stmt, @NotNull ResolveInfo info) {
     var todos = stmt.flatMap(s -> resolveStmt(s, info));
-    abstract class OvergrownGeneralizer extends OverGeneralizer {
+    class OvergrownGeneralizer extends OverGeneralizer {
       final MutableMap<GeneralizedVar, Expr.Param> dependencyGeneralizes = MutableLinkedHashMap.of();
       final ResolveStmt task;
       // MutableList<Generalize> deps = MutableList.create();
@@ -57,19 +57,20 @@ public interface StmtResolver {
 
     todos.forEach(task -> {
       if (task.stmt instanceof Generalize gen) {
-        var generalizer = new OvergrownGeneralizer(task) {
-          @Override protected boolean isSelf(@NotNull GeneralizedVar var) { return gen.variables.contains(var); }
-        };
-        task.generalizes.forEach((depGen, _) -> depGen.owner.dependencies.forEach(generalizer::introduceDependencies));
+        var generalizer = new OvergrownGeneralizer(task);
+        generalizer.currentPath.appendAll(gen.variables);
+        task.generalizes.forEach((depGen, _) -> {
+          generalizer.currentPath.append(depGen);
+          depGen.owner.dependencies.forEach(generalizer::introduceDependencies);
+          generalizer.currentPath.removeLast();
+        });
         generalizer.dependencyGeneralizes.putAll(task.generalizes);
         gen.dependencies = ImmutableMap.from(generalizer.dependencyGeneralizes);
       }
     });
     todos.forEach(task -> {
       if (task.stmt instanceof TeleDecl decl) {
-        var generalizer = new OvergrownGeneralizer(task) {
-          @Override protected boolean isSelf(@NotNull GeneralizedVar var) { return false; }
-        };
+        var generalizer = new OvergrownGeneralizer(task);
         task.generalizes.forEach((gen, _) -> gen.owner.dependencies.forEach(generalizer::introduceDependencies));
         insertGeneralizedVars(decl, task.generalizes);
         insertGeneralizedVars(decl, generalizer.dependencyGeneralizes);

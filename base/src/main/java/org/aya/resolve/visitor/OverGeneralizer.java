@@ -12,31 +12,23 @@ import org.jetbrains.annotations.NotNull;
 /// Collects dependency information for generalized variables using DFS on their types.
 ///
 /// 1. A variable's type may reference other generalized variables; we record those as dependencies.
-/// 2. If we revisit a variable already on the DFS stack ("visiting" set), that indicates
+/// 2. If we revisit a variable already on the DFS stack [#currentPath], that indicates
 ///    a cyclic dependency, and we report an error.
-/// 3. Once a variable is fully processed, it goes into the "visited" set; future registrations
-///    of the same variable skip repeated traversal.
-///
-/// Pitfalls & Notes:
-/// - A single variable (e.g. “A”) should be registered once, to avoid duplication.
-/// - Attempting to re-scan or re-introduce “A” in another variable’s context can cause
-///   confusion or potential cycles. So we do all dependency scans here, at declaration time.
-/// - Any reference to a variable out of scope is handled as an error in the resolver
-///   if it’s not in the allowedGeneralizes map.
+/// 3. Once a variable is fully processed, it goes into the [#introduceDependency] method; future registrations
+///    of the same variable skip repeated traversal using [#contains].
 public abstract class OverGeneralizer {
   private final @NotNull Context reporter;
-  private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
+  public final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
 
   public OverGeneralizer(@NotNull Context reporter) { this.reporter = reporter; }
   protected abstract boolean contains(@NotNull GeneralizedVar var);
-  protected abstract boolean isSelf(@NotNull GeneralizedVar var);
   protected abstract void introduceDependency(@NotNull GeneralizedVar var, @NotNull Expr.Param param);
 
   public final void introduceDependencies(@NotNull GeneralizedVar var, @NotNull Expr.Param param) {
     if (contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
-    if (currentPath.contains(var) || isSelf(var)) {
+    if (currentPath.contains(var)) {
       // Find cycle start index
       var cycleStart = currentPath.indexOf(var);
       if (cycleStart < 0) cycleStart = 0;
