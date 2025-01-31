@@ -28,6 +28,8 @@ import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
+import static org.aya.compiler.free.Constants.LAMBDA_NEW;
+
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
@@ -154,7 +156,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
-      case LamTerm lamTerm -> builder.mkNew(LamTerm.class, ImmutableSeq.of(serializeClosure(lamTerm.body())));
+      case LamTerm lamTerm -> builder.mkNew(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body())));
       case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
         getInstance(ref),
         builder.iconst(ulift),

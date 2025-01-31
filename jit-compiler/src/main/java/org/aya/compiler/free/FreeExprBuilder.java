@@ -6,12 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
+import org.aya.util.error.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
@@ -26,10 +28,13 @@ public interface FreeExprBuilder {
    * A {@code new} expression, the class should have only one (public) constructor with parameter count {@code args.size()}.
    */
   default @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
-    var first = Arrays.stream(className.getConstructors())
+    var candidates = Arrays.stream(className.getConstructors())
       .filter(c -> c.getParameterCount() == args.size())
-      .findFirst().get();
+      .collect(ImmutableSeq.factory());
 
+    assert candidates.size() == 1 : "Ambiguous constructors: count " + candidates.size();
+
+    var first = candidates.getFirst();
     var desc = FreeUtil.fromClass(className);
     var conRef = FreeClassBuilder.makeConstructorRef(desc,
       Arrays.stream(first.getParameterTypes())

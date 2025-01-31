@@ -44,10 +44,17 @@ import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 public class CompileTest {
   public static final @NotNull @Language("Aya") String SAMPLE_CODE = """
-      open inductive Nat | zro | suc Nat
-      def plus (a b : Nat) : Nat
-      | zro, b => b
-      | suc a, b => suc (plus a b)
+    open inductive Nat | zro | suc Nat
+    open inductive Vec Nat Type
+    | zro, A => vnil
+    | suc n, A => vcons A (Vec n A)
+    
+    def plus (a b : Nat) : Nat
+    | zro, b => b
+    | suc a, b => suc (plus a b)
+    
+    def id {A : Type} (a : A) : A => a
+    def idLam : Nat -> Nat => id (fn n => n)
     """;
 
   public void justTest(@NotNull CompileTester tester) throws ClassNotFoundException, NoSuchFieldException {
@@ -56,13 +63,16 @@ public class CompileTest {
     JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "zro"));
     JitCon S = tester.loadInstance(getClassName(baka.derive("Nat"), "suc"));
     JitFn plus = tester.loadInstance(getClassName(baka, "plus"));
+    JitFn idLam = tester.loadInstance(getClassName(baka, "idLam"));
     var zero = new ConCall(O, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
     var one = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(zero));
     var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
     var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
 
     var mResult = plus.invoke(ImmutableSeq.of(two, three));
-    System.out.println(mResult.easyToString());
+    var idLamResult = idLam.invoke(ImmutableSeq.empty());
+    var finalResult = new AppTerm(idLamResult, mResult).make();
+    System.out.println(finalResult.easyToString());
   }
 
   @Test public void test0() {
