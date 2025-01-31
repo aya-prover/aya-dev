@@ -74,24 +74,6 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  @Test public void path1() {
-    var result = tyck("""
-      inductive Nat | O | S Nat
-      prim I : ISet
-      prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-      prim coe
-      variable A : Type
-      def infix = (a b : A) => Path (\\i => A) a b
-      def refl {a : A} : a = a => \\i => a
-      open inductive Int
-      | pos Nat | neg Nat
-      | zro : pos 0 = neg 0
-      example def testZro0 : zro 0 = pos 0 => refl
-      example def testZro1 : zro 1 = neg 0 => refl
-      """).defs;
-    assertTrue(result.isNotEmpty());
-  }
-
   /// Need pruning
   /*@Test*/
   public void issue768() {
@@ -107,42 +89,6 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  @Test public void test2() {
-    var result = tyck("""
-      open inductive Nat | O | S Nat
-      open inductive Bool | true | false
-      def not Bool : Bool | true => false | false => true
-      def even Nat : Bool
-      | 0 => true
-      | S n => odd n
-      def odd Nat : Bool
-      | 0 => false
-      | S n => even n
-      """).defs;
-    assertTrue(result.isNotEmpty());
-  }
-
-  @Test public void test3() {
-    assertTrue(tyck("""
-      open inductive Nat | O | S Nat
-      open inductive Natt | OO | SS Nat
-      def infix = {A : Type} (a b : A) => Type
-      // Disambiguate by type checking
-      def test (a : Nat) => a = 114514
-      """).defs.isNotEmpty());
-  }
-
-  @Test public void elimResolve() {
-    assertTrue(tyck("""
-      open inductive Nat | O | S Nat
-      open inductive Phantom Nat Nat (A : Type) | mk A
-      variable a b : Nat
-      def plus : Phantom a b Nat elim a
-      | O => mk b
-      | S a => mk b
-      """).defs.isNotEmpty());
-  }
-
   @Test public void classTyck() {
     // 🦀
     assertTrue(tyck("""
@@ -156,14 +102,6 @@ public class TyckTest {
       | infix * : carrier -> carrier -> carrier
         tighter =
       | idl (x : carrier) : unit * x = x
-      """).defs.isNotEmpty());
-  }
-
-  @Test public void what() {
-    assertTrue(tyck("""
-      class Kontainer
-      | Taipe : Type
-      | walue : Taipe
       """).defs.isNotEmpty());
   }
 

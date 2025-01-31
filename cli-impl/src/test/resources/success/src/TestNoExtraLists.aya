@@ -1,3 +1,33 @@
 open import prelude
 
 def canonicalList => [ 114514 ]
+
+// Below are ported from TyckTest
+
+def even Nat : Bool
+| 0 => true
+| suc n => odd n
+def odd Nat : Bool
+| 0 => false
+| suc n => even n
+
+open inductive Nat2
+| zero2
+| suc2 Nat2
+
+// Disambiguate by type checking
+def test (a : Nat) => a = 114514
+
+ open inductive Int
+| pos Nat | neg Nat
+| zro : pos 0 = neg 0
+example def testZro0 : zro 0 = pos 0 => refl
+example def testZro1 : zro 1 = neg 0 => refl
+
+module ElimResolve {
+  open inductive Phantom Nat Nat (A : Type) | mk A
+  variable a b : Nat
+  def plus : Phantom a b Nat elim a
+  | 0 => mk b
+  | suc a => mk b
+}
