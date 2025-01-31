@@ -21,19 +21,17 @@ import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Resolves expressions inside stmts, after {@link StmtPreResolver}
- *
- * @author re-xyr, ice1000, kiva
- * @see StmtPreResolver
- * @see ExprResolver
- */
+/// Resolves expressions inside stmts, after [StmtPreResolver]
+///
+/// @author re-xyr, ice1000, kiva
+/// @see StmtPreResolver
+/// @see ExprResolver
 public interface StmtResolver {
   static void resolveStmt(@NotNull ImmutableSeq<ResolvingStmt> stmt, @NotNull ResolveInfo info) {
     stmt.forEach(s -> resolveStmt(s, info));
   }
 
-  /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
+  /// @apiNote Note that this function MUTATES the stmt if it's a Decl.
   static void resolveStmt(@NotNull ResolvingStmt stmt, @NotNull ResolveInfo info) {
     switch (stmt) {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl, info);
@@ -48,11 +46,9 @@ public interface StmtResolver {
     }
   }
 
-  /**
-   * Resolve {@param predecl}, where {@code predecl.ctx()} is the context of the body of {@param predecl}
-   *
-   * @apiNote Note that this function MUTATES the decl
-   */
+  /// Resolve {@param predecl}, where `predecl.ctx()` is the context of the body of {@param predecl}
+  ///
+  /// @apiNote Note that this function MUTATES the decl
   private static void resolveDecl(@NotNull ResolvingStmt.ResolvingDecl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
@@ -146,7 +142,7 @@ public interface StmtResolver {
       .filter(unit -> TyckUnit.needTyck(unit, info.modulePath())));
   }
 
-  /** @param decl is unmodified */
+  /// @param decl is unmodified
   private static void addReferences(@NotNull ResolveInfo info, TyckOrder decl, ExprResolver resolver) {
     addReferences(info, decl, resolver.reference().view());
   }

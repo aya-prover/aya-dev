@@ -134,7 +134,8 @@ public record ExprResolver(
             // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
             if (allowGeneralizing) {
               var param = generalized.toParam(false);
-              introduceDependencies(generalized, param);
+              var generalizer = new OvergrownGeneralizer();
+              generalizer.introduceDependencies(generalized, param);
               yield param.ref();
             } else {
               yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
@@ -249,17 +250,15 @@ public record ExprResolver(
     });
   }
 
-  private void introduceDependencies(@NotNull GeneralizedVar var, @NotNull Expr.Param param) {
-    if (allowedGeneralizes.containsKey(var)) return;
-
-    // Introduce dependencies first
-    var.owner.dependencies.forEach(this::introduceDependencies);
-
-    // Now introduce the variable itself
-    var owner = var.owner;
-    assert owner != null : "GeneralizedVar owner should not be null";
-    allowedGeneralizes.put(var, param);
-    addReference(owner);
+  private class OvergrownGeneralizer extends OverGeneralizer {
+    public OvergrownGeneralizer() { super(ctx); }
+    @Override protected boolean contains(@NotNull GeneralizedVar var) { return allowedGeneralizes.containsKey(var); }
+    @Override protected void introduceDependency(@NotNull GeneralizedVar var, Expr.@NotNull Param param) {
+      var owner = var.owner;
+      assert owner != null : "GeneralizedVar owner should not be null";
+      allowedGeneralizes.put(var, param);
+      addReference(owner);
+    }
   }
 
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {

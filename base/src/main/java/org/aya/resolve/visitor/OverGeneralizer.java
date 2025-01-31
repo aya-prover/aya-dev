@@ -2,24 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
-import java.util.function.Consumer;
-
-import kala.collection.MapView;
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.CyclicDependencyError;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.ref.GeneralizedVar;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.PosedUnaryOperator;
-import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /// Collects dependency information for generalized variables using DFS on their types.
 ///
@@ -35,34 +24,33 @@ import org.jetbrains.annotations.Nullable;
 ///   confusion or potential cycles. So we do all dependency scans here, at declaration time.
 /// - Any reference to a variable out of scope is handled as an error in the resolver
 ///   if it’s not in the allowedGeneralizes map.
-public final class OverGeneralizer {
+public abstract class OverGeneralizer {
   private final @NotNull Context reporter;
   private final @NotNull MutableSet<GeneralizedVar> visiting = MutableSet.create();
-  private final @NotNull MutableSet<GeneralizedVar> visited = MutableSet.create();
   private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
 
-  public OverGeneralizer(@NotNull Context reporter) {
-    this.reporter = reporter;
-  }
+  public OverGeneralizer(@NotNull Context reporter) { this.reporter = reporter; }
+  protected abstract boolean contains(@NotNull GeneralizedVar var);
+  protected abstract void introduceDependency(@NotNull GeneralizedVar var, @NotNull Expr.Param param);
 
-  public void register(GeneralizedVar var) {
-    if (visited.contains(var)) return;
+  public final void introduceDependencies(@NotNull GeneralizedVar var, @NotNull Expr.Param param) {
+    if (contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
     if (!visiting.add(var)) {
       // Find cycle start index
       var cycleStart = currentPath.indexOf(var);
       var cyclePath = currentPath.view().drop(cycleStart).appended(var);
-      visiting.clear();
       reporter.reportAndThrow(new CyclicDependencyError(var.sourcePos(), var, cyclePath.toImmutableSeq()));
     }
 
     currentPath.append(var);
-    // Recursively register dependencies
-    var.owner.dependencies.keysView().forEach(this::register);
+    // Introduce dependencies first
+    var.owner.dependencies.forEach(this::introduceDependencies);
 
+    // Now introduce the variable itself
+    introduceDependency(var, param);
     currentPath.removeLast();
     visiting.remove(var);
-    visited.add(var);
   }
 }
