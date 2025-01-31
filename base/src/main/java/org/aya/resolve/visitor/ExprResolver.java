@@ -19,7 +19,10 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
-import org.aya.syntax.ref.*;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
 import org.aya.util.error.Panic;
 import org.aya.util.error.PosedUnaryOperator;
@@ -134,8 +137,9 @@ public record ExprResolver(
             // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
             if (allowGeneralizing) {
               var param = generalized.toParam(false);
-              var generalizer = new OvergrownGeneralizer();
-              generalizer.introduceDependencies(generalized, param);
+              // Now introduce the variable itself
+              allowedGeneralizes.put(generalized, param);
+              addReference(generalized.owner);
               yield param.ref();
             } else {
               yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
@@ -248,17 +252,6 @@ public record ExprResolver(
       ctx.set(ctx.get().bind(bind.var()));
       return b;
     });
-  }
-
-  private class OvergrownGeneralizer extends OverGeneralizer {
-    public OvergrownGeneralizer() { super(ctx); }
-    @Override protected boolean contains(@NotNull GeneralizedVar var) { return allowedGeneralizes.containsKey(var); }
-    @Override protected void introduceDependency(@NotNull GeneralizedVar var, Expr.@NotNull Param param) {
-      var owner = var.owner;
-      assert owner != null : "GeneralizedVar owner should not be null";
-      allowedGeneralizes.put(var, param);
-      addReference(owner);
-    }
   }
 
   public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
