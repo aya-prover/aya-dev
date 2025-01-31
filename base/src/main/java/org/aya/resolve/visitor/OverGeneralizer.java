@@ -29,15 +29,17 @@ public abstract class OverGeneralizer {
 
   public OverGeneralizer(@NotNull Context reporter) { this.reporter = reporter; }
   protected abstract boolean contains(@NotNull GeneralizedVar var);
+  protected abstract boolean isSelf(@NotNull GeneralizedVar var);
   protected abstract void introduceDependency(@NotNull GeneralizedVar var, @NotNull Expr.Param param);
 
   public final void introduceDependencies(@NotNull GeneralizedVar var, @NotNull Expr.Param param) {
     if (contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
-    if (currentPath.contains(var)) {
+    if (currentPath.contains(var) || isSelf(var)) {
       // Find cycle start index
       var cycleStart = currentPath.indexOf(var);
+      if (cycleStart < 0) cycleStart = 0;
       var cyclePath = currentPath.view().drop(cycleStart).appended(var);
       reporter.reportAndThrow(new CyclicDependencyError(var.sourcePos(), var, cyclePath.toImmutableSeq()));
     }

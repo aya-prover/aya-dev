@@ -5,6 +5,9 @@ package org.aya.resolve.visitor;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.stmt.TyckOrder;
 import org.aya.generic.stmt.TyckUnit;
@@ -13,8 +16,12 @@ import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.visitor.ExprResolver.Where;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.stmt.Generalize;
 import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.util.error.Panic;
@@ -28,28 +35,77 @@ import org.jetbrains.annotations.NotNull;
 /// @see ExprResolver
 public interface StmtResolver {
   static void resolveStmt(@NotNull ImmutableSeq<ResolvingStmt> stmt, @NotNull ResolveInfo info) {
-    stmt.forEach(s -> resolveStmt(s, info));
+    var todos = stmt.flatMap(s -> resolveStmt(s, info));
+    abstract class OvergrownGeneralizer extends OverGeneralizer {
+      final MutableMap<GeneralizedVar, Expr.Param> dependencyGeneralizes = MutableLinkedHashMap.of();
+      final ResolveStmt task;
+      // MutableList<Generalize> deps = MutableList.create();
+      public OvergrownGeneralizer(@NotNull ResolveStmt task) {
+        super(info.thisModule());
+        this.task = task;
+      }
+      @Override protected boolean contains(@NotNull GeneralizedVar var) {
+        return dependencyGeneralizes.containsKey(var) || task.generalizes.containsKey(var);
+      }
+      @Override protected void introduceDependency(@NotNull GeneralizedVar var, Expr.@NotNull Param param) {
+        var owner = var.owner;
+        assert owner != null : "GeneralizedVar owner should not be null";
+        dependencyGeneralizes.put(var, param);
+        // deps.append(owner);
+      }
+    }
+
+    todos.forEach(task -> {
+      if (task.stmt instanceof Generalize gen) {
+        var generalizer = new OvergrownGeneralizer(task) {
+          @Override protected boolean isSelf(@NotNull GeneralizedVar var) { return gen.variables.contains(var); }
+        };
+        task.generalizes.forEach((depGen, _) -> depGen.owner.dependencies.forEach(generalizer::introduceDependencies));
+        generalizer.dependencyGeneralizes.putAll(task.generalizes);
+        gen.dependencies = ImmutableMap.from(generalizer.dependencyGeneralizes);
+      }
+    });
+    todos.forEach(task -> {
+      if (task.stmt instanceof TeleDecl decl) {
+        var generalizer = new OvergrownGeneralizer(task) {
+          @Override protected boolean isSelf(@NotNull GeneralizedVar var) { return false; }
+        };
+        task.generalizes.forEach((gen, _) -> gen.owner.dependencies.forEach(generalizer::introduceDependencies));
+        insertGeneralizedVars(decl, task.generalizes);
+        insertGeneralizedVars(decl, generalizer.dependencyGeneralizes);
+        // addReferences(info, new TyckOrder.Head(gen), generalizer.deps.view().map(TyckOrder.Head::new));
+      }
+    });
   }
 
+  /// @param generalizes the directly referred generalized variables
+  record ResolveStmt(Stmt stmt, MutableMap<GeneralizedVar, Expr.Param> generalizes) { }
+
+  /// @return the "TO-DO" for the rest of the resolving, see [ResolveStmt]
   /// @apiNote Note that this function MUTATES the stmt if it's a Decl.
-  static void resolveStmt(@NotNull ResolvingStmt stmt, @NotNull ResolveInfo info) {
-    switch (stmt) {
+  static Option<ResolveStmt> resolveStmt(@NotNull ResolvingStmt stmt, @NotNull ResolveInfo info) {
+    return switch (stmt) {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl, info);
-      case ResolvingStmt.ModStmt(var stmts) -> resolveStmt(stmts, info);
+      case ResolvingStmt.ModStmt(var stmts) -> {
+        resolveStmt(stmts, info);
+        yield Option.none();
+      }
       case ResolvingStmt.GenStmt(var variables) -> {
         var resolver = new ExprResolver(info.thisModule(), true);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, PosedUnaryOperator.identity());
         variables.dependencies = ImmutableMap.from(resolver.allowedGeneralizes().view());
         addReferences(info, new TyckOrder.Head(variables), resolver);
+        yield Option.some(new ResolveStmt(variables, resolver.allowedGeneralizes()));
       }
-    }
+    };
   }
 
   /// Resolve {@param predecl}, where `predecl.ctx()` is the context of the body of {@param predecl}
   ///
   /// @apiNote Note that this function MUTATES the decl
-  private static void resolveDecl(@NotNull ResolvingStmt.ResolvingDecl predecl, @NotNull ResolveInfo info) {
+  private static Option<ResolveStmt>
+  resolveDecl(@NotNull ResolvingStmt.ResolvingDecl predecl, @NotNull ResolveInfo info) {
     switch (predecl) {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
         var where = decl.body instanceof FnBody.BlockBody ? Where.Head : Where.FnSimple;
@@ -58,8 +114,7 @@ public interface StmtResolver {
         switch (decl.body) {
           case FnBody.BlockBody body -> {
             assert body.elims() == null;
-            // introducing generalized variable is not allowed in clauses, hence we insert them before body resolving
-            insertGeneralizedVars(decl, resolver);
+            // insertGeneralizedVars(decl, resolver);
             resolveElim(resolver, body.inner());
             var clausesResolver = resolver.deriveRestrictive();
             clausesResolver.reference().append(new TyckOrder.Head(decl));
@@ -68,15 +123,16 @@ public interface StmtResolver {
           }
           case FnBody.ExprBody(var expr) -> {
             var body = expr.descent(resolver);
-            insertGeneralizedVars(decl, resolver);
+            // insertGeneralizedVars(decl, resolver);
             decl.body = new FnBody.ExprBody(body);
             addReferences(info, new TyckOrder.Head(decl), resolver);
           }
         }
+        return Option.some(new ResolveStmt(decl, resolver.allowedGeneralizes()));
       }
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
         var resolver = resolveDeclSignature(info, new ExprResolver(ctx, true), data, Where.Head);
-        insertGeneralizedVars(data, resolver);
+        // insertGeneralizedVars(data, resolver);
         resolveElim(resolver, data.body);
         data.body.forEach(con -> {
           var bodyResolver = resolver.deriveRestrictive();
@@ -94,6 +150,7 @@ public interface StmtResolver {
 
         addReferences(info, new TyckOrder.Body(data), resolver.reference().view()
           .concat(data.body.clauses.map(TyckOrder.Body::new)));
+        return Option.some(new ResolveStmt(data, resolver.allowedGeneralizes()));
       }
       case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
         var resolver = new ExprResolver(ctx, false);
@@ -120,6 +177,7 @@ public interface StmtResolver {
       // handled in DataDecl and ClassDecl
       case ResolvingStmt.MiscDecl _ -> Panic.unreachable();
     }
+    return Option.none();
   }
   private static void
   resolveMemberSignature(TeleDecl con, ExprResolver bodyResolver, MutableValue<@NotNull Context> mCtx) {
@@ -163,8 +221,8 @@ public interface StmtResolver {
     return newResolver;
   }
 
-  private static void insertGeneralizedVars(@NotNull TeleDecl decl, @NotNull ExprResolver resolver) {
-    decl.telescope = decl.telescope.prependedAll(resolver.allowedGeneralizes().valuesView());
+  private static void insertGeneralizedVars(@NotNull TeleDecl decl, MutableMap<GeneralizedVar, Expr.Param> generalizes) {
+    decl.telescope = decl.telescope.prependedAll(generalizes.valuesView());
   }
 
   private static <Cls> void resolveElim(@NotNull ExprResolver resolver, @NotNull MatchBody<Cls> body) {

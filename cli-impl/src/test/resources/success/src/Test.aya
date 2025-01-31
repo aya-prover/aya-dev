@@ -135,3 +135,9 @@ module Issue243 {
   | nothing => refl
   | _ => 233
 }
+
+module PullRequest1226 {
+  variable A : Type
+  variable a b : A
+  def basic (a = a) => a
+}
