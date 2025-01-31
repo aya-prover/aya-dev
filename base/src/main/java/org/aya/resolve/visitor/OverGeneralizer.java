@@ -3,7 +3,6 @@
 package org.aya.resolve.visitor;
 
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSet;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.CyclicDependencyError;
 import org.aya.syntax.concrete.Expr;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 ///   if it’s not in the allowedGeneralizes map.
 public abstract class OverGeneralizer {
   private final @NotNull Context reporter;
-  private final @NotNull MutableSet<GeneralizedVar> visiting = MutableSet.create();
   private final @NotNull MutableList<GeneralizedVar> currentPath = MutableList.create();
 
   public OverGeneralizer(@NotNull Context reporter) { this.reporter = reporter; }
@@ -37,7 +35,7 @@ public abstract class OverGeneralizer {
     if (contains(var)) return;
 
     // If var is already being visited in current DFS path, we found a cycle
-    if (!visiting.add(var)) {
+    if (currentPath.contains(var)) {
       // Find cycle start index
       var cycleStart = currentPath.indexOf(var);
       var cyclePath = currentPath.view().drop(cycleStart).appended(var);
@@ -51,6 +49,5 @@ public abstract class OverGeneralizer {
     // Now introduce the variable itself
     introduceDependency(var, param);
     currentPath.removeLast();
-    visiting.remove(var);
   }
 }
