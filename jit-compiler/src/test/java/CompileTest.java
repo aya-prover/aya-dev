@@ -7,6 +7,7 @@ import org.aya.compiler.free.morphism.asm.AsmOutputCollector;
 import org.aya.compiler.free.morphism.source.SourceClassBuilder;
 import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
+import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
@@ -16,6 +17,8 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.resolve.module.ModuleCallback;
 import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.TopLevelDef;
@@ -24,6 +27,7 @@ import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.call.ConCall;
+import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
@@ -32,60 +36,47 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.lang.constant.ConstantDescs;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 public class CompileTest {
+  public static final @NotNull @Language("Aya") String SAMPLE_CODE = """
+      open inductive Nat | zro | suc Nat
+      def plus (a b : Nat) : Nat
+      | zro, b => b
+      | suc a, b => suc (plus a b)
+    """;
+
+  public void justTest(@NotNull CompileTester tester) throws ClassNotFoundException, NoSuchFieldException {
+    var baka = DumbModuleLoader.DUMB_MODULE_NAME;
+
+    JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "zro"));
+    JitCon S = tester.loadInstance(getClassName(baka.derive("Nat"), "suc"));
+    JitFn plus = tester.loadInstance(getClassName(baka, "plus"));
+    var zero = new ConCall(O, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
+    var one = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(zero));
+    var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
+    var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
+
+    var mResult = plus.invoke(ImmutableSeq.of(two, three));
+    System.out.println(mResult.easyToString());
+  }
+
   @Test public void test0() {
-    var result = tyck("""
-      open inductive Nat | O | S Nat
-      open inductive Vec (n : Nat) Type
-      | O, A   => vnil
-      | S n, A => vcons A (Vec n A)
-      
-      def plus (a b : Nat) : Nat elim a
-      | O => b
-      | S n => S (plus n b)
-      
-      def what : Nat -> Nat => fn n => plus n 1
-      """); // .filter(x -> x instanceof FnDef || x instanceof DataDef);
+    var result = tyck(SAMPLE_CODE); // .filter(x -> x instanceof FnDef || x instanceof DataDef);
 
     var code = serializeFrom(result);
 
     try {
       var tester = new CompileTester(code);
       tester.compile();
-      var baka = DumbModuleLoader.DUMB_MODULE_NAME;
-
-      JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "O"));
-      JitCon S = tester.loadInstance(getClassName(baka.derive("Nat"), "S"));
-      JitFn plus = tester.loadInstance(getClassName(baka, "plus"));
-      var zero = new ConCall(O, ImmutableSeq.empty(), 0, ImmutableSeq.empty());
-      var one = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(zero));
-      var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
-      var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
-
-      var mResult = plus.invoke(ImmutableSeq.of(two, three));
-      System.out.println(mResult.easyToString());
-    } catch (IOException e) {
+      justTest(tester);
+    } catch (IOException | ClassNotFoundException | NoSuchFieldException e) {
       throw new RuntimeException(e);
     }
-
-    // var vec = (DataDef) result.findFirst(def -> def.ref().name().equals("Vec")).get();
-    // var out = new DataSerializer(new StringBuilder(), 0, new NameGenerator(), _ -> {}).serialize(vec).result();
-    // System.out.println("Vec.java");
-    // System.out.println(out);
-    //
-    // var vnil = (ConDef) result.findFirst(def -> def.ref().name().equals("[]")).get();
-    // out = new ConSerializer(new StringBuilder(), 0, new NameGenerator()).serialize(vnil).result();
-    // System.out.println("vnil.java");
-    // System.out.println(out);
-    //
-    // var plus = (FnDef) result.findFirst(def -> def.ref().name().equals("plus")).get();
-    // out = new FnSerializer(new StringBuilder(), 0, new NameGenerator()).serialize(plus).result();
-    // System.out.println("plus.java");
-    // System.out.println(out);
   }
 
   @Test public void serLam() {
@@ -111,19 +102,19 @@ public class CompileTest {
   }
 
   @Test
-  public void testAsm() throws IOException {
+  public void testAsm() throws IOException, ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
     var base = Path.of("src", "test", "build");
-    var result = tyck("""
-      open inductive Nat | zro | suc Nat
-      def plus (a b : Nat) : Nat
-      | zro, b => b
-      | suc a, b => suc (plus a b)
-      """);
+    var result = tyck(SAMPLE_CODE);
 
+    FileUtil.deleteRecursively(base);
     new ModuleSerializer(result.info.shapeFactory())
       .serialize(new AsmJavaBuilder<>(new AsmOutputCollector.Default()), new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
       .writeTo(base);
+
+    try (var innerLoader = new URLClassLoader(new URL[]{base.toUri().toURL()}, getClass().getClassLoader())) {
+      justTest(new CompileTester(innerLoader));
+    }
   }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {

@@ -175,6 +175,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
           acb.loadExpr(expr);
           cb.putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
         });
+        cb.return_();
       });
     }
   }

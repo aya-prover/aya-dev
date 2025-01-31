@@ -17,6 +17,7 @@ import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
 import org.glavo.classfile.Opcode;
 import org.glavo.classfile.TypeKind;
+import org.glavo.classfile.instruction.SwitchCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,9 +186,23 @@ public record AsmCodeBuilder(
 
   @Override
   public void switchCase(@NotNull LocalVariable elim, @NotNull ImmutableIntSeq cases, @NotNull ObjIntConsumer<FreeCodeBuilder> branch, @NotNull Consumer<FreeCodeBuilder> defaultCase) {
-    // FIXME: i don't know how to do this
-    loadExpr(mkNew(UnsupportedOperationException.class, ImmutableSeq.empty()));
-    writer.athrow();
+    var switchCases = cases.mapToObj(i -> SwitchCase.of(i, writer.newLabel()));
+    var defaultLabel = writer.newLabel();
+
+    loadVar(elim);
+    writer.tableswitch(defaultLabel, switchCases.asJava());
+
+    cases.forEach(i ->
+      writer.block(inner -> {
+        inner.labelBinding(switchCases.get(i).target());
+        subscoped(inner, builder -> {
+          branch.accept(builder, i);
+        });
+      })
+    );
+
+    writer.labelBinding(defaultLabel);
+    subscoped(defaultCase::accept);
   }
 
   @Override

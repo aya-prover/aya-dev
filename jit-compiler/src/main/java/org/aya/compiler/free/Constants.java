@@ -161,7 +161,7 @@ public final class Constants {
     "unreachable",
     ConstantDescs.CD_Object,
     ImmutableSeq.empty(),
-    true
+    false
   );
 
   public static final @NotNull MethodRef INT_REPR = new MethodRef(

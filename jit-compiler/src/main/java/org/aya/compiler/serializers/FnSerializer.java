@@ -7,6 +7,7 @@ import java.lang.constant.ConstantDescs;
 import java.util.EnumSet;
 import java.util.function.Consumer;
 
+import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.compiler.free.Constants;
@@ -31,10 +32,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     this.shapeFactory = shapeFactory;
   }
 
+  /// @see JitFn#invoke(Seq)
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
     return new MethodRef(
-      owner, "invoke", Constants.CD_Term, ImmutableSeq.of(Constants.CD_Thunk)
-      .appendedAll(ImmutableSeq.fill(argc, Constants.CD_Term)), false
+      owner, "invoke", Constants.CD_Term, ImmutableSeq.fill(argc, Constants.CD_Term), false
     );
   }
 
