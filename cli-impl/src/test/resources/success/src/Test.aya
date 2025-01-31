@@ -136,8 +136,23 @@ module Issue243 {
   | _ => 233
 }
 
-module PullRequest1226 {
+module PullRequest1226Basic {
   variable A : Type
   variable a b : A
-  def basic (a = a) => a
+  def test (a = a) => a
+}
+
+module PullRequest1226Hard {
+  variable A : Type
+  variable a : A
+  open inductive K | kk
+  open inductive G (k : K) | gg
+  open inductive F (A : Type) (k : K) (n : G k) | ff
+  open inductive N (b : A) (c : A) | nn
+  variable k : K
+  variable n : G k
+  variable xs : F A k n
+  variable b c : A
+  variable d : N b c
+  def test : d = d => refl
 }

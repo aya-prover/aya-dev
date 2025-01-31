@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.concrete.stmt.Generalize;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
@@ -38,6 +39,6 @@ public sealed interface ResolvingStmt {
 
   record TopDecl(@NotNull Decl stmt, @NotNull Context context) implements ResolvingDecl { }
   record MiscDecl(@NotNull Decl stmt) implements ResolvingDecl { }
-  record GenStmt(@NotNull Generalize stmt) implements ResolvingStmt { }
+  record GenStmt(@NotNull Generalize stmt, @NotNull ModuleContext context) implements ResolvingStmt { }
   record ModStmt(@NotNull ImmutableSeq<@NotNull ResolvingStmt> resolved) implements ResolvingStmt { }
 }

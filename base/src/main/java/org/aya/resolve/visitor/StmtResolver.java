@@ -91,8 +91,8 @@ public interface StmtResolver {
         resolveStmt(stmts, info);
         yield Option.none();
       }
-      case ResolvingStmt.GenStmt(var variables) -> {
-        var resolver = new ExprResolver(info.thisModule(), true);
+      case ResolvingStmt.GenStmt(var variables, var context) -> {
+        var resolver = new ExprResolver(context, true);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, PosedUnaryOperator.identity());
         variables.dependencies = ImmutableMap.from(resolver.allowedGeneralizes().view());
