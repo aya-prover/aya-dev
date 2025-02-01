@@ -2,6 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.normalize.Normalizer;
@@ -21,16 +31,6 @@ import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Random;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TyckTest {
   @Test public void test0() {
@@ -159,8 +159,7 @@ public class TyckTest {
       """).defs.isNotEmpty());
   }
 
-  @Test
-  public void what() {
+  @Test public void what() {
     assertTrue(tyck("""
       class Kontainer
       | Taipe : Type

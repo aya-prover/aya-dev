@@ -1,6 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.primitive;
+
+import java.util.EnumMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import static org.aya.syntax.core.def.PrimDef.*;
+import static org.aya.syntax.core.term.SortTerm.Set0;
+import static org.aya.syntax.core.term.SortTerm.Type0;
 
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableMap;
@@ -26,13 +34,6 @@ import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import static org.aya.syntax.core.def.PrimDef.*;
-import static org.aya.syntax.core.term.SortTerm.Type0;
-
 public class PrimFactory {
   private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
   private final @NotNull EnumMap<@NotNull ID, @NotNull PrimDefLike> defs = new EnumMap<>(ID.class);
@@ -43,6 +44,7 @@ public class PrimFactory {
       stringConcat,
       intervalType,
       pathType,
+      partialType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
   }
@@ -129,6 +131,15 @@ public class PrimFactory {
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
 
+  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, _) -> {
+    throw new UnsupportedOperationException("TODO");
+  }, ref -> {
+    var paramR = new Param("r", DimTyTerm.INSTANCE, true);
+    var paramS = new Param("s", DimTyTerm.INSTANCE, true);
+    var paramA = new Param("A", Type0, true);
+    return new PrimDef(ref, ImmutableSeq.of(paramR, paramS, paramA), Set0, ID.PARTIAL);
+  }, ImmutableSeq.of(ID.I));
+
   /*
   private final @NotNull PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
     var varA = new LocalVar("A");
@@ -166,7 +177,7 @@ public class PrimFactory {
     ImmutableSeq.empty());
 
   public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
-    var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref);
+    var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref());
     definePrim(rst);
     return rst;
   }

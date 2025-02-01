@@ -383,7 +383,7 @@ public record StmtTycker(
     tycker.unifyTermReported(
       DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result()),
       // No checks, slightly faster than TeleDef.defType
-      DepTypeTerm.makePi(core.telescope.view().map(Param::type), core.result),
+      DepTypeTerm.makePi(core.telescope().view().map(Param::type), core.result()),
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     var zonker = new Finalizer.Zonk<>(tycker);

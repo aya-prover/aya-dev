@@ -225,10 +225,6 @@ apply { plugin("jacoco-report-aggregation") }
 dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }
 
 val ccr = tasks["testCodeCoverageReport"]
-tasks.register("githubActions") {
-  group = "verification"
-  dependsOn(ccr, tasks.findByPath(":lsp:jlink"))
-}
 
 if (Os.isFamily(Os.FAMILY_WINDOWS)) tasks.register("showCCR") {
   dependsOn(ccr)

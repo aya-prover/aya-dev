@@ -1,6 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
+
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -15,9 +18,6 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
 
 // You should compile this with its constructors
 public final class DataSerializer extends JitTeleSerializer<DataDef> {
@@ -60,7 +60,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     // The capture is one-to-one
     var flipped = ImmutableMap.from(recog.captures().view()
       .map((k, v) -> Tuple.<DefVar<?, ?>, CodeShape.GlobalId>of(((TyckAnyDef<?>) v).ref, k)));
-    var capture = unit.body.map(x -> flipped.get(x.ref));
+    var capture = unit.body().map(x -> flipped.get(x.ref));
     return capture.toArray(CodeShape.GlobalId.class);
   }
 
@@ -71,7 +71,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
   @Override
   protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, DataDef unit) {
-    return super.superConArgs(builder, unit).appended(builder.iconst(unit.body.size()));
+    return super.superConArgs(builder, unit).appended(builder.iconst(unit.body().size()));
   }
 
   /**
@@ -81,13 +81,13 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     var cons = Constants.JITDATA_CONS;
     var consRef = builder.refField(cons, builder.thisRef());
 
-    if (unit.body.isEmpty()) {
+    if (unit.body().isEmpty()) {
       builder.returnWith(consRef);
       return;
     }
 
     builder.ifNull(builder.getArray(consRef, 0), cb -> {
-      unit.body.forEachIndexed((idx, con) -> {
+      unit.body().forEachIndexed((idx, con) -> {
         cb.updateArray(consRef, idx, AbstractExprializer.getInstance(builder, con));
       });
     }, null);

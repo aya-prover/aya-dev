@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
+import java.lang.constant.ClassDesc;
+
+import static org.aya.compiler.serializers.NameSerializer.getReference;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.free.FreeClassBuilder;
@@ -18,10 +22,6 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
-
-import java.lang.constant.ClassDesc;
-
-import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
@@ -49,7 +49,7 @@ public final class ModuleSerializer {
 
   private void serializeCons(@NotNull FreeClassBuilder builder, @NotNull DataDef dataDef) {
     var ser = new ConSerializer(recorder);
-    dataDef.body.forEach(con -> ser.serialize(builder, con));
+    dataDef.body().forEach(con -> ser.serialize(builder, con));
   }
 
   private void serializeMems(@NotNull FreeClassBuilder builder, @NotNull ClassDef classDef) {
