@@ -1,6 +1,9 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
 import org.aya.compiler.free.morphism.free.FreeRunner;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
@@ -9,9 +12,6 @@ import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
 
 public class FreeTest {
   public static ModuleSerializer serializer = null;
@@ -37,6 +37,6 @@ public class FreeTest {
     var result = new FreeRunner<>(SourceFreeJavaBuilder.create())
       .runFree(free);
 
-    Files.writeString(CompileTester.GEN_DIR.resolve("freeJavaBaka.java"), result);
+    Files.writeString(CompileTest.GEN_DIR.resolve("freeJavaBaka.java"), result);
   }
 }

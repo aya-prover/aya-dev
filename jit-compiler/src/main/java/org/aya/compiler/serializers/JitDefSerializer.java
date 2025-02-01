@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
+
+import java.util.function.Consumer;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.FreeClassBuilder;
@@ -12,8 +14,6 @@ import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSerializer<T> {
   protected JitDefSerializer(@NotNull Class<?> superClass, @NotNull MatchyRecorder recorder) {
@@ -40,9 +40,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
 
   protected int buildShape(T unit) { return -1; }
   protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
-
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
-
   protected abstract @NotNull Class<?> callClass();
 
   protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {

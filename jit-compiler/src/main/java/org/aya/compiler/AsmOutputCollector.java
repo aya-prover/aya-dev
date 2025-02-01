@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism.asm;
+package org.aya.compiler;
 
 import java.io.IOException;
 import java.lang.constant.ClassDesc;
@@ -36,7 +36,7 @@ public interface AsmOutputCollector {
     public void writeTo(@NotNull Path baseDir) throws IOException {
       output.forEachChecked(((path, bytes) -> {
         var filePath = baseDir.resolve(path);
-        Files.createDirectories(baseDir);
+        Files.createDirectories(filePath.getParent());
         Files.write(filePath, bytes);
       }));
     }

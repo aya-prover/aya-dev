@@ -6,12 +6,11 @@ import java.lang.constant.ConstantDescs;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.morphism.asm.AsmJavaBuilder;
-import org.aya.compiler.free.morphism.asm.AsmOutputCollector;
 import org.aya.compiler.free.morphism.source.SourceClassBuilder;
 import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
@@ -53,8 +52,9 @@ public class CompileTest {
     def id {A : Type} (a : A) : A => a
     def idLam : Nat -> Nat => id (fn n => n)
     """;
+  public static Path GEN_DIR = Paths.get("build/tmp/testGenerated");
 
-  public void justTest(@NotNull CompileTester tester) throws ClassNotFoundException, NoSuchFieldException {
+  public void justTest(@NotNull CompileTester tester) {
     var baka = DumbModuleLoader.DUMB_MODULE_NAME;
 
     JitCon O = tester.loadInstance(getClassName(baka.derive("Nat"), "zro"));
@@ -70,20 +70,6 @@ public class CompileTest {
     var idLamResult = idLam.invoke(ImmutableSeq.empty());
     var finalResult = new AppTerm(idLamResult, mResult).make();
     System.out.println(finalResult.easyToString());
-  }
-
-  @Test public void test0() {
-    var result = tyck(SAMPLE_CODE); // .filter(x -> x instanceof FnDef || x instanceof DataDef);
-
-    var code = serializeFrom(result);
-
-    try {
-      var tester = new CompileTester(code);
-      tester.compile();
-      justTest(tester);
-    } catch (IOException | ClassNotFoundException | NoSuchFieldException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Test public void serLam() {
@@ -102,21 +88,19 @@ public class CompileTest {
   private static final @NotNull Path FILE = Path.of("/home/senpai/1919810.aya");
   public static final ThrowingReporter REPORTER = new ThrowingReporter(AyaPrettierOptions.pretty());
 
-  public static @NotNull String serializeFrom(@NotNull TyckResult result) {
-    return new ModuleSerializer(result.info.shapeFactory())
+  public static void serializeFrom(@NotNull TyckResult result, @NotNull Path base) throws IOException {
+    new ModuleSerializer(result.info.shapeFactory())
       .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
+        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
+      .writeTo(base);
   }
 
   @Test public void testAsm() throws IOException, ClassNotFoundException, NoSuchFieldException {
-    var base = CompileTester.GEN_DIR;
+    var base = GEN_DIR.resolve("basic");
     var result = tyck(SAMPLE_CODE);
 
     FileUtil.deleteRecursively(base);
-    new ModuleSerializer(result.info.shapeFactory())
-      .serialize(new AsmJavaBuilder<>(new AsmOutputCollector.Default()), new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
-      .writeTo(base);
+    serializeFrom(result, base);
 
     try (var innerLoader = new URLClassLoader(new URL[]{base.toUri().toURL()}, getClass().getClassLoader())) {
       justTest(new CompileTester(innerLoader));

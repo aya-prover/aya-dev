@@ -1,5 +1,15 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+
+import static org.aya.compiler.serializers.NameSerializer.getClassName;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
@@ -13,17 +23,7 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.literate.CodeOptions;
-import org.aya.syntax.ref.ModulePath;
-import org.aya.syntax.ref.QPath;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.util.Random;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-
-import static org.aya.compiler.serializers.NameSerializer.getClassName;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class RedBlackTreeTest {
   @Test public void test1() throws IOException {
@@ -33,10 +33,12 @@ public class RedBlackTreeTest {
     stream.close();
     var result = CompileTest.tyck(code);
 
-    var tester = new CompileTester(CompileTest.serializeFrom(result));
-    tester.compile();
+    var baseDir = CompileTest.GEN_DIR.resolve("redblack");
+    CompileTest.serializeFrom(result, baseDir);
+    var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, getClass().getClassLoader());
+    var tester = new CompileTester(innerLoader);
 
-    var baka = QPath.fileLevel(ModulePath.of(DumbModuleLoader.DUMB_MODULE_STRING));
+    var baka = DumbModuleLoader.DUMB_MODULE_NAME;
 
     JitData List = tester.loadInstance(getClassName(baka, "List"));
     JitCon nil = tester.loadInstance(getClassName(baka.derive("List"), "[]"));
