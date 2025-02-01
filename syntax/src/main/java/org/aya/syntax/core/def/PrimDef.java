@@ -55,12 +55,11 @@ public record PrimDef(
     STRCONCAT("strcat"),
     I("I"),
     PATH("Path"),
+    PARTIAL("Partial"),
     COE("coe"),
     HCOMP("hcom");
 
-    public final @NotNull
-    @NonNls String id;
-
+    public final @NotNull @NonNls String id;
     @Override public String toString() { return id; }
 
     public static @Nullable ID find(@NotNull String id) {

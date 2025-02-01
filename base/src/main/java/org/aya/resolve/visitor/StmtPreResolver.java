@@ -99,7 +99,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       case Generalize variables -> {
         for (var variable : variables.variables)
           context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
-        yield new ResolvingStmt.GenStmt(variables);
+        yield new ResolvingStmt.GenStmt(variables, context);
       }
     };
   }
