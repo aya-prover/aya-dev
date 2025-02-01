@@ -2,6 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
+import java.lang.constant.ClassDesc;
+import java.util.Arrays;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;
@@ -12,11 +17,6 @@ import org.glavo.classfile.attribute.NestHostAttribute;
 import org.glavo.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.constant.ClassDesc;
-import java.util.Arrays;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /// Resources:
 /// * <a href="https://viewer.glavo.org/">ClassViewer</a>
@@ -78,8 +78,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     return realClassName;
   }
 
-  @Override
-  public @NotNull C buildClass(
+  @Override public @NotNull C buildClass(
     @Nullable CompiledAya metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,

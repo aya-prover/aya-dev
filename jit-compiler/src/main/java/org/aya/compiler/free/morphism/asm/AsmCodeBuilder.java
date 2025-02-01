@@ -2,6 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.MethodTypeDesc;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.free.ArgumentProvider;
@@ -20,13 +27,6 @@ import org.glavo.classfile.TypeKind;
 import org.glavo.classfile.instruction.SwitchCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
 
 /// @param breaking the label that used for jumping out
 public record AsmCodeBuilder(
@@ -68,8 +68,7 @@ public record AsmCodeBuilder(
     subscoped(writer, breaking, block);
   }
 
-  @Override
-  public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
+  @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
     var variable = new AsmVariable(pool.acquire(), type);
     if (initializer != null) updateVar(variable, initializer);
     return variable;
@@ -84,16 +83,14 @@ public record AsmCodeBuilder(
       superConArgs);
   }
 
-  @Override
-  public void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update) {
+  @Override public void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update) {
     var asmVar = assertVar(var);
     var expr = assertExpr(update);
     expr.accept(this);
     writer.storeInstruction(asmVar.kind(), asmVar.slot());
   }
 
-  @Override
-  public void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update) {
+  @Override public void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update) {
     var expr = assertExpr(array);
     var component = expr.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
@@ -159,8 +156,7 @@ public record AsmCodeBuilder(
     ifThenElse(Opcode.IFNULL, thenBlock::accept, elseBlock);
   }
 
-  @Override
-  public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
+  @Override public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
     // sorry, nesting breakable is unsupported.
     if (breaking != null) Panic.unreachable();
     writer.block(builder -> {
@@ -169,14 +165,12 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override
-  public void breakOut() {
+  @Override public void breakOut() {
     if (breaking == null) Panic.unreachable();
     writer.goto_(breaking);
   }
 
-  @Override
-  public void exec(@NotNull FreeJavaExpr expr) {
+  @Override public void exec(@NotNull FreeJavaExpr expr) {
     var asmExpr = assertExpr(expr);
     asmExpr.accept(this);
     if (!asmExpr.type().equals(ConstantDescs.CD_void)) {
@@ -205,8 +199,7 @@ public record AsmCodeBuilder(
     subscoped(defaultCase::accept);
   }
 
-  @Override
-  public void returnWith(@NotNull FreeJavaExpr expr) {
+  @Override public void returnWith(@NotNull FreeJavaExpr expr) {
     var asmExpr = assertExpr(expr);
     var kind = TypeKind.fromDescriptor(asmExpr.type().descriptorString());
     asmExpr.accept(this);
@@ -249,8 +242,7 @@ public record AsmCodeBuilder(
     }
   }
 
-  @Override
-  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return AsmExpr.withType(conRef.owner(), builder -> {
       builder.writer.new_(conRef.owner());
       builder.invoke(
@@ -267,27 +259,23 @@ public record AsmCodeBuilder(
     return AsmExpr.withType(method.returnType(), builder -> builder.invoke(InvokeKind.Virtual, method, owner, args));
   }
 
-  @Override
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return AsmExpr.withType(method.returnType(), builder ->
       builder.invoke(InvokeKind.Static, method, null, args));
   }
 
-  @Override
-  public @NotNull AsmExpr refField(@NotNull FieldRef field) {
+  @Override public @NotNull AsmExpr refField(@NotNull FieldRef field) {
     return AsmExpr.withType(field.returnType(), builder ->
       builder.writer.getstatic(field.owner(), field.name(), field.returnType()));
   }
-  @Override
-  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
+  @Override public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
     return AsmExpr.withType(field.returnType(), builder -> {
       builder.loadExpr(owner);
       builder.writer.getfield(field.owner(), field.name(), field.returnType());
     });
   }
 
-  @Override
-  public @NotNull AsmExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+  @Override public @NotNull AsmExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
     var ref = FreeJavaResolver.resolve(enumClass, enumName, enumClass);
     return refField(ref);
   }
@@ -304,8 +292,7 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override
-  public @NotNull AsmExpr iconst(int i) {
+  @Override public @NotNull AsmExpr iconst(int i) {
     return AsmExpr.withType(ConstantDescs.CD_int, builder -> {
       switch (i) {
         case -1 -> builder.writer.iconst_m1();
@@ -324,24 +311,20 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override
-  public @NotNull AsmExpr iconst(boolean b) {
+  @Override public @NotNull AsmExpr iconst(boolean b) {
     return b ? ja : nein;
   }
 
-  @Override
-  public @NotNull AsmExpr aconst(@NotNull String value) {
+  @Override public @NotNull AsmExpr aconst(@NotNull String value) {
     return AsmExpr.withType(ConstantDescs.CD_String, builder ->
       builder.writer.ldc(builder.writer.constantPool().stringEntry(value)));
   }
 
-  @Override
-  public @NotNull AsmExpr aconstNull(@NotNull ClassDesc type) {
+  @Override public @NotNull AsmExpr aconstNull(@NotNull ClassDesc type) {
     return AsmExpr.withType(type, builder -> builder.writer.aconst_null());
   }
 
-  @Override
-  public @NotNull AsmExpr thisRef() {
+  @Override public @NotNull AsmExpr thisRef() {
     assert hasThis;
     return AsmExpr.withType(parent.owner, builder -> builder.writer.aload(0));
   }
@@ -369,8 +352,7 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override
-  public @NotNull AsmExpr getArray(@NotNull FreeJavaExpr array, int index) {
+  @Override public @NotNull AsmExpr getArray(@NotNull FreeJavaExpr array, int index) {
     var expr = assertExpr(array);
     var component = expr.type().componentType();
     assert component != null;
@@ -383,8 +365,7 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override
-  public @NotNull AsmExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  @Override public @NotNull AsmExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
     return AsmExpr.withType(as, builder -> {
       builder.loadExpr(obj);
       builder.writer.checkcast(as);

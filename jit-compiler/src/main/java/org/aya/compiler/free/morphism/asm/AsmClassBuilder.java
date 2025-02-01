@@ -2,6 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
+import java.lang.constant.*;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
@@ -19,15 +28,6 @@ import org.glavo.classfile.attribute.NestMembersAttribute;
 import org.glavo.classfile.constantpool.InvokeDynamicEntry;
 import org.glavo.classfile.constantpool.MethodHandleEntry;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.*;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public final class AsmClassBuilder implements FreeClassBuilder {
   public final @NotNull ClassDesc owner;
@@ -92,8 +92,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     return new MethodRef(owner, name, returnType, paramTypes, false);
   }
 
-  @Override
-  public @NotNull MethodRef buildMethod(
+  @Override public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,

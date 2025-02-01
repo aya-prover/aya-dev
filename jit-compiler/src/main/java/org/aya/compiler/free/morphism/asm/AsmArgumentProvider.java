@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
+import java.lang.constant.ClassDesc;
+
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.ArgumentProvider;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
 
 public class AsmArgumentProvider implements ArgumentProvider {
   public final @NotNull ImmutableSeq<ClassDesc> parameters;
@@ -17,8 +17,7 @@ public class AsmArgumentProvider implements ArgumentProvider {
     this.isStatic = isStatic;
   }
 
-  @Override
-  public @NotNull AsmVariable arg(int nth) {
+  @Override public @NotNull AsmVariable arg(int nth) {
     assert nth < parameters.size();
     return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth));
   }
@@ -31,14 +30,12 @@ public class AsmArgumentProvider implements ArgumentProvider {
       this.parameters = parameters;
     }
 
-    @Override
-    public @NotNull AsmExpr capture(int nth) {
+    @Override public @NotNull AsmExpr capture(int nth) {
       assert nth < captures.size();
       return new AsmVariable(nth, captures.get(nth)).ref();
     }
 
-    @Override
-    public @NotNull AsmVariable arg(int nth) {
+    @Override public @NotNull AsmVariable arg(int nth) {
       assert nth < parameters.size();
       return new AsmVariable(captures.size() + nth, parameters.get(nth));
     }
