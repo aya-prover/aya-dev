@@ -2,6 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
@@ -10,7 +17,6 @@ import org.aya.cli.utils.CompilerUtil;
 import org.aya.compiler.CompiledModule;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.NameSerializer;
-import org.aya.prelude.GeneratedVersion;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
@@ -20,22 +26,9 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.FileUtil;
-import org.aya.util.error.Global;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.tools.ToolProvider;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
   private static class AyaClassLoader extends URLClassLoader {
@@ -133,32 +126,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)));
     var libraryRoot = file.owner().outDir();
-    var baseDir = computeBaseDir(libraryRoot).toAbsolutePath();
-    var relativePath = NameSerializer.getReference(QPath.fileLevel(file.moduleName()), null,
-      NameSerializer.NameType.ClassPath) + ".java";
-    var javaSrcPath = baseDir.resolve(relativePath);
-    FileUtil.writeString(javaSrcPath, javaCode);
-    var compiler = ToolProvider.getSystemJavaCompiler();
-    var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8);
-    var compilationUnits = fileManager.getJavaFileObjects(javaSrcPath);
-    var classpath = cl.urls.view()
-      .appended(baseDir)
-      .map(Path::toString);
-    var selfClassPath = System.getProperty("java.class.path");
-    if (selfClassPath != null && !selfClassPath.isBlank()) classpath = classpath.appended(selfClassPath);
-    else {
-      // here, I'm in jlink mode
-      var jlinkClassPath = Paths.get(System.getProperty("jdk.module.path"))
-        .resolveSibling("misc")
-        .resolve("syntax-fat.jar")
-        .normalize();
-      classpath = classpath.appended(jlinkClassPath.toString());
-    }
-    var options = List.of("--class-path", classpath.joinToString(File.pathSeparator),
-      "--enable-preview", "--release", GeneratedVersion.JDK_VERSION);
-    var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
-    boolean compileSuccess = task.call();
-    if (Global.DELETE_JIT_JAVA_SOURCE && compileSuccess) Files.delete(javaSrcPath);
+    javaCode.writeTo(computeBaseDir(libraryRoot).toAbsolutePath());
     var coreFile = file.compiledCorePath();
 
     // save compiled core and load compiled ResolveInfo
