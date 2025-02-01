@@ -36,8 +36,8 @@ public interface AsmOutputCollector {
     public void writeTo(@NotNull Path baseDir) throws IOException {
       output.forEachChecked(((path, bytes) -> {
         var filePath = baseDir.resolve(path);
-        filePath.getParent().toFile().mkdirs();
-        Files.write(baseDir.resolve(path), bytes);
+        Files.createDirectories(baseDir);
+        Files.write(filePath, bytes);
       }));
     }
   }

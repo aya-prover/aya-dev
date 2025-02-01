@@ -1,13 +1,20 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
+import java.io.IOException;
+import java.lang.constant.ConstantDescs;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
+
+import static org.aya.compiler.serializers.NameSerializer.getClassName;
+
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.morphism.asm.AsmJavaBuilder;
 import org.aya.compiler.free.morphism.asm.AsmOutputCollector;
 import org.aya.compiler.free.morphism.source.SourceClassBuilder;
 import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
 import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
-import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
@@ -17,8 +24,6 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.resolve.module.ModuleCallback;
 import org.aya.syntax.compile.JitCon;
-import org.aya.syntax.compile.JitData;
-import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.TopLevelDef;
@@ -33,14 +38,6 @@ import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.lang.constant.ConstantDescs;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Path;
-
-import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 public class CompileTest {
   public static final @NotNull @Language("Aya") String SAMPLE_CODE = """
@@ -111,9 +108,8 @@ public class CompileTest {
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)));
   }
 
-  @Test
-  public void testAsm() throws IOException, ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-    var base = Path.of("src", "test", "build");
+  @Test public void testAsm() throws IOException, ClassNotFoundException, NoSuchFieldException {
+    var base = CompileTester.GEN_DIR;
     var result = tyck(SAMPLE_CODE);
 
     FileUtil.deleteRecursively(base);
