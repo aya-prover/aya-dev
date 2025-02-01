@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import org.aya.compiler.serializers.AyaSerializer;
@@ -8,6 +8,7 @@ import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.compile.JitDef;
 import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.tools.ToolProvider;
 import java.io.IOException;
@@ -21,8 +22,8 @@ import java.util.List;
 public class CompileTester {
   public static Path GEN_DIR = Paths.get("build/tmp/testGenerated");
 
-  private final Path baka;
-  public final ClassLoader cl;
+  private final @Nullable Path baka;
+  public final @NotNull ClassLoader cl;
 
   public CompileTester(@NotNull String code) throws IOException {
     var genDir = GEN_DIR.resolve(AyaSerializer.PACKAGE_BASE);
@@ -30,7 +31,14 @@ public class CompileTester {
     cl = new URLClassLoader(new URL[]{GEN_DIR.toUri().toURL()});
   }
 
+  public CompileTester(@NotNull ClassLoader cl) {
+    this.baka = null;
+    this.cl = cl;
+  }
+
   public void compile() {
+    assert baka != null;
+
     try {
       var compiler = ToolProvider.getSystemJavaCompiler();
       var fileManager = compiler.getStandardFileManager(null, null, null);

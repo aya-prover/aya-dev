@@ -49,9 +49,10 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
    */
   void exec(@NotNull FreeJavaExpr expr);
 
-  /**
-   * Build a switch statement on int
-   */
+  /// Build a switch statement on int
+  ///
+  /// @apiNote the {@param branch}es must return or [#breakOut], this method will NOT generate the `break` instruction therefore the control flow will
+  ///          pass to the next case.
   void switchCase(
     @NotNull LocalVariable elim,
     @NotNull ImmutableIntSeq cases,
