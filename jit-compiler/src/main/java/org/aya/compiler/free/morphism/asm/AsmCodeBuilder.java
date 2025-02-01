@@ -67,7 +67,7 @@ public record AsmCodeBuilder(
   invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     invoke(
       InvokeKind.Special,
-      FreeJavaResolver.resolve(parent.ownerSuper, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
+      FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
       thisRef(),
       superConArgs);
   }
@@ -310,7 +310,7 @@ public record AsmCodeBuilder(
 
   @Override public @NotNull AsmExpr thisRef() {
     assert hasThis;
-    return AsmExpr.withType(parent.owner, builder -> builder.writer.aload(0));
+    return AsmExpr.withType(parent.owner(), builder -> builder.writer.aload(0));
   }
 
   @Override

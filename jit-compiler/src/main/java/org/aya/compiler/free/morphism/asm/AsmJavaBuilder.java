@@ -23,20 +23,17 @@ import org.jetbrains.annotations.Nullable;
 /// * <a href="https://viewer.glavo.org/">ClassViewer</a>
 /// * <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html">Class File Specification</a>
 public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) implements FreeJavaBuilder<C> {
-  /// @param nestedName null if top level class
   /// @return the class descriptor
   public static @NotNull ClassDesc buildClass(
     @NotNull AsmOutputCollector collector,
     @Nullable CompiledAya metadata,
-    @NotNull ClassDesc fileClassName,
-    @Nullable String nestedName,
-    @NotNull ClassDesc superclass,
+    @NotNull ClassData classData,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    var realClassName = nestedName == null ? fileClassName : fileClassName.nested(nestedName);
+    var realClassName = classData.className();
     var bc = ClassFile.of().build(realClassName, cb -> {
       cb.withFlags(AccessFlag.PUBLIC, AccessFlag.FINAL, AccessFlag.SUPER);
-      cb.withSuperclass(superclass);
+      cb.withSuperclass(classData.classSuper());
 
       // region metadata
 
@@ -66,12 +63,12 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
 
       // endregion metadata
 
-      var acb = new AsmClassBuilder(realClassName, superclass, cb, collector);
+      var acb = new AsmClassBuilder(classData, cb, collector);
       builder.accept(acb);
       acb.postBuild();
 
-      if (nestedName != null) {
-        cb.with(NestHostAttribute.of(fileClassName));
+      if (classData.outer() != null) {
+        cb.with(NestHostAttribute.of(classData.outer().data().className()));
       }
     });
 
@@ -85,7 +82,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    buildClass(collector, metadata, className, null, FreeUtil.fromClass(superclass), builder);
+    buildClass(collector, metadata, new ClassData(className, FreeUtil.fromClass(superclass), null), builder);
     return collector;
   }
 }
