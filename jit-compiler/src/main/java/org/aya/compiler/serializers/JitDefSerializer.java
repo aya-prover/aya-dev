@@ -41,7 +41,10 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   protected int buildShape(T unit) { return -1; }
   protected CodeShape.GlobalId[] buildRecognition(T unit) { return new CodeShape.GlobalId[0]; }
   protected abstract boolean shouldBuildEmptyCall(@NotNull T unit);
+  /// Used in class instantiations
   protected abstract @NotNull Class<?> callClass();
+  /// Used in type decls
+  protected @NotNull Class<?> callBaseClass() { return callClass(); }
 
   protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
@@ -54,7 +57,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
-        nestBuilder.buildConstantField(FreeUtil.fromClass(callClass()),
+        nestBuilder.buildConstantField(FreeUtil.fromClass(callBaseClass()),
           AyaSerializer.FIELD_EMPTYCALL, cb ->
             buildEmptyCall(cb, unit));
       }
