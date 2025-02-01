@@ -119,8 +119,8 @@ public record AsmCodeBuilder(
     lhsExpr.accept(this);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
-      var cast = checkcast(lhs, rhs);
-      var bind = makeVar(rhs, cast);
+      var cast = builder.checkcast(lhs, rhs);
+      var bind = builder.makeVar(rhs, cast);
       thenBlock.accept(builder, bind);
     }, elseBlock);
   }

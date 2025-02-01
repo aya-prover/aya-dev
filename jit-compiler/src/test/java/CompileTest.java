@@ -51,6 +51,15 @@ public class CompileTest {
     
     def id {A : Type} (a : A) : A => a
     def idLam : Nat -> Nat => id (fn n => n)
+    
+    def fib (n : Nat) : Nat
+    | 0 => 0
+    | 1 => 1
+    | suc (suc n) => plus (fib (suc n)) (fib n)
+    
+    def infixr ++ {A : Type} {m n : Nat} (xs : Vec m A) (ys : Vec n A) : Vec (plus m n) A
+    | vnil, ys => ys
+    | vcons x xs, ys => vcons x (xs ++ ys)
     """;
   public static Path GEN_DIR = Paths.get("build/tmp/testGenerated");
 
