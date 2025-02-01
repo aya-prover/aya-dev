@@ -34,7 +34,7 @@ public class RedBlackTreeTest {
     var result = CompileTest.tyck(code);
 
     var baseDir = CompileTest.GEN_DIR.resolve("redblack");
-    CompileTest.serializeFrom(result, baseDir);
+    Profiler.profileMany("Code Generation", 1, () -> CompileTest.serializeFrom(result, baseDir));
     var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, getClass().getClassLoader());
     var tester = new InstanceLoader(innerLoader);
 
@@ -64,7 +64,7 @@ public class RedBlackTreeTest {
     var sortResult = normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL);
     assertNotNull(sortResult);
 
-    Profiler.profileMany(5, () ->
+    Profiler.profileMany("Code Execution", 5, () ->
       normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL));
 
     System.out.println(sortResult.easyToString());

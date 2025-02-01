@@ -12,8 +12,10 @@ public class Profiler {
     return end - begin;
   }
 
-  public static long profileMany(int count, @NotNull CheckedRunnable<?> runnable) {
+  public static long profileMany(String title, int count, @NotNull CheckedRunnable<?> runnable) {
     assert count > 0;
+    System.out.println("Profiling " + title);
+
     long[] times = new long[count];
     long begin, end;
 
