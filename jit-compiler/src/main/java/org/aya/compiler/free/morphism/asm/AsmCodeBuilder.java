@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /// @param breaking the label that used for jumping out
+/// @param hasThis  is this an instance method or a static method
 public record AsmCodeBuilder(
   @NotNull CodeBuilder writer,
   @NotNull AsmClassBuilder parent,
@@ -39,23 +40,14 @@ public record AsmCodeBuilder(
   public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_Boolean, builder -> builder.writer.iconst_1());
   public static final @NotNull AsmExpr nein = AsmExpr.withType(ConstantDescs.CD_Boolean, builder -> builder.writer.iconst_0());
 
-  public @NotNull AsmVariable assertVar(@NotNull LocalVariable var) {
-    return (AsmVariable) var;
-  }
-
-  public @NotNull AsmExpr assertExpr(@NotNull FreeJavaExpr expr) {
-    return (AsmExpr) expr;
-  }
-
+  public @NotNull AsmVariable assertVar(@NotNull LocalVariable var) { return (AsmVariable) var; }
+  public @NotNull AsmExpr assertExpr(@NotNull FreeJavaExpr expr) { return (AsmExpr) expr; }
   public void loadVar(@NotNull LocalVariable var) {
     var asmVar = assertVar(var);
     writer.loadInstruction(asmVar.kind(), asmVar.slot());
   }
 
-  public void loadExpr(@NotNull FreeJavaExpr expr) {
-    assertExpr(expr).accept(this);
-  }
-
+  public void loadExpr(@NotNull FreeJavaExpr expr) { assertExpr(expr).accept(this); }
   public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
     block.accept(new AsmCodeBuilder(innerWriter, parent, pool.copy(), breaking, hasThis));
   }
@@ -64,18 +56,15 @@ public record AsmCodeBuilder(
     subscoped(innerWrite, breaking, block);
   }
 
-  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) {
-    subscoped(writer, breaking, block);
-  }
-
+  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, block); }
   @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
     var variable = new AsmVariable(pool.acquire(), type);
     if (initializer != null) updateVar(variable, initializer);
     return variable;
   }
 
-  @Override
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
+  @Override public void
+  invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     invoke(
       InvokeKind.Special,
       FreeJavaResolver.resolve(parent.ownerSuper, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
@@ -178,8 +167,8 @@ public record AsmCodeBuilder(
     }
   }
 
-  @Override
-  public void switchCase(@NotNull LocalVariable elim, @NotNull ImmutableIntSeq cases, @NotNull ObjIntConsumer<FreeCodeBuilder> branch, @NotNull Consumer<FreeCodeBuilder> defaultCase) {
+  @Override public void
+  switchCase(@NotNull LocalVariable elim, @NotNull ImmutableIntSeq cases, @NotNull ObjIntConsumer<FreeCodeBuilder> branch, @NotNull Consumer<FreeCodeBuilder> defaultCase) {
     var switchCases = cases.mapToObj(i -> SwitchCase.of(i, writer.newLabel()));
     var defaultLabel = writer.newLabel();
 
@@ -189,9 +178,7 @@ public record AsmCodeBuilder(
     cases.forEach(i ->
       writer.block(inner -> {
         inner.labelBinding(switchCases.get(i).target());
-        subscoped(inner, builder -> {
-          branch.accept(builder, i);
-        });
+        subscoped(inner, builder -> branch.accept(builder, i));
       })
     );
 
@@ -280,8 +267,8 @@ public record AsmCodeBuilder(
     return refField(ref);
   }
 
-  @Override
-  public @NotNull AsmExpr mkLambda(@NotNull ImmutableSeq<FreeJavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> lamBody) {
+  @Override public @NotNull AsmExpr
+  mkLambda(@NotNull ImmutableSeq<FreeJavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> lamBody) {
     var captureExprs = captures.map(this::assertExpr);
     var captureTypes = captureExprs.map(AsmExpr::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);
@@ -311,10 +298,7 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override public @NotNull AsmExpr iconst(boolean b) {
-    return b ? ja : nein;
-  }
-
+  @Override public @NotNull AsmExpr iconst(boolean b) { return b ? ja : nein; }
   @Override public @NotNull AsmExpr aconst(@NotNull String value) {
     return AsmExpr.withType(ConstantDescs.CD_String, builder ->
       builder.writer.ldc(builder.writer.constantPool().stringEntry(value)));

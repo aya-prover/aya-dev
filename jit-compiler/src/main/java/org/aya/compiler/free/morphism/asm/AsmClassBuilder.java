@@ -4,9 +4,6 @@ package org.aya.compiler.free.morphism.asm;
 
 import java.lang.constant.*;
 import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -38,7 +35,7 @@ public final class AsmClassBuilder implements FreeClassBuilder {
   public final @NotNull MutableMap<FieldRef, Function<FreeExprBuilder, FreeJavaExpr>> fieldInitializers = MutableLinkedHashMap.of();
   private int lambdaCounter = 0;
 
-  /// @see java.lang.invoke.LambdaMetafactory#metafactory(MethodHandles.Lookup, String, MethodType, MethodType, MethodHandle, MethodType)
+  /// @see java.lang.invoke.LambdaMetafactory#metafactory
   private final @NotNull LazyValue<MethodHandleEntry> lambdaBoostrapMethodHandle;
 
   public AsmClassBuilder(
@@ -163,7 +160,8 @@ public final class AsmClassBuilder implements FreeClassBuilder {
 
   public void postBuild() {
     if (nestedMembers.isNotEmpty()) {
-      writer.with(NestMembersAttribute.of(nestedMembers.map(x -> writer.constantPool().classEntry(x)).asJava()));
+      var pool = writer.constantPool();
+      writer.with(NestMembersAttribute.of(nestedMembers.map(pool::classEntry).asJava()));
     }
 
     if (fieldInitializers.isNotEmpty()) {
