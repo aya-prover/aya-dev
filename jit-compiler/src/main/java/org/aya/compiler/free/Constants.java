@@ -15,6 +15,7 @@ import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.pat.PatMatcher;
+import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCallLike;
@@ -30,6 +31,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import static java.lang.constant.ConstantDescs.*;
+
 public final class Constants {
   private Constants() { }
 
@@ -38,6 +41,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_ImmutableSeq = FreeUtil.fromClass(ImmutableSeq.class);
   public static final @NotNull ClassDesc CD_MutableSeq = FreeUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = FreeUtil.fromClass(Supplier.class);
+  public static final @NotNull ClassDesc CD_Closure = FreeUtil.fromClass(Closure.class);
   public static final @NotNull ClassDesc CD_Result = FreeUtil.fromClass(Result.class);
   public static final @NotNull String NAME_OF = "of";
   public static final @NotNull String NAME_EMPTY = "empty";
@@ -146,9 +150,9 @@ public final class Constants {
    * @see Closure#mkConst(Term)
    */
   public static final @NotNull MethodRef CLOSURE_MKCONST = new MethodRef(
-    FreeUtil.fromClass(Closure.class),
+    CD_Closure,
     "mkConst",
-    FreeUtil.fromClass(Closure.class),
+    CD_Closure,
     ImmutableSeq.of(CD_Term),
     true
   );
@@ -161,7 +165,7 @@ public final class Constants {
     "unreachable",
     ConstantDescs.CD_Object,
     ImmutableSeq.empty(),
-    true
+    false
   );
 
   public static final @NotNull MethodRef INT_REPR = new MethodRef(
@@ -257,4 +261,10 @@ public final class Constants {
     FreeUtil.fromClass(PatMatcher.class), "apply",
     CD_Result, ImmutableSeq.of(CD_ImmutableSeq, CD_ImmutableSeq), false
   );
+
+  public static final @NotNull MethodRef LAMBDA_NEW = new MethodRef(
+    FreeUtil.fromClass(LamTerm.class),
+    INIT_NAME,
+    CD_void, ImmutableSeq.of(CD_Closure),
+    false);
 }

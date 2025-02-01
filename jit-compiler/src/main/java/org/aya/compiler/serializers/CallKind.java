@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -15,7 +15,7 @@ import java.lang.constant.ClassDesc;
 public enum CallKind {
   Fn(FnCall.class, FnDefLike.class),
   Data(DataCall.class, DataDefLike.class),
-  Con(ConCall.class, ConDefLike.class),
+  Con(ConCallLike.class, ConDefLike.class),
   Prim(PrimCall.class, PrimDefLike.class);
 
   public final @NotNull ClassDesc callType;

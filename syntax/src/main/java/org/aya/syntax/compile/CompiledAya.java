@@ -10,6 +10,13 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CompiledAya {
+  String NAME_MODULE = "module";
+  String NAME_FILE_MODULE_SIZE = "fileModuleSize";
+  String NAME_NAME = "name";
+  String NAME_ASSOC = "assoc";
+  String NAME_SHAPE = "shape";
+  String NAME_RECOGNITION = "recognition";
+
   @NotNull String[] module();
   int fileModuleSize();
   @NotNull String name();
