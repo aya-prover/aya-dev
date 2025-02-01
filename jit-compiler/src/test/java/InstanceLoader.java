@@ -7,7 +7,7 @@ import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.syntax.compile.JitDef;
 import org.jetbrains.annotations.NotNull;
 
-public record CompileTester(@NotNull ClassLoader cl) {
+public record InstanceLoader(@NotNull ClassLoader cl) {
   @SuppressWarnings("unchecked")
   public <T> @NotNull Class<T> load(String qualified) {
     try {

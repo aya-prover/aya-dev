@@ -36,7 +36,7 @@ public class RedBlackTreeTest {
     var baseDir = CompileTest.GEN_DIR.resolve("redblack");
     CompileTest.serializeFrom(result, baseDir);
     var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, getClass().getClassLoader());
-    var tester = new CompileTester(innerLoader);
+    var tester = new InstanceLoader(innerLoader);
 
     var baka = DumbModuleLoader.DUMB_MODULE_NAME;
 
