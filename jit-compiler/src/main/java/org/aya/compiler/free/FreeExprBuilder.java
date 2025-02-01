@@ -13,18 +13,12 @@ import org.aya.compiler.free.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * the result only depends on the {@link FreeCodeBuilder} that this builder derived from
- */
+/// the result only depends on the [FreeCodeBuilder] that this builder derived from
 public interface FreeExprBuilder {
-  /**
-   * A {@code new} expression on specified constructor.
-   */
+  /// A `new` expression on specified constructor.
   @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
-  /**
-   * A {@code new} expression, the class should have only one (public) constructor with parameter count {@code args.size()}.
-   */
+  /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.
   default @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     var candidates = ImmutableArray.wrap(className.getConstructors())
       .filter(c -> c.getParameterCount() == args.size());
@@ -35,25 +29,21 @@ public interface FreeExprBuilder {
     var desc = FreeUtil.fromClass(className);
     var conRef = FreeClassBuilder.makeConstructorRef(desc,
       ImmutableArray.wrap(first.getParameterTypes())
-      .map(FreeUtil::fromClass));
+        .map(FreeUtil::fromClass));
     return mkNew(conRef, args);
   }
 
   default @NotNull FreeJavaExpr refVar(@NotNull LocalVariable name) { return name.ref(); }
 
-  /**
-   * Invoke a (non-interface) method on {@param owner}.
-   * Remember to {@link FreeCodeBuilder#exec(FreeJavaExpr)} if you do not need the result!
-   */
+  /// Invoke a (non-interface) method on {@param owner}.
+  /// Remember to [#exec(FreeJavaExpr)] if you do not need the result!
   @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
-  /** Invoke a static method */
+  /// Invoke a static method
   @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args);
 
   @NotNull FreeJavaExpr refField(@NotNull FieldRef field);
-
   @NotNull FreeJavaExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner);
-
   @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
 
   default @NotNull FreeJavaExpr refEnum(@NotNull Enum<?> value) {
@@ -75,13 +65,9 @@ public interface FreeExprBuilder {
   );
 
   @NotNull FreeJavaExpr iconst(int i);
-
   @NotNull FreeJavaExpr iconst(boolean b);
-
   @NotNull FreeJavaExpr aconst(@NotNull String value);
-
   @NotNull FreeJavaExpr aconstNull(@NotNull ClassDesc type);
-
   @NotNull FreeJavaExpr thisRef();
 
   /**
@@ -95,7 +81,6 @@ public interface FreeExprBuilder {
   );
 
   @NotNull FreeJavaExpr getArray(@NotNull FreeJavaExpr array, int index);
-
   @NotNull FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as);
 
   default FreeJavaExpr checkcast(@NotNull FreeJavaExpr obj, @NotNull Class<?> as) {
