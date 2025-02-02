@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class AsmClassBuilder implements FreeClassBuilder {
   public final @NotNull ClassData classData;
-  public final @NotNull ClassBuilder writer;     // I am sorry
+  public final @NotNull ClassBuilder writer;
   public final @NotNull AsmOutputCollector collector;
   public final @NotNull MutableList<String> nestedMembers = MutableList.create();
   public final @NotNull MutableMap<FieldRef, Function<FreeExprBuilder, FreeJavaExpr>> fieldInitializers = MutableLinkedHashMap.of();
