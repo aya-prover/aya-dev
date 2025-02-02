@@ -2,6 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
@@ -19,22 +29,11 @@ import org.aya.ide.LspPrimFactory;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.primitive.PrimFactory;
 import org.aya.util.FileUtil;
-import org.aya.util.error.Global;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * LibraryTest testing the compilation of a library and its dependencies
@@ -62,7 +61,6 @@ public class LibraryTest {
 
   // Use this test for additional compilation
   public static void main(String... args) throws IOException {
-    Global.DELETE_JIT_JAVA_SOURCE = false;
     assertEquals(0, compile(DIR));
   }
 

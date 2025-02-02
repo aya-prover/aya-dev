@@ -1,18 +1,21 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
+import kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public class Profiler {
-  public static long profile(@NotNull Runnable runnable) {
+  public static long profile(@NotNull CheckedRunnable<?> runnable) {
     var begin = System.currentTimeMillis();
     runnable.run();
     var end = System.currentTimeMillis();
     return end - begin;
   }
 
-  public static long profileMany(int count, @NotNull Runnable runnable) {
+  public static long profileMany(String title, int count, @NotNull CheckedRunnable<?> runnable) {
     assert count > 0;
+    System.out.println("Profiling " + title);
+
     long[] times = new long[count];
     long begin, end;
 

@@ -18,6 +18,7 @@ import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.call.ConCall;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.jetbrains.annotations.NotNull;
 
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
@@ -26,7 +27,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   }
 
   @Override protected @NotNull Class<?> callClass() { return ConCall.class; }
-
+  @Override protected @NotNull Class<?> callBaseClass() { return ConCallLike.class; }
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
       FreeUtil.fromClass(JitData.class),

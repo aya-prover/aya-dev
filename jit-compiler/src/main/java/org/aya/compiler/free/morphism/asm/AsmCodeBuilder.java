@@ -67,7 +67,7 @@ public record AsmCodeBuilder(
   invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
     invoke(
       InvokeKind.Special,
-      FreeJavaResolver.resolve(parent.ownerSuper, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
+      FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
       thisRef(),
       superConArgs);
   }
@@ -119,8 +119,8 @@ public record AsmCodeBuilder(
     lhsExpr.accept(this);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
-      var cast = checkcast(lhs, rhs);
-      var bind = makeVar(rhs, cast);
+      var cast = builder.checkcast(lhs, rhs);
+      var bind = builder.makeVar(rhs, cast);
       thenBlock.accept(builder, bind);
     }, elseBlock);
   }
@@ -310,7 +310,7 @@ public record AsmCodeBuilder(
 
   @Override public @NotNull AsmExpr thisRef() {
     assert hasThis;
-    return AsmExpr.withType(parent.owner, builder -> builder.writer.aload(0));
+    return AsmExpr.withType(parent.owner(), builder -> builder.writer.aload(0));
   }
 
   @Override

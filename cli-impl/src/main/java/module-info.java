@@ -6,8 +6,6 @@ module aya.cli.impl {
   requires aya.md;
   requires aya.producer;
   requires aya.compiler;
-  requires java.compiler;
-  requires jdk.compiler;
   requires aya.jb.md;
   requires org.jetbrains.annotations;
 

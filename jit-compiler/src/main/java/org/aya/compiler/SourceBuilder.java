@@ -1,17 +1,17 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler;
-
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 import static org.aya.compiler.serializers.AyaSerializer.CLASS_PANIC;
 import static org.aya.compiler.serializers.ExprializeUtil.makeString;
+
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class SourceBuilder {
   public final @NotNull StringBuilder builder;
@@ -27,10 +27,7 @@ public final class SourceBuilder {
   }
   
   public record JitParam(@NotNull String name, @NotNull String type) { }
-
-  private void assertLineBegin() {
-    assert isLineBegin;
-  }
+  private void assertLineBegin() { assert isLineBegin; }
 
   public void runInside(@NotNull Runnable runnable) {
     indent++;
@@ -39,9 +36,7 @@ public final class SourceBuilder {
   }
 
 
-  public int indent() {
-    return this.indent;
-  }
+  public int indent() { return this.indent; }
 
   private void fillIndent() {
     assertLineBegin();
