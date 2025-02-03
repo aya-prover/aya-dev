@@ -209,6 +209,7 @@ public final class PatternSerializer {
     builder.updateVar(matchState, builder.iconst(state));
   }
 
+  // TODO: obliterate this
   private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
     builder.exec(
       builder.invoke(Constants.MUTSEQ_SET, result.ref(), ImmutableSeq.of(

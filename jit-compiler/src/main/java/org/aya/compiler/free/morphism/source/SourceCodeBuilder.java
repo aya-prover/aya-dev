@@ -13,6 +13,7 @@ import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ExprializeUtil;
+import org.aya.compiler.serializers.LocalVarCtx;
 import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,6 +213,10 @@ public record SourceCodeBuilder(
     sourceBuilder.buildSwitch(getExpr(elim), cases,
       i -> branch.accept(this, i),
       () -> defaultCase.accept(this));
+  }
+  @Override
+  public @NotNull LocalVarCtx genVarCtx(int size) {
+    return null; // TODO: omg do smth about source codegen ahhhhhhhkajhsdkjlhajklhqljkbwamdbsahcuyzgl
   }
 
   @Override public void returnWith(@NotNull FreeJavaExpr expr) {
