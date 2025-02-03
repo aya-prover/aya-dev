@@ -13,7 +13,7 @@ import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.compiler.serializers.LocalVarCtx;
+import org.aya.compiler.serializers.VarCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,10 +151,10 @@ public record FreeCodeBuilderImpl(
     stmts.append(new FreeStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
   }
   @Override
-  public @NotNull LocalVarCtx genVarCtx(int size) {
+  public @NotNull VarCtx genVarCtx(int size) {
     var init = invoke(Constants.MUTSEQ, ImmutableSeq.of(iconst(size), aconstNull(Constants.CD_Term)));
     var seq = makeVar(Constants.CD_MutableSeq, init);
-    return new LocalVarCtx.SeqView(seq);
+    return new VarCtx.SeqView(seq);
   }
 
   @Override public void returnWith(@NotNull FreeJavaExpr expr) {

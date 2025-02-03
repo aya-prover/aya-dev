@@ -10,7 +10,7 @@ import java.util.function.ObjIntConsumer;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.serializers.LocalVarCtx;
+import org.aya.compiler.serializers.VarCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public interface FreeCodeBuilder extends FreeExprBuilder {
   );
 
   /// Builds a local variable context in the current code state.
-  @NotNull LocalVarCtx genVarCtx(int size);
+  @NotNull VarCtx genVarCtx(int size);
 
   void returnWith(@NotNull FreeJavaExpr expr);
   default void unreachable() {

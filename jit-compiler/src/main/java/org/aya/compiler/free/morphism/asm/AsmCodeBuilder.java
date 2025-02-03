@@ -19,7 +19,7 @@ import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.morphism.free.VariablePool;
-import org.aya.compiler.serializers.LocalVarCtx;
+import org.aya.compiler.serializers.VarCtx;
 import org.aya.util.error.Panic;
 import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
@@ -187,7 +187,7 @@ public record AsmCodeBuilder(
     subscoped(defaultCase::accept);
   }
   @Override
-  public @NotNull LocalVarCtx genVarCtx(int size) {
+  public @NotNull VarCtx genVarCtx(int size) {
     return null; // TODO
   }
 

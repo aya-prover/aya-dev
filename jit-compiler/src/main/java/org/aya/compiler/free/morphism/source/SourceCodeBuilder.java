@@ -13,7 +13,7 @@ import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ExprializeUtil;
-import org.aya.compiler.serializers.LocalVarCtx;
+import org.aya.compiler.serializers.VarCtx;
 import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,7 +215,7 @@ public record SourceCodeBuilder(
       () -> defaultCase.accept(this));
   }
   @Override
-  public @NotNull LocalVarCtx genVarCtx(int size) {
+  public @NotNull VarCtx genVarCtx(int size) {
     return null; // TODO: omg do smth about source codegen ahhhhhhhkajhsdkjlhajklhqljkbwamdbsahcuyzgl
   }
 

@@ -9,22 +9,20 @@ import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 
-// TODO: name clashes with actual LocalVariable; this one should be named `VarCtx` or smth
-
-/// Stores the context/representation needed for local variable management. This class
-/// handles the distinctions in local variable representation between Java Source and
-/// Bytecode code generation (see #1302).
-public interface LocalVarCtx {
+/// Stores the context/representation needed for variable management. This class handles
+/// the distinctions in variable representation between Java Source and Bytecode code
+/// generation (see #1302).
+public interface VarCtx {
   @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index);
   void set(@NotNull FreeCodeBuilder cb, int index, @NotNull FreeJavaExpr value);
   
-  /// Represents local variables in a runtime {@link kala.collection.mutable.MutableSeq}
+  /// Represents variable context in a runtime {@link kala.collection.mutable.MutableSeq}
   /// of {@link Object}. This representation is used in Java Source and AST generation
   /// to avoid "captured variables must be final or effectively final" while performing
   /// assignments in pattern matching.
   ///
   /// @param seq The created variable for storing the runtime local variable sequence.
-  record SeqView(LocalVariable seq) implements LocalVarCtx {
+  record SeqView(LocalVariable seq) implements VarCtx {
     @Override
     public @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index) {
       return cb.invoke(Constants.SEQ_GET, seq.ref(), ImmutableSeq.of(cb.iconst(index)));
