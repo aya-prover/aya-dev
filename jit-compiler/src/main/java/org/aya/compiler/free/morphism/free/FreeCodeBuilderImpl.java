@@ -154,7 +154,7 @@ public record FreeCodeBuilderImpl(
   public @NotNull VarCtx genVarCtx(int size) {
     var init = invoke(Constants.MUTSEQ, ImmutableSeq.of(iconst(size), aconstNull(Constants.CD_Term)));
     var seq = makeVar(Constants.CD_MutableSeq, init);
-    return new VarCtx.SeqView(size, seq);
+    return new VarCtx.SeqView(seq);
   }
 
   @Override public void returnWith(@NotNull FreeJavaExpr expr) {
