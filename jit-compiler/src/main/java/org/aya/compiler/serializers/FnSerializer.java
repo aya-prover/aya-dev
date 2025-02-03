@@ -85,12 +85,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         var ser = new PatternSerializer(argExprs, onStuckCon, unit.is(Modifier.Overlap));
         ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
             matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
-            var result = serializeTermUnderTele(
-              builder0,
-              matching.body(),
-              patSer.result.ref(),
-              bindSize
-            );
+            var result = serializeTermUnderTele(builder0, matching.body(), patSer.result.toExprSeq(builder0));
             builder0.returnWith(result);
           })
         ).toImmutableSeq());

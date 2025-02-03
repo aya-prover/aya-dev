@@ -73,7 +73,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var matching = unit.clauses().map(clause ->
       new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
         (ps, cb, bindCount) -> {
-          var resultSeq = AbstractExprializer.fromSeq(cb, Constants.CD_Term, ps.result.ref(), bindCount);
+          var resultSeq = ps.result.toExprSeq(cb);
           var fullSeq = resultSeq.appendedAll(captureExprs);
           var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
           cb.returnWith(returns);

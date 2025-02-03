@@ -54,7 +54,7 @@ public final class PatternSerializer {
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  @UnknownNullability LocalVariable result;
+  @UnknownNullability VarCtx result;
   @UnknownNullability LocalVariable matchState;
   @UnknownNullability LocalVariable subMatchState;
 
@@ -92,7 +92,7 @@ public final class PatternSerializer {
         }
       }
       case Pat.Bind _ -> {
-        onMatchBind(builder, term);
+        result.set(builder, bindCount++, term);
         onMatchSucc.accept(builder);
       }
 
@@ -208,16 +208,6 @@ public final class PatternSerializer {
   private void updateState(@NotNull FreeCodeBuilder builder, int state) {
     builder.updateVar(matchState, builder.iconst(state));
   }
-
-  // TODO: obliterate this
-  private void onMatchBind(@NotNull FreeCodeBuilder builder, @NotNull FreeJavaExpr term) {
-    builder.exec(
-      builder.invoke(Constants.MUTSEQ_SET, result.ref(), ImmutableSeq.of(
-        builder.iconst(bindCount++),
-        term
-      ))
-    );
-  }
   // endregion Java Source Code Generate API
 
   public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
@@ -229,13 +219,8 @@ public final class PatternSerializer {
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int maxBindSize = bindSize.max();
 
-    // var result = MutableSeq.fill(maxBindCount, null);
-    result = builder.makeVar(Constants.CD_MutableSeq,
-      builder.invoke(Constants.MUTSEQ, ImmutableSeq.of(
-        builder.iconst(maxBindSize),
-        builder.aconstNull(Constants.CD_Term)
-      ))
-    );
+    // generates local term variables
+    result = builder.genVarCtx(maxBindSize);
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
     subMatchState = builder.makeVar(ConstantDescs.CD_boolean, builder.iconst(false));

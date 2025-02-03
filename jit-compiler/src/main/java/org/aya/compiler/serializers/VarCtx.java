@@ -8,12 +8,14 @@ import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.morphism.asm.AsmVariable;
+import org.aya.prettier.BasePrettier;
 import org.jetbrains.annotations.NotNull;
 
 /// Stores the context/representation needed for variable management. This class handles
 /// the distinctions in variable representation between Java Source and Bytecode code
 /// generation (see #1302).
 public interface VarCtx {
+  @NotNull ImmutableSeq<FreeJavaExpr> toExprSeq(@NotNull FreeCodeBuilder cb);
   @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index);
   void set(@NotNull FreeCodeBuilder cb, int index, @NotNull FreeJavaExpr value);
   
@@ -23,7 +25,12 @@ public interface VarCtx {
   /// assignments in pattern matching.
   ///
   /// @param seq The created variable for storing the runtime local variable sequence.
-  record SeqView(LocalVariable seq) implements VarCtx {
+
+  record SeqView(int size, LocalVariable seq) implements VarCtx {
+    @Override
+    public @NotNull ImmutableSeq<FreeJavaExpr> toExprSeq(@NotNull FreeCodeBuilder cb) {
+      return AbstractExprializer.fromSeq(cb, Constants.CD_Term, seq.ref(), size);
+    }
     @Override
     public @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index) {
       return cb.invoke(Constants.SEQ_GET, seq.ref(), ImmutableSeq.of(cb.iconst(index)));
@@ -40,6 +47,10 @@ public interface VarCtx {
   /// to {@link SeqView}. This can be used for Bytecode targets due to the lack of
   /// Java compile-time constraint on immutability of captured variables.
   record SepVars(ImmutableSeq<AsmVariable> seq) implements VarCtx {
+    @Override
+    public @NotNull ImmutableSeq<FreeJavaExpr> toExprSeq(@NotNull FreeCodeBuilder cb) {
+      return seq.map(AsmVariable::ref);
+    }
     @Override
     public @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index) {
       return seq.get(index).ref();
