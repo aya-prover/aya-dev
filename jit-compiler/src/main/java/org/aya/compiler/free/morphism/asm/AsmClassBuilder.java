@@ -65,13 +65,8 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     )));
   }
 
-  public @NotNull ClassDesc owner() {
-    return classData.className();
-  }
-
-  public @NotNull ClassDesc ownerSuper() {
-    return classData.classSuper();
-  }
+  public @NotNull ClassDesc owner() { return classData.className(); }
+  public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
   @Override
   public void buildNestedClass(@NotNull CompiledAya compiledAya, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<FreeClassBuilder> builder) {
@@ -178,7 +173,8 @@ public final class AsmClassBuilder implements FreeClassBuilder {
         InnerClassInfo.of(owner().nested(cd), Optional.of(owner()), Optional.of(cd), ClassData.AF_NESTED));
     } else {
       assert nestedMembers.isEmpty();
-      innerClassesEntries = ImmutableSeq.of(InnerClassInfo.of(owner(), Optional.of(outerClassData.data().classSuper()), Optional.of(outerClassData.thisName()), ClassData.AF_NESTED));
+      innerClassesEntries = ImmutableSeq.of(InnerClassInfo.of(owner(), Optional.of(outerClassData.data().classSuper()),
+        Optional.of(outerClassData.thisName()), ClassData.AF_NESTED));
     }
 
     if (innerClassesEntries.isNotEmpty()) {
