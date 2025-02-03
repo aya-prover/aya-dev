@@ -8,7 +8,6 @@ import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.morphism.asm.AsmVariable;
-import org.aya.prettier.BasePrettier;
 import org.jetbrains.annotations.NotNull;
 
 /// Stores the context/representation needed for variable management. This class handles
@@ -27,7 +26,6 @@ public interface VarCtx {
     /// assignments in pattern matching.
     ///
     /// @param seq The created variable for storing the runtime local variable sequence.
-
     record SeqView(LocalVariable seq) implements VarCtx {
         @Override
         public @NotNull ImmutableSeq<FreeJavaExpr> toExprSeq(@NotNull FreeCodeBuilder cb, int limit) {

@@ -31,9 +31,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, MatchyData unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
-      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty());
-    });
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
+    );
   }
 
   @Override protected @NotNull String className(MatchyData unit) {
