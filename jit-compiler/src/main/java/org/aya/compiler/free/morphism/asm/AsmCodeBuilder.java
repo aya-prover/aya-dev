@@ -11,10 +11,7 @@ import java.util.function.ObjIntConsumer;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeJavaResolver;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
@@ -188,7 +185,8 @@ public record AsmCodeBuilder(
   }
   @Override
   public @NotNull VarCtx genVarCtx(int size) {
-    return null; // TODO
+    var seq = ImmutableSeq.fill(size, _ -> makeVar(Constants.CD_Term, aconstNull(Constants.CD_Term)));
+    return new VarCtx.SepVars(seq);
   }
 
   @Override public void returnWith(@NotNull FreeJavaExpr expr) {

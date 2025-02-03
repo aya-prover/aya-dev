@@ -7,6 +7,7 @@ import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.free.morphism.asm.AsmVariable;
 import org.jetbrains.annotations.NotNull;
 
 /// Stores the context/representation needed for variable management. This class handles
@@ -16,7 +17,7 @@ public interface VarCtx {
   @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index);
   void set(@NotNull FreeCodeBuilder cb, int index, @NotNull FreeJavaExpr value);
   
-  /// Represents variable context in a runtime {@link kala.collection.mutable.MutableSeq}
+  /// Represents the variable context in a runtime {@link kala.collection.mutable.MutableSeq}
   /// of {@link Object}. This representation is used in Java Source and AST generation
   /// to avoid "captured variables must be final or effectively final" while performing
   /// assignments in pattern matching.
@@ -32,6 +33,20 @@ public interface VarCtx {
       cb.exec(
         cb.invoke(Constants.MUTSEQ_SET, seq.ref(), ImmutableSeq.of(cb.iconst(index), value))
       );
+    }
+  }
+
+  /// Represents the variable context as separate local variables as an optimization
+  /// to {@link SeqView}. This can be used for Bytecode targets due to the lack of
+  /// Java compile-time constraint on immutability of captured variables.
+  record SepVars(ImmutableSeq<AsmVariable> seq) implements VarCtx {
+    @Override
+    public @NotNull FreeJavaExpr get(@NotNull FreeCodeBuilder cb, int index) {
+      return seq.get(index).ref();
+    }
+    @Override
+    public void set(@NotNull FreeCodeBuilder cb, int index, @NotNull FreeJavaExpr value) {
+      cb.updateVar(seq.get(index), value);
     }
   }
 }
