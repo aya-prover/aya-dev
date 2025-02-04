@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
@@ -450,7 +451,7 @@ public sealed interface Expr extends AyaDocile {
     /// @param generator `x * y` part above
     /// @param binds     `x <- [1, 2, 3], y <- [4, 5, 6]` part above
     /// @param names     the bind (`>>=`) function, it is [#monadBind] in default,
-    ///                  the pure (`return`) function, it is [#functorPure] in default
+    ///                                                    the pure (`return`) function, it is [#functorPure] in default
     /// @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
     /// it will be desugared to `do x <- [1, 2, 3], y <- [4, 5, 6], return x * y`
     public record CompBlock(
@@ -639,11 +640,15 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<E> body,
     @NotNull BiFunction<P, WithPos<E>, E> constructor
   ) {
-    if (params.isEmpty()) return body;
-    var drop = params.drop(1);
-    var subPos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
-      drop.map(SourceNode::sourcePos));
-    return new WithPos<>(sourcePos, constructor.apply(params.getFirst(),
-      buildNested(subPos, drop, body, constructor)));
+    record StackData<P>(P p, SourcePos pos) { }
+    var subPoses = MutableArrayList.<StackData<P>>create();
+    while (!params.isEmpty()) {
+      subPoses.append(new StackData<>(params.getFirst(), sourcePos));
+      params = params.drop(1);
+      sourcePos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
+        params.map(SourceNode::sourcePos));
+    }
+    return subPoses.foldRight(body, (data, acc) ->
+      new WithPos<>(data.pos, constructor.apply(data.p, acc)));
   }
 }
