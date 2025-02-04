@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
@@ -73,7 +73,10 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var matching = unit.clauses().map(clause ->
       new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
         (ps, cb, binds) -> {
-          var resultSeq = ps.result.take(binds).map(LocalVariable::ref);
+          var resultSeq = ps.result.view()
+            .take(binds)
+            .map(LocalVariable::ref)
+            .toImmutableSeq();
           var fullSeq = resultSeq.appendedAll(captureExprs);
           // assert fullSeq.size() == binds;
           var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
