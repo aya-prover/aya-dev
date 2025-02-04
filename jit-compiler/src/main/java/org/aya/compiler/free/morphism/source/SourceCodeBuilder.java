@@ -286,7 +286,9 @@ public record SourceCodeBuilder(
     return () -> {
       sourceBuilder.append("(" + name.joinToString(", ") + ") -> {");
       sourceBuilder.appendLine();
-      sourceBuilder.runInside(() -> builder.accept(ap, this));
+      sourceBuilder.runInside(() -> {
+        builder.accept(ap, this);
+      });
       sourceBuilder.append("}");
     };
   }
