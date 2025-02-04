@@ -450,8 +450,7 @@ public sealed interface Expr extends AyaDocile {
     ///
     /// @param generator `x * y` part above
     /// @param binds     `x <- [1, 2, 3], y <- [4, 5, 6]` part above
-    /// @param names     the bind (`>>=`) function, it is [#monadBind] in default,
-    ///                                                    the pure (`return`) function, it is [#functorPure] in default
+    /// @param names     bind (`>>=`) is [#monadBind] by default and pure (`return`) is [#functorPure] by default
     /// @apiNote a ArrayCompBlock will be desugar to a do-block. For the example above,
     /// it will be desugared to `do x <- [1, 2, 3], y <- [4, 5, 6], return x * y`
     public record CompBlock(
@@ -475,9 +474,7 @@ public sealed interface Expr extends AyaDocile {
       }
     }
 
-    /**
-     * helper constructor, also find constructor calls easily in IDE
-     */
+    /// Helper constructor, also find constructor calls easily in IDE
     public static Array newList(@NotNull ImmutableSeq<WithPos<Expr>> exprs) {
       return new Array(Either.right(new ElementList(exprs)));
     }
