@@ -11,10 +11,7 @@ import java.util.function.ObjIntConsumer;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeJavaResolver;
+import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;

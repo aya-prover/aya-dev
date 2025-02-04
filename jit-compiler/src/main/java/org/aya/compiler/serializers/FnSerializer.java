@@ -84,13 +84,11 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       case Either.Right(var clauses) -> {
         var ser = new PatternSerializer(argExprs, onStuckCon, unit.is(Modifier.Overlap));
         ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
-            matching.bindCount(), matching.patterns(), (patSer, builder0, bindSize) -> {
-            var result = serializeTermUnderTele(
-              builder0,
-              matching.body(),
-              patSer.result.ref(),
-              bindSize
-            );
+            matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
+            var result = serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
+              .take(count)
+              .map(LocalVariable::ref)
+              .toImmutableSeq());
             builder0.returnWith(result);
           })
         ).toImmutableSeq());

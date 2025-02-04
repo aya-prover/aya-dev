@@ -61,7 +61,8 @@ public class RedBlackTreeTest {
     var args = ImmutableSeq.of(largeList);
 
     var normalizer = new Normalizer(result.info().makeTyckState());
-    var sortResult = normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL);
+    var term = tree_sortNat.invoke(args);
+    var sortResult = normalizer.normalize(term, CodeOptions.NormalizeMode.FULL);
     assertNotNull(sortResult);
 
     Profiler.profileMany("Code Execution", 5, () ->

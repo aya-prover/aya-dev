@@ -1,14 +1,17 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
+
+import java.lang.constant.ClassDesc;
+import java.util.function.Consumer;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.CompiledAya;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -16,9 +19,6 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.constant.ClassDesc;
-import java.util.function.Consumer;
 
 public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.MatchyData> {
   public record MatchyData(
@@ -31,9 +31,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, MatchyData unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
-      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty());
-    });
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
+    );
   }
 
   @Override protected @NotNull String className(MatchyData unit) {
@@ -72,9 +72,12 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
     var matching = unit.clauses().map(clause ->
       new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
-        (ps, cb, bindCount) -> {
-          var resultSeq = AbstractExprializer.fromSeq(cb, Constants.CD_Term, ps.result.ref(), bindCount);
-          var fullSeq = resultSeq.appendedAll(captureExprs);
+        (ps, cb, binds) -> {
+          var fullSeq = ps.result.view()
+            .take(binds)
+            .map(LocalVariable::ref)
+            .appendedAll(captureExprs)
+            .toImmutableSeq();
           var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
           cb.returnWith(returns);
         })
