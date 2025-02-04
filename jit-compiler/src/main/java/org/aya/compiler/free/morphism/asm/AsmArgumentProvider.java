@@ -19,7 +19,7 @@ public class AsmArgumentProvider implements ArgumentProvider {
 
   @Override public @NotNull AsmVariable arg(int nth) {
     assert nth < parameters.size();
-    return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth));
+    return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth), false);
   }
 
   public static final class Lambda implements ArgumentProvider.Lambda {
@@ -32,12 +32,12 @@ public class AsmArgumentProvider implements ArgumentProvider {
 
     @Override public @NotNull AsmExpr capture(int nth) {
       assert nth < captures.size();
-      return new AsmVariable(nth, captures.get(nth)).ref();
+      return new AsmVariable(nth, captures.get(nth), false).ref();
     }
 
     @Override public @NotNull AsmVariable arg(int nth) {
       assert nth < parameters.size();
-      return new AsmVariable(captures.size() + nth, parameters.get(nth));
+      return new AsmVariable(captures.size() + nth, parameters.get(nth), false);
     }
   }
 }

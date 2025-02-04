@@ -13,7 +13,7 @@ public record AsmVariablePool(int offset, @NotNull MutableList<AsmVariable> vars
   public static @NotNull AsmVariablePool from(@Nullable ClassDesc thisType, @NotNull ImmutableSeq<ClassDesc> telescope) {
     var scope = new AsmVariablePool();
     if (thisType != null) {
-      scope.acquire(thisType);
+      scope.vars.append(new AsmVariable(0, thisType, true));
     }
 
     telescope.forEach(scope::acquire);
@@ -27,7 +27,7 @@ public record AsmVariablePool(int offset, @NotNull MutableList<AsmVariable> vars
 
   public @NotNull AsmVariable acquire(@NotNull ClassDesc varType) {
     var slot = offset + vars.size();
-    var var = new AsmVariable(slot, varType);
+    var var = new AsmVariable(slot, varType, false);
     vars.append(var);
     return var;
   }
@@ -43,7 +43,7 @@ public record AsmVariablePool(int offset, @NotNull MutableList<AsmVariable> vars
   public void submit(@NotNull AsmCodeBuilder builder) {
     vars.forEach(var -> builder.writer().localVariable(
       var.slot(),
-      "var" + var.slot(),
+      var.name(),
       var.type(),
       builder.writer().startLabel(),
       builder.writer().endLabel()
