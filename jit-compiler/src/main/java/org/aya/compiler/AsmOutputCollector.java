@@ -18,7 +18,7 @@ public interface AsmOutputCollector {
     public Default() { this(MutableMap.create()); }
 
     public static @NotNull Path from(@NotNull ImmutableSeq<String> components) {
-      return Path.of(components.getFirst(), components.view().drop(1).toArray(new String[components.size() - 1]));
+      return Path.of(components.getFirst(), components.view().drop(1).toArray(String[]::new));
     }
 
     public static @NotNull Path getPath(@NotNull ClassDesc className) {

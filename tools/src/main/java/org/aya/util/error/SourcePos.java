@@ -1,6 +1,8 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
+
+import java.util.Objects;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
@@ -8,8 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * Position in source code for error reporting only.
@@ -108,10 +108,6 @@ public record SourcePos(
     return startLine == endLine;
   }
 
-  public @NotNull SourcePos sourcePosForSubExpr(@NotNull SeqView<SourcePos> params) {
-    return sourcePosForSubExpr(file, params);
-  }
-
   public @NotNull SourcePos sourcePosForSubExpr(@NotNull SourceFile sourceFile, @NotNull SeqView<SourcePos> params) {
     var restParamSourcePos = params.fold(SourcePos.NONE, (acc, it) -> {
       if (acc == SourcePos.NONE) return it;
@@ -129,7 +125,7 @@ public record SourcePos(
     );
   }
 
-  @Override public String toString() {
+  @Override public @NotNull String toString() {
     return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + lineColumnString() + ']';
   }
   public @NotNull String lineColumnString() {
