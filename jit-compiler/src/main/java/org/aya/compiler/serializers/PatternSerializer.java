@@ -54,7 +54,7 @@ public final class PatternSerializer {
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  @UnknownNullability VarCtx result;
+  @UnknownNullability ImmutableSeq<LocalVariable> result;
   @UnknownNullability LocalVariable matchState;
   @UnknownNullability LocalVariable subMatchState;
 
@@ -92,7 +92,7 @@ public final class PatternSerializer {
         }
       }
       case Pat.Bind _ -> {
-        result.set(builder, bindCount++, term);
+        builder.updateVar(result.get(bindCount++), term);
         onMatchSucc.accept(builder);
       }
 
@@ -217,10 +217,10 @@ public final class PatternSerializer {
     }
 
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
-    int maxBindSize = bindSize.max();
+    int binds = bindSize.max();
 
     // generates local term variables
-    result = builder.genVarCtx(maxBindSize);
+    result = ImmutableSeq.fill(binds, _ -> builder.makeVar(Constants.CD_Term, builder.aconstNull(Constants.CD_Term)));
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
     subMatchState = builder.makeVar(ConstantDescs.CD_boolean, builder.iconst(false));

@@ -7,13 +7,11 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.value.MutableValue;
 import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.Constants;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.compiler.serializers.VarCtx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,12 +147,6 @@ public record FreeCodeBuilderImpl(
     var defaultBody = subscoped(isBreakable, defaultCase::accept);
 
     stmts.append(new FreeStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
-  }
-  @Override
-  public @NotNull VarCtx genVarCtx(int size) {
-    var init = invoke(Constants.MUTSEQ, ImmutableSeq.of(iconst(size), aconstNull(Constants.CD_Term)));
-    var seq = makeVar(Constants.CD_MutableSeq, init);
-    return new VarCtx.SeqView(seq);
   }
 
   @Override public void returnWith(@NotNull FreeJavaExpr expr) {
