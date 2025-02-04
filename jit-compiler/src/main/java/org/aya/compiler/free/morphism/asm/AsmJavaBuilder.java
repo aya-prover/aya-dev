@@ -63,9 +63,9 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
 
       // endregion metadata
 
-      var acb = new AsmClassBuilder(classData, cb, collector);
-      builder.accept(acb);
-      acb.postBuild();
+      try (var acb = new AsmClassBuilder(classData, cb, collector)) {
+        builder.accept(acb);
+      }
 
       if (classData.outer() != null) {
         cb.with(NestHostAttribute.of(classData.outer().data().className()));

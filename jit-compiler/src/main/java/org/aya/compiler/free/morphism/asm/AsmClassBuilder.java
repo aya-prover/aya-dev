@@ -18,7 +18,6 @@ import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.compiler.free.morphism.free.VariablePool;
 import org.aya.syntax.compile.CompiledAya;
 import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
@@ -30,7 +29,7 @@ import org.glavo.classfile.constantpool.InvokeDynamicEntry;
 import org.glavo.classfile.constantpool.MethodHandleEntry;
 import org.jetbrains.annotations.NotNull;
 
-public final class AsmClassBuilder implements FreeClassBuilder {
+public final class AsmClassBuilder implements FreeClassBuilder, AutoCloseable {
   public final @NotNull ClassData classData;
   public final @NotNull ClassBuilder writer;
   public final @NotNull AsmOutputCollector collector;
@@ -88,8 +87,9 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     writer.withMethod(name, desc, flags.flagsMask(), mBuilder -> {
       var ap = new AsmArgumentProvider(paramTypes, false);
       mBuilder.withCode(cb -> {
-        var acb = new AsmCodeBuilder(cb, this, new VariablePool(paramTypes.size() + 1), null, true);
-        builder.accept(ap, acb);
+        try (var acb = new AsmCodeBuilder(cb, this, paramTypes, true)) {
+          builder.accept(ap, acb);
+        }
       });
     });
 
@@ -138,7 +138,9 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     // create static method for lambda implementation
     writer.withMethodBody(lambdaMethodName, lambdaMethodDesc, AccessFlags.ofMethod(AccessFlag.PRIVATE, AccessFlag.SYNTHETIC, AccessFlag.STATIC).flagsMask(), cb -> {
       var apl = new AsmArgumentProvider.Lambda(captureTypes, ref.paramTypes());
-      builder.accept(apl, new AsmCodeBuilder(cb, this, new VariablePool(fullParams.size()), null, false));
+      try (var acb = new AsmCodeBuilder(cb, this, fullParams, false)) {
+        builder.accept(apl, acb);
+      }
     });
 
     // the method handle to the static lambda method
@@ -165,7 +167,8 @@ public final class AsmClassBuilder implements FreeClassBuilder {
     return pool.invokeDynamicEntry(bsmEntry, nameAndType);
   }
 
-  public void postBuild() {
+  @Override
+  public void close() {
     ImmutableSeq<InnerClassInfo> innerClassesEntries;
     var outerClassData = classData.outer();
     if (outerClassData == null) {
@@ -188,13 +191,14 @@ public final class AsmClassBuilder implements FreeClassBuilder {
 
     if (fieldInitializers.isNotEmpty()) {
       writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
-        var acb = new AsmCodeBuilder(cb, this, new VariablePool(), null, false);
-        fieldInitializers.forEach((fieldRef, init) -> {
-          var expr = init.apply(acb);
-          acb.loadExpr(expr);
-          cb.putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
-        });
-        cb.return_();
+        try (var acb = new AsmCodeBuilder(cb, this, ImmutableSeq.empty(), false)) {
+          fieldInitializers.forEach((fieldRef, init) -> {
+            var expr = init.apply(acb);
+            acb.loadExpr(expr);
+            cb.putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
+          });
+          cb.return_();
+        }
       });
     }
   }
