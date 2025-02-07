@@ -171,6 +171,10 @@ public record SourcePos(
   public static @NotNull LineColumn offsetToLineColumn(@NotNull SourceFile file, int pos, int lowerBound) {
     var offsets = file.lineOffsets();
     var line = offsets.binarySearch(lowerBound, offsets.size(), pos);
+    // We want `line` to be the last index in the array whose value is no greater than `pos`.
+    // If `pos` exists in the array then `line = <index of pos>` from the binary search.
+    // In the case where binary search does not find a direct result, `(-upperBound - 1)` is
+    // returned. To obtain the value of `line` we subtract the index of `upperBound` by 1.
     if (line < 0) line = -line - 2;
     return LineColumn.of(line, pos - offsets.get(line));
   }
