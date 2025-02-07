@@ -29,7 +29,7 @@ public interface StringUtil {
    * @return a sequence of integers denoting the start position of each line
    */
   static @NotNull ImmutableIntArray indexedLines(@NotNull String str) {
-    var results = MutableIntList.<Integer>create();
+    var results = MutableIntList.create();
     var index = MutableIntValue.create();
     str.lines().forEach(line -> {
       results.append(index.get());
