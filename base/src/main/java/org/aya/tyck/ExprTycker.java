@@ -499,7 +499,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
       case DefVar<?, ?> defVar -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkDefApplication(defVar);
-      default -> throw new UnsupportedOperationException("TODO");
+      default -> Panic.unreachable();
     };
   }
 

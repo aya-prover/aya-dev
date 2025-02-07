@@ -379,7 +379,7 @@ public record AyaProducer(
 
   public @Nullable DataDecl dataDecl(GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
     var body = node.peekChild(ELIM_DATA_BODY);
-    if (body == null) return error(body, "Expect data body");
+    if (body == null) return error(node, "Expect data body");
     var tele = telescope(node.childrenOfType(TELE));
     var info = declInfo(node, ModifierParser.DECL_FILTER);
     var name = info.checkName(this);
@@ -946,10 +946,6 @@ public record AyaProducer(
   }
 
   public @NotNull WithPos<String> teleParamName(@NotNull GenericNode<?> node) {
-    return weakId(node.child(WEAK_ID));
-  }
-
-  public @NotNull WithPos<String> newArgField(@NotNull GenericNode<?> node) {
     return weakId(node.child(WEAK_ID));
   }
 
