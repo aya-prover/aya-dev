@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
-import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.collection.mutable.primitive.MutableIntList;
+import kala.value.primitive.MutableIntValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.ZonedDateTime;
@@ -30,11 +30,11 @@ public interface StringUtil {
    */
   static @NotNull ImmutableIntArray indexedLines(@NotNull String str) {
     var results = MutableIntList.<Integer>create();
-    var index = 0;
-    for (var line : ImmutableSeq.from(str.lines())) {
-      results.append(index);
-      index += line.length() + 1;
-    }
+    var index = MutableIntValue.create();
+    str.lines().forEach(line -> {
+      results.append(index.get());
+      index.add(line.length() + 1);
+    });
     return results.toImmutableArray();
   }
 }
