@@ -1,9 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
 import com.intellij.openapi.util.text.Strings;
+import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import org.aya.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,14 +20,20 @@ import java.nio.file.Path;
 public record SourceFile(
   @NotNull String display,
   @NotNull Option<Path> underlying,
-  @NotNull String sourceCode
+  @NotNull String sourceCode,
+  @NotNull ImmutableSeq<Integer> lineOffsets
 ) {
+
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {
     return from(locator, path, Files.readString(path));
   }
 
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path, @NotNull String sourceCode) {
     return new SourceFile(locator.displayName(path).toString(), path, sourceCode);
+  }
+
+  public SourceFile(@NotNull String display, @NotNull Option<Path> underlying, @NotNull String sourceCode) {
+    this(display, underlying, Strings.convertLineSeparators(sourceCode), StringUtil.indexedLines(sourceCode));
   }
 
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {
