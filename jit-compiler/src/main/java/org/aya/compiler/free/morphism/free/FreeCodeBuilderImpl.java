@@ -32,25 +32,15 @@ public record FreeCodeBuilderImpl(
     return inner.build();
   }
 
-  public @NotNull ImmutableSeq<FreeStmt> build() {
-    return stmts.freeze();
-  }
-
-  public static @NotNull FreeExpr assertFreeExpr(@NotNull FreeJavaExpr expr) {
-    return (FreeExpr) expr;
-  }
+  public @NotNull ImmutableSeq<FreeStmt> build() { return stmts.freeze(); }
+  public static @NotNull FreeExpr assertFreeExpr(@NotNull FreeJavaExpr expr) { return (FreeExpr) expr; }
 
   public static @NotNull ImmutableSeq<FreeExpr> assertFreeExpr(@NotNull ImmutableSeq<FreeJavaExpr> exprs) {
     return exprs.map(x -> (FreeExpr) x);
   }
 
-  public static @NotNull FreeVariable assertFreeVariable(@NotNull LocalVariable var) {
-    return (FreeVariable) var;
-  }
-
-  public @NotNull FreeVariable.Local acquireVariable() {
-    return new FreeVariable.Local(pool.acquire());
-  }
+  public static @NotNull FreeVariable assertFreeVariable(@NotNull LocalVariable var) { return (FreeVariable) var; }
+  public @NotNull FreeVariable.Local acquireVariable() { return new FreeVariable.Local(pool.acquire()); }
 
   @Override
   public @NotNull FreeVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
@@ -66,13 +56,11 @@ public record FreeCodeBuilderImpl(
     stmts.append(new FreeStmt.Super(superConParams, assertFreeExpr(superConArgs)));
   }
 
-  @Override
-  public void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update) {
+  @Override public void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update) {
     stmts.append(new FreeStmt.SetVariable(assertFreeVariable(var), assertFreeExpr(update)));
   }
 
-  @Override
-  public void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update) {
+  @Override public void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update) {
     stmts.append(new FreeStmt.SetArray(assertFreeExpr(array), idx, assertFreeExpr(update)));
   }
 
@@ -83,18 +71,18 @@ public record FreeCodeBuilderImpl(
     stmts.append(new FreeStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
 
-  @Override
-  public void ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
+  @Override public void
+  ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
     buildIf(new FreeStmt.Condition.IsFalse(assertFreeVariable(notTrue)), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
+  @Override public void
+  ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<FreeCodeBuilder> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
     buildIf(new FreeStmt.Condition.IsTrue(assertFreeVariable(theTrue)), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifInstanceOf(@NotNull FreeJavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
+  @Override public void
+  ifInstanceOf(@NotNull FreeJavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<FreeCodeBuilder> elseBlock) {
     var varHolder = MutableValue.<FreeVariable.Local>create();
     buildIf(new FreeStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
       var asTerm = ((FreeCodeBuilderImpl) b).acquireVariable();
@@ -118,25 +106,21 @@ public record FreeCodeBuilderImpl(
     buildIf(new FreeStmt.Condition.IsNull(assertFreeExpr(isNull)), thenBlock, elseBlock);
   }
 
-  @Override
-  public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
+  @Override public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
     var innerBlockBody = subscoped(true, innerBlock::accept);
     stmts.append(new FreeStmt.Breakable(innerBlockBody));
   }
 
-  @Override
-  public void breakOut() {
+  @Override public void breakOut() {
     assert isBreakable;
     stmts.append(FreeStmt.Break.INSTANCE);
   }
 
-  @Override
-  public void exec(@NotNull FreeJavaExpr expr) {
+  @Override public void exec(@NotNull FreeJavaExpr expr) {
     stmts.append(new FreeStmt.Exec(assertFreeExpr(expr)));
   }
 
-  @Override
-  public void switchCase(
+  @Override public void switchCase(
     @NotNull LocalVariable elim,
     @NotNull ImmutableIntSeq cases,
     @NotNull ObjIntConsumer<FreeCodeBuilder> branch,
@@ -157,8 +141,7 @@ public record FreeCodeBuilderImpl(
     stmts.append(FreeStmt.Unreachable.INSTANCE);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return FreeExprBuilderImpl.INSTANCE.mkNew(conRef, args);
   }
 
@@ -166,13 +149,12 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.refVar(name);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull FreeJavaExpr
+  invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return FreeExprBuilderImpl.INSTANCE.invoke(method, owner, args);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull FreeJavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
     return FreeExprBuilderImpl.INSTANCE.invoke(method, args);
   }
 
@@ -180,13 +162,11 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.refField(field);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
+  @Override public @NotNull FreeJavaExpr refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
     return FreeExprBuilderImpl.INSTANCE.refField(field, owner);
   }
 
-  @Override
-  public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+  @Override public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
     return FreeExprBuilderImpl.INSTANCE.refEnum(enumClass, enumName);
   }
 
@@ -205,12 +185,10 @@ public record FreeCodeBuilderImpl(
     return FreeExprBuilderImpl.INSTANCE.aconstNull(type);
   }
 
-  @Override public @NotNull FreeJavaExpr thisRef() {
-    return FreeExprBuilderImpl.INSTANCE.thisRef();
-  }
+  @Override public @NotNull FreeJavaExpr thisRef() { return FreeExprBuilderImpl.INSTANCE.thisRef(); }
 
-  @Override
-  public @NotNull FreeJavaExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
+  @Override public @NotNull FreeJavaExpr
+  mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
     return FreeExprBuilderImpl.INSTANCE.mkArray(type, length, initializer);
   }
 
