@@ -47,26 +47,15 @@ See also [use as a library](#use-as-a-library).
 
 ## Contributing to Aya
 
-> [!IMPORTANT]
->
-> Since you need [Java 22] to set this project up, in case your choice
-> of IDE is IntelliJ IDEA, version 2024.2 or higher is required.
+See [HACKING.md](HACKING.md) for technical details,
+[CONTRIBUTING.md](CONTRIBUTING.md) for social responsibilities,
+and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-+ Questions or concerns are welcomed in the discussion area.
-  We will try our best to answer your questions, but please be nice.
-+ We welcome nitpicks on error reporting! Please let us know anything not perfect.
-  We have already implemented several user-suggested error messages.
-+ Before contributing in any form, please read
-  [the contribution guideline](CONTRIBUTING.md) thoroughly
-  and make sure you understand your responsibilities.
-+ Please follow [the Code of Conduct](CODE_OF_CONDUCT.md) to
-  ensure an inclusive and welcoming community atmosphere.
-+ Ask [@ice1000] or simply create a ticket in the discussion to become an organization member.
-  + If you want to contribute, ask before doing anything.
-    We are reluctant to accept PRs that contradict our design goals.
-    We value your time and enthusiasm, so we don't want to close your PRs :)
+Questions are _always_ welcomed in [Discussion](https://github.com/aya-prover/aya-dev/discussions).
+We will try our best to answer your questions. Please be nice to us!
+We also welcome nitpicks on any user-interaction issues, especially on error reporting.
+Let us know if you have any suggestions.
 
-[@ice1000]: https://github.com/ice1000
 [actions]: https://github.com/aya-prover/aya-dev/actions/workflows/gradle-check.yaml/badge.svg
 [codecov]: https://img.shields.io/codecov/c/github/aya-prover/aya-dev?logo=codecov&logoColor=white
 [maven]: https://img.shields.io/maven-central/v/org.aya-prover/base?logo=gradle

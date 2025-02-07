@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -44,16 +44,24 @@ public record LibrarySource(
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
   @NotNull MutableValue<ImmutableSeq<TyckDef>> tycked,
   @NotNull MutableValue<ResolveInfo> resolveInfo,
-  @NotNull MutableValue<LiterateData> literateData
+  @NotNull MutableValue<LiterateData> literateData,
+  @NotNull MutableValue<ModulePath> moduleNameCache
 ) implements GenericAyaFile {
   public static @NotNull LibrarySource create(@NotNull LibraryOwner owner, @NotNull Path file) {
     var underlyingFile = FileUtil.canonicalize(file);
     return new LibrarySource(owner, underlyingFile, AyaFiles.isLiterate(underlyingFile),
-      MutableList.create(), MutableValue.create(),
+      MutableList.create(), MutableValue.create(), MutableValue.create(),
       MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
   public @NotNull ModulePath moduleName() {
+    if (moduleNameCache.get() != null) return moduleNameCache.get();
+    var name = computeModuleName();
+    moduleNameCache.set(name);
+    return name;
+  }
+
+  private @NotNull ModulePath computeModuleName() {
     var info = resolveInfo.get();
     if (info != null) return info.modulePath();
     var display = displayPath();
@@ -117,10 +125,7 @@ public record LibrarySource(
     return AyaFiles.resolveAyaCompiledFile(owner.outDir(), mod);
   }
 
-  @Override public String toString() {
-    return underlyingFile.toString();
-  }
-
+  @Override public @NotNull String toString() { return underlyingFile.toString(); }
   @Override public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
