@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
 import org.aya.cli.library.incremental.CompilerAdvisor;
@@ -30,8 +26,8 @@ import org.aya.syntax.AyaFiles;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
+import org.aya.util.StringUtil;
 import org.aya.util.error.Panic;
-import org.aya.util.more.StringUtil;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.MutableGraph;
@@ -39,6 +35,10 @@ import org.aya.util.tyck.OrgaTycker;
 import org.aya.util.tyck.SccTycker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author kiva

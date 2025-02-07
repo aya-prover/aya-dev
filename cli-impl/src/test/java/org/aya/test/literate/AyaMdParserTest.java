@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.literate;
 
@@ -19,9 +19,9 @@ import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.test.TestRunner;
 import org.aya.util.FileUtil;
+import org.aya.util.StringUtil;
 import org.aya.util.error.Global;
 import org.aya.util.error.SourceFile;
-import org.aya.util.more.StringUtil;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.ThrowingReporter;

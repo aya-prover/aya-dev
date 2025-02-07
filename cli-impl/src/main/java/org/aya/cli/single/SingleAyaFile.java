@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
@@ -20,9 +20,9 @@ import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.FileUtil;
+import org.aya.util.StringUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
-import org.aya.util.more.StringUtil;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.Problem;

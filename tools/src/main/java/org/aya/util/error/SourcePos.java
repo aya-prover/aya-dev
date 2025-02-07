@@ -2,14 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.error;
 
-import java.util.Objects;
-
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
-import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.SeqView;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * Position in source code for error reporting only.
@@ -159,13 +158,24 @@ public record SourcePos(
   }
 
   public static @NotNull SourcePos of(@NotNull TextRange range, @NotNull SourceFile file, boolean singleLine) {
-    var start = StringUtil.offsetToLineColumn(file.sourceCode(), range.getStartOffset());
+    var start = offsetToLineColumn(file, range.getStartOffset(), 0);
     var length = range.getLength();
     var endOffset = range.getEndOffset() - (length == 0 ? 0 : 1);
     var end = singleLine || length == 0
       ? LineColumn.of(start.line, start.column + length - 1)
-      : StringUtil.offsetToLineColumn(file.sourceCode(), endOffset);
+      : offsetToLineColumn(file, endOffset, start.line);
     return new SourcePos(file, range.getStartOffset(), endOffset,
       start.line + 1, start.column, end.line + 1, end.column);
+  }
+
+  public static @NotNull LineColumn offsetToLineColumn(@NotNull SourceFile file, int pos, int lowerBound) {
+    var offsets = file.lineOffsets();
+    var line = offsets.binarySearch(lowerBound, offsets.size(), pos);
+    // We want `line` to be the last index in the array whose value is no greater than `pos`.
+    // If `pos` exists in the array then `line = <index of pos>` from the binary search.
+    // In the case where binary search does not find a direct result, `(-upperBound - 1)` is
+    // returned. To obtain the value of `line` we subtract the index of `upperBound` by 1.
+    if (line < 0) line = -line - 2;
+    return LineColumn.of(line, pos - offsets.get(line));
   }
 }
