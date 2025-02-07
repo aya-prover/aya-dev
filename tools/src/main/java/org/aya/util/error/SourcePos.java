@@ -8,7 +8,6 @@ import kala.collection.SeqView;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -171,7 +170,7 @@ public record SourcePos(
 
   public static @NotNull LineColumn offsetToLineColumn(@NotNull SourceFile file, int pos, int lowerBound) {
     var offsets = file.lineOffsets();
-    var line = offsets.binarySearch(lowerBound, offsets.size(), pos, Comparator.comparingInt(mid -> mid));
+    var line = offsets.binarySearch(lowerBound, offsets.size(), pos);
     if (line < 0) line = -line - 2;
     return LineColumn.of(line, pos - offsets.get(line));
   }

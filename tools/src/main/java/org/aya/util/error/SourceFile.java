@@ -3,7 +3,7 @@
 package org.aya.util.error;
 
 import com.intellij.openapi.util.text.Strings;
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.control.Option;
 import org.aya.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public record SourceFile(
   @NotNull String display,
   @NotNull Option<Path> underlying,
   @NotNull String sourceCode,
-  @NotNull ImmutableSeq<Integer> lineOffsets
+  @NotNull ImmutableIntArray lineOffsets
 ) {
 
   public static @NotNull SourceFile from(@NotNull SourceFileLocator locator, @NotNull Path path) throws IOException {

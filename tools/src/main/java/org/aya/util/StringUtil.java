@@ -3,7 +3,8 @@
 package org.aya.util;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
+import kala.collection.immutable.primitive.ImmutableIntArray;
+import kala.collection.mutable.primitive.MutableIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.ZonedDateTime;
@@ -27,13 +28,13 @@ public interface StringUtil {
    *
    * @return a sequence of integers denoting the start position of each line
    */
-  static @NotNull ImmutableSeq<Integer> indexedLines(@NotNull String str) {
-    var results = MutableList.<Integer>create();
+  static @NotNull ImmutableIntArray indexedLines(@NotNull String str) {
+    var results = MutableIntList.<Integer>create();
     var index = 0;
-    for (var line: ImmutableSeq.from(str.lines())) {
+    for (var line : ImmutableSeq.from(str.lines())) {
       results.append(index);
       index += line.length() + 1;
     }
-    return results.toImmutableSeq();
+    return results.toImmutableArray();
   }
 }
