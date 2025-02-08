@@ -309,8 +309,10 @@ lambda2Expr ::= KW_LAMBDA unitPattern lambdaBody?
 doBlockContent ::= doBinding | expr
 doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 
-matchType ::= (KW_AS <<commaSep weakId>>)? KW_RETURNS expr
-matchExpr ::= KW_MATCH KW_ELIM? exprList matchType? clauses
+matchType ::= KW_RETURNS expr
+matchDiscr ::= KW_ELIM? expr KW_AS (KW_AS weakId)?
+matchDiscrList ::= <<commaSep matchDiscr>>
+matchExpr ::= KW_MATCH matchDiscrList matchType? clauses
 
 argument ::= atomExArgument
            | tupleImArgument
