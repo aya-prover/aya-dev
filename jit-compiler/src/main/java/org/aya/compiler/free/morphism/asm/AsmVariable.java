@@ -8,12 +8,20 @@ import org.aya.compiler.free.data.LocalVariable;
 import org.glavo.classfile.TypeKind;
 import org.jetbrains.annotations.NotNull;
 
-public record AsmVariable(int slot, @NotNull ClassDesc type) implements LocalVariable {
+public record AsmVariable(int slot, @NotNull ClassDesc type, boolean isThis) implements LocalVariable {
+  public AsmVariable {
+    assert !isThis || slot == 0;
+  }
+
   public @NotNull TypeKind kind() {
     return TypeKind.fromDescriptor(type.descriptorString());
   }
 
   @Override public @NotNull AsmExpr ref() {
     return AsmExpr.withType(type, builder -> builder.writer().loadInstruction(kind(), slot));
+  }
+
+  public @NotNull String name() {
+    return isThis ? "this" : "var" + slot;
   }
 }

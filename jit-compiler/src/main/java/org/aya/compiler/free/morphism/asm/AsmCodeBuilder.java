@@ -15,7 +15,6 @@ import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.compiler.free.morphism.free.VariablePool;
 import org.aya.util.error.Panic;
 import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
@@ -30,12 +29,25 @@ import org.jetbrains.annotations.Nullable;
 public record AsmCodeBuilder(
   @NotNull CodeBuilder writer,
   @NotNull AsmClassBuilder parent,
-  @NotNull VariablePool pool,
+  @NotNull AsmVariablePool pool,
   @Nullable Label breaking,
   boolean hasThis
-) implements FreeCodeBuilder {
-  public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_Boolean, builder -> builder.writer.iconst_1());
-  public static final @NotNull AsmExpr nein = AsmExpr.withType(ConstantDescs.CD_Boolean, builder -> builder.writer.iconst_0());
+) implements FreeCodeBuilder, AutoCloseable {
+  public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_1());
+  public static final @NotNull AsmExpr nein = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_0());
+
+  public AsmCodeBuilder(
+    @NotNull CodeBuilder writer,
+    @NotNull AsmClassBuilder parent,
+    @NotNull ImmutableSeq<ClassDesc> parameterTypes,
+    boolean hasThis
+  ) {
+    this(writer, parent,
+      AsmVariablePool.from(parent.owner(), parameterTypes),
+      null,
+      hasThis
+    );
+  }
 
   public @NotNull AsmVariable assertVar(@NotNull LocalVariable var) { return (AsmVariable) var; }
   public @NotNull AsmExpr assertExpr(@NotNull FreeJavaExpr expr) { return (AsmExpr) expr; }
@@ -45,8 +57,16 @@ public record AsmCodeBuilder(
   }
 
   public void loadExpr(@NotNull FreeJavaExpr expr) { assertExpr(expr).accept(this); }
+
+  @Override
+  public void close() {
+    pool.submit(this);
+  }
+
   public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
-    block.accept(new AsmCodeBuilder(innerWriter, parent, pool.copy(), breaking, hasThis));
+    try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, hasThis)) {
+      block.accept(innerBuilder);
+    }
   }
 
   public void subscoped(@NotNull CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
@@ -54,8 +74,9 @@ public record AsmCodeBuilder(
   }
 
   public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, block); }
+
   @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
-    var variable = new AsmVariable(pool.acquire(), type);
+    var variable = pool.acquire(type);
     if (initializer != null) updateVar(variable, initializer);
     return variable;
   }

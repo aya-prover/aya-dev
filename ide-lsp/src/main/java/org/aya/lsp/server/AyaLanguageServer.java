@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -100,12 +100,26 @@ public class AyaLanguageServer implements LanguageServer {
     return SeqView.narrow(mockLibraries(path).view());
   }
 
+  private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@NotNull Path path) {
+    var file = path.toFile();
+    Path ayaJson = null;
+
+    if (file.isDirectory()) {
+      if (Files.exists(path.resolve(Constants.AYA_JSON))) ayaJson = path;
+    } else if (file.exists() && file.getName().equals(Constants.AYA_JSON)) {
+      ayaJson = path.getParent();
+    }
+
+    if (ayaJson == null) return null;
+    return importAyaLibrary(ayaJson);
+  }
+
+  /// @param path a path to the directory that contains "aya.json"
   /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
-  private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@Nullable Path path) {
-    if (path == null) return null;
+  private @Nullable SeqView<LibraryOwner> importAyaLibrary(@NotNull Path path) {
     var ayaJson = path.resolve(Constants.AYA_JSON);
-    if (!Files.exists(ayaJson)) return tryAyaLibrary(path.getParent());
+    if (!Files.exists(ayaJson)) return null;
     try {
       var config = LibraryConfigData.fromLibraryRoot(path);
       var owner = DiskLibraryOwner.from(config);
