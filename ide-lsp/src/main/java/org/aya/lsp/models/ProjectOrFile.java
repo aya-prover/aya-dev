@@ -19,7 +19,8 @@ public sealed interface ProjectOrFile {
     } else {
       var fileName = path.getFileName().toString();
       if (fileName.equals(Constants.AYA_JSON)) {
-        return new Project(path.getParent());     // never null, a file must belongs to some directory
+        return new Project(path.getParent());
+        // ^ never null, a file must belong to some directory
       } else if (fileName.endsWith(Constants.AYA_POSTFIX) || fileName.endsWith(Constants.AYA_LITERATE_POSTFIX)) {
         return new File(path);
       }
@@ -30,11 +31,9 @@ public sealed interface ProjectOrFile {
 
   @NotNull Path path();
 
-  record Project(@NotNull Path path) implements ProjectOrFile {
-    public @NotNull Path ayaJsonPath() {
-      return path.resolve(Constants.AYA_JSON);
-    }
+  record Project(@Override @NotNull Path path) implements ProjectOrFile {
+    public @NotNull Path ayaJsonPath() { return path.resolve(Constants.AYA_JSON); }
   }
 
-  record File(@NotNull Path path) implements ProjectOrFile { }
+  record File(@Override @NotNull Path path) implements ProjectOrFile { }
 }

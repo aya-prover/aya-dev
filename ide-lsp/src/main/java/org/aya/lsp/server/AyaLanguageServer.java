@@ -2,6 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.gson.Gson;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -44,18 +54,6 @@ import org.aya.util.reporter.BufferReporter;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
@@ -116,9 +114,8 @@ public class AyaLanguageServer implements LanguageServer {
       libraries.append(owner);
       return SeqView.of(owner);
     } catch (IOException e) {
-      var s = new StringWriter();
-      e.printStackTrace(new PrintWriter(s));
-      Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+      Log.e("Cannot load library. Stack trace:");
+      Log.stackTrace(e);
     } catch (LibraryConfigData.BadConfig bad) {
       client.showMessage(new ShowMessageParams(MessageType.Error, "Cannot load malformed library: " + bad.getMessage()));
     }
@@ -243,9 +240,8 @@ public class AyaLanguageServer implements LanguageServer {
     try {
       LibraryCompiler.newCompiler(primFactory, reporter, FLAGS, advisor, owner).start();
     } catch (IOException e) {
-      var s = new StringWriter();
-      e.printStackTrace(new PrintWriter(s));
-      Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
+      Log.e("IOException occurred when running the compiler. Stack trace:");
+      Log.stackTrace(e);
     }
     publishProblems(reporter, options);
     return SemanticHighlight.invoke(owner);

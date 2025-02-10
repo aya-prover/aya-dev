@@ -118,12 +118,7 @@ public final class LibraryConfigData {
   }
 
   public static class BadConfig extends RuntimeException {
-    public BadConfig(@NotNull String message) {
-      super(message);
-    }
-
-    public BadConfig(@NotNull String message, @NotNull Throwable cause) {
-      super(message, cause);
-    }
+    public BadConfig(@NotNull String message) { super(message); }
+    public BadConfig(@NotNull String message, @NotNull Throwable cause) { super(message, cause); }
   }
 }
