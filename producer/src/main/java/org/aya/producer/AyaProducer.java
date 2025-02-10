@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import static org.aya.parser.AyaPsiElementTypes.*;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -994,8 +993,7 @@ public record AyaProducer(
   }
 
   public static @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node, @NotNull SourceFile file) {
-    @NotNull TextRange range = node.range();
-    return SourcePos.of(range, file, isTerminalNode(node));
+    return SourcePos.of(node.range(), file, isTerminalNode(node));
   }
 
   public static boolean isTerminalNode(@NotNull GenericNode<?> node) {

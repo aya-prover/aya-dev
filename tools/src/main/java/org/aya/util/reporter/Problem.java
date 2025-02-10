@@ -37,19 +37,10 @@ public interface Problem {
   @NotNull SourcePos sourcePos();
   @NotNull Doc describe(@NotNull PrettierOptions options);
   @NotNull Severity level();
-  default @NotNull Stage stage() {
-    return Stage.OTHER;
-  }
-  default @NotNull Doc hint(@NotNull PrettierOptions options) {
-    return Doc.empty();
-  }
-  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
-    return SeqView.empty();
-  }
-
-  default boolean isError() {
-    return level() == Severity.ERROR || level() == Severity.GOAL;
-  }
+  default @NotNull Stage stage() { return Stage.OTHER; }
+  default @NotNull Doc hint(@NotNull PrettierOptions options) { return Doc.empty(); }
+  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) { return SeqView.empty(); }
+  default boolean isError() { return level() == Severity.ERROR || level() == Severity.GOAL; }
 
   default @NotNull PrettyError toPrettyError(
     @NotNull PrettierOptions options,
