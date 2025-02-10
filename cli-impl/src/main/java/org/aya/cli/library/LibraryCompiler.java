@@ -26,7 +26,7 @@ import org.aya.syntax.AyaFiles;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
-import org.aya.util.StringUtil;
+import org.aya.util.TimeUtil;
 import org.aya.util.error.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
@@ -140,7 +140,7 @@ public class LibraryCompiler {
         known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
       known.appendAll(dedup);
     });
-    reporter.reportNest("Done in " + StringUtil.timeToString(
+    reporter.reportNest("Done in " + TimeUtil.millisToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return depGraph;
   }
@@ -176,7 +176,7 @@ public class LibraryCompiler {
     var datetimeFMValue = cmdPretty.datetimeFrontMatterValue();
     if (datetimeFMKey == null) datetimeFMKey = litConfig.datetimeFrontMatterKey();
     if (datetimeFMValue != null) datetimeFMKey = "date";
-    datetimeFMValue = StringUtil.timeInGitFormat();
+    datetimeFMValue = TimeUtil.gitFormat();
     var frontMatter = new LiterateData.InjectedFrontMatter(datetimeFMKey, datetimeFMValue);
     // always use the backend options from the command line, like output format, server-side rendering, etc.
     var outputTarget = cmdPretty.prettyFormat().target;
@@ -236,7 +236,7 @@ public class LibraryCompiler {
     }
 
     var make = make(modified);
-    reporter.reportNest("Library loaded in " + StringUtil.timeToString(
+    reporter.reportNest("Library loaded in " + TimeUtil.millisToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     pretty(modified);
     return make;
@@ -385,7 +385,7 @@ public class LibraryCompiler {
         throw new Panic("Unable to load module: " + moduleName);
       var time = System.currentTimeMillis() - startTime;
       // Print those who have taken too long
-      if (time > 1500) reporter.reportNest("Done in " + StringUtil.timeToString(
+      if (time > 1500) reporter.reportNest("Done in " + TimeUtil.millisToString(
         time), LibraryOwner.DEFAULT_INDENT + 2);
     }
   }

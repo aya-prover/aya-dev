@@ -6,6 +6,7 @@ module aya.util.more {
   requires transitive kala.collection.primitive;
 
   exports org.aya.util.binop;
+  exports org.aya.util.extra;
   exports org.aya.util.terck;
   exports org.aya.util.tyck.pat;
 }

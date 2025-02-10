@@ -20,7 +20,7 @@ import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.FileUtil;
-import org.aya.util.StringUtil;
+import org.aya.util.TimeUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourceFileLocator;
 import org.aya.util.prettier.PrettierOptions;
@@ -66,7 +66,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
     var renderOptions = flags.renderOptions();
     if (currentStage == CliEnums.PrettyStage.literate) {
       var value = flags.datetimeFrontMatterValue();
-      if (value == null) value = StringUtil.timeInGitFormat();
+      if (value == null) value = TimeUtil.gitFormat();
       var frontMatter = new LiterateData.InjectedFrontMatter(flags.datetimeFrontMatterKey(), value);
       var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(),
         frontMatter, flags.prettierOptions());
