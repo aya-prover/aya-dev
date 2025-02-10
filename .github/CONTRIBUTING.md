@@ -29,7 +29,7 @@ These are currently not accepted:
 Your responsibility:
 
 - Unethical behaviors not adhering to [the Code of Conduct](CODE_OF_CONDUCT.md) is not allowed and will be taken proper action upon by maintainers.
-- Include tests for new features or bug fixes. See [Test.aya](/cli-impl/src/test/resources/success/src/Test.aya).
+- Include tests for new features or bug fixes. See [Test.aya](../cli-impl/src/test/resources/success/src/Test.aya).
 
 If you are interested in contributing more and becoming a member of the organization, please contact the maintainers.
 

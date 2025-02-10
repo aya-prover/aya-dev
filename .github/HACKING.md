@@ -10,6 +10,39 @@
 We use gradle to build the compiler. It comes with a wrapper script (`gradlew` or `gradlew.bat` in the root of the
 repository) which downloads appropriate version of gradle automatically if you have JDK installed.
 
+The rest of the guide is split into two main parts: working with the project, which is mainly about the software
+engineering aspects of the project, and understanding the code, which is about the design and implementation of the
+type checker.
+
+# Working with the project
+
+## Subprojects
+
+Aya is divided into several subprojects. Here are some notable ones:
+
+### Aya-specific subprojects
+
++ The syntax definitions live in `syntax`. This includes both the core and the concrete syntax.
++ The parser is separated into `parser` (the generated parsing code) and `producer`
+  (transformer from parse tree to concrete syntax tree).
++ The type checker and all of the related utilities live in `base`.
++ The JIT compiler and code generation utilities live in `jit-compiler`.
++ The generic pretty printing framework is in `pretty`. It is similar to the Haskell `Doc` framework.
++ The library system, literate mode, single-file type checker, and basic REPL implementation are in `cli-impl`.
+
+### General, reusable utilities
+
++ The generalized termination checker and a bunch of other utilities (files, ordering, error report, source pos,
+  persistent union find, etc.) are in `tools`.
++ The generalized binary operator parser, generalized mutable graph, and some generic coverage checking tools, are
+  in `tools-kala` because they depend on a larger subset of the kala library.
++ The command and argument parsing framework is in `tools-repl`.
+  It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
++ The literate-markdown related infrastructure is in `tools-md`.
+  It offers [JetBrains/markdown] extensions for literate mode of any language with a highlighter.
+
+[JetBrains/markdown]: https://github.com/JetBrains/markdown
+
 ## Common Gradle Tasks
 
 All gradle tasks are case-insensitive.
@@ -40,10 +73,91 @@ You may also need the following plugins:
 + [Kotlin](https://plugins.jetbrains.com/plugin/6954) for editing the build scripts
 + [IntelliJ Aya](https://github.com/aya-prover/intellij-aya) (unpublished yet) for editing Aya code
 + A special plugin to disable some incorrect error report of JPMS in IntelliJ IDEA, which we would not like to
-  publish, [Download link](https://github.com/user-attachments/files/18740788/fuck.idea.jpms-SNAPSHOT.jar.zip),
-  make sure you rename the file to remove the `.zip` postfix so it becomes a jar.
+  publish. [Download link](https://github.com/user-attachments/files/18740788/fuck.idea.jpms-SNAPSHOT.jar.zip).
+  Make sure you rename the file to remove the `.zip` postfix so it becomes a jar
 
-## More information
+## Authoring and running tests
+
+We prefer using integration tests, which is very convenient -- all fixtures can use the stdlib,
+and we don't have to reload the stdlib for each fixture.
+Most of the cases are in [Test.aya](../cli-impl/src/test/resources/success/src/Test.aya),
+some are scattered around in the same directory.
+
+The runner for integration test is [LibraryTest](../cli-impl/src/test/java/org/aya/test/LibraryTest.java).
+There's a `main` function, with a few more test cases you can run with either gradle or intellij.
+
+The golden test fixtures for error reporting can be found in the
+[negative](../cli-impl/src/test/java/org/aya/test/fixtures) directory,
+and the runner is [TestRunner](../cli-impl/src/test/java/org/aya/test/TestRunner.java).
+
+# Understanding the code
+
+To understand the Aya source code, it is very important to conceptually comprehend the type theoretic techniques
+used in the language. This section explains these concepts.
+
+This section assumes basic familiarity with type checkers for dependent type theory,
+such as the notion of a core language, syntax with bindings, de Bruijn indices, telescopes, etc.,
+and the need of a "partial evaluator" for normalizing terms.
+
+## Pre-elaboration passes
+
+After parsing using the Grammar-Kit parser,
+the [AyaProducer](../producer/src/main/java/org/aya/producer/AyaProducer.java) translates the parse tree into the
+surface syntax tree. Then we will run [StmtResolver](../base/src/main/java/org/aya/resolve/visitor/StmtResolver.java)
+on the top-level statements, to get the variable references resolved using the library system.
+
+Then, based on the resolved references, we desugar the code using [Desalt](../base/src/main/java/org/aya/resolve/salt/Desalt.java),
+whose main job is to turn `BinOpSeq` -- a sequence of binary operator items -- into the appropriate tree structure.
+
+Then we turn the definitions into a graph of dependencies based on the "referencing" relation,
+and infer the type checking order based on it. We type check each strongly connected component (SCC) in topological order.
+In case an SCC fails, we will try to type check the other SCCs that don't depend on it.
+
+## Binding and substitution
+
+Aya uses both locally nameless and HOAS (higher-order abstract syntax) for binding and substitution.
+The generic interface for "substitutable stuff" is [Closure](../syntax/src/main/java/org/aya/syntax/core/Closure.java).
+During type checking, Aya produces locally nameless terms, and they will be _compiled_ down to HOAS after elaboration.
+
+The interface for core language is [Term](../syntax/src/main/java/org/aya/syntax/core/term/Term.java), which has
+sufficiently readable markdown-based javadoc. One may navigate through the code by clicking the links using an IDE.
+
+For a more detailed explanation, see the [related blog post](https://www.aya-prover.org/blog/jit-compile).
+
+## Identity and quotients
+
+Aya integrates XTT, a set-level cubical type theory, for a well-behaved identity type
+(the cubical path type), together with the cubical syntax for higher-inductive types.
+
+The set-level truncation turns the higher-inductive types into quotients.
+
+## Pattern matching
+
+Aya has pattern matching in its kernel for reduction of overlapping and order-independent patterns,
+even though the first-match functions do not need the clauses.
+This might be further improved in the future.
+
+The patterns will be _compiled_ to a state machine for pattern matching during the HOAS code generation,
+so we no longer need to traverse the patterns when unfolding functions.
+
+Inspired from Agda, Aya does not unfold a function to its clauses when the function call is stuck.
+This differs from Coq/Lean, where pattern matching is more "first-class", so stuck pattern matchings can be
+accidentally pretty printed, which can make error messages much harder to understand.
+
+## Termination checking
+
+Aya implemented a termination checker using call matrices with predicative assumption, very similar to Agda.
+This makes it very difficult to support an impredicative universe, see [Agda #3883](https://github.com/agda/agda/issues/3883).
+
+## Generalization
+
+The implementation is going to be fixed soon, I promise
+
+## Definitional proof irrelevance
+
+This is too hard. We haven't done anything about it yet. Tried a few times, never got satisfactory results.
+
+# More information
 
 There is the [note](../note) directory, which contains some development notes about naming conventions,
 specification of certain subroutines, literature review of certain features of existing proof assistants,
