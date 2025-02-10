@@ -89,21 +89,5 @@ implementation group: 'org.aya-prover', name: '[project name]', version: '[lates
 
 + `[project name]` specifies the subproject of Aya you want to use,
   and the options are `pretty`, `base`, `cli-impl`, `parser`, etc.
-  + The syntax definitions live in `syntax`.
-  + The parser lives in `parser` (the generated parsing code) and `producer`
-    (transformer from parse tree to concrete syntax tree).
-  + The type checker lives in `base`.
-  + The JIT compiler lives in `jit-compiler`.
-  + The generalized pretty printing framework is in `pretty`.
-  + The library system, literate mode, single-file type checker, and basic REPL are in `cli-impl`.
-  + The generalized tree builder, generalized termination checker,
-    and a bunch of other utilities (files, etc.) are in `tools`.
-  + The generalized binary operator parser, generalized mutable graph are
-    in `tools-kala` because they depend on a larger subset of the kala library.
-  + The command and argument parsing framework is in `tools-repl`.
-    It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
-  + The literate-markdown related infrastructure is in `tools-md`.
-    It offers [JetBrains/markdown] extensions for literate mode of any language with a highlighter.
+  + For the list of the subprojects, see [HACKING.md](HACKING.md).
 + `[latest version]` is what you see on this badge ![maven].
-
-[JetBrains/markdown]: https://github.com/JetBrains/markdown

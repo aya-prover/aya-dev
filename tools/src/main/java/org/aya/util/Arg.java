@@ -12,27 +12,10 @@ import java.util.function.UnaryOperator;
  *            In Aya, it is either core term, core pattern, concrete term, or concrete pattern.
  */
 public record Arg<T>(@Override @NotNull T term, @Override boolean explicit) implements BinOpElem<T> {
-  public static <T> @NotNull Arg<T> ofExplicitly(@NotNull T term) {
-    return new Arg<>(term, true);
-  }
-
-  public static <T> @NotNull Arg<T> ofImplicitly(@NotNull T term) {
-    return new Arg<>(term, false);
-  }
-
-  public @NotNull Arg<T> implicitify() {
-    return new Arg<>(term, false);
-  }
-
-  public <R> @NotNull Arg<R> map(@NotNull Function<T, R> mapper) {
-    return new Arg<>(mapper.apply(term), explicit);
-  }
-
-  public @NotNull Arg<T> update(@NotNull T term) {
-    return term == term() ? this : new Arg<>(term, explicit);
-  }
-
-  public @NotNull Arg<T> descent(@NotNull UnaryOperator<@NotNull T> f) {
-    return update(f.apply(term));
-  }
+  public static <T> @NotNull Arg<T> ofExplicitly(@NotNull T term) { return new Arg<>(term, true); }
+  public static <T> @NotNull Arg<T> ofImplicitly(@NotNull T term) { return new Arg<>(term, false); }
+  public @NotNull Arg<T> implicitify() { return new Arg<>(term, false); }
+  public <R> @NotNull Arg<R> map(@NotNull Function<T, R> mapper) { return new Arg<>(mapper.apply(term), explicit); }
+  public @NotNull Arg<T> update(@NotNull T term) { return term == term() ? this : new Arg<>(term, explicit); }
+  public @NotNull Arg<T> descent(@NotNull UnaryOperator<@NotNull T> f) { return update(f.apply(term)); }
 }

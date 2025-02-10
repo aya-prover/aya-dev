@@ -5,7 +5,7 @@ package org.aya.compiler.free;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;

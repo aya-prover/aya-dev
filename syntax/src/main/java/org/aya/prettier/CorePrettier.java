@@ -2,13 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
-import java.util.EnumSet;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
-import static org.aya.prettier.Tokens.*;
-
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqView;
@@ -42,10 +35,17 @@ import org.aya.syntax.ref.GenerateKind.Basic;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.Arg;
-import org.aya.util.error.SourcePos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.EnumSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+import static org.aya.prettier.Tokens.*;
 
 /**
  * It's the pretty printer.

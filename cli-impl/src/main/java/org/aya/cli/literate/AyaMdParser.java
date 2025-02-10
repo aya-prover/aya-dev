@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.literate;
 
@@ -10,7 +10,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.literate.AyaBacktickParser;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.syntax.literate.CodeOptions;
-import org.aya.util.error.SourceFile;
+import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.Reporter;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.parser.MarkerProcessor;

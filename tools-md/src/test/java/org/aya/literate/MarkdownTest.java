@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.literate.parser.BaseMdParser;
 import org.aya.literate.parser.InterestingLanguage;
-import org.aya.util.error.SourceFile;
+import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.IgnoringReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;

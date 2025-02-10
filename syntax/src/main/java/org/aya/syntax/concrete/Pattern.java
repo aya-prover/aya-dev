@@ -17,8 +17,8 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.ForLSP;
-import org.aya.util.error.*;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

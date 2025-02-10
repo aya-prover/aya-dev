@@ -19,9 +19,9 @@ import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.test.TestRunner;
 import org.aya.util.FileUtil;
-import org.aya.util.StringUtil;
-import org.aya.util.error.Global;
-import org.aya.util.error.SourceFile;
+import org.aya.util.Global;
+import org.aya.util.TimeUtil;
+import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.BufferReporter;
 import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.ThrowingReporter;
@@ -112,7 +112,7 @@ public class AyaMdParserTest {
     var oneCase = new Case(caseName);
     var data = initLiterateTestCase(oneCase);
 
-    var defaultFM = new LiterateData.InjectedFrontMatter(null, StringUtil.timeInGitFormat());
+    var defaultFM = new LiterateData.InjectedFrontMatter(null, TimeUtil.gitFormat());
     var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
     data.reporter().problems().clear();
@@ -154,7 +154,7 @@ public class AyaMdParserTest {
   private static @NotNull Doc lastUpdatedTest(String caseName) throws IOException {
     var oneCase = new Case(caseName);
     var data = initLiterateTestCase(oneCase);
-    var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", StringUtil.timeInGitFormat());
+    var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", TimeUtil.gitFormat());
     return data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
   }

@@ -3,9 +3,9 @@
 package org.aya.syntax.ref;
 
 import org.aya.generic.Constants;
-import org.aya.util.error.SourceNode;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

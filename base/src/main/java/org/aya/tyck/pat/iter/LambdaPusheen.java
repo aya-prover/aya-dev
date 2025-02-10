@@ -5,7 +5,7 @@ package org.aya.tyck.pat.iter;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.util.Arg;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

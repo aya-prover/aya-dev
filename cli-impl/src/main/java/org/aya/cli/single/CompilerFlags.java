@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
@@ -7,7 +7,7 @@ import org.aya.cli.render.RenderOptions;
 import org.aya.cli.utils.CliEnums;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.backend.string.StringPrinterConfig;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -2,11 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.cli;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.interactive.ReplCompiler;
 import org.aya.generic.Constants;
@@ -21,13 +16,18 @@ import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.CompiledVar;
 import org.aya.syntax.ref.DefVar;
-import org.aya.util.error.Global;
-import org.aya.util.error.SourcePos;
+import org.aya.util.Global;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ReplCompilerTest {
   public final @NotNull ReplCompiler compiler = new ReplCompiler(ImmutableSeq.empty(), new ThrowingReporter(AyaPrettierOptions.debug()), null);

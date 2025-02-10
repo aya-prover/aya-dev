@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.lang.constant.ConstantDescs;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
@@ -21,9 +17,13 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
+
+import java.lang.constant.ConstantDescs;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * We do not serialize meta solve, it is annoying

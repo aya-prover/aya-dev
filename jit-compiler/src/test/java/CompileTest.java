@@ -1,15 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
-import java.io.IOException;
-import java.lang.constant.ConstantDescs;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import static org.aya.compiler.serializers.NameSerializer.getClassName;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.morphism.source.SourceClassBuilder;
 import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
@@ -32,11 +23,20 @@ import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.util.FileUtil;
-import org.aya.util.error.SourceFile;
+import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.lang.constant.ConstantDescs;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
 public class CompileTest {
   public static final @NotNull @Language("Aya") String SAMPLE_CODE = """

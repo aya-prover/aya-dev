@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.error;
 
@@ -14,8 +14,8 @@ import org.aya.resolve.context.ReporterContext;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.error.SourcePos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 

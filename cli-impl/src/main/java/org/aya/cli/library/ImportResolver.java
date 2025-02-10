@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -7,7 +7,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

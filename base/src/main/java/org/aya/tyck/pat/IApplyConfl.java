@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.function.UnaryOperator;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Modifier;
 import org.aya.syntax.core.def.FnDef;
@@ -15,10 +13,12 @@ import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.UnaryOperator;
 
 /// This is XTT-specific confluence check, very simple: we check for all combinations.
 /// So, if we do

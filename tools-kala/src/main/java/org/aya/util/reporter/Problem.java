@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
@@ -9,10 +9,10 @@ import org.aya.pretty.backend.terminal.UnixTermStyle;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Style;
 import org.aya.pretty.doc.Styles;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
-import org.aya.util.error.pretty.PrettyError;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.error.PrettyError;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -37,19 +37,10 @@ public interface Problem {
   @NotNull SourcePos sourcePos();
   @NotNull Doc describe(@NotNull PrettierOptions options);
   @NotNull Severity level();
-  default @NotNull Stage stage() {
-    return Stage.OTHER;
-  }
-  default @NotNull Doc hint(@NotNull PrettierOptions options) {
-    return Doc.empty();
-  }
-  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) {
-    return SeqView.empty();
-  }
-
-  default boolean isError() {
-    return level() == Severity.ERROR || level() == Severity.GOAL;
-  }
+  default @NotNull Stage stage() { return Stage.OTHER; }
+  default @NotNull Doc hint(@NotNull PrettierOptions options) { return Doc.empty(); }
+  default @NotNull SeqView<WithPos<Doc>> inlineHints(@NotNull PrettierOptions options) { return SeqView.empty(); }
+  default boolean isError() { return level() == Severity.ERROR || level() == Severity.GOAL; }
 
   default @NotNull PrettyError toPrettyError(
     @NotNull PrettierOptions options,

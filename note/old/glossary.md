@@ -32,10 +32,11 @@
   + Arend 里面叫 `Universe`
   + Agda 里面叫 `Sort`
 + `Sort` -- `Univ` 的属性，包括 universe level 和 homotopy truncation level
-  + 命名来自 Arend
+  + 命名来自 Arend，和 logical framework 中的同名概念意思实际上不一样
   + Agda 里面就叫 `Level` 但是他们没有 homotopy truncation level
-+ `Distill` -- pretty print 或格式化代码（format/reformat code）（参见：https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml ）
-+ `Stmt` -- 语句（statement），文件由一组 `Stmt` 组成
++ `Distill` -- pretty print 或格式化代码（format/reformat code）（参见：https://github.com/jonsterling/dreamtt/blob/main/frontend/Distiller.ml ），
+  原意是将 core 转化为 concrete，所以这个词其实是误用。目前已经重命名为 `Prettier`
++ `Stmt` -- 语句（statement），每个 Aya 文件由一组 `Stmt` 组成
 
 ### 各种 Visitor
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.cli;
 
@@ -12,7 +12,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.utils.LiteratePrettierOptions;
 import org.aya.util.Version;
-import org.aya.util.error.SourceFileLocator;
+import org.aya.util.position.SourceFileLocator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

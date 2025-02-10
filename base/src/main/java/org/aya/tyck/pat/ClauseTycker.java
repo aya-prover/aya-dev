@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -35,15 +31,19 @@ import org.aya.tyck.pat.iter.PatternIterator;
 import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourceNode;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
@@ -6,9 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.decl.Decl;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourcePos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.Panic;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;

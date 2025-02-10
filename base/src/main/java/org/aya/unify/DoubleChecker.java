@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
@@ -8,7 +8,6 @@ import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.BadExprError;
@@ -16,12 +15,10 @@ import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Contextful;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Function;
 
 /**
  * @apiNote {@link Unifier#localCtx()} should be the same object as {@link Synthesizer#localCtx()}

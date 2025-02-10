@@ -6,7 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.WithPos;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 

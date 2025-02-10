@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import static org.aya.tyck.tycker.TeleTycker.loadTele;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.control.Option;
@@ -39,12 +37,14 @@ import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.TeleTycker;
 import org.aya.unify.Synthesizer;
-import org.aya.util.error.Panic;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.aya.tyck.tycker.TeleTycker.loadTele;
 
 /// Checks definitions. All the dirty telescope manipulation are here.
 /// This class glues the type checking of exprs and patterns together.

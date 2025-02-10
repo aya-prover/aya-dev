@@ -5,9 +5,8 @@ package org.aya.syntax.compile;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.ClassDefLike;
-import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.telescope.JitTele;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

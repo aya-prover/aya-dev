@@ -7,8 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
-import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.free.data.FieldRef;
+import org.aya.compiler.free.data.MethodRef;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -22,7 +22,7 @@ import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.RuleReducer;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -31,7 +31,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import static java.lang.constant.ConstantDescs.*;
+import static java.lang.constant.ConstantDescs.CD_void;
+import static java.lang.constant.ConstantDescs.INIT_NAME;
 
 public final class Constants {
   private Constants() { }

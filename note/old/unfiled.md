@@ -2,7 +2,7 @@
 
 There are two global states:
 
-+ `org.aya.util.error.Global`, controlling whether to equalize all
++ `org.aya.util.position.Global`, controlling whether to equalize all
   `SourcePos` and whether to avoid generating random names.
 
 ### `StmtTycker`

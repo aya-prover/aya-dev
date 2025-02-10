@@ -4,8 +4,8 @@ package org.aya.syntax.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Suppress;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

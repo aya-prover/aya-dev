@@ -2,16 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.google.gson.Gson;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -49,11 +39,21 @@ import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.syntax.AyaFiles;
 import org.aya.util.FileUtil;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
 import org.aya.util.reporter.BufferReporter;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);

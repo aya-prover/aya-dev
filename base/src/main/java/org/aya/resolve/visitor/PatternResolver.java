@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.visitor;
 
@@ -12,9 +12,9 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.ref.*;
-import org.aya.util.error.Panic;
-import org.aya.util.error.PosedUnaryOperator;
-import org.aya.util.error.SourcePos;
+import org.aya.util.Panic;
+import org.aya.util.position.PosedUnaryOperator;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

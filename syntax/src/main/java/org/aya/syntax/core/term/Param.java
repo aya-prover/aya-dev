@@ -9,8 +9,8 @@ import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.SourcePos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

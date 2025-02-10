@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -10,7 +10,7 @@ import org.aya.ide.syntax.SyntaxDeclAction;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 public record Folding(@NotNull MutableList<FoldingArea> foldingRanges) implements SyntaxDeclAction {

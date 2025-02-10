@@ -8,8 +8,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.telescope.JitTele;
+import org.aya.util.PrettierOptions;
 import org.aya.util.binop.Assoc;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

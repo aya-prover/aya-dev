@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic.stmt;
 
@@ -8,7 +8,7 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.error.SourceNode;
+import org.aya.util.position.SourceNode;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface TyckUnit extends SourceNode permits Stmt, Decl {
