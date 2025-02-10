@@ -6,7 +6,7 @@ import java.nio.file.Files;
 
 import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
 import org.aya.compiler.free.morphism.free.FreeRunner;
-import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
+import source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
