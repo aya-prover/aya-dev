@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.function.UnaryOperator;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.normalize.LetReplacer;
 import org.aya.syntax.core.Jdg;
@@ -13,8 +11,10 @@ import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.tyck.ctx.LocalLet;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.UnaryOperator;
 
 public final class PatBinder extends MatcherBase {
   private final LetReplacer let = new LetReplacer(new LocalLet());

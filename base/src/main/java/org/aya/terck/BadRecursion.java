@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
@@ -8,8 +8,8 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
-import org.aya.util.error.SourcePos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.terck.Diagonal;
 import org.jetbrains.annotations.NotNull;

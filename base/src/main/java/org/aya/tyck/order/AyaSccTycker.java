@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.order;
 
@@ -23,7 +23,7 @@ import org.aya.terck.CallResolver;
 import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.tycker.Problematic;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.CallGraph;

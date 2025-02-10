@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.models;
 
 import org.aya.lsp.utils.LspRange;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.core.term.Term;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.WithPos;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.Range;
 import org.jetbrains.annotations.NotNull;

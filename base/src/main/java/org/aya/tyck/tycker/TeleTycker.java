@@ -20,8 +20,8 @@ import org.aya.syntax.telescope.Signature;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.UnifyError;
 import org.aya.unify.Synthesizer;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

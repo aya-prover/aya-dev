@@ -10,7 +10,7 @@ import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {

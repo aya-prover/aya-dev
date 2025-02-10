@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
-import java.util.function.UnaryOperator;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.State;
 import org.aya.syntax.core.term.MetaPatTerm;
@@ -12,8 +10,10 @@ import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.UnaryOperator;
 
 public abstract class MatcherBase {
   private final @NotNull UnaryOperator<Term> pre;

@@ -24,10 +24,10 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
-import org.aya.util.error.Panic;
-import org.aya.util.error.PosedUnaryOperator;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.PosedUnaryOperator;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

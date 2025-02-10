@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.interactive;
 
@@ -43,9 +43,9 @@ import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.TeleTycker;
-import org.aya.util.error.SourceFileLocator;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourceFileLocator;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.DelayedReporter;
 import org.aya.util.reporter.Problem;

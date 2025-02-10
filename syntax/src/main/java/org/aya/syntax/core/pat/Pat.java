@@ -2,11 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.IntUnaryOperator;
-import java.util.function.UnaryOperator;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -25,12 +20,17 @@ import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Pair;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.IntUnaryOperator;
+import java.util.function.UnaryOperator;
 
 /**
  * Patterns in the core syntax.

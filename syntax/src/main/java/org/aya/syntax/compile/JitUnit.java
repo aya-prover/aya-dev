@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableArray;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
 import org.aya.syntax.ref.QPath;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JitUnit {

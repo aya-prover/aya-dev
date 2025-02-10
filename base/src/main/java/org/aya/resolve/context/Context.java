@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
-import java.nio.file.Path;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 import kala.collection.SeqLike;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -18,13 +14,17 @@ import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.tycker.Problematic;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author re-xyr

@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
 import org.aya.lsp.server.AyaLanguageClient;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.intellij.lang.annotations.PrintFormat;
 import org.javacs.lsp.ShowMessageParams;
 import org.javacs.lsp.ShowMessageType;

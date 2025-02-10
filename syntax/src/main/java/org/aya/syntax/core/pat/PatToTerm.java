@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
-import java.util.function.Function;
-
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -11,8 +9,10 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 public interface PatToTerm {
   static @NotNull Term visit(@NotNull Pat pat) {

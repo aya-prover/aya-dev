@@ -2,12 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
-import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Function;
-
-import static org.aya.prettier.Tokens.*;
-
 import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -30,11 +24,17 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.PrettierOptions;
 import org.aya.util.binop.Assoc;
-import org.aya.util.error.WithPos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static org.aya.prettier.Tokens.*;
 
 /**
  * @author ice1000, kiva

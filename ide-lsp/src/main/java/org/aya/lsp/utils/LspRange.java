@@ -1,11 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.utils;
 
 import kala.control.Option;
 import org.aya.ide.util.XY;
 import org.aya.ide.util.XYXY;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourcePos;
 import org.javacs.lsp.Location;
 import org.javacs.lsp.LocationLink;
 import org.javacs.lsp.Position;

@@ -8,7 +8,7 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.ForLSP;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;

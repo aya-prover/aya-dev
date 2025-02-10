@@ -3,7 +3,7 @@
 package org.aya.syntax.core;
 
 import org.aya.tyck.TyckTest;
-import org.aya.util.error.Global;
+import org.aya.util.Global;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

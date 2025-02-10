@@ -25,9 +25,9 @@ import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.*;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourceFile;
-import org.aya.util.error.SourcePos;
+import org.aya.util.Panic;
+import org.aya.util.position.SourceFile;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

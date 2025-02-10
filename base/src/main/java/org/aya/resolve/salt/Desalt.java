@@ -8,10 +8,10 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.Panic;
-import org.aya.util.error.PosedUnaryOperator;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.PosedUnaryOperator;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

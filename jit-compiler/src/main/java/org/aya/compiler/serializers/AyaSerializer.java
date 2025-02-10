@@ -8,7 +8,7 @@ import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.syntax.core.term.Term;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;

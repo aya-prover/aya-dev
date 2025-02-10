@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -10,7 +10,7 @@ import org.aya.cli.literate.HighlightInfo;
 import org.aya.ide.action.ProjectSymbol;
 import org.aya.ide.action.ProjectSymbol.Symbol;
 import org.aya.lsp.utils.LspRange;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.DocumentSymbol;
 import org.javacs.lsp.SymbolKind;

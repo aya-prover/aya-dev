@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
@@ -9,7 +9,7 @@ import org.aya.compiler.CompiledModule;
 import org.aya.generic.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 

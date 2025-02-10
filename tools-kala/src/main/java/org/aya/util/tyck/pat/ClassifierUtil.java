@@ -2,18 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.tyck.pat;
 
-import java.util.function.Function;
-import java.util.function.ObjIntConsumer;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import org.aya.util.Pair;
-import org.aya.util.error.SourceNode;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 
 public interface ClassifierUtil<Subst, Term, Param, Pat> {
   Param subst(Subst subst, Param param);

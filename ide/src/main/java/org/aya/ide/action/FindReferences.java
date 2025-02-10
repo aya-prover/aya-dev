@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
@@ -10,8 +10,8 @@ import org.aya.ide.Resolver;
 import org.aya.ide.util.XY;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 public interface FindReferences {

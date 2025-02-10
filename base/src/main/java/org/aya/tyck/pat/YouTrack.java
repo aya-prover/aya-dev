@@ -15,8 +15,8 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /**

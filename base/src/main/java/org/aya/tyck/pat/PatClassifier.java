@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.stream.Collectors;
-
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -28,14 +26,16 @@ import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.Pair;
-import org.aya.util.error.SourceNode;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.pat.ClassifierUtil;
 import org.aya.util.tyck.pat.Indexed;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Collectors;
 
 /// Coverage checking & case tree generation. Part of the code is generalized and moved to [ClassifierUtil],
 /// which is reusable. The main subroutine of coverage checking is _splitting_, i.e. look at a list of clauses,

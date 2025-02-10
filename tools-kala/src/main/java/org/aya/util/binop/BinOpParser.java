@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.binop;
 
@@ -7,8 +7,8 @@ import kala.collection.SeqView;
 import kala.collection.Set;
 import kala.collection.mutable.*;
 import org.aya.util.BinOpElem;
-import org.aya.util.error.SourceNode;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -21,7 +21,7 @@ import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.core.term.repr.*;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;

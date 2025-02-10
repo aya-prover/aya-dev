@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic.term;
 
@@ -7,7 +7,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt.decl;
 
@@ -9,8 +9,8 @@ import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.Arg;
-import org.aya.util.error.PosedUnaryOperator;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.PosedUnaryOperator;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

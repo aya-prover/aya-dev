@@ -1,10 +1,11 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.util.error;
+package org.aya.util.position;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import kala.collection.SeqView;
+import org.aya.util.Global;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

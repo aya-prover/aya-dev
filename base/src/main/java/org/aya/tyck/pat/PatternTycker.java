@@ -2,9 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.Objects;
-import java.util.function.Predicate;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -40,14 +37,17 @@ import org.aya.tyck.pat.iter.SignatureIterator;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.Arg;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.Panic;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
+
+import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Tyck for {@link Pattern}'s, the left hand side of one clause.

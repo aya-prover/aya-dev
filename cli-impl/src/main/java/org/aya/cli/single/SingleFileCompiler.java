@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.single;
 
@@ -9,7 +9,7 @@ import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
-import org.aya.util.error.SourceFileLocator;
+import org.aya.util.position.SourceFileLocator;
 import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;

@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.util.error;
+package org.aya.util.position;
 
 import com.intellij.openapi.util.text.Strings;
 import kala.collection.immutable.primitive.ImmutableIntArray;
@@ -11,11 +11,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Unified source file representation for error reporting only.
- *
- * @param display Usually constructed with {@link SourceFileLocator#displayName(Path)}
- */
+/// Unified source file representation for error reporting only.
+///
+/// @param display Usually constructed with [#displayName(Path)]
 public record SourceFile(
   @NotNull String display,
   @NotNull Option<Path> underlying,
@@ -31,7 +29,7 @@ public record SourceFile(
   }
 
   public SourceFile(@NotNull String display, @NotNull Option<Path> underlying, @NotNull String sourceCode) {
-    this(display, underlying, Strings.convertLineSeparators(sourceCode), ParsingUtil.indexedLines(sourceCode));
+    this(display, underlying, Strings.convertLineSeparators(sourceCode), PositionUtil.indexedLines(sourceCode));
   }
 
   public SourceFile(@NotNull String display, @NotNull Path underlying, @NotNull String sourceCode) {

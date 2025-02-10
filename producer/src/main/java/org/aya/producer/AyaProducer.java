@@ -2,11 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.producer;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
-import static org.aya.parser.AyaPsiElementTypes.*;
-
 import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -41,15 +36,20 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.Arg;
 import org.aya.util.Pair;
+import org.aya.util.Panic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.error.Panic;
-import org.aya.util.error.SourceFile;
-import org.aya.util.error.SourcePos;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.SourceFile;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static org.aya.parser.AyaPsiElementTypes.*;
 
 /**
  * Working with GK parser:

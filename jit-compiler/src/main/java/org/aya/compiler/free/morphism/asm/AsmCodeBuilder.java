@@ -2,20 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.free.*;
+import org.aya.compiler.free.ArgumentProvider;
+import org.aya.compiler.free.FreeCodeBuilder;
+import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.free.FreeJavaResolver;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.util.error.Panic;
+import org.aya.util.Panic;
 import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
 import org.glavo.classfile.Opcode;
@@ -23,6 +19,13 @@ import org.glavo.classfile.TypeKind;
 import org.glavo.classfile.instruction.SwitchCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.MethodTypeDesc;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
 
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method

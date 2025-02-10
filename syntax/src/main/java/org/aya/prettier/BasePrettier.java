@@ -2,12 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
-import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.ToIntBiFunction;
-
-import static org.aya.prettier.Tokens.KW_PRIM;
-
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
@@ -30,11 +24,17 @@ import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Arg;
 import org.aya.util.BinOpElem;
+import org.aya.util.Panic;
+import org.aya.util.PrettierOptions;
 import org.aya.util.binop.Assoc;
-import org.aya.util.error.Panic;
-import org.aya.util.prettier.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.ToIntBiFunction;
+
+import static org.aya.prettier.Tokens.KW_PRIM;
 
 public abstract class BasePrettier<Term extends AyaDocile> {
   public static @NotNull Doc coreArgsDoc(@NotNull PrettierOptions options, @NotNull SeqView<? extends AyaDocile> self) {
