@@ -42,7 +42,6 @@
 See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
-[Java 22]: https://jdk.java.net/22
 [1lab]: https://1lab.dev
 
 ## Contributing to Aya

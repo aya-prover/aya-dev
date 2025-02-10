@@ -2,6 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.gson.Gson;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -31,10 +41,7 @@ import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
 import org.aya.lsp.library.WsLibrary;
-import org.aya.lsp.models.ComputeTypeResult;
-import org.aya.lsp.models.HighlightResult;
-import org.aya.lsp.models.ServerOptions;
-import org.aya.lsp.models.ServerRenderOptions;
+import org.aya.lsp.models.*;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
 import org.aya.prettier.AyaPrettierOptions;
@@ -47,18 +54,6 @@ import org.aya.util.reporter.BufferReporter;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
@@ -92,6 +87,7 @@ public class AyaLanguageServer implements LanguageServer {
     return libraries.view();
   }
 
+  /// TODO: handle duplicate registering
   /// @return the libraries that are actually loaded
   public SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
@@ -101,34 +97,25 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@NotNull Path path) {
-    var file = path.toFile();
-    Path ayaJson = null;
-
-    if (file.isDirectory()) {
-      if (Files.exists(path.resolve(Constants.AYA_JSON))) ayaJson = path;
-    } else if (file.exists() && file.getName().equals(Constants.AYA_JSON)) {
-      ayaJson = path.getParent();
-    }
-
-    if (ayaJson == null) return null;
-    return importAyaLibrary(ayaJson);
+    var projectOrFile = ProjectOrFile.resolve(path);
+    if (!(projectOrFile instanceof ProjectOrFile.Project project)) return null;
+    return importAyaLibrary(project);
   }
 
-  /// @param path a path to the directory that contains "aya.json"
+  /// @param project a path to the directory that contains "aya.json"
   /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
-  private @Nullable SeqView<LibraryOwner> importAyaLibrary(@NotNull Path path) {
-    var ayaJson = path.resolve(Constants.AYA_JSON);
+  private @Nullable SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectOrFile.Project project) {
+    var ayaJson = project.ayaJsonPath();
     if (!Files.exists(ayaJson)) return null;
     try {
-      var config = LibraryConfigData.fromLibraryRoot(path);
+      var config = LibraryConfigData.fromLibraryRoot(project.path());
       var owner = DiskLibraryOwner.from(config);
       libraries.append(owner);
       return SeqView.of(owner);
     } catch (IOException e) {
-      var s = new StringWriter();
-      e.printStackTrace(new PrintWriter(s));
-      Log.e("Cannot load library. Stack trace:\n%s", s.toString());
+      Log.e("Cannot load library. Stack trace:");
+      Log.stackTrace(e);
     } catch (LibraryConfigData.BadConfig bad) {
       client.showMessage(new ShowMessageParams(MessageType.Error, "Cannot load malformed library: " + bad.getMessage()));
     }
@@ -253,9 +240,8 @@ public class AyaLanguageServer implements LanguageServer {
     try {
       LibraryCompiler.newCompiler(primFactory, reporter, FLAGS, advisor, owner).start();
     } catch (IOException e) {
-      var s = new StringWriter();
-      e.printStackTrace(new PrintWriter(s));
-      Log.e("IOException occurred when running the compiler. Stack trace:\n%s", s.toString());
+      Log.e("IOException occurred when running the compiler. Stack trace:");
+      Log.stackTrace(e);
     }
     publishProblems(reporter, options);
     return SemanticHighlight.invoke(owner);

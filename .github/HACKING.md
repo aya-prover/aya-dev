@@ -1,5 +1,7 @@
 # Hacking Aya
 
+[Java 22]: https://jdk.java.net/22
+
 > [!IMPORTANT]
 >
 > Since you need [Java 22] to set this project up, in case your choice
@@ -37,6 +39,9 @@ You may also need the following plugins:
 + [Grammar-Kit](https://plugins.jetbrains.com/plugin/6606) for editing the parser
 + [Kotlin](https://plugins.jetbrains.com/plugin/6954) for editing the build scripts
 + [IntelliJ Aya](https://github.com/aya-prover/intellij-aya) (unpublished yet) for editing Aya code
++ A special plugin to disable some incorrect error report of JPMS in IntelliJ IDEA, which we would not like to
+  publish, [Download link](https://github.com/user-attachments/files/18740788/fuck.idea.jpms-SNAPSHOT.jar.zip),
+  make sure you rename the file to remove the `.zip` postfix so it becomes a jar.
 
 ## More information
 
