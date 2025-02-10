@@ -7,12 +7,10 @@ import kala.collection.mutable.primitive.MutableIntList;
 import kala.value.primitive.MutableIntValue;
 import org.jetbrains.annotations.NotNull;
 
-public interface ParsingUtil {
-  /**
-   * all line separators are treat as 1 character long
-   *
-   * @return a sequence of integers denoting the start position of each line
-   */
+public interface PositionUtil {
+  /// All line separators are treat as 1 character long
+  ///
+  /// @return a sequence of integers denoting the start position of each line
   static @NotNull ImmutableIntArray indexedLines(@NotNull String str) {
     var results = MutableIntList.create();
     var index = MutableIntValue.create();
