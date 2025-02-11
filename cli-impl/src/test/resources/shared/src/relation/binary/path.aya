@@ -1,6 +1,6 @@
-prim I
-prim Path
-prim coe
+prim I : ISet
+prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
+prim coe (r s : I) (A : I -> Type) : A r -> A s
 
 variable A B : Type
 def infix = (a b : A) : Type => Path (\i => A) a b

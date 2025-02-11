@@ -1,0 +1,47 @@
+open import prelude
+
+// Named application
+module Test1 {
+  variable A : Type
+  def foo {value : A} : A => value
+  def what : Nat => foo {value := 233}
+}
+
+module Test2 {
+  def even Nat : Bool
+  | 0 => true
+  | suc n => odd n
+  def odd Nat : Bool
+  | 0 => false
+  | suc n => even n
+}
+
+module Test3 {
+  open inductive Natt | OO | SS Nat
+  // Disambiguate by type checking
+  def test (a : Nat) => a = 114514
+}
+
+module Path0 {
+  def transp (A : I -> Type) (a : A 0) : A 1 => coe 0 1 A a
+  def transpInv (A : I -> Type) (a : A 1) : A 0 => coe 1 0 A a
+  def coeFill0 (A : I -> Type) (u : A 0) : Path A u (transp A u) => \i => coe 0 i A u
+}
+
+module Path1 {
+  open inductive Int
+  | pos Nat | neg Nat
+  | zro : pos 0 = neg 0
+  example def testZro0 : zro 0 = pos 0 => refl
+  example def testZro1 : zro 1 = neg 0 => refl
+}
+
+module ClassTyck {
+  // 🦀
+  class Monoid
+  | classifying carrier : Type
+  | unit : carrier
+  | infix * : carrier -> carrier -> carrier
+    tighter =
+  | idl (x : carrier) : unit * x = x
+}
