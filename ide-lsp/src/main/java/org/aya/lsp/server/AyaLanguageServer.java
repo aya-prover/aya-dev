@@ -95,8 +95,8 @@ public class AyaLanguageServer implements LanguageServer {
     return SeqView.narrow(mockLibraries(path));
   }
 
-  /// Check whether the project/the aya file {@param projetOrFile} represents is registered in this {@link AyaLanguageServer}.
-  private @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectOrFile projectOrFile) {
+  /// Check whether the project/the aya file {@param projectOrFile} represents is registered in this {@link AyaLanguageServer}.
+  public @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectOrFile projectOrFile) {
     return libraries.getOrNull(projectOrFile.path());
   }
 
