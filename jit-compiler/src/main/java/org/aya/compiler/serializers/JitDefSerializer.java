@@ -23,8 +23,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   /**
    * @see CompiledAya
    */
-  @Override
-  protected @NotNull CompiledAya buildMetadata(@NotNull T unit) {
+  @Override protected @NotNull CompiledAya buildMetadata(@NotNull T unit) {
     var ref = unit.ref();
     var module = ref.module;
     var assoc = ref.assoc();

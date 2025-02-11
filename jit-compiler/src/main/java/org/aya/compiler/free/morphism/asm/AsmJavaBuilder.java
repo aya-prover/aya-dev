@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
@@ -50,14 +51,18 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
             .collect(Collectors.toList())
         );
 
-        cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
-          FreeUtil.fromClass(CompiledAya.class),
+        var attributes = MutableList.of(
           AnnotationElement.of(CompiledAya.NAME_MODULE, moduleValue),
           AnnotationElement.of(CompiledAya.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
-          AnnotationElement.of(CompiledAya.NAME_NAME, nameValue),
-          AnnotationElement.of(CompiledAya.NAME_ASSOC, assocValue),
-          AnnotationElement.of(CompiledAya.NAME_SHAPE, shapeValue),
-          AnnotationElement.of(CompiledAya.NAME_RECOGNITION, recognitionValue)
+          AnnotationElement.of(CompiledAya.NAME_NAME, nameValue)
+        );
+        if (metadata.assoc() != -1) attributes.append(AnnotationElement.of(CompiledAya.NAME_ASSOC, assocValue));
+        if (metadata.shape() != -1) attributes.append(AnnotationElement.of(CompiledAya.NAME_SHAPE, shapeValue));
+        if (metadata.recognition().length != 0) attributes.append(AnnotationElement.of(CompiledAya.NAME_RECOGNITION, recognitionValue));
+
+        cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
+          FreeUtil.fromClass(CompiledAya.class),
+          attributes.asJava()
         )));
       }
 

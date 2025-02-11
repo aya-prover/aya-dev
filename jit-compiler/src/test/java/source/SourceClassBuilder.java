@@ -31,16 +31,16 @@ public record SourceClassBuilder(
   public void buildMetadata(@NotNull CompiledAya compiledAya) {
     sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(CompiledAya.class)) + "(");
     sourceBuilder.runInside(() -> {
-      buildMetadataRecord("module", SourceCodeBuilder.mkHalfArray(
+      buildMetadataRecord(CompiledAya.NAME_MODULE, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(compiledAya.module()).map(ExprializeUtil::makeString)
       ), true);
-      buildMetadataRecord("fileModuleSize", Integer.toString(compiledAya.fileModuleSize()), false);
-      buildMetadataRecord("name", ExprializeUtil.makeString(compiledAya.name()), false);
+      buildMetadataRecord(CompiledAya.NAME_FILE_MODULE_SIZE, Integer.toString(compiledAya.fileModuleSize()), false);
+      buildMetadataRecord(CompiledAya.NAME_NAME, ExprializeUtil.makeString(compiledAya.name()), false);
       if (compiledAya.assoc() != -1)
-        buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
+        buildMetadataRecord(CompiledAya.NAME_ASSOC, Integer.toString(compiledAya.assoc()), false);
       if (compiledAya.shape() != -1)
-        buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
-      if (compiledAya.recognition().length != 0) buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(
+        buildMetadataRecord(CompiledAya.NAME_SHAPE, Integer.toString(compiledAya.shape()), false);
+      if (compiledAya.recognition().length != 0) buildMetadataRecord(CompiledAya.NAME_RECOGNITION, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(compiledAya.recognition()).map(x ->
           SourceCodeBuilder.makeRefEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name())
         )
