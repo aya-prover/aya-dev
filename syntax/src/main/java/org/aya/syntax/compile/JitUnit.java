@@ -10,10 +10,10 @@ import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JitUnit {
-  private CompiledAya metadata;
+  private AyaMetadata metadata;
 
-  public @NotNull final CompiledAya metadata() {
-    if (metadata == null) metadata = getClass().getAnnotation(CompiledAya.class);
+  public @NotNull final AyaMetadata metadata() {
+    if (metadata == null) metadata = getClass().getAnnotation(AyaMetadata.class);
     if (metadata == null) throw new Panic("No @CompiledAya on " + getClass().getName());
     return metadata;
   }

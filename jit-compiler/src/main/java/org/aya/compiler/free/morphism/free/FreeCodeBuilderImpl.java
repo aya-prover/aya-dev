@@ -42,8 +42,7 @@ public record FreeCodeBuilderImpl(
   public static @NotNull FreeVariable assertFreeVariable(@NotNull LocalVariable var) { return (FreeVariable) var; }
   public @NotNull FreeVariable.Local acquireVariable() { return new FreeVariable.Local(pool.acquire()); }
 
-  @Override
-  public @NotNull FreeVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
+  @Override public @NotNull FreeVariable makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
     var theVar = acquireVariable();
     stmts.append(new FreeStmt.DeclareVariable(type, theVar));
     if (initializer != null) updateVar(theVar, initializer);

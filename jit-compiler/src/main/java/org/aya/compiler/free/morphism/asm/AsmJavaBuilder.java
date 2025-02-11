@@ -12,7 +12,7 @@ import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.glavo.classfile.*;
 import org.glavo.classfile.attribute.NestHostAttribute;
@@ -27,7 +27,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
   /// @return the class descriptor
   public static @NotNull ClassDesc buildClass(
     @NotNull AsmOutputCollector collector,
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassData classData,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
@@ -52,16 +52,16 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
         );
 
         var attributes = MutableList.of(
-          AnnotationElement.of(CompiledAya.NAME_MODULE, moduleValue),
-          AnnotationElement.of(CompiledAya.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
-          AnnotationElement.of(CompiledAya.NAME_NAME, nameValue)
+          AnnotationElement.of(AyaMetadata.NAME_MODULE, moduleValue),
+          AnnotationElement.of(AyaMetadata.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
+          AnnotationElement.of(AyaMetadata.NAME_NAME, nameValue)
         );
-        if (metadata.assoc() != -1) attributes.append(AnnotationElement.of(CompiledAya.NAME_ASSOC, assocValue));
-        if (metadata.shape() != -1) attributes.append(AnnotationElement.of(CompiledAya.NAME_SHAPE, shapeValue));
-        if (metadata.recognition().length != 0) attributes.append(AnnotationElement.of(CompiledAya.NAME_RECOGNITION, recognitionValue));
+        if (metadata.assoc() != -1) attributes.append(AnnotationElement.of(AyaMetadata.NAME_ASSOC, assocValue));
+        if (metadata.shape() != -1) attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
+        if (metadata.recognition().length != 0) attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
-          FreeUtil.fromClass(CompiledAya.class),
+          FreeUtil.fromClass(AyaMetadata.class),
           attributes.asJava()
         )));
       }
@@ -82,7 +82,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
   }
 
   @Override public @NotNull C buildClass(
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

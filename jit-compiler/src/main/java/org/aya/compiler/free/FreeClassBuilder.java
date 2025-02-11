@@ -5,7 +5,7 @@ package org.aya.compiler.free;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -20,7 +20,7 @@ public interface FreeClassBuilder {
   }
 
   void buildNestedClass(
-    @NotNull CompiledAya compiledAya,
+    @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

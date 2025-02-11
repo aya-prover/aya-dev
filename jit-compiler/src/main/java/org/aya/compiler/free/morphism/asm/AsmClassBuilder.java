@@ -18,7 +18,7 @@ import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
 import org.glavo.classfile.ClassBuilder;
@@ -68,8 +68,8 @@ public final class AsmClassBuilder implements FreeClassBuilder, AutoCloseable {
   public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
   @Override public void
-  buildNestedClass(@NotNull CompiledAya compiledAya, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<FreeClassBuilder> builder) {
-    AsmJavaBuilder.buildClass(collector, compiledAya,
+  buildNestedClass(@NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<FreeClassBuilder> builder) {
+    AsmJavaBuilder.buildClass(collector, ayaMetadata,
       new ClassData(owner().nested(name), FreeUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),
       builder);

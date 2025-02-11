@@ -7,7 +7,7 @@ import kala.collection.mutable.FreezableMutableList;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public record FreeClassBuilderImpl(
-  @Nullable CompiledAya metadata,
+  @Nullable AyaMetadata metadata,
   @NotNull ClassDesc parentOrThis,
   @Nullable String nested,
   @NotNull Class<?> superclass,
@@ -32,12 +32,12 @@ public record FreeClassBuilderImpl(
   }
 
   @Override public void buildNestedClass(
-    @NotNull CompiledAya compiledAya,
+    @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    var classBuilder = new FreeClassBuilderImpl(compiledAya, className(), name, superclass, FreezableMutableList.create());
+    var classBuilder = new FreeClassBuilderImpl(ayaMetadata, className(), name, superclass, FreezableMutableList.create());
     builder.accept(classBuilder);
     members.append(classBuilder.build());
   }

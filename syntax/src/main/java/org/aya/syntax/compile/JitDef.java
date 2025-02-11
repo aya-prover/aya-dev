@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A well-typed compiled definition
  *
- * @implNote every definition should be annotated by {@link CompiledAya}
+ * @implNote every definition should be annotated by {@link AyaMetadata}
  */
 public abstract sealed class JitDef extends JitUnit implements AnyDef, AyaDocile permits JitClass, JitTele {
   @Override public @NotNull ModulePath fileModule() {

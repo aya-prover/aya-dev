@@ -12,18 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public class VariablePool {
   private int nextAvailable = 0;
 
-  public VariablePool() {
-  }
-
-  public VariablePool(int nextAvailable) {
-    this.nextAvailable = nextAvailable;
-  }
-
-  public int acquire() {
-    return nextAvailable++;
-  }
-
-  public @NotNull VariablePool copy() {
-    return new VariablePool(nextAvailable);
-  }
+  public VariablePool() { }
+  public VariablePool(int nextAvailable) { this.nextAvailable = nextAvailable; }
+  public int acquire() { return nextAvailable++; }
+  public @NotNull VariablePool copy() { return new VariablePool(nextAvailable); }
 }

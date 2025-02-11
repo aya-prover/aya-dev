@@ -6,7 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.QPath;
@@ -28,18 +28,18 @@ public abstract class ClassTargetSerializer<T> {
     this.recorder = recorder;
   }
 
-  public record CompiledAyaImpl(
+  public record AyaMetadataImpl(
     @Override @NotNull String[] module, @Override int fileModuleSize,
     @Override @NotNull String name, @Override int assoc, @Override int shape,
     @Override @NotNull CodeShape.GlobalId[] recognition
-  ) implements CompiledAya {
-    public CompiledAyaImpl(
+  ) implements AyaMetadata {
+    public AyaMetadataImpl(
       @NotNull QPath path, @NotNull String name, int assoc, int shape,
       @NotNull CodeShape.GlobalId[] recognition
     ) {
       this(path.module().module().toArray(new String[0]), path.fileModuleSize(), name, assoc, shape, recognition);
     }
-    @Override public Class<? extends Annotation> annotationType() { return CompiledAya.class; }
+    @Override public Class<? extends Annotation> annotationType() { return AyaMetadata.class; }
   }
 
   protected @NotNull FieldRef buildInstance(@NotNull FreeClassBuilder builder) {
@@ -51,7 +51,7 @@ public abstract class ClassTargetSerializer<T> {
 
   protected abstract @NotNull String className(T unit);
 
-  protected abstract @NotNull CompiledAya buildMetadata(T unit);
+  protected abstract @NotNull AyaMetadata buildMetadata(T unit);
 
   protected void buildFramework(
     @NotNull FreeClassBuilder builder,

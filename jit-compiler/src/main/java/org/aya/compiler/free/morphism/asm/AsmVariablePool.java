@@ -32,13 +32,8 @@ public record AsmVariablePool(int offset, @NotNull MutableList<AsmVariable> vars
     return var;
   }
 
-  public int length() {
-    return offset + vars.size();
-  }
-
-  public @NotNull AsmVariablePool subscope() {
-    return new AsmVariablePool(length(), MutableList.create());
-  }
+  public int length() { return offset + vars.size(); }
+  public @NotNull AsmVariablePool subscope() { return new AsmVariablePool(length(), MutableList.create()); }
 
   public void submit(@NotNull AsmCodeBuilder builder) {
     vars.forEach(var -> builder.writer().localVariable(
