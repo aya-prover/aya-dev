@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler;
+package source;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
-import static org.aya.compiler.serializers.AyaSerializer.CLASS_PANIC;
+import static org.aya.compiler.serializers.ExprializeUtil.CLASS_PANIC;
 import static org.aya.compiler.serializers.ExprializeUtil.makeString;
 
 import kala.collection.immutable.ImmutableSeq;

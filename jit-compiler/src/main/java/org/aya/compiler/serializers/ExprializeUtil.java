@@ -3,22 +3,13 @@
 package org.aya.compiler.serializers;
 
 import com.intellij.openapi.util.text.StringUtil;
-import kala.collection.immutable.ImmutableSeq;
+import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExprializeUtil {
-  String SEP = ", ";
-
-  static @NotNull String makeNew(@NotNull String className, String... terms) {
-    return ImmutableSeq.from(terms).joinToString(SEP, "new " + className + "(", ")");
-  }
-
+  String CLASS_PANIC = getJavaRef(Panic.class);
   static @NotNull String makeString(@NotNull String raw) {
     return "\"" + StringUtil.escapeStringCharacters(raw) + "\"";
-  }
-
-  static @NotNull String isNull(@NotNull String term) {
-    return term + " == null";
   }
 
   static @NotNull String getInstance(@NotNull String defName) {

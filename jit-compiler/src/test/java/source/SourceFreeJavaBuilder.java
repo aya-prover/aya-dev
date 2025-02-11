@@ -3,7 +3,6 @@
 package source;
 
 import kala.collection.Seq;
-import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;

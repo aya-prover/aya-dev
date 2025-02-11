@@ -128,22 +128,20 @@ public class ReplCompiler {
     owner.libraryDeps().forEach(this::importModule);
   }
 
-  /** @see org.aya.cli.single.SingleFileCompiler#compile(Path, ModuleCallback) */
+  /// @see org.aya.cli.single.SingleFileCompiler#compile(Path, ModuleCallback)
   private void loadFile(@NotNull Path file) {
     compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser)), NormalizeMode.HEAD);
   }
 
-  /** @param text the text of code to compile, witch might either be a `program` or an `expr`. */
+  /// @param text the text of code to compile, witch might either be a `program` or an `expr`.
   public @NotNull Either<ImmutableSeq<TyckDef>, Term> compileToContext(@NotNull String text, @NotNull NormalizeMode normalizeMode) {
     if (text.isBlank()) return Either.left(ImmutableSeq.empty());
     return compileToContext(parser -> parser.repl(text), normalizeMode);
   }
 
-  /**
-   * Copied and adapted.
-   *
-   * @see org.aya.cli.single.SingleFileCompiler#compile
-   */
+  /// Copied and adapted.
+  ///
+  /// @see org.aya.cli.single.SingleFileCompiler#compile
   public @NotNull Either<ImmutableSeq<TyckDef>, Term> compileToContext(
     @NotNull CheckedFunction<AyaParserImpl, Either<ImmutableSeq<Stmt>, WithPos<Expr>>, IOException> parsing,
     @NotNull NormalizeMode normalizeMode
