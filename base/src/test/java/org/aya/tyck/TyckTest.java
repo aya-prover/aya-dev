@@ -32,6 +32,8 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+/// Do NOT add simple test fixtures here.
+/// Find TyckTest.aya and add tests there.
 public class TyckTest {
   /// Need pruning
   /*@Test*/
@@ -80,7 +82,7 @@ public class TyckTest {
 
     var seed = 114514L;
     var random = new Random(seed);
-    var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> Math.abs(random.nextInt()) % 100));
+    var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> random.nextInt(400)));
     var args = ImmutableSeq.of(NatCall, leCall, largeList);
 
     var beginTime = System.currentTimeMillis();
