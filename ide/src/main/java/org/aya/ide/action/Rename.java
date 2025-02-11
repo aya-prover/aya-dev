@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
@@ -23,7 +24,7 @@ public interface Rename {
   static @NotNull ImmutableSeq<RenameEdit> rename(
     @NotNull LibrarySource source,
     @NotNull String newName,
-    @NotNull SeqView<LibraryOwner> libraries, XY xy
+    @NotNull CollectionView<LibraryOwner> libraries, XY xy
   ) {
     return FindReferences.findOccurrences(source, libraries, xy)
       .map(to -> new RenameEdit(to, newName))

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GotoDefinition {
   static @NotNull SeqView<WithPos<SourcePos>> findDefs(
     @NotNull LibrarySource source,
-    @NotNull SeqView<LibraryOwner> libraries, XY xy
+    @NotNull CollectionView<LibraryOwner> libraries, XY xy
   ) {
     return Resolver.resolveVar(source, xy).mapNotNull(pos -> {
       var from = pos.sourcePos();
@@ -39,7 +40,7 @@ public interface GotoDefinition {
     });
   }
 
-  private static @Nullable SourcePos mockSourcePos(@NotNull SeqView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {
+  private static @Nullable SourcePos mockSourcePos(@NotNull CollectionView<LibraryOwner> libraries, @NotNull ModuleVar moduleVar) {
     return Resolver.resolveModule(libraries, new ModulePath(moduleVar.path().ids()))
       .map(src -> src.originalFile(""))
       .map(src -> new SourcePos(src, 0, 0, 1, 0, 1, 0))

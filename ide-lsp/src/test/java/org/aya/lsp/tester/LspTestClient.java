@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
@@ -63,6 +63,10 @@ public final class LspTestClient implements AyaLanguageClient {
         advisor.prepareCompile();
         var elapsed = loadLibraries();
         c.checker().check(advisor, elapsed);
+      }
+      case TestCommand.Register(var path, var checker) -> {
+        registerLibrary(path);
+        checker.check(advisor, service);
       }
     }
   }

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
@@ -30,7 +31,7 @@ public record ProjectSymbol(
     return symbol.symbols.toImmutableSeq();
   }
 
-  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+  public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull CollectionView<LibraryOwner> libraries) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     libraries.forEach(symbol::collectLib);
     return symbol.symbols.toImmutableSeq();

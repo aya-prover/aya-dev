@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
@@ -6,8 +6,10 @@ import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
+import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
+import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
 import org.aya.syntax.concrete.Pattern;
@@ -15,6 +17,7 @@ import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.util.FileUtil;
 import org.javacs.lsp.InitializeParams;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.TextDocumentIdentifier;
@@ -24,17 +27,23 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
-import static org.aya.lsp.tester.TestCommand.compile;
-import static org.aya.lsp.tester.TestCommand.mutate;
+import static org.aya.lsp.tester.TestCommand.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LspTest {
-  public static final @NotNull Path TEST_LIB = Path.of("src", "test", "resources", "lsp-test-lib");
+  public static final @NotNull Path RES_DIR = FileUtil.canonicalize(Path.of("src", "test", "resources"));
+  public static final @NotNull Path TEST_LIB = RES_DIR.resolve("lsp-test-lib");
+  public static final @NotNull Path TEST_LIB0 = RES_DIR.resolve("lsp-test-lib0");
+  public static final @NotNull Path TEST_FILE = TEST_LIB0.resolve("unwatched.aya");
 
   public @NotNull LspTestClient launch(@NotNull Path libraryRoot) {
-    var client = new LspTestClient();
+    var client = launch();
     client.registerLibrary(libraryRoot);
     return client;
+  }
+
+  public @NotNull LspTestClient launch() {
+    return new LspTestClient();
   }
 
   @Test public void testJustLoad() {
@@ -78,6 +87,26 @@ public class LspTest {
       compile((a, e) -> assertRemake(a, e, "Nat::Core", "VecCore", "HelloWorld")),
       mutate("PathPrims"),
       compile((a, e) -> assertRemake(a, e, "PathPrims", "Path", "HelloWorld"))
+    );
+  }
+
+  private void duplicateRegisterTester(int count, @NotNull ProjectPath check, @NotNull AyaLanguageServer lsp) {
+    assertEquals(count, lsp.libraries().size());
+    assertNotNull(lsp.getRegisteredLibrary(check));
+  }
+
+  @Test public void testDuplicateRegister() {
+
+    launch().execute(
+      register(TEST_LIB, (_, lsp) ->
+        duplicateRegisterTester(1, new ProjectPath.Project(TEST_LIB), lsp)),
+      register(TEST_LIB0.resolve(Constants.AYA_JSON), (_, lsp) ->
+        duplicateRegisterTester(2, new ProjectPath.Project(TEST_LIB0), lsp)),
+      // test dup here
+      register(TEST_LIB0, (_, lsp) ->
+        duplicateRegisterTester(2, new ProjectPath.Project(TEST_LIB0), lsp)),
+      register(TEST_FILE, (_, lsp) ->
+        duplicateRegisterTester(3, new ProjectPath.File(TEST_FILE), lsp))
     );
   }
 
