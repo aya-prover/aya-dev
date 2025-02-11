@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
@@ -88,7 +89,7 @@ public interface Resolver {
   }
 
   /** resolve a top-level module by its qualified name */
-  static @NotNull Option<LibrarySource> resolveModule(@NotNull SeqView<LibraryOwner> owners, @NotNull ModulePath module) {
+  static @NotNull Option<LibrarySource> resolveModule(@NotNull CollectionView<LibraryOwner> owners, @NotNull ModulePath module) {
     for (var owner : owners) {
       var found = resolveModule(owner, module);
       if (found.isDefined()) return found;

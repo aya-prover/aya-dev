@@ -3,10 +3,10 @@
 package org.aya.lsp.server;
 
 import com.google.gson.Gson;
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
@@ -59,7 +59,7 @@ public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
-  private final @NotNull MutableList<LibraryOwner> libraries = MutableList.create();
+  private final @NotNull MutableMap<Path, LibraryOwner> libraries = MutableMap.create();
   /**
    * When working with LSP, we need to track all previously created Primitives.
    * This is shared per library.
@@ -83,22 +83,27 @@ public class AyaLanguageServer implements LanguageServer {
     Log.init(this.client);
   }
 
-  public @NotNull SeqView<LibraryOwner> libraries() {
-    return libraries.view();
+  public @NotNull CollectionView<LibraryOwner> libraries() {
+    return libraries.valuesView();
   }
 
-  /// TODO: handle duplicate registering
-  ///
   /// @return the libraries that are actually loaded
   public SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
     var tryLoad = tryAyaLibrary(path);
     if (tryLoad != null) return tryLoad;
-    return SeqView.narrow(mockLibraries(path).view());
+    return SeqView.narrow(mockLibraries(path));
+  }
+
+  /// Check whether the project/the aya file {@param projetOrFile} represents is registered in this {@link AyaLanguageServer}.
+  private @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectOrFile projectOrFile) {
+    return libraries.getOrNull(projectOrFile.path());
   }
 
   private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@NotNull Path path) {
     var projectOrFile = ProjectOrFile.resolve(path);
+    var registered = getRegisteredLibrary(projectOrFile);
+    if (registered != null) return SeqView.of(registered);
     if (!(projectOrFile instanceof ProjectOrFile.Project project)) return null;
     return importAyaLibrary(project);
   }
@@ -107,12 +112,13 @@ public class AyaLanguageServer implements LanguageServer {
   /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
   private @Nullable SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectOrFile.Project project) {
+    var projectPath = project.path();
     var ayaJson = project.ayaJsonPath();
     if (!Files.exists(ayaJson)) return null;
     try {
-      var config = LibraryConfigData.fromLibraryRoot(project.path());
+      var config = LibraryConfigData.fromLibraryRoot(projectPath);
       var owner = DiskLibraryOwner.from(config);
-      libraries.append(owner);
+      libraries.put(projectPath, owner);
       return SeqView.of(owner);
     } catch (IOException e) {
       Log.e("Cannot load library. Stack trace:");
@@ -124,10 +130,12 @@ public class AyaLanguageServer implements LanguageServer {
     return SeqView.empty();
   }
 
-  private ImmutableSeq<WsLibrary> mockLibraries(@NotNull Path path) {
-    var mocked = AyaFiles.collectAyaSourceFiles(path, 1).map(WsLibrary::mock);
-    libraries.appendAll(mocked);
-    return mocked;
+  private SeqView<WsLibrary> mockLibraries(@NotNull Path path) {
+    var mocked = AyaFiles.collectAyaSourceFiles(path, 1)
+      .map(f -> Tuple.of(f, WsLibrary.mock(f)));
+
+    mocked.forEach(libraries::put);
+    return mocked.view().map(Tuple2::component2);
   }
 
   @Override public void initialized() {
@@ -185,7 +193,7 @@ public class AyaLanguageServer implements LanguageServer {
     var ayaJson = path.resolve(Constants.AYA_JSON);
     if (!Files.exists(ayaJson)) return findOwner(path.getParent());
     var book = MutableSet.<LibraryConfig>create();
-    for (var lib : libraries) {
+    for (var lib : libraries()) {
       var found = findOwner(book, lib, path);
       if (found != null) return found;
     }
@@ -214,7 +222,8 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   public @Nullable LibrarySource find(@NotNull Path moduleFile) {
-    for (var lib : libraries) {
+    // TODO: check librarySrcRoot before find?
+    for (var lib : libraries()) {
       var found = find(lib, moduleFile);
       if (found != null) return found;
     }
@@ -274,7 +283,7 @@ public class AyaLanguageServer implements LanguageServer {
             case null -> {
               var mock = WsLibrary.mock(newSrc);
               Log.d("Created new file: %s, mocked a library %s for it", newSrc, mock.mockConfig().name());
-              libraries.append(mock);
+              libraries.put(newSrc, mock);
             }
             default -> { }
           }
@@ -285,7 +294,14 @@ public class AyaLanguageServer implements LanguageServer {
           Log.d("Deleted file: %s, removed from owner: %s", src.underlyingFile(), src.owner().underlyingLibrary().name());
           switch (src.owner()) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
-            case WsLibrary owner -> libraries.removeIf(o -> o == owner);
+            case WsLibrary owner -> {
+              // TODO: how about `find` returns a tuple?
+              var key = libraries.keysView()
+                .find(t -> libraries.get(t) == owner)
+                .get();
+
+              libraries.remove(key);
+            }
             default -> { }
           }
         }
@@ -304,7 +320,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
-    return Optional.of(GotoDefinition.findDefs(source, libraries.view(), LspRange.pos(params.position)).mapNotNull(pos -> {
+    return Optional.of(GotoDefinition.findDefs(source, libraries(), LspRange.pos(params.position)).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var to = pos.data();
       var res = LspRange.toLoc(from, to);
@@ -331,7 +347,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(params.textDocument.uri);
     if (source == null) return Optional.empty();
     return Optional.of(FindReferences
-      .findRefs(source, libraries.view(), LspRange.pos(params.position))
+      .findRefs(source, libraries(), LspRange.pos(params.position))
       .map(LspRange::toLoc)
       .collect(Collectors.toList()));
   }
@@ -339,7 +355,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public WorkspaceEdit rename(RenameParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return null;
-    var renames = Rename.rename(source, params.newName, libraries.view(), LspRange.pos(params.position))
+    var renames = Rename.rename(source, params.newName, libraries(), LspRange.pos(params.position))
       .view()
       .flatMap(t -> t.sourcePos().file().underlying().map(f -> Tuple.of(f.toUri(), t)))
       .collect(Collectors.groupingBy(
@@ -377,7 +393,7 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<CodeLens> codeLens(CodeLensParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    return LensMaker.invoke(source, libraries.view());
+    return LensMaker.invoke(source, libraries());
   }
 
   @Override public CodeLens resolveCodeLens(CodeLens codeLens) {
@@ -391,7 +407,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   @Override public List<? extends GenericWorkspaceSymbol> workspaceSymbols(WorkspaceSymbolParams params) {
-    return SymbolMaker.workspaceSymbols(options, libraries.view()).asJava();
+    return SymbolMaker.workspaceSymbols(options, libraries()).asJava();
   }
 
   @Override

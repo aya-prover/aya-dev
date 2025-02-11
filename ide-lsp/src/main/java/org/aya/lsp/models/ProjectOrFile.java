@@ -3,19 +3,17 @@
 package org.aya.lsp.models;
 
 import org.aya.generic.Constants;
+import org.aya.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public sealed interface ProjectOrFile {
-  /// @return null if {@param path} is neither represents an aya project nor an aya file
-  static @Nullable ProjectOrFile resolve(@NotNull Path path) {
+  static @NotNull ProjectOrFile resolve(@NotNull Path path) {
+    path = FileUtil.canonicalize(path);
     if (Files.isDirectory(path)) {
-      if (Files.exists(path.resolve(Constants.AYA_JSON))) {
-        return new Project(path);
-      }
+      return new Project(path);
     } else {
       var fileName = path.getFileName().toString();
       if (fileName.equals(Constants.AYA_JSON)) {
@@ -25,10 +23,9 @@ public sealed interface ProjectOrFile {
         return new File(path);
       }
     }
-
-    return null;
   }
 
+  /// @return canonicalized path
   @NotNull Path path();
 
   record Project(@Override @NotNull Path path) implements ProjectOrFile {

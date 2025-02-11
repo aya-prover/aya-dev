@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
@@ -23,7 +24,7 @@ public interface SymbolMaker {
     return ProjectSymbol.invoke(options, source).map(SymbolMaker::documentSymbol);
   }
 
-  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull PrettierOptions options, @NotNull SeqView<LibraryOwner> libraries) {
+  static @NotNull ImmutableSeq<WorkspaceSymbol> workspaceSymbols(@NotNull PrettierOptions options, @NotNull CollectionView<LibraryOwner> libraries) {
     return ProjectSymbol.invoke(options, libraries).mapNotNull(SymbolMaker::workspaceSymbol);
   }
 

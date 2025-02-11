@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
@@ -22,10 +23,10 @@ import java.util.Collections;
 import java.util.List;
 
 public record LensMaker(
-  @NotNull SeqView<LibraryOwner> libraries,
+  @NotNull CollectionView<LibraryOwner> libraries,
   @NotNull MutableList<CodeLens> codeLens
 ) implements SyntaxDeclAction {
-  public static @NotNull List<CodeLens> invoke(@NotNull LibrarySource source, @NotNull SeqView<LibraryOwner> libraries) {
+  public static @NotNull List<CodeLens> invoke(@NotNull LibrarySource source, @NotNull CollectionView<LibraryOwner> libraries) {
     var maker = new LensMaker(libraries, MutableList.create());
     var program = source.program().get();
     if (program != null) program.forEach(maker);

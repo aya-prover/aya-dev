@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FindReferences {
   static @NotNull SeqView<SourcePos> findRefs(
     @NotNull LibrarySource source,
-    @NotNull SeqView<LibraryOwner> libraries, XY xy
+    @NotNull CollectionView<LibraryOwner> libraries, XY xy
   ) {
     var vars = Resolver.resolveVar(source, xy);
     return findRefs(vars.map(WithPos::data), libraries);
@@ -25,7 +26,7 @@ public interface FindReferences {
 
   static @NotNull SeqView<SourcePos> findRefs(
     @NotNull SeqView<AnyVar> vars,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull CollectionView<LibraryOwner> libraries
   ) {
     return vars.flatMap(var -> {
       var resolver = new Resolver.UsageResolver(var, MutableList.create());
@@ -43,7 +44,7 @@ public interface FindReferences {
 
   static @NotNull SeqView<SourcePos> findRefsOutsideDefs(
     @NotNull SeqView<AnyVar> vars,
-    @NotNull SeqView<LibraryOwner> libraries
+    @NotNull CollectionView<LibraryOwner> libraries
   ) {
     var defPos = vars.filterIsInstance(DefVar.class).map(def -> def.concrete.entireSourcePos());
     return findRefs(vars, libraries).filter(ref -> defPos.noneMatch(pos -> pos.containsIndex(ref)));
@@ -51,7 +52,7 @@ public interface FindReferences {
 
   static @NotNull SeqView<SourcePos> findOccurrences(
     @NotNull LibrarySource source,
-    @NotNull SeqView<LibraryOwner> libraries, XY xy
+    @NotNull CollectionView<LibraryOwner> libraries, XY xy
   ) {
     var defs = GotoDefinition.findDefs(source, libraries, xy).map(WithPos::data);
     var refs = FindReferences.findRefs(source, libraries, xy);
