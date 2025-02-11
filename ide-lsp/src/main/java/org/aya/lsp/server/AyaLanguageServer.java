@@ -88,33 +88,39 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   /// @return the libraries that are actually loaded
-  public SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
+  public @NotNull SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
-    var tryLoad = tryAyaLibrary(path);
-    if (tryLoad != null) return tryLoad;
-    return SeqView.narrow(mockLibraries(path));
+    var resolved = ProjectPath.resolve(path);
+    if (resolved == null) return SeqView.empty();
+
+    if (resolved instanceof ProjectPath.Project project) {
+      return tryAyaLibrary(project);
+    }
+
+    // resolved is Directory or File
+    return SeqView.narrow(mockLibraries(resolved.path()));
   }
 
   /// Check whether the project/the aya file {@param projectOrFile} represents is registered in this {@link AyaLanguageServer}.
-  public @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectOrFile projectOrFile) {
-    return libraries.getOrNull(projectOrFile.path());
+  public @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectPath projectOrFile) {
+    return libraries.getOrNull(FileUtil.canonicalize(projectOrFile.path()));
   }
 
-  private @Nullable SeqView<LibraryOwner> tryAyaLibrary(@NotNull Path path) {
-    var projectOrFile = ProjectOrFile.resolve(path);
-    var registered = getRegisteredLibrary(projectOrFile);
-    if (registered != null) return SeqView.of(registered);
-    if (!(projectOrFile instanceof ProjectOrFile.Project project)) return null;
-    return importAyaLibrary(project);
+  private @NotNull SeqView<LibraryOwner> tryAyaLibrary(@NotNull ProjectPath.Project path) {
+    var registered = getRegisteredLibrary(path);
+    if (registered != null) {
+      Log.i("Duplicated: %s", path.path());
+      return SeqView.of(registered);
+    }
+
+    return importAyaLibrary(path);
   }
 
   /// @param project a path to the directory that contains "aya.json"
   /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
-  private @Nullable SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectOrFile.Project project) {
+  private @NotNull SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectPath.Project project) {
     var projectPath = project.path();
-    var ayaJson = project.ayaJsonPath();
-    if (!Files.exists(ayaJson)) return null;
     try {
       var config = LibraryConfigData.fromLibraryRoot(projectPath);
       var owner = DiskLibraryOwner.from(config);
