@@ -2,13 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
+import java.util.Collections;
+import java.util.List;
+
 import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @param shellLike see {@link CommandArg#shellLike}
@@ -80,7 +80,7 @@ public record ReplParser<T>(
     return new ReplParsedLine<>(
       cursor - lexer.startOffset(word),
       tokens,
-      tokens.stream().map(tok -> textOf(line, tok)).toList(),
+      tokens.map(tok -> textOf(line, tok)).asJava(),
       wordText, tokens.indexOf(word), line, cursor
     );
   }

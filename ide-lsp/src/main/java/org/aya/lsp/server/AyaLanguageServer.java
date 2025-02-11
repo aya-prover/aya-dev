@@ -2,6 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.google.gson.Gson;
 import kala.collection.CollectionView;
 import kala.collection.SeqView;
@@ -44,16 +53,6 @@ import org.aya.util.reporter.BufferReporter;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
@@ -261,11 +260,11 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   public void publishProblems(@NotNull BufferReporter reporter, @NotNull PrettierOptions options) {
-    var diags = reporter.problems().stream()
+    var diags = reporter.problems().view()
       .filter(p -> p.sourcePos().belongsToSomeFile())
-      .peek(p -> Log.d("%s", p.describe(options).debugRender()))
-      .flatMap(p -> Stream.concat(Stream.of(p), p.inlineHints(options).stream().map(t -> new InlineHintProblem(p, t))))
-      .flatMap(p -> p.sourcePos().file().underlying().stream().map(uri -> Tuple.of(uri, p)))
+      .onEach(p -> Log.d("%s", p.describe(options).debugRender()))
+      .flatMap(p -> SeqView.of(p).appendedAll(p.inlineHints(options).map(t -> new InlineHintProblem(p, t))))
+      .flatMap(p -> p.sourcePos().file().underlying().map(uri -> Tuple.of(uri, p)))
       .collect(Collectors.groupingBy(
         Tuple2::component1,
         Collectors.mapping(Tuple2::component2, ImmutableSeq.factory())
@@ -396,7 +395,7 @@ public class AyaLanguageServer implements LanguageServer {
       // only highlight references in the current file
       .filter(pos -> pos.file().underlying().equals(currentFile))
       .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
-      .stream().toList();
+      .toSeq().asJava();
   }
 
   @Override public List<CodeLens> codeLens(CodeLensParams params) {

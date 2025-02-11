@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.tester;
 
+import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Unit;
@@ -73,11 +74,9 @@ public final class LspTestClient implements AyaLanguageClient {
 
   @Override
   public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
-    var errors = diagnostics.diagnostics.stream()
-      .filter(d -> d.severity == DiagnosticSeverity.Error)
-      .collect(ImmutableSeq.factory());
+    var errors = Seq.wrapJava(diagnostics.diagnostics)
+      .filter(d -> d.severity == DiagnosticSeverity.Error);
     Assertions.assertTrue(errors.isEmpty(),
-      "Unexpected compiler errors: " +
-        errors.joinToString("\n", d -> d.message));
+      errors.joinToString("\n", "Unexpected compiler errors: ", "", d -> d.message));
   }
 }

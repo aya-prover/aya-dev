@@ -87,8 +87,7 @@ public sealed interface Candidate<T> {
     @Override public T get() {
       var view = symbols.valuesView().distinct();
       if (view.sizeGreaterThan(1)) Panic.unreachable();
-      //noinspection OptionalGetWithoutIsPresent
-      return symbols.valuesView().stream().findFirst().get();
+      return symbols.valuesView().getAny();
     }
 
     @Override
