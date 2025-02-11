@@ -8,11 +8,5 @@ import java.util.function.BiConsumer;
 
 @FunctionalInterface
 public interface PosedConsumer<T> extends BiConsumer<SourcePos, T> {
-  default void accept(@NotNull WithPos<T> a) {
-    accept(a.sourcePos(), a.data());
-  }
-
-  default void forceAccept(T a) {
-    accept(SourcePos.NONE, a);
-  }
+  default void accept(@NotNull WithPos<T> a) { accept(a.sourcePos(), a.data()); }
 }

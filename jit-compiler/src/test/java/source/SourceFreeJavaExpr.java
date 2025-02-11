@@ -15,6 +15,5 @@ public sealed interface SourceFreeJavaExpr extends FreeJavaExpr {
 
   // A {@link Cont} should be used in a {@link SourceCodeBuilder} who constructs it.
   @FunctionalInterface
-  non-sealed interface Cont extends SourceFreeJavaExpr, Runnable {
-  }
+  non-sealed interface Cont extends SourceFreeJavaExpr, Runnable { }
 }

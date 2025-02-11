@@ -67,8 +67,8 @@ public final class AsmClassBuilder implements FreeClassBuilder, AutoCloseable {
   public @NotNull ClassDesc owner() { return classData.className(); }
   public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
-  @Override
-  public void buildNestedClass(@NotNull CompiledAya compiledAya, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<FreeClassBuilder> builder) {
+  @Override public void
+  buildNestedClass(@NotNull CompiledAya compiledAya, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<FreeClassBuilder> builder) {
     AsmJavaBuilder.buildClass(collector, compiledAya,
       new ClassData(owner().nested(name), FreeUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),

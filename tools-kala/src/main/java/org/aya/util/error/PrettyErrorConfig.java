@@ -4,23 +4,17 @@ package org.aya.util.error;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author kiva
- */
+/// @author kiva
 public interface PrettyErrorConfig {
-  /**
-   * Returns the number of spaces occupied by the tab in different terminals.
-   * e.g. return 4 for normal console output, 2 for compact format style.
-   *
-   * @return space count
-   */
+  /// Returns the number of spaces occupied by the tab in different terminals.
+  /// e.g. return 4 for normal console output, 2 for compact format style.
+  ///
+  /// @return space count
   default int tabWidth() { return 4; }
 
-  /**
-   * Show more lines before startLine and after endLine
-   *
-   * @return line count
-   */
+  /// Show more lines before startLine and after endLine
+  ///
+  /// @return line count
   default int showMore() { return 2; }
   @NotNull PrettyErrorConfig DEFAULT = new PrettyErrorConfig() { };
 }
