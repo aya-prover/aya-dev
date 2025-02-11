@@ -44,21 +44,27 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
             .collect(Collectors.toList()));
         var fileModuleSizeValue = AnnotationValue.ofInt(metadata.fileModuleSize());
         var nameValue = AnnotationValue.ofString(metadata.name());
-        var assocValue = AnnotationValue.ofInt(metadata.assoc());
-        var shapeValue = AnnotationValue.ofInt(metadata.shape());
-        var recognitionValue = AnnotationValue.ofArray(
-          Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name()))
-            .collect(Collectors.toList())
-        );
 
         var attributes = MutableList.of(
           AnnotationElement.of(AyaMetadata.NAME_MODULE, moduleValue),
           AnnotationElement.of(AyaMetadata.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
           AnnotationElement.of(AyaMetadata.NAME_NAME, nameValue)
         );
-        if (metadata.assoc() != -1) attributes.append(AnnotationElement.of(AyaMetadata.NAME_ASSOC, assocValue));
-        if (metadata.shape() != -1) attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
-        if (metadata.recognition().length != 0) attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
+        if (metadata.assoc() != -1) {
+          var assocValue = AnnotationValue.ofInt(metadata.assoc());
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_ASSOC, assocValue));
+        }
+        if (metadata.shape() != -1) {
+          var shapeValue = AnnotationValue.ofInt(metadata.shape());
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
+        }
+        if (metadata.recognition().length != 0) {
+          var recognitionValue = AnnotationValue.ofArray(
+            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name()))
+              .collect(Collectors.toList())
+          );
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
+        }
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
           FreeUtil.fromClass(AyaMetadata.class),
