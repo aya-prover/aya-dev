@@ -41,10 +41,7 @@ public record SourceFile(
   public static final SourceFile SER =
     new SourceFile("<serialized-core>", Option.none(), "", ImmutableIntArray.empty());
 
-  public boolean isSomeFile() {
-    return underlying.isDefined();
-  }
-
+  public boolean isSomeFile() { return underlying.isDefined(); }
   public @NotNull Path resolveSibling(@NotNull Path sibling) {
     return underlying().getOrElse(() -> Path.of(".")).resolveSibling(sibling);
   }

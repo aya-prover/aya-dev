@@ -11,13 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * Position in source code for error reporting only.
- *
- * @param tokenEndIndex   The index of last character (inclusive)
- * @param tokenStartIndex The index of first character (inclusive)
- * @author kiva
- */
+/// Position in source code for error reporting only.
+///
+/// @param tokenEndIndex   The index of last character (inclusive)
+/// @param tokenStartIndex The index of first character (inclusive)
+/// @author kiva
 public record SourcePos(
   @NotNull SourceFile file,
   int tokenStartIndex,
@@ -31,9 +29,9 @@ public record SourcePos(
     assert tokenEndIndex >= tokenStartIndex - 1;
   }
 
-  /** Single instance SourcePos for mocking tests and other usages. */
+  /// Single instance SourcePos for mocking tests and other usages.
   public static final SourcePos NONE = new SourcePos(SourceFile.NONE, -1, -1, -1, -1, -1, -1);
-  /** Source pos used in serialized core */
+  /// Source pos used in serialized core
   public static final SourcePos SER = new SourcePos(SourceFile.SER, -1, -1, -1, -1, -1, -1);
 
   private static int min(int x, int y) {
@@ -104,9 +102,7 @@ public record SourcePos(
 
   public boolean belongsToSomeFile() { return this != SourcePos.NONE && file.isSomeFile(); }
   public int linesOfCode() { return endLine - startLine + 1; }
-  public boolean oneLinear() {
-    return startLine == endLine;
-  }
+  public boolean oneLinear() { return startLine == endLine; }
 
   public @NotNull SourcePos sourcePosForSubExpr(@NotNull SourceFile sourceFile, @NotNull SeqView<SourcePos> params) {
     var restParamSourcePos = params.fold(SourcePos.NONE, (acc, it) -> {

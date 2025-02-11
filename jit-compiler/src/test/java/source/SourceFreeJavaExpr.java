@@ -1,6 +1,6 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism.source;
+package source;
 
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.data.LocalVariable;
@@ -15,6 +15,5 @@ public sealed interface SourceFreeJavaExpr extends FreeJavaExpr {
 
   // A {@link Cont} should be used in a {@link SourceCodeBuilder} who constructs it.
   @FunctionalInterface
-  non-sealed interface Cont extends SourceFreeJavaExpr, Runnable {
-  }
+  non-sealed interface Cont extends SourceFreeJavaExpr, Runnable { }
 }

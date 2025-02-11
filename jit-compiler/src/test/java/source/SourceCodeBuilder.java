@@ -1,10 +1,9 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism.source;
+package source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.ArgumentProvider;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
@@ -22,8 +21,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
-import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassRef;
+import static source.SourceFreeJavaBuilder.toClassRef;
 
+/// Basically a debugging impl for [FreeCodeBuilder]. It produces slightly illegal Java code.
 public record SourceCodeBuilder(
   @NotNull SourceClassBuilder parent,
   @NotNull SourceBuilder sourceBuilder
@@ -284,7 +284,7 @@ public record SourceCodeBuilder(
     var name = ImmutableSeq.fill(method.paramTypes().size(), _ -> sourceBuilder.nameGen.nextName());
     var ap = new SourceArgumentProvider.Lambda(captures, name);
     return () -> {
-      sourceBuilder.append("(" + name.joinToString(", ") + ") -> {");
+      sourceBuilder.append(name.joinToString(", ", "(", ") -> {"));
       sourceBuilder.appendLine();
       sourceBuilder.runInside(() -> builder.accept(ap, this));
       sourceBuilder.append("}");

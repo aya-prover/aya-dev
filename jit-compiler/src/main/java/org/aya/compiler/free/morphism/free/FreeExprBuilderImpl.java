@@ -42,8 +42,7 @@ public enum FreeExprBuilderImpl implements FreeExprBuilder {
     return new FreeExpr.RefField(field, assertFreeExpr(owner));
   }
 
-  @Override
-  public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+  @Override public @NotNull FreeJavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
     return new FreeExpr.RefEnum(enumClass, enumName);
   }
 

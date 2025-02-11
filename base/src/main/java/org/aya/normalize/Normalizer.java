@@ -220,10 +220,8 @@ public final class Normalizer implements UnaryOperator<Term> {
     @Override public Term apply(Term term) { return Normalizer.this.apply(term); }
   }
 
-  /**
-   * Do NOT use this in the type checker.
-   * This is for REPL/literate mode and testing.
-   */
+  /// Do NOT use this in the type checker.
+  /// This is for REPL/literate mode and testing.
   public @NotNull Term normalize(Term term, NormalizeMode mode) {
     return switch (mode) {
       case HEAD -> apply(term);

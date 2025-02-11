@@ -10,27 +10,11 @@ import java.util.Arrays;
 public interface CountingReporter extends Reporter {
   int problemSize(@NotNull Problem.Severity severity);
   void clear();
-
-  default int errorSize() {
-    return problemSize(Problem.Severity.ERROR);
-  }
-
-  default int warningSize() {
-    return problemSize(Problem.Severity.WARN);
-  }
-
-  default int goalSize() {
-    return problemSize(Problem.Severity.GOAL);
-  }
-
-  default boolean noError() {
-    return errorSize() == 0 && goalSize() == 0;
-  }
-
-  default boolean anyError() {
-    return !noError();
-  }
-
+  default int errorSize() { return problemSize(Problem.Severity.ERROR); }
+  default int warningSize() { return problemSize(Problem.Severity.WARN); }
+  default int goalSize() { return problemSize(Problem.Severity.GOAL); }
+  default boolean noError() { return errorSize() == 0 && goalSize() == 0; }
+  default boolean anyError() { return !noError(); }
   default @NotNull String countToString() {
     return String.format("%d error(s), %d warning(s).", errorSize(), warningSize());
   }

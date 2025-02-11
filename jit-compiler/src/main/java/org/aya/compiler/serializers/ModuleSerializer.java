@@ -89,7 +89,7 @@ public final class ModuleSerializer {
   @VisibleForTesting
   public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
-    var metadata = new ClassTargetSerializer.CompiledAyaImpl(unit.name,
+    var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);
 
     return builder.buildClass(metadata, desc, JitUnit.class, cb -> {

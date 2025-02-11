@@ -5,7 +5,7 @@ package org.aya.compiler.free.morphism.free;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +13,7 @@ import java.lang.constant.ClassDesc;
 
 public sealed interface FreeDecl {
   record Clazz(
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassDesc owner,
     @Nullable String nested,
     @NotNull Class<?> superclass,

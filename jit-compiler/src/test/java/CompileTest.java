@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.morphism.source.SourceClassBuilder;
-import org.aya.compiler.free.morphism.source.SourceCodeBuilder;
-import org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder;
+import source.SourceClassBuilder;
+import source.SourceCodeBuilder;
+import source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;

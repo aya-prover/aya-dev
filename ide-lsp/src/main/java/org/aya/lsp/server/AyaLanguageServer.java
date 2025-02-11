@@ -88,6 +88,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   /// TODO: handle duplicate registering
+  ///
   /// @return the libraries that are actually loaded
   public SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
     Log.i("Adding library path %s", path);
@@ -220,14 +221,8 @@ public class AyaLanguageServer implements LanguageServer {
     return null;
   }
 
-  public @Nullable LibrarySource find(@NotNull URI uri) {
-    return find(toPath(uri));
-  }
-
-  @NotNull private Path toPath(@NotNull URI uri) {
-    return FileUtil.canonicalize(Path.of(uri));
-  }
-
+  public @Nullable LibrarySource find(@NotNull URI uri) { return find(toPath(uri)); }
+  @NotNull private Path toPath(@NotNull URI uri) { return FileUtil.canonicalize(Path.of(uri)); }
   public @NotNull ImmutableSeq<HighlightResult> reload() {
     return libraries().flatMap(this::loadLibrary).toImmutableSeq();
   }

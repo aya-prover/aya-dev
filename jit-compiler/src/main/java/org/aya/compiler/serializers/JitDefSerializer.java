@@ -10,7 +10,7 @@ import org.aya.compiler.free.FreeExprBuilder;
 import org.aya.compiler.free.FreeJavaExpr;
 import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +21,15 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   }
 
   /**
-   * @see CompiledAya
+   * @see AyaMetadata
    */
-  @Override
-  protected @NotNull CompiledAya buildMetadata(@NotNull T unit) {
+  @Override protected @NotNull AyaMetadata buildMetadata(@NotNull T unit) {
     var ref = unit.ref();
     var module = ref.module;
     var assoc = ref.assoc();
     var assocIdx = assoc == null ? -1 : assoc.ordinal();
     assert module != null;
-    return new CompiledAyaImpl(
+    return new AyaMetadataImpl(
       module, ref.name(),
       assocIdx,
       buildShape(unit),

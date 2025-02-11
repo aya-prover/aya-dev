@@ -1,14 +1,13 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism.source;
+package source;
 
 import kala.collection.Seq;
-import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;
 import org.aya.compiler.serializers.ExprializeUtil;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     "DataFlowIssue", "LoopStatementThatDoesntLoop", "UnnecessaryLocalVariable"
   );
   @Override public @NotNull String buildClass(
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

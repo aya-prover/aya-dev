@@ -12,7 +12,7 @@ import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeCodeBuilder;
 import org.aya.compiler.free.data.LocalVariable;
 import org.aya.compiler.free.data.MethodRef;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.repr.CodeShape;
@@ -113,9 +113,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     builder.returnWith(result);
   }
 
-  @Override protected @NotNull CompiledAya buildMetadata(@NotNull MatchyData unit) {
+  @Override protected @NotNull AyaMetadata buildMetadata(@NotNull MatchyData unit) {
     var qname = unit.matchy.qualifiedName();
-    return new CompiledAyaImpl(
+    return new AyaMetadataImpl(
       qname.module(), qname.name(),
       -1, -1, new CodeShape.GlobalId[0]
     );

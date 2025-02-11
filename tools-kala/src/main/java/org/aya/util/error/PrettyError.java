@@ -14,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-/**
- * @author kiva
- */
+/// @author kiva
 public record PrettyError(
   @NotNull SourcePos errorRange,
   @NotNull Doc brief,
@@ -38,25 +36,11 @@ public record PrettyError(
     char beginCorner,
     char endCorner
   ) {
-    public @NotNull String underlineBody(int n) {
-      return Character.toString(underlineBody).repeat(n);
-    }
-
-    public @NotNull Doc underlineBodyDoc(int n) {
-      return Doc.plain(underlineBody(n));
-    }
-
-    public @NotNull Doc lineNoSepDoc() {
-      return Doc.plain(Character.toString(lineNoSeparator));
-    }
-
-    public @NotNull Doc beginCornerDoc() {
-      return Doc.plain(Character.toString(beginCorner));
-    }
-
-    public @NotNull Doc endCornerDoc() {
-      return Doc.plain(Character.toString(endCorner));
-    }
+    public @NotNull String underlineBody(int n) { return Character.toString(underlineBody).repeat(n); }
+    public @NotNull Doc underlineBodyDoc(int n) { return Doc.plain(underlineBody(n)); }
+    public @NotNull Doc lineNoSepDoc() { return Doc.plain(Character.toString(lineNoSeparator)); }
+    public @NotNull Doc beginCornerDoc() { return Doc.plain(Character.toString(beginCorner)); }
+    public @NotNull Doc endCornerDoc() { return Doc.plain(Character.toString(endCorner)); }
 
     public static final FormatConfig CLASSIC = new FormatConfig(
       Option.none(),

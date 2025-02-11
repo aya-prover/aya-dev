@@ -91,8 +91,8 @@ public final class FreeRunner<Carrier> {
       case FreeExpr.Lambda(var lamCaptures, var methodRef, var body) -> {
         var captureExprs = runFree(ap, builder, lamCaptures);
 
-        // run captures outside of subscope!
-        // brand new scope! the lambda body lives in a difference place to the current scope
+        // run captures outside subscope!
+        // brand-new scope! the lambda body lives in a difference place to the current scope
         try (var _ = new SubscopeHandle(MutableMap.create())) {
           yield builder.mkLambda(captureExprs, methodRef, (lap, cb) ->
             runFree(lap, cb, body));

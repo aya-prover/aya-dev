@@ -15,6 +15,14 @@ module Issue942 {
     wrap (\ x => z≠s (pinv x))
 }
 
+module PullRequest1085 {
+  open inductive Phantom Nat Nat (A : Type) | mk A
+  variable a b : Nat
+  def plus : Phantom a b Nat elim a
+  | 0 => mk b
+  | suc a => mk b
+}
+
 module Issue1130 {
   def f (p : I -> Nat) => 0
   def test => f (refl {a := 1})

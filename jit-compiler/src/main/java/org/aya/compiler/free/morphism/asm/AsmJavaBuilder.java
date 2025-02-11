@@ -7,11 +7,12 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.free.FreeClassBuilder;
 import org.aya.compiler.free.FreeJavaBuilder;
 import org.aya.compiler.free.FreeUtil;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.glavo.classfile.*;
 import org.glavo.classfile.attribute.NestHostAttribute;
@@ -26,7 +27,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
   /// @return the class descriptor
   public static @NotNull ClassDesc buildClass(
     @NotNull AsmOutputCollector collector,
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassData classData,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
@@ -43,21 +44,31 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
             .collect(Collectors.toList()));
         var fileModuleSizeValue = AnnotationValue.ofInt(metadata.fileModuleSize());
         var nameValue = AnnotationValue.ofString(metadata.name());
-        var assocValue = AnnotationValue.ofInt(metadata.assoc());
-        var shapeValue = AnnotationValue.ofInt(metadata.shape());
-        var recognitionValue = AnnotationValue.ofArray(
-          Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name()))
-            .collect(Collectors.toList())
+
+        var attributes = MutableList.of(
+          AnnotationElement.of(AyaMetadata.NAME_MODULE, moduleValue),
+          AnnotationElement.of(AyaMetadata.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
+          AnnotationElement.of(AyaMetadata.NAME_NAME, nameValue)
         );
+        if (metadata.assoc() != -1) {
+          var assocValue = AnnotationValue.ofInt(metadata.assoc());
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_ASSOC, assocValue));
+        }
+        if (metadata.shape() != -1) {
+          var shapeValue = AnnotationValue.ofInt(metadata.shape());
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
+        }
+        if (metadata.recognition().length != 0) {
+          var recognitionValue = AnnotationValue.ofArray(
+            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name()))
+              .collect(Collectors.toList())
+          );
+          attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
+        }
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
-          FreeUtil.fromClass(CompiledAya.class),
-          AnnotationElement.of(CompiledAya.NAME_MODULE, moduleValue),
-          AnnotationElement.of(CompiledAya.NAME_FILE_MODULE_SIZE, fileModuleSizeValue),
-          AnnotationElement.of(CompiledAya.NAME_NAME, nameValue),
-          AnnotationElement.of(CompiledAya.NAME_ASSOC, assocValue),
-          AnnotationElement.of(CompiledAya.NAME_SHAPE, shapeValue),
-          AnnotationElement.of(CompiledAya.NAME_RECOGNITION, recognitionValue)
+          FreeUtil.fromClass(AyaMetadata.class),
+          attributes.asJava()
         )));
       }
 
@@ -77,7 +88,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
   }
 
   @Override public @NotNull C buildClass(
-    @Nullable CompiledAya metadata,
+    @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder

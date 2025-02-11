@@ -1,14 +1,13 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.free.morphism.source;
+package source;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.SourceBuilder;
 import org.aya.compiler.free.*;
 import org.aya.compiler.free.data.FieldRef;
 import org.aya.compiler.free.data.MethodRef;
 import org.aya.compiler.serializers.ExprializeUtil;
-import org.aya.syntax.compile.CompiledAya;
+import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +16,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassName;
-import static org.aya.compiler.free.morphism.source.SourceFreeJavaBuilder.toClassRef;
+import static source.SourceFreeJavaBuilder.toClassName;
+import static source.SourceFreeJavaBuilder.toClassRef;
 
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
@@ -29,20 +28,20 @@ public record SourceClassBuilder(
     sourceBuilder.appendLine(prepend + name + " = " + value);
   }
 
-  public void buildMetadata(@NotNull CompiledAya compiledAya) {
-    sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(CompiledAya.class)) + "(");
+  public void buildMetadata(@NotNull AyaMetadata ayaMetadata) {
+    sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(AyaMetadata.class)) + "(");
     sourceBuilder.runInside(() -> {
-      buildMetadataRecord("module", SourceCodeBuilder.mkHalfArray(
-        ImmutableSeq.from(compiledAya.module()).map(ExprializeUtil::makeString)
+      buildMetadataRecord(AyaMetadata.NAME_MODULE, SourceCodeBuilder.mkHalfArray(
+        ImmutableSeq.from(ayaMetadata.module()).map(ExprializeUtil::makeString)
       ), true);
-      buildMetadataRecord("fileModuleSize", Integer.toString(compiledAya.fileModuleSize()), false);
-      buildMetadataRecord("name", ExprializeUtil.makeString(compiledAya.name()), false);
-      if (compiledAya.assoc() != -1)
-        buildMetadataRecord("assoc", Integer.toString(compiledAya.assoc()), false);
-      if (compiledAya.shape() != -1)
-        buildMetadataRecord("shape", Integer.toString(compiledAya.shape()), false);
-      if (compiledAya.recognition().length != 0) buildMetadataRecord("recognition", SourceCodeBuilder.mkHalfArray(
-        ImmutableSeq.from(compiledAya.recognition()).map(x ->
+      buildMetadataRecord(AyaMetadata.NAME_FILE_MODULE_SIZE, Integer.toString(ayaMetadata.fileModuleSize()), false);
+      buildMetadataRecord(AyaMetadata.NAME_NAME, ExprializeUtil.makeString(ayaMetadata.name()), false);
+      if (ayaMetadata.assoc() != -1)
+        buildMetadataRecord(AyaMetadata.NAME_ASSOC, Integer.toString(ayaMetadata.assoc()), false);
+      if (ayaMetadata.shape() != -1)
+        buildMetadataRecord(AyaMetadata.NAME_SHAPE, Integer.toString(ayaMetadata.shape()), false);
+      if (ayaMetadata.recognition().length != 0) buildMetadataRecord(AyaMetadata.NAME_RECOGNITION, SourceCodeBuilder.mkHalfArray(
+        ImmutableSeq.from(ayaMetadata.recognition()).map(x ->
           SourceCodeBuilder.makeRefEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name())
         )
       ), false);
@@ -51,12 +50,12 @@ public record SourceClassBuilder(
   }
 
   @Override public void buildNestedClass(
-    @NotNull CompiledAya compiledAya,
+    @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
     @NotNull Consumer<FreeClassBuilder> builder
   ) {
-    buildMetadata(compiledAya);
+    buildMetadata(ayaMetadata);
     this.sourceBuilder.buildClass(name, toClassRef(FreeUtil.fromClass(superclass)), true, () ->
       builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
