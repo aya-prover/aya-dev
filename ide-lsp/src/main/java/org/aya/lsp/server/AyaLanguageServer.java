@@ -103,9 +103,10 @@ public class AyaLanguageServer implements LanguageServer {
 
   /// Check whether the project/the aya file {@param projectOrFile} represents is registered in this {@link AyaLanguageServer}.
   public @Nullable LibraryOwner getRegisteredLibrary(@NotNull ProjectPath projectOrFile) {
-    return libraries.getOrNull(FileUtil.canonicalize(projectOrFile.path()));
+    return libraries.getOrNull(projectOrFile.path());
   }
 
+  /// @apiNote requires the lock to {@link #libraries}
   private @NotNull SeqView<LibraryOwner> tryAyaLibrary(@NotNull ProjectPath.Project path) {
     var registered = getRegisteredLibrary(path);
     if (registered != null) {
@@ -117,8 +118,9 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   /// @param project a path to the directory that contains "aya.json"
-  /// @return null if the path needs to be "mocked", empty if the library fails to load (due to IO exceptions
+  /// @return empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
+  /// @apiNote requires the lock to {@link #libraries}
   private @NotNull SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectPath.Project project) {
     var projectPath = project.path();
     try {
@@ -136,6 +138,7 @@ public class AyaLanguageServer implements LanguageServer {
     return SeqView.empty();
   }
 
+  /// @apiNote requires the lock to {@link #libraries}
   private SeqView<WsLibrary> mockLibraries(@NotNull Path path) {
     var mocked = AyaFiles.collectAyaSourceFiles(path, 1)
       .map(f -> Tuple.of(f, WsLibrary.mock(f)));
@@ -301,7 +304,7 @@ public class AyaLanguageServer implements LanguageServer {
           switch (src.owner()) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
             case WsLibrary owner -> {
-              // TODO: how about `find` returns a tuple?
+              // TODO: how about `AyaLanguageServer#find` returns a tuple?
               var key = libraries.keysView()
                 .find(t -> libraries.get(t) == owner)
                 .get();

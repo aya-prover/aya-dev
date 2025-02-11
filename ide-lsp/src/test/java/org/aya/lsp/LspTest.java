@@ -17,6 +17,7 @@ import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.util.FileUtil;
 import org.javacs.lsp.InitializeParams;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.TextDocumentIdentifier;
@@ -95,16 +96,20 @@ public class LspTest {
   }
 
   @Test public void testDuplicateRegister() {
+    var pTestLib = new ProjectPath.Project(FileUtil.canonicalize(TEST_LIB));
+    var pTestLib0 = new ProjectPath.Project(FileUtil.canonicalize(TEST_LIB0));
+    var pTestFile = new ProjectPath.File(FileUtil.canonicalize(TEST_FILE));
+
     launch().execute(
       register(TEST_LIB, (_, lsp) ->
-        duplicateRegisterTester(1, new ProjectPath.Project(TEST_LIB), lsp)),
+        duplicateRegisterTester(1, pTestLib, lsp)),
       register(TEST_LIB0.resolve(Constants.AYA_JSON), (_, lsp) ->
-        duplicateRegisterTester(2, new ProjectPath.Project(TEST_LIB0), lsp)),
+        duplicateRegisterTester(2, pTestLib0, lsp)),
       // test dup here
       register(TEST_LIB0, (_, lsp) ->
-        duplicateRegisterTester(2, new ProjectPath.Project(TEST_LIB0), lsp)),
+        duplicateRegisterTester(2, pTestLib0, lsp)),
       register(TEST_FILE, (_, lsp) ->
-        duplicateRegisterTester(3, new ProjectPath.File(TEST_FILE), lsp))
+        duplicateRegisterTester(3, pTestFile, lsp))
     );
   }
 
