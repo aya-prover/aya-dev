@@ -82,9 +82,7 @@ public class AyaLanguageServer implements LanguageServer {
     Log.init(this.client);
   }
 
-  public @NotNull CollectionView<LibraryOwner> libraries() {
-    return libraries.valuesView();
-  }
+  public @NotNull CollectionView<LibraryOwner> libraries() { return libraries.valuesView(); }
 
   /// @return the libraries that are actually loaded
   public @NotNull SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
@@ -142,6 +140,7 @@ public class AyaLanguageServer implements LanguageServer {
     var mocked = AyaFiles.collectAyaSourceFiles(path, 1)
       .map(f -> Tuple.of(f, WsLibrary.mock(f)));
 
+    // Cannot replace with `onEach` due to the laziness of `onEach`
     mocked.forEach(libraries::put);
     return mocked.view().map(Tuple2::component2);
   }
@@ -346,8 +345,7 @@ public class AyaLanguageServer implements LanguageServer {
     return Optional.of(new Hover(List.of(marked)));
   }
 
-  @Override
-  public Optional<SignatureHelp> signatureHelp(TextDocumentPositionParams params) {
+  @Override public Optional<SignatureHelp> signatureHelp(TextDocumentPositionParams params) {
     throw new UnsupportedOperationException();
   }
 
