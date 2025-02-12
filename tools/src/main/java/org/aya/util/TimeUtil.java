@@ -4,7 +4,10 @@ package org.aya.util;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 
+import kala.function.CheckedRunnable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface TimeUtil {
@@ -18,5 +21,31 @@ public interface TimeUtil {
 
   static @NotNull String gitFormat() {
     return ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss X"));
+  }
+
+  static long profile(@NotNull CheckedRunnable<?> runnable) {
+    var begin = System.currentTimeMillis();
+    runnable.run();
+    var end = System.currentTimeMillis();
+    return end - begin;
+  }
+
+  static double profileMany(
+    @Nls(capitalization = Nls.Capitalization.Sentence) String title,
+    int count, @NotNull CheckedRunnable<?> runnable
+  ) {
+    assert count > 0;
+    System.out.println("Profiling: " + title);
+
+    var times = new long[count];
+    for (int i = 0; i < count; ++i) {
+      var time = profile(runnable);
+      times[i] = time;
+      System.out.println(i + ": Done in " + millisToString(time));
+    }
+
+    var stats = Arrays.stream(times).summaryStatistics();
+    System.out.println("Average: Done in " + millisToString((long) stats.getAverage()));
+    return stats.getAverage();
   }
 }

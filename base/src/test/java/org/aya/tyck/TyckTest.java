@@ -28,6 +28,7 @@ import org.aya.syntax.core.term.call.FnCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
+import org.aya.util.TimeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -85,14 +86,16 @@ public class TyckTest {
     var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> random.nextInt(400)));
     var args = ImmutableSeq.of(NatCall, leCall, largeList);
 
-    var beginTime = System.currentTimeMillis();
-    var sortResult = new Normalizer(new TyckState(result.info().shapeFactory(), new PrimFactory()))
-      .normalize(new FnCall(tree_sort, 0, args), NormalizeMode.FULL);
-    var endTime = System.currentTimeMillis();
-    assertNotNull(sortResult);
+    var normalizer = new Normalizer(new TyckState(result.info().shapeFactory(), new PrimFactory()));
+    var sortResult = new Object() {
+      Term t;
+    };
+    var deltaTime = TimeUtil.profile(() -> sortResult.t = normalizer
+      .normalize(new FnCall(tree_sort, 0, args), NormalizeMode.FULL));
+    assertNotNull(sortResult.t);
 
-    System.out.println("Done in " + (endTime - beginTime));
-    System.out.println(sortResult.easyToString());
+    System.out.println("Done in " + TimeUtil.millisToString(deltaTime));
+    System.out.println(sortResult.t.easyToString());
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {
