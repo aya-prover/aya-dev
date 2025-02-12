@@ -214,6 +214,8 @@ public class CorePrettier extends BasePrettier<Term> {
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
+      case PartialTyTerm(var lhs, var rhs, var A) -> throw new UnsupportedOperationException("TODO");
+      case PartialTerm(var element) -> throw new UnsupportedOperationException("TODO");
     };
   }
 

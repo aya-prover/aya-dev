@@ -277,6 +277,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!compare(lProj, rProj, lTy)) yield false;
         yield compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj));
       }
+      case PartialTerm element1 -> {
+        if (!(rhs instanceof PartialTerm(var element2)) || !(type instanceof PartialTyTerm(_, _, var A))) yield false;
+        yield doCompareTyped(element1, element2, A);
+      }
       default -> compareUntyped(lhs, rhs) != null;
     };
   }
@@ -516,6 +520,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
         if (!tyResult) yield false;
         yield compare(a0, b0, A.apply(DimTerm.I0)) && compare(a1, b1, A.apply(DimTerm.I1));
+      }
+      case Pair(PartialTyTerm(var lhs1, var rhs1, var A1), PartialTyTerm(var lhs2, var rhs2, var A2)) -> {
+        // lhs1 = rhs1 ==> lhs2 = rhs2
+        boolean to = withConnection(lhs1, rhs1, () -> state.isConnected(lhs2, rhs2));
+        if (!to) yield false;
+        // lhs1 = rhs1 <== lhs2 = rhs2
+        boolean from = withConnection(lhs2, rhs2, () -> state.isConnected(lhs1, rhs1));
+        if (!from) yield false;
+        yield false;
       }
       default -> throw noRules(preLhs);
     };

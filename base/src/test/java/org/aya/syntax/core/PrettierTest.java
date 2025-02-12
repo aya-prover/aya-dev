@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PrettierTest {
+public class  PrettierTest {
   @BeforeAll public static void setup() {
     Global.NO_RANDOM_NAME = true;
   }
