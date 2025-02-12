@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 import kala.function.CheckedRunnable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface TimeUtil {
@@ -29,9 +30,12 @@ public interface TimeUtil {
     return end - begin;
   }
 
-  static double profileMany(String title, int count, @NotNull CheckedRunnable<?> runnable) {
+  static double profileMany(
+    @Nls(capitalization = Nls.Capitalization.Sentence) String title,
+    int count, @NotNull CheckedRunnable<?> runnable
+  ) {
     assert count > 0;
-    System.out.println("Profiling " + title);
+    System.out.println("Profiling: " + title);
 
     var times = new long[count];
     for (int i = 0; i < count; ++i) {
