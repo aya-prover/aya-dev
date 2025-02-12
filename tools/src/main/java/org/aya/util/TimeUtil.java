@@ -4,6 +4,7 @@ package org.aya.util;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 
 import kala.function.CheckedRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -28,29 +29,19 @@ public interface TimeUtil {
     return end - begin;
   }
 
-  static long profileMany(String title, int count, @NotNull CheckedRunnable<?> runnable) {
+  static double profileMany(String title, int count, @NotNull CheckedRunnable<?> runnable) {
     assert count > 0;
     System.out.println("Profiling " + title);
 
     var times = new long[count];
-    long begin, end;
-
     for (int i = 0; i < count; ++i) {
-      begin = System.currentTimeMillis();
-      runnable.run();
-      end = System.currentTimeMillis();
-      times[i] = end - begin;
-    }
-
-    long sum = 0;
-    for (var i = 0; i < count; ++i) {
-      var time = times[i];
-      sum += time;
+      var time = profile(runnable);
+      times[i] = time;
       System.out.println(i + ": Done in " + millisToString(time));
     }
 
-    var ave = sum / count;
-    System.out.println("Average: Done in " + millisToString(ave));
-    return ave;
+    var stats = Arrays.stream(times).summaryStatistics();
+    System.out.println("Average: Done in " + millisToString((long) stats.getAverage()));
+    return stats.getAverage();
   }
 }
