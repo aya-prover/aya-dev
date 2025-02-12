@@ -19,9 +19,7 @@ import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.ModuleCallback;
 import org.aya.syntax.SyntaxTestUtil;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.*;
-import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.call.FnCall;
@@ -67,8 +65,7 @@ public class TyckTest {
     DataDefLike List = getDef(defs, "List");
     ConDefLike nil = getDef(defs, "[]");
     ConDefLike cons = getDef(defs, ":>");
-    FnDefLike le = getDef(defs, "le");
-    FnDefLike tree_sort = getDef(defs, "tree_sort");
+    FnDefLike tree_sortNat = getDef(defs, "tree_sortNat");
 
     var NatCall = new DataCall(Nat, 0, ImmutableSeq.empty());
     var ListNatCall = new DataCall(List, 0, ImmutableSeq.of(NatCall));
@@ -77,25 +74,24 @@ public class TyckTest {
 
     Function<ImmutableIntSeq, Term> mkList = xs -> new ListTerm(xs.mapToObj(mkInt), nil, cons, ListNatCall);
 
-    var leCall = new LamTerm(new Closure.Jit(x ->
-      new LamTerm(new Closure.Jit(y ->
-        new FnCall(le, 0, ImmutableSeq.of(x, y))))));
-
     var seed = 114514L;
     var random = new Random(seed);
     var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> random.nextInt(400)));
-    var args = ImmutableSeq.of(NatCall, leCall, largeList);
+    var args = ImmutableSeq.of(largeList);
 
     var normalizer = new Normalizer(new TyckState(result.info().shapeFactory(), new PrimFactory()));
     var sortResult = new Object() {
       Term t;
     };
     var deltaTime = TimeUtil.profile(() -> sortResult.t = normalizer
-      .normalize(new FnCall(tree_sort, 0, args), NormalizeMode.FULL));
+      .normalize(new FnCall(tree_sortNat, 0, args), NormalizeMode.FULL));
     assertNotNull(sortResult.t);
 
     System.out.println("Done in " + TimeUtil.millisToString(deltaTime));
     System.out.println(sortResult.t.easyToString());
+
+    TimeUtil.profileMany("Running many times on the same input...", 5, () ->
+      normalizer.normalize(new FnCall(tree_sortNat, 0, args), NormalizeMode.FULL));
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {

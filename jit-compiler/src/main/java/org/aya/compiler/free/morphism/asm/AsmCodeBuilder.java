@@ -2,6 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.free.morphism.asm;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.MethodTypeDesc;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.ObjIntConsumer;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.free.ArgumentProvider;
@@ -19,13 +26,6 @@ import org.glavo.classfile.TypeKind;
 import org.glavo.classfile.instruction.SwitchCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.ObjIntConsumer;
 
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method
@@ -46,7 +46,7 @@ public record AsmCodeBuilder(
     boolean hasThis
   ) {
     this(writer, parent,
-      AsmVariablePool.from(parent.owner(), parameterTypes),
+      AsmVariablePool.from(hasThis ? parent.owner() : null, parameterTypes),
       null,
       hasThis
     );
@@ -60,11 +60,7 @@ public record AsmCodeBuilder(
   }
 
   public void loadExpr(@NotNull FreeJavaExpr expr) { assertExpr(expr).accept(this); }
-
-  @Override
-  public void close() {
-    pool.submit(this);
-  }
+  @Override public void close() { pool.submit(this); }
 
   public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
     try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, hasThis)) {
