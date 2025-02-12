@@ -22,7 +22,6 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
-import org.aya.syntax.literate.CodeOptions;
 import org.aya.util.TimeUtil;
 import org.junit.jupiter.api.Test;
 
@@ -63,12 +62,15 @@ public class RedBlackTreeTest {
 
     var normalizer = new Normalizer(result.info().makeTyckState());
     var term = tree_sortNat.invoke(args);
-    var sortResult = normalizer.normalize(term, CodeOptions.NormalizeMode.FULL);
-    assertNotNull(sortResult);
-    System.out.println(sortResult.easyToString());
+    assertNotNull(term);
+    System.out.println(term.easyToString());
 
-    System.out.println("Now running many times...");
-    TimeUtil.profileMany("Code Execution", 5, () ->
-      normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL));
+    TimeUtil.profileMany("Now running many times on the same input...", 5, () ->
+      tree_sortNat.invoke(args));
+
+    TimeUtil.profileMany("Now running many times on new inputs....", 5, () -> {
+      var newList = mkList.apply(ImmutableIntSeq.fill(1500, () -> random.nextInt(400)));
+      tree_sortNat.invoke(ImmutableSeq.of(newList));
+    });
   }
 }
