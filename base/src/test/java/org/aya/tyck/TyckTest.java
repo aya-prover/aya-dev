@@ -77,21 +77,21 @@ public class TyckTest {
     var seed = 114514L;
     var random = new Random(seed);
     var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> random.nextInt(400)));
-    var args = ImmutableSeq.of(largeList);
+    var term = new FnCall(tree_sortNat, 0, ImmutableSeq.of(largeList));
 
     var normalizer = new Normalizer(new TyckState(result.info().shapeFactory(), new PrimFactory()));
     var sortResult = new Object() {
       Term t;
     };
     var deltaTime = TimeUtil.profile(() -> sortResult.t = normalizer
-      .normalize(new FnCall(tree_sortNat, 0, args), NormalizeMode.FULL));
+      .normalize(term, NormalizeMode.FULL));
     assertNotNull(sortResult.t);
 
     System.out.println("Done in " + TimeUtil.millisToString(deltaTime));
     System.out.println(sortResult.t.easyToString());
 
     TimeUtil.profileMany("Running many times on the same input...", 10, () ->
-      normalizer.normalize(new FnCall(tree_sortNat, 0, args), NormalizeMode.FULL));
+      normalizer.normalize(term, NormalizeMode.FULL));
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) {
