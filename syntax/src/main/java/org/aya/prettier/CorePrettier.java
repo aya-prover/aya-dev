@@ -17,6 +17,7 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.compile.*;
+import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
@@ -214,8 +215,10 @@ public class CorePrettier extends BasePrettier<Term> {
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
-      case PartialTyTerm(var lhs, var rhs, var A) -> throw new UnsupportedOperationException("TODO");
-      case PartialTerm(var element) -> throw new UnsupportedOperationException("TODO");
+      case PartialTyTerm(var lhs, var rhs, var A) -> {
+        yield Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, lhs), term(Outer.AppSpine, rhs), term(Outer.AppSpine, A));
+      }
+      case PartialTerm(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
     };
   }
 
