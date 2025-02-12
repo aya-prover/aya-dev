@@ -13,7 +13,7 @@ kala = "0.81.0"
 # https://picocli.info
 picocli = "4.7.6"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
-aya-upstream = "0.0.33"
+aya-upstream = "0.0.34"
 # https://github.com/jline/jline3
 jline = "3.29.0"
 # https://junit.org/junit5
