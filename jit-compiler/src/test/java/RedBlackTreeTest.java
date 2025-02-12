@@ -23,6 +23,7 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.literate.CodeOptions;
+import org.aya.util.TimeUtil;
 import org.junit.jupiter.api.Test;
 
 public class RedBlackTreeTest {
@@ -34,7 +35,7 @@ public class RedBlackTreeTest {
     var result = CompileTest.tyck(code);
 
     var baseDir = CompileTest.GEN_DIR.resolve("redblack");
-    Profiler.profileMany("Code Generation", 1, () -> CompileTest.serializeFrom(result, baseDir));
+    TimeUtil.profileMany("Code Generation", 1, () -> CompileTest.serializeFrom(result, baseDir));
     var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, getClass().getClassLoader());
     var tester = new InstanceLoader(innerLoader);
 
@@ -57,17 +58,17 @@ public class RedBlackTreeTest {
 
     var seed = 114514L;
     var random = new Random(seed);
-    var largeList = mkList.apply(ImmutableIntSeq.fill(500, () -> random.nextInt(400)));
+    var largeList = mkList.apply(ImmutableIntSeq.fill(1500, () -> random.nextInt(400)));
     var args = ImmutableSeq.of(largeList);
 
     var normalizer = new Normalizer(result.info().makeTyckState());
     var term = tree_sortNat.invoke(args);
     var sortResult = normalizer.normalize(term, CodeOptions.NormalizeMode.FULL);
     assertNotNull(sortResult);
-
-    Profiler.profileMany("Code Execution", 5, () ->
-      normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL));
-
     System.out.println(sortResult.easyToString());
+
+    System.out.println("Now running many times...");
+    TimeUtil.profileMany("Code Execution", 5, () ->
+      normalizer.normalize(tree_sortNat.invoke(args), CodeOptions.NormalizeMode.FULL));
   }
 }
