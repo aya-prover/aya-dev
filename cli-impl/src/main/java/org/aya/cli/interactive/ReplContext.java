@@ -6,10 +6,10 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple2;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleExport;
@@ -137,7 +137,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     var node = resolve(prefix);
     if (node == null) return ImmutableSeq.empty();
 
-    var hint = MutableLinkedSet.<String>create();
+    var hint = MutableTreeSet.<String>create();
 
     hint.addAll(node.children().keysView());
     if (node.inhabited) {

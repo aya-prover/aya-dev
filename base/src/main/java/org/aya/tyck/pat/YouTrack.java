@@ -4,9 +4,9 @@ package org.aya.tyck.pat;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedSet;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSet;
+import kala.collection.mutable.MutableTreeSet;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
@@ -66,7 +66,7 @@ public record YouTrack(
   }
 
   public void check(@NotNull FnClauseBody body, @NotNull Term type) {
-    var doms = MutableLinkedSet.<ClausesProblem.Domination>create();
+    var doms = MutableTreeSet.<ClausesProblem.Domination>create();
     body.classes.forEach(results -> {
       var contents = results.cls().mapToObj(i -> new Info(i, body.clauses.get(i)));
       for (int i = 1, size = contents.size(); i < size; i++) {
