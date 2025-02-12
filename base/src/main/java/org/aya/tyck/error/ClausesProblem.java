@@ -20,6 +20,8 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public sealed interface ClausesProblem extends Problem {
   @Override default @NotNull Severity level() { return Severity.ERROR; }
 
@@ -116,7 +118,8 @@ public sealed interface ClausesProblem extends Problem {
     }
   }
 
-  record Domination(int dom, int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {
+  record Domination(int dom, int sub, @Override @NotNull SourcePos sourcePos)
+    implements ClausesProblem, Comparable<Domination> {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var subOrdinal = Doc.ordinal(sub);
       return Doc.sep(
@@ -128,6 +131,15 @@ public sealed interface ClausesProblem extends Problem {
     }
 
     @Override public @NotNull Severity level() { return Severity.WARN; }
+    @Override public int compareTo(@NotNull ClausesProblem.Domination o) {
+      var domCmp = Integer.compare(dom, o.dom);
+      return domCmp != 0 ? domCmp : Integer.compare(sub, o.sub);
+    }
+    @Override public boolean equals(Object o) {
+      if (!(o instanceof Domination that)) return false;
+      return dom == that.dom && sub == that.sub;
+    }
+    @Override public int hashCode() { return Objects.hash(dom, sub); }
   }
 
   record FMDomination(int sub, @Override @NotNull SourcePos sourcePos) implements ClausesProblem {

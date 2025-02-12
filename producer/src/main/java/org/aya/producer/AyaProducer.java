@@ -2,10 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.producer;
 
+import java.util.stream.Collectors;
+
+import static org.aya.parser.AyaPsiElementTypes.*;
+
 import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import kala.collection.ArraySeq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
@@ -45,11 +50,6 @@ import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
-import static org.aya.parser.AyaPsiElementTypes.*;
 
 /**
  * Working with GK parser:
@@ -304,10 +304,9 @@ public record AyaProducer(
           MutableList<WithPos<Suppress>> sups = FreezableMutableList.create();
 
           for (var arg : args) {
-            var resolved = Arrays.stream(Suppress.values())
+            var resolved = ArraySeq.wrap(Suppress.values()).view()
               .filter(x -> arg.tokenText().contentEquals(x.name()))
-              .findFirst()
-              .orElse(null);
+              .getAnyOrNull();
 
             if (resolved == null) {
               reporter.report(new BadXWarn.BadWarnWarn(sourcePosOf(arg), arg.tokenText().toString()));

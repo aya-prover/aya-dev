@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.render.vscode;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.Strictness;
@@ -20,10 +24,6 @@ import org.aya.pretty.style.AyaColorScheme;
 import org.aya.pretty.style.AyaStyleKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ColorTheme {
   public static Try<ColorTheme> loadFrom(@NotNull Path path) throws JsonParseException {
@@ -103,10 +103,10 @@ public class ColorTheme {
   }
 
   public void findAndPut(@NotNull MutableMap<String, Integer> putTo, @NotNull String key, @NotNull Seq<String> scope, @NotNull Map<String, Integer> fallback) {
-    var result = scope.view().map(this::find).findFirst(Option::isDefined);
+    var result = scope.view().flatMap(this::find).getFirstOption();
 
     if (result.isDefined()) {
-      var settings = result.get().get();
+      var settings = result.get();
       var foreground = settings.foreground;
 
       if (foreground != null) {

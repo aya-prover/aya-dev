@@ -2,6 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -14,9 +17,6 @@ import org.aya.util.error.PrettyError;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public interface Problem {
   enum Severity {
@@ -51,7 +51,7 @@ public interface Problem {
       sourcePos,
       brief(options),
       prettyErrorConf,
-      inlineHints(options).stream()
+      inlineHints(options)
         .collect(Collectors.groupingBy(WithPos::sourcePos,
           Collectors.mapping(WithPos::data, Seq.factory())))
         .entrySet()

@@ -174,6 +174,16 @@ In file $FILE:5:2 ->
 Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
+In file $FILE:8:2 ->
+
+  6 │   | suc (suc a) => a
+  7 │   | 2147483647 => 3
+  8 │   | 2147483647 => 4
+    │     ╰─────────────╯
+
+Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
+         unreachable
+
 In file $FILE:9:2 ->
 
   7 │   | 2147483647 => 3
@@ -212,16 +222,6 @@ In file $FILE:7:2 ->
     │     ╰─────────────╯
 
 Warning: The 6th clause dominates the 5th clause. The 5th clause will be 
-         unreachable
-
-In file $FILE:8:2 ->
-
-  6 │   | suc (suc a) => a
-  7 │   | 2147483647 => 3
-  8 │   | 2147483647 => 4
-    │     ╰─────────────╯
-
-Warning: The 2nd clause dominates the 6th clause. The 6th clause will be 
          unreachable
 
 6 error(s), 7 warning(s).
@@ -329,16 +329,6 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
        and
          suc b
 
-In file $FILE:13:2 ->
-
-  11 │   | a, b => b
-  12 │   | a, suc b => b
-  13 │   | a, 1919810 => 1
-     │     ╰─────────────╯
-
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
 In file $FILE:12:2 ->
 
   10 │   overlap def largeInt3 Nat Nat : Nat
@@ -347,6 +337,16 @@ In file $FILE:12:2 ->
      │     ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
+In file $FILE:13:2 ->
+
+  11 │   | a, b => b
+  12 │   | a, suc b => b
+  13 │   | a, 1919810 => 1
+     │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:15:12 ->
@@ -450,16 +450,6 @@ Error: The 2nd and the 1st clauses are not confluent because we failed to unify
        and
          suc b
 
-In file $FILE:26:2 ->
-
-  24 │   | b, a => b
-  25 │   | suc b, a => b
-  26 │   | 1919810, a => 1
-     │     ╰─────────────╯
-
-Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
-         unreachable
-
 In file $FILE:25:2 ->
 
   23 │   overlap def largeInt3-inv Nat Nat : Nat
@@ -468,6 +458,16 @@ In file $FILE:25:2 ->
      │     ╰───────────╯
 
 Warning: The 1st clause dominates the 2nd clause. The 2nd clause will be 
+         unreachable
+
+In file $FILE:26:2 ->
+
+  24 │   | b, a => b
+  25 │   | suc b, a => b
+  26 │   | 1919810, a => 1
+     │     ╰─────────────╯
+
+Warning: The 1st clause dominates the 3rd clause. The 3rd clause will be 
          unreachable
 
 In file $FILE:28:12 ->
@@ -488,16 +488,6 @@ Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
        and
          515
 
-In file $FILE:29:2 ->
-
-  27 │   
-  28 │   overlap def multi-nodes Nat Nat : Nat
-  29 │   | 114, 0 => 0
-     │     ╰─────────╯
-
-Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
-         unreachable
-
 In file $FILE:31:2 ->
 
   29 │   | 114, 0 => 0
@@ -506,6 +496,16 @@ In file $FILE:31:2 ->
      │     ╰─────────────╯
 
 Warning: The 2nd clause dominates the 3rd clause. The 3rd clause will be 
+         unreachable
+
+In file $FILE:29:2 ->
+
+  27 │   
+  28 │   overlap def multi-nodes Nat Nat : Nat
+  29 │   | 114, 0 => 0
+     │     ╰─────────╯
+
+Warning: The 5th clause dominates the 1st clause. The 1st clause will be 
          unreachable
 
 In file $FILE:30:2 ->

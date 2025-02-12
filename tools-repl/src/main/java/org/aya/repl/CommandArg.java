@@ -2,7 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
-import kala.collection.Seq;
+import java.util.function.Function;
+
+import kala.collection.ArraySeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.control.Try;
@@ -10,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.AggregateCompleter;
-
-import java.util.function.Function;
 
 public interface CommandArg {
   @NotNull Class<?> type();
@@ -82,7 +82,7 @@ public interface CommandArg {
     try {
       return Enum.valueOf(enumClass, trimName);
     } catch (IllegalArgumentException _) {
-      var one = Seq.of(enumClass.getEnumConstants())
+      var one = ArraySeq.wrap(enumClass.getEnumConstants())
         .findFirst(n -> n.name().toLowerCase().startsWith(trimName.toLowerCase()));
       if (one.isEmpty()) throw new IllegalArgumentException("No such enum constant: " + name);
       return one.get();
