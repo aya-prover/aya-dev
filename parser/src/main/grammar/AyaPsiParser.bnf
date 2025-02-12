@@ -262,6 +262,7 @@ expr ::= newExpr
        | lambda1Expr
        | lambda2Expr
        | matchExpr
+       | partialExpr
        | letExpr
        | doExpr
        | selfExpr
@@ -292,6 +293,7 @@ piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 selfExpr ::= KW_SELF (AT qualifiedId)?
+partialExpr ::= KW_PARTIAL expr
 
 letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"

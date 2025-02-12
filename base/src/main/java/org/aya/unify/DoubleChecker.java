@@ -77,7 +77,7 @@ public record DoubleChecker(
         unifier.compare(preterm, newMeta, null);
         yield true;
       }
-      case PartialTerm element ->
+      case PartialTerm(var element) ->
         whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
           ? withConnection(r, s, () -> inherit(element, A))
           : failF(new BadExprError(preterm, unifier.pos, expected));

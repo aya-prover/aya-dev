@@ -50,8 +50,9 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_0_EXPR,
       LAMBDA_1_EXPR, LAMBDA_2_EXPR, LET_EXPR, LITERAL,
       LIT_INT_EXPR, LIT_STRING_EXPR, MATCH_EXPR, NEW_EXPR,
-      PI_EXPR, PROJ_EXPR, REF_EXPR, SELF_EXPR,
-      SIGMA_EXPR, TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
+      PARTIAL_EXPR, PI_EXPR, PROJ_EXPR, REF_EXPR,
+      SELF_EXPR, SIGMA_EXPR, TUPLE_ATOM, ULIFT_ATOM,
+      UNIV_EXPR),
   };
 
   /* ********************************************************** */
@@ -2258,13 +2259,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 5: ATOM(lambda1Expr)
   // 6: ATOM(lambda2Expr)
   // 7: ATOM(matchExpr)
-  // 8: PREFIX(letExpr)
-  // 9: ATOM(doExpr)
-  // 10: ATOM(selfExpr)
-  // 11: ATOM(atomExpr)
-  // 12: BINARY(arrowExpr)
-  // 13: POSTFIX(appExpr)
-  // 14: POSTFIX(projExpr)
+  // 8: PREFIX(partialExpr)
+  // 9: PREFIX(letExpr)
+  // 10: ATOM(doExpr)
+  // 11: ATOM(selfExpr)
+  // 12: ATOM(atomExpr)
+  // 13: BINARY(arrowExpr)
+  // 14: POSTFIX(appExpr)
+  // 15: POSTFIX(projExpr)
   public static boolean expr(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expr")) return false;
     addVariant(b, "<expr>");
@@ -2278,6 +2280,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = lambda1Expr(b, l + 1);
     if (!r) r = lambda2Expr(b, l + 1);
     if (!r) r = matchExpr(b, l + 1);
+    if (!r) r = partialExpr(b, l + 1);
     if (!r) r = letExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
     if (!r) r = selfExpr(b, l + 1);
@@ -2293,15 +2296,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 12 && consumeTokenSmart(b, TO)) {
-        r = expr(b, l, 11);
+      if (g < 13 && consumeTokenSmart(b, TO)) {
+        r = expr(b, l, 12);
         exit_section_(b, l, m, ARROW_EXPR, r, true, null);
       }
-      else if (g < 13 && appExpr_0(b, l + 1)) {
+      else if (g < 14 && appExpr_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, APP_EXPR, r, true, null);
       }
-      else if (g < 14 && projFix(b, l + 1)) {
+      else if (g < 15 && projFix(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROJ_EXPR, r, true, null);
       }
@@ -2534,6 +2537,18 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
+  public static boolean partialExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialExpr")) return false;
+    if (!nextTokenIsSmart(b, KW_PARTIAL)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, KW_PARTIAL);
+    p = r;
+    r = p && expr(b, l, 8);
+    exit_section_(b, l, m, PARTIAL_EXPR, r, p, null);
+    return r || p;
+  }
+
   public static boolean letExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "letExpr")) return false;
     if (!nextTokenIsSmart(b, KW_LET)) return false;
@@ -2541,7 +2556,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = letExpr_0(b, l + 1);
     p = r;
-    r = p && expr(b, l, 8);
+    r = p && expr(b, l, 9);
     exit_section_(b, l, m, LET_EXPR, r, p, null);
     return r || p;
   }

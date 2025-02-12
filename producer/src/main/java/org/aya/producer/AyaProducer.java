@@ -679,6 +679,10 @@ public record AyaProducer(
       var tele = unitPattern(node.child(UNIT_PATTERN));
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
     }
+    if (node.is(PARTIAL_EXPR)) {
+      var body = expr(node.child(EXPR));
+      return new WithPos<>(pos, new Expr.Partial(body));
+    }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
       var names = new Expr.IdiomNames(

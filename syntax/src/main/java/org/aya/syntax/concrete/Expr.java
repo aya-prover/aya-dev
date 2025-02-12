@@ -275,6 +275,12 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
+  record Partial(@NotNull WithPos<Expr> body) implements Expr {
+    @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    }
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) { f.accept(body); }
+  }
+
   record RawSort(@NotNull SortKind kind) implements Expr, Sugar {
     @Override public @NotNull RawSort descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
