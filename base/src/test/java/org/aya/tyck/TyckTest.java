@@ -90,7 +90,7 @@ public class TyckTest {
     System.out.println("Done in " + TimeUtil.millisToString(deltaTime));
     System.out.println(sortResult.t.easyToString());
 
-    TimeUtil.profileMany("Running many times on the same input...", 5, () ->
+    TimeUtil.profileMany("Running many times on the same input...", 10, () ->
       normalizer.normalize(new FnCall(tree_sortNat, 0, args), NormalizeMode.FULL));
   }
 

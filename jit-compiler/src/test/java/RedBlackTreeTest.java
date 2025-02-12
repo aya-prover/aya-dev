@@ -36,7 +36,8 @@ public class RedBlackTreeTest {
     stream.close();
     var result = CompileTest.tyck(code);
     var baseDir = CompileTest.GEN_DIR.resolve("redblack");
-    TimeUtil.profileMany("Code generation", 1, () -> CompileTest.serializeFrom(result, baseDir));
+    var time = TimeUtil.profile(() -> CompileTest.serializeFrom(result, baseDir));
+    System.out.println("Code generation time: " + TimeUtil.millisToString(time));
     var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, RedBlackTreeTest.class.getClassLoader());
     InstanceLoader tester = new InstanceLoader(innerLoader);
 
@@ -68,7 +69,7 @@ public class RedBlackTreeTest {
     assertNotNull(term);
     System.out.println(term.easyToString());
 
-    TimeUtil.profileMany("Running many times on the same input...", 5, () ->
+    TimeUtil.profileMany("Running many times on the same input...", 10, () ->
       tree_sortNat.invoke(args));
   }
 
