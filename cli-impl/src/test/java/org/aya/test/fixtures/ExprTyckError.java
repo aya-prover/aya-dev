@@ -68,4 +68,9 @@ public interface ExprTyckError {
     open inductive Wrap (A : Type) | wrap A
     def what (A : Type) (w : Wrap) : w = w => refl
     """;
+
+  @Language("Aya") String testBadPartial = """
+    prim I
+    def test : I => partial 0
+    """;
 }

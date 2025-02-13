@@ -9,11 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class  PrettierTest {
-  @BeforeAll public static void setup() {
-    Global.NO_RANDOM_NAME = true;
-  }
-
+public class PrettierTest {
+  @BeforeAll public static void setup() { Global.NO_RANDOM_NAME = true; }
   @Test public void clauses() {
     var result = TyckTest.tyck("""
       open inductive Nat | O | S Nat
