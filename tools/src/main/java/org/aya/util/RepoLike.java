@@ -7,12 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface RepoLike<T> {
   void setDownstream(@Nullable T downstream);
-
-  default void merge() {
-    setDownstream(null);
-  }
-
-  default void fork(@NotNull T t) {
-    setDownstream(t);
-  }
+  default void merge() { setDownstream(null); }
+  default void fork(@NotNull T t) { setDownstream(t); }
 }

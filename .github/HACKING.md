@@ -25,17 +25,18 @@ Aya is divided into several subprojects. Here are some notable ones:
 + The syntax definitions live in `syntax`. This includes both the core and the concrete syntax.
 + The parser is separated into `parser` (the generated parsing code) and `producer`
   (transformer from parse tree to concrete syntax tree).
-+ The type checker and all of the related utilities live in `base`.
++ The type checker and all the related utilities live in `base`.
 + The JIT compiler and code generation utilities live in `jit-compiler`.
 + The generic pretty printing framework is in `pretty`. It is similar to the Haskell `Doc` framework.
 + The library system, literate mode, single-file type checker, and basic REPL implementation are in `cli-impl`.
 
 ### General, reusable utilities
 
-+ The generalized termination checker and a bunch of other utilities (files, ordering, error report, source pos,
-  persistent union find, etc.) are in `tools`.
-+ The generalized binary operator parser, generalized mutable graph, and some generic coverage checking tools, are
-  in `tools-kala` because they depend on a larger subset of the kala library.
++ The generalized termination checker and a bunch of other utilities (files, ordering, persistent union find, etc.)
+  are in `tools`.
++ The source-pos related utilities, generalized binary operator parser, generalized mutable graph,
+  and some generic coverage checking tools, are in `tools-kala` because they depend
+  on a larger subset of the kala library (the primitive collections).
 + The command and argument parsing framework is in `tools-repl`.
   It offers an implementation of jline3 parser based on Grammar-Kit and relevant facilities.
 + The literate-markdown related infrastructure is in `tools-md`.
