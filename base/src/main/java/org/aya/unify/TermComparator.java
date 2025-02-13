@@ -280,7 +280,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case PartialTerm(var element1) -> {
         if (!(rhs instanceof PartialTerm(var element2)) || !(type instanceof PartialTyTerm(var r, var s, var A)))
           yield false;
-        yield withConnection(r, s, () -> doCompareTyped(element1, element2, A));
+        yield withConnection(whnf(r), whnf(s), () -> doCompareTyped(element1, element2, A));
       }
       default -> compareUntyped(lhs, rhs) != null;
     };
@@ -523,13 +523,17 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(a0, b0, A.apply(DimTerm.I0)) && compare(a1, b1, A.apply(DimTerm.I1));
       }
       case Pair(PartialTyTerm(var lhs1, var rhs1, var A1), PartialTyTerm(var lhs2, var rhs2, var A2)) -> {
+        var wl1 = whnf(lhs1);
+        var wr1 = whnf(rhs1);
+        var wl2 = whnf(lhs2);
+        var wr2 = whnf(rhs2);
         // lhs1 = rhs1 ==> lhs2 = rhs2
-        boolean to = withConnection(lhs1, rhs1, () -> state.isConnected(lhs2, rhs2));
+        boolean to = withConnection(wl1, wr1, () -> state.isConnected(wl2, wr2));
         if (!to) yield false;
         // lhs1 = rhs1 <== lhs2 = rhs2
-        boolean from = withConnection(lhs2, rhs2, () -> state.isConnected(lhs1, rhs1));
+        boolean from = withConnection(wl2, wr2, () -> state.isConnected(wl1, wr1));
         if (!from) yield false;
-        yield false;
+        yield true;
       }
       default -> throw noRules(preLhs);
     };

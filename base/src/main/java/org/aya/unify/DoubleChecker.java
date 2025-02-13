@@ -79,7 +79,7 @@ public record DoubleChecker(
       }
       case PartialTerm(var element) ->
         whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
-          ? withConnection(r, s, () -> inherit(element, A))
+          ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
           : failF(new BadExprError(preterm, unifier.pos, expected));
 
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);

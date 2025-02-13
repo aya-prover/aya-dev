@@ -251,8 +251,12 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           args.map(this::doSerialize), captures.map(this::doSerialize));
       }
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
-      case PartialTyTerm(var lhs, var rhs, var A) -> throw new UnsupportedOperationException("TODO");
-      case PartialTerm(var element) -> throw new UnsupportedOperationException("TODO");
+      case PartialTyTerm(var lhs, var rhs, var A) -> builder.mkNew(PartialTyTerm.class, ImmutableSeq.of(
+        doSerialize(lhs),
+        doSerialize(rhs),
+        doSerialize(A)
+      ));
+      case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
     };
   }
 

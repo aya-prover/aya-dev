@@ -173,7 +173,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       case Expr.Partial(var element) -> whnf(type) instanceof PartialTyTerm(var r, var s, var A)
-        ? withConnection(r, s, () -> {
+        ? withConnection(whnf(r), whnf(s), () -> {
         var wellElement = inherit(element, A);
         return new Jdg.Default(new PartialTerm(wellElement.wellTyped()), type);
       })
