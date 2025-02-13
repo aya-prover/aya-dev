@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
+import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
@@ -18,20 +22,15 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.PartialTerm;
-import org.aya.syntax.core.term.xtt.PartialTyTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
 /// together with their overrides in [LocalTerm] and [FreeTerm].
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm, PartialTerm {
+  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);

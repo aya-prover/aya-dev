@@ -48,7 +48,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     // Function Modifiers
     Opaque(KW_OPAQUE, Alpha, "opaque"),
     Inline(KW_INLINE, Alpha, "inline"),
-    Partial(KW_PARTIAL, None, "partial", Opaque),
+    NonTerminating(KW_NONTERMINATING, None, "nonterminating", Opaque),
     Overlap(KW_OVERLAP, None, "overlap");
 
     public final @NotNull IElementType type;
@@ -94,7 +94,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     ) {
       return new Filter(new DefaultModifiers(defaultAcc, miscAvail), mod -> switch (mod) {
         case Private -> true;
-        case Open, Opaque, Inline, Overlap, Example, Partial -> miscAvail.contains(mod);
+        case Open, Opaque, Inline, Overlap, Example, NonTerminating -> miscAvail.contains(mod);
       });
     }
   }
@@ -123,7 +123,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
   /** "opaque", "inline" and "overlap" is available to functions. */
   public static final Filter FN_FILTER = Filter.create(
     new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-    EnumSet.of(CModifier.Opaque, CModifier.Inline, CModifier.Overlap, CModifier.Partial, CModifier.Example));
+    EnumSet.of(CModifier.Opaque, CModifier.Inline, CModifier.Overlap, CModifier.NonTerminating, CModifier.Example));
 
   /** nothing is available to sub-level decls (ctor/field). */
   public static final Filter SUBDECL_FILTER = Filter.create(
@@ -146,7 +146,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
       if (misc(CModifier.Inline) != null) fnMods.add(Modifier.Inline);
       if (misc(CModifier.Opaque) != null) fnMods.add(Modifier.Opaque);
       if (misc(CModifier.Overlap) != null) fnMods.add(Modifier.Overlap);
-      if (misc(CModifier.Partial) != null) fnMods.add(Modifier.Partial);
+      if (misc(CModifier.NonTerminating) != null) fnMods.add(Modifier.NonTerminating);
       return fnMods;
     }
   }

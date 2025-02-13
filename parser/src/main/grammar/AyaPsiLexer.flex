@@ -20,15 +20,10 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 // Nested doc comment processing, copied from
 // https://github.com/devkt-plugins/rust-devkt/blob/master/grammar/RustLexer.flex
 %{}
-  /**
-    * Dedicated storage for starting position of some previously successful
-    * match
-    */
+  /// Dedicated storage for starting position of some previously successful match
   private int zzPostponedMarkedPos = -1;
 
-  /**
-    * Dedicated nested-comment level counter
-    */
+  /// Dedicated nested-comment level counter
   private int zzNestedCommentLevel = 0;
 %}
 
@@ -111,6 +106,7 @@ BLOCK_COMMENT_END   = "*/"
   "fixr"                { return KW_FIXR; }
 
   "example"             { return KW_EXAMPLE; }
+  "nonterminating"      { return KW_NONTERMINATING; }
   "partial"             { return KW_PARTIAL; }
   "coerce"              { return KW_COERCE; }
   "opaque"              { return KW_OPAQUE; }

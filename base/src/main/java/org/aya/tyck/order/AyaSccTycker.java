@@ -113,7 +113,7 @@ public record AyaSccTycker(
     // TODO: positivity check for data/record definitions
     var fn = recDefs.view()
       .filterIsInstance(FnDecl.class)
-      .filterNot(f -> f.modifiers.contains(Modifier.Partial))
+      .filterNot(f -> f.modifiers.contains(Modifier.NonTerminating))
       .map(f -> f.ref.core)
       .toImmutableSeq();
     terckRecursiveFn(fn);
@@ -129,7 +129,7 @@ public record AyaSccTycker(
       .forEach(f -> {
         var ref = domRef(f);
         if (ref.core instanceof FnDef fnDef) {
-          fnDef.modifiers().add(Modifier.Partial);
+          fnDef.modifiers().add(Modifier.NonTerminating);
           // If it fails to terck, it seems very dangerous because the user seems unaware
           // what they're doing. So we take extra care and mark it as opaque.
           fnDef.modifiers().add(Modifier.Opaque);
