@@ -116,7 +116,10 @@ public record Synthesizer(
         if (!(trySynth(papp.fun()) instanceof EqTerm eq)) yield null;
         yield eq.appA(papp.arg());
       }
-      case PartialTyTerm _ -> SortTerm.ISet;
+      case PartialTyTerm ty -> {
+        if (!(trySynth(ty.ty()) instanceof SortTerm sort)) yield null;
+        yield new SortTerm(SortKind.Set, sort.lift());
+      }
       case ErrorTerm error -> ErrorTerm.typeOf(error);
       case SortTerm sort -> sort.succ();
       case DimTerm _ -> DimTyTerm.INSTANCE;

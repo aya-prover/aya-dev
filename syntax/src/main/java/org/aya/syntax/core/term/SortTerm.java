@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ice1000, tsao-chi
  */
 public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, Formation {
-
   public SortTerm(@NotNull SortKind kind, int lift) {
     this.kind = kind;
     if (!kind.hasLevel() && lift != 0) throw new IllegalArgumentException("invalid lift");
@@ -24,9 +23,7 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
   public static final @NotNull SortTerm Set1 = new SortTerm(SortKind.Set, 1);
   public static final @NotNull SortTerm ISet = new SortTerm(SortKind.ISet, 0);
 
-  /**
-   * <a href="https://github.com/agda/agda/blob/6a92d584c70a615fdc3f364975814d75a0e31bf7/src/full/Agda/TypeChecking/Substitute.hs#L1541-L1558">Agda</a>
-   */
+  /// [Agda](https://github.com/agda/agda/blob/6a92d584c70a615fdc3f364975814d75a0e31bf7/src/full/Agda/TypeChecking/Substitute.hs#L1541-L1558)
   public @NotNull SortTerm succ() {
     return switch (kind) {
       case Type, Set -> new SortTerm(kind, lift + 1);
