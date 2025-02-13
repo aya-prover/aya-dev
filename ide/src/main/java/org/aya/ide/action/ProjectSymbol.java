@@ -3,7 +3,6 @@
 package org.aya.ide.action;
 
 import kala.collection.CollectionView;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
@@ -28,13 +27,13 @@ public record ProjectSymbol(
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     symbol.collectSource(source);
-    return symbol.symbols.toImmutableSeq();
+    return symbol.symbols.toSeq();
   }
 
   public static @NotNull ImmutableSeq<Symbol> invoke(@NotNull PrettierOptions options, @NotNull CollectionView<LibraryOwner> libraries) {
     var symbol = new ProjectSymbol(options, MutableList.create());
     libraries.forEach(symbol::collectLib);
-    return symbol.symbols.toImmutableSeq();
+    return symbol.symbols.toSeq();
   }
 
   private void collectLib(@NotNull LibraryOwner owner) {
@@ -66,7 +65,7 @@ public record ProjectSymbol(
       ComputeSignature.computeSignature(options, dv),
       SyntaxHighlight.kindOf(dv),
       nameLoc, entireLoc,
-      children == null ? ImmutableSeq.empty() : children.symbols.toImmutableSeq());
+      children == null ? ImmutableSeq.empty() : children.symbols.toSeq());
     symbols.append(symbol);
   }
 

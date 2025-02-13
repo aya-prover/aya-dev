@@ -147,12 +147,12 @@ public class LspTest {
     assertNotNull(advisor.lastJob);
     var actualInDep = advisor.newlyCompiled.view()
       .map(r -> r.modulePath().toString())
-      .toImmutableSeq();
+      .toSeq();
     var actual = advisor.lastCompiled()
       .map(s -> s.moduleName().module().joinToString(Constants.SCOPE_SEPARATOR))
       .concat(actualInDep)
       .distinct()
-      .toImmutableSeq();
+      .toSeq();
     var expected = ImmutableSeq.from(modules);
     assertEquals(expected.sorted(), actual.sorted());
   }

@@ -240,7 +240,7 @@ public class AyaLanguageServer implements LanguageServer {
   public @Nullable LibrarySource find(@NotNull URI uri) { return find(toPath(uri)); }
   @NotNull private Path toPath(@NotNull URI uri) { return FileUtil.canonicalize(Path.of(uri)); }
   public @NotNull ImmutableSeq<HighlightResult> reload() {
-    return libraries().flatMap(this::loadLibrary).toImmutableSeq();
+    return libraries().flatMap(this::loadLibrary).toSeq();
   }
 
   public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
@@ -432,7 +432,7 @@ public class AyaLanguageServer implements LanguageServer {
         return new FoldingRange(range.start.line, range.start.character,
           range.end.line, range.end.character, FoldingRangeKind.Region);
       })
-      .toImmutableSeq()
+      .toSeq()
       .asJava();
   }
 

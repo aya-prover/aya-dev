@@ -32,7 +32,7 @@ public record FlclFaithfulPrettier(@Override @NotNull PrettierOptions options)
     return new HighlightInfo.Ref(range, EMPTY_LINK, kind, null);
   }
   public @NotNull Doc highlight(@NotNull FlclToken.File file) {
-    var highlights = file.tokens().view().map(FlclFaithfulPrettier::toInfo).sorted().toImmutableSeq();
+    var highlights = file.tokens().view().map(FlclFaithfulPrettier::toInfo).sorted().toSeq();
     FaithfulPrettier.checkHighlights(highlights);
     return doHighlight(file.sourceCode(), file.startIndex(), highlights);
   }

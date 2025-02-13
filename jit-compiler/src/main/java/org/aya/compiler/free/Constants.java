@@ -78,41 +78,18 @@ public final class Constants {
     true
   );
 
-  /**
-   * @see MutableSeq#fill(int, Object)
-   */
-  public static final @NotNull MethodRef MUTSEQ = new MethodRef(
-    CD_MutableSeq,
-    "fill",
-    CD_MutableSeq, ImmutableSeq.of(ConstantDescs.CD_int, ConstantDescs.CD_Object),
-    true
-  );
-
-  /**
-   * @see MutableSeq#set(int, Object)
-   */
-  public static final @NotNull MethodRef MUTSEQ_SET = new MethodRef(
-    CD_MutableSeq, "set", ConstantDescs.CD_void,
-    ImmutableSeq.of(ConstantDescs.CD_int, ConstantDescs.CD_Object),
-    true
-  );
-
-  /**
-   * Remember to {@code checkcast} the result value!!
-   *
-   * @see Seq#get(int)
-   */
+  /// Remember to `checkcast` the result value!!
+  ///
+  /// @see Seq#get(int)
   public static final @NotNull MethodRef SEQ_GET = new MethodRef(
     CD_Seq, "get", ConstantDescs.CD_Object,
     ImmutableSeq.of(ConstantDescs.CD_int),
     true
   );
 
-  /**
-   * @see Seq#toImmutableSeq()
-   */
-  public static final @NotNull MethodRef SEQ_TOIMMSEQ = new MethodRef(
-    CD_Seq, "toImmutableSeq", CD_ImmutableSeq, ImmutableSeq.empty(), true
+  /// @see Seq#toSeq()
+  public static final @NotNull MethodRef SEQ_TOSEQ = new MethodRef(
+    CD_Seq, "toSeq", CD_ImmutableSeq, ImmutableSeq.empty(), true
   );
 
   public static final @NotNull MethodRef IMMTREESEQ = new MethodRef(

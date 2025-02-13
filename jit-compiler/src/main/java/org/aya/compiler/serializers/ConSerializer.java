@@ -46,7 +46,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   /// @param unit must be indexed, otherwise it should use the default impl.
   /// @see JitCon#isAvailable
   private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
-    var termSeq = builder.invoke(Constants.SEQ_TOIMMSEQ, argsTerm.ref(), ImmutableSeq.empty());
+    var termSeq = builder.invoke(Constants.SEQ_TOSEQ, argsTerm.ref(), ImmutableSeq.empty());
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
     var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
     var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);

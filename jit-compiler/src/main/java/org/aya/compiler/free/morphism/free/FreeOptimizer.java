@@ -30,7 +30,7 @@ public interface FreeOptimizer {
     if (block.isEmpty()) return block;
     var exceptLast = block.view().dropLast(1).flatMap(it -> optimize(it, false));
     var last = optimize(block.getLast(), true);
-    return exceptLast.concat(last).toImmutableSeq();
+    return exceptLast.concat(last).toSeq();
   }
 
   static @NotNull SeqView<FreeStmt> optimize(FreeStmt stmt, boolean endOfBreakable) {

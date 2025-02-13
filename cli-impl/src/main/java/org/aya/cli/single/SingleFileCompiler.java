@@ -40,7 +40,7 @@ public final class SingleFileCompiler {
     loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter,
       flags.modulePaths().map(path ->
           new FileModuleLoader(locator, path, reporter, ayaParser, fileManager))
-        .toImmutableSeq()));
+        .toSeq()));
   }
 
   public <E extends IOException> int compile(

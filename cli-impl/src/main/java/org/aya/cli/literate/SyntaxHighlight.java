@@ -56,7 +56,7 @@ public record SyntaxHighlight(
       var addition = lexicalHighlight(sourceFile.get());
       prettier.info.appendAll(addition);
     }
-    return prettier.info.toImmutableSeq();
+    return prettier.info.toSeq();
   }
 
   public static @NotNull ImmutableSeq<@NotNull Lit> lexicalHighlight(@NotNull SourceFile file) {
@@ -76,7 +76,7 @@ public record SyntaxHighlight(
           return new Lit(AyaProducer.sourcePosOf(token, file), text.contains("\n") ? LitKind.Eol : LitKind.Whitespace);
         }
         return null;
-      }).toImmutableSeq();
+      }).toSeq();
   }
 
   @Override public void

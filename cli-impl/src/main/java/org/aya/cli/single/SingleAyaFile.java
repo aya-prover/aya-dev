@@ -68,7 +68,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       var value = flags.datetimeFrontMatterValue();
       if (value == null) value = TimeUtil.gitFormat();
       var frontMatter = new LiterateData.InjectedFrontMatter(flags.datetimeFrontMatterKey(), value);
-      var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toImmutableSeq(),
+      var d = toDoc((ImmutableSeq<Stmt>) doc, reporter.problems().toSeq(),
         frontMatter, flags.prettierOptions());
       var text = renderOptions.render(out, d, flags.backendOpts(true));
       FileUtil.writeString(prettyDir.resolve(fileName), text);

@@ -68,7 +68,7 @@ public record LibrarySource(
     var displayNoExt = display.resolveSibling(AyaFiles.stripAyaSourcePostfix(display.getFileName().toString()));
     return new ModulePath(IntRange.closedOpen(0, displayNoExt.getNameCount())
       .mapToObjTo(MutableList.create(), i -> displayNoExt.getName(i).toString())
-      .toImmutableSeq());
+      .toSeq());
   }
 
   public @NotNull Path displayPath() {
