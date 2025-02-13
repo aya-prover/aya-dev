@@ -65,6 +65,8 @@ public interface AyaPsiElementTypes {
   IElementType LIT_INT_EXPR = new AyaPsiElementType("LIT_INT_EXPR");
   IElementType LIT_STRING_EXPR = new AyaPsiElementType("LIT_STRING_EXPR");
   IElementType LOOSERS = new AyaPsiElementType("LOOSERS");
+  IElementType MATCH_DISCR = new AyaPsiElementType("MATCH_DISCR");
+  IElementType MATCH_DISCR_LIST = new AyaPsiElementType("MATCH_DISCR_LIST");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
   IElementType MATCH_TYPE = new AyaPsiElementType("MATCH_TYPE");
   IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");

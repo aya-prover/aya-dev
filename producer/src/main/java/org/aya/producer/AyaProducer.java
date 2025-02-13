@@ -19,6 +19,7 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
+import kala.tuple.Tuple;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -602,26 +603,31 @@ public record AyaProducer(
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
-      var isElim = node.peekChild(KW_ELIM) != null;
-      var discr = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toSeq();
-      if (isElim && !discr.allMatch(e -> e.data() instanceof Expr.Unresolved)) {
+      var discrList = node.child(MATCH_DISCR_LIST).child(COMMA_SEP).childrenOfType(MATCH_DISCR).map(d -> {
+        Option<LocalVar> asBinding = d.peekChild(KW_AS) == null ?
+          Option.some(LocalVar.from(weakId(d.child(WEAK_ID)))) :
+          Option.none();
+
+        return Tuple.of(
+          expr(d.child(EXPR)),
+          asBinding,
+          d.peekChild(KW_ELIM) == null
+        );
+      }).toSeq();
+      if (!discrList.allMatch(d -> d.component3() && d.component1().data() instanceof Expr.Unresolved)) {
         reporter.report(new ParseError(pos, "Elimination match must be on variables"));
         throw new ParsingInterruptedException();
+      } else if (!discrList.allMatch(d -> d.component2().isEmpty() || !d.component3())) {
+        reporter.report(new ParseError(pos, "Elimination match could not be combined with as-binding"));
+        throw new ParsingInterruptedException();
       }
+      var discr = discrList.map(Tuple::component1).toSeq();
+      var asBindings = discrList.map(Tuple::component2).toSeq();
+      var isElim = discrList.map(Tuple::component3).toSeq();
       var matchType = node.peekChild(MATCH_TYPE);
-      ImmutableSeq<LocalVar> asBindings = ImmutableSeq.empty();
+
       WithPos<Expr> returns = null;
       if (matchType != null) {
-        var commaSep = matchType.peekChild(COMMA_SEP);
-        if (commaSep != null) asBindings = commaSep.childrenOfType(WEAK_ID)
-          .map(this::weakId)
-          .map(LocalVar::from)
-          .toSeq();
-        if (matchType.peekChild(KW_AS) != null && !discr.sizeEquals(asBindings)) {
-          reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-binding(s) but "
-            + discr.size() + " discriminant(s)"));
-          throw new ParsingInterruptedException();
-        }
         var returnsNode = matchType.peekChild(EXPR);
         if (returnsNode != null) returns = expr(returnsNode);
       }

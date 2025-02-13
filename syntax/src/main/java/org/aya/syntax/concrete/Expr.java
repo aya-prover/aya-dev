@@ -4,8 +4,10 @@ package org.aya.syntax.concrete;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableBooleanSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
+import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Nested;
@@ -584,7 +586,8 @@ public sealed interface Expr extends AyaDocile {
   record Match(
     @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull ImmutableSeq<LocalVar> asBindings, boolean isElim,
+    @NotNull ImmutableSeq<Option<LocalVar>> asBindings,
+    @NotNull ImmutableBooleanSeq isElim,
     @Nullable WithPos<Expr> returns
   ) implements Expr {
     public @NotNull Match update(
