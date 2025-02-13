@@ -523,20 +523,23 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(a0, b0, A.apply(DimTerm.I0)) && compare(a1, b1, A.apply(DimTerm.I1));
       }
       case Pair(PartialTyTerm(var lhs1, var rhs1, var A1), PartialTyTerm(var lhs2, var rhs2, var A2)) -> {
-        var wl1 = whnf(lhs1);
-        var wr1 = whnf(rhs1);
         var wl2 = whnf(lhs2);
         var wr2 = whnf(rhs2);
-        // lhs1 = rhs1 ==> lhs2 = rhs2
-        boolean to = withConnection(wl1, wr1, () -> state.isConnected(wl2, wr2));
-        if (!to) yield false;
-        // lhs1 = rhs1 <== lhs2 = rhs2
-        boolean from = withConnection(wl2, wr2, () -> state.isConnected(wl1, wr1));
-        if (!from) yield false;
-        yield true;
+        if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield false;
+        yield withConnection(wl2, wr2, () -> compare(A1, A2, null));
       }
       default -> throw noRules(preLhs);
     };
+  }
+
+  /// Params are assumed to be in whnf
+  private boolean logicallyInequivalent(Term wl1, Term wr1, Term wl2, Term wr2) {
+    // lhs1 = rhs1 ==> lhs2 = rhs2
+    var to = withConnection(wl1, wr1, () -> state.isConnected(wl2, wr2));
+    if (!to) return true;
+    // lhs1 = rhs1 <== lhs2 = rhs2
+    var from = withConnection(wl2, wr2, () -> state.isConnected(wl1, wr1));
+    return !from;
   }
 
   public @NotNull SubscopedVar subscope(@NotNull Term type) {

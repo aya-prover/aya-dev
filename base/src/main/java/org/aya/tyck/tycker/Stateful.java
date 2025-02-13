@@ -11,6 +11,7 @@ import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -44,6 +45,14 @@ public interface Stateful {
   default <R> R withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull Supplier<R> action) {
     state().connect(lhs, rhs);
     var result = action.get();
+    state().disconnect(lhs, rhs);
+    return result;
+  }
+
+  /// Used too often, make a specialized version
+  default boolean withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull BooleanSupplier action) {
+    state().connect(lhs, rhs);
+    var result = action.getAsBoolean();
     state().disconnect(lhs, rhs);
     return result;
   }

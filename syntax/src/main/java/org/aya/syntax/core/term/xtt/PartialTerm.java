@@ -11,7 +11,7 @@ public record PartialTerm(@NotNull Term element) implements Term {
     return element == element() ? this : new PartialTerm(element);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+  @Override public @NotNull PartialTerm descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, element));
   }
 }
