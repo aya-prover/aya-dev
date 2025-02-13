@@ -64,7 +64,7 @@ public sealed interface Pat {
   static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
   collectVariables(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<LocalVar>create();
-    var newPats = pats.map(p -> p.bind(buffer)).toImmutableSeq();
+    var newPats = pats.map(p -> p.bind(buffer)).toSeq();
     return new Pair<>(buffer, newPats);
   }
 

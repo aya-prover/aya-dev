@@ -30,7 +30,7 @@ public interface TyckOrderError extends TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Circular signature dependency found between"),
-        Doc.commaList(cycles.view().map(this::nameOf).toImmutableSeq()
+        Doc.commaList(cycles.view().map(this::nameOf).toSeq()
           .sorted().view().map(Doc::plain))
       );
     }

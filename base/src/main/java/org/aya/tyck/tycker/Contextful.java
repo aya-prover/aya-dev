@@ -49,7 +49,7 @@ public interface Contextful {
    * @see LocalCtx#extract()
    */
   default @NotNull MetaCall freshMeta(String name, @NotNull SourcePos pos, MetaVar.Requirement req, boolean isUser) {
-    var vars = localCtx().extract().toImmutableSeq();
+    var vars = localCtx().extract().toSeq();
     var args = vars.<Term>map(FreeTerm::new);
     return new MetaCall(new MetaVar(name, pos, args.size(), req.bind(vars.view()), isUser), args);
   }

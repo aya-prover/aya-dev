@@ -99,7 +99,7 @@ public final class TyckState {
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
-      var frozenEqns = eqns.toImmutableSeq();
+      var frozenEqns = eqns.toSeq();
       if (postSimplificationSize == frozenEqns.size()) {
         // TODO: report error, cannot solve eqns
         reporter.report(new MetaVarError.CannotSolveEquations(frozenEqns));

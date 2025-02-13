@@ -74,7 +74,7 @@ public interface Finalizer {
           fail(new UnsolvedMeta(stack.view()
             .drop(1)
             .map(this::freezeHoles)
-            .toImmutableSeq(), ref.pos(), ref.name()));
+            .toSeq(), ref.pos(), ref.name()));
         }
         case MetaLitTerm mlt -> fail(new UnsolvedLit(mlt));
         default -> {

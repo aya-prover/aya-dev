@@ -239,7 +239,7 @@ public class PatternTycker implements Problematic, Stateful {
           foundError(new PatternProblem.TooManyImplicitPattern(pattern, currentParam));
         }
 
-        return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.TooManyImplicit);
+        return new FindNextParam(generatedPats.toSeq(), FindNextParam.Kind.TooManyImplicit);
       } else {
         // current param is implicit, generate pattern for it
         generatedPats.append(generatePattern());
@@ -253,10 +253,10 @@ public class PatternTycker implements Problematic, Stateful {
 
     // no more param
     if (currentParam == null) {
-      return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.TooManyPattern);
+      return new FindNextParam(generatedPats.toSeq(), FindNextParam.Kind.TooManyPattern);
     }
 
-    return new FindNextParam(generatedPats.toImmutableSeq(), FindNextParam.Kind.Success);
+    return new FindNextParam(generatedPats.toSeq(), FindNextParam.Kind.Success);
   }
 
   public @NotNull TyckResult tyck(
@@ -416,7 +416,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped) {
-    return new TyckResult(wellTyped.toImmutableSeq(), paramSubst.toImmutableSeq(), asSubst, hasError);
+    return new TyckResult(wellTyped.toSeq(), paramSubst.toSeq(), asSubst, hasError);
   }
 
   private record Selection(

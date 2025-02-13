@@ -84,7 +84,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
   }
 
   public @NotNull AbstractTele.Locns signature() {
-    return new AbstractTele.Locns(consumed.toImmutableSeq(), body().body());
+    return new AbstractTele.Locns(consumed.toSeq(), body().body());
   }
 
   @Override

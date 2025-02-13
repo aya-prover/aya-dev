@@ -83,11 +83,11 @@ public class HighlighterTester {
   }
 
   public void runTest() {
-    var sortedActual = actual.view().distinct().sorted().toImmutableSeq().view();
+    var sortedActual = actual.view().distinct().sorted().toSeq().view();
     if (sortedActual.getLast() instanceof HighlightInfo.Lit(_, var kind) && kind == HighlightInfo.LitKind.Eol)
       // Remove the last Eol
       sortedActual = sortedActual.dropLast(1);
-    runTest(sortedActual.toImmutableSeq(), Seq.of(expected));
+    runTest(sortedActual.toSeq(), Seq.of(expected));
   }
 
   public void runTest(@NotNull ImmutableSeq<HighlightInfo> actuals, @NotNull Seq<ExpectedHighlightInfo> expecteds) {
