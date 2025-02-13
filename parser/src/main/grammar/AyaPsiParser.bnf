@@ -27,11 +27,9 @@
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
 
+  // add `KW_` prefix to avoid conflict with a AyaPsiTokenType name.
   tokens = [
-    // ---- AyaLexer begin: Keywords
-    // add `KW_` prefix to avoid conflict with a AyaPsiTokenType name.
-
-    // associativities
+    // associativity
     KW_INFIX  = 'infix'
     KW_INFIXL = 'infixl'
     KW_INFIXR = 'infixr'
@@ -42,9 +40,6 @@
     KW_TIGHTER = 'tighter'
     KW_LOOSER = 'looser'
 
-    // samples
-    KW_EXAMPLE = 'example'
-
     // universe
     // KW_ULIFT = 'regexp:ulift|\u2191'
     KW_ULIFT = 'ulift'
@@ -53,12 +48,25 @@
     KW_PROP = 'Prop'
     KW_ISET = 'ISet'
 
+    // modifiers
+    KW_EXAMPLE = 'example'
     KW_COERCE = 'coerce'
     KW_OPAQUE = 'opaque'
     KW_INLINE = 'inline'
-    KW_PARTIAL = 'partial'
+    KW_NONTERMINATING = 'nonterminating'
     KW_OVERLAP = 'overlap'
 
+    // exprs
+    KW_MATCH = 'match'
+    KW_PARTIAL = 'partial'
+    KW_RETURNS = 'returns'
+    KW_NEW = 'new'
+    KW_DO = 'do'
+    KW_ELIM = 'elim'
+    KW_LET = 'let'
+    KW_IN = 'in'
+
+    // decls
     KW_AS = 'as'
     KW_OPEN = 'open'
     KW_IMPORT = 'import'
@@ -67,19 +75,12 @@
     KW_USING = 'using'
     KW_HIDING = 'hiding'
     KW_MODULE = 'module'
-    KW_MATCH = 'match'
-    KW_RETURNS = 'returns'
     KW_VARIABLE = 'variable'
     KW_DEF = 'def'
     KW_CLASS = 'class'
     KW_DATA = 'inductive'
     KW_PRIM = 'prim'
     KW_EXTENDS = 'extends'
-    KW_NEW = 'new'
-    KW_DO = 'do'
-    KW_ELIM = 'elim'
-    KW_LET = 'let'
-    KW_IN = 'in'
 
     // Unimplemented but reserved
     KW_CLASSIFIYING = 'classifying'
@@ -95,8 +96,6 @@
     KW_PI = 'Fn'
     // KW_FORALL = 'regexp:forall|\u2200'
     KW_FORALL = 'forall'
-
-    // ---- AyaLexer end: Keywords
 
     // TO = 'regexp:->|\u2192'
     TO = '->'
@@ -219,7 +218,7 @@ declModifier ::= KW_PRIVATE
                | KW_OPAQUE
                | KW_INLINE
                | KW_OVERLAP
-               | KW_PARTIAL
+               | KW_NONTERMINATING
                | KW_OPEN
 pragma ::= AT ID (LPAREN <<commaSep ID>> RPAREN)?
 

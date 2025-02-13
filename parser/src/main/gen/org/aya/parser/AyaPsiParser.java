@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -786,7 +783,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //                | KW_OPAQUE
   //                | KW_INLINE
   //                | KW_OVERLAP
-  //                | KW_PARTIAL
+  //                | KW_NONTERMINATING
   //                | KW_OPEN
   public static boolean declModifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declModifier")) return false;
@@ -797,7 +794,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_OPAQUE);
     if (!r) r = consumeToken(b, KW_INLINE);
     if (!r) r = consumeToken(b, KW_OVERLAP);
-    if (!r) r = consumeToken(b, KW_PARTIAL);
+    if (!r) r = consumeToken(b, KW_NONTERMINATING);
     if (!r) r = consumeToken(b, KW_OPEN);
     exit_section_(b, l, m, r, false, null);
     return r;

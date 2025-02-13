@@ -4,9 +4,10 @@ package org.aya.syntax.core.term.xtt;
 
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
-public record PartialTerm(@NotNull Term element) implements Term {
+public record PartialTerm(@NotNull Term element) implements StableWHNF {
   public @NotNull PartialTerm update(@NotNull Term element) {
     return element == element() ? this : new PartialTerm(element);
   }

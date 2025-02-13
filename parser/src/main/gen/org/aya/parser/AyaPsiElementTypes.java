@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -151,6 +148,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_MATCH = new AyaPsiTokenType("match");
   IElementType KW_MODULE = new AyaPsiTokenType("module");
   IElementType KW_NEW = new AyaPsiTokenType("new");
+  IElementType KW_NONTERMINATING = new AyaPsiTokenType("nonterminating");
   IElementType KW_OPAQUE = new AyaPsiTokenType("opaque");
   IElementType KW_OPEN = new AyaPsiTokenType("open");
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");

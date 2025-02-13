@@ -32,7 +32,7 @@ public interface TerckError {
   // This should pass
   @Language("Aya") String testPartialDef = """
     open import arith::nat::base
-    partial def f Nat : Nat
+    nonterminating def f Nat : Nat
     | a => f a
     """;
 
