@@ -88,6 +88,11 @@ public record BadTypeError(
       state);
   }
 
+  public static @NotNull BadTypeError partialElement(@NotNull TyckState state, @NotNull WithPos<Expr> expr, @NotNull Term actualType) {
+    return new BadTypeError(expr, actualType, Doc.plain("partial element"),
+      Doc.english("being expected"), _ -> Doc.english("Partial type"), state);
+  }
+
   public static @NotNull BadTypeError doNotLike(
     @NotNull TyckState state, @NotNull WithPos<Expr> expr,
     @NotNull Term actual, @NotNull AyaDocile need

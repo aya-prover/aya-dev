@@ -17,6 +17,8 @@ import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.core.term.xtt.CoeTerm;
+import org.aya.syntax.core.term.xtt.PartialTerm;
+import org.aya.syntax.core.term.xtt.PartialTyTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,7 +31,7 @@ import java.util.function.UnaryOperator;
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
 /// together with their overrides in [LocalTerm] and [FreeTerm].
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
+  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm, PartialTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);

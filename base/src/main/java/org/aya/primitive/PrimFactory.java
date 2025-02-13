@@ -24,10 +24,7 @@ import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.core.term.repr.StringTerm;
-import org.aya.syntax.core.term.xtt.CoeTerm;
-import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
-import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
@@ -131,8 +128,11 @@ public class PrimFactory {
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
 
-  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, _) -> {
-    throw new UnsupportedOperationException("TODO");
+  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, state) -> {
+    var r = prim.args().get(0);
+    var s = prim.args().get(1);
+    var A = prim.args().get(2);
+    return new PartialTyTerm(r, s, A);
   }, ref -> {
     var paramR = new Param("r", DimTyTerm.INSTANCE, true);
     var paramS = new Param("s", DimTyTerm.INSTANCE, true);

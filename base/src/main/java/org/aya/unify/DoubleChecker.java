@@ -7,6 +7,8 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.PartialTerm;
+import org.aya.syntax.core.term.xtt.PartialTyTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
@@ -75,6 +77,11 @@ public record DoubleChecker(
         unifier.compare(preterm, newMeta, null);
         yield true;
       }
+      case PartialTerm(var element) ->
+        whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
+          ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
+          : failF(new BadExprError(preterm, unifier.pos, expected));
+
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
     };
   }

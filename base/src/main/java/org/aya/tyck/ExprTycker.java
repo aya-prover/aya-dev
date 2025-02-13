@@ -27,10 +27,7 @@ import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
-import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
-import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.core.term.xtt.PAppTerm;
+import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ctx.LocalLet;
@@ -175,6 +172,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, storedTy), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
+      case Expr.Partial(var element) -> whnf(type) instanceof PartialTyTerm(var r, var s, var A)
+        ? withConnection(whnf(r), whnf(s), () -> {
+        var wellElement = inherit(element, A);
+        return new Jdg.Default(new PartialTerm(wellElement.wellTyped()), type);
+      })
+        : fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
   }

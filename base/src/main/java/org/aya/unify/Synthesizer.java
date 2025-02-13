@@ -88,7 +88,7 @@ public record Synthesizer(
           case Sigma -> DepTypeTerm.lubSigma(pSort, bSort);
         };
       }
-      case TupTerm _, LamTerm _ -> null;
+      case TupTerm _, LamTerm _, PartialTerm _ -> null;
       case FreeTerm(var var) -> localCtx().get(var);
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
@@ -115,6 +115,10 @@ public record Synthesizer(
       case PAppTerm papp -> {
         if (!(trySynth(papp.fun()) instanceof EqTerm eq)) yield null;
         yield eq.appA(papp.arg());
+      }
+      case PartialTyTerm ty -> {
+        if (!(trySynth(ty.ty()) instanceof SortTerm sort)) yield null;
+        yield new SortTerm(SortKind.Set, sort.lift());
       }
       case ErrorTerm error -> ErrorTerm.typeOf(error);
       case SortTerm sort -> sort.succ();
