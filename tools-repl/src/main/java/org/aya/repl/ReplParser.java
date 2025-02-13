@@ -58,7 +58,7 @@ public record ReplParser<T>(
     var tokens = lexer.allTheWayDown()
       .view()
       .filterNot(lexer::isWhitespace)
-      .toImmutableSeq();
+      .toSeq();
     var wordOpt = tokens.findFirst(token ->
       lexer.containsOffset(token, cursor));
     // In case we're in a whitespace or at the end

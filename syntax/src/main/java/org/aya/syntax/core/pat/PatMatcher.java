@@ -33,7 +33,7 @@ public abstract class PatMatcher extends MatcherBase {
   ) {
     try {
       matchMany(pats, terms);
-      return Result.ok(matched.toImmutableSeq());
+      return Result.ok(matched.toSeq());
     } catch (MatcherBase.Failure e) {
       return Result.err(e.reason);
     }
@@ -51,11 +51,11 @@ public abstract class PatMatcher extends MatcherBase {
     // also replace the bindings in pat as sub-meta,
     // so that we can solve this meta more.
 
-    var eater = new BindEater(matched.toImmutableSeq(), MutableList.create());
+    var eater = new BindEater(matched.toSeq(), MutableList.create());
     var boroboroPat = eater.apply(pat);   // It looks boroboro, there are holes on it.
     meta.solution().set(boroboroPat);
 
-    return eater.mouth().toImmutableSeq();
+    return eater.mouth().toSeq();
   }
 
   public static final class InferMeta extends PatMatcher {

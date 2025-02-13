@@ -17,7 +17,7 @@ public record Diagonal<C, T>(
     assert matrix.rows() == matrix.cols();
     var diag = IntRange.closedOpen(0, matrix.rows())
       .mapToObjTo(MutableList.create(), i -> matrix.matrix()[i][i])
-      .toImmutableSeq();
+      .toSeq();
     return new Diagonal<>(matrix, diag);
   }
 

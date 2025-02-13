@@ -41,7 +41,7 @@ public final class ConDef extends SubLevelDef {
 
   @Override public @NotNull DefVar<ConDef, DataCon> ref() { return ref; }
   @Override public @NotNull ImmutableSeq<Param> telescope() {
-    return fullTelescope().toImmutableSeq();
+    return fullTelescope().toSeq();
   }
 
   public static final class Delegate extends TyckAnyDef<ConDef> implements ConDefLike {
@@ -55,7 +55,7 @@ public final class ConDef extends SubLevelDef {
     @Override public int selfTeleSize() { return core().selfTele.size(); }
     @Override public int ownerTeleSize() { return core().ownerTele.size(); }
     @Override public @NotNull ImmutableSeq<Param> selfTele(@NotNull ImmutableSeq<Term> ownerArgs) {
-      return Param.instTele(core().selfTele.view(), ownerArgs.view()).toImmutableSeq();
+      return Param.instTele(core().selfTele.view(), ownerArgs.view()).toSeq();
     }
 
     @Override public @NotNull DataDefLike dataRef() { return core().dataRef; }

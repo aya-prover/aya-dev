@@ -116,14 +116,14 @@ public record MutableGraph<T>(@NotNull MutableMap<T, @NotNull MutableList<@NotNu
           t = pop();
           scc.append(t);
         }
-        SCCs.append(scc.toImmutableSeq());
+        SCCs.append(scc.toSeq());
       }
     }
 
     public ImmutableSeq<ImmutableSeq<T>> tarjan() {
       // view should be lazy or this code will blow up
       E.keysView().filter(v -> info(v).noIndex()).forEach(this::makeSCC);
-      return SCCs.toImmutableSeq();
+      return SCCs.toSeq();
     }
   }
 }

@@ -175,7 +175,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
       .collect(ImmutableMap.collector(WithPos::data, x -> x))
       // ^ distinctBy(WithPos::data)
       .valuesView()
-      .toImmutableSeq();
+      .toSeq();
   }
 
   /**

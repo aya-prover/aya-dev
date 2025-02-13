@@ -115,7 +115,7 @@ public class BaseMdParser {
       children.append(mapNode(child));
     }
 
-    return children.toImmutableSeq();
+    return children.toSeq();
   }
 
   private static final @NotNull ImmutableSeq<IElementType> HEADINGS = ImmutableSeq.of(
@@ -323,7 +323,7 @@ public class BaseMdParser {
 
   protected Literate flatten(@NotNull Seq<Literate> children) {
     return children.sizeEquals(1) ? children.getFirst()
-      : new Literate.Many(null, children.toImmutableSeq());
+      : new Literate.Many(null, children.toSeq());
   }
 
   // endregion Parsing

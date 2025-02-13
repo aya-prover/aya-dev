@@ -642,7 +642,7 @@ public sealed interface Doc extends Docile {
   }
 
   @Contract("_, _ -> new") static @NotNull Doc list(boolean isOrdered, @NotNull SeqLike<@NotNull Doc> docs) {
-    return new List(isOrdered, docs.toImmutableSeq());
+    return new List(isOrdered, docs.toSeq());
   }
 
   @Contract("_ -> new") static @NotNull Doc ordered(Doc @NotNull ... docs) {
@@ -715,7 +715,7 @@ public sealed interface Doc extends Docile {
   @Contract("_, _ -> new")
   static @NotNull Doc join(@NotNull Doc delim, @NotNull SeqLike<@NotNull Doc> docs) {
     // See https://github.com/aya-prover/aya-prover-proto/issues/753
-    var cache = docs.toImmutableSeq();
+    var cache = docs.toSeq();
     if (cache.isEmpty()) return empty();
     var first = cache.getFirst();
     if (cache.sizeEquals(1)) return first;
@@ -738,7 +738,7 @@ public sealed interface Doc extends Docile {
 
   //endregion
   private static @NotNull Doc simpleCat(@NotNull SeqLike<@NotNull Doc> xs) {
-    var seq = xs.toImmutableSeq();
+    var seq = xs.toSeq();
     if (seq.isEmpty()) return empty();
     if (seq.sizeEquals(1)) return seq.getFirst();
     return new Cat(seq);

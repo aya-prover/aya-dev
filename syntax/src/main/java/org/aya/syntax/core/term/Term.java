@@ -68,7 +68,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// which will be indexed from the bindCount, rather than 0.
   default @NotNull Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
     if (teleVars.isEmpty()) return this;
-    return bindAllFrom(teleVars.reversed().toImmutableSeq(), depth);
+    return bindAllFrom(teleVars.reversed().toSeq(), depth);
   }
 
   default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
@@ -88,7 +88,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// @see #replaceAllFrom(int, ImmutableSeq)
   /// @see #instTele(SeqView)
   default @NotNull Term instTeleFrom(int from, @NotNull SeqView<Term> tele) {
-    return replaceAllFrom(from, tele.reversed().toImmutableSeq());
+    return replaceAllFrom(from, tele.reversed().toSeq());
   }
 
   /// Corresponds to _instantiate_ operator in \[MM 2004\].

@@ -164,7 +164,7 @@ public record DepTypeTerm(
       term = body.toLocns().body();
     }
 
-    return new Unpi(params.toImmutableSeq(), term);
+    return new Unpi(params.toSeq(), term);
   }
 
   public static @NotNull SortTerm lubPi(@NotNull SortTerm domain, @NotNull SortTerm codomain) {

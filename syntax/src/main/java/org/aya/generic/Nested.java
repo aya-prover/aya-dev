@@ -62,6 +62,6 @@ public interface Nested<Param, Term, This extends Nested<Param, Term, This>> {
       nestedBody = nestedBody.data().tryNested();
     }
 
-    return Tuple.of(telescope.toImmutableSeq(), body);
+    return Tuple.of(telescope.toSeq(), body);
   }
 }

@@ -22,7 +22,7 @@ public record CmdCompleter(
         .flatMap(c -> c.owner().names())
         .map(c -> Command.PREFIX + c)
         .map(Candidate::new)
-        .toImmutableSeq());
+        .toSeq());
   }
 
   @Override public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {

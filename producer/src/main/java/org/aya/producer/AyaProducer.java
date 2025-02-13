@@ -89,7 +89,7 @@ public record AyaProducer(
   public @NotNull Either<ImmutableSeq<Stmt>, WithPos<Expr>> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
     if (repl != null) return Either.right(expr(repl));
-    return Either.left(node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
+    return Either.left(node.childrenOfType(STMT).flatMap(this::stmt).toSeq());
   }
 
   public @NotNull ImmutableSeq<Stmt> stmt(@NotNull GenericNode<?> node) {
@@ -100,7 +100,7 @@ public record AyaProducer(
       var stmts = MutableList.<Stmt>create();
       var result = decl(node, stmts);
       if (result != null) stmts.prepend(result);
-      return stmts.toImmutableSeq();
+      return stmts.toSeq();
     }
     if (node.is(GENERALIZE)) return ImmutableSeq.of(generalize(node));
     return unreachable(node);
@@ -111,13 +111,13 @@ public record AyaProducer(
       node.childrenOfType(GENERALIZE_PARAM_NAME)
         .map(this::generalizeParamName)
         .map(id -> new GeneralizedVar(id.data(), id.sourcePos()))
-        .toImmutableSeq(),
+        .toSeq(),
       type(node.child(TYPE)));
   }
 
   public @NotNull Pair<SourcePos, SourcePos> importQualifiedPos(@NotNull GenericNode<?> qualifiedId) {
     var ids = qualifiedId.childrenOfType(WEAK_ID);
-    var prefix = ids.dropLast(1).toImmutableSeq();
+    var prefix = ids.dropLast(1).toSeq();
     var prefixPos = prefix.isEmpty() ? SourcePos.NONE : sourcePosOf(prefix.get(0)).union(sourcePosOf(prefix.getLast()));
     return new Pair<>(prefixPos, sourcePosOf(ids.getLast()));
   }
@@ -166,7 +166,7 @@ public record AyaProducer(
       .mapNotNull(h -> h.peekChild(COMMA_SEP))
       .flatMap(node -> node.childrenOfType(QUALIFIED_ID).map(this::qualifiedId))
       .map(UseHide.Name::new)
-      .toImmutableSeq(),
+      .toSeq(),
       strategy);
   }
 
@@ -174,7 +174,7 @@ public record AyaProducer(
     return new UseHide(useLists
       .mapNotNull(u -> u.peekChild(COMMA_SEP))
       .flatMap(this::useIdsComma)
-      .toImmutableSeq(),
+      .toSeq(),
       strategy);
   }
 
@@ -206,10 +206,10 @@ public record AyaProducer(
     return new BindBlock(sourcePosOf(node),
       node.childrenOfType(LOOSERS)
         .flatMap(this::qualifiedIDs)
-        .toImmutableSeq(),
+        .toSeq(),
       node.childrenOfType(TIGHTERS)
         .flatMap(this::qualifiedIDs)
-        .toImmutableSeq(),
+        .toSeq(),
       MutableValue.create(), MutableValue.create());
   }
 
@@ -231,7 +231,7 @@ public record AyaProducer(
     var modName = weakId(node.child(WEAK_ID));
     return new Command.Module(
       modName.sourcePos(), sourcePosOf(node), modName.data(),
-      node.childrenOfType(STMT).flatMap(this::stmt).toImmutableSeq());
+      node.childrenOfType(STMT).flatMap(this::stmt).toSeq());
   }
 
   public @Nullable Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
@@ -260,7 +260,7 @@ public record AyaProducer(
       return new WithPos<>(pos, modifier);
     });
 
-    return new ModifierParser(reporter()).parse(modifiers.toImmutableSeq(), filter);
+    return new ModifierParser(reporter()).parse(modifiers.toSeq(), filter);
   }
 
   private record DeclParseData(
@@ -315,7 +315,7 @@ public record AyaProducer(
             }
           }
 
-          decl.pragmaInfo.suppressWarn = new PragmaInfo.SuppressWarn(namePos, sups.toImmutableSeq());
+          decl.pragmaInfo.suppressWarn = new PragmaInfo.SuppressWarn(namePos, sups.toSeq());
         }
         default -> reporter.report(new BadXWarn.BadPragmaWarn(namePos, name));
       }
@@ -356,7 +356,7 @@ public record AyaProducer(
     if (expr == null && implies != null) return error(implies, "Expect function body");
     if (expr != null) return new FnBody.ExprBody(expr(expr));
     var body = node.childrenOfType(BARRED_CLAUSE)
-      .map(this::bareOrBarredClause).toImmutableSeq();
+      .map(this::bareOrBarredClause).toSeq();
     var elims = elims(node.peekChild(ELIMS));
     return new FnBody.BlockBody(body, elims);
   }
@@ -392,7 +392,7 @@ public record AyaProducer(
 
   public @NotNull MatchBody<DataCon> elimDataBody(@NotNull GenericNode<?> node) {
     var elims = elims(node.peekChild(ELIMS));
-    var bodies = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toImmutableSeq();
+    var bodies = node.childrenOfType(DATA_BODY).mapNotNull(this::dataBody).toSeq();
     return new MatchBody<>(bodies, elims);
   }
 
@@ -401,7 +401,7 @@ public record AyaProducer(
     return node.child(COMMA_SEP)
       .childrenOfType(WEAK_ID)
       .map(this::weakId)
-      .toImmutableSeq();
+      .toSeq();
   }
 
   public @Nullable DataCon dataBody(@NotNull GenericNode<?> node) {
@@ -418,7 +418,7 @@ public record AyaProducer(
     var info = declInfo(node, ModifierParser.DECL_FILTER);
     var name = info.checkName(this);
     if (name == null) return null;
-    var members = node.childrenOfType(CLASS_MEMBER).mapIndexed(this::classMember).toImmutableSeq();
+    var members = node.childrenOfType(CLASS_MEMBER).mapIndexed(this::classMember).toSeq();
     var decl = new ClassDecl(name, info.info, members);
     giveMeOpen(info.modifier, decl, additional);
     pragma(node, decl);
@@ -464,7 +464,7 @@ public record AyaProducer(
   }
 
   public @NotNull ImmutableSeq<Expr.Param> telescope(SeqView<? extends GenericNode<?>> telescope) {
-    return telescope.flatMap(this::tele).toImmutableSeq();
+    return telescope.flatMap(this::tele).toSeq();
   }
 
   public @NotNull ImmutableSeq<Expr.Param> tele(@NotNull GenericNode<?> node) {
@@ -494,11 +494,11 @@ public record AyaProducer(
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
-    return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toImmutableSeq();
+    return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toSeq();
   }
 
   public @NotNull ImmutableSeq<Expr.Param> typedTelescope(SeqView<? extends GenericNode<?>> telescope) {
-    return telescope.flatMap(this::typedTele).toImmutableSeq();
+    return telescope.flatMap(this::typedTele).toSeq();
   }
 
   public @NotNull ImmutableSeq<Expr.Param> typedTele(@NotNull GenericNode<?> node) {
@@ -527,7 +527,7 @@ public record AyaProducer(
     return teleBinderUntyped(ids).view()
       .map(LocalVar::from)
       .map(bind -> new Expr.Param(bind.definition(), bind, typeOrHole(null, pos), explicit))
-      .toImmutableSeq();
+      .toSeq();
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, SourcePos pos) {
@@ -585,7 +585,7 @@ public record AyaProducer(
       return lifts > 0 ? new WithPos<>(pos, new Expr.Lift(expr, lifts)) : expr;
     }
     if (node.is(TUPLE_ATOM)) {
-      var expr = node.child(COMMA_SEP).childrenOfType(EXPR).toImmutableSeq();
+      var expr = node.child(COMMA_SEP).childrenOfType(EXPR).toSeq();
       if (expr.size() == 1) return newBinOPScope(expr(expr.get(0)));
       return Expr.buildTuple(pos, expr.map(this::expr).view());
     }
@@ -595,7 +595,7 @@ public record AyaProducer(
         .map(this::argument)
         .collect(MutableSinglyLinkedList.factory());
       tail.push(head);
-      return new WithPos<>(pos, new Expr.BinOpSeq(tail.toImmutableSeq()));
+      return new WithPos<>(pos, new Expr.BinOpSeq(tail.toSeq()));
     }
     if (node.is(PROJ_EXPR)) return new WithPos<>(pos, buildProj(expr(node.child(EXPR)), node.child(PROJ_FIX)));
     if (node.is(MATCH_EXPR)) {
@@ -603,7 +603,7 @@ public record AyaProducer(
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
       var isElim = node.peekChild(KW_ELIM) != null;
-      var discr = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
+      var discr = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toSeq();
       if (isElim && !discr.allMatch(e -> e.data() instanceof Expr.Unresolved)) {
         reporter.report(new ParseError(pos, "Elimination match must be on variables"));
         throw new ParsingInterruptedException();
@@ -616,7 +616,7 @@ public record AyaProducer(
         if (commaSep != null) asBindings = commaSep.childrenOfType(WEAK_ID)
           .map(this::weakId)
           .map(LocalVar::from)
-          .toImmutableSeq();
+          .toSeq();
         if (matchType.peekChild(KW_AS) != null && !discr.sizeEquals(asBindings)) {
           reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-binding(s) but "
             + discr.size() + " discriminant(s)"));
@@ -627,12 +627,12 @@ public record AyaProducer(
       }
       return new WithPos<>(pos, new Expr.Match(
         discr,
-        bare.concat(barred).toImmutableSeq(), asBindings, isElim,
+        bare.concat(barred).toSeq(), asBindings, isElim,
         returns
       ));
     }
     if (node.is(ARROW_EXPR)) {
-      var exprs = node.childrenOfType(EXPR).toImmutableSeq();
+      var exprs = node.childrenOfType(EXPR).toSeq();
       assert exprs.sizeEquals(2);
       var expr0 = exprs.get(0);
       var to = expr(exprs.get(1));
@@ -665,7 +665,7 @@ public record AyaProducer(
         .map(LocalVar::from)
         .map(v -> new WithPos<Pattern>(v.definition(), new Pattern.Bind(v)))
         .map(Arg::ofExplicitly)
-        .toImmutableSeq();
+        .toSeq();
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(LAMBDA_1_EXPR)) {
@@ -696,7 +696,7 @@ public record AyaProducer(
         .flatMap(child -> child.childrenOfType(EXPR))
         .map(this::expr)
         .appended(expr(block.child(EXPR)))
-        .toImmutableSeq()));
+        .toSeq()));
     }
     if (node.is(DO_EXPR)) {
       return new WithPos<>(pos, new Expr.Do(Constants.monadBind,
@@ -709,7 +709,7 @@ public record AyaProducer(
             var expr = e.child(EXPR);
             return new Expr.DoBind(sourcePosOf(expr), LocalVar.IGNORED, expr(expr));
           })
-          .toImmutableSeq()));
+          .toSeq()));
     }
     if (node.is(ARRAY_ATOM)) {
       var arrayBlock = node.peekChild(ARRAY_BLOCK);
@@ -747,7 +747,7 @@ public record AyaProducer(
       return new Expr.NamedArg(true, null, projected);
     }
     if (node.is(TUPLE_IM_ARGUMENT)) {
-      var items = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toImmutableSeq();
+      var items = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toSeq();
       if (items.sizeEquals(1)) return new Expr.NamedArg(false, newBinOPScope(items.getFirst()));
       var tupExpr = Expr.buildTuple(pos, items.view());
       return new Expr.NamedArg(false, tupExpr);
@@ -793,7 +793,7 @@ public record AyaProducer(
   private @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> unitPatterns(@NotNull GenericNode<?> node) {
     return node.childrenOfType(UNIT_PATTERN)
       .map(this::unitPattern)
-      .toImmutableSeq();
+      .toSeq();
   }
 
   private Arg<WithPos<Pattern>> unitPattern(@NotNull GenericNode<?> node) {
@@ -849,7 +849,7 @@ public record AyaProducer(
               pat.term().sourcePos(), "Implicit elements in a list pattern is disallowed"));
           }
           return pat.term();
-        }).toImmutableSeq());
+        }).toSeq());
     }
     if (node.peekChild(NUMBER) != null)
       return new Pattern.Number(node.tokenText().toInt());
@@ -867,7 +867,7 @@ public record AyaProducer(
     var bindings = node.child(COMMA_SEP)
       .childrenOfType(DO_BINDING)
       .map(this::doBinding)
-      .toImmutableSeq();
+      .toSeq();
     // Recommend: make these more precise: bind to `<-` and pure to `expr` (`x * y` in above)
     var names = new Expr.Array.ListCompNames(
       Constants.monadBind,
@@ -885,7 +885,7 @@ public record AyaProducer(
     var exprs = node.child(COMMA_SEP)
       .childrenOfType(EXPR)
       .map(this::expr)
-      .toImmutableSeq();
+      .toSeq();
 
     return Expr.Array.newList(exprs);
   }
@@ -903,7 +903,7 @@ public record AyaProducer(
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
-    return node.childrenOfType(PATTERN).map(this::pattern).toImmutableSeq();
+    return node.childrenOfType(PATTERN).map(this::pattern).toSeq();
   }
 
   public @NotNull Pattern.Clause clause(@NotNull GenericNode<?> node) {
@@ -955,13 +955,13 @@ public record AyaProducer(
     return new QualifiedID(sourcePosOf(node),
       node.childrenOfType(WEAK_ID)
         .map(this::weakId)
-        .map(WithPos::data).toImmutableSeq());
+        .map(WithPos::data).toSeq());
   }
 
   public @NotNull ModulePath modulePath(@NotNull GenericNode<?> node) {
     return new ModulePath(node.childrenOfType(WEAK_ID)
       .map(this::weakId)
-      .map(WithPos::data).toImmutableSeq());
+      .map(WithPos::data).toSeq());
   }
 
   /**
