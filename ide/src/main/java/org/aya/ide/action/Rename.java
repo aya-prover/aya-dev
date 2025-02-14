@@ -3,7 +3,6 @@
 package org.aya.ide.action;
 
 import kala.collection.CollectionView;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.cli.library.source.LibraryOwner;
@@ -28,7 +27,7 @@ public interface Rename {
   ) {
     return FindReferences.findOccurrences(source, libraries, xy)
       .map(to -> new RenameEdit(to, newName))
-      .toImmutableSeq();
+      .toSeq();
   }
 
   record RenameEdit(

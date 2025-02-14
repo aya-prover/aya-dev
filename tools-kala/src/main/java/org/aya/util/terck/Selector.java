@@ -59,7 +59,7 @@ public interface Selector {
         case Useless<A> u -> {}
       }
     });
-    return Tuple.of(winners.toImmutableSeq(), old.value.toImmutableSeq());
+    return Tuple.of(winners.toSeq(), old.value.toSeq());
   }
 
   /** A weaker {@link Relation} used in decrease amount (speed) comparison */

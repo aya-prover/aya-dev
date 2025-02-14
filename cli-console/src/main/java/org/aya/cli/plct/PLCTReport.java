@@ -91,7 +91,7 @@ public final class PLCTReport {
     var seq = parse(client.send(req, HttpResponse.BodyHandlers.ofInputStream()).body())
       .view()
       .filter(i -> i.updatedAt.isAfter(since))
-      .toImmutableSeq();
+      .toSeq();
     if (seq.isEmpty()) return Doc.empty();
     return Doc.vcat(seq.view()
       .map(this::pullRequest)

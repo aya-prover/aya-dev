@@ -74,7 +74,7 @@ public record PatClassifier(
     var classifier = new PatClassifier(tycker, pos);
     var cl = classifier.classifyN(ImmutableSeq.empty(), telescope, freePats
       .mapIndexed((i, clause) -> new Indexed<>(clause.view(), i))
-      .toImmutableSeq(), 4);
+      .toSeq(), 4);
     var p = cl.partition(c -> c.cls().isEmpty());
     var missing = p.component1();
     if (missing.isNotEmpty()) tycker.fail(
@@ -170,7 +170,7 @@ public record PatClassifier(
         if (missedCon >= body.size()) {
           return ImmutableSeq.of(simple(param.toFreshPat(), ImmutableIntSeq.empty()));
         }
-        return buffer.toImmutableSeq();
+        return buffer.toSeq();
       }
       default -> { }
     }

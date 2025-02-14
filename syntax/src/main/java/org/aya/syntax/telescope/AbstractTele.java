@@ -117,7 +117,7 @@ public interface AbstractTele {
 
     public @NotNull Locns bind(@NotNull LocalVar var, @NotNull Param type) {
       var boundTele = telescope.view().mapIndexed((idx, p) -> p.descent(t -> t.bindAt(var, idx)));
-      return new Locns(boundTele.prepended(type).toImmutableSeq(), result.bindAt(var, telescope.size()));
+      return new Locns(boundTele.prepended(type).toSeq(), result.bindAt(var, telescope.size()));
     }
 
     public @NotNull Locns bindTele(@NotNull SeqView<Tuple2<LocalVar, Param>> tele) {
@@ -140,7 +140,7 @@ public interface AbstractTele {
       var cope = telescope.view()
         .drop(preArgs.size())
         .mapIndexed((idx, p) -> p.descent(t -> t.instTeleFrom(idx, view)))
-        .toImmutableSeq();
+        .toSeq();
       var result = this.result.instTeleFrom(cope.size(), view);
       return new Locns(cope, result);
     }

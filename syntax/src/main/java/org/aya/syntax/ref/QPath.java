@@ -43,6 +43,6 @@ public record QPath(@NotNull ModulePath module, int fileModuleSize) implements S
       result.append(tabibito.apply(new QPath(new ModulePath(module.module().take(i)), fileModuleSize)));
     }
 
-    return result.toImmutableSeq();
+    return result.toSeq();
   }
 }

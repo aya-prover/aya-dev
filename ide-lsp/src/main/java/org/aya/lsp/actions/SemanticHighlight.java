@@ -16,7 +16,7 @@ public interface SemanticHighlight {
   static @NotNull ImmutableSeq<HighlightResult> invoke(@NotNull LibraryOwner owner) {
     var symbols = MutableList.<HighlightResult>create();
     highlight(owner, symbols);
-    return symbols.toImmutableSeq();
+    return symbols.toSeq();
   }
 
   private static void highlight(@NotNull LibraryOwner owner, @NotNull MutableList<HighlightResult> result) {

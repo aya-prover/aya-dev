@@ -206,7 +206,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
       new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
       wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view())))
-        .toImmutableSeq());
+        .toSeq());
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
     return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));

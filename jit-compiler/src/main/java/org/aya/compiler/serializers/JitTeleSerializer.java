@@ -39,11 +39,11 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     var sizeExpr = builder.iconst(size);
     var licit = tele.view().map(Param::explicit)
       .map(builder::iconst)
-      .toImmutableSeq();
+      .toSeq();
     var licitExpr = builder.mkArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
       .map(builder::aconst)
-      .toImmutableSeq();
+      .toSeq();
     var namesExpr = builder.mkArray(ConstantDescs.CD_String, names.size(), names);
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }

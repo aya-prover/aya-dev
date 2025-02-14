@@ -7,13 +7,13 @@ project = "0.38.0-SNAPSHOT"
 # https://openjdk.org/
 java = "22"
 # https://github.com/JetBrains/java-annotations
-annotations = "26.0.1"
+annotations = "26.0.2"
 # https://github.com/Glavo/kala-common
-kala = "0.81.0"
+kala = "0.82.0"
 # https://picocli.info
 picocli = "4.7.6"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
-aya-upstream = "0.0.34"
+aya-upstream = "0.0.35"
 # https://github.com/jline/jline3
 jline = "3.29.0"
 # https://junit.org/junit5
@@ -26,7 +26,7 @@ jlink = "3.1.1"
 # https://github.com/jacoco/jacoco
 jacoco = "0.8.12"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
-manifold = "2024.1.43"
+manifold = "2024.1.55"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }

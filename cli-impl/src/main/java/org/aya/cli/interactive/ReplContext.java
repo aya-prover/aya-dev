@@ -146,7 +146,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       hint.addAll(mod.symbols().keysView());
     }
 
-    return hint.toImmutableSeq();
+    return hint.toSeq();
   }
 
   public @NotNull ImmutableMap<String, ModuleTrie> moduleTree() {
@@ -155,7 +155,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       return this.moduleTree;
     }
 
-    var moduleNames = this.modules.keysView().toImmutableSeq()
+    var moduleNames = this.modules.keysView().toSeq()
       .map(x -> x.ids().view());
 
     this.moduleTree = buildModuleTree(moduleNames);
@@ -192,7 +192,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
       }
     }
 
-    return indexed.toImmutableSeq()
+    return indexed.toSeq()
       .collect(ImmutableMap.collector(Tuple2::component1, x -> {
         var children = buildModuleTree(x.component2());
         var isInhabited = inhabited.contains(x.component1());

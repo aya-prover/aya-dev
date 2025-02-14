@@ -108,6 +108,6 @@ public record PatUnify(
   ) {
     assert rpats.sizeEquals(lpats);
     var args = lpats.zip(rpats, (lp, rp) -> unifyPat(lp, rp, ctx, lhsSubst, rhsSubst));
-    return new Result(new PatUnify(lhsSubst, rhsSubst, ctx), args.toImmutableSeq());
+    return new Result(new PatUnify(lhsSubst, rhsSubst, ctx), args.toSeq());
   }
 }

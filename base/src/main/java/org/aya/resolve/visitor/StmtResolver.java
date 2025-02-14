@@ -64,7 +64,7 @@ public interface StmtResolver {
             resolveElim(resolver, body.inner());
             var clausesResolver = resolver.deriveRestrictive();
             clausesResolver.reference().append(new TyckOrder.Head(decl));
-            decl.body = body.map(x -> clausesResolver.clause(decl.teleVars().toImmutableSeq(), x));
+            decl.body = body.map(x -> clausesResolver.clause(decl.teleVars().toSeq(), x));
             addReferences(info, new TyckOrder.Body(decl), clausesResolver);
           }
           case FnBody.ExprBody(var expr) -> {
@@ -86,7 +86,7 @@ public interface StmtResolver {
           bodyResolver.enter(Where.ConPattern);
           con.patterns = con.patterns.map(pat ->
             pat.descent(pattern ->
-              bodyResolver.resolvePattern(pattern, data.teleVars().toImmutableSeq(), mCtx)));
+              bodyResolver.resolvePattern(pattern, data.teleVars().toSeq(), mCtx)));
           bodyResolver.exit();
           resolveMemberSignature(con, bodyResolver, mCtx);
           addReferences(info, new TyckOrder.Head(con), bodyResolver);

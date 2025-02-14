@@ -113,7 +113,7 @@ public class AyaMdParserTest {
     var data = initLiterateTestCase(oneCase);
 
     var defaultFM = new LiterateData.InjectedFrontMatter(null, TimeUtil.gitFormat());
-    var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
+    var doc = data.literate().toDoc(data.stmts(), data.reporter().problems().toSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
     data.reporter().problems().clear();
     // save some coverage
@@ -155,7 +155,7 @@ public class AyaMdParserTest {
     var oneCase = new Case(caseName);
     var data = initLiterateTestCase(oneCase);
     var defaultFM = new LiterateData.InjectedFrontMatter("lastUpdated", TimeUtil.gitFormat());
-    return data.literate().toDoc(data.stmts(), data.reporter().problems().toImmutableSeq(),
+    return data.literate().toDoc(data.stmts(), data.reporter().problems().toSeq(),
       defaultFM, AyaPrettierOptions.pretty()).toDoc();
   }
 

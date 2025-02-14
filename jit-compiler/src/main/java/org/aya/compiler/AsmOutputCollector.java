@@ -25,7 +25,7 @@ public interface AsmOutputCollector {
       var str = className.descriptorString();
       var components = ImmutableSeq.from(str.substring(1, str.length() - 1).split("/"));
       var fileName = components.getLast() + ".class";
-      return from(components.view().dropLast(1).appended(fileName).toImmutableSeq());
+      return from(components.view().dropLast(1).appended(fileName).toSeq());
     }
 
     @Override public void write(@NotNull ClassDesc className, byte @NotNull [] bytecode) {

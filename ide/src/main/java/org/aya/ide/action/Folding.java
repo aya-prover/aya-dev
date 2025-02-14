@@ -18,7 +18,7 @@ public record Folding(@NotNull MutableList<FoldingArea> foldingRanges) implement
     var folder = new Folding(MutableList.create());
     var program = source.program().get();
     if (program != null) program.forEach(folder);
-    return folder.foldingRanges.toImmutableSeq();
+    return folder.foldingRanges.toSeq();
   }
 
   @Override public void accept(@NotNull Stmt stmt) {

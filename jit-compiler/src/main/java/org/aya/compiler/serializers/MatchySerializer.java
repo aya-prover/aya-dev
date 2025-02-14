@@ -77,7 +77,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
             .take(binds)
             .map(LocalVariable::ref)
             .appendedAll(captureExprs)
-            .toImmutableSeq();
+            .toSeq();
           var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
           cb.returnWith(returns);
         })

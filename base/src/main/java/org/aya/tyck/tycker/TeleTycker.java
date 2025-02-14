@@ -42,7 +42,7 @@ public sealed interface TeleTycker extends Contextful {
     @NotNull ImmutableSeq<Expr.Param> cTele,
     @NotNull WithPos<Expr> result
   ) {
-    var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
+    var locals = cTele.view().map(Expr.Param::ref).toSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
     return new Signature(new AbstractTele.Locns(checkedParam, checkedResult), cTele.map(Expr.Param::sourcePos));
@@ -53,9 +53,9 @@ public sealed interface TeleTycker extends Contextful {
    */
   default @NotNull ImmutableSeq<Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
     var tele = checkTeleFree(cTele);
-    var locals = cTele.view().map(Expr.Param::ref).toImmutableSeq();
+    var locals = cTele.view().map(Expr.Param::ref).toSeq();
     bindTele(locals, tele);
-    return tele.toImmutableSeq();
+    return tele.toSeq();
   }
 
   /**

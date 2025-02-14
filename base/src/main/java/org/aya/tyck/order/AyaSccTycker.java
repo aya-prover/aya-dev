@@ -75,7 +75,7 @@ public record AyaSccTycker(
     var unit = scc.view().map(TyckOrder::unit)
       .distinct()
       .sorted(Comparator.comparing(SourceNode::sourcePos))
-      .toImmutableSeq();
+      .toSeq();
     if (unit.sizeEquals(1)) checkUnit(new TyckOrder.Body(unit.getFirst()));
     else {
       unit.forEach(u -> check(new TyckOrder.Head(u)));
@@ -108,14 +108,14 @@ public record AyaSccTycker(
     var recDefs = units.view()
       .filter(u -> selfReferencing(resolveInfo.depGraph(), u))
       .map(TyckOrder::unit)
-      .toImmutableSeq();
+      .toSeq();
     if (recDefs.isEmpty()) return;
     // TODO: positivity check for data/record definitions
     var fn = recDefs.view()
       .filterIsInstance(FnDecl.class)
       .filterNot(f -> f.modifiers.contains(Modifier.NonTerminating))
       .map(f -> f.ref.core)
-      .toImmutableSeq();
+      .toSeq();
     terckRecursiveFn(fn);
   }
 

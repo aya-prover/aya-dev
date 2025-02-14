@@ -22,7 +22,7 @@ public class ShapeFactory {
     return discovered.view()
       .map(AyaShape.FindImpl::new)
       .filter(t -> t.recog().shape() == shape)
-      .toImmutableSeq();
+      .toSeq();
   }
 
   public @NotNull Option<ShapeRecognition> find(@Nullable AnyDef def) {

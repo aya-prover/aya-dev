@@ -37,7 +37,7 @@ public interface FaithfulPrettier {
       .filterNot(h -> h.sourcePos().isEmpty())
       .filter(x -> codeRange.containsIndex(x.sourcePos()))
       .sorted().distinct()
-      .toImmutableSeq();
+      .toSeq();
     checkHighlights(highlightInRange);
     return highlightInRange;
   }

@@ -88,10 +88,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
             var result = serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
               .take(count)
               .map(LocalVariable::ref)
-              .toImmutableSeq());
+              .toSeq());
             builder0.returnWith(result);
           })
-        ).toImmutableSeq());
+        ).toSeq());
       }
     }
   }

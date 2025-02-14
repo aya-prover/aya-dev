@@ -73,9 +73,9 @@ public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
           type.bindTele(fullTele.view().map(FreeTerm::name)
             .slice(0, ownerTeleSize + i))));
 
-      this.selfTele = selfTele.toImmutableSeq();
+      this.selfTele = selfTele.toSeq();
     }
 
-    return Param.instTele(selfTele.view(), ownerArgs.view()).toImmutableSeq();
+    return Param.instTele(selfTele.view(), ownerArgs.view()).toSeq();
   }
 }

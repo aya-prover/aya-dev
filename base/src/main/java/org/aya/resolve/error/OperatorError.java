@@ -83,8 +83,8 @@ public interface OperatorError extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(
         Doc.english("Circular precedence found between"),
-        Doc.commaList(items.view().map(BinOpSet.BinOP::name).toImmutableSeq()
-          .sorted().view().map(Doc::plain))
+        Doc.commaList(items.view().map(BinOpSet.BinOP::name)
+          .sorted().map(Doc::plain))
       );
     }
   }

@@ -90,7 +90,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     @NotNull AnyDef var, @NotNull SeqLike<Term> args,
     @NotNull Outer outer, boolean showImplicits
   ) {
-    var preArgs = args.toImmutableSeq();
+    var preArgs = args.toSeq();
     var licit = computeLicitFromDef(var, preArgs.size());
 
     // licited args, note that this may not include all [var] args since [preArgs.size()] may less than [licit.size()]
@@ -133,7 +133,7 @@ public abstract class BasePrettier<Term extends AyaDocile> {
     @Nullable Assoc assoc, @NotNull Doc fn, @NotNull Fmt<T> fmt, Outer outer,
     @NotNull SeqView<? extends @NotNull BinOpElem<@NotNull T>> args, boolean showImplicits
   ) {
-    var visibleArgs = (showImplicits ? args : args.filter(BinOpElem::explicit)).toImmutableSeq();
+    var visibleArgs = (showImplicits ? args : args.filter(BinOpElem::explicit)).toSeq();
     if (visibleArgs.isEmpty()) return assoc != null ? Doc.parened(fn) : fn;
     if (assoc != null) {
       var firstArg = visibleArgs.getFirst();

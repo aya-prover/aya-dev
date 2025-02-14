@@ -20,7 +20,7 @@ public record InlineHintProblem(@NotNull Problem owner, WithPos<Doc> docWithPos)
   }
 
   public static @NotNull ImmutableSeq<Problem> withInlineHints(@NotNull Problem problem, @NotNull PrettierOptions options) {
-    return InlineHintProblem.from(problem, options).prepended(problem).toImmutableSeq();
+    return InlineHintProblem.from(problem, options).prepended(problem).toSeq();
   }
 
   @Override public @NotNull SourcePos sourcePos() {

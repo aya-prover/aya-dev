@@ -37,20 +37,20 @@ public record FlclParser(
         .map(MarkerNodeWrapper::tokenText)
         .map(CharSequence::toString);
       var title = idChildren.getFirst();
-      var ids = idChildren.drop(1).toImmutableSeq();
+      var ids = idChildren.drop(1).toSeq();
       insert(title, ids);
     });
     var body = node.child(FlclPsiElementTypes.BODY);
-    var ids = body.childrenOfType(FlclPsiElementTypes.ID).toImmutableSeq();
-    var nums = body.childrenOfType(FlclPsiElementTypes.NUMBER).toImmutableSeq();
-    var ws = body.childrenOfType(TokenType.WHITE_SPACE).toImmutableSeq();
+    var ids = body.childrenOfType(FlclPsiElementTypes.ID).toSeq();
+    var nums = body.childrenOfType(FlclPsiElementTypes.NUMBER).toSeq();
+    var ws = body.childrenOfType(TokenType.WHITE_SPACE).toSeq();
     var tokens = MutableArrayList.<FlclToken>create(ids.size() + nums.size() + ws.size());
     ids.mapNotNullTo(tokens, this::computeType);
     nums.mapTo(tokens, n -> computeToken(n.range(), FlclToken.Type.Number));
     ws.mapTo(tokens, n -> computeToken(n.range(),
       n.tokenText().indexOf('\n') > 0 ? FlclToken.Type.Eol : FlclToken.Type.WhiteSpace));
     int startIndex = node.child(FlclPsiElementTypes.SEPARATOR).range().getEndOffset() + 1;
-    return new FlclToken.File(tokens.toImmutableSeq(), body.tokenText(), startIndex);
+    return new FlclToken.File(tokens.toSeq(), body.tokenText(), startIndex);
   }
 
   private void insert(String title, @NotNull ImmutableSeq<String> ids) {

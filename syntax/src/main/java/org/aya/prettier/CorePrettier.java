@@ -371,12 +371,12 @@ public class CorePrettier extends BasePrettier<Term> {
       var dataSig = con.dataRef.signature();
       var licits = ImmutableSeq.fill(dataSig.telescopeSize(), dataSig::telescopeLicit).view();
       return visitClause(pats, licits, ownerArgs -> {
-        var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs).toImmutableSeq();
+        var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs).toSeq();
         return visitConRhs(conName, coerce, new AbstractTele.Locns(realSelfTele, ErrorTerm.DUMMY));
       });
     } else {
       var ownerArgs = con.ownerTele.<Term>map(Param::toFreshTerm);
-      var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs.view()).toImmutableSeq();
+      var realSelfTele = Param.instTele(rawSelfTele.view(), ownerArgs.view()).toSeq();
       return Doc.sep(BAR, visitConRhs(conName, coerce, new AbstractTele.Locns(realSelfTele, ErrorTerm.DUMMY)));
     }
   }
@@ -449,7 +449,7 @@ public class CorePrettier extends BasePrettier<Term> {
       );
     }
 
-    return richTele.toImmutableSeq();
+    return richTele.toSeq();
   }
 
   private @NotNull LocalVar generateName(@Nullable Term whty) {

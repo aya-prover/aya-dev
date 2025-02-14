@@ -116,7 +116,7 @@ public record CompiledModule(
 
     var imports = resolveInfo.imports().view().map((k, v) ->
       new SerImport(v.resolveInfo().modulePath(),
-        k.ids(), v.reExport())).toImmutableSeq();
+        k.ids(), v.reExport())).toSeq();
     var serExport = ImmutableSet.from(exports);
     var reExports = ImmutableMap.from(resolveInfo.reExports().view()
       .map((k, v) -> Tuple.of(

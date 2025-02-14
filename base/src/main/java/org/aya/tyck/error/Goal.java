@@ -38,7 +38,7 @@ public record Goal(
       Doc.vcat(hole.args().map(arg -> renderScopeVar(options, arg)))
       // ,meta.conditions.isNotEmpty() ? Doc.vcat(
       //   ImmutableSeq.of(Doc.plain("To ensure confluence:"))
-      //     .concat(meta.conditions.toImmutableSeq().map(tup -> Doc.par(1, Doc.cat(
+      //     .concat(meta.conditions.toSeq().map(tup -> Doc.par(1, Doc.cat(
       //       Doc.plain("Given "),
       //       Doc.parened(tup.component1().toDoc(options)),
       //       Doc.plain(", we should have: "),

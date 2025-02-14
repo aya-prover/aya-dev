@@ -26,7 +26,7 @@ public final class PiPusheen implements Pusheenable<Param, @NotNull Term> {
   }
 
   public @NotNull DepTypeTerm.Unpi unpiBody() {
-    return new DepTypeTerm.Unpi(unpi.sliceView(pusheenIdx, unpi.size()).toImmutableSeq(), result);
+    return new DepTypeTerm.Unpi(unpi.sliceView(pusheenIdx, unpi.size()).toSeq(), result);
   }
 
   @Override public boolean hasNext() { return pusheenIdx < unpi.size(); }

@@ -139,9 +139,9 @@ public record CallGraph<C, T>(
       var bad = idempotent
         .map(Diagonal::create)
         .filterNot(diag -> diag.diagonal().anyMatch(Relation::isDecreasing))
-        .toImmutableSeq();
+        .toSeq();
       if (bad.isNotEmpty()) bads.appendAll(bad);
     }
-    return bads.toImmutableSeq();
+    return bads.toSeq();
   }
 }

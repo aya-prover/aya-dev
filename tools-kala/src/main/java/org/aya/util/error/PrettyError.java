@@ -75,7 +75,7 @@ public record PrettyError(
     var primary = errorRange;
     var hints = inlineHints.view()
       .filter(kv -> kv.pos.oneLinear())
-      .toImmutableSeq(); // TODO: multiline inline hints?
+      .toSeq(); // TODO: multiline inline hints?
     var allRange = hints.map(PosDoc::pos).foldLeft(primary, SourcePos::union);
     return Doc.vcat(
       Doc.plain("In file " + errorRange.file().display() + ":" + primary.startLine() + ":" + primary.startColumn() + " ->"),
@@ -190,7 +190,7 @@ public record PrettyError(
     builder.add(codeHint);
     // show overlapped hints in the next line
     if (split.overlapped.isNotEmpty())
-      renderHints(true, startOrEnd != null, currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped.toImmutableSeq());
+      renderHints(true, startOrEnd != null, currentLine, codeIndent, vbarUsedIndent, vbar, currentCode, builder, split.overlapped.toSeq());
   }
 
   private @NotNull Doc renderStartEndHint(@NotNull HintLine startOrEnd, @NotNull Doc vbar, @NotNull Doc almost, int rest) {
@@ -226,7 +226,7 @@ public record PrettyError(
     var between = hintLines.view()
       .filter(h -> h.loc == NowLoc.Between)
       .sorted(Comparator.comparingInt(a -> a.allocIndent))
-      .toImmutableSeq();
+      .toSeq();
     var others = hintLines.filter(h -> h.loc != NowLoc.Between);
     var vbar = computeMultilineVBar(between);
     renderHints(false, false, currentLine, codeIndent, vbar.last, vbar.doc, currentCode, builder, others);
@@ -281,7 +281,7 @@ public record PrettyError(
           case None -> null;
         })
         .sorted(Comparator.comparingInt(a -> a.startCol))
-        .toImmutableSeq();
+        .toSeq();
 
       if (hintLines.isEmpty()) {
         builder.add(currentLine, Doc.indent(codeIndent * INDENT_FACTOR, currentCode));

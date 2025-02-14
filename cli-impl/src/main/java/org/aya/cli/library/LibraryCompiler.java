@@ -251,7 +251,7 @@ public class LibraryCompiler {
     var depGraph = resolveImports();
     var affected = collectAffected(modified, depGraph);
     var SCCs = affected.topologicalOrder().view()
-      .reversed().toImmutableSeq();
+      .reversed().toSeq();
     // ^ top order generated from usage graph should be reversed.
     // Only here we generate top order from usage graph just for efficiency
     // (transposing a graph is slower than reversing a list).
@@ -321,7 +321,7 @@ public class LibraryCompiler {
 
   /** collect source files that are directly modified by user */
   private @NotNull ImmutableSeq<LibrarySource> collectModified() {
-    return owner.librarySources().filter(advisor::isSourceModified).toImmutableSeq();
+    return owner.librarySources().filter(advisor::isSourceModified).toSeq();
   }
 
   private void clearPrimitives(@Nullable ImmutableSeq<Stmt> stmts) {

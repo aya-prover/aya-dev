@@ -65,7 +65,7 @@ public record ExprResolver(
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().valuesView().toImmutableSeq();
+    var view = resolver.allowedGeneralizes().valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }
 
@@ -101,7 +101,7 @@ public record ExprResolver(
       case Expr.Hole(var expl, var fill, var core, var local) -> {
         assert local.isEmpty();
         yield new Expr.Hole(expl, fill, core,
-          ctx.collect(MutableList.create()).toImmutableSeq());
+          ctx.collect(MutableList.create()).toSeq());
       }
       default -> expr;
     };

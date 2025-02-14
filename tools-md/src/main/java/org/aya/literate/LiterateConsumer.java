@@ -26,7 +26,7 @@ public interface LiterateConsumer extends Consumer<Literate> {
 
     default @NotNull ImmutableSeq<T> extract(Literate literate) {
       accept(literate);
-      return result().toImmutableSeq();
+      return result().toSeq();
     }
   }
 

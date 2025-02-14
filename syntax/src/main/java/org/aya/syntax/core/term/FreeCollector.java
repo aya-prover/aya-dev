@@ -16,5 +16,5 @@ public record FreeCollector(@NotNull MutableSet<LocalVar> frees) implements Unar
     else term.descent(this);
     return term;
   }
-  public @NotNull ImmutableSeq<LocalVar> collected() { return frees.toImmutableSeq(); }
+  public @NotNull ImmutableSeq<LocalVar> collected() { return frees.toSeq(); }
 }

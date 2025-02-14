@@ -291,7 +291,7 @@ public record StmtTycker(
       freeDataCall = new DataCall(dataDef, 0, lhsResult.freePats().map(PatToTerm::visit));
 
       var allTypedBinds = Pat.collectBindings(wellPats.view());
-      ownerBinds = patWithTypeBound.component1().toImmutableSeq();
+      ownerBinds = patWithTypeBound.component1().toSeq();
       TeleTycker.bindTele(ownerBinds, allTypedBinds);
       ownerTelePos = ownerBinds.map(LocalVar::definition);
       ownerTele = allTypedBinds.map(Param::implicitize);

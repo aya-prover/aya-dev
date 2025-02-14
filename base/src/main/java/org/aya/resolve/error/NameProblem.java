@@ -47,7 +47,7 @@ public interface NameProblem extends Problem {
     }
 
     public @NotNull ImmutableSeq<String> didYouMean() {
-      return disambiguation.view().map(mod -> mod.resolve(name).toString()).toImmutableSeq();
+      return disambiguation.view().map(mod -> mod.resolve(name).toString()).toSeq();
     }
   }
 
@@ -210,7 +210,7 @@ public interface NameProblem extends Problem {
           possible.append(modName.resolve(name).toString());
         }
       });
-      return possible.toImmutableSeq();
+      return possible.toSeq();
     }
   }
 

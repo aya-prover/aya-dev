@@ -42,7 +42,7 @@ public interface ModuleLoader extends Problematic {
       SCCs.forEach(sccTycker::tyckSCC);
     } finally {
       if (onTycked != null) onTycked.onModuleTycked(
-        resolveInfo, sccTycker.sccTycker().wellTyped().toImmutableSeq());
+        resolveInfo, sccTycker.sccTycker().wellTyped().toSeq());
     }
     return resolveInfo;
   }

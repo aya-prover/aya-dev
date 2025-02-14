@@ -64,7 +64,7 @@ public record LiterateFaithfulPrettier(
       .filter(p -> codeRange.containsIndex(p.sourcePos()))
       .flatMap(p -> InlineHintProblem.withInlineHints(p, options))
       .distinct()
-      .toImmutableSeq();
+      .toSeq();
 
     return problemsInRange.foldLeft(FaithfulPrettier.highlightsInRange(codeRange, highlights), (acc, p) -> {
       var partition = acc.partition(

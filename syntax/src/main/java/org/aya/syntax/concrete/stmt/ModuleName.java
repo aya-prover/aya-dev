@@ -53,7 +53,7 @@ public sealed interface ModuleName extends Serializable {
 
   static @NotNull ModuleName from(@NotNull SeqLike<String> ids) {
     if (ids.isEmpty()) return This;
-    return new Qualified(ids.toImmutableSeq());
+    return new Qualified(ids.toSeq());
   }
 
   static @NotNull ModuleName.ThisRef of() {

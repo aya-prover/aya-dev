@@ -138,7 +138,7 @@ public class LibraryTest {
         .filterNot(Method::isDefault)
         .map(Method::getName)
         .filterNot(methodsCalled::contains)
-        .toImmutableSeq();
+        .toSeq();
       assertEquals(ImmutableSeq.empty(), notCalled);
     }
   }

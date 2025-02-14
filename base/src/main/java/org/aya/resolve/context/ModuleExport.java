@@ -78,7 +78,7 @@ public record ModuleExport(
 
     return new ExportResult(
       badNames.isNotEmpty() ? this : newModule,
-      badNames.toImmutableSeq(),
+      badNames.toSeq(),
       ImmutableSeq.empty());
   }
 
@@ -115,8 +115,8 @@ public record ModuleExport(
 
     return new ExportResult(
       hasError ? this : newExport,
-      badNames.toImmutableSeq(),
-      shadowNames.toImmutableSeq()
+      badNames.toSeq(),
+      shadowNames.toSeq()
     );
   }
 
