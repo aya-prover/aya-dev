@@ -5,12 +5,12 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -33,7 +33,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return Constants.JIT_TELE_CON_PARAMS;
   }
 
-  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, T unit) {
+  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, T unit) {
     var tele = unit.telescope();
     var size = tele.size();
     var sizeExpr = builder.iconst(size);
@@ -48,15 +48,15 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }
 
-  @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, T unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, T unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(superConParams(), superConArgs(cb, unit)));
   }
 
   @Override protected void buildFramework(
-    @NotNull FreeClassBuilder builder,
+    @NotNull ClassBuilder builder,
     @NotNull T unit,
-    @NotNull Consumer<FreeClassBuilder> continuation
+    @NotNull Consumer<ClassBuilder> continuation
   ) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (unit.telescope().isNotEmpty()) nestBuilder.buildMethod(
@@ -90,7 +90,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   /**
    * @see JitTele#telescope(int, Term...)
    */
-  protected void buildTelescope(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull LocalVariable iTerm, @NotNull LocalVariable teleArgsTerm) {
+  protected void buildTelescope(@NotNull CodeBuilder builder, @NotNull T unit, @NotNull LocalVariable iTerm, @NotNull LocalVariable teleArgsTerm) {
     var tele = unit.telescope();
 
     builder.switchCase(
@@ -105,13 +105,13 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
 
         cb.returnWith(result);
       },
-      FreeCodeBuilder::unreachable);
+      CodeBuilder::unreachable);
   }
 
   /**
    * @see JitTele#result
    */
-  protected void buildResult(@NotNull FreeCodeBuilder builder, @NotNull T unit, @NotNull LocalVariable teleArgsTerm) {
+  protected void buildResult(@NotNull CodeBuilder builder, @NotNull T unit, @NotNull LocalVariable teleArgsTerm) {
     var result = serializeTermUnderTele(
       builder,
       unit.result(),

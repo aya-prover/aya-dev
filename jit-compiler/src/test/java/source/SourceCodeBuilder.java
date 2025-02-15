@@ -4,13 +4,13 @@ package source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
-import org.aya.compiler.free.data.FieldRef;
-import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.FieldRef;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,16 +23,16 @@ import java.util.function.ObjIntConsumer;
 
 import static source.SourceFreeJavaBuilder.toClassRef;
 
-/// Basically a debugging impl for [FreeCodeBuilder]. It produces slightly illegal Java code.
+/// Basically a debugging impl for [CodeBuilder]. It produces slightly illegal Java code.
 public record SourceCodeBuilder(
   @NotNull SourceClassBuilder parent,
   @NotNull SourceBuilder sourceBuilder
-) implements FreeCodeBuilder {
-  public void appendArgs(@NotNull ImmutableSeq<FreeJavaExpr> args) {
+) implements CodeBuilder {
+  public void appendArgs(@NotNull ImmutableSeq<JavaExpr> args) {
     IterableUtil.forEach(args, () -> sourceBuilder.append(", "), this::appendExpr);
   }
 
-  public void appendExpr(@NotNull FreeJavaExpr expr) {
+  public void appendExpr(@NotNull JavaExpr expr) {
     switch ((SourceFreeJavaExpr) expr) {
       case SourceFreeJavaExpr.BlackBox blackBox -> sourceBuilder.append(blackBox.expr());
       case SourceFreeJavaExpr.Cont cont -> cont.run();
@@ -44,7 +44,7 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<FreeJavaExpr> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
     sourceBuilder.append("super(");
     appendArgs(superConArgs);
     sourceBuilder.append(");");
@@ -52,7 +52,7 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public @NotNull SourceFreeJavaExpr.BlackBox makeVar(@NotNull ClassDesc type, @Nullable FreeJavaExpr initializer) {
+  public @NotNull SourceFreeJavaExpr.BlackBox makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
     var name = sourceBuilder.nameGen.nextName();
 
     sourceBuilder.append(toClassRef(type) + " " + name);
@@ -68,7 +68,7 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr.BlackBox(name);
   }
 
-  @Override public void updateVar(@NotNull LocalVariable var, @NotNull FreeJavaExpr update) {
+  @Override public void updateVar(@NotNull LocalVariable var, @NotNull JavaExpr update) {
     sourceBuilder.append(getExpr(var) + " = ");
     appendExpr(update);
     sourceBuilder.append(";");
@@ -76,7 +76,7 @@ public record SourceCodeBuilder(
   }
 
   // (() -> something).get()[0] = 114;
-  @Override public void updateArray(@NotNull FreeJavaExpr array, int idx, @NotNull FreeJavaExpr update) {
+  @Override public void updateArray(@NotNull JavaExpr array, int idx, @NotNull JavaExpr update) {
     appendExpr(array);
     sourceBuilder.append("[" + idx + "]");
     sourceBuilder.append(" = ");
@@ -85,7 +85,7 @@ public record SourceCodeBuilder(
     sourceBuilder.appendLine();
   }
 
-  private void buildUpdate(@NotNull String lhs, @NotNull FreeJavaExpr rhs) {
+  private void buildUpdate(@NotNull String lhs, @NotNull JavaExpr rhs) {
     sourceBuilder.append(lhs);
     sourceBuilder.append(" = ");
     appendExpr(rhs);
@@ -95,8 +95,8 @@ public record SourceCodeBuilder(
 
   private void buildIf(
     @NotNull Runnable condition,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     sourceBuilder.append("if (");
     condition.run();
@@ -117,33 +117,33 @@ public record SourceCodeBuilder(
 
   private void buildIf(
     @NotNull String condition,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf(() -> sourceBuilder.append(condition), thenBlock, elseBlock);
   }
 
   @Override public void ifNotTrue(
     @NotNull LocalVariable notTrue,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf("! (" + getExpr(notTrue) + ")", thenBlock, elseBlock);
   }
 
   @Override public void ifTrue(
     @NotNull LocalVariable theTrue,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf(getExpr(theTrue), thenBlock, elseBlock);
   }
 
   @Override public void ifInstanceOf(
-    @NotNull FreeJavaExpr lhs,
+    @NotNull JavaExpr lhs,
     @NotNull ClassDesc rhs,
-    @NotNull BiConsumer<FreeCodeBuilder, LocalVariable> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     var name = sourceBuilder.nameGen.nextName();
     buildIf(() -> {
@@ -154,10 +154,10 @@ public record SourceCodeBuilder(
   }
 
   @Override public void ifIntEqual(
-    @NotNull FreeJavaExpr lhs,
+    @NotNull JavaExpr lhs,
     int rhs,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf(() -> {
       appendExpr(lhs);
@@ -166,10 +166,10 @@ public record SourceCodeBuilder(
   }
 
   @Override public void ifRefEqual(
-    @NotNull FreeJavaExpr lhs,
-    @NotNull FreeJavaExpr rhs,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull JavaExpr lhs,
+    @NotNull JavaExpr rhs,
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf(() -> {
       appendExpr(lhs);
@@ -179,9 +179,9 @@ public record SourceCodeBuilder(
   }
 
   @Override public void ifNull(
-    @NotNull FreeJavaExpr isNull,
-    @NotNull Consumer<FreeCodeBuilder> thenBlock,
-    @Nullable Consumer<FreeCodeBuilder> elseBlock
+    @NotNull JavaExpr isNull,
+    @NotNull Consumer<CodeBuilder> thenBlock,
+    @Nullable Consumer<CodeBuilder> elseBlock
   ) {
     buildIf(() -> {
       appendExpr(isNull);
@@ -189,7 +189,7 @@ public record SourceCodeBuilder(
     }, thenBlock, elseBlock);
   }
 
-  @Override public void breakable(@NotNull Consumer<FreeCodeBuilder> innerBlock) {
+  @Override public void breakable(@NotNull Consumer<CodeBuilder> innerBlock) {
     sourceBuilder.appendLine("do {");
     sourceBuilder.runInside(() -> innerBlock.accept(this));
     sourceBuilder.appendLine("} while (false);");
@@ -197,7 +197,7 @@ public record SourceCodeBuilder(
 
   @Override public void breakOut() { sourceBuilder.buildBreak(); }
 
-  @Override public void exec(@NotNull FreeJavaExpr expr) {
+  @Override public void exec(@NotNull JavaExpr expr) {
     appendExpr(expr);
     sourceBuilder.append(";");
     sourceBuilder.appendLine();
@@ -206,22 +206,22 @@ public record SourceCodeBuilder(
   @Override public void switchCase(
     @NotNull LocalVariable elim,
     @NotNull ImmutableIntSeq cases,
-    @NotNull ObjIntConsumer<FreeCodeBuilder> branch,
-    @NotNull Consumer<FreeCodeBuilder> defaultCase
+    @NotNull ObjIntConsumer<CodeBuilder> branch,
+    @NotNull Consumer<CodeBuilder> defaultCase
   ) {
     sourceBuilder.buildSwitch(getExpr(elim), cases,
       i -> branch.accept(this, i),
       () -> defaultCase.accept(this));
   }
 
-  @Override public void returnWith(@NotNull FreeJavaExpr expr) {
+  @Override public void returnWith(@NotNull JavaExpr expr) {
     sourceBuilder.append("return ");
     appendExpr(expr);
     sourceBuilder.append(";");
     sourceBuilder.appendLine();
   }
 
-  private @NotNull SourceFreeJavaExpr.Cont mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  private @NotNull SourceFreeJavaExpr.Cont mkNew(@NotNull ClassDesc className, @NotNull ImmutableSeq<JavaExpr> args) {
     return () -> {
       sourceBuilder.append("new " + toClassRef(className) + "(");
       appendArgs(args);
@@ -229,16 +229,16 @@ public record SourceCodeBuilder(
     };
   }
 
-  @Override public @NotNull FreeJavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  @Override public @NotNull JavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
     return mkNew(conRef.owner(), args);
   }
 
-  @Override public @NotNull FreeJavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<FreeJavaExpr> args) {
-    return mkNew(FreeUtil.fromClass(className), args);
+  @Override public @NotNull JavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<JavaExpr> args) {
+    return mkNew(AstUtil.fromClass(className), args);
   }
 
   @Override
-  public @NotNull SourceFreeJavaExpr.Cont invoke(@NotNull MethodRef method, @NotNull FreeJavaExpr owner, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  public @NotNull SourceFreeJavaExpr.Cont invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
     return () -> {
       appendExpr(owner);
       sourceBuilder.append("." + method.name() + "(");
@@ -248,7 +248,7 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public @NotNull SourceFreeJavaExpr.Cont invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<FreeJavaExpr> args) {
+  public @NotNull SourceFreeJavaExpr.Cont invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
     return () -> {
       sourceBuilder.append(toClassRef(method.owner()) + "." + method.name() + "(");
       appendArgs(args);
@@ -260,7 +260,7 @@ public record SourceCodeBuilder(
     return new SourceFreeJavaExpr.BlackBox(toClassRef(field.owner()) + "." + field.name());
   }
 
-  @Override public @NotNull SourceFreeJavaExpr.Cont refField(@NotNull FieldRef field, @NotNull FreeJavaExpr owner) {
+  @Override public @NotNull SourceFreeJavaExpr.Cont refField(@NotNull FieldRef field, @NotNull JavaExpr owner) {
     return () -> {
       appendExpr(owner);
       sourceBuilder.append("." + field.name());
@@ -277,9 +277,9 @@ public record SourceCodeBuilder(
   }
 
   @Override public @NotNull SourceFreeJavaExpr.Cont mkLambda(
-    @NotNull ImmutableSeq<FreeJavaExpr> captures,
+    @NotNull ImmutableSeq<JavaExpr> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, FreeCodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> builder
   ) {
     var name = ImmutableSeq.fill(method.paramTypes().size(), _ -> sourceBuilder.nameGen.nextName());
     var ap = new SourceArgumentProvider.Lambda(captures, name);
@@ -316,7 +316,7 @@ public record SourceCodeBuilder(
   }
 
   @Override
-  public @NotNull SourceFreeJavaExpr.Cont mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<FreeJavaExpr> initializer) {
+  public @NotNull SourceFreeJavaExpr.Cont mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<JavaExpr> initializer) {
     assert initializer == null || initializer.sizeEquals(length);
     var hasInit = initializer != null;
     var arrayIndicator = hasInit ? "[]" : "[" + length + "]";
@@ -331,14 +331,14 @@ public record SourceCodeBuilder(
     };
   }
 
-  @Override public @NotNull SourceFreeJavaExpr.Cont getArray(@NotNull FreeJavaExpr array, int index) {
+  @Override public @NotNull SourceFreeJavaExpr.Cont getArray(@NotNull JavaExpr array, int index) {
     return () -> {
       appendExpr(array);
       sourceBuilder.append("[" + index + "]");
     };
   }
 
-  @Override public @NotNull SourceFreeJavaExpr.Cont checkcast(@NotNull FreeJavaExpr obj, @NotNull ClassDesc as) {
+  @Override public @NotNull SourceFreeJavaExpr.Cont checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as) {
     return () -> {
       sourceBuilder.append("((" + toClassRef(as) + ") ");
       appendExpr(obj);

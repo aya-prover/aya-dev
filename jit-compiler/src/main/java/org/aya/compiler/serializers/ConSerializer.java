@@ -2,15 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.util.function.BiConsumer;
-
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
-import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.morphism.*;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.ConDef;
@@ -21,6 +17,10 @@ import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.function.BiConsumer;
+
 public final class ConSerializer extends JitTeleSerializer<ConDef> {
   public ConSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
     super(JitCon.class, recorder);
@@ -30,12 +30,12 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override protected @NotNull Class<?> callBaseClass() { return ConCallLike.class; }
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
-      FreeUtil.fromClass(JitData.class),
+      AstUtil.fromClass(JitData.class),
       ConstantDescs.CD_int, ConstantDescs.CD_boolean
     ));
   }
 
-  @Override protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, ConDef unit) {
+  @Override protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, ConDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprializer.getInstance(builder, unit.dataRef),
       builder.iconst(unit.selfTele.size()),
@@ -45,7 +45,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   /// @param unit must be indexed, otherwise it should use the default impl.
   /// @see JitCon#isAvailable
-  private void buildIsAvailable(@NotNull FreeCodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
+  private void buildIsAvailable(@NotNull CodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
     var termSeq = builder.invoke(Constants.SEQ_TOSEQ, argsTerm.ref(), ImmutableSeq.empty());
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
     var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
@@ -64,14 +64,14 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
    * @see ConDefLike#equality(Seq, boolean)
    */
   private void buildEquality(
-    @NotNull FreeCodeBuilder builder,
+    @NotNull CodeBuilder builder,
     ConDef unit,
     @NotNull LocalVariable argsTerm,
     @NotNull LocalVariable is0Term
   ) {
     var eq = unit.equality;
     assert eq != null;
-    BiConsumer<FreeCodeBuilder, Boolean> continuation = (cb, b) -> {
+    BiConsumer<CodeBuilder, Boolean> continuation = (cb, b) -> {
       var side = b ? eq.a() : eq.b();
       cb.returnWith(serializeTermUnderTele(cb, side, argsTerm.ref(), unit.telescope().size()));
     };
@@ -81,10 +81,10 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
       otherwise -> continuation.accept(otherwise, false));
   }
 
-  @Override public @NotNull ConSerializer serialize(@NotNull FreeClassBuilder builder0, ConDef unit) {
+  @Override public @NotNull ConSerializer serialize(@NotNull ClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
       if (unit.pats.isNotEmpty()) builder.buildMethod(
-        FreeUtil.fromClass(Result.class),
+        AstUtil.fromClass(Result.class),
         "isAvailable",
         ImmutableSeq.of(Constants.CD_ImmutableSeq),
         (ap, builder1) ->

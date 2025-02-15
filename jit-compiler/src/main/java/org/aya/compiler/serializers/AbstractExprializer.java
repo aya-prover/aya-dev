@@ -3,8 +3,8 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
@@ -13,18 +13,18 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
 public abstract class AbstractExprializer<T> {
-  protected final @NotNull FreeExprBuilder builder;
+  protected final @NotNull ExprBuilder builder;
 
-  protected AbstractExprializer(@NotNull FreeExprBuilder builder) { this.builder = builder; }
+  protected AbstractExprializer(@NotNull ExprBuilder builder) { this.builder = builder; }
 
-  public @NotNull FreeJavaExpr makeImmutableSeq(
+  public @NotNull JavaExpr makeImmutableSeq(
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<FreeJavaExpr> terms
+    @NotNull ImmutableSeq<JavaExpr> terms
   ) {
     return makeImmutableSeq(builder, typeName, terms);
   }
 
-  public @NotNull FreeJavaExpr serializeToImmutableSeq(
+  public @NotNull JavaExpr serializeToImmutableSeq(
     @NotNull Class<?> typeName,
     @NotNull ImmutableSeq<T> terms
   ) {
@@ -32,10 +32,10 @@ public abstract class AbstractExprializer<T> {
     return makeImmutableSeq(typeName, sered);
   }
 
-  public static @NotNull FreeJavaExpr makeImmutableSeq(
-    @NotNull FreeExprBuilder builder,
+  public static @NotNull JavaExpr makeImmutableSeq(
+    @NotNull ExprBuilder builder,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<FreeJavaExpr> terms
+    @NotNull ImmutableSeq<JavaExpr> terms
   ) {
     return makeImmutableSeq(builder, Constants.IMMSEQ, typeName, terms);
   }
@@ -51,13 +51,13 @@ public abstract class AbstractExprializer<T> {
   /// @see ImmutableSeq#of(Object, Object, Object, Object)
   /// @see ImmutableSeq#of(Object, Object, Object, Object, Object)
   /// @see ImmutableSeq#of(Object[])
-  public static @NotNull FreeJavaExpr makeImmutableSeq(
-    @NotNull FreeExprBuilder builder,
+  public static @NotNull JavaExpr makeImmutableSeq(
+    @NotNull ExprBuilder builder,
     @NotNull MethodRef con,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<FreeJavaExpr> terms
+    @NotNull ImmutableSeq<JavaExpr> terms
   ) {
-    ImmutableSeq<FreeJavaExpr> args;
+    ImmutableSeq<JavaExpr> args;
 
     if (terms.size() <= 5) {
       String name = con.name();
@@ -78,7 +78,7 @@ public abstract class AbstractExprializer<T> {
 
       args = terms;
     } else {
-      args = ImmutableSeq.of(builder.mkArray(FreeUtil.fromClass(typeName), terms.size(), terms));
+      args = ImmutableSeq.of(builder.mkArray(AstUtil.fromClass(typeName), terms.size(), terms));
     }
 
     return builder.invoke(con, args);
@@ -87,30 +87,30 @@ public abstract class AbstractExprializer<T> {
   /**
    * Return the reference to the {@code INSTANCE} field of the compiled class to {@param def}
    */
-  public final @NotNull FreeJavaExpr getInstance(@NotNull AnyDef def) {
+  public final @NotNull JavaExpr getInstance(@NotNull AnyDef def) {
     return getInstance(builder, def);
   }
 
-  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {
+  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull TyckDef def) {
     return getInstance(builder, AnyDef.fromVar(def.ref()));
   }
 
-  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull ClassDesc desc) {
+  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull ClassDesc desc) {
     return builder.refField(FreeJavaResolver.resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
   }
 
-  public static @NotNull FreeJavaExpr getInstance(@NotNull FreeExprBuilder builder, @NotNull AnyDef def) {
+  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull AnyDef def) {
     return getInstance(builder, NameSerializer.getClassDesc(def));
   }
 
-  public static @NotNull FreeJavaExpr getRef(@NotNull FreeExprBuilder builder, @NotNull CallKind callType, @NotNull FreeJavaExpr call) {
+  public static @NotNull JavaExpr getRef(@NotNull ExprBuilder builder, @NotNull CallKind callType, @NotNull JavaExpr call) {
     return builder.invoke(FreeJavaResolver.resolve(
       callType.callType, AyaSerializer.FIELD_INSTANCE,
       callType.refType, ImmutableSeq.empty(), true
     ), call, ImmutableSeq.empty());
   }
 
-  public final @NotNull FreeJavaExpr getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
+  public final @NotNull JavaExpr getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
     return builder.refField(FreeJavaResolver.resolve(
       NameSerializer.getClassDesc(def),
       AyaSerializer.FIELD_EMPTYCALL,
@@ -118,19 +118,19 @@ public abstract class AbstractExprializer<T> {
     );
   }
 
-  public static @NotNull ImmutableSeq<FreeJavaExpr> fromSeq(
-    @NotNull FreeExprBuilder builder,
+  public static @NotNull ImmutableSeq<JavaExpr> fromSeq(
+    @NotNull ExprBuilder builder,
     @NotNull ClassDesc elementType,
-    @NotNull FreeJavaExpr theSeq,
+    @NotNull JavaExpr theSeq,
     int size
   ) {
     return ImmutableSeq.fill(size, idx -> makeSeqGet(builder, elementType, theSeq, idx));
   }
 
-  public static @NotNull FreeJavaExpr makeSeqGet(
-    @NotNull FreeExprBuilder builder,
+  public static @NotNull JavaExpr makeSeqGet(
+    @NotNull ExprBuilder builder,
     @NotNull ClassDesc elementType,
-    @NotNull FreeJavaExpr theSeq,
+    @NotNull JavaExpr theSeq,
     int size
   ) {
     var result = builder.invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
@@ -141,10 +141,10 @@ public abstract class AbstractExprializer<T> {
    * Actually perform serialization, unlike {@link #serialize}
    * which will perform some initialization after a {@code T} is obtained.
    */
-  protected abstract @NotNull FreeJavaExpr doSerialize(@NotNull T term);
+  protected abstract @NotNull JavaExpr doSerialize(@NotNull T term);
 
   /**
    * Prepare and perform {@link #doSerialize}
    */
-  public abstract @NotNull FreeJavaExpr serialize(T unit);
+  public abstract @NotNull JavaExpr serialize(T unit);
 }

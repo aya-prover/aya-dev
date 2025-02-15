@@ -7,7 +7,6 @@ module aya.compiler {
   requires org.glavo.classfile;
 
   exports org.aya.compiler;
-  exports org.aya.compiler.free;
-  exports org.aya.compiler.free.data;
   exports org.aya.compiler.serializers;
+  exports org.aya.compiler.morphism;
 }
