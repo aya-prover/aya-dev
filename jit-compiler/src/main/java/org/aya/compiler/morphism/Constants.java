@@ -43,7 +43,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_MutableSeq = AstUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = AstUtil.fromClass(Supplier.class);
   public static final @NotNull ClassDesc CD_Closure = AstUtil.fromClass(Closure.class);
-  public static final @NotNull ClassDesc CD_UnaryOperator = FreeUtil.fromClass(UnaryOperator.class);
+  public static final @NotNull ClassDesc CD_UnaryOperator = AstUtil.fromClass(UnaryOperator.class);
   public static final @NotNull ClassDesc CD_Result = AstUtil.fromClass(Result.class);
   public static final @NotNull String NAME_OF = "of";
   public static final @NotNull String NAME_EMPTY = "empty";
