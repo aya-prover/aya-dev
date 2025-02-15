@@ -4,8 +4,8 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.ExprBuilder;

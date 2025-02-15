@@ -1,18 +1,17 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.morphism;
+package org.aya.compiler.data;
 
 import kala.collection.ArraySeq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.AstUtil;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
-public final class FreeJavaResolver {
+public final class DataResolver {
   /**
    * Find a method with given information
    */

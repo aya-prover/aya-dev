@@ -4,12 +4,12 @@ package org.aya.compiler.morphism.asm;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.LocalVariable;
+import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.FreeJavaResolver;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
 import org.glavo.classfile.Label;
@@ -83,7 +83,7 @@ public record AsmCodeBuilder(
   invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
     invoke(
       InvokeKind.Special,
-      FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
+      DataResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
       thisRef(),
       superConArgs);
   }
@@ -279,7 +279,7 @@ public record AsmCodeBuilder(
   }
 
   @Override public @NotNull AsmExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
-    var ref = FreeJavaResolver.resolve(enumClass, enumName, enumClass);
+    var ref = DataResolver.resolve(enumClass, enumName, enumClass);
     return refField(ref);
   }
 

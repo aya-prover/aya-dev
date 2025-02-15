@@ -4,9 +4,9 @@ package source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.LocalVariable;
+import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.CodeBuilder;

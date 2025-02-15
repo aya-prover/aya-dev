@@ -3,7 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.CodeBuilder;

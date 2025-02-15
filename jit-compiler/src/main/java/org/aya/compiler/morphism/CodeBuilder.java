@@ -4,7 +4,7 @@ package org.aya.compiler.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -6,8 +6,9 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.MethodRef;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.*;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
@@ -34,8 +35,8 @@ import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
  * Build the "constructor form" of {@link Term}, but in Java.
  */
 public final class TermExprializer extends AbstractExprializer<Term> {
-  public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
-  public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
+  public static final @NotNull FieldRef TYPE0_FIELD = DataResolver.resolve(SortTerm.class, "Type0");
+  public static final @NotNull FieldRef ISET_FIELD = DataResolver.resolve(SortTerm.class, "ISet");
   /// Terms that should be instantiated
   private final @NotNull ImmutableSeq<JavaExpr> instantiates;
   private final @NotNull MutableLinkedHashMap<LocalVar, JavaExpr> binds;

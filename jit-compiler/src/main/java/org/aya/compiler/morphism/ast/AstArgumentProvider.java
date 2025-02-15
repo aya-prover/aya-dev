@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.morphism.ast;
 
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;

@@ -4,9 +4,9 @@ package org.aya.compiler.morphism;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.LocalVariable;
+import org.aya.compiler.data.MethodRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

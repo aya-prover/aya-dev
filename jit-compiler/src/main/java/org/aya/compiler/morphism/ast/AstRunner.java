@@ -4,7 +4,7 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.morphism.*;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;

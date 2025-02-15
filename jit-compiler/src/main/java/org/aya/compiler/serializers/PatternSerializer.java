@@ -7,7 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.Constants;

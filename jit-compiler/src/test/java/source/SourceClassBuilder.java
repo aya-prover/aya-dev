@@ -3,8 +3,8 @@
 package source;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.FieldRef;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.FieldRef;
+import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.*;
 import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.AyaMetadata;

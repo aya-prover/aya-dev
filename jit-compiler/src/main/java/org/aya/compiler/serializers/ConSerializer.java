@@ -5,7 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.morphism.*;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.morphism.asm;
 
-import org.aya.compiler.LocalVariable;
+import org.aya.compiler.data.LocalVariable;
 import org.glavo.classfile.TypeKind;
 import org.jetbrains.annotations.NotNull;
 

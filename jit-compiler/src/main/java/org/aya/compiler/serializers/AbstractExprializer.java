@@ -3,7 +3,8 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.MethodRef;
+import org.aya.compiler.data.MethodRef;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -71,7 +72,7 @@ public abstract class AbstractExprializer<T> {
         params = ImmutableSeq.fill(terms.size(), ConstantDescs.CD_Object);
       }
 
-      con = FreeJavaResolver.resolve(
+      con = DataResolver.resolve(
         con.owner(), name,
         con.returnType(), params,
         con.isInterface());
@@ -96,7 +97,7 @@ public abstract class AbstractExprializer<T> {
   }
 
   public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull ClassDesc desc) {
-    return builder.refField(FreeJavaResolver.resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
+    return builder.refField(DataResolver.resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
   }
 
   public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull AnyDef def) {
@@ -104,14 +105,14 @@ public abstract class AbstractExprializer<T> {
   }
 
   public static @NotNull JavaExpr getRef(@NotNull ExprBuilder builder, @NotNull CallKind callType, @NotNull JavaExpr call) {
-    return builder.invoke(FreeJavaResolver.resolve(
+    return builder.invoke(DataResolver.resolve(
       callType.callType, AyaSerializer.FIELD_INSTANCE,
       callType.refType, ImmutableSeq.empty(), true
     ), call, ImmutableSeq.empty());
   }
 
   public final @NotNull JavaExpr getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
-    return builder.refField(FreeJavaResolver.resolve(
+    return builder.refField(DataResolver.resolve(
       NameSerializer.getClassDesc(def),
       AyaSerializer.FIELD_EMPTYCALL,
       callType.callType)
