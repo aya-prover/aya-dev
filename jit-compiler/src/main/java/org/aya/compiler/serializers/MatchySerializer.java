@@ -3,6 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
@@ -40,10 +41,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return NameSerializer.javifyClassName(unit.matchy.qualifiedName().module(), unit.matchy.qualifiedName().name());
   }
 
+  private static @NotNull InvokeSignatureHelper makeHelper(int capturec, int argc) {
+    return new InvokeSignatureHelper(ImmutableSeq.fill(capturec + argc, Constants.CD_Term));
+  }
+
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
     return new MethodRef(
       owner, "invoke",
-      Constants.CD_Term, ImmutableSeq.fill(1 + capturec + argc, i -> i == 0 ? Constants.CD_UnaryOperator : Constants.CD_Term),
+      Constants.CD_Term, makeHelper(capturec, argc).parameters(),
       false
     );
   }
@@ -102,13 +107,11 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var capturec = data.capturesSize;
     int argc = data.argsSize;
     var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
-    var invokeExpr = builder.invoke(invokeRef, builder.thisRef(),
-      AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
-        .view()
-        .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
-        .prepended(pre.ref())
-        .collect(ImmutableSeq.factory())
-    );
+    var fullArgs = SeqView.of(pre.ref())
+      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec))
+      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
+      .collect(ImmutableSeq.factory());
+    var invokeExpr = builder.invoke(invokeRef, builder.thisRef(), fullArgs);
 
     builder.returnWith(invokeExpr);
   }
@@ -135,16 +138,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
 
-      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.fill(1 + capturec + argc, i ->
-        i == 0
-          ? Constants.CD_UnaryOperator
-          : Constants.CD_Term
-      ), (ap, cb) -> {
-        var pre = ap.arg(0);
-        var captures = ImmutableSeq.fill(capturec, i -> ap.arg(1 + i));
-        var args = ImmutableSeq.fill(argc, i -> ap.arg(1 + i + capturec));
+      var helper = makeHelper(capturec, argc);
+
+      builder.buildMethod(Constants.CD_Term, "invoke", helper.parameters(), (ap, cb) -> {
+        var pre = helper.normalizer(ap);
+        var captures = ImmutableSeq.fill(capturec, i -> helper.arg(ap, i));
+        var args = ImmutableSeq.fill(argc, i -> helper.arg(ap, i + capturec));
         buildInvoke(cb, unit, pre, captures, args);
-        });
+      });
 
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
         Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq

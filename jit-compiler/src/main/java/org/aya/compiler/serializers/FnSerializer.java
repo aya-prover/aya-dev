@@ -32,14 +32,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     this.shapeFactory = shapeFactory;
   }
 
+  private static @NotNull InvokeSignatureHelper makeHelper(int argc) {
+    return new InvokeSignatureHelper(ImmutableSeq.fill(argc, Constants.CD_Term));
+  }
+
   /// @see JitFn#invoke(java.util.function.UnaryOperator, Seq)
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
     return new MethodRef(
-      owner, "invoke", Constants.CD_Term, ImmutableSeq.fill(1 + argc, i ->
-      i == 0
-        ? Constants.CD_UnaryOperator
-        : Constants.CD_Term
-    ), false);
+      owner, "invoke", Constants.CD_Term, makeHelper(argc).parameters(), false);
   }
 
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
@@ -127,31 +127,27 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override public @NotNull FnSerializer serialize(@NotNull ClassBuilder builder, FnDef unit) {
-    var fullParam = ImmutableSeq.fill(1 + unit.telescope().size(), i ->
-      i == 0
-        ? Constants.CD_UnaryOperator
-        : Constants.CD_Term
-    );
-
     buildFramework(builder, unit, builder0 -> {
+      var fixedInvokeHelper = makeHelper(unit.telescope().size());
       var fixedInvoke = builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        fullParam,
+        fixedInvokeHelper.parameters(),
         (ap, cb) -> {
-          var pre = ap.arg(0);
+          var pre = fixedInvokeHelper.normalizer(ap);
           var args = ImmutableSeq.fill(unit.telescope().size(),
-            i -> ap.arg(i + 1));
+            i -> fixedInvokeHelper.arg(ap, i));
           buildInvoke(cb, unit, pre, args);
         }
       );
 
+      var varargInvokeHelper = new InvokeSignatureHelper(ImmutableSeq.of(Constants.CD_Seq));
       builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        ImmutableSeq.of(Constants.CD_UnaryOperator, Constants.CD_Seq),
+        varargInvokeHelper.parameters(),
         (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke, ap.arg(0), ap.arg(1))
+          buildInvoke(cb, unit, fixedInvoke, varargInvokeHelper.normalizer(ap), varargInvokeHelper.arg(ap, 0))
       );
     });
 

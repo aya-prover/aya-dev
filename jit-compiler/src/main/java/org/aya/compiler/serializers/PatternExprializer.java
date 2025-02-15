@@ -24,12 +24,12 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
   }
 
   private @NotNull JavaExpr serializeTerm(@NotNull Term term) {
-    return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm)
+    return new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 
   private @NotNull JavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
-    var termSer = new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder);
+    var termSer = new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
       getInstance(head.ref()),
