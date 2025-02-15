@@ -36,42 +36,44 @@ import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
 public final class TermExprializer extends AbstractExprializer<Term> {
   public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
+
   /// Terms that should be instantiated
   private final @NotNull ImmutableSeq<JavaExpr> instantiates;
   private final @NotNull MutableLinkedHashMap<LocalVar, JavaExpr> binds;
 
   /// Whether allow {@link LocalTerm}, false in default (in order to report unexpected LocalTerm)
   private final boolean allowLocalTerm;
-  private final @NotNull MatchyRecorder recorder;
 
   public TermExprializer(
-    @NotNull ExprBuilder builder, @NotNull ImmutableSeq<JavaExpr> instantiates,
-    @NotNull MatchyRecorder recorder
+    @NotNull ExprBuilder builder,
+    @NotNull SerializerContext context,
+    @NotNull ImmutableSeq<JavaExpr> instantiates
   ) {
-    this(builder, instantiates, false, recorder);
+    this(builder, context, instantiates, false);
   }
 
   public TermExprializer(
-          @NotNull ExprBuilder builder, @NotNull ImmutableSeq<JavaExpr> instantiates,
-          boolean allowLocalTer, @NotNull MatchyRecorder recorder
+          @NotNull ExprBuilder builder,
+    @NotNull SerializerContext context,
+    @NotNull ImmutableSeq<JavaExpr> instantiates,
+          boolean allowLocalTer
   ) {
-    super(builder);
+    super(builder, context);
     this.instantiates = instantiates;
     this.allowLocalTerm = allowLocalTer;
     this.binds = MutableLinkedHashMap.of();
-    this.recorder = recorder;
   }
 
   private TermExprializer(
     @NotNull ExprBuilder builder,
+    @NotNull SerializerContext context,
     @NotNull MutableLinkedHashMap<LocalVar, JavaExpr> newBinds,
-    boolean allowLocalTerm, @NotNull MatchyRecorder recorder
+    boolean allowLocalTerm
   ) {
-    super(builder);
+    super(builder, context);
     this.instantiates = ImmutableSeq.empty();
     this.binds = newBinds;
     this.allowLocalTerm = allowLocalTerm;
-    this.recorder = recorder;
   }
 
   private @NotNull JavaExpr serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
@@ -246,7 +248,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeClosureToImmutableSeq(forgor)
         ));
       case MatchCall(var ref, var args, var captures) -> {
-        if (ref instanceof Matchy matchy) recorder.addMatchy(matchy, args.size(), captures.size());
+        if (ref instanceof Matchy matchy) context.recorder().addMatchy(matchy, args.size(), captures.size());
         yield buildMatchyInvoke(NameSerializer.getClassDesc(ref),
           args.map(this::doSerialize), captures.map(this::doSerialize));
       }
@@ -268,8 +270,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     var entries = binds.toImmutableSeq();
     return builder.mkLambda(entries.map(Tuple2::component2), lambdaType, (ap, builder) -> {
       var captured = entries.mapIndexed((i, tup) -> Tuple.of(tup.component1(), ap.capture(i)));
-      var result = cont.apply(ap, new TermExprializer(this.builder,
-        MutableLinkedHashMap.from(captured), this.allowLocalTerm, recorder));
+      var result = cont.apply(ap, new TermExprializer(this.builder, context,
+        MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder.returnWith(result);
     });
   }

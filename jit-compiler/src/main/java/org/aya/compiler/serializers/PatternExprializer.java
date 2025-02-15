@@ -15,19 +15,16 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PatternExprializer extends AbstractExprializer<Pat> {
   private final boolean allowLocalTerm;
-  private final @NotNull MatchyRecorder recorder;
 
   PatternExprializer(
-          @NotNull ExprBuilder builder, boolean allowLocalTerm,
-          @NotNull MatchyRecorder recorder
+          @NotNull ExprBuilder builder, @NotNull SerializerContext context, boolean allowLocalTerm
   ) {
-    super(builder);
+    super(builder, context);
     this.allowLocalTerm = allowLocalTerm;
-    this.recorder = recorder;
   }
 
   private @NotNull JavaExpr serializeTerm(@NotNull Term term) {
-    return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder)
+    return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 

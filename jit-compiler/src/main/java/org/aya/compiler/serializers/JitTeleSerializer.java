@@ -97,7 +97,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
       iTerm,
       IntRange.closedOpen(0, tele.size()).collect(ImmutableIntSeq.factory()),
       (cb, kase) -> {
-        var result = serializeTermUnderTele(
+        var result = serializeTermUnderTeleWithoutNormalizer(
           cb,
           tele.get(kase).type(),
           teleArgsTerm.ref(), kase
@@ -112,7 +112,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
    * @see JitTele#result
    */
   protected void buildResult(@NotNull CodeBuilder builder, @NotNull T unit, @NotNull LocalVariable teleArgsTerm) {
-    var result = serializeTermUnderTele(
+    var result = serializeTermUnderTeleWithoutNormalizer(
       builder,
       unit.result(),
       teleArgsTerm.ref(),

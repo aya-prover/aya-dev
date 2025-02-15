@@ -43,13 +43,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
     return new MethodRef(
       owner, "invoke",
-      Constants.CD_Term, ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
+      Constants.CD_Term, ImmutableSeq.fill(1 + capturec + argc, i -> i == 0 ? Constants.CD_UnaryOperator : Constants.CD_Term),
       false
     );
   }
 
   private void buildInvoke(
     @NotNull CodeBuilder builder, @NotNull MatchyData data,
+    @NotNull LocalVariable pre,
     @NotNull ImmutableSeq<LocalVariable> captures, @NotNull ImmutableSeq<LocalVariable> args
   ) {
     var unit = data.matchy;
@@ -70,6 +71,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       return;
     }
 
+    var normalizer = pre.ref();
+    var serializerContext = buildSerializerContext(normalizer);
+
     var matching = unit.clauses().map(clause ->
       new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
         (ps, cb, binds) -> {
@@ -78,20 +82,21 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
             .map(LocalVariable::ref)
             .appendedAll(captureExprs)
             .toSeq();
-          var returns = serializeTermUnderTele(cb, clause.body(), fullSeq);
+          var returns = serializerContext.serializeTermUnderTele(cb, clause.body(), fullSeq);
           cb.returnWith(returns);
         })
     );
 
-    new PatternSerializer(argExprs, onFailed, false)
+    new PatternSerializer(argExprs, onFailed, serializerContext, false)
       .serialize(builder, matching);
   }
 
   /**
-   * @see JitMatchy#invoke(Seq, Seq)
+   * @see JitMatchy#invoke(java.util.function.UnaryOperator, Seq, Seq)
    */
   private void buildInvoke(
     @NotNull CodeBuilder builder, @NotNull MatchyData data,
+    @NotNull LocalVariable pre,
     @NotNull LocalVariable captures, @NotNull LocalVariable args
   ) {
     var capturec = data.capturesSize;
@@ -99,7 +104,10 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
     var invokeExpr = builder.invoke(invokeRef, builder.thisRef(),
       AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
+        .view()
         .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
+        .prepended(pre.ref())
+        .collect(ImmutableSeq.factory())
     );
 
     builder.returnWith(invokeExpr);
@@ -109,7 +117,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   private void buildType(@NotNull CodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
     var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), data.capturesSize);
     var argSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), data.argsSize);
-    var result = serializeTermUnderTele(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
+    var result = serializeTermUnderTeleWithoutNormalizer(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
     builder.returnWith(result);
   }
 
@@ -127,19 +135,24 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
 
-      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.fill(capturec + argc, Constants.CD_Term),
-        (ap, cb) -> {
-          var captures = ImmutableSeq.fill(capturec, ap::arg);
-          var args = ImmutableSeq.fill(argc, i -> ap.arg(i + capturec));
-          buildInvoke(cb, unit, captures, args);
+      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.fill(1 + capturec + argc, i ->
+        i == 0
+          ? Constants.CD_UnaryOperator
+          : Constants.CD_Term
+      ), (ap, cb) -> {
+        var pre = ap.arg(0);
+        var captures = ImmutableSeq.fill(capturec, i -> ap.arg(1 + i));
+        var args = ImmutableSeq.fill(argc, i -> ap.arg(1 + i + capturec));
+        buildInvoke(cb, unit, pre, captures, args);
         });
 
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
-        Constants.CD_Seq, Constants.CD_Seq
+        Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq
       ), (ap, cb) -> {
-        var captures = ap.arg(0);
-        var args = ap.arg(1);
-        buildInvoke(cb, unit, captures, args);
+        var pre = ap.arg(0);
+        var captures = ap.arg(1);
+        var args = ap.arg(2);
+        buildInvoke(cb, unit, pre, captures, args);
       });
 
       builder.buildMethod(Constants.CD_Term, "type", ImmutableSeq.of(

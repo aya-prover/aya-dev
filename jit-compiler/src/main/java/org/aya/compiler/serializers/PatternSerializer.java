@@ -60,16 +60,19 @@ public final class PatternSerializer {
 
   private final @NotNull ImmutableSeq<JavaExpr> argNames;
   private final @NotNull Consumer<CodeBuilder> onFailed;
+  private final @NotNull SerializerContext context;
   private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternSerializer(
     @NotNull ImmutableSeq<JavaExpr> argNames,
     @NotNull Consumer<CodeBuilder> onFailed,
+    @NotNull SerializerContext context,
     boolean isOverlap
   ) {
     this.argNames = argNames;
     this.onFailed = onFailed;
+    this.context = context;
     this.isOverlap = isOverlap;
   }
 
@@ -96,41 +99,50 @@ public final class PatternSerializer {
         onMatchSucc.accept(builder);
       }
 
-      case Pat.Con con -> builder.ifInstanceOf(term, AstUtil.fromClass(ConCallLike.class),
-        (builder1, conTerm) -> builder1.ifRefEqual(
-          AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
-          AbstractExprializer.getInstance(builder1, con.ref()),
-          builder2 -> {
-            var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
-            var conArgs = AbstractExprializer.fromSeq(
-              builder2,
-              Constants.CD_Term,
-              conArgsTerm,
-              con.args().size()
-            );
+      case Pat.Con con -> {
+        var whnf = context.whnf(builder, term);
+        builder.ifInstanceOf(whnf, AstUtil.fromClass(ConCallLike.class),
+          (builder1, conTerm) -> builder1.ifRefEqual(
+            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
+            AbstractExprializer.getInstance(builder1, con.ref()),
+            builder2 -> {
+              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
+              var conArgs = AbstractExprializer.fromSeq(
+                builder2,
+                Constants.CD_Term,
+                conArgsTerm,
+                con.args().size()
+              );
 
-            doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
-          }, null /* mismatch, do nothing */
-        ), this::onStuck);
+              doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
+            }, null /* mismatch, do nothing */
+          ), this::onStuck);
+      }
       case Pat.Meta _ -> Panic.unreachable();
-      case Pat.ShapedInt shapedInt -> multiStage(builder, term, ImmutableSeq.of(
-        // mTerm -> solveMeta(shapedInt, mTerm),
-        (builder0, mTerm) ->
-          matchInt(builder0, shapedInt, mTerm),
-        (builder0, mTerm) ->
-          doSerialize(builder0, shapedInt.constructorForm(), builder.refVar(mTerm),
-            // There will a sequence of [subMatchState = true] if there are a lot of [Pat.ShapedInt],
-            // but our optimizer will fix them
-            Once.of(builder1 -> updateSubstate(builder1, true)))
-      ), onMatchSucc);
-      case Pat.Tuple(var l, var r) ->
-        builder.ifInstanceOf(term, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+      case Pat.ShapedInt shapedInt -> {
+        var whnf = context.whnf(builder, term);
+        multiStage(builder, whnf, ImmutableSeq.of(
+          // mTerm -> solveMeta(shapedInt, mTerm),
+          (builder0, mTerm) ->
+            matchInt(builder0, shapedInt, mTerm),
+          (builder0, mTerm) ->
+            doSerialize(builder0, shapedInt.constructorForm(), builder.refVar(mTerm),
+              // There will a sequence of [subMatchState = true] if there are a lot of [Pat.ShapedInt],
+              // but our optimizer will fix them
+              Once.of(builder1 -> updateSubstate(builder1, true)))
+        ), onMatchSucc);
+      }
+      case Pat.Tuple(var l, var r) -> {
+        var whnf = context.whnf(builder, term);
+        builder.ifInstanceOf(whnf, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+          // TODO: use doSerialize on many pat version
           var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
           doSerialize(builder0, l, lhs, Once.of(builder1 -> {
             var rhs = builder0.invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
             doSerialize(builder1, r, rhs, onMatchSucc);
           }));
         }, this::onStuck);
+      }
     }
   }
 

@@ -18,6 +18,8 @@ import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 
+import java.util.function.UnaryOperator;
+
 public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
   public final JitData dataType;
   private final boolean hasEq;
@@ -37,9 +39,12 @@ public abstract non-sealed class JitCon extends JitTele implements ConDefLike {
   /// Whether this constructor is available of data type.
   /// The default impl is for non-indexed constructors, where it's always available.
   ///
+  /// @implSpec the implementation is invoking {@link org.aya.syntax.core.pat.PatMatcher},
+  ///           cause serializing meta solving is complicated and not worth.
+  ///
   /// @param args the argument to the data type
   /// @return a match result, a sequence of substitution if success
-  public @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull ImmutableSeq<Term> args) {
+  public @NotNull Result<ImmutableSeq<Term>, State> isAvailable(@NotNull UnaryOperator<Term> pre, @NotNull ImmutableSeq<Term> args) {
     return Result.ok(args);
   }
 

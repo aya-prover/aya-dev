@@ -32,11 +32,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  /// @see JitFn#invoke(Seq)
+  /// @see JitFn#invoke(java.util.function.UnaryOperator, Seq)
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
     return new MethodRef(
-      owner, "invoke", Constants.CD_Term, ImmutableSeq.fill(argc, Constants.CD_Term), false
-    );
+      owner, "invoke", Constants.CD_Term, ImmutableSeq.fill(1 + argc, i ->
+      i == 0
+        ? Constants.CD_UnaryOperator
+        : Constants.CD_Term
+    ), false);
   }
 
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
@@ -62,6 +65,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private void buildInvoke(
     @NotNull CodeBuilder builder,
     @NotNull FnDef unit,
+    @NotNull LocalVariable preTerm,
     @NotNull ImmutableSeq<LocalVariable> argTerms
   ) {
     Consumer<CodeBuilder> onStuckCon = cb -> {
@@ -70,6 +74,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     };
 
     var argExprs = argTerms.map(LocalVariable::ref);
+    var normalizer = preTerm.ref();
+    var serializerContext = buildSerializerContext(normalizer);
 
     if (unit.is(Modifier.Opaque)) {
       onStuckCon.accept(builder);
@@ -78,14 +84,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
     switch (unit.body()) {
       case Either.Left(var expr) -> {
-        var result = serializeTermUnderTele(builder, expr, argExprs);
+        var result = serializerContext.serializeTermUnderTele(builder, expr, argExprs);
         builder.returnWith(result);
       }
       case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(argExprs, onStuckCon, unit.is(Modifier.Overlap));
+        var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
         ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
             matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-            var result = serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
+          var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
               .take(count)
               .map(LocalVariable::ref)
               .toSeq());
@@ -99,10 +105,16 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   /**
    * Build vararg `invoke`
    */
-  private void buildInvoke(@NotNull CodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable argsTerm) {
+  private void buildInvoke(
+    @NotNull CodeBuilder builder,
+    @NotNull FnDef unit,
+    @NotNull MethodRef invokeMethod,
+    @NotNull LocalVariable preTerm,
+    @NotNull LocalVariable argsTerm
+  ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var result = builder.invoke(invokeMethod, builder.thisRef(), args);
+    var result = builder.invoke(invokeMethod, builder.thisRef(), args.prepended(preTerm.ref()));
     builder.returnWith(result);
   }
 
@@ -115,7 +127,11 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override public @NotNull FnSerializer serialize(@NotNull ClassBuilder builder, FnDef unit) {
-    var fullParam = ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term);
+    var fullParam = ImmutableSeq.fill(1 + unit.telescope().size(), i ->
+      i == 0
+        ? Constants.CD_UnaryOperator
+        : Constants.CD_Term
+    );
 
     buildFramework(builder, unit, builder0 -> {
       var fixedInvoke = builder0.buildMethod(
@@ -123,18 +139,19 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         fullParam,
         (ap, cb) -> {
+          var pre = ap.arg(0);
           var args = ImmutableSeq.fill(unit.telescope().size(),
-            ap::arg);
-          buildInvoke(cb, unit, args);
+            i -> ap.arg(i + 1));
+          buildInvoke(cb, unit, pre, args);
         }
       );
 
       builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        ImmutableSeq.of(Constants.CD_Seq),
+        ImmutableSeq.of(Constants.CD_UnaryOperator, Constants.CD_Seq),
         (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke, ap.arg(0))
+          buildInvoke(cb, unit, fixedInvoke, ap.arg(0), ap.arg(1))
       );
     });
 

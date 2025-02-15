@@ -36,7 +36,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
       builder.iconst(unit.index()),
-      serializeTerm(builder, unit.type())
+      serializeTermWithoutNormalizer(builder, unit.type())
     ));
   }
 
