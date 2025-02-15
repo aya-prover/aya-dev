@@ -3,9 +3,11 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.data.MethodRef;
+import org.aya.compiler.data.Constants;
 import org.aya.compiler.data.DataResolver;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.data.MethodRef;
+import org.aya.compiler.morphism.ExprBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +81,7 @@ public abstract class AbstractExprializer<T> {
 
       args = terms;
     } else {
-      args = ImmutableSeq.of(builder.mkArray(AstUtil.fromClass(typeName), terms.size(), terms));
+      args = ImmutableSeq.of(builder.mkArray(DataResolver.fromClass(typeName), terms.size(), terms));
     }
 
     return builder.invoke(con, args);

@@ -4,11 +4,11 @@ package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.data.Constants;
 import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.Constants;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;

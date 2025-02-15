@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.value.LazyValue;
 import org.aya.compiler.AsmOutputCollector;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.*;
@@ -49,7 +50,7 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
     this.collector = collector;
     this.lambdaBoostrapMethodHandle = LazyValue.of(() -> writer.constantPool().methodHandleEntry(MethodHandleDesc.ofMethod(
       DirectMethodHandleDesc.Kind.STATIC,
-      AstUtil.fromClass(LambdaMetafactory.class),
+      DataResolver.fromClass(LambdaMetafactory.class),
       "metafactory",
       MethodTypeDesc.of(
         ConstantDescs.CD_CallSite,
@@ -69,7 +70,7 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
   @Override public void
   buildNestedClass(@NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<ClassBuilder> builder) {
     AsmJavaBuilder.buildClass(collector, ayaMetadata,
-      new ClassData(owner().nested(name), AstUtil.fromClass(superclass),
+      new ClassData(owner().nested(name), DataResolver.fromClass(superclass),
         new ClassData.Outer(classData, name)),
       builder);
     nestedMembers.append(name);

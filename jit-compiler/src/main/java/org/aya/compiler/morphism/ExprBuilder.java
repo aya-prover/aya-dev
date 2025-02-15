@@ -4,6 +4,7 @@ package org.aya.compiler.morphism;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.data.MethodRef;
@@ -26,10 +27,10 @@ public interface ExprBuilder {
     assert candidates.size() == 1 : "Ambiguous constructors: count " + candidates.size();
 
     var first = candidates.getFirst();
-    var desc = AstUtil.fromClass(className);
+    var desc = DataResolver.fromClass(className);
     var conRef = ClassBuilder.makeConstructorRef(desc,
       ImmutableArray.wrap(first.getParameterTypes())
-        .map(AstUtil::fromClass));
+        .map(DataResolver::fromClass));
     return mkNew(conRef, args);
   }
 
@@ -47,7 +48,7 @@ public interface ExprBuilder {
   @NotNull JavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName);
 
   default @NotNull JavaExpr refEnum(@NotNull Enum<?> value) {
-    var cd = AstUtil.fromClass(value.getClass());
+    var cd = DataResolver.fromClass(value.getClass());
     var name = value.name();
     return refEnum(cd, name);
   }
@@ -84,6 +85,6 @@ public interface ExprBuilder {
   @NotNull JavaExpr checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as);
 
   default JavaExpr checkcast(@NotNull JavaExpr obj, @NotNull Class<?> as) {
-    return checkcast(obj, AstUtil.fromClass(as));
+    return checkcast(obj, DataResolver.fromClass(as));
   }
 }

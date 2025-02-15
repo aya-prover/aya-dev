@@ -3,7 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.ExprBuilder;
 import org.aya.compiler.morphism.JavaExpr;
@@ -56,7 +56,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   protected void buildFramework(@NotNull ClassBuilder builder, @NotNull T unit, @NotNull Consumer<ClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
-        nestBuilder.buildConstantField(AstUtil.fromClass(callBaseClass()),
+        nestBuilder.buildConstantField(DataResolver.fromClass(callBaseClass()),
           AyaSerializer.FIELD_EMPTYCALL, cb ->
             buildEmptyCall(cb, unit));
       }

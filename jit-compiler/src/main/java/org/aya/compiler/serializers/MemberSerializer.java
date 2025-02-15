@@ -3,7 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.JavaExpr;
@@ -25,9 +25,9 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   @Override
   protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
-      AstUtil.fromClass(JitClass.class),
+      DataResolver.fromClass(JitClass.class),
       ConstantDescs.CD_int,
-      AstUtil.fromClass(SortTerm.class)
+      DataResolver.fromClass(SortTerm.class)
     ));
   }
 

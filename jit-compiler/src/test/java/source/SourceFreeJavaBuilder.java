@@ -3,7 +3,7 @@
 package source;
 
 import kala.collection.Seq;
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.JavaBuilder;
 import org.aya.compiler.serializers.ExprializeUtil;
@@ -59,7 +59,7 @@ public record SourceFreeJavaBuilder(@NotNull SourceBuilder sourceBuilder)
     cb.sourceBuilder().appendLine(warningsToSuppress.joinToString(", ",
       "@SuppressWarnings(value = {", "})", ExprializeUtil::makeString));
     sourceBuilder.buildClass(className.displayName(),
-      toClassRef(AstUtil.fromClass(superclass)), false, () ->
+      toClassRef(DataResolver.fromClass(superclass)), false, () ->
         builder.accept(cb));
     return sourceBuilder.builder.toString();
   }

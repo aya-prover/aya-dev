@@ -5,8 +5,12 @@ package org.aya.compiler.serializers;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
+import org.aya.compiler.data.Constants;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.LocalVariable;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.ConDef;
@@ -30,7 +34,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override protected @NotNull Class<?> callBaseClass() { return ConCallLike.class; }
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
-      AstUtil.fromClass(JitData.class),
+      DataResolver.fromClass(JitData.class),
       ConstantDescs.CD_int, ConstantDescs.CD_boolean
     ));
   }
@@ -84,7 +88,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override public @NotNull ConSerializer serialize(@NotNull ClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
       if (unit.pats.isNotEmpty()) builder.buildMethod(
-        AstUtil.fromClass(Result.class),
+        DataResolver.fromClass(Result.class),
         "isAvailable",
         ImmutableSeq.of(Constants.CD_ImmutableSeq),
         (ap, builder1) ->

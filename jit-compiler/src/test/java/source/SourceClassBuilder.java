@@ -3,6 +3,7 @@
 package source;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.*;
@@ -29,7 +30,7 @@ public record SourceClassBuilder(
   }
 
   public void buildMetadata(@NotNull AyaMetadata ayaMetadata) {
-    sourceBuilder.appendLine("@" + toClassRef(AstUtil.fromClass(AyaMetadata.class)) + "(");
+    sourceBuilder.appendLine("@" + toClassRef(DataResolver.fromClass(AyaMetadata.class)) + "(");
     sourceBuilder.runInside(() -> {
       buildMetadataRecord(AyaMetadata.NAME_MODULE, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(ayaMetadata.module()).map(ExprializeUtil::makeString)
@@ -42,7 +43,7 @@ public record SourceClassBuilder(
         buildMetadataRecord(AyaMetadata.NAME_SHAPE, Integer.toString(ayaMetadata.shape()), false);
       if (ayaMetadata.recognition().length != 0) buildMetadataRecord(AyaMetadata.NAME_RECOGNITION, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(ayaMetadata.recognition()).map(x ->
-          SourceCodeBuilder.makeRefEnum(AstUtil.fromClass(CodeShape.GlobalId.class), x.name())
+          SourceCodeBuilder.makeRefEnum(DataResolver.fromClass(CodeShape.GlobalId.class), x.name())
         )
       ), false);
     });
@@ -56,7 +57,7 @@ public record SourceClassBuilder(
     @NotNull Consumer<ClassBuilder> builder
   ) {
     buildMetadata(ayaMetadata);
-    this.sourceBuilder.buildClass(name, toClassRef(AstUtil.fromClass(superclass)), true, () ->
+    this.sourceBuilder.buildClass(name, toClassRef(DataResolver.fromClass(superclass)), true, () ->
       builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
 

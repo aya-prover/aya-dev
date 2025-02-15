@@ -7,10 +7,10 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
+import org.aya.compiler.data.Constants;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.LocalVariable;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
@@ -96,7 +96,7 @@ public final class PatternSerializer {
         onMatchSucc.accept(builder);
       }
 
-      case Pat.Con con -> builder.ifInstanceOf(term, AstUtil.fromClass(ConCallLike.class),
+      case Pat.Con con -> builder.ifInstanceOf(term, DataResolver.fromClass(ConCallLike.class),
         (builder1, conTerm) -> builder1.ifRefEqual(
           AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
           AbstractExprializer.getInstance(builder1, con.ref()),
@@ -124,7 +124,7 @@ public final class PatternSerializer {
             Once.of(builder1 -> updateSubstate(builder1, true)))
       ), onMatchSucc);
       case Pat.Tuple(var l, var r) ->
-        builder.ifInstanceOf(term, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+        builder.ifInstanceOf(term, DataResolver.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
           doSerialize(builder0, l, lhs, Once.of(builder1 -> {
             var rhs = builder0.invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
@@ -161,7 +161,7 @@ public final class PatternSerializer {
   }
 
   private void matchInt(@NotNull CodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
-    builder.ifInstanceOf(builder.refVar(term), AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+    builder.ifInstanceOf(builder.refVar(term), DataResolver.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
       var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
         builder0.refVar(intTerm),

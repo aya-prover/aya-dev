@@ -4,7 +4,6 @@ package org.aya.compiler.data;
 
 import kala.collection.ArraySeq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +35,7 @@ public final class DataResolver {
   public static @NotNull FieldRef resolve(@NotNull Class<?> owner, @NotNull String name) {
     try {
       var field = owner.getField(name);
-      return resolve(AstUtil.fromClass(owner), name, AstUtil.fromClass(field.getType()));
+      return resolve(fromClass(owner), name, fromClass(field.getType()));
     } catch (NoSuchFieldException e) {
       throw new Panic(e);
     }
@@ -58,11 +57,14 @@ public final class DataResolver {
     var reallyFound = found.getFirst();
 
     return resolve(
-      AstUtil.fromClass(owner),
+      fromClass(owner),
       name,
-      AstUtil.fromClass(reallyFound.getReturnType()),
-      ImmutableSeq.from(reallyFound.getParameterTypes()).map(AstUtil::fromClass),
+      fromClass(reallyFound.getReturnType()),
+      ImmutableSeq.from(reallyFound.getParameterTypes()).map(DataResolver::fromClass),
       reallyFound.getDeclaringClass().isInterface()
     );
+  }
+  public static @NotNull ClassDesc fromClass(@NotNull Class<?> clazz) {
+    return ClassDesc.ofDescriptor(clazz.descriptorString());
   }
 }

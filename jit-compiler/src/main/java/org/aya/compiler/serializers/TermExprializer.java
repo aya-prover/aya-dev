@@ -6,10 +6,13 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import org.aya.compiler.data.Constants;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.MethodRef;
-import org.aya.compiler.data.DataResolver;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.ExprBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
@@ -29,7 +32,7 @@ import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
+import static org.aya.compiler.data.Constants.LAMBDA_NEW;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.

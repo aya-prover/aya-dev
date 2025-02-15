@@ -4,6 +4,8 @@ package org.aya.compiler.morphism;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.compiler.data.Constants;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.LocalVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +19,7 @@ public interface CodeBuilder extends ExprBuilder {
   @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer);
 
   default LocalVariable makeVar(@NotNull Class<?> type, @Nullable JavaExpr initializer) {
-    return makeVar(AstUtil.fromClass(type), initializer);
+    return makeVar(DataResolver.fromClass(type), initializer);
   }
 
   void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs);

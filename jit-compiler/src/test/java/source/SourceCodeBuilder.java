@@ -4,11 +4,11 @@ package source;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.serializers.ExprializeUtil;
@@ -234,7 +234,7 @@ public record SourceCodeBuilder(
   }
 
   @Override public @NotNull JavaExpr mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<JavaExpr> args) {
-    return mkNew(AstUtil.fromClass(className), args);
+    return mkNew(DataResolver.fromClass(className), args);
   }
 
   @Override
