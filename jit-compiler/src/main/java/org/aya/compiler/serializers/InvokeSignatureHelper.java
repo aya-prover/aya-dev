@@ -3,9 +3,9 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.Constants;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;

@@ -69,24 +69,24 @@ public abstract class ClassTargetSerializer<T> {
 
   public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
 
-  public @NotNull SerializerContext buildSerializerContext(@NotNull FreeJavaExpr normalizer) {
+  public @NotNull SerializerContext buildSerializerContext(@NotNull JavaExpr normalizer) {
     return new SerializerContext(normalizer, recorder);
   }
 
   /// Construct a {@link SerializerContext} with a no-op normalizer
-  public @NotNull SerializerContext buildSerializerContext(@NotNull FreeExprBuilder builder) {
+  public @NotNull SerializerContext buildSerializerContext(@NotNull ExprBuilder builder) {
     return new SerializerContext(builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty()), recorder);
   }
 
-  public @NotNull FreeJavaExpr serializeTermUnderTeleWithoutNormalizer(
-    @NotNull FreeExprBuilder builder, @NotNull Term term,
-    @NotNull FreeJavaExpr argsTerm, int size
+  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
+    @NotNull ExprBuilder builder, @NotNull Term term,
+    @NotNull JavaExpr argsTerm, int size
   ) {
     return serializeTermUnderTeleWithoutNormalizer(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
   }
 
-  public @NotNull FreeJavaExpr serializeTermUnderTeleWithoutNormalizer(
-    @NotNull FreeExprBuilder builder,
+  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
+    @NotNull ExprBuilder builder,
     @NotNull Term term,
     @NotNull ImmutableSeq<JavaExpr> argTerms
   ) {
@@ -94,7 +94,7 @@ public abstract class ClassTargetSerializer<T> {
       .serialize(term);
   }
 
-  public @NotNull FreeJavaExpr serializeTermWithoutNormalizer(@NotNull FreeCodeBuilder builder, @NotNull Term term) {
+  public @NotNull JavaExpr serializeTermWithoutNormalizer(@NotNull CodeBuilder builder, @NotNull Term term) {
     return serializeTermUnderTeleWithoutNormalizer(builder, term, ImmutableSeq.empty());
   }
 }
