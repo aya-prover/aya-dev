@@ -2,16 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.lang.constant.ClassDesc;
-import java.util.function.Consumer;
-
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.Constants;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -19,6 +16,9 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.constant.ClassDesc;
+import java.util.function.Consumer;
 
 public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.MatchyData> {
   public record MatchyData(
@@ -30,7 +30,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     super(JitMatchy.class, recorder);
   }
 
-  @Override protected @NotNull MethodRef buildConstructor(@NotNull FreeClassBuilder builder, MatchyData unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, MatchyData unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
     );
@@ -49,14 +49,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   private void buildInvoke(
-    @NotNull FreeCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull CodeBuilder builder, @NotNull MatchyData data,
     @NotNull ImmutableSeq<LocalVariable> captures, @NotNull ImmutableSeq<LocalVariable> args
   ) {
     var unit = data.matchy;
     var captureExprs = captures.map(LocalVariable::ref);
     var argExprs = args.map(LocalVariable::ref);
 
-    Consumer<FreeCodeBuilder> onFailed = b -> {
+    Consumer<CodeBuilder> onFailed = b -> {
       var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
         AbstractExprializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
         AbstractExprializer.makeImmutableSeq(b, Term.class, captureExprs),
@@ -91,7 +91,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
    * @see JitMatchy#invoke(Seq, Seq)
    */
   private void buildInvoke(
-    @NotNull FreeCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull CodeBuilder builder, @NotNull MatchyData data,
     @NotNull LocalVariable captures, @NotNull LocalVariable args
   ) {
     var capturec = data.capturesSize;
@@ -106,7 +106,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   /** @see JitMatchy#type */
-  private void buildType(@NotNull FreeCodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
+  private void buildType(@NotNull CodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
     var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), data.capturesSize);
     var argSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), data.argsSize);
     var result = serializeTermUnderTele(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
@@ -122,7 +122,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override public @NotNull ClassTargetSerializer<MatchyData>
-  serialize(@NotNull FreeClassBuilder builder0, MatchyData unit) {
+  serialize(@NotNull ClassBuilder builder0, MatchyData unit) {
     buildFramework(builder0, unit, builder -> {
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;

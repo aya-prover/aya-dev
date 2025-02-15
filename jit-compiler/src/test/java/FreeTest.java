@@ -1,17 +1,17 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
-import java.io.IOException;
-import java.nio.file.Files;
-
-import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
-import org.aya.compiler.free.morphism.free.FreeRunner;
-import source.SourceFreeJavaBuilder;
+import org.aya.compiler.morphism.ast.AstJavaBuilder;
+import org.aya.compiler.morphism.ast.AstRunner;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import source.SourceFreeJavaBuilder;
+
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class FreeTest {
   public static ModuleSerializer serializer = null;
@@ -33,8 +33,8 @@ public class FreeTest {
   }
 
   @Test public void free2source() throws IOException {
-    var free = serializer.serialize(FreeJavaBuilderImpl.INSTANCE, moduleResult);
-    var result = new FreeRunner<>(SourceFreeJavaBuilder.create())
+    var free = serializer.serialize(AstJavaBuilder.INSTANCE, moduleResult);
+    var result = new AstRunner<>(SourceFreeJavaBuilder.create())
       .runFree(free);
 
     Files.writeString(CompileTest.GEN_DIR.resolve("freeJavaBaka.java"), result);

@@ -2,20 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.util.EnumSet;
-import java.util.function.Consumer;
-
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.data.LocalVariable;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -23,6 +18,11 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.call.FnCall;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.util.EnumSet;
+import java.util.function.Consumer;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -51,7 +51,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, FnDef unit) {
+  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
   }
@@ -60,11 +60,11 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build fixed argument `invoke`
    */
   private void buildInvoke(
-    @NotNull FreeCodeBuilder builder,
+    @NotNull CodeBuilder builder,
     @NotNull FnDef unit,
     @NotNull ImmutableSeq<LocalVariable> argTerms
   ) {
-    Consumer<FreeCodeBuilder> onStuckCon = cb -> {
+    Consumer<CodeBuilder> onStuckCon = cb -> {
       var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms.map(LocalVariable::ref));
       cb.returnWith(stuckTerm);
     };
@@ -99,7 +99,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   /**
    * Build vararg `invoke`
    */
-  private void buildInvoke(@NotNull FreeCodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable argsTerm) {
+  private void buildInvoke(@NotNull CodeBuilder builder, @NotNull FnDef unit, @NotNull MethodRef invokeMethod, @NotNull LocalVariable argsTerm) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
     var result = builder.invoke(invokeMethod, builder.thisRef(), args);
@@ -114,7 +114,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return shapeMaybe.get().shape().ordinal();
   }
 
-  @Override public @NotNull FnSerializer serialize(@NotNull FreeClassBuilder builder, FnDef unit) {
+  @Override public @NotNull FnSerializer serialize(@NotNull ClassBuilder builder, FnDef unit) {
     var fullParam = ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term);
 
     buildFramework(builder, unit, builder0 -> {

@@ -3,9 +3,9 @@
 package source;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.*;
-import org.aya.compiler.free.data.FieldRef;
-import org.aya.compiler.free.data.MethodRef;
+import org.aya.compiler.FieldRef;
+import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.*;
 import org.aya.compiler.serializers.ExprializeUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
@@ -22,14 +22,14 @@ import static source.SourceFreeJavaBuilder.toClassRef;
 public record SourceClassBuilder(
   @NotNull SourceFreeJavaBuilder parent, @NotNull ClassDesc owner,
   @NotNull SourceBuilder sourceBuilder
-) implements FreeClassBuilder {
+) implements ClassBuilder {
   private void buildMetadataRecord(@NotNull String name, @NotNull String value, boolean isFirst) {
     var prepend = isFirst ? "" : ", ";
     sourceBuilder.appendLine(prepend + name + " = " + value);
   }
 
   public void buildMetadata(@NotNull AyaMetadata ayaMetadata) {
-    sourceBuilder.appendLine("@" + toClassRef(FreeUtil.fromClass(AyaMetadata.class)) + "(");
+    sourceBuilder.appendLine("@" + toClassRef(AstUtil.fromClass(AyaMetadata.class)) + "(");
     sourceBuilder.runInside(() -> {
       buildMetadataRecord(AyaMetadata.NAME_MODULE, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(ayaMetadata.module()).map(ExprializeUtil::makeString)
@@ -42,7 +42,7 @@ public record SourceClassBuilder(
         buildMetadataRecord(AyaMetadata.NAME_SHAPE, Integer.toString(ayaMetadata.shape()), false);
       if (ayaMetadata.recognition().length != 0) buildMetadataRecord(AyaMetadata.NAME_RECOGNITION, SourceCodeBuilder.mkHalfArray(
         ImmutableSeq.from(ayaMetadata.recognition()).map(x ->
-          SourceCodeBuilder.makeRefEnum(FreeUtil.fromClass(CodeShape.GlobalId.class), x.name())
+          SourceCodeBuilder.makeRefEnum(AstUtil.fromClass(CodeShape.GlobalId.class), x.name())
         )
       ), false);
     });
@@ -53,10 +53,10 @@ public record SourceClassBuilder(
     @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<FreeClassBuilder> builder
+    @NotNull Consumer<ClassBuilder> builder
   ) {
     buildMetadata(ayaMetadata);
-    this.sourceBuilder.buildClass(name, toClassRef(FreeUtil.fromClass(superclass)), true, () ->
+    this.sourceBuilder.buildClass(name, toClassRef(AstUtil.fromClass(superclass)), true, () ->
       builder.accept(new SourceClassBuilder(parent, owner.nested(name), sourceBuilder)));
   }
 
@@ -64,7 +64,7 @@ public record SourceClassBuilder(
     @NotNull String returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
   ) {
     var params = paramTypes.map(x ->
       new SourceBuilder.JitParam(sourceBuilder.nameGen.nextName(), toClassRef(x))
@@ -80,7 +80,7 @@ public record SourceClassBuilder(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
   ) {
     buildMethod(toClassRef(returnType), name, paramTypes, builder);
     return new MethodRef(this.owner, name, returnType, paramTypes, false);
@@ -88,7 +88,7 @@ public record SourceClassBuilder(
 
   @Override public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, FreeCodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
   ) {
     buildMethod(
       "/* constructor */",
@@ -96,13 +96,13 @@ public record SourceClassBuilder(
       paramTypes,
       builder);
 
-    return FreeClassBuilder.makeConstructorRef(this.owner, paramTypes);
+    return ClassBuilder.makeConstructorRef(this.owner, paramTypes);
   }
 
   @Override public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
-    @NotNull Function<FreeExprBuilder, FreeJavaExpr> initializer
+    @NotNull Function<ExprBuilder, JavaExpr> initializer
   ) {
     sourceBuilder.append("public static final " + toClassRef(returnType) + " " + name + " = ");
     var codeBuilder = new SourceCodeBuilder(this, sourceBuilder);

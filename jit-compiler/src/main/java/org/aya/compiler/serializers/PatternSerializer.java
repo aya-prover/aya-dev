@@ -7,11 +7,11 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.free.Constants;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
-import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -30,19 +30,19 @@ import java.util.function.Consumer;
  */
 public final class PatternSerializer {
   @FunctionalInterface
-  public interface SuccessContinuation extends TriConsumer<PatternSerializer, FreeCodeBuilder, Integer> {
+  public interface SuccessContinuation extends TriConsumer<PatternSerializer, CodeBuilder, Integer> {
   }
 
   // Just for checking
-  public final static class Once implements Consumer<FreeCodeBuilder> {
-    public static @NotNull Once of(@NotNull Consumer<FreeCodeBuilder> run) { return new Once(run); }
-    private final @NotNull Consumer<FreeCodeBuilder> run;
+  public final static class Once implements Consumer<CodeBuilder> {
+    public static @NotNull Once of(@NotNull Consumer<CodeBuilder> run) { return new Once(run); }
+    private final @NotNull Consumer<CodeBuilder> run;
     private boolean dirty = false;
 
-    public Once(@NotNull Consumer<FreeCodeBuilder> run) { this.run = run; }
+    public Once(@NotNull Consumer<CodeBuilder> run) { this.run = run; }
 
     @Override
-    public void accept(FreeCodeBuilder freeClassBuilder) {
+    public void accept(CodeBuilder freeClassBuilder) {
       if (dirty) throw new Panic("Once");
       dirty = true;
       this.run.accept(freeClassBuilder);
@@ -58,14 +58,14 @@ public final class PatternSerializer {
   @UnknownNullability LocalVariable matchState;
   @UnknownNullability LocalVariable subMatchState;
 
-  private final @NotNull ImmutableSeq<FreeJavaExpr> argNames;
-  private final @NotNull Consumer<FreeCodeBuilder> onFailed;
+  private final @NotNull ImmutableSeq<JavaExpr> argNames;
+  private final @NotNull Consumer<CodeBuilder> onFailed;
   private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternSerializer(
-    @NotNull ImmutableSeq<FreeJavaExpr> argNames,
-    @NotNull Consumer<FreeCodeBuilder> onFailed,
+    @NotNull ImmutableSeq<JavaExpr> argNames,
+    @NotNull Consumer<CodeBuilder> onFailed,
     boolean isOverlap
   ) {
     this.argNames = argNames;
@@ -76,9 +76,9 @@ public final class PatternSerializer {
   // region Serializing
 
   private void doSerialize(
-    @NotNull FreeCodeBuilder builder,
+    @NotNull CodeBuilder builder,
     @NotNull Pat pat,
-    @NotNull FreeJavaExpr term,
+    @NotNull JavaExpr term,
     @NotNull Once onMatchSucc
   ) {
     switch (pat) {
@@ -96,7 +96,7 @@ public final class PatternSerializer {
         onMatchSucc.accept(builder);
       }
 
-      case Pat.Con con -> builder.ifInstanceOf(term, FreeUtil.fromClass(ConCallLike.class),
+      case Pat.Con con -> builder.ifInstanceOf(term, AstUtil.fromClass(ConCallLike.class),
         (builder1, conTerm) -> builder1.ifRefEqual(
           AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
           AbstractExprializer.getInstance(builder1, con.ref()),
@@ -124,7 +124,7 @@ public final class PatternSerializer {
             Once.of(builder1 -> updateSubstate(builder1, true)))
       ), onMatchSucc);
       case Pat.Tuple(var l, var r) ->
-        builder.ifInstanceOf(term, FreeUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+        builder.ifInstanceOf(term, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
           doSerialize(builder0, l, lhs, Once.of(builder1 -> {
             var rhs = builder0.invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
@@ -144,9 +144,9 @@ public final class PatternSerializer {
    * @param continuation    on match success
    */
   private void multiStage(
-    @NotNull FreeCodeBuilder builder,
-    @NotNull FreeJavaExpr term,
-    @NotNull ImmutableSeq<BiConsumer<FreeCodeBuilder, LocalVariable>> preContinuation,
+    @NotNull CodeBuilder builder,
+    @NotNull JavaExpr term,
+    @NotNull ImmutableSeq<BiConsumer<CodeBuilder, LocalVariable>> preContinuation,
     @NotNull Once continuation
   ) {
     updateSubstate(builder, false);
@@ -160,8 +160,8 @@ public final class PatternSerializer {
     builder.ifTrue(subMatchState, continuation, null);
   }
 
-  private void matchInt(@NotNull FreeCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
-    builder.ifInstanceOf(builder.refVar(term), FreeUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+  private void matchInt(@NotNull CodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
+    builder.ifInstanceOf(builder.refVar(term), AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
       var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
         builder0.refVar(intTerm),
@@ -179,9 +179,9 @@ public final class PatternSerializer {
    * @apiNote {@code pats.sizeEquals(terms)}
    */
   private void doSerialize(
-    @NotNull FreeCodeBuilder builder,
+    @NotNull CodeBuilder builder,
     @NotNull SeqView<Pat> pats,
-    @NotNull SeqView<FreeJavaExpr> terms,
+    @NotNull SeqView<JavaExpr> terms,
     @NotNull Once continuation
   ) {
     if (pats.isEmpty()) {
@@ -197,20 +197,20 @@ public final class PatternSerializer {
   // endregion Serializing
 
   // region Java Source Code Generate API
-  private void onStuck(@NotNull FreeCodeBuilder builder) {
+  private void onStuck(@NotNull CodeBuilder builder) {
     if (!isOverlap) builder.breakOut();
   }
 
-  private void updateSubstate(@NotNull FreeCodeBuilder builder, boolean state) {
+  private void updateSubstate(@NotNull CodeBuilder builder, boolean state) {
     builder.updateVar(subMatchState, builder.iconst(state));
   }
 
-  private void updateState(@NotNull FreeCodeBuilder builder, int state) {
+  private void updateState(@NotNull CodeBuilder builder, int state) {
     builder.updateVar(matchState, builder.iconst(state));
   }
   // endregion Java Source Code Generate API
 
-  public PatternSerializer serialize(@NotNull FreeCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
+  public PatternSerializer serialize(@NotNull CodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
       onFailed.accept(builder);
       return this;
@@ -250,7 +250,7 @@ public final class PatternSerializer {
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, FreeCodeBuilder::unreachable);
+    }, CodeBuilder::unreachable);
 
     return this;
   }

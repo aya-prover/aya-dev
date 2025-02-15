@@ -2,19 +2,15 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.lang.constant.ClassDesc;
-
-import static org.aya.compiler.serializers.NameSerializer.getReference;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeJavaBuilder;
-import org.aya.compiler.free.morphism.asm.AsmJavaBuilder;
-import org.aya.compiler.free.morphism.free.FreeJavaBuilderImpl;
-import org.aya.compiler.free.morphism.free.FreeOptimizer;
-import org.aya.compiler.free.morphism.free.FreeRunner;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.JavaBuilder;
+import org.aya.compiler.morphism.asm.AsmJavaBuilder;
+import org.aya.compiler.morphism.ast.AstJavaBuilder;
+import org.aya.compiler.morphism.ast.AstOptimizer;
+import org.aya.compiler.morphism.ast.AstRunner;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
@@ -23,6 +19,10 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
+
+import java.lang.constant.ClassDesc;
+
+import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 /**
  * Serializing a module, note that it may not a file module, so we need not to make importing.
@@ -48,17 +48,17 @@ public final class ModuleSerializer {
     this.shapeFactory = shapeFactory;
   }
 
-  private void serializeCons(@NotNull FreeClassBuilder builder, @NotNull DataDef dataDef) {
+  private void serializeCons(@NotNull ClassBuilder builder, @NotNull DataDef dataDef) {
     var ser = new ConSerializer(recorder);
     dataDef.body().forEach(con -> ser.serialize(builder, con));
   }
 
-  private void serializeMems(@NotNull FreeClassBuilder builder, @NotNull ClassDef classDef) {
+  private void serializeMems(@NotNull ClassBuilder builder, @NotNull ClassDef classDef) {
     var ser = new MemberSerializer(recorder);
     classDef.members().forEach(mem -> ser.serialize(builder, mem));
   }
 
-  private void doSerialize(@NotNull FreeClassBuilder builder, @NotNull TyckDef unit) {
+  private void doSerialize(@NotNull ClassBuilder builder, @NotNull TyckDef unit) {
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(shapeFactory, recorder)
         .serialize(builder, teleDef);
@@ -81,13 +81,13 @@ public final class ModuleSerializer {
   }
 
   public @NotNull AsmOutputCollector.Default serializeWithBestBuilder(ModuleResult unit) {
-    var freeJava = serialize(FreeJavaBuilderImpl.INSTANCE, unit);
-    freeJava = FreeOptimizer.optimizeClass(freeJava);
-    return new FreeRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).runFree(freeJava);
+    var freeJava = serialize(AstJavaBuilder.INSTANCE, unit);
+    freeJava = AstOptimizer.optimizeClass(freeJava);
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).runFree(freeJava);
   }
 
   @VisibleForTesting
-  public <Carrier> Carrier serialize(@NotNull FreeJavaBuilder<Carrier> builder, ModuleResult unit) {
+  public <Carrier> Carrier serialize(@NotNull JavaBuilder<Carrier> builder, ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);

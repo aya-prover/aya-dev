@@ -2,13 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package source;
 
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.data.LocalVariable;
+import org.aya.compiler.LocalVariable;
+import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface SourceFreeJavaExpr extends FreeJavaExpr {
+public sealed interface SourceFreeJavaExpr extends JavaExpr {
   record BlackBox(@NotNull String expr) implements SourceFreeJavaExpr, LocalVariable {
-    @Override public @NotNull FreeJavaExpr ref() {
+    @Override public @NotNull JavaExpr ref() {
       return this;
     }
   }

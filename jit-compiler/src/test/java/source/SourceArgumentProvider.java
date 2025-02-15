@@ -3,8 +3,8 @@
 package source;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.ArgumentProvider;
-import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 public record SourceArgumentProvider(@NotNull ImmutableSeq<String> names) implements ArgumentProvider {
@@ -12,9 +12,9 @@ public record SourceArgumentProvider(@NotNull ImmutableSeq<String> names) implem
     return new SourceFreeJavaExpr.BlackBox(names.get(nth));
   }
 
-  record Lambda(@NotNull ImmutableSeq<FreeJavaExpr> captures,
+  record Lambda(@NotNull ImmutableSeq<JavaExpr> captures,
                 @NotNull ImmutableSeq<String> names) implements ArgumentProvider.Lambda {
-    @Override public @NotNull FreeJavaExpr capture(int nth) { return captures.get(nth); }
+    @Override public @NotNull JavaExpr capture(int nth) { return captures.get(nth); }
 
     @Override public @NotNull SourceFreeJavaExpr.BlackBox arg(int nth) {
       return new SourceFreeJavaExpr.BlackBox(names.get(nth));

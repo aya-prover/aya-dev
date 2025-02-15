@@ -2,18 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import java.util.function.Consumer;
-
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeExprBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.ExprBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.CodeShape;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSerializer<T> {
   protected JitDefSerializer(@NotNull Class<?> superClass, @NotNull MatchyRecorder recorder) {
@@ -45,7 +45,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   /// Used in type decls
   protected @NotNull Class<?> callBaseClass() { return callClass(); }
 
-  protected final FreeJavaExpr buildEmptyCall(@NotNull FreeExprBuilder builder, @NotNull TyckDef def) {
+  protected final JavaExpr buildEmptyCall(@NotNull ExprBuilder builder, @NotNull TyckDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
   }
 
@@ -53,10 +53,10 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     return NameSerializer.javifyClassName(unit.ref());
   }
 
-  protected void buildFramework(@NotNull FreeClassBuilder builder, @NotNull T unit, @NotNull Consumer<FreeClassBuilder> continuation) {
+  protected void buildFramework(@NotNull ClassBuilder builder, @NotNull T unit, @NotNull Consumer<ClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
-        nestBuilder.buildConstantField(FreeUtil.fromClass(callBaseClass()),
+        nestBuilder.buildConstantField(AstUtil.fromClass(callBaseClass()),
           AyaSerializer.FIELD_EMPTYCALL, cb ->
             buildEmptyCall(cb, unit));
       }
@@ -66,5 +66,5 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   }
 
   @Override
-  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull FreeClassBuilder builder, T unit);
+  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
 }

@@ -3,8 +3,8 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeExprBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
+import org.aya.compiler.morphism.ExprBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
@@ -18,20 +18,20 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
   private final @NotNull MatchyRecorder recorder;
 
   PatternExprializer(
-    @NotNull FreeExprBuilder builder, boolean allowLocalTerm,
-    @NotNull MatchyRecorder recorder
+          @NotNull ExprBuilder builder, boolean allowLocalTerm,
+          @NotNull MatchyRecorder recorder
   ) {
     super(builder);
     this.allowLocalTerm = allowLocalTerm;
     this.recorder = recorder;
   }
 
-  private @NotNull FreeJavaExpr serializeTerm(@NotNull Term term) {
+  private @NotNull JavaExpr serializeTerm(@NotNull Term term) {
     return new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder)
       .serialize(term);
   }
 
-  private @NotNull FreeJavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
+  private @NotNull JavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
     var termSer = new TermExprializer(builder, ImmutableSeq.empty(), allowLocalTerm, recorder);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
@@ -41,7 +41,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
     ));
   }
 
-  @Override protected @NotNull FreeJavaExpr doSerialize(@NotNull Pat term) {
+  @Override protected @NotNull JavaExpr doSerialize(@NotNull Pat term) {
     return switch (term) {
       case Pat.Misc misc -> builder.refEnum(misc);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
@@ -67,5 +67,5 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
     };
   }
 
-  @Override public @NotNull FreeJavaExpr serialize(Pat unit) { return doSerialize(unit); }
+  @Override public @NotNull JavaExpr serialize(Pat unit) { return doSerialize(unit); }
 }

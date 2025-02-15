@@ -1,12 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.free.FreeClassBuilder;
-import org.aya.compiler.free.FreeCodeBuilder;
-import org.aya.compiler.free.FreeJavaExpr;
-import org.aya.compiler.free.FreeUtil;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.AnyDef;
@@ -25,14 +25,14 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   @Override
   protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
-      FreeUtil.fromClass(JitClass.class),
+      AstUtil.fromClass(JitClass.class),
       ConstantDescs.CD_int,
-      FreeUtil.fromClass(SortTerm.class)
+      AstUtil.fromClass(SortTerm.class)
     ));
   }
 
   @Override
-  protected @NotNull ImmutableSeq<FreeJavaExpr> superConArgs(@NotNull FreeCodeBuilder builder, MemberDef unit) {
+  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, MemberDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
       builder.iconst(unit.index()),
@@ -40,7 +40,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
     ));
   }
 
-  @Override public @NotNull MemberSerializer serialize(@NotNull FreeClassBuilder builder, MemberDef unit) {
+  @Override public @NotNull MemberSerializer serialize(@NotNull ClassBuilder builder, MemberDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }
