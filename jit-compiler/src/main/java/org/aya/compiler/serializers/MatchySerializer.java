@@ -101,16 +101,16 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
    */
   private void buildInvoke(
     @NotNull CodeBuilder builder, @NotNull MatchyData data,
-    @NotNull LocalVariable pre,
+    @NotNull LocalVariable normalizer,
     @NotNull LocalVariable captures, @NotNull LocalVariable args
   ) {
     var capturec = data.capturesSize;
     int argc = data.argsSize;
     var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
-    var fullArgs = SeqView.of(pre.ref())
-      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec))
-      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc))
-      .collect(ImmutableSeq.factory());
+    var preArgs = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
+      .view()
+      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc));
+    var fullArgs = InvokeSignatureHelper.args(normalizer.ref(), preArgs);
     var invokeExpr = builder.invoke(invokeRef, builder.thisRef(), fullArgs);
 
     builder.returnWith(invokeExpr);

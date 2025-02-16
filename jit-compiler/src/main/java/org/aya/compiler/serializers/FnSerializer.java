@@ -32,14 +32,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  private static @NotNull InvokeSignatureHelper makeHelper(int argc) {
-    return new InvokeSignatureHelper(ImmutableSeq.fill(argc, Constants.CD_Term));
-  }
-
   /// @see JitFn#invoke(java.util.function.UnaryOperator, Seq)
   public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
     return new MethodRef(
-      owner, "invoke", Constants.CD_Term, makeHelper(argc).parameters(), false);
+      owner, "invoke", Constants.CD_Term, InvokeSignatureHelper.parameters(ImmutableSeq.fill(argc, Constants.CD_Term).view()), false);
   }
 
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
@@ -109,12 +105,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull CodeBuilder builder,
     @NotNull FnDef unit,
     @NotNull MethodRef invokeMethod,
-    @NotNull LocalVariable preTerm,
+    @NotNull LocalVariable normalizerTerm,
     @NotNull LocalVariable argsTerm
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var result = builder.invoke(invokeMethod, builder.thisRef(), args.prepended(preTerm.ref()));
+    var fullArgs = InvokeSignatureHelper.args(normalizerTerm.ref(), args.view());
+    var result = builder.invoke(invokeMethod, builder.thisRef(), fullArgs);
     builder.returnWith(result);
   }
 
@@ -128,11 +125,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
   @Override public @NotNull FnSerializer serialize(@NotNull ClassBuilder builder, FnDef unit) {
     buildFramework(builder, unit, builder0 -> {
-      var fixedInvokeHelper = makeHelper(unit.telescope().size());
       var fixedInvoke = builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        fixedInvokeHelper.parameters(),
+        InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term).view()),
         (ap, cb) -> {
           var pre = InvokeSignatureHelper.normalizer(ap);
           var args = ImmutableSeq.fill(unit.telescope().size(),
@@ -141,11 +137,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         }
       );
 
-      var varargInvokeHelper = new InvokeSignatureHelper(ImmutableSeq.of(Constants.CD_Seq));
       builder0.buildMethod(
         Constants.CD_Term,
         "invoke",
-        varargInvokeHelper.parameters(),
+        InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_Seq).view()),
         (ap, cb) ->
           buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0))
       );

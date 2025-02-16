@@ -92,11 +92,10 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override public @NotNull ConSerializer serialize(@NotNull ClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
       if (unit.pats.isNotEmpty()) {
-        var helper = new InvokeSignatureHelper(ImmutableSeq.of(Constants.CD_ImmutableSeq));
         builder.buildMethod(
           AstUtil.fromClass(Result.class),
           "isAvailable",
-          helper.parameters(),
+          InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_ImmutableSeq).view()),
           (ap, builder1) ->
             buildIsAvailable(builder1, unit, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0)));
       }

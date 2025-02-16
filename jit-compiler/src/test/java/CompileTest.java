@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.serializers.SerializerContext;
 import source.SourceClassBuilder;
 import source.SourceCodeBuilder;
 import source.SourceFreeJavaBuilder;
@@ -86,7 +87,7 @@ public class CompileTest {
     var dummy = new SourceCodeBuilder(new SourceClassBuilder(fjb, ConstantDescs.CD_Object, fjb.sourceBuilder()), fjb.sourceBuilder());
     // \ t. (\0. 0 t)
     var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Locns(new AppTerm(new LocalTerm(0), t)))));
-    var out = new TermExprializer(dummy, ImmutableSeq.empty(), new ModuleSerializer.MatchyRecorder())
+    var out = new TermExprializer(dummy, new SerializerContext(null, new ModuleSerializer.MatchyRecorder()), ImmutableSeq.empty())
       .serialize(lam);
 
     System.out.println(out);

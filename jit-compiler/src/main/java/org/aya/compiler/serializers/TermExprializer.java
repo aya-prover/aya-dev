@@ -282,9 +282,22 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
-    return builder.mkLambda(entries.map(Tuple2::component2), lambdaType, (ap, builder) -> {
-      var captured = entries.mapIndexed((i, tup) -> Tuple.of(tup.component1(), ap.capture(i)));
-      var result = cont.apply(ap, new TermExprializer(this.builder, context,
+    var fullCaptures = entries.map(Tuple2::component2);
+    boolean hasNormalizer;
+    if (context.normalizer() != null) {
+      hasNormalizer = true;
+      fullCaptures = fullCaptures.prepended(context.normalizer());
+    } else {
+      hasNormalizer = false;
+    }
+
+    return builder.mkLambda(fullCaptures, lambdaType, (ap, builder) -> {
+      var newContext = new SerializerContext(context.normalizer() == null ? null : InvokeSignatureHelper.normalizer(ap), context.recorder());
+      var captured = entries.mapIndexed((i, tup) -> {
+        var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
+        return Tuple.of(tup.component1(), capturedExpr);
+      });
+      var result = cont.apply(ap, new TermExprializer(this.builder, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder.returnWith(result);
     });
