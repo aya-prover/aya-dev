@@ -134,7 +134,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       normalizer = Constants.unaryOperatorIdentity(builder);
     }
 
-    var fullArgs = InvokeSignatureHelper.args(normalizer, args.view().appendedAll(captures));
+    var fullArgs = InvokeSignatureHelper.args(normalizer, captures.view().appendedAll(args));
 
     return builder.invoke(
       MatchySerializer.resolveInvoke(matchyClass, captures.size(), args.size()),
