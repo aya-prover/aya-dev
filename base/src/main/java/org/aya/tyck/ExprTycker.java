@@ -224,7 +224,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
-      paramTele.toImmutableSeq(),
+      paramTele.toSeq(),
       new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
       ImmutableSeq.fill(discriminant.size(), i ->
         new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
