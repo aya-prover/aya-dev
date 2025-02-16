@@ -14,8 +14,12 @@ import java.lang.constant.ConstantDescs;
 
 public abstract class AbstractExprializer<T> {
   protected final @NotNull ExprBuilder builder;
+  protected final @NotNull SerializerContext context;
 
-  protected AbstractExprializer(@NotNull ExprBuilder builder) { this.builder = builder; }
+  protected AbstractExprializer(@NotNull ExprBuilder builder, @NotNull SerializerContext context) {
+    this.builder = builder;
+    this.context = context;
+  }
 
   public @NotNull JavaExpr makeImmutableSeq(
     @NotNull Class<?> typeName,

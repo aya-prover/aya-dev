@@ -43,13 +43,14 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_MutableSeq = AstUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = AstUtil.fromClass(Supplier.class);
   public static final @NotNull ClassDesc CD_Closure = AstUtil.fromClass(Closure.class);
+  public static final @NotNull ClassDesc CD_UnaryOperator = AstUtil.fromClass(UnaryOperator.class);
   public static final @NotNull ClassDesc CD_Result = AstUtil.fromClass(Result.class);
   public static final @NotNull String NAME_OF = "of";
   public static final @NotNull String NAME_EMPTY = "empty";
 
   // Term -> Term
   public static final @NotNull MethodRef CLOSURE = new MethodRef(
-    AstUtil.fromClass(UnaryOperator.class),
+    CD_UnaryOperator,
     "apply",
     ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
@@ -231,6 +232,10 @@ public final class Constants {
     ImmutableSeq.empty(),
     true
   );
+
+  public static @NotNull JavaExpr unaryOperatorIdentity(@NotNull ExprBuilder builder) {
+    return builder.invoke(CLOSURE_ID, ImmutableSeq.empty());
+  }
 
   /**
    * @see PatMatcher#apply(ImmutableSeq, ImmutableSeq)

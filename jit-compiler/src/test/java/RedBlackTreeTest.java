@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Random;
+import java.util.function.UnaryOperator;
 
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -65,19 +66,19 @@ public class RedBlackTreeTest {
     System.out.println("Input: " + largeList);
     var args = ImmutableSeq.of(mkList(largeList));
 
-    var term = tree_sortNat.invoke(args);
+    var term = tree_sortNat.invoke(UnaryOperator.identity(), args);
     assertNotNull(term);
     System.out.println(term.easyToString());
 
     TimeUtil.profileMany("Running many times on the same input...", 10, () ->
-      tree_sortNat.invoke(args));
+      tree_sortNat.invoke(UnaryOperator.identity(), args));
   }
 
   @Test public void varyingInput() {
     var random = new Random(1919810L);
     TimeUtil.profileMany("Running many times on new inputs....", 5, () -> {
       var newList = mkList(ImmutableIntSeq.fill(500, () -> random.nextInt(400)));
-      tree_sortNat.invoke(ImmutableSeq.of(newList));
+      tree_sortNat.invoke(UnaryOperator.identity(), ImmutableSeq.of(newList));
     });
   }
 }

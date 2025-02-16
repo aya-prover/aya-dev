@@ -69,23 +69,32 @@ public abstract class ClassTargetSerializer<T> {
 
   public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
 
-  public @NotNull JavaExpr serializeTermUnderTele(
+  public @NotNull SerializerContext buildSerializerContext(@NotNull JavaExpr normalizer) {
+    return new SerializerContext(normalizer, recorder);
+  }
+
+  /// Construct a {@link SerializerContext} with a no-op normalizer
+  public @NotNull SerializerContext buildSerializerContext() {
+    return new SerializerContext(null, recorder);
+  }
+
+  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
     @NotNull ExprBuilder builder, @NotNull Term term,
     @NotNull JavaExpr argsTerm, int size
   ) {
-    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
+    return serializeTermUnderTeleWithoutNormalizer(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
   }
 
-  public @NotNull JavaExpr serializeTermUnderTele(
+  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
     @NotNull ExprBuilder builder,
     @NotNull Term term,
     @NotNull ImmutableSeq<JavaExpr> argTerms
   ) {
-    return new TermExprializer(builder, argTerms, recorder)
+    return new TermExprializer(builder, buildSerializerContext(), argTerms)
       .serialize(term);
   }
 
-  public @NotNull JavaExpr serializeTerm(@NotNull CodeBuilder builder, @NotNull Term term) {
-    return serializeTermUnderTele(builder, term, ImmutableSeq.empty());
+  public @NotNull JavaExpr serializeTermWithoutNormalizer(@NotNull CodeBuilder builder, @NotNull Term term) {
+    return serializeTermUnderTeleWithoutNormalizer(builder, term, ImmutableSeq.empty());
   }
 }

@@ -76,7 +76,7 @@ public final class Normalizer implements UnaryOperator<Term> {
           continue;
         }
         case FnCall(JitFn instance, int ulift, var args) -> {
-          var result = instance.invoke(args);
+          var result = instance.invoke(this, args);
           if (result instanceof FnCall(var ref, _, var newArgs) &&
             ref == instance && newArgs.sameElements(args, true)
           ) return defaultValue;
@@ -169,7 +169,7 @@ public final class Normalizer implements UnaryOperator<Term> {
           continue;
         }
         case MatchCall(JitMatchy fn, var discr, var captures) -> {
-          var result = fn.invoke(captures, discr);
+          var result = fn.invoke(this, captures, discr);
           if (result instanceof MatchCall(var ref, var newDiscr, var newCaptures) &&
             ref == fn && newDiscr.sameElements(discr, true) &&
             newCaptures.sameElements(captures, true)

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.serializers.SerializerContext;
 import source.SourceClassBuilder;
 import source.SourceCodeBuilder;
 import source.SourceFreeJavaBuilder;
@@ -35,6 +36,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.UnaryOperator;
 
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
@@ -75,8 +77,8 @@ public class CompileTest {
     var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
     var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
 
-    var mResult = plus.invoke(ImmutableSeq.of(two, three));
-    var idLamResult = idLam.invoke(ImmutableSeq.empty());
+    var mResult = plus.invoke(UnaryOperator.identity(), ImmutableSeq.of(two, three));
+    var idLamResult = idLam.invoke(UnaryOperator.identity(), ImmutableSeq.empty());
     var finalResult = new AppTerm(idLamResult, mResult).make();
     System.out.println(finalResult.easyToString());
   }
@@ -86,7 +88,7 @@ public class CompileTest {
     var dummy = new SourceCodeBuilder(new SourceClassBuilder(fjb, ConstantDescs.CD_Object, fjb.sourceBuilder()), fjb.sourceBuilder());
     // \ t. (\0. 0 t)
     var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Locns(new AppTerm(new LocalTerm(0), t)))));
-    var out = new TermExprializer(dummy, ImmutableSeq.empty(), new ModuleSerializer.MatchyRecorder())
+    var out = new TermExprializer(dummy, new SerializerContext(null, new ModuleSerializer.MatchyRecorder()), ImmutableSeq.empty())
       .serialize(lam);
 
     System.out.println(out);

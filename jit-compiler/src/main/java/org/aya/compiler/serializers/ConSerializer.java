@@ -45,14 +45,22 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   /// @param unit must be indexed, otherwise it should use the default impl.
   /// @see JitCon#isAvailable
-  private void buildIsAvailable(@NotNull CodeBuilder builder, ConDef unit, @NotNull LocalVariable argsTerm) {
+  private void buildIsAvailable(
+    @NotNull CodeBuilder builder,
+    ConDef unit,
+    @NotNull LocalVariable preTerm,
+    @NotNull LocalVariable argsTerm
+  ) {
     var termSeq = builder.invoke(Constants.SEQ_TOSEQ, argsTerm.ref(), ImmutableSeq.empty());
+    var normalizer = preTerm.ref();
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
-    var patsTerm = unit.pats.map(x -> new PatternExprializer(builder, true, recorder).serialize(x));
+    var patsTerm = unit.pats.map(x ->
+      new PatternExprializer(builder, buildSerializerContext(normalizer), true)
+        .serialize(x)
+    );
     var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
-    var id = builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty());
     var matcherTerm = builder.mkNew(PatMatcher.InferMeta.class,
-      ImmutableSeq.of(id));
+      ImmutableSeq.of(normalizer));
 
     var matchResult = builder.invoke(Constants.PATMATCHER_APPLY, matcherTerm,
       ImmutableSeq.of(patsSeq, termSeq));
@@ -73,7 +81,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     assert eq != null;
     BiConsumer<CodeBuilder, Boolean> continuation = (cb, b) -> {
       var side = b ? eq.a() : eq.b();
-      cb.returnWith(serializeTermUnderTele(cb, side, argsTerm.ref(), unit.telescope().size()));
+      cb.returnWith(serializeTermUnderTeleWithoutNormalizer(cb, side, argsTerm.ref(), unit.telescope().size()));
     };
 
     builder.ifTrue(is0Term,
@@ -83,12 +91,14 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   @Override public @NotNull ConSerializer serialize(@NotNull ClassBuilder builder0, ConDef unit) {
     buildFramework(builder0, unit, builder -> {
-      if (unit.pats.isNotEmpty()) builder.buildMethod(
-        AstUtil.fromClass(Result.class),
-        "isAvailable",
-        ImmutableSeq.of(Constants.CD_ImmutableSeq),
-        (ap, builder1) ->
-          buildIsAvailable(builder1, unit, ap.arg(0)));
+      if (unit.pats.isNotEmpty()) {
+        builder.buildMethod(
+          AstUtil.fromClass(Result.class),
+          "isAvailable",
+          InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_ImmutableSeq).view()),
+          (ap, builder1) ->
+            buildIsAvailable(builder1, unit, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0)));
+      }
 
       if (unit.equality != null) {
         builder.buildMethod(

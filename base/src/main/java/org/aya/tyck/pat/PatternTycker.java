@@ -494,7 +494,7 @@ public class PatternTycker implements Problematic, Stateful {
     @NotNull DataCall type, @NotNull ConDefLike con, @NotNull TyckState state
   ) {
     return switch (con) {
-      case JitCon jitCon -> jitCon.isAvailable(type.args());
+      case JitCon jitCon -> jitCon.isAvailable(new Normalizer(state), type.args());
       case ConDef.Delegate conDef -> {
         var pats = conDef.core().pats;
         if (pats.isNotEmpty()) {

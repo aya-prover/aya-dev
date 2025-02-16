@@ -3,6 +3,7 @@
 package org.aya.syntax.compile;
 
 import java.util.EnumSet;
+import java.util.function.UnaryOperator;
 
 import kala.collection.Seq;
 import org.aya.generic.Modifier;
@@ -22,7 +23,7 @@ public abstract non-sealed class JitFn extends JitTele implements FnDefLike {
   /**
    * Unfold this function
    */
-  abstract public @NotNull Term invoke(@NotNull Seq<@NotNull Term> args);
+  abstract public @NotNull Term invoke(@NotNull UnaryOperator<Term> pre, @NotNull Seq<@NotNull Term> args);
   @Override public boolean is(@NotNull Modifier mod) {
     return (modifiers & (1 << mod.ordinal())) != 0;
   }
