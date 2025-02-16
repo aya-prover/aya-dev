@@ -74,8 +74,8 @@ public abstract class ClassTargetSerializer<T> {
   }
 
   /// Construct a {@link SerializerContext} with a no-op normalizer
-  public @NotNull SerializerContext buildSerializerContext(@NotNull ExprBuilder builder) {
-    return new SerializerContext(builder.invoke(Constants.CLOSURE_ID, ImmutableSeq.empty()), recorder);
+  public @NotNull SerializerContext buildSerializerContext() {
+    return new SerializerContext(null, recorder);
   }
 
   public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
@@ -90,7 +90,7 @@ public abstract class ClassTargetSerializer<T> {
     @NotNull Term term,
     @NotNull ImmutableSeq<JavaExpr> argTerms
   ) {
-    return new TermExprializer(builder, buildSerializerContext(builder), argTerms)
+    return new TermExprializer(builder, buildSerializerContext(), argTerms)
       .serialize(term);
   }
 

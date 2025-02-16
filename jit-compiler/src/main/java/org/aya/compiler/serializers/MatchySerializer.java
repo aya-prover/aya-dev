@@ -141,9 +141,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var helper = makeHelper(capturec, argc);
 
       builder.buildMethod(Constants.CD_Term, "invoke", helper.parameters(), (ap, cb) -> {
-        var pre = helper.normalizer(ap);
-        var captures = ImmutableSeq.fill(capturec, i -> helper.arg(ap, i));
-        var args = ImmutableSeq.fill(argc, i -> helper.arg(ap, i + capturec));
+        var pre = InvokeSignatureHelper.normalizer(ap);
+        var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
+        var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
         buildInvoke(cb, unit, pre, captures, args);
       });
 

@@ -134,9 +134,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         fixedInvokeHelper.parameters(),
         (ap, cb) -> {
-          var pre = fixedInvokeHelper.normalizer(ap);
+          var pre = InvokeSignatureHelper.normalizer(ap);
           var args = ImmutableSeq.fill(unit.telescope().size(),
-            i -> fixedInvokeHelper.arg(ap, i));
+            i -> InvokeSignatureHelper.arg(ap, i));
           buildInvoke(cb, unit, pre, args);
         }
       );
@@ -147,7 +147,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
         "invoke",
         varargInvokeHelper.parameters(),
         (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke, varargInvokeHelper.normalizer(ap), varargInvokeHelper.arg(ap, 0))
+          buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0))
       );
     });
 

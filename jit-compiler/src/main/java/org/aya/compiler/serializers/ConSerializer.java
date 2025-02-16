@@ -98,7 +98,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
           "isAvailable",
           helper.parameters(),
           (ap, builder1) ->
-            buildIsAvailable(builder1, unit, helper.normalizer(ap), helper.arg(ap, 0)));
+            buildIsAvailable(builder1, unit, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0)));
       }
 
       if (unit.equality != null) {

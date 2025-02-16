@@ -233,6 +233,10 @@ public final class Constants {
     true
   );
 
+  public static @NotNull JavaExpr unaryOperatorIdentity(@NotNull ExprBuilder builder) {
+    return builder.invoke(CLOSURE_ID, ImmutableSeq.empty());
+  }
+
   /**
    * @see PatMatcher#apply(ImmutableSeq, ImmutableSeq)
    */
