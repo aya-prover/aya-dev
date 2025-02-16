@@ -22,15 +22,18 @@ public enum AstExprBuilder implements ExprBuilder {
   INSTANCE;
 
   @Override public @NotNull JavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
+    assert conRef.checkArguments(args);
     return new AstExpr.New(conRef, assertFreeExpr(args));
   }
 
   @Override
   public @NotNull JavaExpr invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
+    assert method.checkArguments(args);
     return new AstExpr.Invoke(method, assertFreeExpr(owner), assertFreeExpr(args));
   }
 
   @Override public @NotNull JavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
+    assert method.checkArguments(args);
     return new AstExpr.Invoke(method, null, assertFreeExpr(args));
   }
 
