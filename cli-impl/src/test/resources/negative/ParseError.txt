@@ -75,13 +75,13 @@ Parsing interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
-MatchNumMismatch:
+MatchElimAs:
 In file $FILE:1:12 ->
 
-  1 │   def test => match e as a, b returns Type {}
-    │               ╰─────────────────────────────╯
+  1 │   def test => match elim e as a {}
+    │               ╰──────────────────╯
 
-Error: I see 2 as-binding(s) but 1 discriminant(s)
+Error: Elimination match could not be combined with as-binding
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).

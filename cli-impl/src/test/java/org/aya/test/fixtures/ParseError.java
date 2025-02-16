@@ -22,7 +22,7 @@ public interface ParseError {
     def id {A : Type} (a : A) => a
     """;
   @Language("Aya") String testMatchElim = "def test => match elim Type {}";
-  @Language("Aya") String testMatchNumMismatch = "def test => match e as a, b returns Type {}";
+  @Language("Aya") String testMatchElimAs = "def test => match elim e as a {}";
   @Language("Aya") String testImplicitTuplePat = """
     def test (Sig Type ** Type) : Type
     | ({a}, b) => a
