@@ -36,6 +36,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.UnaryOperator;
 
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 
@@ -76,8 +77,8 @@ public class CompileTest {
     var two = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(one));
     var three = new ConCall(S, ImmutableSeq.empty(), 0, ImmutableSeq.of(two));
 
-    var mResult = plus.invoke(ImmutableSeq.of(two, three));
-    var idLamResult = idLam.invoke(ImmutableSeq.empty());
+    var mResult = plus.invoke(UnaryOperator.identity(), ImmutableSeq.of(two, three));
+    var idLamResult = idLam.invoke(UnaryOperator.identity(), ImmutableSeq.empty());
     var finalResult = new AppTerm(idLamResult, mResult).make();
     System.out.println(finalResult.easyToString());
   }
