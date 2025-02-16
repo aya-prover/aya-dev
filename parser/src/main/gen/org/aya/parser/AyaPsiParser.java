@@ -1399,15 +1399,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // KW_ELIM? expr KW_AS (KW_AS weakId)?
+  // KW_ELIM? expr (KW_AS weakId)?
   public static boolean matchDiscr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matchDiscr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, MATCH_DISCR, "<match discr>");
     r = matchDiscr_0(b, l + 1);
     r = r && expr(b, l + 1, -1);
-    r = r && consumeToken(b, KW_AS);
-    r = r && matchDiscr_3(b, l + 1);
+    r = r && matchDiscr_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1420,15 +1419,15 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   // (KW_AS weakId)?
-  private static boolean matchDiscr_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchDiscr_3")) return false;
-    matchDiscr_3_0(b, l + 1);
+  private static boolean matchDiscr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr_2")) return false;
+    matchDiscr_2_0(b, l + 1);
     return true;
   }
 
   // KW_AS weakId
-  private static boolean matchDiscr_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchDiscr_3_0")) return false;
+  private static boolean matchDiscr_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, KW_AS);
@@ -2715,4 +2714,3 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   static final Parser ID_parser_ = (b, l) -> consumeToken(b, ID);
   static final Parser expr_parser_ = (b, l) -> expr(b, l + 1, -1);
 }
-

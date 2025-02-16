@@ -186,7 +186,11 @@ public record ExprResolver(
       case Expr.Match match -> {
         var discriminant = match.discriminant().map(x -> x.descent(this));
         var returnsCtx = ctx;
-        for (var binding : match.asBindings()) returnsCtx = returnsCtx.bind(binding);
+        for (var binding : match.asBindings()) {
+          if (binding.isDefined()) {
+            returnsCtx = returnsCtx.bind(binding.get());
+          }
+        }
         var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;
 
         // Requires exhaustiveness check, therefore must need the full data body

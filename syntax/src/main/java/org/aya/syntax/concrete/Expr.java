@@ -4,7 +4,6 @@ package org.aya.syntax.concrete;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableBooleanSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
 import kala.control.Option;
@@ -587,7 +586,7 @@ public sealed interface Expr extends AyaDocile {
     @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
     @NotNull ImmutableSeq<Option<LocalVar>> asBindings,
-    @NotNull ImmutableBooleanSeq isElim,
+    @NotNull ImmutableSeq<Boolean> elims,
     @Nullable WithPos<Expr> returns
   ) implements Expr {
     public @NotNull Match update(
@@ -597,7 +596,7 @@ public sealed interface Expr extends AyaDocile {
     ) {
       return this.discriminant.sameElements(discriminant, true)
         && this.clauses.sameElements(clauses, true) && this.returns == returns
-        ? this : new Match(discriminant, clauses, asBindings, isElim, returns);
+        ? this : new Match(discriminant, clauses, asBindings, elims, returns);
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {

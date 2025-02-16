@@ -3,6 +3,7 @@
 package org.aya.resolve.salt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Option;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
@@ -99,8 +100,8 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
           realBody = new WithPos<>(sourcePos, new Expr.Match(
             lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
             ImmutableSeq.of(lam.clause()),
+            ImmutableSeq.of(Option.none()),
             ImmutableSeq.empty(),
-            true,
             null
           ));
         }
