@@ -100,8 +100,8 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
           realBody = new WithPos<>(sourcePos, new Expr.Match(
             lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
             ImmutableSeq.of(lam.clause()),
-            ImmutableSeq.of(Option.none()),
-            ImmutableSeq.empty(),
+            ImmutableSeq.fill(lamTele.size(), Option.none()),
+            ImmutableSeq.fill(lamTele.size(), true),
             null
           ));
         }
