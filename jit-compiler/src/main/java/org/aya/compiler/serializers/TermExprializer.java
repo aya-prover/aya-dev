@@ -104,13 +104,18 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     ));
   }
 
-  private @NotNull JavaExpr
-  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<JavaExpr> args) {
+  private @NotNull JavaExpr getNormalizer() {
     var normalizer = context.normalizer();
     if (normalizer == null) {
       normalizer = Constants.unaryOperatorIdentity(builder);
     }
 
+    return normalizer;
+  }
+
+  private @NotNull JavaExpr
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<JavaExpr> args) {
+    var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
 
     if (ulift != 0) {
@@ -125,12 +130,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<JavaExpr> args,
     @NotNull ImmutableSeq<JavaExpr> captures
   ) {
-    // TODO: unify this with [buildFnInvoke]
-    var normalizer = context.normalizer();
-    if (normalizer == null) {
-      normalizer = Constants.unaryOperatorIdentity(builder);
-    }
-
+    var normalizer = getNormalizer();
     return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
   }
 

@@ -45,10 +45,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
   }
 
-  public static JavaExpr makeInvoke(
+  public static @NotNull JavaExpr makeInvoke(
     @NotNull ExprBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull JavaExpr instance,
     @NotNull JavaExpr normalizer,
     @NotNull ImmutableSeq<JavaExpr> args
   ) {
@@ -57,16 +56,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       InvokeSignatureHelper.parameters(ImmutableSeq.fill(args.size(), Constants.CD_Term).view()),
       false
     );
-    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args.view()));
-  }
 
-  public static JavaExpr makeInvoke(
-    @NotNull ExprBuilder builder,
-    @NotNull ClassDesc owner,
-    @NotNull JavaExpr normalizer,
-    @NotNull ImmutableSeq<JavaExpr> args
-  ) {
-    return makeInvoke(builder, owner, TermExprializer.getInstance(builder, owner), normalizer, args);
+    var instance = TermExprializer.getInstance(builder, owner);
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
   }
 
   /**
@@ -124,7 +116,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var result = builder.invoke(invokeMethod, builder.thisRef(), InvokeSignatureHelper.args(normalizerTerm.ref(), args.view()));
+    var result = AbstractExprializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm.ref(), args.view());
     builder.returnWith(result);
   }
 

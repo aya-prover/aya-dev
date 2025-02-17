@@ -45,11 +45,11 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   public static @NotNull JavaExpr makeInvoke(
     @NotNull ExprBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull JavaExpr instance,
     @NotNull JavaExpr normalizer,
     @NotNull ImmutableSeq<JavaExpr> captures,
     @NotNull ImmutableSeq<JavaExpr> args
   ) {
+    var instance = TermExprializer.getInstance(builder, owner);
     var ref = new MethodRef(
       owner, "invoke",
       Constants.CD_Term,
@@ -57,17 +57,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, captures.view().appendedAll(args)));
-  }
-
-  public static @NotNull JavaExpr makeInvoke(
-    @NotNull ExprBuilder builder,
-    @NotNull ClassDesc owner,
-    @NotNull JavaExpr normalizer,
-    @NotNull ImmutableSeq<JavaExpr> captures,
-    @NotNull ImmutableSeq<JavaExpr> args
-  ) {
-    return makeInvoke(builder, owner, TermExprializer.getInstance(builder, owner), normalizer, captures, args);
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
   }
 
   private void buildInvoke(

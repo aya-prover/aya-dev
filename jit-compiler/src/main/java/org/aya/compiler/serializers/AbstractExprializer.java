@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.*;
@@ -151,4 +152,14 @@ public abstract class AbstractExprializer<T> {
    * Prepare and perform {@link #doSerialize}
    */
   public abstract @NotNull JavaExpr serialize(T unit);
+
+  public static @NotNull JavaExpr makeCallInvoke(
+    @NotNull ExprBuilder builder,
+    @NotNull MethodRef ref,
+    @NotNull JavaExpr instance,
+    @NotNull JavaExpr normalizer,
+    @NotNull SeqView<JavaExpr> args
+  ) {
+    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
+  }
 }
