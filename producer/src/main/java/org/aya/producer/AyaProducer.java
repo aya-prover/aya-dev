@@ -19,7 +19,6 @@ import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
-import kala.tuple.Tuple;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -603,30 +602,21 @@ public record AyaProducer(
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
-      var discrList = node.child(MATCH_DISCR_LIST).child(COMMA_SEP).childrenOfType(MATCH_DISCR).map(d -> {
-        var elim = d.peekChild(KW_ELIM) != null;
-        Option<LocalVar> asBinding = d.peekChild(KW_AS) == null ?
-          Option.none() :
-          Option.some(LocalVar.from(weakId(d.child(WEAK_ID))));
-        var discr = expr(d.child(EXPR));
-
-        return Tuple.of(
+      var discrList = node.child(MATCH_DISCR_LIST).child(COMMA_SEP).childrenOfType(MATCH_DISCR)
+        .map(d -> new Expr.Match.Discriminant(
           expr(d.child(EXPR)),
-          asBinding,
-          elim
-        );
-      }).toSeq();
+          d.peekChild(KW_AS) != null ?
+            LocalVar.from(weakId(d.child(WEAK_ID))) : null,
+          d.peekChild(KW_ELIM) != null
+        )).toSeq();
 
-      if (!discrList.allMatch(d -> !d.component3() || d.component1().data() instanceof Expr.Unresolved)) {
+      if (!discrList.allMatch(d -> !d.isElim() || d.discr().data() instanceof Expr.Unresolved)) {
         reporter.report(new ParseError(pos, "Elimination match must be on variables"));
         throw new ParsingInterruptedException();
-      } else if (!discrList.allMatch(d -> d.component2().isEmpty() || !d.component3())) {
+      } else if (!discrList.allMatch(d -> d.asBinding() == null || !d.isElim())) {
         reporter.report(new ParseError(pos, "Elimination match could not be combined with as-binding"));
         throw new ParsingInterruptedException();
       }
-      var discr = discrList.map(Tuple::component1).toSeq();
-      var asBindings = discrList.map(Tuple::component2).toSeq();
-      var elims = discrList.map(Tuple::component3).toSeq();
       var matchType = node.peekChild(MATCH_TYPE);
 
       WithPos<Expr> returns = null;
@@ -635,8 +625,8 @@ public record AyaProducer(
         if (returnsNode != null) returns = expr(returnsNode);
       }
       return new WithPos<>(pos, new Expr.Match(
-        discr,
-        bare.concat(barred).toSeq(), asBindings, elims,
+        discrList,
+        bare.concat(barred).toSeq(),
         returns
       ));
     }

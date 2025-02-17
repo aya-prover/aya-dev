@@ -184,11 +184,13 @@ public record ExprResolver(
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
       case Expr.Match match -> {
-        var discriminant = match.discriminant().map(x -> x.descent(this));
+        var discriminant = match.discriminant().map(
+          d -> new Expr.Match.Discriminant(d.discr().descent(this), d.asBinding(), d.isElim())
+        );
         var returnsCtx = ctx;
-        for (var binding : match.asBindings()) {
-          if (binding.isDefined()) {
-            returnsCtx = returnsCtx.bind(binding.get());
+        for (var discr : match.discriminant()) {
+          if (discr.asBinding() != null) {
+            returnsCtx = returnsCtx.bind(discr.asBinding());
           }
         }
         var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;

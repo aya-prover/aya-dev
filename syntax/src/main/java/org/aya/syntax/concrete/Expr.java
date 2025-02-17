@@ -6,7 +6,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.control.Either;
-import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Nested;
@@ -583,20 +582,24 @@ public sealed interface Expr extends AyaDocile {
   }
 
   record Match(
-    @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+    @NotNull ImmutableSeq<Discriminant> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull ImmutableSeq<Option<LocalVar>> asBindings,
-    @NotNull ImmutableSeq<Boolean> elims,
     @Nullable WithPos<Expr> returns
   ) implements Expr {
+    public record Discriminant(
+      @NotNull WithPos<Expr> discr,
+      @Nullable LocalVar asBinding,
+      @NotNull Boolean isElim
+    ) { }
+
     public @NotNull Match update(
-      @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+      @NotNull ImmutableSeq<Discriminant> discriminant,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
       @Nullable WithPos<Expr> returns
     ) {
       return this.discriminant.sameElements(discriminant, true)
         && this.clauses.sameElements(clauses, true) && this.returns == returns
-        ? this : new Match(discriminant, clauses, asBindings, elims, returns);
+        ? this : new Match(discriminant, clauses, returns);
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
@@ -604,7 +607,7 @@ public sealed interface Expr extends AyaDocile {
     }
 
     public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
-      return update(discriminant.map(x -> x.descent(f)),
+      return update(discriminant.map(d -> new Discriminant(d.discr().descent(f), d.asBinding(), d.isElim())),
         clauses.map(x -> x.descent(f, g)),
         returns != null ? returns.descent(f) : null);
     }
@@ -613,7 +616,7 @@ public sealed interface Expr extends AyaDocile {
     ///
     /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
-      discriminant.forEach(f::accept);
+      discriminant.forEach(d -> f.accept(d.discr()));
       clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
     }

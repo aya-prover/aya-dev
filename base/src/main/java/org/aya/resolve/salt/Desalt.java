@@ -3,7 +3,6 @@
 package org.aya.resolve.salt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Option;
 import org.aya.generic.term.SortKind;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
@@ -47,7 +46,9 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       }
       case Expr.Match match -> {
         return match.update(
-          match.discriminant().map(e -> e.descent(this)),
+          match.discriminant().map(d -> new Expr.Match.Discriminant(
+            d.discr().descent(this), d.asBinding(), d.isElim()
+          )),
           match.clauses().map(clause -> clause.descent(this, pattern)),
           match.returns() != null ? match.returns().descent(this) : null
         );
@@ -98,10 +99,12 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
           // the var with prime are renamed vars
 
           realBody = new WithPos<>(sourcePos, new Expr.Match(
-            lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
+            lamTele.map(x -> new Expr.Match.Discriminant(
+              new WithPos<>(x.definition(), new Expr.Ref(x)),
+              null,
+              true
+            )),
             ImmutableSeq.of(lam.clause()),
-            ImmutableSeq.fill(lamTele.size(), Option.none()),
-            ImmutableSeq.fill(lamTele.size(), true),
             null
           ));
         }
