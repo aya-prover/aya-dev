@@ -2,15 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.JavaExpr;
+import org.aya.compiler.morphism.*;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -32,12 +28,6 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  /// @see JitFn#invoke(java.util.function.UnaryOperator, Seq)
-  public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int argc) {
-    return new MethodRef(
-      owner, "invoke", Constants.CD_Term, InvokeSignatureHelper.parameters(ImmutableSeq.fill(argc, Constants.CD_Term).view()), false);
-  }
-
   public static int modifierFlags(@NotNull EnumSet<Modifier> modies) {
     var flag = 0;
     for (var mody : modies) flag |= 1 << mody.ordinal();
@@ -53,6 +43,22 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
+  }
+
+  public static @NotNull JavaExpr makeInvoke(
+    @NotNull ExprBuilder builder,
+    @NotNull ClassDesc owner,
+    @NotNull JavaExpr normalizer,
+    @NotNull ImmutableSeq<JavaExpr> args
+  ) {
+    var ref = new MethodRef(
+      owner, "invoke", Constants.CD_Term,
+      InvokeSignatureHelper.parameters(ImmutableSeq.fill(args.size(), Constants.CD_Term).view()),
+      false
+    );
+
+    var instance = TermExprializer.getInstance(builder, owner);
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
   }
 
   /**
@@ -110,8 +116,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var fullArgs = InvokeSignatureHelper.args(normalizerTerm.ref(), args.view());
-    var result = builder.invoke(invokeMethod, builder.thisRef(), fullArgs);
+    var result = AbstractExprializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm.ref(), args.view());
     builder.returnWith(result);
   }
 

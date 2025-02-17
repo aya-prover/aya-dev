@@ -104,17 +104,19 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     ));
   }
 
-  private @NotNull JavaExpr
-  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<JavaExpr> args) {
+  private @NotNull JavaExpr getNormalizer() {
     var normalizer = context.normalizer();
     if (normalizer == null) {
       normalizer = Constants.unaryOperatorIdentity(builder);
     }
 
-    var invokeExpr = builder.invoke(
-      FnSerializer.resolveInvoke(defClass, args.size()),
-      getInstance(builder, defClass),
-      InvokeSignatureHelper.args(normalizer, args.view()));
+    return normalizer;
+  }
+
+  private @NotNull JavaExpr
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<JavaExpr> args) {
+    var normalizer = getNormalizer();
+    var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
 
     if (ulift != 0) {
       return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
@@ -128,19 +130,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<JavaExpr> args,
     @NotNull ImmutableSeq<JavaExpr> captures
   ) {
-    // TODO: unify this with [buildFnInvoke]
-    var normalizer = context.normalizer();
-    if (normalizer == null) {
-      normalizer = Constants.unaryOperatorIdentity(builder);
-    }
-
-    var fullArgs = InvokeSignatureHelper.args(normalizer, captures.view().appendedAll(args));
-
-    return builder.invoke(
-      MatchySerializer.resolveInvoke(matchyClass, captures.size(), args.size()),
-      getInstance(builder, matchyClass),
-      fullArgs
-    );
+    var normalizer = getNormalizer();
+    return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
   }
 
   @Override protected @NotNull JavaExpr doSerialize(@NotNull Term term) {

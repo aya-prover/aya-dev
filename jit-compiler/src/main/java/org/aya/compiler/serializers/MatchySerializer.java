@@ -3,13 +3,10 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.*;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -41,16 +38,26 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return NameSerializer.javifyClassName(unit.matchy.qualifiedName().module(), unit.matchy.qualifiedName().name());
   }
 
-  private static @NotNull InvokeSignatureHelper makeHelper(int capturec, int argc) {
-    return new InvokeSignatureHelper(ImmutableSeq.fill(capturec + argc, Constants.CD_Term));
+  private static @NotNull ImmutableSeq<ClassDesc> makeInvokeParameters(int capturec, int argc) {
+    return InvokeSignatureHelper.parameters(ImmutableSeq.fill(capturec + argc, Constants.CD_Term).view());
   }
 
-  public static @NotNull MethodRef resolveInvoke(@NotNull ClassDesc owner, int capturec, int argc) {
-    return new MethodRef(
+  public static @NotNull JavaExpr makeInvoke(
+    @NotNull ExprBuilder builder,
+    @NotNull ClassDesc owner,
+    @NotNull JavaExpr normalizer,
+    @NotNull ImmutableSeq<JavaExpr> captures,
+    @NotNull ImmutableSeq<JavaExpr> args
+  ) {
+    var instance = TermExprializer.getInstance(builder, owner);
+    var ref = new MethodRef(
       owner, "invoke",
-      Constants.CD_Term, makeHelper(capturec, argc).parameters(),
+      Constants.CD_Term,
+      makeInvokeParameters(captures.size(), args.size()),
       false
     );
+
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
   }
 
   private void buildInvoke(
@@ -100,13 +107,14 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
    * @see JitMatchy#invoke(java.util.function.UnaryOperator, Seq, Seq)
    */
   private void buildInvoke(
-    @NotNull CodeBuilder builder, @NotNull MatchyData data,
+    @NotNull CodeBuilder builder,
+    @NotNull MatchyData data,
+    @NotNull MethodRef invokeRef,
     @NotNull LocalVariable normalizer,
     @NotNull LocalVariable captures, @NotNull LocalVariable args
   ) {
     var capturec = data.capturesSize;
     int argc = data.argsSize;
-    var invokeRef = resolveInvoke(NameSerializer.getClassDesc(data.matchy), capturec, argc);
     var preArgs = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), capturec)
       .view()
       .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), argc));
@@ -138,9 +146,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
 
-      var helper = makeHelper(capturec, argc);
-
-      builder.buildMethod(Constants.CD_Term, "invoke", helper.parameters(), (ap, cb) -> {
+      var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke",
+        makeInvokeParameters(capturec, argc), (ap, cb) -> {
         var pre = InvokeSignatureHelper.normalizer(ap);
         var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
         var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
@@ -153,7 +160,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
         var pre = ap.arg(0);
         var captures = ap.arg(1);
         var args = ap.arg(2);
-        buildInvoke(cb, unit, pre, captures, args);
+        buildInvoke(cb, unit, fixedInvokeRef, pre, captures, args);
       });
 
       builder.buildMethod(Constants.CD_Term, "type", ImmutableSeq.of(

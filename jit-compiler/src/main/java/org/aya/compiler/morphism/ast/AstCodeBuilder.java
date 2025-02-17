@@ -52,6 +52,7 @@ public record AstCodeBuilder(
   @Override
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
     assert isConstructor;
+    assert superConParams.sizeEquals(superConArgs);
     stmts.append(new AstStmt.Super(superConParams, assertFreeExpr(superConArgs)));
   }
 
