@@ -172,6 +172,8 @@ public final class AstRunner<Carrier> {
           var branch = branches.get(idx);
           runFree(ap, cb, branch);
         }, cb -> runFree(ap, cb, defaultCase));
+      case AstStmt.Continue _ -> builder.doContinue();
+      case AstStmt.Loop(var inner) -> builder.loop(cb -> runFree(ap, cb, inner));
     }
   }
 

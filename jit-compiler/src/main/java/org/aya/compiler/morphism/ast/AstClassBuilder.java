@@ -46,7 +46,7 @@ public record AstClassBuilder(
     @NotNull MethodRef ref,
     @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
   ) {
-    var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
+    var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), ref.isConstructor());
     builder.accept(new AstArgumentProvider(ref.paramTypes().size()), codeBuilder);
     members.append(new AstDecl.Method(ref, codeBuilder.build()));
   }

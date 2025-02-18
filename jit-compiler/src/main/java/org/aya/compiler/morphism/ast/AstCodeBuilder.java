@@ -23,11 +23,10 @@ import java.util.function.ObjIntConsumer;
 public record AstCodeBuilder(
   @NotNull FreezableMutableList<AstStmt> stmts,
   @NotNull VariablePool pool,
-  boolean isConstructor,
-  boolean isBreakable
+  boolean isConstructor
 ) implements CodeBuilder {
-  public @NotNull ImmutableSeq<AstStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
-    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool, isConstructor, isBreakable);
+  public @NotNull ImmutableSeq<AstStmt> subscoped(@NotNull Consumer<AstCodeBuilder> block) {
+    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool, isConstructor);
     block.accept(inner);
     return inner.build();
   }
@@ -64,8 +63,8 @@ public record AstCodeBuilder(
   }
 
   private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    var thenBlockBody = subscoped(isBreakable, thenBlock::accept);
-    var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock::accept);
+    var thenBlockBody = subscoped(thenBlock::accept);
+    var elseBlockBody = elseBlock == null ? null : subscoped(elseBlock::accept);
 
     stmts.append(new AstStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
@@ -106,12 +105,11 @@ public record AstCodeBuilder(
   }
 
   @Override public void breakable(@NotNull Consumer<CodeBuilder> innerBlock) {
-    var innerBlockBody = subscoped(true, innerBlock::accept);
+    var innerBlockBody = subscoped(innerBlock::accept);
     stmts.append(new AstStmt.Breakable(innerBlockBody));
   }
 
   @Override public void breakOut() {
-    assert isBreakable;
     stmts.append(AstStmt.Break.INSTANCE);
   }
 
@@ -125,9 +123,8 @@ public record AstCodeBuilder(
     @NotNull ObjIntConsumer<CodeBuilder> branch,
     @NotNull Consumer<CodeBuilder> defaultCase
   ) {
-    var branchBodies = cases.mapToObj(kase ->
-      subscoped(isBreakable, b -> branch.accept(b, kase)));
-    var defaultBody = subscoped(isBreakable, defaultCase::accept);
+    var branchBodies = cases.mapToObj(kase -> subscoped(b -> branch.accept(b, kase)));
+    var defaultBody = subscoped(defaultCase::accept);
 
     stmts.append(new AstStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
   }

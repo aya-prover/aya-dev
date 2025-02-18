@@ -4,12 +4,12 @@ package org.aya.compiler.morphism.asm;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.data.FieldRef;
 import org.aya.compiler.data.LocalVariable;
 import org.aya.compiler.data.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.data.DataResolver;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
 import org.glavo.classfile.Label;
@@ -33,6 +33,7 @@ public record AsmCodeBuilder(
   @NotNull AsmClassBuilder parent,
   @NotNull AsmVariablePool pool,
   @Nullable Label breaking,
+  @Nullable Label funcStart, // used in conjunction with `loop` for tailrec
   boolean hasThis
 ) implements CodeBuilder, AutoCloseable {
   public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_1());
@@ -46,6 +47,7 @@ public record AsmCodeBuilder(
   ) {
     this(writer, parent,
       AsmVariablePool.from(hasThis ? parent.owner() : null, parameterTypes),
+      null,
       null,
       hasThis
     );
@@ -61,17 +63,17 @@ public record AsmCodeBuilder(
   public void loadExpr(@NotNull JavaExpr expr) { assertExpr(expr).accept(this); }
   @Override public void close() { pool.submit(this); }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
-    try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, hasThis)) {
+  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label fStart, @NotNull Consumer<AsmCodeBuilder> block) {
+    try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, fStart, hasThis)) {
       block.accept(innerBuilder);
     }
   }
 
   public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
-    subscoped(innerWrite, breaking, block);
+    subscoped(innerWrite, breaking, funcStart, block);
   }
 
-  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, block); }
+  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, funcStart, block); }
 
   @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
     var variable = pool.acquire(type);
@@ -173,6 +175,21 @@ public record AsmCodeBuilder(
   @Override public void breakOut() {
     if (breaking == null) Panic.unreachable();
     writer.goto_(breaking);
+  }
+
+  // this part is hideous; fix this later
+  @Override
+  public void doContinue() {
+    if (funcStart == null) Panic.unreachable();
+    writer.goto_(funcStart);
+  }
+
+  @Override
+  public void loop(@NotNull Consumer<CodeBuilder> innerBlock) {
+    if (funcStart != null) Panic.unreachable();
+    writer.block(builder -> {
+      subscoped(builder, endLabel, innerBlock::accept);
+    });
   }
 
   @Override public void exec(@NotNull JavaExpr expr) {

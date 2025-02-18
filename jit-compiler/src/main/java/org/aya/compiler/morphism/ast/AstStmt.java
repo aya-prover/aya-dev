@@ -34,7 +34,7 @@ public sealed interface AstStmt {
   enum Break implements AstStmt { INSTANCE }
   enum Unreachable implements AstStmt { INSTANCE }
 
-  record While(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
+  record Loop(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
   enum Continue implements AstStmt { INSTANCE }
 
   record Exec(@NotNull AstExpr expr) implements AstStmt { }
