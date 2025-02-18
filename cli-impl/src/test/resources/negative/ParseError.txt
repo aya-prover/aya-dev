@@ -69,7 +69,7 @@ In file $FILE:1:12 ->
   1 │   def test => match elim Type {}
     │               ╰────────────────╯
 
-Error: Elimination match must be on variables
+Error: Expect variable in match elim
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).
@@ -81,7 +81,8 @@ In file $FILE:1:12 ->
   1 │   def test => match elim e as a {}
     │               ╰──────────────────╯
 
-Error: Elimination match could not be combined with as-binding
+Error: Don't use as-binding together with elim. Just use the elim-variable 
+       directly
 
 Parsing interrupted due to:
 1 error(s), 0 warning(s).

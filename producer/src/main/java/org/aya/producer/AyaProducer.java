@@ -609,10 +609,10 @@ public record AyaProducer(
         )).toSeq();
 
       if (!discrList.allMatch(d -> !d.isElim() || d.discr().data() instanceof Expr.Unresolved)) {
-        reporter.report(new ParseError(pos, "Elimination match must be on variables"));
+        reporter.report(new ParseError(pos, "Expect variable in match elim"));
         throw new ParsingInterruptedException();
       } else if (!discrList.allMatch(d -> d.asBinding() == null || !d.isElim())) {
-        reporter.report(new ParseError(pos, "Elimination match could not be combined with as-binding"));
+        reporter.report(new ParseError(pos, "Don't use as-binding together with elim. Just use the elim-variable directly"));
         throw new ParsingInterruptedException();
       }
       var matchType = node.peekChild(MATCH_TYPE);
