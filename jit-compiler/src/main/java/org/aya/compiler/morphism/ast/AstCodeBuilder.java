@@ -9,6 +9,7 @@ import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
+import org.aya.compiler.ir.IRStmt;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.JavaExpr;
@@ -21,18 +22,18 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 public record AstCodeBuilder(
-  @NotNull FreezableMutableList<AstStmt> stmts,
+  @NotNull FreezableMutableList<IRStmt> stmts,
   @NotNull VariablePool pool,
   boolean isConstructor,
   boolean isBreakable
 ) implements CodeBuilder {
-  public @NotNull ImmutableSeq<AstStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
+  public @NotNull ImmutableSeq<IRStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
     var inner = new AstCodeBuilder(FreezableMutableList.create(), pool, isConstructor, isBreakable);
     block.accept(inner);
     return inner.build();
   }
 
-  public @NotNull ImmutableSeq<AstStmt> build() { return stmts.freeze(); }
+  public @NotNull ImmutableSeq<IRStmt> build() { return stmts.freeze(); }
   public static @NotNull AstExpr assertFreeExpr(@NotNull JavaExpr expr) { return (AstExpr) expr; }
 
   public static @NotNull ImmutableSeq<AstExpr> assertFreeExpr(@NotNull ImmutableSeq<JavaExpr> exprs) {
@@ -44,7 +45,7 @@ public record AstCodeBuilder(
 
   @Override public @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
     var theVar = acquireVariable();
-    stmts.append(new AstStmt.DeclareVariable(type, theVar));
+    stmts.append(new IRStmt.DeclVar(type, theVar));
     if (initializer != null) updateVar(theVar, initializer);
     return theVar;
   }
@@ -53,38 +54,38 @@ public record AstCodeBuilder(
   public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
     assert isConstructor;
     assert superConParams.sizeEquals(superConArgs);
-    stmts.append(new AstStmt.Super(superConParams, assertFreeExpr(superConArgs)));
+    stmts.append(new IRStmt.Super(superConParams, assertFreeExpr(superConArgs)));
   }
 
   @Override public void updateVar(@NotNull LocalVariable var, @NotNull JavaExpr update) {
-    stmts.append(new AstStmt.SetVariable(assertFreeVariable(var), assertFreeExpr(update)));
+    stmts.append(new IRStmt.SetVar(assertFreeVariable(var), assertFreeExpr(update)));
   }
 
   @Override public void updateArray(@NotNull JavaExpr array, int idx, @NotNull JavaExpr update) {
-    stmts.append(new AstStmt.SetArray(assertFreeExpr(array), idx, assertFreeExpr(update)));
+    stmts.append(new IRStmt.SetArray(assertFreeExpr(array), idx, assertFreeExpr(update)));
   }
 
-  private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
+  private void buildIf(@NotNull IRStmt.Condition condition, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
     var thenBlockBody = subscoped(isBreakable, thenBlock::accept);
     var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock::accept);
 
-    stmts.append(new AstStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
+    stmts.append(new IRStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
 
   @Override public void
   ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsFalse(assertFreeVariable(notTrue)), thenBlock, elseBlock);
+    buildIf(new IRStmt.Condition.IsFalse(assertFreeVariable(notTrue)), thenBlock, elseBlock);
   }
 
   @Override public void
   ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsTrue(assertFreeVariable(theTrue)), thenBlock, elseBlock);
+    buildIf(new IRStmt.Condition.IsTrue(assertFreeVariable(theTrue)), thenBlock, elseBlock);
   }
 
   @Override public void
   ifInstanceOf(@NotNull JavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
     var varHolder = MutableValue.<AstVariable.Local>create();
-    buildIf(new AstStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
+    buildIf(new IRStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
       var asTerm = ((AstCodeBuilder) b).acquireVariable();
       varHolder.set(asTerm);
       thenBlock.accept(b, asTerm);
@@ -93,31 +94,31 @@ public record AstCodeBuilder(
 
   @Override
   public void ifIntEqual(@NotNull JavaExpr lhs, int rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsIntEqual(assertFreeExpr(lhs), rhs), thenBlock, elseBlock);
+    buildIf(new IRStmt.Condition.IsIntEqual(assertFreeExpr(lhs), rhs), thenBlock, elseBlock);
   }
 
   @Override
   public void ifRefEqual(@NotNull JavaExpr lhs, @NotNull JavaExpr rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsRefEqual(assertFreeExpr(lhs), assertFreeExpr(rhs)), thenBlock, elseBlock);
+    buildIf(new IRStmt.Condition.IsRefEqual(assertFreeExpr(lhs), assertFreeExpr(rhs)), thenBlock, elseBlock);
   }
 
   @Override
   public void ifNull(@NotNull JavaExpr isNull, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsNull(assertFreeExpr(isNull)), thenBlock, elseBlock);
+    buildIf(new IRStmt.Condition.IsNull(assertFreeExpr(isNull)), thenBlock, elseBlock);
   }
 
   @Override public void breakable(@NotNull Consumer<CodeBuilder> innerBlock) {
     var innerBlockBody = subscoped(true, innerBlock::accept);
-    stmts.append(new AstStmt.Breakable(innerBlockBody));
+    stmts.append(new IRStmt.Breakable(innerBlockBody));
   }
 
   @Override public void breakOut() {
     assert isBreakable;
-    stmts.append(AstStmt.Break.INSTANCE);
+    stmts.append(IRStmt.Break.INSTANCE);
   }
 
   @Override public void exec(@NotNull JavaExpr expr) {
-    stmts.append(new AstStmt.Exec(assertFreeExpr(expr)));
+    stmts.append(new IRStmt.Exec(assertFreeExpr(expr)));
   }
 
   @Override public void switchCase(
@@ -130,15 +131,15 @@ public record AstCodeBuilder(
       subscoped(isBreakable, b -> branch.accept(b, kase)));
     var defaultBody = subscoped(isBreakable, defaultCase::accept);
 
-    stmts.append(new AstStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
+    stmts.append(new IRStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
   }
 
   @Override public void returnWith(@NotNull JavaExpr expr) {
-    stmts.append(new AstStmt.Return(assertFreeExpr(expr)));
+    stmts.append(new IRStmt.Return(assertFreeExpr(expr)));
   }
 
   @Override public void unreachable() {
-    stmts.append(AstStmt.Unreachable.INSTANCE);
+    stmts.append(IRStmt.Unreachable.INSTANCE);
   }
 
   @Override public @NotNull JavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {

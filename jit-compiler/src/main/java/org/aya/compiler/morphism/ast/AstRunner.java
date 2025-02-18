@@ -5,6 +5,7 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.LocalVariable;
+import org.aya.compiler.ir.IRStmt;
 import org.aya.compiler.morphism.*;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -114,18 +115,18 @@ public final class AstRunner<Carrier> {
     };
   }
 
-  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull ImmutableSeq<AstStmt> free) {
+  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull ImmutableSeq<IRStmt> free) {
     free.forEach(it -> runFree(ap, builder, it));
   }
 
-  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull AstStmt free) {
+  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull IRStmt free) {
     switch (free) {
-      case AstStmt.Break _ -> builder.breakOut();
-      case AstStmt.Unreachable _ -> builder.unreachable();
-      case AstStmt.Breakable(var inner) -> builder.breakable(cb -> runFree(ap, cb, inner));
-      case AstStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
-      case AstStmt.Exec exec -> builder.exec(runFree(ap, builder, exec.expr()));
-      case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
+      case IRStmt.Break _ -> builder.breakOut();
+      case IRStmt.Unreachable _ -> builder.unreachable();
+      case IRStmt.Breakable(var inner) -> builder.breakable(cb -> runFree(ap, cb, inner));
+      case IRStmt.DeclVar mkVar -> bindVar(mkVar.var().index(), builder.makeVar(mkVar.type(), null));
+      case IRStmt.Exec exec -> builder.exec(runFree(ap, builder, exec.expr()));
+      case IRStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
         Consumer<CodeBuilder> thenBlock = cb -> {
           try (var _ = subscoped()) {
             runFree(ap, cb, thenBody);
@@ -139,9 +140,9 @@ public final class AstRunner<Carrier> {
         } : null;
 
         switch (cond) {
-          case AstStmt.Condition.IsFalse(var isFalse) -> builder.ifNotTrue(runFree(ap, isFalse), thenBlock, elseBlock);
-          case AstStmt.Condition.IsTrue(var isTrue) -> builder.ifTrue(runFree(ap, isTrue), thenBlock, elseBlock);
-          case AstStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
+          case IRStmt.Condition.IsFalse(var isFalse) -> builder.ifNotTrue(runFree(ap, isFalse), thenBlock, elseBlock);
+          case IRStmt.Condition.IsTrue(var isTrue) -> builder.ifTrue(runFree(ap, isTrue), thenBlock, elseBlock);
+          case IRStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
             var asTerm = as.get();
             assert asTerm != null;
             builder.ifInstanceOf(runFree(ap, builder, lhs), rhs, (cb, var) -> {
@@ -151,20 +152,20 @@ public final class AstRunner<Carrier> {
               }
             }, elseBlock);
           }
-          case AstStmt.Condition.IsIntEqual(var lhs, var rhs) ->
+          case IRStmt.Condition.IsIntEqual(var lhs, var rhs) ->
             builder.ifIntEqual(runFree(ap, builder, lhs), rhs, thenBlock, elseBlock);
-          case AstStmt.Condition.IsNull(var ref) -> builder.ifNull(runFree(ap, builder, ref), thenBlock, elseBlock);
-          case AstStmt.Condition.IsRefEqual(var lhs, var rhs) ->
+          case IRStmt.Condition.IsNull(var ref) -> builder.ifNull(runFree(ap, builder, ref), thenBlock, elseBlock);
+          case IRStmt.Condition.IsRefEqual(var lhs, var rhs) ->
             builder.ifRefEqual(runFree(ap, builder, lhs), runFree(ap, builder, rhs), thenBlock, elseBlock);
         }
       }
-      case AstStmt.Return(var expr) -> builder.returnWith(runFree(ap, builder, expr));
-      case AstStmt.SetArray(var arr, var idx, var update) ->
+      case IRStmt.Return(var expr) -> builder.returnWith(runFree(ap, builder, expr));
+      case IRStmt.SetArray(var arr, var idx, var update) ->
         builder.updateArray(runFree(ap, builder, arr), idx, runFree(ap, builder, update));
-      case AstStmt.SetVariable(var var, var update) ->
+      case IRStmt.SetVar(var var, var update) ->
         builder.updateVar(runFree(ap, var), runFree(ap, builder, update));
-      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, runFree(ap, builder, args));
-      case AstStmt.Switch(var elim, var cases, var branches, var defaultCase) ->
+      case IRStmt.Super(var params, var args) -> builder.invokeSuperCon(params, runFree(ap, builder, args));
+      case IRStmt.Switch(var elim, var cases, var branches, var defaultCase) ->
         builder.switchCase(runFree(ap, elim), cases, (cb, kase) -> {
           // slow impl, i am lazy
           int idx = cases.indexOf(kase);

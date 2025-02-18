@@ -5,6 +5,7 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
+import org.aya.compiler.ir.IRStmt;
 import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public sealed interface AstDecl {
   // Constructors also count as method, with method name "<init>".
   record Method(
     @NotNull MethodRef signature,
-    @NotNull ImmutableSeq<AstStmt> body
+    @NotNull ImmutableSeq<IRStmt> body
   ) implements AstDecl { }
 
   record ConstantField(@NotNull FieldRef signature, @NotNull AstExpr init) implements AstDecl { }

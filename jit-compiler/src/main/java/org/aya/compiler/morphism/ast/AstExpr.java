@@ -5,6 +5,7 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
+import org.aya.compiler.ir.IRStmt;
 import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ public sealed interface AstExpr extends JavaExpr {
   record RefField(@NotNull FieldRef fieldRef, @Nullable AstExpr owner) implements AstExpr { }
   record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr { }
   record Lambda(@NotNull ImmutableSeq<AstExpr> captures, @NotNull MethodRef method,
-                @NotNull ImmutableSeq<AstStmt> body) implements AstExpr { }
+                @NotNull ImmutableSeq<IRStmt> body) implements AstExpr { }
 
   sealed interface Const extends AstExpr { }
   record Iconst(int value) implements Const { }

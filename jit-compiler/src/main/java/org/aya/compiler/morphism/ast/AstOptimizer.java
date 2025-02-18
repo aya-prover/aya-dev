@@ -4,6 +4,7 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.compiler.ir.IRStmt;
 import org.aya.compiler.morphism.ast.AstDecl.Clazz;
 import org.aya.compiler.morphism.ast.AstDecl.ConstantField;
 import org.aya.compiler.morphism.ast.AstDecl.Method;
@@ -25,7 +26,7 @@ public interface AstOptimizer {
     };
   }
 
-  static @NotNull ImmutableSeq<AstStmt> optimizeBlock(ImmutableSeq<AstStmt> block, boolean endOfBreakable) {
+  static @NotNull ImmutableSeq<IRStmt> optimizeBlock(ImmutableSeq<IRStmt> block, boolean endOfBreakable) {
     if (!endOfBreakable) return block.flatMap(it -> optimize(it, false));
     if (block.isEmpty()) return block;
     var exceptLast = block.view().dropLast(1).flatMap(it -> optimize(it, false));
@@ -33,37 +34,37 @@ public interface AstOptimizer {
     return exceptLast.concat(last).toSeq();
   }
 
-  static @NotNull SeqView<AstStmt> optimize(AstStmt stmt, boolean endOfBreakable) {
+  static @NotNull SeqView<IRStmt> optimize(IRStmt stmt, boolean endOfBreakable) {
     return switch (stmt) {
-      case AstStmt.Switch(var elim, var cases, var branch, var defaultCase) -> {
+      case IRStmt.Switch(var elim, var cases, var branch, var defaultCase) -> {
         branch = branch.map(it -> optimizeBlock(it, endOfBreakable));
         defaultCase = optimizeBlock(defaultCase, endOfBreakable);
         if (branch.isEmpty()) yield defaultCase.view();
-        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == AstStmt.Unreachable.INSTANCE) {
+        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == IRStmt.Unreachable.INSTANCE) {
           if (branch.sizeEquals(1)) {
             yield branch.getFirst().view();
           } else if (branch.sizeEquals(2)) {
-            yield SeqView.of(new AstStmt.IfThenElse(
-              new AstStmt.Condition.IsIntEqual(new AstExpr.RefVariable(elim), cases.getFirst()),
+            yield SeqView.of(new IRStmt.IfThenElse(
+              new IRStmt.Condition.IsIntEqual(new AstExpr.RefVariable(elim), cases.getFirst()),
               branch.getFirst(),
               branch.getLast()
             ));
           } else if (branch.sizeGreaterThan(1)) {
-            yield SeqView.of(new AstStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
+            yield SeqView.of(new IRStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
           }
         }
-        yield SeqView.of(new AstStmt.Switch(elim, cases, branch, defaultCase));
+        yield SeqView.of(new IRStmt.Switch(elim, cases, branch, defaultCase));
       }
-      case AstStmt.Breakable(var stmts) -> SeqView.of(new AstStmt.Breakable(optimizeBlock(stmts, true)));
-      case AstStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
+      case IRStmt.Breakable(var stmts) -> SeqView.of(new IRStmt.Breakable(optimizeBlock(stmts, true)));
+      case IRStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
         thenBlock = optimizeBlock(thenBlock, endOfBreakable);
         if (elseBlock != null) {
           elseBlock = optimizeBlock(elseBlock, endOfBreakable);
           if (elseBlock.isEmpty()) elseBlock = null;
         }
-        yield SeqView.of(new AstStmt.IfThenElse(cond, thenBlock, elseBlock));
+        yield SeqView.of(new IRStmt.IfThenElse(cond, thenBlock, elseBlock));
       }
-      case AstStmt.Break _ when endOfBreakable -> SeqView.empty();
+      case IRStmt.Break _ when endOfBreakable -> SeqView.empty();
       default -> SeqView.of(stmt);
     };
   }
