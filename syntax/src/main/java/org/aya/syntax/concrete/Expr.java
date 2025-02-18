@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
@@ -26,10 +30,6 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
@@ -589,8 +589,15 @@ public sealed interface Expr extends AyaDocile {
     public record Discriminant(
       @NotNull WithPos<Expr> discr,
       @Nullable LocalVar asBinding,
-      @NotNull Boolean isElim
-    ) { }
+      boolean isElim
+    ) {
+      public @NotNull Discriminant update(@NotNull WithPos<Expr> discr) {
+        return discr == discr() ? this : new Discriminant(discr, asBinding, isElim);
+      }
+      public @NotNull Discriminant descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+        return update(discr.descent(f));
+      }
+    }
 
     public @NotNull Match update(
       @NotNull ImmutableSeq<Discriminant> discriminant,
@@ -603,11 +610,11 @@ public sealed interface Expr extends AyaDocile {
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return descent(f, (_, p) -> p);
+      return descent(f, PosedUnaryOperator.identity());
     }
 
     public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
-      return update(discriminant.map(d -> new Discriminant(d.discr().descent(f), d.asBinding(), d.isElim())),
+      return update(discriminant.map(d -> d.descent(f)),
         clauses.map(x -> x.descent(f, g)),
         returns != null ? returns.descent(f) : null);
     }
