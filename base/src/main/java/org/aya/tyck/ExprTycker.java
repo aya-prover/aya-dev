@@ -529,8 +529,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) ->
-        ArgsComputer.generateApplication(this, args, localLet.get(ref)).lift(lift);
+      case LocalVar ref when localLet.contains(ref) -> {
+        var jdg = localLet.get(ref);
+        yield ArgsComputer.generateApplication(this, args, new Jdg.Default(new LetFreeTerm(ref, jdg), jdg.type())).lift(lift);
+      }
       case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
@@ -576,7 +578,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     try (var _ = subscope()) {
       localLet.put(let.bind().bindName(), definedAsResult);
-      return checker.apply(let.body());
+      var result = checker.apply(let.body());
+      var boundWellTyped = result.wellTyped().bind(let.bind().bindName());
+      var wellTypedLet = new LetTerm(definedAsResult.wellTyped(), boundWellTyped);
+      var boundType = result.type().bind(let.bind().bindName());
+      var typeLet = new LetTerm(definedAsResult.wellTyped(), boundType);
+      return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
 
