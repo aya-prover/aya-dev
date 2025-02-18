@@ -15,7 +15,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
@@ -591,18 +590,17 @@ public record AyaProducer(
     }
     if (node.is(APP_EXPR)) {
       var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
-      var tail = node.childrenOfType(ARGUMENT)
+      var elements = node.childrenOfType(ARGUMENT)
         .map(this::argument)
-        .collect(MutableSinglyLinkedList.factory());
-      tail.push(head);
-      return new WithPos<>(pos, new Expr.BinOpSeq(tail.toSeq()));
+        .prepended(head);
+      return new WithPos<>(pos, new Expr.BinOpSeq(elements.toSeq()));
     }
     if (node.is(PROJ_EXPR)) return new WithPos<>(pos, buildProj(expr(node.child(EXPR)), node.child(PROJ_FIX)));
     if (node.is(MATCH_EXPR)) {
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
-      var discrList = node.child(MATCH_DISCR_LIST).child(COMMA_SEP).childrenOfType(MATCH_DISCR)
+      var discrList = node.child(COMMA_SEP).childrenOfType(MATCH_DISCR)
         .map(d -> new Expr.Match.Discriminant(
           expr(d.child(EXPR)),
           d.peekChild(KW_AS) != null ?

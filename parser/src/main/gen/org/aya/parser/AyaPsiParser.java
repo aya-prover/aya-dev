@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1437,17 +1440,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<commaSep matchDiscr>>
-  public static boolean matchDiscrList(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchDiscrList")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, MATCH_DISCR_LIST, "<match discr list>");
-    r = commaSep(b, l + 1, AyaPsiParser::matchDiscr);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // KW_RETURNS expr
   public static boolean matchType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matchType")) return false;
@@ -2535,14 +2527,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // KW_MATCH matchDiscrList matchType? clauses
+  // KW_MATCH <<commaSep matchDiscr>> matchType? clauses
   public static boolean matchExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matchExpr")) return false;
     if (!nextTokenIsSmart(b, KW_MATCH)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_MATCH);
-    r = r && matchDiscrList(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::matchDiscr);
     r = r && matchExpr_2(b, l + 1);
     r = r && clauses(b, l + 1);
     exit_section_(b, m, MATCH_EXPR, r);

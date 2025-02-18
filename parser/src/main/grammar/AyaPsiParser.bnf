@@ -311,8 +311,7 @@ doExpr ::= KW_DO LBRACE? <<commaSep doBlockContent>> RBRACE?
 
 matchType ::= KW_RETURNS expr
 matchDiscr ::= KW_ELIM? expr (KW_AS weakId)?
-matchDiscrList ::= <<commaSep matchDiscr>>
-matchExpr ::= KW_MATCH matchDiscrList matchType? clauses
+matchExpr ::= KW_MATCH <<commaSep matchDiscr>> matchType? clauses
 
 argument ::= atomExArgument
            | tupleImArgument
