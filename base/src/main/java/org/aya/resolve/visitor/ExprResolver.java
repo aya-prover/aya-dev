@@ -184,9 +184,7 @@ public record ExprResolver(
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
       case Expr.Match match -> {
-        var discriminant = match.discriminant().map(
-          d -> new Expr.Match.Discriminant(d.discr().descent(this), d.asBinding(), d.isElim())
-        );
+        var discriminant = match.discriminant().map(d -> d.descent(this));
         var returnsCtx = ctx;
         for (var discr : match.discriminant()) {
           if (discr.asBinding() != null) {
