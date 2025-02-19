@@ -18,6 +18,8 @@ import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -601,20 +603,36 @@ public record AyaProducer(
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
       var discrList = node.child(COMMA_SEP).childrenOfType(MATCH_DISCR)
-        .map(d -> new Expr.Match.Discriminant(
-          expr(d.child(EXPR)),
-          d.peekChild(KW_AS) != null ?
-            LocalVar.from(weakId(d.child(WEAK_ID))) : null,
-          d.peekChild(KW_ELIM) != null
+        .map(d -> Tuple.of(
+          new Expr.Match.Discriminant(
+            expr(d.child(EXPR)),
+            d.peekChild(KW_AS) != null ?
+              LocalVar.from(weakId(d.child(WEAK_ID))) : null,
+            d.peekChild(KW_ELIM) != null
+          ),
+          d
         )).toSeq();
 
-      if (!discrList.allMatch(d -> !d.isElim() || d.discr().data() instanceof Expr.Unresolved)) {
-        reporter.report(new ParseError(pos, "Expect variable in match elim"));
-        throw new ParsingInterruptedException();
-      } else if (!discrList.allMatch(d -> d.asBinding() == null || !d.isElim())) {
-        reporter.report(new ParseError(pos, "Don't use as-binding together with elim. Just use the elim-variable directly"));
+      var errors = discrList.flatMap(t -> {
+        var discr = t.component1();
+        var discrNode = t.component2();
+        if (discr.isElim() && !(discr.discr().data() instanceof Expr.Unresolved)) {
+          return Option.some(new ParseError(discr.discr().sourcePos(), "Expect variable in match elim"));
+        } else if (discr.asBinding() != null && discr.isElim()) {
+          return Option.some(new ParseError(
+            sourcePosOf(discrNode),
+            "Don't use as-binding together with elim. Just use the elim-variable directly")
+          );
+        } else {
+          return Option.none();
+        }
+      });
+
+      if (!errors.isEmpty()) {
+        errors.forEach(reporter::report);
         throw new ParsingInterruptedException();
       }
+
       var matchType = node.peekChild(MATCH_TYPE);
 
       WithPos<Expr> returns = null;
@@ -623,7 +641,7 @@ public record AyaProducer(
         if (returnsNode != null) returns = expr(returnsNode);
       }
       return new WithPos<>(pos, new Expr.Match(
-        discrList,
+        discrList.map(Tuple2::component1).toSeq(),
         bare.concat(barred).toSeq(),
         returns
       ));

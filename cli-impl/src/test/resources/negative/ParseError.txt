@@ -64,28 +64,43 @@ Warning: Unrecognized warning `thisWillNeverBeARealWarning` will be ignored.
 That looks right!
 
 MatchElim:
-In file $FILE:1:12 ->
+In file $FILE:1:23 ->
 
-  1 │   def test => match elim Type {}
-    │               ╰────────────────╯
+  1 │   def test => match elim Type, elim Type {}
+    │                          ╰──╯
+
+Error: Expect variable in match elim
+
+In file $FILE:1:34 ->
+
+  1 │   def test => match elim Type, elim Type {}
+    │                                     ╰──╯
 
 Error: Expect variable in match elim
 
 Parsing interrupted due to:
-1 error(s), 0 warning(s).
+2 error(s), 0 warning(s).
 Let's learn from that.
 
 MatchElimAs:
-In file $FILE:1:12 ->
+In file $FILE:1:18 ->
 
-  1 │   def test => match elim e as a {}
-    │               ╰──────────────────╯
+  1 │   def test => match elim e as a, elim f as b {}
+    │                     ╰─────────╯
+
+Error: Don't use as-binding together with elim. Just use the elim-variable 
+       directly
+
+In file $FILE:1:31 ->
+
+  1 │   def test => match elim e as a, elim f as b {}
+    │                                  ╰─────────╯
 
 Error: Don't use as-binding together with elim. Just use the elim-variable 
        directly
 
 Parsing interrupted due to:
-1 error(s), 0 warning(s).
+2 error(s), 0 warning(s).
 Let's learn from that.
 
 ImplicitTuplePat:
