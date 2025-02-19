@@ -189,7 +189,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         } else if (discr.isElim() && arg.wellTyped() instanceof FreeTerm(LocalVar name)) {
           tele.append(name);
         } else {
-          tele.append(new LocalVar(Constants.ANONYMOUS_PREFIX));
+          tele.append(LocalVar.generate(discr.discr().sourcePos()));
         }
       });
 
@@ -209,7 +209,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       if (discr.isElim() && arg.wellTyped() instanceof FreeTerm(LocalVar name)) {
         elimVarTele.append(name);
       } else {
-        elimVarTele.append(new LocalVar(Constants.ANONYMOUS_PREFIX));
+        elimVarTele.append(LocalVar.generate(discr.discr().sourcePos()));
       }
 
       paramTele.append(new Param(Constants.ANONYMOUS_PREFIX, paramTy, true));
@@ -219,8 +219,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       new ClauseTycker(this),
       paramTele.toSeq(),
       new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
-      ImmutableSeq.fill(discriminant.size(), i ->
-        new LocalVar("match" + i, discriminant.get(i).discr().sourcePos(), GenerateKind.Basic.Tyck)),
+      elimVarTele.toSeq(),
       ImmutableSeq.empty(), clauses);
     var wellClauses = clauseTycker.check(exprPos).wellTyped().matchingsView();
 
