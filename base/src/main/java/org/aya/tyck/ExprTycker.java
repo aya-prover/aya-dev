@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import java.util.Comparator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
@@ -47,10 +51,6 @@ import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -535,7 +535,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var term = definedAs.isLet()
           ? new LetFreeTerm(ref, jdg.wellTyped())
           : jdg.wellTyped();
-        yield ArgsComputer.generateApplication(this, args, new Jdg.Default(term, jdg.type())).lift(lift);
+        var start = new Jdg.Default(term, jdg.type());
+        yield ArgsComputer.generateApplication(this, args, start).lift(lift);
       }
       case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
