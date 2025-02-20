@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface FreeTermLike extends TyckInternal permits FreeTerm, LetFreeTerm {
   @NotNull LocalVar name();
 
-  @Override default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
-
   @Override default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
     var idx = vars.indexOf(this.name());
     if (idx == -1) return this;

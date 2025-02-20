@@ -230,13 +230,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     // Bind the free occurrences and spawn the lifted clauses as a definition
     var captures = usages.collected();
-    var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
+    var captureVars = captures.view().map(FreeTermLike::name);
+    var lifted = new Matchy(type.bindTele(wellArgs.size(), captureVars),
       new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
-      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view())))
+      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captureVars)))
         .toSeq());
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
-    return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));
+    return new MatchCall(lifted, wellTerms, ImmutableSeq.narrow(captures));
   }
 
   /**
@@ -518,8 +519,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   ) throws NotPi {
     return switch (f) {
       case LocalVar ref when localLet.contains(ref) -> {
-        var jdg = localLet.get(ref);
-        yield ArgsComputer.generateApplication(this, args, new Jdg.Default(new LetFreeTerm(ref, jdg), jdg.type())).lift(lift);
+        var definedAs = localLet.get(ref);
+        var jdg = definedAs.definedAs();
+        var term = definedAs.isLet()
+          ? new LetFreeTerm(ref, jdg.wellTyped())
+          : jdg.wellTyped();
+        yield ArgsComputer.generateApplication(this, args, new Jdg.Default(term, jdg.type())).lift(lift);
       }
       case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
@@ -560,7 +565,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var definedAsResult = inherit(definedAsExpr, type);
 
     try (var _ = subscope()) {
-      localLet.put(let.bind().bindName(), definedAsResult);
+      localLet.put(let.bind().bindName(), new LocalLet.DefinedAs(definedAsResult, true));
       var result = checker.apply(let.body());
       var boundWellTyped = result.wellTyped().bind(let.bind().bindName());
       var wellTypedLet = new LetTerm(definedAsResult.wellTyped(), boundWellTyped);
