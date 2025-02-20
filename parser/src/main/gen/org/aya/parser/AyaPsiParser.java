@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1399,34 +1402,53 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (KW_AS <<commaSep weakId>>)? KW_RETURNS expr
-  public static boolean matchType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchType")) return false;
-    if (!nextTokenIs(b, "<match type>", KW_AS, KW_RETURNS)) return false;
+  // KW_ELIM? expr (KW_AS weakId)?
+  public static boolean matchDiscr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, MATCH_TYPE, "<match type>");
-    r = matchType_0(b, l + 1);
-    r = r && consumeToken(b, KW_RETURNS);
+    Marker m = enter_section_(b, l, _NONE_, MATCH_DISCR, "<match discr>");
+    r = matchDiscr_0(b, l + 1);
     r = r && expr(b, l + 1, -1);
+    r = r && matchDiscr_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (KW_AS <<commaSep weakId>>)?
-  private static boolean matchType_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchType_0")) return false;
-    matchType_0_0(b, l + 1);
+  // KW_ELIM?
+  private static boolean matchDiscr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr_0")) return false;
+    consumeToken(b, KW_ELIM);
     return true;
   }
 
-  // KW_AS <<commaSep weakId>>
-  private static boolean matchType_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchType_0_0")) return false;
+  // (KW_AS weakId)?
+  private static boolean matchDiscr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr_2")) return false;
+    matchDiscr_2_0(b, l + 1);
+    return true;
+  }
+
+  // KW_AS weakId
+  private static boolean matchDiscr_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchDiscr_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, KW_AS);
-    r = r && commaSep(b, l + 1, AyaPsiParser::weakId);
+    r = r && weakId(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // KW_RETURNS expr
+  public static boolean matchType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchType")) return false;
+    if (!nextTokenIs(b, KW_RETURNS)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, KW_RETURNS);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, m, MATCH_TYPE, r);
     return r;
   }
 
@@ -2505,31 +2527,23 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // KW_MATCH KW_ELIM? exprList matchType? clauses
+  // KW_MATCH <<commaSep matchDiscr>> matchType? clauses
   public static boolean matchExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matchExpr")) return false;
     if (!nextTokenIsSmart(b, KW_MATCH)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_MATCH);
-    r = r && matchExpr_1(b, l + 1);
-    r = r && exprList(b, l + 1);
-    r = r && matchExpr_3(b, l + 1);
+    r = r && commaSep(b, l + 1, AyaPsiParser::matchDiscr);
+    r = r && matchExpr_2(b, l + 1);
     r = r && clauses(b, l + 1);
     exit_section_(b, m, MATCH_EXPR, r);
     return r;
   }
 
-  // KW_ELIM?
-  private static boolean matchExpr_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchExpr_1")) return false;
-    consumeTokenSmart(b, KW_ELIM);
-    return true;
-  }
-
   // matchType?
-  private static boolean matchExpr_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "matchExpr_3")) return false;
+  private static boolean matchExpr_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matchExpr_2")) return false;
     matchType(b, l + 1);
     return true;
   }

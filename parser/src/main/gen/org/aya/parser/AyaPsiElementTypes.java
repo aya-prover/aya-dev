@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -65,6 +68,7 @@ public interface AyaPsiElementTypes {
   IElementType LIT_INT_EXPR = new AyaPsiElementType("LIT_INT_EXPR");
   IElementType LIT_STRING_EXPR = new AyaPsiElementType("LIT_STRING_EXPR");
   IElementType LOOSERS = new AyaPsiElementType("LOOSERS");
+  IElementType MATCH_DISCR = new AyaPsiElementType("MATCH_DISCR");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
   IElementType MATCH_TYPE = new AyaPsiElementType("MATCH_TYPE");
   IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");

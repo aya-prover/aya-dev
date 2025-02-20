@@ -46,7 +46,7 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
       }
       case Expr.Match match -> {
         return match.update(
-          match.discriminant().map(e -> e.descent(this)),
+          match.discriminant().map(d -> d.descent(this)),
           match.clauses().map(clause -> clause.descent(this, pattern)),
           match.returns() != null ? match.returns().descent(this) : null
         );
@@ -97,10 +97,12 @@ public final class Desalt implements PosedUnaryOperator<Expr> {
           // the var with prime are renamed vars
 
           realBody = new WithPos<>(sourcePos, new Expr.Match(
-            lamTele.map(x -> new WithPos<>(x.definition(), new Expr.Ref(x))),
+            lamTele.map(x -> new Expr.Match.Discriminant(
+              new WithPos<>(x.definition(), new Expr.Ref(x)),
+              null,
+              true
+            )),
             ImmutableSeq.of(lam.clause()),
-            ImmutableSeq.empty(),
-            true,
             null
           ));
         }

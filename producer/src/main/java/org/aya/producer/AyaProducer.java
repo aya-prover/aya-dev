@@ -15,10 +15,11 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSinglyLinkedList;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Modifier;
@@ -591,43 +592,55 @@ public record AyaProducer(
     }
     if (node.is(APP_EXPR)) {
       var head = new Expr.NamedArg(true, expr(node.child(EXPR)));
-      var tail = node.childrenOfType(ARGUMENT)
+      var elements = node.childrenOfType(ARGUMENT)
         .map(this::argument)
-        .collect(MutableSinglyLinkedList.factory());
-      tail.push(head);
-      return new WithPos<>(pos, new Expr.BinOpSeq(tail.toSeq()));
+        .prepended(head);
+      return new WithPos<>(pos, new Expr.BinOpSeq(elements.toSeq()));
     }
     if (node.is(PROJ_EXPR)) return new WithPos<>(pos, buildProj(expr(node.child(EXPR)), node.child(PROJ_FIX)));
     if (node.is(MATCH_EXPR)) {
       var clauses = node.child(CLAUSES);
       var bare = clauses.childrenOfType(BARE_CLAUSE).map(this::bareOrBarredClause);
       var barred = clauses.childrenOfType(BARRED_CLAUSE).map(this::bareOrBarredClause);
-      var isElim = node.peekChild(KW_ELIM) != null;
-      var discr = node.child(COMMA_SEP).childrenOfType(EXPR).map(this::expr).toSeq();
-      if (isElim && !discr.allMatch(e -> e.data() instanceof Expr.Unresolved)) {
-        reporter.report(new ParseError(pos, "Elimination match must be on variables"));
+      var discrList = node.child(COMMA_SEP).childrenOfType(MATCH_DISCR)
+        .map(d -> Tuple.of(
+          new Expr.Match.Discriminant(
+            expr(d.child(EXPR)),
+            d.peekChild(KW_AS) != null ?
+              LocalVar.from(weakId(d.child(WEAK_ID))) : null,
+            d.peekChild(KW_ELIM) != null
+          ),
+          d
+        )).toSeq();
+
+      var errors = discrList.mapNotNull(t -> {
+        var discr = t.component1();
+        var discrNode = t.component2();
+        if (discr.isElim() && !(discr.discr().data() instanceof Expr.Unresolved)) {
+          return new ParseError(discr.discr().sourcePos(), "Expect variable in match elim");
+        } else if (discr.asBinding() != null && discr.isElim()) {
+          return new ParseError(
+            sourcePosOf(discrNode),
+            "Don't use as-binding together with elim. Just use the elim-variable directly");
+        }
+        return null;
+      });
+
+      if (errors.isNotEmpty()) {
+        errors.forEach(reporter::report);
         throw new ParsingInterruptedException();
       }
+
       var matchType = node.peekChild(MATCH_TYPE);
-      ImmutableSeq<LocalVar> asBindings = ImmutableSeq.empty();
+
       WithPos<Expr> returns = null;
       if (matchType != null) {
-        var commaSep = matchType.peekChild(COMMA_SEP);
-        if (commaSep != null) asBindings = commaSep.childrenOfType(WEAK_ID)
-          .map(this::weakId)
-          .map(LocalVar::from)
-          .toSeq();
-        if (matchType.peekChild(KW_AS) != null && !discr.sizeEquals(asBindings)) {
-          reporter.report(new ParseError(pos, "I see " + asBindings.size() + " as-binding(s) but "
-            + discr.size() + " discriminant(s)"));
-          throw new ParsingInterruptedException();
-        }
         var returnsNode = matchType.peekChild(EXPR);
         if (returnsNode != null) returns = expr(returnsNode);
       }
       return new WithPos<>(pos, new Expr.Match(
-        discr,
-        bare.concat(barred).toSeq(), asBindings, isElim,
+        discrList.map(Tuple2::component1),
+        bare.concat(barred).toSeq(),
         returns
       ));
     }

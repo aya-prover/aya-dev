@@ -119,10 +119,15 @@ module Issue94 {
   def obvious : Fn (a : Sig Nat ** Nat) -> Nat => fn { (a, b) => a + b }
 }
 
-// relies on match elim
-// open inductive IsZero Nat
-// | zero => ack
-// def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
+
+module Issue1212 {
+  open inductive IsZero Nat
+  | zero => ack
+  def matchElim : Fn (a : Nat) (b : Nat) -> IsZero a -> Nat => fn a b p => match elim a, b, p {
+  | zero, _, ack => 233
+  }
+  def irrefutable : Fn (a : Nat) -> IsZero a -> Nat => fn { zero, ack => 233 }
+}
 
 module Issue243 {
   open import data::vec using (Vec, [], :>)

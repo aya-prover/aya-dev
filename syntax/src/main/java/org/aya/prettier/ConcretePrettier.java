@@ -213,7 +213,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       );
       case Expr.New neu -> Doc.sep(KW_NEW, term(Outer.Free, neu.classCall()));
       case Expr.Match match -> {
-        var deltaDoc = match.discriminant().map(x -> term(Outer.Free, x));
+        var deltaDoc = match.discriminant().map(x -> term(Outer.Free, x.discr()));
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         var clauseDoc = visitClauses(match.clauses());
 

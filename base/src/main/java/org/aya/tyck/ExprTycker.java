@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableTreeSet;
+import kala.control.Option;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
@@ -152,20 +153,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           element -> inherit(element, elementTy).wellTyped()));
         yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
       }
-      case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
-        var wellArgs = discriminant.map(this::synthesize);
+      case Expr.Match(var discriminant, var clauses, var returns) -> {
+        var wellArgs = discriminant.map(d -> synthesize(d.discr()));
         Term storedTy;
         // Type check the type annotation
         if (returns != null) {
-          if (asBindings.isEmpty()) {
-            unifyTyReported(type, storedTy = ty(returns), returns);
-          } else {
-            try (var _ = subscope()) {
-              asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
-              storedTy = ty(returns).bindTele(asBindings.view());
-            }
-            unifyTyReported(type, storedTy.instTele(wellArgs.view().map(Jdg::wellTyped)), returns);
-          }
+          storedTy = matchReturnTy(discriminant, wellArgs, returns);
+          unifyTyReported(type, storedTy.instTele(wellArgs.view().map(Jdg::wellTyped)), returns);
         } else {
           storedTy = type;
         }
@@ -182,17 +176,50 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
+  private @NotNull Term matchReturnTy(
+    ImmutableSeq<Expr.Match.Discriminant> discriminant,
+    ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns
+  ) {
+    try (var _ = subscope()) {
+      var tele = MutableList.<LocalVar>create();
+      wellArgs.forEachWith(discriminant, (arg, discr) -> {
+        if (discr.asBinding() != null) {
+          localCtx().put(discr.asBinding(), arg.type());
+          tele.append(discr.asBinding());
+        } else if (discr.isElim() && arg.wellTyped() instanceof FreeTerm(LocalVar name)) {
+          tele.append(name);
+        } else {
+          tele.append(LocalVar.generate(discr.discr().sourcePos()));
+        }
+      });
+
+      return ty(returns).bindTele(tele.view());
+    }
+  }
+
   private @NotNull MatchCall match(
-    ImmutableSeq<WithPos<Expr>> discriminant, @NotNull SourcePos exprPos,
+    ImmutableSeq<Expr.Match.Discriminant> discriminant, @NotNull SourcePos exprPos,
     ImmutableSeq<Pattern.Clause> clauses, ImmutableSeq<Jdg> wellArgs, Term type
   ) {
-    var telescope = wellArgs.map(x -> new Param(Constants.ANONYMOUS_PREFIX, x.type(), true));
+    var elimVarTele = MutableList.<LocalVar>create();
+    var paramTele = MutableList.<Param>create();
+    wellArgs.forEachWith(discriminant, (arg, discr) -> {
+      var paramTy = arg.type().bindTele(elimVarTele.view());
+
+      if (discr.isElim() && arg.wellTyped() instanceof FreeTerm(LocalVar name)) {
+        elimVarTele.append(name);
+      } else {
+        elimVarTele.append(LocalVar.generate(discr.discr().sourcePos()));
+      }
+
+      paramTele.append(new Param(Constants.ANONYMOUS_PREFIX, paramTy, true));
+    });
+
     var clauseTycker = new ClauseTycker.Worker(
       new ClauseTycker(this),
-      telescope,
+      paramTele.toSeq(),
       new DepTypeTerm.Unpi(ImmutableSeq.empty(), type),
-      ImmutableSeq.fill(discriminant.size(), i ->
-        new LocalVar("match" + i, discriminant.get(i).sourcePos(), GenerateKind.Basic.Tyck)),
+      elimVarTele.toSeq(),
       ImmutableSeq.empty(), clauses);
     var wellClauses = clauseTycker.check(exprPos).wellTyped().matchingsView();
 
@@ -458,16 +485,11 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
         yield new Jdg.Default(new NewTerm(call), call);
       }
-      case Expr.Match(var discriminant, var clauses, var asBindings, var isElim, var returns) -> {
-        var wellArgs = discriminant.map(this::synthesize);
+      case Expr.Match(var discriminant, var clauses, var returns) -> {
+        var wellArgs = discriminant.map(d -> synthesize(d.discr()));
         if (returns == null) yield fail(expr.data(), new MatchMissingReturnsError(expr));
         // Type check the type annotation
-        Term type;
-        if (asBindings.isEmpty()) type = ty(returns);
-        else try (var _ = subscope()) {
-          asBindings.forEachWith(wellArgs, (as, discr) -> localCtx().put(as, discr.type()));
-          type = ty(returns).bindTele(asBindings.view());
-        }
+        Term type = matchReturnTy(discriminant, wellArgs, returns);
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
       case Expr.Unresolved _ -> Panic.unreachable();

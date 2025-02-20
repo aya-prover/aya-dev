@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
@@ -26,10 +30,6 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
@@ -582,27 +582,39 @@ public sealed interface Expr extends AyaDocile {
   }
 
   record Match(
-    @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+    @NotNull ImmutableSeq<Discriminant> discriminant,
     @NotNull ImmutableSeq<Pattern.Clause> clauses,
-    @NotNull ImmutableSeq<LocalVar> asBindings, boolean isElim,
     @Nullable WithPos<Expr> returns
   ) implements Expr {
+    public record Discriminant(
+      @NotNull WithPos<Expr> discr,
+      @Nullable LocalVar asBinding,
+      boolean isElim
+    ) {
+      public @NotNull Discriminant update(@NotNull WithPos<Expr> discr) {
+        return discr == discr() ? this : new Discriminant(discr, asBinding, isElim);
+      }
+      public @NotNull Discriminant descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+        return update(discr.descent(f));
+      }
+    }
+
     public @NotNull Match update(
-      @NotNull ImmutableSeq<WithPos<Expr>> discriminant,
+      @NotNull ImmutableSeq<Discriminant> discriminant,
       @NotNull ImmutableSeq<Pattern.Clause> clauses,
       @Nullable WithPos<Expr> returns
     ) {
       return this.discriminant.sameElements(discriminant, true)
         && this.clauses.sameElements(clauses, true) && this.returns == returns
-        ? this : new Match(discriminant, clauses, asBindings, isElim, returns);
+        ? this : new Match(discriminant, clauses, returns);
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return descent(f, (_, p) -> p);
+      return descent(f, PosedUnaryOperator.identity());
     }
 
     public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f, @NotNull PosedUnaryOperator<@NotNull Pattern> g) {
-      return update(discriminant.map(x -> x.descent(f)),
+      return update(discriminant.map(d -> d.descent(f)),
         clauses.map(x -> x.descent(f, g)),
         returns != null ? returns.descent(f) : null);
     }
@@ -611,7 +623,7 @@ public sealed interface Expr extends AyaDocile {
     ///
     /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
-      discriminant.forEach(f::accept);
+      discriminant.forEach(d -> f.accept(d.discr()));
       clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
     }

@@ -184,9 +184,13 @@ public record ExprResolver(
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
       case Expr.Match match -> {
-        var discriminant = match.discriminant().map(x -> x.descent(this));
+        var discriminant = match.discriminant().map(d -> d.descent(this));
         var returnsCtx = ctx;
-        for (var binding : match.asBindings()) returnsCtx = returnsCtx.bind(binding);
+        for (var discr : match.discriminant()) {
+          if (discr.asBinding() != null) {
+            returnsCtx = returnsCtx.bind(discr.asBinding());
+          }
+        }
         var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;
 
         // Requires exhaustiveness check, therefore must need the full data body
