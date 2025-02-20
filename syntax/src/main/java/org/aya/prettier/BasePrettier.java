@@ -5,6 +5,7 @@ package org.aya.prettier;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.primitive.MutableBooleanList;
 import kala.collection.primitive.BooleanSeq;
@@ -34,7 +35,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToIntBiFunction;
 
-import static org.aya.prettier.Tokens.KW_PRIM;
+import static org.aya.prettier.Tokens.*;
 
 public abstract class BasePrettier<Term extends AyaDocile> {
   public static @NotNull Doc coreArgsDoc(@NotNull PrettierOptions options, @NotNull SeqView<? extends AyaDocile> self) {
@@ -379,6 +380,21 @@ public abstract class BasePrettier<Term extends AyaDocile> {
       case ClassMember _, MemberDefLike _ -> MEMBER;
       case null, default -> null;
     };
+  }
+
+  public @NotNull Doc visitLetBind(@NotNull Doc bind, @NotNull Doc signature, @NotNull Doc definedAs) {
+    return Doc.sepNonEmpty(bind, signature, DEFINED_AS, definedAs);
+  }
+
+  public @NotNull Doc visitLet(@NotNull SeqView<Doc> letBinds, @NotNull Doc body) {
+    var oneLine = letBinds.sizeEquals(1);
+    var letSeq = oneLine
+      ? letBinds.getFirst()
+      : Doc.vcat(letBinds.map(t -> Doc.sep(BAR, t)));
+
+    var docs = ImmutableSeq.of(KW_LET, letSeq, KW_IN);
+    var halfLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
+    return Doc.sep(halfLet, body);
   }
 
   /**
