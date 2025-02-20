@@ -5,10 +5,13 @@ package org.aya.tyck.ctx;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.control.Option;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Scoped;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 /**
  * A locally, lazy substitution<br/>
@@ -17,8 +20,24 @@ import org.jetbrains.annotations.Nullable;
  */
 public record LocalLet(
   @Override @Nullable LocalLet parent,
-  @NotNull MutableLinkedHashMap<LocalVar, Jdg> let
-) implements Scoped<LocalVar, Jdg, LocalLet> {
+  @NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let
+) implements Scoped<LocalVar, LocalLet.DefinedAs, LocalLet> {
+  /// @param isLet whether this record is introduced by a LetTerm
+  public record DefinedAs(@NotNull Jdg definedAs, boolean isLet) {
+    // FIXME: remove compatibility shit
+    public @NotNull Term wellTyped() {
+      return definedAs.wellTyped();
+    }
+
+    public @NotNull Term type() {
+      return definedAs.type();
+    }
+
+    public @NotNull DefinedAs map(@NotNull UnaryOperator<Jdg> f) {
+      return new DefinedAs(f.apply(definedAs), isLet);
+    }
+  }
+
   public LocalLet() { this(null, MutableLinkedHashMap.of()); }
   @Override public @NotNull LocalLet self() { return this; }
 
@@ -26,13 +45,13 @@ public record LocalLet(
     return derive(MutableLinkedHashMap.of());
   }
 
-  public @NotNull LocalLet derive(@NotNull MutableLinkedHashMap<LocalVar, Jdg> let) {
+  public @NotNull LocalLet derive(@NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let) {
     return new LocalLet(this, let);
   }
 
-  @Override public @NotNull Option<Jdg> getLocal(@NotNull LocalVar key) {
+  @Override public @NotNull Option<LocalLet.DefinedAs> getLocal(@NotNull LocalVar key) {
     return let.getOption(key);
   }
 
-  @Override public void putLocal(@NotNull LocalVar key, @NotNull Jdg value) { let.put(key, value); }
+  @Override public void putLocal(@NotNull LocalVar key, @NotNull LocalLet.DefinedAs value) { let.put(key, value); }
 }
