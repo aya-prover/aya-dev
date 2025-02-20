@@ -2,16 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.ctx;
 
+import java.util.function.UnaryOperator;
+
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.control.Option;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Scoped;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.UnaryOperator;
 
 /**
  * A locally, lazy substitution<br/>
@@ -24,15 +25,6 @@ public record LocalLet(
 ) implements Scoped<LocalVar, LocalLet.DefinedAs, LocalLet> {
   /// @param isLet whether this record is introduced by a LetTerm
   public record DefinedAs(@NotNull Jdg definedAs, boolean isLet) {
-    // FIXME: remove compatibility shit
-    public @NotNull Term wellTyped() {
-      return definedAs.wellTyped();
-    }
-
-    public @NotNull Term type() {
-      return definedAs.type();
-    }
-
     public @NotNull DefinedAs map(@NotNull UnaryOperator<Jdg> f) {
       return new DefinedAs(f.apply(definedAs), isLet);
     }
@@ -52,6 +44,11 @@ public record LocalLet(
   @Override public @NotNull Option<LocalLet.DefinedAs> getLocal(@NotNull LocalVar key) {
     return let.getOption(key);
   }
-
+  public @NotNull Term getTerm(@NotNull LocalVar key) {
+    return get(key).definedAs.wellTyped();
+  }
+  public boolean allFreeLocal() {
+    return let.valuesView().allMatch(definedAs -> definedAs.definedAs.wellTyped() instanceof FreeTerm);
+  }
   @Override public void putLocal(@NotNull LocalVar key, @NotNull LocalLet.DefinedAs value) { let.put(key, value); }
 }
