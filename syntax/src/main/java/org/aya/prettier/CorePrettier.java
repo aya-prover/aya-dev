@@ -217,14 +217,17 @@ public class CorePrettier extends BasePrettier<Term> {
         yield Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, lhs), term(Outer.AppSpine, rhs), term(Outer.AppSpine, A));
       }
       case PartialTerm(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
-      case LetTerm(var definedAs, var body) -> {
-        var name = nameGen.bindName(definedAs);
-        var freeBody = body.apply(name);
+      case LetTerm let -> {
+        var unlet = let.unlet(nameGen);
+        var letSeq = unlet.definedAs().view()
+          .map(letBind ->
+            visitLetBind(varDoc(letBind.name()), Doc.empty(), term(Outer.Free, letBind.definedAs())));
+        var body = term(Outer.Free, unlet.body());
+        var letDoc = visitLet(letSeq, body);
 
-        yield Doc.vcat(
-          KW_LET,
-          Doc.sep(BAR, varDoc(name), DEFINED_AS, term(Outer.Free, definedAs)),
-          Doc.sep(KW_IN, Doc.nest(2, term(Outer.Free, freeBody))));
+        unlet.definedAs().forEach(t -> nameGen.unbindName(t.name()));
+
+        yield letDoc;
       }
     };
   }

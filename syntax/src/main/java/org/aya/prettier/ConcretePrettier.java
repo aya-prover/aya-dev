@@ -178,32 +178,8 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       case Expr.Let let -> {
         var letsAndBody = Nested.destructNested(WithPos.dummy(let));
         var lets = letsAndBody.component1();
-        var body = letsAndBody.component2().data();
-        var oneLine = lets.sizeEquals(1);
-        var letSeq = oneLine
-          ? visitLetBind(lets.getFirst())
-          : Doc.vcat(lets.view()
-            .map(this::visitLetBind)
-            // | f := g
-            .map(x -> Doc.sep(BAR, x)));
-
-        var docs = ImmutableSeq.of(KW_LET, letSeq, KW_IN);
-
-        // ```
-        // let a := b in
-        // ```
-        //
-        // or
-        //
-        // ```
-        // let
-        // | a := b
-        // | c := d
-        // in
-        // ```
-        var halfLet = oneLine ? Doc.sep(docs) : Doc.vcat(docs);
-
-        yield Doc.sep(halfLet, term(Outer.Free, body));
+        var letSeq = lets.view().map(this::visitLetBind);
+        yield visitLet(letSeq, term(Outer.Free, letsAndBody.component2()));
       }
       // let open Foo using (bar) in
       //   body
@@ -466,17 +442,17 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
   private @NotNull Doc visitLetBind(@NotNull Expr.LetBind letBind) {
     // f : G := g
-    var prelude = MutableList.of(varDoc(letBind.bindName()));
+    var bindDoc = varDoc(letBind.bindName());
+    var definedAs = term(Outer.Free, letBind.definedAs());
+    var signature = MutableList.<Doc>create();
 
     if (letBind.telescope().isNotEmpty()) {
-      prelude.append(visitTele(letBind.telescope()));
+      signature.append(visitTele(letBind.telescope()));
     }
 
-    appendResult(prelude, letBind.result());
-    prelude.append(DEFINED_AS);
-    prelude.append(term(Outer.Free, letBind.definedAs()));
+    appendResult(signature, letBind.result());
 
-    return Doc.sep(prelude);
+    return visitLetBind(bindDoc, Doc.sep(signature), definedAs);
   }
 
   private @NotNull Doc visitModifier(@NotNull Modifier modifier) {
