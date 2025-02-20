@@ -4,9 +4,12 @@ package org.aya.syntax.core.term;
 
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
-public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements Term {
+import java.util.function.UnaryOperator;
+
+public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements Term, BetaRedex {
   public @NotNull LetTerm update(@NotNull Term definedAs, @NotNull Closure body) {
     return definedAs == definedAs() && body == body()
       ? this
@@ -16,5 +19,10 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
   @Override
   public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, definedAs), body.descent(f));
+  }
+
+  @Override
+  public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
+    return mapper.apply(body.apply(definedAs));
   }
 }

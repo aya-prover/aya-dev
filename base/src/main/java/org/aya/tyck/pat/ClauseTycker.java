@@ -73,7 +73,7 @@ public final class ClauseTycker implements Problematic, Stateful {
    *                   {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
    *                   {@link org.aya.tyck.pat.iter.Pusheenable.Const}
    * @param paramSubst substitution for parameter, in the same ordeer as parameter.
-   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #dumpLocalLetTo}
+   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTycker, see {@link #dumpLocalLetTo}
    * @param freePats   a free version of the patterns, see {@link #freePats()}
    * @param asSubst    substitution of the {@code as} patterns
    * @implNote If there are fewer pats than parameters, there will be some pats inserted,
@@ -91,9 +91,12 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
+    /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
-      teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
+      teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
+        // TODO: replace "false" with some argument.
+        .put(ref, new LocalLet.DefinedAs(subst, false)));
       exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
   }
@@ -163,7 +166,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
       var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
       newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
-      curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
+      curLhs.asSubst.let().replaceAll((_, t) -> t.map(j -> j.map(lets)));
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
@@ -358,6 +361,17 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
+  /// This is used for inline [LetFreeTerm]s those introduced in [LhsResult#dumpLocalLetTo].
+  public static final class LetFreeTermInliner {
+    public static @NotNull Term apply(@NotNull Term term) {
+      if (term instanceof LetFreeTerm(var _, var definedAs)) {
+        return apply(definedAs);
+      }
+
+      return term.descent(LetFreeTermInliner::apply);
+    }
+  }
+
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
     return r.map(new TermInline());
   }
@@ -373,7 +387,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
     // map in place 😱😱😱😱
-    result.asSubst().let().replaceAll((_, t) -> inlineTerm(t));
+    result.asSubst().let().replaceAll((_, t) -> t.map(ClauseTycker::inlineTerm));
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }
