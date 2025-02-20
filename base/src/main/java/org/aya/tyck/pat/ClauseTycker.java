@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -43,10 +47,6 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
@@ -183,8 +183,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// This method performs these changes.
     private @Nullable LhsResult refinePattern(LhsResult curLhs, PatClass.Seq<Term, Pat> curCls) {
       var lets = new PatBinder().apply(curLhs.allPats().toSeq(), curCls.term());
-      if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
-        return null;
+      if (lets.let().allFreeLocal()) return null;
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
       var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
       newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
