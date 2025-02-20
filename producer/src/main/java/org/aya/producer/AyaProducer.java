@@ -613,22 +613,20 @@ public record AyaProducer(
           d
         )).toSeq();
 
-      var errors = discrList.flatMap(t -> {
+      var errors = discrList.mapNotNull(t -> {
         var discr = t.component1();
         var discrNode = t.component2();
         if (discr.isElim() && !(discr.discr().data() instanceof Expr.Unresolved)) {
-          return Option.some(new ParseError(discr.discr().sourcePos(), "Expect variable in match elim"));
+          return new ParseError(discr.discr().sourcePos(), "Expect variable in match elim");
         } else if (discr.asBinding() != null && discr.isElim()) {
-          return Option.some(new ParseError(
+          return new ParseError(
             sourcePosOf(discrNode),
-            "Don't use as-binding together with elim. Just use the elim-variable directly")
-          );
-        } else {
-          return Option.none();
+            "Don't use as-binding together with elim. Just use the elim-variable directly");
         }
+        return null;
       });
 
-      if (!errors.isEmpty()) {
+      if (errors.isNotEmpty()) {
         errors.forEach(reporter::report);
         throw new ParsingInterruptedException();
       }
@@ -641,7 +639,7 @@ public record AyaProducer(
         if (returnsNode != null) returns = expr(returnsNode);
       }
       return new WithPos<>(pos, new Expr.Match(
-        discrList.map(Tuple2::component1).toSeq(),
+        discrList.map(Tuple2::component1),
         bare.concat(barred).toSeq(),
         returns
       ));
