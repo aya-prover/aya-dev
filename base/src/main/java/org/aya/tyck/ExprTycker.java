@@ -564,6 +564,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();
+    var bindName = letBind.bindName();
     var typeExpr = Expr.buildPi(letBind.sourcePos(),
       letBind.telescope().view(), letBind.result());
     // as well as the body of the binding, for example:
@@ -578,16 +579,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
+    var definedAs = definedAsResult.wellTyped();
 
     addWithTerm(letBind, letBind.sourcePos(), definedAsResult.type());
 
     try (var _ = subscope()) {
-      localLet.put(let.bind().bindName(), new LocalLet.DefinedAs(definedAsResult, true));
+      localLet.put(bindName, definedAsResult, true);
       var result = checker.apply(let.body());
-      var boundWellTyped = result.wellTyped().bind(let.bind().bindName());
-      var wellTypedLet = new LetTerm(definedAsResult.wellTyped(), boundWellTyped);
-      var boundType = result.type().bind(let.bind().bindName());
-      var typeLet = new LetTerm(definedAsResult.wellTyped(), boundType);
+      var wellTypedLet = LetTerm.bind(bindName, definedAs, result.wellTyped());
+      var typeLet = LetTerm.bind(bindName, definedAs, result.type());
       return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
