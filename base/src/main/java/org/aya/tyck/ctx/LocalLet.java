@@ -51,4 +51,8 @@ public record LocalLet(
     return let.valuesView().allMatch(definedAs -> definedAs.definedAs.wellTyped() instanceof FreeTerm);
   }
   @Override public void putLocal(@NotNull LocalVar key, @NotNull LocalLet.DefinedAs value) { let.put(key, value); }
+
+  public void put(@NotNull LocalVar key, @NotNull Jdg definedAs, boolean isLet) {
+    put(key, new DefinedAs(definedAs, isLet));
+  }
 }
