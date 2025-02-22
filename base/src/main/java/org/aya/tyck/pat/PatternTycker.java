@@ -412,7 +412,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private void addAsSubst(@NotNull LocalVar as, @NotNull Pat pattern, @NotNull Term type) {
-    asSubst.put(as, new LocalLet.DefinedAs(new Jdg.Default(PatToTerm.visit(pattern), type), false));
+    asSubst.put(as, new Jdg.Default(PatToTerm.visit(pattern), type), false);
   }
 
   private @NotNull TyckResult done(@NotNull MutableList<Pat> wellTyped) {

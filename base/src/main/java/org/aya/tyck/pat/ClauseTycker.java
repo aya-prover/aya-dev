@@ -96,7 +96,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
         // TODO: replace "false" with some argument.
-        .put(ref, new LocalLet.DefinedAs(subst, false)));
+        .put(ref, subst, false));
       exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
   }

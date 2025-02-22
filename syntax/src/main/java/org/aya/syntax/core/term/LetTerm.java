@@ -49,4 +49,10 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
 
     return new Unlet(definedAs.toSeq(), let);
   }
+
+  public static @NotNull Term bind(@NotNull LocalVar bind, @NotNull Term definedAs, @NotNull Term body) {
+    var boundBody = body.bind(bind);
+    if (boundBody.body() == body) return body;
+    return new LetTerm(definedAs, boundBody);
+  }
 }
