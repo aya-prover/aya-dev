@@ -586,8 +586,9 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     try (var _ = subscope()) {
       localLet.put(bindName, definedAsResult, true);
       var result = checker.apply(let.body());
-      var wellTypedLet = LetTerm.bind(bindName, definedAs, result.wellTyped());
-      var typeLet = LetTerm.bind(bindName, definedAs, result.type());
+      var letFree = new LetFreeTerm(bindName, definedAs);
+      var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
+      var typeLet = LetTerm.bind(letFree, result.type());
       return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
