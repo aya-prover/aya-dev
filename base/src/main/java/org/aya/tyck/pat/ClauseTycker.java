@@ -371,18 +371,6 @@ public final class ClauseTycker implements Problematic, Stateful {
     });
   }
 
-  /// TODO: remove this and replace with LetTerm
-  /// This is used for inline [LetFreeTerm]s those introduced in [LhsResult#dumpLocalLetTo].
-  public static final class LetFreeTermInliner {
-    public static @NotNull Term apply(@NotNull Term term) {
-      if (term instanceof LetFreeTerm(var _, var definedAs)) {
-        return apply(definedAs);
-      }
-
-      return term.descent(LetFreeTermInliner::apply);
-    }
-  }
-
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
     return r.map(new TermInline());
   }
