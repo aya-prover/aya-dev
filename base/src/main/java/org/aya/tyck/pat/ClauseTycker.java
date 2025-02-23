@@ -93,10 +93,9 @@ public final class ClauseTycker implements Problematic, Stateful {
   ) implements SourceNode {
     /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
-    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean introLet) {
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
-        // TODO: replace "false" with some argument.
-        .put(ref, subst, false));
+        .put(ref, subst, introLet));
       exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
   }
@@ -283,7 +282,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       } else {
         // the localCtx will be restored after exiting [subscoped]e
         exprTycker.setLocalCtx(result.localCtx);
-        result.dumpLocalLetTo(teleBinds, exprTycker);
+        result.dumpLocalLetTo(teleBinds, exprTycker, true);
         // now exprTycker has all substitutions that PatternTycker introduced.
         wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
@@ -298,6 +297,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
         // eta body with inserted patterns
         wellBody = AppTerm.make(wellBody, pats.view().takeLast(result.unpiParamSize).map(PatToTerm::visit));
+        wellBody = makeLet(exprTycker.localLet(), wellBody);
         wellBody = wellBody.bindTele(patBindTele.view());
       }
 
@@ -360,6 +360,18 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
+  /// Bind all [LocalLet.DefinedAs] in {@param lets} on {@param term}, [LocalLet#parent] is not included.
+  ///
+  /// @param term a free term
+  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
+    // only one level
+    return lets.let().toSeq().foldRight(term, (let, acc) -> {
+      var letFree = new LetFreeTerm(let.component1(), let.component2().definedAs().wellTyped());
+      return LetTerm.bind(letFree, term);
+    });
+  }
+
+  /// TODO: remove this and replace with LetTerm
   /// This is used for inline [LetFreeTerm]s those introduced in [LhsResult#dumpLocalLetTo].
   public static final class LetFreeTermInliner {
     public static @NotNull Term apply(@NotNull Term term) {
