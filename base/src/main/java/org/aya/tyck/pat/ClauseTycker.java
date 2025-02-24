@@ -91,7 +91,6 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
-    /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean introLet) {
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
@@ -367,7 +366,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     // only one level
     return lets.let().toSeq().foldRight(term, (let, acc) -> {
       var letFree = new LetFreeTerm(let.component1(), let.component2().definedAs().wellTyped());
-      return LetTerm.bind(letFree, term);
+      return LetTerm.bind(letFree, acc);
     });
   }
 
