@@ -16,6 +16,7 @@ public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull Term define
       : new LetFreeTerm(name, definedAs);
   }
 
+  // TODO: is it good to 'descent' a [LetFreeTerm]? I think the proper way to descent a [LetFreeTerm] is descent a [LetTerm].
   @Override
   public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, definedAs));
