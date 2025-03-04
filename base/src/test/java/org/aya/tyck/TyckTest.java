@@ -2,16 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Random;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.normalize.Normalizer;
@@ -31,6 +21,16 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Random;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /// Do NOT add simple test fixtures here.
 /// Find TyckTest.aya and add tests there.
 public class TyckTest {
@@ -45,6 +45,20 @@ public class TyckTest {
       def how' {m : Nat} (a : Nat) (b : SomeDT m) : Nat => 0
       def what {A : Nat -> Type} (B : Fn (n : Nat) -> A n -> Nat) : Unit => unit
       def boom => what (fn n => fn m => how' 0 m)
+      """).defs;
+    assertTrue(result.isNotEmpty());
+  }
+
+  // @Test
+  public void simpleLambdaHole() {
+    var result = tyck("""
+      open inductive Unit | unit
+      inductive Nat | O | S Nat
+      open inductive SomeDT Nat
+      | m => someDT
+      def how' {m : Nat} (a : Nat) (b : SomeDT m) : Nat => 0
+      def what {A : Nat -> Type} (B : Fn (n : Nat) -> A n -> Nat) : Unit => unit
+      def boom => what (fn n => how' 0 __)
       """).defs;
     assertTrue(result.isNotEmpty());
   }

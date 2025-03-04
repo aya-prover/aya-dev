@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
@@ -29,7 +29,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern));
+    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.misc().pattern));
   }
 
   /**
