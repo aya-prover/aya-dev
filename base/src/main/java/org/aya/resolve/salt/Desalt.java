@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.salt;
 
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.util.position.PosedUnaryOperator;
@@ -22,6 +23,11 @@ public record Desalt(
   public Expr apply(SourcePos sourcePos, Expr expr) {
     // TODO: check if this induces redundant descent
     expr = misc.apply(sourcePos, expr);
+    expr = hole.apply(sourcePos, expr);
+
+    var debug = expr.toDoc(AyaPrettierOptions.debug());
+    System.out.println(debug.renderToString(100, true));
+
     return expr;
   }
 }
