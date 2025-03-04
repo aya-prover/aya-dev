@@ -50,7 +50,7 @@ public final class DesugarMisc implements PosedUnaryOperator<Expr> {
       case Expr.Match match -> {
         return match.update(
           match.discriminant().map(d -> d.descent(this)),
-          match.clauses().map(clause -> clause.descent(this, pattern)),
+          match.clauses().map(clause -> clause.descent(this, new Pat(info))),
           match.returns() != null ? match.returns().descent(this) : null
         );
       }
@@ -114,9 +114,8 @@ public final class DesugarMisc implements PosedUnaryOperator<Expr> {
       }
     };
   }
-  public @NotNull PosedUnaryOperator<Pattern> pattern = new Pat();
 
-  private class Pat implements PosedUnaryOperator<Pattern> {
+  public record Pat(@NotNull ResolveInfo info) implements PosedUnaryOperator<Pattern> {
     @Override public Pattern apply(SourcePos sourcePos, Pattern pattern) {
       return switch (pattern) {
         case Pattern.BinOpSeq binOpSeq -> apply(new PatternBinParser(info, binOpSeq.seq().view()).build(sourcePos));

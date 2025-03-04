@@ -49,16 +49,10 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  // @Test
+  @Test
   public void simpleLambdaHole() {
     var result = tyck("""
-      open inductive Unit | unit
-      inductive Nat | O | S Nat
-      open inductive SomeDT Nat
-      | m => someDT
-      def how' {m : Nat} (a : Nat) (b : SomeDT m) : Nat => 0
-      def what {A : Nat -> Type} (B : Fn (n : Nat) -> A n -> Nat) : Unit => unit
-      def boom => what (fn n => how' 0 __)
+      def returnLast {A B C : Type} : A -> B -> C -> C => fn a => fn b => __
       """).defs;
     assertTrue(result.isNotEmpty());
   }

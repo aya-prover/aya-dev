@@ -11,19 +11,14 @@ import org.jetbrains.annotations.NotNull;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
 public record Desalt(
-  @NotNull DesugarMisc misc,
-  @NotNull DesugarLambdaHole hole
+  @NotNull ResolveInfo info
 ) implements PosedUnaryOperator<Expr> {
-
-  public Desalt(@NotNull ResolveInfo info) {
-    this(new DesugarMisc(info), new DesugarLambdaHole());
-  }
 
   @Override
   public Expr apply(SourcePos sourcePos, Expr expr) {
     // TODO: check if this induces redundant descent
-    expr = misc.apply(sourcePos, expr);
-    expr = hole.apply(sourcePos, expr);
+    expr = new DesugarMisc(info).apply(sourcePos, expr);
+    expr = new DesugarLambdaHole().apply(sourcePos, expr);
 
     var debug = expr.toDoc(AyaPrettierOptions.debug());
     System.out.println(debug.renderToString(100, true));
