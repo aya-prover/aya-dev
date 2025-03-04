@@ -7,7 +7,6 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.value.LazyValue;
 import org.aya.cli.literate.HighlightInfo.DefKind;
 import org.aya.cli.literate.HighlightInfo.Lit;
 import org.aya.cli.literate.HighlightInfo.LitKind;
@@ -23,7 +22,6 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.*;
 import org.aya.util.Panic;
 import org.aya.util.position.SourceFile;
@@ -80,9 +78,10 @@ public record SyntaxHighlight(
   }
 
   @Override public void
-  visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
-    info.append(linkRef(pos, var, type.get()));
+  visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
+    info.append(linkRef(pos, var, type.toDocile()));
   }
+
   @Override public void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
       case Expr.LitInt _ -> info.append(LitKind.Int.toLit(pos));
@@ -103,10 +102,10 @@ public record SyntaxHighlight(
 
   @Override public void visitVarDecl(
     @NotNull SourcePos pos, @NotNull AnyVar var,
-    @NotNull LazyValue<@Nullable Term> type
+    @NotNull Type type
   ) {
     if (var instanceof LocalVar v && v.isGenerated()) return;
-    info.append(linkDef(pos, var, type.get()));
+    info.append(linkDef(pos, var, type.toDocile()));
   }
 
   @Override public void visitModuleRef(@NotNull SourcePos pos, @NotNull ModulePath path) {

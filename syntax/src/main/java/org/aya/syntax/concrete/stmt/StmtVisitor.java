@@ -5,6 +5,7 @@ package org.aya.syntax.concrete.stmt;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.LazyValue;
+import org.aya.generic.AyaDocile;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
@@ -24,32 +25,59 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public interface StmtVisitor extends Consumer<Stmt> {
-  /** module decl or import as name */
+  record Type(@Nullable Expr userType, @NotNull LazyValue<@Nullable Term> lazyType) {
+    public static final @NotNull Type noType = new Type((Expr) null);
+
+    public Type(@NotNull LazyValue<@Nullable Term> lazyType) {
+      this(null, lazyType);
+    }
+
+    public Type(@Nullable Expr userType) {
+      this(userType, LazyValue.ofValue(null));
+    }
+
+    public @Nullable AyaDocile toDocile() {
+      AyaDocile docile = lazyType.get();
+      return docile == null ? userType : docile;
+    }
+  }
+
+  /** @implNote Should conceptually only be used outside of these visitors, where types are all ignored. */
+  @Deprecated
+  @NotNull LazyValue<@Nullable Term> noType = LazyValue.ofValue(null);
+
+  /// invoked when a module name is introduced, such as a module declaration or import-as
   default void visitModuleDecl(@NotNull SourcePos pos, @NotNull ModuleName path) { }
-  /** module name ref */
+  /// module name ref
   default void visitModuleRef(@NotNull SourcePos pos, @NotNull ModuleName path) { }
-  /** import */
+  /// import
   default void visitModuleRef(@NotNull SourcePos pos, @NotNull ModulePath path) { }
+
   default void visitVar(
     @NotNull SourcePos pos, @NotNull AnyVar var,
-    @NotNull LazyValue<@Nullable Term> type
+    @NotNull Type type
   ) { }
+
   default void visitVarRef(
     @NotNull SourcePos pos, @NotNull AnyVar var,
-    @NotNull LazyValue<@Nullable Term> type
+    @NotNull Type type
   ) { visitVar(pos, var, type); }
+
+  default void visitUnresolvedRef(@NotNull QualifiedID qid) { }
+
   default void visitVarDecl(
     @NotNull SourcePos pos, @NotNull AnyVar var,
-    @NotNull LazyValue<@Nullable Term> type
+    @NotNull Type type
   ) { visitVar(pos, var, type); }
 
   @ApiStatus.NonExtendable
-  default void visitLocalVarDecl(@NotNull LocalVar var, @NotNull LazyValue<@Nullable Term> type) {
+  default void visitLocalVarDecl(@NotNull LocalVar var, @NotNull Type type) {
     visitVarDecl(var.definition(), var, type);
   }
+
   @ApiStatus.NonExtendable
   default void visitParamDecl(Expr.@NotNull Param param) {
-    visitLocalVarDecl(param.ref(), withTermType(param));
+    visitLocalVarDecl(param.ref(), fromParam(param));
   }
 
   private @Nullable Term varType(@Nullable AnyVar var) {
@@ -59,12 +87,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
     return null;
   }
 
-  private @NotNull LazyValue<@Nullable Term> lazyType(@Nullable AnyVar var) {
-    return LazyValue.of(() -> varType(var));
+  private @NotNull Type lazyType(@Nullable AnyVar var) {
+    return new Type(null, LazyValue.of(() -> varType(var)));
   }
 
-  /** @implNote Should conceptually only be used outside of these visitors, where types are all ignored. */
-  @NotNull LazyValue<@Nullable Term> noType = LazyValue.ofValue(null);
   default void visit(@NotNull BindBlock bb) {
     var t = Option.ofNullable(bb.resolvedTighters().get()).getOrElse(ImmutableSeq::empty);
     var l = Option.ofNullable(bb.resolvedLoosers().get()).getOrElse(ImmutableSeq::empty);
@@ -74,7 +100,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
   private void visitVars(@NotNull Stmt stmt) {
     switch (stmt) {
-      case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, noType));
+      case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data())));
       case Command.Module m -> visitModuleDecl(m.sourcePos(), ModuleName.of(m.name()));
       case Command.Import i -> {
         // Essentially `i.asName() != null` but fancier
@@ -111,11 +137,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
           case DataDecl data -> data.body.forEach(this::accept);
           case ClassDecl clazz -> clazz.members.forEach(this);
           case FnDecl fn -> {
-            fn.body.forEach(this::visitExpr, cl -> cl.forEach(this::visitExpr,
-              this::visitPattern));
+            fn.body.forEach(this::visitExpr, this::visitClause);
             if (fn.body instanceof FnBody.BlockBody block) {
               if (block.elims() != null) block.elims().forEachWith(block.rawElims(), (var, name) ->
-                visitVarRef(name.sourcePos(), var, noType));
+                visitVarRef(name.sourcePos(), var, Type.noType));
             }
           }
           case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
@@ -133,16 +158,21 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitVars(stmt);
   }
 
+  default void visitClause(@NotNull Pattern.Clause clause) {
+    clause.forEach(this::visitExpr, this::visitPattern);
+  }
+
+  // TODO: maybe we can provide the corresponding Expr.Param or term/Param of this pattern.
   private void visitPattern(@NotNull WithPos<Pattern> pat) { visitPattern(pat.sourcePos(), pat.data()); }
   default void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
     switch (pat) {
       case Pattern.Con con -> {
         var resolvedVar = con.resolved().data();
         visitVarRef(con.resolved().sourcePos(), AnyDef.toVar(resolvedVar),
-          LazyValue.of(() -> TyckDef.defType(resolvedVar)));
+          new Type(LazyValue.of(() -> TyckDef.defType(resolvedVar))));
       }
-      case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), LazyValue.of(bind.type()));
-      case Pattern.As as -> visitLocalVarDecl(as.as(), LazyValue.of(as.type()));
+      case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), new Type(LazyValue.of(bind.type())));
+      case Pattern.As as -> visitLocalVarDecl(as.as(), new Type(LazyValue.of(as.type())));
       default -> { }
     }
 
@@ -152,17 +182,34 @@ public interface StmtVisitor extends Consumer<Stmt> {
   private void visitExpr(@NotNull WithPos<Expr> expr) { visitExpr(expr.sourcePos(), expr.data()); }
   default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
+      case Expr.Unresolved unresolved -> visitUnresolvedRef(unresolved.name());
       case Expr.Ref ref -> visitVarRef(pos, ref.var(), withTermType(ref));
-      case Expr.Lambda lam -> visitLocalVarDecl(lam.ref(), noType);
+      case Expr.Lambda lam -> visitLocalVarDecl(lam.ref(), Type.noType);
       case Expr.DepType depType -> visitParamDecl(depType.param());
       case Expr.Array array -> array.arrayBlock().forEach(
-        left -> left.binds().forEach(bind -> visitLocalVarDecl(bind.var(), noType)),
+        left -> left.binds().forEach(bind -> visitLocalVarDecl(bind.var(), Type.noType)),
         _ -> { }
       );
-      case Expr.Let let -> visitLocalVarDecl(let.bind().bindName(), noType);
-      case Expr.Do du -> du.binds().forEach(bind -> visitLocalVarDecl(bind.var(), noType));
+      case Expr.Let let -> {
+        var bind = let.bind();
+        // it is possible that it has telescope without return type
+        var hasType = bind.telescope().isNotEmpty() || !(bind.result().data() instanceof Expr.Hole);
+        Type type;
+        if (!hasType) {
+          type = Type.noType;
+        } else {
+          var result = bind.result();
+          // dummy pos, as we don't really need it.
+          var piType = Expr.buildPi(SourcePos.NONE, bind.telescope().view(), result).data();
+          type = new Type(piType);
+        }
+
+        visitLocalVarDecl(let.bind().bindName(), type);
+      }
+      case Expr.Do du -> du.binds().forEach(bind -> visitLocalVarDecl(bind.var(), Type.noType));
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
+      // TODO: use visitClause
       case Expr.Match match -> match.clauses().forEach(clause -> clause.patterns.forEach(
         t -> visitPattern(t.term())));
       default -> { }
@@ -175,7 +222,17 @@ public interface StmtVisitor extends Consumer<Stmt> {
     telescopic.telescope.forEach(param -> param.forEach(this::visitExpr));
     if (telescopic.result != null) visitExpr(telescopic.result);
   }
-  private @NotNull LazyValue<@Nullable Term> withTermType(@NotNull Expr.WithTerm term) {
-    return LazyValue.of(term::coreType);
+
+  private @NotNull Type fromParam(@NotNull Expr.Param param) {
+    return withTermType(param.type(), param);
   }
+
+  private @NotNull Type withTermType(@NotNull Expr.WithTerm term) {
+    return withTermType(null, term);
+  }
+
+  private @NotNull Type withTermType(@Nullable Expr userType, @NotNull Expr.WithTerm term) {
+    return new Type(userType, LazyValue.of(term::coreType));
+  }
+
 }

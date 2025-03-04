@@ -523,6 +523,7 @@ public sealed interface Expr extends AyaDocile {
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(bind.descent(f), body.descent(f));
     }
+
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) {
       bind.forEach(f);
       f.accept(body);
@@ -546,6 +547,7 @@ public sealed interface Expr extends AyaDocile {
     public @NotNull LetBind descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(telescope.map(x -> x.descent(f)), result.descent(f), definedAs.descent(f));
     }
+
     public void forEach(PosedConsumer<Expr> f) {
       telescope.forEach(param -> param.forEach(f));
       f.accept(result);
@@ -653,7 +655,9 @@ public sealed interface Expr extends AyaDocile {
     return buildNested(sourcePos, binds, body, Let::new);
   }
 
-  /** convert flattened terms into nested right-associate terms */
+  /// convert flattened terms into nested right-associate terms
+  ///
+  /// @implSpec `returned.pos() == sourcePos` if `params.isNotEmpty()`, otherwise `returned == body`
   static <P extends SourceNode, E> @NotNull WithPos<E> buildNested(
     @NotNull SourcePos sourcePos,
     @NotNull SeqView<P> params,
