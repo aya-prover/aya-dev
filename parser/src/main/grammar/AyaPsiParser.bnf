@@ -357,10 +357,12 @@ atomBindPattern ::= qualifiedId {
 
 literal ::= refExpr
           | holeExpr
+          | lambdaHoleExpr
           | litIntExpr
           | litStringExpr
           | univExpr
 holeExpr ::= goalExpr | calmFaceExpr
+lambdaHoleExpr ::= LAMBDA_HOLE
 calmFaceExpr ::= CALM_FACE
 
 goalExpr ::= LGOAL expr? RGOAL

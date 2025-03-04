@@ -1207,6 +1207,18 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // LAMBDA_HOLE
+  public static boolean lambdaHoleExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lambdaHoleExpr")) return false;
+    if (!nextTokenIs(b, LAMBDA_HOLE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LAMBDA_HOLE);
+    exit_section_(b, m, LAMBDA_HOLE_EXPR, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // teleParamName | <<licit lambdaTeleBinder>>
   public static boolean lambdaTele(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambdaTele")) return false;
@@ -1357,6 +1369,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // refExpr
   //           | holeExpr
+  //           | lambdaHoleExpr
   //           | litIntExpr
   //           | litStringExpr
   //           | univExpr
@@ -1366,6 +1379,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _COLLAPSE_, LITERAL, "<literal>");
     r = refExpr(b, l + 1);
     if (!r) r = holeExpr(b, l + 1);
+    if (!r) r = lambdaHoleExpr(b, l + 1);
     if (!r) r = litIntExpr(b, l + 1);
     if (!r) r = litStringExpr(b, l + 1);
     if (!r) r = univExpr(b, l + 1);
