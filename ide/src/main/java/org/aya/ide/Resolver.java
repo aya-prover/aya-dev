@@ -6,23 +6,21 @@ import kala.collection.CollectionView;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.value.LazyValue;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.ide.util.ModuleVar;
 import org.aya.ide.util.XY;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.TyckDef;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -45,9 +43,9 @@ public interface Resolver {
   ) {
     var program = source.program().get();
     if (program == null) return SeqView.empty();
-    var collect = new XYResolver(xy, MutableList.create());
+    var collect = new XYResolver(xy);
     program.view().forEach(collect);
-    return collect.collect.view().mapNotNull(pos -> switch (pos.data()) {
+    return collect.resolved.view().mapNotNull(pos -> switch (pos.data()) {
       case DefVar<?, ?> defVar -> new WithPos<>(pos.sourcePos(), defVar);
       case LocalVar localVar -> new WithPos<>(pos.sourcePos(), localVar);
       case ModuleVar moduleVar -> new WithPos<>(pos.sourcePos(), moduleVar);
@@ -110,22 +108,38 @@ public interface Resolver {
    *
    * @author ice1000, kiva, wsx
    */
-  record XYResolver(XY xy, MutableList<WithPos<AnyVar>> collect) implements StmtVisitor {
-    @Override public void
-    visitVar(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
-      if (xy.inside(pos)) collect.append(new WithPos<>(pos, var));
+  record XYResolver(
+    @NotNull XY xy,
+    @NotNull MutableList<WithPos<AnyVar>> resolved,
+    @NotNull MutableList<QualifiedID> unresolved
+  ) implements StmtVisitor {
+    public XYResolver(@NotNull XY xy) {
+      this(xy, MutableList.create(), MutableList.create());
     }
+
+    @Override
+    public void visitUnresolvedRef(@NotNull QualifiedID qid) {
+      if (xy.inside(qid.sourcePos())) unresolved.append(qid);
+    }
+
     @Override public void
-    visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
+    visitVar(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
+      if (xy.inside(pos)) resolved.append(new WithPos<>(pos, var));
+    }
+
+    @Override public void
+    visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
       if (var instanceof LocalVar v && v.isGenerated()) return;
       StmtVisitor.super.visitVarDecl(pos, var, type);
     }
+
     // TODO[for hoshino]: what to do about ModulePath?
     @Override public void visitModuleRef(@NotNull SourcePos pos, @NotNull ModuleName path) {
-      visitVarRef(pos, new ModuleVar(path), noType);
+      visitVarRef(pos, new ModuleVar(path), Type.noType);
     }
+
     @Override public void visitModuleDecl(@NotNull SourcePos pos, @NotNull ModuleName path) {
-      visitVarDecl(pos, new ModuleVar(path), noType);
+      visitVarDecl(pos, new ModuleVar(path), Type.noType);
     }
   }
 
@@ -136,7 +150,7 @@ public interface Resolver {
    */
   record UsageResolver(@NotNull AnyVar target, @NotNull MutableList<SourcePos> collect) implements StmtVisitor {
     @Override
-    public void visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull LazyValue<@Nullable Term> type) {
+    public void visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
       // for imported serialized definitions, let's compare by qualified name
       var usage = (target == var)
         || var instanceof DefVar<?, ?> def
