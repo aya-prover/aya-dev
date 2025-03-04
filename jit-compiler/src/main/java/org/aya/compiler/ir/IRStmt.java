@@ -12,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
+/// For future-proofing, the intermediate representation should have:
+/// - Structured control flows (i.e., no jumps) (due to rendering as or generating Java source)
+/// - Sufficient abstraction away from the Java source language
 public sealed interface IRStmt {
   // TODO: local names
   record DeclVar(@NotNull ClassDesc type, @NotNull AstVariable.Local var) implements IRStmt { }
@@ -33,8 +36,10 @@ public sealed interface IRStmt {
   record IfThenElse(@NotNull Condition cond, @NotNull ImmutableSeq<IRStmt> thenBlock,
                     @Nullable ImmutableSeq<IRStmt> elseBlock) implements IRStmt { }
 
+  // TODO: structured gotos
   record Breakable(@NotNull ImmutableSeq<IRStmt> block) implements IRStmt { }
   enum Break implements IRStmt { INSTANCE }
+
   enum Unreachable implements IRStmt { INSTANCE }
 
   record Exec(@NotNull AstExpr expr) implements IRStmt { }
