@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
 
-  private MutableStack<HoleCollector> scopes = new MutableLinkedList<>();
+  private final MutableStack<HoleCollector> scopes = MutableStack.create();
   private boolean collectNextLayer = true;
 
   @Override
