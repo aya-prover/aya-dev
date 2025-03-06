@@ -126,6 +126,7 @@
     RGOAL = '?}'
     AT = '@'
 
+    LAMBDA_HOLE = '__'
     CALM_FACE = '_'
 
     // used for bootstrapping lexer
@@ -137,7 +138,7 @@
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
   extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self|partial)Expr") = expr
   extends("literal") = expr
-  extends("refExpr|holeExpr|lit.+Expr|univExpr") = literal
+  extends("refExpr|holeExpr|lit.+Expr|univExpr|lambdaHoleExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
 
   extends(".+Atom") = atomExpr
@@ -357,10 +358,12 @@ atomBindPattern ::= qualifiedId {
 
 literal ::= refExpr
           | holeExpr
+          | lambdaHoleExpr
           | litIntExpr
           | litStringExpr
           | univExpr
 holeExpr ::= goalExpr | calmFaceExpr
+lambdaHoleExpr ::= LAMBDA_HOLE
 calmFaceExpr ::= CALM_FACE
 
 goalExpr ::= LGOAL expr? RGOAL

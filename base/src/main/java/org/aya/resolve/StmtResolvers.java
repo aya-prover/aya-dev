@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.salt.Desalt;
+import org.aya.resolve.salt.DesugarMisc;
 import org.aya.resolve.visitor.StmtBinder;
 import org.aya.resolve.visitor.StmtPreResolver;
 import org.aya.resolve.visitor.StmtResolver;
@@ -29,7 +30,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern));
+    stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
   }
 
   /**

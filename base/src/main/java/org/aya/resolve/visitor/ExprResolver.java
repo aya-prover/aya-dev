@@ -52,7 +52,7 @@ public record ExprResolver(
     ImmutableSeq<Expr.Param> params,
     WithPos<Expr> expr
   ) {
-    public @NotNull LiterateResolved descent(PosedUnaryOperator<Expr> desalt) {
+    public @NotNull LiterateResolved descent(@NotNull PosedUnaryOperator<Expr> desalt) {
       return new LiterateResolved(params.map(p -> p.descent(desalt)), expr.descent(desalt));
     }
   }

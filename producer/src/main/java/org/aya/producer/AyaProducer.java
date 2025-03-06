@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.producer;
 
-import java.util.stream.Collectors;
-
-import static org.aya.parser.AyaPsiElementTypes.*;
-
 import com.intellij.lexer.FlexLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -51,6 +47,10 @@ import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Collectors;
+
+import static org.aya.parser.AyaPsiElementTypes.*;
 
 /**
  * Working with GK parser:
@@ -555,6 +555,7 @@ public record AyaProducer(
       return new WithPos<>(pos, new Expr.Unresolved(qid));
     }
     if (node.is(CALM_FACE_EXPR)) return new WithPos<>(pos, new Expr.Hole(false, null));
+    if (node.is(LAMBDA_HOLE_EXPR)) { return new WithPos<>(pos, Expr.LambdaHole.INSTANCE); }
     if (node.is(GOAL_EXPR)) {
       var fillingExpr = node.peekChild(EXPR);
       var filling = fillingExpr == null ? null : expr(fillingExpr);
