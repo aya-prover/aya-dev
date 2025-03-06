@@ -64,4 +64,21 @@ public class SyntaxTest {
       assertNotNull(stmt.easyToString());
     }
   }
+
+  @Test public void test2() {
+    var moduleLoader = SyntaxTestUtil.moduleLoader();
+    var stmts = SyntaxTestUtil.parse("""
+      open inductive Unit | unit
+      inductive Nat | O | S Nat
+      open inductive SomeDT Nat
+      | m => someDT
+      def how' {m : Nat} (a : Nat) (b : SomeDT m) : Nat => 0
+      def what {A : Nat -> Type} (B : Fn (n : Nat) -> A n -> Nat) : Unit => unit
+      def boom => what (fn n => how' 0 __)
+      """);
+    moduleLoader.resolve(stmts);
+    for (var stmt : stmts) {
+      assertNotNull(stmt.easyToString());
+    }
+  }
 }

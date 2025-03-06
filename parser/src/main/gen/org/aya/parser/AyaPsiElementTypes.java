@@ -58,6 +58,7 @@ public interface AyaPsiElementTypes {
   IElementType LAMBDA_0_EXPR = new AyaPsiElementType("LAMBDA_0_EXPR");
   IElementType LAMBDA_1_EXPR = new AyaPsiElementType("LAMBDA_1_EXPR");
   IElementType LAMBDA_2_EXPR = new AyaPsiElementType("LAMBDA_2_EXPR");
+  IElementType LAMBDA_HOLE_EXPR = new AyaPsiElementType("LAMBDA_HOLE_EXPR");
   IElementType LAMBDA_TELE = new AyaPsiElementType("LAMBDA_TELE");
   IElementType LAMBDA_TELE_BINDER = new AyaPsiElementType("LAMBDA_TELE_BINDER");
   IElementType LET_BIND = new AyaPsiElementType("LET_BIND");
@@ -172,6 +173,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_ULIFT = new AyaPsiTokenType("ulift");
   IElementType KW_USING = new AyaPsiTokenType("using");
   IElementType KW_VARIABLE = new AyaPsiTokenType("variable");
+  IElementType LAMBDA_HOLE = new AyaPsiTokenType("__");
   IElementType LARRAY = new AyaPsiTokenType("[");
   IElementType LARROW = new AyaPsiTokenType("<-");
   IElementType LBRACE = new AyaPsiTokenType("{");

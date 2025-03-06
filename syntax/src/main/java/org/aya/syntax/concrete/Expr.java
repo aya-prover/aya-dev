@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete;
 
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
@@ -30,6 +26,10 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
@@ -315,6 +315,13 @@ public sealed interface Expr extends AyaDocile {
   record LitString(@NotNull String string) implements Expr {
     @Override public @NotNull LitString descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
+  }
+
+  enum LambdaHole implements Expr {
+    INSTANCE;
+
+    @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) { }
   }
 
   record New(@NotNull WithPos<Expr> classCall) implements Expr {
@@ -660,15 +667,14 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<E> body,
     @NotNull BiFunction<P, WithPos<E>, E> constructor
   ) {
-    record StackData<P>(P p, SourcePos pos) { }
-    var subPoses = MutableArrayList.<StackData<P>>create();
+    var subPoses = MutableArrayList.<WithPos<P>>create();
     while (!params.isEmpty()) {
-      subPoses.append(new StackData<>(params.getFirst(), sourcePos));
+      subPoses.append(new WithPos<>(sourcePos, params.getFirst()));
       params = params.drop(1);
       sourcePos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         params.map(SourceNode::sourcePos));
     }
     return subPoses.foldRight(body, (data, acc) ->
-      new WithPos<>(data.pos, constructor.apply(data.p, acc)));
+      new WithPos<>(data.sourcePos(), constructor.apply(data.data(), acc)));
   }
 }
