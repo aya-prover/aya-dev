@@ -158,6 +158,12 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitVars(stmt);
   }
 
+  // scope introducer
+  default void visitLetBind(@NotNull Expr.LetBind bind) {
+
+  }
+
+  // scope introducer
   default void visitClause(@NotNull Pattern.Clause clause) {
     clause.forEach(this::visitExpr, this::visitPattern);
   }
@@ -218,6 +224,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
     expr.forEach(this::visitExpr);
   }
 
+  default boolean enterScope() {
+
+  }
+
   default void visitTelescopic(@NotNull TeleDecl telescopic) {
     telescopic.telescope.forEach(param -> param.forEach(this::visitExpr));
     if (telescopic.result != null) visitExpr(telescopic.result);
@@ -234,5 +244,4 @@ public interface StmtVisitor extends Consumer<Stmt> {
   private @NotNull Type withTermType(@Nullable Expr userType, @NotNull Expr.WithTerm term) {
     return new Type(userType, LazyValue.of(term::coreType));
   }
-
 }

@@ -110,6 +110,10 @@ public class LspTest {
     );
   }
 
+  @Test public void testContextWalker() {
+
+  }
+
   @Test public void colorful() {
     var initParams = new InitializeParams();
     initParams.initializationOptions = new Gson().toJsonTree(new ServerOptions(new ServerRenderOptions(null, null, RenderOptions.OutputTarget.HTML)));
