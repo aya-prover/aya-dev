@@ -24,12 +24,27 @@ public interface SyntaxNodeAction<Location> extends StmtVisitor, PosedConsumer<E
 
   @Override default void accept(@NotNull Stmt stmt) {
     if (!(stmt instanceof Decl decl) || accept(location(), decl.entireSourcePos()))
-      StmtVisitor.super.accept(stmt);
+      doAccept(stmt);
+  }
+
+  default void doAccept(@NotNull Stmt stmt) {
+    StmtVisitor.super.accept(stmt);
   }
 
   @Override default void accept(SourcePos sourcePos, Expr expr) {
     if (!accept(location(), sourcePos)) return;
     expr.forEach(this);
+  }
+
+  // FIXME: PosedConsumer<Term>
+  @Override
+  default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
+    if (!accept(location(), pos)) return;
+    doVisitExpr(pos, expr);
+  }
+
+  default void doVisitExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
+    StmtVisitor.super.visitExpr(sourcePos, expr);
   }
 
   /**
