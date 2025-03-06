@@ -667,15 +667,14 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<E> body,
     @NotNull BiFunction<P, WithPos<E>, E> constructor
   ) {
-    record StackData<P>(P p, SourcePos pos) { }
-    var subPoses = MutableArrayList.<StackData<P>>create();
+    var subPoses = MutableArrayList.<WithPos<P>>create();
     while (!params.isEmpty()) {
-      subPoses.append(new StackData<>(params.getFirst(), sourcePos));
+      subPoses.append(new WithPos<>(sourcePos, params.getFirst()));
       params = params.drop(1);
       sourcePos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         params.map(SourceNode::sourcePos));
     }
     return subPoses.foldRight(body, (data, acc) ->
-      new WithPos<>(data.pos, constructor.apply(data.p, acc)));
+      new WithPos<>(data.sourcePos(), constructor.apply(data.data(), acc)));
   }
 }
