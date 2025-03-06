@@ -13,12 +13,10 @@ import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
-
   private final MutableStack<HoleCollector> scopes = MutableStack.create();
   private boolean collectNextLayer = true;
 
-  @Override
-  public Expr apply(SourcePos sourcePos, Expr expr) {
+  @Override public Expr apply(SourcePos sourcePos, Expr expr) {
     var shouldCollect = collectNextLayer;
     if (shouldCollect) scopes.push(new HoleCollector());
 
@@ -32,6 +30,8 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
       }
       // Match requires specialized handling as its discriminant and clauses have different scopes.
       case Expr.Match(var discrs, var clauses, var returns) -> {
+        // wrong inspection
+        //noinspection UnusedAssignment
         collectNextLayer = false;
         var mappedDiscrs = discrs.map(x -> x.descent(this));
         collectNextLayer = true;

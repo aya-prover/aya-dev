@@ -9,17 +9,9 @@ import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
-public record Desalt(
-  @NotNull ResolveInfo info
-) implements PosedUnaryOperator<Expr> {
-
-  @Override
-  public Expr apply(SourcePos sourcePos, Expr expr) {
+public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Expr> {
+  @Override public Expr apply(SourcePos sourcePos, Expr expr) {
     expr = new DesugarMisc(info).apply(sourcePos, expr);
-    expr = new DesugarLambdaHole().apply(sourcePos, expr);
-
-    // System.out.println(expr.easyToString());
-
-    return expr;
+    return new DesugarLambdaHole().apply(sourcePos, expr);
   }
 }

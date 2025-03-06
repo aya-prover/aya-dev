@@ -15,13 +15,7 @@ import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class DesugarMisc implements PosedUnaryOperator<Expr> {
-  private final @NotNull ResolveInfo info;
-
-  public DesugarMisc(@NotNull ResolveInfo info) {
-    this.info = info;
-  }
-
+public record DesugarMisc(@NotNull ResolveInfo info) implements PosedUnaryOperator<Expr> {
   private @Nullable Integer levelVar(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.BinOpSeq _ -> levelVar(expr.descent(this));
