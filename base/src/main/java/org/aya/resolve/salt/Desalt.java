@@ -18,7 +18,7 @@ public record Desalt(
     expr = new DesugarMisc(info).apply(sourcePos, expr);
     expr = new DesugarLambdaHole().apply(sourcePos, expr);
 
-    System.out.println(expr.easyToString());
+    // System.out.println(expr.easyToString());
 
     return expr;
   }
