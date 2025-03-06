@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.salt;
 
-import kala.collection.mutable.MutableLinkedList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.Constants;
@@ -51,16 +50,16 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
       }
     }
 
-    if (shouldCollect) result = popScopeAndTransform(result);
+    if (shouldCollect) result = popScopeAndTransform(sourcePos, result);
     return result;
   }
 
-  private @NotNull Expr popScopeAndTransform(Expr from) {
-    return Expr.buildLam(SourcePos.NONE, scopes.pop().holes.view(), WithPos.dummy(from)).data();
+  private @NotNull Expr popScopeAndTransform(SourcePos sourcePos, Expr from) {
+    return Expr.buildLam(sourcePos, scopes.pop().holes.view(), new WithPos<>(sourcePos, from)).data();
   }
 
   private static class HoleCollector {
-    @NotNull MutableList<LocalVar> holes = new MutableLinkedList<>();
+    @NotNull MutableList<LocalVar> holes = MutableList.create();
     public void add(LocalVar var) { holes.append(var); }
   }
 }

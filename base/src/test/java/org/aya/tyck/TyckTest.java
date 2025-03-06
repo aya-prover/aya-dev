@@ -49,20 +49,6 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  // @Test
-  // public void simpleLambdaHole() {
-  //   var result = tyck("""
-  //     open inductive Nat | zero | suc Nat
-  //
-  //     def test : Nat -> (Nat -> Nat) => match __ {
-  //       | zero => __
-  //       | 1 => fn y => y
-  //       | _ => fn z => z
-  //     }
-  //     """).defs;
-  //   assertTrue(result.isNotEmpty());
-  // }
-
   @SuppressWarnings("unchecked") private static <T extends AnyDef> T
   getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
     return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());
