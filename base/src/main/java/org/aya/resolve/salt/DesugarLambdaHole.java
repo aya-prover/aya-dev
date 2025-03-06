@@ -25,14 +25,25 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
 
     Expr result = expr;
     switch (expr) {
+      // For lambda holes, add to the most recent scope.
       case Expr.LambdaHole() -> {
         var fresh = Constants.randomlyNamed(sourcePos);
         scopes.peek().add(fresh);
         result = new Expr.Ref(fresh);
       }
-      case Expr.Lambda lambda -> {
+      // Match requires specialized handling as its discriminant and clauses have different scopes.
+      case Expr.Match(var discrs, var clauses, var returns) -> {
+        collectNextLayer = false;
+        var mappedDiscrs = discrs.map(x -> x.descent(this));
         collectNextLayer = true;
-        result = lambda.descent(this);
+        var mappedClauses = clauses.map(x -> x.descent(this, PosedUnaryOperator.identity()));
+        var mappedExprs = returns == null ? null : returns.descent(this);
+        result = new Expr.Match(mappedDiscrs, mappedClauses, mappedExprs);
+      }
+
+      case Expr.Lambda _ -> {
+        collectNextLayer = true;
+        result = expr.descent(this);
       }
       default -> {
         collectNextLayer = false;
