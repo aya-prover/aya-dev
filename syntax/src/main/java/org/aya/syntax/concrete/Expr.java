@@ -317,7 +317,9 @@ public sealed interface Expr extends AyaDocile {
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { }
   }
 
-  record LambdaHole() implements Expr {
+  enum LambdaHole implements Expr {
+    INSTANCE;
+
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) { return this; }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) { }
   }

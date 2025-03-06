@@ -555,7 +555,7 @@ public record AyaProducer(
       return new WithPos<>(pos, new Expr.Unresolved(qid));
     }
     if (node.is(CALM_FACE_EXPR)) return new WithPos<>(pos, new Expr.Hole(false, null));
-    if (node.is(LAMBDA_HOLE_EXPR)) { return new WithPos<>(pos, new Expr.LambdaHole()); }
+    if (node.is(LAMBDA_HOLE_EXPR)) { return new WithPos<>(pos, Expr.LambdaHole.INSTANCE); }
     if (node.is(GOAL_EXPR)) {
       var fillingExpr = node.peekChild(EXPR);
       var filling = fillingExpr == null ? null : expr(fillingExpr);

@@ -23,7 +23,7 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
     Expr result = expr;
     switch (expr) {
       // For lambda holes, add to the most recent scope.
-      case Expr.LambdaHole() -> {
+      case Expr.LambdaHole _ -> {
         var fresh = Constants.randomlyNamed(sourcePos);
         scopes.peek().add(fresh);
         result = new Expr.Ref(fresh);
