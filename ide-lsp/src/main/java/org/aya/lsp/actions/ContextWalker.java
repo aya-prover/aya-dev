@@ -5,46 +5,57 @@ package org.aya.lsp.actions;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
+import org.aya.generic.AyaDocile;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.Tokens;
+import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.GenerateKind;
+import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /// ContextWalker traversal the concrete syntax tree to target position, record all available variable.
 public class ContextWalker implements SyntaxNodeAction.Cursor {
-  public record ConcreteJdg(@NotNull AnyVar var, @NotNull Type userType) { }
+  /// @param var either [LocalVar] or [GeneralizedVar]
+  @Debug.Renderer(text = "")
+  public record ConcreteJdg(@NotNull AnyVar var, @NotNull Type userType) implements AyaDocile {
+    @Override
+    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      var typeDoc = userType.toDocile();
+      var realTypeDoc = typeDoc == null
+        ? Doc.empty()
+        : Doc.sep(Tokens.HAS_TYPE, typeDoc.toDoc(options));
+
+      return Doc.sepNonEmpty(BasePrettier.varDoc(var), realTypeDoc);
+    }
+  }
 
   private static final @NotNull LocalVar RESULT_VAR = new LocalVar("_", SourcePos.NONE);
 
-  private final @NotNull MutableList<ConcreteJdg> localContext;
+  private final @NotNull MutableMap<String, ConcreteJdg> localContext;
   private final @NotNull MutableList<String> moduleContext;
   private final @NotNull XY xy;
 
   public ContextWalker(@NotNull XY xy) {
     this.xy = xy;
-    this.localContext = MutableList.create();
+    this.localContext = MutableMap.create();
     this.moduleContext = MutableList.create();
   }
 
   // region Context Restriction
-
-  @Override
-  public void visitClause(Pattern.@NotNull Clause clause) {
-    if (!accept(location(), clause.sourcePos)) return;
-    Cursor.super.visitClause(clause);
-  }
-
-  // TODO: avoid traversal pattern matching clause that doesn't contain [xy].
 
   @Override
   public @NotNull XY location() {
@@ -58,6 +69,18 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     }
 
     Cursor.super.doAccept(stmt);
+  }
+
+  @Override
+  public void visitClause(Pattern.@NotNull Clause clause) {
+    if (!accept(location(), clause.sourcePos)) return;
+    Cursor.super.visitClause(clause);
+  }
+
+  @Override
+  public void visitLetBind(Expr.@NotNull LetBind bind) {
+    if (!accept(location(), bind.sourcePos())) return;
+    Cursor.super.visitLetBind(bind);
   }
 
   @Override
@@ -75,17 +98,53 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     Cursor.super.visitTelescope(telescope, result);
   }
 
+  @Override
+  public void visitDoBinds(@NotNull SeqView<Expr.DoBind> binds) {
+    // similar to visitTelescope
+    var idx = binds.indexWhere(it -> accept(xy, it.sourcePos()));
+    if (idx != -1) {
+      var bindSeq = binds.take(idx + 1).toSeq();
+      binds = bindSeq.view().take(idx);
+
+      var body = bindSeq.get(idx).expr();
+      binds = binds.appended(new Expr.DoBind(body));
+    }
+
+    Cursor.super.visitDoBinds(binds);
+  }
+
+  @Override
+  public void visitMatch(@NotNull Expr.Match match) {
+    var discriminant = match.discriminant();
+    var returns = match.returns();
+
+    discriminant.forEach(it -> visitExpr(it.discr().sourcePos(), it.discr().data()));
+
+    if (returns != null && accept(xy, returns.sourcePos())) {
+      // not available in clause bodies!
+      discriminant.view()
+        .mapNotNull(Expr.Match.Discriminant::asBinding)
+        .forEach(it -> visitLocalVarDecl(it, Type.noType));
+      visitExpr(returns.sourcePos(), returns.data());
+    } else {
+      match.clauses().forEach(this::visitClause);
+    }
+  }
+
   // endregion Context Restriction
 
   @Override
   public void visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
-    this.localContext.append(new ConcreteJdg(var, type));
+    if (var == LocalVar.IGNORED || pos == SourcePos.NONE) return;
+    // in case of the resolving failed.
+    if (!(var instanceof LocalVar || var instanceof GeneralizedVar)) return;
+    this.localContext.put(var.name(), new ConcreteJdg(var, type));
   }
 
   /// @return all accessible local variables and their concrete types. The order is not guaranteed.
   /// FIXME: the order should be guaranteed, in order to handle shadowing.
   public @NotNull ImmutableSeq<ConcreteJdg> localContext() {
-    return localContext.toSeq();
+    return localContext.valuesView().toSeq();
   }
 
   /// @return which module the cursor in
