@@ -136,6 +136,7 @@ public sealed interface Expr extends AyaDocile {
   }
 
   record ClauseLam(@NotNull Pattern.Clause clause) implements Expr, Sugar {
+    // TODO: remove this
     public static boolean canBeBind(@NotNull Arg<WithPos<Pattern>> pat) {
       var thePat = pat.term().data();
       return thePat instanceof Pattern.Bind || thePat == Pattern.CalmFace.INSTANCE;

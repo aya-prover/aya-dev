@@ -66,6 +66,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
   default void visitUnresolvedRef(@NotNull QualifiedID qid) { }
 
+  /// @implNote the impl should be able to handle {@link SourcePos#NONE} and {@link LocalVar#IGNORED}.
   default void visitVarDecl(
     @NotNull SourcePos pos, @NotNull AnyVar var,
     @NotNull Type type
@@ -74,6 +75,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
   @ApiStatus.NonExtendable
   default void visitLocalVarDecl(@NotNull LocalVar var, @NotNull Type type) {
     visitVarDecl(var.definition(), var, type);
+  }
+
+  default void visitParam(@NotNull Expr.Param param) {
+    visitExpr(param.typeExpr());
+    visitParamDecl(param);
   }
 
   @ApiStatus.NonExtendable
@@ -142,10 +148,13 @@ public interface StmtVisitor extends Consumer<Stmt> {
       }
       case Generalize generalize -> visitExpr(generalize.type);
     }
-    visitVars(stmt);
+    // visitVars(stmt);
   }
 
   default void visitDecl(@NotNull Decl decl) {
+    visitVarDecl(decl.sourcePos(), decl.ref(), lazyType(decl.ref()));
+    visit(decl.bindBlock());
+
     if (decl instanceof TeleDecl tele) visitTelescopic(tele);
     switch (decl) {
       case DataDecl data -> visitDataDecl(data);
@@ -166,11 +175,12 @@ public interface StmtVisitor extends Consumer<Stmt> {
   }
 
   default void visitFnDecl(@NotNull FnDecl decl) {
-    decl.body.forEach(this::visitExpr, this::visitClause);
     if (decl.body instanceof FnBody.BlockBody block) {
       if (block.elims() != null) block.elims().forEachWith(block.rawElims(), (var, name) ->
         visitVarRef(name.sourcePos(), var, Type.noType));
     }
+
+    decl.body.forEach(this::visitExpr, this::visitClause);
   }
 
   default void visitDataCon(@NotNull DataCon decl) {
@@ -180,6 +190,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
   default void visitPrimDecl(@NotNull PrimDecl decl) { }
 
   default void visitClassMember(@NotNull ClassMember decl) { }
+
+  default void visitDoBind(@NotNull Expr.DoBind bind) {
+    visitExpr(bind.expr());
+    visitLocalVarDecl(bind.var(), Type.noType);
+  }
 
   // scope introducer
   default void visitClause(@NotNull Pattern.Clause clause) {
@@ -203,43 +218,68 @@ public interface StmtVisitor extends Consumer<Stmt> {
     pat.forEach(this::visitPattern);
   }
 
+  default void visitMatch(@NotNull Expr.Match match) {
+    var discriminant = match.discriminant();
+    discriminant.forEach(it -> visitExpr(it.discr()));
+    discriminant.view()
+      .mapNotNull(Expr.Match.Discriminant::asBinding)
+      .forEach(it -> visitLocalVarDecl(it, Type.noType));
+
+    var returns = match.returns();
+    if (returns != null) visitExpr(returns);
+
+    match.clauses().forEach(this::visitClause);
+  }
+
   private void visitExpr(@NotNull WithPos<Expr> expr) { visitExpr(expr.sourcePos(), expr.data()); }
   default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
       case Expr.Unresolved unresolved -> visitUnresolvedRef(unresolved.name());
       case Expr.Ref ref -> visitVarRef(pos, ref.var(), withTermType(ref));
-      case Expr.Lambda lam -> visitLocalVarDecl(lam.ref(), Type.noType);
-      case Expr.DepType depType -> visitParamDecl(depType.param());
-      case Expr.Array array -> array.arrayBlock().forEach(
-        left -> left.binds().forEach(bind -> visitLocalVarDecl(bind.var(), Type.noType)),
-        _ -> { }
-      );
+      case Expr.Lambda lam -> {
+        visitLocalVarDecl(lam.ref(), Type.noType);
+        visitExpr(lam.body());
+      }
+      case Expr.ClauseLam lam -> visitClause(lam.clause());
+      case Expr.DepType depType -> {
+        visitParamDecl(depType.param());
+        visitExpr(depType.last());
+      }
+      case Expr.Array array when array.arrayBlock().isLeft() -> {
+        var compBlock = array.arrayBlock().getLeftValue();
+        compBlock.binds().forEach(this::visitDoBind);
+        visitExpr(compBlock.generator());
+      }
       case Expr.Let let -> {
         var bind = let.bind();
+        var result = bind.result();
+
+        // visit let bind
+        visitTelescope(bind.telescope().view(), result.data() instanceof Expr.Hole ? null : result);
+        visitExpr(bind.definedAs());
+
         // it is possible that it has telescope without return type
-        var hasType = bind.telescope().isNotEmpty() || !(bind.result().data() instanceof Expr.Hole);
+        var hasType = bind.telescope().isNotEmpty() || !(result.data() instanceof Expr.Hole);
         Type type;
         if (!hasType) {
           type = Type.noType;
         } else {
-          var result = bind.result();
           // dummy pos, as we don't really need it.
           var piType = Expr.buildPi(SourcePos.NONE, bind.telescope().view(), result).data();
           type = new Type(piType);
         }
 
         visitLocalVarDecl(let.bind().bindName(), type);
+        visitExpr(let.body());
       }
-      case Expr.Do du -> du.binds().forEach(bind -> visitLocalVarDecl(bind.var(), Type.noType));
-      case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null ->
+      case Expr.Do du -> du.binds().forEach(this::visitDoBind);
+      case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null -> {
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
-      // TODO: use visitClause
-      case Expr.Match match -> match.clauses().forEach(clause -> clause.patterns.forEach(
-        t -> visitPattern(t.term())));
-      default -> { }
+        visitExpr(proj.tup());
+      }
+      case Expr.Match match -> visitMatch(match);
+      default -> expr.forEach(this::visitExpr);
     }
-
-    expr.forEach(this::visitExpr);
   }
 
   default void visitTelescopic(@NotNull TeleDecl telescopic) {
@@ -249,11 +289,6 @@ public interface StmtVisitor extends Consumer<Stmt> {
   default void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     params.forEach(this::visitParam);
     if (result != null) visitExpr(result);
-  }
-
-  default void visitParam(@NotNull Expr.Param param) {
-    visitLocalVarDecl(param.ref(), fromParam(param));
-    visitExpr(param.typeExpr());
   }
 
   private @NotNull Type fromParam(@NotNull Expr.Param param) {
