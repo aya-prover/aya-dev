@@ -491,9 +491,11 @@ public record AyaProducer(
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
+    // TODO: should we count the parenthesis?
+    var pos = sourcePosOf(node);
     var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
-    return ids.map(i -> new Expr.Param(i.sourcePos(), LocalVar.from(i), type, explicit));
+    return ids.map(i -> new Expr.Param(pos, LocalVar.from(i), type, explicit));
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {

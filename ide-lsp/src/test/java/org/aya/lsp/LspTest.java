@@ -4,8 +4,11 @@ package org.aya.lsp;
 
 import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
+import org.aya.ide.util.XY;
+import org.aya.lsp.actions.ContextWalker;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
@@ -13,6 +16,7 @@ import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.MetaPatTerm;
@@ -110,8 +114,36 @@ public class LspTest {
     );
   }
 
-  @Test public void testContextWalker() {
+  private @NotNull ContextWalker runWalker(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
+    var walker = new ContextWalker(xy);
+    stmts.forEach(walker);
+    return walker;
+  }
 
+  @Test public void testContextWalker() {
+    var client = launch(TEST_LIB);
+    client.execute(compile((_, _) -> { }));
+    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
+    assert source != null;
+    var stmt = source.program().get();
+    assert stmt != null;
+
+    var inTelescope = new XY(13, 25);     // {b : _Nat}
+    var inResult = new XY(13, 32);        // : _Nat
+    var inLetTele = new XY(14, 33);       // (e : _Nat)
+    var inLetResult = new XY(14, 40);     // : _Nat
+    var inLetBody = new XY(14, 52);       // _c a a
+    var inSucClause = new XY(15, 13);     // suc a => _a
+
+    var result0 = runWalker(stmt, inTelescope);
+    var result1 = runWalker(stmt, inResult);
+    var result2 = runWalker(stmt, inLetTele);
+    var result3 = runWalker(stmt, inLetResult);
+    var result4 = runWalker(stmt, inLetBody);
+    var result5 = runWalker(stmt, inSucClause);
+
+    // TODO: make some assertion
+    return;
   }
 
   @Test public void colorful() {
