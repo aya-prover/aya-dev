@@ -909,6 +909,7 @@ public record AyaProducer(
   }
 
   public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
+    var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
     var teles = typedTelescope(node.childrenOfType(LAMBDA_TELE));
@@ -916,8 +917,7 @@ public record AyaProducer(
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(bind.sourcePos(), LocalVar.from(bind), teles, result, body);
-    // ^ see `doBinding()` for why the source pos of `LetBind` should be `bind.sourcePos()`
+    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
@@ -987,7 +987,7 @@ public record AyaProducer(
    */
   public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
     var wp = weakId(node.child(WEAK_ID));
-    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
+    return new Expr.DoBind(sourcePosOf(node), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
   private <T> T unreachable(GenericNode<?> node) {
