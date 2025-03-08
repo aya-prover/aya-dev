@@ -39,7 +39,7 @@ public record LocalVar(
     return new LocalVar(id.data(), id.sourcePos());
   }
 
-  public static final @NotNull LocalVar IGNORED = new LocalVar("_", SourcePos.NONE);
+  public static final @NotNull LocalVar IGNORED = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Anonymous);
   @Override public @NotNull SourcePos sourcePos() { return definition; }
   @Override public boolean equals(@Nullable Object o) { return this == o; }
   @Override public int hashCode() { return System.identityHashCode(this); }

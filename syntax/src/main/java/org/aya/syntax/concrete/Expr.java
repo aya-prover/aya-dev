@@ -53,13 +53,13 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<Expr> typeExpr,
     boolean explicit,
     @ForLSP MutableValue<Term> theCoreType
-  ) implements SourceNode, AyaDocile, ParamLike<Expr>, WithTerm {
+  ) implements SourceNode, Named, AyaDocile, ParamLike<Expr>, WithTerm {
+    @Override
+    public @NotNull SourcePos nameSourcePos() {
+      return ref.definition();
+    }
 
     @Override public @NotNull Expr type() { return typeExpr.data(); }
-
-    public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, new WithPos<>(sourcePos, new Hole(false, null)), explicit);
-    }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar ref, @NotNull WithPos<Expr> typeExpr, boolean explicit) {
       this(sourcePos, ref, typeExpr, explicit, MutableValue.create());
@@ -406,7 +406,11 @@ public sealed interface Expr extends AyaDocile {
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar var,
     @NotNull WithPos<Expr> expr
-  ) implements SourceNode {
+  ) implements SourceNode, Named {
+    @Override public @NotNull SourcePos nameSourcePos() {
+      return var.definition();
+    }
+
     public DoBind(@NotNull WithPos<Expr> expr) {
       this(expr.sourcePos(), LocalVar.IGNORED, expr);
     }
@@ -550,7 +554,12 @@ public sealed interface Expr extends AyaDocile {
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs
-  ) implements SourceNode {
+  ) implements SourceNode, Named {
+    @Override
+    public @NotNull SourcePos nameSourcePos() {
+      return bindName.sourcePos();
+    }
+
     public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs);
