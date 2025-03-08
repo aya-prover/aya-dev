@@ -133,7 +133,7 @@ public class LspTest {
     var inLetTele = new XY(14, 33);       // (e : _Nat)
     var inLetResult = new XY(14, 40);     // : _Nat
     var inLetBody = new XY(14, 52);       // _c a a
-    var inSucClause = new XY(15, 13);     // suc a => _a
+    var inSucClause = new XY(15, 31);     // "114" in _a
 
     var result0 = runWalker(stmt, inTelescope);
     var result1 = runWalker(stmt, inResult);

@@ -227,6 +227,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     match.clauses().forEach(this::visitClause);
   }
 
+  // scope introducer
   default void visitLetBind(@NotNull Expr.LetBind bind) {
     var result = bind.result();
     // visit let bind
@@ -286,6 +287,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitTelescope(telescopic.telescope.view(), telescopic.result);
   }
 
+  // scope introducer
   default void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     params.forEach(this::visitParam);
     if (result != null) visitExpr(result);
