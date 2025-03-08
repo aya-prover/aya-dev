@@ -640,13 +640,8 @@ public sealed interface Expr extends AyaDocile {
     /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(d -> f.accept(d.discr()));
-      // do not foreach [clauses]
+      clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
-    }
-
-    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f, @NotNull Consumer<Pattern.@NotNull Clause> g) {
-      forEach(f);
-      clauses.forEach(g);
     }
   }
 
@@ -676,7 +671,9 @@ public sealed interface Expr extends AyaDocile {
 
   /// convert flattened terms into nested right-associate terms
   ///
-  /// @implSpec `returned.pos() == sourcePos` if `params.isNotEmpty()`, otherwise `returned == body`
+  /// @param sourcePos the source pos of the whole nested structure,
+  ///                  should be the same as `body.sourcePos()` if `params.isEmpty()`.
+  /// @implSpec `returns.sourcePos() == sourcePos`
   static <P extends SourceNode, E> @NotNull WithPos<E> buildNested(
     @NotNull SourcePos sourcePos,
     @NotNull SeqView<P> params,
