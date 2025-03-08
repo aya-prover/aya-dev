@@ -6,12 +6,8 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import org.aya.generic.AyaDocile;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.Tokens;
-import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.Command;
@@ -20,32 +16,17 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
-import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/// TODO: move to `ide`
 /// ContextWalker traversal the concrete syntax tree to target position, record all available variable.
 public class ContextWalker implements SyntaxNodeAction.Cursor {
-  /// @param var either [LocalVar] or [GeneralizedVar]
-  @Debug.Renderer(text = "")
-  public record ConcreteJdg(@NotNull AnyVar var, @NotNull Type userType) implements AyaDocile {
-    @Override
-    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      var typeDoc = userType.toDocile();
-      var realTypeDoc = typeDoc == null
-        ? Doc.empty()
-        : Doc.sep(Tokens.HAS_TYPE, typeDoc.toDoc(options));
-
-      return Doc.sepNonEmpty(BasePrettier.varDoc(var), realTypeDoc);
-    }
-  }
-
   private static final @NotNull LocalVar RESULT_VAR = new LocalVar("_", SourcePos.NONE);
 
-  private final @NotNull MutableMap<String, ConcreteJdg> localContext;
+  private final @NotNull MutableMap<String, Completion.CompletionItemu.Local> localContext;
   private final @NotNull MutableList<String> moduleContext;
   private final @NotNull XY xy;
 
@@ -138,12 +119,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     if (var == LocalVar.IGNORED || pos == SourcePos.NONE) return;
     // in case of the resolving failed.
     if (!(var instanceof LocalVar || var instanceof GeneralizedVar)) return;
-    this.localContext.put(var.name(), new ConcreteJdg(var, type));
+    this.localContext.put(var.name(), new Completion.CompletionItemu.Local(var, type));
   }
 
   /// @return all accessible local variables and their concrete types. The order is not guaranteed.
   /// FIXME: the order should be guaranteed, in order to handle shadowing.
-  public @NotNull ImmutableSeq<ConcreteJdg> localContext() {
+  public @NotNull ImmutableSeq<Completion.CompletionItemu.Local> localContext() {
     return localContext.valuesView().toSeq();
   }
 
