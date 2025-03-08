@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link Stmt} that is resolving, stores some extra information (i.e. the context 'inside' of it).
- * This is a functional construction, it is similar to the following agda code:
+ * It is similar to the following agda code:
  *
  * <pre>
  *   postulate
