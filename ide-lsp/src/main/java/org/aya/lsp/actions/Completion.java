@@ -4,7 +4,16 @@ package org.aya.lsp.actions;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.Tokens;
+import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.util.PrettierOptions;
 import org.javacs.lsp.CompletionItem;
 import org.javacs.lsp.CompletionItemKind;
 import org.javacs.lsp.InsertTextFormat;
@@ -20,4 +29,50 @@ public class Completion {
       item.insertTextFormat = InsertTextFormat.PlainText;
       return item;
     });
+
+  public record Telescope(@NotNull ImmutableSeq<StmtVisitor.Type> telescope, @NotNull StmtVisitor.Type result) {
+  }
+
+  // FIXME: ugly though, fix me later
+  public sealed interface CompletionItemu {
+    sealed interface Symbol extends CompletionItemu {
+      @NotNull String name();
+      @NotNull Telescope type();
+    }
+
+    record Decl(
+      @NotNull ModuleName inModule,
+      @Override @NotNull String name,
+      @Override @NotNull Telescope type
+    ) implements Symbol { }
+
+    record Module(@NotNull ModuleName moduleName) implements CompletionItemu { }
+
+    record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
+      @Override
+      public @NotNull String name() {
+        return var.name();
+      }
+
+      @Override
+      public @NotNull Telescope type() {
+        return new Telescope(ImmutableSeq.empty(), userType);
+      }
+
+      @Override
+      public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+        var typeDoc = userType.toDocile();
+        var realTypeDoc = typeDoc == null
+          ? Doc.empty()
+          : Doc.sep(Tokens.HAS_TYPE, typeDoc.toDoc(options));
+
+        return Doc.sepNonEmpty(BasePrettier.varDoc(var), realTypeDoc);
+      }
+    }
+  }
+
+  /// Do the similar job as {@link org.aya.resolve.visitor.StmtPreResolver}
+  public static @NotNull ImmutableSeq<CompletionItemu> resolveTopLevel() {
+    throw new UnsupportedOperationException("TODO");
+  }
 }
