@@ -95,7 +95,7 @@ public record AyaSccTycker(
   private void checkUnit(@NotNull TyckOrder order) {
     if (order.unit() instanceof FnDecl fn && fn.body instanceof FnBody.ExprBody) {
       if (selfReferencing(resolveInfo.depGraph(), order)) {
-        fail(new BadRecursion(fn.sourcePos(), fn.ref, null));
+        fail(new BadRecursion(fn.nameSourcePos(), fn.ref, null));
         throw new SccTyckingFailed(ImmutableSeq.of(order));
       }
       check(new TyckOrder.Body(fn));
@@ -125,7 +125,7 @@ public record AyaSccTycker(
     var graph = CallGraph.<Callable.Tele, TyckDef>create();
     fn.forEach(def -> new CallResolver(resolveInfo.makeTyckState(), def, targets, graph).check());
     graph.findBadRecursion().view()
-      .sorted(Comparator.comparing(a -> domRef(a).concrete.sourcePos()))
+      .sorted(Comparator.comparing(a -> domRef(a).concrete.nameSourcePos()))
       .forEach(f -> {
         var ref = domRef(f);
         if (ref.core instanceof FnDef fnDef) {
@@ -134,7 +134,7 @@ public record AyaSccTycker(
           // what they're doing. So we take extra care and mark it as opaque.
           fnDef.modifiers().add(Modifier.Opaque);
         }
-        fail(new BadRecursion(ref.concrete.sourcePos(), ref, f));
+        fail(new BadRecursion(ref.concrete.nameSourcePos(), ref, f));
       });
   }
 

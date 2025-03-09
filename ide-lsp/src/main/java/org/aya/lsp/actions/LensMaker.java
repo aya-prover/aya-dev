@@ -43,7 +43,7 @@ public record LensMaker(
       Resolver.withChildren(maybe).forEach(dv -> {
         var refs = FindReferences.findRefsOutsideDefs(SeqView.of(dv), libraries).toSeq();
         if (!refs.isEmpty()) {
-          var sourcePos = dv.concrete.sourcePos();
+          var sourcePos = dv.concrete.nameSourcePos();
           var uri = LspRange.toFileUri(sourcePos);
           var range = LspRange.toRange(sourcePos);
 

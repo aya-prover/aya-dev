@@ -14,7 +14,7 @@ public sealed interface PrimError extends TyckError {
       return Doc.sep(Doc.code(prim.toDoc(options)), Doc.english("is expected to have a return type"));
     }
 
-    @Override public @NotNull SourcePos sourcePos() { return prim.sourcePos(); }
+    @Override public @NotNull SourcePos sourcePos() { return prim.nameSourcePos(); }
   }
 
   record BadSignature(
@@ -30,7 +30,7 @@ public sealed interface PrimError extends TyckError {
       return info.describeUnify(options, comparison, prologue, Doc.english("but you gave"));
     }
     @Override public @NotNull SourcePos sourcePos() {
-      return prim.sourcePos();
+      return prim.nameSourcePos();
     }
   }
 

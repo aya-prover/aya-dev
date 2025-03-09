@@ -3,6 +3,7 @@
 package org.aya.syntax.concrete.stmt.decl;
 
 import org.aya.generic.stmt.TyckUnit;
+import org.aya.syntax.concrete.Named;
 import org.aya.syntax.concrete.stmt.BindBlock;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
@@ -20,15 +21,16 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  * @see Decl
  */
-public sealed abstract class Decl implements SourceNode, Stmt, TyckUnit, OpDecl
+public sealed abstract class Decl implements SourceNode, Named, Stmt, TyckUnit, OpDecl
   permits ClassDecl, TeleDecl {
   public @NotNull DeclInfo info;
   public boolean isExample;
   public @NotNull PragmaInfo pragmaInfo = new PragmaInfo();
-  public @NotNull Object suppresses = null;
 
   public final @NotNull BindBlock bindBlock() { return info.bindBlock(); }
   public final @NotNull SourcePos entireSourcePos() { return info.entireSourcePos(); }
+  @Override public @NotNull SourcePos nameSourcePos() { return info.sourcePos(); }
+  // TODO: use info.entireSourcePos after TyckUnit extends Named instead of SourceNode
   @Override public final @NotNull SourcePos sourcePos() { return info.sourcePos(); }
   @Override public final @NotNull Stmt.Accessibility accessibility() { return info.accessibility(); }
   @Override public final @Nullable OpDecl.OpInfo opInfo() { return info.opInfo(); }

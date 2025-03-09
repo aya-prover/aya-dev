@@ -29,7 +29,7 @@ public interface GotoDefinition {
     return Resolver.resolveVar(source, xy).mapNotNull(pos -> {
       var from = pos.sourcePos();
       var target = switch (pos.data()) {
-        case DefVar<?, ?> defVar -> defVar.concrete.sourcePos();
+        case DefVar<?, ?> defVar -> defVar.concrete.nameSourcePos();
         case LocalVar localVar -> localVar.definition();
         case ModuleVar moduleVar -> mockSourcePos(libraries, moduleVar);
         case GeneralizedVar gVar -> gVar.sourcePos;
