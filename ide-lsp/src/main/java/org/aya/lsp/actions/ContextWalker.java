@@ -67,6 +67,8 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   @Override
   public void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     var telescope = params;
+
+    // in order to [indexWhere]
     if (result != null) telescope = telescope.appended(new Expr.Param(result.sourcePos(), RESULT_VAR, result, true));
 
     var idx = telescope.indexWhere(it -> accept(xy, it.sourcePos()));
@@ -123,7 +125,6 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   }
 
   /// @return all accessible local variables and their concrete types. The order is not guaranteed.
-  /// FIXME: the order should be guaranteed, in order to handle shadowing.
   public @NotNull ImmutableSeq<Completion.CompletionItemu.Local> localContext() {
     return localContext.valuesView().toSeq();
   }

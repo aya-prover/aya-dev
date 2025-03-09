@@ -140,10 +140,10 @@ public record StmtTycker(
               hasLhsError = patResult.hasLhsError();
               if (!hasLhsError) {
                 var rawParams = signature.params();
-                var confluence = new YouTrack(rawParams, tycker, fnDecl.sourcePos());
+                var confluence = new YouTrack(rawParams, tycker, fnDecl.nameSourcePos());
                 var classes = PatClassifier.classify(
                   patResult.clauses().view().map(Pat.Preclause::pats),
-                  rawParams.view(), tycker, fnDecl.sourcePos());
+                  rawParams.view(), tycker, fnDecl.nameSourcePos());
                 var absurds = patResult.absurdPrefixCount();
                 coreBody.classes = classes.map(cls -> cls.ignoreAbsurd(absurds));
                 confluence.check(coreBody, signature.result());
@@ -155,7 +155,7 @@ public record StmtTycker(
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }
             if (!hasLhsError) {
-              var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
+              var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.nameSourcePos());
               hitConflChecker.check();
             }
             yield def;
@@ -190,7 +190,7 @@ public record StmtTycker(
       case DataDecl data -> {
         var teleTycker = new TeleTycker.Default(tycker);
         var result = data.result;
-        if (result == null) result = new WithPos<>(data.sourcePos(), new Expr.Sort(SortKind.Type, 0));
+        if (result == null) result = new WithPos<>(data.nameSourcePos(), new Expr.Sort(SortKind.Type, 0));
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
         var zonker = new Finalizer.Zonk<>(tycker);
@@ -216,7 +216,7 @@ public record StmtTycker(
           // there will be defcalls to it,
           fnRef.signature = fnRef.signature.descent(zonker::zonk).pusheen(tycker::whnf);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
-            fail(new NobodyError(decl.sourcePos(), fn.ref));
+            fail(new NobodyError(decl.nameSourcePos(), fn.ref));
         }
       }
     }
@@ -241,7 +241,7 @@ public record StmtTycker(
       .bindTele(
         tycker.state.classThis.pop(),
         new Param("self", classCall, false),
-        classRef.concrete.sourcePos()
+        classRef.concrete.nameSourcePos()
       );
 
     // self is still in the context
@@ -368,7 +368,7 @@ public record StmtTycker(
     var primRef = prim.ref;
     var core = primRef.core;
     if (prim.telescope.isEmpty() && prim.result == null) {
-      var pos = prim.sourcePos();
+      var pos = prim.nameSourcePos();
       primRef.signature = new Signature(TyckDef.defSignature(core), ImmutableSeq.fill(core.telescope().size(), pos));
       return;
     }

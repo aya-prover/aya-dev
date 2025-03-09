@@ -9,8 +9,11 @@ import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.position.SourceNode;
+import org.aya.util.position.SourcePos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+// TODO: don't extends SourceNode, extends Named
 public sealed interface TyckUnit extends SourceNode permits Stmt, Decl {
   static boolean needTyck(@NotNull TyckOrder unit, @NotNull ModulePath currentMod) {
     return needTyck(unit.unit(), currentMod);

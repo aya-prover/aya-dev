@@ -110,7 +110,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx) -> {
           setupModule(mCtx, con.ref);
-          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.sourcePos());
+          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos());
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
@@ -118,7 +118,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) -> {
           setupModule(mCtx, mem.ref);
-          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.sourcePos());
+          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos());
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
@@ -130,7 +130,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       case PrimDecl decl -> {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
-        var sourcePos = decl.sourcePos();
+        var sourcePos = decl.nameSourcePos();
         var primID = PrimDef.ID.find(name);
         if (primID == null) context.reportAndThrow(new PrimResolveError.UnknownPrim(sourcePos, name));
         var lack = factory.checkDependency(primID);
@@ -184,7 +184,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
       ModuleName.This.resolve(module),
       innerCtx.exports,
       decl.accessibility(),
-      decl.sourcePos()
+      decl.nameSourcePos()
     );
     return innerCtx;
   }
@@ -197,7 +197,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
   resolveTopLevelDecl(@NotNull D decl, @NotNull ModuleContext context) {
     var ctx = decl.isExample ? exampleContext(context) : context;
     setupModule(ctx, decl.ref());
-    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.sourcePos());
+    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
     return ctx;
   }
   private void setupModule(ModuleContext ctx, DefVar<?, ?> ref) {
