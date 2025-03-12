@@ -580,7 +580,7 @@ public sealed interface Expr extends AyaDocile {
   /// Being desugared after resolving.
   record LetOpen(
     @NotNull SourcePos sourcePos,
-    @NotNull ModuleName.Qualified componentName,
+    @NotNull WithPos<ModuleName.Qualified> componentName,
     @NotNull UseHide useHide,
     @NotNull WithPos<Expr> body
   ) implements Expr, Sugar {
@@ -598,7 +598,7 @@ public sealed interface Expr extends AyaDocile {
     public @NotNull Command.Open openCmd() {
       return new Command.Open(
         sourcePos, Stmt.Accessibility.Private,
-        componentName, useHide,
+        componentName.data(), useHide,
         false, true
       );
     }

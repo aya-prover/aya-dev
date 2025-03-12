@@ -278,6 +278,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visitLocalVarDecl(bind.bindName(), type);
         visitExpr(body);
       }
+      case Expr.LetOpen letOpen -> {
+        var module = letOpen.componentName();
+        visitModuleRef(module.sourcePos(), module.data());
+        visitExpr(letOpen.body());
+      }
       case Expr.Do du -> visitDoBinds(du.binds().view());
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null -> {
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
