@@ -747,7 +747,7 @@ public record AyaProducer(
         var useHide = node.peekChild(USE_HIDE);
 
         return new WithPos<>(pos, new Expr.LetOpen(pos,
-          component.component().resolve(component.name()),
+          new WithPos<>(component.sourcePos(), component.component().resolve(component.name())),
           useHide == null ? UseHide.EMPTY : useHide(useHide),
           body));
       }
