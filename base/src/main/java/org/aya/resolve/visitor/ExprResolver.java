@@ -179,7 +179,7 @@ public record ExprResolver(
       case Expr.LetOpen letOpen -> {
         var context = new NoExportContext(ctx);
         // open module
-        context.openModule(letOpen.componentName(), Stmt.Accessibility.Private,
+        context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
           letOpen.sourcePos(), letOpen.useHide());
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
