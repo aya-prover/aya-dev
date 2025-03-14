@@ -29,10 +29,8 @@ public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporte
   @Override public MutableList<LocalVar> collect(@NotNull MutableList<LocalVar> container) {
     return parent.collect(container);
   }
-
-  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
-    @NotNull String name, @NotNull SourcePos sourcePos
-  ) {
+  @Override
+  public @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
     return null;
   }
 
@@ -40,7 +38,7 @@ public record ReporterContext(@NotNull Context parent, @NotNull Reporter reporte
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
