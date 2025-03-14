@@ -4,6 +4,7 @@ package org.aya.resolve.visitor;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.stmt.TyckUnit;
+import org.aya.resolve.context.Candidate;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.compile.JitCon;
@@ -25,6 +26,7 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
   private @NotNull Context context;
   private final @NotNull ImmutableSeq<LocalVar> mercy;
   private final @NotNull Consumer<TyckUnit> parentAdd;
+  private boolean hasError;
 
   public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd) {
     this.context = context;
@@ -38,30 +40,44 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
   public @NotNull Pattern post(@NotNull SourcePos pos, @NotNull Pattern pat) {
     return switch (pat) {
       case Pattern.Bind bind -> {
-        // Check whether this {bind} is a Con
-        var conMaybe = context.iterate(ctx -> isCon(ctx.getUnqualifiedLocalMaybe(bind.bind().name(), pos)));
-        if (conMaybe != null) {
-          // It wants to be a con!
-          addReference(conMaybe);
-          yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
-        }
+        try {
+          // Check whether this {bind} is a Con
+          var conMaybe = context.iterate(ctx -> isCon(ctx.getUnqualifiedLocalMaybe(bind.bind().name(), pos)));
+          if (conMaybe != null) {
+            // It wants to be a con!
+            addReference(conMaybe);
+            yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
+          }
 
-        // It is not a constructor, it is a bind
-        context = context.bind(bind.bind(), this::toWarn);
-        yield bind;
+          // It is not a constructor, it is a bind
+          context = context.bind(bind.bind(), this::toWarn);
+          yield bind;
+        } catch (Context.ResolvingInterruptedException _) {
+          foundError();
+          // TODO: bad con
+          throw new UnsupportedOperationException("TODO");
+        }
       }
       case Pattern.QualifiedRef qref -> {
         var qid = qref.qualifiedID();
         if (!(qid.component() instanceof ModuleName.Qualified mod))
           throw new Panic("QualifiedRef#qualifiedID should be qualified");
-        var conMaybe = context.iterate(ctx -> isCon(ctx.getQualifiedLocalMaybe(mod, qid.name(), pos)));
-        if (conMaybe != null) {
-          addReference(conMaybe);
-          yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
+        try {
+          var conMaybe = context.iterate(ctx -> isCon(ctx.getQualifiedLocalMaybe(mod, qid.name(), pos)));
+          if (conMaybe != null) {
+            addReference(conMaybe);
+            yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
+          }
+
+          // reuse try-catch
+          // !! No Such Thing !!
+          context.reportAndThrow(new NameProblem.QualifiedNameNotFoundError(qid.component(), qid.name(), pos));
+        } catch (Context.ResolvingInterruptedException _) {
+          foundError();
+          // TODO: bad con
         }
 
-        // !! No Such Thing !!
-        yield context.reportAndThrow(new NameProblem.QualifiedNameNotFoundError(qid.component(), qid.name(), pos));
+        throw new UnsupportedOperationException("TODO");
       }
       case Pattern.As as -> {
         context = context.bind(as.as(), this::toWarn);
@@ -71,8 +87,10 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
     };
   }
 
-  private boolean toWarn(@Nullable AnyVar var) {
-    return var instanceof LocalVar && !mercy.contains(var);
+  private boolean toWarn(@Nullable Candidate<AnyVar> var) {
+    return var instanceof Candidate.Defined<AnyVar> defined
+      && defined.get() instanceof LocalVar local
+      && !mercy.contains(local);
   }
 
   private void addReference(@NotNull AnyDefVar defVar) {
@@ -85,5 +103,13 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
       case CompiledVar var when var.core() instanceof JitCon -> var;
       case null, default -> null;
     };
+  }
+
+  private void foundError() {
+    this.hasError = true;
+  }
+
+  public boolean hasError() {
+    return hasError;
   }
 }

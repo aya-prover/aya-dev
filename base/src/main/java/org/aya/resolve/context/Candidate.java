@@ -11,6 +11,8 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
+
 /**
  * Candidate represents a list of candidate of symbol resolving
  */
@@ -26,6 +28,7 @@ public sealed interface Candidate<T> {
   boolean isEmpty();
   @NotNull ImmutableSeq<ModuleName> from();
   boolean contains(@NotNull ModuleName modName);
+  void forEach(@NotNull Consumer<T> f);
 
   static <T> @NotNull Candidate<T> of(@NotNull ModuleName fromModule, @NotNull T symbol) {
     return switch (fromModule) {
@@ -61,6 +64,7 @@ public sealed interface Candidate<T> {
     }
     @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.of(ModuleName.This); }
     @Override public boolean contains(@NotNull ModuleName modName) { return modName == ModuleName.This; }
+    @Override public void forEach(@NotNull Consumer<T> f) { f.accept(symbol); }
   }
 
   /**
@@ -94,6 +98,7 @@ public sealed interface Candidate<T> {
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
+
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
@@ -104,6 +109,11 @@ public sealed interface Candidate<T> {
           yield new Imported<>(ImmutableMap.from(symbols));
         }
       };
+    }
+
+    @Override
+    public void forEach(@NotNull Consumer<T> f) {
+      symbols.forEach((_, s) -> f.accept(s));
     }
   }
 }

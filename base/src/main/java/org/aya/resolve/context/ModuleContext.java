@@ -68,17 +68,13 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return modules().getOrNull(modName);
   }
 
-  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var symbol = symbols().get(name);
-    if (symbol.isEmpty()) return null;
-    if (symbol.isAmbiguous()) reportAndThrow(new NameProblem.AmbiguousNameError(
-      name, symbol.from(), sourcePos));
-
-    return symbol.get();
+  @Override
+  default @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    return symbols().get(name);
   }
 
   @Override
-  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) throws ResolvingInterruptedException {
     var mod = getModuleLocalMaybe(modName);
     if (mod == null) return null;
     var symbol = mod.symbols().getOrNull(name);
@@ -99,10 +95,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     var export = module.exports();
     importModule(modName, export, accessibility, sourcePos);
-    export.modules().forEach((qname, innerMod) ->
+    export.modules().forEachChecked((qname, innerMod) ->
       importModule(modName.concat(qname), innerMod, accessibility, sourcePos));
   }
 
@@ -118,7 +114,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     var exists = modules().getOrNull(modName);
     if (exists != null) {
       if (exists == moduleExport) return;
@@ -136,7 +132,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     @NotNull UseHide useHide
-  ) {
+  ) throws ResolvingInterruptedException {
     openModule(modName, accessibility,
       useHide.list().map(UseHide.Name::id),
       useHide.renaming(),
@@ -157,7 +153,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
     UseHide.Strategy strategy
-  ) {
+  ) throws ResolvingInterruptedException {
     var modExport = getModuleMaybe(modName);
     if (modExport == null)
       reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
@@ -174,11 +170,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     reportAll(filterProblem.concat(mapProblem));
 
     var renamed = mapRes.result();
-    renamed.symbols().forEach((name, ref) ->
+    renamed.symbols().forEachChecked((name, ref) ->
       importSymbol(ref, modName, name, accessibility, sourcePos));
 
     // import the modules that {renamed} exported
-    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
+    renamed.modules().forEachChecked((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
   }
 
   /**
@@ -190,12 +186,12 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     var symbols = symbols();
     var candidates = symbols.get(name);
     if (candidates.isEmpty()) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null
-        && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
+      var candy = getCandidateMaybe(name, sourcePos);
+      if (candy != null && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
         fail(new NameProblem.ShadowingWarn(name, sourcePos));
       }
@@ -225,7 +221,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) { return true; }
 
-  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
+  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) throws ResolvingInterruptedException {
     importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos);
   }
 }

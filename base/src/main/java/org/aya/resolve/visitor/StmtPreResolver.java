@@ -6,10 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
-import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.NoExportContext;
-import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.context.ReporterContext;
+import org.aya.resolve.context.*;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -22,6 +19,7 @@ import org.aya.syntax.ref.QPath;
 import org.aya.util.Panic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +31,19 @@ import java.util.function.Function;
 /**
  * simply adds all top-level names to the context
  */
-public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
-  /**
-   * Resolve {@link Stmt}s under {@param context}.
-   *
-   * @return the context of the body of each {@link Stmt}, where imports and opens are stripped.
-   */
+public final class StmtPreResolver {
+  private final @NotNull ModuleLoader loader;
+  private final @NotNull ResolveInfo resolveInfo;
+  private boolean hasError;
+
+  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
+    this.loader = loader;
+    this.resolveInfo = resolveInfo;
+  }
+
+  /// Resolve {@link Stmt}s under {@param context}.
+  ///
+  /// @return the context of the body of each {@link Stmt}, where imports and opens are stripped.
   public ImmutableSeq<ResolvingStmt> resolveStmt(@NotNull ImmutableSeq<Stmt> stmts, ModuleContext context) {
     return stmts.mapNotNull(stmt -> resolveStmt(stmt, context));
   }
@@ -50,8 +55,10 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var wholeModeName = context.modulePath().derive(mod.name());
         // Is there a file level module with path {context.moduleName}::{mod.name} ?
         if (loader.existsFileLevelModule(wholeModeName)) {
-          context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+          foundError(context, new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+          yield null;     // TODO: Is this Problem critical? or we can continue the resolving.
         }
+
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
         context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
@@ -200,7 +207,17 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
     return ctx;
   }
+
   private void setupModule(ModuleContext ctx, DefVar<?, ?> ref) {
     ref.module = new QPath(ctx.modulePath(), resolveInfo.modulePath().size());
+  }
+
+  public void foundError(@NotNull Context context, @NotNull Problem problem) {
+    context.fail(problem);
+    this.hasError = true;
+  }
+
+  public boolean hasError() {
+    return hasError;
   }
 }

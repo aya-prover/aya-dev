@@ -36,12 +36,10 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  ) {
-    if (name.equals(this.name)) return ref;
-    else return null;
+  @Override
+  public @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    if (name.equals(this.name)) return new Candidate.Defined<>(ref);
+    return null;
   }
 
   @Override
@@ -49,7 +47,7 @@ public record BindContext(
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
   }
 
