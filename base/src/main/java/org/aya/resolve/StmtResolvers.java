@@ -18,6 +18,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
   }
 
   private void resolveStmts(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
+    // TODO: handle return value
     StmtResolver.resolveStmt(stmts, info);
   }
 
