@@ -31,23 +31,42 @@ import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Resolves bindings.
  *
- * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
- *                           and represents the allowed generalized level vars otherwise
- * @param allowGeneralizing  allow new generalized vars to be introduced
  * @author re-xyr, ice1000
  * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
-public record ExprResolver(
-  @NotNull Context ctx,
-  boolean allowGeneralizing,
-  @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
-  @NotNull MutableList<TyckOrder> reference,
-  @NotNull MutableStack<Where> where
-) implements PosedUnaryOperator<Expr> {
+public final class ExprResolver implements PosedUnaryOperator<Expr> {
+  private final @NotNull Context ctx;
+  private final boolean allowGeneralizing;
+  private final @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes;
+  private final @NotNull MutableList<TyckOrder> reference;
+  private final @NotNull MutableStack<Where> where;
+  private boolean hasError = false;
+
+  /**
+   * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
+   *                           and represents the allowed generalized level vars otherwise
+   * @param allowGeneralizing  allow new generalized vars to be introduced
+   */
+  public ExprResolver(
+    @NotNull Context ctx,
+    boolean allowGeneralizing,
+    @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
+    @NotNull MutableList<TyckOrder> reference,
+    @NotNull MutableStack<Where> where
+  ) {
+    this.ctx = ctx;
+    this.allowGeneralizing = allowGeneralizing;
+    this.allowedGeneralizes = allowedGeneralizes;
+    this.reference = reference;
+    this.where = where;
+  }
+
   public record LiterateResolved(
     ImmutableSeq<Expr.Param> params,
     WithPos<Expr> expr
@@ -65,7 +84,7 @@ public record ExprResolver(
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().valuesView().toSeq();
+    var view = resolver.allowedGeneralizes.valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }
 
@@ -94,9 +113,15 @@ public record ExprResolver(
       case Expr.Proj(var tup, var ix, _, var theCore) -> {
         if (ix.isLeft()) yield expr;
         var projName = ix.getRightValue();
-        var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
-        yield new Expr.Proj(tup, ix, resolvedIx, theCore);
+        try {
+          var resolvedIx = ctx.getMaybe(projName);
+          if (resolvedIx == null)
+            ctx.reportAndThrow(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
+          yield new Expr.Proj(tup, ix, resolvedIx, theCore);
+        } catch (Context.ResolvingInterruptedException _) {
+          foundError();
+          yield expr;
+        }
       }
       case Expr.Hole(var expl, var fill, var core, var local) -> {
         assert local.isEmpty();
@@ -131,30 +156,35 @@ public record ExprResolver(
         right -> right.descent(this)
       ));
       case Expr.Unresolved(var name) -> {
-        var resolved = resolve(name);
-        AnyVar finalVar = switch (resolved) {
-          case GeneralizedVar generalized -> {
-            // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
-            if (allowGeneralizing) {
-              // Ordered set semantics. Do not expect too many generalized vars.
-              var owner = generalized.owner;
-              assert owner != null : "Sanity check";
-              var param = owner.toExpr(false, generalized.toLocal());
-              allowedGeneralizes.put(generalized, param);
-              addReference(owner);
-              yield param.ref();
-            } else {
-              yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
+        try {
+          var resolved = resolve(name);
+          AnyVar finalVar = switch (resolved) {
+            case GeneralizedVar generalized -> {
+              // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
+              if (allowGeneralizing) {
+                // Ordered set semantics. Do not expect too many generalized vars.
+                var owner = generalized.owner;
+                assert owner != null : "Sanity check";
+                var param = owner.toExpr(false, generalized.toLocal());
+                allowedGeneralizes.put(generalized, param);
+                addReference(owner);
+                yield param.ref();
+              } else {
+                yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
+              }
             }
-          }
-          case DefVar<?, ?> defVar -> {
-            addReference(defVar);
-            yield defVar;
-          }
-          case AnyVar var -> var;
-        };
+            case DefVar<?, ?> defVar -> {
+              addReference(defVar);
+              yield defVar;
+            }
+            case AnyVar var -> var;
+          };
 
-        yield new Expr.Ref(finalVar);
+          yield new Expr.Ref(finalVar);
+        } catch (Context.ResolvingInterruptedException _) {
+          foundError();
+          yield expr;
+        }
       }
       case Expr.Let let -> {
         // resolve letBind
@@ -179,8 +209,14 @@ public record ExprResolver(
       case Expr.LetOpen letOpen -> {
         var context = new NoExportContext(ctx);
         // open module
-        context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
-          letOpen.sourcePos(), letOpen.useHide());
+        try {
+          context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
+            letOpen.sourcePos(), letOpen.useHide());
+        } catch (Context.ResolvingInterruptedException e) {
+          foundError();
+          // don't panic, continue the resolving
+        }
+
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
       case Expr.Match match -> {
@@ -262,7 +298,7 @@ public record ExprResolver(
     });
   }
 
-  public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
+  public @NotNull AnyVar resolve(@NotNull QualifiedID name) throws Context.ResolvingInterruptedException {
     var result = ctx.get(name);
     if (result instanceof GeneralizedVar gvar) {
       var gened = allowedGeneralizes.getOrNull(gvar);
@@ -279,6 +315,12 @@ public record ExprResolver(
     resolver.enter(initial);
     return resolver;
   }
+
+  public @NotNull Context ctx() { return ctx; }
+  public @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes() { return allowedGeneralizes; }
+  public @NotNull MutableList<TyckOrder> reference() { return reference; }
+  public boolean hasError() { return hasError; }
+  public void foundError() { this.hasError = true; }
 
   public enum Where {
     // Data head & Fn head
