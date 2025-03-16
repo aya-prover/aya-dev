@@ -1,34 +1,28 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.action;
 
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
-import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.util.PrettierOptions;
-import org.javacs.lsp.CompletionItem;
-import org.javacs.lsp.CompletionItemKind;
-import org.javacs.lsp.InsertTextFormat;
 import org.jetbrains.annotations.NotNull;
 
 public class Completion {
-  public static final @NotNull ImmutableSeq<CompletionItem> KEYWORD = ImmutableArray.Unsafe.wrap(AyaParserDefinitionBase.KEYWORDS.getTypes())
-    .map(type -> {
-      var item = new CompletionItem();
-      item.label = type.toString();
-      item.kind = CompletionItemKind.Keyword;
-      item.insertText = item.label;
-      item.insertTextFormat = InsertTextFormat.PlainText;
-      return item;
-    });
+  // public static final @NotNull ImmutableSeq<CompletionItem> KEYWORD = ImmutableArray.Unsafe.wrap(AyaParserDefinitionBase.KEYWORDS.getTypes())
+  //   .map(type -> {
+  //     var item = new CompletionItem();
+  //     item.label = type.toString();
+  //     item.kind = CompletionItemKind.Keyword;
+  //     item.insertText = item.label;
+  //     item.insertTextFormat = InsertTextFormat.PlainText;
+  //     return item;
+  //   });
 
   public record Telescope(@NotNull ImmutableSeq<StmtVisitor.Type> telescope, @NotNull StmtVisitor.Type result) {
   }
