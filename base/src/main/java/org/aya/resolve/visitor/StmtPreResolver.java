@@ -61,18 +61,33 @@ public final class StmtPreResolver {
 
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
-        context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
+
+        try {
+          context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
+        } catch (Context.ResolvingInterruptedException e) {
+          foundError();
+        }
+
         yield new ResolvingStmt.ModStmt(children);
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path();
         var success = loader.load(modulePath);
-        if (success == null)
-          context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+        if (success == null) {
+          foundError(context, new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+          yield null;
+        }
+
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
-        context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+
+        try {
+          context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+        } catch (Context.ResolvingInterruptedException e) {
+          foundError();
+        }
+
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
         yield null;
@@ -82,13 +97,20 @@ public final class StmtPreResolver {
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
-        ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
+
+        try {
+          ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
+        } catch (Context.ResolvingInterruptedException e) {
+          foundError();
+        }
+
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
           resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc);
         });
+
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           // skip if there is no `as` or it is qualified.
@@ -104,8 +126,13 @@ public final class StmtPreResolver {
         yield null;
       }
       case Generalize variables -> {
-        for (var variable : variables.variables)
-          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
+        for (var variable : variables.variables) {
+          try {
+            context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
+          } catch (Context.ResolvingInterruptedException e) {
+            foundError();
+          }
+        }
         yield new ResolvingStmt.GenStmt(variables, context);
       }
     };
@@ -117,7 +144,11 @@ public final class StmtPreResolver {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx) -> {
           setupModule(mCtx, con.ref);
-          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos());
+          try {
+            mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos());
+          } catch (Context.ResolvingInterruptedException e) {
+            foundError();
+          }
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
@@ -125,7 +156,11 @@ public final class StmtPreResolver {
         var ctx = resolveTopLevelDecl(decl, context);
         var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) -> {
           setupModule(mCtx, mem.ref);
-          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos());
+          try {
+            mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos());
+          } catch (Context.ResolvingInterruptedException e) {
+            foundError();
+          }
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
@@ -138,14 +173,22 @@ public final class StmtPreResolver {
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.nameSourcePos();
+
         var primID = PrimDef.ID.find(name);
-        if (primID == null) context.reportAndThrow(new PrimResolveError.UnknownPrim(sourcePos, name));
-        var lack = factory.checkDependency(primID);
-        if (lack.isNotEmpty() && lack.get().isNotEmpty())
-          context.reportAndThrow(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
-        else if (factory.isForbiddenRedefinition(primID, false))
-          context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
-        factory.factory(primID, decl.ref);
+        if (primID == null) {
+          foundError(context, new PrimResolveError.UnknownPrim(sourcePos, name));
+        } else {
+          var lack = factory.checkDependency(primID);
+          if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
+            foundError(context, new PrimResolveError.Dependency(name, lack.get(), sourcePos));
+          } else if (factory.isForbiddenRedefinition(primID, false)) {
+            foundError(context, new PrimResolveError.Redefinition(name, sourcePos));
+          }
+
+          factory.factory(primID, decl.ref);
+        }
+
+        // whatever success or not, we resolve the decl
         var resolvedCtx = resolveTopLevelDecl(decl, context);
         yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
@@ -187,12 +230,17 @@ public final class StmtPreResolver {
     var innerCtx = context.derive(decl.ref().name(), suppress(context.reporter(), decl));
     childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
     var module = decl.ref().name();
-    context.importModule(
-      ModuleName.This.resolve(module),
-      innerCtx.exports,
-      decl.accessibility(),
-      decl.nameSourcePos()
-    );
+    try {
+      context.importModule(
+        ModuleName.This.resolve(module),
+        innerCtx.exports,
+        decl.accessibility(),
+        decl.nameSourcePos()
+      );
+    } catch (Context.ResolvingInterruptedException e) {
+      foundError();
+    }
+
     return innerCtx;
   }
 
@@ -204,7 +252,13 @@ public final class StmtPreResolver {
   resolveTopLevelDecl(@NotNull D decl, @NotNull ModuleContext context) {
     var ctx = decl.isExample ? exampleContext(context) : context;
     setupModule(ctx, decl.ref());
-    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
+
+    try {
+      ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
+    } catch (Context.ResolvingInterruptedException e) {
+      foundError();
+    }
+
     return ctx;
   }
 
@@ -212,8 +266,12 @@ public final class StmtPreResolver {
     ref.module = new QPath(ctx.modulePath(), resolveInfo.modulePath().size());
   }
 
-  public void foundError(@NotNull Context context, @NotNull Problem problem) {
+  private void foundError(@NotNull Context context, @NotNull Problem problem) {
     context.fail(problem);
+    foundError();
+  }
+
+  private void foundError() {
     this.hasError = true;
   }
 

@@ -4,11 +4,10 @@ package org.aya.lsp;
 
 import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
 import org.aya.ide.util.XY;
-import org.aya.lsp.actions.ContextWalker;
+import org.aya.ide.action.ContextWalker;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
