@@ -36,7 +36,7 @@ import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
 import org.aya.ide.LspPrimFactory;
 import org.aya.ide.action.*;
-import org.aya.lsp.actions.Completion;
+import org.aya.ide.action.Completion;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
@@ -48,8 +48,6 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.syntax.AyaFiles;
-import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.tyck.error.Goal;
 import org.aya.util.FileUtil;
 import org.aya.util.PrettierOptions;
 import org.aya.util.reporter.BufferReporter;
@@ -322,7 +320,8 @@ public class AyaLanguageServer implements LanguageServer {
   /// In order to compute the completion list, we need a {@link org.aya.tyck.error.Goal} to do this.
   /// Completion also provides a keyword list and all available top level definition.
   @Override public Optional<CompletionList> completion(TextDocumentPositionParams position) {
-    return Optional.of(new CompletionList(false, Completion.KEYWORD.asJava()));
+    return Optional.empty();
+    // return Optional.of(new CompletionList(false, Completion.KEYWORD.asJava()));
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {

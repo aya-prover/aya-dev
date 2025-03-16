@@ -11,14 +11,29 @@ import org.aya.resolve.visitor.StmtResolver;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 
-public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo info) {
+import java.util.Objects;
+
+public final class StmtResolvers {
+  private final @NotNull ModuleLoader loader;
+  private final @NotNull ResolveInfo info;
+  private boolean hasError = false;
+
+  public StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo info) {
+    this.loader = loader;
+    this.info = info;
+  }
+
   private @NotNull ImmutableSeq<ResolvingStmt> fillContext(@NotNull ImmutableSeq<Stmt> stmts) {
-    return new StmtPreResolver(loader, info).resolveStmt(stmts, info.thisModule());
+    var resolver = new StmtPreResolver(loader, info);
+    var result = resolver.resolveStmt(stmts, info.thisModule());
+    this.hasError |= resolver.hasError();
+    return result;
   }
 
   private void resolveStmts(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
     // TODO: handle return value
-    StmtResolver.resolveStmt(stmts, info);
+    var hasError = StmtResolver.resolveStmt(stmts, info);
+    this.hasError |= hasError;
   }
 
   private void resolveBind(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
@@ -26,6 +41,8 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
     binder.resolveBind(stmts);
     info.opRename().forEach((var, rename) ->
       binder.bind(rename.bindCtx(), rename.bind(), var));
+
+    // TODO: hasError
   }
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
@@ -41,5 +58,9 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
     resolveStmts(resolving); // resolve mutates stmts
     resolveBind(resolving); // mutates bind blocks
     info.opSet().reportIfCyclic();
+  }
+
+  public boolean hasError() {
+    return hasError;
   }
 }
