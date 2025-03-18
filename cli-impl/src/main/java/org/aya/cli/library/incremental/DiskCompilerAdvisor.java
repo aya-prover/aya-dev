@@ -19,6 +19,7 @@ import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.core.def.TopLevelDef;
@@ -26,6 +27,7 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.FileUtil;
+import org.aya.util.Panic;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +90,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull Path libraryRoot,
     @NotNull ModuleLoader recurseLoader,
     @NotNull PrimFactory primFactory
-  ) throws ClassNotFoundException, MalformedURLException {
+  ) throws ClassNotFoundException, MalformedURLException, Context.ResolvingInterruptedException {
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var coreDir = computeBaseDir(libraryRoot);
     cl.addURL(coreDir);
@@ -102,7 +104,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
-  ) throws IOException, ClassNotFoundException {
+  ) throws IOException, ClassNotFoundException, Context.ResolvingInterruptedException {
     if (corePath == null || sourcePath == null) return null;
     if (!Files.exists(corePath)) return null;
 
@@ -131,11 +133,15 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
 
     // save compiled core and load compiled ResolveInfo
     var coreMod = CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
-    return doLoadCompiledCore(
-      coreMod, resolveInfo.reporter(),
-      resolveInfo.modulePath(), file.underlyingFile(), libraryRoot,
-      recurseLoader, resolveInfo.primFactory()
-    );
+    try {
+      return doLoadCompiledCore(
+        coreMod, resolveInfo.reporter(),
+        resolveInfo.modulePath(), file.underlyingFile(), libraryRoot,
+        recurseLoader, resolveInfo.primFactory()
+      );
+    } catch (Context.ResolvingInterruptedException e) {
+      return Panic.unreachable();
+    }
   }
 
   private static @NotNull Path computeBaseDir(@NotNull Path outDir) {
