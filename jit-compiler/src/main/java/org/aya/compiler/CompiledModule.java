@@ -178,7 +178,7 @@ public record CompiledModule(
   private void loadModule(
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
     @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
-  ) {
+  ) throws Context.ResolvingInterruptedException {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var object = DeState.getJitDef(jitClass);
       // Not all JitUnit are JitDef, see JitMatchy
@@ -230,7 +230,7 @@ public record CompiledModule(
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
       var mod = success.thisModule();
       thisResolve.thisModule().importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
+      reExports.getOption(modName).forEachChecked(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
         useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
