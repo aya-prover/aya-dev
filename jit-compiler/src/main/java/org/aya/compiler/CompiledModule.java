@@ -12,6 +12,7 @@ import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
@@ -159,14 +160,14 @@ public record CompiledModule(
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context,
     @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory
-  ) {
+  ) throws Context.ResolvingInterruptedException {
     var state = new DeState(classLoader);
     return toResolveInfo(loader, context, state, primFactory, new ShapeFactory());
   }
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory
-  ) {
+  ) throws Context.ResolvingInterruptedException {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
     shallowResolve(loader, resolveInfo);
     loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()));
@@ -218,7 +219,7 @@ public record CompiledModule(
   /**
    * like {@link org.aya.resolve.visitor.StmtPreResolver} but only resolve import
    */
-  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
+  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) throws Context.ResolvingInterruptedException {
     for (var anImport : imports) {
       var modName = anImport.path;
       var modRename = ModuleName.qualified(anImport.rename);

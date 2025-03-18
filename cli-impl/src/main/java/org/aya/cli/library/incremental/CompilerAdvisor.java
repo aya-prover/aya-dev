@@ -7,6 +7,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.GenericAyaParser;
@@ -67,7 +68,7 @@ public interface CompilerAdvisor extends AutoCloseable {
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
-  ) throws IOException, ClassNotFoundException;
+  ) throws IOException, ClassNotFoundException, Context.ResolvingInterruptedException;
 
   /**
    * Save the well-typed defs as compiled defs
@@ -94,7 +95,7 @@ public interface CompilerAdvisor extends AutoCloseable {
     assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
       return doLoadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
-    } catch (IOException | ClassNotFoundException e) {
+    } catch (IOException | ClassNotFoundException | Context.ResolvingInterruptedException e) {
       throw new Panic("Compiled aya found but cannot be loaded", e);
     }
   }
