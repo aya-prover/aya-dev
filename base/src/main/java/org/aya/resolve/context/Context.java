@@ -251,4 +251,10 @@ public interface Context extends Problematic {
   class ResolvingInterruptedException extends Exception {
     public InterruptException.InterruptStage stage() { return InterruptException.InterruptStage.Resolving; }
   }
+
+  final class ResolveModuleInterruptedException extends InterruptException {
+    @Override public InterruptStage stage() {
+      return InterruptStage.Resolving;
+    }
+  }
 }
