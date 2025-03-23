@@ -3,6 +3,7 @@
 package org.aya.syntax.concrete.stmt.decl;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.function.CheckedConsumer;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -51,5 +52,9 @@ public class MatchBody<Clause> {
 
   public void forEach(@NotNull Consumer<Clause> f) {
     clauses.forEach(f);
+  }
+
+  public <Ex extends Throwable> void forEachChecked(@NotNull CheckedConsumer<Clause, Ex> f) throws Ex {
+    clauses.forEachChecked(f);
   }
 }
