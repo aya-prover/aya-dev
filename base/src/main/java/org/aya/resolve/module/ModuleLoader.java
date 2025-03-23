@@ -7,6 +7,7 @@ import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.syntax.concrete.stmt.Stmt;
@@ -82,8 +83,10 @@ public interface ModuleLoader extends Problematic {
     var resolver = new StmtResolvers(recurseLoader, resolveInfo);
     resolver.resolve(program);
     resolver.desugar(program);
-    // TODO: deal with:
-    // resolver.hasError()
+
+    if (resolver.hasError()) {
+      throw new Context.ResolveModuleInterruptedException();
+    }
   }
 
   @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);

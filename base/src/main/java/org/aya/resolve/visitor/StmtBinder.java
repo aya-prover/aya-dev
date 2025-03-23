@@ -23,18 +23,18 @@ import org.jetbrains.annotations.Nullable;
 import static org.aya.resolve.ResolvingStmt.*;
 
 public record StmtBinder(@NotNull ResolveInfo info) {
-  private void visitBind(@NotNull Context ctx, @NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind) {
+  private void visitBind(@NotNull Context ctx, @NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind) throws Context.ResolvingInterruptedException {
     bind(ctx, bind, selfDef.concrete);
   }
 
   /**
    * Bind {@param bindBlock} to {@param opSet} in {@param ctx}
    */
-  public void bind(@NotNull Context ctx, @NotNull BindBlock bindBlock, OpDecl self) {
+  public void bind(@NotNull Context ctx, @NotNull BindBlock bindBlock, OpDecl self) throws Context.ResolvingInterruptedException {
     if (bindBlock == BindBlock.EMPTY) return;
-    bindBlock.resolvedLoosers().set(bindBlock.loosers().mapNotNull(looser ->
+    bindBlock.resolvedLoosers().set(bindBlock.loosers().mapNotNullChecked(looser ->
       bind(self, ctx, OpDecl.BindPred.Looser, looser)));
-    bindBlock.resolvedTighters().set(bindBlock.tighters().mapNotNull(tighter ->
+    bindBlock.resolvedTighters().set(bindBlock.tighters().mapNotNullChecked(tighter ->
       bind(self, ctx, OpDecl.BindPred.Tighter, tighter)));
   }
 
@@ -50,14 +50,13 @@ public record StmtBinder(@NotNull ResolveInfo info) {
     }
 
     // make compiler happy 😥
-    info.opSet().fail(
-      new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
+    info.opSet().fail(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();
   }
 
-  public void resolveBind(@NotNull SeqLike<ResolvingStmt> contents) {
-    contents.forEach(s -> resolveBind(info.thisModule(), s));
-    info.opRename().forEach((_, v) -> {
+  public void resolveBind(@NotNull SeqLike<ResolvingStmt> contents) throws Context.ResolvingInterruptedException {
+    contents.forEachChecked(s -> resolveBind(info.thisModule(), s));
+    info.opRename().forEachChecked((_, v) -> {
       if (v.bind() == BindBlock.EMPTY) return;
       bind(info.thisModule(), v.bind(), v.renamed());
     });
@@ -66,14 +65,14 @@ public record StmtBinder(@NotNull ResolveInfo info) {
   /**
    * @param ctx the context that {@param stmt} binds to
    */
-  private void resolveBind(@NotNull Context ctx, @NotNull ResolvingStmt stmt) {
+  private void resolveBind(@NotNull Context ctx, @NotNull ResolvingStmt stmt) throws Context.ResolvingInterruptedException {
     switch (stmt) {
       case TopDecl(DataDecl decl, var innerCtx) -> {
-        decl.body.forEach(con -> resolveBind(innerCtx, new MiscDecl(con)));
+        decl.body.forEachChecked(con -> resolveBind(innerCtx, new MiscDecl(con)));
         visitBind(ctx, decl.ref, decl.bindBlock());
       }
       case TopDecl(ClassDecl decl, var innerCtx) -> {
-        decl.members.forEach(field -> resolveBind(innerCtx, new MiscDecl(field)));
+        decl.members.forEachChecked(field -> resolveBind(innerCtx, new MiscDecl(field)));
         visitBind(ctx, decl.ref, decl.bindBlock());
       }
       case TopDecl(FnDecl fn, var innerCtx) -> visitBind(innerCtx, fn.ref, fn.bindBlock());
