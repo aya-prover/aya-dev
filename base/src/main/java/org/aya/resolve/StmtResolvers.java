@@ -3,6 +3,7 @@
 package org.aya.resolve;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.salt.Desalt;
 import org.aya.resolve.salt.DesugarMisc;
@@ -32,18 +33,19 @@ public final class StmtResolvers {
   }
 
   private void resolveStmts(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
-    // TODO: handle return value
     var hasError = StmtResolver.resolveStmt(stmts, info);
     this.hasError |= hasError;
   }
 
   private void resolveBind(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
-    var binder = new StmtBinder(info);
-    binder.resolveBind(stmts);
-    info.opRename().forEach((var, rename) ->
-      binder.bind(rename.bindCtx(), rename.bind(), var));
-
-    // TODO: hasError
+    try {
+      var binder = new StmtBinder(info);
+      binder.resolveBind(stmts);
+      info.opRename().forEachChecked((var, rename) ->
+        binder.bind(rename.bindCtx(), rename.bind(), var));
+    } catch (Context.ResolvingInterruptedException e) {
+      this.hasError = true;
+    }
   }
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
