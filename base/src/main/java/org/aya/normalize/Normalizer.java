@@ -69,6 +69,10 @@ public final class Normalizer implements UnaryOperator<Term> {
         case StableWHNF _, FreeTerm _ -> {
           return descentedTerm;
         }
+        case LetFreeTerm(var _, var definedAs) -> {
+          term = definedAs;
+          continue;
+        }
         case BetaRedex app -> {
           var result = app.make(this);
           if (result == app) return defaultValue;
