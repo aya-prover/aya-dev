@@ -49,6 +49,14 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
+  @Test
+  public void tailrec() {
+    var result = tyck("""
+      tailrec def foo {A : Type} (a : A): A => a
+      """).defs;
+    assertTrue(result.isNotEmpty());
+  }
+
   @SuppressWarnings("unchecked") private static <T extends AnyDef> T
   getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
     return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());

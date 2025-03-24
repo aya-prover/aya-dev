@@ -168,6 +168,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_SELF = new AyaPsiTokenType("self");
   IElementType KW_SET = new AyaPsiTokenType("Set");
   IElementType KW_SIGMA = new AyaPsiTokenType("Sig");
+  IElementType KW_TAILREC = new AyaPsiTokenType("tailrec");
   IElementType KW_TIGHTER = new AyaPsiTokenType("tighter");
   IElementType KW_TYPE = new AyaPsiTokenType("Type");
   IElementType KW_ULIFT = new AyaPsiTokenType("ulift");

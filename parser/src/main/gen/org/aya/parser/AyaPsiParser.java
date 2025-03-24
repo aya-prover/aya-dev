@@ -788,6 +788,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //                | KW_OVERLAP
   //                | KW_NONTERMINATING
   //                | KW_OPEN
+  //                | KW_TAILREC
   public static boolean declModifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declModifier")) return false;
     boolean r;
@@ -799,6 +800,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_OVERLAP);
     if (!r) r = consumeToken(b, KW_NONTERMINATING);
     if (!r) r = consumeToken(b, KW_OPEN);
+    if (!r) r = consumeToken(b, KW_TAILREC);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

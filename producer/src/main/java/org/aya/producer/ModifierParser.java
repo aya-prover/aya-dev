@@ -49,7 +49,8 @@ public record ModifierParser(@NotNull Reporter reporter) {
     Opaque(KW_OPAQUE, Alpha, "opaque"),
     Inline(KW_INLINE, Alpha, "inline"),
     NonTerminating(KW_NONTERMINATING, None, "nonterminating", Opaque),
-    Overlap(KW_OVERLAP, None, "overlap");
+    Overlap(KW_OVERLAP, None, "overlap"),
+    Tailrec(KW_TAILREC, None, "tailrec");
 
     public final @NotNull IElementType type;
     public final @NotNull ModifierGroup group;
@@ -94,7 +95,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
     ) {
       return new Filter(new DefaultModifiers(defaultAcc, miscAvail), mod -> switch (mod) {
         case Private -> true;
-        case Open, Opaque, Inline, Overlap, Example, NonTerminating -> miscAvail.contains(mod);
+        case Open, Opaque, Inline, Overlap, Example, NonTerminating, Tailrec -> miscAvail.contains(mod);
       });
     }
   }
@@ -123,7 +124,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
   /** "opaque", "inline" and "overlap" is available to functions. */
   public static final Filter FN_FILTER = Filter.create(
     new WithPos<>(SourcePos.NONE, Stmt.Accessibility.Public),
-    EnumSet.of(CModifier.Opaque, CModifier.Inline, CModifier.Overlap, CModifier.NonTerminating, CModifier.Example));
+    EnumSet.of(CModifier.Opaque, CModifier.Inline, CModifier.Overlap, CModifier.NonTerminating, CModifier.Example, CModifier.Tailrec));
 
   /** nothing is available to sub-level decls (ctor/field). */
   public static final Filter SUBDECL_FILTER = Filter.create(
