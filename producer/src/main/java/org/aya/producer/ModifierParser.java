@@ -148,6 +148,7 @@ public record ModifierParser(@NotNull Reporter reporter) {
       if (misc(CModifier.Opaque) != null) fnMods.add(Modifier.Opaque);
       if (misc(CModifier.Overlap) != null) fnMods.add(Modifier.Overlap);
       if (misc(CModifier.NonTerminating) != null) fnMods.add(Modifier.NonTerminating);
+      if (misc(CModifier.Tailrec) != null) fnMods.add(Modifier.Tailrec);
       return fnMods;
     }
   }

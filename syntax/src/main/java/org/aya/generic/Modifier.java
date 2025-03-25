@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -21,6 +21,8 @@ public enum Modifier {
   /// That the function does not need termination checking,
   /// and will not be reduced.
   NonTerminating("nonterminating"),
+  /// That the function is enforced to be tail recursive.
+  Tailrec("tailrec")
   ;
 
   public final @NotNull String keyword;

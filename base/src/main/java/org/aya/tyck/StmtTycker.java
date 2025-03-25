@@ -111,6 +111,10 @@ public record StmtTycker(
             var zonker = new Finalizer.Zonk<>(tycker);
             var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
+            if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
+              var recCheck = new TailRecChecker(this, fnDecl);
+              recCheck.apply(expr);
+            }
             yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
           case FnBody.BlockBody body -> {
@@ -157,6 +161,13 @@ public record StmtTycker(
             if (!hasLhsError) {
               var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
               hitConflChecker.check();
+            }
+
+            if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
+              clauses.stream().filter(c -> c.expr.isDefined()).forEach(c -> {
+                var recCheck = new TailRecChecker(this, fnDecl);
+                recCheck.apply(c.expr.get());
+              });
             }
             yield def;
           }

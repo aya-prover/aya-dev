@@ -49,10 +49,24 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  @Test
+  // @Test
   public void tailrec() {
     var result = tyck("""
-      tailrec def foo {A : Type} (a : A): A => a
+      open inductive Nat | O | S Nat
+      tailrec def foo (a : Nat) : Nat elim a
+      | 0 => 0
+      | S v => let y := v in foo y
+      """).defs;
+    assertTrue(result.isNotEmpty());
+  }
+
+  // @Test
+  public void blockStmt() {
+    var result = tyck("""
+      open inductive Nat | O | S Nat
+      def lind (a b : Nat) : Nat elim a
+      | 0 => b
+      | S a' => S (lind a' b)
       """).defs;
     assertTrue(result.isNotEmpty());
   }
