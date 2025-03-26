@@ -158,6 +158,13 @@ public record StmtTycker(
               var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
               hitConflChecker.check();
             }
+
+            if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
+              clauses.stream().filter(c -> c.expr.isDefined()).forEach(c -> {
+                var recCheck = new TailRecChecker(this, fnDecl);
+                recCheck.apply(c.expr.get());
+              });
+            }
             yield def;
           }
         };
