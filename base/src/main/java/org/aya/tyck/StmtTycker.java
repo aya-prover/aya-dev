@@ -111,10 +111,6 @@ public record StmtTycker(
             var zonker = new Finalizer.Zonk<>(tycker);
             var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
-            if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
-              var recCheck = new TailRecChecker(this, fnDecl);
-              recCheck.apply(expr);
-            }
             yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
           case FnBody.BlockBody body -> {
