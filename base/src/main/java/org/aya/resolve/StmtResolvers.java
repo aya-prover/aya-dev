@@ -13,8 +13,6 @@ import org.aya.resolve.visitor.StmtResolver;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public final class StmtResolvers {
   private final @NotNull ModuleLoader loader;
   private final @NotNull ResolveInfo info;
@@ -50,7 +48,15 @@ public final class StmtResolvers {
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
+    try {
+      stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
+    } catch (RuntimeException e) {
+      if (e.getCause() instanceof Context.ResolvingInterruptedException) {
+        this.hasError = true;
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**

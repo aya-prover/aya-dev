@@ -45,12 +45,15 @@ public record StmtBinder(@NotNull ResolveInfo info) {
     var var = ctx.get(id);
     var opDecl = info.resolveOpDecl(var);
     if (opDecl != null) {
-      info.opSet().bind(self, pred, opDecl, id.sourcePos());
-      return var instanceof AnyDefVar defVar ? defVar : null;
+      var failed = info.opSet().bind(self, pred, opDecl, id.sourcePos());
+      if (!failed) {
+        return var instanceof AnyDefVar defVar ? defVar : null;
+      }
+    } else {
+      info.opSet().fail(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     }
 
     // make compiler happy 😥
-    info.opSet().fail(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     throw new Context.ResolvingInterruptedException();
   }
 

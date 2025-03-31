@@ -78,7 +78,7 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
       return new Arg<>(new WithPos<>(pos, newCon), explicit);
     } else {
       fail(new PatternProblem.UnknownCon(func));
-      throw new Context.ResolvingInterruptedException();
+      throw new RuntimeException(new Context.ResolvingInterruptedException());
     }
   }
   @Override public @NotNull Reporter reporter() { return opSet.reporter; }

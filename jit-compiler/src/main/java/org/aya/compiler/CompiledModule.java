@@ -268,10 +268,12 @@ public record CompiledModule(
     opSet.ensureHasElem(opDecl);
     bind.loosers().forEach(looser -> {
       var target = resolveOp(resolveInfo, state, looser);
+      // TODO: check result
       opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
     });
     bind.tighters().forEach(tighter -> {
       var target = resolveOp(resolveInfo, state, tighter);
+      // TODO: check result
       opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
     });
   }

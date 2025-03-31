@@ -116,7 +116,7 @@ public class LibraryCompiler {
    * The graph is used to generate incremental build list according to files'
    * last modified time.
    */
-  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
+  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException, Context.ResolvingInterruptedException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
       var recurse = owner.findModule(mod);
