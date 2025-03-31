@@ -49,7 +49,15 @@ public final class StmtResolvers {
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
     var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern));
+    try {
+      stmts.forEach(stmt -> stmt.descentInPlace(salt, salt.pattern));
+    } catch (RuntimeException e) {
+      if (e.getCause() instanceof Context.ResolvingInterruptedException) {
+        this.hasError = true;
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**

@@ -42,7 +42,7 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos
-  ) {
+  ) throws ResolvingInterruptedException {
     ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
     if (accessibility == Stmt.Accessibility.Public) {
       exports.export(modName, modExport);

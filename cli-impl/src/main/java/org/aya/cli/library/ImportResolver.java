@@ -4,6 +4,7 @@ package org.aya.cli.library;
 
 import kala.collection.SeqLike;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
@@ -15,14 +16,14 @@ import java.io.IOException;
 public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   public interface ImportLoader {
-    @NotNull LibrarySource load(@NotNull ModulePath path, @NotNull SourcePos sourcePos);
+    @NotNull LibrarySource load(@NotNull ModulePath path, @NotNull SourcePos sourcePos) throws Context.ResolvingInterruptedException;
   }
 
-  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws IOException {
+  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws IOException, Context.ResolvingInterruptedException {
     stmts.forEachChecked(this::resolveStmt);
   }
 
-  public void resolveStmt(@NotNull Stmt stmt) throws IOException {
+  public void resolveStmt(@NotNull Stmt stmt) throws IOException, Context.ResolvingInterruptedException {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents());
       case Command.Import cmd -> {

@@ -24,11 +24,9 @@ public final class AyaBinOpSet extends BinOpSet implements Problematic {
   }
   @Override protected void reportSelfBind(@NotNull SourcePos sourcePos) {
     fail(new OperatorError.SelfBind(sourcePos));
-    throw new Context.ResolvingInterruptedException();
   }
 
   @Override protected void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles) {
     cycles.forEach(c -> fail(new OperatorError.Circular(c)));
-    throw new Context.ResolvingInterruptedException();
   }
 }
