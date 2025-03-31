@@ -19,11 +19,6 @@ import java.nio.file.Path;
  */
 public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingFile) implements Context {
   @Override public @Nullable Context parent() { return null; }
-  @Override public @Nullable AnyVar getUnqualifiedLocalMaybe(
-    @NotNull String name, @NotNull SourcePos sourcePos
-  ) {
-    return null;
-  }
 
   @Override public @Nullable AnyVar getQualifiedLocalMaybe(
     @NotNull ModuleName.Qualified modName,
@@ -39,6 +34,11 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
 
   @Override public @NotNull ModulePath modulePath() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    return null;
   }
 
   @Override public @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
