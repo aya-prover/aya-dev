@@ -11,16 +11,14 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple2;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
-import org.aya.resolve.context.ModuleSymbol;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.*;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.util.Panic;
 import org.aya.util.RepoLike;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -55,6 +53,22 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     super.exportSymbol(name, ref);
     // REPL always overwrites symbols.
     return true;
+  }
+
+  @Override
+  public void importModuleContext(
+    ModuleName.@NotNull Qualified modName,
+    @NotNull ModuleContext module,
+    Stmt.@NotNull Accessibility accessibility,
+    @NotNull SourcePos sourcePos
+  ) {
+    try {
+      super.importModuleContext(modName, module, accessibility, sourcePos);
+    } catch (ResolvingInterruptedException e) {
+      // This is because the [ResolvingInterruptedException] of [importModuleContext] comes from [importModule],
+      // which is overrode by ReplContext and no exception will be thrown
+      Panic.unreachable();
+    }
   }
 
   @Override public void importModule(
