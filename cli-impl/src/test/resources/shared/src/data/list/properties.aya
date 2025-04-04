@@ -27,10 +27,10 @@ def rev=naive-aux (xs ys : List A) : rev' (rev-naive xs) ys = rev-naive (xs ++ y
   <=> rev=naive-aux (xs :<ʳ y) ys
   <=> pmap rev-naive (++-assoc xs [ y ] ys)
 
-def rev=naive (xs : List A) : rev xs = rev-naive xs => rev=naive-aux [ ] xs
+def rev=naive : rev {A} = rev-naive {A} => funExt (rev {A}) (rev-naive {A}) (fn xs => rev=naive-aux [ ] xs)
 
 def rev-append (xs : List A) (x : A) : rev (xs :<ʳ x) = x :< rev xs =>
-  rev=naive (xs :<ʳ x) <=> rev-naive-append xs x <=> pmap (x :<) (pinv (rev=naive xs))
+  pmap (fn f => f (xs :<ʳ x)) rev=naive  <=> rev-naive-append xs x <=> pmap (fn f => x :< f xs) (pinv rev=naive)
 
 def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
 | [ ] => refl
