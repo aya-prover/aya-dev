@@ -17,6 +17,21 @@ def length-++ (xs ys : List A) : length (xs ++ ys) = length xs + length ys elim 
 | [ ] => refl
 | x :< xs' => pmap suc (length-++ _ _)
 
+private def rev-naive-append (xs : List A) (x : A) : rev-naive (xs :<ʳ x) = x :< rev-naive xs elim xs
+| [ ] => refl
+| x' :< xs => pmap (:<ʳ x') (rev-naive-append xs x)
+
+def rev=naive-aux (xs ys : List A) : rev' (rev-naive xs) ys = rev-naive (xs ++ ys) elim ys
+| [ ] => refl
+| y :< ys => pmap (fn l => rev' l ys) (pinv (rev-naive-append xs y))
+  <=> rev=naive-aux (xs :<ʳ y) ys
+  <=> pmap rev-naive (++-assoc xs [ y ] ys)
+
+def rev=naive : rev {A} = rev-naive {A} => funExt (rev {A}) (rev-naive {A}) (fn xs => rev=naive-aux [ ] xs)
+
+def rev-append (xs : List A) (x : A) : rev (xs :<ʳ x) = x :< rev xs =>
+  pmap (fn f => f (xs :<ʳ x)) rev=naive  <=> rev-naive-append xs x <=> pmap (fn f => x :< f xs) (pinv rev=naive)
+
 def map-comp (g : B -> C) (f : A -> B) (l : List A) : map (\x => g (f x)) l = map g (map f l) elim l
 | [ ] => refl
 | x :< xs => pmap (g (f x) :<) (map-comp g f xs)

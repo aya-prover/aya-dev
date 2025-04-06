@@ -32,9 +32,10 @@ Aya is divided into several subprojects. Here are some notable ones:
 
 ### General, reusable utilities
 
-+ The generalized termination checker and a bunch of other utilities (files, ordering, persistent union find, etc.)
++ A bunch of other utilities including files, ordering, persistent union find, etc.
   are in `tools`.
-+ The source-pos related utilities, generalized binary operator parser, generalized mutable graph,
++ The source-pos related utilities, generalized binary operator parser,
+  generalized mutable graph, generalized termination checker,
   and some generic coverage checking tools, are in `tools-kala` because they depend
   on a larger subset of the kala library (the primitive collections).
 + The command and argument parsing framework is in `tools-repl`.

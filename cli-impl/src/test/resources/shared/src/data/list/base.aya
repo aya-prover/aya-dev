@@ -18,6 +18,9 @@ overlap def infixr ++ (xs ys : List A) : List A
 | x :< xs', _ => x :< (xs' ++ ys)
 tighter =
 
+def infixl :<ʳ (xs : List A) (x : A) : List A => xs ++ [ x ]
+tighter =
+
 def map (f : A -> B) (xs : List A) : List B elim xs
 | [ ] => [ ]
 | x :< xs' => f x :< map f xs'
@@ -27,6 +30,10 @@ def rev' (buf xs : List A) : List A elim xs
 | x :< xs' => rev' (x :< buf) xs'
 
 def rev (xs : List A) : List A => rev' [ ] xs
+
+def rev-naive (xs : List A) : List A
+| [ ] => [ ]
+| x :< xs => rev-naive xs :<ʳ x
 
 overlap def take (n : Nat) (xs : List A) : List A
 | _, [ ] => [ ]
