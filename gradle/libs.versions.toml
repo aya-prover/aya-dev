@@ -24,7 +24,7 @@ gson = "2.12.1"
 # https://github.com/beryx/badass-jlink-plugin
 jlink = "3.1.1"
 # https://github.com/jacoco/jacoco
-jacoco = "0.8.12"
+jacoco = "0.8.13"
 # https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-delegation
 manifold = "2025.1.1"
 
