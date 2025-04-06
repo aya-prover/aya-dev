@@ -53,8 +53,8 @@ public sealed interface TeleTycker extends Contextful {
    */
   default @NotNull ImmutableSeq<Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
     var tele = checkTeleFree(cTele);
-    var locals = cTele.view().map(Expr.Param::ref).toSeq();
-    bindTele(locals, tele);
+    var locals = cTele.map(Expr.Param::ref);
+    AbstractTele.bindTele(locals, tele);
     return tele.toSeq();
   }
 
@@ -70,14 +70,6 @@ public sealed interface TeleTycker extends Contextful {
       localCtx().put(p.ref(), pTy);
       return new Param(p.ref().name(), pTy, p.explicit());
     }));
-  }
-
-  /**
-   * Replace {@link org.aya.syntax.core.term.FreeTerm} in {@param tele} with appropriate index
-   */
-  @Contract(mutates = "param2")
-  static void bindTele(ImmutableSeq<LocalVar> binds, MutableSeq<Param> tele) {
-    tele.replaceAllIndexed((i, p) -> p.descent(t -> t.bindTele(binds.sliceView(0, i))));
   }
 
   @Contract(mutates = "param3")

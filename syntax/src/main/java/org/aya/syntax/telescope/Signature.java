@@ -26,7 +26,7 @@ public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
   public @NotNull Term result() { return telescope.result(); }
 
   public @NotNull Signature descent(@NotNull UnaryOperator<Term> f) {
-    return new Signature(new AbstractTele.Locns(telescope.telescope().map(x -> x.descent(f)), f.apply(telescope.result())), pos);
+    return new Signature(telescope.map((_, t) -> f.apply(t)), pos);
   }
 
   /**

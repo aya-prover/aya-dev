@@ -76,7 +76,7 @@ public interface LibraryOwner {
       thisOwner.libraryDeps().forEach(queue::enqueue);
     }
 
-    return libs.toImmutableSet();
+    return libs.toSet();
   }
 
   static @NotNull MutableGraph<LibraryConfig> buildDependencyGraph(@NotNull LibraryOwner owner) {

@@ -1,12 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.plct;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import kala.collection.immutable.ImmutableSeq;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
 import org.aya.cli.console.MainArgs;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.ReplUtil;
@@ -25,11 +23,13 @@ import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
 public final class PLCTReport {
+  public record Repo(String name, String route) { }
   @NotNull
-  public static final ImmutableSeq<Tuple2<String, String>> REPO = ImmutableSeq.of(
-    Tuple.of("Aya Prover", "aya-prover/aya-dev"),
-    Tuple.of("Aya VSCode", "aya-prover/aya-vscode"),
-    Tuple.of("Aya Intellij Plugin", "aya-prover/intellij-aya")
+  public static final ImmutableSeq<Repo> REPO = ImmutableSeq.of(
+    new Repo("Aya Prover", "aya-prover/aya-dev"),
+    new Repo("Aya Website", "aya-prover/aya-prover-docs"),
+    new Repo("Aya VSCode", "aya-prover/aya-vscode"),
+    new Repo("Aya Intellij Plugin", "aya-prover/intellij-aya")
   );
   public static final @NotNull @Nls String SHRUG = "🤷";
   private final @NotNull HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
@@ -78,7 +78,7 @@ public final class PLCTReport {
       markdown = generate("Your Awesome Repository", args.repoName, since);
     } else {
       markdown = Doc.vcat(REPO
-        .mapChecked(t -> generate(t.component1(), t.component2(), since))
+        .mapChecked(t -> generate(t.name, t.route, since))
         .view()
         .prepended(Doc.plain("## The Aya Theorem Prover")));
     }
@@ -123,7 +123,7 @@ public final class PLCTReport {
 
   public static @NotNull ImmutableSeq<GsonClasses.PR> parse(@NotNull InputStream input) {
     return ImmutableSeq.from(new GsonBuilder()
-      .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, ctx) ->
+      .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, _, _) ->
         LocalDateTime.parse(json.getAsJsonPrimitive().getAsString().replace("Z", "")))
       .create()
       .fromJson(new InputStreamReader(input), GsonClasses.PR[].class));

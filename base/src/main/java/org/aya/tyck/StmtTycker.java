@@ -292,7 +292,7 @@ public record StmtTycker(
 
       var allTypedBinds = Pat.collectBindings(wellPats.view());
       ownerBinds = patWithTypeBound.component1().toSeq();
-      TeleTycker.bindTele(ownerBinds, allTypedBinds);
+      AbstractTele.bindTele(ownerBinds, allTypedBinds);
       ownerTelePos = ownerBinds.map(LocalVar::definition);
       ownerTele = allTypedBinds.map(Param::implicitize);
       if (wellPats.allMatch(pat -> pat instanceof Pat.Bind))
