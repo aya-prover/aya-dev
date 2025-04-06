@@ -8,6 +8,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableSeq;
 import kala.range.primitive.IntRange;
 import kala.tuple.Tuple2;
 import org.aya.generic.term.DTKind;
@@ -17,12 +18,22 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Panic;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 
 /// Index-safe telescope
 public interface AbstractTele {
+  /// Replace [org.aya.syntax.core.term.FreeTerm] in {@param tele} with appropriate index
+  ///
+  /// @implNote it will call [Seq#sliceView] several times on {@param binds} so it's not a good idea to
+  /// take it as a view.
+  @Contract(mutates = "param2")
+  static void bindTele(Seq<LocalVar> binds, MutableSeq<Param> tele) {
+    tele.replaceAllIndexed((i, p) -> p.descent(t -> t.bindTele(binds.sliceView(0, i))));
+  }
+
   /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
   default @NotNull Term telescope(int i, Term[] teleArgs) {
     return telescope(i, ArraySeq.wrap(teleArgs));
@@ -151,27 +162,24 @@ public interface AbstractTele {
     /// Perform {@param mapper} on each parameters and result.
     ///
     /// @param mapper accept a sequence of names of previous parameters and an instantiated type.
-    ///                                           By checking `vars.sizeEquals(telescopeSize())` to tell if it is the result
-    public @NotNull Locns map(BiFunction<SeqView<LocalVar>, Term, Term> mapper) {
+    /// @implNote By checking `vars.sizeEquals(telescopeSize())` to tell if it is the result
+    @NotNull Locns map(BiFunction<SeqView<LocalVar>, Term, Term> mapper) {
       var vars = MutableList.<LocalVar>create();
       var newTele = MutableList.<Param>create();
 
       for (var param : telescope) {
         var freeType = param.type().instTeleVar(vars.view());
         newTele.append(param.update(mapper.apply(vars.view(), freeType)));
-        vars.append(param.toFreshTerm().name());
+        vars.append(LocalVar.generate(param.name()));
       }
 
       // vars.size == telescopeSize
       var freeResult = result.instTeleVar(vars.view());
       var newResult = mapper.apply(vars.view(), freeResult);
 
-      // TODO: move bindTele out of TeleTycker so that we can unify them
       var boundResult = newResult.bindTele(vars.view());
-      var boundParams = newTele.mapIndexed((idx, p) ->
-        p.descent(t -> t.bindTele(vars.sliceView(0, idx))));
-
-      return new Locns(boundParams, boundResult);
+      AbstractTele.bindTele(vars, newTele);
+      return new Locns(newTele.toSeq(), boundResult);
     }
   }
 
