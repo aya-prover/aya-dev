@@ -121,8 +121,8 @@ In file $FILE:7:15 ->
     │                  ╰╯
 
 Error: Unsolved meta _
-       in `^0 (?_ ^0)`
-       in `^0 (?_ ^0) → ^1 (Neg <X>)`
+       in `F (?_ F)`
+       in `F (?_ F) → F (Neg <X>)`
 
 4 error(s), 0 warning(s).
 Let's learn from that.
