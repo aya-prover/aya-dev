@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableTreeSet;
-import kala.control.Option;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
@@ -101,9 +100,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
           try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
             core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
           }
-          checkBoundaries(eq, core, body.sourcePos(), msg ->
+          var isOk = checkBoundaries(eq, core, body.sourcePos(), msg ->
             new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-          yield new Jdg.Default(new LamTerm(core), eq);
+          var term = new LamTerm(core);
+          yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
         }
         case MetaCall metaCall -> {
           var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
@@ -264,9 +264,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
         var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
           : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
-        checkBoundaries(eq, closure, expr.sourcePos(), msg ->
+        var isOk = checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-        return new Jdg.Default(new LamTerm(closure), eq);
+        var resultTerm = new LamTerm(closure);
+        return new Jdg.Default(isOk ? resultTerm : new ErrorTerm(resultTerm), eq);
       }
     }
     // Try coercive subtyping between classes

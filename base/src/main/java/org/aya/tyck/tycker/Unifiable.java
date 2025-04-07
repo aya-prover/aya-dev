@@ -47,17 +47,17 @@ public interface Unifiable extends Problematic, Stateful {
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(upper, lower, null, pos, Ordering.Lt);
-    if (result != null) fail(pc.apply(new UnifyInfo.Comparison(
-      freezeHoles(lower), freezeHoles(upper), result)));
+    if (result != null) fail(pc.apply(UnifyInfo.makeComparison(this, lower, upper, result)));
     return result == null;
   }
 
-  default void checkBoundaries(
+  default boolean checkBoundaries(
     EqTerm eq, Closure core, @NotNull SourcePos pos,
     @NotNull Function<UnifyInfo.Comparison, Problem> report
   ) {
-    unifyTermReported(core.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0), pos, report);
-    unifyTermReported(core.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1), pos, report);
+    var lhs = unifyTermReported(core.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0), pos, report);
+    var rhs = unifyTermReported(core.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1), pos, report);
+    return lhs && rhs;
   }
 
   default boolean unifyTermReported(
@@ -65,8 +65,7 @@ public interface Unifiable extends Problematic, Stateful {
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(lhs, rhs, type, pos, Ordering.Eq);
-    if (result != null) fail(pc.apply(new UnifyInfo.Comparison(
-      freezeHoles(rhs), freezeHoles(lhs), result)));
+    if (result != null) fail(pc.apply(UnifyInfo.makeComparison(this, rhs, lhs, result)));
     return result == null;
   }
 
