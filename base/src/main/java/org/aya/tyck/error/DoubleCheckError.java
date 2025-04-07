@@ -9,6 +9,8 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+/// Double checker errors. It would be nice if someone can trigger these errors,
+/// because I don't see how would one easily do so.
 public interface DoubleCheckError {
   record RuleError(
     @Override @NotNull AyaDocile expr,
