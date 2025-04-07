@@ -34,7 +34,6 @@ public final class Unifier extends TermComparator {
     this.allowDelay = allowDelay;
   }
 
-  public @NotNull Unifier derive(Ordering ordering) { return derive(pos, ordering); }
   public @NotNull Unifier derive(@NotNull SourcePos pos, Ordering ordering) {
     return new Unifier(state, localCtx().derive(), reporter, pos, ordering, allowDelay);
   }

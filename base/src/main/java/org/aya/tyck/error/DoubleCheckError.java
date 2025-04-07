@@ -29,12 +29,11 @@ public interface DoubleCheckError {
   record BoundaryError(
     @NotNull SourcePos sourcePos,
     @NotNull UnifyInfo info,
-    @NotNull UnifyInfo.Comparison comparison,
-    @NotNull int dim
+    @NotNull UnifyInfo.Comparison comparison
   ) implements TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return info.describeUnify(options, comparison,
-        Doc.english("When checking the boundary " + dim + ", there is a mismatch between:"),
+        Doc.english("When double-checking the boundary, there is a mismatch between:"),
         Doc.plain("and"));
     }
   }

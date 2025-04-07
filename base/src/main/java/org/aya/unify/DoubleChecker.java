@@ -10,12 +10,11 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.error.DoubleCheckError;
-import org.aya.tyck.tycker.AbstractTycker;
-import org.aya.tyck.tycker.Contextful;
-import org.aya.tyck.tycker.Problematic;
-import org.aya.tyck.tycker.Stateful;
+import org.aya.tyck.error.UnifyInfo;
+import org.aya.tyck.tycker.*;
 import org.aya.util.Ordering;
 import org.aya.util.Panic;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public record DoubleChecker(
   @NotNull Unifier unifier,
   @NotNull Synthesizer synthesizer
-) implements Stateful, Contextful, Problematic {
+) implements Contextful, Unifiable {
   public DoubleChecker(@NotNull Unifier unifier) { this(unifier, new Synthesizer(unifier.nameGen, unifier)); }
 
   public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
@@ -66,14 +65,8 @@ public record DoubleChecker(
             var param = scope.var();
             if (!inherit(body.apply(param), eq.A().apply(param)))
               yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
-            var eqUnifier = unifier.derive(Ordering.Eq);
-            if (!eqUnifier.compare(body.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0))) {
-              yield false;
-            }
-            if (!eqUnifier.compare(body.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1))) {
-              yield false;
-            }
-            yield true;
+            yield checkBoundaries(eq, body, unifier.pos, comparison ->
+              new DoubleCheckError.BoundaryError(unifier.pos, new UnifyInfo(state()), comparison));
           }
         }
         default -> failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
@@ -102,8 +95,8 @@ public record DoubleChecker(
   @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) { return unifier.setLocalCtx(ctx); }
   @Override public @NotNull TyckState state() { return unifier.state(); }
   @Override public @NotNull Reporter reporter() { return unifier.reporter(); }
-
-  public AbstractTycker.@NotNull SubscopedVar subscope(@NotNull Term type) {
-    return unifier.subscope(type);
+  public AbstractTycker.@NotNull SubscopedVar subscope(@NotNull Term type) { return unifier.subscope(type); }
+  @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
+    return unifier.derive(pos, order);
   }
 }

@@ -51,12 +51,13 @@ public interface Unifiable extends Problematic, Stateful {
     return result == null;
   }
 
-  default void checkBoundaries(
+  default boolean checkBoundaries(
     EqTerm eq, Closure core, @NotNull SourcePos pos,
     @NotNull Function<UnifyInfo.Comparison, Problem> report
   ) {
-    unifyTermReported(core.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0), pos, report);
-    unifyTermReported(core.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1), pos, report);
+    var lhs = unifyTermReported(core.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0), pos, report);
+    var rhs = unifyTermReported(core.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1), pos, report);
+    return lhs && rhs;
   }
 
   default boolean unifyTermReported(
