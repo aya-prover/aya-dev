@@ -37,6 +37,13 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
     @NotNull TermComparator.FailureData failureData
   ) { }
 
+  public static @NotNull Comparison makeComparison(
+    @NotNull Stateful stateful, @NotNull Term actual, @NotNull Term expected,
+    @NotNull TermComparator.FailureData failureData
+  ) {
+    return new Comparison(stateful.freezeHoles(actual), stateful.freezeHoles(expected), failureData);
+  }
+
   public @NotNull Doc describeUnify(
     @NotNull PrettierOptions options,
     @NotNull Comparison comparison,

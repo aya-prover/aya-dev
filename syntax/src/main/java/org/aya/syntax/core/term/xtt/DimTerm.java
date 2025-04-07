@@ -10,7 +10,5 @@ import org.jetbrains.annotations.NotNull;
 public enum DimTerm implements StableWHNF {
   I0, I1;
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return this;
-  }
+  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
 }

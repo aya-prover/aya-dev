@@ -65,7 +65,7 @@ public record DoubleChecker(
           try (var scope = subscope(DimTyTerm.INSTANCE)) {
             var param = scope.var();
             if (!inherit(body.apply(param), eq.A().apply(param)))
-              yield failF(new DoubleCheckError(preterm, unifier.pos, expected));
+              yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
             var eqUnifier = unifier.derive(Ordering.Eq);
             if (!eqUnifier.compare(body.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0))) {
               yield false;
@@ -76,9 +76,9 @@ public record DoubleChecker(
             yield true;
           }
         }
-        default -> failF(new DoubleCheckError(preterm, unifier.pos, expected));
+        default -> failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
       };
-      case TupTerm _ -> failF(new DoubleCheckError(preterm, unifier.pos, expected));
+      case TupTerm _ -> failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
       case MetaCall(var ref, var args) when !(ref.req() instanceof MetaVar.OfType) -> {
         var newMeta = new MetaCall(new MetaVar(
           ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType(expected), false), args);
@@ -88,7 +88,7 @@ public record DoubleChecker(
       }
       case PartialTerm(var element) -> whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
         ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
-        : failF(new DoubleCheckError(preterm, unifier.pos, expected));
+        : failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
 
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
     };

@@ -9,18 +9,33 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public record DoubleCheckError(
-  @Override @NotNull AyaDocile expr,
-  @NotNull SourcePos sourcePos,
-  @NotNull Term expectedTy
-) implements TyckError {
-  @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-    return Doc.vcat(
-      Doc.english("The expected type from the double checker is"),
-      Doc.par(1, expectedTy.toDoc(options)),
-      Doc.english("but the given expression"),
-      Doc.par(1, expr.toDoc(options)),
-      Doc.english("does not construct something into this type")
-    );
+public interface DoubleCheckError {
+  record RuleError(
+    @Override @NotNull AyaDocile expr,
+    @NotNull SourcePos sourcePos,
+    @NotNull Term expectedTy
+  ) implements TyckError {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.vcat(
+        Doc.english("The term given to the double checker is"),
+        Doc.par(1, expr.toDoc(options)),
+        Doc.english("but the expected type"),
+        Doc.par(1, expectedTy.toDoc(options)),
+        Doc.english("does not like this term.")
+      );
+    }
+  }
+
+  record BoundaryError(
+    @NotNull SourcePos sourcePos,
+    @NotNull UnifyInfo info,
+    @NotNull UnifyInfo.Comparison comparison,
+    @NotNull int dim
+  ) implements TyckError {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return info.describeUnify(options, comparison,
+        Doc.english("When checking the boundary " + dim + ", there is a mismatch between:"),
+        Doc.plain("and"));
+    }
   }
 }

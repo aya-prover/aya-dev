@@ -47,8 +47,7 @@ public interface Unifiable extends Problematic, Stateful {
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(upper, lower, null, pos, Ordering.Lt);
-    if (result != null) fail(pc.apply(new UnifyInfo.Comparison(
-      freezeHoles(lower), freezeHoles(upper), result)));
+    if (result != null) fail(pc.apply(UnifyInfo.makeComparison(this, lower, upper, result)));
     return result == null;
   }
 
@@ -65,8 +64,7 @@ public interface Unifiable extends Problematic, Stateful {
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(lhs, rhs, type, pos, Ordering.Eq);
-    if (result != null) fail(pc.apply(new UnifyInfo.Comparison(
-      freezeHoles(rhs), freezeHoles(lhs), result)));
+    if (result != null) fail(pc.apply(UnifyInfo.makeComparison(this, rhs, lhs, result)));
     return result == null;
   }
 
