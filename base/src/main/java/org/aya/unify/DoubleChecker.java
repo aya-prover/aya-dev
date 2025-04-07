@@ -5,26 +5,26 @@ package org.aya.unify;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
-import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.core.term.xtt.PartialTerm;
-import org.aya.syntax.core.term.xtt.PartialTyTerm;
+import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.TyckState;
-import org.aya.tyck.error.BadExprError;
+import org.aya.tyck.error.DoubleCheckError;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Contextful;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.util.Ordering;
 import org.aya.util.Panic;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @apiNote {@link Unifier#localCtx()} should be the same object as {@link Synthesizer#localCtx()}
- */
+/// @apiNote [#localCtx()] should be the same object as [#localCtx()]
+/// @apiNote Should only be called in [Unifier]
+/// @implSpec Since [Unifier] already reports error when this returns false,
+/// We should avoid reporting _basic_ type errors here, but providing like
+/// _smaller_ type errors in bidirectional typing rules should still be helpful.
 public record DoubleChecker(
   @NotNull Unifier unifier,
   @NotNull Synthesizer synthesizer
@@ -63,24 +63,32 @@ public record DoubleChecker(
         }
         case EqTerm eq -> {
           try (var scope = subscope(DimTyTerm.INSTANCE)) {
-            // TODO: check boundaries
             var param = scope.var();
-            yield inherit(body.apply(param), eq.A().apply(param));
+            if (!inherit(body.apply(param), eq.A().apply(param)))
+              yield failF(new DoubleCheckError(preterm, unifier.pos, expected));
+            var eqUnifier = unifier.derive(Ordering.Eq);
+            if (!eqUnifier.compare(body.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0))) {
+              yield false;
+            }
+            if (!eqUnifier.compare(body.apply(DimTerm.I1), eq.b(), eq.appA(DimTerm.I1))) {
+              yield false;
+            }
+            yield true;
           }
         }
-        default -> failF(new BadExprError(preterm, unifier.pos, expected));
+        default -> failF(new DoubleCheckError(preterm, unifier.pos, expected));
       };
-      case TupTerm _ -> failF(new BadExprError(preterm, unifier.pos, expected));
+      case TupTerm _ -> failF(new DoubleCheckError(preterm, unifier.pos, expected));
       case MetaCall(var ref, var args) when !(ref.req() instanceof MetaVar.OfType) -> {
         var newMeta = new MetaCall(new MetaVar(
           ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType(expected), false), args);
+        // Intends for solving meta only, should always success
         unifier.compare(preterm, newMeta, null);
         yield true;
       }
-      case PartialTerm(var element) ->
-        whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
-          ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
-          : failF(new BadExprError(preterm, unifier.pos, expected));
+      case PartialTerm(var element) -> whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
+        ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
+        : failF(new DoubleCheckError(preterm, unifier.pos, expected));
 
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
     };
