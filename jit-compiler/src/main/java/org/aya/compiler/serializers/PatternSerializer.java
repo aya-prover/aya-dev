@@ -231,8 +231,6 @@ public final class PatternSerializer {
     var bindSize = unit.mapToInt(ImmutableIntSeq.factory(), Matching::bindCount);
     int binds = bindSize.max();
 
-
-
     // generates local term variables
     result = ImmutableSeq.fill(binds, _ -> builder.makeVar(Constants.CD_Term, builder.aconstNull(Constants.CD_Term)));
     // whether the match success or mismatch, 0 implies mismatch
