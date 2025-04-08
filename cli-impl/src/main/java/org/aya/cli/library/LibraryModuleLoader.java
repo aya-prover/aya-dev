@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -74,6 +74,11 @@ record LibraryModuleLoader(
     assert program != null;
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
+    if (resolveInfo == null) {
+      //TODO
+      throw new UnsupportedOperationException("TODO");
+    }
+
     tyckModule(resolveInfo, (moduleResolve, defs) -> {
       source.notifyTycked(moduleResolve, defs);
       if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs, recurseLoader);
