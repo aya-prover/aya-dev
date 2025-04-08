@@ -1,0 +1,4 @@
+open inductive Nat | O | S Nat
+tailrec def const0 (a : Nat) : Nat
+| 0 => 0
+| S v => const0 v
