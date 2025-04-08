@@ -153,7 +153,8 @@ public class ReplCompiler {
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
           var resolveInfo = makeResolveInfo(context.fork());
-          loader.resolveModule(resolveInfo, program, loader);
+          var hasError = loader.resolveModule(resolveInfo, program, loader);
+          if (hasError) return ImmutableSeq.empty();
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return ImmutableSeq.empty();
@@ -164,7 +165,7 @@ public class ReplCompiler {
         expr -> tyckAndNormalize(expr, false, normalizeMode)
       );
     } catch (InterruptException _) {
-      // Only two kinds of interruptions are possible: parsing and resolving
+      // Only two kinds of interruptions are possible: parsing and ~~resolving~~
       return Either.left(ImmutableSeq.empty());
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
