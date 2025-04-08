@@ -60,13 +60,13 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  // @Test
+  @Test
   public void blockStmt() {
     var result = tyck("""
       open inductive Nat | O | S Nat
-      def lind (a b : Nat) : Nat elim a
+      tailrec def lind (a b : Nat) : Nat elim a
       | 0 => b
-      | S a' => S (lind a' b)
+      | S a' => lind a' b
       """).defs;
     assertTrue(result.isNotEmpty());
   }

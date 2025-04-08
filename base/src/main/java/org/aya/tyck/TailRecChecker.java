@@ -42,12 +42,18 @@ public class TailRecChecker implements PosedUnaryOperator<Expr> {
         atTailPosition = store;
         body.descent(this);
       }
-      // TODO: Expr.Match
+      case Expr.Match(var dis, var clauses, var returns) -> {
+        atTailPosition = false;
+        dis.forEach(disc -> disc.descent(this));
+        clauses.forEach(clause -> clause.expr.forEach(e -> e.descent(this)));
+        if (returns != null) returns.descent(this);
+      }
       default -> {
         atTailPosition = false;
         expr.descent(this);
       }
     }
+    atTailPosition = store;
     return null;
   }
 }
