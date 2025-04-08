@@ -5,7 +5,7 @@ package org.aya.tyck;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.ref.DefVar;
-import org.aya.tyck.error.TailrecError;
+import org.aya.tyck.error.TailRecError;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
@@ -30,7 +30,7 @@ public class TailRecChecker implements PosedUnaryOperator<Expr> {
         if (func instanceof Expr.Ref ref && ref.var() instanceof DefVar<?, ?> defVar) {
           var fDecl = (FnDecl) defVar.concrete;
           if (fDecl == self && args.size() == self.telescope.size() && !atTailPosition) {
-            reporter.fail(new TailrecError(sourcePos));
+            reporter.fail(new TailRecError(sourcePos));
           }
         }
         atTailPosition = false;

@@ -7,7 +7,7 @@ import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-public record TailrecError(
+public record TailRecError(
   SourcePos sourcePos
 ) implements TyckError {
   @Override
