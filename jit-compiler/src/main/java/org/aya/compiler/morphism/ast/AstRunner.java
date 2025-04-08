@@ -123,6 +123,8 @@ public final class AstRunner<Carrier> {
       case AstStmt.Break _ -> builder.breakOut();
       case AstStmt.Unreachable _ -> builder.unreachable();
       case AstStmt.Breakable(var inner) -> builder.breakable(cb -> runFree(ap, cb, inner));
+      case AstStmt.WhileTrue(var inner) -> builder.whileTrue(cb -> runFree(ap, cb, inner));
+      case AstStmt.Continue _ -> builder.continueLoop();
       case AstStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
       case AstStmt.Exec exec -> builder.exec(runFree(ap, builder, exec.expr()));
       case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {

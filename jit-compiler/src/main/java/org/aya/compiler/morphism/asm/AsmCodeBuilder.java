@@ -33,6 +33,7 @@ public record AsmCodeBuilder(
   @NotNull AsmClassBuilder parent,
   @NotNull AsmVariablePool pool,
   @Nullable Label breaking,
+  @Nullable Label continuing,
   boolean hasThis
 ) implements CodeBuilder, AutoCloseable {
   public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_1());
@@ -46,6 +47,7 @@ public record AsmCodeBuilder(
   ) {
     this(writer, parent,
       AsmVariablePool.from(hasThis ? parent.owner() : null, parameterTypes),
+      null,
       null,
       hasThis
     );
@@ -61,17 +63,17 @@ public record AsmCodeBuilder(
   public void loadExpr(@NotNull JavaExpr expr) { assertExpr(expr).accept(this); }
   @Override public void close() { pool.submit(this); }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @NotNull Consumer<AsmCodeBuilder> block) {
-    try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, hasThis)) {
+  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
+    try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, continuing, hasThis)) {
       block.accept(innerBuilder);
     }
   }
 
   public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
-    subscoped(innerWrite, breaking, block);
+    subscoped(innerWrite, breaking, continuing, block);
   }
 
-  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, block); }
+  public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, continuing, block); }
 
   @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
     var variable = pool.acquire(type);
@@ -166,13 +168,26 @@ public record AsmCodeBuilder(
     if (breaking != null) Panic.unreachable();
     writer.block(builder -> {
       var endLabel = builder.breakLabel();
-      subscoped(builder, endLabel, innerBlock::accept);
+      subscoped(builder, endLabel, continuing, innerBlock::accept);
     });
   }
 
   @Override public void breakOut() {
     if (breaking == null) Panic.unreachable();
     writer.goto_(breaking);
+  }
+
+  @Override public void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock) {
+    if (continuing != null) Panic.unreachable();
+    writer.block(builder -> {
+      var continueLabel = builder.startLabel();
+      subscoped(builder, breaking, continueLabel, innerBlock::accept);
+    });
+  }
+
+  @Override public void continueLoop() {
+    if (continuing == null) Panic.unreachable();
+    writer.goto_(continuing);
   }
 
   @Override public void exec(@NotNull JavaExpr expr) {
