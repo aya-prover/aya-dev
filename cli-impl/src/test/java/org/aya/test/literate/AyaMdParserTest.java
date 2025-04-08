@@ -97,6 +97,7 @@ public class AyaMdParserTest {
     var ctx = new EmptyContext(reporter, Path.of(".")).derive(oneCase.modName());
     var loader = new DumbModuleLoader(ctx);
     var info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
+    assert info != null;
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
     return new LiterateTestCase(reporter, literate, stmts);

@@ -59,13 +59,17 @@ public final class SingleFileCompiler {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
-      loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
+      var info = loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
         ayaFile.tyckAdditional(resolveInfo);
         ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
         ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
         ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
       });
+
+      if (info == null) {
+        // TODO: do we need some code here?
+      }
     });
   }
 }

@@ -38,7 +38,9 @@ public record FileModuleLoader(
     try {
       var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);
       var context = new EmptyContext(reporter, sourcePath).derive(path);
-      return tyckModule(resolveModule(primFactory, context, program, recurseLoader), null);
+      var info = resolveModule(primFactory, context, program, recurseLoader);
+      if (info == null) return null;
+      return tyckModule(info, null);
     } catch (IOException e) {
       return null;
     }
