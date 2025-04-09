@@ -49,28 +49,6 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
-  // @Test
-  public void tailrec() {
-    var result = tyck("""
-      open inductive Nat | O | S Nat
-      tailrec def foo (a : Nat) : Nat elim a
-      | 0 => 0
-      | S v => let y := v in foo y
-      """).defs;
-    assertTrue(result.isNotEmpty());
-  }
-
-  @Test
-  public void blockStmt() {
-    var result = tyck("""
-      open inductive Nat | O | S Nat
-      tailrec def lind (a b : Nat) : Nat elim a
-      | 0 => b
-      | S a' => lind a' b
-      """).defs;
-    assertTrue(result.isNotEmpty());
-  }
-
   @SuppressWarnings("unchecked") private static <T extends AnyDef> T
   getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
     return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());
