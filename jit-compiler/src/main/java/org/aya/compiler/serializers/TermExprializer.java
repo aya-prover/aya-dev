@@ -175,9 +175,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case FnCall(var ref, var ulift, var args, _) -> buildFnInvoke( // TODO: linxuan
-        NameSerializer.getClassDesc(ref), ulift,
-        args.map(this::doSerialize));
+      case FnCall(var ref, var ulift, var args, var tailCall) ->
+        buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
         var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
           serializeApplicable(rule),
@@ -343,5 +342,11 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     vars.forEachWith(instantiates, binds::put);
 
     return doSerialize(unit);
+  }
+  public void serializeTailCall(Term unit) {
+    binds.clear();
+    var s = unit.easyToString();
+    var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
+    // TODO: linxuan
   }
 }

@@ -32,16 +32,15 @@ public interface TailRecChecker {
             return new FnCall(ref, ulift, args, true);
           }
         }
-        default -> {
-          atTailPosition = false;
-          term.descent(this);
-        }
+        default -> { }
       }
-      return term;
+      atTailPosition = false;
+      return term.descent(this);
     }
   }
 
-  static void assertTailRec(@NotNull Problematic reporter, @NotNull Term term, @NotNull FnDecl self) {
-    new TailRecDescent(reporter, self).apply(term);
+  static @NotNull Term assertTailRec(@NotNull Problematic reporter, @NotNull Term term, @NotNull FnDecl self) {
+    var desc = new TailRecDescent(reporter, self);
+    return desc.apply(term);
   }
 }

@@ -162,7 +162,11 @@ public record StmtTycker(
             if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
               switch (def.body()) {
                 case Either.Right<Term, FnClauseBody>(var v) -> {
-                  v.matchingsView().forEach(m -> TailRecChecker.assertTailRec(this, m.body(), fnDecl));
+                  v.clauses = v.clauses.map(w -> {
+                    var match = w.data();
+                    var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
+                    return w.update(match.update(term));
+                  });
                 }
                 case Either.Left<Term, FnClauseBody> _ -> Panic.unreachable();
               }

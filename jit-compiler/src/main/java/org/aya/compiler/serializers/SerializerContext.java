@@ -23,6 +23,13 @@ public record SerializerContext(
     return new TermExprializer(builder, this, argTerms)
       .serialize(term);
   }
+  public void serializeTailCallUnderTele(
+    @NotNull ExprBuilder builder,
+    @NotNull Term term,
+    @NotNull ImmutableSeq<JavaExpr> argTerms
+  ) {
+    new TermExprializer(builder, this, argTerms).serializeTailCall(term);
+  }
 
   public @NotNull JavaExpr serializeTermUnderTele(
     @NotNull ExprBuilder builder, @NotNull Term term,
