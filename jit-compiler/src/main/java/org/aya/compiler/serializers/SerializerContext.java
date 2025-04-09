@@ -24,7 +24,7 @@ public record SerializerContext(
     return new TermExprializer(builder, this, argTerms)
       .serialize(term);
   }
-  public @NotNull FnCall serializeTailCallUnderTele(
+  public @NotNull ImmutableSeq<JavaExpr> serializeTailCallUnderTele(
     @NotNull ExprBuilder builder,
     @NotNull FnCall term,
     @NotNull ImmutableSeq<JavaExpr> argTerms

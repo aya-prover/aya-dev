@@ -343,13 +343,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
     return doSerialize(unit);
   }
-  public @NotNull FnCall serializeTailCall(@NotNull FnCall unit) {
+  public @NotNull ImmutableSeq<JavaExpr> serializeTailCall(@NotNull FnCall unit) {
     binds.clear();
     var s = unit.easyToString();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
-    var instantiated = unit.instTeleVar(vars.view());
+    var instantiated = (FnCall) unit.instTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
 
-    return (FnCall) instantiated;
+    return instantiated.args().map(this::doSerialize);
   }
 }
