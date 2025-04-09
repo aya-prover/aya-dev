@@ -26,11 +26,10 @@ public interface TailRecChecker {
     @Override
     public Term apply(@NotNull Term term) {
       switch (term) {
-        case FnCall(var ref, int ulift, var args) -> {
-          if (ref instanceof FnDef.Delegate d && d.ref.equals(self.ref)) {
-            if (args.size() == self.telescope.size() && !atTailPosition) {
-              reporter.fail(new TailRecError(self.sourcePos()));
-            }
+        case FnCall(var ref, int ulift, var args, _) -> {
+          if (ref instanceof FnDef.Delegate d && d.ref.equals(self.ref) && args.size() == self.telescope.size()) {
+            if (!atTailPosition) reporter.fail(new TailRecError(self.sourcePos()));
+            return new FnCall(ref, ulift, args, true);
           }
         }
         default -> {

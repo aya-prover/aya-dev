@@ -175,7 +175,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case FnCall(var ref, var ulift, var args) -> buildFnInvoke(
+      case FnCall(var ref, var ulift, var args, _) -> buildFnInvoke( // TODO: linxuan
         NameSerializer.getClassDesc(ref), ulift,
         args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
