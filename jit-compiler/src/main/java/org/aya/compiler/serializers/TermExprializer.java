@@ -343,10 +343,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
     return doSerialize(unit);
   }
-  public void serializeTailCall(Term unit) {
+  public @NotNull FnCall serializeTailCall(@NotNull FnCall unit) {
     binds.clear();
     var s = unit.easyToString();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
-    // TODO: linxuan
+    var instantiated = unit.instTeleVar(vars.view());
+    vars.forEachWith(instantiates, binds::put);
+
+    return (FnCall) instantiated;
   }
 }
