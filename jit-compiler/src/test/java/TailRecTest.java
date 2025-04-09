@@ -19,7 +19,7 @@ import java.util.function.UnaryOperator;
 import static org.aya.compiler.serializers.NameSerializer.getClassName;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class TailrecTest {
+public class TailRecTest {
   private static JitCon O, S;
   private static JitFn const0;
   private static DataCall NatCall;
@@ -33,7 +33,7 @@ public class TailrecTest {
     var baseDir = CompileTest.GEN_DIR.resolve("seqsum");
     var time = TimeUtil.profile(() -> CompileTest.serializeFrom(result, baseDir));
     System.out.println("Code generation time: " + TimeUtil.millisToString(time));
-    var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, TailrecTest.class.getClassLoader());
+    var innerLoader = new URLClassLoader(new URL[]{baseDir.toUri().toURL()}, TailRecTest.class.getClassLoader());
     InstanceLoader tester = new InstanceLoader(innerLoader);
 
     var baka = DumbModuleLoader.DUMB_MODULE_NAME;
@@ -48,7 +48,7 @@ public class TailrecTest {
   }
 
   @Test public void basics() {
-    var num = new IntegerTerm(512, O, S, NatCall);
+    var num = new IntegerTerm(696969, O, S, NatCall);
     var term = const0.invoke(UnaryOperator.identity(), ImmutableSeq.of(num));
     assertNotNull(term);
     System.out.println(term.easyToString());
