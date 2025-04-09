@@ -160,10 +160,12 @@ public record StmtTycker(
             }
 
             if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
-              clauses.stream().filter(c -> c.expr.isDefined()).forEach(c -> {
-                var recCheck = new TailRecChecker(this, fnDecl);
-                recCheck.apply(c.expr.get());
-              });
+              switch (def.body()) {
+                case Either.Right<Term, FnClauseBody>(var v) -> {
+                  v.matchingsView().forEach(m -> TailRecChecker.assertTailRec(this, m.body()));
+                }
+                case Either.Left<Term, FnClauseBody> _ -> Panic.unreachable();
+              }
             }
             yield def;
           }
@@ -183,6 +185,7 @@ public record StmtTycker(
         yield new DataDef(data.ref, data.body.clauses.map(kon -> kon.ref.core));
       }
     };
+
     reporter.clearSuppress();
     return core;
   }

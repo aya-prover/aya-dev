@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.TailRecError;
 import org.aya.tyck.tycker.Problematic;
@@ -11,10 +12,26 @@ import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 public class TailRecChecker implements PosedUnaryOperator<Expr> {
+
+  static class TailRecDescent implements UnaryOperator<Term> {
+
+    @Override
+    public Term apply(@NotNull Term term) {
+      var s = term.easyToString();
+      return term;
+    }
+  }
+
   private final Problematic reporter;
   private final FnDecl self;
   private boolean atTailPosition = true;
+
+  public static void assertTailRec(@NotNull Problematic reporter, @NotNull Term term) {
+    term.descent(new TailRecDescent());
+  }
 
   public TailRecChecker(@NotNull Problematic reporter, @NotNull FnDecl self) {
     this.reporter = reporter;
