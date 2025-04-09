@@ -94,7 +94,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-              if (matching.body() instanceof FnCall(_, _, var args, var tailCall)) {
+              if (matching.body() instanceof FnCall(_, _, var args, var tailCall) && tailCall && false) { // TODO: remove
                 serializerContext.serializeTailCallUnderTele(builder0, matching.body(), patSer.result.view()
                   .take(count)
                   .map(LocalVariable::ref)
