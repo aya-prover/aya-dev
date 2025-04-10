@@ -345,7 +345,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
   public @NotNull ImmutableSeq<JavaExpr> serializeTailCall(@NotNull FnCall unit) {
     binds.clear();
-    var s = unit.easyToString();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     var instantiated = (FnCall) unit.instTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
