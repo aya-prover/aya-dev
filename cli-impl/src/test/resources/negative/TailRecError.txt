@@ -20,3 +20,16 @@ Error: Function marked as tailrec is not tail-recursive
 2 error(s), 0 warning(s).
 Let's learn from that.
 
+TailRecWritenByTepperStudent:
+In file $FILE:2:12 ->
+
+  1 │   open inductive Nat | O | S Nat
+  2 │   tailrec def add (a b : Nat) : Nat elim a, b
+    │               ╰─╯
+  3 │   | 0, y => y
+
+Error: Function marked as tailrec is not tail-recursive
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+

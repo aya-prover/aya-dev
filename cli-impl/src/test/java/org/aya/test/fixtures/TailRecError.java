@@ -16,4 +16,11 @@ public interface TailRecError {
     | S 0 => 1
     | S (S x) => add (fib x) (fib (S x))
     """;
+
+  @Language("Aya") String testTailRecWritenByTepperStudent = """
+    open inductive Nat | O | S Nat
+    tailrec def add (a b : Nat) : Nat elim a, b
+    | 0, y => y
+    | S x, y => S (add x y)
+    """;
 }
