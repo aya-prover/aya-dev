@@ -44,7 +44,8 @@ public class TestRunner {
       OperatorError.class,
       TerckError.class,
       PatCohError.class,
-      ClassError.class
+      ClassError.class,
+      TailRecError.class
     ).mapNotNullChecked(TestRunner::expectFixture);
     if (toCheck.isNotEmpty()) {
       new ProcessBuilder("git", "add", FIXTURE_DIR.toString())

@@ -1,0 +1,22 @@
+Fib:
+In file $FILE:6:12 ->
+
+  4 │   | S x, y => add x (S y)
+  5 │   
+  6 │   tailrec def fib (a : Nat) : Nat elim a
+    │               ╰─╯
+
+Error: Function marked as tailrec is not tail-recursive
+
+In file $FILE:6:12 ->
+
+  4 │   | S x, y => add x (S y)
+  5 │   
+  6 │   tailrec def fib (a : Nat) : Nat elim a
+    │               ╰─╯
+
+Error: Function marked as tailrec is not tail-recursive
+
+2 error(s), 0 warning(s).
+Let's learn from that.
+
