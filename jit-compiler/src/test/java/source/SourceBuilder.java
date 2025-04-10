@@ -2,16 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package source;
 
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.immutable.primitive.ImmutableIntSeq;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 import static org.aya.compiler.serializers.ExprializeUtil.CLASS_PANIC;
 import static org.aya.compiler.serializers.ExprializeUtil.makeString;
-
-import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.primitive.ImmutableIntSeq;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class SourceBuilder {
   public final @NotNull StringBuilder builder;
@@ -93,6 +93,7 @@ public final class SourceBuilder {
   }
 
   public void buildBreak() { appendLine("break;"); }
+  public void buildContinue() { appendLine("continue;"); }
   public void buildReturn(@NotNull String retWith) { appendLine("return " + retWith + ";"); }
   public void buildComment(@NotNull String comment) { appendLine("// " + comment); }
   public void buildPanic(@Nullable String message) {

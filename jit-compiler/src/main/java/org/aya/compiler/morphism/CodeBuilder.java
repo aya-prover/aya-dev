@@ -34,6 +34,9 @@ public interface CodeBuilder extends ExprBuilder {
   void breakable(@NotNull Consumer<CodeBuilder> innerBlock);
   void breakOut();
 
+  void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock);
+  void continueLoop();
+
   /// Turns an expression to a statement
   void exec(@NotNull JavaExpr expr);
 

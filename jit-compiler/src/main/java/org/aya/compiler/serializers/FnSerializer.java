@@ -65,42 +65,64 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build fixed argument `invoke`
    */
   private void buildInvoke(
-    @NotNull CodeBuilder builder,
+    @NotNull CodeBuilder topBuilder,
     @NotNull FnDef unit,
     @NotNull LocalVariable preTerm,
     @NotNull ImmutableSeq<LocalVariable> argTerms
   ) {
-    Consumer<CodeBuilder> onStuckCon = cb -> {
-      var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms.map(LocalVariable::ref));
-      cb.returnWith(stuckTerm);
+    Consumer<CodeBuilder> buildFn = builder -> {
+      Consumer<CodeBuilder> onStuckCon = cb -> {
+        var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms.map(LocalVariable::ref));
+        cb.returnWith(stuckTerm);
+      };
+
+      var argExprs = argTerms.map(LocalVariable::ref);
+      var normalizer = preTerm.ref();
+      var serializerContext = buildSerializerContext(normalizer);
+
+      if (unit.is(Modifier.Opaque)) {
+        onStuckCon.accept(builder);
+        return;
+      }
+
+      switch (unit.body()) {
+        case Either.Left(var expr) -> {
+          var result = serializerContext.serializeTermUnderTele(builder, expr, argExprs);
+          builder.returnWith(result);
+        }
+        case Either.Right(var clauses) -> {
+          var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
+          ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
+              matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
+              if (matching.body() instanceof FnCall call && call.tailCall()) {
+                var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
+                  .take(count)
+                  .map(LocalVariable::ref)
+                  .toSeq());
+                assert argTerms.size() == args.size();
+                // Will cause conflict in theory, but won't in practice due to current local variable
+                // declaration heuristics.
+                argTerms.zip(args).forEach(tup -> {
+                  builder0.updateVar(tup.component1(), tup.component2());
+                });
+                builder0.continueLoop();
+              } else {
+                var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
+                  .take(count)
+                  .map(LocalVariable::ref)
+                  .toSeq());
+                builder0.returnWith(result);
+              }
+            })
+          ).toSeq());
+        }
+      }
     };
 
-    var argExprs = argTerms.map(LocalVariable::ref);
-    var normalizer = preTerm.ref();
-    var serializerContext = buildSerializerContext(normalizer);
-
-    if (unit.is(Modifier.Opaque)) {
-      onStuckCon.accept(builder);
-      return;
-    }
-
-    switch (unit.body()) {
-      case Either.Left(var expr) -> {
-        var result = serializerContext.serializeTermUnderTele(builder, expr, argExprs);
-        builder.returnWith(result);
-      }
-      case Either.Right(var clauses) -> {
-        var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
-        ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
-            matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-          var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
-              .take(count)
-              .map(LocalVariable::ref)
-              .toSeq());
-            builder0.returnWith(result);
-          })
-        ).toSeq());
-      }
+    if (unit.modifiers().contains(Modifier.Tailrec)) {
+      topBuilder.whileTrue(buildFn);
+    } else {
+      buildFn.accept(topBuilder);
     }
   }
 

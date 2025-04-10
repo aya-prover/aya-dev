@@ -55,6 +55,7 @@
     KW_INLINE = 'inline'
     KW_NONTERMINATING = 'nonterminating'
     KW_OVERLAP = 'overlap'
+    KW_TAILREC = 'tailrec'
 
     // exprs
     KW_MATCH = 'match'
@@ -221,6 +222,7 @@ declModifier ::= KW_PRIVATE
                | KW_OVERLAP
                | KW_NONTERMINATING
                | KW_OPEN
+               | KW_TAILREC
 pragma ::= AT ID (LPAREN <<commaSep ID>> RPAREN)?
 
 classDecl

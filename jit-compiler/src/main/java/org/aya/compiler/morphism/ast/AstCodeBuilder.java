@@ -116,6 +116,15 @@ public record AstCodeBuilder(
     stmts.append(AstStmt.Break.INSTANCE);
   }
 
+  @Override public void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock) {
+    var innerBlockBody = subscoped(false, innerBlock::accept);
+    stmts.append(new AstStmt.WhileTrue(innerBlockBody));
+  }
+
+  @Override public void continueLoop() {
+    stmts.append(AstStmt.Continue.INSTANCE);
+  }
+
   @Override public void exec(@NotNull JavaExpr expr) {
     stmts.append(new AstStmt.Exec(assertFreeExpr(expr)));
   }

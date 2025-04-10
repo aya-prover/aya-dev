@@ -1,0 +1,13 @@
+open inductive Nat | O | S Nat
+
+tailrec def const0 (a : Nat) : Nat
+| 0 => 0
+| S v => let | foo := 0 in const0 v
+
+tailrec def add (a b : Nat) : Nat elim a, b
+| 0, y => y
+| S x, y => add x (S y)
+
+tailrec def mult (a b acc : Nat) : Nat elim a
+| 0 => acc
+| S x => mult x b (add b acc)

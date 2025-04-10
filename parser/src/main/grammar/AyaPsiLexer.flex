@@ -114,6 +114,7 @@ BLOCK_COMMENT_END   = "*/"
   "overlap"             { return KW_OVERLAP; }
   "override"            { return KW_OVERRIDE; }
   "completed"           { return KW_COMPLETED; }
+  "tailrec"             { return KW_TAILREC; }
 
   "variable"            { return KW_VARIABLE; }
   "def"                 { return KW_DEF; }

@@ -8,6 +8,7 @@ import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ExprBuilder;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.FnCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,13 @@ public record SerializerContext(
   ) {
     return new TermExprializer(builder, this, argTerms)
       .serialize(term);
+  }
+  public @NotNull ImmutableSeq<JavaExpr> serializeTailCallUnderTele(
+    @NotNull ExprBuilder builder,
+    @NotNull FnCall term,
+    @NotNull ImmutableSeq<JavaExpr> argTerms
+  ) {
+    return new TermExprializer(builder, this, argTerms).serializeTailCall(term);
   }
 
   public @NotNull JavaExpr serializeTermUnderTele(

@@ -197,6 +197,16 @@ public record SourceCodeBuilder(
 
   @Override public void breakOut() { sourceBuilder.buildBreak(); }
 
+  @Override public void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock) {
+    sourceBuilder.appendLine("while (true) {");
+    sourceBuilder.runInside(() -> innerBlock.accept(this));
+    sourceBuilder.appendLine("}");
+  }
+
+  @Override public void continueLoop() {
+    sourceBuilder.buildContinue();
+  }
+
   @Override public void exec(@NotNull JavaExpr expr) {
     appendExpr(expr);
     sourceBuilder.append(";");

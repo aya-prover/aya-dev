@@ -2,11 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
 
-import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
-
-import static org.aya.generic.State.Stuck;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
@@ -32,6 +27,11 @@ import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
+
+import static org.aya.generic.State.Stuck;
 
 /**
  * Unlike in pre-v0.30 Aya, we use only one normalizer, only doing head reduction,
@@ -75,15 +75,15 @@ public final class Normalizer implements UnaryOperator<Term> {
           term = result;
           continue;
         }
-        case FnCall(JitFn instance, int ulift, var args) -> {
+        case FnCall(JitFn instance, int ulift, var args, _) -> {
           var result = instance.invoke(this, args);
-          if (result instanceof FnCall(var ref, _, var newArgs) &&
+          if (result instanceof FnCall(var ref, _, var newArgs, _) &&
             ref == instance && newArgs.sameElements(args, true)
           ) return defaultValue;
           term = result.elevate(ulift);
           continue;
         }
-        case FnCall(FnDef.Delegate delegate, int ulift, var args) -> {
+        case FnCall(FnDef.Delegate delegate, int ulift, var args, _) -> {
           FnDef core = delegate.core();
           if (core == null) return defaultValue;
           if (!isOpaque(core)) switch (core.body()) {

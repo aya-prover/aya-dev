@@ -158,6 +158,19 @@ public record StmtTycker(
               var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.sourcePos());
               hitConflChecker.check();
             }
+
+            if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
+              switch (def.body()) {
+                case Either.Right<Term, FnClauseBody>(var v) -> {
+                  v.clauses = v.clauses.map(w -> {
+                    var match = w.data();
+                    var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
+                    return w.update(match.update(term));
+                  });
+                }
+                case Either.Left<Term, FnClauseBody> _ -> Panic.unreachable();
+              }
+            }
             yield def;
           }
         };
@@ -176,6 +189,7 @@ public record StmtTycker(
         yield new DataDef(data.ref, data.body.clauses.map(kon -> kon.ref.core));
       }
     };
+
     reporter.clearSuppress();
     return core;
   }

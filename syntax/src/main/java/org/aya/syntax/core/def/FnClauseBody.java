@@ -11,7 +11,7 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.NotNull;
 
 public final class FnClauseBody {
-  public final ImmutableSeq<WithPos<Term.Matching>> clauses;
+  public ImmutableSeq<WithPos<Term.Matching>> clauses;
   public ImmutableSeq<PatClass.Seq<Term, Pat>> classes;
   public FnClauseBody(ImmutableSeq<WithPos<Term.Matching>> clauses) { this.clauses = clauses; }
   public @NotNull SeqView<Term.Matching> matchingsView() {
