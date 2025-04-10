@@ -336,7 +336,6 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
   @Override public @NotNull JavaExpr serialize(Term unit) {
     binds.clear();
-    var s = unit.easyToString();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instTeleVar(vars.view());
     vars.forEachWith(instantiates, binds::put);
