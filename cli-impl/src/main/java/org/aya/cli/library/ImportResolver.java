@@ -11,19 +11,19 @@ import org.aya.syntax.ref.ModulePath;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   public interface ImportLoader {
     @NotNull LibrarySource load(@NotNull ModulePath path, @NotNull SourcePos sourcePos) throws Context.ResolvingInterruptedException;
   }
 
-  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws IOException, Context.ResolvingInterruptedException {
-    stmts.forEachChecked(this::resolveStmt);
+  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws Context.ResolvingInterruptedException {
+    for (var stmt : stmts) {
+      resolveStmt(stmt);
+    }
   }
 
-  public void resolveStmt(@NotNull Stmt stmt) throws IOException, Context.ResolvingInterruptedException {
+  public void resolveStmt(@NotNull Stmt stmt) throws Context.ResolvingInterruptedException {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents());
       case Command.Import cmd -> {

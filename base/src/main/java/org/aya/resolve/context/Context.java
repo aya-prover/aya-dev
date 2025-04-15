@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -250,11 +249,5 @@ public interface Context extends Problematic {
 
   class ResolvingInterruptedException extends Exception {
     public InterruptException.InterruptStage stage() { return InterruptException.InterruptStage.Resolving; }
-  }
-
-  final class ResolveModuleInterruptedException extends InterruptException {
-    @Override public InterruptStage stage() {
-      return InterruptStage.Resolving;
-    }
   }
 }

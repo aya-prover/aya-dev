@@ -7,7 +7,6 @@ import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.syntax.concrete.stmt.Stmt;
@@ -66,7 +65,8 @@ public interface ModuleLoader extends Problematic {
   ) {
     var opSet = new AyaBinOpSet(reporter());
     var resolveInfo = new ResolveInfo(context, primFactory, new ShapeFactory(), opSet);
-    if (resolveModule(resolveInfo, program, recurseLoader)) return null;
+    var success = resolveModule(resolveInfo, program, recurseLoader);
+    if (!success) return null;
     return resolveInfo;
   }
 
@@ -76,7 +76,7 @@ public interface ModuleLoader extends Problematic {
    * @param resolveInfo   the context of the module
    * @param program       the statements of the module
    * @param recurseLoader the module loader that used to resolve
-   * @return true if has any error
+   * @return false if has any error
    */
   @ApiStatus.Internal
   default boolean resolveModule(
@@ -87,7 +87,7 @@ public interface ModuleLoader extends Problematic {
     resolver.resolve(program);
     resolver.desugar(program);
 
-    return resolver.hasError();
+    return !resolver.hasError();
   }
 
   @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);

@@ -7,17 +7,23 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.range.primitive.IntRange;
 import kala.tuple.Tuple2;
 import org.aya.generic.term.DTKind;
+import org.aya.generic.term.ParamLike;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.term.DepTypeTerm;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Panic;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +38,22 @@ public interface AbstractTele {
   @Contract(mutates = "param2")
   static void bindTele(Seq<LocalVar> binds, MutableSeq<Param> tele) {
     tele.replaceAllIndexed((i, p) -> p.descent(t -> t.bindTele(binds.sliceView(0, i))));
+  }
+
+  static @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele) {
+    var richTele = FreezableMutableList.<ParamLike<Term>>create();
+
+    for (var i = 0; i < tele.telescopeSize(); ++i) {
+      var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
+      var type = tele.telescope(i, binds);
+      richTele.append(new RichParam(
+        new LocalVar(tele.telescopeName(i), SourcePos.NONE, GenerateKind.Basic.Pretty),
+        type,
+        tele.telescopeLicit(i))
+      );
+    }
+
+    return richTele.toSeq();
   }
 
   /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data

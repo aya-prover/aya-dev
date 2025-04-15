@@ -65,6 +65,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   }
 
   @Override
+  public void visitLetBody(Expr.@NotNull Let let) {
+    if (!accept(location(), let.body().sourcePos())) return;
+    Cursor.super.visitLetBody(let);
+  }
+
+  @Override
   public void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     var telescope = params;
 

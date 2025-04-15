@@ -153,8 +153,8 @@ public class ReplCompiler {
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
           var resolveInfo = makeResolveInfo(context.fork());
-          var hasError = loader.resolveModule(resolveInfo, program, loader);
-          if (hasError) return ImmutableSeq.empty();
+          var success = loader.resolveModule(resolveInfo, program, loader);
+          if (!success) return ImmutableSeq.empty();
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return ImmutableSeq.empty();

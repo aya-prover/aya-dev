@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.LazyValue;
 import org.aya.generic.AyaDocile;
+import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
@@ -17,6 +18,7 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,20 +28,28 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public interface StmtVisitor extends Consumer<Stmt> {
-  record Type(@Nullable Expr userType, @NotNull LazyValue<@Nullable Term> lazyType) {
-    public static final @NotNull Type noType = new Type((Expr) null);
+  record Type(@Nullable Expr userType, @NotNull LazyValue<@Nullable Term> lazyType) implements AyaDocile {
+    public static final @NotNull Doc noTypeDoc = Doc.plain("<error>");
+    public static final @NotNull Type noType = new Type(null, LazyValue.ofValue(null));
 
     public Type(@NotNull LazyValue<@Nullable Term> lazyType) {
       this(null, lazyType);
     }
 
-    public Type(@Nullable Expr userType) {
+    public Type(@NotNull Expr userType) {
       this(userType, LazyValue.ofValue(null));
     }
 
     public @Nullable AyaDocile toDocile() {
       AyaDocile docile = lazyType.get();
       return docile == null ? userType : docile;
+    }
+
+    @Override
+    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      var doc = toDocile();
+      if (doc == null) return noTypeDoc;
+      return doc.toDoc(options);
     }
   }
 
@@ -240,6 +250,26 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitExpr(bind.definedAs());
   }
 
+  default void visitLetBody(@NotNull Expr.Let let) {
+    var bind = let.bind();
+    var body = let.body();
+
+    var result = bind.result();
+    // it is possible that it has telescope without return type
+    var hasType = bind.telescope().isNotEmpty() || !(result.data() instanceof Expr.Hole);
+    Type type;
+    if (!hasType) {
+      type = Type.noType;
+    } else {
+      // dummy pos, as we don't really need it.
+      var piType = Expr.buildPi(SourcePos.NONE, bind.telescope().view(), result).data();
+      type = new Type(piType);
+    }
+
+    visitLocalVarDecl(bind.bindName(), type);
+    visitExpr(body);
+  }
+
   private void visitExpr(@NotNull WithPos<Expr> expr) { visitExpr(expr.sourcePos(), expr.data()); }
   default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
@@ -260,23 +290,9 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visitDoBinds(compBlock.binds().view()
           .appended(new Expr.DoBind(gen)));
       }
-      case Expr.Let(var bind, var body) -> {
-        visitLetBind(bind);
-
-        var result = bind.result();
-        // it is possible that it has telescope without return type
-        var hasType = bind.telescope().isNotEmpty() || !(result.data() instanceof Expr.Hole);
-        Type type;
-        if (!hasType) {
-          type = Type.noType;
-        } else {
-          // dummy pos, as we don't really need it.
-          var piType = Expr.buildPi(SourcePos.NONE, bind.telescope().view(), result).data();
-          type = new Type(piType);
-        }
-
-        visitLocalVarDecl(bind.bindName(), type);
-        visitExpr(body);
+      case Expr.Let let -> {
+        visitLetBind(let.bind());
+        visitLetBody(let);
       }
       case Expr.LetOpen letOpen -> {
         var module = letOpen.componentName();
