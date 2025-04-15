@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.parser;
 
@@ -58,6 +58,8 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
     AyaPsiElementTypes.KW_DO,
     AyaPsiElementTypes.KW_ELIM,
     AyaPsiElementTypes.KW_EXAMPLE,
+    AyaPsiElementTypes.KW_TAILREC,
+    AyaPsiElementTypes.KW_NONTERMINATING,
     AyaPsiElementTypes.KW_EXTENDS,
     AyaPsiElementTypes.KW_FIXL,
     AyaPsiElementTypes.KW_FIXR,
