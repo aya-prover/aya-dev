@@ -20,7 +20,7 @@ Error: Function marked as tailrec is not tail-recursive
 2 error(s), 0 warning(s).
 Let's learn from that.
 
-TailRecWritenByTepperStudent:
+TailRecWrittenByTepperStudent:
 In file $FILE:2:12 ->
 
   1 │   open inductive Nat | O | S Nat

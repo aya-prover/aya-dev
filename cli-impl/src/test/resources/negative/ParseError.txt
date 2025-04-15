@@ -27,7 +27,8 @@ In file $FILE:1:0 ->
     │   ╰────╯
   2 │   | a => a
 
-Warning: Ignoring inline
+Warning: Ignoring inline because it only applies to expression function bodies, 
+         not pattern matching.
 
 That looks right!
 
