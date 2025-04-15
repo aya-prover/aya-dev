@@ -14,3 +14,5 @@ module Subworld {
   | zero => let c (d : Nat) (e : Nat) : Nat := d in c a a
   | suc a => let b := "114" in a
 }
+
+variable A B : String

@@ -14,7 +14,7 @@ public sealed interface ProjectPath {
   /// Resolve {@param path} to:
   /// * {@link Project}, which represents an aya project ("aya.json" exists)
   /// * {@link Directory}, which represents a normal directory (lack of "aya.json")
-  /// * {@link File}, which represents an aya file (with ".aya" pr ".aya.md" extension)
+  /// * {@link File}, which represents an aya file (with ".aya" or ".aya.md" extension)
   /// * null, which represents a normal file (unknown file type)
   static @Nullable ProjectPath resolve(@NotNull Path path) {
     path = FileUtil.canonicalize(path);
