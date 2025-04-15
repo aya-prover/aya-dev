@@ -529,7 +529,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
-  private Jdg computeArgs(
+  private @NotNull Jdg computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
     @NotNull AbstractTele params, @NotNull BiFunction<Term[], @Nullable Term, Jdg> k
   ) throws NotPi {

@@ -338,10 +338,12 @@ public record AyaProducer(
     var inline = info.modifier.misc(ModifierParser.CModifier.Inline);
     var overlap = info.modifier.misc(ModifierParser.CModifier.Overlap);
     if (dynamite instanceof FnBody.BlockBody && inline != null) {
-      reporter.report(new BadXWarn.BadModifierWarn(inline, Modifier.Inline));
+      reporter.report(new BadXWarn.OnlyExprBodyWarn(inline, Modifier.Inline));
+      fnMods.remove(Modifier.Inline);
     }
     if (dynamite instanceof FnBody.ExprBody && overlap != null) {
       reporter.report(new ModifierProblem(overlap, ModifierParser.CModifier.Overlap, ModifierProblem.Reason.Duplicative));
+      fnMods.remove(Modifier.Overlap);
     }
 
     var ty = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());

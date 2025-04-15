@@ -6,6 +6,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
+import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.*;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 
 public record AppTycker<Ex extends Exception>(
   @Override @NotNull TyckState state,
@@ -134,7 +136,17 @@ public record AppTycker<Ex extends Exception>(
       if (operator != null) {
         return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
       }
-      var fnCall = new FnCall(fnDef, 0, argsSeq);
+      Term fnCall;
+      if (fnDef.is(Modifier.Inline)) {
+        fnCall = switch (fnDef) {
+          case JitFn jit -> jit.invoke(UnaryOperator.identity(), argsSeq);
+          case FnDef.Delegate def -> {
+            // This must succeed, see org.aya.producer.AyaProducer#fnDecl
+            var core = def.core().body().getLeftValue();
+            yield core.instTele(argsSeq.view());
+          }
+        };
+      } else fnCall = new FnCall(fnDef, 0, argsSeq);
       return new Jdg.Default(fnCall, result);
     });
   }
