@@ -70,7 +70,9 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
   @Override
   default @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    return symbols().get(name);
+    var candy = symbols().get(name);
+    if (candy.isEmpty()) return null;
+    return candy;
   }
 
   @Override
