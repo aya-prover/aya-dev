@@ -7,12 +7,15 @@ import kala.collection.mutable.MutableList;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
+import org.aya.ide.util.XY;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
+import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.ClassDecl;
 import org.aya.syntax.concrete.stmt.decl.TeleDecl;
@@ -26,10 +29,11 @@ import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Panic;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.WithPos;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Completion {
+public final class Completion {
   public record Param(@NotNull String name, @NotNull StmtVisitor.Type type) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -95,15 +99,47 @@ public class Completion {
     }
   }
 
-  /// Resolve all top level (private) declarations
-  ///
-  /// @return null if failed, probably {@param source} is not parsed/resolved yet.
-  public static @Nullable ImmutableSeq<CompletionItemu> resolveTopLevel(@NotNull LibrarySource source) {
+  public final @NotNull LibrarySource source;
+  public final @NotNull XY xy;
+  private @Nullable ModuleName inModule = null;
+  private @Nullable ImmutableSeq<CompletionItemu.Local> localContext;
+  private @Nullable ImmutableSeq<CompletionItemu> topLevelContext;
+
+  public Completion(@NotNull LibrarySource source, @NotNull XY xy) {
+    this.source = source;
+    this.xy = xy;
+  }
+
+  @Contract("-> this")
+  public @NotNull Completion compute() {
+    var stmts = source.program().get();
     var info = source.resolveInfo().get();
-    if (info == null) {
-      return null;
+
+    if (stmts != null) {
+      var walker = resolveLocal(stmts, xy);
+      this.inModule = walker.moduleContext();
+      this.localContext = walker.localContext();
     }
 
+    if (info != null) {
+      topLevelContext = resolveTopLevel(info);
+    }
+
+    return this;
+  }
+
+  public @Nullable ModuleName inModule() { return inModule; }
+  public @Nullable ImmutableSeq<CompletionItemu.Local> localContext() { return localContext; }
+  public @Nullable ImmutableSeq<CompletionItemu> topLevelContext() { return topLevelContext; }
+
+  public static @NotNull ContextWalker resolveLocal(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
+    var walker = new ContextWalker(xy);
+    stmts.forEach(walker);
+    return walker;
+  }
+
+  /// Resolve all top level (private) declarations
+  public static @NotNull ImmutableSeq<CompletionItemu> resolveTopLevel(@NotNull ResolveInfo info) {
     var decls = MutableList.<CompletionItemu.Decl>create();
 
     info.thisModule().symbols().forEach((name, candy) -> {

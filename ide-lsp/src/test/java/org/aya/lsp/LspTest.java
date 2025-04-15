@@ -151,7 +151,9 @@ public class LspTest {
     client.execute(compile((_, _) -> { }));
     var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
     assert source != null;
-    var result = Completion.resolveTopLevel(source);
+    var info = source.resolveInfo().get();
+    assert info != null;
+    var result = Completion.resolveTopLevel(info);
     return;
   }
 
