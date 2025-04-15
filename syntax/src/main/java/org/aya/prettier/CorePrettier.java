@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import kala.value.LazyValue;
@@ -17,7 +16,6 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.compile.*;
-import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.def.*;
@@ -341,7 +339,7 @@ public class CorePrettier extends BasePrettier<Term> {
     modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
     line1.append(name);
 
-    var tele = enrich(telescope);
+    var tele = AbstractTele.enrich(telescope);
     var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
     var result = telescope.result(subst);
 
@@ -355,7 +353,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
   /// @param selfTele self tele of the constructor, unlike [JitCon], the data args/owner args should be supplied.
   private @NotNull Doc visitConRhs(@NotNull Doc name, boolean coerce, @NotNull AbstractTele selfTele) {
-    return Doc.sepNonEmpty(coe(coerce), name, visitTele(enrich(selfTele), null));
+    return Doc.sepNonEmpty(coe(coerce), name, visitTele(AbstractTele.enrich(selfTele), null));
   }
 
   private @NotNull Doc visitCon(
@@ -384,7 +382,7 @@ public class CorePrettier extends BasePrettier<Term> {
   private @NotNull Doc visitData(@NotNull DataDefLike dataDef) {
     var name = defVar(AnyDef.toVar(dataDef));
     var telescope = dataDef.signature();
-    var richDataTele = enrich(telescope);
+    var richDataTele = AbstractTele.enrich(telescope);
     var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
 
     var line1 = Doc.sepNonEmpty(KW_DATA, name,
@@ -436,21 +434,6 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   // region Name Generation
-  private @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele) {
-    var richTele = FreezableMutableList.<ParamLike<Term>>create();
-
-    for (var i = 0; i < tele.telescopeSize(); ++i) {
-      var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
-      var type = tele.telescope(i, binds);
-      richTele.append(new RichParam(
-        new LocalVar(tele.telescopeName(i), SourcePos.NONE, Basic.Pretty),
-        type,
-        tele.telescopeLicit(i))
-      );
-    }
-
-    return richTele.toSeq();
-  }
 
   private @NotNull LocalVar generateName(@Nullable Term whty) {
     return nameGen.bindName(whty);
@@ -459,7 +442,7 @@ public class CorePrettier extends BasePrettier<Term> {
   record VisitTele(@NotNull Doc tele, @NotNull LazyValue<Doc> result) { }
 
   private @NotNull VisitTele visitTele(@NotNull AbstractTele tele) {
-    var richTele = enrich(tele);
+    var richTele = AbstractTele.enrich(tele);
     var teleDoc = visitTele(richTele, null);
 
     return new VisitTele(teleDoc, LazyValue.of(() -> {

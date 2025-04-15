@@ -129,17 +129,18 @@ public class LibraryCompiler {
     finder.resolveStmt(source.program().get());
   }
 
-  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException {
+  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException, Context.ResolvingInterruptedException {
     var depGraph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
-    owner.librarySources().forEachChecked(src -> {
+    for (var src : owner.librarySources()) {
       resolveImportsIfNeeded(src);
       var known = depGraph.sucMut(src);
       var dedup = src.imports().filter(s ->
         known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
       known.appendAll(dedup);
-    });
+    }
+
     reporter.reportNest("Done in " + TimeUtil.millisToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return depGraph;
@@ -150,7 +151,12 @@ public class LibraryCompiler {
       "Warning: command-line specified module path (--module-path) is ignored when compiling libraries.");
     if (flags.outputFile() != null) reporter.reportString(
       "Warning: command-line specified output file (-o, --output) is ignored when compiling libraries.");
-    return CompilerUtil.catching(reporter, flags, this::make);
+    return CompilerUtil.catching(reporter, flags, () -> {
+      try {
+        this.make();
+      } catch (Context.ResolvingInterruptedException _) {
+      }
+    });
   }
 
   private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
@@ -209,7 +215,7 @@ public class LibraryCompiler {
    * @return whether the library is up-to-date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
-  private boolean make() throws IOException {
+  private boolean make() throws IOException, Context.ResolvingInterruptedException {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
@@ -245,7 +251,7 @@ public class LibraryCompiler {
   /**
    * @return whether the library is up-to-date.
    */
-  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException {
+  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException, Context.ResolvingInterruptedException {
     // modified sources need reparse
     modified.forEach(this::clearModified);
     var depGraph = resolveImports();
