@@ -25,9 +25,10 @@ public interface BadXWarn extends Problem {
     }
   }
 
-  record BadModifierWarn(@Override @NotNull SourcePos sourcePos, @NotNull Modifier modifier) implements BadXWarn {
+  record OnlyExprBodyWarn(@Override @NotNull SourcePos sourcePos, @NotNull Modifier modifier) implements BadXWarn {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.plain("Ignoring"), Doc.styled(BasePrettier.KEYWORD, modifier.keyword));
+      return Doc.sep(Doc.plain("Ignoring"), Doc.styled(BasePrettier.KEYWORD, modifier.keyword),
+        Doc.english("because it only applies to expression function bodies, not pattern matching."));
     }
   }
 
