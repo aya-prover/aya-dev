@@ -12,7 +12,7 @@ include(
   "cli-console",
   "tools",
   // Uses kala-primitives
-  "jit-compiler",
+  "jit-anf",
   "tools-kala",
   "tools-md",
   "tools-repl",
@@ -24,4 +24,3 @@ include(
   "ide",
   "ide-lsp",
 )
-include("jit-anf")
