@@ -89,7 +89,17 @@ public record SourcePos(
   }
 
   public boolean containsVisually(int line, int column) {
-    return line >= startLine && line <= endLine && column >= startColumn - 1 && column <= endColumn;
+    var singleLine = startLine == endLine;
+    var afterStartCol = startColumn - 1 <= column;
+    var beforeEndCol = column <= endColumn;
+
+    if (singleLine) return line == startLine && afterStartCol && beforeEndCol;
+
+    if (line == startLine) return afterStartCol;
+    if (line == endLine) return beforeEndCol;
+
+    // noe, line != startLine != endLine
+    return startLine < line && line < endLine;
   }
 
   public boolean contains(int pos) {
