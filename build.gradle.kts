@@ -49,7 +49,7 @@ allprojects {
   version = projectVersion
 }
 
-val useJacoco = listOf("base", "syntax", "producer", "pretty", "cli-impl", "jit-compiler", "tools")
+val useJacoco = listOf("base", "syntax", "producer", "pretty", "cli-impl", "jit-anf", "tools")
 
 /** gradle.properties or environmental variables */
 fun propOrEnv(name: String): String =

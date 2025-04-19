@@ -1,0 +1,18 @@
+open inductive Nat | O | S Nat
+
+def add (a b : Nat) : Nat elim a, b
+| 0, y => y
+| S x, y => S (add x y)
+
+def mult (a b : Nat) : Nat elim a
+| 0 => 0
+| S x => add b (mult x b)
+
+def pred (n : Nat) : Nat elim n
+| 0 => 0
+| S x => x
+
+def sub (a b : Nat) : Nat elim a, b
+| 0, y => 0
+| x, 0 => x
+| S x, S y => sub x y
