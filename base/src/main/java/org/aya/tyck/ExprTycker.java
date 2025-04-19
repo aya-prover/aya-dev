@@ -2,6 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import java.util.Comparator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
@@ -46,10 +50,6 @@ import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -230,13 +230,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     // Bind the free occurrences and spawn the lifted clauses as a definition
     var captures = usages.collected();
-    var lifted = new Matchy(type.bindTele(wellArgs.size(), captures.view()),
+    var captureVars = captures.view().map(FreeTermLike::name);
+    var lifted = new Matchy(type.bindTele(wellArgs.size(), captureVars),
       new QName(QPath.fileLevel(fileModule), "match-" + exprPos.lineColumnString()),
-      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captures.view())))
+      wellClauses.map(clause -> clause.update(clause.body().bindTele(clause.bindCount(), captureVars)))
         .toSeq());
 
     var wellTerms = wellArgs.map(Jdg::wellTyped);
-    return new MatchCall(lifted, wellTerms, captures.map(FreeTerm::new));
+    return new MatchCall(lifted, wellTerms, ImmutableSeq.narrow(captures));
   }
 
   /**
@@ -517,8 +518,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) ->
-        ArgsComputer.generateApplication(this, args, localLet.get(ref)).lift(lift);
+      case LocalVar ref when localLet.contains(ref) -> {
+        var definedAs = localLet.get(ref);
+        var jdg = definedAs.definedAs();
+        var term = definedAs.isLet()
+          ? new LetFreeTerm(ref, jdg.wellTyped())
+          : jdg.wellTyped();
+        var start = new Jdg.Default(term, jdg.type());
+        yield ArgsComputer.generateApplication(this, args, start).lift(lift);
+      }
       case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
@@ -545,6 +553,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();
+    var bindName = letBind.bindName();
     var typeExpr = Expr.buildPi(letBind.sourcePos(),
       letBind.telescope().view(), letBind.result());
     // as well as the body of the binding, for example:
@@ -556,10 +565,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
+    var definedAs = definedAsResult.wellTyped();
 
     try (var _ = subscope()) {
-      localLet.put(let.bind().bindName(), definedAsResult);
-      return checker.apply(let.body());
+      localLet.put(bindName, definedAsResult, true);
+      var result = checker.apply(let.body());
+      var letFree = new LetFreeTerm(bindName, definedAs);
+      var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
+      var typeLet = LetTerm.bind(letFree, result.type());
+      return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
 
