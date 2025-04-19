@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.value.LazyValue;
@@ -98,6 +99,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     l.forEachWith(bb.loosers(), (ll, b) -> visitVarRef(b.sourcePos(), ll, lazyType(ll)));
   }
 
+  // TODO: remove this
   private void visitVars(@NotNull Stmt stmt) {
     switch (stmt) {
       case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data())));
@@ -131,22 +133,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
-      case Decl decl -> {
-        if (decl instanceof TeleDecl tele) visitTelescopic(tele);
-        switch (decl) {
-          case DataDecl data -> data.body.forEach(this::accept);
-          case ClassDecl clazz -> clazz.members.forEach(this);
-          case FnDecl fn -> {
-            fn.body.forEach(this::visitExpr, this::visitClause);
-            if (fn.body instanceof FnBody.BlockBody block) {
-              if (block.elims() != null) block.elims().forEachWith(block.rawElims(), (var, name) ->
-                visitVarRef(name.sourcePos(), var, Type.noType));
-            }
-          }
-          case DataCon con -> con.patterns.forEach(cl -> visitPattern(cl.term()));
-          case PrimDecl _, ClassMember _ -> { }
-        }
-      }
+      case Decl decl -> visitDecl(decl);
       case Command command -> {
         switch (command) {
           case Command.Module module -> module.contents().forEach(this);
@@ -158,6 +145,43 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitVars(stmt);
   }
 
+  default void visitDecl(@NotNull Decl decl) {
+    if (decl instanceof TeleDecl tele) visitTelescopic(tele);
+    switch (decl) {
+      case DataDecl data -> visitDataDecl(data);
+      case ClassDecl clazz -> visitClassDecl(clazz);
+      case FnDecl fn -> visitFnDecl(fn);
+      case DataCon con -> visitDataCon(con);
+      case PrimDecl prim -> visitPrimDecl(prim);
+      case ClassMember member -> visitClassMember(member);
+    }
+  }
+
+  default void visitDataDecl(@NotNull DataDecl decl) {
+    decl.body.forEach(this::accept);
+  }
+
+  default void visitClassDecl(@NotNull ClassDecl decl) {
+    decl.members.forEach(this);
+  }
+
+  default void visitFnDecl(@NotNull FnDecl decl) {
+    decl.body.forEach(this::visitExpr, this::visitClause);
+    if (decl.body instanceof FnBody.BlockBody block) {
+      if (block.elims() != null) block.elims().forEachWith(block.rawElims(), (var, name) ->
+        visitVarRef(name.sourcePos(), var, Type.noType));
+    }
+  }
+
+  default void visitDataCon(@NotNull DataCon decl) {
+    decl.patterns.forEach(cl -> visitPattern(cl.term()));
+  }
+
+  default void visitPrimDecl(@NotNull PrimDecl decl) { }
+
+  default void visitClassMember(@NotNull ClassMember decl) { }
+
+  // scope introducer
   default void visitClause(@NotNull Pattern.Clause clause) {
     clause.forEach(this::visitExpr, this::visitPattern);
   }
@@ -219,8 +243,17 @@ public interface StmtVisitor extends Consumer<Stmt> {
   }
 
   default void visitTelescopic(@NotNull TeleDecl telescopic) {
-    telescopic.telescope.forEach(param -> param.forEach(this::visitExpr));
-    if (telescopic.result != null) visitExpr(telescopic.result);
+    visitTelescope(telescopic.telescope.view(), telescopic.result);
+  }
+
+  default void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
+    params.forEach(this::visitParam);
+    if (result != null) visitExpr(result);
+  }
+
+  default void visitParam(@NotNull Expr.Param param) {
+    visitLocalVarDecl(param.ref(), fromParam(param));
+    visitExpr(param.typeExpr());
   }
 
   private @NotNull Type fromParam(@NotNull Expr.Param param) {
@@ -234,5 +267,4 @@ public interface StmtVisitor extends Consumer<Stmt> {
   private @NotNull Type withTermType(@Nullable Expr userType, @NotNull Expr.WithTerm term) {
     return new Type(userType, LazyValue.of(term::coreType));
   }
-
 }

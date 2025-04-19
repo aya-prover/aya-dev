@@ -633,8 +633,13 @@ public sealed interface Expr extends AyaDocile {
     /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(d -> f.accept(d.discr()));
-      clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
+      // do not foreach [clauses]
       if (returns != null) f.accept(returns);
+    }
+
+    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f, @NotNull Consumer<Pattern.@NotNull Clause> g) {
+      forEach(f);
+      clauses.forEach(g);
     }
   }
 
