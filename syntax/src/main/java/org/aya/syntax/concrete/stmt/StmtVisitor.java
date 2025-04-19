@@ -77,6 +77,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitVarDecl(var.definition(), var, type);
   }
 
+  @ApiStatus.NonExtendable
   default void visitParam(@NotNull Expr.Param param) {
     visitExpr(param.typeExpr());
     visitParamDecl(param);
@@ -85,6 +86,12 @@ public interface StmtVisitor extends Consumer<Stmt> {
   @ApiStatus.NonExtendable
   default void visitParamDecl(Expr.@NotNull Param param) {
     visitLocalVarDecl(param.ref(), fromParam(param));
+  }
+
+  @ApiStatus.NonExtendable
+  default void visitDoBind(@NotNull Expr.DoBind bind) {
+    visitExpr(bind.expr());
+    visitLocalVarDecl(bind.var(), Type.noType);
   }
 
   private @Nullable Term varType(@Nullable AnyVar var) {
@@ -105,50 +112,40 @@ public interface StmtVisitor extends Consumer<Stmt> {
     l.forEachWith(bb.loosers(), (ll, b) -> visitVarRef(b.sourcePos(), ll, lazyType(ll)));
   }
 
-  // TODO: remove this
-  private void visitVars(@NotNull Stmt stmt) {
-    switch (stmt) {
-      case Generalize g -> g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data())));
-      case Command.Module m -> visitModuleDecl(m.sourcePos(), ModuleName.of(m.name()));
-      case Command.Import i -> {
-        // Essentially `i.asName() != null` but fancier
-        var path = i.path();
-        if (i.asName() instanceof WithPos(var pos, var asName)) {
-          visitModuleRef(i.sourcePos(), path);
-          visitModuleDecl(pos, ModuleName.of(asName));
-        } else {
-          if (i.sourcePosExceptLast() != SourcePos.NONE) visitModuleRef(i.sourcePosExceptLast(), path.dropLast(1));
-          visitModuleDecl(i.sourcePosLast(), ModuleName.of(path.last()));
-        }
-      }
-      case Command.Open o when o.fromSugar() -> { }  // handled in `case Decl` or `case Command.Import`
-      case Command.Open o -> {
-        visitModuleRef(o.sourcePos(), o.path());
-        // TODO: what about the symbols that introduced by renaming
-        // https://github.com/aya-prover/aya-dev/issues/721
-        o.useHide().list().forEach(v -> visit(v.asBind()));
-      }
-      case Decl decl -> {
-        visit(decl.bindBlock());
-        visitVarDecl(decl.sourcePos(), decl.ref(), lazyType(decl.ref()));
-        if (decl instanceof TeleDecl tele)
-          tele.telescope.forEach(this::visitParamDecl);
-      }
-    }
-  }
-
   default void accept(@NotNull Stmt stmt) {
     switch (stmt) {
       case Decl decl -> visitDecl(decl);
       case Command command -> {
         switch (command) {
-          case Command.Module module -> module.contents().forEach(this);
-          case Command.Import _, Command.Open _ -> { }
+          case Command.Module module -> {
+            visitModuleDecl(module.sourcePos(), ModuleName.of(module.name()));      // TODO: what about nested module, also 1-length name?
+            module.contents().forEach(this);
+          }
+          case Command.Open o when o.fromSugar() -> { }
+          case Command.Open o -> {
+            visitModuleRef(o.sourcePos(), o.path());
+            // TODO: what about the symbols that introduced by renaming
+            // https://github.com/aya-prover/aya-dev/issues/721
+            o.useHide().list().forEach(v -> visit(v.asBind()));
+          }
+          case Command.Import i -> {
+            // Essentially `i.asName() != null` but fancier
+            var path = i.path();
+            if (i.asName() instanceof WithPos(var pos, var asName)) {
+              visitModuleRef(i.sourcePos(), path);
+              visitModuleDecl(pos, ModuleName.of(asName));
+            } else {
+              if (i.sourcePosExceptLast() != SourcePos.NONE) visitModuleRef(i.sourcePosExceptLast(), path.dropLast(1));
+              visitModuleDecl(i.sourcePosLast(), ModuleName.of(path.last()));
+            }
+          }
         }
       }
-      case Generalize generalize -> visitExpr(generalize.type);
+      case Generalize g -> {
+        visitExpr(g.type);
+        g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data())));
+      }
     }
-    // visitVars(stmt);
   }
 
   default void visitDecl(@NotNull Decl decl) {
@@ -191,9 +188,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
   default void visitClassMember(@NotNull ClassMember decl) { }
 
-  default void visitDoBind(@NotNull Expr.DoBind bind) {
-    visitExpr(bind.expr());
-    visitLocalVarDecl(bind.var(), Type.noType);
+  default void visitDoBinds(@NotNull SeqView<Expr.DoBind> binds) {
+    binds.forEach(this::visitDoBind);
   }
 
   // scope introducer
@@ -231,6 +227,13 @@ public interface StmtVisitor extends Consumer<Stmt> {
     match.clauses().forEach(this::visitClause);
   }
 
+  default void visitLetBind(@NotNull Expr.LetBind bind) {
+    var result = bind.result();
+    // visit let bind
+    visitTelescope(bind.telescope().view(), result.data() instanceof Expr.Hole ? null : result);
+    visitExpr(bind.definedAs());
+  }
+
   private void visitExpr(@NotNull WithPos<Expr> expr) { visitExpr(expr.sourcePos(), expr.data()); }
   default void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
     switch (expr) {
@@ -247,17 +250,14 @@ public interface StmtVisitor extends Consumer<Stmt> {
       }
       case Expr.Array array when array.arrayBlock().isLeft() -> {
         var compBlock = array.arrayBlock().getLeftValue();
-        compBlock.binds().forEach(this::visitDoBind);
-        visitExpr(compBlock.generator());
+        var gen = compBlock.generator();
+        visitDoBinds(compBlock.binds().view()
+          .appended(new Expr.DoBind(gen)));
       }
-      case Expr.Let let -> {
-        var bind = let.bind();
+      case Expr.Let(var bind, var body) -> {
+        visitLetBind(bind);
+
         var result = bind.result();
-
-        // visit let bind
-        visitTelescope(bind.telescope().view(), result.data() instanceof Expr.Hole ? null : result);
-        visitExpr(bind.definedAs());
-
         // it is possible that it has telescope without return type
         var hasType = bind.telescope().isNotEmpty() || !(result.data() instanceof Expr.Hole);
         Type type;
@@ -269,10 +269,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
           type = new Type(piType);
         }
 
-        visitLocalVarDecl(let.bind().bindName(), type);
-        visitExpr(let.body());
+        visitLocalVarDecl(bind.bindName(), type);
+        visitExpr(body);
       }
-      case Expr.Do du -> du.binds().forEach(this::visitDoBind);
+      case Expr.Do du -> visitDoBinds(du.binds().view());
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null -> {
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
         visitExpr(proj.tup());

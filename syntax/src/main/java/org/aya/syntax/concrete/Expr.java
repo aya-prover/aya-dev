@@ -407,6 +407,10 @@ public sealed interface Expr extends AyaDocile {
     @NotNull LocalVar var,
     @NotNull WithPos<Expr> expr
   ) implements SourceNode {
+    public DoBind(@NotNull WithPos<Expr> expr) {
+      this(expr.sourcePos(), LocalVar.IGNORED, expr);
+    }
+
     public @NotNull DoBind update(@NotNull WithPos<Expr> expr) {
       return expr == expr() ? this : new DoBind(sourcePos, var, expr);
     }
