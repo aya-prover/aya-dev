@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 dependencies {
@@ -6,7 +6,7 @@ dependencies {
   api(project(":parser"))
   api(libs.gson)
   implementation(project(":producer"))
-  implementation(project(":jit-compiler"))
+  implementation(project(":jit-anf"))
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest)
   testImplementation(project(":cli-console"))

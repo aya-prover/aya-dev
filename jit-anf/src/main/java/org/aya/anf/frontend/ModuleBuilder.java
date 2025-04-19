@@ -3,6 +3,7 @@
 package org.aya.anf.frontend;
 
 import kala.collection.mutable.MutableList;
+import org.aya.anf.ANFModule;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.FnDef;
@@ -15,7 +16,7 @@ public class ModuleBuilder {
   private final MutableList<ConDef> constructors = MutableList.create();
   private final MutableList<Object> functions = MutableList.create();
 
-  private void addTopLevelDef(@NotNull TyckDef def) {
+  public void addTopLevelDef(@NotNull TyckDef def) {
     switch (def) {
       case ConDef conDef -> constructors.append(conDef);
       case DataDef dataDef -> data.append(dataDef);
@@ -24,5 +25,9 @@ public class ModuleBuilder {
       }
       default -> throw new Panic("unimplemented");
     }
+  }
+
+  public @NotNull ANFModule build() {
+    return new ANFModule(data, constructors, functions);
   }
 }
