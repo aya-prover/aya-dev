@@ -5,5 +5,6 @@ module aya.anf {
 
   requires static org.jetbrains.annotations;
 
-  exports org.aya.anf;
+  exports org.aya.anf.ir;
+  exports org.aya.anf.frontend;
 }

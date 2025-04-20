@@ -1,10 +1,10 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.anf;
+package org.aya.anf.ir;
 
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface ANFVar permits ANFVar.Generated, ANFVar.Local {
+public sealed interface IRVar permits IRVar.Generated, IRVar.Local {
   /// Shows the display name of the variable. Used during debugging and source generation.
   @NotNull String display();
 
@@ -12,11 +12,11 @@ public sealed interface ANFVar permits ANFVar.Generated, ANFVar.Local {
   // e.g., when trivializing a nested application, the parameters are assigned to generated
   // vars in surronding let-bindings. Their display name should reflect that.
 
-  record Generated() implements ANFVar {
+  record Generated() implements IRVar {
     @Override public @NotNull String display() { return "TODO"; }
   }
 
-  record Local(@NotNull String name) implements ANFVar {
+  record Local(@NotNull String name) implements IRVar {
     public @Override @NotNull String display() { return name; }
   }
 }

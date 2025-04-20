@@ -1,6 +1,7 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-import org.aya.anf.ANFModule;
+
+import org.aya.anf.frontend.ModuleBuilder;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ public class TestPipeline {
     @Language("Aya") var code = new String(stream.readAllBytes());
     stream.close();
     var result = TestUtils.tyck(code);
-    var module = ANFModule.from(result.defs().view());
+    var module = ModuleBuilder.build(result.defs().view());
     System.out.println(module.debugRender());
   }
 }

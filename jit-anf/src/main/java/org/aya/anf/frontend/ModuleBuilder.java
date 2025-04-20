@@ -2,8 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.anf.frontend;
 
+import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
-import org.aya.anf.ANFModule;
+import org.aya.anf.ir.IRModule;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.FnDef;
@@ -27,7 +28,13 @@ public class ModuleBuilder {
     }
   }
 
-  public @NotNull ANFModule build() {
-    return new ANFModule(data, constructors, functions);
+  public @NotNull IRModule build() {
+    return new IRModule(data, constructors, functions);
+  }
+
+  public static @NotNull IRModule build(@NotNull SeqView<TyckDef> defs) {
+    var builder = new ModuleBuilder();
+    defs.forEach(builder::addTopLevelDef);
+    return builder.build();
   }
 }
