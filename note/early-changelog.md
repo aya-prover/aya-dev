@@ -1,5 +1,31 @@
 # Early changelog
 
+## v0.38
+
+We are now living on Java 24!
+
+Breaking change:
+
+The keyword `partial` is renamed to `nonterminating` to reserve `partial` for partial elements,
+
+New features:
+
+- An incomplete implementation of partial elements. Need overhaul, because there might be absurd cofibrations (`0 = 1`) and the elements should be nullable. It's non-null currently :(
+- The `tailrec` modifier, that indicates a function to be tail-recursive, and will produce code using TCO (thanks to @linxuanm),
+- Automatic dependent pattern matching in `match` expressions, using the `elim` keyword (thanks to @dark-flames),
+- The modifier `inline` now actually has semantics -- any invocation will be call-by-name inlined,
+- The symbol `__` for implicit lambda expressions similar to Arend, Scala, and Lean,
+- The double checker now checks the boundaries of path lambdas.
+
+Bug fixes and internal improvements:
+
+- Fix that `Signature#descent` didn't handle de-Bruijn indices correctly,
+- Replace some usages of stream API with kala views,
+- More performance tests for the [PLunch talk](https://www.youtube.com/watch?v=lvwygACgJFk),
+- Submodule `tools` no longer depends on `kala-collection-primitive`,
+- Fix potential bug in pattern matching unfolding when the arguments are not sufficiently unfolded,
+- Improve generated PLCT reports to not use `api` URLs.
+
 ## v0.37
 
 Breaking changes:
