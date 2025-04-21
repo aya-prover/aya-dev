@@ -10,5 +10,4 @@ dependencies {
   api(project(":tools-md"))
   api(project(":pretty"))
   api(libs.aya.ij.core)
-  testImplementation(libs.junit.params)
 }
