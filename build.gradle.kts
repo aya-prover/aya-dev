@@ -22,9 +22,6 @@ var javaVersion: Int by rootProject.ext
 projectVersion = libs.versions.project.get()
 javaVersion = libs.versions.java.get().toInt()
 
-// Workaround that `libs` is not available in `jacoco {}` block
-var jacocoVersion: String = libs.versions.jacoco.get()
-
 // Platforms we build jlink-ed aya for:
 // The "current" means the "current platform", as it is unnecessary to detect what the current system is,
 // as calling jlink with default arguments will build for the current platform.
@@ -86,7 +83,7 @@ subprojects {
   }
 
   if (name in useJacoco) jacoco {
-    toolVersion = jacocoVersion
+    toolVersion = rootProject.libs.versions.jacoco.get()
   }
 
   idea.module {
@@ -95,8 +92,6 @@ subprojects {
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    modularity.inferModulePath.set(true)
-
     options.apply {
       isDeprecation = true
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
@@ -120,7 +115,7 @@ subprojects {
     }
   }
 
-  tasks.withType<Javadoc>().configureEach {
+  tasks.javadoc {
     val options = options as StandardJavadocDocletOptions
     options.modulePath = tasks.compileJava.get().classpath.toList()
     options.addBooleanOption("-enable-preview", true)
@@ -234,11 +229,12 @@ subprojects {
 apply { plugin("jacoco-report-aggregation") }
 dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }
 
-val ccr = tasks["testCodeCoverageReport"]
+val ccr = tasks.testCodeCoverageReport
 
 if (Os.isFamily(Os.FAMILY_WINDOWS)) tasks.register("showCCR") {
   dependsOn(ccr)
-  doLast { exec { commandLine("cmd", "/c", "explorer", "build\\reports\\jacoco\\testCodeCoverageReport\\html\\index.html") } }
+  val path = "build\\reports\\jacoco\\testCodeCoverageReport\\html\\index.html"
+  doLast { providers.exec { commandLine("cmd", "/c", "explorer", path) } }
 }
 
 tasks.withType<Sync>().configureEach {
