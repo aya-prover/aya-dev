@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.BuildUtil
 
 plugins {
   java
+  `jvm-test-suite`
   `jacoco-report-aggregation`
   idea
   `java-library`
@@ -20,9 +21,6 @@ var javaVersion: Int by rootProject.ext
 
 projectVersion = libs.versions.project.get()
 javaVersion = libs.versions.java.get().toInt()
-
-// Workaround that `libs` is not available in `jacoco {}` block
-var jacocoVersion: String = libs.versions.jacoco.get()
 
 // Platforms we build jlink-ed aya for:
 // The "current" means the "current platform", as it is unnecessary to detect what the current system is,
@@ -85,7 +83,7 @@ subprojects {
   }
 
   if (name in useJacoco) jacoco {
-    toolVersion = jacocoVersion
+    toolVersion = rootProject.libs.versions.jacoco.get()
   }
 
   idea.module {
@@ -94,8 +92,6 @@ subprojects {
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    modularity.inferModulePath.set(true)
-
     options.apply {
       isDeprecation = true
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
@@ -119,9 +115,9 @@ subprojects {
     }
   }
 
-  tasks.withType<Javadoc>().configureEach {
+  tasks.javadoc {
     val options = options as StandardJavadocDocletOptions
-    options.modulePath = tasks.compileJava.get().classpath.toList()
+    options.modulePath(tasks.compileJava.get().classpath.toList())
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", javaVersion.toString())
     options.addStringOption("Xdoclint:none", "-quiet")
@@ -140,23 +136,28 @@ subprojects {
   if (name in useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
-      xml.required.set(true)
-      csv.required.set(false)
-      html.required.set(false)
+      xml.required = true
+      csv.required = false
+      html.required = false
     }
   }
 
-  tasks.withType<Test>().configureEach {
-    jvmArgs = listOf("--enable-preview")
-    useJUnitPlatform()
-    enableAssertions = true
-    reports.junitXml.mergeReruns.set(true)
+  @Suppress("UnstableApiUsage")
+  testing.suites {
+    val test by getting(JvmTestSuite::class) {
+      useJUnitJupiter(rootProject.libs.versions.junit)
+      targets.all {
+        testTask.configure {
+          if (name in useJacoco) finalizedBy(tasks.jacocoTestReport)
+          jvmArgs = listOf("--enable-preview")
+          enableAssertions = true
+          reports.junitXml.mergeReruns = true
+        }
+      }
+    }
   }
 
-  tasks.withType<JavaExec>().configureEach {
-    jvmArgs = listOf("--enable-preview")
-    enableAssertions = true
-  }
+  tasks.withType<JavaExec>().configureEach { jvmArgs = listOf("--enable-preview"); enableAssertions = true }
 
   val ossrhUsername = propOrEnv("ossrhUsername")
   val ossrhPassword = propOrEnv("ossrhPassword")
@@ -166,10 +167,7 @@ subprojects {
     val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
     name = "MavenCentral"
-    credentials {
-      username = ossrhUsername
-      password = ossrhPassword
-    }
+    credentials { username = ossrhUsername; password = ossrhPassword }
   }
 
   // Gradle module metadata contains Gradle JVM version, disable it
@@ -184,33 +182,25 @@ subprojects {
     artifactId = proj.name
     from(components["java"])
     pom {
-      description.set("The Aya proof assistant")
-      name.set(proj.name)
-      url.set("https://www.aya-prover.org")
+      description = "The Aya proof assistant"
+      name = proj.name
+      url = "https://www.aya-prover.org"
       licenses {
-        license {
-          name.set("MIT")
-          url.set("$githubUrl/blob/master/LICENSE")
-        }
+        license { name = "MIT"; url = "$githubUrl/blob/master/LICENSE" }
       }
       developers {
-        fun dev(i: String, n: String, u: String) = developer {
-          id.set(i)
-          name.set(n)
-          email.set(u)
-        }
-        dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
-        dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
-        dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
-        dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
-        dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
-        dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
-        dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
-        dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+        developer { id = "ice1000"; name = "Tesla (Yinsen) Zhang"; email = "ice1000kotlin@foxmail.com" }
+        developer { id = "imkiva"; name = "Kiva Oyama"; email = "imkiva@islovely.icu" }
+        developer { id = "re-xyr"; name = "Xy Ren"; email = "xy.r@outlook.com" }
+        developer { id = "dark-flames"; name = "Darkflames"; email = "dark_flames@outlook.com" }
+        developer { id = "tsao-chi"; name = "tsao-chi"; email = "tsao-chi@the-lingo.org" }
+        developer { id = "lunalunaa"; name = "Luna Xin"; email = "luna.xin@outlook.com" }
+        developer { id = "wsx"; name = "Shuxian Wang"; email = "wsx@berkeley.edu" }
+        developer { id = "HoshinoTented"; name = "Hoshino Tented"; email = "limbolrain@gmail.com" }
       }
       scm {
-        connection.set("scm:git:$githubUrl")
-        url.set(githubUrl)
+        connection = "scm:git:$githubUrl"
+        url = githubUrl
       }
     }
   }
@@ -224,11 +214,12 @@ subprojects {
 apply { plugin("jacoco-report-aggregation") }
 dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }
 
-val ccr = tasks["testCodeCoverageReport"]
+val ccr = tasks.testCodeCoverageReport
 
 if (Os.isFamily(Os.FAMILY_WINDOWS)) tasks.register("showCCR") {
   dependsOn(ccr)
-  doLast { exec { commandLine("cmd", "/c", "explorer", "build\\reports\\jacoco\\testCodeCoverageReport\\html\\index.html") } }
+  val path = "build\\reports\\jacoco\\testCodeCoverageReport\\html\\index.html"
+  doLast { providers.exec { commandLine("cmd", "/c", "explorer", path) } }
 }
 
 tasks.withType<Sync>().configureEach {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.aya.gradle.GenerateVersionTask
 
@@ -9,9 +9,6 @@ dependencies {
   // annotationProcessor(libs.manifold.delegate.codegen)
   testImplementation(project(":producer"))
   testImplementation(project(":jit-compiler"))
-  testImplementation(libs.junit.params)
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.hamcrest)
   // testAnnotationProcessor(libs.manifold.delegate.codegen)
 }
 
@@ -38,6 +35,4 @@ val cleanGenerated = tasks.register("cleanGenerated") {
 tasks.named("clean") { dependsOn(cleanGenerated) }
 
 // Thank you Long
-tasks.withType<JavaExec>().configureEach {
-  jvmArgs( "-Xss32m")
-}
+tasks.withType<JavaExec>().configureEach { jvmArgs( "-Xss32m") }

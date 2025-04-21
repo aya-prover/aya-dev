@@ -4,13 +4,7 @@
 dependencies {
   api(project(":base"))
   implementation("org.glavo:classfile:0.5.0")
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.hamcrest)
   testImplementation(project(":producer"))
 }
 
-tasks.withType<JavaExec>().configureEach {
-  val vmArgs = jvmArgs ?: mutableListOf()
-  vmArgs.add("-Xss32M")
-  jvmArgs = vmArgs
-}
+tasks.withType<JavaExec>().configureEach { jvmArgs("-Xss32M") }
