@@ -5,6 +5,4 @@ dependencies {
   api(libs.kala.collection)
   api(project(":pretty"))
   api(libs.aya.ij.text)
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.hamcrest)
 }

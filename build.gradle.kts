@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.BuildUtil
@@ -117,7 +117,7 @@ subprojects {
 
   tasks.javadoc {
     val options = options as StandardJavadocDocletOptions
-    options.modulePath = tasks.compileJava.get().classpath.toList()
+    options.modulePath(tasks.compileJava.get().classpath.toList())
     options.addBooleanOption("-enable-preview", true)
     options.addStringOption("-source", javaVersion.toString())
     options.addStringOption("Xdoclint:none", "-quiet")

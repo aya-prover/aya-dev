@@ -54,9 +54,7 @@ jline-terminal-api = { group = "org.jline", name = "jline-terminal", version.ref
 jline-builtins = { group = "org.jline", name = "jline-builtins", version.ref = "jline" }
 jline-reader = { group = "org.jline", name = "jline-reader", version.ref = "jline" }
 
-junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
-hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
 
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
