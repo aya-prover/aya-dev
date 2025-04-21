@@ -5,6 +5,7 @@ import org.aya.gradle.BuildUtil
 
 plugins {
   java
+  `jvm-test-suite`
   `jacoco-report-aggregation`
   idea
   `java-library`
@@ -146,11 +147,20 @@ subprojects {
     }
   }
 
-  tasks.withType<Test>().configureEach {
-    jvmArgs = listOf("--enable-preview")
-    useJUnitPlatform()
-    enableAssertions = true
-    reports.junitXml.mergeReruns.set(true)
+  testing {
+    suites {
+      @Suppress("UnstableApiUsage")
+      val test by getting(JvmTestSuite::class) {
+        useJUnitJupiter(rootProject.libs.junit.jupiter.map { it.version!! })
+        targets.all {
+          testTask.configure {
+            jvmArgs = listOf("--enable-preview")
+            enableAssertions = true
+            reports.junitXml.mergeReruns = true
+          }
+        }
+      }
+    }
   }
 
   tasks.withType<JavaExec>().configureEach {
