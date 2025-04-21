@@ -136,23 +136,22 @@ subprojects {
   if (name in useJacoco) tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
-      xml.required.set(true)
-      csv.required.set(false)
-      html.required.set(false)
+      xml.required = true
+      csv.required = false
+      html.required = false
     }
   }
 
-  testing {
-    suites {
-      @Suppress("UnstableApiUsage")
-      val test by getting(JvmTestSuite::class) {
-        useJUnitJupiter(rootProject.libs.junit.jupiter.map { it.version!! })
-        targets.all {
-          testTask.configure {
-            jvmArgs = listOf("--enable-preview")
-            enableAssertions = true
-            reports.junitXml.mergeReruns = true
-          }
+  @Suppress("UnstableApiUsage")
+  testing.suites {
+    val test by getting(JvmTestSuite::class) {
+      useJUnitJupiter(rootProject.libs.versions.junit)
+      targets.all {
+        testTask.configure {
+          if (name in useJacoco) finalizedBy(tasks.jacocoTestReport)
+          jvmArgs = listOf("--enable-preview")
+          enableAssertions = true
+          reports.junitXml.mergeReruns = true
         }
       }
     }
