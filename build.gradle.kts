@@ -157,10 +157,7 @@ subprojects {
     }
   }
 
-  tasks.withType<JavaExec>().configureEach {
-    jvmArgs = listOf("--enable-preview")
-    enableAssertions = true
-  }
+  tasks.withType<JavaExec>().configureEach { jvmArgs = listOf("--enable-preview"); enableAssertions = true }
 
   val ossrhUsername = propOrEnv("ossrhUsername")
   val ossrhPassword = propOrEnv("ossrhPassword")
@@ -170,10 +167,7 @@ subprojects {
     val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
     name = "MavenCentral"
-    credentials {
-      username = ossrhUsername
-      password = ossrhPassword
-    }
+    credentials { username = ossrhUsername; password = ossrhPassword }
   }
 
   // Gradle module metadata contains Gradle JVM version, disable it
@@ -188,33 +182,25 @@ subprojects {
     artifactId = proj.name
     from(components["java"])
     pom {
-      description.set("The Aya proof assistant")
-      name.set(proj.name)
-      url.set("https://www.aya-prover.org")
+      description = "The Aya proof assistant"
+      name = proj.name
+      url = "https://www.aya-prover.org"
       licenses {
-        license {
-          name.set("MIT")
-          url.set("$githubUrl/blob/master/LICENSE")
-        }
+        license { name = "MIT"; url = "$githubUrl/blob/master/LICENSE" }
       }
       developers {
-        fun dev(i: String, n: String, u: String) = developer {
-          id.set(i)
-          name.set(n)
-          email.set(u)
-        }
-        dev("ice1000", "Tesla (Yinsen) Zhang", "ice1000kotlin@foxmail.com")
-        dev("imkiva", "Kiva Oyama", "imkiva@islovely.icu")
-        dev("re-xyr", "Xy Ren", "xy.r@outlook.com")
-        dev("dark-flames", "Darkflames", "dark_flames@outlook.com")
-        dev("tsao-chi", "tsao-chi", "tsao-chi@the-lingo.org")
-        dev("lunalunaa", "Luna Xin", "luna.xin@outlook.com")
-        dev("wsx", "Shuxian Wang", "wsx@berkeley.edu")
-        dev("HoshinoTented", "Hoshino Tented", "limbolrain@gmail.com")
+        developer { id = "ice1000"; name = "Tesla (Yinsen) Zhang"; email = "ice1000kotlin@foxmail.com" }
+        developer { id = "imkiva"; name = "Kiva Oyama"; email = "imkiva@islovely.icu" }
+        developer { id = "re-xyr"; name = "Xy Ren"; email = "xy.r@outlook.com" }
+        developer { id = "dark-flames"; name = "Darkflames"; email = "dark_flames@outlook.com" }
+        developer { id = "tsao-chi"; name = "tsao-chi"; email = "tsao-chi@the-lingo.org" }
+        developer { id = "lunalunaa"; name = "Luna Xin"; email = "luna.xin@outlook.com" }
+        developer { id = "wsx"; name = "Shuxian Wang"; email = "wsx@berkeley.edu" }
+        developer { id = "HoshinoTented"; name = "Hoshino Tented"; email = "limbolrain@gmail.com" }
       }
       scm {
-        connection.set("scm:git:$githubUrl")
-        url.set(githubUrl)
+        connection = "scm:git:$githubUrl"
+        url = githubUrl
       }
     }
   }
