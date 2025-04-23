@@ -3,6 +3,7 @@
 package org.aya.ide.action;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
@@ -12,6 +13,8 @@ import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.ModuleName;
@@ -60,9 +63,8 @@ public final class Completion {
     }
   }
 
-  // FIXME: ugly though, fix me later
-  public sealed interface CompletionItemu {
-    sealed interface Symbol extends CompletionItemu {
+  public sealed interface Item {
+    sealed interface Symbol extends Item {
       @NotNull String name();
       @NotNull Telescope type();
     }
@@ -74,7 +76,7 @@ public final class Completion {
       @Override @NotNull Telescope type
     ) implements Symbol { }
 
-    record Module(@NotNull ModuleName moduleName) implements CompletionItemu { }
+    record Module(@NotNull ModuleName moduleName) implements Item { }
 
     record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
       @Override
@@ -102,8 +104,8 @@ public final class Completion {
   public final @NotNull LibrarySource source;
   public final @NotNull XY xy;
   private @Nullable ModuleName inModule = null;
-  private @Nullable ImmutableSeq<CompletionItemu.Local> localContext;
-  private @Nullable ImmutableSeq<CompletionItemu> topLevelContext;
+  private @Nullable ImmutableSeq<Item.Local> localContext;
+  private @Nullable ImmutableSeq<Item> topLevelContext;
 
   public Completion(@NotNull LibrarySource source, @NotNull XY xy) {
     this.source = source;
@@ -114,23 +116,28 @@ public final class Completion {
   public @NotNull Completion compute() {
     var stmts = source.program().get();
     var info = source.resolveInfo().get();
+    var topLevel = info;
 
     if (stmts != null) {
       var walker = resolveLocal(stmts, xy);
       this.inModule = walker.moduleContext();
       this.localContext = walker.localContext();
+      var leaf = walker.leaf();
+      if (leaf instanceof Expr.Unresolved unresolved) {
+
+      }
     }
 
     if (info != null) {
-      topLevelContext = resolveTopLevel(info);
+      topLevelContext = resolveTopLevel(info.thisModule());
     }
 
     return this;
   }
 
   public @Nullable ModuleName inModule() { return inModule; }
-  public @Nullable ImmutableSeq<CompletionItemu.Local> localContext() { return localContext; }
-  public @Nullable ImmutableSeq<CompletionItemu> topLevelContext() { return topLevelContext; }
+  public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
+  public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
 
   public static @NotNull ContextWalker resolveLocal(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
     var walker = new ContextWalker(xy);
@@ -138,41 +145,57 @@ public final class Completion {
     return walker;
   }
 
+  /// TODO: accept [ModuleContext] rather than [ResolveInfo],
+  ///       also this function should be able to extract symbols of parent [ModuleContext].
   /// Resolve all top level (private) declarations
-  public static @NotNull ImmutableSeq<CompletionItemu> resolveTopLevel(@NotNull ResolveInfo info) {
-    var decls = MutableList.<CompletionItemu.Decl>create();
+  ///
+  /// @implNote be aware that a symbol defined in a submodule can be imported (by `open`) in the parent module.
+  public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContext ctx) {
+    var decls = MutableHashMap.<String, MutableList<Item.Decl>>create();
 
-    info.thisModule().symbols().forEach((name, candy) -> {
-      candy.forEach((inMod, var) -> {
-        Telescope type = switch (var) {
-          case GeneralizedVar gVar -> new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
-          case DefVar<?, ?> defVar -> {
-            // TODO: try defVar.signature? but that requires some tycking
-            var concrete = defVar.concrete;
-            yield switch (concrete) {
-              case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
-              case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
-            };
-          }
-          case CompiledVar jitVar -> switch (jitVar.core()) {
-            case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
-            case JitTele jitTele -> {
-              var freeParams = AbstractTele.enrich(jitTele);
-              var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
-              yield new Telescope(
-                freeParams.map(it ->
-                  new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
-                new StmtVisitor.Type(LazyValue.ofValue(freeResult))
-              );
+    Context someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
+
+    while (someInterestingLoopVariableWhichIDontKnowHowToNameIt instanceof ModuleContext mCtx) {
+      mCtx.symbols().forEach((name, candy) -> {
+        if (decls.containsKey(name)) return;
+        var candycandy = MutableList.<Item.Decl>create();
+        decls.put(name, candycandy);
+        candy.forEach((inMod, var) -> {
+          Telescope type = switch (var) {
+            case GeneralizedVar gVar ->
+              new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
+            case DefVar<?, ?> defVar -> {
+              // TODO: try defVar.signature? but that requires some tycking
+              var concrete = defVar.concrete;
+              yield switch (concrete) {
+                case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
+                case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
+              };
             }
+            case CompiledVar jitVar -> switch (jitVar.core()) {
+              case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
+              case JitTele jitTele -> {
+                var freeParams = AbstractTele.enrich(jitTele);
+                var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
+                yield new Telescope(
+                  freeParams.map(it ->
+                    new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
+                  new StmtVisitor.Type(LazyValue.ofValue(freeResult))
+                );
+              }
+            };
+            default -> Panic.unreachable();
           };
-          default -> Panic.unreachable();
-        };
-        var decl = new Completion.CompletionItemu.Decl(inMod, name, type);
-        decls.append(decl);
+          var decl = new Item.Decl(inMod, name, type);
+          candycandy.append(decl);
+        });
       });
-    });
 
-    return ImmutableSeq.narrow(decls.toSeq());
+      someInterestingLoopVariableWhichIDontKnowHowToNameIt = mCtx.parent();
+    }
+
+    return decls.valuesView()
+      .flatMap(it -> it)
+      .collect(ImmutableSeq.factory());
   }
 }
