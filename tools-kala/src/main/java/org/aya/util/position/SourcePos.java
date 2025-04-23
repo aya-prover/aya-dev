@@ -98,7 +98,7 @@ public record SourcePos(
     if (line == startLine) return afterStartCol;
     if (line == endLine) return beforeEndCol;
 
-    // noe, line != startLine != endLine
+    // now, line != startLine != endLine
     return startLine < line && line < endLine;
   }
 

@@ -15,13 +15,12 @@ import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.syntax.compile.JitClass;
+import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.concrete.stmt.decl.ClassDecl;
-import org.aya.syntax.concrete.stmt.decl.TeleDecl;
+import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.CompiledVar;
@@ -73,10 +72,38 @@ public final class Completion {
     record Decl(
       @NotNull ModuleName disambiguous,
       @Override @NotNull String name,
-      @Override @NotNull Telescope type
-    ) implements Symbol { }
+      @Override @NotNull Telescope type,
+      @NotNull Kind kind
+    ) implements Symbol {
+      // TODO: I guess we can place this in [syntax] module
+      public enum Kind {
+        Generalized, Fn, Data, Con, Class, Member, Prim;
 
-    record Module(@NotNull ModuleName moduleName) implements Item { }
+        public static @NotNull Kind from(@NotNull org.aya.syntax.concrete.stmt.decl.Decl decl) {
+          return switch (decl) {
+            case ClassDecl _ -> Kind.Class;
+            case ClassMember _ -> Kind.Member;
+            case DataCon _ -> Kind.Con;
+            case DataDecl _ -> Kind.Data;
+            case FnDecl _ -> Kind.Fn;
+            case PrimDecl _ -> Kind.Prim;
+          };
+        }
+
+        public static @NotNull Kind from(@NotNull JitDef def) {
+          return switch (def) {
+            case JitClass _ -> Kind.Class;
+            case JitFn _ -> Kind.Fn;
+            case JitCon _ -> Kind.Con;
+            case JitData _ -> Kind.Data;
+            case JitMember _ -> Kind.Member;
+            case JitPrim _ -> Kind.Prim;
+          };
+        }
+      }
+    }
+
+    record Module(@NotNull ModuleName.Qualified moduleName) implements Item { }
 
     record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
       @Override
@@ -103,20 +130,28 @@ public final class Completion {
 
   public final @NotNull LibrarySource source;
   public final @NotNull XY xy;
+  private final @NotNull ImmutableSeq<String> incompleteName;
+  private final boolean endsWithSeparator;
   private @Nullable ModuleName inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
 
-  public Completion(@NotNull LibrarySource source, @NotNull XY xy) {
+  public Completion(
+    @NotNull LibrarySource source,
+    @NotNull XY xy,
+    @NotNull ImmutableSeq<String> incompleteName,
+    boolean endsWithSeparator
+  ) {
     this.source = source;
     this.xy = xy;
+    this.incompleteName = incompleteName;
+    this.endsWithSeparator = endsWithSeparator;
   }
 
   @Contract("-> this")
   public @NotNull Completion compute() {
     var stmts = source.program().get();
     var info = source.resolveInfo().get();
-    var topLevel = info;
 
     if (stmts != null) {
       var walker = resolveLocal(stmts, xy);
@@ -156,32 +191,42 @@ public final class Completion {
         var candycandy = MutableList.<Item.Decl>create();
         decls.put(name, candycandy);
         candy.forEach((inMod, var) -> {
+          Item.Decl.Kind declKind;
           Telescope type = switch (var) {
-            case GeneralizedVar gVar ->
-              new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
+            case GeneralizedVar gVar -> {
+              declKind = Item.Decl.Kind.Generalized;
+              yield new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
+            }
             case DefVar<?, ?> defVar -> {
               // TODO: try defVar.signature? but that requires some tycking
               var concrete = defVar.concrete;
+              declKind = Item.Decl.Kind.from(concrete);
               yield switch (concrete) {
                 case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
                 case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
               };
             }
-            case CompiledVar jitVar -> switch (jitVar.core()) {
-              case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
-              case JitTele jitTele -> {
-                var freeParams = AbstractTele.enrich(jitTele);
-                var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
-                yield new Telescope(
-                  freeParams.map(it ->
-                    new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
-                  new StmtVisitor.Type(LazyValue.ofValue(freeResult))
-                );
-              }
-            };
-            default -> Panic.unreachable();
+            case CompiledVar jitVar -> {
+              declKind = Item.Decl.Kind.from(jitVar.core());
+              yield switch (jitVar.core()) {
+                case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
+                case JitTele jitTele -> {
+                  var freeParams = AbstractTele.enrich(jitTele);
+                  var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
+                  yield new Telescope(
+                    freeParams.map(it ->
+                      new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
+                    new StmtVisitor.Type(LazyValue.ofValue(freeResult))
+                  );
+                }
+              };
+            }
+            default -> {
+              declKind = Item.Decl.Kind.Prim;     // make compiler happy
+              yield Panic.unreachable();
+            }
           };
-          var decl = new Item.Decl(inMod, name, type);
+          var decl = new Item.Decl(inMod, name, type, declKind);
           candycandy.append(decl);
         });
       });
