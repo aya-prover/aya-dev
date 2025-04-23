@@ -153,7 +153,7 @@ public class LspTest {
     assert source != null;
     var info = source.resolveInfo().get();
     assert info != null;
-    var result = Completion.resolveTopLevel(info);
+    var result = Completion.resolveTopLevel(info.thisModule());
     return;
   }
 

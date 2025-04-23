@@ -174,6 +174,7 @@ public class AyaLanguageServer implements LanguageServer {
     cap.documentSymbolProvider = true;
     cap.workspaceSymbolProvider = true;
     cap.foldingRangeProvider = true;
+    cap.completionProvider = new ServerCapabilities.CompletionOptions(false, List.of(), List.of());
 
     initializeOptions(new Gson().fromJson(params.initializationOptions, ServerOptions.class));
 
@@ -325,7 +326,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {
-    throw new UnsupportedOperationException();
+    return params;
   }
 
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
