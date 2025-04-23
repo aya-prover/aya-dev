@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
@@ -12,7 +13,6 @@ import org.aya.ide.util.XY;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
-import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.compile.JitClass;
@@ -122,10 +122,6 @@ public final class Completion {
       var walker = resolveLocal(stmts, xy);
       this.inModule = walker.moduleContext();
       this.localContext = walker.localContext();
-      var leaf = walker.leaf();
-      if (leaf instanceof Expr.Unresolved unresolved) {
-
-      }
     }
 
     if (info != null) {
@@ -145,13 +141,12 @@ public final class Completion {
     return walker;
   }
 
-  /// TODO: accept [ModuleContext] rather than [ResolveInfo],
-  ///       also this function should be able to extract symbols of parent [ModuleContext].
-  /// Resolve all top level (private) declarations
+  /// Resolve all top level declarations
   ///
   /// @implNote be aware that a symbol defined in a submodule can be imported (by `open`) in the parent module.
   public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContext ctx) {
     var decls = MutableHashMap.<String, MutableList<Item.Decl>>create();
+    var modules = MutableHashMap.<ModuleName.Qualified, Item.Module>create();
 
     Context someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
 
@@ -191,11 +186,15 @@ public final class Completion {
         });
       });
 
+      mCtx.modules().forEach((modName, _) ->
+        modules.putIfAbsent(modName, new Item.Module(modName)));
+
       someInterestingLoopVariableWhichIDontKnowHowToNameIt = mCtx.parent();
     }
 
     return decls.valuesView()
-      .flatMap(it -> it)
-      .collect(ImmutableSeq.factory());
+      .flatMap(it -> SeqView.<Item>narrow(it.view()))
+      .toSeq()        // TODO: fix this copy
+      .appendedAll(modules.valuesView());
   }
 }
