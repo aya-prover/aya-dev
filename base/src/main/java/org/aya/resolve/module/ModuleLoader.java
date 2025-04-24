@@ -3,6 +3,7 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.value.primitive.MutableBooleanValue;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
