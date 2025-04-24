@@ -30,6 +30,7 @@ import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -76,14 +77,16 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
     }
   }
   /**
+   * TODO: check all caller for @Nullable
    * Do !!!NOT!!! use in the type checker.
    * This is solely for cosmetic features, such as literate mode inline expressions, or repl.
    */
   @Contract(pure = true)
-  public static LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
+  public static @Nullable LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
     var resolver = new ExprResolver(context, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
+    if (resolver.hasError) return null;
     var view = resolver.allowedGeneralizes.valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }

@@ -149,20 +149,24 @@ public class ReplCompiler {
     try {
       var parser = new AyaParserImpl(reporter);
       var programOrExpr = parsing.applyChecked(parser);
-      return programOrExpr.map(
+      return programOrExpr.fold(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
           var resolveInfo = makeResolveInfo(context.fork());
           var success = loader.resolveModule(resolveInfo, program, loader);
-          if (!success) return ImmutableSeq.empty();
+          if (!success) return Either.left(ImmutableSeq.empty());
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
-          if (reporter.anyError()) return ImmutableSeq.empty();
+          if (reporter.anyError()) return Either.left(ImmutableSeq.empty());
           context.merge();
           shapeFactory.merge();
-          return newDefs.get();
+          return Either.left(newDefs.get());
         },
-        expr -> tyckAndNormalize(expr, false, normalizeMode)
+        expr -> {
+          var result = tyckAndNormalize(expr, false, normalizeMode);
+          if (result == null) return Either.left(ImmutableSeq.empty());
+          return Either.right(result);
+        }
       );
     } catch (InterruptException _) {
       // Only two kinds of interruptions are possible: parsing and ~~resolving~~
@@ -183,11 +187,11 @@ public class ReplCompiler {
   public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
     var parseTree = parseExpr(text);
     if (parseTree == null) return null;
-    try {
-      if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
-        return unresolved.var();
-    } catch (InterruptException _) {
-    }
+
+    var resolveResult = ExprResolver.resolveLax(context, parseTree);
+    if (resolveResult == null) return null;
+
+    if (resolveResult.expr().data() instanceof Expr.Ref unresolved) return unresolved.var();
     return null;
   }
 
@@ -210,9 +214,10 @@ public class ReplCompiler {
   }
 
   /** @param isType true means take the type, otherwise take the term. */
-  private @NotNull Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
+  private @Nullable Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
     Jdg jdg = null;
     var resolvedExpr = ExprResolver.resolveLax(context, expr);
+    if (resolvedExpr == null) return null;
     if (mode == NormalizeMode.NULL) jdg = LiterateData.simpleVar(resolvedExpr.expr().data());
     // in case we have un-messaged TyckException
     if (jdg == null) try (var delayedReporter = new DelayedReporter(reporter)) {
