@@ -387,6 +387,7 @@ public class LibraryCompiler {
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var startTime = System.currentTimeMillis();
       var mod = moduleLoader.load(moduleName);
+      // TODO: dont panic here
       if (mod == null || file.resolveInfo().get() == null)
         throw new Panic("Unable to load module: " + moduleName);
       var time = System.currentTimeMillis() - startTime;

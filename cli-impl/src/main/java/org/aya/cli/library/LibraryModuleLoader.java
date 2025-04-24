@@ -42,7 +42,7 @@ record LibraryModuleLoader(
   @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
-  @Override public @NotNull ResolveInfo
+  @Override public @Nullable ResolveInfo
   load(@NotNull ModulePath mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod.module());
@@ -75,8 +75,7 @@ record LibraryModuleLoader(
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
     if (resolveInfo == null) {
-      //TODO
-      throw new UnsupportedOperationException("TODO");
+      return null;
     }
 
     tyckModule(resolveInfo, (moduleResolve, defs) -> {
