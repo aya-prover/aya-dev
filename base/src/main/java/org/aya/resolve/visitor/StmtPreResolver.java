@@ -16,6 +16,7 @@ import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.QPath;
+import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
@@ -31,14 +32,15 @@ import java.util.function.Function;
 /**
  * simply adds all top-level names to the context
  */
-public final class StmtPreResolver {
+public final class StmtPreResolver implements HasError {
   private final @NotNull ModuleLoader loader;
   private final @NotNull ResolveInfo resolveInfo;
-  private boolean hasError;
+  private final @NotNull HasError hasError;
 
-  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
+  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo, @NotNull HasError hasError) {
     this.loader = loader;
     this.resolveInfo = resolveInfo;
+    this.hasError = hasError;
   }
 
   /// Resolve {@link Stmt}s under {@param context}.
@@ -271,11 +273,12 @@ public final class StmtPreResolver {
     foundError();
   }
 
-  private void foundError() {
-    this.hasError = true;
+  @Override
+  public void foundError() {
+    hasError.foundError();
   }
 
-  public boolean hasError() {
-    return hasError;
+  @Override public boolean hasError() {
+    return hasError.hasError();
   }
 }

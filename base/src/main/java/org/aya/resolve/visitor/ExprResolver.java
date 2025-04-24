@@ -24,6 +24,7 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
+import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
@@ -32,8 +33,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * Resolves bindings.
  *
@@ -41,13 +40,13 @@ import java.util.Objects;
  * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
-public final class ExprResolver implements PosedUnaryOperator<Expr> {
+public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
   private final @NotNull Context ctx;
   private final boolean allowGeneralizing;
   private final @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes;
   private final @NotNull MutableList<TyckOrder> reference;
   private final @NotNull MutableStack<Where> where;
-  private boolean hasError = false;
+  private final HasError hasError;
 
   /**
    * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
@@ -59,13 +58,15 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
     boolean allowGeneralizing,
     @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
     @NotNull MutableList<TyckOrder> reference,
-    @NotNull MutableStack<Where> where
+    @NotNull MutableStack<Where> where,
+    @NotNull HasError hasError
   ) {
     this.ctx = ctx;
     this.allowGeneralizing = allowGeneralizing;
     this.allowedGeneralizes = allowedGeneralizes;
     this.reference = reference;
     this.where = where;
+    this.hasError = hasError;
   }
 
   public record LiterateResolved(
@@ -83,16 +84,16 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
    */
   @Contract(pure = true)
   public static @Nullable LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
-    var resolver = new ExprResolver(context, true);
+    var resolver = new ExprResolver(context, true, new HasError.Bool());
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    if (resolver.hasError) return null;
+    if (resolver.hasError()) return null;
     var view = resolver.allowedGeneralizes.valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }
 
-  public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
-    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
+  public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing, @NotNull HasError hasError) {
+    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), hasError);
   }
 
   public void resetRefs() { reference.clear(); }
@@ -100,7 +101,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where);
+    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where, hasError);
   }
 
   /**
@@ -108,7 +109,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where);
+    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where, hasError);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -314,7 +315,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
     var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
-      MutableStack.create());
+      MutableStack.create(), hasError);
     resolver.enter(initial);
     return resolver;
   }
@@ -322,8 +323,10 @@ public final class ExprResolver implements PosedUnaryOperator<Expr> {
   public @NotNull Context ctx() { return ctx; }
   public @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes() { return allowedGeneralizes; }
   public @NotNull MutableList<TyckOrder> reference() { return reference; }
-  public boolean hasError() { return hasError; }
-  public void foundError() { this.hasError = true; }
+  @Override
+  public boolean hasError() { return hasError.hasError(); }
+  @Override
+  public void foundError() { this.hasError.foundError(); }
 
   public enum Where {
     // Data head & Fn head

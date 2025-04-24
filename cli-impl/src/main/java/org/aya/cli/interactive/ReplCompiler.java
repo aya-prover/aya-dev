@@ -204,6 +204,7 @@ public class ReplCompiler {
       return null;
     }
   }
+
   private @Nullable WithPos<Expr> parseExpr(@NotNull String text) {
     var parseTree = new AyaParserImpl(reporter).repl(text);
     if (parseTree.isLeft()) {

@@ -16,6 +16,7 @@ import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.TyckOrderError;
+import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,26 +27,32 @@ import org.jetbrains.annotations.NotNull;
  * @see StmtPreResolver
  * @see ExprResolver
  */
-public class StmtResolver {
+public class StmtResolver implements HasError {
   private final @NotNull ResolveInfo info;
-  private boolean hasError = false;
+  private final @NotNull HasError hasError;
 
-  public StmtResolver(@NotNull ResolveInfo info) {
+  public StmtResolver(@NotNull ResolveInfo info, @NotNull HasError hasError) {
     this.info = info;
+    this.hasError = hasError;
   }
 
-  public static boolean resolveStmt(@NotNull ImmutableSeq<ResolvingStmt> stmt, @NotNull ResolveInfo info) {
-    var resolver = new StmtResolver(info);
+  public static void resolveStmt(
+    @NotNull ImmutableSeq<ResolvingStmt> stmt,
+    @NotNull ResolveInfo info,
+    @NotNull HasError hasError
+  ) {
+    var resolver = new StmtResolver(info, hasError);
     stmt.forEach(resolver::resolveStmt);
-    return resolver.hasError();
   }
 
+  @Override
+  public void foundError() {
+    hasError.foundError();
+  }
+
+  @Override
   public boolean hasError() {
-    return hasError;
-  }
-
-  private void foundError() {
-    hasError = true;
+    return hasError.hasError();
   }
 
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
@@ -54,7 +61,7 @@ public class StmtResolver {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl);
       case ResolvingStmt.ModStmt(var stmts) -> stmts.forEach(this::resolveStmt);
       case ResolvingStmt.GenStmt(var variables, var context) -> {
-        var resolver = new ExprResolver(context, false);
+        var resolver = new ExprResolver(context, false, hasError);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, (_, p) -> p);
         addReferences(new TyckOrder.Head(variables), resolver);
@@ -72,7 +79,7 @@ public class StmtResolver {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
         var where = decl.body instanceof FnBody.BlockBody ? Where.Head : Where.FnSimple;
         // Generalized works for simple bodies and signatures
-        var resolver = resolveDeclSignature(new ExprResolver(ctx, true), decl, where);
+        var resolver = resolveDeclSignature(new ExprResolver(ctx, true, hasError), decl, where);
         switch (decl.body) {
           case FnBody.BlockBody body -> {
             assert body.elims() == null;
@@ -93,7 +100,7 @@ public class StmtResolver {
         }
       }
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
-        var resolver = resolveDeclSignature(new ExprResolver(ctx, true), data, Where.Head);
+        var resolver = resolveDeclSignature(new ExprResolver(ctx, true, hasError), data, Where.Head);
         insertGeneralizedVars(data, resolver);
         resolveElim(resolver, data.body);
         data.body.forEach(con -> {
@@ -114,7 +121,7 @@ public class StmtResolver {
           .concat(data.body.clauses.map(TyckOrder.Body::new)));
       }
       case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
-        var resolver = new ExprResolver(ctx, false);
+        var resolver = new ExprResolver(ctx, false, hasError);
         resolver.enter(Where.Head);
         decl.members.forEach(field -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
@@ -131,7 +138,7 @@ public class StmtResolver {
           .concat(decl.members.map(TyckOrder.Head::new)));
       }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {
-        resolveDeclSignature(new ExprResolver(ctx, false), decl, Where.Head);
+        resolveDeclSignature(new ExprResolver(ctx, false, hasError), decl, Where.Head);
         addReferences(new TyckOrder.Body(decl), SeqView.empty());
       }
       case ResolvingStmt.TopDecl _ -> Panic.unreachable();
