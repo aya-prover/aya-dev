@@ -18,7 +18,9 @@ import org.aya.generic.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.primitive.PrimFactory;
+import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
@@ -386,7 +388,14 @@ public class LibraryCompiler {
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var startTime = System.currentTimeMillis();
-      var mod = moduleLoader.load(moduleName);
+
+      ResolveInfo mod;
+      try {
+        mod = moduleLoader.load(moduleName);
+      } catch (Context.ResolvingInterruptedException | ModNotFoundException e) {
+        mod = null;
+      }
+
       // TODO: dont panic here
       if (mod == null || file.resolveInfo().get() == null)
         throw new Panic("Unable to load module: " + moduleName);

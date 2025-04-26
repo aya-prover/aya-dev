@@ -3,12 +3,13 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.value.primitive.MutableBooleanValue;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
@@ -24,14 +25,13 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader extends Problematic {
-  default <E extends Exception> @Nullable ResolveInfo tyckModule(
+  default <E extends Exception> @NotNull ResolveInfo tyckModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @Nullable ModuleCallback<E> onTycked
-  ) throws E {
+  ) throws E, Context.ResolvingInterruptedException {
     var info = resolveModule(primFactory, context, program, this);
-    if (info == null) return null;
     return tyckModule(info, onTycked);
   }
 
@@ -58,16 +58,15 @@ public interface ModuleLoader extends Problematic {
    * @param recurseLoader the {@link ModuleLoader} that use for tycking the module
    */
   @ApiStatus.Internal
-  default @Nullable ResolveInfo resolveModule(
+  default @NotNull ResolveInfo resolveModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @NotNull ModuleLoader recurseLoader
-  ) {
+  ) throws Context.ResolvingInterruptedException {
     var opSet = new AyaBinOpSet(reporter());
     var resolveInfo = new ResolveInfo(context, primFactory, new ShapeFactory(), opSet);
-    var success = resolveModule(resolveInfo, program, recurseLoader);
-    if (!success) return null;
+    resolveModule(resolveInfo, program, recurseLoader);
     return resolveInfo;
   }
 
@@ -77,22 +76,23 @@ public interface ModuleLoader extends Problematic {
    * @param resolveInfo   the context of the module
    * @param program       the statements of the module
    * @param recurseLoader the module loader that used to resolve
-   * @return false if has any error
    */
   @ApiStatus.Internal
-  default boolean resolveModule(
+  default void resolveModule(
     @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> program,
     @NotNull ModuleLoader recurseLoader
-  ) {
+  ) throws Context.ResolvingInterruptedException {
     var resolver = new StmtResolvers(recurseLoader, resolveInfo);
     resolver.resolve(program);
     resolver.desugar(program);
 
-    return !resolver.hasError();
+    if (resolver.hasError()) throw new Context.ResolvingInterruptedException();
   }
 
-  @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);
-  default @Nullable ResolveInfo load(@NotNull ModulePath path) {
+  @NotNull ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader)
+    throws Context.ResolvingInterruptedException, ModNotFoundException;
+  default @NotNull ResolveInfo load(@NotNull ModulePath path)
+    throws Context.ResolvingInterruptedException, ModNotFoundException {
     return load(path, this);
   }
 

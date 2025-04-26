@@ -14,6 +14,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.compile.JitData;
@@ -224,11 +225,17 @@ public record CompiledModule(
       var modName = anImport.path;
       var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
-      var success = loader.load(modName);
-      if (success == null)
-        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
-      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
-      var mod = success.thisModule();
+
+      ResolveInfo info;
+      try {
+        info = loader.load(modName);
+      } catch (ModNotFoundException e) {
+        // make compiler happy
+        info = thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
+      }
+
+      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(info, isPublic));
+      var mod = info.thisModule();
       thisResolve.thisModule().importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
       reExports.getOption(modName).forEachChecked(useHide -> thisResolve.thisModule().openModule(modRename,
         Stmt.Accessibility.Public,
@@ -238,7 +245,7 @@ public record CompiledModule(
       var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
-      thisResolve.open(success, SourcePos.SER, acc);
+      thisResolve.open(info, SourcePos.SER, acc);
     }
   }
 

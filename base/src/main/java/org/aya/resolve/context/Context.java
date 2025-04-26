@@ -247,7 +247,7 @@ public interface Context extends Problematic {
     return new PhysicalModuleContext(reporter, this, modulePath().derive(extraName));
   }
 
-  class ResolvingInterruptedException extends Exception {
+  final class ResolvingInterruptedException extends Exception {
     public InterruptException.InterruptStage stage() { return InterruptException.InterruptStage.Resolving; }
   }
 }

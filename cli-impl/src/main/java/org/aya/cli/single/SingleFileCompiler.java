@@ -6,6 +6,7 @@ import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
@@ -59,15 +60,15 @@ public final class SingleFileCompiler {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
-      var info = loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
-        ayaFile.tyckAdditional(resolveInfo);
-        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
-        ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
-        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
-        if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
-      });
-
-      if (info == null) {
+      try {
+        loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
+          ayaFile.tyckAdditional(resolveInfo);
+          ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
+          ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
+          ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
+          if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
+        });
+      } catch (Context.ResolvingInterruptedException e) {
         // TODO: do we need some code here?
       }
     });
