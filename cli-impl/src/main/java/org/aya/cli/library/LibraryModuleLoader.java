@@ -8,6 +8,7 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
@@ -42,8 +43,9 @@ record LibraryModuleLoader(
   @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
-  @Override public @Nullable ResolveInfo
-  load(@NotNull ModulePath mod, @NotNull ModuleLoader recurseLoader) {
+  @Override public @NotNull ResolveInfo
+  load(@NotNull ModulePath mod, @NotNull ModuleLoader recurseLoader)
+    throws Context.ResolvingInterruptedException {
     var basePaths = owner.modulePath();
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod.module());
     if (sourcePath == null) {
@@ -74,9 +76,6 @@ record LibraryModuleLoader(
     assert program != null;
     var context = new EmptyContext(reporter, sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
-    if (resolveInfo == null) {
-      return null;
-    }
 
     tyckModule(resolveInfo, (moduleResolve, defs) -> {
       source.notifyTycked(moduleResolve, defs);

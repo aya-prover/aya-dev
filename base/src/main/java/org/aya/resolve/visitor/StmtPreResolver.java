@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.*;
+import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -74,8 +75,13 @@ public final class StmtPreResolver implements HasError {
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path();
-        var success = loader.load(modulePath);
-        if (success == null) {
+
+        ResolveInfo success;
+        try {
+          success = loader.load(modulePath);
+        } catch (Context.ResolvingInterruptedException e) {
+          yield null;
+        } catch (ModNotFoundException e) {
           foundError(context, new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
           yield null;
         }

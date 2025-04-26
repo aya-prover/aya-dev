@@ -20,6 +20,7 @@ import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.PhysicalModuleContext;
@@ -153,8 +154,13 @@ public class ReplCompiler {
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
           var resolveInfo = makeResolveInfo(context.fork());
-          var success = loader.resolveModule(resolveInfo, program, loader);
-          if (!success) return Either.left(ImmutableSeq.empty());
+
+          try {
+            loader.resolveModule(resolveInfo, program, loader);
+          } catch (Context.ResolvingInterruptedException e) {
+            return Either.left(ImmutableSeq.empty());
+          }
+
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
           if (reporter.anyError()) return Either.left(ImmutableSeq.empty());

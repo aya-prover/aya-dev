@@ -9,12 +9,9 @@ import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
-import org.aya.util.Panic;
 import org.aya.util.reporter.Reporter;
-import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class DumbModuleLoader implements ModuleLoader {
   public static final @NonNls @NotNull String DUMB_MODULE_STRING = "baka";
@@ -27,17 +24,17 @@ public class DumbModuleLoader implements ModuleLoader {
   }
 
   public @NotNull ResolveInfo resolve(@NotNull ImmutableSeq<Stmt> stmts) {
-    var info = resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME.module()), stmts, this);
-    if (info == null) {
-      throw new AssertionError("resolving interrupted");
+    try {
+      return resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME.module()), stmts, this);
+    } catch (Context.ResolvingInterruptedException e) {
+      throw new RuntimeException(e);
     }
-
-    return info;
   }
 
-  @Override public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @NotNull ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     throw new UnsupportedOperationException();
   }
+
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) { return false; }
   @Override public @NotNull Reporter reporter() { return baseContext.reporter(); }
 }
