@@ -187,6 +187,7 @@ public final class StmtPreResolver implements HasError {
           foundError(context, new PrimResolveError.UnknownPrim(sourcePos, name));
         } else {
           var lack = factory.checkDependency(primID);
+          // TODO: panic
           if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
             foundError(context, new PrimResolveError.Dependency(name, lack.get(), sourcePos));
           } else if (factory.isForbiddenRedefinition(primID, false)) {
