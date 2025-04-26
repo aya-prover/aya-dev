@@ -118,20 +118,20 @@ public class LibraryCompiler {
    * The graph is used to generate incremental build list according to files'
    * last modified time.
    */
-  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException, ModNotFoundException {
+  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
       var recurse = owner.findModule(mod);
       if (recurse == null) {
         reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
-        throw new ModNotFoundException();
+        throw new LibraryTyckingFailed();
       }
       return recurse;
     }, source);
     finder.resolveStmt(source.program().get());
   }
 
-  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException, ModNotFoundException {
+  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException {
     var depGraph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
@@ -153,12 +153,7 @@ public class LibraryCompiler {
       "Warning: command-line specified module path (--module-path) is ignored when compiling libraries.");
     if (flags.outputFile() != null) reporter.reportString(
       "Warning: command-line specified output file (-o, --output) is ignored when compiling libraries.");
-    return CompilerUtil.catching(reporter, flags, () -> {
-      try {
-        this.make();
-      } catch (ModNotFoundException _) {
-      }
-    });
+    return CompilerUtil.catching(reporter, flags, this::make);
   }
 
   private void pretty(ImmutableSeq<LibrarySource> modified) throws IOException {
@@ -218,7 +213,7 @@ public class LibraryCompiler {
    * @return whether the library is up-to-date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
-  private boolean make() throws IOException, ModNotFoundException {
+  private boolean make() throws IOException {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
@@ -254,7 +249,7 @@ public class LibraryCompiler {
   /**
    * @return whether the library is up-to-date.
    */
-  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException, ModNotFoundException {
+  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException {
     // modified sources need reparse
     modified.forEach(this::clearModified);
     var depGraph = resolveImports();

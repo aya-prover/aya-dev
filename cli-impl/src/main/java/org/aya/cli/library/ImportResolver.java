@@ -14,16 +14,16 @@ import org.jetbrains.annotations.NotNull;
 public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySource librarySource) {
   @FunctionalInterface
   public interface ImportLoader {
-    @NotNull LibrarySource load(@NotNull ModulePath path, @NotNull SourcePos sourcePos) throws ModNotFoundException;
+    @NotNull LibrarySource load(@NotNull ModulePath path, @NotNull SourcePos sourcePos);
   }
 
-  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) throws ModNotFoundException {
+  public void resolveStmt(@NotNull SeqLike<Stmt> stmts) {
     for (var stmt : stmts) {
       resolveStmt(stmt);
     }
   }
 
-  public void resolveStmt(@NotNull Stmt stmt) throws ModNotFoundException {
+  public void resolveStmt(@NotNull Stmt stmt) {
     switch (stmt) {
       case Command.Module mod -> resolveStmt(mod.contents());
       case Command.Import cmd -> {
