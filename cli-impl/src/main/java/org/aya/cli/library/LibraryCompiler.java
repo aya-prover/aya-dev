@@ -118,20 +118,20 @@ public class LibraryCompiler {
    * The graph is used to generate incremental build list according to files'
    * last modified time.
    */
-  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException, Context.ResolvingInterruptedException {
+  private void resolveImportsIfNeeded(@NotNull LibrarySource source) throws IOException, ModNotFoundException {
     if (parseIfNeeded(source)) return; // already resolved
     var finder = new ImportResolver((mod, sourcePos) -> {
       var recurse = owner.findModule(mod);
       if (recurse == null) {
         reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
-        throw new Context.ResolvingInterruptedException();
+        throw new ModNotFoundException();
       }
       return recurse;
     }, source);
     finder.resolveStmt(source.program().get());
   }
 
-  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException, Context.ResolvingInterruptedException {
+  private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException, ModNotFoundException {
     var depGraph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
@@ -156,7 +156,7 @@ public class LibraryCompiler {
     return CompilerUtil.catching(reporter, flags, () -> {
       try {
         this.make();
-      } catch (Context.ResolvingInterruptedException _) {
+      } catch (ModNotFoundException _) {
       }
     });
   }
@@ -212,12 +212,13 @@ public class LibraryCompiler {
   }
 
   /**
+   * FIXME: stop throwing ModNotFoundException?
    * Incrementally compiles a library without handling compilation errors.
    *
    * @return whether the library is up-to-date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
-  private boolean make() throws IOException, Context.ResolvingInterruptedException {
+  private boolean make() throws IOException, ModNotFoundException {
     var library = owner.underlyingLibrary();
     var anyDepChanged = false;
     for (var dep : owner.libraryDeps()) {
@@ -253,7 +254,7 @@ public class LibraryCompiler {
   /**
    * @return whether the library is up-to-date.
    */
-  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException, Context.ResolvingInterruptedException {
+  private boolean make(@NotNull ImmutableSeq<LibrarySource> modified) throws IOException, ModNotFoundException {
     // modified sources need reparse
     modified.forEach(this::clearModified);
     var depGraph = resolveImports();
@@ -393,6 +394,9 @@ public class LibraryCompiler {
       try {
         mod = moduleLoader.load(moduleName);
       } catch (Context.ResolvingInterruptedException | ModNotFoundException e) {
+        // we also catch Context.ResolvingInterruptedException here, the code in [tyckSCC] will handle the case.
+        // [ModNotFoundException] is kinda impossible, as we are using SccTycker.
+        // TODO: ^ is it?
         mod = null;
       }
 
