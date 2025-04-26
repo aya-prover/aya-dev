@@ -3,4 +3,5 @@
 package org.aya.resolve.error;
 
 public class ModNotFoundException extends Exception {
+  public ModNotFoundException() { }
 }
