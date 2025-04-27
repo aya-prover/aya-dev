@@ -146,7 +146,7 @@ public final class StmtPreResolver implements HasError {
     };
   }
 
-  private @NotNull ResolvingStmt resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
+  private @Nullable ResolvingStmt resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
     return switch (predecl) {
       case DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
@@ -185,13 +185,15 @@ public final class StmtPreResolver implements HasError {
         var primID = PrimDef.ID.find(name);
         if (primID == null) {
           foundError(context, new PrimResolveError.UnknownPrim(sourcePos, name));
+          yield null;
         } else {
           var lack = factory.checkDependency(primID);
-          // TODO: panic
           if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
             foundError(context, new PrimResolveError.Dependency(name, lack.get(), sourcePos));
+            yield null;
           } else if (factory.isForbiddenRedefinition(primID, false)) {
             foundError(context, new PrimResolveError.Redefinition(name, sourcePos));
+            yield null;
           }
 
           factory.factory(primID, decl.ref);
