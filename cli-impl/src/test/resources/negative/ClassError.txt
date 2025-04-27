@@ -35,7 +35,6 @@ In file $FILE:3:30 ->
 
 Error: Unknown member `ummm` projected
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 

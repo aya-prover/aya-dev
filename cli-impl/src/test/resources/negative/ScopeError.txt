@@ -30,7 +30,6 @@ Error: The unqualified name `zero` is ambiguous
          `Nat1::zero`
          `Nat2::zero`
 
-Resolving interrupted due to:
 1 error(s), 2 warning(s).
 Let's learn from that.
 
@@ -61,7 +60,6 @@ In file $FILE:2:0 ->
 Error: The name `zero` being exported clashes with another exported definition 
        with the same name
 
-Resolving interrupted due to:
 1 error(s), 2 warning(s).
 Let's learn from that.
 
@@ -75,8 +73,16 @@ In file $FILE:2:11 ->
 Error: The name `suc` is not defined in the current scope
        Did you mean: `Nat::suc`
 
-Resolving interrupted due to:
-1 error(s), 0 warning(s).
+In file $FILE:2:15 ->
+
+  1 │   inductive Nat | zero | suc Nat
+  2 │   def one => suc zero
+    │                  ╰──╯
+
+Error: The name `zero` is not defined in the current scope
+       Did you mean: `Nat::zero`
+
+2 error(s), 0 warning(s).
 Let's learn from that.
 
 ImportDefineShadow:
@@ -102,7 +108,6 @@ In file $FILE:4:14 ->
 
 Error: The qualified name `A::bar` is not defined in the current scope
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -116,7 +121,6 @@ In file $FILE:4:15 ->
 
 Error: The qualified name `A::bar` is not defined in the current scope
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -143,7 +147,6 @@ In file $FILE:3:2 ->
 
 Error: The name zero (`zero`) is already defined elsewhere
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -155,7 +158,6 @@ In file $FILE:1:12 ->
 
 Error: Redefinition of primitive `I`
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -167,7 +169,6 @@ In file $FILE:1:5 ->
 
 Error: The primitive `Path` depends on undeclared primitive(s): `I`
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -179,7 +180,6 @@ In file $FILE:1:5 ->
 
 Error: Unknown primitive `senpaiSuki`
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -192,7 +192,6 @@ In file $FILE:2:9 ->
 
 Error: The qualified name `Nat::suc` is not defined in the current scope
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -209,7 +208,6 @@ In file $FILE:3:29 ->
 
 Error: The name `b` is not defined in the current scope
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -223,7 +221,6 @@ In file $FILE:3:7 ->
 
 Error: The generalized variable `A` is not available here
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -236,7 +233,6 @@ In file $FILE:2:7 ->
 
 Error: The module name `A` is already defined elsewhere
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -248,7 +244,6 @@ In file $FILE:1:7 ->
 
 Error: The module name `hopefullyThisModuleWillNeverExist` is not found
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -261,7 +256,6 @@ In file $FILE:1:5 ->
 Error: The module name `hopefullyThisModuleWillNeverExist` is not defined in the
        current scope
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -286,7 +280,6 @@ In file $FILE:4:12 ->
 Error: The name `t` being exported clashes with another exported definition with
        the same name
 
-Resolving interrupted due to:
 1 error(s), 1 warning(s).
 Let's learn from that.
 
@@ -299,7 +292,6 @@ In file $FILE:2:24 ->
 
 Error: Unknown member `B` projected
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
