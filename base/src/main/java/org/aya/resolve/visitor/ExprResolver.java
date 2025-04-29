@@ -280,7 +280,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
   ///
   /// @param telescope the telescope of the clause which the {@param pattern} lives, can be [ImmutableSeq#empty()].
   public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
-    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
+    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference, this);
     var result = pattern.descent(resolver);
     ctx.set(resolver.context());
     return result;
