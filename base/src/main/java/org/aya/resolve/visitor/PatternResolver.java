@@ -13,6 +13,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.ref.*;
+import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
@@ -26,12 +27,13 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
   private @NotNull Context context;
   private final @NotNull ImmutableSeq<LocalVar> mercy;
   private final @NotNull Consumer<TyckUnit> parentAdd;
-  private boolean hasError;
+  private final HasError hasError;
 
-  public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd) {
+  public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd, HasError hasError) {
     this.context = context;
     this.mercy = mercy;
     this.parentAdd = parentAdd;
+    this.hasError = hasError;
   }
 
   public @NotNull Context context() { return context; }
@@ -105,11 +107,8 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
     };
   }
 
-  private void foundError() {
-    this.hasError = true;
-  }
-
-  public boolean hasError() {
-    return hasError;
+  @Override
+  public void foundError() {
+    hasError.foundError();
   }
 }
