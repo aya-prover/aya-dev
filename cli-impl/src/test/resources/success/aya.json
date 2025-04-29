@@ -1,7 +1,7 @@
 {
   "ayaVersion": "0.31",
   "group": "org.aya-prover",
-  "name": "tests",
+  "name" : "success",
   "version": "0.1.0",
 
   "dependency": {
