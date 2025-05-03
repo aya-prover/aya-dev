@@ -7,6 +7,10 @@ public interface HasError {
   boolean hasError();
   void foundError();
 
+  default void checkError(boolean anyError) {
+    if (anyError) foundError();
+  }
+
   final class Bool implements HasError {
     private boolean hasError = false;
     @Override public boolean hasError() { return hasError; }

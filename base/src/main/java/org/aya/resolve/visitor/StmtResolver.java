@@ -45,15 +45,8 @@ public class StmtResolver implements HasError {
     stmt.forEach(resolver::resolveStmt);
   }
 
-  @Override
-  public void foundError() {
-    hasError.foundError();
-  }
-
-  @Override
-  public boolean hasError() {
-    return hasError.hasError();
-  }
+  @Override public void foundError() { hasError.foundError(); }
+  @Override public boolean hasError() { return hasError.hasError(); }
 
   /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
   private void resolveStmt(@NotNull ResolvingStmt stmt) {
@@ -61,7 +54,7 @@ public class StmtResolver implements HasError {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl);
       case ResolvingStmt.ModStmt(var stmts) -> stmts.forEach(this::resolveStmt);
       case ResolvingStmt.GenStmt(var variables, var context) -> {
-        var resolver = new ExprResolver(context, false, hasError);
+        var resolver = new ExprResolver(context, info.reporter(), false, hasError);
         resolver.enter(Where.Head);
         variables.descentInPlace(resolver, (_, p) -> p);
         addReferences(new TyckOrder.Head(variables), resolver);
@@ -77,9 +70,10 @@ public class StmtResolver implements HasError {
   private void resolveDecl(@NotNull ResolvingStmt.ResolvingDecl predecl) {
     switch (predecl) {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
+        var reporter = StmtPreResolver.suppress(info.reporter(), decl);
         var where = decl.body instanceof FnBody.BlockBody ? Where.Head : Where.FnSimple;
         // Generalized works for simple bodies and signatures
-        var resolver = resolveDeclSignature(new ExprResolver(ctx, true, hasError), decl, where);
+        var resolver = resolveDeclSignature(new ExprResolver(ctx, reporter, true, hasError), decl, where);
         switch (decl.body) {
           case FnBody.BlockBody body -> {
             assert body.elims() == null;
@@ -100,7 +94,7 @@ public class StmtResolver implements HasError {
         }
       }
       case ResolvingStmt.TopDecl(DataDecl data, var ctx) -> {
-        var resolver = resolveDeclSignature(new ExprResolver(ctx, true, hasError), data, Where.Head);
+        var resolver = resolveDeclSignature(new ExprResolver(ctx, info.reporter(), true, hasError), data, Where.Head);
         insertGeneralizedVars(data, resolver);
         resolveElim(resolver, data.body);
         data.body.forEach(con -> {
@@ -121,7 +115,7 @@ public class StmtResolver implements HasError {
           .concat(data.body.clauses.map(TyckOrder.Body::new)));
       }
       case ResolvingStmt.TopDecl(ClassDecl decl, var ctx) -> {
-        var resolver = new ExprResolver(ctx, false, hasError);
+        var resolver = new ExprResolver(ctx, info.reporter(), false, hasError);
         resolver.enter(Where.Head);
         decl.members.forEach(field -> {
           var bodyResolver = resolver.member(decl, ExprResolver.Where.Head);
@@ -138,7 +132,7 @@ public class StmtResolver implements HasError {
           .concat(decl.members.map(TyckOrder.Head::new)));
       }
       case ResolvingStmt.TopDecl(PrimDecl decl, var ctx) -> {
-        resolveDeclSignature(new ExprResolver(ctx, false, hasError), decl, Where.Head);
+        resolveDeclSignature(new ExprResolver(ctx, info.reporter(), false, hasError), decl, Where.Head);
         addReferences(new TyckOrder.Body(decl), SeqView.empty());
       }
       case ResolvingStmt.TopDecl _ -> Panic.unreachable();
@@ -194,25 +188,20 @@ public class StmtResolver implements HasError {
   }
 
   private <Cls> void resolveElim(@NotNull ExprResolver resolver, @NotNull MatchBody<Cls> body) {
-    if (body.elims() != null) {
-      // TODO: panic or just return?
-      return;
-    }
+    assert body.elims() == null;
 
-    try {
-      var resolved = body.rawElims.mapChecked(elim -> {
-        var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
-        if (!(result instanceof LocalVar localVar)) {
-          return resolver.ctx().<LocalVar>reportAndThrow(new NameProblem.UnqualifiedNameNotFoundError(resolver.ctx(),
-            elim.data(), elim.sourcePos()));
-        }
-        // result is LocalVar -> result in telescope
-        return localVar;
-      });
+    var resolved = body.rawElims.map(elim -> {
+      var result = resolver.resolve(new QualifiedID(elim.sourcePos(), elim.data()));
+      if (!(result instanceof LocalVar localVar)) {
+        info.reporter().report(new NameProblem.UnqualifiedNameNotFoundError(resolver.ctx(),
+          elim.data(), elim.sourcePos()));
+        return null;
+      }
+      // result is LocalVar -> result in telescope
+      return localVar;
+    });
 
-      body.resolve(resolved);
-    } catch (Context.ResolvingInterruptedException _) {
-      foundError();
-    }
+    if (resolved.anyMatch(i -> i == null)) return;
+    body.resolve(resolved);
   }
 }

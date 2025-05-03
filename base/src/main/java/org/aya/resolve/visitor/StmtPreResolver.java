@@ -6,7 +6,10 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
-import org.aya.resolve.context.*;
+import org.aya.resolve.context.Context;
+import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.NoExportContext;
+import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
@@ -17,31 +20,27 @@ import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.QPath;
-import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
-import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
+ * TODO: turn into record
  * simply adds all top-level names to the context
  */
-public final class StmtPreResolver implements HasError {
+public final class StmtPreResolver {
   private final @NotNull ModuleLoader loader;
   private final @NotNull ResolveInfo resolveInfo;
-  private final @NotNull HasError hasError;
 
-  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo, @NotNull HasError hasError) {
+  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
     this.loader = loader;
     this.resolveInfo = resolveInfo;
-    this.hasError = hasError;
   }
 
   /// Resolve {@link Stmt}s under {@param context}.
@@ -52,24 +51,21 @@ public final class StmtPreResolver implements HasError {
   }
 
   public @Nullable ResolvingStmt resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
+    var thisReporter = resolveInfo.reporter();
     return switch (stmt) {
       case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
         var wholeModeName = context.modulePath().derive(mod.name());
         // Is there a file level module with path {context.moduleName}::{mod.name} ?
         if (loader.existsFileLevelModule(wholeModeName)) {
-          foundError(context, new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+          thisReporter.report(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
           yield null;     // TODO: Is this Problem critical? or we can continue the resolving.
         }
 
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
 
-        try {
-          context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
-        } catch (Context.ResolvingInterruptedException e) {
-          foundError();
-        }
+        context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos(), thisReporter);
 
         yield new ResolvingStmt.ModStmt(children);
       }
@@ -77,12 +73,13 @@ public final class StmtPreResolver implements HasError {
         var modulePath = cmd.path();
 
         ResolveInfo success;
+        // TODO: get rid of these exceptions
         try {
           success = loader.load(modulePath);
         } catch (Context.ResolvingInterruptedException e) {
           yield null;
         } catch (ModNotFoundException e) {
-          foundError(context, new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+          thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
           yield null;
         }
 
@@ -90,11 +87,7 @@ public final class StmtPreResolver implements HasError {
         var as = cmd.asName();
         var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
 
-        try {
-          context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos());
-        } catch (Context.ResolvingInterruptedException e) {
-          foundError();
-        }
+        context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos(), thisReporter);
 
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
@@ -106,11 +99,7 @@ public final class StmtPreResolver implements HasError {
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
 
-        try {
-          ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
-        } catch (Context.ResolvingInterruptedException e) {
-          foundError();
-        }
+        ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
 
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
@@ -135,11 +124,7 @@ public final class StmtPreResolver implements HasError {
       }
       case Generalize variables -> {
         for (var variable : variables.variables) {
-          try {
-            context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
-          } catch (Context.ResolvingInterruptedException e) {
-            foundError();
-          }
+          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos, thisReporter);
         }
         yield new ResolvingStmt.GenStmt(variables, context);
       }
@@ -150,49 +135,41 @@ public final class StmtPreResolver implements HasError {
     return switch (predecl) {
       case DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx) -> {
+        var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx, reporter) -> {
           setupModule(mCtx, con.ref);
-          try {
-            mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos());
-          } catch (Context.ResolvingInterruptedException e) {
-            foundError();
-          }
+          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos(), reporter);
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) -> {
+        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx, reporter) -> {
           setupModule(mCtx, mem.ref);
-          try {
-            mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos());
-          } catch (Context.ResolvingInterruptedException e) {
-            foundError();
-          }
+          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos(), reporter);
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
-        var ctx = resolveTopLevelDecl(decl, context);
-        var hijackedCtx = new ReporterContext(ctx, suppress(context.reporter(), decl));
-        yield new ResolvingStmt.TopDecl(decl, hijackedCtx);
+        var resolvedCtx = resolveTopLevelDecl(decl, context);
+        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
       case PrimDecl decl -> {
+        var thisReporter = resolveInfo.reporter();
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.nameSourcePos();
 
         var primID = PrimDef.ID.find(name);
         if (primID == null) {
-          foundError(context, new PrimResolveError.UnknownPrim(sourcePos, name));
+          thisReporter.report(new PrimResolveError.UnknownPrim(sourcePos, name));
           yield null;
         } else {
           var lack = factory.checkDependency(primID);
           if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
-            foundError(context, new PrimResolveError.Dependency(name, lack.get(), sourcePos));
+            thisReporter.report(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
             yield null;
           } else if (factory.isForbiddenRedefinition(primID, false)) {
-            foundError(context, new PrimResolveError.Redefinition(name, sourcePos));
+            thisReporter.report(new PrimResolveError.Redefinition(name, sourcePos));
             yield null;
           }
 
@@ -207,7 +184,7 @@ public final class StmtPreResolver implements HasError {
     };
   }
 
-  private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
+  public static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
     var suppressInfo = decl.pragmaInfo.suppressWarn;
     if (suppressInfo == null) return reporter;
 
@@ -223,6 +200,11 @@ public final class StmtPreResolver implements HasError {
     return r;
   }
 
+  @FunctionalInterface
+  private interface ChildResolver<T> {
+    void accept(@NotNull T child, @NotNull ModuleContext context, @NotNull Reporter reporter);
+  }
+
   /**
    * pre-resolve children of {@param decl}
    *
@@ -236,21 +218,20 @@ public final class StmtPreResolver implements HasError {
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
-    @NotNull BiConsumer<Child, ModuleContext> childResolver
+    @NotNull ChildResolver<Child> childResolver
   ) {
-    var innerCtx = context.derive(decl.ref().name(), suppress(context.reporter(), decl));
-    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
+    var thisReporter = resolveInfo.reporter();
+    var innerReporter = suppress(thisReporter, decl);
+    var innerCtx = context.derive(decl.ref().name());
+    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx, innerReporter));
     var module = decl.ref().name();
-    try {
-      context.importModule(
-        ModuleName.This.resolve(module),
-        innerCtx.exports,
-        decl.accessibility(),
-        decl.nameSourcePos()
-      );
-    } catch (Context.ResolvingInterruptedException e) {
-      foundError();
-    }
+    context.importModule(
+      ModuleName.This.resolve(module),
+      innerCtx.exports,
+      decl.accessibility(),
+      decl.nameSourcePos(),
+      thisReporter
+    );
 
     return innerCtx;
   }
@@ -264,30 +245,12 @@ public final class StmtPreResolver implements HasError {
     var ctx = decl.isExample ? exampleContext(context) : context;
     setupModule(ctx, decl.ref());
 
-    try {
-      ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
-    } catch (Context.ResolvingInterruptedException e) {
-      foundError();
-    }
+    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos(), resolveInfo.reporter());
 
     return ctx;
   }
 
   private void setupModule(ModuleContext ctx, DefVar<?, ?> ref) {
     ref.module = new QPath(ctx.modulePath(), resolveInfo.modulePath().size());
-  }
-
-  private void foundError(@NotNull Context context, @NotNull Problem problem) {
-    context.fail(problem);
-    foundError();
-  }
-
-  @Override
-  public void foundError() {
-    hasError.foundError();
-  }
-
-  @Override public boolean hasError() {
-    return hasError.hasError();
   }
 }

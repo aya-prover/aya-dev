@@ -18,7 +18,6 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.Panic;
 import org.aya.util.RepoLike;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -32,21 +31,23 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   private boolean modified = true;
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
-  public ReplContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath name) {
-    super(reporter, parent, name);
+  public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
+    super(parent, name);
   }
 
-  @Override public void importSymbol(
+  @Override public boolean importSymbol(
     @NotNull AnyVar ref,
     @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     modified = true;
     // REPL always overwrites symbols.
     symbols().add(name, ref, fromModule);
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
+    return true;
   }
 
   @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
@@ -59,34 +60,32 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     ModuleName.@NotNull Qualified modName,
     @NotNull ModuleContext module,
     Stmt.@NotNull Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
-    try {
-      super.importModuleContext(modName, module, accessibility, sourcePos);
-    } catch (ResolvingInterruptedException e) {
-      // This is because the [ResolvingInterruptedException] of [importModuleContext] comes from [importModule],
-      // which is overrode by ReplContext and no exception will be thrown
-      Panic.unreachable();
-    }
+    super.importModuleContext(modName, module, accessibility, sourcePos, reporter);
   }
 
-  @Override public void importModule(
+  @Override public boolean importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     modified = true;
     modules.put(modName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
+    return true;
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, modulePath().derive(extraName));
+
+  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName) {
+    return new ReplContext(this, modulePath().derive(extraName));
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, modulePath().derive(extraName));
+  @Override public @NotNull ReplContext derive(@NotNull String extraName) {
+    return new ReplContext(this, modulePath().derive(extraName));
   }
 
   @Override public void setDownstream(@Nullable ReplContext downstream) {
@@ -94,7 +93,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   public @NotNull ReplContext fork() {
-    var kid = derive(":theKid", reporter);
+    var kid = derive(":theKid");
     fork(kid);
     return kid;
   }

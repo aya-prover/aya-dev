@@ -86,7 +86,7 @@ public class ReplCompiler {
     };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(reporter);
-    this.context = new ReplContext(reporter, new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
     this.fileManager = new SingleAyaFile.Factory(reporter);
     var parser = new AyaParserImpl(reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
