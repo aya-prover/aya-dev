@@ -294,7 +294,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull JavaExpr makeClosure(@NotNull BiFunction<TermExprializer, JavaExpr, JavaExpr> cont) {
-    return makeLambda(Constants.CLOSURE, (ap, te) -> cont.apply(te, ap.arg(0).ref()));
+    return makeLambda(Constants.CLOSURE, (ap, te) ->
+      cont.apply(te, builder.checkcast(ap.arg(0).ref(), Constants.CD_Term)));
   }
 
   private @NotNull JavaExpr serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
