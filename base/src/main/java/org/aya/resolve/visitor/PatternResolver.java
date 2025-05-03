@@ -107,7 +107,6 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
     };
   }
 
-  @Override
   public void foundError() {
     hasError.foundError();
   }
