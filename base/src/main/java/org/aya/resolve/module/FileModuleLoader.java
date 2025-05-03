@@ -40,7 +40,7 @@ public record FileModuleLoader(
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
     try {
       var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);
-      var context = new EmptyContext(reporter, sourcePath).derive(path);
+      var context = new EmptyContext(sourcePath).derive(path);
       var info = resolveModule(primFactory, context, program, recurseLoader);
       return tyckModule(info, null);
     } catch (IOException e) {

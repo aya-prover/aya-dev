@@ -45,9 +45,7 @@ public final class StmtResolvers {
     stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
   }
 
-  /**
-   * Resolve file level {@link Stmt}s
-   */
+  /// Resolve file level [Stmt]s
   public void resolve(@NotNull ImmutableSeq<Stmt> stmts) {
     var resolving = fillContext(stmts);
     resolveStmts(resolving); // resolve mutates stmts
