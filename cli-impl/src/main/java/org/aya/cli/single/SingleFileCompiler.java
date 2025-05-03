@@ -6,6 +6,7 @@ import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 public final class SingleFileCompiler {
   public final @NotNull CollectingReporter reporter;
@@ -46,20 +46,19 @@ public final class SingleFileCompiler {
   public <E extends IOException> int compile(
     @NotNull Path sourceFile, @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
-    return compile(sourceFile, reporter -> new EmptyContext(reporter, sourceFile).derive("Mian"), moduleCallback);
+    return compile(sourceFile, new EmptyContext(sourceFile).derive("Mian"), moduleCallback);
   }
 
   public <E extends IOException> int compile(
     @NotNull Path sourceFile,
-    @NotNull Function<Reporter, ModuleContext> context,
+    @NotNull ModuleContext context,
     @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
     return CompilerUtil.catching(reporter, flags, () -> {
-      var ctx = context.apply(reporter);
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
-      loader.tyckModule(new PrimFactory(), ctx, program, (resolveInfo, defs) -> {
+      loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
         ayaFile.tyckAdditional(resolveInfo);
         ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
         ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);

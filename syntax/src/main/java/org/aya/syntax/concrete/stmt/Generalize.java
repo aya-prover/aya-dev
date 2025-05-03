@@ -3,6 +3,7 @@
 package org.aya.syntax.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.stmt.TyckUnit;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.GeneralizedVar;
@@ -12,7 +13,7 @@ import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
-public final class Generalize implements Stmt {
+public final class Generalize implements Stmt, TyckUnit {
   @Override public @NotNull Accessibility accessibility() {
     return Accessibility.Private;
   }
@@ -43,4 +44,8 @@ public final class Generalize implements Stmt {
   }
 
   public @NotNull SourcePos sourcePos() { return sourcePos; }
+
+  @Override public @NotNull SourcePos nameSourcePos() {
+    return variables.map(GeneralizedVar::sourcePos).reduce(SourcePos::union);
+  }
 }

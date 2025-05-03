@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.terck;
 
-import java.util.function.Consumer;
-
 import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
@@ -28,6 +26,8 @@ import org.aya.util.terck.CallGraph;
 import org.aya.util.terck.CallMatrix;
 import org.aya.util.terck.Relation;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 /**
  * Resolve calls and build call graph of recursive functions,

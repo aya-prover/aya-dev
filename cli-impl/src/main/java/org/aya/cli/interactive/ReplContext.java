@@ -11,10 +11,7 @@ import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.collection.mutable.MutableTreeSet;
 import kala.tuple.Tuple2;
-import org.aya.resolve.context.Context;
-import org.aya.resolve.context.ModuleExport;
-import org.aya.resolve.context.ModuleSymbol;
-import org.aya.resolve.context.PhysicalModuleContext;
+import org.aya.resolve.context.*;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyDefVar;
@@ -30,25 +27,27 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
   private @Nullable ReplContext downstream = null;
-  /** @see #moduleTree() */
+  /// @see #moduleTree()
   private boolean modified = true;
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
-  public ReplContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath name) {
-    super(reporter, parent, name);
+  public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
+    super(parent, name);
   }
 
-  @Override public void importSymbol(
+  @Override public boolean importSymbol(
     @NotNull AnyVar ref,
     @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     modified = true;
     // REPL always overwrites symbols.
     symbols().add(name, ref, fromModule);
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
+    return true;
   }
 
   @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {
@@ -57,23 +56,35 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return true;
   }
 
-  @Override public void importModule(
+  @Override public boolean importModuleContext(
+    ModuleName.@NotNull Qualified modName,
+    @NotNull ModuleContext module,
+    Stmt.@NotNull Accessibility accessibility,
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
+  ) {
+    return super.importModuleContext(modName, module, accessibility, sourcePos, reporter);
+  }
+
+  @Override public boolean importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport mod,
     Stmt.@NotNull Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     modified = true;
     modules.put(modName, mod);
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
+    return true;
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, modulePath().derive(extraName));
+  @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName) {
+    return new ReplContext(this, modulePath().derive(extraName));
   }
 
-  @Override public @NotNull ReplContext derive(@NotNull String extraName, @NotNull Reporter reporter) {
-    return new ReplContext(reporter, this, modulePath().derive(extraName));
+  @Override public @NotNull ReplContext derive(@NotNull String extraName) {
+    return new ReplContext(this, modulePath().derive(extraName));
   }
 
   @Override public void setDownstream(@Nullable ReplContext downstream) {
@@ -81,7 +92,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   public @NotNull ReplContext fork() {
-    var kid = derive(":theKid", reporter);
+    var kid = derive(":theKid");
     fork(kid);
     return kid;
   }
@@ -105,10 +116,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     symbols.table().clear();
   }
 
-  /**
-   * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
-   * so be careful about {@param rhs}
-   */
+  /// @apiNote It is possible that putting [ModuleName.Qualified] and [ModuleName.ThisRef] to the same name,
+  /// so be careful about {@param rhs}
   private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> dest, @NotNull ModuleSymbol<T> src) {
     for (var key : src.table().keysView()) {
       var candy = dest.get(key);
@@ -164,11 +173,9 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return moduleTree;
   }
 
-  /**
-   * Rebuild module tree from flattened module names
-   *
-   * @param moduleNames a list of {@link ModuleName.Qualified} but in an efficient representation, the element should be non-empty
-   */
+  /// Rebuild the module tree from flattened module names
+  ///
+  /// @param moduleNames a list of [ModuleName.Qualified] but in an efficient representation, the element should be non-empty
   private @NotNull ImmutableMap<String, ModuleTrie>
   buildModuleTree(@NotNull Seq<SeqView<String>> moduleNames) {
     if (moduleNames.isEmpty()) {

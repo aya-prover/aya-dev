@@ -4,7 +4,6 @@ package org.aya.resolve.salt;
 
 import kala.collection.SeqView;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.error.OperatorError;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.GenerateKind;
@@ -78,8 +77,10 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
       return new Arg<>(new WithPos<>(pos, newCon), explicit);
     } else {
       fail(new PatternProblem.UnknownCon(func));
-      throw new Context.ResolvingInterruptedException();
+      throw new MalformedPatternException();
     }
   }
   @Override public @NotNull Reporter reporter() { return opSet.reporter; }
+
+  public static final class MalformedPatternException extends RuntimeException { }
 }

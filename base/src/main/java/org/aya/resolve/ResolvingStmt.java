@@ -10,30 +10,23 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * {@link Stmt} that is resolving, stores some extra information (i.e. the context 'inside' of it).
- * It is similar to the following agda code:
- *
- * <pre>
- *   postulate
- *     Context : Set
- *
- *   inductive Stmt : Set where
- *     FnDecl : Stmt
- *     DataDecl : Stmt
- *     DataCon : Stmt
- *
- *   inductive ExtInfo : Stmt -> Set where
- *     ExtData : Context -> ExtInfo DataDecl
- *     ExtFn : Context -> ExtInfo FnDecl
- *     -- trivial extra info
- *     ExtCon : ExtInfo DataCon
- *
- *   ResolvingStmt : Set _
- *   ResolvingStmt = Σ[ s ∈ Stmt ] ExtInfo s
- * </pre>
- * <p>
- */
+/// [Stmt] that is resolving, stores some extra information (i.e. the context 'inside' of it).
+/// It is similar to the following agda code:
+/// ```
+/// postulate
+///   Context : Set
+/// inductive Stmt : Set where
+///   FnDecl : Stmt
+///   DataDecl : Stmt
+///   DataCon : Stmt
+/// inductive ExtInfo : Stmt -> Set where
+///   ExtData : Context -> ExtInfo DataDecl
+///   ExtFn : Context -> ExtInfo FnDecl
+///   -- trivial extra info
+///   ExtCon : ExtInfo DataCon
+/// ResolvingStmt : Set _
+/// ResolvingStmt = Σ[ s ∈ Stmt ] ExtInfo s
+///```
 public sealed interface ResolvingStmt {
   sealed interface ResolvingDecl extends ResolvingStmt { }
 

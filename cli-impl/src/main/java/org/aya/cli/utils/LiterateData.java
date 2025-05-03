@@ -16,6 +16,7 @@ import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.salt.Desalt;
+import org.aya.resolve.salt.PatternBinParser;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
@@ -59,10 +60,14 @@ public record LiterateData(
   public void resolve(@NotNull ResolveInfo info) {
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      var data = ExprResolver.resolveLax(info.thisModule(), c.expr)
-        .descent(new Desalt(info));
-      c.params = data.params();
-      c.expr = data.expr();
+      var resolved = ExprResolver.resolveLax(info.thisModule(), info.reporter(), c.expr);
+      // Skip if error
+      if (resolved == null) return;
+      try {
+        var data = resolved.descent(new Desalt(info));
+        c.params = data.params();
+        c.expr = data.expr();
+      } catch (PatternBinParser.MalformedPatternException _) { }
     });
   }
 

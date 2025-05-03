@@ -13,8 +13,8 @@ import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
@@ -30,6 +30,7 @@ import org.aya.util.Panic;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -158,25 +159,25 @@ public record CompiledModule(
 
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context,
-    @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory
+    @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory, @NotNull Reporter reporter
   ) {
     var state = new DeState(classLoader);
-    return toResolveInfo(loader, context, state, primFactory, new ShapeFactory());
+    return toResolveInfo(loader, context, state, primFactory, new ShapeFactory(), reporter);
   }
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
-    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory
+    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull Reporter reporter
   ) {
-    var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
-    shallowResolve(loader, resolveInfo);
-    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()));
+    var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
+    shallowResolve(loader, resolveInfo, reporter);
+    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
     deOp(state, resolveInfo);
     return resolveInfo;
   }
 
   private void loadModule(
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
-    @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass
+    @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass, @NotNull Reporter reporter
   ) {
     for (var jitClass : rootClass.getDeclaredClasses()) {
       var object = DeState.getJitDef(jitClass);
@@ -190,11 +191,13 @@ public record CompiledModule(
           // The accessibility doesn't matter, this context is readonly
           var innerCtx = context.derive(data.name());
           for (var constructor : data.constructors()) {
-            innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER);
+            var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
+            if (! success) Panic.unreachable();
           }
-          context.importModuleContext(
+          var success = context.importModuleContext(
             ModuleName.This.resolve(data.name()),
-            innerCtx, Stmt.Accessibility.Public, SourcePos.SER);
+            innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
+          if (! success) Panic.unreachable();
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -218,26 +221,39 @@ public record CompiledModule(
   /**
    * like {@link org.aya.resolve.visitor.StmtPreResolver} but only resolve import
    */
-  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve) {
+  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
     for (var anImport : imports) {
       var modName = anImport.path;
       var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
-      var success = loader.load(modName);
-      if (success == null)
-        thisResolve.thisModule().reportAndThrow(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
-      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(success, isPublic));
-      var mod = success.thisModule();
-      thisResolve.thisModule().importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER);
-      reExports.getOption(modName).forEach(useHide -> thisResolve.thisModule().openModule(modRename,
-        Stmt.Accessibility.Public,
-        useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
-        useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
-        SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding));
+
+      var loaded = loader.load(modName);
+      if (loaded.isErr()) {
+        throw new Panic("Unable to load a dependency module of a compiled module");
+      }
+
+      var info = loaded.get();
+
+      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(info, isPublic));
+      var mod = info.thisModule();
+      var success = thisResolve.thisModule()
+        .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
+      if (! success) Panic.unreachable();
+      var useHide = reExports.getOrNull(modName);
+      if (useHide != null) {
+        success = thisResolve.thisModule().openModule(modRename,
+          Stmt.Accessibility.Public,
+          useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
+          useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
+          SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
+          reporter);
+
+        if (! success) Panic.unreachable();
+      }
       var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
-      thisResolve.open(success, SourcePos.SER, acc);
+      thisResolve.open(info, SourcePos.SER, acc);
     }
   }
 
@@ -267,11 +283,13 @@ public record CompiledModule(
     opSet.ensureHasElem(opDecl);
     bind.loosers().forEach(looser -> {
       var target = resolveOp(resolveInfo, state, looser);
-      opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+      var success = opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+      if (! success) Panic.unreachable();
     });
     bind.tighters().forEach(tighter -> {
       var target = resolveOp(resolveInfo, state, tighter);
-      opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
+      var success = opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
+      if (! success) Panic.unreachable();
     });
   }
 

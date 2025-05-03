@@ -3,7 +3,6 @@
 package org.aya.resolve.salt;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.error.OperatorError;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.tyck.tycker.Problematic;
@@ -24,11 +23,9 @@ public final class AyaBinOpSet extends BinOpSet implements Problematic {
   }
   @Override protected void reportSelfBind(@NotNull SourcePos sourcePos) {
     fail(new OperatorError.SelfBind(sourcePos));
-    throw new Context.ResolvingInterruptedException();
   }
 
   @Override protected void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles) {
-    cycles.forEach(c -> fail(new OperatorError.Circular(c)));
-    throw new Context.ResolvingInterruptedException();
+    reporter.reportAll(cycles.view().map(OperatorError.Circular::new));
   }
 }

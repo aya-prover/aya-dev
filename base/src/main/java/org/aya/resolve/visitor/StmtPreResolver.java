@@ -9,7 +9,6 @@ import org.aya.resolve.ResolvingStmt;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.context.ReporterContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -27,45 +26,68 @@ import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
+ * TODO: turn into record
  * simply adds all top-level names to the context
  */
-public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
-  /**
-   * Resolve {@link Stmt}s under {@param context}.
-   *
-   * @return the context of the body of each {@link Stmt}, where imports and opens are stripped.
-   */
+public final class StmtPreResolver {
+  private final @NotNull ModuleLoader loader;
+  private final @NotNull ResolveInfo resolveInfo;
+
+  public StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo resolveInfo) {
+    this.loader = loader;
+    this.resolveInfo = resolveInfo;
+  }
+
+  /// Resolve {@link Stmt}s under {@param context}.
+  ///
+  /// @return the context of the body of each {@link Stmt}, where imports and opens are stripped.
   public ImmutableSeq<ResolvingStmt> resolveStmt(@NotNull ImmutableSeq<Stmt> stmts, ModuleContext context) {
     return stmts.mapNotNull(stmt -> resolveStmt(stmt, context));
   }
 
   public @Nullable ResolvingStmt resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
+    var thisReporter = resolveInfo.reporter();
     return switch (stmt) {
       case Decl decl -> resolveDecl(decl, context);
       case Command.Module mod -> {
         var wholeModeName = context.modulePath().derive(mod.name());
         // Is there a file level module with path {context.moduleName}::{mod.name} ?
         if (loader.existsFileLevelModule(wholeModeName)) {
-          context.reportAndThrow(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+          thisReporter.report(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
+          yield null;     // TODO: Is this Problem critical? or we can continue the resolving.
         }
+
         var newCtx = context.derive(mod.name());
         var children = resolveStmt(mod.contents(), newCtx);
-        context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos());
+
+        context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos(), thisReporter);
+
         yield new ResolvingStmt.ModStmt(children);
       }
       case Command.Import cmd -> {
         var modulePath = cmd.path();
-        var success = loader.load(modulePath);
-        if (success == null)
-          context.reportAndThrow(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+
+        var loaded = loader.load(modulePath);
+        switch (loaded.getErrOrNull()) {
+          case Resolve -> { yield null; }
+          case NotFound -> {
+            thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+            yield null;
+          }
+          case null -> { }
+        }
+
+        var success = loaded.get();
+
         var mod = success.thisModule();
         var as = cmd.asName();
         var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
-        context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos());
+
+        context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos(), thisReporter);
+
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
         yield null;
@@ -75,13 +97,16 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         var acc = cmd.accessibility();
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
-        ctx.openModule(mod, acc, cmd.sourcePos(), useHide);
+
+        ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
+
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
         resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
           if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
           resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc);
         });
+
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
           // skip if there is no `as` or it is qualified.
@@ -97,48 +122,60 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
         yield null;
       }
       case Generalize variables -> {
-        for (var variable : variables.variables)
-          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos);
+        for (var variable : variables.variables) {
+          context.defineSymbol(variable, Stmt.Accessibility.Private, variable.sourcePos, thisReporter);
+        }
         yield new ResolvingStmt.GenStmt(variables, context);
       }
     };
   }
 
-  private @NotNull ResolvingStmt resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
+  private @Nullable ResolvingStmt resolveDecl(@NotNull Decl predecl, @NotNull ModuleContext context) {
     return switch (predecl) {
       case DataDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx) -> {
+        var innerCtx = resolveChildren(decl, ctx, d -> d.body.clauses.view(), (con, mCtx, reporter) -> {
           setupModule(mCtx, con.ref);
-          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos());
+          mCtx.defineSymbol(con.ref(), Stmt.Accessibility.Public, con.nameSourcePos(), reporter);
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case ClassDecl decl -> {
         var ctx = resolveTopLevelDecl(decl, context);
-        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx) -> {
+        var innerCtx = resolveChildren(decl, ctx, d -> d.members.view(), (mem, mCtx, reporter) -> {
           setupModule(mCtx, mem.ref);
-          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos());
+          mCtx.defineSymbol(mem.ref(), Stmt.Accessibility.Public, mem.ref().concrete.nameSourcePos(), reporter);
         });
         yield new ResolvingStmt.TopDecl(decl, innerCtx);
       }
       case FnDecl decl -> {
-        var ctx = resolveTopLevelDecl(decl, context);
-        var hijackedCtx = new ReporterContext(ctx, suppress(context.reporter(), decl));
-        yield new ResolvingStmt.TopDecl(decl, hijackedCtx);
+        var resolvedCtx = resolveTopLevelDecl(decl, context);
+        yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
       case PrimDecl decl -> {
+        var thisReporter = resolveInfo.reporter();
         var factory = resolveInfo.primFactory();
         var name = decl.ref.name();
         var sourcePos = decl.nameSourcePos();
+
         var primID = PrimDef.ID.find(name);
-        if (primID == null) context.reportAndThrow(new PrimResolveError.UnknownPrim(sourcePos, name));
-        var lack = factory.checkDependency(primID);
-        if (lack.isNotEmpty() && lack.get().isNotEmpty())
-          context.reportAndThrow(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
-        else if (factory.isForbiddenRedefinition(primID, false))
-          context.reportAndThrow(new PrimResolveError.Redefinition(name, sourcePos));
-        factory.factory(primID, decl.ref);
+        if (primID == null) {
+          thisReporter.report(new PrimResolveError.UnknownPrim(sourcePos, name));
+          yield null;
+        } else {
+          var lack = factory.checkDependency(primID);
+          if (lack.isNotEmpty() && lack.get().isNotEmpty()) {
+            thisReporter.report(new PrimResolveError.Dependency(name, lack.get(), sourcePos));
+            yield null;
+          } else if (factory.isForbiddenRedefinition(primID, false)) {
+            thisReporter.report(new PrimResolveError.Redefinition(name, sourcePos));
+            yield null;
+          }
+
+          factory.factory(primID, decl.ref);
+        }
+
+        // whatever success or not, we resolve the decl
         var resolvedCtx = resolveTopLevelDecl(decl, context);
         yield new ResolvingStmt.TopDecl(decl, resolvedCtx);
       }
@@ -146,7 +183,7 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     };
   }
 
-  private static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
+  public static Reporter suppress(@NotNull Reporter reporter, @NotNull Decl decl) {
     var suppressInfo = decl.pragmaInfo.suppressWarn;
     if (suppressInfo == null) return reporter;
 
@@ -162,6 +199,11 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     return r;
   }
 
+  @FunctionalInterface
+  private interface ChildResolver<T> {
+    void accept(@NotNull T child, @NotNull ModuleContext context, @NotNull Reporter reporter);
+  }
+
   /**
    * pre-resolve children of {@param decl}
    *
@@ -175,17 +217,21 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
-    @NotNull BiConsumer<Child, ModuleContext> childResolver
+    @NotNull ChildResolver<Child> childResolver
   ) {
-    var innerCtx = context.derive(decl.ref().name(), suppress(context.reporter(), decl));
-    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx));
+    var thisReporter = resolveInfo.reporter();
+    var innerReporter = suppress(thisReporter, decl);
+    var innerCtx = context.derive(decl.ref().name());
+    childrenGet.apply(decl).forEach(child -> childResolver.accept(child, innerCtx, innerReporter));
     var module = decl.ref().name();
     context.importModule(
       ModuleName.This.resolve(module),
       innerCtx.exports,
       decl.accessibility(),
-      decl.nameSourcePos()
+      decl.nameSourcePos(),
+      thisReporter
     );
+
     return innerCtx;
   }
 
@@ -197,9 +243,11 @@ public record StmtPreResolver(@NotNull ModuleLoader loader, @NotNull ResolveInfo
   resolveTopLevelDecl(@NotNull D decl, @NotNull ModuleContext context) {
     var ctx = decl.isExample ? exampleContext(context) : context;
     setupModule(ctx, decl.ref());
-    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos());
+
+    ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos(), resolveInfo.reporter());
     return ctx;
   }
+
   private void setupModule(ModuleContext ctx, DefVar<?, ?> ref) {
     ref.module = new QPath(ctx.modulePath(), resolveInfo.modulePath().size());
   }

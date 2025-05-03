@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.actions;
+package org.aya.ide.action;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -21,14 +21,16 @@ import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/// TODO: move to `ide`
 /// ContextWalker traversal the concrete syntax tree to target position, record all available variable.
+/// It behaves like a [org.aya.resolve.visitor.ExprResolver]
 public class ContextWalker implements SyntaxNodeAction.Cursor {
   private static final @NotNull LocalVar RESULT_VAR = new LocalVar("_", SourcePos.NONE);
 
-  private final @NotNull MutableMap<String, Completion.CompletionItemu.Local> localContext;
+  private final @NotNull MutableMap<String, Completion.Item.Local> localContext;
+  // TODO: store [ModuleContext] rather than [ModuleName] after making `let-open` and `Command.Module` stores [ModuleContext]
   private final @NotNull MutableList<String> moduleContext;
   private final @NotNull XY xy;
+  private @Nullable Expr leaf;
 
   public ContextWalker(@NotNull XY xy) {
     this.xy = xy;
@@ -62,6 +64,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   public void visitLetBind(Expr.@NotNull LetBind bind) {
     if (!accept(location(), bind.sourcePos())) return;
     Cursor.super.visitLetBind(bind);
+  }
+
+  @Override
+  public void visitLetBody(Expr.@NotNull Let let) {
+    if (!accept(location(), let.body().sourcePos())) return;
+    Cursor.super.visitLetBody(let);
   }
 
   @Override
@@ -121,11 +129,23 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     if (var == LocalVar.IGNORED || pos == SourcePos.NONE) return;
     // in case of the resolving failed.
     if (!(var instanceof LocalVar || var instanceof GeneralizedVar)) return;
-    this.localContext.put(var.name(), new Completion.CompletionItemu.Local(var, type));
+    this.localContext.put(var.name(), new Completion.Item.Local(var, type));
+  }
+
+  @Override
+  public void doVisitExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
+    leaf = expr;
+    Cursor.super.doVisitExpr(sourcePos, expr);
+  }
+
+  /// @return the last visited expr
+  public @NotNull Expr leaf() {
+    assert leaf != null;
+    return leaf;
   }
 
   /// @return all accessible local variables and their concrete types. The order is not guaranteed.
-  public @NotNull ImmutableSeq<Completion.CompletionItemu.Local> localContext() {
+  public @NotNull ImmutableSeq<Completion.Item.Local> localContext() {
     return localContext.valuesView().toSeq();
   }
 

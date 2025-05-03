@@ -2,13 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibraryOwner;
@@ -29,6 +22,13 @@ import org.aya.util.FileUtil;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DiskCompilerAdvisor implements CompilerAdvisor {
   private static class AyaClassLoader extends URLClassLoader {
@@ -89,11 +89,11 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ModuleLoader recurseLoader,
     @NotNull PrimFactory primFactory
   ) throws ClassNotFoundException, MalformedURLException {
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    var context = new EmptyContext(sourcePath).derive(mod);
     var coreDir = computeBaseDir(libraryRoot);
     cl.addURL(coreDir);
     cl.loadClass(NameSerializer.getModuleClassName(QPath.fileLevel(mod)));
-    return compiledAya.toResolveInfo(recurseLoader, context, cl, primFactory);
+    return compiledAya.toResolveInfo(recurseLoader, context, cl, primFactory, reporter);
   }
 
   @Override public @Nullable ResolveInfo doLoadCompiledCore(

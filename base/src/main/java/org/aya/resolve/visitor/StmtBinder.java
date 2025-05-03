@@ -17,12 +17,13 @@ import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.util.Panic;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.reporter.LocalReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.aya.resolve.ResolvingStmt.*;
 
-public record StmtBinder(@NotNull ResolveInfo info) {
+public record StmtBinder(@NotNull ResolveInfo info, @NotNull LocalReporter reporter) {
   private void visitBind(@NotNull Context ctx, @NotNull DefVar<?, ?> selfDef, @NotNull BindBlock bind) {
     bind(ctx, bind, selfDef.concrete);
   }
@@ -41,23 +42,24 @@ public record StmtBinder(@NotNull ResolveInfo info) {
   private @Nullable AnyDefVar bind(
     @NotNull OpDecl self, @NotNull Context ctx,
     @NotNull OpDecl.BindPred pred, @NotNull QualifiedID id
-  ) throws Context.ResolvingInterruptedException {
-    var var = ctx.get(id);
+  ) {
+    var var = ctx.get(id, reporter);
+    assert var != null;
     var opDecl = info.resolveOpDecl(var);
     if (opDecl != null) {
-      info.opSet().bind(self, pred, opDecl, id.sourcePos());
-      return var instanceof AnyDefVar defVar ? defVar : null;
+      var success = info.opSet().bind(self, pred, opDecl, id.sourcePos());
+      if (success) {
+        return var instanceof AnyDefVar defVar ? defVar : null;
+      }
+    } else {
+      reporter.report(new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
     }
-
-    // make compiler happy 😥
-    info.opSet().fail(
-      new NameProblem.OperatorNameNotFound(id.sourcePos(), id.join()));
-    throw new Context.ResolvingInterruptedException();
+    return null;
   }
 
   public void resolveBind(@NotNull SeqLike<ResolvingStmt> contents) {
     contents.forEach(s -> resolveBind(info.thisModule(), s));
-    info.opRename().forEach((_, v) -> {
+    info.opRename().forEachChecked((_, v) -> {
       if (v.bind() == BindBlock.EMPTY) return;
       bind(info.thisModule(), v.bind(), v.renamed());
     });

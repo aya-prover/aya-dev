@@ -1,13 +1,14 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Result;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author re-xyr
@@ -17,12 +18,13 @@ public record ModuleListLoader(
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
   @Override
-  public @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
+  public @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
-      var mod = loader.load(path, recurseLoader);
-      if (mod != null) return mod;
+      var loaded = loader.load(path, recurseLoader);
+      if (loaded.isOk()) return loaded;
     }
-    return null;
+
+    return Result.err(LoadErrorKind.NotFound);
   }
 
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {

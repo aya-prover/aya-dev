@@ -23,8 +23,7 @@ public interface TyckOrderError extends TyckError {
 
   record CircularSignature(@NotNull ImmutableSeq<TyckUnit> cycles) implements TyckOrderError {
     @Override public @NotNull SourcePos sourcePos() {
-      // FIXME: use nameSourcePos
-      return cycles.view().map(TyckUnit::sourcePos)
+      return cycles.view().map(TyckUnit::nameSourcePos)
         .max(Comparator.comparingInt(SourcePos::tokenEndIndex));
     }
 
@@ -37,7 +36,8 @@ public interface TyckOrderError extends TyckError {
     }
   }
 
-  record SelfReference(@NotNull TyckUnit expr) implements TyckOrderError, SourceNodeProblem {
+  record SelfReference(@NotNull TyckUnit expr) implements TyckOrderError {
+    @Override public @NotNull SourcePos sourcePos() { return expr.nameSourcePos(); }
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.english("Self-reference found in the signature of"),
         Doc.plain(nameOf(expr)));

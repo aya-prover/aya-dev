@@ -85,7 +85,7 @@ public class ReplCompiler {
     };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(reporter);
-    this.context = new ReplContext(reporter, new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(Path.of("REPL")), ModulePath.of("REPL"));
     this.fileManager = new SingleAyaFile.Factory(reporter);
     var parser = new AyaParserImpl(reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
@@ -95,7 +95,7 @@ public class ReplCompiler {
 
   private @NotNull ExprResolver.LiterateResolved
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
-    var ctx = new EmptyContext(reporter, Path.of("dummy")).derive("dummy");
+    var ctx = new EmptyContext(Path.of("dummy")).derive("dummy");
     var resolveInfo = makeResolveInfo(ctx);
     return expr.descent(new Desalt(resolveInfo));
   }
@@ -124,7 +124,7 @@ public class ReplCompiler {
         return info.thisModule();
       })
       .filterIsInstance(PhysicalModuleContext.class)
-      .forEach(mod -> context.importModuleContext(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE));
+      .forEach(mod -> context.importModuleContext(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE, reporter));
     owner.libraryDeps().forEach(this::importModule);
   }
 
@@ -149,22 +149,29 @@ public class ReplCompiler {
     try {
       var parser = new AyaParserImpl(reporter);
       var programOrExpr = parsing.applyChecked(parser);
-      return programOrExpr.map(
+      return programOrExpr.fold(
         program -> {
           var newDefs = MutableValue.<ImmutableSeq<TyckDef>>create();
           var resolveInfo = makeResolveInfo(context.fork());
-          loader.resolveModule(resolveInfo, program, loader);
+
+          var isOk = loader.resolveModule(resolveInfo, program, loader);
+          if (!isOk) return Either.left(ImmutableSeq.empty());
+
           resolveInfo.shapeFactory().discovered = shapeFactory.fork().discovered;
           loader.tyckModule(resolveInfo, ((_, defs) -> newDefs.set(defs)));
-          if (reporter.anyError()) return ImmutableSeq.empty();
+          if (reporter.anyError()) return Either.left(ImmutableSeq.empty());
           context.merge();
           shapeFactory.merge();
-          return newDefs.get();
+          return Either.left(newDefs.get());
         },
-        expr -> tyckAndNormalize(expr, false, normalizeMode)
+        expr -> {
+          var result = tyckAndNormalize(expr, false, normalizeMode);
+          if (result == null) return Either.left(ImmutableSeq.empty());
+          return Either.right(result);
+        }
       );
     } catch (InterruptException _) {
-      // Only two kinds of interruptions are possible: parsing and resolving
+      // Only two kinds of interruptions are possible: parsing and ~~resolving~~
       return Either.left(ImmutableSeq.empty());
     } catch (IOException e) {
       reporter.reportString(e.getMessage());
@@ -182,11 +189,11 @@ public class ReplCompiler {
   public @Nullable AnyVar parseToAnyVar(@NotNull String text) {
     var parseTree = parseExpr(text);
     if (parseTree == null) return null;
-    try {
-      if (ExprResolver.resolveLax(context, parseTree).expr().data() instanceof Expr.Ref unresolved)
-        return unresolved.var();
-    } catch (InterruptException _) {
-    }
+
+    var resolveResult = ExprResolver.resolveLax(context, reporter, parseTree);
+    if (resolveResult == null) return null;
+
+    if (resolveResult.expr().data() instanceof Expr.Ref unresolved) return unresolved.var();
     return null;
   }
 
@@ -199,6 +206,7 @@ public class ReplCompiler {
       return null;
     }
   }
+
   private @Nullable WithPos<Expr> parseExpr(@NotNull String text) {
     var parseTree = new AyaParserImpl(reporter).repl(text);
     if (parseTree.isLeft()) {
@@ -209,9 +217,10 @@ public class ReplCompiler {
   }
 
   /** @param isType true means take the type, otherwise take the term. */
-  private @NotNull Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
+  private @Nullable Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
     Jdg jdg = null;
-    var resolvedExpr = ExprResolver.resolveLax(context, expr);
+    var resolvedExpr = ExprResolver.resolveLax(context, reporter, expr);
+    if (resolvedExpr == null) return null;
     if (mode == NormalizeMode.NULL) jdg = LiterateData.simpleVar(resolvedExpr.expr().data());
     // in case we have un-messaged TyckException
     if (jdg == null) try (var delayedReporter = new DelayedReporter(reporter)) {

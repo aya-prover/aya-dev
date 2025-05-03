@@ -3,6 +3,7 @@
 package org.aya.resolve.context;
 
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
@@ -25,7 +26,6 @@ public record BindContext(
   @NotNull LocalVar ref
 ) implements Context {
   @Override public @NotNull Context parent() { return parent; }
-  @Override public @NotNull Reporter reporter() { return parent.reporter(); }
 
   @Override public @NotNull Path underlyingFile() {
     return parent.underlyingFile();
@@ -36,21 +36,20 @@ public record BindContext(
     return parent.collect(container);
   }
 
-  @Override public @Nullable LocalVar getUnqualifiedLocalMaybe(
-    @NotNull String name,
-    @NotNull SourcePos sourcePos
-  ) {
-    if (name.equals(this.name)) return ref;
-    else return null;
+  @Override
+  public @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    if (name.equals(this.name)) return new Candidate.Defined<>(ref);
+    return null;
   }
 
   @Override
-  public @Nullable AnyVar getQualifiedLocalMaybe(
+  public @Nullable Option<AnyVar> getQualifiedLocalMaybe(
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
-    return parent.getQualifiedLocalMaybe(modName, name, sourcePos);
+    return parent.getQualifiedLocalMaybe(modName, name, sourcePos, reporter);
   }
 
   @Override

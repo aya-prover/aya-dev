@@ -346,7 +346,7 @@ public record AyaProducer(
       fnMods.remove(Modifier.Overlap);
     }
 
-    var ty = typeOrHole(node.peekChild(TYPE), info.info.sourcePos());
+    var ty = typeOrHole(node.peekChild(TYPE), info.info.nameSourcePos());
     var fnDecl = new FnDecl(info.info, fnMods, name, tele, ty, dynamite);
     if (info.modifier.isExample()) fnDecl.isExample = true;
     pragma(node, fnDecl);
@@ -435,7 +435,7 @@ public record AyaProducer(
     return new ClassMember(
       name, info.info,
       telescope(node.childrenOfType(TELE)),
-      typeOrHole(node.peekChild(TYPE), info.info.sourcePos()));
+      typeOrHole(node.peekChild(TYPE), info.info.nameSourcePos()));
   }
 
   private <T> @Nullable T error(@NotNull GenericNode<?> node, @NotNull String message) {
@@ -632,7 +632,7 @@ public record AyaProducer(
       });
 
       if (errors.isNotEmpty()) {
-        errors.forEach(reporter::report);
+        reporter.reportAll(errors.view());
         throw new ParsingInterruptedException();
       }
 

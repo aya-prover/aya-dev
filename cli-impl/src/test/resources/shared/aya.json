@@ -1,7 +1,7 @@
 {
   "ayaVersion": "0.32",
   "group": "org.aya-prover",
-  "name": "tests",
+  "name" : "shared",
   "version": "0.1.0",
 
   "literate": {

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public non-sealed class PhysicalModuleContext implements ModuleContext {
-  public final @NotNull Reporter reporter;
   public final @NotNull Context parent;
   public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
@@ -30,23 +29,23 @@ public non-sealed class PhysicalModuleContext implements ModuleContext {
 
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Reporter reporter, @NotNull Context parent, @NotNull ModulePath modulePath) {
-    this.reporter = reporter;
+  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath modulePath) {
     this.parent = parent;
     this.modulePath = modulePath;
   }
 
-  @Override public @NotNull Reporter reporter() { return reporter; }
-  @Override public void importModule(
+  @Override public boolean importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport modExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
-    ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos);
+    var ret = ModuleContext.super.importModule(modName, modExport, accessibility, sourcePos, reporter);
     if (accessibility == Stmt.Accessibility.Public) {
       exports.export(modName, modExport);
     }
+    return ret;
   }
 
   @Override public boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) {

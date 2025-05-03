@@ -11,6 +11,9 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 /**
  * Candidate represents a list of candidate of symbol resolving
  */
@@ -26,6 +29,10 @@ public sealed interface Candidate<T> {
   boolean isEmpty();
   @NotNull ImmutableSeq<ModuleName> from();
   boolean contains(@NotNull ModuleName modName);
+  void forEach(@NotNull BiConsumer<ModuleName, T> f);
+  default void forEach(@NotNull Consumer<T> f) {
+    this.forEach((_, s) -> f.accept(s));
+  }
 
   static <T> @NotNull Candidate<T> of(@NotNull ModuleName fromModule, @NotNull T symbol) {
     return switch (fromModule) {
@@ -61,6 +68,9 @@ public sealed interface Candidate<T> {
     }
     @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.of(ModuleName.This); }
     @Override public boolean contains(@NotNull ModuleName modName) { return modName == ModuleName.This; }
+    @Override public void forEach(@NotNull BiConsumer<ModuleName, T> f) {
+      f.accept(ModuleName.This, symbol);
+    }
   }
 
   /**
@@ -94,6 +104,7 @@ public sealed interface Candidate<T> {
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);
     }
+
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> candy) {
       return switch (candy) {
         case Candidate.Defined<T> v -> v;
@@ -105,5 +116,7 @@ public sealed interface Candidate<T> {
         }
       };
     }
+
+    @Override public void forEach(@NotNull BiConsumer<ModuleName, T> f) { symbols.forEach(f); }
   }
 }

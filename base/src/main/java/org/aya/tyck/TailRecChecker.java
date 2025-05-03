@@ -28,7 +28,7 @@ public interface TailRecChecker {
       switch (term) {
         case FnCall(var ref, int ulift, var args, _) -> {
           if (ref instanceof FnDef.Delegate d && d.ref.equals(self.ref) && args.size() == self.telescope.size()) {
-            if (!atTailPosition) reporter.fail(new TailRecError(self.sourcePos()));
+            if (!atTailPosition) reporter.fail(new TailRecError(self.nameSourcePos()));
             return new FnCall(ref, ulift, args, true);
           }
         }

@@ -10,19 +10,31 @@ import org.aya.resolve.visitor.StmtBinder;
 import org.aya.resolve.visitor.StmtPreResolver;
 import org.aya.resolve.visitor.StmtResolver;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.util.reporter.LocalReporter;
 import org.jetbrains.annotations.NotNull;
 
-public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo info) {
+public final class StmtResolvers {
+  private final @NotNull ModuleLoader loader;
+  private final @NotNull ResolveInfo info;
+  public final @NotNull LocalReporter reporter;
+
+  public StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo info) {
+    this.loader = loader;
+    this.info = info;
+    reporter = new LocalReporter(info.reporter());
+  }
+
   private @NotNull ImmutableSeq<ResolvingStmt> fillContext(@NotNull ImmutableSeq<Stmt> stmts) {
-    return new StmtPreResolver(loader, info).resolveStmt(stmts, info.thisModule());
+    var resolver = new StmtPreResolver(loader, info);
+    return resolver.resolveStmt(stmts, info.thisModule());
   }
 
   private void resolveStmts(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
-    StmtResolver.resolveStmt(stmts, info);
+    StmtResolver.resolveStmt(stmts, info, reporter);
   }
 
   private void resolveBind(@NotNull ImmutableSeq<ResolvingStmt> stmts) {
-    var binder = new StmtBinder(info);
+    var binder = new StmtBinder(info, reporter);
     binder.resolveBind(stmts);
     info.opRename().forEach((var, rename) ->
       binder.bind(rename.bindCtx(), rename.bind(), var));
@@ -33,9 +45,7 @@ public record StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo i
     stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
   }
 
-  /**
-   * Resolve file level {@link Stmt}s
-   */
+  /// Resolve file level [Stmt]s
   public void resolve(@NotNull ImmutableSeq<Stmt> stmts) {
     var resolving = fillContext(stmts);
     resolveStmts(resolving); // resolve mutates stmts

@@ -4,6 +4,8 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
+import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -43,67 +45,61 @@ import java.nio.file.Path;
  */
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
   @Override @NotNull Context parent();
-
-  @Override default @NotNull Reporter reporter() { return parent().reporter(); }
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
-  /**
-   * All available symbols in this context
-   * TODO: {@link AnyDefVar}?
-   */
+  /// All available symbols in this context
   @NotNull ModuleSymbol<AnyVar> symbols();
 
-  /**
-   * All imported modules in this context.<br/>
-   * {@code Qualified Module -> Module Export}
-   */
+  /// All imported modules in this context.<br/>
+  /// `Qualified Module -> Module Export`
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
-  /**
-   * Things (symbol or module) that are exported by this module.
-   */
+  /// Things (symbol or module) that are exported by this module.
   @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {
     return modules().getOrNull(modName);
   }
 
-  @Override default @Nullable AnyVar getUnqualifiedLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var symbol = symbols().get(name);
-    if (symbol.isEmpty()) return null;
-    if (symbol.isAmbiguous()) reportAndThrow(new NameProblem.AmbiguousNameError(
-      name, symbol.from(), sourcePos));
-
-    return symbol.get();
+  @Override
+  default @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
+    var candy = symbols().get(name);
+    if (candy.isEmpty()) return null;
+    return candy;
   }
 
-  @Override
-  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) {
+  @Override default @Nullable Option<AnyVar>
+  getQualifiedLocalMaybe(ModuleName.@NotNull Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos, @NotNull Reporter reporter) {
     var mod = getModuleLocalMaybe(modName);
     if (mod == null) return null;
     var symbol = mod.symbols().getOrNull(name);
     if (symbol == null) {
-      reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      reporter.report(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      return Option.none();
     }
-    return symbol;
+    return Option.some(symbol);
   }
 
-  /**
-   * Import modules from {@param module}, this method also import modules
-   * that inside {@param module}.
-   *
-   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
-   */
-  default void importModuleContext(
+  /// Import modules from {@param module}, this method also import modules
+  /// that inside {@param module}.
+  ///
+  /// @see ModuleContext#importModule
+  default boolean importModuleContext(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
+    var success = MutableBooleanValue.create(true);
     var export = module.exports();
-    importModule(modName, export, accessibility, sourcePos);
-    export.modules().forEach((qname, innerMod) ->
-      importModule(modName.concat(qname), innerMod, accessibility, sourcePos));
+    success.set(importModule(modName, export, accessibility, sourcePos, reporter));
+    export.modules().forEachChecked((qname, innerMod) -> {
+      var result = importModule(modName.concat(qname), innerMod, accessibility, sourcePos, reporter);
+      success.getAndUpdate(t -> t && result);
+    });
+
+    return success.get();
   }
 
   /**
@@ -113,34 +109,39 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param modName       the name of the module
    * @param moduleExport  the module
    */
-  default void importModule(
+  default boolean importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     var exists = modules().getOrNull(modName);
     if (exists != null) {
-      if (exists == moduleExport) return;
-      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      if (exists == moduleExport) return true;
+      reporter.report(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      return false;
     } else if (getModuleMaybe(modName) != null) {
-      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      reporter.report(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      return true;
     }
 
     // put after check, otherwise you will get a lot of ModShadowingWarn!
     modules().put(modName, moduleExport);
+    return true;
   }
 
-  default void openModule(
+  default boolean openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
-    @NotNull UseHide useHide
+    @NotNull UseHide useHide,
+    @NotNull Reporter reporter
   ) {
-    openModule(modName, accessibility,
+    return openModule(modName, accessibility,
       useHide.list().map(UseHide.Name::id),
       useHide.renaming(),
-      sourcePos, useHide.strategy());
+      sourcePos, useHide.strategy(), reporter);
   }
 
   /**
@@ -150,61 +151,73 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param filter  use or hide which definitions
    * @param rename  renaming
    */
-  default void openModule(
+  default boolean openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull ImmutableSeq<QualifiedID> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
-    UseHide.Strategy strategy
+    @NotNull UseHide.Strategy strategy,
+    @NotNull Reporter reporter
   ) {
     var modExport = getModuleMaybe(modName);
-    if (modExport == null)
-      reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
+    if (modExport == null) {
+      reporter.report(new NameProblem.ModNameNotFoundError(modName, sourcePos));
+      return false;
+    }
 
     var filterRes = modExport.filter(filter, strategy);
     var filterProblem = filterRes.problems(modName);
-    if (filterRes.anyError()) reportAllAndThrow(filterProblem);
+    if (filterRes.anyError()) {
+      reporter.reportAll(filterProblem);
+      return false;
+    }
 
     var mapRes = filterRes.result().map(rename);
     var mapProblem = mapRes.problems(modName);
-    if (mapRes.anyError()) reportAllAndThrow(mapProblem);
+    if (mapRes.anyError()) {
+      reporter.reportAll(mapProblem);
+      return false;
+    }
 
     // report all warnings
-    reportAll(filterProblem.concat(mapProblem));
+    reporter.reportAll(filterProblem.concat(mapProblem));
 
     var renamed = mapRes.result();
     renamed.symbols().forEach((name, ref) ->
-      importSymbol(ref, modName, name, accessibility, sourcePos));
+      importSymbol(ref, modName, name, accessibility, sourcePos, reporter));
 
     // import the modules that {renamed} exported
-    renamed.modules().forEach((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
+    renamed.modules().forEach((qname, mod) ->
+      importModule(qname, mod, accessibility, sourcePos, reporter));
+
+    return true;
   }
 
-  /**
-   * Adding a new symbol to this module.
-   */
-  default void importSymbol(
+  /// Adding a new symbol to this module.
+  default boolean importSymbol(
     @NotNull AnyVar ref,
     @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
-    @NotNull SourcePos sourcePos
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
   ) {
     var symbols = symbols();
     var candidates = symbols.get(name);
     if (candidates.isEmpty()) {
-      if (getUnqualifiedMaybe(name, sourcePos) != null
-        && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
+      var candy = getCandidateMaybe(name, sourcePos);
+      if (candy != null && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
-        fail(new NameProblem.ShadowingWarn(name, sourcePos));
+        reporter.report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (candidates.from().contains(fromModule)) {
       // this case happens when the user is trying to open a module in twice (even the symbol are equal)
       // or define two symbols with same name ([fromModule == ModuleName.This])
-      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+      reporter.report(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+      return false;
     } else if (candidates.isAmbiguous() || candidates.get() != ref) {
-      fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+      reporter.report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
     symbols.add(name, ref, fromModule);
@@ -213,9 +226,11 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {
       var success = exportSymbol(name, defVar);
       if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
+        reporter.report(new NameProblem.DuplicateExportError(name, sourcePos));
       }
     }
+
+    return true;
   }
 
   /**
@@ -225,7 +240,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) { return true; }
 
-  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) {
-    importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos);
+  default boolean defineSymbol(
+    @NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos, @NotNull Reporter reporter
+  ) {
+    return importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos, reporter);
   }
 }

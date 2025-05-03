@@ -4,11 +4,11 @@ package org.aya.lsp;
 
 import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
+import org.aya.ide.action.Completion;
+import org.aya.ide.action.ContextWalker;
 import org.aya.ide.util.XY;
-import org.aya.lsp.actions.ContextWalker;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
@@ -135,14 +135,25 @@ public class LspTest {
     var inLetBody = new XY(14, 52);       // _c a a
     var inSucClause = new XY(15, 31);     // "114" in _a
 
-    var result0 = runWalker(stmt, inTelescope);
-    var result1 = runWalker(stmt, inResult);
-    var result2 = runWalker(stmt, inLetTele);
-    var result3 = runWalker(stmt, inLetResult);
-    var result4 = runWalker(stmt, inLetBody);
-    var result5 = runWalker(stmt, inSucClause);
+    var result0 = runWalker(stmt, inTelescope);   // (a : Nat)
+    var result1 = runWalker(stmt, inResult);      // (a : Nat) {b : Nat}
+    var result2 = runWalker(stmt, inLetTele);     // (a : Nat) {b : Nat} (d : Nat)
+    var result3 = runWalker(stmt, inLetResult);   // (a : Nat) {b : Nat} (d : Nat) (e : Nat)
+    var result4 = runWalker(stmt, inLetBody);     // (a : Nat) {b : Nat} (c : Nat -> Nat -> Nat)
+    var result5 = runWalker(stmt, inSucClause);   // (a : Nat) (b : String)
 
     // TODO: make some assertion
+    return;
+  }
+
+  @Test public void testModuleContextExtraction() {
+    var client = launch(TEST_LIB);
+    client.execute(compile((_, _) -> { }));
+    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
+    assert source != null;
+    var info = source.resolveInfo().get();
+    assert info != null;
+    var result = Completion.resolveTopLevel(info.thisModule());
     return;
   }
 

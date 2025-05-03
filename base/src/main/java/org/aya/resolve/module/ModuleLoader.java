@@ -1,14 +1,17 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Result;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.salt.AyaBinOpSet;
+import org.aya.resolve.salt.PatternBinParser;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.order.AyaOrgaTycker;
@@ -23,17 +26,19 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader extends Problematic {
-  default <E extends Exception> @NotNull ResolveInfo tyckModule(
+  default <E extends Exception> @Nullable ResolveInfo tyckModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
     @Nullable ModuleCallback<E> onTycked
   ) throws E {
-    return tyckModule(resolveModule(primFactory, context, program, this), onTycked);
+    var info = resolveModule(primFactory, context, program, this);
+    if (info == null) return null;
+    return tyckModule(info, onTycked);
   }
 
   default <E extends Exception> @NotNull ResolveInfo
-  tyckModule(ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
+  tyckModule(@NotNull ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
     var SCCs = resolveInfo.depGraph().topologicalOrder();
     var delayedReporter = new DelayedReporter(reporter());
     var sccTycker = new AyaOrgaTycker(AyaSccTycker.create(resolveInfo, delayedReporter), resolveInfo);
@@ -48,14 +53,16 @@ public interface ModuleLoader extends Problematic {
   }
 
   /**
+   * TODO: check all caller
    * Resolve a certain module
    *
    * @param context       the module
    * @param program       the stmt
    * @param recurseLoader the {@link ModuleLoader} that use for tycking the module
+   * @return null if failed
    */
   @ApiStatus.Internal
-  default @NotNull ResolveInfo resolveModule(
+  default @Nullable ResolveInfo resolveModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,
     @NotNull ImmutableSeq<Stmt> program,
@@ -63,29 +70,35 @@ public interface ModuleLoader extends Problematic {
   ) {
     var opSet = new AyaBinOpSet(reporter());
     var resolveInfo = new ResolveInfo(context, primFactory, new ShapeFactory(), opSet);
-    resolveModule(resolveInfo, program, recurseLoader);
+    var success = resolveModule(resolveInfo, program, recurseLoader);
+    if (!success) return null;
     return resolveInfo;
   }
 
-  /**
-   * Resolve a certain module.
-   *
-   * @param resolveInfo   the context of the module
-   * @param program       the statements of the module
-   * @param recurseLoader the module loader that used to resolve
-   */
+  /// Resolve a certain module.
+  ///
+  /// @param resolveInfo   the context of the module
+  /// @param program       the statements of the module
+  /// @param recurseLoader the module loader that used to resolve
+  /// @return true if success
   @ApiStatus.Internal
-  default void resolveModule(
+  default boolean resolveModule(
     @NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<Stmt> program,
     @NotNull ModuleLoader recurseLoader
   ) {
     var resolver = new StmtResolvers(recurseLoader, resolveInfo);
     resolver.resolve(program);
-    resolver.desugar(program);
+    try { resolver.desugar(program); } catch (PatternBinParser.MalformedPatternException _) { }
+
+    return !resolver.reporter.dirty();
   }
 
-  @Nullable ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);
-  default @Nullable ResolveInfo load(@NotNull ModulePath path) {
+  /// Load a module with {@param path}
+  ///
+  /// @return [LoadErrorKind#Resolve] implies a resolve error, and already reported
+  ///         [LoadErrorKind#NotFound] implies a module not found error, and not yet reported.
+  @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);
+  default @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path) {
     return load(path, this);
   }
 

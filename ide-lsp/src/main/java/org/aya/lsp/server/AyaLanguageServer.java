@@ -36,7 +36,8 @@ import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
 import org.aya.ide.LspPrimFactory;
 import org.aya.ide.action.*;
-import org.aya.lsp.actions.Completion;
+import org.aya.ide.action.Completion;
+import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
@@ -48,8 +49,6 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.syntax.AyaFiles;
-import org.aya.syntax.concrete.stmt.QualifiedID;
-import org.aya.tyck.error.Goal;
 import org.aya.util.FileUtil;
 import org.aya.util.PrettierOptions;
 import org.aya.util.reporter.BufferReporter;
@@ -163,7 +162,7 @@ public class AyaLanguageServer implements LanguageServer {
     var workOps = new ServerCapabilities.WorkspaceFoldersOptions(true, true);
     var workCap = new ServerCapabilities.WorkspaceServerCapabilities(workOps);
     cap.completionProvider = new ServerCapabilities.CompletionOptions(
-      true, Collections.singletonList("QWERTYUIOPASDFGHJKLZXCVBNM.qwertyuiopasdfghjklzxcvbnm+-*/_[]:"),
+      false, Collections.singletonList("::"),
       Collections.emptyList());
     cap.workspace = workCap;
     cap.definitionProvider = true;
@@ -322,11 +321,14 @@ public class AyaLanguageServer implements LanguageServer {
   /// In order to compute the completion list, we need a {@link org.aya.tyck.error.Goal} to do this.
   /// Completion also provides a keyword list and all available top level definition.
   @Override public Optional<CompletionList> completion(TextDocumentPositionParams position) {
-    return Optional.of(new CompletionList(false, Completion.KEYWORD.asJava()));
+    var source = find(position.textDocument.uri);
+    if (source == null) return Optional.empty();
+    var xy = LspRange.pos(position.position);
+    return Optional.of(CompletionProvider.completion(this, options, source, xy));
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {
-    throw new UnsupportedOperationException();
+    return params;
   }
 
   @Override public Optional<List<? extends GenericLocation>> gotoDefinition(TextDocumentPositionParams params) {
@@ -483,7 +485,7 @@ public class AyaLanguageServer implements LanguageServer {
     return computer.result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, computer.result);
   }
 
-  private @NotNull String render(@NotNull Doc doc) {
+  public @NotNull String render(@NotNull Doc doc) {
     var target = serverOptions.renderOptions.target();
     var renderOptions = this.renderOptions;
 

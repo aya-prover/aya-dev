@@ -14,6 +14,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
+import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.concrete.stmt.Stmt;
@@ -94,9 +95,13 @@ public class AyaMdParserTest {
     var reporter = new BufferReporter();
     var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
     var stmts = literate.parseMe(new AyaParserImpl(reporter));
-    var ctx = new EmptyContext(reporter, Path.of(".")).derive(oneCase.modName());
-    var loader = new DumbModuleLoader(ctx);
-    var info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
+    var ctx = new EmptyContext(Path.of(".")).derive(oneCase.modName());
+    var loader = new DumbModuleLoader(reporter, ctx);
+
+    ResolveInfo info;
+    info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
+    assertNotNull(info);
+
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);
     return new LiterateTestCase(reporter, literate, stmts);

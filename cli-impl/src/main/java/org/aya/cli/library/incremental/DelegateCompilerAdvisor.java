@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.incremental;
 
@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.Context;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.core.def.TyckDef;

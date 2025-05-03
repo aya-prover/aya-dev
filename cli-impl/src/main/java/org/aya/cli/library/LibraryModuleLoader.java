@@ -1,14 +1,16 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Result;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.module.FileModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.AyaFiles;
@@ -42,7 +44,7 @@ record LibraryModuleLoader(
   @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states
 ) implements ModuleLoader {
-  @Override public @NotNull ResolveInfo
+  @Override public @NotNull Result<ResolveInfo, LoadErrorKind>
   load(@NotNull ModulePath mod, @NotNull ModuleLoader recurseLoader) {
     var basePaths = owner.modulePath();
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePaths, mod.module());
@@ -53,27 +55,29 @@ record LibraryModuleLoader(
       var depCorePath = AyaFiles.resolveAyaCompiledFile(basePaths, mod.module());
       var core = loadCompiledCore(mod, depCorePath, depCorePath, recurseLoader);
       assert core != null : "dependencies not built?";
-      return core;
+      return Result.ok(core);
     }
 
     var source = owner.findModule(mod);
     assert source != null;
 
-    // we are loading a module belonging to this library, try finding compiled core first.
+    // We are loading a module belonging to this library, try finding compiled core first.
     // If found, check modifications and decide whether to proceed with compiled core.
     var corePath = source.compiledCorePath();
     var tryCore = loadCompiledCore(mod, sourcePath, corePath, recurseLoader);
     if (tryCore != null) {
       // the core file was found and up-to-date.
       source.resolveInfo().set(tryCore);
-      return tryCore;
+      return Result.ok(tryCore);
     }
 
     // No compiled core is found, or source file is modified, compile it from source.
     var program = source.program().get();
     assert program != null;
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    var context = new EmptyContext(sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
+    if (resolveInfo == null) return Result.err(LoadErrorKind.Resolve);
+
     tyckModule(resolveInfo, (moduleResolve, defs) -> {
       source.notifyTycked(moduleResolve, defs);
       if (reporter.noError()) saveCompiledCore(source, moduleResolve, defs, recurseLoader);
@@ -86,7 +90,7 @@ record LibraryModuleLoader(
       tyckedInfo = resolveInfo;
     }
 
-    return tyckedInfo;
+    return Result.ok(tyckedInfo);
   }
 
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {

@@ -18,7 +18,7 @@ import org.aya.generic.InterruptException;
 import org.aya.pretty.backend.string.StringPrinterConfig;
 import org.aya.pretty.printer.PrinterConfig;
 import org.aya.primitive.PrimFactory;
-import org.aya.resolve.context.Context;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
 import org.aya.resolve.module.ModuleLoader;
@@ -122,7 +122,7 @@ public class LibraryCompiler {
       var recurse = owner.findModule(mod);
       if (recurse == null) {
         reporter.report(new NameProblem.ModNotFoundError(mod, sourcePos));
-        throw new Context.ResolvingInterruptedException();
+        throw new LibraryTyckingFailed();
       }
       return recurse;
     }, source);
@@ -133,13 +133,14 @@ public class LibraryCompiler {
     var depGraph = MutableGraph.<LibrarySource>create();
     reportNest("[Info] Resolving source file dependency");
     var startTime = System.currentTimeMillis();
-    owner.librarySources().forEachChecked(src -> {
+    for (var src : owner.librarySources()) {
       resolveImportsIfNeeded(src);
       var known = depGraph.sucMut(src);
       var dedup = src.imports().filter(s ->
         known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
       known.appendAll(dedup);
-    });
+    }
+
     reporter.reportNest("Done in " + TimeUtil.millisToString(
       System.currentTimeMillis() - startTime), LibraryOwner.DEFAULT_INDENT + 2);
     return depGraph;
@@ -206,7 +207,7 @@ public class LibraryCompiler {
   /**
    * Incrementally compiles a library without handling compilation errors.
    *
-   * @return whether the library is up-to-date.
+   * @return whether the library is up to date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
   private boolean make() throws IOException {
@@ -380,9 +381,14 @@ public class LibraryCompiler {
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var startTime = System.currentTimeMillis();
-      var mod = moduleLoader.load(moduleName);
-      if (mod == null || file.resolveInfo().get() == null)
+
+      var loaded = moduleLoader.load(moduleName);
+      if (loaded.getErrOrNull() == LoadErrorKind.Resolve) return;
+      // we also handle [Resolve] here, the code in [tyckSCC] will handle the case.
+      if (loaded.getErrOrNull() == LoadErrorKind.NotFound || file.resolveInfo().get() == null)
         throw new Panic("Unable to load module: " + moduleName);
+      // [NotFound] is kinda impossible, as we are using SccTycker.
+      // TODO: ^ is it?
       var time = System.currentTimeMillis() - startTime;
       // Print those who have taken too long
       if (time > 1500) reporter.reportNest("Done in " + TimeUtil.millisToString(

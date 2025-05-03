@@ -28,8 +28,11 @@ import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.LocalReporter;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Resolves bindings.
@@ -43,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ExprResolver(
   @NotNull Context ctx,
+  @NotNull Reporter reporter,
   boolean allowGeneralizing,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
@@ -57,20 +61,27 @@ public record ExprResolver(
     }
   }
   /**
+   * TODO: check all caller for @Nullable
    * Do !!!NOT!!! use in the type checker.
    * This is solely for cosmetic features, such as literate mode inline expressions, or repl.
    */
   @Contract(pure = true)
-  public static LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
-    var resolver = new ExprResolver(context, true);
+  public static @Nullable LiterateResolved
+  resolveLax(@NotNull ModuleContext context, @NotNull Reporter reporter, @NotNull WithPos<Expr> expr) {
+    var localReporter = new LocalReporter(reporter);
+    var resolver = new ExprResolver(context, localReporter, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    var view = resolver.allowedGeneralizes().valuesView().toSeq();
+    if (localReporter.dirty()) return null;
+    var view = resolver.allowedGeneralizes.valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }
 
-  public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing) {
-    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
+  public ExprResolver(
+    @NotNull Context ctx, @NotNull Reporter reporter,
+    boolean allowGeneralizing
+  ) {
+    this(ctx, reporter, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
   }
 
   public void resetRefs() { reference.clear(); }
@@ -78,7 +89,7 @@ public record ExprResolver(
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where);
+    return ctx == ctx() ? this : new ExprResolver(ctx, reporter, allowGeneralizing, allowedGeneralizes, reference, where);
   }
 
   /**
@@ -86,7 +97,7 @@ public record ExprResolver(
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where);
+    return new ExprResolver(ctx, reporter, false, allowedGeneralizes, reference, where);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -94,9 +105,13 @@ public record ExprResolver(
       case Expr.Proj(var tup, var ix, _, var theCore) -> {
         if (ix.isLeft()) yield expr;
         var projName = ix.getRightValue();
-        var resolvedIx = ctx.getMaybe(projName);
-        if (resolvedIx == null) ctx.reportAndThrow(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
-        yield new Expr.Proj(tup, ix, resolvedIx, theCore);
+        var resolvedIx = ctx.getMaybe(projName, reporter);
+        if (resolvedIx == null) {
+          reporter.report(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
+          yield expr;
+        }
+        if (resolvedIx.isEmpty()) yield expr;
+        yield new Expr.Proj(tup, ix, resolvedIx.get(), theCore);
       }
       case Expr.Hole(var expl, var fill, var core, var local) -> {
         assert local.isEmpty();
@@ -115,7 +130,7 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.ClauseLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
+      case Expr.ClauseLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause(), reporter));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(depType.param(), mCtx);
@@ -144,7 +159,8 @@ public record ExprResolver(
               addReference(owner);
               yield param.ref();
             } else {
-              yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
+              reporter.report(new GeneralizedNotAvailableError(pos, generalized));
+              yield null;
             }
           }
           case DefVar<?, ?> defVar -> {
@@ -152,7 +168,12 @@ public record ExprResolver(
             yield defVar;
           }
           case AnyVar var -> var;
+          case null -> null;
         };
+
+        if (finalVar == null) {
+          yield expr;
+        }
 
         yield new Expr.Ref(finalVar);
       }
@@ -172,7 +193,7 @@ public record ExprResolver(
         // end resolve letBind
 
         // resolve body
-        var newBody = let.body().descent(enter(ctx.bind(letBind.bindName())));
+        var newBody = let.body().descent(enter(ctx.bind(letBind.bindName(), reporter)));
 
         yield let.update(letBind.update(telescope, result, definedAs), newBody);
       }
@@ -180,7 +201,8 @@ public record ExprResolver(
         var context = new NoExportContext(ctx);
         // open module
         context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
-          letOpen.sourcePos(), letOpen.useHide());
+          letOpen.sourcePos(), letOpen.useHide(), reporter);
+
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
       case Expr.Match match -> {
@@ -188,14 +210,14 @@ public record ExprResolver(
         var returnsCtx = ctx;
         for (var discr : match.discriminant()) {
           if (discr.asBinding() != null) {
-            returnsCtx = returnsCtx.bind(discr.asBinding());
+            returnsCtx = returnsCtx.bind(discr.asBinding(), reporter);
           }
         }
         var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;
 
         // Requires exhaustiveness check, therefore must need the full data body
         enter(Where.FnPattern);
-        var clauses = match.clauses().map(x -> clause(ImmutableSeq.empty(), x));
+        var clauses = match.clauses().map(x -> clause(ImmutableSeq.empty(), x, reporter));
         exit();
 
         yield match.update(discriminant, clauses, returns);
@@ -224,11 +246,11 @@ public record ExprResolver(
     addReference(defVar.concrete);
   }
 
-  public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause) {
+  public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause, @NotNull Reporter reporter) {
     var mCtx = MutableValue.create(ctx);
     enter(Where.FnPattern);
     var pats = clause.patterns.map(pa ->
-      pa.descent(pat -> resolvePattern(pat, telescope, mCtx)));
+      pa.descent(pat -> resolvePattern(pat, telescope, mCtx, reporter)));
     exit();
     enter(Where.FnBody);
     var body = clause.expr.map(x -> x.descent(enter(mCtx.get())));
@@ -239,8 +261,8 @@ public record ExprResolver(
   /// Resolve a [Pattern]
   ///
   /// @param telescope the telescope of the clause which the {@param pattern} lives, can be [ImmutableSeq#empty()].
-  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
-    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference);
+  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx, @NotNull Reporter reporter) {
+    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference, reporter);
     var result = pattern.descent(resolver);
     ctx.set(resolver.context());
     return result;
@@ -249,7 +271,7 @@ public record ExprResolver(
   @Contract(mutates = "param2")
   public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
-    ctx.set(ctx.get().bind(param.ref()));
+    ctx.set(ctx.get().bind(param.ref(), reporter));
     return p;
   }
 
@@ -257,13 +279,13 @@ public record ExprResolver(
   bind(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
       var b = bind.descent(enter(ctx.get()));
-      ctx.set(ctx.get().bind(bind.var()));
+      ctx.set(ctx.get().bind(bind.var(), reporter));
       return b;
     });
   }
 
-  public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
-    var result = ctx.get(name);
+  public @Nullable AnyVar resolve(@NotNull QualifiedID name) {
+    var result = ctx.get(name, reporter);
     if (result instanceof GeneralizedVar gvar) {
       var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
@@ -273,7 +295,7 @@ public record ExprResolver(
   }
 
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
-    var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
+    var resolver = new ExprResolver(ctx, reporter, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
       MutableStack.create());
     resolver.enter(initial);

@@ -46,7 +46,6 @@ In file $FILE:1:10 ->
 
 Error: Self-reference found in the signature of SelfData
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -58,7 +57,6 @@ In file $FILE:1:21 ->
 
 Error: Self-reference found in the signature of SelfCon
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
@@ -72,7 +70,6 @@ In file $FILE:2:4 ->
 
 Error: Self-reference found in the signature of crazyAdd
 
-Resolving interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 

@@ -15,14 +15,21 @@ public abstract class BinOpSet {
   public final @NotNull MutableSet<BinOP> ops = MutableSet.of(APP_ELEM);
   public static final @NotNull BinOpSet.BinOP APP_ELEM = BinOP.from(SourcePos.NONE, OpDecl.APPLICATION);
 
-  public void bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
+  /// @return false if error
+  public boolean bind(@NotNull OpDecl op, @NotNull OpDecl.BindPred pred, @NotNull OpDecl target, @NotNull SourcePos sourcePos) {
     var opElem = ensureHasElem(op, sourcePos);
     var targetElem = ensureHasElem(target, sourcePos);
-    if (opElem == targetElem) reportSelfBind(sourcePos);
+    if (opElem == targetElem) {
+      reportSelfBind(sourcePos);
+      return false;
+    }
+
     switch (pred) {
       case Tighter -> addTighter(opElem, targetElem);
       case Looser -> addTighter(targetElem, opElem);
     }
+
+    return true;
   }
 
   public PredCmp compare(@NotNull BinOpSet.BinOP lhs, @NotNull BinOpSet.BinOP rhs) {
