@@ -117,9 +117,6 @@ public sealed interface Candidate<T> {
       };
     }
 
-    @Override
-    public void forEach(@NotNull BiConsumer<ModuleName, T> f) {
-      symbols.forEach(f);
-    }
+    @Override public void forEach(@NotNull BiConsumer<ModuleName, T> f) { symbols.forEach(f); }
   }
 }

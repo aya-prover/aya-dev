@@ -24,9 +24,7 @@ public record EmptyContext(@NotNull Reporter reporter, @NotNull Path underlyingF
     @NotNull ModuleName.Qualified modName,
     @NotNull String name,
     @NotNull SourcePos sourcePos
-  ) {
-    return null;
-  }
+  ) { return null; }
 
   @Override public @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName, @NotNull Reporter reporter) {
     return new PhysicalModuleContext(reporter, this, extraName);

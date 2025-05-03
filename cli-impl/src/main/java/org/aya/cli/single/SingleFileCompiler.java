@@ -69,7 +69,7 @@ public final class SingleFileCompiler {
           if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
         });
       } catch (Context.ResolvingInterruptedException e) {
-        // TODO: do we need some code here?
+        // Will be handled by CompilerUtil.catching
       }
     });
   }
