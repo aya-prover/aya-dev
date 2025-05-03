@@ -14,6 +14,7 @@ import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.Panic;
+import org.aya.util.reporter.LocalReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public interface CompilerAdvisor extends AutoCloseable {
     @Nullable Path sourcePath,
     @Nullable Path corePath,
     @NotNull ModuleLoader recurseLoader
-  ) throws IOException, ClassNotFoundException, Context.ResolvingInterruptedException;
+  ) throws IOException, ClassNotFoundException;
 
   /**
    * Save the well-typed defs as compiled defs
@@ -95,7 +96,7 @@ public interface CompilerAdvisor extends AutoCloseable {
     assert recurseLoader instanceof CachedModuleLoader<?>;
     try {
       return doLoadCompiledCore(reporter, owner, mod, sourcePath, corePath, recurseLoader);
-    } catch (IOException | ClassNotFoundException | Context.ResolvingInterruptedException e) {
+    } catch (IOException | ClassNotFoundException e) {
       throw new Panic("Compiled aya found but cannot be loaded", e);
     }
   }

@@ -47,8 +47,8 @@ public record StmtBinder(@NotNull ResolveInfo info, @NotNull LocalReporter repor
     assert var != null;
     var opDecl = info.resolveOpDecl(var);
     if (opDecl != null) {
-      var failed = info.opSet().bind(self, pred, opDecl, id.sourcePos());
-      if (!failed) {
+      var success = info.opSet().bind(self, pred, opDecl, id.sourcePos());
+      if (success) {
         return var instanceof AnyDefVar defVar ? defVar : null;
       }
     } else {

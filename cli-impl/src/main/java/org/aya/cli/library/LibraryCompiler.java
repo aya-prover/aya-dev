@@ -20,6 +20,7 @@ import org.aya.pretty.printer.PrinterConfig;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.CachedModuleLoader;
@@ -385,19 +386,13 @@ public class LibraryCompiler {
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var startTime = System.currentTimeMillis();
 
-      ResolveInfo mod;
-      try {
-        mod = moduleLoader.load(moduleName);
-      } catch (Context.ResolvingInterruptedException | ModNotFoundException e) {
-        // we also catch Context.ResolvingInterruptedException here, the code in [tyckSCC] will handle the case.
-        // [ModNotFoundException] is kinda impossible, as we are using SccTycker.
-        // TODO: ^ is it?
-        mod = null;
-      }
-
-      // TODO: dont panic here
-      if (mod == null || file.resolveInfo().get() == null)
+      var loaded = moduleLoader.load(moduleName);
+      if (loaded.getErrOrNull() == LoadErrorKind.Resolve) return;
+      // we also handle [Resolve] here, the code in [tyckSCC] will handle the case.
+      if (loaded.getErrOrNull() == LoadErrorKind.NotFound || file.resolveInfo().get() == null)
         throw new Panic("Unable to load module: " + moduleName);
+      // [NotFound] is kinda impossible, as we are using SccTycker.
+      // TODO: ^ is it?
       var time = System.currentTimeMillis() - startTime;
       // Print those who have taken too long
       if (time > 1500) reporter.reportNest("Done in " + TimeUtil.millisToString(

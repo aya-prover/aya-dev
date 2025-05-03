@@ -15,7 +15,6 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.ModNotFoundException;
-import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
@@ -32,10 +31,8 @@ import org.aya.util.Panic;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
-import org.aya.util.reporter.LocalReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -161,27 +158,25 @@ public record CompiledModule(
     }
   }
 
-  public @Nullable ResolveInfo toResolveInfo(
+  public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context,
     @NotNull ClassLoader classLoader, @NotNull PrimFactory primFactory, @NotNull Reporter reporter
   ) {
     var state = new DeState(classLoader);
     return toResolveInfo(loader, context, state, primFactory, new ShapeFactory(), reporter);
   }
-  public @Nullable ResolveInfo toResolveInfo(
+  public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull Reporter reporter
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
-    var success = shallowResolve(loader, resolveInfo, reporter);
-    if (! success) return null;
-    success = loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
-    if (! success) return null;
+    shallowResolve(loader, resolveInfo, reporter);
+    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
     deOp(state, resolveInfo);
     return resolveInfo;
   }
 
-  private boolean loadModule(
+  private void loadModule(
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
     @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass, @NotNull Reporter reporter
   ) {
@@ -198,12 +193,12 @@ public record CompiledModule(
           var innerCtx = context.derive(data.name());
           for (var constructor : data.constructors()) {
             var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
-            if (! success) return false;
+            if (! success) Panic.unreachable();
           }
           var success = context.importModuleContext(
             ModuleName.This.resolve(data.name()),
             innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
-          if (! success) return false;
+          if (! success) Panic.unreachable();
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -227,27 +222,24 @@ public record CompiledModule(
   /**
    * like {@link org.aya.resolve.visitor.StmtPreResolver} but only resolve import
    */
-  private boolean shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
+  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
     for (var anImport : imports) {
       var modName = anImport.path;
       var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
 
-      // TODO: It seems impossible to load a not yet compiled module if it is a dependency of a compiled module
-      ResolveInfo info;
-      try {
-        info = loader.load(modName);
-      } catch (ModNotFoundException | Context.ResolvingInterruptedException e) {
-        // make compiler happy
-        reporter.report(new NameProblem.ModNotFoundError(modName, SourcePos.SER));
-        return false;
+      var loaded = loader.load(modName);
+      if (loaded.isErr()) {
+        throw new Panic("Unable to load a dependency module of a compiled module");
       }
+
+      var info = loaded.get();
 
       thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(info, isPublic));
       var mod = info.thisModule();
       var success = thisResolve.thisModule()
         .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
-      if (! success) return false;
+      if (! success) Panic.unreachable();
       var useHide = reExports.getOrNull(modName);
       if (useHide != null) {
         success = thisResolve.thisModule().openModule(modRename,
@@ -257,15 +249,13 @@ public record CompiledModule(
           SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
           reporter);
 
-        if (! success) return false;
+        if (! success) Panic.unreachable();
       }
       var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(info, SourcePos.SER, acc);
     }
-
-    return true;
   }
 
   /**
@@ -294,13 +284,13 @@ public record CompiledModule(
     opSet.ensureHasElem(opDecl);
     bind.loosers().forEach(looser -> {
       var target = resolveOp(resolveInfo, state, looser);
-      // TODO: check result
-      opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+      var success = opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
+      if (! success) Panic.unreachable();
     });
     bind.tighters().forEach(tighter -> {
       var target = resolveOp(resolveInfo, state, tighter);
-      // TODO: check result
-      opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
+      var success = opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
+      if (! success) Panic.unreachable();
     });
   }
 
