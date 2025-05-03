@@ -51,7 +51,7 @@ public record ExprResolver(
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
   @NotNull MutableStack<Where> where
-) implements PosedUnaryOperator<Expr>{
+) implements PosedUnaryOperator<Expr> {
   public record LiterateResolved(
     ImmutableSeq<Expr.Param> params,
     WithPos<Expr> expr

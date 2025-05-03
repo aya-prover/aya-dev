@@ -28,7 +28,6 @@ import java.util.function.Predicate;
 /// if your code needs this information, feel free to change them!
 ///
 /// @author re-xyr
-///
 public interface Context {
   @Nullable Context parent();
   @NotNull Path underlyingFile();

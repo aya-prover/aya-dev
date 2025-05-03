@@ -6,11 +6,9 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.ResolvingStmt;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.NoExportContext;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
@@ -79,7 +77,7 @@ public final class StmtPreResolver {
             thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
             yield null;
           }
-          case null -> {}
+          case null -> { }
         }
 
         var success = loaded.get();
@@ -247,7 +245,6 @@ public final class StmtPreResolver {
     setupModule(ctx, decl.ref());
 
     ctx.defineSymbol(decl.ref(), decl.accessibility(), decl.nameSourcePos(), resolveInfo.reporter());
-
     return ctx;
   }
 

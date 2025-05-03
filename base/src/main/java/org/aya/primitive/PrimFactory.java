@@ -2,14 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.primitive;
 
-import java.util.EnumMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import static org.aya.syntax.core.def.PrimDef.*;
-import static org.aya.syntax.core.term.SortTerm.Set0;
-import static org.aya.syntax.core.term.SortTerm.Type0;
-
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -30,6 +22,14 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import static org.aya.syntax.core.def.PrimDef.*;
+import static org.aya.syntax.core.term.SortTerm.Set0;
+import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
   private final @NotNull Map<@NotNull ID, @NotNull PrimSeed> seeds;
