@@ -86,7 +86,7 @@ public class ReplCompiler {
     };
     this.shapeFactory = new ReplShapeFactory();
     this.opSet = new AyaBinOpSet(reporter);
-    this.context = new ReplContext(new EmptyContext(reporter, Path.of("REPL")), ModulePath.of("REPL"));
+    this.context = new ReplContext(new EmptyContext(Path.of("REPL")), ModulePath.of("REPL"));
     this.fileManager = new SingleAyaFile.Factory(reporter);
     var parser = new AyaParserImpl(reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
@@ -96,7 +96,7 @@ public class ReplCompiler {
 
   private @NotNull ExprResolver.LiterateResolved
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
-    var ctx = new EmptyContext(reporter, Path.of("dummy")).derive("dummy");
+    var ctx = new EmptyContext(Path.of("dummy")).derive("dummy");
     var resolveInfo = makeResolveInfo(ctx);
     return expr.descent(new Desalt(resolveInfo));
   }
@@ -125,7 +125,7 @@ public class ReplCompiler {
         return info.thisModule();
       })
       .filterIsInstance(PhysicalModuleContext.class)
-      .forEach(mod -> context.importModuleContext(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE));
+      .forEach(mod -> context.importModuleContext(mod.modulePath().asName(), mod, Stmt.Accessibility.Public, SourcePos.NONE, reporter));
     owner.libraryDeps().forEach(this::importModule);
   }
 
@@ -194,7 +194,7 @@ public class ReplCompiler {
     var parseTree = parseExpr(text);
     if (parseTree == null) return null;
 
-    var resolveResult = ExprResolver.resolveLax(context, parseTree);
+    var resolveResult = ExprResolver.resolveLax(context, reporter, parseTree);
     if (resolveResult == null) return null;
 
     if (resolveResult.expr().data() instanceof Expr.Ref unresolved) return unresolved.var();
@@ -223,7 +223,7 @@ public class ReplCompiler {
   /** @param isType true means take the type, otherwise take the term. */
   private @Nullable Term tyckAndNormalize(WithPos<Expr> expr, boolean isType, NormalizeMode mode) {
     Jdg jdg = null;
-    var resolvedExpr = ExprResolver.resolveLax(context, expr);
+    var resolvedExpr = ExprResolver.resolveLax(context, reporter, expr);
     if (resolvedExpr == null) return null;
     if (mode == NormalizeMode.NULL) jdg = LiterateData.simpleVar(resolvedExpr.expr().data());
     // in case we have un-messaged TyckException
