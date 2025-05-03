@@ -491,9 +491,11 @@ public record AyaProducer(
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
+    // TODO: should we count the parenthesis?
+    var pos = sourcePosOf(node);
     var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
-    return ids.map(i -> new Expr.Param(i.sourcePos(), LocalVar.from(i), type, explicit));
+    return ids.map(i -> new Expr.Param(pos, LocalVar.from(i), type, explicit));
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
@@ -745,7 +747,7 @@ public record AyaProducer(
         var useHide = node.peekChild(USE_HIDE);
 
         return new WithPos<>(pos, new Expr.LetOpen(pos,
-          component.component().resolve(component.name()),
+          new WithPos<>(component.sourcePos(), component.component().resolve(component.name())),
           useHide == null ? UseHide.EMPTY : useHide(useHide),
           body));
       }
@@ -907,6 +909,7 @@ public record AyaProducer(
   }
 
   public @NotNull Expr.LetBind letBind(@NotNull GenericNode<?> node) {
+    var pos = sourcePosOf(node);
     var bind = weakId(node.child(WEAK_ID));
     // make IDEA happy
     var teles = typedTelescope(node.childrenOfType(LAMBDA_TELE));
@@ -914,8 +917,7 @@ public record AyaProducer(
     var body = expr(node.child(EXPR));
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(bind.sourcePos(), LocalVar.from(bind), teles, result, body);
-    // ^ see `doBinding()` for why the source pos of `LetBind` should be `bind.sourcePos()`
+    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
@@ -985,7 +987,7 @@ public record AyaProducer(
    */
   public @NotNull Expr.DoBind doBinding(@NotNull GenericNode<?> node) {
     var wp = weakId(node.child(WEAK_ID));
-    return new Expr.DoBind(wp.sourcePos(), LocalVar.from(wp), expr(node.child(EXPR)));
+    return new Expr.DoBind(sourcePosOf(node), LocalVar.from(wp), expr(node.child(EXPR)));
   }
 
   private <T> T unreachable(GenericNode<?> node) {

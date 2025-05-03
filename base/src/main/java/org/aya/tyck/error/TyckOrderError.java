@@ -23,6 +23,7 @@ public interface TyckOrderError extends TyckError {
 
   record CircularSignature(@NotNull ImmutableSeq<TyckUnit> cycles) implements TyckOrderError {
     @Override public @NotNull SourcePos sourcePos() {
+      // FIXME: use nameSourcePos
       return cycles.view().map(TyckUnit::sourcePos)
         .max(Comparator.comparingInt(SourcePos::tokenEndIndex));
     }

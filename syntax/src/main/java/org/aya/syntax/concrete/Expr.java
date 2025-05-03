@@ -53,13 +53,13 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<Expr> typeExpr,
     boolean explicit,
     @ForLSP MutableValue<Term> theCoreType
-  ) implements SourceNode, AyaDocile, ParamLike<Expr>, WithTerm {
+  ) implements SourceNode, Named, AyaDocile, ParamLike<Expr>, WithTerm {
+    @Override
+    public @NotNull SourcePos nameSourcePos() {
+      return ref.definition();
+    }
 
     @Override public @NotNull Expr type() { return typeExpr.data(); }
-
-    public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar var, boolean explicit) {
-      this(sourcePos, var, new WithPos<>(sourcePos, new Hole(false, null)), explicit);
-    }
 
     public Param(@NotNull SourcePos sourcePos, @NotNull LocalVar ref, @NotNull WithPos<Expr> typeExpr, boolean explicit) {
       this(sourcePos, ref, typeExpr, explicit, MutableValue.create());
@@ -406,7 +406,11 @@ public sealed interface Expr extends AyaDocile {
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar var,
     @NotNull WithPos<Expr> expr
-  ) implements SourceNode {
+  ) implements SourceNode, Named {
+    @Override public @NotNull SourcePos nameSourcePos() {
+      return var.definition();
+    }
+
     public DoBind(@NotNull WithPos<Expr> expr) {
       this(expr.sourcePos(), LocalVar.IGNORED, expr);
     }
@@ -550,7 +554,12 @@ public sealed interface Expr extends AyaDocile {
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs
-  ) implements SourceNode {
+  ) implements SourceNode, Named {
+    @Override
+    public @NotNull SourcePos nameSourcePos() {
+      return bindName.sourcePos();
+    }
+
     public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
         ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs);
@@ -571,7 +580,7 @@ public sealed interface Expr extends AyaDocile {
   /// Being desugared after resolving.
   record LetOpen(
     @NotNull SourcePos sourcePos,
-    @NotNull ModuleName.Qualified componentName,
+    @NotNull WithPos<ModuleName.Qualified> componentName,
     @NotNull UseHide useHide,
     @NotNull WithPos<Expr> body
   ) implements Expr, Sugar {
@@ -589,7 +598,7 @@ public sealed interface Expr extends AyaDocile {
     public @NotNull Command.Open openCmd() {
       return new Command.Open(
         sourcePos, Stmt.Accessibility.Private,
-        componentName, useHide,
+        componentName.data(), useHide,
         false, true
       );
     }
@@ -638,13 +647,8 @@ public sealed interface Expr extends AyaDocile {
     /// @see StmtVisitor#visitExpr
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       discriminant.forEach(d -> f.accept(d.discr()));
-      // do not foreach [clauses]
+      clauses.forEach(clause -> clause.forEach(f, (_, _) -> { }));
       if (returns != null) f.accept(returns);
-    }
-
-    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f, @NotNull Consumer<Pattern.@NotNull Clause> g) {
-      forEach(f);
-      clauses.forEach(g);
     }
   }
 
@@ -674,7 +678,9 @@ public sealed interface Expr extends AyaDocile {
 
   /// convert flattened terms into nested right-associate terms
   ///
-  /// @implSpec `returned.pos() == sourcePos` if `params.isNotEmpty()`, otherwise `returned == body`
+  /// @param sourcePos the source pos of the whole nested structure,
+  ///                  should be the same as `body.sourcePos()` if `params.isEmpty()`.
+  /// @implSpec `returns.sourcePos() == sourcePos`
   static <P extends SourceNode, E> @NotNull WithPos<E> buildNested(
     @NotNull SourcePos sourcePos,
     @NotNull SeqView<P> params,

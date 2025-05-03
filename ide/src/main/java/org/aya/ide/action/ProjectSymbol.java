@@ -58,7 +58,7 @@ public record ProjectSymbol(
   }
 
   private void collect(@NotNull DefVar<?, ?> dv, @Nullable ProjectSymbol children) {
-    var nameLoc = dv.concrete.sourcePos();
+    var nameLoc = dv.concrete.nameSourcePos();
     var entireLoc = dv.concrete.entireSourcePos();
     var symbol = new Symbol(
       dv.name(),

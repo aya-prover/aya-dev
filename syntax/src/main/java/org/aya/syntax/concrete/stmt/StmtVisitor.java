@@ -149,7 +149,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
   }
 
   default void visitDecl(@NotNull Decl decl) {
-    visitVarDecl(decl.sourcePos(), decl.ref(), lazyType(decl.ref()));
+    visitVarDecl(decl.nameSourcePos(), decl.ref(), lazyType(decl.ref()));
     visit(decl.bindBlock());
 
     if (decl instanceof TeleDecl tele) visitTelescopic(tele);
@@ -205,13 +205,18 @@ public interface StmtVisitor extends Consumer<Stmt> {
         var resolvedVar = con.resolved().data();
         visitVarRef(con.resolved().sourcePos(), AnyDef.toVar(resolvedVar),
           new Type(LazyValue.of(() -> TyckDef.defType(resolvedVar))));
+
+        con.forEach(this::visitPattern);
       }
       case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), new Type(LazyValue.of(bind.type())));
-      case Pattern.As as -> visitLocalVarDecl(as.as(), new Type(LazyValue.of(as.type())));
-      default -> { }
-    }
+      case Pattern.As as -> {
+        // visit before as var decl
+        as.forEach(this::visitPattern);
+        visitLocalVarDecl(as.as(), new Type(LazyValue.of(as.type())));
+      }
 
-    pat.forEach(this::visitPattern);
+      default -> pat.forEach(this::visitPattern);
+    }
   }
 
   default void visitMatch(@NotNull Expr.Match match) {
@@ -227,6 +232,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     match.clauses().forEach(this::visitClause);
   }
 
+  // scope introducer
   default void visitLetBind(@NotNull Expr.LetBind bind) {
     var result = bind.result();
     // visit let bind
@@ -272,6 +278,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
         visitLocalVarDecl(bind.bindName(), type);
         visitExpr(body);
       }
+      case Expr.LetOpen letOpen -> {
+        var module = letOpen.componentName();
+        visitModuleRef(module.sourcePos(), module.data());
+        visitExpr(letOpen.body());
+      }
       case Expr.Do du -> visitDoBinds(du.binds().view());
       case Expr.Proj proj when proj.ix().isRight() && proj.resolvedVar() != null -> {
         visitVarRef(proj.ix().getRightValue().sourcePos(), proj.resolvedVar(), lazyType(proj.resolvedVar()));
@@ -286,6 +297,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitTelescope(telescopic.telescope.view(), telescopic.result);
   }
 
+  // scope introducer
   default void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     params.forEach(this::visitParam);
     if (result != null) visitExpr(result);

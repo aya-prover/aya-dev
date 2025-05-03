@@ -49,6 +49,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
 
   /**
    * All available symbols in this context
+   * TODO: {@link AnyDefVar}?
    */
   @NotNull ModuleSymbol<AnyVar> symbols();
 
