@@ -59,8 +59,10 @@ public record LiterateData(
   public void resolve(@NotNull ResolveInfo info) {
     extractedExprs.forEach(c -> {
       assert c.expr != null;
-      var data = ExprResolver.resolveLax(info.thisModule(), c.expr)
-        .descent(new Desalt(info));
+      var resolved = ExprResolver.resolveLax(info.thisModule(), info.reporter(), c.expr);
+      // Skip if error
+      if (resolved == null) return;
+      var data = resolved.descent(new Desalt(info));
       c.params = data.params();
       c.expr = data.expr();
     });

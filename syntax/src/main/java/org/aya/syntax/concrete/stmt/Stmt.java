@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author kiva
  */
-public sealed interface Stmt extends TyckUnit, AyaDocile permits Command, Generalize, Decl {
+public sealed interface Stmt extends AyaDocile permits Command, Generalize, Decl {
   /**
    * @apiNote the <code>import</code> stmts do not have a meaningful accessibility,
    * do not refer to this in those cases

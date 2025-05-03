@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ReplContext extends PhysicalModuleContext implements RepoLike<ReplContext> {
   private @Nullable ReplContext downstream = null;
-  /** @see #moduleTree() */
+  /// @see #moduleTree()
   private boolean modified = true;
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
@@ -56,14 +56,14 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return true;
   }
 
-  @Override public void importModuleContext(
+  @Override public boolean importModuleContext(
     ModuleName.@NotNull Qualified modName,
     @NotNull ModuleContext module,
     Stmt.@NotNull Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     @NotNull Reporter reporter
   ) {
-    super.importModuleContext(modName, module, accessibility, sourcePos, reporter);
+    return super.importModuleContext(modName, module, accessibility, sourcePos, reporter);
   }
 
   @Override public boolean importModule(
@@ -78,7 +78,6 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     if (accessibility == Stmt.Accessibility.Public) exports.export(modName, mod);
     return true;
   }
-
 
   @Override public @NotNull ReplContext derive(@NotNull ModulePath extraName) {
     return new ReplContext(this, modulePath().derive(extraName));
@@ -117,10 +116,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     symbols.table().clear();
   }
 
-  /**
-   * @apiNote It is possible that putting {@link ModuleName.Qualified} and {@link ModuleName.ThisRef} to the same name,
-   * so be careful about {@param rhs}
-   */
+  /// @apiNote It is possible that putting [ModuleName.Qualified] and [ModuleName.ThisRef] to the same name,
+  /// so be careful about {@param rhs}
   private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> dest, @NotNull ModuleSymbol<T> src) {
     for (var key : src.table().keysView()) {
       var candy = dest.get(key);
@@ -176,11 +173,9 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return moduleTree;
   }
 
-  /**
-   * Rebuild module tree from flattened module names
-   *
-   * @param moduleNames a list of {@link ModuleName.Qualified} but in an efficient representation, the element should be non-empty
-   */
+  /// Rebuild the module tree from flattened module names
+  ///
+  /// @param moduleNames a list of [ModuleName.Qualified] but in an efficient representation, the element should be non-empty
   private @NotNull ImmutableMap<String, ModuleTrie>
   buildModuleTree(@NotNull Seq<SeqView<String>> moduleNames) {
     if (moduleNames.isEmpty()) {

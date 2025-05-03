@@ -23,7 +23,7 @@ public final class SyntaxTestUtil {
   private static final @NotNull Path FILE = Path.of("/home/senpai/114514.aya");
 
   public static @NotNull DumbModuleLoader moduleLoader() {
-    return new DumbModuleLoader(new EmptyContext(THROWING, FILE));
+    return new DumbModuleLoader(THROWING, new EmptyContext(FILE));
   }
 
   @Contract(pure = true)

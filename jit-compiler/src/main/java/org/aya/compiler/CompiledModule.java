@@ -12,10 +12,9 @@ import org.aya.compiler.serializers.NameSerializer;
 import org.aya.primitive.PrimFactory;
 import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.PhysicalModuleContext;
-import org.aya.resolve.error.ModNotFoundException;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
@@ -169,7 +168,7 @@ public record CompiledModule(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull Reporter reporter
   ) {
-    var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory);
+    var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
     shallowResolve(loader, resolveInfo, reporter);
     loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
     deOp(state, resolveInfo);
