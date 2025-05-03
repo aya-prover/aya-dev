@@ -24,11 +24,11 @@ import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.ClassError;
-import org.aya.util.HasError;
 import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.LocalReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +50,8 @@ public record ExprResolver(
   boolean allowGeneralizing,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
-  @NotNull MutableStack<Where> where,
-  @NotNull HasError hasErrorDelegate
-) implements PosedUnaryOperator<Expr>, HasError {
+  @NotNull MutableStack<Where> where
+) implements PosedUnaryOperator<Expr>{
   public record LiterateResolved(
     ImmutableSeq<Expr.Param> params,
     WithPos<Expr> expr
@@ -69,19 +68,20 @@ public record ExprResolver(
   @Contract(pure = true)
   public static @Nullable LiterateResolved
   resolveLax(@NotNull ModuleContext context, @NotNull Reporter reporter, @NotNull WithPos<Expr> expr) {
-    var resolver = new ExprResolver(context, reporter, true, new HasError.Bool());
+    var localReporter = new LocalReporter(reporter);
+    var resolver = new ExprResolver(context, localReporter, true);
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
-    if (resolver.hasError()) return null;
+    if (localReporter.dirty()) return null;
     var view = resolver.allowedGeneralizes.valuesView().toSeq();
     return new LiterateResolved(view, inner);
   }
 
   public ExprResolver(
     @NotNull Context ctx, @NotNull Reporter reporter,
-    boolean allowGeneralizing, @NotNull HasError hasError
+    boolean allowGeneralizing
   ) {
-    this(ctx, reporter, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), hasError);
+    this(ctx, reporter, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create());
   }
 
   public void resetRefs() { reference.clear(); }
@@ -89,7 +89,7 @@ public record ExprResolver(
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, reporter, allowGeneralizing, allowedGeneralizes, reference, where, hasErrorDelegate);
+    return ctx == ctx() ? this : new ExprResolver(ctx, reporter, allowGeneralizing, allowedGeneralizes, reference, where);
   }
 
   /**
@@ -97,7 +97,7 @@ public record ExprResolver(
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, reporter, false, allowedGeneralizes, reference, where, hasErrorDelegate);
+    return new ExprResolver(ctx, reporter, false, allowedGeneralizes, reference, where);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -130,7 +130,7 @@ public record ExprResolver(
     return switch (pre(expr)) {
       case Expr.Do doExpr ->
         doExpr.update(apply(SourcePos.NONE, doExpr.bindName()), bind(doExpr.binds(), MutableValue.create(ctx)));
-      case Expr.ClauseLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause()));
+      case Expr.ClauseLam lam -> lam.update(clause(ImmutableSeq.empty(), lam.clause(), reporter));
       case Expr.DepType depType -> {
         var mCtx = MutableValue.create(ctx);
         var param = bind(depType.param(), mCtx);
@@ -168,9 +168,10 @@ public record ExprResolver(
             yield defVar;
           }
           case AnyVar var -> var;
+          case null -> null;
         };
+
         if (finalVar == null) {
-          foundError();
           yield expr;
         }
 
@@ -216,7 +217,7 @@ public record ExprResolver(
 
         // Requires exhaustiveness check, therefore must need the full data body
         enter(Where.FnPattern);
-        var clauses = match.clauses().map(x -> clause(ImmutableSeq.empty(), x));
+        var clauses = match.clauses().map(x -> clause(ImmutableSeq.empty(), x, reporter));
         exit();
 
         yield match.update(discriminant, clauses, returns);
@@ -245,11 +246,11 @@ public record ExprResolver(
     addReference(defVar.concrete);
   }
 
-  public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause) {
+  public @NotNull Pattern.Clause clause(@NotNull ImmutableSeq<LocalVar> telescope, @NotNull Pattern.Clause clause, @NotNull Reporter reporter) {
     var mCtx = MutableValue.create(ctx);
     enter(Where.FnPattern);
     var pats = clause.patterns.map(pa ->
-      pa.descent(pat -> resolvePattern(pat, telescope, mCtx)));
+      pa.descent(pat -> resolvePattern(pat, telescope, mCtx, reporter)));
     exit();
     enter(Where.FnBody);
     var body = clause.expr.map(x -> x.descent(enter(mCtx.get())));
@@ -260,8 +261,8 @@ public record ExprResolver(
   /// Resolve a [Pattern]
   ///
   /// @param telescope the telescope of the clause which the {@param pattern} lives, can be [ImmutableSeq#empty()].
-  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx) {
-    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference, this);
+  public @NotNull WithPos<Pattern> resolvePattern(@NotNull WithPos<Pattern> pattern, @NotNull ImmutableSeq<LocalVar> telescope, MutableValue<Context> ctx, @NotNull Reporter reporter) {
+    var resolver = new PatternResolver(ctx.get(), telescope, this::addReference, reporter);
     var result = pattern.descent(resolver);
     ctx.set(resolver.context());
     return result;
@@ -283,7 +284,7 @@ public record ExprResolver(
     });
   }
 
-  public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
+  public @Nullable AnyVar resolve(@NotNull QualifiedID name) {
     var result = ctx.get(name, reporter);
     if (result instanceof GeneralizedVar gvar) {
       var gened = allowedGeneralizes.getOrNull(gvar);
@@ -296,13 +297,10 @@ public record ExprResolver(
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
     var resolver = new ExprResolver(ctx, reporter, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
-      MutableStack.create(), hasErrorDelegate);
+      MutableStack.create());
     resolver.enter(initial);
     return resolver;
   }
-
-  @Override public void foundError() { hasErrorDelegate.foundError(); }
-  @Override public boolean hasError() { return hasErrorDelegate.hasError(); }
 
   public enum Where {
     // Data head & Fn head

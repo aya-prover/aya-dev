@@ -22,8 +22,10 @@ import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-///
 /// > There is no "exception" in this library
+///
+/// Some functions may report error without providing any indicator (such as boolean or Option),
+/// if your code needs this information, feel free to change them!
 ///
 /// @author re-xyr
 ///

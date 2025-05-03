@@ -86,7 +86,7 @@ public interface ModuleLoader extends Problematic {
     resolver.resolve(program);
     resolver.desugar(program);
 
-    if (resolver.hasError()) throw new Context.ResolvingInterruptedException();
+    if (resolver.reporter.dirty()) throw new Context.ResolvingInterruptedException();
   }
 
   @NotNull ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader)

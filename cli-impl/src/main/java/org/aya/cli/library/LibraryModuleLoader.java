@@ -74,7 +74,7 @@ record LibraryModuleLoader(
     // No compiled core is found, or source file is modified, compile it from source.
     var program = source.program().get();
     assert program != null;
-    var context = new EmptyContext(reporter, sourcePath).derive(mod);
+    var context = new EmptyContext(sourcePath).derive(mod);
     var resolveInfo = resolveModule(states.primFactory, context, program, recurseLoader);
 
     tyckModule(resolveInfo, (moduleResolve, defs) -> {

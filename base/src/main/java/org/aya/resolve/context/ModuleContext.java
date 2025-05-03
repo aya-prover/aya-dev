@@ -5,6 +5,7 @@ package org.aya.resolve.context;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
+import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -83,17 +84,22 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   /// that inside {@param module}.
   ///
   /// @see ModuleContext#importModule
-  default void importModuleContext(
+  default boolean importModuleContext(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     @NotNull Reporter reporter
   ) {
+    var success = MutableBooleanValue.create(true);
     var export = module.exports();
-    importModule(modName, export, accessibility, sourcePos, reporter);
-    export.modules().forEachChecked((qname, innerMod) ->
-      importModule(modName.concat(qname), innerMod, accessibility, sourcePos, reporter));
+    success.set(importModule(modName, export, accessibility, sourcePos, reporter));
+    export.modules().forEachChecked((qname, innerMod) -> {
+      var result = importModule(modName.concat(qname), innerMod, accessibility, sourcePos, reporter);
+      success.getAndUpdate(t -> t && result);
+    });
+
+    return success.get();
   }
 
   /**
@@ -103,7 +109,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param modName       the name of the module
    * @param moduleExport  the module
    */
-  default void importModule(
+  default boolean importModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
@@ -112,26 +118,27 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   ) {
     var exists = modules().getOrNull(modName);
     if (exists != null) {
-      if (exists == moduleExport) return;
+      if (exists == moduleExport) return true;
       reporter.report(new NameProblem.DuplicateModNameError(modName, sourcePos));
-      return;
+      return false;
     } else if (getModuleMaybe(modName) != null) {
       reporter.report(new NameProblem.ModShadowingWarn(modName, sourcePos));
-      return;
+      return true;
     }
 
     // put after check, otherwise you will get a lot of ModShadowingWarn!
     modules().put(modName, moduleExport);
+    return true;
   }
 
-  default void openModule(
+  default boolean openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
     @NotNull UseHide useHide,
     @NotNull Reporter reporter
   ) {
-    openModule(modName, accessibility,
+    return openModule(modName, accessibility,
       useHide.list().map(UseHide.Name::id),
       useHide.renaming(),
       sourcePos, useHide.strategy(), reporter);
@@ -144,7 +151,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    * @param filter  use or hide which definitions
    * @param rename  renaming
    */
-  default void openModule(
+  default boolean openModule(
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull ImmutableSeq<QualifiedID> filter,
@@ -156,21 +163,21 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     var modExport = getModuleMaybe(modName);
     if (modExport == null) {
       reporter.report(new NameProblem.ModNameNotFoundError(modName, sourcePos));
-      return;
+      return false;
     }
 
     var filterRes = modExport.filter(filter, strategy);
     var filterProblem = filterRes.problems(modName);
     if (filterRes.anyError()) {
       reporter.reportAll(filterProblem);
-      return;
+      return false;
     }
 
     var mapRes = filterRes.result().map(rename);
     var mapProblem = mapRes.problems(modName);
     if (mapRes.anyError()) {
       reporter.reportAll(mapProblem);
-      return;
+      return false;
     }
 
     // report all warnings
@@ -183,10 +190,12 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     // import the modules that {renamed} exported
     renamed.modules().forEach((qname, mod) ->
       importModule(qname, mod, accessibility, sourcePos, reporter));
+
+    return true;
   }
 
   /// Adding a new symbol to this module.
-  default void importSymbol(
+  default boolean importSymbol(
     @NotNull AnyVar ref,
     @NotNull ModuleName fromModule,
     @NotNull String name,
@@ -206,7 +215,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
       // this case happens when the user is trying to open a module in twice (even the symbol are equal)
       // or define two symbols with same name ([fromModule == ModuleName.This])
       reporter.report(new NameProblem.DuplicateNameError(name, ref, sourcePos));
-      return;
+      return false;
     } else if (candidates.isAmbiguous() || candidates.get() != ref) {
       reporter.report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
@@ -220,6 +229,8 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
         reporter.report(new NameProblem.DuplicateExportError(name, sourcePos));
       }
     }
+
+    return true;
   }
 
   /**
@@ -229,10 +240,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) { return true; }
 
-  default void defineSymbol(
+  default boolean defineSymbol(
     @NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos, @NotNull Reporter reporter
   ) {
-    importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos, reporter);
+    return importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos, reporter);
   }
 }

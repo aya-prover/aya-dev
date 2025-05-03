@@ -136,13 +136,11 @@ public class ReplCompilerTest {
   }
 
   private @Nullable AnyVar findContext(@NotNull String name) {
-    try {
-      var ctx = compiler.getContext();
-      return ctx.getMaybe(new QualifiedID(SourcePos.NONE,
-        ImmutableSeq.of(Constants.SCOPE_SEPARATOR_PATTERN.split(name))));
-    } catch (Context.ResolvingInterruptedException _) {
-      return null;
-    }
+    var ctx = compiler.getContext();
+    var result = ctx.getMaybe(new QualifiedID(SourcePos.NONE,
+      ImmutableSeq.of(Constants.SCOPE_SEPARATOR_PATTERN.split(name))), compiler.reporter);
+    if (result == null) return null;
+    return result.getOrNull();
   }
 
   private void compile(@NotNull String code) {
