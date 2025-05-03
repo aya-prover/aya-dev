@@ -5,7 +5,6 @@ package org.aya.resolve.context;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import org.aya.generic.InterruptException;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -198,9 +197,5 @@ public interface Context {
 
   default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
     return new PhysicalModuleContext(this, modulePath().derive(extraName));
-  }
-
-  final class ResolvingInterruptedException extends Exception {
-    public InterruptException.InterruptStage stage() { return InterruptException.InterruptStage.Resolving; }
   }
 }

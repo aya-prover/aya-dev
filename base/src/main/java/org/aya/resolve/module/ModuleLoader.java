@@ -11,6 +11,7 @@ import org.aya.resolve.StmtResolvers;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.salt.AyaBinOpSet;
+import org.aya.resolve.salt.PatternBinParser;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.order.AyaOrgaTycker;
@@ -70,7 +71,7 @@ public interface ModuleLoader extends Problematic {
     var opSet = new AyaBinOpSet(reporter());
     var resolveInfo = new ResolveInfo(context, primFactory, new ShapeFactory(), opSet);
     var success = resolveModule(resolveInfo, program, recurseLoader);
-    if (! success) return null;
+    if (!success) return null;
     return resolveInfo;
   }
 
@@ -87,12 +88,13 @@ public interface ModuleLoader extends Problematic {
   ) {
     var resolver = new StmtResolvers(recurseLoader, resolveInfo);
     resolver.resolve(program);
-    resolver.desugar(program);
+    try { resolver.desugar(program); } catch (PatternBinParser.MalformedPatternException _) { }
 
     return !resolver.reporter.dirty();
   }
 
   /// Load a module with {@param path}
+  ///
   /// @return [LoadErrorKind#Resolve] implies a resolve error, and already reported
   ///         [LoadErrorKind#NotFound] implies a module not found error, and not yet reported.
   @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader);

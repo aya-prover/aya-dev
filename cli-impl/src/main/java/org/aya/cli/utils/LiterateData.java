@@ -16,6 +16,7 @@ import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.salt.Desalt;
+import org.aya.resolve.salt.PatternBinParser;
 import org.aya.resolve.visitor.ExprResolver;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
@@ -62,9 +63,11 @@ public record LiterateData(
       var resolved = ExprResolver.resolveLax(info.thisModule(), info.reporter(), c.expr);
       // Skip if error
       if (resolved == null) return;
-      var data = resolved.descent(new Desalt(info));
-      c.params = data.params();
-      c.expr = data.expr();
+      try {
+        var data = resolved.descent(new Desalt(info));
+        c.params = data.params();
+        c.expr = data.expr();
+      } catch (PatternBinParser.MalformedPatternException _) { }
     });
   }
 
