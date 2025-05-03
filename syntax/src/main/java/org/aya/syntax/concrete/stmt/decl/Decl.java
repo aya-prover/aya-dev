@@ -29,9 +29,8 @@ public sealed abstract class Decl implements SourceNode, Named, Stmt, TyckUnit, 
 
   public final @NotNull BindBlock bindBlock() { return info.bindBlock(); }
   public final @NotNull SourcePos entireSourcePos() { return info.entireSourcePos(); }
-  @Override public @NotNull SourcePos nameSourcePos() { return info.sourcePos(); }
-  // TODO: use info.entireSourcePos after TyckUnit extends Named instead of SourceNode
-  @Override public final @NotNull SourcePos sourcePos() { return info.sourcePos(); }
+  @Override public @NotNull SourcePos nameSourcePos() { return info.nameSourcePos(); }
+  @Override public final @NotNull SourcePos sourcePos() { return info.entireSourcePos(); }
   @Override public final @NotNull Stmt.Accessibility accessibility() { return info.accessibility(); }
   @Override public final @Nullable OpDecl.OpInfo opInfo() { return info.opInfo(); }
   protected Decl(@NotNull DeclInfo info) { this.info = info; }

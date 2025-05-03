@@ -55,8 +55,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
     return true;
   }
 
-  @Override
-  public void importModuleContext(
+  @Override public void importModuleContext(
     ModuleName.@NotNull Qualified modName,
     @NotNull ModuleContext module,
     Stmt.@NotNull Accessibility accessibility,

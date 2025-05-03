@@ -47,21 +47,14 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
   @Override default @NotNull Reporter reporter() { return parent().reporter(); }
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
-  /**
-   * All available symbols in this context
-   * TODO: {@link AnyDefVar}?
-   */
+  /// All available symbols in this context
   @NotNull ModuleSymbol<AnyVar> symbols();
 
-  /**
-   * All imported modules in this context.<br/>
-   * {@code Qualified Module -> Module Export}
-   */
+  /// All imported modules in this context.<br/>
+  /// `Qualified Module -> Module Export`
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
-  /**
-   * Things (symbol or module) that are exported by this module.
-   */
+  /// Things (symbol or module) that are exported by this module.
   @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {

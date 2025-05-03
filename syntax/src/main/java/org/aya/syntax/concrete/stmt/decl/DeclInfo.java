@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.concrete.stmt.decl;
 
+import org.aya.syntax.concrete.Named;
 import org.aya.syntax.concrete.stmt.BindBlock;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.binop.OpDecl;
@@ -11,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 public record DeclInfo(
   @NotNull Stmt.Accessibility accessibility,
-  @NotNull SourcePos sourcePos,
+  @Override @NotNull SourcePos nameSourcePos,
   @NotNull SourcePos entireSourcePos,
   @Nullable OpDecl.OpInfo opInfo,
   @NotNull BindBlock bindBlock
-) {
+) implements Named {
 }

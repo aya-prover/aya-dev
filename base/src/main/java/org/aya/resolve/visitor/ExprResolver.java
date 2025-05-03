@@ -36,39 +36,21 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Resolves bindings.
  *
+ * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
+ *                           and represents the allowed generalized level vars otherwise
+ * @param allowGeneralizing  allow new generalized vars to be introduced
  * @author re-xyr, ice1000
  * @implSpec allowedGeneralizes must be linked map
  * @see StmtResolver
  */
-public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
-  private final @NotNull Context ctx;
-  private final boolean allowGeneralizing;
-  private final @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes;
-  private final @NotNull MutableList<TyckOrder> reference;
-  private final @NotNull MutableStack<Where> where;
-  private final HasError hasError;
-
-  /**
-   * @param allowedGeneralizes will be filled with generalized vars if {@param allowGeneralizing},
-   *                           and represents the allowed generalized level vars otherwise
-   * @param allowGeneralizing  allow new generalized vars to be introduced
-   */
-  public ExprResolver(
-    @NotNull Context ctx,
-    boolean allowGeneralizing,
-    @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
-    @NotNull MutableList<TyckOrder> reference,
-    @NotNull MutableStack<Where> where,
-    @NotNull HasError hasError
-  ) {
-    this.ctx = ctx;
-    this.allowGeneralizing = allowGeneralizing;
-    this.allowedGeneralizes = allowedGeneralizes;
-    this.reference = reference;
-    this.where = where;
-    this.hasError = hasError;
-  }
-
+public record ExprResolver(
+  @NotNull Context ctx,
+  boolean allowGeneralizing,
+  @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
+  @NotNull MutableList<TyckOrder> reference,
+  @NotNull MutableStack<Where> where,
+  @NotNull HasError hasErrorDelegate
+) implements PosedUnaryOperator<Expr>, HasError {
   public record LiterateResolved(
     ImmutableSeq<Expr.Param> params,
     WithPos<Expr> expr
@@ -101,7 +83,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where, hasError);
+    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where, hasErrorDelegate);
   }
 
   /**
@@ -109,7 +91,7 @@ public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where, hasError);
+    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where, hasErrorDelegate);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -315,18 +297,13 @@ public final class ExprResolver implements PosedUnaryOperator<Expr>, HasError {
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
     var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
-      MutableStack.create(), hasError);
+      MutableStack.create(), hasErrorDelegate);
     resolver.enter(initial);
     return resolver;
   }
 
-  public @NotNull Context ctx() { return ctx; }
-  public @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes() { return allowedGeneralizes; }
-  public @NotNull MutableList<TyckOrder> reference() { return reference; }
-  @Override
-  public boolean hasError() { return hasError.hasError(); }
-  @Override
-  public void foundError() { this.hasError.foundError(); }
+  @Override public void foundError() { hasErrorDelegate.foundError(); }
+  @Override public boolean hasError() { return hasErrorDelegate.hasError(); }
 
   public enum Where {
     // Data head & Fn head

@@ -26,13 +26,8 @@ public final class StmtResolvers implements HasError {
     this.info = info;
   }
 
-  @Override public void foundError() {
-    hasError = true;
-  }
-
-  @Override public boolean hasError() {
-    return hasError;
-  }
+  @Override public void foundError() { hasError = true; }
+  @Override public boolean hasError() { return hasError; }
 
   private @NotNull ImmutableSeq<ResolvingStmt> fillContext(@NotNull ImmutableSeq<Stmt> stmts) {
     var resolver = new StmtPreResolver(loader, info, this);
