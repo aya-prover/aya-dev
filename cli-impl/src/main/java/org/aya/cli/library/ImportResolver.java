@@ -4,7 +4,6 @@ package org.aya.cli.library;
 
 import kala.collection.SeqLike;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.resolve.error.ModNotFoundException;
 import org.aya.syntax.concrete.stmt.Command;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
