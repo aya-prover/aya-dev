@@ -8,7 +8,9 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.concrete.stmt.Generalize;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /// [Stmt] that is resolving, stores some extra information (i.e. the context 'inside' of it).
 /// It is similar to the following agda code:

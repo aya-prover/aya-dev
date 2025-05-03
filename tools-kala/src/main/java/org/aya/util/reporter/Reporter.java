@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
+import kala.collection.SeqView;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.PrettierOptions;
 import org.aya.util.error.PrettyError;
@@ -16,6 +17,10 @@ public interface Reporter {
    * @param problem problem to report
    */
   void report(@NotNull Problem problem);
+
+  default void reportAll(@NotNull SeqView<Problem> problems) {
+    problems.forEach(this::report);
+  }
 
   @ApiStatus.Internal
   default void reportString(@NotNull String s) {

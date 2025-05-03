@@ -27,13 +27,11 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
   private @NotNull Context context;
   private final @NotNull ImmutableSeq<LocalVar> mercy;
   private final @NotNull Consumer<TyckUnit> parentAdd;
-  private final HasError hasError;
 
-  public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd, HasError hasError) {
+  public PatternResolver(@NotNull Context context, @NotNull ImmutableSeq<LocalVar> mercy, @NotNull Consumer<TyckUnit> parentAdd) {
     this.context = context;
     this.mercy = mercy;
     this.parentAdd = parentAdd;
-    this.hasError = hasError;
   }
 
   public @NotNull Context context() { return context; }

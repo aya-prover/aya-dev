@@ -16,21 +16,17 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.HasError;
 import org.jetbrains.annotations.NotNull;
 
-public final class StmtResolvers implements HasError {
+public final class StmtResolvers {
   private final @NotNull ModuleLoader loader;
   private final @NotNull ResolveInfo info;
-  private boolean hasError = false;
 
   public StmtResolvers(@NotNull ModuleLoader loader, @NotNull ResolveInfo info) {
     this.loader = loader;
     this.info = info;
   }
 
-  @Override public void foundError() { hasError = true; }
-  @Override public boolean hasError() { return hasError; }
-
   private @NotNull ImmutableSeq<ResolvingStmt> fillContext(@NotNull ImmutableSeq<Stmt> stmts) {
-    var resolver = new StmtPreResolver(loader, info, this);
+    var resolver = new StmtPreResolver(loader, info);
     return resolver.resolveStmt(stmts, info.thisModule());
   }
 

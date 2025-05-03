@@ -29,6 +29,7 @@ import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record ExprResolver(
   @NotNull Context ctx,
+  @NotNull Reporter reporter,
   boolean allowGeneralizing,
   @NotNull MutableMap<GeneralizedVar, Expr.Param> allowedGeneralizes,
   @NotNull MutableList<TyckOrder> reference,
@@ -65,8 +67,9 @@ public record ExprResolver(
    * This is solely for cosmetic features, such as literate mode inline expressions, or repl.
    */
   @Contract(pure = true)
-  public static @Nullable LiterateResolved resolveLax(@NotNull ModuleContext context, @NotNull WithPos<Expr> expr) {
-    var resolver = new ExprResolver(context, true, new HasError.Bool());
+  public static @Nullable LiterateResolved
+  resolveLax(@NotNull ModuleContext context, @NotNull Reporter reporter, @NotNull WithPos<Expr> expr) {
+    var resolver = new ExprResolver(context, reporter, true, new HasError.Bool());
     resolver.enter(Where.FnBody);
     var inner = expr.descent(resolver);
     if (resolver.hasError()) return null;
@@ -74,8 +77,11 @@ public record ExprResolver(
     return new LiterateResolved(view, inner);
   }
 
-  public ExprResolver(@NotNull Context ctx, boolean allowGeneralizing, @NotNull HasError hasError) {
-    this(ctx, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), hasError);
+  public ExprResolver(
+    @NotNull Context ctx, @NotNull Reporter reporter,
+    boolean allowGeneralizing, @NotNull HasError hasError
+  ) {
+    this(ctx, reporter, allowGeneralizing, MutableLinkedHashMap.of(), MutableList.create(), MutableStack.create(), hasError);
   }
 
   public void resetRefs() { reference.clear(); }
@@ -83,7 +89,7 @@ public record ExprResolver(
   public void exit() { where.pop(); }
 
   public @NotNull ExprResolver enter(Context ctx) {
-    return ctx == ctx() ? this : new ExprResolver(ctx, allowGeneralizing, allowedGeneralizes, reference, where, hasErrorDelegate);
+    return ctx == ctx() ? this : new ExprResolver(ctx, reporter, allowGeneralizing, allowedGeneralizes, reference, where, hasErrorDelegate);
   }
 
   /**
@@ -91,7 +97,7 @@ public record ExprResolver(
    * that resolves the body/bodies of something.
    */
   public @NotNull ExprResolver deriveRestrictive() {
-    return new ExprResolver(ctx, false, allowedGeneralizes, reference, where, hasErrorDelegate);
+    return new ExprResolver(ctx, reporter, false, allowedGeneralizes, reference, where, hasErrorDelegate);
   }
 
   public @NotNull Expr pre(@NotNull Expr expr) {
@@ -99,15 +105,13 @@ public record ExprResolver(
       case Expr.Proj(var tup, var ix, _, var theCore) -> {
         if (ix.isLeft()) yield expr;
         var projName = ix.getRightValue();
-        try {
-          var resolvedIx = ctx.getMaybe(projName);
-          if (resolvedIx == null)
-            ctx.reportAndThrow(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
-          yield new Expr.Proj(tup, ix, resolvedIx, theCore);
-        } catch (Context.ResolvingInterruptedException _) {
-          foundError();
+        var resolvedIx = ctx.getMaybe(projName, reporter);
+        if (resolvedIx == null) {
+          reporter.report(new ClassError.UnknownMember(projName.sourcePos(), projName.join()));
           yield expr;
         }
+        if (resolvedIx.isEmpty()) yield expr;
+        yield new Expr.Proj(tup, ix, resolvedIx.get(), theCore);
       }
       case Expr.Hole(var expl, var fill, var core, var local) -> {
         assert local.isEmpty();
@@ -142,35 +146,35 @@ public record ExprResolver(
         right -> right.descent(this)
       ));
       case Expr.Unresolved(var name) -> {
-        try {
-          var resolved = resolve(name);
-          AnyVar finalVar = switch (resolved) {
-            case GeneralizedVar generalized -> {
-              // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
-              if (allowGeneralizing) {
-                // Ordered set semantics. Do not expect too many generalized vars.
-                var owner = generalized.owner;
-                assert owner != null : "Sanity check";
-                var param = owner.toExpr(false, generalized.toLocal());
-                allowedGeneralizes.put(generalized, param);
-                addReference(owner);
-                yield param.ref();
-              } else {
-                yield ctx.reportAndThrow(new GeneralizedNotAvailableError(pos, generalized));
-              }
+        var resolved = resolve(name);
+        AnyVar finalVar = switch (resolved) {
+          case GeneralizedVar generalized -> {
+            // a "resolved" GeneralizedVar is not in [allowedGeneralizes]
+            if (allowGeneralizing) {
+              // Ordered set semantics. Do not expect too many generalized vars.
+              var owner = generalized.owner;
+              assert owner != null : "Sanity check";
+              var param = owner.toExpr(false, generalized.toLocal());
+              allowedGeneralizes.put(generalized, param);
+              addReference(owner);
+              yield param.ref();
+            } else {
+              reporter.report(new GeneralizedNotAvailableError(pos, generalized));
+              yield null;
             }
-            case DefVar<?, ?> defVar -> {
-              addReference(defVar);
-              yield defVar;
-            }
-            case AnyVar var -> var;
-          };
-
-          yield new Expr.Ref(finalVar);
-        } catch (Context.ResolvingInterruptedException _) {
+          }
+          case DefVar<?, ?> defVar -> {
+            addReference(defVar);
+            yield defVar;
+          }
+          case AnyVar var -> var;
+        };
+        if (finalVar == null) {
           foundError();
           yield expr;
         }
+
+        yield new Expr.Ref(finalVar);
       }
       case Expr.Let let -> {
         // resolve letBind
@@ -188,20 +192,15 @@ public record ExprResolver(
         // end resolve letBind
 
         // resolve body
-        var newBody = let.body().descent(enter(ctx.bind(letBind.bindName())));
+        var newBody = let.body().descent(enter(ctx.bind(letBind.bindName(), reporter)));
 
         yield let.update(letBind.update(telescope, result, definedAs), newBody);
       }
       case Expr.LetOpen letOpen -> {
         var context = new NoExportContext(ctx);
         // open module
-        try {
-          context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
-            letOpen.sourcePos(), letOpen.useHide());
-        } catch (Context.ResolvingInterruptedException e) {
-          foundError();
-          // don't panic, continue the resolving
-        }
+        context.openModule(letOpen.componentName().data(), Stmt.Accessibility.Private,
+          letOpen.sourcePos(), letOpen.useHide(), reporter);
 
         yield letOpen.update(letOpen.body().descent(enter(context)));
       }
@@ -210,7 +209,7 @@ public record ExprResolver(
         var returnsCtx = ctx;
         for (var discr : match.discriminant()) {
           if (discr.asBinding() != null) {
-            returnsCtx = returnsCtx.bind(discr.asBinding());
+            returnsCtx = returnsCtx.bind(discr.asBinding(), reporter);
           }
         }
         var returns = match.returns() != null ? match.returns().descent(enter(returnsCtx)) : null;
@@ -271,7 +270,7 @@ public record ExprResolver(
   @Contract(mutates = "param2")
   public @NotNull Expr.Param bind(@NotNull Expr.Param param, @NotNull MutableValue<Context> ctx) {
     var p = param.descent(enter(ctx.get()));
-    ctx.set(ctx.get().bind(param.ref()));
+    ctx.set(ctx.get().bind(param.ref(), reporter));
     return p;
   }
 
@@ -279,13 +278,13 @@ public record ExprResolver(
   bind(@NotNull ImmutableSeq<Expr.DoBind> binds, @NotNull MutableValue<Context> ctx) {
     return binds.map(bind -> {
       var b = bind.descent(enter(ctx.get()));
-      ctx.set(ctx.get().bind(bind.var()));
+      ctx.set(ctx.get().bind(bind.var(), reporter));
       return b;
     });
   }
 
-  public @NotNull AnyVar resolve(@NotNull QualifiedID name) throws Context.ResolvingInterruptedException {
-    var result = ctx.get(name);
+  public @NotNull AnyVar resolve(@NotNull QualifiedID name) {
+    var result = ctx.get(name, reporter);
     if (result instanceof GeneralizedVar gvar) {
       var gened = allowedGeneralizes.getOrNull(gvar);
       if (gened != null) return gened.ref();
@@ -295,7 +294,7 @@ public record ExprResolver(
   }
 
   public @NotNull ExprResolver member(@NotNull TyckUnit decl, Where initial) {
-    var resolver = new ExprResolver(ctx, false, allowedGeneralizes,
+    var resolver = new ExprResolver(ctx, reporter, false, allowedGeneralizes,
       MutableList.of(new TyckOrder.Head(decl)),
       MutableStack.create(), hasErrorDelegate);
     resolver.enter(initial);

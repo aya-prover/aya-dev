@@ -4,6 +4,7 @@ package org.aya.resolve.context;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.control.Option;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
@@ -43,8 +44,6 @@ import java.nio.file.Path;
  */
 public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
   @Override @NotNull Context parent();
-
-  @Override default @NotNull Reporter reporter() { return parent().reporter(); }
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
   /// All available symbols in this context
@@ -68,33 +67,33 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     return candy;
   }
 
-  @Override
-  default @Nullable AnyVar getQualifiedLocalMaybe(@NotNull ModuleName.Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos) throws ResolvingInterruptedException {
+  @Override default @Nullable Option<AnyVar>
+  getQualifiedLocalMaybe(ModuleName.@NotNull Qualified modName, @NotNull String name, @NotNull SourcePos sourcePos, @NotNull Reporter reporter) {
     var mod = getModuleLocalMaybe(modName);
     if (mod == null) return null;
     var symbol = mod.symbols().getOrNull(name);
     if (symbol == null) {
-      reportAndThrow(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      reporter.report(new NameProblem.QualifiedNameNotFoundError(modName, name, sourcePos));
+      return Option.none();
     }
-    return symbol;
+    return Option.some(symbol);
   }
 
-  /**
-   * Import modules from {@param module}, this method also import modules
-   * that inside {@param module}.
-   *
-   * @see ModuleContext#importModule(ModuleName.Qualified, ModuleExport, Stmt.Accessibility, SourcePos)
-   */
+  /// Import modules from {@param module}, this method also import modules
+  /// that inside {@param module}.
+  ///
+  /// @see ModuleContext#importModule
   default void importModuleContext(
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleContext module,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) throws ResolvingInterruptedException {
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
+  ) {
     var export = module.exports();
-    importModule(modName, export, accessibility, sourcePos);
+    importModule(modName, export, accessibility, sourcePos, reporter);
     export.modules().forEachChecked((qname, innerMod) ->
-      importModule(modName.concat(qname), innerMod, accessibility, sourcePos));
+      importModule(modName.concat(qname), innerMod, accessibility, sourcePos, reporter));
   }
 
   /**
@@ -108,14 +107,17 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModuleName.Qualified modName,
     @NotNull ModuleExport moduleExport,
     @NotNull Stmt.Accessibility accessibility,
-    @NotNull SourcePos sourcePos
-  ) throws ResolvingInterruptedException {
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
+  ) {
     var exists = modules().getOrNull(modName);
     if (exists != null) {
       if (exists == moduleExport) return;
-      reportAndThrow(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      reporter.report(new NameProblem.DuplicateModNameError(modName, sourcePos));
+      return;
     } else if (getModuleMaybe(modName) != null) {
-      fail(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      reporter.report(new NameProblem.ModShadowingWarn(modName, sourcePos));
+      return;
     }
 
     // put after check, otherwise you will get a lot of ModShadowingWarn!
@@ -126,12 +128,13 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ModuleName.Qualified modName,
     @NotNull Stmt.Accessibility accessibility,
     @NotNull SourcePos sourcePos,
-    @NotNull UseHide useHide
-  ) throws ResolvingInterruptedException {
+    @NotNull UseHide useHide,
+    @NotNull Reporter reporter
+  ) {
     openModule(modName, accessibility,
       useHide.list().map(UseHide.Name::id),
       useHide.renaming(),
-      sourcePos, useHide.strategy());
+      sourcePos, useHide.strategy(), reporter);
   }
 
   /**
@@ -147,55 +150,65 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     @NotNull ImmutableSeq<QualifiedID> filter,
     @NotNull ImmutableSeq<WithPos<UseHide.Rename>> rename,
     @NotNull SourcePos sourcePos,
-    UseHide.Strategy strategy
-  ) throws ResolvingInterruptedException {
+    @NotNull UseHide.Strategy strategy,
+    @NotNull Reporter reporter
+  ) {
     var modExport = getModuleMaybe(modName);
-    if (modExport == null)
-      reportAndThrow(new NameProblem.ModNameNotFoundError(modName, sourcePos));
+    if (modExport == null) {
+      reporter.report(new NameProblem.ModNameNotFoundError(modName, sourcePos));
+      return;
+    }
 
     var filterRes = modExport.filter(filter, strategy);
     var filterProblem = filterRes.problems(modName);
-    if (filterRes.anyError()) reportAllAndThrow(filterProblem);
+    if (filterRes.anyError()) {
+      reporter.reportAll(filterProblem);
+      return;
+    }
 
     var mapRes = filterRes.result().map(rename);
     var mapProblem = mapRes.problems(modName);
-    if (mapRes.anyError()) reportAllAndThrow(mapProblem);
+    if (mapRes.anyError()) {
+      reporter.reportAll(mapProblem);
+      return;
+    }
 
     // report all warnings
-    reportAll(filterProblem.concat(mapProblem));
+    reporter.reportAll(filterProblem.concat(mapProblem));
 
     var renamed = mapRes.result();
-    renamed.symbols().forEachChecked((name, ref) ->
-      importSymbol(ref, modName, name, accessibility, sourcePos));
+    renamed.symbols().forEach((name, ref) ->
+      importSymbol(ref, modName, name, accessibility, sourcePos, reporter));
 
     // import the modules that {renamed} exported
-    renamed.modules().forEachChecked((qname, mod) -> importModule(qname, mod, accessibility, sourcePos));
+    renamed.modules().forEach((qname, mod) ->
+      importModule(qname, mod, accessibility, sourcePos, reporter));
   }
 
-  /**
-   * Adding a new symbol to this module.
-   */
+  /// Adding a new symbol to this module.
   default void importSymbol(
     @NotNull AnyVar ref,
     @NotNull ModuleName fromModule,
     @NotNull String name,
     @NotNull Stmt.Accessibility acc,
-    @NotNull SourcePos sourcePos
-  ) throws ResolvingInterruptedException {
+    @NotNull SourcePos sourcePos,
+    @NotNull Reporter reporter
+  ) {
     var symbols = symbols();
     var candidates = symbols.get(name);
     if (candidates.isEmpty()) {
       var candy = getCandidateMaybe(name, sourcePos);
       if (candy != null && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
-        fail(new NameProblem.ShadowingWarn(name, sourcePos));
+        reporter.report(new NameProblem.ShadowingWarn(name, sourcePos));
       }
     } else if (candidates.from().contains(fromModule)) {
       // this case happens when the user is trying to open a module in twice (even the symbol are equal)
       // or define two symbols with same name ([fromModule == ModuleName.This])
-      reportAndThrow(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+      reporter.report(new NameProblem.DuplicateNameError(name, ref, sourcePos));
+      return;
     } else if (candidates.isAmbiguous() || candidates.get() != ref) {
-      fail(new NameProblem.AmbiguousNameWarn(name, sourcePos));
+      reporter.report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
     symbols.add(name, ref, fromModule);
@@ -204,7 +217,7 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {
       var success = exportSymbol(name, defVar);
       if (!success) {
-        reportAndThrow(new NameProblem.DuplicateExportError(name, sourcePos));
+        reporter.report(new NameProblem.DuplicateExportError(name, sourcePos));
       }
     }
   }
@@ -216,7 +229,10 @@ public sealed interface ModuleContext extends Context permits NoExportContext, P
    */
   default boolean exportSymbol(@NotNull String name, @NotNull AnyDefVar ref) { return true; }
 
-  default void defineSymbol(@NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility, @NotNull SourcePos sourcePos) throws ResolvingInterruptedException {
-    importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos);
+  default void defineSymbol(
+    @NotNull AnyVar ref, @NotNull Stmt.Accessibility accessibility,
+    @NotNull SourcePos sourcePos, @NotNull Reporter reporter
+  ) {
+    importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos, reporter);
   }
 }
