@@ -3,15 +3,19 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Result;
 import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class DumbModuleLoader implements ModuleLoader {
   public static final @NonNls @NotNull String DUMB_MODULE_STRING = "baka";
@@ -24,14 +28,12 @@ public class DumbModuleLoader implements ModuleLoader {
   }
 
   public @NotNull ResolveInfo resolve(@NotNull ImmutableSeq<Stmt> stmts) {
-    try {
-      return resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME.module()), stmts, this);
-    } catch (Context.ResolvingInterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    return Objects.requireNonNull(
+      resolveModule(primFactory, baseContext.derive(DUMB_MODULE_NAME.module()), stmts, this),
+      "Resolve");
   }
 
-  @Override public @NotNull ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
+  @Override public @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     throw new UnsupportedOperationException();
   }
 

@@ -58,17 +58,13 @@ public final class SingleFileCompiler {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser);
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
-      try {
-        loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
-          ayaFile.tyckAdditional(resolveInfo);
-          ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
-          ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
-          ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
-          if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
-        });
-      } catch (Context.ResolvingInterruptedException e) {
-        // Will be handled by CompilerUtil.catching
-      }
+      loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
+        ayaFile.tyckAdditional(resolveInfo);
+        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
+        ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
+        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
+        if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
+      });
     });
   }
 }

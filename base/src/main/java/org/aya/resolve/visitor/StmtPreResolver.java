@@ -72,16 +72,17 @@ public final class StmtPreResolver {
       case Command.Import cmd -> {
         var modulePath = cmd.path();
 
-        ResolveInfo success;
-        // TODO: get rid of these exceptions
-        try {
-          success = loader.load(modulePath);
-        } catch (Context.ResolvingInterruptedException e) {
-          yield null;
-        } catch (ModNotFoundException e) {
-          thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
-          yield null;
+        var loaded = loader.load(modulePath);
+        switch (loaded.getErrOrNull()) {
+          case Resolve -> { yield null; }
+          case NotFound -> {
+            thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
+            yield null;
+          }
+          case null -> {}
         }
+
+        var success = loaded.get();
 
         var mod = success.thisModule();
         var as = cmd.asName();

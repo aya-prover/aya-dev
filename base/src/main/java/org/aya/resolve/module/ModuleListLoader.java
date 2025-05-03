@@ -3,8 +3,10 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Result;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.error.ModNotFoundException;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.Reporter;
@@ -18,16 +20,13 @@ public record ModuleListLoader(
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
   @Override
-  public @NotNull ResolveInfo load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader)
-    throws Context.ResolvingInterruptedException, ModNotFoundException {
+  public @NotNull Result<ResolveInfo, LoadErrorKind> load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     for (var loader : loaders) {
-      try {
-        return loader.load(path, recurseLoader);
-      } catch (Context.ResolvingInterruptedException | ModNotFoundException _) {
-      }
+      var loaded = loader.load(path, recurseLoader);
+      if (loaded.isOk()) return loaded;
     }
 
-    throw new ModNotFoundException();
+    return Result.err(LoadErrorKind.NotFound);
   }
 
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) {

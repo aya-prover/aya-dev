@@ -4,8 +4,10 @@ package org.aya.resolve.module;
 
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableTreeMap;
+import kala.control.Result;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
+import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.error.ModNotFoundException;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.reporter.Reporter;
@@ -21,16 +23,16 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
   @Override public @NotNull Reporter reporter() { return loader.reporter(); }
   public CachedModuleLoader(@NotNull ML loader) { this.loader = loader; }
 
-  @Override public @NotNull ResolveInfo
-  load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) throws Context.ResolvingInterruptedException, ModNotFoundException {
+  @Override public @NotNull Result<ResolveInfo, LoadErrorKind>
+  load(@NotNull ModulePath path, @NotNull ModuleLoader recurseLoader) {
     var qualified = path.toString();
 
     var cached = cache.getOrNull(qualified);
-    if (cached != null) return cached;
+    if (cached != null) return Result.ok(cached);
 
     // we don't have `getOrPutChecked`, sorry
     var loaded = loader.load(path, recurseLoader);
-    cache.put(qualified, loaded);
+    loaded.forEach(t -> cache.put(qualified, t));
     return loaded;
   }
 
