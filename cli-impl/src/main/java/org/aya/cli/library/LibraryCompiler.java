@@ -205,10 +205,9 @@ public class LibraryCompiler {
   }
 
   /**
-   * FIXME: stop throwing ModNotFoundException?
    * Incrementally compiles a library without handling compilation errors.
    *
-   * @return whether the library is up-to-date.
+   * @return whether the library is up to date.
    * @apiNote The return value does not indicate whether the library is compiled successfully.
    */
   private boolean make() throws IOException {
