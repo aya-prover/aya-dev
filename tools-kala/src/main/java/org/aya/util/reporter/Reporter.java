@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util.reporter;
 
-import kala.collection.SeqView;
+import kala.collection.CollectionView;
 import org.aya.pretty.doc.Doc;
 import org.aya.util.PrettierOptions;
 import org.aya.util.error.PrettyError;
@@ -11,14 +11,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface Reporter {
-  /**
-   * Report a problem
-   *
-   * @param problem problem to report
-   */
+  /// Report a problem
+  ///
+  /// @param problem problem to report
   void report(@NotNull Problem problem);
 
-  default void reportAll(@NotNull SeqView<Problem> problems) {
+  default void reportAll(@NotNull CollectionView<? extends Problem> problems) {
     problems.forEach(this::report);
   }
 

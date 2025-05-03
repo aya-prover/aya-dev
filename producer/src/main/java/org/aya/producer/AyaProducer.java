@@ -632,7 +632,7 @@ public record AyaProducer(
       });
 
       if (errors.isNotEmpty()) {
-        errors.forEach(reporter::report);
+        reporter.reportAll(errors.view());
         throw new ParsingInterruptedException();
       }
 

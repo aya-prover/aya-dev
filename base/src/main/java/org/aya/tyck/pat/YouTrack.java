@@ -75,6 +75,6 @@ public record YouTrack(
         }
       }
     });
-    doms.forEach(tycker::fail);
+    tycker.reporter.reportAll(doms.view());
   }
 }

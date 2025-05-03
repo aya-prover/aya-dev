@@ -26,6 +26,6 @@ public final class AyaBinOpSet extends BinOpSet implements Problematic {
   }
 
   @Override protected void reportCyclic(ImmutableSeq<ImmutableSeq<BinOP>> cycles) {
-    cycles.forEach(c -> fail(new OperatorError.Circular(c)));
+    reporter.reportAll(cycles.view().map(OperatorError.Circular::new));
   }
 }

@@ -18,7 +18,7 @@ public record DelayedReporter(
   }
 
   public void reportNow() {
-    problems.forEach(this.delegated::report);
+    delegated.reportAll(problems.view());
     problems.clear();
   }
 

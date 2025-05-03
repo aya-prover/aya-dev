@@ -3,7 +3,6 @@
 package org.aya.resolve.salt;
 
 import kala.collection.SeqView;
-import org.aya.generic.InterruptException;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.error.OperatorError;
 import org.aya.syntax.concrete.Pattern;
@@ -83,7 +82,5 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
   }
   @Override public @NotNull Reporter reporter() { return opSet.reporter; }
 
-  public static final class MalformedPatternException extends RuntimeException {
-    public InterruptException.InterruptStage stage() { return InterruptException.InterruptStage.Resolving; }
-  }
+  public static final class MalformedPatternException extends RuntimeException { }
 }
