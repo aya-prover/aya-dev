@@ -55,13 +55,6 @@ public record ResolveInfo(
   public ResolveInfo(
     @NotNull ModuleContext thisModule,
     @NotNull PrimFactory primFactory,
-    @NotNull ShapeFactory shapeFactory
-  ) {
-    this(thisModule, primFactory, shapeFactory, new AyaBinOpSet(thisModule.reporter()));
-  }
-  public ResolveInfo(
-    @NotNull ModuleContext thisModule,
-    @NotNull PrimFactory primFactory,
     @NotNull ShapeFactory shapeFactory,
     @NotNull AyaBinOpSet opSet
   ) {

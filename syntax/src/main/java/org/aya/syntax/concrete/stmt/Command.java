@@ -7,12 +7,13 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.position.PosedUnaryOperator;
+import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public sealed interface Command extends Stmt {
+public sealed interface Command extends Stmt, SourceNode {
   default @Override void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) { }
   /// @param sourcePosExceptLast can be NONE if the entire import is one `weakId`
   record Import(

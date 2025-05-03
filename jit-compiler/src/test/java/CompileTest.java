@@ -2,11 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.serializers.SerializerContext;
-import source.SourceClassBuilder;
-import source.SourceCodeBuilder;
-import source.SourceFreeJavaBuilder;
 import org.aya.compiler.serializers.ModuleSerializer;
+import org.aya.compiler.serializers.SerializerContext;
 import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
@@ -29,6 +26,9 @@ import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+import source.SourceClassBuilder;
+import source.SourceCodeBuilder;
+import source.SourceFreeJavaBuilder;
 
 import java.io.IOException;
 import java.lang.constant.ConstantDescs;
@@ -119,7 +119,7 @@ public class CompileTest {
   }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {
-    var moduleLoader = new DumbModuleLoader(new EmptyContext(REPORTER, FILE));
+    var moduleLoader = new DumbModuleLoader(REPORTER, new EmptyContext(FILE));
     var callback = new ModuleCallback<RuntimeException>() {
       ImmutableSeq<TyckDef> ok;
       @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }

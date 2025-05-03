@@ -15,14 +15,12 @@ import org.aya.pretty.doc.Doc;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.test.TestRunner;
 import org.aya.util.FileUtil;
 import org.aya.util.Global;
-import org.aya.util.Panic;
 import org.aya.util.TimeUtil;
 import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.BufferReporter;
@@ -98,14 +96,11 @@ public class AyaMdParserTest {
     var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
     var stmts = literate.parseMe(new AyaParserImpl(reporter));
     var ctx = new EmptyContext(Path.of(".")).derive(oneCase.modName());
-    var loader = new DumbModuleLoader(ctx);
+    var loader = new DumbModuleLoader(reporter, ctx);
 
     ResolveInfo info;
-    try {
-      info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
-    } catch (Context.ResolvingInterruptedException e) {
-      info = Panic.unreachable();
-    }
+    info = loader.resolveModule(new PrimFactory(), ctx, stmts, loader);
+    assertNotNull(info);
 
     loader.tyckModule(info, null);
     literate.tyckAdditional(info);

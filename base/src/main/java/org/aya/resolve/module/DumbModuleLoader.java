@@ -22,8 +22,11 @@ public class DumbModuleLoader implements ModuleLoader {
   public static final @NotNull QPath DUMB_MODULE_NAME = new QPath(ModulePath.of(DUMB_MODULE_STRING), 1);
 
   public final @NotNull PrimFactory primFactory = new PrimFactory();
+  private final @NotNull Reporter reporter;
   public final @NotNull Context baseContext;
-  public DumbModuleLoader(@NotNull Context baseContext) {
+
+  public DumbModuleLoader(@NotNull Reporter reporter, @NotNull Context baseContext) {
+    this.reporter = reporter;
     this.baseContext = baseContext;
   }
 
@@ -38,5 +41,5 @@ public class DumbModuleLoader implements ModuleLoader {
   }
 
   @Override public boolean existsFileLevelModule(@NotNull ModulePath path) { return false; }
-  @Override public @NotNull Reporter reporter() { return baseContext.reporter(); }
+  @Override public @NotNull Reporter reporter() { return reporter; }
 }
