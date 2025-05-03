@@ -6,7 +6,7 @@ In file $FILE:6:12 ->
   6 │   tailrec def fib (a : Nat) : Nat elim a
     │               ╰─╯
 
-Error: Function marked as tailrec is not tail-recursive
+Error: Function marked as `tailrec` is not tail-recursive
 
 In file $FILE:6:12 ->
 
@@ -15,7 +15,7 @@ In file $FILE:6:12 ->
   6 │   tailrec def fib (a : Nat) : Nat elim a
     │               ╰─╯
 
-Error: Function marked as tailrec is not tail-recursive
+Error: Function marked as `tailrec` is not tail-recursive
 
 2 error(s), 0 warning(s).
 Let's learn from that.
@@ -28,7 +28,7 @@ In file $FILE:2:12 ->
     │               ╰─╯
   3 │   | 0, y => y
 
-Error: Function marked as tailrec is not tail-recursive
+Error: Function marked as `tailrec` is not tail-recursive
 
 1 error(s), 0 warning(s).
 Let's learn from that.

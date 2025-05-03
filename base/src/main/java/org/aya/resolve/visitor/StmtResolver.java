@@ -148,7 +148,7 @@ public class StmtResolver {
   private void addReferences(TyckOrder decl, SeqView<TyckOrder> refs) {
     // check self-reference
     if (decl instanceof TyckOrder.Head head && refs.contains(head)) {
-      info.opSet().fail(new TyckOrderError.SelfReference(head.unit()));
+      reporter.report(new TyckOrderError.SelfReference(head.unit()));
       return;
     }
 
