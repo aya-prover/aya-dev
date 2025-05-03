@@ -22,13 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * Resolves expressions inside stmts, after {@link StmtPreResolver}
- *
- * @author re-xyr, ice1000, kiva
- * @see StmtPreResolver
- * @see ExprResolver
- */
+/// Resolves expressions inside stmts, after [StmtPreResolver]
+///
+/// @author re-xyr, ice1000, kiva
+/// @see StmtPreResolver
+/// @see ExprResolver
 public class StmtResolver {
   private final @NotNull ResolveInfo info;
   private final @NotNull LocalReporter reporter;
@@ -46,7 +44,7 @@ public class StmtResolver {
     stmt.forEach(resolver::resolveStmt);
   }
 
-  /** @apiNote Note that this function MUTATES the stmt if it's a Decl. */
+  /// @apiNote Note that this function MUTATES the stmt if it's a Decl.
   private void resolveStmt(@NotNull ResolvingStmt stmt) {
     switch (stmt) {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl);
@@ -60,11 +58,9 @@ public class StmtResolver {
     }
   }
 
-  /**
-   * Resolve {@param predecl}, where {@code predecl.ctx()} is the context of the body of {@param predecl}
-   *
-   * @apiNote Note that this function MUTATES the decl
-   */
+  /// Resolve {@param predecl}, where `predecl.ctx()` is the context of the body of {@param predecl}
+  ///
+  /// @apiNote Note that this function MUTATES the decl
   private void resolveDecl(@NotNull ResolvingStmt.ResolvingDecl predecl) {
     switch (predecl) {
       case ResolvingStmt.TopDecl(FnDecl decl, var ctx) -> {
@@ -160,7 +156,7 @@ public class StmtResolver {
       .filter(unit -> TyckUnit.needTyck(unit, info.modulePath())));
   }
 
-  /** @param decl is unmodified */
+  /// @param decl is unmodified
   private void addReferences(TyckOrder decl, ExprResolver resolver) {
     addReferences(decl, resolver.reference().view());
   }
