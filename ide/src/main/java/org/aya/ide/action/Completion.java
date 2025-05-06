@@ -279,6 +279,7 @@ public final class Completion {
     });
 
     return SeqView.<Item>narrow(decls.view())
-      .concat(modules);
+      .concat(modules)
+      .toSeq();
   }
 }
