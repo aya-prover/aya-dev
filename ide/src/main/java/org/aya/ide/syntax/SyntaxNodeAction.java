@@ -23,6 +23,7 @@ public interface SyntaxNodeAction<Location> extends StmtVisitor, PosedConsumer<E
   boolean accept(@NotNull Location xy, @NotNull SourcePos sourcePos);
 
   @Override default void accept(@NotNull Stmt stmt) {
+    // TODO: Why we always visit non-Decl?
     if (!(stmt instanceof Decl decl) || accept(location(), decl.entireSourcePos()))
       doAccept(stmt);
   }
