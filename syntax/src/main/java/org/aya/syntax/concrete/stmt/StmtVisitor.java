@@ -14,10 +14,7 @@ import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.AnyDefVar;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.*;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
@@ -99,6 +96,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
   }
 
   @ApiStatus.NonExtendable
+  default void visitGeneralizedVarDecl(@NotNull GeneralizedVar v) {
+    visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data()));
+  }
+
+  @ApiStatus.NonExtendable
   default void visitDoBind(@NotNull Expr.DoBind bind) {
     visitExpr(bind.expr());
     visitLocalVarDecl(bind.var(), Type.noType);
@@ -153,7 +155,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
       }
       case Generalize g -> {
         visitExpr(g.type);
-        g.variables.forEach(v -> visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data())));
+        g.variables.forEach(this::visitGeneralizedVarDecl);
       }
     }
   }
@@ -313,7 +315,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitTelescope(telescopic.telescope.view(), telescopic.result);
   }
 
-  // scope introducer
+  /// Visit a telescope,
   default void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     params.forEach(this::visitParam);
     if (result != null) visitExpr(result);
