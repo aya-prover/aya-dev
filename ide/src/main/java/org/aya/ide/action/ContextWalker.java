@@ -4,6 +4,7 @@ package org.aya.ide.action;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.ide.syntax.SyntaxNodeAction;
@@ -34,7 +35,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
 
   public ContextWalker(@NotNull XY xy) {
     this.xy = xy;
-    this.localContext = MutableMap.create();
+    this.localContext = MutableLinkedHashMap.of();
     this.moduleContext = MutableList.create();
   }
 
@@ -120,6 +121,10 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     } else {
       match.clauses().forEach(this::visitClause);
     }
+  }
+  @Override
+  public void visitGeneralizedVarDecl(@NotNull GeneralizedVar v) {
+    // ignored
   }
 
   // endregion Context Restriction

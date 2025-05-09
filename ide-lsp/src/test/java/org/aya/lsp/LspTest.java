@@ -40,13 +40,13 @@ public class LspTest {
   public static final @NotNull Path TEST_LIB0 = RES_DIR.resolve("lsp-test-lib0");
   public static final @NotNull Path TEST_FILE = TEST_LIB0.resolve("unwatched.aya");
 
-  public @NotNull LspTestClient launch(@NotNull Path libraryRoot) {
+  public static @NotNull LspTestClient launch(@NotNull Path libraryRoot) {
     var client = launch();
     client.registerLibrary(libraryRoot);
     return client;
   }
 
-  public @NotNull LspTestClient launch() {
+  public static @NotNull LspTestClient launch() {
     return new LspTestClient();
   }
 
@@ -112,49 +112,6 @@ public class LspTest {
       register(TEST_FILE, (_, lsp) ->
         duplicateRegisterTester(3, new ProjectPath.File(TEST_FILE), lsp))
     );
-  }
-
-  private @NotNull ContextWalker runWalker(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
-    var walker = new ContextWalker(xy);
-    stmts.forEach(walker);
-    return walker;
-  }
-
-  @Test public void testContextWalker() {
-    var client = launch(TEST_LIB);
-    client.execute(compile((_, _) -> { }));
-    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
-    assert source != null;
-    var stmt = source.program().get();
-    assert stmt != null;
-
-    var inTelescope = new XY(13, 25);     // {b : _Nat}
-    var inResult = new XY(13, 32);        // : _Nat
-    var inLetTele = new XY(14, 33);       // (e : _Nat)
-    var inLetResult = new XY(14, 40);     // : _Nat
-    var inLetBody = new XY(14, 52);       // _c a a
-    var inSucClause = new XY(15, 31);     // "114" in _a
-
-    var result0 = runWalker(stmt, inTelescope);   // (a : Nat)
-    var result1 = runWalker(stmt, inResult);      // (a : Nat) {b : Nat}
-    var result2 = runWalker(stmt, inLetTele);     // (a : Nat) {b : Nat} (d : Nat)
-    var result3 = runWalker(stmt, inLetResult);   // (a : Nat) {b : Nat} (d : Nat) (e : Nat)
-    var result4 = runWalker(stmt, inLetBody);     // (a : Nat) {b : Nat} (c : Nat -> Nat -> Nat)
-    var result5 = runWalker(stmt, inSucClause);   // (a : Nat) (b : String)
-
-    // TODO: make some assertion
-    return;
-  }
-
-  @Test public void testModuleContextExtraction() {
-    var client = launch(TEST_LIB);
-    client.execute(compile((_, _) -> { }));
-    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
-    assert source != null;
-    var info = source.resolveInfo().get();
-    assert info != null;
-    var result = Completion.resolveTopLevel(info.thisModule());
-    return;
   }
 
   @Test public void colorful() {
