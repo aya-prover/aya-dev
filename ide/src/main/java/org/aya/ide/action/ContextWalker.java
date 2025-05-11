@@ -87,6 +87,13 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
 
     // the key is skipping the variable that are not accessible, the expr doesn't matter,
     // as they will be skipped by [visitExpr] if the cursor is not inside
+    // * if [idx] == -1, which means the cursor is inside the body (function body or let-bind body or whatever),
+    //                  in this case, [Cursor.super.visitTelescope] only visit all var decls.
+    // * if [idx] != -1, which means the cursor is inside one of the parameters or the result.
+    //   + if the cursor is inside one of the parameters, then telescope is the list of all parameters before [idx],
+    //     in this case, [Cursor.super.visitTelescope] only visit telescope var decls and the type of [idx] parameter.
+    //   + if the cursor is inside the result, then [telescope = params],
+    //     in this case, [Cursor.super.visitTelescope] visit telescope var decls and the result.
     Cursor.super.visitTelescope(telescope, result);
   }
 
