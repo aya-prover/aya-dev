@@ -58,7 +58,8 @@ public enum AstExprBuilder implements ExprBuilder {
     var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
     // [captures.size()..]th parameters are lambda arguments
-    var lambdaBodyBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), false, false);
+    var lambdaBodyBuilder = new AstCodeBuilder(FreezableMutableList.create(),
+      new VariablePool(argc), false, false);
     builder.accept(new AstArgumentProvider.Lambda(capturec, argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
