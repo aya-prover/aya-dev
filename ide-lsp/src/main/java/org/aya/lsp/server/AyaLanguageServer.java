@@ -36,7 +36,6 @@ import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
 import org.aya.ide.LspPrimFactory;
 import org.aya.ide.action.*;
-import org.aya.ide.action.Completion;
 import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
