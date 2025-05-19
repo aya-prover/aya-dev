@@ -23,7 +23,7 @@ public class TestUtils {
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }
 
   public static TyckResult tyck(@Language("Aya") @NotNull String code) {
-    var moduleLoader = new DumbModuleLoader(new EmptyContext(REPORTER, FILE));
+    var moduleLoader = new DumbModuleLoader(REPORTER, new EmptyContext(FILE));
     var callback = new ModuleCallback<RuntimeException>() {
       ImmutableSeq<TyckDef> ok;
       @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }

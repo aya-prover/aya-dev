@@ -9,9 +9,6 @@ dependencies {
   // annotationProcessor(libs.manifold.delegate.codegen)
   testImplementation(project(":producer"))
   testImplementation(project(":jit-anf"))
-  testImplementation(libs.junit.params)
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.hamcrest)
   // testAnnotationProcessor(libs.manifold.delegate.codegen)
 }
 
