@@ -2,16 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.anf.ir;
 
-import kala.collection.mutable.MutableList;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.jetbrains.annotations.NotNull;
 
 /// Represents an entire compilation module.
 public record IRModule(
-  @NotNull MutableList<DataDef> data,
-  @NotNull MutableList<ConDef> constructors,
-  @NotNull MutableList<Object> functions
+  @NotNull ImmutableSeq<DataDef> data,
+  @NotNull ImmutableSeq<ConDef> constructors,
+  @NotNull ImmutableMap<IRFuncDesc, Object> functions
 ) {
 
   public @NotNull String debugRender() {

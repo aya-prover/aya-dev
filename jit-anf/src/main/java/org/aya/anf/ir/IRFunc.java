@@ -6,7 +6,7 @@ import org.aya.generic.Modifier;
 import org.aya.syntax.core.def.FnDef;
 import org.jetbrains.annotations.NotNull;
 
-public record IRFunction(
+public record IRFunc(
   @NotNull FuncAttr attr,
   @NotNull IRStmt body
 ) {

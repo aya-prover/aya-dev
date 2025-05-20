@@ -3,25 +3,25 @@
 package org.aya.anf.frontend;
 
 import kala.control.Either;
-import org.aya.anf.ir.IRFunction;
+import org.aya.anf.ir.IRFunc;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-public class FunctionBuilder {
-  private @NotNull IRFunction.FuncAttr attr = IRFunction.FuncAttr.DEFAULT;
+public class FuncBuilder {
+  private @NotNull IRFunc.FuncAttr attr = IRFunc.FuncAttr.DEFAULT;
 
-  public @NotNull FunctionBuilder withAttr(@NotNull IRFunction.FuncAttr attr) {
+  public @NotNull FuncBuilder withAttr(@NotNull IRFunc.FuncAttr attr) {
     this.attr = attr;
     return this;
   }
 
-  public @NotNull FunctionBuilder withBody(@NotNull Either<Term, FnClauseBody> body) {
+  public @NotNull FuncBuilder withBody(@NotNull Either<Term, FnClauseBody> body) {
 
     return this;
   }
 
-  public @NotNull IRFunction build() {
-    return new IRFunction(attr, null);
+  public @NotNull IRFunc build() {
+    return new IRFunc(attr, null);
   }
 }

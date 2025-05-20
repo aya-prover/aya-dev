@@ -2,5 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.anf.frontend;
 
-public class FnCompiler {
+/// Contains metadata for an `IRFunc`.
+public class FuncMetadata {
+  public int uses = 0;
+  public int generatedFuncs = 0;
 }
