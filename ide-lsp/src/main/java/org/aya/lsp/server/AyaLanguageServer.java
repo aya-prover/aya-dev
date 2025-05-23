@@ -323,7 +323,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(position.textDocument.uri);
     if (source == null) return Optional.empty();
     var xy = LspRange.pos(position.position);
-    return Optional.of(CompletionProvider.completion(this, options, source, xy));
+    return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {

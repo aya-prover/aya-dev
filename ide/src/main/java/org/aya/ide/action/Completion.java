@@ -56,8 +56,12 @@ public final class Completion {
       // TODO: unify with ConcretePrettier/CorePrettier?
       var docs = MutableList.<Doc>create();
       telescope.forEach(p -> docs.append(p.toDoc(options)));
-      docs.append(Tokens.HAS_TYPE);
-      docs.append(result.toDoc(options));
+
+      var resultDoc = result.toDocile();
+      if (resultDoc != null) {
+        docs.append(Tokens.HAS_TYPE);
+        docs.append(resultDoc.toDoc(options));
+      }
 
       return Doc.sep(docs);
     }
