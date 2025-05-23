@@ -283,7 +283,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
       }
       case Expr.ClauseLam lam -> visitClause(lam.clause());
       case Expr.DepType depType -> {
-        visitParamDecl(depType.param());
+        visitParam(depType.param());
         visitExpr(depType.last());
       }
       case Expr.Array array when array.arrayBlock().isLeft() -> {
