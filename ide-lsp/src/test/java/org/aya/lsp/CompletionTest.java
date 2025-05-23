@@ -4,10 +4,15 @@ package org.aya.lsp;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
 import org.aya.ide.util.XY;
+import org.aya.lsp.actions.CompletionProvider;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.javacs.lsp.Position;
+import org.javacs.lsp.TextDocumentIdentifier;
+import org.javacs.lsp.TextDocumentPositionParams;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -61,6 +66,18 @@ public class CompletionTest {
     var info = source.resolveInfo().get();
     assert info != null;
     var result = Completion.resolveTopLevel(info.thisModule());
+    return;
+  }
+
+  @Test public void testCompletionProvider() {
+    // TODO: check by human eyes, sorry
+    var client = launch(TEST_LIB);
+    client.execute(compile((_, _) -> { }));
+    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
+    assert source != null;
+    var xy = new XY(14, 52);        // _c a a
+    // XY: 14, 52
+    var list = CompletionProvider.completion(source, xy, AyaDocile::easyToString).items;
     return;
   }
 

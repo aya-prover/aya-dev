@@ -6,18 +6,21 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.util.XY;
-import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.pretty.doc.Doc;
-import org.aya.util.PrettierOptions;
+import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.CompletionItem;
 import org.javacs.lsp.CompletionItemKind;
 import org.javacs.lsp.CompletionList;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompletionProvider {
+  public interface Renderer {
+    String render(@NotNull AyaDocile docile);
+  }
+
   public static final @NotNull ImmutableSeq<CompletionItem> KEYWORDS = ImmutableArray.Unsafe
     .wrap(AyaParserDefinitionBase.KEYWORDS.getTypes())
     .map(it -> {
@@ -28,10 +31,9 @@ public final class CompletionProvider {
     });
 
   public static @NotNull CompletionList completion(
-    @NotNull AyaLanguageServer lsp,
-    @NotNull PrettierOptions options,
     @NotNull LibrarySource source,
-    @NotNull XY xy
+    @NotNull XY xy,
+    @NotNull Renderer renderer
   ) {
     // TODO: resolve certain ModuleContext according to the qualified name at [xy].
     var completion = new Completion(source, xy, ImmutableSeq.empty(), false)
@@ -45,12 +47,13 @@ public final class CompletionProvider {
 
     var full = SeqView.<Completion.Item>narrow(local.view())
       .concat(top)
-      .map(it -> from(lsp, options, it))
+      .map(it -> from(it, renderer))
       .concat(KEYWORDS);
 
     return new CompletionList(false, full.toSeq().asJava());
   }
 
+  @MagicConstant(valuesFromClass = CompletionItemKind.class)
   public static int toCompletionKind(@NotNull Completion.Item.Decl.Kind kind) {
     return switch (kind) {
       case Generalized, Data -> CompletionItemKind.Struct;
@@ -63,9 +66,8 @@ public final class CompletionProvider {
   }
 
   public static @NotNull CompletionItem from(
-    @NotNull AyaLanguageServer lsp,
-    @NotNull PrettierOptions options,
-    @NotNull Completion.Item item
+    @NotNull Completion.Item item,
+    @NotNull Renderer renderer
   ) {
     var completionItem = new CompletionItem();
 
@@ -77,18 +79,14 @@ public final class CompletionProvider {
       case Completion.Item.Local symbol -> {
         completionItem.kind = CompletionItemKind.Variable;
         completionItem.label = symbol.name();
-        var typeDoc = symbol.toDoc(options);
-        var sepTypeDoc = Doc.stickySep(Doc.ONE_WS, typeDoc);
-        completionItem.detail = lsp.render(sepTypeDoc);
+        completionItem.detail = " " + renderer.render(symbol.type());
       }
       case Completion.Item.Decl decl -> {
         completionItem.kind = toCompletionKind(decl.kind());
         completionItem.label = decl.name();
         // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemLabelDetails
         // TODO: deal with ambiguous, we need [labelDetails] property
-        var typeDoc = decl.type().toDoc(options);
-        var sepTypeDoc = Doc.stickySep(Doc.ONE_WS, typeDoc);
-        completionItem.detail = lsp.render(sepTypeDoc);
+        completionItem.detail = " " + renderer.render(decl.type());
       }
     }
 

@@ -5,6 +5,8 @@ package org.aya.ide.util;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+/// @param x line, count from 1
+/// @param y column, count from 0
 public record XY(int x, int y) {
   public boolean inside(@NotNull SourcePos sourcePos) {
     return sourcePos.containsVisually(x, y);
