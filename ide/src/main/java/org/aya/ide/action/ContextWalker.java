@@ -93,6 +93,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
       telescope = telescope.take(idx);
     }
 
+    // the cursor can in:
+    // 0. parameter
+    // 1. between parameters
+    // 2. result
+    // 3. before result, after ':' or before ':', after the last parameter
+
     // TODO: deal the case that the cursor is between two parameters
 
     // the key is skipping the variable that are not accessible, the expr doesn't matter,
