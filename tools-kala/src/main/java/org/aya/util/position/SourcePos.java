@@ -88,20 +88,6 @@ public record SourcePos(
     return line >= startLine && line <= endLine && column >= startColumn && column <= endColumn;
   }
 
-  public boolean containsVisually(int line, int column) {
-    var singleLine = startLine == endLine;
-    var afterStartCol = startColumn - 1 <= column;
-    var beforeEndCol = column <= endColumn;
-
-    if (singleLine) return line == startLine && afterStartCol && beforeEndCol;
-
-    if (line == startLine) return afterStartCol;
-    if (line == endLine) return beforeEndCol;
-
-    // now, line != startLine != endLine
-    return startLine < line && line < endLine;
-  }
-
   public boolean contains(int pos) {
     return pos >= tokenStartIndex && pos <= tokenEndIndex;
   }
@@ -143,6 +129,39 @@ public record SourcePos(
     // be a constant according to JLS
     if (Global.UNITE_SOURCE_POS) return 0;
     return Objects.hash(tokenStartIndex, tokenEndIndex, startLine, startColumn, endLine, endColumn);
+  }
+
+  /// Compare this [SourcePos] to given line-column position
+  ///
+  /// @return * 0 if the position is contained in this [SourcePos]
+  ///         * negative if the position is before this [SourcePos]
+  ///         * positive if the position is after this [SourcePos]
+  public int compareVisually(int line, int column) {
+    var singleLine = startLine == endLine;
+    var afterStartCol = startColumn <= column;
+    var beforeEndCol = column <= endColumn;
+
+    if (singleLine) {
+      if (line != startLine) {
+        // -1 if line < startLine
+        // 1 if line > startLine
+        // 0 if the computer corrupted
+        return Integer.compare(line, startLine);
+      }
+
+      // same line
+      return afterStartCol
+        ? (beforeEndCol ? 0 : 1)
+        : -1;
+    }
+
+    if (line == startLine) return afterStartCol ? 0 : -1;
+    if (line == endLine) return beforeEndCol ? 0 : 1;
+
+    // now, line != startLine != endLine
+    return startLine < line
+      ? (line < endLine ? 0 : 1)
+      : -1;
   }
 
   @Override public int compareTo(@NotNull SourcePos o) { return Integer.compare(tokenStartIndex, o.tokenStartIndex); }
