@@ -93,6 +93,8 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
       telescope = telescope.take(idx);
     }
 
+    // TODO: deal the case that the cursor is between two parameters
+
     // the key is skipping the variable that are not accessible, the expr doesn't matter,
     // as they will be skipped by [visitExpr] if the cursor is not inside
     // * if [idx] == -1, which means the cursor is inside the body (function body or let-bind body or whatever),
