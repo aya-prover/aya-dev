@@ -123,12 +123,7 @@ public final class Completion {
 
       @Override
       public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-        var typeDoc = userType.toDocile();
-        var realTypeDoc = typeDoc == null
-          ? Doc.empty()
-          : Doc.sep(Tokens.HAS_TYPE, typeDoc.toDoc(options));
-
-        return Doc.sepNonEmpty(BasePrettier.varDoc(var), realTypeDoc);
+        return Doc.sepNonEmpty(BasePrettier.varDoc(var), type().toDoc(options));
       }
     }
   }

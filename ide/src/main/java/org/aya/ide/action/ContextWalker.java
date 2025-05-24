@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.control.Either;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XY;
 import org.aya.syntax.concrete.Expr;
@@ -31,7 +32,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   // TODO: store [ModuleContext] rather than [ModuleName] after making `let-open` and `Command.Module` stores [ModuleContext]
   private final @NotNull MutableList<String> moduleContext;
   private final @NotNull XY xy;
-  private @Nullable Expr leaf;
+  private @Nullable Either<Expr, Pattern> leaf;
 
   public ContextWalker(@NotNull XY xy) {
     this.xy = xy;
@@ -62,6 +63,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   }
 
   @Override
+  public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
+    if (accept(location(), pos)) this.leaf = Either.right(pat);
+    Cursor.super.visitPattern(pos, pat);
+  }
+
+  @Override
   public void visitLetBind(Expr.@NotNull LetBind bind) {
     if (!accept(location(), bind.sourcePos())) return;
     Cursor.super.visitLetBind(bind);
@@ -82,6 +89,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
 
     var idx = telescope.indexWhere(it -> accept(xy, it.sourcePos()));
     if (idx != -1) {
+      result = telescope.get(idx).typeExpr();
       telescope = telescope.take(idx);
     }
 
@@ -146,13 +154,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
 
   @Override
   public void doVisitExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
-    leaf = expr;
+    leaf = Either.left(expr);
     Cursor.super.doVisitExpr(sourcePos, expr);
   }
 
   /// @return the last visited expr
-  public @NotNull Expr leaf() {
-    assert leaf != null;
+  public @Nullable Either<Expr, Pattern> leaf() {
     return leaf;
   }
 
