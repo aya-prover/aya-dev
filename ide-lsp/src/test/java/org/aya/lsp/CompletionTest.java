@@ -39,7 +39,8 @@ public class CompletionTest {
     var inLetResult = new XY(14, 40);     // : _Nat
     var inLetBody = new XY(14, 52);       // _c a a
     var inSucClause = new XY(15, 31);     // "114" in _a
-    var inSucPat = new XY(15, 4);
+    var inSucPat = new XY(15, 4);         // | _suc a
+    var betweenParams = new XY(13, 20);   // (a : Nat) _{b : Nat}
 
     var result0 = runWalker(stmt, inTelescope);   // (a : Nat)
     var result1 = runWalker(stmt, inResult);      // (a : Nat) {b : Nat}
@@ -48,6 +49,7 @@ public class CompletionTest {
     var result4 = runWalker(stmt, inLetBody);     // (a : Nat) {b : Nat} (c : Nat -> Nat -> Nat)
     var result5 = runWalker(stmt, inSucClause);   // (a : Nat) (b : String)
     var result6 = runWalker(stmt, inSucPat);
+    var result7 = runWalker(stmt, betweenParams); // (a : Nat)
 
     assertContext(result0, "a : Nat");
     assertContext(result1, "a : Nat", "b : Nat");
@@ -55,6 +57,7 @@ public class CompletionTest {
     assertContext(result3, "a : Nat", "b : Nat", "d : Nat", "e : Nat");
     assertContext(result4, "a : Nat", "b : Nat", "c : Nat -> Nat -> Nat");
     assertContext(result5, "a : Nat", "b");     // no type annotation, we can't infer type at resolving stage
+    assertContext(result7, "a : Nat");
   }
 
   @Test public void testModuleContextExtraction() {

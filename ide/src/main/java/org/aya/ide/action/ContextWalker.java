@@ -87,7 +87,18 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     // in order to [indexWhere]
     if (result != null) telescope = telescope.appended(new Expr.Param(result.sourcePos(), RESULT_VAR, result, true));
 
-    var idx = telescope.indexWhere(it -> accept(xy, it.sourcePos()));
+    var firstAfter = telescope.indexWhere(it -> xy.before(it.sourcePos()));
+    int idx = firstAfter;
+
+    // firstAfter == -1 -> cursor is after the whole signature
+    if (firstAfter != -1) {
+      // we treat the cursor is inside the next parameter if it is between two parameters
+      if (firstAfter != 0 && accept(xy, telescope.get(firstAfter - 1).sourcePos())) {
+        // if the cursor is inside the previous parameter
+        idx = firstAfter - 1;
+      }
+    }
+
     if (idx != -1) {
       result = telescope.get(idx).typeExpr();
       telescope = telescope.take(idx);
@@ -98,8 +109,6 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     // 1. between parameters
     // 2. result
     // 3. before result, after ':' or before ':', after the last parameter
-
-    // TODO: deal the case that the cursor is between two parameters
 
     // the key is skipping the variable that are not accessible, the expr doesn't matter,
     // as they will be skipped by [visitExpr] if the cursor is not inside
