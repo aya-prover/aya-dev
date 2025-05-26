@@ -15,6 +15,12 @@ import org.aya.syntax.core.def.TyckDef;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
+/// Builds an entire IR module when given a sequence of definitions.
+///
+/// On the top level, there are two passes:
+/// - Population: goes through all global definitions and populate data, constructors and
+///   function "headers" (for metadata info, diagnostics, etc.)
+/// - Definition: goes through all functions and generates their definitions
 public class ModuleBuilder {
   private final MutableList<DataDef> data = MutableList.create();
   private final MutableList<ConDef> constructors = MutableList.create();
@@ -30,6 +36,10 @@ public class ModuleBuilder {
       default -> throw new Panic("unimplemented");
     }
   }
+
+  public void addData(@NotNull DataDef def) { data.append(def); }
+  public void addConstructor(@NotNull ConDef def) { constructors.append(def); }
+  public void populateFunction(@NotNull FnDef def) { functions. }
 
   public @NotNull IRModule build() {
     return new IRModule(data.toImmutableArray(), constructors.toImmutableArray(), ImmutableMap.from(functions));

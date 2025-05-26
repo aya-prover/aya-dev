@@ -6,4 +6,9 @@ package org.aya.anf.frontend;
 public class FuncMetadata {
   public int uses = 0;
   public int generatedFuncs = 0;
+
+  @Override
+  public String toString() {
+    return String.format("[uses=%d, generated_funcs=%d]", uses, generatedFuncs);
+  }
 }
