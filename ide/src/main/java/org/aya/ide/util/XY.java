@@ -16,4 +16,8 @@ public record XY(int x, int y) {
   public boolean after(@NotNull SourcePos sourcePos) {
     return sourcePos.compareVisually(x, y) > 0;
   }
+
+  public boolean before(@NotNull SourcePos sourcePos) {
+    return sourcePos.compareVisually(x, y) < 0;
+  }
 }
