@@ -17,6 +17,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
@@ -165,7 +166,10 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   public void visitVarDecl(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
     if (var == LocalVar.IGNORED || pos == SourcePos.NONE) return;
     // in case of the resolving failed.
-    if (!(var instanceof LocalVar || var instanceof GeneralizedVar)) return;
+    // only [LocalVar] is possible, as we ignore [GeneralizedVar]
+    if (!(var instanceof LocalVar localVar)
+      // ignore invisible vars
+      || localVar.generateKind() != GenerateKind.Basic.None) return;
     this.localContext.put(var.name(), new Completion.Item.Local(var, type));
   }
 
