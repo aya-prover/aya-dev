@@ -133,6 +133,7 @@ public record SourcePos(
 
   /// Compare this [SourcePos] to given line-column position
   ///
+  /// TODO: reverse the sign?
   /// @return * 0 if the position is contained in this [SourcePos]
   ///         * negative if the position is before this [SourcePos]
   ///         * positive if the position is after this [SourcePos]

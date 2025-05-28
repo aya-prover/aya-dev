@@ -1,0 +1,95 @@
+open import data::list::base
+open import STLC::Map
+open import data::unit
+open import relation::nullary::empty
+open import relation::binary::path
+
+open import arith::nat using (Nat , =?)
+open Nat
+
+open import relation::nullary::decidable using (Decidable, yes, no, if-then-else, ifd)
+open Decidable
+
+open import data::maybe using (Maybe)
+open Maybe
+
+
+def Name : Type => Nat
+def Index : Type => Nat
+
+open inductive Term
+| free Name
+| bound Index
+| lam Term
+| app Term Term
+| true | false
+
+open inductive Typu
+| Arrow Typu Typu
+| Bool
+
+def FreeCtx : Type => Map Typu
+def BoundCtx : Type => List Typu
+
+open inductive HasType FreeCtx BoundCtx Term Typu : Type
+//   (n : T) ∈ Γ
+// ---------------
+//  Γ, Δ |- n : T
+| G, D, free n, T => free-hasType (T = G n)
+//    Δ[n] = T
+// ---------------
+//  Γ, Δ |- n : T
+| G, D, bound n, T => bound-hasType (just T = D !! n)
+| G, D, lam t, T => lam-hasType
+  (A B : Typu)
+  (T = Arrow A B)
+  (HasType G (A :< D) t B)
+| G, D, app f a, B => app-hasType
+  (A : Typu)
+  (HasType G D f (Arrow A B))
+  (HasType G D a A)
+| G, D, true , Bool => true-hasType
+| G, D, false, Bool => false-hasType
+
+def value Term : Type
+| true => Unit
+| false => Unit
+| lam _ => Unit
+| _ => Empty
+
+open inductive Step Term Term : Type
+//    f --> f'
+// --------------
+//  f a --> f' a
+| t, s => app-update
+  (f a : Term)
+  (t = app f a)
+  (f' : Term)
+  (s = app f' a)
+  (Step f f')
+// ----------------------------------
+//  (lam. t) a --> instantiate t 0 a
+| t, s => app-reduce
+  (v a : Term)
+  (t = app (lam v) a)
+  (s = instantiate v 0 a)
+
+// replace the bodun variable n with given Term, do not shift other bound variables.
+def instantiate (t : Term) Nat (v : Term) : Term
+| free n, _, _ => t
+| bound i, n, v => if-then-else (i =? n) v t
+| lam t, n, v => lam (instantiate t (suc n) v)
+| app f a, n, v => app (instantiate f n v) (instantiate a n v)
+| true, _, _ => t
+| false, _, _ => t
+
+def instantiate-preverse
+  (G : FreeCtx) (D : BoundCtx)
+  (t : Term) (V : Typu) (T : Typu)
+  (ht : HasType G (D :<ʳ V) t T)
+  (v : Term)
+  (hv : HasType G nil v V)
+  : HasType G D (instantiate t (length D) v) T
+| G, D, (free n), V, T, (free-hasType ht), v, hv => free-hasType ht
+| G, D, (bound idx), V, T, (bound-hasType ht), v, hv => {??}
+| G, D, t, V, T, ht, v, hv => {??}

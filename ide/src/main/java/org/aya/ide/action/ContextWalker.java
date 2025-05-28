@@ -19,6 +19,7 @@ import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,42 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     Cursor.super.visitLetBody(let);
   }
 
+  /// Find the parameter which the cursor is inside.
+  /// If the cursor is between two parameters, we treat the cursor is inside the later parameter.
+  /// In fact, this function can be used to find anything that may introduce a binding, such as [Expr.DoBind]
+  ///
+  /// @param params all parameters, must be ordered and not overlapped
+  /// @return the index of the parameter, -1 if [#xy] is after all parameters
+  private <T extends SourceNode> int findParameters(@NotNull SeqView<T> params) {
+    var parameters = params.toSeq();
+    var result = parameters.view().map(SourceNode::sourcePos)
+      .binarySearch(
+        SourcePos.NONE,
+        (node, point) -> {
+          assert point == SourcePos.NONE;
+          return -node.compareVisually(xy.x(), xy.y());
+        });
+
+    int paramIdx;
+    if (result < 0) {
+      // result == - (insert point) - 1
+      var insertPoint = -(result + 1);
+      if (insertPoint >= parameters.size()) {
+        // [xy] is after the whole signature
+        paramIdx = -1;
+      } else {
+        // we treat the cursor is inside [insertPoint]th parameter, for example:
+        // insert point = 0, which means [xy] is before the whole signature, we treat it is inside the first parameter
+        paramIdx = insertPoint;
+      }
+    } else {
+      // the cursor is actually inside a parameter.
+      paramIdx = result;
+    }
+
+    return paramIdx;
+  }
+
   @Override
   public void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     var telescope = params;
@@ -88,28 +125,12 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     // in order to [indexWhere]
     if (result != null) telescope = telescope.appended(new Expr.Param(result.sourcePos(), RESULT_VAR, result, true));
 
-    var firstAfter = telescope.indexWhere(it -> xy.before(it.sourcePos()));
-    int idx = firstAfter;
-
-    // firstAfter == -1 -> cursor is after the whole signature
-    if (firstAfter != -1) {
-      // we treat the cursor is inside the next parameter if it is between two parameters
-      if (firstAfter != 0 && accept(xy, telescope.get(firstAfter - 1).sourcePos())) {
-        // if the cursor is inside the previous parameter
-        idx = firstAfter - 1;
-      }
-    }
+    var idx = findParameters(telescope);
 
     if (idx != -1) {
       result = telescope.get(idx).typeExpr();
       telescope = telescope.take(idx);
     }
-
-    // the cursor can in:
-    // 0. parameter
-    // 1. between parameters
-    // 2. result
-    // 3. before result, after ':' or before ':', after the last parameter
 
     // the key is skipping the variable that are not accessible, the expr doesn't matter,
     // as they will be skipped by [visitExpr] if the cursor is not inside
@@ -125,6 +146,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
 
   @Override
   public void visitDoBinds(@NotNull SeqView<Expr.DoBind> binds) {
+    // TODO: use findParameters
     // similar to visitTelescope
     var idx = binds.indexWhere(it -> accept(xy, it.sourcePos()));
     if (idx != -1) {
