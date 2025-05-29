@@ -4,6 +4,7 @@ open import STLC::Lemma
 open import data::unit
 open import relation::nullary::empty
 open import relation::binary::path
+open import relation::binary::nat_cmp
 
 open import arith::nat using (Nat , =?, s=s)
 open Nat
@@ -123,7 +124,7 @@ def instantiate-preverse
     | lastV : (D :<ʳ V) !! idx = just V := transport (fn l => (D :<ʳ V) !! l = just V) (pinv p) (!!-last D V)
     | T=V : T = V := just-inj (ht <=> lastV)
     in transport (fn T' => HasType G D v T') (pinv T=V) hv-weaken
-  | _ because reflect_false np => {??}
+  | _ because reflect_false np => bound-hasType (pinv (!!-not-last D V idx T (pinv ht) np))
   }
 | G, D, (lam t), V, T, (lam-hasType A B e ht), v, hv => let
   | IH : HasType G (A :< D) (instantiate t (suc (length D)) v) B := instantiate-preverse G (A :< D) t V B ht v hv

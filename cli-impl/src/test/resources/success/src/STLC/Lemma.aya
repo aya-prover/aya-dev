@@ -1,6 +1,9 @@
 open import data::list::base
+open import data::list::properties using (!!→length, length-++, ++-!!-l)
 open import relation::binary::path
 open import relation::nullary::empty
+open import relation::unary::negation
+open import relation::binary::nat_cmp
 
 open import arith::nat using (Nat)
 open Nat
@@ -16,3 +19,13 @@ def !!-++ {A : Type} (xs : List A) (n : Nat) (x : A) (xs !! n = just x) : Fn (ys
 def !!-last {A : Type} (xs : List A) (y : A) : (xs :<ʳ y) !! (length xs) = just y
 | nil, y => refl
 | (x :< xs), y => !!-last xs y
+
+def !!-not-last {A : Type} (xs : List A) (y : A) (n : Nat)
+  (x : A) (h : (xs :<ʳ y) !! n = just x)
+  (e : neg (n = length xs))
+  : xs !! n = just x => let
+  | n<lengthxsy : n < (length (xs :<ʳ y)) := !!→length n (xs :<ʳ y) x h
+  // suc n <= suc (length xs) -> n <= length xs
+  | n<suclengthxs : n < suc (length xs) := transport (fn l => n < l) (length-++ xs [ y ]) n<lengthxsy
+  | n<lengthxs : n < length xs := <=-with-≠ (s<=s n<suclengthxs) e
+  in pinv (++-!!-l n xs [ y ] n<lengthxs) <=> h
