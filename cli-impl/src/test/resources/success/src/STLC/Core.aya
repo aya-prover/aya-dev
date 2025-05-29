@@ -6,7 +6,7 @@ open import relation::nullary::empty
 open import relation::binary::path
 open import relation::binary::nat_cmp
 
-open import arith::nat using (Nat , =?, s=s)
+open import arith::nat using (Nat , =?, s=s, z≠s)
 open Nat
 
 open import relation::nullary::decidable using
@@ -27,6 +27,32 @@ open inductive Term
 | lam Term
 | app Term Term
 | true | false
+
+private def Term-diag Term : Nat
+| free _ => 0
+| bound _ => 1
+| lam _ => 2
+| app _ _ => 3
+| true => 4
+| false => 5
+
+private def app≠free {f a : Term} {n : Name} (p : app f a = free n) : Empty => let
+  | three=0 : 3 = 0 := pmap Term-diag p
+  in z≠s (pinv three=0)
+
+private def app≠bound {f a : Term} {n : Name} (p : app f a = bound n) : Empty => let
+  | three=1 : 3 = 1 := pmap Term-diag p
+  | step : 2 = 0 := s=s three=1
+  in z≠s (pinv step)
+
+private def app≠lam {f a t : Term} (p : app f a = lam t) : Empty => let
+  | three=2 : 3 = 2 := pmap Term-diag p
+  | step : 2 = 1 := s=s three=2
+  | step : 1 = 0 := s=s step
+  in z≠s (pinv step)
+
+private def app≠true {f a : Term} (p : app f a = true) : Empty => z≠s (s=s (s=s (s=s (pmap Term-diag p))))
+private def app≠false {f a : Term} (p : app f a = false) : Empty => z≠s (s=s (s=s (s=s (pmap Term-diag p))))
 
 open inductive Typu
 | Arrow Typu Typu
@@ -87,6 +113,27 @@ def instantiate (t : Term) Nat (v : Term) : Term
 | true, _, _ => t
 | false, _, _ => t
 
+private def app-diag-f Term : Term
+| app f a => f
+| _ => false
+
+private def app-diag-a Term : Term
+| app f a => a
+| _ => false
+
+private def Arrow-diag-A Typu : Typu
+| Arrow A B => A
+| _ => Bool
+
+private def Arrow-diag-B Typu : Typu
+| Arrow A B => B
+| _ => Bool
+
+private def app-inj-f {f f' a a' : Term} (p : app f a = app f' a') : f = f' => fn i => app-diag-f (p i)
+private def app-inj-a {f f' a a' : Term} (p : app f a = app f' a') : a = a' => fn i => app-diag-a (p i)
+private def Arrow-inj-A {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : A = A' => fn i => Arrow-diag-A (p i)
+private def Arrow-inj-B {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : B = B' => fn i => Arrow-diag-B (p i)
+
 private def if-map {P Q T : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) (then else : T) :
   if-then-else d then else = if-then-else (dec_map f g d) then else
 | f, g, _ because (reflect_true p), then, else => refl
@@ -135,3 +182,44 @@ def instantiate-preverse
   in app-hasType A IHf IHa
 | G, D, true, V, Bool, true-hasType, v, hv => true-hasType
 | G, D, false, V, Bool, false-hasType, v, hv => false-hasType
+
+def prevervation (G : FreeCtx)
+  (t : Term) (T : Typu)
+  (HasType G nil t T)
+  (t' : Term)
+  (Step t t')
+  : HasType G nil t' T
+| G, (app f' a'), T, (app-hasType A hf' ha'), t', app-update f a et g et' hupdate => let
+  | f'=f : f' = f := app-inj-f et
+  | a'=a : a' = a := app-inj-a et
+  | hf : HasType G nil f (Arrow A T) := transport (fn f => HasType G nil f (Arrow A T)) f'=f hf'
+  | ha : HasType G nil a A := transport (fn a => HasType G nil a A) a'=a ha'
+  | IH : HasType G nil g (Arrow A T) := prevervation G f (Arrow A T) hf g hupdate
+  in transport (fn t => HasType G nil t T) (pinv et')
+    (app-hasType A IH ha)
+| G, (app f' a'), T, (app-hasType A hf' ha'), t', (app-reduce v a et et') => let
+  | f'=lamv : f' = lam v := app-inj-f et
+  | a'=a : a' = a := app-inj-a et
+  | hlamv : HasType G nil (lam v) (Arrow A T) := transport (fn t => HasType G nil t (Arrow A T)) f'=lamv hf'
+  in match hlamv {
+  | lam-hasType A' B' eT hv => let
+    | A'=A : A' = A := Arrow-inj-A (pinv eT)
+    | B'=T : B' = T := Arrow-inj-B (pinv eT)
+    | ha : HasType G nil a A := transport (fn a => HasType G nil a A) a'=a ha'
+    | haA' : HasType G nil a A' := transport (fn A => HasType G nil a A) (pinv A'=A) ha
+    | t'-preserve : HasType G nil (instantiate v 0 a) B' := instantiate-preverse G nil v A' B' hv a haA'
+    | ht' : HasType G nil t' B' := transport (fn t => HasType G nil t B') (pinv et') t'-preserve
+    | ht'T : HasType G nil t' T := transport (fn T => HasType G nil t' T) B'=T ht'
+    in ht'T
+  }
+// handle impossible cases
+| G, free _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠free (pinv et))
+| G, bound _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠bound (pinv et))
+| G, lam _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠lam (pinv et))
+| G, true, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠true (pinv et))
+| G, false, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠false (pinv et))
+| G, free _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠free (pinv et))
+| G, bound _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠bound (pinv et))
+| G, lam _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠lam (pinv et))
+| G, true, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠true (pinv et))
+| G, false, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠false (pinv et))
