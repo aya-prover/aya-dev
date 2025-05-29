@@ -1,18 +1,21 @@
 open import data::list::base
 open import STLC::Map
+open import STLC::Lemma
 open import data::unit
 open import relation::nullary::empty
 open import relation::binary::path
 
-open import arith::nat using (Nat , =?)
+open import arith::nat using (Nat , =?, s=s)
 open Nat
 
-open import relation::nullary::decidable using (Decidable, yes, no, if-then-else, ifd)
+open import relation::nullary::decidable using
+  (Decidable, yes, no, if-then-else, ifd, map as dec_map)
+  (Reflect)
+open Reflect
 open Decidable
 
-open import data::maybe using (Maybe)
+open import data::maybe using (Maybe, nothing≠just, just-inj)
 open Maybe
-
 
 def Name : Type => Nat
 def Index : Type => Nat
@@ -74,7 +77,7 @@ open inductive Step Term Term : Type
   (t = app (lam v) a)
   (s = instantiate v 0 a)
 
-// replace the bodun variable n with given Term, do not shift other bound variables.
+// replace the bound variable n with given Term, do not shift other bound variables.
 def instantiate (t : Term) Nat (v : Term) : Term
 | free n, _, _ => t
 | bound i, n, v => if-then-else (i =? n) v t
@@ -83,6 +86,28 @@ def instantiate (t : Term) Nat (v : Term) : Term
 | true, _, _ => t
 | false, _, _ => t
 
+private def if-map {P Q T : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) (then else : T) :
+  if-then-else d then else = if-then-else (dec_map f g d) then else
+| f, g, _ because (reflect_true p), then, else => refl
+| f, g, _ because (reflect_false np), then, else => refl
+
+private def if-eq-refl {T : Type} (a : Nat) (t f : T) : if-then-else (a =? a) t f = t elim a
+| zero => refl
+| suc a => pinv (if-map (pmap suc) s=s (a =? a) t f) <=> (if-eq-refl a t f)
+
+def weakening {G : FreeCtx} {D : BoundCtx} {t : Term} {T : Typu} (HasType G D t T) : Fn (D' : BoundCtx) -> HasType G (D ++ D') t T
+| free-hasType h, D => free-hasType {G} {_} h
+| {G}, {D}, {bound idx}, bound-hasType h, D' => let
+  | !!-expand : just T = (D ++ D') !! idx := pinv (!!-++ D idx T (pinv h) D')
+  in bound-hasType !!-expand
+| {G}, {D}, {lam t}, lam-hasType A B e h, D' => let
+  | IH : HasType G ((A :< D) ++ D') t B := weakening h D'
+  in lam-hasType A B e IH
+| {G}, {D}, {app f a}, app-hasType A hf ha, D' =>
+  app-hasType A (weakening hf D') (weakening ha D')
+| true-hasType, D' => true-hasType
+| false-hasType, D' => false-hasType
+
 def instantiate-preverse
   (G : FreeCtx) (D : BoundCtx)
   (t : Term) (V : Typu) (T : Typu)
@@ -90,6 +115,22 @@ def instantiate-preverse
   (v : Term)
   (hv : HasType G nil v V)
   : HasType G D (instantiate t (length D) v) T
-| G, D, (free n), V, T, (free-hasType ht), v, hv => free-hasType ht
-| G, D, (bound idx), V, T, (bound-hasType ht), v, hv => {??}
-| G, D, t, V, T, ht, v, hv => {??}
+| G, D, (free n), V, T, (free-hasType ht), v, hv => free-hasType {G} {D} ht
+| G, D, (bound idx), V, T, (bound-hasType ht), v, hv =>
+  match idx =? length D as p returns HasType G D (if-then-else p v (bound idx)) T {
+  | _ because reflect_true p => let
+    | hv-weaken : HasType G D v V := weakening hv D
+    | lastV : (D :<ʳ V) !! idx = just V := transport (fn l => (D :<ʳ V) !! l = just V) (pinv p) (!!-last D V)
+    | T=V : T = V := just-inj (ht <=> lastV)
+    in transport (fn T' => HasType G D v T') (pinv T=V) hv-weaken
+  | _ because reflect_false np => {??}
+  }
+| G, D, (lam t), V, T, (lam-hasType A B e ht), v, hv => let
+  | IH : HasType G (A :< D) (instantiate t (suc (length D)) v) B := instantiate-preverse G (A :< D) t V B ht v hv
+  in lam-hasType A B e IH
+| G, D, (app f a), V, T, (app-hasType A hf ha), v, hv => let
+  | IHf := instantiate-preverse G D f V (Arrow A T) hf v hv
+  | IHa := instantiate-preverse G D a V A ha v hv
+  in app-hasType A IHf IHa
+| G, D, true, V, Bool, true-hasType, v, hv => true-hasType
+| G, D, false, V, Bool, false-hasType, v, hv => false-hasType
