@@ -1,0 +1,18 @@
+open import data::list::base
+open import relation::binary::path
+open import relation::nullary::empty
+
+open import arith::nat using (Nat)
+open Nat
+
+open import data::maybe using (Maybe, nothing≠just)
+open Maybe
+
+def !!-++ {A : Type} (xs : List A) (n : Nat) (x : A) (xs !! n = just x) : Fn (ys : List A) -> (xs ++ ys) !! n = just x
+| nil, n, x, h => exfalso (nothing≠just h)
+| x' :< xs, zero, x, h, _ => h
+| x' :< xs, suc n, x, h => !!-++ xs n x h
+
+def !!-last {A : Type} (xs : List A) (y : A) : (xs :<ʳ y) !! (length xs) = just y
+| nil, y => refl
+| (x :< xs), y => !!-last xs y

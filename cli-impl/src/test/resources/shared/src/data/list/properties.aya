@@ -73,6 +73,8 @@ def rev-distrib-++ (xs ys : List A) : rev (xs ++ ys) = (rev ys ++ rev xs) elim x
   | step3 : rev ys ++ rev' [ x ] xs = rev ys ++ (rev xs ++ [ x ]) := pmap (rev ys ++) (rev'-++ _ _)
   in step0 <=> step1 <=> step2 <=> pinv step3
 
+// TODO: reorganize these
+
 def !!→length (i : Nat) (xs : List A) (v : A) (xs !! i = just v) : i < length xs
 | 0, [ ], _, p => exfalso (nothing≠just p)
 | 0, _ :< _, _, p => refl
