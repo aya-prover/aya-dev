@@ -1,5 +1,6 @@
 open import arith::nat using (Nat)
+open import data::maybe
 open Nat
 
-def Map (A : Type) : Type => Nat -> A
-
+def Map (A : Type) : Type => Nat -> Maybe A
+def empty-map (A : Type) : Map A => fn _ => nothing

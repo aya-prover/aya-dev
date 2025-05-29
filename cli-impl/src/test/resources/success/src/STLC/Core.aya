@@ -61,11 +61,13 @@ open inductive Typu
 def FreeCtx : Type => Map Typu
 def BoundCtx : Type => List Typu
 
+def empty-free-ctx : FreeCtx => empty-map Typu
+
 open inductive HasType FreeCtx BoundCtx Term Typu : Type
 //   (n : T) ∈ Γ
 // ---------------
 //  Γ, Δ |- n : T
-| G, D, free n, T => free-hasType (T = G n)
+| G, D, free n, T => free-hasType (just T = G n)
 //    Δ[n] = T
 // ---------------
 //  Γ, Δ |- n : T
@@ -223,3 +225,10 @@ def prevervation (G : FreeCtx)
 | G, lam _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠lam (pinv et))
 | G, true, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠true (pinv et))
 | G, false, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠false (pinv et))
+
+// (lam. ^0) true ∈ Bool
+def test-hasType-0 : HasType empty-free-ctx nil (app (lam (bound 0)) true) Bool =>
+  app-hasType Bool (lam-hasType Bool Bool refl (bound-hasType {_} {[ Bool ]} {0} {Bool} refl)) true-hasType
+
+def freeTerm (t : Term) : Type => Sig (G : FreeCtx) (T : Typu) ** (HasType G nil t T)
+def boundTerm (t : Term) : Type => freeTerm t -> Empty
