@@ -10,9 +10,9 @@ def hello2 : Nat => 514
 def hello3 : String => "1919" ++ "810"
 
 module Subworld {
-  def foo (a : Nat) {b : Nat} : Nat
-  | zero => let c (d : Nat) (e : Nat) : Nat := d in c a a
-  | suc a => let b := "114" in a
+  def foo (a : Nat) {b : Nat} Nat : Nat
+  | zero, _ => let c (d : Nat) (e : Nat) : Nat := d in c a a
+  | suc a, _ => let b := "114" in a
 }
 
 variable A B : String

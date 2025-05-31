@@ -34,11 +34,11 @@ public class CompletionTest {
     assert stmt != null;
 
     var inTelescope = new XY(13, 25);     // {b : _Nat}
-    var inResult = new XY(13, 32);        // : _Nat
-    var inLetTele = new XY(14, 33);       // (e : _Nat)
-    var inLetResult = new XY(14, 40);     // : _Nat
-    var inLetBody = new XY(14, 52);       // _c a a
-    var inSucClause = new XY(15, 31);     // "114" in _a
+    var inResult = new XY(13, 35);        // : _Nat
+    var inLetTele = new XY(14, 36);       // (e : _Nat)
+    var inLetResult = new XY(14, 43);     // : _Nat
+    var inLetBody = new XY(14, 55);       // _c a a
+    var inSucClause = new XY(15, 34);     // "114" in _a
     var inSucPat = new XY(15, 4);         // | _suc a
     var betweenParams = new XY(13, 20);   // (a : Nat) _{b : Nat}
 

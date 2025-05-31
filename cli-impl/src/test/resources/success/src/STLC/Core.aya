@@ -76,11 +76,18 @@ open inductive HasType FreeCtx BoundCtx Term Typu : Type
   (A B : Typu)
   (T = Arrow A B)
   (HasType G (A :< D) t B)
+//  Γ, Δ |- f : A -> B   Γ, Δ |- a : A
+// ------------------------------------
+//           Γ, Δ |- f a : B
 | G, D, app f a, B => app-hasType
   (A : Typu)
   (HasType G D f (Arrow A B))
   (HasType G D a A)
+// ---------------------
+//  Γ, Δ |- true : Bool
 | G, D, true , Bool => true-hasType
+// ----------------------
+//  Γ, Δ |- false : Bool
 | G, D, false, Bool => false-hasType
 
 def value Term : Type
@@ -105,6 +112,14 @@ open inductive Step Term Term : Type
   (v a : Term)
   (t = app (lam v) a)
   (s = instantiate v 0 a)
+
+def bind (t : Term) Name Index : Term
+| free n, target, to => if-then-else (n =? target) (bound to) t
+| bound _, _, _ => t
+| lam t, target, to => lam (bind t target (suc to))
+| app f a, target, to => app (bind f target to) (bind a target to)
+| true, _, _ => t
+| false, _, _ => t
 
 // replace the bound variable n with given Term, do not shift other bound variables.
 def instantiate (t : Term) Nat (v : Term) : Term
@@ -226,7 +241,7 @@ def prevervation (G : FreeCtx)
 | G, true, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠true (pinv et))
 | G, false, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠false (pinv et))
 
-// (lam. ^0) true ∈ Bool
+// (), [] |- (lam. ^0) true : Bool
 def test-hasType-0 : HasType empty-free-ctx nil (app (lam (bound 0)) true) Bool =>
   app-hasType Bool (lam-hasType Bool Bool refl (bound-hasType {_} {[ Bool ]} {0} {Bool} refl)) true-hasType
 
