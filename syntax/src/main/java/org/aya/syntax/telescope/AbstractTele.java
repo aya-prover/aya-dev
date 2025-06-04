@@ -83,14 +83,14 @@ public interface AbstractTele {
   /// @return true if explicit
   boolean telescopeLicit(int i);
 
-  ///Get the name of {@param i}-th parameter.
+  /// Get the name of {@param i}-th parameter.
   @NotNull String telescopeName(int i);
 
-  ///Get all information of {@param i}-th parameter
+  /// Get all information of {@param i}-th parameter
   ///
-  ///@see #telescope
-  ///@see #telescopeName
-  ///@see #telescopeLicit
+  /// @see #telescope
+  /// @see #telescopeName
+  /// @see #telescopeLicit
   default @NotNull Param telescopeRich(int i, Term... teleArgs) {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
@@ -122,11 +122,11 @@ public interface AbstractTele {
 
   default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
 
-  ///Default implementation of {@link AbstractTele}
+  /// Default implementation of {@link AbstractTele}
   ///
-  ///@param telescope bound parameters, that is, the later parameter can refer to the former parameters
-  ///                 by {@link org.aya.syntax.core.term.LocalTerm}
-  ///@param result    bound result
+  /// @param telescope bound parameters, that is, the later parameter can refer to the former parameters
+  ///                                  by {@link org.aya.syntax.core.term.LocalTerm}
+  /// @param result    bound result
   record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
     @Override public int telescopeSize() { return telescope.size(); }
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
