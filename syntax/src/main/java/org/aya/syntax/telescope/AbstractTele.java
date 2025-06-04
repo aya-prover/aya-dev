@@ -70,37 +70,27 @@ public interface AbstractTele {
     return Panic.unreachable();
   }
 
-  /**
-   * Get the result of this signature
-   *
-   * @param teleArgs the arguments to all parameters.
-   */
+  /// Get the result of this signature
+  ///
+  /// @param teleArgs the arguments to all parameters.
   @NotNull Term result(Seq<Term> teleArgs);
 
-  /**
-   * Return the amount of parameters.
-   */
+  /// Return the amount of parameters.
   int telescopeSize();
 
-  /**
-   * Return the licit of {@param i}-th parameter.
-   *
-   * @return true if explicit
-   */
+  /// Return the licit of {@param i}-th parameter.
+  ///
+  /// @return true if explicit
   boolean telescopeLicit(int i);
 
-  /**
-   * Get the name of {@param i}-th parameter.
-   */
+  ///Get the name of {@param i}-th parameter.
   @NotNull String telescopeName(int i);
 
-  /**
-   * Get all information of {@param i}-th parameter
-   *
-   * @see #telescope
-   * @see #telescopeName
-   * @see #telescopeLicit
-   */
+  ///Get all information of {@param i}-th parameter
+  ///
+  ///@see #telescope
+  ///@see #telescopeName
+  ///@see #telescopeLicit
   default @NotNull Param telescopeRich(int i, Term... teleArgs) {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
@@ -132,13 +122,11 @@ public interface AbstractTele {
 
   default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
 
-  /**
-   * Default implementation of {@link AbstractTele}
-   *
-   * @param telescope bound parameters, that is, the later parameter can refer to the former parameters
-   *                  by {@link org.aya.syntax.core.term.LocalTerm}
-   * @param result    bound result
-   */
+  ///Default implementation of {@link AbstractTele}
+  ///
+  ///@param telescope bound parameters, that is, the later parameter can refer to the former parameters
+  ///                 by {@link org.aya.syntax.core.term.LocalTerm}
+  ///@param result    bound result
   record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
     @Override public int telescopeSize() { return telescope.size(); }
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
@@ -227,9 +215,7 @@ public interface AbstractTele {
     return new Inst(this, preArgs);
   }
 
-  /**
-   * Apply first {@code args.size()} parameters with {@param args} of {@param signature}
-   */
+  /// Apply first {@code args.size()} parameters with {@param args} of {@param signature}
   record Inst(
     @NotNull AbstractTele signature,
     @NotNull ImmutableSeq<Term> args
