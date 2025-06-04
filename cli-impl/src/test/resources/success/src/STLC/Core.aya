@@ -190,15 +190,21 @@ def bind-preserve
 
 // The only case we care is instantiating the last bound variable, otherwise we have to handle shifting.
 // In practice, we always instantiate in order; in the other hand, if you have to instantiate an non-last bound variable,
-// you can do that in this manner:
+// you can do that in this procedure:
 // Suppose `Γ, Δ ++ [ B ] ++ [ A ] |- t : C`, then
 // ```
 // let
 // | t' := instantiate t (length Δ + 1) (free nameT)      // (nameT : A, Γ), Δ ++ [ B ] |- t' : C
 // | inst_t' := instantiate t (length Δ) v                // (nameT : A, Γ), Δ |- inst_t' : C
 // | recover := bind t (free nameT) (length Δ)            // Γ, Δ ++ [ A ] |- recover : C
+//                                                        // you can also use `weakening` to preserve `B`
+//                                                        // (nameT : A, Γ), Δ ++ [ B ] |- inst_t' : C
+//                                                        // and then
+//                                                        // Γ, Δ ++ [ B ] ++ [ A ] |- recover : C
 // in recover
 // ```
+// In fact, if we treat `t` a function `A -> B -> C`,
+// then this procedure is exactly `fn nameT => t nameT v`.
 def instantiate-preverse
   (G : FreeCtx) (D : BoundCtx)
   (t : Term) (V : Typu) (T : Typu)
