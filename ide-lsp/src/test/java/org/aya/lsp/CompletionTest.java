@@ -77,7 +77,7 @@ public class CompletionTest {
     client.execute(compile((_, _) -> { }));
     var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
     assert source != null;
-    var xy = new XY(14, 52);        // _c a a
+    var xy = new XY(14, 55);        // _c a a
     // XY: 14, 52
     var list = CompletionProvider.completion(source, xy, AyaDocile::easyToString).items;
     return;

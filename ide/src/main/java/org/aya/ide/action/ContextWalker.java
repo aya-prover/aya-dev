@@ -35,6 +35,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   private final @NotNull MutableList<String> moduleContext;
   private final @NotNull XY xy;
   private @Nullable Either<Expr, Pattern> leaf;
+  private @Nullable Expr lastApp;
 
   public ContextWalker(@NotNull XY xy) {
     this.xy = xy;
@@ -122,7 +123,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   public void visitTelescope(@NotNull SeqView<Expr.Param> params, @Nullable WithPos<Expr> result) {
     var telescope = params;
 
-    // in order to [indexWhere]
+    // in order to [findParameters]
     if (result != null) telescope = telescope.appended(new Expr.Param(result.sourcePos(), RESULT_VAR, result, true));
 
     var idx = findParameters(telescope);
@@ -191,19 +192,30 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
     // only [LocalVar] is possible, as we ignore [GeneralizedVar]
     if (!(var instanceof LocalVar localVar)
       // ignore invisible vars
-      || localVar.generateKind() != GenerateKind.Basic.None) return;
+      || localVar.isGenerated()) return;
     this.localContext.put(var.name(), new Completion.Item.Local(var, type));
   }
 
   @Override
   public void doVisitExpr(@NotNull SourcePos sourcePos, @NotNull Expr expr) {
     leaf = Either.left(expr);
+
+    switch (expr) {
+      case Expr.App _, Expr.BinOpSeq _ -> this.lastApp = expr;
+      default -> { }
+    }
+
     Cursor.super.doVisitExpr(sourcePos, expr);
   }
 
   /// @return the last visited expr
   public @Nullable Either<Expr, Pattern> leaf() {
     return leaf;
+  }
+
+  /// @return the last application node, must be [Expr.App] or [Expr.BinOpSeq]
+  public @Nullable Expr lastApp() {
+    return lastApp;
   }
 
   /// @return all accessible local variables and their concrete types. The order is not guaranteed.

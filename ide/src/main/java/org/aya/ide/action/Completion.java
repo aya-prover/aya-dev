@@ -37,10 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Completion {
-  public record Param(@NotNull String name, @NotNull StmtVisitor.Type type) implements AyaDocile {
+  public record Param(@Nullable String name, @NotNull StmtVisitor.Type type, boolean licit) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      return Doc.parened(Doc.sep(Doc.plain(name), Tokens.HAS_TYPE, type.toDoc(options)));
+      var nameDoc = name == null ? Doc.empty() : Doc.sep(Doc.plain(name), Tokens.HAS_TYPE);
+      var param = Doc.sepNonEmpty(nameDoc, type.toDoc(options));
+      return licit ? Doc.parened(param) : Doc.braced(param);
     }
   }
 
@@ -48,7 +50,11 @@ public final class Completion {
                           @NotNull StmtVisitor.Type result) implements AyaDocile {
     public static @NotNull Telescope from(@NotNull ImmutableSeq<Expr.Param> params, @Nullable WithPos<Expr> result) {
       return new Telescope(
-        params.map(p -> new Param(p.ref().name(), new StmtVisitor.Type(p.type()))),
+        params.map(p ->
+          new Param(
+            p.ref().isGenerated() ? null : p.ref().name(),
+            new StmtVisitor.Type(p.type()), p.explicit())
+        ),
         result == null ? StmtVisitor.Type.noType : new StmtVisitor.Type(result.data()));
     }
 
@@ -74,11 +80,13 @@ public final class Completion {
     }
 
     /// @param disambiguous which {@link ModuleName} this declaration defines in
+    /// @param ownerName the name of the owner, used by constructors or fields
     record Decl(
       @NotNull ModuleName disambiguous,
       @Override @NotNull String name,
       @Override @NotNull Telescope type,
-      @NotNull Kind kind
+      @NotNull Kind kind,
+      @Nullable String ownerName
     ) implements Symbol {
       // TODO: I guess we can place this in [syntax] module
       public enum Kind {
@@ -166,6 +174,11 @@ public final class Completion {
 
     if (info != null) {
       var modName = ModuleName.from(context);
+      // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
+      // if (modName == ModuleName.This && inModule != null) {
+      //   modName = inModule;
+      // }
+
       switch (modName) {
         case ModuleName.ThisRef _ -> {
           topLevelContext = resolveTopLevel(info.thisModule());
@@ -193,6 +206,7 @@ public final class Completion {
 
   private static @NotNull Item.Decl from(@NotNull ModuleName inMod, @NotNull String name, @NotNull AnyVar var) {
     Item.Decl.Kind declKind;
+    String ownerName = null;
     Telescope type = switch (var) {
       case GeneralizedVar gVar -> {
         declKind = Item.Decl.Kind.Generalized;
@@ -202,21 +216,30 @@ public final class Completion {
         // TODO: try defVar.signature? but that requires some tycking
         var concrete = defVar.concrete;
         declKind = Item.Decl.Kind.from(concrete);
+
+        if (concrete instanceof DataCon con) {
+          ownerName = con.dataRef.concrete.ref.name();
+        }
+
         yield switch (concrete) {
-          case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
+          case ClassDecl _ -> throw new UnsupportedOperationException("TODO");
           case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
         };
       }
       case CompiledVar jitVar -> {
         declKind = Item.Decl.Kind.from(jitVar.core());
         yield switch (jitVar.core()) {
-          case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
+          case JitClass _ -> throw new UnsupportedOperationException("TODO");
           case JitTele jitTele -> {
+            if (jitTele instanceof JitCon con) {
+              ownerName = con.dataType.name();
+            }
+
             var freeParams = AbstractTele.enrich(jitTele);
             var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
             yield new Telescope(
               freeParams.map(it ->
-                new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
+                new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())), it.explicit())),
               new StmtVisitor.Type(LazyValue.ofValue(freeResult))
             );
           }
@@ -228,7 +251,7 @@ public final class Completion {
       }
     };
 
-    return new Item.Decl(inMod, name, type, declKind);
+    return new Item.Decl(inMod, name, type, declKind, ownerName);
   }
 
   /// Resolve all top level declarations

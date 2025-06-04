@@ -54,6 +54,15 @@ public interface StmtVisitor extends Consumer<Stmt> {
   @Deprecated
   @NotNull LazyValue<@Nullable Term> noType = LazyValue.ofValue(null);
 
+  record ExprInfo(@Nullable AppNode appNode) {
+    sealed interface AppNode {
+      int index();
+    }
+
+    record App(@NotNull Expr.App app, int index) implements AppNode { }
+    record BinOp(@NotNull Expr.BinOpSeq seq, int index) implements AppNode { }
+  }
+
   /// invoked when a module name is introduced, such as a module declaration or import-as
   default void visitModuleDecl(@NotNull SourcePos pos, @NotNull ModuleName path) { }
   /// module name ref
