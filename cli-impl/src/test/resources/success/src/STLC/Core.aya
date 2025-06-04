@@ -3,6 +3,7 @@ open import STLC::Map
 open import STLC::Lemma
 open import data::unit
 open import relation::nullary::empty
+open import relation::unary::negation
 open import relation::binary::path
 open import relation::binary::nat_cmp
 
@@ -151,15 +152,6 @@ private def app-inj-a {f f' a a' : Term} (p : app f a = app f' a') : a = a' => f
 private def Arrow-inj-A {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : A = A' => fn i => Arrow-diag-A (p i)
 private def Arrow-inj-B {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : B = B' => fn i => Arrow-diag-B (p i)
 
-private def if-map {P Q T : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) (then else : T) :
-  if-then-else d then else = if-then-else (dec_map f g d) then else
-| f, g, _ because (reflect_true p), then, else => refl
-| f, g, _ because (reflect_false np), then, else => refl
-
-private def if-eq-refl {T : Type} (a : Nat) (t f : T) : if-then-else (a =? a) t f = t elim a
-| zero => refl
-| suc a => pinv (if-map (pmap suc) s=s (a =? a) t f) <=> (if-eq-refl a t f)
-
 def weakening {G : FreeCtx} {D : BoundCtx} {t : Term} {T : Typu} (HasType G D t T) : Fn (D' : BoundCtx) -> HasType G (D ++ D') t T
 | free-hasType h, D => free-hasType {G} {_} h
 | {G}, {D}, {bound idx}, bound-hasType h, D' => let
@@ -173,6 +165,40 @@ def weakening {G : FreeCtx} {D : BoundCtx} {t : Term} {T : Typu} (HasType G D t 
 | true-hasType, D' => true-hasType
 | false-hasType, D' => false-hasType
 
+def bind-preserve
+  {G : FreeCtx} {D : BoundCtx}
+  {t : Term} {V : Typu} {T : Typu}
+  {name : Name}
+  (ht : HasType (put G name V) D t T)
+  : HasType G (D :<ʳ V) (bind t name (length D)) T
+| {G}, {D}, {free n}, {V}, {T}, {name}, free-hasType ht =>
+  match n =? name as p returns HasType G (D :<ʳ V) (if-then-else p (bound (length D)) t) T {
+  | _ because reflect_true p => let
+    | e : put G name V name = just V := put-same G name V
+    | htn : just T = put G name V name := transport (fn n => just T = put G name V n) p ht
+    | jT=jV : just T = just V := htn <=> e
+    in bound-hasType (jT=jV <=> (pinv (!!-last D V)))
+  | _ because reflect_false np => free-hasType {G} {_} (ht <=> put-not-same G name V n (npinv np))
+  }
+| {G}, {D}, {bound n}, {V}, {T}, {name}, bound-hasType ht => bound-hasType (pinv (!!-++ D n T (pinv ht) [ V ]))
+| {G}, {D}, {lam t}, {V}, {T}, {name}, lam-hasType A B e ht => let
+  | IH : HasType G ((A :< D) :<ʳ V) (bind t name (suc (length D))) B := bind-preserve ht
+  in lam-hasType A B e IH
+| {G}, {D}, {app f a}, {V}, {T}, {name}, app-hasType A hf ha => app-hasType A (bind-preserve hf) (bind-preserve ha)
+| {G}, {D}, {true}, {V}, {Bool}, {name}, true-hasType => true-hasType
+| {G}, {D}, {false}, {V}, {Bool}, {name}, false-hasType => false-hasType
+
+// The only case we care is instantiating the last bound variable, otherwise we have to handle shifting.
+// In practice, we always instantiate in order; in the other hand, if you have to instantiate an non-last bound variable,
+// you can do that in this manner:
+// Suppose `Γ, Δ ++ [ B ] ++ [ A ] |- t : C`, then
+// ```
+// let
+// | t' := instantiate t (length Δ + 1) (free nameT)      // (nameT : A, Γ), Δ ++ [ B ] |- t' : C
+// | inst_t' := instantiate t (length Δ) v                // (nameT : A, Γ), Δ |- inst_t' : C
+// | recover := bind t (free nameT) (length Δ)            // Γ, Δ ++ [ A ] |- recover : C
+// in recover
+// ```
 def instantiate-preverse
   (G : FreeCtx) (D : BoundCtx)
   (t : Term) (V : Typu) (T : Typu)
