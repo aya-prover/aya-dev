@@ -148,6 +148,7 @@ public class ContextWalker implements SyntaxNodeAction.Cursor {
   @Override
   public void visitDoBinds(@NotNull SeqView<Expr.DoBind> binds) {
     // TODO: use findParameters
+    //  be aware that array comp block also use this method, however, `binds` is not well-ordered: it's generator is before other binds.
     // similar to visitTelescope
     var idx = binds.indexWhere(it -> accept(xy, it.sourcePos()));
     if (idx != -1) {

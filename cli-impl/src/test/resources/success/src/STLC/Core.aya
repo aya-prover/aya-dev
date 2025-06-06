@@ -7,17 +7,12 @@ open import relation::unary::negation
 open import relation::binary::path
 open import relation::binary::nat_cmp
 
-open import arith::nat using (Nat , =?, s=s, z≠s)
-open Nat
-
+open import arith::nat using (Nat, zero, suc, =?, s=s, z≠s)
 open import relation::nullary::decidable using
-  (Decidable, yes, no, if-then-else, ifd, map as dec_map)
-  (Reflect)
-open Reflect
-open Decidable
+  (Decidable, because, yes, no, if-then-else, ifd, map as dec_map)
+  (Reflect, reflect_true, reflect_false)
 
-open import data::maybe using (Maybe, nothing≠just, just-inj)
-open Maybe
+open import data::maybe using (Maybe, just, nothing, nothing≠just, just-inj)
 
 def Name : Type => Nat
 def Index : Type => Nat
@@ -277,5 +272,6 @@ def prevervation (G : FreeCtx)
 def test-hasType-0 : HasType empty-free-ctx nil (app (lam (bound 0)) true) Bool =>
   app-hasType Bool (lam-hasType Bool Bool refl (bound-hasType {_} {[ Bool ]} {0} {Bool} refl)) true-hasType
 
+def wellTyped (t : Term) : Type => Sig (G : FreeCtx) (D : BoundCtx) (T : Typu) ** (HasType G D t T)
 def freeTerm (t : Term) : Type => Sig (G : FreeCtx) (T : Typu) ** (HasType G nil t T)
-def boundTerm (t : Term) : Type => freeTerm t -> Empty
+def boundTerm (t : Term) : Type => Sig (wellTyped t) ** (freeTerm t -> Empty)
