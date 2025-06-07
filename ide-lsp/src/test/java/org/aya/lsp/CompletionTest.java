@@ -10,6 +10,7 @@ import org.aya.ide.action.ContextWalker;
 import org.aya.ide.util.XY;
 import org.aya.lsp.actions.CompletionProvider;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.javacs.lsp.CompletionItemKind;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.aya.lsp.LspTest.TEST_LIB;
 import static org.aya.lsp.LspTest.launch;
 import static org.aya.lsp.tester.TestCommand.compile;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CompletionTest {
   private static @NotNull ContextWalker runWalker(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
@@ -79,8 +81,17 @@ public class CompletionTest {
     assert source != null;
     var xy = new XY(14, 55);        // _c a a
     // XY: 14, 52
-    var list = CompletionProvider.completion(source, xy, AyaDocile::easyToString).items;
-    return;
+    var list = ImmutableSeq.from(CompletionProvider.completion(source, xy, AyaDocile::easyToString).items);
+
+    var c = list.find(i -> i.label.equals("c")).get();
+    assertEquals(CompletionItemKind.Variable, c.kind);
+    assertNotNull(c.labelDetails);
+    assertEquals(" : Nat -> Nat -> Nat", c.labelDetails.detail);
+
+    var String = list.find(i -> i.label.equals("String")).get();
+    assertEquals(CompletionItemKind.Interface, String.kind);
+    assertNotNull(String.labelDetails);
+    assertEquals("StringPrims", String.labelDetails.description);
   }
 
   public void assertContext(@NotNull ContextWalker walker, String @NotNull ... asserts) {

@@ -23,10 +23,7 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.CompiledVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Panic;
@@ -227,6 +224,7 @@ public final class Completion {
 
         yield switch (concrete) {
           case ClassDecl _ -> throw new UnsupportedOperationException("TODO");
+          // TODO: result can be null, solution: use core signature
           case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
         };
       }
