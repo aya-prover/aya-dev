@@ -41,8 +41,12 @@ public final class Completion {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var nameDoc = name == null ? Doc.empty() : Doc.sep(Doc.plain(name), Tokens.HAS_TYPE);
-      var param = Doc.sepNonEmpty(nameDoc, type.toDoc(options));
-      return licit ? Doc.parened(param) : Doc.braced(param);
+      var typeDoc = type.toDoc(options);
+      return licit
+        ? (nameDoc.isEmpty()
+        ? typeDoc                                         // Foo
+        : Doc.parened(Doc.sep(nameDoc, typeDoc)))         // (a : Foo)
+        : Doc.braced(Doc.sepNonEmpty(nameDoc, typeDoc));    // {Foo} or {a : Foo}
     }
   }
 

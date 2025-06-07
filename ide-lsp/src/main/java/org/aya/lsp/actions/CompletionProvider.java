@@ -91,9 +91,7 @@ public final class CompletionProvider {
         completionItem.labelDetails = new CompletionItemLabelDetails();
         completionItem.labelDetails.detail = " " + renderer.render(decl.type());
 
-        var disambi = decl.disambiguous();
-        if (decl.ownerName() != null) disambi = disambi.resolve(decl.ownerName());
-        completionItem.labelDetails.description = disambi.toString();
+        completionItem.labelDetails.description = decl.disambiguous().toString();
       }
     }
 
