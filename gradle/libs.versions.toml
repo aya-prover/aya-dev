@@ -13,14 +13,14 @@ kala = "0.82.0"
 # https://picocli.info
 picocli = "4.7.6"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
-aya-upstream = "0.0.35"
+aya-upstream = "0.0.36"
 # https://github.com/jline/jline3
-jline = "3.29.0"
+jline = "3.30.4"
 # https://junit.org/junit5
 junit = "5.11.3"
 hamcrest = "2.2"
 # https://github.com/google/gson
-gson = "2.12.1"
+gson = "2.13.1"
 # https://github.com/beryx/badass-jlink-plugin
 jlink = "3.1.1"
 # https://github.com/jacoco/jacoco
