@@ -1,0 +1,28 @@
+open import arith::nat using (Nat, =?)
+open import data::maybe
+open import relation::nullary::decidable
+open import relation::binary::path
+open import relation::unary::negation
+open import relation::nullary::empty
+open Nat
+
+open import STLC::Lemma
+
+def Map (A : Type) : Type => Nat -> Maybe A
+def empty-map (A : Type) : Map A => fn _ => nothing
+
+def put {A : Type} (m : Map A) (key : Nat) (v : A) : Map A =>
+  fn k => if-then-else (k =? key) (just v) (m k)
+
+def remove {A : Type} (m : Map A) (key : Nat) : Map A =>
+  fn k => if-then-else (k =? key) nothing (m k)
+
+def put-same {A : Type} (m : Map A) (key : Nat) (v : A) : put m key v key = just v =>
+  if-eq-refl key (just v) (m key)
+
+def put-not-same {A : Type} (m : Map A) (key : Nat) (v : A) (key' : Nat) (ne : neg (key = key'))
+  : put m key v key' = m key' => match key' =? key as p returns if-then-else p (just v) (m key') = m key' {
+  | _ because reflect_true p => exfalso (ne (pinv p))
+  | _ because reflect_false np => refl
+  }
+

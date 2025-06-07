@@ -227,15 +227,11 @@ public record CompiledModule(
       var modRename = ModuleName.qualified(anImport.rename);
       var isPublic = anImport.isPublic;
 
-      var loaded = loader.load(modName);
-      if (loaded.isErr()) {
-        throw new Panic("Unable to load a dependency module of a compiled module");
-      }
+      var loaded = loader.load(modName)
+        .getOrThrow(() -> new Panic("Unable to load a dependency module of a compiled module"));
 
-      var info = loaded.get();
-
-      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(info, isPublic));
-      var mod = info.thisModule();
+      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(loaded, isPublic));
+      var mod = loaded.thisModule();
       var success = thisResolve.thisModule()
         .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
       if (! success) Panic.unreachable();
@@ -253,7 +249,7 @@ public record CompiledModule(
       var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
-      thisResolve.open(info, SourcePos.SER, acc);
+      thisResolve.open(loaded, SourcePos.SER, acc);
     }
   }
 

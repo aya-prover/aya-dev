@@ -21,9 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-/**
- * @author re-xyr, kiva, ice1000
- */
+/// @author re-xyr, kiva, ice1000
 public record DepTypeTerm(
   @NotNull DTKind kind, @NotNull Term param,
   @NotNull Closure body
@@ -36,22 +34,19 @@ public record DepTypeTerm(
     return update(f.apply(0, param), body.descent(f));
   }
 
-  /**
-   * i : I |- a : A i
-   * ------------------
-   * i : I |- B i a
-   * <p>
-   * It's not the case that [a] contains [i], [i] only appears in [A] and [B a]
-   */
+  /// ```
+  ///  i : I |- a : A i
+  /// ------------------
+  ///   i : I |- B i a
+  ///```
+  /// It's not the case that {@param a} contains {@param i}, {@param i} only appears in `A` and `B a`
   private Closure.@NotNull Locns abstractBia(@NotNull LocalVar i, Closure a) {
     return body.apply(a.apply(i)).bind(i);
   }
 
-  /**
-   * Perform {@code coe} on a dependent type.
-   *
-   * @param i the parameter of {@link CoeTerm#type()}
-   */
+  /// Perform {@code coe} on a dependent type.
+  ///
+  /// @param i the parameter of {@link CoeTerm#type()}
   public @NotNull Term coe(@NotNull LocalVar i, CoeTerm coe) {
     // We may suppose: pi/sigma = `(a : A i), B i a`,
     // this is i : I |- A i

@@ -15,6 +15,7 @@ import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.ModuleName;
@@ -22,10 +23,7 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.CompiledVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.GeneralizedVar;
+import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Panic;
@@ -36,10 +34,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Completion {
-  public record Param(@NotNull String name, @NotNull StmtVisitor.Type type) implements AyaDocile {
+  public record Param(@Nullable String name, @NotNull StmtVisitor.Type type, boolean licit) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      return Doc.parened(Doc.sep(Doc.plain(name), Tokens.HAS_TYPE, type.toDoc(options)));
+      var nameDoc = name == null ? Doc.empty() : Doc.sep(Doc.plain(name), Tokens.HAS_TYPE);
+      var typeDoc = type.toDoc(options);
+      return licit
+        ? (nameDoc.isEmpty()
+        ? typeDoc                                         // Foo
+        : Doc.parened(Doc.sep(nameDoc, typeDoc)))         // (a : Foo)
+        : Doc.braced(Doc.sepNonEmpty(nameDoc, typeDoc));    // {Foo} or {a : Foo}
     }
   }
 
@@ -47,7 +51,11 @@ public final class Completion {
                           @NotNull StmtVisitor.Type result) implements AyaDocile {
     public static @NotNull Telescope from(@NotNull ImmutableSeq<Expr.Param> params, @Nullable WithPos<Expr> result) {
       return new Telescope(
-        params.map(p -> new Param(p.ref().name(), new StmtVisitor.Type(p.type()))),
+        params.map(p ->
+          new Param(
+            p.ref().isGenerated() ? null : p.ref().name(),
+            new StmtVisitor.Type(p.type()), p.explicit())
+        ),
         result == null ? StmtVisitor.Type.noType : new StmtVisitor.Type(result.data()));
     }
 
@@ -55,8 +63,12 @@ public final class Completion {
       // TODO: unify with ConcretePrettier/CorePrettier?
       var docs = MutableList.<Doc>create();
       telescope.forEach(p -> docs.append(p.toDoc(options)));
-      docs.append(Tokens.HAS_TYPE);
-      docs.append(result.toDoc(options));
+
+      var resultDoc = result.toDocile();
+      if (resultDoc != null) {
+        docs.append(Tokens.HAS_TYPE);
+        docs.append(resultDoc.toDoc(options));
+      }
 
       return Doc.sep(docs);
     }
@@ -69,11 +81,13 @@ public final class Completion {
     }
 
     /// @param disambiguous which {@link ModuleName} this declaration defines in
+    /// @param ownerName the name of the owner, used by constructors or fields
     record Decl(
       @NotNull ModuleName disambiguous,
       @Override @NotNull String name,
       @Override @NotNull Telescope type,
-      @NotNull Kind kind
+      @NotNull Kind kind,
+      @Nullable String ownerName
     ) implements Symbol {
       // TODO: I guess we can place this in [syntax] module
       public enum Kind {
@@ -118,12 +132,7 @@ public final class Completion {
 
       @Override
       public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-        var typeDoc = userType.toDocile();
-        var realTypeDoc = typeDoc == null
-          ? Doc.empty()
-          : Doc.sep(Tokens.HAS_TYPE, typeDoc.toDoc(options));
-
-        return Doc.sepNonEmpty(BasePrettier.varDoc(var), realTypeDoc);
+        return Doc.sepNonEmpty(BasePrettier.varDoc(var), type().toDoc(options));
       }
     }
   }
@@ -136,6 +145,8 @@ public final class Completion {
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
 
+  /// @param incompleteName    the incomplete name under the cursor, only used for determine the context of completion
+  /// @param endsWithSeparator ditto
   public Completion(
     @NotNull LibrarySource source,
     @NotNull XY xy,
@@ -152,15 +163,33 @@ public final class Completion {
   public @NotNull Completion compute() {
     var stmts = source.program().get();
     var info = source.resolveInfo().get();
+    var context = endsWithSeparator ? incompleteName : incompleteName.dropLast(1);
 
-    if (stmts != null) {
-      var walker = resolveLocal(stmts, xy);
-      this.inModule = walker.moduleContext();
-      this.localContext = walker.localContext();
+    if (context.isEmpty()) {
+      if (stmts != null) {
+        var walker = resolveLocal(stmts, xy);
+        this.inModule = walker.moduleContext();
+        this.localContext = walker.localContext();
+      }
     }
 
     if (info != null) {
-      topLevelContext = resolveTopLevel(info.thisModule());
+      var modName = ModuleName.from(context);
+      // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
+      // if (modName == ModuleName.This && inModule != null) {
+      //   modName = inModule;
+      // }
+
+      switch (modName) {
+        case ModuleName.ThisRef _ -> {
+          topLevelContext = resolveTopLevel(info.thisModule());
+        }
+        case ModuleName.Qualified qualified -> {
+          var mod = info.thisModule().getModuleMaybe(qualified);
+          if (mod == null) break;     // TODO: do something?
+          topLevelContext = resolveModLevel(qualified, mod);
+        }
+      }
     }
 
     return this;
@@ -174,6 +203,57 @@ public final class Completion {
     var walker = new ContextWalker(xy);
     stmts.forEach(walker);
     return walker;
+  }
+
+  private static @NotNull Item.Decl from(@NotNull ModuleName inMod, @NotNull String name, @NotNull AnyVar var) {
+    Item.Decl.Kind declKind;
+    String ownerName = null;
+    Telescope type = switch (var) {
+      case GeneralizedVar gVar -> {
+        declKind = Item.Decl.Kind.Generalized;
+        yield new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
+      }
+      case DefVar<?, ?> defVar -> {
+        // TODO: try defVar.signature? but that requires some tycking
+        var concrete = defVar.concrete;
+        declKind = Item.Decl.Kind.from(concrete);
+
+        if (concrete instanceof DataCon con) {
+          ownerName = con.dataRef.concrete.ref.name();
+        }
+
+        yield switch (concrete) {
+          case ClassDecl _ -> throw new UnsupportedOperationException("TODO");
+          // TODO: result can be null, solution: use core signature
+          case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
+        };
+      }
+      case CompiledVar jitVar -> {
+        declKind = Item.Decl.Kind.from(jitVar.core());
+        yield switch (jitVar.core()) {
+          case JitClass _ -> throw new UnsupportedOperationException("TODO");
+          case JitTele jitTele -> {
+            if (jitTele instanceof JitCon con) {
+              ownerName = con.dataType.name();
+            }
+
+            var freeParams = AbstractTele.enrich(jitTele);
+            var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
+            yield new Telescope(
+              freeParams.map(it ->
+                new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())), it.explicit())),
+              new StmtVisitor.Type(LazyValue.ofValue(freeResult))
+            );
+          }
+        };
+      }
+      default -> {
+        declKind = Item.Decl.Kind.Prim;     // make compiler happy
+        yield Panic.unreachable();
+      }
+    };
+
+    return new Item.Decl(inMod, name, type, declKind, ownerName);
   }
 
   /// Resolve all top level declarations
@@ -191,42 +271,7 @@ public final class Completion {
         var candycandy = MutableList.<Item.Decl>create();
         decls.put(name, candycandy);
         candy.forEach((inMod, var) -> {
-          Item.Decl.Kind declKind;
-          Telescope type = switch (var) {
-            case GeneralizedVar gVar -> {
-              declKind = Item.Decl.Kind.Generalized;
-              yield new Telescope(ImmutableSeq.empty(), new StmtVisitor.Type(gVar.owner.type.data()));
-            }
-            case DefVar<?, ?> defVar -> {
-              // TODO: try defVar.signature? but that requires some tycking
-              var concrete = defVar.concrete;
-              declKind = Item.Decl.Kind.from(concrete);
-              yield switch (concrete) {
-                case ClassDecl classDecl -> throw new UnsupportedOperationException("TODO");
-                case TeleDecl teleDecl -> Telescope.from(teleDecl.telescope, teleDecl.result);
-              };
-            }
-            case CompiledVar jitVar -> {
-              declKind = Item.Decl.Kind.from(jitVar.core());
-              yield switch (jitVar.core()) {
-                case JitClass jitClass -> throw new UnsupportedOperationException("TODO");
-                case JitTele jitTele -> {
-                  var freeParams = AbstractTele.enrich(jitTele);
-                  var freeResult = jitTele.result(freeParams.map(it -> new FreeTerm(it.ref())));
-                  yield new Telescope(
-                    freeParams.map(it ->
-                      new Param(it.ref().name(), new StmtVisitor.Type(LazyValue.ofValue(it.type())))),
-                    new StmtVisitor.Type(LazyValue.ofValue(freeResult))
-                  );
-                }
-              };
-            }
-            default -> {
-              declKind = Item.Decl.Kind.Prim;     // make compiler happy
-              yield Panic.unreachable();
-            }
-          };
-          var decl = new Item.Decl(inMod, name, type, declKind);
+          var decl = from(inMod, name, var);
           candycandy.append(decl);
         });
       });
@@ -241,5 +286,24 @@ public final class Completion {
       .flatMap(it -> SeqView.<Item>narrow(it.view()))
       .toSeq()        // TODO: fix this copy
       .appendedAll(modules.valuesView());
+  }
+
+  public static @NotNull ImmutableSeq<Item> resolveModLevel(@NotNull ModuleName.Qualified inMod, @NotNull ModuleExport export) {
+    var decls = MutableList.<Item.Decl>create();
+    var modules = MutableList.<Item.Module>create();
+
+    export.symbols().forEach((name, var) -> {
+      var decl = from(inMod, name, var);
+      decls.append(decl);
+    });
+
+    export.modules().forEach((mod, _) -> {
+      var fullName = inMod.concat(mod);
+      modules.append(new Item.Module(fullName));
+    });
+
+    return SeqView.<Item>narrow(decls.view())
+      .concat(modules)
+      .toSeq();
   }
 }

@@ -1,0 +1,46 @@
+open import data::list::base
+open import data::list::properties using (!!→length, length-++, ++-!!-l)
+open import relation::binary::path
+open import relation::nullary::empty
+open import relation::unary::negation
+open import relation::binary::nat_cmp
+
+open import relation::nullary::decidable using
+  (Decidable, yes, no, if-then-else, ifd, map as dec_map)
+  (Reflect)
+open Reflect
+open Decidable
+
+open import arith::nat using (Nat, =?, s=s)
+open Nat
+
+open import data::maybe using (Maybe, nothing≠just)
+open Maybe
+
+def !!-++ {A : Type} (xs : List A) (n : Nat) (x : A) (xs !! n = just x) : Fn (ys : List A) -> (xs ++ ys) !! n = just x
+| nil, n, x, h => exfalso (nothing≠just h)
+| x' :< xs, zero, x, h, _ => h
+| x' :< xs, suc n, x, h => !!-++ xs n x h
+
+def !!-last {A : Type} (xs : List A) (y : A) : (xs :<ʳ y) !! (length xs) = just y
+| nil, y => refl
+| (x :< xs), y => !!-last xs y
+
+def !!-not-last {A : Type} (xs : List A) (y : A) (n : Nat)
+  (x : A) (h : (xs :<ʳ y) !! n = just x)
+  (e : neg (n = length xs))
+  : xs !! n = just x => let
+  | n<lengthxsy : n < (length (xs :<ʳ y)) := !!→length n (xs :<ʳ y) x h
+  // suc n <= suc (length xs) -> n <= length xs
+  | n<suclengthxs : n < suc (length xs) := transport (fn l => n < l) (length-++ xs [ y ]) n<lengthxsy
+  | n<lengthxs : n < length xs := <=-with-≠ (s<=s n<suclengthxs) e
+  in pinv (++-!!-l n xs [ y ] n<lengthxs) <=> h
+
+def if-map {P Q T : Type} (f : P -> Q) (g : Q -> P) (d : Decidable P) (then else : T) :
+  if-then-else d then else = if-then-else (dec_map f g d) then else
+| f, g, _ because (reflect_true p), then, else => refl
+| f, g, _ because (reflect_false np), then, else => refl
+
+def if-eq-refl {T : Type} (a : Nat) (t f : T) : if-then-else (a =? a) t f = t elim a
+| zero => refl
+| suc a => pinv (if-map (pmap suc) s=s (a =? a) t f) <=> (if-eq-refl a t f)

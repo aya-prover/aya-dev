@@ -36,7 +36,6 @@ import org.aya.cli.utils.InlineHintProblem;
 import org.aya.generic.Constants;
 import org.aya.ide.LspPrimFactory;
 import org.aya.ide.action.*;
-import org.aya.ide.action.Completion;
 import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
@@ -324,7 +323,7 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(position.textDocument.uri);
     if (source == null) return Optional.empty();
     var xy = LspRange.pos(position.position);
-    return Optional.of(CompletionProvider.completion(this, options, source, xy));
+    return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {

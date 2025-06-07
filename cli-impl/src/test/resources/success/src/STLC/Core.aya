@@ -1,0 +1,277 @@
+open import data::list::base
+open import STLC::Map
+open import STLC::Lemma
+open import data::unit
+open import relation::nullary::empty
+open import relation::unary::negation
+open import relation::binary::path
+open import relation::binary::nat_cmp
+
+open import arith::nat using (Nat, zero, suc, =?, s=s, z≠s)
+open import relation::nullary::decidable using
+  (Decidable, because, yes, no, if-then-else, ifd, map as dec_map)
+  (Reflect, reflect_true, reflect_false)
+
+open import data::maybe using (Maybe, just, nothing, nothing≠just, just-inj)
+
+def Name : Type => Nat
+def Index : Type => Nat
+
+open inductive Term
+| free Name
+| bound Index
+| lam Term
+| app Term Term
+| true | false
+
+private def Term-diag Term : Nat
+| free _ => 0
+| bound _ => 1
+| lam _ => 2
+| app _ _ => 3
+| true => 4
+| false => 5
+
+private def app≠free {f a : Term} {n : Name} (p : app f a = free n) : Empty => let
+  | three=0 : 3 = 0 := pmap Term-diag p
+  in z≠s (pinv three=0)
+
+private def app≠bound {f a : Term} {n : Name} (p : app f a = bound n) : Empty => let
+  | three=1 : 3 = 1 := pmap Term-diag p
+  | step : 2 = 0 := s=s three=1
+  in z≠s (pinv step)
+
+private def app≠lam {f a t : Term} (p : app f a = lam t) : Empty => let
+  | three=2 : 3 = 2 := pmap Term-diag p
+  | step : 2 = 1 := s=s three=2
+  | step : 1 = 0 := s=s step
+  in z≠s (pinv step)
+
+private def app≠true {f a : Term} (p : app f a = true) : Empty => z≠s (s=s (s=s (s=s (pmap Term-diag p))))
+private def app≠false {f a : Term} (p : app f a = false) : Empty => z≠s (s=s (s=s (s=s (pmap Term-diag p))))
+
+open inductive Typu
+| Arrow Typu Typu
+| Bool
+
+def FreeCtx : Type => Map Typu
+def BoundCtx : Type => List Typu
+
+def empty-free-ctx : FreeCtx => empty-map Typu
+
+open inductive HasType FreeCtx BoundCtx Term Typu : Type
+//   (n : T) ∈ Γ
+// ---------------
+//  Γ, Δ |- n : T
+| G, D, free n, T => free-hasType (just T = G n)
+//    Δ[n] = T
+// ---------------
+//  Γ, Δ |- n : T
+| G, D, bound n, T => bound-hasType (just T = D !! n)
+| G, D, lam t, T => lam-hasType
+  (A B : Typu)
+  (T = Arrow A B)
+  (HasType G (A :< D) t B)
+//  Γ, Δ |- f : A -> B   Γ, Δ |- a : A
+// ------------------------------------
+//           Γ, Δ |- f a : B
+| G, D, app f a, B => app-hasType
+  (A : Typu)
+  (HasType G D f (Arrow A B))
+  (HasType G D a A)
+// ---------------------
+//  Γ, Δ |- true : Bool
+| G, D, true , Bool => true-hasType
+// ----------------------
+//  Γ, Δ |- false : Bool
+| G, D, false, Bool => false-hasType
+
+def value Term : Type
+| true => Unit
+| false => Unit
+| lam _ => Unit
+| _ => Empty
+
+open inductive Step Term Term : Type
+//    f --> f'
+// --------------
+//  f a --> f' a
+| t, s => app-update
+  (f a : Term)
+  (t = app f a)
+  (f' : Term)
+  (s = app f' a)
+  (Step f f')
+// ----------------------------------
+//  (lam. t) a --> instantiate t 0 a
+| t, s => app-reduce
+  (v a : Term)
+  (t = app (lam v) a)
+  (s = instantiate v 0 a)
+
+def bind (t : Term) Name Index : Term
+| free n, target, to => if-then-else (n =? target) (bound to) t
+| bound _, _, _ => t
+| lam t, target, to => lam (bind t target (suc to))
+| app f a, target, to => app (bind f target to) (bind a target to)
+| true, _, _ => t
+| false, _, _ => t
+
+// replace the bound variable n with given Term, do not shift other bound variables.
+def instantiate (t : Term) Nat (v : Term) : Term
+| free n, _, _ => t
+| bound i, n, v => if-then-else (i =? n) v t
+| lam t, n, v => lam (instantiate t (suc n) v)
+| app f a, n, v => app (instantiate f n v) (instantiate a n v)
+| true, _, _ => t
+| false, _, _ => t
+
+private def app-diag-f Term : Term
+| app f a => f
+| _ => false
+
+private def app-diag-a Term : Term
+| app f a => a
+| _ => false
+
+private def Arrow-diag-A Typu : Typu
+| Arrow A B => A
+| _ => Bool
+
+private def Arrow-diag-B Typu : Typu
+| Arrow A B => B
+| _ => Bool
+
+private def app-inj-f {f f' a a' : Term} (p : app f a = app f' a') : f = f' => fn i => app-diag-f (p i)
+private def app-inj-a {f f' a a' : Term} (p : app f a = app f' a') : a = a' => fn i => app-diag-a (p i)
+private def Arrow-inj-A {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : A = A' => fn i => Arrow-diag-A (p i)
+private def Arrow-inj-B {A A' B B' : Typu} (p : Arrow A B = Arrow A' B') : B = B' => fn i => Arrow-diag-B (p i)
+
+def weakening {G : FreeCtx} {D : BoundCtx} {t : Term} {T : Typu} (HasType G D t T) : Fn (D' : BoundCtx) -> HasType G (D ++ D') t T
+| free-hasType h, D => free-hasType {G} {_} h
+| {G}, {D}, {bound idx}, bound-hasType h, D' => let
+  | !!-expand : just T = (D ++ D') !! idx := pinv (!!-++ D idx T (pinv h) D')
+  in bound-hasType !!-expand
+| {G}, {D}, {lam t}, lam-hasType A B e h, D' => let
+  | IH : HasType G ((A :< D) ++ D') t B := weakening h D'
+  in lam-hasType A B e IH
+| {G}, {D}, {app f a}, app-hasType A hf ha, D' =>
+  app-hasType A (weakening hf D') (weakening ha D')
+| true-hasType, D' => true-hasType
+| false-hasType, D' => false-hasType
+
+def bind-preserve
+  {G : FreeCtx} {D : BoundCtx}
+  {t : Term} {V : Typu} {T : Typu}
+  {name : Name}
+  (ht : HasType (put G name V) D t T)
+  : HasType G (D :<ʳ V) (bind t name (length D)) T
+| {G}, {D}, {free n}, {V}, {T}, {name}, free-hasType ht =>
+  match n =? name as p returns HasType G (D :<ʳ V) (if-then-else p (bound (length D)) t) T {
+  | _ because reflect_true p => let
+    | e : put G name V name = just V := put-same G name V
+    | htn : just T = put G name V name := transport (fn n => just T = put G name V n) p ht
+    | jT=jV : just T = just V := htn <=> e
+    in bound-hasType (jT=jV <=> (pinv (!!-last D V)))
+  | _ because reflect_false np => free-hasType {G} {_} (ht <=> put-not-same G name V n (npinv np))
+  }
+| {G}, {D}, {bound n}, {V}, {T}, {name}, bound-hasType ht => bound-hasType (pinv (!!-++ D n T (pinv ht) [ V ]))
+| {G}, {D}, {lam t}, {V}, {T}, {name}, lam-hasType A B e ht => let
+  | IH : HasType G ((A :< D) :<ʳ V) (bind t name (suc (length D))) B := bind-preserve ht
+  in lam-hasType A B e IH
+| {G}, {D}, {app f a}, {V}, {T}, {name}, app-hasType A hf ha => app-hasType A (bind-preserve hf) (bind-preserve ha)
+| {G}, {D}, {true}, {V}, {Bool}, {name}, true-hasType => true-hasType
+| {G}, {D}, {false}, {V}, {Bool}, {name}, false-hasType => false-hasType
+
+// The only case we care is instantiating the last bound variable, otherwise we have to handle shifting.
+// In practice, we always instantiate in order; in the other hand, if you have to instantiate an non-last bound variable,
+// you can do that in this procedure:
+// Suppose `Γ, Δ ++ [ B ] ++ [ A ] |- t : C`, then
+// ```
+// let
+// | t' := instantiate t (length Δ + 1) (free nameT)      // (nameT : A, Γ), Δ ++ [ B ] |- t' : C
+// | inst_t' := instantiate t (length Δ) v                // (nameT : A, Γ), Δ |- inst_t' : C
+// | recover := bind t (free nameT) (length Δ)            // Γ, Δ ++ [ A ] |- recover : C
+//                                                        // you can also use `weakening` to preserve `B`
+//                                                        // (nameT : A, Γ), Δ ++ [ B ] |- inst_t' : C
+//                                                        // and then
+//                                                        // Γ, Δ ++ [ B ] ++ [ A ] |- recover : C
+// in recover
+// ```
+// In fact, if we treat `t` a function `A -> B -> C`,
+// then this procedure is exactly `fn nameT => t nameT v`.
+def instantiate-preverse
+  (G : FreeCtx) (D : BoundCtx)
+  (t : Term) (V : Typu) (T : Typu)
+  (ht : HasType G (D :<ʳ V) t T)
+  (v : Term)
+  (hv : HasType G nil v V)
+  : HasType G D (instantiate t (length D) v) T
+| G, D, (free n), V, T, (free-hasType ht), v, hv => free-hasType {G} {D} ht
+| G, D, (bound idx), V, T, (bound-hasType ht), v, hv =>
+  match idx =? length D as p returns HasType G D (if-then-else p v (bound idx)) T {
+  | _ because reflect_true p => let
+    | hv-weaken : HasType G D v V := weakening hv D
+    | lastV : (D :<ʳ V) !! idx = just V := transport (fn l => (D :<ʳ V) !! l = just V) (pinv p) (!!-last D V)
+    | T=V : T = V := just-inj (ht <=> lastV)
+    in transport (fn T' => HasType G D v T') (pinv T=V) hv-weaken
+  | _ because reflect_false np => bound-hasType (pinv (!!-not-last D V idx T (pinv ht) np))
+  }
+| G, D, (lam t), V, T, (lam-hasType A B e ht), v, hv => let
+  | IH : HasType G (A :< D) (instantiate t (suc (length D)) v) B := instantiate-preverse G (A :< D) t V B ht v hv
+  in lam-hasType A B e IH
+| G, D, (app f a), V, T, (app-hasType A hf ha), v, hv => let
+  | IHf := instantiate-preverse G D f V (Arrow A T) hf v hv
+  | IHa := instantiate-preverse G D a V A ha v hv
+  in app-hasType A IHf IHa
+| G, D, true, V, Bool, true-hasType, v, hv => true-hasType
+| G, D, false, V, Bool, false-hasType, v, hv => false-hasType
+
+def prevervation (G : FreeCtx)
+  (t : Term) (T : Typu)
+  (HasType G nil t T)
+  (t' : Term)
+  (Step t t')
+  : HasType G nil t' T
+| G, (app f' a'), T, (app-hasType A hf' ha'), t', app-update f a et g et' hupdate => let
+  | f'=f : f' = f := app-inj-f et
+  | a'=a : a' = a := app-inj-a et
+  | hf : HasType G nil f (Arrow A T) := transport (fn f => HasType G nil f (Arrow A T)) f'=f hf'
+  | ha : HasType G nil a A := transport (fn a => HasType G nil a A) a'=a ha'
+  | IH : HasType G nil g (Arrow A T) := prevervation G f (Arrow A T) hf g hupdate
+  in transport (fn t => HasType G nil t T) (pinv et')
+    (app-hasType A IH ha)
+| G, (app f' a'), T, (app-hasType A hf' ha'), t', (app-reduce v a et et') => let
+  | f'=lamv : f' = lam v := app-inj-f et
+  | a'=a : a' = a := app-inj-a et
+  | hlamv : HasType G nil (lam v) (Arrow A T) := transport (fn t => HasType G nil t (Arrow A T)) f'=lamv hf'
+  in match hlamv {
+  | lam-hasType A' B' eT hv => let
+    | A'=A : A' = A := Arrow-inj-A (pinv eT)
+    | B'=T : B' = T := Arrow-inj-B (pinv eT)
+    | ha : HasType G nil a A := transport (fn a => HasType G nil a A) a'=a ha'
+    | haA' : HasType G nil a A' := transport (fn A => HasType G nil a A) (pinv A'=A) ha
+    | t'-preserve : HasType G nil (instantiate v 0 a) B' := instantiate-preverse G nil v A' B' hv a haA'
+    | ht' : HasType G nil t' B' := transport (fn t => HasType G nil t B') (pinv et') t'-preserve
+    | ht'T : HasType G nil t' T := transport (fn T => HasType G nil t' T) B'=T ht'
+    in ht'T
+  }
+// handle impossible cases
+| G, free _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠free (pinv et))
+| G, bound _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠bound (pinv et))
+| G, lam _, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠lam (pinv et))
+| G, true, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠true (pinv et))
+| G, false, T, ht, t', app-update _ _ et _ _ _ => exfalso (app≠false (pinv et))
+| G, free _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠free (pinv et))
+| G, bound _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠bound (pinv et))
+| G, lam _, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠lam (pinv et))
+| G, true, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠true (pinv et))
+| G, false, T, ht, t', (app-reduce _ _ et _) => exfalso (app≠false (pinv et))
+
+// (), [] |- (lam. ^0) true : Bool
+def test-hasType-0 : HasType empty-free-ctx nil (app (lam (bound 0)) true) Bool =>
+  app-hasType Bool (lam-hasType Bool Bool refl (bound-hasType {_} {[ Bool ]} {0} {Bool} refl)) true-hasType
+
+def wellTyped (t : Term) : Type => Sig (G : FreeCtx) (D : BoundCtx) (T : Typu) ** (HasType G D t T)
+def freeTerm (t : Term) : Type => Sig (G : FreeCtx) (T : Typu) ** (HasType G nil t T)
+def boundTerm (t : Term) : Type => Sig (wellTyped t) ** (freeTerm t -> Empty)

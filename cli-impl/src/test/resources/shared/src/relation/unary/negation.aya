@@ -1,3 +1,6 @@
 open import relation::nullary::empty
+open import relation::binary::path using (=, pinv)
 
 def neg (A : Type) : Type => A -> Empty
+
+def npinv {A : Type} {a b : A} (ne : neg (a = b)) : neg (b = a) => fn b=a => ne (pinv b=a)
