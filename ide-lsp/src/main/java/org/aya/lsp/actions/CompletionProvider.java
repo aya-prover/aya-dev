@@ -13,6 +13,7 @@ import org.aya.parser.AyaParserDefinitionBase;
 import org.intellij.lang.annotations.MagicConstant;
 import org.javacs.lsp.CompletionItem;
 import org.javacs.lsp.CompletionItemKind;
+import org.javacs.lsp.CompletionItemLabelDetails;
 import org.javacs.lsp.CompletionList;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,14 +80,20 @@ public final class CompletionProvider {
       case Completion.Item.Local symbol -> {
         completionItem.kind = CompletionItemKind.Variable;
         completionItem.label = symbol.name();
-        completionItem.detail = " " + renderer.render(symbol.type());
+        completionItem.labelDetails = new CompletionItemLabelDetails();
+        completionItem.labelDetails.detail = " " + renderer.render(symbol.type());
+        completionItem.labelDetails.description = "";
       }
       case Completion.Item.Decl decl -> {
         completionItem.kind = toCompletionKind(decl.kind());
         completionItem.label = decl.name();
         // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemLabelDetails
-        // TODO: deal with ambiguous, we need [labelDetails] property
-        completionItem.detail = " " + renderer.render(decl.type());
+        completionItem.labelDetails = new CompletionItemLabelDetails();
+        completionItem.labelDetails.detail = " " + renderer.render(decl.type());
+
+        var disambi = decl.disambiguous();
+        if (decl.ownerName() != null) disambi = disambi.resolve(decl.ownerName());
+        completionItem.labelDetails.description = disambi.toString();
       }
     }
 
