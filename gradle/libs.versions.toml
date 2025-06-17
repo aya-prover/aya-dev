@@ -5,7 +5,7 @@
 project = "0.39.0-SNAPSHOT"
 
 # https://openjdk.org/
-java = "24"
+java = "22"
 # https://github.com/JetBrains/java-annotations
 annotations = "26.0.2"
 # https://github.com/Glavo/kala-common
