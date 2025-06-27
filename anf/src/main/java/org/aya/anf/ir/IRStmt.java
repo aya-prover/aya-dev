@@ -5,4 +5,5 @@ package org.aya.anf.ir;
 public interface IRStmt {
 
   record Match() implements IRStmt { }
+  record Let() implements IRStmt { }
 }
