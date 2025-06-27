@@ -4,17 +4,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public sealed interface TestSource permits TestSource.TestFile, TestSource.NoFile {
+public sealed interface TestCaseSource permits TestCaseSource.TestFile, TestCaseSource.NoFile {
 
   @NotNull String readableSource();
   @NotNull String code() throws IOException;
 
-  record TestFile(@NotNull String path) implements TestSource {
+  record TestFile(@NotNull String path) implements TestCaseSource {
     @Override
     public @NotNull String readableSource() { return path; }
     @Override
     public @NotNull String code() throws IOException {
-      var stream = TestSource.class.getResourceAsStream(path);
+      var stream = TestCaseSource.class.getResourceAsStream(path);
       assert stream != null;
       var code = new String(stream.readAllBytes());
       stream.close();
@@ -22,7 +22,7 @@ public sealed interface TestSource permits TestSource.TestFile, TestSource.NoFil
     }
   }
 
-  record NoFile(@NotNull String code) implements TestSource {
+  record NoFile(@NotNull String code) implements TestCaseSource {
     @Override
     public @NotNull String readableSource() { return "<no source>"; }
   }
