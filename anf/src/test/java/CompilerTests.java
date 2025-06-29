@@ -22,6 +22,9 @@ public class CompilerTests {
       var test = new FullFileTest(file);
       test.init();
       test.generateOutputDir();
+      test.compile();
+      test.generateJava();
+      test.generateBytecode();
     }
   }
 }

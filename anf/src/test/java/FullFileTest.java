@@ -33,4 +33,8 @@ public class FullFileTest {
   public void generateOutputDir() throws IOException {
     CompilerTests.GEN_DIR.resolve(name).toFile().mkdirs();
   }
+
+  public void compile() {}
+  public void generateJava() { }
+  public void generateBytecode() { }
 }
