@@ -4,7 +4,6 @@ module aya.anf {
   requires kala.collection.primitive;
 
   requires static org.jetbrains.annotations;
-  requires gradle.api;
 
   exports org.aya.anf.ir;
   exports org.aya.anf.misc;
