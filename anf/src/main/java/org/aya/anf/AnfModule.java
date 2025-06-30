@@ -4,6 +4,7 @@ package org.aya.anf;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.anf.ir.IRFunc;
 import org.aya.anf.ir.IRFuncDesc;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
@@ -13,15 +14,8 @@ import org.jetbrains.annotations.NotNull;
 public record AnfModule(
   @NotNull ImmutableSeq<DataDef> data,
   @NotNull ImmutableSeq<ConDef> constructors,
-  @NotNull ImmutableMap<IRFuncDesc, Object> functions
+  @NotNull ImmutableMap<IRFuncDesc, IRFunc> functions
 ) {
 
-  public @NotNull String debugRender() {
-    var b = new StringBuilder();
-    b.append("Data:\n");
-    data.forEach(d -> b.append(d.easyToString()).append("\n"));
-    b.append("Constructors:\n");
-    constructors.forEach(d -> b.append(d.easyToString()).append("\n"));
-    return b.toString();
-  }
+
 }

@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 
 /// An instance of this can be rendered with IRRenderer.
 public interface IRComponentRender {
-  @NotNull Doc consoleRender();
+  @NotNull Doc render();
 }
