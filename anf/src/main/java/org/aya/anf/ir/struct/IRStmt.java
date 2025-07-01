@@ -1,8 +1,9 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.anf.ir;
+package org.aya.anf.ir.struct;
 
-public sealed interface IRValue permits IRValue.Const {
+public interface IRStmt {
 
-  record Const() implements IRValue {}
+  record Match() implements IRStmt { }
+  record Let() implements IRStmt { }
 }

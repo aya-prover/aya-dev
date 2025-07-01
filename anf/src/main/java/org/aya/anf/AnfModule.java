@@ -4,8 +4,8 @@ package org.aya.anf;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.anf.ir.IRFunc;
-import org.aya.anf.ir.IRFuncDesc;
+import org.aya.anf.ir.module.IRFunc;
+import org.aya.anf.ir.module.IRFuncDesc;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.DataDef;
 import org.jetbrains.annotations.NotNull;
