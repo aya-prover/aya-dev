@@ -54,7 +54,7 @@ public class FullFileTest {
   }
 
   private void onTyck(ResolveInfo info, ImmutableSeq<TyckDef> defs) {
-
+    
   }
 
   public void generateJava() { }
