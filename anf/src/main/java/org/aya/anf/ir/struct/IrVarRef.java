@@ -2,8 +2,9 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.anf.ir.struct;
 
-public interface IRStmt {
+import org.jetbrains.annotations.NotNull;
 
-  record Match() implements IRStmt { }
-  record Let() implements IRStmt { }
+/// Denotes the use of a variable.
+public record IrVarRef(@NotNull IrVarDecl decl) {
+
 }

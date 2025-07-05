@@ -4,8 +4,7 @@ package org.aya.anf.ir.struct;
 
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface IRValue permits IRValue.Const, IRValue.Var {
-
-  record Const() implements IRValue {}
-  record Var(@NotNull IRVarRef ref) implements IRValue {}
+public interface IrExp {
+  record Val(@NotNull IrVal val) implements IrExp {}
+  record Let(@NotNull LetClause let, @NotNull IrExp body) implements IrExp { }
 }

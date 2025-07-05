@@ -4,7 +4,8 @@ package org.aya.anf.ir.struct;
 
 import org.jetbrains.annotations.NotNull;
 
-/// Denotes the use of a variable.
-public record IRVarRef(@NotNull IRVarDecl decl) {
+public sealed interface IrVal permits IrVal.Var, IrVal.Lambda {
 
+  record Var(@NotNull IrVarRef ref) implements IrVal {}
+  record Lambda(@NotNull IrVarDecl decl, @NotNull IrExp body) implements IrVal {}
 }

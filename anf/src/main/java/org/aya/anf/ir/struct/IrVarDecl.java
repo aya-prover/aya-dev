@@ -7,17 +7,19 @@ import org.jetbrains.annotations.Nullable;
 
 /// Represents a variable declaration in the IR. Each variable should only have one instantiation
 /// of this, and it should be referenced on use site.
-public interface IRVarDecl {
+public interface IrVarDecl {
 
   /// Returns the (unique) identifier of a variable. The result of this may change in different
   /// phases of the compilation (e.g., for generated variables after gathering all contextual
   /// info).
-  @NotNull String getIdentifier();
+  @NotNull String identifier();
 
   /// Returns a newly generated reference to this variable.
-  @NotNull IRVarRef newRef();
+  default @NotNull IrVarRef newRef() { return new IrVarRef(this); }
 
-  class Generated implements IRVarDecl {
+  record Local(@NotNull String identifier) implements IrVarDecl { }
+
+  class Generated implements IrVarDecl {
 
     private final int uid;
     private @Nullable String assignedName = null;
@@ -25,13 +27,8 @@ public interface IRVarDecl {
     public Generated(int unnamedIndex) { uid = unnamedIndex; }
 
     @Override
-    public @NotNull String getIdentifier() {
+    public @NotNull String identifier() {
       return assignedName != null ? assignedName : "gen_var_" + uid;
-    }
-
-    @Override
-    public @NotNull IRVarRef newRef() {
-      return new IRVarRef(this);
     }
   }
 }
