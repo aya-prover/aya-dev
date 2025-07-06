@@ -2,18 +2,27 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
+import com.intellij.openapi.util.text.Strings;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
+import org.aya.ide.action.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.lsp.actions.CompletionProvider;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.producer.AyaParserImpl;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.util.position.SourceFile;
+import org.aya.util.reporter.ThrowingReporter;
 import org.javacs.lsp.CompletionItemKind;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
 
 import static org.aya.lsp.LspTest.TEST_LIB;
 import static org.aya.lsp.LspTest.launch;
@@ -97,5 +106,17 @@ public class CompletionTest {
   public void assertContext(@NotNull ContextWalker walker, String @NotNull ... asserts) {
     walker.localContext().forEachWith(ImmutableArray.Unsafe.wrap(asserts), (actual, expected) ->
       Assertions.assertEquals(expected, actual.easyToString()));
+  }
+
+  @Test
+  public void testNodeWalker() throws IOException {
+    var file = TEST_LIB.resolve("src").resolve("HelloWorld.aya");
+    var content = Files.readString(file);
+    var node = new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.debug()))
+      .parseNode(Strings.convertLineSeparators(content));
+    var sourceFile = new SourceFile("HelloWorld.aya", file, content);
+
+    var target = new NodeWalker(sourceFile, node, new XY(13, 25)).run();
+    System.out.println(target);
   }
 }

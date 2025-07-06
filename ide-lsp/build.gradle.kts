@@ -12,6 +12,7 @@ CommonTasks.fatJar(project, Constants.mainClassQName)
 dependencies {
   // NOTE: use `api`. IntelliJ plugin needs it temporarily (should depend on ide instead of lsp).
   api(project(":ide"))
+  api(project(":producer"))
   api(libs.aya.lsp.protocol)
   implementation(project(":cli-console"))
   implementation(libs.picocli.runtime)
