@@ -97,24 +97,20 @@ public final class NodeWalker {
     return rightMost(node.lastChild());
   }
 
-  /// Focus to another node nearby [#node], typically the left one.
-  /// * the space between clauses/statements/let-bind/do-bind: left
-  /// * the space between parameters: right/NOP
-  /// * start delimiter of any right-open scope introducer (such as clause): left
-  /// (for example, if `data Foo | a _| b`, then the cursor is inside `| a` rather than `| b`)
+  /// Place the cursor [#node] to the right level, if [#node]:
+  /// * whitespace: left non-whitespace
+  /// * is the start delimiter of any right-open scope introducer (such as clause): left non-whitespace
+  ///   (for example, if `data Foo | a _| b`, then the cursor is inside `| a` rather than `| b`)
+  /// * otherwise: [#node]
+  ///
+  /// If this method doesn't return [#node], a [EmptyNode] is returned, it represents a position in the AST with correct level.
+  /// For example, `fn a => a_` will focus on the position right after token `a` rather than the position right after the whole lambda.
   ///
   /// @param node cannot be [EmptyNode]
-  /// @return focused node, note that the returned node can be [EmptyNode]
   /// @apiNote It is possible that [#node] is returned while it is a [com.intellij.psi.PsiWhiteSpace]
   public static @NotNull GenericNode<?> refocus(@NotNull GenericNode<?> node) {
     var parent = node.parent();
     assert parent != null;
-
-    var pparent = parent.parent();
-
-    var siblings = pparent == null
-      ? ImmutableSeq.<GenericNode<?>>empty()
-      : pparent.childrenView().toSeq();
 
     var maybeAtNextRightOpen = RIGHT_OPEN_START_DELIMITERS.contains(node.elementType())
       && RIGHT_OPEN_INTRODUCER.contains(parent.elementType());
