@@ -3,13 +3,16 @@
 package org.aya.lsp;
 
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import kala.function.IntIntBiFunction;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
 import org.aya.ide.action.NodeWalker;
 import org.aya.ide.util.XY;
+import org.aya.intellij.GenericNode;
 import org.aya.lsp.actions.CompletionProvider;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.aya.lsp.LspTest.TEST_LIB;
 import static org.aya.lsp.LspTest.launch;
@@ -108,6 +112,19 @@ public class CompletionTest {
       Assertions.assertEquals(expected, actual.easyToString()));
   }
 
+  private static final @NotNull Path TEST_FILE = TEST_LIB.resolve("src").resolve("HelloWorld.aya");
+
+  private @NotNull SourceFile readTestFile() throws IOException {
+    var content = Files.readString(TEST_FILE);
+    return new SourceFile(TEST_FILE.getFileName().toString(), TEST_FILE, content);
+  }
+
+  private @NotNull GenericNode<?> parseFile(@NotNull SourceFile file) {
+    return new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.debug()))
+      .parseNode(file.sourceCode());
+  }
+
+
   @Test
   public void testNodeWalker() throws IOException {
     var file = TEST_LIB.resolve("src").resolve("HelloWorld.aya");
@@ -116,7 +133,30 @@ public class CompletionTest {
       .parseNode(Strings.convertLineSeparators(content));
     var sourceFile = new SourceFile("HelloWorld.aya", file, content);
 
-    var target = new NodeWalker(sourceFile, node, new XY(13, 25)).run();
+    var target = NodeWalker.run(sourceFile, node, new XY(13, 25), TokenSet.EMPTY);
     System.out.println(target);
+  }
+
+  @Test
+  public void testRefocus() throws IOException {
+    var sourceFile = readTestFile();
+    var node = parseFile(sourceFile);
+    IntIntBiFunction<GenericNode<?>> runner = (x, y) -> {
+      var xy = new XY(x, y);
+      var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
+      var focused = NodeWalker.refocus(mNode);
+      return focused;
+    };
+
+    var afterClause2 = runner.apply(15, 35);    // in a_'\n'
+    var onClause2Bar = runner.apply(15, 2);     // _| suc a
+    var betweenParam = runner.apply(13, 19);    // (a : Nat)_ {b : Nat}
+    var onId = runner.apply(13, 15);      // (a : _Nat)
+
+    // TODO: how to make assertion? use offset??
+    System.out.println(afterClause2);
+    System.out.println(onClause2Bar);
+    System.out.println(betweenParam);
+    System.out.println(onId);
   }
 }
