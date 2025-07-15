@@ -177,5 +177,6 @@ public class CompletionTest {
     runner.accept(new XY(13, 25));    // {b : _Nat}
     runner.accept(new XY(14, 60));    // c a a_
     runner.accept(new XY(14, 24));    // (d _: Nat)
+    runner.accept(new XY(22, 7));
   }
 }
