@@ -12,6 +12,7 @@ plugins {
   `maven-publish`
   signing
   alias(libs.plugins.jlink) apply false
+  id("com.gradleup.nmcp.aggregation").version("1.0.1")
 }
 
 var projectVersion: String by rootProject.ext
@@ -159,17 +160,6 @@ subprojects {
 
   tasks.withType<JavaExec>().configureEach { jvmArgs = listOf("--enable-preview"); enableAssertions = true }
 
-  val ossrhUsername = propOrEnv("ossrhUsername")
-  val ossrhPassword = propOrEnv("ossrhPassword")
-
-  if (ossrhUsername.isNotEmpty()) publishing.repositories.maven {
-    val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
-    val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
-    name = "MavenCentral"
-    credentials { username = ossrhUsername; password = ossrhPassword }
-  }
-
   // Gradle module metadata contains Gradle JVM version, disable it
   tasks.withType<GenerateModuleMetadata>().configureEach {
     enabled = false
@@ -210,6 +200,22 @@ subprojects {
     sign(publishing.publications["maven"])
   }
 }
+
+val ossrhUsername = propOrEnv("mavenCentralPortalUsername")
+val ossrhPassword = propOrEnv("mavenCentralPortalPassword")
+
+if (ossrhUsername.isNotEmpty()) nmcpAggregation {
+  centralPortal {
+    username = property("mavenCentralPortalUsername").toString()
+    password = property("mavenCentralPortalPassword").toString()
+    if (isRelease) publishingType = "USER_MANAGED"
+    else publishingType = "AUTOMATIC"
+  }
+
+  // Publish all projects that apply the 'maven-publish' plugin
+  publishAllProjectsProbablyBreakingProjectIsolation()
+}
+
 
 apply { plugin("jacoco-report-aggregation") }
 dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }

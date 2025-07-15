@@ -11,13 +11,13 @@ annotations = "26.0.2"
 # https://github.com/Glavo/kala-common
 kala = "0.82.0"
 # https://picocli.info
-picocli = "4.7.6"
+picocli = "4.7.7"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
 aya-upstream = "0.0.36"
 # https://github.com/jline/jline3
 jline = "3.30.4"
 # https://junit.org/junit5
-junit = "5.11.3"
+junit = "5.13.3"
 hamcrest = "2.2"
 # https://github.com/google/gson
 gson = "2.13.1"
