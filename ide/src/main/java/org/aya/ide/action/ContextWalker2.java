@@ -67,14 +67,6 @@ public class ContextWalker2 {
     UNIT_PATTERN
   );
 
-  /// All node that: contains only `expr` or token, such as `type := BAR expr`
-  /// TODO: complete this list
-  public static final @NotNull TokenSet EXPR_ONLY = TokenSet.create(
-    TYPE,
-    ARROW_EXPR,
-    NEW_EXPR
-  );
-
   private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
   private @Nullable Location location = null;
 
@@ -168,6 +160,12 @@ public class ContextWalker2 {
     PATTERNS
   );
 
+  private final @NotNull CompletionPartition typePartition = new CompletionPartition(
+    ImmutableSeq.of(COLON),
+    ImmutableSeq.of(null, Location.Expr),
+    null
+  );
+
   public void visit(@Nullable GenericNode<?> node) {
     if (node == null) return;
 
@@ -180,10 +178,6 @@ public class ContextWalker2 {
         visitDecl(node);
       } else {
         visitMisc(node);
-      }
-
-      if (EXPR_ONLY.contains(type)) {
-        setLocationExpr();
       }
 
       visit(parent);
@@ -245,10 +239,19 @@ public class ContextWalker2 {
 
     var type = parent.elementType();
 
+    if (type == ARROW_EXPR) {
+      setLocationExpr();
+      return;
+    }
+
     if (type == LET_BIND) {
       letBindPartition.accept(node);
     } else if (type == CLAUSE) {
       clausePartition.accept(node);
+    } else if (type == TYPE) {
+      typePartition.accept(node);
+    } else if (type == NEW_EXPR) {
+      // TODO
     }
   }
 }
