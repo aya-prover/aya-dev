@@ -137,6 +137,8 @@ public class CompletionTest {
 
     var target = NodeWalker.run(sourceFile, node, new XY(13, 25), TokenSet.EMPTY);
     System.out.println(target);
+    target = NodeWalker.run(sourceFile, node, new XY(13, 26), TokenSet.EMPTY);
+    System.out.println(target);
   }
 
   @Test
@@ -146,7 +148,7 @@ public class CompletionTest {
     IntIntBiFunction<GenericNode<?>> runner = (x, y) -> {
       var xy = new XY(x, y);
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
-      var focused = NodeWalker.refocus(mNode);
+      var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       return focused;
     };
 
@@ -154,12 +156,14 @@ public class CompletionTest {
     var onClause2Bar = runner.apply(15, 2);     // _| suc a
     var betweenParam = runner.apply(13, 19);    // (a : Nat)_ {b : Nat}
     var onId = runner.apply(13, 15);      // (a : _Nat)
+    var inId = runner.apply(13, 16);      // (a : N_at)
 
     // TODO: how to make assertion? use offset??
     System.out.println(afterClause2);
     System.out.println(onClause2Bar);
     System.out.println(betweenParam);
     System.out.println(onId);
+    System.out.println(inId);
   }
 
   @Test
@@ -168,16 +172,14 @@ public class CompletionTest {
     var node = parseFile(sourceFile);
     Consumer<XY> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
-      var focused = NodeWalker.refocus(mNode);
+      var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       var walker = new ContextWalker2();
       walker.visit(focused);
       System.out.println(walker.location());
     };
 
-    runner.accept(new XY(13, 25));    // {b : _Nat}
+    runner.accept(new XY(13, 26));    // {b : N_at}
     runner.accept(new XY(14, 60));    // c a a_
-    runner.accept(new XY(14, 24));    // (d _: Nat)
-    runner.accept(new XY(22, 7));
-    runner.accept(new XY(24, 0));
+    runner.accept(new XY(14, 34));    // (e _: Nat)
   }
 }

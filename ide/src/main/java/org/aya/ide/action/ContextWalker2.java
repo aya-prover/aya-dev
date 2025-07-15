@@ -25,29 +25,41 @@ public class ContextWalker2 {
   }
 
   public class CompletionPartition {
+    public final @NotNull ImmutableSeq<IElementType> pins;
     public final @NotNull ImmutableSeq<ContextWalker2.@Nullable Location> locations;
     public final @Nullable IElementType paramType;
-    private final @NotNull NodeLocator locator;
 
     public CompletionPartition(
       @NotNull ImmutableSeq<IElementType> pins,
       @NotNull ImmutableSeq<Location> locations,
       @Nullable IElementType paramType
     ) {
+      this.pins = pins;
       this.locations = locations;
       this.paramType = paramType;
-      this.locator = new NodeLocator(pins);
 
       assert pins.isNotEmpty();
       assert locations.size() == pins.size() + 1;
     }
 
     public @NotNull ImmutableSeq<GenericNode<?>> accept(@NotNull GenericNode<?> node) {
-      var prevSiblings = locator.locate(node, (_, i) -> {
-        var maybeLocation = locations.get(i);
-        if (maybeLocation != null) setLocation(maybeLocation);
-      });
+      var prevSiblings = backward(node)
+        .toSeq();
 
+      // part locating
+      int part = 0;   // also the index of the next delimiter
+      for (var sibling : prevSiblings) {
+        if (part == pins.size()) break;
+        if (sibling.elementType() == pins.get(part)) {
+          part++;
+        }
+      }
+
+      // set location
+      var maybeLocation = locations.get(part);
+      if (maybeLocation != null) setLocation(maybeLocation);
+
+      // collect bindings
       if (paramType != null) {
         prevSiblings.filter(it -> it.elementType() == paramType)
           .forEach(ContextWalker2.this::collectBinding);
