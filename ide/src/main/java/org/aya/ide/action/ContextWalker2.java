@@ -156,6 +156,18 @@ public class ContextWalker2 {
     LET_BIND_BLOCK
   );
 
+  private final @NotNull CompletionPartition letBindPartition = new CompletionPartition(
+    ImmutableSeq.of(DEFINE_AS),
+    ImmutableSeq.of(Location.Bind, Location.Expr),
+    LAMBDA_TELE
+  );
+
+  private final @NotNull CompletionPartition clausePartition = new CompletionPartition(
+    ImmutableSeq.of(IMPLIES),
+    ImmutableSeq.of(Location.Pattern, Location.Expr),
+    PATTERNS
+  );
+
   public void visit(@Nullable GenericNode<?> node) {
     if (node == null) return;
 
@@ -166,6 +178,8 @@ public class ContextWalker2 {
         visitExpr(node);
       } else if (DECL.contains(type)) {
         visitDecl(node);
+      } else {
+        visitMisc(node);
       }
 
       if (EXPR_ONLY.contains(type)) {
@@ -176,16 +190,9 @@ public class ContextWalker2 {
     }
   }
 
-  /// @param node with [GenericNode#elementType()] is [AyaPsiElementTypes#TELE_BINDER_UNTYPED]
-  private void collectTeleBinderUntyped(@Nullable GenericNode<?> node) {
-    if (node == null) return;
-
-    node.childrenOfType(TELE_PARAM_NAME)
-      .map(t -> t.child(WEAK_ID))
-      .map(GenericNode::tokenText)
-      .forEach(n -> {
-        localContext.putIfAbsent(n.toString(), null);   // FIXME
-      });
+  private void collectWeakId(@NotNull GenericNode<?> node) {
+    var name = node.tokenText().toString();
+    // TODo: retrieve type
   }
 
   private void collectBinding(@NotNull GenericNode<?> node) {
@@ -196,32 +203,17 @@ public class ContextWalker2 {
     if (type == TELE_BINDER_UNTYPED) {
       node.childrenOfType(TELE_PARAM_NAME)
         .map(t -> t.child(WEAK_ID))
-        .map(GenericNode::tokenText)
-        .forEach(n -> {
-          localContext.putIfAbsent(n.toString(), null);   // FIXME
-        });
+        .forEach(this::collectWeakId);
+    } else if (type == LET_BIND_BLOCK) {
+      node.childrenOfType(LET_BIND)
+        .map(t -> t.child(WEAK_ID))
+        .forEach(this::collectWeakId);
     }
   }
 
   /// @param bindIntroducers nodes that is [#BIND_INTRODUCER]
   private void collectBindings(@NotNull ImmutableSeq<GenericNode<?>> bindIntroducers) {
     bindIntroducers.forEach(this::collectBinding);
-  }
-
-  private static @NotNull ImmutableSeq<GenericNode<?>> processTeleLike(
-    @NotNull GenericNode<?> node,
-    @NotNull IElementType delimiter,
-    @NotNull Runnable onBefore,
-    @NotNull Runnable onAfter
-  ) {
-    return new NodeLocator(delimiter)
-      .locate(node, (_, i) -> {
-        switch (i) {
-          case 0 -> onBefore.run();
-          case 1 -> onAfter.run();
-          default -> Panic.unreachable();
-        }
-      });
   }
 
   /// @param node which [GenericNode#parent()] is [#DECL], can be [org.aya.ide.action.NodeWalker.EmptyNode]
@@ -245,5 +237,18 @@ public class ContextWalker2 {
     else if (type == FORALL_EXPR) forallPartition.accept(node);
     else if (type == PI_EXPR) piPartition.accept(node);
     else if (type == LET_EXPR) letPartition.accept(node);
+  }
+
+  public void visitMisc(@NotNull GenericNode<?> node) {
+    var parent = node.parent();
+    assert parent != null;
+
+    var type = parent.elementType();
+
+    if (type == LET_BIND) {
+      letBindPartition.accept(node);
+    } else if (type == CLAUSE) {
+      clausePartition.accept(node);
+    }
   }
 }
