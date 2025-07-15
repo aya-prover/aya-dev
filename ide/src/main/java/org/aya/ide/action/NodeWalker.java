@@ -14,10 +14,6 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
-import org.aya.parser.AyaParserDefinitionBase;
-import org.aya.parser.AyaPsiElementTypes;
-import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.concrete.Pattern;
 import org.aya.util.Panic;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
@@ -37,7 +33,7 @@ public final class NodeWalker {
     while (true) {
       if (leafTypes.contains(node.elementType())) break;
 
-      var children = ImmutableSeq.<GenericNode<?>>narrow(node.childrenView().toSeq());
+      var children = node.childrenView().toSeq();
       if (children.isEmpty()) break;
 
       var idx = binarySearch(children, file, Either.left(location));
@@ -49,7 +45,7 @@ public final class NodeWalker {
     return node;
   }
 
-  private static int binarySearch(@NotNull ImmutableSeq<GenericNode<?>> nodes, @NotNull SourceFile file, @NotNull Either<XY, Integer> location) {
+  private static int binarySearch(@NotNull ImmutableSeq<? extends GenericNode<?>> nodes, @NotNull SourceFile file, @NotNull Either<XY, Integer> location) {
     int low = 0;
     int high = nodes.size() - 1;
 
@@ -73,38 +69,15 @@ public final class NodeWalker {
     return -(low + 1);
   }
 
-  /// All scope introducer with right-open, like [Pattern.Clause], but not [Expr.Param], does not include [org.aya.syntax.concrete.stmt.Stmt].
-  /// These structure must/may start with a delimiter, such as `|`.
-  public static final @NotNull TokenSet RIGHT_OPEN_INTRODUCER = TokenSet.create(
-    AyaPsiElementTypes.BARRED_CLAUSE,
-    AyaPsiElementTypes.LET_BIND_BLOCK,
-    AyaPsiElementTypes.DATA_BODY
-  );
-
-  /// All possible start delimiter of [#RIGHT_OPEN_INTRODUCER],
-  /// note that the token should be the direct child of those introducers.
-  public static final @NotNull TokenSet RIGHT_OPEN_START_DELIMITERS = TokenSet.create(
-    AyaPsiElementTypes.BAR
-  );
-
-  /// All possible end delimiters of any right close structure, such as `()`.
-  /// [#refocus] cannot refocus to these structure
-  /// [#refocus] also focus on an empty node even a _start delimiter_ is encountered.
-  public static final @NotNull TokenSet RIGHT_CLOSE_DELIMITERS = AyaParserDefinitionBase.DELIMITERS;
-
   public static @NotNull GenericNode<?> rightMost(@NotNull GenericNode<?> node) {
     if (node.childrenView().isEmpty()) return node;
     return rightMost(node.lastChild());
   }
 
-  /// Place the cursor [#node] to the right level, if [#node]:
-  /// * whitespace: left non-whitespace
-  /// * is the start delimiter of any right-open scope introducer (such as clause): left non-whitespace
-  ///   (for example, if `data Foo | a _| b`, then the cursor is inside `| a` rather than `| b`)
-  /// * otherwise: [#node]
-  ///
-  /// If this method doesn't return [#node], a [EmptyNode] is returned, it represents a position in the AST with correct level.
-  /// For example, `fn a => a_` will focus on the position right after token `a` rather than the position right after the whole lambda.
+  /// Place the cursor [#node] to the right level and right token.
+  /// This function move the cursor to the left token if:
+  /// * [#node] is not [TokenType#WHITE_SPACE] and the cursor is at the beginning of [#node]
+  /// * [#node] is [TokenType#WHITE_SPACE]
   ///
   /// @param node cannot be [EmptyNode]
   /// @apiNote It is possible that [#node] is returned while it is a [com.intellij.psi.PsiWhiteSpace]
@@ -112,17 +85,17 @@ public final class NodeWalker {
     var parent = node.parent();
     assert parent != null;
 
-    var maybeAtNextRightOpen = RIGHT_OPEN_START_DELIMITERS.contains(node.elementType())
-      && RIGHT_OPEN_INTRODUCER.contains(parent.elementType());
-    var isWhiteSpace = node.elementType().equals(TokenType.WHITE_SPACE);
-
-    if (maybeAtNextRightOpen) {
+    if (node.elementType() != TokenType.WHITE_SPACE && true) {
+      // TODO: add condition: only refocus to the left if the cursor is at the beginning of [node].
+      // We always refocus on the left most token, as the cursor is at the left side of [node].
       var prevToken = prevToken(node);
       assert prevToken != null;
-      return refocus(prevToken);
+      // in case of consecutive tokens
+      if (prevToken.elementType() != TokenType.WHITE_SPACE) return new EmptyNode(prevToken);
+      node = prevToken;
     }
 
-    if (isWhiteSpace) {
+    if (node.elementType() == TokenType.WHITE_SPACE) {
       var prevToken = node;
       while (prevToken.elementType().equals(TokenType.WHITE_SPACE)) {
         var token = prevToken(prevToken);
