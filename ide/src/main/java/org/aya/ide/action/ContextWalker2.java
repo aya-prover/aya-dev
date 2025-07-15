@@ -9,9 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.intellij.GenericNode;
-import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
-import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,6 +164,24 @@ public class ContextWalker2 {
     null
   );
 
+  private final @NotNull CompletionPartition doPartition = new CompletionPartition(
+    ImmutableSeq.of(KW_DO),
+    ImmutableSeq.of(null, Location.Expr),
+    DO_BLOCK_CONTENT
+  );
+
+  private final @NotNull CompletionPartition doBindPartition = new CompletionPartition(
+    ImmutableSeq.of(LARROW),
+    ImmutableSeq.of(Location.Bind, Location.Expr),
+    null
+  );
+
+  private final @NotNull CompletionPartition arrayCompBlockPartition = new CompletionPartition(
+    ImmutableSeq.of(BAR),
+    ImmutableSeq.of(Location.Expr, null),
+    DO_BINDING
+  );
+
   public void visit(@Nullable GenericNode<?> node) {
     if (node == null) return;
 
@@ -202,6 +218,12 @@ public class ContextWalker2 {
       node.childrenOfType(LET_BIND)
         .map(t -> t.child(WEAK_ID))
         .forEach(this::collectWeakId);
+    } else if (type == DO_BLOCK_CONTENT) {
+      // FIXME: not yet tested
+      var binding = node.peekChild(DO_BINDING);
+      if (binding != null) {
+        collectWeakId(binding.child(WEAK_ID));
+      }
     }
   }
 
@@ -231,6 +253,7 @@ public class ContextWalker2 {
     else if (type == FORALL_EXPR) forallPartition.accept(node);
     else if (type == PI_EXPR) piPartition.accept(node);
     else if (type == LET_EXPR) letPartition.accept(node);
+    else if (type == DO_EXPR) doPartition.accept(node);
   }
 
   public void visitMisc(@NotNull GenericNode<?> node) {
@@ -239,19 +262,26 @@ public class ContextWalker2 {
 
     var type = parent.elementType();
 
+    // special case, `arrowExpr := expr TO expr`, unlike `type := COLON expr`, both sides of `arrowExpr` are expr
     if (type == ARROW_EXPR) {
       setLocationExpr();
       return;
     }
 
-    if (type == LET_BIND) {
-      letBindPartition.accept(node);
-    } else if (type == CLAUSE) {
-      clausePartition.accept(node);
-    } else if (type == TYPE) {
-      typePartition.accept(node);
-    } else if (type == NEW_EXPR) {
-      // TODO
+    if (type == LET_BIND) letBindPartition.accept(node);
+    else if (type == CLAUSE) clausePartition.accept(node);
+    else if (type == TYPE) typePartition.accept(node);
+    else if (type == NEW_EXPR) ;     // TODO
+    else if (type == DO_BINDING) doBindPartition.accept(node);
+    else if (type == ARRAY_COMP_BLOCK) {
+      var prevSiblings = arrayCompBlockPartition.accept(node);
+      // special case, as all bindings it introduces are after the usage (generator).
+      // we only case is generator,
+      // as `arrayCompBlockPartition.accept` can do the job if [node] is (in) do bind,
+      // and it do nothing if [node] is (in) generator
+      if (!prevSiblings.anyMatch(it -> it.elementType() == BAR)) {
+        parent.childrenOfType(DO_BINDING).forEach(this::collectBinding);
+      }
     }
   }
 }
