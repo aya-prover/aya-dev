@@ -29,7 +29,11 @@ public class ContextWalker2 {
     public final @Nullable IElementType paramType;
     private final @NotNull NodeLocator locator;
 
-    public CompletionPartition(@NotNull ImmutableSeq<IElementType> pins, @NotNull ImmutableSeq<Location> locations, @Nullable IElementType paramType) {
+    public CompletionPartition(
+      @NotNull ImmutableSeq<IElementType> pins,
+      @NotNull ImmutableSeq<Location> locations,
+      @Nullable IElementType paramType
+    ) {
       this.locations = locations;
       this.paramType = paramType;
       this.locator = new NodeLocator(pins);
@@ -164,12 +168,6 @@ public class ContextWalker2 {
     null
   );
 
-  private final @NotNull CompletionPartition doPartition = new CompletionPartition(
-    ImmutableSeq.of(KW_DO),
-    ImmutableSeq.of(null, Location.Expr),
-    DO_BLOCK_CONTENT
-  );
-
   private final @NotNull CompletionPartition doBindPartition = new CompletionPartition(
     ImmutableSeq.of(LARROW),
     ImmutableSeq.of(Location.Bind, Location.Expr),
@@ -253,7 +251,6 @@ public class ContextWalker2 {
     else if (type == FORALL_EXPR) forallPartition.accept(node);
     else if (type == PI_EXPR) piPartition.accept(node);
     else if (type == LET_EXPR) letPartition.accept(node);
-    else if (type == DO_EXPR) doPartition.accept(node);
   }
 
   public void visitMisc(@NotNull GenericNode<?> node) {
@@ -276,11 +273,22 @@ public class ContextWalker2 {
     else if (type == ARRAY_COMP_BLOCK) {
       var prevSiblings = arrayCompBlockPartition.accept(node);
       // special case, as all bindings it introduces are after the usage (generator).
-      // we only case is generator,
+      // the only case is generator,
       // as `arrayCompBlockPartition.accept` can do the job if [node] is (in) do bind,
       // and it do nothing if [node] is (in) generator
       if (!prevSiblings.anyMatch(it -> it.elementType() == BAR)) {
         parent.childrenOfType(DO_BINDING).forEach(this::collectBinding);
+      }
+    } else if (type == COMMA_SEP) {
+      var pparent = parent.parent();
+      if (pparent != null) {
+        var ptype = pparent.elementType();
+        if (ptype == DO_EXPR) {
+          setLocationExpr();
+          backward(node)
+            .filter(it -> it.elementType() == DO_BLOCK_CONTENT)
+            .forEach(this::collectBinding);
+        }
       }
     }
   }

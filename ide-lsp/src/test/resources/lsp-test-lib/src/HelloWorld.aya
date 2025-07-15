@@ -17,8 +17,4 @@ module Subworld {
 
 variable A B : String
 
-def justTest => do {
-  a <- bar,
-  b <- foo,
-  c
-}
+def justTest => do { }
