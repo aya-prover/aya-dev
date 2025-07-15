@@ -21,10 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class NodeWalker {
+  public record Result(@NotNull GenericNode<?> node, int offsetInNode) { }
+
   private NodeWalker() { }
 
   /// Find the **node** under [#location], note that it could be empty (such as [com.intellij.psi.PsiWhiteSpace])
-  public static @NotNull GenericNode<?> run(
+  public static @NotNull Result run(
     @NotNull SourceFile file,
     @NotNull GenericNode<?> node,
     @NotNull XY location,
@@ -36,31 +38,31 @@ public final class NodeWalker {
       var children = node.childrenView().toSeq();
       if (children.isEmpty()) break;
 
-      var idx = binarySearch(children, file, Either.left(location));
+      var idx = binarySearch(children, file, location);
       // normally [idx] won't be negative, as the [TextRange]s of children are continuous.
       if (idx < 0) Panic.unreachable();   // TODO: what should i do?
       node = children.get(idx);
     }
 
-    return node;
+    // [location] must inside [node], therefore `location.x() - 1` must less than `lineOffsets().size()`
+    var lineOffsetInFile = file.lineOffsets().get(location.x() - 1);
+    // lineOffsetInFile is the index of the first character of line `location.x()`, and `location.y()` is count from 0, so we have:
+    var index = lineOffsetInFile + location.y();
+    var offsetInNode = index - node.range().getStartOffset();
+
+    return new Result(node, offsetInNode);
   }
 
-  private static int binarySearch(@NotNull ImmutableSeq<? extends GenericNode<?>> nodes, @NotNull SourceFile file, @NotNull Either<XY, Integer> location) {
+  private static int binarySearch(@NotNull ImmutableSeq<? extends GenericNode<?>> nodes, @NotNull SourceFile file, @NotNull XY location) {
     int low = 0;
     int high = nodes.size() - 1;
 
     while (low <= high) {
       int mid = (low + high) >>> 1;
       var node = nodes.get(mid);
-      // TODO: use cache if GenericNode becomes UserDataHolder.
-      var cmp = switch (location) {
-        case Either.Left<XY, Integer>(var value) -> {
-          var range = SourcePos.of(node.range(), file, false);
-          yield -range.compareVisually(value.x(), value.y());
-        }
-        case Either.Right<XY, Integer>(var value) -> node.range().contains(value) ? 0
-          : Integer.compare(node.range().getStartOffset(), value);
-      };
+      var range = SourcePos.of(node.range(), file, false);
+      var cmp = -range.compareVisually(location.x(), location.y());
+
       if (cmp == 0) return mid;
       if (cmp < 0) low = mid + 1;
       else high = mid - 1;
@@ -81,11 +83,11 @@ public final class NodeWalker {
   ///
   /// @param node cannot be [EmptyNode]
   /// @apiNote It is possible that [#node] is returned while it is a [com.intellij.psi.PsiWhiteSpace]
-  public static @NotNull GenericNode<?> refocus(@NotNull GenericNode<?> node) {
+  public static @NotNull GenericNode<?> refocus(@NotNull GenericNode<?> node, int offsetInNode) {
     var parent = node.parent();
     assert parent != null;
 
-    if (node.elementType() != TokenType.WHITE_SPACE && true) {
+    if (node.elementType() != TokenType.WHITE_SPACE && offsetInNode == 0) {
       // TODO: add condition: only refocus to the left if the cursor is at the beginning of [node].
       // We always refocus on the left most token, as the cursor is at the left side of [node].
       var prevToken = prevToken(node);
