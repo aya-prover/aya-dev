@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import static org.aya.lsp.LspTest.TEST_LIB;
 import static org.aya.lsp.LspTest.launch;
@@ -165,10 +166,15 @@ public class CompletionTest {
   public void testCompletion2() throws IOException {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
-    var mNode = NodeWalker.run(sourceFile, node, new XY(13, 24), TokenSet.EMPTY);
-    var focused = NodeWalker.refocus(mNode);
-    var walker = new ContextWalker2();
-    walker.visit(focused);
-    System.out.println(walker.location());
+    Consumer<XY> runner = (xy) -> {
+      var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
+      var focused = NodeWalker.refocus(mNode);
+      var walker = new ContextWalker2();
+      walker.visit(focused);
+      System.out.println(walker.location());
+    };
+
+    runner.accept(new XY(13, 25));    // {b : _Nat}
+    runner.accept(new XY(14, 60));    // c a a_
   }
 }
