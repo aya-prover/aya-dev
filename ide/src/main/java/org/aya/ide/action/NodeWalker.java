@@ -190,6 +190,10 @@ public final class NodeWalker {
       return host.parent();
     }
 
+    public @NotNull GenericNode<?> host() {
+      return host;
+    }
+
     @Override
     public @NotNull Sequence<EmptyNode> childrenSequence() {
       return SequencesKt.emptySequence();
