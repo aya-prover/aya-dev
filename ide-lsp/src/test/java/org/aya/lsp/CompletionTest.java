@@ -10,6 +10,7 @@ import kala.function.IntIntBiFunction;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
+import org.aya.ide.action.ContextWalker2;
 import org.aya.ide.action.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
@@ -158,5 +159,16 @@ public class CompletionTest {
     System.out.println(onClause2Bar);
     System.out.println(betweenParam);
     System.out.println(onId);
+  }
+
+  @Test
+  public void testCompletion2() throws IOException {
+    var sourceFile = readTestFile();
+    var node = parseFile(sourceFile);
+    var mNode = NodeWalker.run(sourceFile, node, new XY(13, 24), TokenSet.EMPTY);
+    var focused = NodeWalker.refocus(mNode);
+    var walker = new ContextWalker2();
+    walker.visit(focused);
+    System.out.println(walker.location());
   }
 }
