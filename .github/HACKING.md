@@ -78,6 +78,16 @@ You may also need the following plugins:
   publish. [Download link](https://github.com/user-attachments/files/18740788/fuck.idea.jpms-SNAPSHOT.jar.zip).
   Make sure you rename the file to remove the `.zip` postfix so it becomes a jar
 
+After completing the previous steps, execute the `Sync All Gradle Projects` in Gradle Panel or Search Panel 
+to fix IntelliJ IDEA `Can't resolve symbol` errors.
+
+![Sync All Gradle Projects](./images/sync_all_gradle_from_panel.png)
+
+
+![Sync All Gradle Projects](./images/search_sync_all.png)
+
+
+
 ## Authoring and running tests
 
 We prefer using integration tests, which is very convenient -- all fixtures can use the stdlib,
