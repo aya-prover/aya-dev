@@ -16,3 +16,7 @@ module Subworld {
 }
 
 variable A B : String
+
+inductive List (A : Type)
+| nil
+| cons (x : A) (xs : List A)

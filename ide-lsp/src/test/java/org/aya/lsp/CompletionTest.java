@@ -173,6 +173,7 @@ public class CompletionTest {
     Consumer<XY> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
+      System.out.println(xy + ": focus on " + focused);
       var walker = new ContextWalker2();
       walker.visit(focused);
       System.out.println(walker.location());
@@ -181,5 +182,7 @@ public class CompletionTest {
     runner.accept(new XY(13, 26));    // {b : N_at}
     runner.accept(new XY(14, 60));    // c a a_
     runner.accept(new XY(14, 34));    // (e _: Nat)
+    runner.accept(new XY(22, 15));    // (x : A) _(xs : List A)
+    runner.accept(new XY(22, 2));     // | _cons
   }
 }

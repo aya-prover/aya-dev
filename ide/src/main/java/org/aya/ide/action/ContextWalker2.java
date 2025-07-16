@@ -21,6 +21,7 @@ public class ContextWalker2 {
     Bind,       // fn _a => ...
     Expr,
     Pattern,
+    Elim,
     Unknown
   }
 
@@ -72,15 +73,6 @@ public class ContextWalker2 {
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
 
-  public static final @NotNull TokenSet BIND_INTRODUCER = TokenSet.create(
-    TELE,
-    LAMBDA_TELE_BINDER,
-    TELE_BINDER_UNTYPED,
-    LET_BIND_BLOCK,
-    PATTERNS,
-    UNIT_PATTERN
-  );
-
   private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
   private @Nullable Location location = null;
 
@@ -96,6 +88,17 @@ public class ContextWalker2 {
     return SeqView.narrow(parent.childrenView().takeWhile(n -> !n.equals(node)));
   }
 
+  /// Return the parent node of [#node],
+  /// this function will return [org.aya.ide.action.NodeWalker.EmptyNode] if [#node] is [org.aya.ide.action.NodeWalker.EmptyNode]
+  /// and the host of [#node] is the last node of its parent (in other word, [#node] is also at the end of its parent).
+  public static @Nullable GenericNode<?> refocusParent(@NotNull GenericNode<?> node) {
+    var parent = node.parent();
+    if (parent == null) return null;
+    if (!(node instanceof NodeWalker.EmptyNode enode)) return parent;
+    if (parent.lastChild().equals(enode.host())) return new NodeWalker.EmptyNode(parent);
+    return parent;
+  }
+
   public @Nullable Location location() {
     return this.location;
   }
@@ -104,26 +107,28 @@ public class ContextWalker2 {
     if (this.location == null) this.location = location;
   }
 
-  private void setLocationExpr() {
-    setLocation(Location.Expr);
-  }
-
-  private void setLocationBind() {
-    setLocation(Location.Bind);
-  }
-
-  private void setLocationPattern() {
-    setLocation(Location.Pattern);
-  }
-
-  private void setLocationUnknown() {
-    setLocation(Location.Unknown);
-  }
-
   private final @NotNull CompletionPartition fnDeclPartition = new CompletionPartition(
     ImmutableSeq.of(KW_DEF),
     ImmutableSeq.of(Location.Modifier, Location.Expr),
     TELE
+  );
+
+  private final @NotNull CompletionPartition dataDeclPartition = new CompletionPartition(
+    ImmutableSeq.of(KW_DATA),
+    ImmutableSeq.of(Location.Modifier, Location.Expr),
+    TELE
+  );
+
+  private final @NotNull CompletionPartition dataConPartition = new CompletionPartition(
+    ImmutableSeq.of(DECL_NAME_OR_INFIX),      // unlike others, we use a node as pin b
+    ImmutableSeq.of(Location.Unknown, Location.Expr),
+    TELE
+  );
+
+  private final @NotNull CompletionPartition elimPartition = new CompletionPartition(
+    ImmutableSeq.of(KW_ELIM),
+    ImmutableSeq.of(null, Location.Elim),
+    null
   );
 
   private final @NotNull CompletionPartition lambda0Partition = new CompletionPartition(
@@ -188,8 +193,8 @@ public class ContextWalker2 {
 
   private final @NotNull CompletionPartition arrayCompBlockPartition = new CompletionPartition(
     ImmutableSeq.of(BAR),
-    ImmutableSeq.of(Location.Expr, null),
-    DO_BINDING
+    ImmutableSeq.of(Location.Expr, Location.Unknown),
+    DO_BINDING    // FIXME: doesn't work, use comma sep
   );
 
   public void visit(@Nullable GenericNode<?> node) {
@@ -206,7 +211,8 @@ public class ContextWalker2 {
         visitMisc(node);
       }
 
-      visit(parent);
+      // in case [node] is EmptyNode, and the its host is still the last child of [parent]
+      visit(refocusParent(node));
     }
   }
 
@@ -249,6 +255,7 @@ public class ContextWalker2 {
 
     var type = parent.elementType();
     if (type == FN_DECL) fnDeclPartition.accept(node);
+    else if (type == DATA_DECL) dataDeclPartition.accept(node);
   }
 
   /// @param node which [GenericNode#parent()] is [#EXPR], can be [org.aya.ide.action.NodeWalker.EmptyNode]
@@ -273,7 +280,7 @@ public class ContextWalker2 {
 
     // special case, `arrowExpr := expr TO expr`, unlike `type := COLON expr`, both sides of `arrowExpr` are expr
     if (type == ARROW_EXPR) {
-      setLocationExpr();
+      setLocation(Location.Expr);
       return;
     }
 
@@ -291,17 +298,23 @@ public class ContextWalker2 {
       if (!prevSiblings.anyMatch(it -> it.elementType() == BAR)) {
         parent.childrenOfType(DO_BINDING).forEach(this::collectBinding);
       }
+    } else if (type == ELIMS) {
+      elimPartition.accept(node);
     } else if (type == COMMA_SEP) {
       var pparent = parent.parent();
       if (pparent != null) {
         var ptype = pparent.elementType();
         if (ptype == DO_EXPR) {
-          setLocationExpr();
+          setLocation(Location.Expr);
           backward(node)
             .filter(it -> it.elementType() == DO_BLOCK_CONTENT)
             .forEach(this::collectBinding);
         }
       }
+    } else if (type == DATA_CON) {
+      dataConPartition.accept(node);
     }
+
+    // TODO: check if `licit`, some EmptyNode focus on licit.
   }
 }
