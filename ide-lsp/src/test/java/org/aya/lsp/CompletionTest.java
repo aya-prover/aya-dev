@@ -207,6 +207,7 @@ public class CompletionTest {
       new XY(3, 34),      // : _Nat
       new XY(5, 36),      // suc d _in
       new XY(5, 48),      // c (foo a)_
+      new XY(9, 10),      // b <- bar_,
       new XY(10, 2)       // _c
     );
 
