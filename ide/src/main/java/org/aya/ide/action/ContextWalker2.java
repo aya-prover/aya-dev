@@ -72,6 +72,10 @@ public class ContextWalker2 {
 
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
+  public static final @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
+    DO_BINDING,
+    LET_BIND
+  );
 
   private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
   private @Nullable Location location = null;
@@ -95,11 +99,9 @@ public class ContextWalker2 {
     var parent = node.parent();
     if (parent == null) return null;
     if (!(node instanceof NodeWalker.EmptyNode enode)) return parent;
-    if (parent.lastChild().equals(enode.host())) return new NodeWalker.EmptyNode(parent);
-
-    // TODO: not enough, we should focus on parent if host is a delimiter (such as `)`)
-    //       and keep if host is not a delimiter, this solve the case `let c := d_ in`
-    //       however, not enough for `let c := (d)_ in`
+    if (parent.lastChild().equals(enode.host())
+      && !RIGHT_OPEN_BINDING_INTRODUCER.contains(parent.elementType()))
+      return new NodeWalker.EmptyNode(parent);
     return parent;
   }
 
