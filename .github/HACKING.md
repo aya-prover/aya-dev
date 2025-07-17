@@ -78,6 +78,19 @@ You may also need the following plugins:
   publish. [Download link](https://github.com/user-attachments/files/18740788/fuck.idea.jpms-SNAPSHOT.jar.zip).
   Make sure you rename the file to remove the `.zip` postfix so it becomes a jar
 
+After importing the project, the code analysis in the Aya source code should be available.
+However, there might be some errors in the build files (with extension `.gradle.kts`), which shouldn't affect
+hacking Aya, but can be annoying sometimes. You can manually refresh the symbols by running the
+`Sync All Gradle Projects` in the Gradle tool window or search its name to fix this.
+
+<details>
+<summary>IDE Screenshots</summary>
+
+![Sync All Gradle Projects](./images/sync_all_gradle_from_panel.png)
+
+![Sync All Gradle Projects](./images/search_sync_all.png)
+</details>
+
 ## Authoring and running tests
 
 We prefer using integration tests, which is very convenient -- all fixtures can use the stdlib,
