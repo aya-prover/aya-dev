@@ -36,7 +36,7 @@ jobs:
       - name: gradle publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: publish --info --no-daemon --stacktrace --warning-mode all
+          arguments: publishAggregationToCentralPortalSnapshots --info --no-daemon --stacktrace --warning-mode all
 
   nightly-build:
     needs: [move-tag, check-aya-version]
