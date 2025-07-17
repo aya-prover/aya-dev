@@ -139,7 +139,7 @@ public final class NodeWalker {
     private final @NotNull TextRange range;
 
     public EmptyNode(@NotNull GenericNode<?> host) {
-      var offset = host.range().getStartOffset();
+      var offset = host.range().getStartOffset() + 1;
 
       this.host = host;
       this.range = new TextRange(offset, offset);
