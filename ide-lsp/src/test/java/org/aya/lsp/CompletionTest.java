@@ -5,8 +5,10 @@ package org.aya.lsp;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IntIntBiFunction;
+import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
@@ -19,6 +21,7 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.position.SourceFile;
+import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.javacs.lsp.CompletionItemKind;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +31,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static org.aya.lsp.LspTest.TEST_LIB;
-import static org.aya.lsp.LspTest.launch;
+import static org.aya.lsp.LspTest.*;
 import static org.aya.lsp.tester.TestCommand.compile;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -114,11 +118,11 @@ public class CompletionTest {
       Assertions.assertEquals(expected, actual.easyToString()));
   }
 
-  private static final @NotNull Path TEST_FILE = TEST_LIB.resolve("src").resolve("HelloWorld.aya");
+  private static final @NotNull Path COMPLETION_TEST_FILE = RES_DIR.resolve("CompletionTest.aya");
 
   private @NotNull SourceFile readTestFile() throws IOException {
-    var content = Files.readString(TEST_FILE);
-    return new SourceFile(TEST_FILE.getFileName().toString(), TEST_FILE, content);
+    var content = Files.readString(COMPLETION_TEST_FILE);
+    return new SourceFile(COMPLETION_TEST_FILE.getFileName().toString(), COMPLETION_TEST_FILE, content);
   }
 
   private @NotNull GenericNode<?> parseFile(@NotNull SourceFile file) {
@@ -126,44 +130,60 @@ public class CompletionTest {
       .parseNode(file.sourceCode());
   }
 
-
   @Test
   public void testNodeWalker() throws IOException {
-    var file = TEST_LIB.resolve("src").resolve("HelloWorld.aya");
-    var content = Files.readString(file);
-    var node = new AyaParserImpl(new ThrowingReporter(AyaPrettierOptions.debug()))
-      .parseNode(Strings.convertLineSeparators(content));
-    var sourceFile = new SourceFile("HelloWorld.aya", file, content);
+    var file = readTestFile();
+    var node = parseFile(file);
+    Function<XY, NodeWalker.Result> runner = (xy) ->
+      NodeWalker.run(file, node, xy, TokenSet.EMPTY);
 
-    var target = NodeWalker.run(sourceFile, node, new XY(13, 25), TokenSet.EMPTY);
-    System.out.println(target);
-    target = NodeWalker.run(sourceFile, node, new XY(13, 26), TokenSet.EMPTY);
-    System.out.println(target);
+    BiConsumer<XY, NodeWalker.Result> checker = (xy, result) -> {
+      var mNode = result.node();
+      var offset = result.offsetInNode();
+      var lineColumn = SourcePos.offsetToLineColumn(file, mNode.range().getStartOffset(), 0);
+      assertEquals(xy.x(), lineColumn.line + 1);
+      assertEquals(xy.y(), lineColumn.column + offset);
+
+      System.out.println("[PASS] position=" + xy + ", text=" + mNode.tokenText());
+    };
+
+    var cases = ImmutableSeq.of(
+      new XY(3, 28),          // {b : Nat} _Nat : Nat
+      new XY(3, 29),          // {b : Nat} N_at : Nat
+      new XY(3, 31)           // {b : Bat} Nat_ : Nat
+    );
+
+    cases.forEach(xy -> checker.accept(xy, runner.apply(xy)));
   }
 
   @Test
   public void testRefocus() throws IOException {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
-    IntIntBiFunction<GenericNode<?>> runner = (x, y) -> {
-      var xy = new XY(x, y);
+    Function<XY, GenericNode<?>> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
-      var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
-      return focused;
+      return NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
     };
 
-    var afterClause2 = runner.apply(15, 35);    // in a_'\n'
-    var onClause2Bar = runner.apply(15, 2);     // _| suc a
-    var betweenParam = runner.apply(13, 19);    // (a : Nat)_ {b : Nat}
-    var onId = runner.apply(13, 15);      // (a : _Nat)
-    var inId = runner.apply(13, 16);      // (a : N_at)
+    TriConsumer<XY, XY, GenericNode<?>> checker = (pos, expected, mNode) -> {
+      var offset = mNode.range().getStartOffset();
+      var lc = SourcePos.offsetToLineColumn(sourceFile, offset, 0);
+      var actualXY = new XY(lc.line + 1, lc.column);
+      assertEquals(expected, actualXY, pos.toString());
+    };
 
-    // TODO: how to make assertion? use offset??
-    System.out.println(afterClause2);
-    System.out.println(onClause2Bar);
-    System.out.println(betweenParam);
-    System.out.println(onId);
-    System.out.println(inId);
+    var cases = ImmutableMap.<XY, XY>of(
+      new XY(1, 35), new XY(1, 34),      // suc (n : Nat) _| zero
+      new XY(3, 13), new XY(3, 12),      // (a : _Nat)
+      new XY(3, 14), new XY(3, 13),      // (a : N_at)
+      new XY(4, 11), new XY(4, 11),      // => b_
+      new XY(5, 48), new XY(5, 48),      // c (foo a)_
+      new XY(6, 0), new XY(5, 48)        // c (foo a)\n_
+    );
+
+    cases.forEach((pos, expected) -> {
+      checker.accept(pos, expected, runner.apply(pos));
+    });
   }
 
   @Test
@@ -179,10 +199,17 @@ public class CompletionTest {
       System.out.println(walker.location());
     };
 
-    runner.accept(new XY(13, 26));    // {b : N_at}
-    runner.accept(new XY(14, 60));    // c a a_
-    runner.accept(new XY(14, 34));    // (e _: Nat)
-    runner.accept(new XY(22, 15));    // (x : A) _(xs : List A)
-    runner.accept(new XY(22, 2));     // | _cons
+    var cases = ImmutableSeq.of(
+      new XY(1, 25),  // suc _(n : Nat)
+      new XY(1, 35),      // ) _| zero
+      new XY(1, 41),      // | zero_
+      new XY(3, 28),      // : Nat} _Nat
+      new XY(3, 34),      // : _Nat
+      new XY(5, 36),      // suc d _in
+      new XY(5, 48),      // c (foo a)_
+      new XY(10, 2)       // _c
+    );
+
+    cases.forEach(runner);
   }
 }

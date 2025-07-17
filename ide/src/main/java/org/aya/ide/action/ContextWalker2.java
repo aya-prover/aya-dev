@@ -17,12 +17,12 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 
 public class ContextWalker2 {
   public enum Location {
-    Modifier,
-    Bind,       // fn _a => ...
-    Expr,
-    Pattern,
-    Elim,
-    Unknown
+    Modifier,   // only modifiers
+    Bind,       // no completion
+    Expr,       // almost everything
+    Pattern,    // only constructors
+    Elim,       // only binds
+    Unknown     // no completion
   }
 
   public class CompletionPartition {
@@ -96,6 +96,10 @@ public class ContextWalker2 {
     if (parent == null) return null;
     if (!(node instanceof NodeWalker.EmptyNode enode)) return parent;
     if (parent.lastChild().equals(enode.host())) return new NodeWalker.EmptyNode(parent);
+
+    // TODO: not enough, we should focus on parent if host is a delimiter (such as `)`)
+    //       and keep if host is not a delimiter, this solve the case `let c := d_ in`
+    //       however, not enough for `let c := (d)_ in`
     return parent;
   }
 
