@@ -40,6 +40,10 @@ public sealed interface Expr extends AyaDocile {
     default @Nullable Term coreType() { return theCoreType().get(); }
   }
 
+  sealed interface BindIntro {
+    @NotNull LocalVar ref();
+  }
+
   /** Yes, please */
   sealed interface Sugar { }
 
@@ -49,11 +53,11 @@ public sealed interface Expr extends AyaDocile {
 
   record Param(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull LocalVar ref,
+    @Override @NotNull LocalVar ref,
     @NotNull WithPos<Expr> typeExpr,
     boolean explicit,
     @ForLSP MutableValue<Term> theCoreType
-  ) implements SourceNode, Named, AyaDocile, ParamLike<Expr>, WithTerm {
+  ) implements SourceNode, Named, AyaDocile, ParamLike<Expr>, WithTerm, BindIntro {
     @Override
     public @NotNull SourcePos nameSourcePos() {
       return ref.definition();
@@ -406,7 +410,8 @@ public sealed interface Expr extends AyaDocile {
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar var,
     @NotNull WithPos<Expr> expr
-  ) implements SourceNode, Named {
+  ) implements SourceNode, Named, BindIntro {
+    @Override public @NotNull LocalVar ref() { return var; }
     @Override public @NotNull SourcePos nameSourcePos() {
       return var.definition();
     }
@@ -554,11 +559,12 @@ public sealed interface Expr extends AyaDocile {
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs
-  ) implements SourceNode, Named {
+  ) implements SourceNode, Named, BindIntro {
     @Override
     public @NotNull SourcePos nameSourcePos() {
       return bindName.sourcePos();
     }
+    @Override public @NotNull LocalVar ref() { return bindName; }
 
     public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs

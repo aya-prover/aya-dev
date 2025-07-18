@@ -18,6 +18,7 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
 import org.aya.generic.Constants;
+import org.aya.generic.Keys;
 import org.aya.generic.Modifier;
 import org.aya.generic.Suppress;
 import org.aya.generic.term.DTKind;
@@ -33,6 +34,7 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.GeneralizedVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
@@ -475,7 +477,9 @@ public record AyaProducer(
     if (tele != null) return licit(tele, TELE_BINDER, this::teleBinder);
     var type = expr(node.child(EXPR));
     var pos = sourcePosOf(node);
-    return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
+    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true);
+    associate(node, param.ref(), param.type(), param.theCoreType());
+    return ImmutableSeq.of(param);
   }
 
   public @NotNull ImmutableSeq<Expr.Param> teleBinder(boolean explicit, @NotNull GenericNode<?> node) {
@@ -483,23 +487,48 @@ public record AyaProducer(
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
     var anonymous = node.peekChild(TELE_BINDER_ANONYMOUS);
-    if (anonymous != null) return ImmutableSeq.of(new Expr.Param(pos,
-      Constants.randomlyNamed(pos),
-      expr(anonymous.child(EXPR)),
-      explicit));
+    if (anonymous != null) {
+      var param = new Expr.Param(pos,
+        Constants.randomlyNamed(pos),
+        expr(anonymous.child(EXPR)),
+        explicit);
+      associate(anonymous, param.ref(), param.type(), param.theCoreType());
+      return ImmutableSeq.of(param);
+    }
     return unreachable(node);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
     // TODO: should we count the parenthesis?
     var pos = sourcePosOf(node);
-    var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
-    return ids.map(i -> new Expr.Param(pos, LocalVar.from(i), type, explicit));
+    return teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), pos, type, explicit);
   }
 
   private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
     return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toSeq();
+  }
+
+  private @NotNull ImmutableSeq<Expr.Param> teleBinderUntyped(
+    @NotNull GenericNode<?> node,
+    @Nullable SourcePos pos,
+    @Nullable WithPos<Expr> typeExpr,
+    boolean explicit
+  ) {
+    var params = node.childrenOfType(TELE_PARAM_NAME);
+    var names = params.map(this::teleParamName);
+
+    return params.zip(names, (n, i) -> {
+      var id = LocalVar.from(i);
+      var myPos = pos == null ? i.sourcePos() : pos;
+      var param = new Expr.Param(
+        myPos,
+        id,
+        typeExpr == null ? typeOrHole(null, myPos) : typeExpr,
+        explicit);
+      associate(n, param.ref(), param.type(), param.theCoreType());
+      return param;
+    }).toSeq();
   }
 
   public @NotNull ImmutableSeq<Expr.Param> typedTelescope(SeqView<? extends GenericNode<?>> telescope) {
@@ -527,12 +556,7 @@ public record AyaProducer(
     if (typed != null) return teleBinderTyped(typed, explicit);
 
     // | teleBinderUntyped
-    var pos = sourcePosOf(node);
-    var ids = node.child(TELE_BINDER_UNTYPED);
-    return teleBinderUntyped(ids).view()
-      .map(LocalVar::from)
-      .map(bind -> new Expr.Param(bind.definition(), bind, typeOrHole(null, pos), explicit))
-      .toSeq();
+    return teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), null, null, explicit);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, SourcePos pos) {
@@ -1007,6 +1031,17 @@ public record AyaProducer(
 
   public @NotNull Pattern newBinOPScope(@NotNull WithPos<Pattern> expr, boolean explicit) {
     return new Pattern.BinOpSeq(ImmutableSeq.of(new Arg<>(expr, explicit)));
+  }
+
+  private void associate(
+    @NotNull GenericNode<?> node,
+    @NotNull LocalVar ref,
+    @NotNull Expr typeExpr,
+    @NotNull MutableValue<Term> withTerm
+  ) {
+    if (!(typeExpr instanceof Expr.Hole)) node.putUserData(Keys.withType, typeExpr);
+    node.putUserData(Keys.withTerm, withTerm);
+    node.putUserData(Keys.bindIntro, ref);
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {
