@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
 import kala.function.IntIntBiFunction;
 import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
@@ -19,6 +20,7 @@ import org.aya.intellij.GenericNode;
 import org.aya.lsp.actions.CompletionProvider;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
+import org.aya.producer.AyaProducer;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
@@ -190,6 +192,10 @@ public class CompletionTest {
   public void testCompletion2() throws IOException {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
+
+    new AyaProducer(Either.left(sourceFile), new ThrowingReporter(AyaPrettierOptions.debug()))
+      .program(node);
+
     Consumer<XY> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());

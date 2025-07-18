@@ -8,8 +8,11 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.value.LazyValue;
+import org.aya.generic.Keys;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
+import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +66,7 @@ public class ContextWalker2 {
       // collect bindings
       if (paramType != null) {
         prevSiblings.filter(it -> it.elementType() == paramType)
-          .forEach(ContextWalker2.this::collectBinding);
+          .forEach(ContextWalker2.this::collectAndPutBinding);
       }
 
       return prevSiblings;
@@ -222,36 +225,71 @@ public class ContextWalker2 {
     }
   }
 
-  private void collectWeakId(@NotNull GenericNode<?> node) {
-    var name = node.tokenText().toString();
-    // TODo: retrieve type
+  private static @Nullable Completion.Item.Local typeOf(@NotNull GenericNode<?> node) {
+    var withTerm = node.getUserData(Keys.withTerm);
+    var withType = node.getUserData(Keys.withType);
+    var ref = node.getUserData(Keys.bindIntro);
+
+    if (ref == null) return null;
+
+    var type = new StmtVisitor.Type(withType, withTerm == null
+      ? LazyValue.ofValue(null)
+      : LazyValue.of(withTerm));
+
+    return new Completion.Item.Local(ref, type);
   }
 
-  private void collectBinding(@NotNull GenericNode<?> node) {
+  private static @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
     System.out.println(node);     // debug
 
     var type = node.elementType();
 
+    if (type == TELE) {
+      var ty = typeOf(node);
+      if (ty == null) {
+        var binder = node.child(LICIT).child(TELE_BINDER);
+        var typed = binder.peekChild(TELE_BINDER_TYPED);
+        if (typed != null) {
+          return collectBinding(typed);
+        }
+        var anonymous = binder.child(TELE_BINDER_ANONYMOUS);
+        ty = typeOf(anonymous);
+        if (ty != null) return ImmutableSeq.of(ty);
+        else return ImmutableSeq.empty();
+      } else {
+        return ImmutableSeq.of(ty);
+      }
+    }
+
+    if (type == TELE_BINDER_TYPED) {
+      return collectBinding(node.child(TELE_BINDER_UNTYPED));
+    }
+
     if (type == TELE_BINDER_UNTYPED) {
-      node.childrenOfType(TELE_PARAM_NAME)
-        .map(t -> t.child(WEAK_ID))
-        .forEach(this::collectWeakId);
-    } else if (type == LET_BIND_BLOCK) {
+      return node.childrenOfType(TELE_PARAM_NAME)
+        .mapNotNull(ContextWalker2::typeOf).toSeq();
+    }
+
+    if (type == LET_BIND_BLOCK) {
       node.childrenOfType(LET_BIND)
-        .map(t -> t.child(WEAK_ID))
-        .forEach(this::collectWeakId);
-    } else if (type == DO_BLOCK_CONTENT) {
+        .forEach(letBind -> {
+          var tele = letBind.childrenOfType(LAMBDA_TELE);
+          var result = letBind.peekChild(TYPE);
+        });
+    }
+
+    if (type == DO_BLOCK_CONTENT) {
       // FIXME: not yet tested
       var binding = node.peekChild(DO_BINDING);
       if (binding != null) {
-        collectWeakId(binding.child(WEAK_ID));
       }
     }
+
+    return ImmutableSeq.empty();
   }
 
-  /// @param bindIntroducers nodes that is [#BIND_INTRODUCER]
-  private void collectBindings(@NotNull ImmutableSeq<GenericNode<?>> bindIntroducers) {
-    bindIntroducers.forEach(this::collectBinding);
+  private void collectAndPutBinding(@NotNull GenericNode<?> node) {
+    collectBinding(node).forEach(l -> localContext.putIfAbsent(l.name(), l));
   }
 
   /// @param node which [GenericNode#parent()] is [#DECL], can be [org.aya.ide.action.NodeWalker.EmptyNode]
@@ -276,6 +314,7 @@ public class ContextWalker2 {
     else if (type == FORALL_EXPR) forallPartition.accept(node);
     else if (type == PI_EXPR) piPartition.accept(node);
     else if (type == LET_EXPR) letPartition.accept(node);
+    else if (type == NEW_EXPR) ;    // TODO
   }
 
   public void visitMisc(@NotNull GenericNode<?> node) {
@@ -293,7 +332,6 @@ public class ContextWalker2 {
     if (type == LET_BIND) letBindPartition.accept(node);
     else if (type == CLAUSE) clausePartition.accept(node);
     else if (type == TYPE) typePartition.accept(node);
-    else if (type == NEW_EXPR) ;     // TODO
     else if (type == DO_BINDING) doBindPartition.accept(node);
     else if (type == ARRAY_COMP_BLOCK) {
       var prevSiblings = arrayCompBlockPartition.accept(node);
@@ -302,7 +340,7 @@ public class ContextWalker2 {
       // as `arrayCompBlockPartition.accept` can do the job if [node] is (in) do bind,
       // and it do nothing if [node] is (in) generator
       if (!prevSiblings.anyMatch(it -> it.elementType() == BAR)) {
-        parent.childrenOfType(DO_BINDING).forEach(this::collectBinding);
+        parent.childrenOfType(DO_BINDING).forEach(this::collectAndPutBinding);
       }
     } else if (type == ELIMS) {
       elimPartition.accept(node);
@@ -314,13 +352,11 @@ public class ContextWalker2 {
           setLocation(Location.Expr);
           backward(node)
             .filter(it -> it.elementType() == DO_BLOCK_CONTENT)
-            .forEach(this::collectBinding);
+            .forEach(this::collectAndPutBinding);
         }
       }
     } else if (type == DATA_CON) {
       dataConPartition.accept(node);
     }
-
-    // TODO: check if `licit`, some EmptyNode focus on licit.
   }
 }
