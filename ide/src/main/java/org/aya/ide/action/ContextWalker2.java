@@ -9,7 +9,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import kala.value.LazyValue;
-import org.aya.generic.Keys;
+import org.aya.generic.BindingInfo;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
@@ -27,61 +27,6 @@ public class ContextWalker2 {
     Elim,       // only binds
     Unknown     // no completion
   }
-
-  public class CompletionPartition {
-    public final @NotNull ImmutableSeq<IElementType> pins;
-    public final @NotNull ImmutableSeq<ContextWalker2.@Nullable Location> locations;
-    public final @Nullable IElementType paramType;
-
-    public CompletionPartition(
-      @NotNull ImmutableSeq<IElementType> pins,
-      @NotNull ImmutableSeq<Location> locations,
-      @Nullable IElementType paramType
-    ) {
-      this.pins = pins;
-      this.locations = locations;
-      this.paramType = paramType;
-
-      assert pins.isNotEmpty();
-      assert locations.size() == pins.size() + 1;
-    }
-
-    public @NotNull ImmutableSeq<GenericNode<?>> accept(@NotNull GenericNode<?> node) {
-      var prevSiblings = backward(node)
-        .toSeq();
-
-      // part locating
-      int part = 0;   // also the index of the next delimiter
-      for (var sibling : prevSiblings) {
-        if (part == pins.size()) break;
-        if (sibling.elementType() == pins.get(part)) {
-          part++;
-        }
-      }
-
-      // set location
-      var maybeLocation = locations.get(part);
-      if (maybeLocation != null) setLocation(maybeLocation);
-
-      // collect bindings
-      if (paramType != null) {
-        prevSiblings.filter(it -> it.elementType() == paramType)
-          .forEach(ContextWalker2.this::collectAndPutBinding);
-      }
-
-      return prevSiblings;
-    }
-  }
-
-  public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
-  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
-  public static final @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
-    DO_BINDING,
-    LET_BIND
-  );
-
-  private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
-  private @Nullable Location location = null;
 
   /// Collect all siblings before [#node]
   public static @NotNull SeqView<GenericNode<?>> backward(@NotNull GenericNode<?> node) {
@@ -108,13 +53,68 @@ public class ContextWalker2 {
     return parent;
   }
 
-  public @Nullable Location location() {
-    return this.location;
+  private static @Nullable Completion.Item.Local typeOf(@Nullable BindingInfo info) {
+    if (info == null) return null;
+    var type = new StmtVisitor.Type(info.typeExpr(), LazyValue.of(info.theCore()));
+    return new Completion.Item.Local(info.var(), type);
   }
 
-  private void setLocation(@NotNull Location location) {
-    if (this.location == null) this.location = location;
+  private @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
+    System.out.println(node);     // debug
+
+    var type = node.elementType();
+
+    if (type == TELE) {
+      var ty = typeOf(bindingInfos.getOrNull(node));
+      if (ty == null) {
+        var binder = node.child(LICIT).child(TELE_BINDER);
+        var typed = binder.peekChild(TELE_BINDER_TYPED);
+        if (typed != null) {
+          return collectBinding(typed);
+        }
+        var anonymous = binder.child(TELE_BINDER_ANONYMOUS);
+        ty = typeOf(bindingInfos.getOrNull(anonymous));
+        if (ty != null) return ImmutableSeq.of(ty);
+        else return ImmutableSeq.empty();
+      } else {
+        return ImmutableSeq.of(ty);
+      }
+    }
+
+    if (type == TELE_BINDER_TYPED) {
+      return collectBinding(node.child(TELE_BINDER_UNTYPED));
+    }
+
+    if (type == TELE_BINDER_UNTYPED) {
+      return node.childrenOfType(TELE_PARAM_NAME)
+        .map(bindingInfos::getOrNull)
+        .mapNotNull(ContextWalker2::typeOf).toSeq();
+    }
+
+    if (type == LET_BIND_BLOCK) {
+      node.childrenOfType(LET_BIND)
+        .forEach(letBind -> {
+          var tele = letBind.childrenOfType(LAMBDA_TELE);
+          var result = letBind.peekChild(TYPE);
+        });
+    }
+
+    if (type == DO_BLOCK_CONTENT) {
+      // FIXME: not yet tested
+      var binding = node.peekChild(DO_BINDING);
+      if (binding != null) {
+      }
+    }
+
+    return ImmutableSeq.empty();
   }
+
+  public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
+  public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
+  public static final @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
+    DO_BINDING,
+    LET_BIND
+  );
 
   private final @NotNull CompletionPartition fnDeclPartition = new CompletionPartition(
     ImmutableSeq.of(KW_DEF),
@@ -206,6 +206,22 @@ public class ContextWalker2 {
     DO_BINDING    // FIXME: doesn't work, use comma sep
   );
 
+  private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
+  private final @NotNull MutableMap<GenericNode<?>, BindingInfo> bindingInfos;
+  private @Nullable Location location = null;
+
+  public ContextWalker2(@NotNull MutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
+    this.bindingInfos = bindingInfos;
+  }
+
+  public @Nullable Location location() {
+    return this.location;
+  }
+
+  private void setLocation(@NotNull Location location) {
+    if (this.location == null) this.location = location;
+  }
+
   public void visit(@Nullable GenericNode<?> node) {
     if (node == null) return;
 
@@ -223,69 +239,6 @@ public class ContextWalker2 {
       // in case [node] is EmptyNode, and the its host is still the last child of [parent]
       visit(refocusParent(node));
     }
-  }
-
-  private static @Nullable Completion.Item.Local typeOf(@NotNull GenericNode<?> node) {
-    var withTerm = node.getUserData(Keys.withTerm);
-    var withType = node.getUserData(Keys.withType);
-    var ref = node.getUserData(Keys.bindIntro);
-
-    if (ref == null) return null;
-
-    var type = new StmtVisitor.Type(withType, withTerm == null
-      ? LazyValue.ofValue(null)
-      : LazyValue.of(withTerm));
-
-    return new Completion.Item.Local(ref, type);
-  }
-
-  private static @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
-    System.out.println(node);     // debug
-
-    var type = node.elementType();
-
-    if (type == TELE) {
-      var ty = typeOf(node);
-      if (ty == null) {
-        var binder = node.child(LICIT).child(TELE_BINDER);
-        var typed = binder.peekChild(TELE_BINDER_TYPED);
-        if (typed != null) {
-          return collectBinding(typed);
-        }
-        var anonymous = binder.child(TELE_BINDER_ANONYMOUS);
-        ty = typeOf(anonymous);
-        if (ty != null) return ImmutableSeq.of(ty);
-        else return ImmutableSeq.empty();
-      } else {
-        return ImmutableSeq.of(ty);
-      }
-    }
-
-    if (type == TELE_BINDER_TYPED) {
-      return collectBinding(node.child(TELE_BINDER_UNTYPED));
-    }
-
-    if (type == TELE_BINDER_UNTYPED) {
-      return node.childrenOfType(TELE_PARAM_NAME)
-        .mapNotNull(ContextWalker2::typeOf).toSeq();
-    }
-
-    if (type == LET_BIND_BLOCK) {
-      node.childrenOfType(LET_BIND)
-        .forEach(letBind -> {
-          var tele = letBind.childrenOfType(LAMBDA_TELE);
-          var result = letBind.peekChild(TYPE);
-        });
-    }
-
-    if (type == DO_BLOCK_CONTENT) {
-      // FIXME: not yet tested
-      var binding = node.peekChild(DO_BINDING);
-      if (binding != null) {
-      }
-    }
-
-    return ImmutableSeq.empty();
   }
 
   private void collectAndPutBinding(@NotNull GenericNode<?> node) {
@@ -357,6 +310,51 @@ public class ContextWalker2 {
       }
     } else if (type == DATA_CON) {
       dataConPartition.accept(node);
+    }
+  }
+
+  public class CompletionPartition {
+    public final @NotNull ImmutableSeq<IElementType> pins;
+    public final @NotNull ImmutableSeq<ContextWalker2.@Nullable Location> locations;
+    public final @Nullable IElementType paramType;
+
+    public CompletionPartition(
+      @NotNull ImmutableSeq<IElementType> pins,
+      @NotNull ImmutableSeq<Location> locations,
+      @Nullable IElementType paramType
+    ) {
+      this.pins = pins;
+      this.locations = locations;
+      this.paramType = paramType;
+
+      assert pins.isNotEmpty();
+      assert locations.size() == pins.size() + 1;
+    }
+
+    public @NotNull ImmutableSeq<GenericNode<?>> accept(@NotNull GenericNode<?> node) {
+      var prevSiblings = backward(node)
+        .toSeq();
+
+      // part locating
+      int part = 0;   // also the index of the next delimiter
+      for (var sibling : prevSiblings) {
+        if (part == pins.size()) break;
+        if (sibling.elementType() == pins.get(part)) {
+          part++;
+        }
+      }
+
+      // set location
+      var maybeLocation = locations.get(part);
+      if (maybeLocation != null) setLocation(maybeLocation);
+
+      // collect bindings
+      if (paramType != null) {
+        prevSiblings.filter(it -> it.elementType() == paramType)
+          .forEach(ContextWalker2.this::collectAndPutBinding);
+      }
+
+      return prevSiblings;
     }
   }
 }
