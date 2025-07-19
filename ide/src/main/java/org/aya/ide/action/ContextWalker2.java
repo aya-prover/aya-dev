@@ -13,8 +13,11 @@ import org.aya.generic.BindingInfo;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
 
@@ -53,6 +56,7 @@ public class ContextWalker2 {
     return parent;
   }
 
+  @Contract("!null -> !null")
   private static @Nullable Completion.Item.Local typeOf(@Nullable BindingInfo info) {
     if (info == null) return null;
     var type = new StmtVisitor.Type(info.typeExpr(), LazyValue.of(info.theCore()));
@@ -91,12 +95,47 @@ public class ContextWalker2 {
         .mapNotNull(ContextWalker2::typeOf).toSeq();
     }
 
+    if (type == LAMBDA_TELE) {
+      var untyped = node.peekChild(TELE_PARAM_NAME);
+      if (untyped != null) {
+        return ImmutableSeq.of(typeOf(bindingInfos.get(untyped)));
+      }
+
+      // TODO: maybe we can return ImmutableSeq<Param> and make Param stores Completion.Item.Local
+      var licit = node.child(LICIT);
+      return collectBinding(licit.child(LAMBDA_TELE_BINDER));
+    }
+
+    if (type == LAMBDA_TELE_BINDER) {
+      var child = node.peekChild(TELE_BINDER_TYPED);
+      if (child == null) child = node.child(TELE_BINDER_UNTYPED);
+      return collectBinding(child);
+    }
+
     if (type == LET_BIND_BLOCK) {
-      node.childrenOfType(LET_BIND)
-        .forEach(letBind -> {
-          var tele = letBind.childrenOfType(LAMBDA_TELE);
-          var result = letBind.peekChild(TYPE);
-        });
+      return node.childrenOfType(LET_BIND)
+        .mapNotNull(letBind -> {
+          // TODO: result
+          var tele = letBind.childrenOfType(LAMBDA_TELE)
+            .map(t -> {
+              var maybeLicit = t.peekChild(LICIT);
+              boolean explicit = true;
+              if (maybeLicit != null) {
+                explicit = maybeLicit.peekChild(LPAREN) != null;
+              }
+
+              var info = typeOf(bindingInfos.getOrNull(t));
+              if (info == null) return null;
+              return new Completion.Param(info.name(), info.type().headless(), explicit);
+            }).toSeq();
+
+          var result = typeOf(bindingInfos.get(letBind));
+          assert result != null;
+
+          if (tele.anyMatch(Objects::isNull)) tele = ImmutableSeq.empty();
+          return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
+        })
+        .toSeq();
     }
 
     if (type == DO_BLOCK_CONTENT) {
