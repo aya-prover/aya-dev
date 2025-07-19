@@ -11,14 +11,15 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.control.Option;
 import kala.function.BooleanObjBiFunction;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import kala.value.MutableValue;
+import org.aya.generic.BindingInfo;
 import org.aya.generic.Constants;
-import org.aya.generic.Keys;
 import org.aya.generic.Modifier;
 import org.aya.generic.Suppress;
 import org.aya.generic.term.DTKind;
@@ -80,7 +81,8 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  */
 public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
-  @NotNull Reporter reporter
+  @NotNull Reporter reporter,
+  @Nullable MutableMap<GenericNode<?>, BindingInfo> bindingInfoMap
 ) {
   // NOTE: change here is you modified `extends` in `AyaPsiParser.bnf`
   public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
@@ -88,6 +90,13 @@ public record AyaProducer(
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
+
+  public AyaProducer(
+    @NotNull Either<SourceFile, SourcePos> source,
+    @NotNull Reporter reporter
+  ) {
+    this(source, reporter, null);
+  }
 
   public @NotNull Either<ImmutableSeq<Stmt>, WithPos<Expr>> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -1039,9 +1048,10 @@ public record AyaProducer(
     @NotNull Expr typeExpr,
     @NotNull MutableValue<Term> withTerm
   ) {
-    if (!(typeExpr instanceof Expr.Hole)) node.putUserData(Keys.withType, typeExpr);
-    node.putUserData(Keys.withTerm, withTerm);
-    node.putUserData(Keys.bindIntro, ref);
+    if (bindingInfoMap != null) {
+      var exists = bindingInfoMap.put(node, new BindingInfo(ref, typeExpr, withTerm)).isDefined();
+      assert !exists : "Duplicate BindingInfo";
+    }
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {
