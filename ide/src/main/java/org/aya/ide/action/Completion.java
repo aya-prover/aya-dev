@@ -71,6 +71,11 @@ public final class Completion {
         result == null ? StmtVisitor.Type.noType : new StmtVisitor.Type(result.data()));
     }
 
+    public @NotNull StmtVisitor.Type headless() {
+      assert telescope.isEmpty();
+      return result;
+    }
+
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       // TODO: unify with ConcretePrettier/CorePrettier?
       var docs = MutableList.<Doc>create();
@@ -131,15 +136,14 @@ public final class Completion {
 
     record Module(@NotNull ModuleName.Qualified moduleName) implements Item { }
 
-    record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
-      @Override
-      public @NotNull String name() {
-        return var.name();
+    record Local(@NotNull AnyVar var, @Override @NotNull Telescope type) implements AyaDocile, Symbol {
+      public Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type result) {
+        this(var, new Telescope(ImmutableSeq.empty(), result));
       }
 
       @Override
-      public @NotNull Telescope type() {
-        return new Telescope(ImmutableSeq.empty(), userType);
+      public @NotNull String name() {
+        return var.name();
       }
 
       @Override

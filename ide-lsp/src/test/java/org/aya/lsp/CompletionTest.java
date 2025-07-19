@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.function.IntIntBiFunction;
 import kala.function.TriConsumer;
@@ -193,14 +194,19 @@ public class CompletionTest {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
 
-    new AyaProducer(Either.left(sourceFile), new ThrowingReporter(AyaPrettierOptions.debug()))
-      .program(node);
+    var producer = new AyaProducer(
+      Either.left(sourceFile),
+      new ThrowingReporter(AyaPrettierOptions.debug()),
+      MutableMap.create()
+    );
+
+    producer.program(node);
 
     Consumer<XY> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       System.out.println(xy + ": focus on " + focused);
-      var walker = new ContextWalker2();
+      var walker = new ContextWalker2(producer.bindingInfoMap());
       walker.visit(focused);
       System.out.println(walker.location());
     };

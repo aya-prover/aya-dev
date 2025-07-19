@@ -569,8 +569,10 @@ public record AyaProducer(
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, SourcePos pos) {
-    return ImmutableSeq.of(new Expr.Param(pos,
-      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true));
+    var param = new Expr.Param(pos,
+      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true);
+    associate(node, param.ref(), param.type(), param.theCoreType());
+    return ImmutableSeq.of(param);
   }
 
   private record DeclNameOrInfix(@NotNull WithPos<String> name, @Nullable OpDecl.OpInfo infix) {
@@ -772,7 +774,10 @@ public record AyaProducer(
       var bindBlockMaybe = node.peekChild(LET_BIND_BLOCK);
       var body = expr(node.child(EXPR));
       if (bindBlockMaybe != null) {
-        var binds = bindBlockMaybe.childrenOfType(LET_BIND).map(this::letBind);
+        var binds = bindBlockMaybe.childrenOfType(LET_BIND)
+          .map(this::letBind)
+          .toSeq()
+          .view();
         return Expr.buildLet(pos, binds, body);
       } else {
         // let open
@@ -948,9 +953,12 @@ public record AyaProducer(
     var teles = typedTelescope(node.childrenOfType(LAMBDA_TELE));
     var result = typeOrHole(node.peekChild(TYPE), bind.sourcePos());
     var body = expr(node.child(EXPR));
+    var ref = LocalVar.from(bind);
+
+    associate(node, ref, result.data(), MutableValue.create());   // TODO: make let bind WithTerm
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
+    return new Expr.LetBind(pos, ref, teles, result, body);
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
@@ -1049,8 +1057,8 @@ public record AyaProducer(
     @NotNull MutableValue<Term> withTerm
   ) {
     if (bindingInfoMap != null) {
-      var exists = bindingInfoMap.put(node, new BindingInfo(ref, typeExpr, withTerm)).isDefined();
-      assert !exists : "Duplicate BindingInfo";
+      assert !bindingInfoMap.containsKey(node) : "Duplicate BindingInfo";
+      bindingInfoMap.put(node, new BindingInfo(ref, typeExpr, withTerm));
     }
   }
 
