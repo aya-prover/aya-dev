@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
+import kala.control.Either;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
@@ -18,6 +19,7 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
@@ -34,6 +36,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Completion {
+  public enum Location {
+    /// Note that we can't distinguish if the cursor is before a decl or after a decl,
+    /// therefore both modifiers and bind block keywords are available.
+    Decl,
+    /// The cursor is inside an expr, where expr keywords are available (such as `do`, `let`)
+    Expr,
+    /// The cursor is inside a pattern, where pattern keywords are available (such as `as`)
+    Pattern
+  }
+
   public record Param(@Nullable String name, @NotNull StmtVisitor.Type type, boolean licit) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -57,6 +69,11 @@ public final class Completion {
             new StmtVisitor.Type(p.type()), p.explicit())
         ),
         result == null ? StmtVisitor.Type.noType : new StmtVisitor.Type(result.data()));
+    }
+
+    public @NotNull StmtVisitor.Type headless() {
+      assert telescope.isEmpty();
+      return result;
     }
 
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -119,15 +136,14 @@ public final class Completion {
 
     record Module(@NotNull ModuleName.Qualified moduleName) implements Item { }
 
-    record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
-      @Override
-      public @NotNull String name() {
-        return var.name();
+    record Local(@NotNull AnyVar var, @Override @NotNull Telescope type) implements AyaDocile, Symbol {
+      public Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type result) {
+        this(var, new Telescope(ImmutableSeq.empty(), result));
       }
 
       @Override
-      public @NotNull Telescope type() {
-        return new Telescope(ImmutableSeq.empty(), userType);
+      public @NotNull String name() {
+        return var.name();
       }
 
       @Override
@@ -144,6 +160,7 @@ public final class Completion {
   private @Nullable ModuleName inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
+  private @Nullable Location location;
 
   /// @param incompleteName    the incomplete name under the cursor, only used for determine the context of completion
   /// @param endsWithSeparator ditto
@@ -170,6 +187,11 @@ public final class Completion {
         var walker = resolveLocal(stmts, xy);
         this.inModule = walker.moduleContext();
         this.localContext = walker.localContext();
+        this.location = switch (walker.leaf()) {
+          case Either.Left<Expr, Pattern> _ -> Location.Expr;
+          case Either.Right<Expr, Pattern> _ -> Location.Pattern;
+          case null -> Location.Decl;
+        };
       }
     }
 
@@ -181,9 +203,7 @@ public final class Completion {
       // }
 
       switch (modName) {
-        case ModuleName.ThisRef _ -> {
-          topLevelContext = resolveTopLevel(info.thisModule());
-        }
+        case ModuleName.ThisRef _ -> topLevelContext = resolveTopLevel(info.thisModule());
         case ModuleName.Qualified qualified -> {
           var mod = info.thisModule().getModuleMaybe(qualified);
           if (mod == null) break;     // TODO: do something?
@@ -195,6 +215,7 @@ public final class Completion {
     return this;
   }
 
+  public @Nullable Location location() { return location; }
   public @Nullable ModuleName inModule() { return inModule; }
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }

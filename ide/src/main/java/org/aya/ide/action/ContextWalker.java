@@ -17,7 +17,6 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GeneralizedVar;
-import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
