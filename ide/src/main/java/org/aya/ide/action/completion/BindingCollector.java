@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 import static org.aya.parser.AyaPsiElementTypes.*;
 
 public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
@@ -103,9 +101,6 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
             }).toSeq();
 
           var result = typeOf(bindingInfos.get(letBind));
-          assert result != null;
-
-          if (tele.anyMatch(Objects::isNull)) tele = ImmutableSeq.empty();
           return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
         })
         .toSeq();

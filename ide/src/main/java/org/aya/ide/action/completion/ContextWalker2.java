@@ -160,7 +160,7 @@ public class ContextWalker2 {
       .forEach(l -> localContext.putIfAbsent(l.name(), l));
   }
 
-  /// @param node which [GenericNode#parent()] is [#DECL], can be [org.aya.ide.action.NodeWalker.EmptyNode]
+  /// @param node which [GenericNode#parent()] is [#DECL], can be [NodeWalker.EmptyNode]
   public void visitDecl(@NotNull GenericNode<?> node) {
     var parent = node.parent();
     assert parent != null;
@@ -170,7 +170,7 @@ public class ContextWalker2 {
     else if (type == DATA_DECL) dataDeclPartition.accept(node);
   }
 
-  /// @param node which [GenericNode#parent()] is [#EXPR], can be [org.aya.ide.action.NodeWalker.EmptyNode]
+  /// @param node which [GenericNode#parent()] is [#EXPR], can be [NodeWalker.EmptyNode]
   public void visitExpr(@NotNull GenericNode<?> node) {
     var parent = node.parent();
     assert parent != null;

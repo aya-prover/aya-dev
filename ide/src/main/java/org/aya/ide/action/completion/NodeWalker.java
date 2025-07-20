@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.ide.action;
+package org.aya.ide.action.completion;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -8,7 +8,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableSeq;
-import kala.control.Either;
 import kala.text.StringSlice;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -88,7 +87,6 @@ public final class NodeWalker {
     assert parent != null;
 
     if (node.elementType() != TokenType.WHITE_SPACE && offsetInNode == 0) {
-      // TODO: add condition: only refocus to the left if the cursor is at the beginning of [node].
       // We always refocus on the left most token, as the cursor is at the left side of [node].
       var prevToken = prevToken(node);
       assert prevToken != null;
@@ -175,11 +173,7 @@ public final class NodeWalker {
     }
 
     @Override public String toString() {
-      final StringBuilder sb = new StringBuilder("EmptyNode{");
-      sb.append("host=").append(host);
-      sb.append(", range=").append(range);
-      sb.append('}');
-      return sb.toString();
+      return "EmptyNode(" + host + ')';
     }
   }
 }

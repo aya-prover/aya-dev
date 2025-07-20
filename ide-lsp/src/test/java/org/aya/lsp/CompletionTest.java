@@ -13,7 +13,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
 import org.aya.ide.action.completion.ContextWalker2;
-import org.aya.ide.action.NodeWalker;
+import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
 import org.aya.lsp.actions.CompletionProvider;

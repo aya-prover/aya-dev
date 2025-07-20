@@ -4,7 +4,6 @@ package org.aya.ide.action.completion;
 
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
-import org.aya.ide.action.NodeWalker;
 import org.aya.intellij.GenericNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
