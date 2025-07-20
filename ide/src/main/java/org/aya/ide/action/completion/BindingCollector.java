@@ -10,6 +10,7 @@ import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,18 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     if (userType instanceof Expr.Hole) userType = null;
     var type = new StmtVisitor.Type(userType, LazyValue.of(info.theCore()));
     return new Completion.Item.Local(info.var(), type);
+  }
+
+  private @NotNull Arg<ImmutableSeq<Completion.Item.Local>> lambdaTele(@NotNull GenericNode<?> node) {
+    var untyped = node.peekChild(TELE_PARAM_NAME);
+    if (untyped != null) {
+      return Arg.ofExplicitly(ImmutableSeq.of(typeOf(bindingInfos.get(untyped))));
+    }
+
+    // TODO: maybe we can return ImmutableSeq<Param> and make Param stores Completion.Item.Local
+    var licit = node.child(LICIT);
+    var explicit = licit.firstChild().is(LPAREN);
+    return new Arg<>(collectBinding(licit.child(LAMBDA_TELE_BINDER)), explicit);
   }
 
   // TODO: maybe SeqView
@@ -64,14 +77,7 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     }
 
     if (type == LAMBDA_TELE) {
-      var untyped = node.peekChild(TELE_PARAM_NAME);
-      if (untyped != null) {
-        return ImmutableSeq.of(typeOf(bindingInfos.get(untyped)));
-      }
-
-      // TODO: maybe we can return ImmutableSeq<Param> and make Param stores Completion.Item.Local
-      var licit = node.child(LICIT);
-      return collectBinding(licit.child(LAMBDA_TELE_BINDER));
+      return lambdaTele(node).term();
     }
 
     if (type == LAMBDA_TELE_BINDER) {
@@ -87,18 +93,13 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     if (type == LET_BIND_BLOCK) {
       return node.childrenOfType(LET_BIND)
         .mapNotNull(letBind -> {
-          // TODO: result
           var tele = letBind.childrenOfType(LAMBDA_TELE)
-            .map(t -> {
-              var maybeLicit = t.peekChild(LICIT);
-              boolean explicit = true;
-              if (maybeLicit != null) {
-                explicit = maybeLicit.peekChild(LPAREN) != null;
-              }
-
-              var info = typeOf(bindingInfos.getOrNull(t));
-              if (info == null) return null;
-              return new Completion.Param(info.name(), info.type().headless(), explicit);
+            .flatMap(t -> {
+              var lt = lambdaTele(t);
+              var explicit = lt.explicit();
+              var params = lt.term();
+              return params.view()
+                .map(param -> new Completion.Param(param.name(), param.type().headless(), explicit));
             }).toSeq();
 
           var result = typeOf(bindingInfos.get(letBind));
