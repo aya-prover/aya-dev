@@ -1,23 +1,19 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.ide.action;
+package org.aya.ide.action.completion;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
-import kala.value.LazyValue;
 import org.aya.generic.BindingInfo;
+import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
-import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
 
@@ -31,129 +27,8 @@ public class ContextWalker2 {
     Unknown     // no completion
   }
 
-  /// Collect all siblings before [#node]
-  public static @NotNull SeqView<GenericNode<?>> backward(@NotNull GenericNode<?> node) {
-    if (node instanceof NodeWalker.EmptyNode enode) {
-      return backward(enode.host()).appended(enode.host());
-    }
-
-    var parent = node.parent();
-    if (parent == null) return SeqView.empty();
-
-    return SeqView.narrow(parent.childrenView().takeWhile(n -> !n.equals(node)));
-  }
-
-  /// Return the parent node of [#node],
-  /// this function will return [org.aya.ide.action.NodeWalker.EmptyNode] if [#node] is [org.aya.ide.action.NodeWalker.EmptyNode]
-  /// and the host of [#node] is the last node of its parent (in other word, [#node] is also at the end of its parent).
-  public static @Nullable GenericNode<?> refocusParent(@NotNull GenericNode<?> node) {
-    var parent = node.parent();
-    if (parent == null) return null;
-    if (!(node instanceof NodeWalker.EmptyNode enode)) return parent;
-    if (parent.lastChild().equals(enode.host())
-      && !RIGHT_OPEN_BINDING_INTRODUCER.contains(parent.elementType()))
-      return new NodeWalker.EmptyNode(parent);
-    return parent;
-  }
-
-  @Contract("!null -> !null")
-  private static @Nullable Completion.Item.Local typeOf(@Nullable BindingInfo info) {
-    if (info == null) return null;
-    var type = new StmtVisitor.Type(info.typeExpr(), LazyValue.of(info.theCore()));
-    return new Completion.Item.Local(info.var(), type);
-  }
-
-  private @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
-    System.out.println(node);     // debug
-
-    var type = node.elementType();
-
-    if (type == TELE) {
-      var ty = typeOf(bindingInfos.getOrNull(node));
-      if (ty == null) {
-        var binder = node.child(LICIT).child(TELE_BINDER);
-        var typed = binder.peekChild(TELE_BINDER_TYPED);
-        if (typed != null) {
-          return collectBinding(typed);
-        }
-        var anonymous = binder.child(TELE_BINDER_ANONYMOUS);
-        ty = typeOf(bindingInfos.getOrNull(anonymous));
-        if (ty != null) return ImmutableSeq.of(ty);
-        else return ImmutableSeq.empty();
-      } else {
-        return ImmutableSeq.of(ty);
-      }
-    }
-
-    if (type == TELE_BINDER_TYPED) {
-      return collectBinding(node.child(TELE_BINDER_UNTYPED));
-    }
-
-    if (type == TELE_BINDER_UNTYPED) {
-      return node.childrenOfType(TELE_PARAM_NAME)
-        .map(bindingInfos::getOrNull)
-        .mapNotNull(ContextWalker2::typeOf).toSeq();
-    }
-
-    if (type == LAMBDA_TELE) {
-      var untyped = node.peekChild(TELE_PARAM_NAME);
-      if (untyped != null) {
-        return ImmutableSeq.of(typeOf(bindingInfos.get(untyped)));
-      }
-
-      // TODO: maybe we can return ImmutableSeq<Param> and make Param stores Completion.Item.Local
-      var licit = node.child(LICIT);
-      return collectBinding(licit.child(LAMBDA_TELE_BINDER));
-    }
-
-    if (type == LAMBDA_TELE_BINDER) {
-      var child = node.peekChild(TELE_BINDER_TYPED);
-      if (child == null) child = node.child(TELE_BINDER_UNTYPED);
-      return collectBinding(child);
-    }
-
-    if (type == LET_BIND_BLOCK) {
-      return node.childrenOfType(LET_BIND)
-        .mapNotNull(letBind -> {
-          // TODO: result
-          var tele = letBind.childrenOfType(LAMBDA_TELE)
-            .map(t -> {
-              var maybeLicit = t.peekChild(LICIT);
-              boolean explicit = true;
-              if (maybeLicit != null) {
-                explicit = maybeLicit.peekChild(LPAREN) != null;
-              }
-
-              var info = typeOf(bindingInfos.getOrNull(t));
-              if (info == null) return null;
-              return new Completion.Param(info.name(), info.type().headless(), explicit);
-            }).toSeq();
-
-          var result = typeOf(bindingInfos.get(letBind));
-          assert result != null;
-
-          if (tele.anyMatch(Objects::isNull)) tele = ImmutableSeq.empty();
-          return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
-        })
-        .toSeq();
-    }
-
-    if (type == DO_BLOCK_CONTENT) {
-      // FIXME: not yet tested
-      var binding = node.peekChild(DO_BINDING);
-      if (binding != null) {
-      }
-    }
-
-    return ImmutableSeq.empty();
-  }
-
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
-  public static final @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
-    DO_BINDING,
-    LET_BIND
-  );
 
   private final @NotNull CompletionPartition fnDeclPartition = new CompletionPartition(
     ImmutableSeq.of(KW_DEF),
@@ -168,7 +43,7 @@ public class ContextWalker2 {
   );
 
   private final @NotNull CompletionPartition dataConPartition = new CompletionPartition(
-    ImmutableSeq.of(DECL_NAME_OR_INFIX),      // unlike others, we use a node as pin b
+    ImmutableSeq.of(DECL_NAME_OR_INFIX),      // unlike others, we use a node as pin
     ImmutableSeq.of(Location.Unknown, Location.Expr),
     TELE
   );
@@ -246,11 +121,11 @@ public class ContextWalker2 {
   );
 
   private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
-  private final @NotNull MutableMap<GenericNode<?>, BindingInfo> bindingInfos;
+  private final @NotNull BindingCollector bindingCollector;
   private @Nullable Location location = null;
 
   public ContextWalker2(@NotNull MutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
-    this.bindingInfos = bindingInfos;
+    this.bindingCollector = new BindingCollector(ImmutableMap.from(bindingInfos));
   }
 
   public @Nullable Location location() {
@@ -276,12 +151,13 @@ public class ContextWalker2 {
       }
 
       // in case [node] is EmptyNode, and the its host is still the last child of [parent]
-      visit(refocusParent(node));
+      visit(NodeWalkUtil.refocusParent(node));
     }
   }
 
   private void collectAndPutBinding(@NotNull GenericNode<?> node) {
-    collectBinding(node).forEach(l -> localContext.putIfAbsent(l.name(), l));
+    bindingCollector.collectBinding(node)
+      .forEach(l -> localContext.putIfAbsent(l.name(), l));
   }
 
   /// @param node which [GenericNode#parent()] is [#DECL], can be [org.aya.ide.action.NodeWalker.EmptyNode]
@@ -342,7 +218,7 @@ public class ContextWalker2 {
         var ptype = pparent.elementType();
         if (ptype == DO_EXPR) {
           setLocation(Location.Expr);
-          backward(node)
+          NodeWalkUtil.backward(node)
             .filter(it -> it.elementType() == DO_BLOCK_CONTENT)
             .forEach(this::collectAndPutBinding);
         }
@@ -371,7 +247,7 @@ public class ContextWalker2 {
     }
 
     public @NotNull ImmutableSeq<GenericNode<?>> accept(@NotNull GenericNode<?> node) {
-      var prevSiblings = backward(node)
+      var prevSiblings = NodeWalkUtil.backward(node)
         .toSeq();
 
       // part locating

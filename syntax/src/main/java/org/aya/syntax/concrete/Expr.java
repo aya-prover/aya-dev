@@ -35,7 +35,7 @@ public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
   void forEach(@NotNull PosedConsumer<@NotNull Expr> f);
   @ForLSP
-  sealed interface WithTerm {
+  sealed interface WithTerm permits Param, Proj, Ref, Pattern.As, Pattern.Bind {
     @NotNull MutableValue<Term> theCoreType();
     default @Nullable Term coreType() { return theCoreType().get(); }
   }

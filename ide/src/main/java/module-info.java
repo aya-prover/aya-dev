@@ -8,4 +8,5 @@ module aya.ide {
   exports org.aya.ide.action;
   exports org.aya.ide.syntax;
   exports org.aya.ide.util;
+  exports org.aya.ide.action.completion;
 }

@@ -2,19 +2,17 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp;
 
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
-import kala.function.IntIntBiFunction;
 import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
-import org.aya.ide.action.ContextWalker2;
+import org.aya.ide.action.completion.ContextWalker2;
 import org.aya.ide.action.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
@@ -220,7 +218,8 @@ public class CompletionTest {
       new XY(5, 36),      // suc d _in
       new XY(5, 48),      // c (foo a)_
       new XY(9, 10),      // b <- bar_,
-      new XY(10, 2)       // _c
+      new XY(10, 2),      // _c
+      new XY(24, 10)      // fn b => _a + b
     );
 
     cases.forEach(runner);

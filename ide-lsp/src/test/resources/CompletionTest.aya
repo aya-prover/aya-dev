@@ -19,3 +19,6 @@ module Sub {
   | suc a, b => suc (plus a b)
   | a, suc b => suc (plus a b)
 }
+
+def lambda (a : Nat) : Nat -> Nat =>
+  fn b => a + b

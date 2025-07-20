@@ -6,9 +6,6 @@ import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
-import org.aya.ide.action.Completion;
-import org.aya.ide.action.ContextWalker;
-import org.aya.ide.util.XY;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.models.ServerOptions;
 import org.aya.lsp.models.ServerRenderOptions;
@@ -16,7 +13,6 @@ import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.tester.LspTestClient;
 import org.aya.lsp.tester.LspTestCompilerAdvisor;
 import org.aya.syntax.concrete.Pattern;
-import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.FnBody;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.term.MetaPatTerm;
@@ -74,7 +70,7 @@ public class LspTest {
       var testClause = ((FnBody.BlockBody) testOpt.get().body).clauses().getFirst();
       // vnil, ys => 0
       var testPat = (Pattern.Bind) testClause.patterns.getLast().term().data();
-      var testTy = assertInstanceOf(DataCall.class, testPat.type().get());
+      var testTy = assertInstanceOf(DataCall.class, testPat.theCoreType().get());
       assertNotNull(testTy);
       // ys : Vec A m
       var lastArg = testTy.args().getLast();

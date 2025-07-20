@@ -51,6 +51,7 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -514,8 +515,10 @@ public record AyaProducer(
     return teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), pos, type, explicit);
   }
 
-  private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
-    return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toSeq();
+  private <T> @NotNull ImmutableSeq<T> teleBinderUntyped(@NotNull GenericNode<?> node, @NotNull BiFunction<GenericNode<?>, WithPos<String>, T> mapper) {
+    var params = node.childrenOfType(TELE_PARAM_NAME).toSeq();
+    var names = params.view().map(this::teleParamName);
+    return params.zip(names, mapper);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderUntyped(
@@ -524,10 +527,7 @@ public record AyaProducer(
     @Nullable WithPos<Expr> typeExpr,
     boolean explicit
   ) {
-    var params = node.childrenOfType(TELE_PARAM_NAME);
-    var names = params.map(this::teleParamName);
-
-    return params.zip(names, (n, i) -> {
+    return teleBinderUntyped(node, (n, i) -> {
       var id = LocalVar.from(i);
       var myPos = pos == null ? i.sourcePos() : pos;
       var param = new Expr.Param(
@@ -537,7 +537,7 @@ public record AyaProducer(
         explicit);
       associate(n, param.ref(), param.type(), param.theCoreType());
       return param;
-    }).toSeq();
+    });
   }
 
   public @NotNull ImmutableSeq<Expr.Param> typedTelescope(SeqView<? extends GenericNode<?>> telescope) {
@@ -714,11 +714,13 @@ public record AyaProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
-      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
-        .map(LocalVar::from)
-        .map(v -> new WithPos<Pattern>(v.definition(), new Pattern.Bind(v)))
-        .map(Arg::ofExplicitly)
-        .toSeq();
+      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), (n, i) -> {
+        var id = LocalVar.from(i);
+        var pat = new Pattern.Bind(id);
+        associate(n, pat.bind(), null, pat.theCoreType());
+        return Arg.ofExplicitly(new WithPos<Pattern>(id.definition(), pat));
+      });
+
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(LAMBDA_1_EXPR)) {
@@ -841,9 +843,15 @@ public record AyaProducer(
     Arg<WithPos<Pattern>> pattern = unitPats.sizeEquals(1)
       ? unitPats.getFirst()
       : new Arg<>(new WithPos<>(innerPatternPos, new Pattern.BinOpSeq(unitPats)), true);
-    return as.isDefined()
-      ? Pattern.As.wrap(pattern, as.get()).map(x -> new WithPos<>(entirePos, x))
-      : pattern;
+
+    if (as.isDefined()) {
+      var asPat = Pattern.As.wrap(pattern, as.get());
+      var posedAsPat = asPat.map(x -> new WithPos<Pattern>(entirePos, x));
+      associate(node, asPat.term().as(), null, asPat.term().theCoreType());
+      return posedAsPat;
+    }
+
+    return pattern;
   }
 
   private @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> unitPatterns(@NotNull GenericNode<?> node) {
@@ -888,7 +896,9 @@ public record AyaProducer(
     if (node.is(ATOM_BIND_PATTERN)) {
       var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
       if (qualifiedId.isUnqualified()) {
-        return new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
+        var pat = new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
+        associate(node, pat.bind(), null, pat.theCoreType());
+        return pat;
       }
       return new Pattern.QualifiedRef(qualifiedId);
     }
@@ -1053,7 +1063,7 @@ public record AyaProducer(
   private void associate(
     @NotNull GenericNode<?> node,
     @NotNull LocalVar ref,
-    @NotNull Expr typeExpr,
+    @Nullable Expr typeExpr,
     @NotNull MutableValue<Term> withTerm
   ) {
     if (bindingInfoMap != null) {

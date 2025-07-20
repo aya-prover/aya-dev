@@ -220,11 +220,11 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
         con.forEach(this::visitPattern);
       }
-      case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), new Type(LazyValue.of(bind.type())));
+      case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), new Type(LazyValue.of(bind.theCoreType())));
       case Pattern.As as -> {
         // visit before as var decl
         as.forEach(this::visitPattern);
-        visitLocalVarDecl(as.as(), new Type(LazyValue.of(as.type())));
+        visitLocalVarDecl(as.as(), new Type(LazyValue.of(as.theCoreType())));
       }
 
       default -> pat.forEach(this::visitPattern);
