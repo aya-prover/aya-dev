@@ -3,6 +3,7 @@
 package org.aya.anf.frontend.compile;
 
 import org.aya.anf.ir.struct.IrComp;
+import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.Panic;
@@ -14,11 +15,12 @@ import org.jetbrains.annotations.NotNull;
 /// name are to be generated after suffcient context gathering).
 public class FuncBuilder {
 
-  private final @NotNull Term source;
-  private final @NotNull LoweringContext ctx = LoweringContext.create();
+  private final @NotNull FnDef fn;
+  private final @NotNull LoweringContext ctx;
 
-  public FuncBuilder(final @NotNull Term source) {
-    this.source = source;
+  public FuncBuilder(final @NotNull FnDef fn) {
+    this.fn = fn;
+    ctx = LoweringContext.fromFuncDef(fn);
   }
 
   // private @NotNull IrComp buildTermUnderBinding(ImmutableSeq<LetClause> vars, Function<Term, IrComp> builder, Term term) {
