@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface IrVal permits IrVal.Var, IrVal.Lambda {
 
   record Var(@NotNull IrVarRef ref) implements IrVal {}
-  record Lambda(@NotNull IrVarDecl decl, @NotNull IrExp body) implements IrVal {}
+  record Lambda(@NotNull IrVarDecl decl, @NotNull IrExpr body) implements IrVal {}
 }

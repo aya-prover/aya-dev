@@ -3,8 +3,7 @@
 package org.aya.anf.frontend.compile;
 
 import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
-import org.aya.anf.ir.struct.IrExp;
+import org.aya.anf.ir.struct.IrExpr;
 import org.aya.anf.ir.struct.IrVarDecl;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
@@ -17,21 +16,21 @@ import org.jetbrains.annotations.NotNull;
 /// name are to be generated after suffcient context gathering).
 public class FuncBuilder {
 
-  private final @NotNull MutableList<IrVarDecl.Generated> unnamedVars = MutableList.create();
+  private final @NotNull LoweringContext ctx = new LoweringContext();
   private @NotNull MutableLinkedHashMap<String, IrVarDecl> binds = MutableLinkedHashMap.of();
 
-  // private @NotNull IrExp buildTermUnderBinding(ImmutableSeq<LetClause> vars, Function<Term, IrExp> builder, Term term) {
+  // private @NotNull IrExpr buildTermUnderBinding(ImmutableSeq<LetClause> vars, Function<Term, IrExpr> builder, Term term) {
   //   // XXX: use incremental hash map
   //   var restore = binds;
   //   binds = MutableLinkedHashMap.from(restore);
   //   vars.forEach(v -> binds.put(v.decl().identifier(), v.decl()));
   //   var exp = buildTerm(term);
-  //   var wrapped = vars.foldRight(exp, (v, e) -> new IrExp.Let());
+  //   var wrapped = vars.foldRight(exp, (v, e) -> new IrExpr.Let());
   //   binds = restore;
   //   return wrapped;
   // }
 
-  private @NotNull IrExp buildTerm(@NotNull Term term) {
+  private @NotNull IrExpr buildTerm(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         yield null;

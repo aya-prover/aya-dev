@@ -8,6 +8,7 @@ import org.aya.anf.ir.struct.IrVarDecl;
 import org.aya.anf.ir.struct.LetClause;
 import org.jetbrains.annotations.NotNull;
 
+/// CPS-style expression builder for the IR.
 public class ExpBuilder {
   private final @NotNull MutableLinkedHashMap<String, IrVarDecl> env;
   private final @NotNull MutableList<LetClause> expBinds = MutableList.create();
