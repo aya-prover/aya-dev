@@ -14,7 +14,7 @@ public class NestedEnvLookup<T> {
   public void add(String key, T value) {
     order.append(key);
     binds.putIfAbsent(key, MutableList.create());
-    binds.get(key).append(value);
+    binds.getOrPut(key, MutableList::create).append(value);
   }
 
   public Pair<String, T> pop() {

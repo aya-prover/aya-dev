@@ -4,8 +4,11 @@ package org.aya.anf.ir.struct;
 
 import org.jetbrains.annotations.NotNull;
 
+/// Denotes a value in monadic form, i.e., one of the following:
+/// - Var reference (including global refs/any atomic value)
+/// - Lambda
 public sealed interface IrVal permits IrVal.Var, IrVal.Lambda {
 
   record Var(@NotNull IrVarRef ref) implements IrVal {}
-  record Lambda(@NotNull IrVarDecl decl, @NotNull IrExpr body) implements IrVal {}
+  record Lambda(@NotNull IrVarDecl decl, @NotNull IrComp body) implements IrVal {}
 }

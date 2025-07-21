@@ -2,9 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.anf.frontend.compile;
 
-import kala.collection.mutable.MutableLinkedHashMap;
-import org.aya.anf.ir.struct.IrExpr;
-import org.aya.anf.ir.struct.IrVarDecl;
+import org.aya.anf.ir.struct.IrComp;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.Panic;
@@ -16,21 +14,25 @@ import org.jetbrains.annotations.NotNull;
 /// name are to be generated after suffcient context gathering).
 public class FuncBuilder {
 
-  private final @NotNull LoweringContext ctx = new LoweringContext();
-  private @NotNull MutableLinkedHashMap<String, IrVarDecl> binds = MutableLinkedHashMap.of();
+  private final @NotNull Term source;
+  private final @NotNull LoweringContext ctx = LoweringContext.create();
 
-  // private @NotNull IrExpr buildTermUnderBinding(ImmutableSeq<LetClause> vars, Function<Term, IrExpr> builder, Term term) {
+  public FuncBuilder(final @NotNull Term source) {
+    this.source = source;
+  }
+
+  // private @NotNull IrComp buildTermUnderBinding(ImmutableSeq<LetClause> vars, Function<Term, IrComp> builder, Term term) {
   //   // XXX: use incremental hash map
   //   var restore = binds;
   //   binds = MutableLinkedHashMap.from(restore);
   //   vars.forEach(v -> binds.put(v.decl().identifier(), v.decl()));
   //   var exp = buildTerm(term);
-  //   var wrapped = vars.foldRight(exp, (v, e) -> new IrExpr.Let());
+  //   var wrapped = vars.foldRight(exp, (v, e) -> new IrComp.Let());
   //   binds = restore;
   //   return wrapped;
   // }
 
-  private @NotNull IrExpr buildTerm(@NotNull Term term) {
+  private @NotNull IrComp buildTerm(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         yield null;

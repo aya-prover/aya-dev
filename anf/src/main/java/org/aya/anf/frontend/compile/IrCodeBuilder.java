@@ -3,21 +3,18 @@
 package org.aya.anf.frontend.compile;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.anf.ir.struct.IrExpr;
-import org.aya.anf.ir.struct.IrVarRef;
+import org.aya.anf.ir.struct.IrComp;
 import org.aya.anf.ir.struct.LetClause;
 import org.jetbrains.annotations.NotNull;
 
+// XXX: currently `binds` are singleton sequences, change this after parallel moves
+// are a thing.
 public record IrCodeBuilder(
   @NotNull LoweringContext ctx,
   @NotNull ImmutableSeq<LetClause> binds
 ) {
 
-  public @NotNull IrVarRef lookup(@NotNull String id) {
-
-  }
-
-  public @NotNull IrExpr finish(@NotNull IrExpr expr) {
-    return binds.foldRight(expr, IrExpr.Let::new);
+  public @NotNull IrComp finish(@NotNull IrComp expr) {
+    return binds.foldRight(expr, IrComp.Let::new);
   }
 }
