@@ -3,6 +3,8 @@
 package org.aya.lsp;
 
 import com.intellij.psi.tree.TokenSet;
+import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -21,11 +23,13 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.producer.AyaProducer;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.ThrowingReporter;
 import org.javacs.lsp.CompletionItemKind;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -200,28 +204,54 @@ public class CompletionTest {
 
     producer.program(node);
 
-    Consumer<XY> runner = (xy) -> {
+    Function<XY, ContextWalker2> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       System.out.println(xy + ": focus on " + focused);
       var walker = new ContextWalker2(producer.bindingInfoMap());
       walker.visit(focused);
       System.out.println(walker.location());
+      return walker;
     };
 
-    var cases = ImmutableSeq.of(
-      new XY(1, 25),  // suc _(n : Nat)
-      new XY(1, 35),      // ) _| zero
-      new XY(1, 41),      // | zero_
-      new XY(3, 28),      // : Nat} _Nat
-      new XY(3, 34),      // : _Nat
-      new XY(5, 36),      // suc d _in
-      new XY(5, 48),      // c (foo a)_
-      new XY(9, 10),      // b <- bar_,
-      new XY(10, 2),      // _c
-      new XY(24, 10)      // fn b => _a + b
-    );
+    var case0 = runner.apply(new XY(1, 25));      // suc _(n : Nat)
+    var case1 = runner.apply(new XY(1, 35));      // ) _| zero
+    var case2 = runner.apply(new XY(1, 41));      // | zero_
+    var case3 = runner.apply(new XY(3, 28));      // : Nat} _Nat
+    var case4 = runner.apply(new XY(3, 34));      // : _Nat
+    var case5 = runner.apply(new XY(5, 36));      // suc d _in
+    var case6 = runner.apply(new XY(5, 48));      // c (foo a)_
+    var case7 = runner.apply(new XY(9, 10));      // b <- bar_,
+    var case8 = runner.apply(new XY(10, 2));      // _c
+    var case9 = runner.apply(new XY(24, 10));      // fn b => _a + b
 
-    cases.forEach(runner);
+    assertContext2(case0);
+    assertContext2(case1, "n : Nat");
+    assertContext2(case2);
+    assertContext2(case3, "a : Nat", "b : Nat");
+    assertContext2(case4, "a : Nat", "b : Nat", ": Nat");
+    assertContext2(case5, "d : Nat", "suc", "a", "b : Nat", ": Nat");
+    assertContext2(case6, "c (d : Nat)", "suc", "a", "b : Nat", ": Nat");
+    assertContext2(case9, "b", "a : Nat");
+  }
+
+  private void assertContext2(@NotNull ContextWalker2 walker, @NotNull String... expected) {
+    var actuals = walker.localContext
+      .valuesView().toSeq().view()
+      .filter(it -> it.var() instanceof LocalVar);
+
+    SeqView<@Nullable String> expecteds = ImmutableSeq.from(expected)
+      .view()
+      .concat(ImmutableSeq.fill(114514, (String) null));
+
+    actuals.forEachWith(expecteds, (a, e) -> {
+      var lvar = (LocalVar) a.var();
+      String actual = lvar.isGenerated()
+        ? a.type().easyToString()
+        : a.easyToString();
+
+      assertNotNull(e, "Unexpected: '" + actual + "'");
+      assertEquals(e, actual);
+    });
   }
 }

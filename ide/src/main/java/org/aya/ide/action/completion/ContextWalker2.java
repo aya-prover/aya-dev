@@ -120,7 +120,7 @@ public class ContextWalker2 {
     DO_BINDING    // FIXME: doesn't work, use comma sep
   );
 
-  private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
+  public final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
   private final @NotNull BindingCollector bindingCollector;
   private @Nullable Location location = null;
 

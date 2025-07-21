@@ -33,7 +33,6 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
       return Arg.ofExplicitly(ImmutableSeq.of(typeOf(bindingInfos.get(untyped))));
     }
 
-    // TODO: maybe we can return ImmutableSeq<Param> and make Param stores Completion.Item.Local
     var licit = node.child(LICIT);
     var explicit = licit.firstChild().is(LPAREN);
     return new Arg<>(collectBinding(licit.child(LAMBDA_TELE_BINDER)), explicit);
