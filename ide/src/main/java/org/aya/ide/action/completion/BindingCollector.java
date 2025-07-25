@@ -5,12 +5,10 @@ package org.aya.ide.action.completion;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
-import org.aya.generic.BindingInfo;
 import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
-import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +37,31 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     return new Arg<>(collectBinding(licit.child(LAMBDA_TELE_BINDER)), explicit);
   }
 
+  private @NotNull Completion.Item.Local letBind(@NotNull GenericNode<?> node) {
+    var tele = node.childrenOfType(LAMBDA_TELE)
+      .flatMap(t -> {
+        var lt = lambdaTele(t);
+        var explicit = lt.explicit();
+        var params = lt.term();
+        return params.view()
+          .map(param -> new Completion.Param(param.name(), param.type().headless(), explicit));
+      }).toSeq();
+
+    var result = typeOf(bindingInfos.get(node));
+    return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
+  }
+
   // TODO: maybe SeqView
+  /// Collect all bindings and their information that [#node] introduce,
+  /// we consider these node can introduce bindings:
+  /// * tele
+  /// * lambdaTele
+  /// * lambdaTeleBinder
+  /// * teleBinderTyped
+  /// * teleBinderUntyped
+  /// * letBindBlock/letBind
+  /// * doBlockContent/doBind
+  /// * teleParamName
   public @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
     var type = node.elementType();
 
@@ -88,20 +110,12 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
 
     if (type == LET_BIND_BLOCK) {
       return node.childrenOfType(LET_BIND)
-        .mapNotNull(letBind -> {
-          var tele = letBind.childrenOfType(LAMBDA_TELE)
-            .flatMap(t -> {
-              var lt = lambdaTele(t);
-              var explicit = lt.explicit();
-              var params = lt.term();
-              return params.view()
-                .map(param -> new Completion.Param(param.name(), param.type().headless(), explicit));
-            }).toSeq();
-
-          var result = typeOf(bindingInfos.get(letBind));
-          return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
-        })
+        .mapNotNull(this::letBind)
         .toSeq();
+    }
+
+    if (type == LET_BIND) {
+      return ImmutableSeq.of(letBind(node));
     }
 
     if (type == DO_BLOCK_CONTENT) {

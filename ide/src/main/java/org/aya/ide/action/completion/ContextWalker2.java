@@ -8,7 +8,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
-import org.aya.generic.BindingInfo;
 import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
@@ -88,6 +87,12 @@ public class ContextWalker2 {
     ImmutableSeq.of(KW_LET, KW_IN),
     ImmutableSeq.of(null, Location.Unknown, Location.Expr),
     LET_BIND_BLOCK
+  );
+
+  private final @NotNull CompletionPartition letListPartition = new CompletionPartition(
+    ImmutableSeq.empty(),
+    ImmutableSeq.of((Location) null),
+    LET_BIND
   );
 
   private final @NotNull CompletionPartition letBindPartition = new CompletionPartition(
@@ -198,6 +203,7 @@ public class ContextWalker2 {
     }
 
     if (type == LET_BIND) letBindPartition.accept(node);
+    else if (type == LET_BIND_BLOCK) letListPartition.accept(node);
     else if (type == CLAUSE) clausePartition.accept(node);
     else if (type == TYPE) typePartition.accept(node);
     else if (type == DO_BINDING) doBindPartition.accept(node);
@@ -242,7 +248,6 @@ public class ContextWalker2 {
       this.locations = locations;
       this.paramType = paramType;
 
-      assert pins.isNotEmpty();
       assert locations.size() == pins.size() + 1;
     }
 

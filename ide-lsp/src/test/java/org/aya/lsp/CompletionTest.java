@@ -228,7 +228,8 @@ public class CompletionTest {
     var case6 = runner.apply(new XY(5, 48));      // c (foo a)_
     var case7 = runner.apply(new XY(9, 10));      // b <- bar_,
     var case8 = runner.apply(new XY(10, 2));      // _c
-    var case9 = runner.apply(new XY(24, 10));      // fn b => _a + b
+    var case9 = runner.apply(new XY(24, 10));     // fn b => _a + b
+    var case10 = runner.apply(new XY(28, 10));    // | c := a_
 
     assertContext2(case0);
     assertContext2(case1, "n : Nat");

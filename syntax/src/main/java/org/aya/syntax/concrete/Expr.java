@@ -40,6 +40,8 @@ public sealed interface Expr extends AyaDocile {
     default @Nullable Term coreType() { return theCoreType().get(); }
   }
 
+  // TODO: maybe remove, idk
+  @ForLSP
   sealed interface BindIntro {
     @NotNull LocalVar ref();
   }

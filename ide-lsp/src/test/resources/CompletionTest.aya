@@ -22,3 +22,9 @@ module Sub {
 
 def lambda (a : Nat) : Nat -> Nat =>
   fn b => a + b
+
+def manyLets => let
+  | a := b
+  | c := a
+  | d := e
+  in f

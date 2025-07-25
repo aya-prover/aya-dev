@@ -5,7 +5,6 @@ package org.aya.ide.action.completion;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
-import org.aya.generic.BindingInfo;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AssociatedNode;
 import org.aya.syntax.concrete.Expr;
@@ -16,6 +15,7 @@ import org.aya.syntax.core.term.Term;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
+/// Extract [BindingInfo] from [kala.value.MutableValue] and its owner, kinda hacking.
 public final class BindingInfoExtractor implements StmtVisitor {
   private final @NotNull MutableMap<GenericNode<?>, BindingInfo> map = MutableMap.create();
 
