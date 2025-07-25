@@ -14,6 +14,7 @@ import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.ContextWalker;
+import org.aya.ide.action.completion.BindingInfoExtractor;
 import org.aya.ide.action.completion.ContextWalker2;
 import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
@@ -198,17 +199,21 @@ public class CompletionTest {
 
     var producer = new AyaProducer(
       Either.left(sourceFile),
-      new ThrowingReporter(AyaPrettierOptions.debug()),
-      MutableMap.create()
+      new ThrowingReporter(AyaPrettierOptions.debug())
     );
 
-    producer.program(node);
+    var stmts = producer.program(node);
+    assert stmts.isLeft();
+
+    var bindingInfoMap = new BindingInfoExtractor()
+      .accept(stmts.getLeftValue())
+      .extracted();
 
     Function<XY, ContextWalker2> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       System.out.println(xy + ": focus on " + focused);
-      var walker = new ContextWalker2(producer.bindingInfoMap());
+      var walker = new ContextWalker2(bindingInfoMap);
       walker.visit(focused);
       System.out.println(walker.location());
       return walker;

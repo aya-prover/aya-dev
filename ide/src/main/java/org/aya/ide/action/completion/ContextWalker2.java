@@ -124,8 +124,8 @@ public class ContextWalker2 {
   private final @NotNull BindingCollector bindingCollector;
   private @Nullable Location location = null;
 
-  public ContextWalker2(@NotNull MutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
-    this.bindingCollector = new BindingCollector(ImmutableMap.from(bindingInfos));
+  public ContextWalker2(@NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
+    this.bindingCollector = new BindingCollector(bindingInfos);
   }
 
   public @Nullable Location location() {

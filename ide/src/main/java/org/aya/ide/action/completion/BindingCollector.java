@@ -10,6 +10,7 @@ import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,6 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
 
   // TODO: maybe SeqView
   public @NotNull ImmutableSeq<Completion.Item.Local> collectBinding(@NotNull GenericNode<?> node) {
-    System.out.println(node);     // debug
-
     var type = node.elementType();
 
     // region tele
@@ -106,7 +105,7 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     }
 
     if (type == DO_BLOCK_CONTENT) {
-      // FIXME: not yet tested
+      // TODO
       var binding = node.peekChild(DO_BINDING);
       if (binding != null) {
       }

@@ -25,6 +25,7 @@ import org.aya.generic.Suppress;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.intellij.GenericNode;
+import org.aya.parser.AssociatedNode;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.AyaPsiTokenType;
@@ -82,8 +83,7 @@ import static org.aya.parser.AyaPsiElementTypes.*;
  */
 public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
-  @NotNull Reporter reporter,
-  @Nullable MutableMap<GenericNode<?>, BindingInfo> bindingInfoMap
+  @NotNull Reporter reporter
 ) {
   // NOTE: change here is you modified `extends` in `AyaPsiParser.bnf`
   public static final @NotNull TokenSet ARRAY_BLOCK = AyaPsiParser.EXTENDS_SETS_[0];
@@ -91,13 +91,6 @@ public record AyaProducer(
   public static final @NotNull TokenSet STMT = AyaPsiParser.EXTENDS_SETS_[3];
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
-
-  public AyaProducer(
-    @NotNull Either<SourceFile, SourcePos> source,
-    @NotNull Reporter reporter
-  ) {
-    this(source, reporter, null);
-  }
 
   public @NotNull Either<ImmutableSeq<Stmt>, WithPos<Expr>> program(@NotNull GenericNode<?> node) {
     var repl = node.peekChild(EXPR);
@@ -487,8 +480,7 @@ public record AyaProducer(
     if (tele != null) return licit(tele, TELE_BINDER, this::teleBinder);
     var type = expr(node.child(EXPR));
     var pos = sourcePosOf(node);
-    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true);
-    associate(node, param.ref(), param.type(), param.theCoreType());
+    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true, new AssociatedNode<>(node));
     return ImmutableSeq.of(param);
   }
 
@@ -501,8 +493,9 @@ public record AyaProducer(
       var param = new Expr.Param(pos,
         Constants.randomlyNamed(pos),
         expr(anonymous.child(EXPR)),
-        explicit);
-      associate(anonymous, param.ref(), param.type(), param.theCoreType());
+        explicit,
+        new AssociatedNode<>(anonymous)
+      );
       return ImmutableSeq.of(param);
     }
     return unreachable(node);
@@ -534,8 +527,9 @@ public record AyaProducer(
         myPos,
         id,
         typeExpr == null ? typeOrHole(null, myPos) : typeExpr,
-        explicit);
-      associate(n, param.ref(), param.type(), param.theCoreType());
+        explicit,
+        new AssociatedNode<>(n)
+      );
       return param;
     });
   }
@@ -570,8 +564,9 @@ public record AyaProducer(
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, SourcePos pos) {
     var param = new Expr.Param(pos,
-      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true);
-    associate(node, param.ref(), param.type(), param.theCoreType());
+      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true,
+      new AssociatedNode<>(node)
+    );
     return ImmutableSeq.of(param);
   }
 
@@ -716,8 +711,7 @@ public record AyaProducer(
       } else result = expr(bodyExpr);
       var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), (n, i) -> {
         var id = LocalVar.from(i);
-        var pat = new Pattern.Bind(id);
-        associate(n, pat.bind(), null, pat.theCoreType());
+        var pat = new Pattern.Bind(id, new AssociatedNode<>(n));
         return Arg.ofExplicitly(new WithPos<Pattern>(id.definition(), pat));
       });
 
@@ -845,9 +839,8 @@ public record AyaProducer(
       : new Arg<>(new WithPos<>(innerPatternPos, new Pattern.BinOpSeq(unitPats)), true);
 
     if (as.isDefined()) {
-      var asPat = Pattern.As.wrap(pattern, as.get());
+      var asPat = pattern.map(p -> new Pattern.As(p, as.get(), new AssociatedNode<>(node)));
       var posedAsPat = asPat.map(x -> new WithPos<Pattern>(entirePos, x));
-      associate(node, asPat.term().as(), null, asPat.term().theCoreType());
       return posedAsPat;
     }
 
@@ -896,9 +889,8 @@ public record AyaProducer(
     if (node.is(ATOM_BIND_PATTERN)) {
       var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
       if (qualifiedId.isUnqualified()) {
-        var pat = new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
-        associate(node, pat.bind(), null, pat.theCoreType());
-        return pat;
+        return new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())),
+          new AssociatedNode<>(node));
       }
       return new Pattern.QualifiedRef(qualifiedId);
     }
@@ -965,10 +957,8 @@ public record AyaProducer(
     var body = expr(node.child(EXPR));
     var ref = LocalVar.from(bind);
 
-    associate(node, ref, result.data(), MutableValue.create());   // TODO: make let bind WithTerm
-
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(pos, ref, teles, result, body);
+    return new Expr.LetBind(pos, ref, teles, result, body, new AssociatedNode<>(node));
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
@@ -1058,18 +1048,6 @@ public record AyaProducer(
 
   public @NotNull Pattern newBinOPScope(@NotNull WithPos<Pattern> expr, boolean explicit) {
     return new Pattern.BinOpSeq(ImmutableSeq.of(new Arg<>(expr, explicit)));
-  }
-
-  private void associate(
-    @NotNull GenericNode<?> node,
-    @NotNull LocalVar ref,
-    @Nullable Expr typeExpr,
-    @NotNull MutableValue<Term> withTerm
-  ) {
-    if (bindingInfoMap != null) {
-      assert !bindingInfoMap.containsKey(node) : "Duplicate BindingInfo";
-      bindingInfoMap.put(node, new BindingInfo(ref, typeExpr, withTerm));
-    }
   }
 
   private @NotNull SourcePos sourcePosOf(@NotNull GenericNode<?> node) {

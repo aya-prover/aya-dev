@@ -246,9 +246,8 @@ public interface StmtVisitor extends Consumer<Stmt> {
 
   // scope introducer
   default void visitLetBind(@NotNull Expr.LetBind bind) {
-    var result = bind.result();
     // visit let bind
-    visitTelescope(bind.telescope().view(), result.data() instanceof Expr.Hole ? null : result);
+    visitTelescope(bind.telescope().view(), bind.result());
     visitExpr(bind.definedAs());
   }
 
