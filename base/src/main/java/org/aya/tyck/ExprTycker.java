@@ -557,7 +557,6 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
 
-    // We don't have to store the whole signature but only the result, cause the type of parameters are stored in [Expr.Param].
     addWithTerm(letBind, letBind.sourcePos(), definedAsResult.type());
 
     try (var _ = subscope()) {

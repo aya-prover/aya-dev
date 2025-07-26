@@ -16,6 +16,9 @@ import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 /// Extract [BindingInfo] from [kala.value.MutableValue] and its owner, kinda hacking.
+/// It is possible that some [kala.value.MutableValue] is NOT [AssociatedNode], which owner is:
+/// * no corresponding binding, such as `Nat -> Nat` (desugared `(_ : Nat) -> Nat`)
+/// * comes from desugar
 public final class BindingInfoExtractor implements StmtVisitor {
   private final @NotNull MutableMap<GenericNode<?>, BindingInfo> map = MutableMap.create();
 

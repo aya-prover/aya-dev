@@ -17,6 +17,8 @@ import org.javacs.lsp.CompletionItemLabelDetails;
 import org.javacs.lsp.CompletionList;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public final class CompletionProvider {
   public interface Renderer {
     String render(@NotNull AyaDocile docile);
@@ -35,7 +37,7 @@ public final class CompletionProvider {
     @NotNull LibrarySource source,
     @NotNull XY xy,
     @NotNull Renderer renderer
-  ) {
+  ) throws IOException {
     // TODO: resolve certain ModuleContext according to the qualified name at [xy].
     var completion = new Completion(source, xy, ImmutableSeq.empty(), false)
       .compute();

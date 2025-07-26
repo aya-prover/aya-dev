@@ -5,12 +5,15 @@ package org.aya.producer;
 import com.intellij.psi.DefaultPsiParser;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.intellij.GenericNode;
 import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.GenericAyaProgram;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.position.SourceFile;
@@ -35,13 +38,14 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
   }
 
   @Override
-  public @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
-    var parse = parse(sourceFile.sourceCode(), errorReport);
+  public @NotNull GenericAyaProgram program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport) {
+    var node = ParserUtil.reportErrorElements(parseNode(sourceFile.sourceCode()), errorReport, reporter);
+    var parse = new AyaProducer(Either.left(errorReport), reporter).program(node);
     if (parse.isRight()) {
       reporter.reportString("Expect statement, got repl expression", Problem.Severity.ERROR);
-      return ImmutableSeq.empty();
+      return new NodedAyaProgram(ImmutableSeq.empty(), node);
     }
-    return parse.getLeftValue();
+    return new NodedAyaProgram(parse.getLeftValue(), node);
   }
 
   private @NotNull Either<ImmutableSeq<Stmt>, WithPos<Expr>> parse(@NotNull String code, @NotNull SourceFile errorReport) {

@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;

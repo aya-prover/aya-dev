@@ -98,7 +98,7 @@ public class CompletionTest {
     return;
   }
 
-  @Test public void testCompletionProvider() {
+  @Test public void testCompletionProvider() throws IOException {
     // TODO: check by human eyes, sorry
     var client = launch(TEST_LIB);
     client.execute(compile((_, _) -> { }));
@@ -236,14 +236,14 @@ public class CompletionTest {
     assertContext2(case2);
     assertContext2(case3, "a : Nat", "b : Nat");
     assertContext2(case4, "a : Nat", "b : Nat", ": Nat");
-    assertContext2(case5, "d : Nat", "suc", "a", "b : Nat", ": Nat");
-    assertContext2(case6, "c (d : Nat)", "suc", "a", "b : Nat", ": Nat");
-    assertContext2(case9, "b", "a : Nat");
+    assertContext2(case5, "d : Nat", "suc : _", "a : _", "b : Nat", ": Nat");
+    assertContext2(case6, "c : Nat -> _", "suc : _", "a : _", "b : Nat", ": Nat");
+    assertContext2(case9, "b : _", "a : Nat");
+    assertContext2(case10, "a : _");
   }
 
   private void assertContext2(@NotNull ContextWalker2 walker, @NotNull String... expected) {
-    var actuals = walker.localContext
-      .valuesView().toSeq().view()
+    var actuals = walker.localContext.valuesView()
       .filter(it -> it.var() instanceof LocalVar);
 
     SeqView<@Nullable String> expecteds = ImmutableSeq.from(expected)

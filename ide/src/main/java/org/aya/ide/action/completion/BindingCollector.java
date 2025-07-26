@@ -9,7 +9,10 @@ import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import static org.aya.parser.AyaPsiElementTypes.*;
 
 public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
+  private static final @NotNull Expr HOLE = new Expr.Hole(false, null);
+
   @Contract("!null -> !null")
   private static @Nullable Completion.Item.Local typeOf(@Nullable BindingInfo info) {
     if (info == null) return null;
@@ -44,11 +49,23 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
         var explicit = lt.explicit();
         var params = lt.term();
         return params.view()
-          .map(param -> new Completion.Param(param.name(), param.type().headless(), explicit));
+          .map(param -> {
+            var ref = param.var() instanceof LocalVar lvar ? lvar : new LocalVar(param.name());
+            var type = param.type().headless().userType();
+            if (type == null) type = HOLE;
+            return new Expr.Param(SourcePos.NONE, ref, new WithPos<>(SourcePos.NONE, type), explicit);
+          });
       }).toSeq();
 
+    var info = bindingInfos.get(node);
+    var typeExpr = info.typeExpr();
     var result = typeOf(bindingInfos.get(node));
-    return new Completion.Item.Local(result.var(), new Completion.Telescope(tele, result.type().headless()));
+    // OMG, this is so stupid
+    var piExpr = Expr.buildPi(SourcePos.NONE, tele.view(), new WithPos<>(SourcePos.NONE, typeExpr != null
+      ? typeExpr
+      : new Expr.Hole(false, null)));
+
+    return new Completion.Item.Local(result.var(), new StmtVisitor.Type(piExpr.data(), result.result().lazyType()));
   }
 
   // TODO: maybe SeqView

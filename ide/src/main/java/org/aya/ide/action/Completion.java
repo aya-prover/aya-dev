@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
@@ -10,7 +11,12 @@ import kala.control.Either;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
+import org.aya.ide.action.completion.BindingInfoExtractor;
+import org.aya.ide.action.completion.ContextWalker2;
+import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
+import org.aya.intellij.GenericNode;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
@@ -30,22 +36,15 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Panic;
 import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourceFile;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class Completion {
-  public enum Location {
-    /// Note that we can't distinguish if the cursor is before a decl or after a decl,
-    /// therefore both modifiers and bind block keywords are available.
-    Decl,
-    /// The cursor is inside an expr, where expr keywords are available (such as `do`, `let`)
-    Expr,
-    /// The cursor is inside a pattern, where pattern keywords are available (such as `as`)
-    Pattern
-  }
+import java.io.IOException;
 
+public final class Completion {
   public record Param(@Nullable String name, @NotNull StmtVisitor.Type type, boolean licit) implements AyaDocile {
     @Override
     public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
@@ -81,10 +80,13 @@ public final class Completion {
       var docs = MutableList.<Doc>create();
       telescope.forEach(p -> docs.append(p.toDoc(options)));
 
+      docs.append(Tokens.HAS_TYPE);
+
       var resultDoc = result.toDocile();
       if (resultDoc != null) {
-        docs.append(Tokens.HAS_TYPE);
         docs.append(resultDoc.toDoc(options));
+      } else {
+        docs.append(Doc.plain(Constants.ANONYMOUS_PREFIX));
       }
 
       return Doc.sep(docs);
@@ -136,9 +138,10 @@ public final class Completion {
 
     record Module(@NotNull ModuleName.Qualified moduleName) implements Item { }
 
-    record Local(@NotNull AnyVar var, @Override @NotNull Telescope type) implements AyaDocile, Symbol {
-      public Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type result) {
-        this(var, new Telescope(ImmutableSeq.empty(), result));
+    record Local(@NotNull AnyVar var, @Override @NotNull StmtVisitor.Type result) implements AyaDocile, Symbol {
+      @Override
+      public @NotNull Telescope type() {
+        return new Telescope(ImmutableSeq.empty(), result);
       }
 
       @Override
@@ -160,7 +163,7 @@ public final class Completion {
   private @Nullable ModuleName inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
-  private @Nullable Location location;
+  private @Nullable ContextWalker2.Location location;
 
   /// @param incompleteName    the incomplete name under the cursor, only used for determine the context of completion
   /// @param endsWithSeparator ditto
@@ -177,30 +180,25 @@ public final class Completion {
   }
 
   @Contract("-> this")
-  public @NotNull Completion compute() {
+  public @NotNull Completion compute() throws IOException {
+    var sourceFile = source.codeFile();
     var stmts = source.program().get();
+    var rootNode = source.rootNode().get();
     var info = source.resolveInfo().get();
     var context = endsWithSeparator ? incompleteName : incompleteName.dropLast(1);
 
     if (context.isEmpty()) {
-      if (stmts != null) {
-        var walker = resolveLocal(stmts, xy);
-        this.inModule = walker.moduleContext();
-        this.localContext = walker.localContext();
-        this.location = switch (walker.leaf()) {
-          case Either.Left<Expr, Pattern> _ -> Location.Expr;
-          case Either.Right<Expr, Pattern> _ -> Location.Pattern;
-          case null -> Location.Decl;
-        };
+      if (stmts != null && rootNode != null) {
+        var walker = resolveLocal(sourceFile, stmts, rootNode, xy);
+        this.localContext = walker.localContext.valuesView().toSeq();
+        this.location = walker.location();
       }
     }
 
     if (info != null) {
       var modName = ModuleName.from(context);
       // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
-      // if (modName == ModuleName.This && inModule != null) {
-      //   modName = inModule;
-      // }
+      //  ^ This requires Expr.LetOpen/Command.Modules storing `ModuleContext`, which is invisible.
 
       switch (modName) {
         case ModuleName.ThisRef _ -> topLevelContext = resolveTopLevel(info.thisModule());
@@ -215,14 +213,21 @@ public final class Completion {
     return this;
   }
 
-  public @Nullable Location location() { return location; }
+  public @Nullable ContextWalker2.Location location() { return location; }
   public @Nullable ModuleName inModule() { return inModule; }
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
 
-  public static @NotNull ContextWalker resolveLocal(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
-    var walker = new ContextWalker(xy);
-    stmts.forEach(walker);
+  public static @NotNull ContextWalker2 resolveLocal(
+    @NotNull SourceFile file,
+    @NotNull ImmutableSeq<Stmt> stmts,
+    @NotNull GenericNode<?> root,
+    @NotNull XY xy
+  ) {
+    var result = NodeWalker.run(file, root, xy, TokenSet.EMPTY);
+    var target = NodeWalker.refocus(result.node(), result.offsetInNode());
+    var walker = new ContextWalker2(new BindingInfoExtractor().accept(stmts).extracted());
+    walker.visit(target);
     return walker;
   }
 
