@@ -7,6 +7,7 @@ import org.aya.anf.ir.struct.IrVarDecl;
 import org.aya.anf.ir.struct.LetClause;
 import org.aya.anf.misc.NestedEnvLookup;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 public record LoweringContext(
@@ -39,5 +40,13 @@ public record LoweringContext(
 
   public void exitScope() {
     env.pop();
+  }
+
+  public @NotNull IrVarDecl lookup(@NotNull String name) {
+    return env.lookup(name).get();
+  }
+
+  public @NotNull IrVarDecl lookup(@NotNull LocalVar local) {
+    return env.lookup(local.name()).get();
   }
 }
