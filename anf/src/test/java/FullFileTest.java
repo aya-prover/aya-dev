@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.anf.frontend.compile.ModuleCompiler;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
@@ -54,7 +55,7 @@ public class FullFileTest {
   }
 
   private void onTyck(ResolveInfo info, ImmutableSeq<TyckDef> defs) {
-    
+    var builder = new ModuleCompiler(info, defs);
   }
 
   public void generateJava() { }
