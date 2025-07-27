@@ -7,7 +7,6 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
@@ -18,14 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import static org.aya.parser.AyaPsiElementTypes.*;
 
 public class ContextWalker2 {
-  public enum Location {
-    Modifier,   // only modifiers
-    Bind,       // no completion
-    Expr,       // almost everything
-    Pattern,    // only constructors
-    Elim,       // only binds
-    Unknown     // no completion
-  }
 
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
@@ -237,7 +228,7 @@ public class ContextWalker2 {
 
   public class CompletionPartition {
     public final @NotNull ImmutableSeq<IElementType> pins;
-    public final @NotNull ImmutableSeq<ContextWalker2.@Nullable Location> locations;
+    public final @NotNull ImmutableSeq<@Nullable Location> locations;
     public final @Nullable IElementType paramType;
 
     public CompletionPartition(

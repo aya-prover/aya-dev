@@ -7,13 +7,13 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
-import kala.control.Either;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.ide.action.completion.BindingInfoExtractor;
 import org.aya.ide.action.completion.ContextWalker2;
+import org.aya.ide.action.completion.Location;
 import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
@@ -25,7 +25,6 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
-import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
@@ -163,7 +162,7 @@ public final class Completion {
   private @Nullable ModuleName inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
-  private @Nullable ContextWalker2.Location location;
+  private @Nullable Location location;
 
   /// @param incompleteName    the incomplete name under the cursor, only used for determine the context of completion
   /// @param endsWithSeparator ditto
@@ -213,7 +212,7 @@ public final class Completion {
     return this;
   }
 
-  public @Nullable ContextWalker2.Location location() { return location; }
+  public @Nullable Location location() { return location; }
   public @Nullable ModuleName inModule() { return inModule; }
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
