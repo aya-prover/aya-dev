@@ -9,6 +9,7 @@ import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
 import org.aya.util.position.SourcePos;
@@ -21,6 +22,12 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 
 public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
   private static final @NotNull Expr HOLE = new Expr.Hole(false, null);
+
+  public static boolean isAvailable(@NotNull Completion.Item.Local local) {
+    return !(local.var() instanceof LocalVar lvar)   // anything beside LocalVar, or
+      || (!lvar.isGenerated()                        // LocalVar, but not generated, and
+      && local.type().result().lazyType().get() != ErrorTerm.TYPE_OF_CON_PATTERN);    // not a constructor
+  }
 
   @Contract("!null -> !null")
   private static @Nullable Completion.Item.Local typeOf(@Nullable BindingInfo info) {
@@ -70,7 +77,7 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
 
   // TODO: maybe SeqView
   /// Collect all bindings and their information that [#node] introduce,
-  /// we consider these node can introduce bindings:
+  /// we consider these nodes can introduce bindings:
   /// * tele
   /// * lambdaTele
   /// * lambdaTeleBinder
@@ -85,19 +92,19 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     // region tele
 
     if (type == TELE) {
-      var ty = typeOf(bindingInfos.getOrNull(node));
-      if (ty == null) {
-        var binder = node.child(LICIT).child(TELE_BINDER);
+      var licit = node.peekChild(LICIT);
+      if (licit != null) {
+        var binder = licit.child(TELE_BINDER);
         var typed = binder.peekChild(TELE_BINDER_TYPED);
         if (typed != null) {
           return collectBinding(typed);
         }
         var anonymous = binder.child(TELE_BINDER_ANONYMOUS);
-        ty = typeOf(bindingInfos.getOrNull(anonymous));
+        var ty = typeOf(bindingInfos.getOrNull(anonymous));
         if (ty != null) return ImmutableSeq.of(ty);
         else return ImmutableSeq.empty();
       } else {
-        return ImmutableSeq.of(ty);
+        return ImmutableSeq.empty();
       }
     }
 

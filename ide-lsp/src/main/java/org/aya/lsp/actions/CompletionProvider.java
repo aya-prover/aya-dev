@@ -10,6 +10,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
+import org.aya.ide.action.completion.BindingCollector;
 import org.aya.ide.util.XY;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.intellij.lang.annotations.MagicConstant;
@@ -57,7 +58,9 @@ public final class CompletionProvider {
     if (local == null) local = ImmutableSeq.empty();
     if (top == null) top = ImmutableSeq.empty();
 
-    var full = SeqView.<Completion.Item>narrow(local.view())
+    var full = SeqView.<Completion.Item>narrow(local.view()
+        .filter(BindingCollector::isAvailable)
+      )
       .concat(top)
       .map(it -> from(it, renderer))
       .concat(keywordCompletion);

@@ -16,8 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
 
+/// Completion is done by these steps:
+/// * [NodeWalker#run]: find the node under certain position
+/// * [NodeWalker#refocus]: find the first meaningful node near the given node
+/// * [ContextWalker2#visit]: collect available bindings of the given node, and determine the [Location] at that position
+/// * [Completion#resolveLocal]: a wrapper of [ContextWalker2]
 public class ContextWalker2 {
-
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
 
@@ -133,6 +137,7 @@ public class ContextWalker2 {
     if (this.location == null) this.location = location;
   }
 
+  /// Traversal the [#node] upward, collecting available bindings and determine the location.
   public void visit(@Nullable GenericNode<?> node) {
     if (node == null) return;
 

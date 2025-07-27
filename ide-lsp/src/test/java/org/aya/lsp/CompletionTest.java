@@ -3,17 +3,14 @@
 package org.aya.lsp;
 
 import com.intellij.psi.tree.TokenSet;
-import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
-import org.aya.ide.action.ContextWalker;
 import org.aya.ide.action.completion.BindingInfoExtractor;
 import org.aya.ide.action.completion.ContextWalker2;
 import org.aya.ide.action.completion.NodeWalker;
@@ -38,7 +35,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.aya.lsp.LspTest.*;
@@ -46,47 +42,6 @@ import static org.aya.lsp.tester.TestCommand.compile;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CompletionTest {
-  private static @NotNull ContextWalker runWalker(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
-    var walker = new ContextWalker(xy);
-    stmts.forEach(walker);
-    return walker;
-  }
-
-  @Test public void testContextWalker() {
-    var client = launch(TEST_LIB);
-    client.execute(compile((_, _) -> { }));
-    var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
-    assert source != null;
-    var stmt = source.program().get();
-    assert stmt != null;
-
-    var inTelescope = new XY(13, 25);     // {b : _Nat}
-    var inResult = new XY(13, 35);        // : _Nat
-    var inLetTele = new XY(14, 36);       // (e : _Nat)
-    var inLetResult = new XY(14, 43);     // : _Nat
-    var inLetBody = new XY(14, 55);       // _c a a
-    var inSucClause = new XY(15, 34);     // "114" in _a
-    var inSucPat = new XY(15, 4);         // | _suc a
-    var betweenParams = new XY(13, 20);   // (a : Nat) _{b : Nat}
-
-    var result0 = runWalker(stmt, inTelescope);   // (a : Nat)
-    var result1 = runWalker(stmt, inResult);      // (a : Nat) {b : Nat}
-    var result2 = runWalker(stmt, inLetTele);     // (a : Nat) {b : Nat} (d : Nat)
-    var result3 = runWalker(stmt, inLetResult);   // (a : Nat) {b : Nat} (d : Nat) (e : Nat)
-    var result4 = runWalker(stmt, inLetBody);     // (a : Nat) {b : Nat} (c : Nat -> Nat -> Nat)
-    var result5 = runWalker(stmt, inSucClause);   // (a : Nat) (b : String)
-    var result6 = runWalker(stmt, inSucPat);
-    var result7 = runWalker(stmt, betweenParams); // (a : Nat)
-
-    assertContext(result0, "a : Nat");
-    assertContext(result1, "a : Nat", "b : Nat");
-    assertContext(result2, "a : Nat", "b : Nat", "d : Nat");
-    assertContext(result3, "a : Nat", "b : Nat", "d : Nat", "e : Nat");
-    assertContext(result4, "a : Nat", "b : Nat", "c : Nat -> Nat -> Nat");
-    assertContext(result5, "a : Nat", "b");     // no type annotation, we can't infer type at resolving stage
-    assertContext(result7, "a : Nat");
-  }
-
   @Test public void testModuleContextExtraction() {
     var client = launch(TEST_LIB);
     client.execute(compile((_, _) -> { }));
@@ -117,11 +72,6 @@ public class CompletionTest {
     assertEquals(CompletionItemKind.Interface, String.kind);
     assertNotNull(String.labelDetails);
     assertEquals("StringPrims", String.labelDetails.description);
-  }
-
-  public void assertContext(@NotNull ContextWalker walker, String @NotNull ... asserts) {
-    walker.localContext().forEachWith(ImmutableArray.Unsafe.wrap(asserts), (actual, expected) ->
-      Assertions.assertEquals(expected, actual.easyToString()));
   }
 
   private static final @NotNull Path COMPLETION_TEST_FILE = RES_DIR.resolve("CompletionTest.aya");
@@ -235,9 +185,9 @@ public class CompletionTest {
     assertContext2(case1, "n : Nat");
     assertContext2(case2);
     assertContext2(case3, "a : Nat", "b : Nat");
-    assertContext2(case4, "a : Nat", "b : Nat", ": Nat");
-    assertContext2(case5, "d : Nat", "suc : _", "a : _", "b : Nat", ": Nat");
-    assertContext2(case6, "c : Nat -> _", "suc : _", "a : _", "b : Nat", ": Nat");
+    assertContext2(case4, "a : Nat", "b : Nat");
+    assertContext2(case5, "d : Nat", "suc : _", "a : _", "b : Nat");
+    assertContext2(case6, "c : Nat -> _", "suc : _", "a : _", "b : Nat");
     assertContext2(case9, "b : _", "a : Nat");
     assertContext2(case10, "a : _");
   }

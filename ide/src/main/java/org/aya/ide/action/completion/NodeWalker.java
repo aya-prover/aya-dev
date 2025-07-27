@@ -39,7 +39,12 @@ public final class NodeWalker {
 
       var idx = binarySearch(children, file, location);
       // normally [idx] won't be negative, as the [TextRange]s of children are continuous.
-      if (idx < 0) Panic.unreachable();   // TODO: what should i do?
+      if (idx < 0) {
+        // This happens when [location] points to an invalid position (normally after the end of the line),
+        // especially when requesting a completion list before saving the file.
+        // But it should be a client problem.
+        Panic.unreachable();
+      }
       node = children.get(idx);
     }
 
@@ -75,7 +80,7 @@ public final class NodeWalker {
     return rightMost(node.lastChild());
   }
 
-  /// Place the cursor [#node] to the right level and right token.
+  /// Place the cursor [#node] to the right token.
   /// This function move the cursor to the left token if:
   /// * [#node] is not [TokenType#WHITE_SPACE] and the cursor is at the beginning of [#node]
   /// * [#node] is [TokenType#WHITE_SPACE]
@@ -132,6 +137,7 @@ public final class NodeWalker {
 
   /// An [EmptyNode] that lives right after [#host].
   /// [EmptyNode] is a pseudo-sibling of [#host].
+  /// TODO: being a [GenericNode] is not good, try `Either<GenericNode<?>, EmptyNode>` ?
   public final static class EmptyNode extends UserDataHolderBase implements GenericNode<EmptyNode> {
     private final @NotNull GenericNode<?> host;
     private final @NotNull TextRange range;

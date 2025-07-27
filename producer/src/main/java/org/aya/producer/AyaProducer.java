@@ -477,7 +477,7 @@ public record AyaProducer(
     if (tele != null) return licit(tele, TELE_BINDER, this::teleBinder);
     var type = expr(node.child(EXPR));
     var pos = sourcePosOf(node);
-    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true, new AssociatedNode<>(node));
+    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true);
     return ImmutableSeq.of(param);
   }
 
@@ -490,8 +490,7 @@ public record AyaProducer(
       var param = new Expr.Param(pos,
         Constants.randomlyNamed(pos),
         expr(anonymous.child(EXPR)),
-        explicit,
-        new AssociatedNode<>(anonymous)
+        explicit
       );
       return ImmutableSeq.of(param);
     }
