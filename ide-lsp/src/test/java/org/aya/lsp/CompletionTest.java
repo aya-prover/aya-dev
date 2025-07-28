@@ -11,7 +11,7 @@ import kala.function.TriConsumer;
 import org.aya.generic.AyaDocile;
 import org.aya.ide.action.Completion;
 import org.aya.ide.action.completion.BindingInfoExtractor;
-import org.aya.ide.action.completion.ContextWalker2;
+import org.aya.ide.action.completion.ContextWalker;
 import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
@@ -155,11 +155,11 @@ public class CompletionTest {
     var extractor = new BindingInfoExtractor()
       .accept(stmts.getLeftValue());
 
-    Function<XY, ContextWalker2> runner = (xy) -> {
+    Function<XY, ContextWalker> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       System.out.println(xy + ": focus on " + focused);
-      var walker = new ContextWalker2(extractor.bindings(), extractor.modules());
+      var walker = new ContextWalker(extractor.bindings(), extractor.modules());
       walker.visit(focused);
       System.out.println(walker.location());
       return walker;
@@ -188,7 +188,7 @@ public class CompletionTest {
     assertContext2(case10, "a : _");
   }
 
-  private void assertContext2(@NotNull ContextWalker2 walker, @NotNull String... expected) {
+  private void assertContext2(@NotNull ContextWalker walker, @NotNull String... expected) {
     var actuals = walker.localContext.valuesView()
       .filter(it -> it.var() instanceof LocalVar);
 

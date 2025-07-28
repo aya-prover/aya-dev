@@ -21,9 +21,9 @@ import static org.aya.parser.AyaPsiElementTypes.*;
 /// Completion is done by these steps:
 /// * [NodeWalker#run]: find the node under certain position
 /// * [NodeWalker#refocus]: find the first meaningful node near the given node
-/// * [ContextWalker2#visit]: collect available bindings of the given node, and determine the [Location] at that position
-/// * [Completion#resolveLocal]: a wrapper of [ContextWalker2]
-public class ContextWalker2 {
+/// * [ContextWalker#visit]: collect available bindings of the given node, and determine the [Location] at that position
+/// * [Completion#resolveLocal]: a wrapper of [ContextWalker]
+public class ContextWalker {
   public static final @NotNull TokenSet EXPR = AyaPsiParser.EXTENDS_SETS_[4];
   public static final @NotNull TokenSet DECL = TokenSet.create(DATA_DECL, FN_DECL, PRIM_DECL, CLASS_DECL);
 
@@ -129,7 +129,7 @@ public class ContextWalker2 {
   private final @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap;
   private @Nullable Location location = null;
 
-  public ContextWalker2(
+  public ContextWalker(
     @NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos,
     @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap
   ) {
@@ -281,7 +281,7 @@ public class ContextWalker2 {
       // collect bindings
       if (paramType != null) {
         prevSiblings.filter(it -> it.elementType() == paramType)
-          .forEach(ContextWalker2.this::collectAndPutBinding);
+          .forEach(ContextWalker.this::collectAndPutBinding);
       }
 
       return prevSiblings;

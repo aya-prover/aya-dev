@@ -12,7 +12,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.ide.action.completion.BindingInfoExtractor;
-import org.aya.ide.action.completion.ContextWalker2;
+import org.aya.ide.action.completion.ContextWalker;
 import org.aya.ide.action.completion.Location;
 import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
@@ -20,7 +20,6 @@ import org.aya.intellij.GenericNode;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.syntax.context.ContextView;
 import org.aya.syntax.context.ModuleContextView;
@@ -223,7 +222,7 @@ public final class Completion {
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
 
-  public static @NotNull ContextWalker2 resolveLocal(
+  public static @NotNull ContextWalker resolveLocal(
     @NotNull SourceFile file,
     @NotNull ImmutableSeq<Stmt> stmts,
     @NotNull GenericNode<?> root,
@@ -232,7 +231,7 @@ public final class Completion {
     var result = NodeWalker.run(file, root, xy, TokenSet.EMPTY);
     var target = NodeWalker.refocus(result.node(), result.offsetInNode());
     var extractor = new BindingInfoExtractor().accept(stmts);
-    var walker = new ContextWalker2(extractor.bindings(), extractor.modules());
+    var walker = new ContextWalker(extractor.bindings(), extractor.modules());
     walker.visit(target);
     return walker;
   }
