@@ -28,7 +28,7 @@ import java.nio.file.Path;
 public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaParser {
   public @NotNull GenericNode<?> parseNode(@NotNull String code) {
     var parser = new AyaFleetParser();
-    return new MarkerNodeWrapper(parser.parse(code), code, null);
+    return new MarkerNodeWrapper(parser.parse(code), code);
   }
 
   @Override public @NotNull WithPos<Expr> expr(@NotNull String code, @NotNull SourcePos sourcePos) {
