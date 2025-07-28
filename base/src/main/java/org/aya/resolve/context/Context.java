@@ -191,11 +191,11 @@ public interface Context {
     return new BindContext(this, name, ref);
   }
 
-  default @NotNull PhysicalModuleContext derive(@NotNull String extraName) {
+  default @NotNull ModuleContext derive(@NotNull String extraName) {
     return derive(new ModulePath(ImmutableSeq.of(extraName)));
   }
 
-  default @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
+  default @NotNull ModuleContext derive(@NotNull ModulePath extraName) {
     return new PhysicalModuleContext(this, modulePath().derive(extraName));
   }
 }

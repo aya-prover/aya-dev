@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author re-xyr
  */
-public non-sealed class PhysicalModuleContext implements ModuleContext {
+public class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
   public final @NotNull ModuleExport exports = new ModuleExport();
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();

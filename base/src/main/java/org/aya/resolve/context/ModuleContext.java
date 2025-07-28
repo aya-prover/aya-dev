@@ -43,7 +43,7 @@ import java.nio.file.Path;
  *
  * @author re-xyr
  */
-public sealed interface ModuleContext extends Context permits NoExportContext, PhysicalModuleContext {
+public interface ModuleContext extends Context {
   @Override @NotNull Context parent();
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
