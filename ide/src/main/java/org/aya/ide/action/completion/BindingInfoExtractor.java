@@ -5,12 +5,16 @@ package org.aya.ide.action.completion;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import kala.value.MutableValue;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AssociatedNode;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.concrete.stmt.Command;
+import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
+import org.aya.syntax.context.ModuleContextView;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -20,12 +24,13 @@ import org.jetbrains.annotations.NotNull;
 /// * no corresponding binding, such as `Nat -> Nat` (desugared `(_ : Nat) -> Nat`)
 /// * comes from desugar
 public final class BindingInfoExtractor implements StmtVisitor {
-  private final @NotNull MutableMap<GenericNode<?>, BindingInfo> map = MutableMap.create();
+  private final @NotNull MutableMap<GenericNode<?>, BindingInfo> bindingMap = MutableMap.create();
+  private final @NotNull MutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap = MutableMap.create();
 
   @Override
   public void visitParamDecl(Expr.@NotNull Param param) {
     if (param.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
-      map.putIfAbsent(node, new BindingInfo(param.ref(), param.type(), delegate));
+      bindingMap.putIfAbsent(node, new BindingInfo(param.ref(), param.type(), delegate));
     }
 
     StmtVisitor.super.visitParamDecl(param);
@@ -34,7 +39,7 @@ public final class BindingInfoExtractor implements StmtVisitor {
   @Override
   public void visitLetBind(Expr.@NotNull LetBind bind) {
     if (bind.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
-      map.putIfAbsent(node, new BindingInfo(bind.ref(), bind.result().data(), delegate));
+      bindingMap.putIfAbsent(node, new BindingInfo(bind.bindName(), bind.result().data(), delegate));
     }
 
     StmtVisitor.super.visitLetBind(bind);
@@ -44,13 +49,23 @@ public final class BindingInfoExtractor implements StmtVisitor {
   public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
     switch (pat) {
       case Pattern.Bind bind when bind.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node) ->
-        map.putIfAbsent(node, new BindingInfo(bind.bind(), null, delegate));
+        bindingMap.putIfAbsent(node, new BindingInfo(bind.bind(), null, delegate));
       case Pattern.As as when as.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node) ->
-        map.putIfAbsent(node, new BindingInfo(as.as(), null, delegate));
+        bindingMap.putIfAbsent(node, new BindingInfo(as.as(), null, delegate));
       default -> { }
     }
 
     StmtVisitor.super.visitPattern(pos, pat);
+  }
+
+  @Override
+  public void accept(@NotNull Stmt stmt) {
+    if (stmt instanceof Command.Module mod
+      && mod.theContext() instanceof AssociatedNode<ModuleContextView>(var delegate, var node)) {
+      this.moduleMap.putIfAbsent(node, delegate);
+    }
+
+    StmtVisitor.super.accept(stmt);
   }
 
   public @NotNull BindingInfoExtractor accept(@NotNull ImmutableSeq<Stmt> program) {
@@ -58,9 +73,10 @@ public final class BindingInfoExtractor implements StmtVisitor {
     return this;
   }
 
-  public @NotNull ImmutableMap<GenericNode<?>, BindingInfo> extracted() {
-    return ImmutableMap.from(map);
+  public @NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindings() {
+    return ImmutableMap.from(bindingMap);
   }
+  public @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> modules() { return ImmutableMap.from(moduleMap); }
 
-  // TODO: let bind / do bind
+  // TODO: do bind
 }

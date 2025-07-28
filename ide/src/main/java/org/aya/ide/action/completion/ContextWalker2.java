@@ -8,9 +8,11 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
+import kala.value.MutableValue;
 import org.aya.ide.action.Completion;
 import org.aya.intellij.GenericNode;
 import org.aya.parser.AyaPsiParser;
+import org.aya.syntax.context.ModuleContextView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,11 +124,17 @@ public class ContextWalker2 {
   );
 
   public final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
+  public @Nullable ModuleContextView moduleContext = null;
   private final @NotNull BindingCollector bindingCollector;
+  private final @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap;
   private @Nullable Location location = null;
 
-  public ContextWalker2(@NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos) {
+  public ContextWalker2(
+    @NotNull ImmutableMap<GenericNode<?>, BindingInfo> bindingInfos,
+    @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap
+  ) {
     this.bindingCollector = new BindingCollector(bindingInfos);
+    this.moduleMap = moduleMap;
   }
 
   public @Nullable Location location() {
@@ -197,6 +205,11 @@ public class ContextWalker2 {
     if (type == ARROW_EXPR) {
       setLocation(Location.Expr);
       return;
+    }
+
+    if (type == MODULE && this.moduleContext == null) {
+      this.moduleContext = moduleMap.get(parent)
+        .get();   // still nullable
     }
 
     if (type == LET_BIND) letBindPartition.accept(node);

@@ -22,6 +22,8 @@ import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.syntax.context.ContextView;
+import org.aya.syntax.context.ModuleContextView;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
@@ -159,7 +161,7 @@ public final class Completion {
   public final @NotNull XY xy;
   private final @NotNull ImmutableSeq<String> incompleteName;
   private final boolean endsWithSeparator;
-  private @Nullable ModuleName inModule = null;
+  private @Nullable ModuleContextView inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
   private @Nullable Location location;
@@ -190,6 +192,7 @@ public final class Completion {
       if (stmts != null && rootNode != null) {
         var walker = resolveLocal(sourceFile, stmts, rootNode, xy);
         this.localContext = walker.localContext.valuesView().toSeq();
+        this.inModule = walker.moduleContext;
         this.location = walker.location();
       }
     }
@@ -199,9 +202,12 @@ public final class Completion {
       // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
       //  ^ This requires Expr.LetOpen/Command.Modules storing `ModuleContext`, which is invisible.
 
+      var topLevel = inModule == null ? info.thisModule() : inModule;
+
       switch (modName) {
-        case ModuleName.ThisRef _ -> topLevelContext = resolveTopLevel(info.thisModule());
+        case ModuleName.ThisRef _ -> topLevelContext = resolveTopLevel(topLevel);
         case ModuleName.Qualified qualified -> {
+          // TODO: find in [inModule]
           var mod = info.thisModule().getModuleMaybe(qualified);
           if (mod == null) break;     // TODO: do something?
           topLevelContext = resolveModLevel(qualified, mod);
@@ -213,7 +219,7 @@ public final class Completion {
   }
 
   public @Nullable Location location() { return location; }
-  public @Nullable ModuleName inModule() { return inModule; }
+  public @Nullable ModuleContextView inModule() { return inModule; }
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
 
@@ -225,7 +231,8 @@ public final class Completion {
   ) {
     var result = NodeWalker.run(file, root, xy, TokenSet.EMPTY);
     var target = NodeWalker.refocus(result.node(), result.offsetInNode());
-    var walker = new ContextWalker2(new BindingInfoExtractor().accept(stmts).extracted());
+    var extractor = new BindingInfoExtractor().accept(stmts);
+    var walker = new ContextWalker2(extractor.bindings(), extractor.modules());
     walker.visit(target);
     return walker;
   }
@@ -284,11 +291,11 @@ public final class Completion {
   /// Resolve all top level declarations
   ///
   /// @implNote be aware that a symbol defined in a submodule can be imported (by `open`) in the parent module.
-  public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContext ctx) {
+  public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContextView ctx) {
     var decls = MutableHashMap.<String, MutableList<Item.Decl>>create();
     var modules = MutableHashMap.<ModuleName.Qualified, Item.Module>create();
 
-    Context someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
+    ContextView someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
 
     while (someInterestingLoopVariableWhichIDontKnowHowToNameIt instanceof ModuleContext mCtx) {
       mCtx.symbols().forEach((name, candy) -> {

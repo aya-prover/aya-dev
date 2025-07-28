@@ -234,7 +234,8 @@ public record AyaProducer(
     var modName = weakId(node.child(WEAK_ID));
     return new Command.Module(
       modName.sourcePos(), sourcePosOf(node), modName.data(),
-      node.childrenOfType(STMT).flatMap(this::stmt).toSeq());
+      node.childrenOfType(STMT).flatMap(this::stmt).toSeq(),
+      new AssociatedNode<>(node));
   }
 
   public @Nullable Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {

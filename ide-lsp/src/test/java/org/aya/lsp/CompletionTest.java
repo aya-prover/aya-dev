@@ -4,7 +4,6 @@ package org.aya.lsp;
 
 import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
-import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
@@ -20,7 +19,6 @@ import org.aya.lsp.actions.CompletionProvider;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.producer.AyaProducer;
-import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
@@ -28,7 +26,6 @@ import org.aya.util.reporter.ThrowingReporter;
 import org.javacs.lsp.CompletionItemKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -155,15 +152,14 @@ public class CompletionTest {
     var stmts = producer.program(node);
     assert stmts.isLeft();
 
-    var bindingInfoMap = new BindingInfoExtractor()
-      .accept(stmts.getLeftValue())
-      .extracted();
+    var extractor = new BindingInfoExtractor()
+      .accept(stmts.getLeftValue());
 
     Function<XY, ContextWalker2> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
       var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
       System.out.println(xy + ": focus on " + focused);
-      var walker = new ContextWalker2(bindingInfoMap);
+      var walker = new ContextWalker2(extractor.bindings(), extractor.modules());
       walker.visit(focused);
       System.out.println(walker.location());
       return walker;
