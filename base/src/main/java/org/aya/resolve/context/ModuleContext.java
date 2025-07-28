@@ -2,8 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve.context;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.resolve.error.NameProblem;
@@ -11,48 +11,38 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.UseHide;
+import org.aya.syntax.context.Candidate;
+import org.aya.syntax.context.ModuleContextView;
+import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-/**
- * A Context for Module.<br/>
- * A module may import symbols/modules and export some symbols/modules, it also defines some symbols/modules.
- * However, name conflicting is a problem during using module, in order to solve it easier in both
- * designer side and user side, a module should hold these properties:
- * <ol>
- *   <li>
- *     No ambiguity on module name: module name conflicting is hard to solve,
- *     unless we introduce unique qualified name for each module which is a little complicate.
- *     Also, there are some implementation problems.
- *   </li>
- *   <li>
- *     No ambiguity on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
- *   </li>
- * </ol>
- * <br/>
- * We also don't handle the case that we have {@code b::c} in {@code a} and {@code c} in {@code a::b} simultaneously.
- *
- * @author re-xyr
- */
-public interface ModuleContext extends Context {
+/// A Context for Module.
+/// A module may import symbols/modules and export some symbols/modules, it also defines some symbols/modules.
+/// However, name conflicting is a problem during using module, in order to solve it easier in both
+/// designer side and user side, a module should hold these properties:
+///
+/// - No ambiguity on module name: module name conflicting is hard to solve,
+///   unless we introduce unique qualified name for each module which is a little complicate.
+///   Also, there are some implementation problems.
+/// - No ambiguity on exported symbol name: ambiguous on symbol name is acceptable, as long as it won't be exported.
+///
+/// We also don't handle the case that we have `b::c` in `a` and `c` in `a::b` simultaneously.
+///
+/// @author re-xyr
+public interface ModuleContext extends ModuleContextView, Context {
   @Override @NotNull Context parent();
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
-
-  /// All available symbols in this context
-  @NotNull ModuleSymbol<AnyVar> symbols();
-
-  /// All imported modules in this context.<br/>
-  /// `Qualified Module -> Module Export`
-  @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules();
 
   /// Things (symbol or module) that are exported by this module.
   @NotNull ModuleExport exports();
@@ -167,14 +157,14 @@ public interface ModuleContext extends Context {
     }
 
     var filterRes = modExport.filter(filter, strategy);
-    var filterProblem = filterRes.problems(modName);
+    var filterProblem = collectProblems(filterRes, modName);
     if (filterRes.anyError()) {
       reporter.reportAll(filterProblem);
       return false;
     }
 
     var mapRes = filterRes.result().map(rename);
-    var mapProblem = mapRes.problems(modName);
+    var mapProblem = collectProblems(mapRes, modName);
     if (mapRes.anyError()) {
       reporter.reportAll(mapProblem);
       return false;
@@ -245,5 +235,18 @@ public interface ModuleContext extends Context {
     @NotNull SourcePos sourcePos, @NotNull Reporter reporter
   ) {
     return importSymbol(ref, ModuleName.This, ref.name(), accessibility, sourcePos, reporter);
+  }
+
+  static SeqView<Problem> collectProblems(@NotNull ModuleExport.ExportResult result, @NotNull ModuleName modName) {
+    SeqView<Problem> invalidNameProblems = result.invalidNames().view()
+      .map(name -> new NameProblem.QualifiedNameNotFoundError(
+        modName.concat(name.component()),
+        name.name(),
+        name.sourcePos()));
+
+    SeqView<Problem> shadowNameProblems = result.shadowNames().view()
+      .map(name -> new NameProblem.ShadowingWarn(name.data(), name.sourcePos()));
+
+    return shadowNameProblems.concat(invalidNameProblems);
   }
 }

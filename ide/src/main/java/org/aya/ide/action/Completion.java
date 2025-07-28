@@ -15,7 +15,7 @@ import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
-import org.aya.resolve.context.ModuleExport;
+import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.ModuleName;

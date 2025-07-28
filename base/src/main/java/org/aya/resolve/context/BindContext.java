@@ -5,6 +5,8 @@ package org.aya.resolve.context;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import org.aya.syntax.concrete.stmt.ModuleName;
+import org.aya.syntax.context.Candidate;
+import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.position.SourcePos;

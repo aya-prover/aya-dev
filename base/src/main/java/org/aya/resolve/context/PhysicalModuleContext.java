@@ -6,6 +6,8 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.context.ModuleExport;
+import org.aya.syntax.context.ModuleSymbol;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
