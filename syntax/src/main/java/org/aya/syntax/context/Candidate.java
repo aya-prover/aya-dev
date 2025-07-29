@@ -99,7 +99,7 @@ public sealed interface Candidate<T> {
       if (view.sizeGreaterThan(1)) Panic.unreachable();
       return symbols.valuesView().getAny();
     }
-    @Override public CollectionView<T> getAll() { return symbols.valuesView(); }
+    @Override public CollectionView<T> getAll() { return symbols.valuesView().distinct(); }
     @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.from(symbols.keysView()); }
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);

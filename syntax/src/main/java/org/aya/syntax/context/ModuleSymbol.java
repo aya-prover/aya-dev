@@ -20,7 +20,12 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
     this(MutableMap.from(other.table));
   }
 
+  // FIXME: dont put, we need a read-only get
   public @NotNull Candidate<T> get(@NotNull String name) {
+    return table.getOrPut(name, Candidate.Imported::empty);
+  }
+
+  public @NotNull Candidate<T> getOrPut(@NotNull String name) {
     return table.getOrPut(name, Candidate.Imported::empty);
   }
 
@@ -40,6 +45,8 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
   public @NotNull MapView<String, Candidate<T>> view() { return table.view(); }
 
   public void forEach(@NotNull BiConsumer<String, Candidate<T>> action) {
-    table.forEach(action);
+    table.forEach((name, candy) -> {
+      if (!candy.isEmpty()) action.accept(name, candy);
+    });
   }
 }
