@@ -195,7 +195,7 @@ public class HighlighterTester {
     var sourceFile = new SourceFile("test.aya", Option.none(), code);
     var reporter = new ThrowingReporter(AyaPrettierOptions.pretty());
     var moduleLoader = new DumbModuleLoader(reporter, new EmptyContext(Path.of(".")).derive("main"));
-    var stmts = new AyaParserImpl(reporter).program(sourceFile);
+    var stmts = new AyaParserImpl(reporter).program(sourceFile).program();
     moduleLoader.resolve(stmts);
     var result = SyntaxHighlight.highlight(null, Option.some(sourceFile), stmts)
       .filterNot(it -> it instanceof HighlightInfo.Lit(_, var kind)

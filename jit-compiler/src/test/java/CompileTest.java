@@ -125,7 +125,7 @@ public class CompileTest {
       @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
     };
     var info = moduleLoader.tyckModule(moduleLoader.resolve(new AyaParserImpl(REPORTER).program(
-      new SourceFile("<baka>", FILE, code))), callback);
+      new SourceFile("<baka>", FILE, code)).program()), callback);
     return new TyckResult(callback.ok, info);
   }
 }

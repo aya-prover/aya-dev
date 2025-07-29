@@ -94,7 +94,7 @@ public class AyaMdParserTest {
 
     var reporter = new BufferReporter();
     var literate = SingleAyaFile.createLiterateFile(mdFile, reporter);
-    var stmts = literate.parseMe(new AyaParserImpl(reporter));
+    var stmts = literate.parseMe(new AyaParserImpl(reporter)).program();
     var ctx = new EmptyContext(Path.of(".")).derive(oneCase.modName());
     var loader = new DumbModuleLoader(reporter, ctx);
 
