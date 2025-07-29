@@ -75,7 +75,6 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     return new Completion.Item.Local(result.var(), new StmtVisitor.Type(piExpr.data(), result.result().lazyType()));
   }
 
-  // TODO: maybe SeqView
   /// Collect all bindings and their information that [#node] introduce,
   /// we consider these nodes can introduce bindings:
   /// * tele
