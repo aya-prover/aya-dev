@@ -6,7 +6,6 @@ import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
 import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;

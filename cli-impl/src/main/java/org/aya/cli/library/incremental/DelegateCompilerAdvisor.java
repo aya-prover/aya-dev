@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.core.def.TyckDef;

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.interactive.ReplCompiler;
 import org.aya.generic.Constants;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.resolve.context.Context;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;

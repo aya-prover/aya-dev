@@ -213,7 +213,7 @@ public final class StmtPreResolver {
    * @param childResolver perform resolve on the child of {@param decl}
    * @return the module context of {@param decl}, it should be a sub-module of {@param context}
    */
-  private <D extends Decl, Child> PhysicalModuleContext resolveChildren(
+  private <D extends Decl, Child> ModuleContext resolveChildren(
     @NotNull D decl,
     @NotNull ModuleContext context,
     @NotNull Function<D, SeqView<Child>> childrenGet,
@@ -226,7 +226,7 @@ public final class StmtPreResolver {
     var module = decl.ref().name();
     context.importModule(
       ModuleName.This.resolve(module),
-      innerCtx.exports,
+      innerCtx.exports(),
       decl.accessibility(),
       decl.nameSourcePos(),
       thisReporter

@@ -5,7 +5,7 @@ package org.aya.resolve.visitor;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import org.aya.generic.stmt.TyckUnit;
-import org.aya.resolve.context.Candidate;
+import org.aya.syntax.context.Candidate;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.compile.JitCon;

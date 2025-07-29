@@ -10,6 +10,7 @@ module aya.syntax {
   exports org.aya.generic;
   exports org.aya.prettier;
   exports org.aya.syntax.compile;
+  exports org.aya.syntax.context;
   exports org.aya.syntax.concrete.stmt.decl;
   exports org.aya.syntax.concrete.stmt;
   exports org.aya.syntax.concrete;

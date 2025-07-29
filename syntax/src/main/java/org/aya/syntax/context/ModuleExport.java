@@ -1,19 +1,16 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.resolve.context;
+package org.aya.syntax.context;
 
 import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.util.position.WithPos;
-import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +43,7 @@ public record ModuleExport(
   /// Well, the cost to also rename the type is not very expensive, we just need to make a new [ModuleExport]
   /// to store that symbol, but I am 2 lazy 😭😭😭😭.
   @Contract(pure = true)
-  @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
+  public @NotNull ExportResult filter(@NotNull ImmutableSeq<QualifiedID> names, UseHide.Strategy strategy) {
     final ModuleExport newModule;
     var badNames = MutableList.<QualifiedID>create();
 
@@ -83,7 +80,7 @@ public record ModuleExport(
   }
 
   @Contract(pure = true)
-  @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
+  public @NotNull ExportResult map(@NotNull Seq<WithPos<UseHide.Rename>> mapper) {
     var newExport = new ModuleExport(this);
     var badNames = MutableList.<QualifiedID>create();
     var shadowNames = MutableList.<WithPos<String>>create();
@@ -165,7 +162,7 @@ public record ModuleExport(
   /**
    * @param result the new module export if success, the old module export if failed.
    */
-  record ExportResult(
+  public record ExportResult(
     @NotNull ModuleExport result,
     @NotNull ImmutableSeq<QualifiedID> invalidNames,
     @NotNull ImmutableSeq<WithPos<String>> shadowNames
@@ -176,19 +173,6 @@ public record ModuleExport(
 
     public boolean anyWarn() {
       return shadowNames().isNotEmpty();
-    }
-
-    public SeqView<Problem> problems(@NotNull ModuleName modName) {
-      SeqView<Problem> invalidNameProblems = invalidNames().view()
-        .map(name -> new NameProblem.QualifiedNameNotFoundError(
-          modName.concat(name.component()),
-          name.name(),
-          name.sourcePos()));
-
-      SeqView<Problem> shadowNameProblems = shadowNames().view()
-        .map(name -> new NameProblem.ShadowingWarn(name.data(), name.sourcePos()));
-
-      return shadowNameProblems.concat(invalidNameProblems);
     }
   }
 }
