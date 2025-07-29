@@ -13,7 +13,6 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.aya.ide.util.XY;
 import org.aya.intellij.GenericNode;
-import org.aya.util.Panic;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +41,11 @@ public final class NodeWalker {
       if (idx < 0) {
         // This happens when [location] points to an invalid position (normally after the end of the line),
         // especially when requesting a completion list before saving the file.
-        // But it should be a client problem.
-        Panic.unreachable();
+        // Simply pick the last child
+        node = children.getLast();
+      } else {
+        node = children.get(idx);
       }
-      node = children.get(idx);
     }
 
     // [location] must inside [node], therefore `location.x() - 1` must less than `lineOffsets().size()`
