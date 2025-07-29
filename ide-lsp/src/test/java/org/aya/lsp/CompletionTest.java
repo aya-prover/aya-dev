@@ -115,7 +115,7 @@ public class CompletionTest {
     var node = parseFile(sourceFile);
     Function<XY, GenericNode<?>> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
-      return NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
+      return NodeWalker.refocus(mNode);
     };
 
     TriConsumer<XY, XY, GenericNode<?>> checker = (pos, expected, mNode) -> {
@@ -157,7 +157,7 @@ public class CompletionTest {
 
     Function<XY, ContextWalker> runner = (xy) -> {
       var mNode = NodeWalker.run(sourceFile, node, xy, TokenSet.EMPTY);
-      var focused = NodeWalker.refocus(mNode.node(), mNode.offsetInNode());
+      var focused = NodeWalker.refocus(mNode);
       System.out.println(xy + ": focus on " + focused);
       var walker = new ContextWalker(extractor.bindings(), extractor.modules());
       walker.visit(focused);
@@ -172,6 +172,7 @@ public class CompletionTest {
     var case4 = runner.apply(new XY(3, 34));      // : _Nat
     var case5 = runner.apply(new XY(5, 36));      // suc d _in
     var case6 = runner.apply(new XY(5, 48));      // c (foo a)_
+    var case6p1 = runner.apply(new XY(5, 50));    // c (foo a)  _     // the cursor is at an impossible position
     var case7 = runner.apply(new XY(9, 10));      // b <- bar_,
     var case8 = runner.apply(new XY(10, 2));      // _c
     var case9 = runner.apply(new XY(24, 10));     // fn b => _a + b
@@ -184,6 +185,7 @@ public class CompletionTest {
     assertContext2(case4, "a : Nat", "b : Nat");
     assertContext2(case5, "d : Nat", "suc : _", "a : _", "b : Nat");
     assertContext2(case6, "c : Nat -> _", "suc : _", "a : _", "b : Nat");
+    assertContext2(case6p1, "c : Nat -> _", "suc : _", "a : _", "b : Nat");
     assertContext2(case9, "b : _", "a : Nat");
     assertContext2(case10, "a : _");
   }

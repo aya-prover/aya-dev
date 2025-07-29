@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class NodeWalker {
+  /// @param offsetInNode the offset in [#node], -1 if the cursor points at an impossible position
   public record Result(@NotNull GenericNode<?> node, int offsetInNode) { }
 
   private NodeWalker() { }
@@ -42,7 +43,7 @@ public final class NodeWalker {
         // This happens when [location] points to an invalid position (normally after the end of the line),
         // especially when requesting a completion list before saving the file.
         // Simply pick the last child
-        node = children.getLast();
+        return new Result(children.getLast(), -1);
       } else {
         node = children.get(idx);
       }
@@ -80,14 +81,20 @@ public final class NodeWalker {
     return rightMost(node.lastChild());
   }
 
+  public static @NotNull GenericNode<?> refocus(@NotNull NodeWalker.Result node) {
+    if (node.offsetInNode == -1) return new EmptyNode(node.node());
+    return refocus(node.node(), node.offsetInNode());
+  }
+
   /// Place the cursor [#node] to the right token.
   /// This function move the cursor to the left token if:
   /// * [#node] is not [TokenType#WHITE_SPACE] and the cursor is at the beginning of [#node]
   /// * [#node] is [TokenType#WHITE_SPACE]
   ///
   /// @param node cannot be [EmptyNode]
+  /// @param offsetInNode the offset in [#node], must be non-negative
   /// @apiNote It is possible that [#node] is returned while it is a [com.intellij.psi.PsiWhiteSpace]
-  public static @NotNull GenericNode<?> refocus(@NotNull GenericNode<?> node, int offsetInNode) {
+  private static @NotNull GenericNode<?> refocus(@NotNull GenericNode<?> node, int offsetInNode) {
     var parent = node.parent();
     assert parent != null;
 

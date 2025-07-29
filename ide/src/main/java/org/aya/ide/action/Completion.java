@@ -238,7 +238,7 @@ public final class Completion {
     @NotNull XY xy
   ) {
     var result = NodeWalker.run(file, root, xy, TokenSet.EMPTY);
-    var target = NodeWalker.refocus(result.node(), result.offsetInNode());
+    var target = NodeWalker.refocus(result);
     var extractor = new BindingInfoExtractor().accept(stmts);
     var walker = new ContextWalker(extractor.bindings(), extractor.modules());
     walker.visit(target);
