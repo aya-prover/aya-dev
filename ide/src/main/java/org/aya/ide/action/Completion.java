@@ -196,20 +196,29 @@ public final class Completion {
       }
     }
 
+    // inModule == null if:
+    // * context.isNotEmpty()
+    // * walker.moduleContext == null: either at top level or no ModuleContextView data
+
     if (info != null) {
       var modName = ModuleName.from(context);
-      // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
-      //  ^ This requires Expr.LetOpen/Command.Modules storing `ModuleContext`, which is invisible.
-
       var topLevel = inModule == null ? info.thisModule() : inModule;
 
       switch (modName) {
-        case ModuleName.ThisRef _ -> topLevelContext = resolveTopLevel(topLevel);
+        case ModuleName.ThisRef _ -> {
+          // `modName instanceof ModuleName.ThisRef` implies `context.isEmpty()`, therefore,
+          // `inModule == null` implies either at top level or no ModuleContextView data.
+          // Both cases are safe to use `info.thisModule()`
+          topLevelContext = resolveTopLevel(topLevel);
+        }
         case ModuleName.Qualified qualified -> {
-          // TODO: find in [inModule]
-          var mod = info.thisModule().getModuleMaybe(qualified);
-          if (mod == null) break;     // TODO: do something?
-          topLevelContext = resolveModLevel(qualified, mod);
+          // `modName instanceof ModuleName.Qualified` implies `context.isNotEmpty()`,
+          // therefore `inModule == info.thisModule()`    // FIXME: bad conclusion
+          // FIXME: we should resolve the current module even `ContextWalker#localContext` is not used
+
+          var mod = topLevel.getModuleMaybe(qualified);
+          if (mod == null) topLevelContext = ImmutableSeq.empty();
+          else topLevelContext = resolveModLevel(qualified, mod);
         }
       }
     }
