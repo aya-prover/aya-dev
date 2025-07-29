@@ -38,10 +38,12 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     return new Completion.Item.Local(info.var(), type);
   }
 
-  private @NotNull Arg<ImmutableSeq<Completion.Item.Local>> lambdaTele(@NotNull GenericNode<?> node) {
+  private @Nullable Arg<ImmutableSeq<Completion.Item.Local>> lambdaTele(@NotNull GenericNode<?> node) {
     var untyped = node.peekChild(TELE_PARAM_NAME);
     if (untyped != null) {
-      return Arg.ofExplicitly(ImmutableSeq.of(typeOf(bindingInfos.get(untyped))));
+      var item = typeOf(bindingInfos.getOrNull(untyped));
+      if (item == null) return null;
+      return Arg.ofExplicitly(ImmutableSeq.of(item));
     }
 
     var licit = node.child(LICIT);
@@ -49,10 +51,12 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     return new Arg<>(collectBinding(licit.child(LAMBDA_TELE_BINDER)), explicit);
   }
 
-  private @NotNull Completion.Item.Local letBind(@NotNull GenericNode<?> node) {
+  private @Nullable Completion.Item.Local letBind(@NotNull GenericNode<?> node) {
     var tele = node.childrenOfType(LAMBDA_TELE)
       .flatMap(t -> {
         var lt = lambdaTele(t);
+        if (lt == null) return ImmutableSeq.empty();
+
         var explicit = lt.explicit();
         var params = lt.term();
         return params.view()
@@ -64,9 +68,12 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
           });
       }).toSeq();
 
-    var info = bindingInfos.get(node);
+    var info = bindingInfos.getOrNull(node);
+    if (info == null) return null;
+
     var typeExpr = info.typeExpr();
-    var result = typeOf(bindingInfos.get(node));
+    var result = typeOf(info);
+
     // OMG, this is so stupid
     var piExpr = Expr.buildPi(SourcePos.NONE, tele.view(), new WithPos<>(SourcePos.NONE, typeExpr != null
       ? typeExpr
@@ -118,7 +125,9 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     }
 
     if (type == LAMBDA_TELE) {
-      return lambdaTele(node).term();
+      var items = lambdaTele(node);
+      if (items == null) return ImmutableSeq.empty();
+      return items.term();
     }
 
     if (type == LAMBDA_TELE_BINDER) {
@@ -138,7 +147,9 @@ public record BindingCollector(@NotNull ImmutableMap<GenericNode<?>, BindingInfo
     }
 
     if (type == LET_BIND) {
-      return ImmutableSeq.of(letBind(node));
+      var bind = letBind(node);
+      if (bind == null) return ImmutableSeq.empty();
+      return ImmutableSeq.of(bind);
     }
 
     if (type == DO_BLOCK_CONTENT) {
