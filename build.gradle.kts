@@ -57,10 +57,10 @@ fun propOrEnv(name: String): String =
   if (hasProperty(name)) property(name).toString()
   else (System.getenv(name) ?: "")
 
+val isSnapshot = projectVersion.toString().endsWith("SNAPSHOT")
+val isRelease = !isSnapshot
 subprojects {
   val proj = this@subprojects
-  val isSnapshot = proj.version.toString().endsWith("SNAPSHOT")
-  val isRelease = !isSnapshot
 
   apply {
     plugin("java")
