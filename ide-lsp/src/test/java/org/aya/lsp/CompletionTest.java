@@ -177,6 +177,8 @@ public class CompletionTest {
     var case8 = runner.apply(new XY(10, 2));      // _c
     var case9 = runner.apply(new XY(24, 10));     // fn b => _a + b
     var case10 = runner.apply(new XY(28, 10));    // | c := a_
+    var case11 = runner.apply(new XY(13, 20));    // [ a + b_ |
+    var case12 = runner.apply(new XY(13, 37));    // b <- d_ ]
 
     assertContext2(case0);
     assertContext2(case1, "n : Nat");
@@ -188,6 +190,8 @@ public class CompletionTest {
     assertContext2(case6p1, "c : Nat -> _", "suc : _", "a : _", "b : Nat");
     assertContext2(case9, "b : _", "a : Nat");
     assertContext2(case10, "a : _");
+    assertContext2(case11, "a : _", "b : _");
+    assertContext2(case12, "a : _");
   }
 
   private void assertContext2(@NotNull ContextWalker walker, @NotNull String... expected) {

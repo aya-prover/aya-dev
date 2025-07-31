@@ -218,12 +218,11 @@ public class ContextWalker {
     else if (type == TYPE) typePartition.accept(node);
     else if (type == DO_BINDING) doBindPartition.accept(node);
     else if (type == ARRAY_COMP_BLOCK) {
-      var prevSiblings = arrayCompBlockPartition.accept(node);
+      var prevSiblings = NodeWalkUtil.backward(node);
       // special case, as all bindings it introduces are after the usage (generator).
-      // the only case is generator,
-      // as `arrayCompBlockPartition.accept` can do the job if [node] is (in) do bind,
-      // and it do nothing if [node] is (in) generator
-      if (!prevSiblings.anyMatch(it -> it.elementType() == BAR)) {
+      // the only case is generator.
+      if (!prevSiblings.anyMatch(it -> it.is(BAR))) {
+        setLocation(Location.Expr);
         parent.childrenOfType(DO_BINDING).forEach(this::collectAndPutBinding);
       }
     } else if (type == ELIMS) {
@@ -231,11 +230,15 @@ public class ContextWalker {
     } else if (type == COMMA_SEP) {
       var pparent = parent.parent();
       if (pparent != null) {
-        var ptype = pparent.elementType();
-        if (ptype == DO_EXPR) {
+        if (pparent.is(DO_EXPR)) {
           setLocation(Location.Expr);
           NodeWalkUtil.backward(node)
             .filter(it -> it.elementType() == DO_BLOCK_CONTENT)
+            .forEach(this::collectAndPutBinding);
+        } else if (pparent.is(ARRAY_COMP_BLOCK)) {
+          setLocation(Location.Bind);
+          NodeWalkUtil.backward(node)
+            .filter(it -> it.is(DO_BINDING))
             .forEach(this::collectAndPutBinding);
         }
       }
