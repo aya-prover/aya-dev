@@ -195,7 +195,7 @@ public class CompletionTest {
   }
 
   private void assertContext2(@NotNull ContextWalker walker, @NotNull String... expected) {
-    var actuals = walker.localContext.valuesView()
+    var actuals = walker.localContext()
       .filter(it -> it.var() instanceof LocalVar);
 
     SeqView<@Nullable String> expecteds = ImmutableSeq.from(expected)

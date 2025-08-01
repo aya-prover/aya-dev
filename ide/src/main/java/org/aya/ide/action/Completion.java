@@ -190,8 +190,8 @@ public final class Completion {
     if (context.isEmpty()) {
       if (stmts != null && rootNode != null) {
         var walker = resolveLocal(sourceFile, stmts, rootNode, xy);
-        this.localContext = walker.localContext.valuesView().toSeq();
-        this.inModule = walker.moduleContext;
+        this.localContext = walker.localContext();
+        this.inModule = walker.moduleContext();
         this.location = walker.location();
       }
     }

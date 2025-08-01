@@ -117,14 +117,8 @@ public class ContextWalker {
     null
   );
 
-  private final @NotNull CompletionPartition arrayCompBlockPartition = new CompletionPartition(
-    ImmutableSeq.of(BAR),
-    ImmutableSeq.of(Location.Expr, Location.Unknown),
-    DO_BINDING    // FIXME: doesn't work, use comma sep
-  );
-
-  public final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
-  public @Nullable ModuleContextView moduleContext = null;
+  private final @NotNull MutableMap<String, Completion.Item.Local> localContext = MutableLinkedHashMap.of();
+  private @Nullable ModuleContextView moduleContext = null;
   private final @NotNull BindingCollector bindingCollector;
   private final @NotNull ImmutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap;
   private @Nullable Location location = null;
@@ -137,8 +131,16 @@ public class ContextWalker {
     this.moduleMap = moduleMap;
   }
 
+  public @NotNull ImmutableSeq<Completion.Item.Local> localContext() {
+    return localContext.valuesView().toSeq();
+  }
+
   public @Nullable Location location() {
     return this.location;
+  }
+
+  public @Nullable ModuleContextView moduleContext() {
+    return this.moduleContext;
   }
 
   private void setLocation(@NotNull Location location) {
