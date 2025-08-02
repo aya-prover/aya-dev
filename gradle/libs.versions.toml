@@ -5,7 +5,7 @@
 project = "0.39.0-SNAPSHOT"
 
 # https://openjdk.org/
-java = "24"
+java = "22"
 # https://github.com/JetBrains/java-annotations
 annotations = "26.0.2"
 # https://github.com/Glavo/kala-common
@@ -13,7 +13,7 @@ kala = "0.82.0"
 # https://picocli.info
 picocli = "4.7.7"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
-aya-upstream = "0.0.36"
+aya-upstream = "0.0.39"
 # https://github.com/jline/jline3
 jline = "3.30.4"
 # https://junit.org/junit5

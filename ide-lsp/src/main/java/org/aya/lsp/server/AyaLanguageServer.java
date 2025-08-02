@@ -323,7 +323,13 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(position.textDocument.uri);
     if (source == null) return Optional.empty();
     var xy = LspRange.pos(position.position);
-    return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
+    try {
+      return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
+    } catch (IOException e) {
+      Log.e("IOException occurred during completion. Stacktrace:");
+      Log.stackTrace(e);
+      return Optional.empty();
+    }
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {

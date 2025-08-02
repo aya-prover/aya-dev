@@ -28,6 +28,6 @@ public final class SyntaxTestUtil {
 
   @Contract(pure = true)
   public static @NotNull ImmutableSeq<Stmt> parse(@Language("Aya") @NotNull String code) {
-    return new AyaParserImpl(THROWING).program(new SourceFile("<baka>", FILE, code));
+    return new AyaParserImpl(THROWING).program(new SourceFile("<baka>", FILE, code)).program();
   }
 }

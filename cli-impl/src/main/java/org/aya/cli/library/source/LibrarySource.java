@@ -7,12 +7,15 @@ import kala.collection.mutable.MutableList;
 import kala.range.primitive.IntRange;
 import kala.value.MutableValue;
 import org.aya.cli.utils.LiterateData;
+import org.aya.intellij.GenericNode;
 import org.aya.literate.Literate;
 import org.aya.pretty.doc.Doc;
+import org.aya.producer.NodedAyaProgram;
 import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.AyaFiles;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.GenericAyaProgram;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
@@ -41,6 +44,7 @@ public record LibrarySource(
   @NotNull Path underlyingFile,
   boolean isLiterate,
   @NotNull MutableList<LibrarySource> imports,
+  @NotNull MutableValue<GenericNode<?>> rootNode,
   @NotNull MutableValue<ImmutableSeq<Stmt>> program,
   @NotNull MutableValue<ImmutableSeq<TyckDef>> tycked,
   @NotNull MutableValue<ResolveInfo> resolveInfo,
@@ -50,7 +54,7 @@ public record LibrarySource(
   public static @NotNull LibrarySource create(@NotNull LibraryOwner owner, @NotNull Path file) {
     var underlyingFile = FileUtil.canonicalize(file);
     return new LibrarySource(owner, underlyingFile, AyaFiles.isLiterate(underlyingFile),
-      MutableList.create(), MutableValue.create(), MutableValue.create(),
+      MutableList.create(), MutableValue.create(), MutableValue.create(), MutableValue.create(),
       MutableValue.create(), MutableValue.create(), MutableValue.create());
   }
 
@@ -93,15 +97,23 @@ public record LibrarySource(
     return LiterateData.toDoc(this, moduleName(), program.get(), problems, frontMatter, options);
   }
 
-  @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+  @Override public @NotNull GenericAyaProgram parseMe(@NotNull GenericAyaParser parser) throws IOException {
     if (isLiterate) {
       var data = LiterateData.create(originalFile(), parser.reporter());
       data.parseMe(parser);
       literateData.set(data);
     }
-    var stmts = GenericAyaFile.super.parseMe(parser);
-    program.set(stmts);
-    return stmts;
+
+    var ayaProgram = GenericAyaFile.super.parseMe(parser);
+    program.set(ayaProgram.program());
+
+    if (ayaProgram instanceof NodedAyaProgram nodedProgram) {
+      rootNode.set(nodedProgram.root());
+    } else {
+      rootNode.set(null);
+    }
+
+    return ayaProgram;
   }
 
   @Override public @NotNull Literate literate() throws IOException {

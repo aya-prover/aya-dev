@@ -3,6 +3,8 @@
 package org.aya.syntax;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.control.Either;
+import kala.tuple.Tuple2;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.position.SourceFile;
@@ -18,8 +20,8 @@ import org.jetbrains.annotations.VisibleForTesting;
  */
 public interface GenericAyaParser {
   @NotNull WithPos<Expr> expr(@NotNull String code, @NotNull SourcePos overridingSourcePos);
-  @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport);
-  @TestOnly @VisibleForTesting default @NotNull ImmutableSeq<Stmt> program(@NotNull SourceFile sourceFile) {
+  @NotNull GenericAyaProgram program(@NotNull SourceFile sourceFile, @NotNull SourceFile errorReport);
+  @TestOnly @VisibleForTesting default @NotNull GenericAyaProgram program(@NotNull SourceFile sourceFile) {
     return program(sourceFile, sourceFile);
   }
   @NotNull Reporter reporter();

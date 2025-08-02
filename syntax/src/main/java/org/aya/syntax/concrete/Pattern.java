@@ -81,12 +81,12 @@ public sealed interface Pattern extends AyaDocile {
   }
 
   /**
-   * @param type used in the LSP server
+   * @param theCoreType used in the LSP server
    */
   record Bind(
     @NotNull LocalVar bind,
-    @ForLSP @NotNull MutableValue<@Nullable Term> type
-  ) implements Pattern, BindLike {
+    @ForLSP @NotNull MutableValue<@Nullable Term> theCoreType
+  ) implements Pattern, BindLike, Expr.WithTerm {
     public Bind(@NotNull LocalVar bind) { this(bind, MutableValue.create()); }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) { }
     @Override public @NotNull Bind descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) { return this; }
@@ -130,14 +130,14 @@ public sealed interface Pattern extends AyaDocile {
   record As(
     @NotNull WithPos<Pattern> pattern,
     @NotNull LocalVar as,
-    @ForLSP @NotNull MutableValue<@Nullable Term> type
-  ) implements Pattern {
-    public static Arg<Pattern> wrap(@NotNull Arg<WithPos<Pattern>> pattern, @NotNull LocalVar var) {
+    @ForLSP @NotNull MutableValue<@Nullable Term> theCoreType
+  ) implements Pattern, Expr.WithTerm {
+    public static Arg<Pattern.As> wrap(@NotNull Arg<WithPos<Pattern>> pattern, @NotNull LocalVar var) {
       return new Arg<>(new As(pattern.term(), var, MutableValue.create()), pattern.explicit());
     }
 
     public @NotNull As update(@NotNull WithPos<Pattern> pattern) {
-      return pattern == pattern() ? this : new As(pattern, as, type);
+      return pattern == pattern() ? this : new As(pattern, as, theCoreType);
     }
 
     @Override public @NotNull As descent(@NotNull PosedUnaryOperator<@NotNull Pattern> f) {

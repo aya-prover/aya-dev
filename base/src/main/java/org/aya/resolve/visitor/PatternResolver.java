@@ -13,6 +13,7 @@ import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.decl.DataCon;
 import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.ref.*;
 import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
@@ -50,6 +51,7 @@ public class PatternResolver implements PosedUnaryOperator<Pattern> {
         if (conMaybe != null) {
           // It wants to be a con!
           addReference(conMaybe);
+          bind.theCoreType().set(ErrorTerm.TYPE_OF_CON_PATTERN);
           yield new Pattern.Con(pos, ConDefLike.from(conMaybe));
         }
 

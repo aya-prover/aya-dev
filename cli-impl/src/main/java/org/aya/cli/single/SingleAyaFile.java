@@ -15,6 +15,7 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.AyaFiles;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.GenericAyaProgram;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.core.def.PrimDef;
@@ -144,7 +145,7 @@ public sealed interface SingleAyaFile extends GenericAyaFile {
       data.tyck(info);
     }
 
-    @Override public @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+    @Override public @NotNull GenericAyaProgram parseMe(@NotNull GenericAyaParser parser) throws IOException {
       data.parseMe(parser);
       return SingleAyaFile.super.parseMe(parser);
     }

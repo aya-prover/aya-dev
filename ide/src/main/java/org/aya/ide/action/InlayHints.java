@@ -27,7 +27,7 @@ public record InlayHints(
     return maker.hints.toSeq();
   }
   @Override public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
-    if (pat instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
+    if (pat instanceof Pattern.Bind bind && bind.theCoreType().get() instanceof Term term) {
       var type = Doc.sep(Doc.symbol(":"), term.toDoc(options));
       hints.append(new Hint(pos, type, true));
     }

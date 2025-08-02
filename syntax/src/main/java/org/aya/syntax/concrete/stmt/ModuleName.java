@@ -47,6 +47,10 @@ public sealed interface ModuleName extends Serializable {
   @NotNull ModuleName concat(@NotNull ModuleName path);
   @NotNull String toString();
 
+  default int length() {
+    return ids().size();
+  }
+
   // region static
 
   @NotNull ModuleName.ThisRef This = ThisRef.Obj;

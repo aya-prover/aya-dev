@@ -55,7 +55,7 @@ public final class SingleFileCompiler {
   ) throws IOException {
     return CompilerUtil.catching(reporter, flags, () -> {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
-      var program = ayaFile.parseMe(ayaParser);
+      var program = ayaFile.parseMe(ayaParser).program();
       ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
       loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
         ayaFile.tyckAdditional(resolveInfo);

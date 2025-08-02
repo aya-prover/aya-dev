@@ -25,7 +25,7 @@ public interface GenericAyaFile {
    * For example, maybe we want to cache the result.
    */
   @MustBeInvokedByOverriders
-  default @NotNull ImmutableSeq<Stmt> parseMe(@NotNull GenericAyaParser parser) throws IOException {
+  default @NotNull GenericAyaProgram parseMe(@NotNull GenericAyaParser parser) throws IOException {
     return parser.program(codeFile(), originalFile());
   }
 

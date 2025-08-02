@@ -41,7 +41,7 @@ public record FileModuleLoader(
   ) {
     var sourcePath = AyaFiles.resolveAyaSourceFile(basePath, path.module());
     try {
-      var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser);
+      var program = fileManager.createAyaFile(locator, sourcePath).parseMe(parser).program();
       var context = new EmptyContext(sourcePath).derive(path);
       var info = resolveModule(primFactory, context, program, recurseLoader);
       if (info == null) return Result.err(LoadErrorKind.Resolve);

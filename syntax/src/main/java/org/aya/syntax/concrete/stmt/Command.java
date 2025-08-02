@@ -3,8 +3,11 @@
 package org.aya.syntax.concrete.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.value.MutableValue;
+import org.aya.generic.WithContext;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.context.ModuleContextView;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourceNode;
@@ -44,8 +47,9 @@ public sealed interface Command extends Stmt, SourceNode {
     @Override @NotNull SourcePos sourcePos,
     @NotNull SourcePos entireSourcePos,
     @NotNull String name,
-    @NotNull ImmutableSeq<@NotNull Stmt> contents
-  ) implements Command {
+    @NotNull ImmutableSeq<@NotNull Stmt> contents,
+    @Override @NotNull MutableValue<ModuleContextView> theContext
+  ) implements Command, WithContext {
     @Override public @NotNull Accessibility accessibility() { return Accessibility.Public; }
     @Override public void descentInPlace(@NotNull PosedUnaryOperator<Expr> f, @NotNull PosedUnaryOperator<Pattern> p) {
       contents.forEach(stmt -> stmt.descentInPlace(f, p));
