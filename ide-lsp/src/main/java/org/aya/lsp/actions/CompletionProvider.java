@@ -126,7 +126,7 @@ public final class CompletionProvider {
 
     items.view()
       .filterIsInstance(Completion.Item.Decl.class)
-      .forEach(d -> map.add(d.name(), d, d.disambiguous()));
+      .forEach(d -> map.put(d.name(), d, d.disambiguous()));
 
     items.view()
       .filterIsInstance(Completion.Item.Module.class)

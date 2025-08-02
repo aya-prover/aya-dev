@@ -39,10 +39,18 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
    * @param name   name for symbol
    * @param symbol the symbol
    */
-  public void add(@NotNull String name, T symbol, ModuleName fromModule) {
+  public void put(@NotNull String name, T symbol, ModuleName fromModule) {
     var candy = Candidate.of(fromModule, symbol);
     var old = get(name);
     table.put(name, old.merge(candy));
+  }
+
+  /// Put {@param candidates}, if there is any record of {@param name}, then [Candidate#merge] with {@param candidates}.
+  public void putAll(@NotNull String name, @NotNull Candidate<T> candidates) {
+    if (!candidates.isEmpty()) {
+      var record = get(name);
+      table.put(name, record.merge(candidates));
+    }
   }
 
   public @NotNull SetView<String> keysView() { return table.keysView(); }

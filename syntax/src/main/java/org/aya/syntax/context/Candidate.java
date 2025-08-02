@@ -21,7 +21,7 @@ public sealed interface Candidate<T> {
   /**
    * Merge two candidate.
    *
-   * @implSpec If conflict happens, {@param candy} will overwrite {@code this},
+   * @implSpec If conflict ha ppens, {@param candy} will overwrite {@code this},
    * the user should check all possible conflicts before merge.
    */
   @NotNull Candidate<T> merge(@NotNull Candidate<T> candy);
@@ -54,6 +54,7 @@ public sealed interface Candidate<T> {
    * A candidate list that only store one symbol, furthermore, it implies the symbol is defined in this module.
    */
   record Defined<T>(T symbol) implements Candidate<T> {
+    /// @return {@param symbol} if it is [Candidate.Defined], this will be used in repl.
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> symbol) {
       return symbol instanceof Candidate.Defined<T> defined ? defined : this;
     }

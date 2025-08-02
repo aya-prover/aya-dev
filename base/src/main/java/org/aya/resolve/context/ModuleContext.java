@@ -208,7 +208,7 @@ public interface ModuleContext extends ModuleContextView, Context {
       reporter.report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
-    symbols.add(name, ref, fromModule);
+    symbols.put(name, ref, fromModule);
 
     // Only `AnyDefVar`s can be exported.
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {

@@ -48,7 +48,7 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   ) {
     modified = true;
     // REPL always overwrites symbols.
-    symbols().add(name, ref, fromModule);
+    symbols().put(name, ref, fromModule);
     if (ref instanceof DefVar<?, ?> defVar && acc == Stmt.Accessibility.Public) exportSymbol(name, defVar);
     return true;
   }
@@ -120,11 +120,10 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   }
 
   /// @apiNote It is possible that putting [ModuleName.Qualified] and [ModuleName.ThisRef] to the same name,
-  /// so be careful about {@param rhs}
+  /// so be careful about {@param src}
   private static <T> void mergeSymbols(@NotNull ModuleSymbol<T> dest, @NotNull ModuleSymbol<T> src) {
     for (var key : src.table().keysView()) {
-      var candy = dest.get(key);
-      dest.table().put(key, candy.merge(src.get(key)));
+      dest.putAll(key, src.get(key));
     }
   }
 
