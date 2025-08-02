@@ -7,6 +7,7 @@ import kala.collection.SetView;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
@@ -20,16 +21,19 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
     this(MutableMap.from(other.table));
   }
 
-  // FIXME: dont put, we need a read-only get
+  /// You should always use [#getNonEmpty(String)] if possible, which [Nullable] is useful for eliminating mistakes.
+  ///
+  /// @return candidate for {@param name}, can be empty, must check before use.
   public @NotNull Candidate<T> get(@NotNull String name) {
-    return table.getOrPut(name, Candidate.Imported::empty);
+    return table.getOrElse(name, Candidate.Imported::empty);
   }
 
-  public @NotNull Candidate<T> getOrPut(@NotNull String name) {
-    return table.getOrPut(name, Candidate.Imported::empty);
+  /// @return null if no such candidate, otherwise a non-empty candidate
+  public @Nullable Candidate<T> getNonEmpty(@NotNull String name) {
+    return table.getOrNull(name);
   }
 
-  public boolean contains(@NotNull String name) { return !get(name).isEmpty(); }
+  public boolean contains(@NotNull String name) { return table.containsKey(name); }
 
   /**
    * @param name   name for symbol
@@ -45,8 +49,6 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
   public @NotNull MapView<String, Candidate<T>> view() { return table.view(); }
 
   public void forEach(@NotNull BiConsumer<String, Candidate<T>> action) {
-    table.forEach((name, candy) -> {
-      if (!candy.isEmpty()) action.accept(name, candy);
-    });
+    table.forEach(action::accept);
   }
 }

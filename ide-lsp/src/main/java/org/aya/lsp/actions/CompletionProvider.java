@@ -132,8 +132,7 @@ public final class CompletionProvider {
       .filterIsInstance(Completion.Item.Module.class)
       .forEach(m -> {
         if (m.moduleName().length() == 1) {
-          var candy = map.get(m.moduleName().ids().getFirst());
-          if (!candy.isEmpty()) return;
+          if (map.contains(m.moduleName().ids().getFirst())) return;
         }
 
         modules.append(m);

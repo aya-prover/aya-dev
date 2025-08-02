@@ -80,8 +80,10 @@ public sealed interface Candidate<T> {
    *                value: the symbol
    */
   record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
-    public static <T> @NotNull Candidate<T> empty() {
-      return new Imported<>(ImmutableMap.empty());
+    public static final @NotNull Candidate<Object> EMPTY = new Imported<>(ImmutableMap.empty());
+
+    @SuppressWarnings("unchecked") public static <T> @NotNull Candidate<T> empty() {
+      return (Candidate<T>) EMPTY;
     }
 
     public static <T> @NotNull Candidate<T> of(@NotNull ModuleName.Qualified from, @NotNull T symbol) {
