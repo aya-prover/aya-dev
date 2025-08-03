@@ -1,4 +1,5 @@
 module aya.anf {
+  requires aya.syntax;
   requires aya.base;
   requires aya.util;
   requires kala.collection.primitive;
