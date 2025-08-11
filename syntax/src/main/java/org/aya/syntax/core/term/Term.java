@@ -40,8 +40,9 @@ public sealed interface Term extends Serializable, AyaDocile
     return bindAllFrom(ImmutableSeq.of(var), depth);
   }
 
-  /// Bind all [LocalVar] since `fromDepth`,
-  /// the i-th [LocalVar] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
+  /// Replacing all [FreeTerm] of leaf nodes with [LocalTerm] since `fromDepth`.
+  ///
+  /// the i-th [FreeTerm#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
   ///
   /// @see #replaceAllFrom
   default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
