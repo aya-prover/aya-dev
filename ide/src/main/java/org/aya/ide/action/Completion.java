@@ -213,7 +213,7 @@ public final class Completion {
         }
         case ModuleName.Qualified qualified -> {
           // `modName instanceof ModuleName.Qualified` implies `context.isNotEmpty()`,
-          // therefore `inModule == info.thisModule()`    // FIXME: bad conclusion
+          // therefore `inModule == info.thisModule()`    // FIXME: bad conclusion, since `context.isNotEmpty` implies `inModule == null`
           // FIXME: we should resolve the current module even `ContextWalker#localContext` is not used
 
           var mod = topLevel.getModuleMaybe(qualified);
@@ -259,6 +259,7 @@ public final class Completion {
         declKind = Item.Decl.Kind.from(concrete);
 
         if (concrete instanceof DataCon con) {
+          // we are unable to obtain the renamed owner name
           ownerName = con.dataRef.concrete.ref.name();
         }
 
