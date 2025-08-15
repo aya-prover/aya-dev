@@ -119,7 +119,7 @@ public class ReplCompiler {
   private void importModule(@NotNull LibraryOwner owner) {
     owner.librarySources()
       .map(src -> {
-        var info = src.resolveInfo().get();
+        var info = src.resolveInfo();
         imports.append(info);
         return info.thisModule();
       })

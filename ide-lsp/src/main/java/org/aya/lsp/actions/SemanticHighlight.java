@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.actions;
 
@@ -26,7 +26,7 @@ public interface SemanticHighlight {
 
   private static @NotNull HighlightResult highlightOne(@NotNull LibrarySource source) {
     var symbols = MutableList.<HighlightResult.Symbol>create();
-    var program = source.program().get();
+    var program = source.program();
     if (program != null) {
       SyntaxHighlight
         .highlight(null, Option.none(), program).view()
@@ -34,7 +34,7 @@ public interface SemanticHighlight {
         .forEach(symbols::append);
     }
     return new HighlightResult(
-      source.underlyingFile().toUri(),
+      source.underlyingFile.toUri(),
       symbols.filter(t -> t.range() != LspRange.NONE));
   }
 }

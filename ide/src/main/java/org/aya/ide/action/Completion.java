@@ -182,9 +182,9 @@ public final class Completion {
   @Contract("-> this")
   public @NotNull Completion compute() throws IOException {
     var sourceFile = source.codeFile();
-    var stmts = source.program().get();
-    var rootNode = source.rootNode().get();
-    var info = source.resolveInfo().get();
+    var stmts = source.program();
+    var rootNode = source.rootNode();
+    var info = source.resolveInfo();
     var context = endsWithSeparator ? incompleteName : incompleteName.dropLast(1);
 
     if (context.isEmpty()) {

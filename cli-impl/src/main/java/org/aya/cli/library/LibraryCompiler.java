@@ -106,7 +106,7 @@ public class LibraryCompiler {
 
   /** @return whether the source file is already parsed. */
   private boolean parseIfNeeded(@NotNull LibrarySource source) throws IOException {
-    if (source.program().get() != null) return true; // already parsed
+    if (source.program() != null) return true; // already parsed
     parse(source);
     return false;
   }
@@ -126,7 +126,7 @@ public class LibraryCompiler {
       }
       return recurse;
     }, source);
-    finder.resolveStmt(source.program().get());
+    finder.resolveStmt(source.program());
   }
 
   private @NotNull MutableGraph<LibrarySource> resolveImports() throws IOException {
@@ -136,7 +136,7 @@ public class LibraryCompiler {
     for (var src : owner.librarySources()) {
       resolveImportsIfNeeded(src);
       var known = depGraph.sucMut(src);
-      var dedup = src.imports().filter(s ->
+      var dedup = src.imports.filter(s ->
         known.noneMatch(k -> k.moduleName().equals(s.moduleName())));
       known.appendAll(dedup);
     }
@@ -281,21 +281,15 @@ public class LibraryCompiler {
   }
 
   private void reparseAffected(@NotNull LibrarySource src) throws IOException {
-    if (src.tycked().get() == null) return;
-    src.tycked().set(null);
-    src.resolveInfo().set(null);
-    src.literateData().set(null);
-    clearPrimitives(src.program().get());
-    parse(src);
+    if (src.clearTyckData()) {
+      clearPrimitives(src.program());
+      parse(src);
+    }
   }
 
   private void clearModified(@NotNull LibrarySource src) {
-    clearPrimitives(src.program().get());
-    src.program().set(null);
-    src.tycked().set(null);
-    src.resolveInfo().set(null);
-    src.literateData().set(null);
-    src.imports().clear();
+    clearPrimitives(src.program());
+    src.clearAllData();
   }
 
   /** collect usages of directly modified source files */
@@ -385,7 +379,7 @@ public class LibraryCompiler {
       var loaded = moduleLoader.load(moduleName);
       if (loaded.getErrOrNull() == LoadErrorKind.Resolve) return;
       // we also handle [Resolve] here, the code in [tyckSCC] will handle the case.
-      if (loaded.getErrOrNull() == LoadErrorKind.NotFound || file.resolveInfo().get() == null)
+      if (loaded.getErrOrNull() == LoadErrorKind.NotFound || file.resolveInfo() == null)
         throw new Panic("Unable to load module: " + moduleName);
       // [NotFound] is kinda impossible, as we are using SccTycker.
       // TODO: ^ is it?

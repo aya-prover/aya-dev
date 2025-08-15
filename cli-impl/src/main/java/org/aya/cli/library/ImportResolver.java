@@ -28,7 +28,7 @@ public record ImportResolver(@NotNull ImportLoader loader, @NotNull LibrarySourc
       case Command.Import cmd -> {
         var ids = cmd.path();
         var success = loader.load(ids, cmd.sourcePos());
-        var imports = librarySource.imports();
+        var imports = librarySource.imports;
         if (imports.anyMatch(i -> i.moduleName().equals(success.moduleName()))) return;
         imports.append(success);
       }

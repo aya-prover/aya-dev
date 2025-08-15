@@ -20,7 +20,7 @@ public record InlayHints(
   @NotNull MutableList<Hint> hints
 ) implements SyntaxNodeAction.Ranged {
   public static @NotNull ImmutableSeq<Hint> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source, @NotNull XYXY range) {
-    var program = source.program().get();
+    var program = source.program();
     if (program == null) return ImmutableSeq.empty();
     var maker = new InlayHints(options, range, MutableList.create());
     program.forEach(maker);

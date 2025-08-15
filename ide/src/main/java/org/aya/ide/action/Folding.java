@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public record Folding(@NotNull MutableList<FoldingArea> foldingRanges) implements SyntaxDeclAction {
   public static @NotNull ImmutableSeq<FoldingArea> invoke(@NotNull LibrarySource source) {
     var folder = new Folding(MutableList.create());
-    var program = source.program().get();
+    var program = source.program();
     if (program != null) program.forEach(folder);
     return folder.foldingRanges.toSeq();
   }
