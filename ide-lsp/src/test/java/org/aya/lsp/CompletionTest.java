@@ -44,10 +44,9 @@ public class CompletionTest {
     client.execute(compile((_, _) -> { }));
     var source = client.service.find(TEST_LIB.resolve("src").resolve("HelloWorld.aya"));
     assert source != null;
-    var info = source.resolveInfo().get();
+    var info = source.resolveInfo();
     assert info != null;
     var result = Completion.resolveTopLevel(info.thisModule());
-    return;
   }
 
   @Test public void testCompletionProvider() throws IOException {
@@ -83,8 +82,7 @@ public class CompletionTest {
       .parseNode(file.sourceCode());
   }
 
-  @Test
-  public void testNodeWalker() throws IOException {
+  @Test public void testNodeWalker() throws IOException {
     var file = readTestFile();
     var node = parseFile(file);
     Function<XY, NodeWalker.Result> runner = (xy) ->
@@ -109,8 +107,7 @@ public class CompletionTest {
     cases.forEach(xy -> checker.accept(xy, runner.apply(xy)));
   }
 
-  @Test
-  public void testRefocus() throws IOException {
+  @Test public void testRefocus() throws IOException {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
     Function<XY, GenericNode<?>> runner = (xy) -> {
@@ -139,8 +136,7 @@ public class CompletionTest {
     });
   }
 
-  @Test
-  public void testCompletion2() throws IOException {
+  @Test public void testCompletion2() throws IOException {
     var sourceFile = readTestFile();
     var node = parseFile(sourceFile);
 

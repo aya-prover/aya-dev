@@ -27,8 +27,7 @@ public final class BindingInfoExtractor implements StmtVisitor {
   private final @NotNull MutableMap<GenericNode<?>, BindingInfo> bindingMap = MutableMap.create();
   private final @NotNull MutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap = MutableMap.create();
 
-  @Override
-  public void visitParamDecl(Expr.@NotNull Param param) {
+  @Override public void visitParamDecl(Expr.@NotNull Param param) {
     if (param.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
       bindingMap.putIfAbsent(node, new BindingInfo(param.ref(), param.type(), delegate));
     }
@@ -36,8 +35,7 @@ public final class BindingInfoExtractor implements StmtVisitor {
     StmtVisitor.super.visitParamDecl(param);
   }
 
-  @Override
-  public void visitLetBind(Expr.@NotNull LetBind bind) {
+  @Override public void visitLetBind(Expr.@NotNull LetBind bind) {
     if (bind.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
       bindingMap.putIfAbsent(node, new BindingInfo(bind.bindName(), bind.result().data(), delegate));
     }
@@ -45,8 +43,7 @@ public final class BindingInfoExtractor implements StmtVisitor {
     StmtVisitor.super.visitLetBind(bind);
   }
 
-  @Override
-  public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
+  @Override public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
     switch (pat) {
       case Pattern.Bind bind when bind.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node) ->
         bindingMap.putIfAbsent(node, new BindingInfo(bind.bind(), null, delegate));
@@ -58,8 +55,7 @@ public final class BindingInfoExtractor implements StmtVisitor {
     StmtVisitor.super.visitPattern(pos, pat);
   }
 
-  @Override
-  public void accept(@NotNull Stmt stmt) {
+  @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Command.Module mod
       && mod.theContext() instanceof AssociatedNode<ModuleContextView>(var delegate, var node)) {
       this.moduleMap.putIfAbsent(node, delegate);

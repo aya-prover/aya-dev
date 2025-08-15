@@ -520,14 +520,13 @@ public record AyaProducer(
     return teleBinderUntyped(node, (n, i) -> {
       var id = LocalVar.from(i);
       var myPos = pos == null ? i.sourcePos() : pos;
-      var param = new Expr.Param(
+      return new Expr.Param(
         myPos,
         id,
         typeExpr == null ? typeOrHole(null, myPos) : typeExpr,
         explicit,
         new AssociatedNode<>(n)
       );
-      return param;
     });
   }
 
@@ -837,8 +836,7 @@ public record AyaProducer(
 
     if (as.isDefined()) {
       var asPat = pattern.map(p -> new Pattern.As(p, as.get(), new AssociatedNode<>(node)));
-      var posedAsPat = asPat.map(x -> new WithPos<Pattern>(entirePos, x));
-      return posedAsPat;
+      return asPat.map(x -> new WithPos<>(entirePos, x));
     }
 
     return pattern;

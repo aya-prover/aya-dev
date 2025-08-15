@@ -21,7 +21,7 @@ public sealed interface Candidate<T> {
   /**
    * Merge two candidate.
    *
-   * @implSpec If conflict ha ppens, {@param candy} will overwrite {@code this},
+   * @implSpec If conflict happens, {@param candy} will overwrite {@code this},
    * the user should check all possible conflicts before merge.
    */
   @NotNull Candidate<T> merge(@NotNull Candidate<T> candy);

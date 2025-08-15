@@ -7,19 +7,14 @@ import org.aya.intellij.GenericNode;
 import org.jetbrains.annotations.NotNull;
 
 /// This [MutableValue] implementation is used for completion
-public record AssociatedNode<T>(@NotNull MutableValue<T> delegate,
-                                @NotNull GenericNode<?> node) implements MutableValue<T> {
+public record AssociatedNode<T>(
+  @NotNull MutableValue<T> delegate,
+  @NotNull GenericNode<?> node
+) implements MutableValue<T> {
   public AssociatedNode(@NotNull GenericNode<?> node) {
     this(MutableValue.create(), node);
   }
 
-  @Override
-  public void set(T value) {
-    delegate.set(value);
-  }
-
-  @Override
-  public T get() {
-    return delegate.get();
-  }
+  @Override public void set(T value) { delegate.set(value); }
+  @Override public T get() { return delegate.get(); }
 }

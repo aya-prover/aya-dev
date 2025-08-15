@@ -47,9 +47,7 @@ public sealed interface ModuleName extends Serializable {
   @NotNull ModuleName concat(@NotNull ModuleName path);
   @NotNull String toString();
 
-  default int length() {
-    return ids().size();
-  }
+  default int length() { return ids().size(); }
 
   // region static
 

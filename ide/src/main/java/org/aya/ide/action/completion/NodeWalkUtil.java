@@ -11,16 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import static org.aya.parser.AyaPsiElementTypes.DO_BINDING;
 import static org.aya.parser.AyaPsiElementTypes.LET_BIND;
 
-public final class NodeWalkUtil {
-  public static final @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
+public interface NodeWalkUtil {
+  @NotNull TokenSet RIGHT_OPEN_BINDING_INTRODUCER = TokenSet.create(
     DO_BINDING,
     LET_BIND
   );
 
-  private NodeWalkUtil() { }
-
   /// Collect all siblings before [#node]
-  public static @NotNull SeqView<GenericNode<?>> backward(@NotNull GenericNode<?> node) {
+  static @NotNull SeqView<GenericNode<?>> backward(@NotNull GenericNode<?> node) {
     if (node instanceof NodeWalker.EmptyNode enode) {
       return backward(enode.host()).appended(enode.host());
     }
@@ -34,7 +32,7 @@ public final class NodeWalkUtil {
   /// Return the parent node of [#node],
   /// this function will return [NodeWalker.EmptyNode] if [#node] is [NodeWalker.EmptyNode]
   /// and the host of [#node] is the last node of its parent (in other word, [#node] is also at the end of its parent).
-  public static @Nullable GenericNode<?> refocusParent(@NotNull GenericNode<?> node) {
+  static @Nullable GenericNode<?> refocusParent(@NotNull GenericNode<?> node) {
     var parent = node.parent();
     if (parent == null) return null;
     if (!(node instanceof NodeWalker.EmptyNode enode)) return parent;
