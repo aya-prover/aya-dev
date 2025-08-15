@@ -8,7 +8,6 @@ plugins {
 repositories {
   mavenCentral()
   gradlePluginPortal()
-  mavenLocal()
 }
 
 val rootDir = projectDir.parentFile!!
