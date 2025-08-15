@@ -20,14 +20,14 @@ public record InlayHints(
   @NotNull MutableList<Hint> hints
 ) implements SyntaxNodeAction.Ranged {
   public static @NotNull ImmutableSeq<Hint> invoke(@NotNull PrettierOptions options, @NotNull LibrarySource source, @NotNull XYXY range) {
-    var program = source.program().get();
+    var program = source.program();
     if (program == null) return ImmutableSeq.empty();
     var maker = new InlayHints(options, range, MutableList.create());
     program.forEach(maker);
     return maker.hints.toSeq();
   }
   @Override public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
-    if (pat instanceof Pattern.Bind bind && bind.type().get() instanceof Term term) {
+    if (pat instanceof Pattern.Bind bind && bind.theCoreType().get() instanceof Term term) {
       var type = Doc.sep(Doc.symbol(":"), term.toDoc(options));
       hints.append(new Hint(pos, type, true));
     }

@@ -41,8 +41,8 @@ public final class StmtResolvers {
   }
 
   public void desugar(@NotNull ImmutableSeq<Stmt> stmts) {
-    var salt = new Desalt(info);
-    stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info)));
+    var salt = new Desalt(info, reporter);
+    stmts.forEach(stmt -> stmt.descentInPlace(salt, new DesugarMisc.Pat(info, reporter)));
   }
 
   /// Resolve file level [Stmt]s

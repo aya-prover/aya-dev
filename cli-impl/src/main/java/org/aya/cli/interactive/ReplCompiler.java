@@ -97,7 +97,7 @@ public class ReplCompiler {
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
     var ctx = new EmptyContext(Path.of("dummy")).derive("dummy");
     var resolveInfo = makeResolveInfo(ctx);
-    return expr.descent(new Desalt(resolveInfo));
+    return expr.descent(new Desalt(resolveInfo, reporter));
   }
 
   public void loadToContext(@NotNull Path file) throws IOException {
@@ -119,7 +119,7 @@ public class ReplCompiler {
   private void importModule(@NotNull LibraryOwner owner) {
     owner.librarySources()
       .map(src -> {
-        var info = src.resolveInfo().get();
+        var info = src.resolveInfo();
         imports.append(info);
         return info.thisModule();
       })
@@ -130,7 +130,7 @@ public class ReplCompiler {
 
   /// @see org.aya.cli.single.SingleFileCompiler#compile(Path, ModuleCallback)
   private void loadFile(@NotNull Path file) {
-    compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser)), NormalizeMode.HEAD);
+    compileToContext(parser -> Either.left(fileManager.createAyaFile(locator, file).parseMe(parser).program()), NormalizeMode.HEAD);
   }
 
   /// @param text the text of code to compile, witch might either be a `program` or an `expr`.

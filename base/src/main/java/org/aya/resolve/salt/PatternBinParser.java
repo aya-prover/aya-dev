@@ -25,15 +25,20 @@ import java.util.function.Function;
 
 public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pattern>, Arg<WithPos<Pattern>>> implements Problematic {
   private final @NotNull ResolveInfo resolveInfo;
+  private final @NotNull Reporter reporter;
 
-  public PatternBinParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<@NotNull Arg<WithPos<Pattern>>> seq) {
+  public PatternBinParser(
+    @NotNull ResolveInfo resolveInfo, @NotNull Reporter reporter,
+    @NotNull SeqView<@NotNull Arg<WithPos<Pattern>>> seq
+  ) {
     super(resolveInfo.opSet(), seq);
     this.resolveInfo = resolveInfo;
+    this.reporter = reporter;
   }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, WithPos<Pattern>, Arg<WithPos<Pattern>>>
   replicate(@NotNull SeqView<@NotNull Arg<WithPos<Pattern>>> seq) {
-    return new PatternBinParser(resolveInfo, seq);
+    return new PatternBinParser(resolveInfo, reporter, seq);
   }
 
   private static final Arg<WithPos<Pattern>> OP_APP = new Arg<>(new WithPos<>(SourcePos.NONE,
@@ -80,7 +85,7 @@ public final class PatternBinParser extends BinOpParser<AyaBinOpSet, WithPos<Pat
       throw new MalformedPatternException();
     }
   }
-  @Override public @NotNull Reporter reporter() { return opSet.reporter; }
+  @Override public @NotNull Reporter reporter() { return reporter; }
 
   public static final class MalformedPatternException extends RuntimeException { }
 }

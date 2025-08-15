@@ -346,8 +346,8 @@ public final class ClauseTycker implements Problematic, Stateful {
   private static final class TermInPatInline {
     public static void apply(@NotNull Pattern pat) {
       var typeRef = switch (pat) {
-        case Pattern.Bind bind -> bind.type();
-        case Pattern.As as -> as.type();
+        case Pattern.Bind bind -> bind.theCoreType();
+        case Pattern.As as -> as.theCoreType();
         default -> null;
       };
 

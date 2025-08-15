@@ -4,8 +4,9 @@ module aya.ide {
 
   requires static org.jetbrains.annotations;
 
-  exports org.aya.ide;
+  exports org.aya.ide.action.completion;
   exports org.aya.ide.action;
   exports org.aya.ide.syntax;
   exports org.aya.ide.util;
+  exports org.aya.ide;
 }

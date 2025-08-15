@@ -53,9 +53,7 @@ public interface ModuleContext extends ModuleContextView, Context {
 
   @Override
   default @Nullable Candidate<AnyVar> getCandidateLocalMaybe(@NotNull String name, @NotNull SourcePos sourcePos) {
-    var candy = symbols().get(name);
-    if (candy.isEmpty()) return null;
-    return candy;
+    return symbols().getNonEmpty(name);
   }
 
   @Override default @Nullable Option<AnyVar>
@@ -194,8 +192,8 @@ public interface ModuleContext extends ModuleContextView, Context {
     @NotNull Reporter reporter
   ) {
     var symbols = symbols();
-    var candidates = symbols.get(name);
-    if (candidates.isEmpty()) {
+    var candidates = symbols.getNonEmpty(name);
+    if (candidates == null) {
       var candy = getCandidateMaybe(name, sourcePos);
       if (candy != null && (!(ref instanceof LocalVar local) || local.generateKind() != GenerateKind.Basic.Anonymous)) {
         // {name} isn't used in this scope, but used in outer scope, shadow!
@@ -210,7 +208,7 @@ public interface ModuleContext extends ModuleContextView, Context {
       reporter.report(new NameProblem.AmbiguousNameWarn(name, sourcePos));
     }
 
-    symbols.add(name, ref, fromModule);
+    symbols.put(name, ref, fromModule);
 
     // Only `AnyDefVar`s can be exported.
     if (ref instanceof AnyDefVar defVar && acc == Stmt.Accessibility.Public) {

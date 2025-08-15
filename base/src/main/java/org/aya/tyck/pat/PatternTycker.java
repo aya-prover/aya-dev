@@ -148,7 +148,7 @@ public class PatternTycker implements Problematic, Stateful {
       }
       case Pattern.Bind bindPat -> {
         var bind = bindPat.bind();
-        var tyRef = bindPat.type();
+        var tyRef = bindPat.theCoreType();
 
         exprTycker.localCtx().put(bind, type);
         tyRef.set(type);

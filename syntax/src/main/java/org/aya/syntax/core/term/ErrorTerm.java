@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ErrorTerm(AyaDocile description, boolean isReallyError) implements StableWHNF, TyckInternal {
   public static final @NotNull ErrorTerm DUMMY =  new ErrorTerm(Doc.plain("dummy"), false);
+  /// This is used by completion to distinguish binding pattern and constructor pattern
+  public static final @NotNull ErrorTerm TYPE_OF_CON_PATTERN = new ErrorTerm(Doc.plain("type of constructor pattern"), false);
 
   public ErrorTerm(Doc doc, boolean isReallyError) { this(_ -> doc, isReallyError); }
   public ErrorTerm(AyaDocile desc) { this(desc, true); }

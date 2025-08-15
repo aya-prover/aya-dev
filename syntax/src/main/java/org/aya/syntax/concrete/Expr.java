@@ -35,7 +35,7 @@ public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
   void forEach(@NotNull PosedConsumer<@NotNull Expr> f);
   @ForLSP
-  sealed interface WithTerm {
+  sealed interface WithTerm permits LetBind, Param, Proj, Ref, Pattern.As, Pattern.Bind {
     @NotNull MutableValue<Term> theCoreType();
     default @Nullable Term coreType() { return theCoreType().get(); }
   }
@@ -49,7 +49,7 @@ public sealed interface Expr extends AyaDocile {
 
   record Param(
     @Override @NotNull SourcePos sourcePos,
-    @NotNull LocalVar ref,
+    @Override @NotNull LocalVar ref,
     @NotNull WithPos<Expr> typeExpr,
     boolean explicit,
     @ForLSP MutableValue<Term> theCoreType
@@ -553,8 +553,9 @@ public sealed interface Expr extends AyaDocile {
     @NotNull LocalVar bindName,
     @NotNull ImmutableSeq<Param> telescope,
     @NotNull WithPos<Expr> result,
-    @NotNull WithPos<Expr> definedAs
-  ) implements SourceNode, Named {
+    @NotNull WithPos<Expr> definedAs,
+    @NotNull MutableValue<Term> theCoreType
+  ) implements SourceNode, Named, WithTerm {
     @Override
     public @NotNull SourcePos nameSourcePos() {
       return bindName.sourcePos();
@@ -562,7 +563,7 @@ public sealed interface Expr extends AyaDocile {
 
     public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
-        ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs);
+        ? this : new LetBind(sourcePos, bindName, telescope, result, definedAs, theCoreType);
     }
 
     public @NotNull LetBind descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {

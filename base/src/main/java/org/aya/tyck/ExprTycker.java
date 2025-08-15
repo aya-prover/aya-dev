@@ -557,6 +557,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     var type = freezeHoles(ty(typeExpr));
     var definedAsResult = inherit(definedAsExpr, type);
 
+    addWithTerm(letBind, letBind.sourcePos(), definedAsResult.type());
+
     try (var _ = subscope()) {
       localLet.put(let.bind().bindName(), definedAsResult);
       return checker.apply(let.body());

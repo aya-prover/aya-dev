@@ -42,7 +42,7 @@ public record ProjectSymbol(
   }
 
   private void collectSource(@NotNull LibrarySource src) {
-    var program = src.program().get();
+    var program = src.program();
     if (program != null) program.forEach(this);
   }
 

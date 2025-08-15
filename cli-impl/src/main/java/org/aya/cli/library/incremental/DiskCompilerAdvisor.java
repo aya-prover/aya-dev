@@ -48,7 +48,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     try {
       var core = source.compiledCorePath();
       if (!Files.exists(core)) return true;
-      return Files.getLastModifiedTime(source.underlyingFile())
+      return Files.getLastModifiedTime(source.underlyingFile)
         .compareTo(Files.getLastModifiedTime(core)) > 0;
     } catch (IOException ignore) {
       return true;
@@ -58,7 +58,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
   @Override public void updateLastModified(@NotNull LibrarySource source) {
     try {
       var core = source.compiledCorePath();
-      Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.underlyingFile()));
+      Files.setLastModifiedTime(core, Files.getLastModifiedTime(source.underlyingFile));
     } catch (IOException ignore) {
     }
   }
@@ -125,7 +125,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
       .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)));
-    var libraryRoot = file.owner().outDir();
+    var libraryRoot = file.owner.outDir();
     javaCode.writeTo(computeBaseDir(libraryRoot).toAbsolutePath());
     var coreFile = file.compiledCorePath();
 
@@ -133,7 +133,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     var coreMod = CompilerUtil.saveCompiledCore(coreFile, defs, resolveInfo);
     return doLoadCompiledCore(
       coreMod, resolveInfo.reporter(),
-      resolveInfo.modulePath(), file.underlyingFile(), libraryRoot,
+      resolveInfo.modulePath(), file.underlyingFile, libraryRoot,
       recurseLoader, resolveInfo.primFactory()
     );
   }

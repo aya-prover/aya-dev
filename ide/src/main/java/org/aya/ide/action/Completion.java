@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.ide.action;
 
+import com.intellij.psi.tree.TokenSet;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableHashMap;
@@ -9,12 +10,19 @@ import kala.collection.mutable.MutableList;
 import kala.value.LazyValue;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Constants;
+import org.aya.ide.action.completion.BindingInfoExtractor;
+import org.aya.ide.action.completion.ContextWalker;
+import org.aya.ide.action.completion.Location;
+import org.aya.ide.action.completion.NodeWalker;
 import org.aya.ide.util.XY;
+import org.aya.intellij.GenericNode;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
-import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.syntax.context.ContextView;
+import org.aya.syntax.context.ModuleContextView;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.Expr;
@@ -28,10 +36,13 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.JitTele;
 import org.aya.util.Panic;
 import org.aya.util.PrettierOptions;
+import org.aya.util.position.SourceFile;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 public final class Completion {
   public record Param(@Nullable String name, @NotNull StmtVisitor.Type type, boolean licit) implements AyaDocile {
@@ -59,15 +70,23 @@ public final class Completion {
         result == null ? StmtVisitor.Type.noType : new StmtVisitor.Type(result.data()));
     }
 
+    public @NotNull StmtVisitor.Type headless() {
+      assert telescope.isEmpty();
+      return result;
+    }
+
     @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       // TODO: unify with ConcretePrettier/CorePrettier?
       var docs = MutableList.<Doc>create();
       telescope.forEach(p -> docs.append(p.toDoc(options)));
 
+      docs.append(Tokens.HAS_TYPE);
+
       var resultDoc = result.toDocile();
       if (resultDoc != null) {
-        docs.append(Tokens.HAS_TYPE);
         docs.append(resultDoc.toDoc(options));
+      } else {
+        docs.append(Doc.plain(Constants.ANONYMOUS_PREFIX));
       }
 
       return Doc.sep(docs);
@@ -119,15 +138,15 @@ public final class Completion {
 
     record Module(@NotNull ModuleName.Qualified moduleName) implements Item { }
 
-    record Local(@NotNull AnyVar var, @NotNull StmtVisitor.Type userType) implements AyaDocile, Symbol {
+    record Local(@NotNull AnyVar var, @Override @NotNull StmtVisitor.Type result) implements AyaDocile, Symbol {
       @Override
-      public @NotNull String name() {
-        return var.name();
+      public @NotNull Telescope type() {
+        return new Telescope(ImmutableSeq.empty(), result);
       }
 
       @Override
-      public @NotNull Telescope type() {
-        return new Telescope(ImmutableSeq.empty(), userType);
+      public @NotNull String name() {
+        return var.name();
       }
 
       @Override
@@ -141,9 +160,10 @@ public final class Completion {
   public final @NotNull XY xy;
   private final @NotNull ImmutableSeq<String> incompleteName;
   private final boolean endsWithSeparator;
-  private @Nullable ModuleName inModule = null;
+  private @Nullable ModuleContextView inModule = null;
   private @Nullable ImmutableSeq<Item.Local> localContext;
   private @Nullable ImmutableSeq<Item> topLevelContext;
+  private @Nullable Location location;
 
   /// @param incompleteName    the incomplete name under the cursor, only used for determine the context of completion
   /// @param endsWithSeparator ditto
@@ -160,34 +180,45 @@ public final class Completion {
   }
 
   @Contract("-> this")
-  public @NotNull Completion compute() {
-    var stmts = source.program().get();
-    var info = source.resolveInfo().get();
+  public @NotNull Completion compute() throws IOException {
+    var sourceFile = source.codeFile();
+    var stmts = source.program();
+    var rootNode = source.rootNode();
+    var info = source.resolveInfo();
     var context = endsWithSeparator ? incompleteName : incompleteName.dropLast(1);
 
     if (context.isEmpty()) {
-      if (stmts != null) {
-        var walker = resolveLocal(stmts, xy);
-        this.inModule = walker.moduleContext();
+      if (stmts != null && rootNode != null) {
+        var walker = resolveLocal(sourceFile, stmts, rootNode, xy);
         this.localContext = walker.localContext();
+        this.inModule = walker.moduleContext();
+        this.location = walker.location();
       }
     }
 
+    // inModule == null if:
+    // * context.isNotEmpty()
+    // * walker.moduleContext == null: either at top level or no ModuleContextView data
+
     if (info != null) {
       var modName = ModuleName.from(context);
-      // TODO: provide top level context inside [inModule] with `ModuleContext` rather than `ModuleExport`.
-      // if (modName == ModuleName.This && inModule != null) {
-      //   modName = inModule;
-      // }
+      var topLevel = inModule == null ? info.thisModule() : inModule;
 
       switch (modName) {
         case ModuleName.ThisRef _ -> {
-          topLevelContext = resolveTopLevel(info.thisModule());
+          // `modName instanceof ModuleName.ThisRef` implies `context.isEmpty()`, therefore,
+          // `inModule == null` implies either at top level or no ModuleContextView data.
+          // Both cases are safe to use `info.thisModule()`
+          topLevelContext = resolveTopLevel(topLevel);
         }
         case ModuleName.Qualified qualified -> {
-          var mod = info.thisModule().getModuleMaybe(qualified);
-          if (mod == null) break;     // TODO: do something?
-          topLevelContext = resolveModLevel(qualified, mod);
+          // `modName instanceof ModuleName.Qualified` implies `context.isNotEmpty()`,
+          // therefore `inModule == info.thisModule()`    // FIXME: bad conclusion, since `context.isNotEmpty` implies `inModule == null`
+          // FIXME: we should resolve the current module even `ContextWalker#localContext` is not used
+
+          var mod = topLevel.getModuleMaybe(qualified);
+          if (mod == null) topLevelContext = ImmutableSeq.empty();
+          else topLevelContext = resolveModLevel(qualified, mod);
         }
       }
     }
@@ -195,13 +226,22 @@ public final class Completion {
     return this;
   }
 
-  public @Nullable ModuleName inModule() { return inModule; }
+  public @Nullable Location location() { return location; }
+  public @Nullable ModuleContextView inModule() { return inModule; }
   public @Nullable ImmutableSeq<Item.Local> localContext() { return localContext; }
   public @Nullable ImmutableSeq<Item> topLevelContext() { return topLevelContext; }
 
-  public static @NotNull ContextWalker resolveLocal(@NotNull ImmutableSeq<Stmt> stmts, @NotNull XY xy) {
-    var walker = new ContextWalker(xy);
-    stmts.forEach(walker);
+  public static @NotNull ContextWalker resolveLocal(
+    @NotNull SourceFile file,
+    @NotNull ImmutableSeq<Stmt> stmts,
+    @NotNull GenericNode<?> root,
+    @NotNull XY xy
+  ) {
+    var result = NodeWalker.run(file, root, xy, TokenSet.EMPTY);
+    var target = NodeWalker.refocus(result);
+    var extractor = new BindingInfoExtractor().accept(stmts);
+    var walker = new ContextWalker(extractor.bindings(), extractor.modules());
+    walker.visit(target);
     return walker;
   }
 
@@ -219,6 +259,7 @@ public final class Completion {
         declKind = Item.Decl.Kind.from(concrete);
 
         if (concrete instanceof DataCon con) {
+          // we are unable to obtain the renamed owner name
           ownerName = con.dataRef.concrete.ref.name();
         }
 
@@ -259,11 +300,11 @@ public final class Completion {
   /// Resolve all top level declarations
   ///
   /// @implNote be aware that a symbol defined in a submodule can be imported (by `open`) in the parent module.
-  public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContext ctx) {
+  public static @NotNull ImmutableSeq<Item> resolveTopLevel(@NotNull ModuleContextView ctx) {
     var decls = MutableHashMap.<String, MutableList<Item.Decl>>create();
     var modules = MutableHashMap.<ModuleName.Qualified, Item.Module>create();
 
-    Context someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
+    ContextView someInterestingLoopVariableWhichIDontKnowHowToNameIt = ctx;
 
     while (someInterestingLoopVariableWhichIDontKnowHowToNameIt instanceof ModuleContext mCtx) {
       mCtx.symbols().forEach((name, candy) -> {

@@ -1,0 +1,30 @@
+open inductive Nat | suc (n : Nat) | zero
+
+def foo (a : Nat) {b : Nat} Nat : Nat
+| zero => b
+| suc a => let c (d : Nat) := suc d in c (foo a)
+
+def doWhat => do {
+  a <- foo,
+  b <- bar,
+  c
+}
+
+def array => [ a + b | a <- c, b <- d ]
+
+module Sub {
+  overlap def plus Nat Nat : Nat
+  | a, zero => a
+  | zero, b => b
+  | suc a, b => suc (plus a b)
+  | a, suc b => suc (plus a b)
+}
+
+def lambda (a : Nat) : Nat -> Nat =>
+  fn b => a + b
+
+def manyLets => let
+  | a := b
+  | c := a
+  | d := e
+  in f

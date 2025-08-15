@@ -61,6 +61,7 @@ public final class StmtPreResolver {
         }
 
         var newCtx = context.derive(mod.name());
+        mod.theContext().set(newCtx);
         var children = resolveStmt(mod.contents(), newCtx);
 
         context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos(), thisReporter);

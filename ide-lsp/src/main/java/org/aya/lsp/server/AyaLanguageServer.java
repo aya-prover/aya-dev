@@ -220,7 +220,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private @Nullable LibrarySource find(@NotNull LibraryOwner owner, Path moduleFile) {
-    var found = owner.librarySources().find(src -> src.underlyingFile().equals(moduleFile));
+    var found = owner.librarySources().find(src -> src.underlyingFile.equals(moduleFile));
     if (found.isDefined()) return found.get();
     for (var dep : owner.libraryDeps()) {
       var foundDep = find(dep, moduleFile);
@@ -274,7 +274,7 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   private void clearProblems(@NotNull ImmutableSeq<ImmutableSeq<LibrarySource>> affected) {
-    var files = affected.flatMap(i -> i.map(LibrarySource::underlyingFile));
+    var files = affected.flatMap(i -> i.map(src -> src.underlyingFile));
     client.clearAyaProblems(files);
   }
 
@@ -299,8 +299,8 @@ public class AyaLanguageServer implements LanguageServer {
         case FileChangeType.Deleted -> {
           var src = find(change.uri);
           if (src == null) return;
-          Log.d("Deleted file: %s, removed from owner: %s", src.underlyingFile(), src.owner().underlyingLibrary().name());
-          switch (src.owner()) {
+          Log.d("Deleted file: %s, removed from owner: %s", src.underlyingFile, src.owner.underlyingLibrary().name());
+          switch (src.owner) {
             case MutableLibraryOwner owner -> owner.removeLibrarySource(src);
             case WsLibrary owner -> {
               // TODO: how about `AyaLanguageServer#find` returns a tuple?
@@ -323,7 +323,13 @@ public class AyaLanguageServer implements LanguageServer {
     var source = find(position.textDocument.uri);
     if (source == null) return Optional.empty();
     var xy = LspRange.pos(position.position);
-    return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
+    try {
+      return Optional.of(CompletionProvider.completion(source, xy, doc -> render(doc.toDoc(options))));
+    } catch (IOException e) {
+      Log.e("IOException occurred during completion. Stacktrace:");
+      Log.stackTrace(e);
+      return Optional.empty();
+    }
   }
 
   @Override public CompletionItem resolveCompletionItem(CompletionItem params) {
@@ -394,8 +400,8 @@ public class AyaLanguageServer implements LanguageServer {
   @Override public List<DocumentHighlight> documentHighlight(TextDocumentPositionParams params) {
     var source = find(params.textDocument.uri);
     if (source == null) return Collections.emptyList();
-    var currentFile = Option.ofNullable(source.underlyingFile());
-    return FindReferences.findOccurrences(source, SeqView.of(source.owner()), LspRange.pos(params.position))
+    var currentFile = Option.ofNullable(source.underlyingFile);
+    return FindReferences.findOccurrences(source, SeqView.of(source.owner), LspRange.pos(params.position))
       // only highlight references in the current file
       .filter(pos -> pos.file().underlying().equals(currentFile))
       .map(pos -> new DocumentHighlight(LspRange.toRange(pos), DocumentHighlightKind.Read))
@@ -477,9 +483,9 @@ public class AyaLanguageServer implements LanguageServer {
   public ComputeTypeResult computeTerm(@NotNull ComputeTypeResult.Params params, ComputeType.Kind type) {
     var source = find(params.uri);
     if (source == null) return ComputeTypeResult.bad(params);
-    var program = source.program().get();
+    var program = source.program();
     if (program == null) return ComputeTypeResult.bad(params);
-    var computer = new ComputeType(source, type, source.resolveInfo().get().makeTyckState(), LspRange.pos(params.position));
+    var computer = new ComputeType(source, type, source.resolveInfo().makeTyckState(), LspRange.pos(params.position));
     program.forEach(computer);
     return computer.result == null ? ComputeTypeResult.bad(params) : ComputeTypeResult.good(params, computer.result);
   }

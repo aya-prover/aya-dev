@@ -54,6 +54,7 @@ public sealed interface Candidate<T> {
    * A candidate list that only store one symbol, furthermore, it implies the symbol is defined in this module.
    */
   record Defined<T>(T symbol) implements Candidate<T> {
+    /// @return {@param symbol} if it is [Candidate.Defined], this will be used in repl.
     @Override public @NotNull Candidate<T> merge(@NotNull Candidate<T> symbol) {
       return symbol instanceof Candidate.Defined<T> defined ? defined : this;
     }
@@ -80,8 +81,10 @@ public sealed interface Candidate<T> {
    *                value: the symbol
    */
   record Imported<T>(@NotNull ImmutableMap<ModuleName.Qualified, T> symbols) implements Candidate<T> {
-    public static <T> @NotNull Candidate<T> empty() {
-      return new Imported<>(ImmutableMap.empty());
+    public static final @NotNull Candidate<Object> EMPTY = new Imported<>(ImmutableMap.empty());
+
+    @SuppressWarnings("unchecked") public static <T> @NotNull Candidate<T> empty() {
+      return (Candidate<T>) EMPTY;
     }
 
     public static <T> @NotNull Candidate<T> of(@NotNull ModuleName.Qualified from, @NotNull T symbol) {
@@ -99,7 +102,7 @@ public sealed interface Candidate<T> {
       if (view.sizeGreaterThan(1)) Panic.unreachable();
       return symbols.valuesView().getAny();
     }
-    @Override public CollectionView<T> getAll() { return symbols.valuesView(); }
+    @Override public CollectionView<T> getAll() { return symbols.valuesView().distinct(); }
     @Override public @NotNull ImmutableSeq<ModuleName> from() { return ImmutableSeq.from(symbols.keysView()); }
     @Override public boolean contains(@NotNull ModuleName modName) {
       return modName instanceof ModuleName.Qualified qmod && symbols.containsKey(qmod);

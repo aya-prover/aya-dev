@@ -60,7 +60,7 @@ public interface FindReferences {
   }
 
   private static @NotNull SeqView<SourcePos> resolve(@NotNull Resolver.UsageResolver resolver, @NotNull LibraryOwner owner) {
-    owner.librarySources().map(src -> src.program().get()).filterNotNull()
+    owner.librarySources().map(LibrarySource::program).filterNotNull()
       .forEach(prog -> prog.forEach(resolver));
     return resolver.collect().view().concat(owner.libraryDeps().flatMap(dep -> resolve(resolver, dep)));
   }

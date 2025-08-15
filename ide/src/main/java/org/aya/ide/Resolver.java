@@ -32,7 +32,7 @@ public interface Resolver {
     @NotNull String name
   ) {
     var mod = resolveModule(owner, module);
-    return mod.mapNotNull(m -> m.tycked().get())
+    return mod.mapNotNull(LibrarySource::tycked)
       .map(defs -> defs.flatMap(Resolver::withChildren))
       .flatMap(defs -> defs.find(def -> def.ref().name().equals(name)));
   }
@@ -41,7 +41,7 @@ public interface Resolver {
   static @NotNull SeqView<WithPos<@NotNull AnyVar>> resolveVar(
     @NotNull LibrarySource source, XY xy
   ) {
-    var program = source.program().get();
+    var program = source.program();
     if (program == null) return SeqView.empty();
     var collect = new XYResolver(xy);
     program.view().forEach(collect);

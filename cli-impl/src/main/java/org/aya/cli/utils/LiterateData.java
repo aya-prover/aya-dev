@@ -64,7 +64,7 @@ public record LiterateData(
       // Skip if error
       if (resolved == null) return;
       try {
-        var data = resolved.descent(new Desalt(info));
+        var data = resolved.descent(new Desalt(info, info.reporter()));
         c.params = data.params();
         c.expr = data.expr();
       } catch (PatternBinParser.MalformedPatternException _) { }

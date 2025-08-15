@@ -23,6 +23,7 @@ import org.aya.generic.Suppress;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.intellij.GenericNode;
+import org.aya.parser.AssociatedNode;
 import org.aya.parser.AyaPsiElementTypes;
 import org.aya.parser.AyaPsiParser;
 import org.aya.parser.AyaPsiTokenType;
@@ -48,6 +49,7 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
@@ -232,7 +234,8 @@ public record AyaProducer(
     var modName = weakId(node.child(WEAK_ID));
     return new Command.Module(
       modName.sourcePos(), sourcePosOf(node), modName.data(),
-      node.childrenOfType(STMT).flatMap(this::stmt).toSeq());
+      node.childrenOfType(STMT).flatMap(this::stmt).toSeq(),
+      new AssociatedNode<>(node));
   }
 
   public @Nullable Decl decl(@NotNull GenericNode<?> node, @NotNull MutableList<Stmt> additional) {
@@ -475,7 +478,8 @@ public record AyaProducer(
     if (tele != null) return licit(tele, TELE_BINDER, this::teleBinder);
     var type = expr(node.child(EXPR));
     var pos = sourcePosOf(node);
-    return ImmutableSeq.of(new Expr.Param(pos, Constants.randomlyNamed(pos), type, true));
+    var param = new Expr.Param(pos, Constants.randomlyNamed(pos), type, true);
+    return ImmutableSeq.of(param);
   }
 
   public @NotNull ImmutableSeq<Expr.Param> teleBinder(boolean explicit, @NotNull GenericNode<?> node) {
@@ -483,23 +487,47 @@ public record AyaProducer(
     var typed = node.peekChild(TELE_BINDER_TYPED);
     if (typed != null) return teleBinderTyped(typed, explicit);
     var anonymous = node.peekChild(TELE_BINDER_ANONYMOUS);
-    if (anonymous != null) return ImmutableSeq.of(new Expr.Param(pos,
-      Constants.randomlyNamed(pos),
-      expr(anonymous.child(EXPR)),
-      explicit));
+    if (anonymous != null) {
+      var param = new Expr.Param(pos,
+        Constants.randomlyNamed(pos),
+        expr(anonymous.child(EXPR)),
+        explicit
+      );
+      return ImmutableSeq.of(param);
+    }
     return unreachable(node);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> teleBinderTyped(@NotNull GenericNode<?> node, boolean explicit) {
     // TODO: should we count the parenthesis?
     var pos = sourcePosOf(node);
-    var ids = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED));
     var type = type(node.child(TYPE));
-    return ids.map(i -> new Expr.Param(pos, LocalVar.from(i), type, explicit));
+    return teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), pos, type, explicit);
   }
 
-  private @NotNull ImmutableSeq<WithPos<String>> teleBinderUntyped(@NotNull GenericNode<?> node) {
-    return node.childrenOfType(TELE_PARAM_NAME).map(this::teleParamName).toSeq();
+  private <T> @NotNull ImmutableSeq<T> teleBinderUntyped(@NotNull GenericNode<?> node, @NotNull BiFunction<GenericNode<?>, WithPos<String>, T> mapper) {
+    var params = node.childrenOfType(TELE_PARAM_NAME).toSeq();
+    var names = params.view().map(this::teleParamName);
+    return params.zip(names, mapper);
+  }
+
+  private @NotNull ImmutableSeq<Expr.Param> teleBinderUntyped(
+    @NotNull GenericNode<?> node,
+    @Nullable SourcePos pos,
+    @Nullable WithPos<Expr> typeExpr,
+    boolean explicit
+  ) {
+    return teleBinderUntyped(node, (n, i) -> {
+      var id = LocalVar.from(i);
+      var myPos = pos == null ? i.sourcePos() : pos;
+      return new Expr.Param(
+        myPos,
+        id,
+        typeExpr == null ? typeOrHole(null, myPos) : typeExpr,
+        explicit,
+        new AssociatedNode<>(n)
+      );
+    });
   }
 
   public @NotNull ImmutableSeq<Expr.Param> typedTelescope(SeqView<? extends GenericNode<?>> telescope) {
@@ -527,17 +555,15 @@ public record AyaProducer(
     if (typed != null) return teleBinderTyped(typed, explicit);
 
     // | teleBinderUntyped
-    var pos = sourcePosOf(node);
-    var ids = node.child(TELE_BINDER_UNTYPED);
-    return teleBinderUntyped(ids).view()
-      .map(LocalVar::from)
-      .map(bind -> new Expr.Param(bind.definition(), bind, typeOrHole(null, pos), explicit))
-      .toSeq();
+    return teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), null, null, explicit);
   }
 
   private @NotNull ImmutableSeq<Expr.Param> lambdaTeleLit(GenericNode<?> node, SourcePos pos) {
-    return ImmutableSeq.of(new Expr.Param(pos,
-      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true));
+    var param = new Expr.Param(pos,
+      LocalVar.from(teleParamName(node)), typeOrHole(null, pos), true,
+      new AssociatedNode<>(node)
+    );
+    return ImmutableSeq.of(param);
   }
 
   private record DeclNameOrInfix(@NotNull WithPos<String> name, @Nullable OpDecl.OpInfo infix) {
@@ -679,11 +705,12 @@ public record AyaProducer(
         var bodyHolePos = impliesToken == null ? pos : sourcePosOf(impliesToken);
         result = new WithPos<>(bodyHolePos, new Expr.Hole(false, null));
       } else result = expr(bodyExpr);
-      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED)).view()
-        .map(LocalVar::from)
-        .map(v -> new WithPos<Pattern>(v.definition(), new Pattern.Bind(v)))
-        .map(Arg::ofExplicitly)
-        .toSeq();
+      var tele = teleBinderUntyped(node.child(TELE_BINDER_UNTYPED), (n, i) -> {
+        var id = LocalVar.from(i);
+        var pat = new Pattern.Bind(id, new AssociatedNode<>(n));
+        return Arg.ofExplicitly(new WithPos<Pattern>(id.definition(), pat));
+      });
+
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, tele, Option.some(result))));
     }
     if (node.is(LAMBDA_1_EXPR)) {
@@ -739,7 +766,10 @@ public record AyaProducer(
       var bindBlockMaybe = node.peekChild(LET_BIND_BLOCK);
       var body = expr(node.child(EXPR));
       if (bindBlockMaybe != null) {
-        var binds = bindBlockMaybe.childrenOfType(LET_BIND).map(this::letBind);
+        var binds = bindBlockMaybe.childrenOfType(LET_BIND)
+          .map(this::letBind)
+          .toSeq()
+          .view();
         return Expr.buildLet(pos, binds, body);
       } else {
         // let open
@@ -803,9 +833,13 @@ public record AyaProducer(
     Arg<WithPos<Pattern>> pattern = unitPats.sizeEquals(1)
       ? unitPats.getFirst()
       : new Arg<>(new WithPos<>(innerPatternPos, new Pattern.BinOpSeq(unitPats)), true);
-    return as.isDefined()
-      ? Pattern.As.wrap(pattern, as.get()).map(x -> new WithPos<>(entirePos, x))
-      : pattern;
+
+    if (as.isDefined()) {
+      var asPat = pattern.map(p -> new Pattern.As(p, as.get(), new AssociatedNode<>(node)));
+      return asPat.map(x -> new WithPos<>(entirePos, x));
+    }
+
+    return pattern;
   }
 
   private @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> unitPatterns(@NotNull GenericNode<?> node) {
@@ -850,7 +884,8 @@ public record AyaProducer(
     if (node.is(ATOM_BIND_PATTERN)) {
       var qualifiedId = qualifiedId(node.child(QUALIFIED_ID));
       if (qualifiedId.isUnqualified()) {
-        return new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())));
+        return new Pattern.Bind(LocalVar.from(new WithPos<>(qualifiedId.sourcePos(), qualifiedId.name())),
+          new AssociatedNode<>(node));
       }
       return new Pattern.QualifiedRef(qualifiedId);
     }
@@ -915,9 +950,10 @@ public record AyaProducer(
     var teles = typedTelescope(node.childrenOfType(LAMBDA_TELE));
     var result = typeOrHole(node.peekChild(TYPE), bind.sourcePos());
     var body = expr(node.child(EXPR));
+    var ref = LocalVar.from(bind);
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(pos, LocalVar.from(bind), teles, result, body);
+    return new Expr.LetBind(pos, ref, teles, result, body, new AssociatedNode<>(node));
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {
