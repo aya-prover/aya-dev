@@ -6,12 +6,13 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.syntax.concrete.Expr;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 /** Desugar, but the sugars are not sweet enough, therefore called salt. */
-public record Desalt(@NotNull ResolveInfo info) implements PosedUnaryOperator<Expr> {
+public record Desalt(@NotNull ResolveInfo info, @NotNull Reporter reporter) implements PosedUnaryOperator<Expr> {
   @Override public Expr apply(SourcePos sourcePos, Expr expr) {
-    expr = new DesugarMisc(info).apply(sourcePos, expr);
+    expr = new DesugarMisc(info, reporter).apply(sourcePos, expr);
     return new DesugarLambdaHole().apply(sourcePos, expr);
   }
 }

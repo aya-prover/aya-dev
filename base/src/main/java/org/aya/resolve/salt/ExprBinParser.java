@@ -9,23 +9,30 @@ import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.error.OperatorError;
 import org.aya.syntax.concrete.Expr;
+import org.aya.tyck.tycker.Problematic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.BinOpParser;
 import org.aya.util.binop.BinOpSet;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.NamedArg> {
+public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.NamedArg> implements Problematic {
   private final @NotNull ResolveInfo resolveInfo;
+  private final @NotNull Reporter reporter;
 
-  public ExprBinParser(@NotNull ResolveInfo resolveInfo, @NotNull SeqView<Expr.@NotNull NamedArg> seq) {
+  public ExprBinParser(
+    @NotNull ResolveInfo resolveInfo, @NotNull Reporter reporter,
+    @NotNull SeqView<Expr.@NotNull NamedArg> seq
+  ) {
     super(resolveInfo.opSet(), seq);
     this.resolveInfo = resolveInfo;
+    this.reporter = reporter;
   }
 
   private static final Expr.NamedArg OP_APP = new Expr.NamedArg(
@@ -34,14 +41,15 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
   );
 
   @Override protected @NotNull Expr.NamedArg appOp() { return OP_APP; }
+  @Override public @NotNull Reporter reporter() { return reporter; }
 
   @Override protected @NotNull BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.NamedArg>
   replicate(@NotNull SeqView<Expr.@NotNull NamedArg> seq) {
-    return new ExprBinParser(resolveInfo, seq);
+    return new ExprBinParser(resolveInfo, reporter, seq);
   }
 
   @Override protected void reportAmbiguousPred(String op1, String op2, SourcePos pos) {
-    opSet.fail(new OperatorError.Precedence(op1, op2, pos));
+    fail(new OperatorError.Precedence(op1, op2, pos));
   }
 
   @Override protected @NotNull WithPos<Expr> createErrorExpr(@NotNull SourcePos sourcePos) {
@@ -49,11 +57,11 @@ public class ExprBinParser extends BinOpParser<AyaBinOpSet, WithPos<Expr>, Expr.
   }
 
   @Override protected void reportFixityError(Assoc top, Assoc current, String topOp, String currentOp, SourcePos pos) {
-    opSet.fail(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
+    fail(new OperatorError.Fixity(currentOp, current, topOp, top, pos));
   }
 
   @Override protected void reportMissingOperand(String op, SourcePos pos) {
-    opSet.fail(new OperatorError.MissingOperand(pos, op));
+    fail(new OperatorError.MissingOperand(pos, op));
   }
 
   @Override protected @Nullable OpDecl underlyingOpDecl(@NotNull Expr.NamedArg elem) {

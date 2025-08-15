@@ -97,7 +97,7 @@ public class ReplCompiler {
   desugarExpr(@NotNull ExprResolver.LiterateResolved expr, @NotNull Reporter reporter) {
     var ctx = new EmptyContext(Path.of("dummy")).derive("dummy");
     var resolveInfo = makeResolveInfo(ctx);
-    return expr.descent(new Desalt(resolveInfo));
+    return expr.descent(new Desalt(resolveInfo, reporter));
   }
 
   public void loadToContext(@NotNull Path file) throws IOException {

@@ -12,10 +12,11 @@ import org.aya.util.Panic;
 import org.aya.util.position.PosedUnaryOperator;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record DesugarMisc(@NotNull ResolveInfo info) implements PosedUnaryOperator<Expr> {
+public record DesugarMisc(@NotNull ResolveInfo info, @NotNull Reporter reporter) implements PosedUnaryOperator<Expr> {
   private @Nullable Integer levelVar(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.BinOpSeq _ -> levelVar(expr.descent(this));
@@ -44,7 +45,7 @@ public record DesugarMisc(@NotNull ResolveInfo info) implements PosedUnaryOperat
       case Expr.Match match -> {
         return match.update(
           match.discriminant().map(d -> d.descent(this)),
-          match.clauses().map(clause -> clause.descent(this, new Pat(info))),
+          match.clauses().map(clause -> clause.descent(this, new Pat(info, reporter))),
           match.returns() != null ? match.returns().descent(this) : null
         );
       }
@@ -63,7 +64,7 @@ public record DesugarMisc(@NotNull ResolveInfo info) implements PosedUnaryOperat
     return switch (satou) {
       case Expr.BinOpSeq(var seq) -> {
         assert seq.isNotEmpty();
-        yield apply(new ExprBinParser(info, seq.view()).build(sourcePos));
+        yield apply(new ExprBinParser(info, reporter, seq.view()).build(sourcePos));
       }
       case Expr.Do aDo -> throw new UnsupportedOperationException("TODO");
       case Expr.Idiom idiom -> throw new UnsupportedOperationException("TODO");
@@ -109,10 +110,10 @@ public record DesugarMisc(@NotNull ResolveInfo info) implements PosedUnaryOperat
     };
   }
 
-  public record Pat(@NotNull ResolveInfo info) implements PosedUnaryOperator<Pattern> {
+  public record Pat(@NotNull ResolveInfo info, @NotNull Reporter reporter) implements PosedUnaryOperator<Pattern> {
     @Override public Pattern apply(SourcePos sourcePos, Pattern pattern) {
       return switch (pattern) {
-        case Pattern.BinOpSeq binOpSeq -> apply(new PatternBinParser(info, binOpSeq.seq().view()).build(sourcePos));
+        case Pattern.BinOpSeq binOpSeq -> apply(new PatternBinParser(info, reporter, binOpSeq.seq().view()).build(sourcePos));
         default -> pattern.descent(this);
       };
     }
