@@ -62,7 +62,7 @@ public class LspTest {
     launch(TEST_LIB).execute(compile((a, _) -> {
       var testOpt = a.lastCompiled()
         .filter(x -> x.moduleName().module().getLast().equals("VecCore"))
-        .flatMap(x -> x.program().get())
+        .flatMap(x -> x.program())
         .filterIsInstance(FnDecl.class)
         .filter(x -> x.ref.name().equals("test"))
         .getFirstOption();

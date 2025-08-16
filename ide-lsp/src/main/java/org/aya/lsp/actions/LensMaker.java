@@ -28,7 +28,7 @@ public record LensMaker(
 ) implements SyntaxDeclAction {
   public static @NotNull List<CodeLens> invoke(@NotNull LibrarySource source, @NotNull CollectionView<LibraryOwner> libraries) {
     var maker = new LensMaker(libraries, MutableList.create());
-    var program = source.program().get();
+    var program = source.program();
     if (program != null) program.forEach(maker);
     return maker.codeLens.asJava();
   }
