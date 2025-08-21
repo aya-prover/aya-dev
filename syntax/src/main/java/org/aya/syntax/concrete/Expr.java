@@ -694,6 +694,12 @@ public sealed interface Expr extends AyaDocile {
       params = params.drop(1);
       sourcePos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         params.map(SourceNode::sourcePos));
+
+      if (params.isNotEmpty()) {
+        // TODO: remove this
+        var justTest = body.sourcePos().sourcePosSince(sourcePos.file(), params.getFirst().sourcePos());
+        assert sourcePos.equals(justTest);
+      }
     }
     return subPoses.foldRight(body, (data, acc) ->
       new WithPos<>(data.sourcePos(), constructor.apply(data.data(), acc)));

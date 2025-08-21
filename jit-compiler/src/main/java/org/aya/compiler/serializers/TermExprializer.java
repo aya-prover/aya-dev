@@ -154,12 +154,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(ulift),
         serializeClosureToImmutableSeq(args)
       ));
-      case MemberCall(var of, var ref, var ulift, var args) -> builder.mkNew(MemberCall.class, ImmutableSeq.of(
-        doSerialize(of),
-        getInstance(ref),
-        builder.iconst(ulift),
-        serializeToImmutableSeq(Term.class, args)
-      ));
+      case MemberCall call -> makeMemberNew(call);
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
@@ -332,6 +327,17 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
   private @NotNull JavaExpr makeAppNew(@NotNull Class<?> className, Term... terms) {
     var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
+    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+  }
+
+  private @NotNull JavaExpr makeMemberNew(@NotNull MemberCall call) {
+    var obj = builder.mkNew(MemberCall.class, ImmutableSeq.of(
+      doSerialize(call.of()),
+      getInstance(call.ref()),
+      builder.iconst(call.ulift()),
+      serializeToImmutableSeq(Term.class, call.args())
+    ));
+
     return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
