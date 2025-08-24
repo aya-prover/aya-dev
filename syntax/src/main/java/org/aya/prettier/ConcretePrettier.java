@@ -104,7 +104,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
       }
       case Expr.Lambda expr -> {
         var pair = Nested.destructNested(WithPos.dummy(expr));
-        var telescope = pair.component1();
+        var telescope = pair.component1().map(Expr.UntypedParam::ref);
         var body = pair.component2().data();
         var prelude = MutableList.of(LAMBDA);
         var docTele = telescope.map(BasePrettier::varDoc);

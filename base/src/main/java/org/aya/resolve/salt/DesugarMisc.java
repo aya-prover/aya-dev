@@ -73,22 +73,35 @@ public record DesugarMisc(@NotNull ResolveInfo info, @NotNull Reporter reporter)
       case Expr.ClauseLam lam -> {
         var isVanilla = lam.patterns().allMatch(x -> x.term().data() instanceof Pattern.BindLike);
 
-        ImmutableSeq<LocalVar> lamTele;
+        ImmutableSeq<Expr.UntypedParam> lamTele;
         WithPos<Expr> realBody;
 
         if (isVanilla) {
           // fn a _ c => ...
-          lamTele = lam.patterns().map(x -> ((Pattern.BindLike) x.term().data()).toLocalVar(x.term().sourcePos()));
+          lamTele = lam.patterns().map(x -> {
+            var bindLike = (Pattern.BindLike) x.term().data();
+            var ref = bindLike.toLocalVar(x.term().sourcePos());
+            var core = switch (bindLike) {
+              case Pattern.Bind bind -> bind.theCoreType();
+              case Pattern.CalmFace _ -> Expr.WithTerm.DUMMY;
+            };
+
+            return new Expr.UntypedParam(ref, core);
+          });
           realBody = lam.body();
         } else {
           lamTele = lam.patterns().mapIndexed((idx, pat) -> {
+            LocalVar ref;
             if (pat.term().data() instanceof Pattern.BindLike bindLike) {
               var bind = bindLike.toLocalVar(pat.term().sourcePos());
               // we need fresh bind, since [bind] may be used in the body.
-              return LocalVar.generate(bind.name(), SourcePos.NONE);
+              ref = LocalVar.generate(bind.name(), SourcePos.NONE);
             } else {
-              return LocalVar.generate("IrrefutableLam" + idx, SourcePos.NONE);
+              ref = LocalVar.generate("IrrefutableLam" + idx, SourcePos.NONE);
             }
+
+            // these param are not available for user, thus dummy.
+            return Expr.UntypedParam.dummy(ref);
           });
 
           // fn a' _ c' => match a', _, c' { a, _, (con c) => ... }
@@ -96,7 +109,7 @@ public record DesugarMisc(@NotNull ResolveInfo info, @NotNull Reporter reporter)
 
           realBody = new WithPos<>(sourcePos, new Expr.Match(
             lamTele.map(x -> new Expr.Match.Discriminant(
-              new WithPos<>(x.definition(), new Expr.Ref(x)),
+              new WithPos<>(x.ref().definition(), new Expr.Ref(x.ref())),
               null,
               true
             )),

@@ -56,8 +56,20 @@ public record InlayHints(
       hints.append(new Hint(param.nameSourcePos(), Doc.sep(Tokens.HAS_TYPE, core.toDoc(options)), true));
     }
 
+    var what = Integer.bitCount(1);
+
     Ranged.super.visitParam(param);
   }
+
+  @Override
+  public void visitUntypedParamDecl(Expr.@NotNull UntypedParam param) {
+    if (param.coreType() instanceof Term coa) {
+      hints.append(new Hint(param.nameSourcePos(), Doc.sep(Tokens.HAS_TYPE, coa.toDoc(options)), true));
+    }
+
+    Ranged.super.visitUntypedParamDecl(param);
+  }
+
   public record Hint(
     @NotNull SourcePos sourcePos,
     @NotNull Doc doc,

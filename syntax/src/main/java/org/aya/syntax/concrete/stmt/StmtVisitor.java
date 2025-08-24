@@ -95,6 +95,10 @@ public interface StmtVisitor extends Consumer<Stmt> {
     visitLocalVarDecl(param.ref(), fromParam(param));
   }
 
+  default void visitUntypedParamDecl(Expr.@NotNull UntypedParam param) {
+    visitLocalVarDecl(param.ref(), withTermType(param));
+  }
+
   @ApiStatus.NonExtendable
   default void visitGeneralizedVarDecl(@NotNull GeneralizedVar v) {
     visitVarDecl(v.sourcePos, v, new Type(v.owner.type.data()));
@@ -277,7 +281,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
       case Expr.Unresolved unresolved -> visitUnresolvedRef(unresolved.name());
       case Expr.Ref ref -> visitVarRef(pos, ref.var(), withTermType(ref));
       case Expr.Lambda lam -> {
-        visitLocalVarDecl(lam.ref(), Type.noType);
+        visitUntypedParamDecl(lam.param());
         visitExpr(lam.body());
       }
       case Expr.ClauseLam lam -> visitClause(lam.clause());

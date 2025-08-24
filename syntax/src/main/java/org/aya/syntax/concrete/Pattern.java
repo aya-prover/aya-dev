@@ -35,8 +35,10 @@ public sealed interface Pattern extends AyaDocile {
   ///
   /// @see Pattern.Bind
   /// @see Pattern.CalmFace
-  interface BindLike {
+  sealed interface BindLike {
     /// Returns the [LocalVar] this [Pattern] introduced, with [SourcePos] {@param pos} if it doesn't have one.
+    /// @apiNote This method is NOT pure, however, this normally doesn't matter, only [CalmFace#toLocalVar] is not pure,
+    ///          but it is always not available.
     @NotNull LocalVar toLocalVar(@NotNull SourcePos pos);
   }
 
