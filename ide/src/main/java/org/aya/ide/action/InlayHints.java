@@ -7,7 +7,9 @@ import kala.collection.mutable.MutableList;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.ide.syntax.SyntaxNodeAction;
 import org.aya.ide.util.XYXY;
+import org.aya.prettier.Tokens;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.PrettierOptions;
@@ -28,12 +30,34 @@ public record InlayHints(
   }
   @Override public void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
     if (pat instanceof Pattern.Bind bind && bind.theCoreType().get() instanceof Term term) {
-      var type = Doc.sep(Doc.symbol(":"), term.toDoc(options));
+      var type = Doc.sep(Tokens.HAS_TYPE, term.toDoc(options));
       hints.append(new Hint(pos, type, true));
     }
     Ranged.super.visitPattern(pos, pat);
   }
 
+  @Override
+  public void visitLetBind(Expr.@NotNull LetBind bind) {
+    if (bind.result().data() instanceof Expr.Hole) {
+      // the user doesn't give the type explicitly
+      var term = bind.theCoreType().get();
+      if (term != null) {
+        // TODO: how do we get the result of [bind] rather than the type of [bind]
+        hints.append(new Hint(bind.nameSourcePos(), Doc.sep(Tokens.HAS_TYPE, term.toDoc(options)), true));
+      }
+    }
+
+    Ranged.super.visitLetBind(bind);
+  }
+
+  @Override
+  public void visitParam(Expr.@NotNull Param param) {
+    if (param.type() instanceof Expr.Hole && param.theCoreType().get() instanceof Term core) {
+      hints.append(new Hint(param.nameSourcePos(), Doc.sep(Tokens.HAS_TYPE, core.toDoc(options)), true));
+    }
+
+    Ranged.super.visitParam(param);
+  }
   public record Hint(
     @NotNull SourcePos sourcePos,
     @NotNull Doc doc,
