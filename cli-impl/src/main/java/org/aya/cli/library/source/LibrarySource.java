@@ -49,7 +49,7 @@ public class LibrarySource implements GenericAyaFile {
   LiterateData literateData;
   ModulePath moduleNameCache;
 
-  private LibrarySource(@NotNull LibraryOwner owner, @NotNull Path underlyingFile, boolean isLiterate) {
+  public LibrarySource(@NotNull LibraryOwner owner, @NotNull Path underlyingFile, boolean isLiterate) {
     this.owner = owner;
     this.underlyingFile = underlyingFile;
     this.isLiterate = isLiterate;

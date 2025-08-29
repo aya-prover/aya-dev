@@ -56,8 +56,6 @@ public record InlayHints(
       hints.append(new Hint(param.nameSourcePos(), Doc.sep(Tokens.HAS_TYPE, core.toDoc(options)), true));
     }
 
-    var what = Integer.bitCount(1);
-
     Ranged.super.visitParam(param);
   }
 
