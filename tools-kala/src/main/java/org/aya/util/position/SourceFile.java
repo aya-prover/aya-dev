@@ -28,6 +28,10 @@ public record SourceFile(
     return new SourceFile(locator.displayName(path).toString(), path, sourceCode);
   }
 
+  public static @NotNull SourceFile from(@NotNull String display, @NotNull Path path) throws IOException {
+    return new SourceFile(display, path, Files.readString(path));
+  }
+
   public SourceFile(@NotNull String display, @NotNull Option<Path> underlying, @NotNull String sourceCode) {
     this(display, underlying, Strings.convertLineSeparators(sourceCode), PositionUtil.indexedLines(sourceCode));
   }

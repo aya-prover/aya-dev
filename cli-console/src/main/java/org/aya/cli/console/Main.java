@@ -3,6 +3,7 @@
 package org.aya.cli.console;
 
 import org.aya.cli.interactive.ReplConfig;
+import org.aya.cli.issue.IssueRunner;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.literate.FlclFaithfulPrettier;
@@ -46,6 +47,7 @@ public class Main extends MainArgs implements Callable<Integer> {
       return 1;
     }
     if (fakeLiterate) return doFakeLiterate();
+    if (setupIssue) return doSetupIssue();
     CompileAction compileAction;
     if (action == null || action.compile == null) compileAction = new CompileAction();
     else compileAction = action.compile;
@@ -104,6 +106,18 @@ public class Main extends MainArgs implements Callable<Integer> {
       return -1;
     }
     return compiler.compile(filePath, null);
+  }
+
+  private int doSetupIssue() throws IOException {
+    var replConfig = ReplConfig.loadFromDefault();
+    replConfig.loadPrelude = !noPrelude;
+    var prettierOptions = replConfig.literatePrettier.prettierOptions;
+    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    replConfig.close();
+
+    if (outputFile == null) outputFile = ".";
+    IssueRunner.run(SourceFile.from(SourceFileLocator.EMPTY, Path.of(inputFile)), Path.of(outputFile), reporter);
+    return 0;
   }
 
   private @Nullable CompilerFlags.PrettyInfo computePrettyInfo(
