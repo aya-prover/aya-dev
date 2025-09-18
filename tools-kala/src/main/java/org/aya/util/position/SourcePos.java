@@ -117,6 +117,16 @@ public record SourcePos(
     );
   }
 
+  public @NotNull SourcePos sourcePosSince(@NotNull SourceFile sourceFile, @NotNull SourcePos since) {
+    return new SourcePos(sourceFile,
+      since.tokenStartIndex,
+      tokenEndIndex,
+      since.startLine,
+      since.startColumn,
+      endLine,
+      endColumn);
+  }
+
   @Override public @NotNull String toString() {
     return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + lineColumnString() + ']';
   }

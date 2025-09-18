@@ -59,8 +59,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   private final @NotNull ModulePath fileModule;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
-    withTerms.add(new WithPos<>(pos, with));
-    with.theCoreType().set(type);
+    if (with.theCoreType() != Expr.WithTerm.DUMMY) {
+      withTerms.add(new WithPos<>(pos, with));
+      with.theCoreType().set(type);
+    }
   }
 
   private ExprTycker(
@@ -87,35 +89,43 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    */
   public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
     return switch (expr.data()) {
-      case Expr.Lambda(var ref, var body) -> switch (whnf(type)) {
-        case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
-          // unifyTyReported(param, dom, expr);
-          try (var _ = subscope(ref, dom)) {
-            var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
-            yield new Jdg.Default(new LamTerm(core), type);
+      case Expr.Lambda lam -> {
+        var ref = lam.ref();
+        var body = lam.body();
+
+        yield switch (whnf(type)) {
+          case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
+            // unifyTyReported(param, dom, expr);
+            try (var _ = subscope(ref, dom)) {
+              addWithTerm(lam, expr.sourcePos(), dom);
+              var core = inherit(body, cod.apply(new FreeTerm(ref))).wellTyped().bind(ref);
+              yield new Jdg.Default(new LamTerm(core), type);
+            }
           }
-        }
-        case EqTerm eq -> {
-          Closure.Locns core;
-          try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
-            core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
+          case EqTerm eq -> {
+            Closure.Locns core;
+            try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
+              addWithTerm(lam, expr.sourcePos(), DimTyTerm.INSTANCE);
+              core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
+            }
+            var isOk = checkBoundaries(eq, core, body.sourcePos(), msg ->
+              new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
+            var term = new LamTerm(core);
+            yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
           }
-          var isOk = checkBoundaries(eq, core, body.sourcePos(), msg ->
-            new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
-          var term = new LamTerm(core);
-          yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
-        }
-        case MetaCall metaCall -> {
-          var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
-          if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
-          unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
-          try (var _ = subscope(ref, pi.param())) {
-            var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
-            yield new Jdg.Default(new LamTerm(core), pi);
+          case MetaCall metaCall -> {
+            var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
+            if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+            unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
+            try (var _ = subscope(ref, pi.param())) {
+              addWithTerm(lam, expr.sourcePos(), pi.param());
+              var core = inherit(body, pi.body().apply(new FreeTerm(ref))).wellTyped().bind(ref);
+              yield new Jdg.Default(new LamTerm(core), pi);
+            }
           }
-        }
-        default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
-      };
+          default -> fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
+        };
+      }
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(),
           new MetaVar.OfType(type), hole.explicit());
@@ -550,7 +560,10 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // as well as the body of the binding, for example:
     // `let f x := g` is desugared to `let f := \x => g`
     var definedAsExpr = Expr.buildLam(letBind.sourcePos(),
-      letBind.telescope().view().map(Expr.Param::ref), letBind.definedAs());
+      letBind.telescope().view()
+        // we use dummy `theCoreType`, as it will be set while tyck [typeExpr].
+        .map(p -> Expr.UntypedParam.dummy(p.ref())),
+      letBind.definedAs());
 
     // Now everything is in form `let f : G := g in h`
 

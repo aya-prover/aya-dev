@@ -35,7 +35,12 @@ public sealed interface Expr extends AyaDocile {
   @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
   void forEach(@NotNull PosedConsumer<@NotNull Expr> f);
   @ForLSP
-  sealed interface WithTerm permits LetBind, Param, Proj, Ref, Pattern.As, Pattern.Bind {
+  sealed interface WithTerm permits Lambda, LetBind, Param, Proj, Ref, UntypedParam, Pattern.As, Pattern.Bind {
+    @NotNull MutableValue<Term> DUMMY = new MutableValue<>() {
+      @Override public void set(Term value) { }
+      @Override public Term get() { return null; }
+    };
+
     @NotNull MutableValue<Term> theCoreType();
     default @Nullable Term coreType() { return theCoreType().get(); }
   }
@@ -45,6 +50,22 @@ public sealed interface Expr extends AyaDocile {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new ConcretePrettier(options).term(BasePrettier.Outer.Free, this);
+  }
+
+  record UntypedParam(
+    @Override @NotNull LocalVar ref,
+    @Override @NotNull MutableValue<Term> theCoreType
+  ) implements SourceNode, Named, WithTerm {
+    public static @NotNull UntypedParam dummy(@NotNull LocalVar ref) {
+      return new UntypedParam(ref, WithTerm.DUMMY);
+    }
+
+    public static @NotNull UntypedParam of(@NotNull Param param) {
+      return new UntypedParam(param.ref, param.theCoreType);
+    }
+
+    @Override public @NotNull SourcePos sourcePos() { return ref.sourcePos(); }
+    @Override public @NotNull SourcePos nameSourcePos() { return ref.sourcePos(); }
   }
 
   record Param(
@@ -166,16 +187,26 @@ public sealed interface Expr extends AyaDocile {
 
   record Lambda(
     @NotNull LocalVar ref,
-    @Override @NotNull WithPos<Expr> body
-  ) implements Expr, Nested<LocalVar, Expr, Lambda> {
-    @Override public @NotNull LocalVar param() { return ref; }
+    @Override @NotNull WithPos<Expr> body,
+    @Override @NotNull MutableValue<Term> theCoreType
+  ) implements Expr, Nested<UntypedParam, Expr, Lambda>, WithTerm {
+    public Lambda(@NotNull UntypedParam param, @NotNull WithPos<Expr> body) {
+      this(param.ref, body, param.theCoreType);
+    }
+
+    public Lambda(@NotNull LocalVar ref, @NotNull WithPos<Expr> body) {
+      this(ref, body, WithTerm.DUMMY);
+    }
+
+    @Override public @NotNull UntypedParam param() { return new UntypedParam(ref, theCoreType); }
     public @NotNull Lambda update(@NotNull WithPos<Expr> body) {
-      return body == body() ? this : new Lambda(ref, body);
+      return body == body() ? this : new Lambda(ref, body, theCoreType);
     }
 
     @Override public @NotNull Lambda descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(body.descent(f));
     }
+
     @Override public void forEach(@NotNull PosedConsumer<Expr> f) { f.accept(body); }
   }
 
@@ -669,7 +700,8 @@ public sealed interface Expr extends AyaDocile {
     return buildNested(sourcePos, params.dropLast(1), params.getLast(), Pattern.Tuple::new);
   }
 
-  static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<LocalVar> params, @NotNull WithPos<Expr> body) {
+  // TODO: fix caller
+  static @NotNull WithPos<Expr> buildLam(@NotNull SourcePos sourcePos, @NotNull SeqView<UntypedParam> params, @NotNull WithPos<Expr> body) {
     return buildNested(sourcePos, params, body, Lambda::new);
   }
 
@@ -694,6 +726,12 @@ public sealed interface Expr extends AyaDocile {
       params = params.drop(1);
       sourcePos = body.sourcePos().sourcePosForSubExpr(sourcePos.file(),
         params.map(SourceNode::sourcePos));
+
+      if (params.isNotEmpty()) {
+        // TODO: remove this
+        var justTest = body.sourcePos().sourcePosSince(sourcePos.file(), params.getFirst().sourcePos());
+        assert sourcePos.equals(justTest);
+      }
     }
     return subPoses.foldRight(body, (data, acc) ->
       new WithPos<>(data.sourcePos(), constructor.apply(data.data(), acc)));

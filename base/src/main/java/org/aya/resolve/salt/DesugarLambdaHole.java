@@ -55,7 +55,7 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
   }
 
   private @NotNull Expr popScopeAndTransform(SourcePos sourcePos, Expr from) {
-    return Expr.buildLam(sourcePos, scopes.pop().holes.view(), new WithPos<>(sourcePos, from)).data();
+    return Expr.buildLam(sourcePos, scopes.pop().holes.view().map(Expr.UntypedParam::dummy), new WithPos<>(sourcePos, from)).data();
   }
 
   private static class HoleCollector {

@@ -27,6 +27,15 @@ public final class BindingInfoExtractor implements StmtVisitor {
   private final @NotNull MutableMap<GenericNode<?>, BindingInfo> bindingMap = MutableMap.create();
   private final @NotNull MutableMap<GenericNode<?>, MutableValue<ModuleContextView>> moduleMap = MutableMap.create();
 
+  @Override
+  public void visitUntypedParamDecl(Expr.@NotNull UntypedParam param) {
+    if (param.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
+      bindingMap.putIfAbsent(node, new BindingInfo(param.ref(), null, delegate));
+    }
+
+    StmtVisitor.super.visitUntypedParamDecl(param);
+  }
+
   @Override public void visitParamDecl(Expr.@NotNull Param param) {
     if (param.theCoreType() instanceof AssociatedNode<Term>(var delegate, var node)) {
       bindingMap.putIfAbsent(node, new BindingInfo(param.ref(), param.type(), delegate));
