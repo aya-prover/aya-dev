@@ -24,3 +24,4 @@ include(
   "ide",
   "ide-lsp",
 )
+include("tools-test")
