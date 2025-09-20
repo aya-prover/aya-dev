@@ -116,8 +116,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     replConfig.close();
 
     if (outputFile == null) outputFile = ".";
-    IssueRunner.run(SourceFile.from(SourceFileLocator.EMPTY, Path.of(inputFile)), Path.of(outputFile), reporter);
-    return 0;
+    return IssueRunner.run(SourceFile.from(SourceFileLocator.EMPTY, Path.of(inputFile)), Path.of(outputFile), reporter);
   }
 
   private @Nullable CompilerFlags.PrettyInfo computePrettyInfo(

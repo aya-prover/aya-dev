@@ -35,6 +35,8 @@ public class IssueParser {
   public final @NotNull String MAGIC_BEGIN_FILES = "BEGIN FILES";
   public final @NotNull String MAGIC_END_FILES = "END FILES";
   public final @NotNull String MAGIC_AYA_VERSION = "AYA VERSION";
+  public final @NotNull String MAGIC_BEGIN_VERSION = "BEGIN VERSION";
+  public final @NotNull String MAGIC_END_VERSION = "END VERSION";
   public final @NotNull ImmutableSeq<String> MAGIC_BEGIN = ImmutableSeq.of(MAGIC_BEGIN_FILES, MAGIC_AYA_VERSION);
 
   // TODO: less functional, use mutability

@@ -15,13 +15,13 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public class IssueRunner {
-  public static void run(@NotNull SourceFile file, @NotNull Path testDir, @NotNull Reporter reporter) throws IOException {
+  public static int run(@NotNull SourceFile file, @NotNull Path testDir, @NotNull Reporter reporter) throws IOException {
     var result = new IssueParser().accept(new BaseMdParser(file, reporter, ImmutableSeq.of(InterestingLanguage.ALL))
       .parseLiterate());
 
     if (result == null) {
       System.err.println("No aya project is found or issue checker is not enable.");
-      return;
+      return -1;
     }
 
     var files = result.component1();
@@ -29,6 +29,11 @@ public class IssueRunner {
 
     IssueRunner.setup(files, testDir);
     System.out.println(version == null ? null : version.versionNumber());
+    System.out.println(files.joinToString(" ", (f) -> {
+      if (f.name() == null) return "<unnamed>.aya";
+      return f.name();
+    }));
+    return 0;
   }
 
   public static void setup(@NotNull ImmutableSeq<IssueParser.File> files, @NotNull Path testDir) throws IOException {
