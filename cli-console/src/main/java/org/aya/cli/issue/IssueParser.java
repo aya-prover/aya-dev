@@ -30,6 +30,10 @@ public class IssueParser {
     }
   }
 
+  public enum BlockType implements BlockParser.Kind {
+    VERSION, FILES
+  }
+
   public final @NotNull Pattern VERSION_PATTERN = Pattern.compile("((\\d+.\\d+)(-SNAPSHOT)?)( \\([a-z\\d]{16}\\))?");
   public final @NotNull String MAGIC_ENABLE = "ISSUE CHECKER ENABLE";
   public final @NotNull String MAGIC_BEGIN_FILES = "BEGIN FILES";
