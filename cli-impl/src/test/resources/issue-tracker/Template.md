@@ -1,10 +1,9 @@
-<!-- ISSUE CHECKER ENABLE -->
+<!-- ISSUE TRACKER ENABLE -->
 
 ## Versions
 
-<!-- AYA VERSION -->
 Java Version: 21
-Aya Version: 0.39
+Aya Version: <!-- BEGIN VERSION -->`0.39`<!-- END VERSION -->
 What Version: 114514
 
 ## Files

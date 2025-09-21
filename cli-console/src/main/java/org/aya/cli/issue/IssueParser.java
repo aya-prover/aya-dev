@@ -5,18 +5,19 @@ package org.aya.cli.issue;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.tuple.Tuple;
-import kala.tuple.Tuple2;
+import kala.control.Option;
 import org.aya.generic.Constants;
 import org.aya.literate.Literate;
-import org.aya.pretty.doc.Doc;
-import org.aya.util.Panic;
+import org.aya.literate.parser.BaseMdParser;
+import org.aya.literate.parser.InterestingLanguage;
+import org.aya.util.position.SourceFile;
+import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
-public class IssueParser {
+public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter reporter) {
   /// @param name with postfix, in fact, this can be a path, such as `bar/foo.aya`
   public record File(@Nullable String name, @NotNull String content) { }
   public record Version(int major, int minor, boolean snapshot, @Nullable String hash) {
@@ -30,66 +31,61 @@ public class IssueParser {
     }
   }
 
+  public record ParseResult(@NotNull ImmutableSeq<File> files, @Nullable Version ayaVersion) { }
+
   public enum BlockType implements BlockParser.Kind {
     VERSION, FILES
   }
 
-  public final @NotNull Pattern VERSION_PATTERN = Pattern.compile("((\\d+.\\d+)(-SNAPSHOT)?)( \\([a-z\\d]{16}\\))?");
-  public final @NotNull String MAGIC_ENABLE = "ISSUE CHECKER ENABLE";
-  public final @NotNull String MAGIC_BEGIN_FILES = "BEGIN FILES";
-  public final @NotNull String MAGIC_END_FILES = "END FILES";
-  public final @NotNull String MAGIC_AYA_VERSION = "AYA VERSION";
-  public final @NotNull String MAGIC_BEGIN_VERSION = "BEGIN VERSION";
-  public final @NotNull String MAGIC_END_VERSION = "END VERSION";
-  public final @NotNull ImmutableSeq<String> MAGIC_BEGIN = ImmutableSeq.of(MAGIC_BEGIN_FILES, MAGIC_AYA_VERSION);
+  public static final @NotNull Pattern VERSION_PATTERN = Pattern.compile("(\\d+).(\\d+)(-SNAPSHOT)?( \\([a-z\\d]{16}\\))?");
 
   // TODO: less functional, use mutability
   // TODO: not sure if we really need to parse markdown
 
-  public @Nullable Tuple2<ImmutableSeq<File>, @Nullable Version> accept(@NotNull Literate issue) {
-    if (!(issue instanceof Literate.Many many)) return null;
-    var iter = many.children().view();
-    var files = MutableList.<File>create();
-    Version version = null;
+  /// @return null if issue tracker is not enabled
+  public @Nullable ParseResult parse() {
+    var isEnabled = issueFile.sourceCode().stripLeading().startsWith("<!-- ISSUE TRACKER ENABLE -->");
+    if (!isEnabled) return null;
 
-    iter = findPin(iter, ImmutableSeq.of(MAGIC_ENABLE));
-    if (iter.isEmpty()) return null;
-    iter = iter.drop(1);
-
-    while (true) {
-      iter = findPin(iter, MAGIC_BEGIN);
-
-      var magic = (Literate.Comment) iter.getFirstOrNull();
-      if (magic == null) break;
-      var pin = magic.comment().trim();
-      if (pin.equals(MAGIC_BEGIN_FILES)) {
-        var result = parseFiles(iter.drop(1));
-        files.appendAll(result.component1());
-        iter = result.component2();
-      } else if (pin.equals(MAGIC_AYA_VERSION)) {
-        var result = parseAyaVersion(iter.drop(1));
-        // we only have one AYA VERSION i guess
-        version = result.component1();
-        iter = result.component2();
-      } else {
-        Panic.unreachable();
+    var blocks = BlockParser.parse(issueFile, reporter, s -> {
+      try {
+        return BlockType.valueOf(s);
+      } catch (IllegalArgumentException _) {
+        return null;
       }
-    }
+    });
 
-    return Tuple.of(files.toSeq(), version);
+    var version = blocks.findFirst(it -> it.blockType() == BlockType.VERSION)
+      .flatMap(it -> Option.ofNullable(parseAyaVersion(it.content().toString())))
+      .getOrNull();
+
+    // no thank you
+    var files = blocks.filter(it -> it.blockType() == BlockType.FILES);
+
+    var ayaFiles = files.flatMap(b -> {
+      var mdParser = new BaseMdParser(
+        new SourceFile(issueFile.display(), Option.none(), b.content().toString()),
+        reporter,
+        ImmutableSeq.of(InterestingLanguage.ALL)
+      );
+
+      var literate = mdParser.parseLiterate();
+      var seq = literate instanceof Literate.Many many ? many.children() : ImmutableSeq.of(literate);
+      return parseFiles(seq.view());
+    });
+
+    return new ParseResult(ayaFiles, version);
   }
 
-  private @NotNull Tuple2<ImmutableSeq<File>, SeqView<Literate>> parseFiles(@NotNull SeqView<Literate> seq) {
+  private static @NotNull ImmutableSeq<File> parseFiles(@NotNull SeqView<Literate> seq) {
     var remains = skipEmpty(seq);
     var files = MutableList.<File>create();
-    var tsuzuku = true;
     String fileName = null;
 
-    while (tsuzuku) {
-      var fileLine = remains.getFirstOrNull();
-      if (fileLine == null) break;
+    while (remains.isNotEmpty()) {
+      var unit = remains.getFirst();
 
-      switch (fileLine) {
+      switch (unit) {
         case Literate.Many many -> {
           var inlineCodes = many.children().filterIsInstance(Literate.InlineCode.class);
           if (inlineCodes.size() == 1) {
@@ -106,7 +102,9 @@ public class IssueParser {
           // TODO: maybe only aya code, by changing [InterestingLanguage] of parser.
           var code = block.code;
           if (code.startsWith("//")) {
-            var firstLine = code.substring(0, code.indexOf('\n'));
+            var firstLineBreak = code.indexOf('\n');
+            if (firstLineBreak == -1) firstLineBreak = code.length();
+            var firstLine = code.substring(0, firstLineBreak);
             var name = parseFileName(firstLine);
             if (name != null) fileName = name;
           }
@@ -114,17 +112,16 @@ public class IssueParser {
           files.append(new File(fileName, code));
           fileName = null;
         }
-        case Literate.Comment(var comment) when comment.trim().equals(MAGIC_END_FILES) -> tsuzuku = false;
         default -> { }
       }
 
-      remains = remains.drop(1);
+      remains = skipEmpty(remains.drop(1));
     }
 
-    return Tuple.of(files.toSeq(), remains);
+    return files.toSeq();
   }
 
-  private @Nullable String parseFileName(@NotNull String text) {
+  private static @Nullable String parseFileName(@NotNull String text) {
     var postfixIdx = text.indexOf(Constants.AYA_POSTFIX);
     if (postfixIdx != -1) {
       var lastLetter = text.lastIndexOf(' ', postfixIdx) + 1;
@@ -134,38 +131,21 @@ public class IssueParser {
     } else return null;
   }
 
-  private @NotNull Tuple2<@Nullable Version, SeqView<Literate>> parseAyaVersion(@NotNull SeqView<Literate> seq) {
-    var remains = skipEmpty(seq);
-    var first = remains.getFirstOrNull();
-    if (!(first instanceof Literate.Many paragraph)) return Tuple.of(null, remains);
+  private static @Nullable Version parseAyaVersion(@NotNull String content) {
+    var matcher = VERSION_PATTERN.matcher(content);
+    if (matcher.find()) {
+      var major = Integer.parseInt(matcher.group(1));
+      var minor = Integer.parseInt(matcher.group(2));
+      var isSnapshot = matcher.group(3) != null;
+      var commit = matcher.group(4);
 
-    var versionText = paragraph.children().view()
-      .dropWhile(it ->
-        (!(it.toDoc() instanceof Doc.PlainText(String text)))
-          || !text.trim().toLowerCase().startsWith("aya"))
-      .takeWhile(it -> it != Literate.EOL).toSeq();
+      return new Version(major, minor, isSnapshot, commit);
+    }
 
-    var text = new Literate.Many(null, versionText).toDoc().commonRender();
-    var matcher = VERSION_PATTERN.matcher(text);
-    if (!matcher.find()) return Tuple.of(null, remains);
-
-    var version = matcher.group(2);
-    var snapshot = matcher.group(3) != null;
-    var hash = matcher.group(4);
-
-    var parts = version.split("\\.");
-    assert parts.length == 2;
-    var major = Integer.parseInt(parts[0]);
-    var minor = Integer.parseInt(parts[1]);
-
-    return Tuple.of(new Version(major, minor, snapshot, hash), remains.drop(1));
+    return null;
   }
 
-  private @NotNull SeqView<Literate> findPin(@NotNull SeqView<Literate> literate, @NotNull ImmutableSeq<String> pins) {
-    return literate.dropWhile(it -> !(it instanceof Literate.Comment(var comment)) || !pins.contains(comment.trim()));
-  }
-
-  private @NotNull SeqView<Literate> skipEmpty(@NotNull SeqView<Literate> seq) {
+  private static @NotNull SeqView<Literate> skipEmpty(@NotNull SeqView<Literate> seq) {
     // TODO: handle empty space case
     return seq.dropWhile(it -> it == Literate.EOL);
   }

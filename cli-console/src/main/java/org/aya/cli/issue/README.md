@@ -1,4 +1,4 @@
-# Issue Checker
+# Issue Tracker
 
 实际上就是用某种 dsl 来操纵 aya，类似于 github action 的 yaml。
 目前计划：
@@ -11,10 +11,12 @@
 
 ## 锚点
 
+通过锚点来确定是否启用 issue tracker，通过 `<!-- ISSUE TRACKER ENABLE -->` 来控制。
+
 通过锚点来确定数据的范围，这包括：
 
 * `<!-- BEGIN FILES -->` 与 `<!-- END FILES -->`，将从其中的 markdown 文本查找文件内容。
-* `<!-- AYA VERSION -->`，将从其接下来的段落中查找 aya 版本
+* `<!-- BEGIN VERSION -->` 与 `<!-- END VERSION -->`，将从其中的文本查找 aya 版本号。
 
 ## 代码识别
 

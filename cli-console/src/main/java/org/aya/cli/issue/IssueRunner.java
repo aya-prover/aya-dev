@@ -3,8 +3,6 @@
 package org.aya.cli.issue;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.literate.parser.BaseMdParser;
-import org.aya.literate.parser.InterestingLanguage;
 import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -16,16 +14,15 @@ import java.util.UUID;
 
 public class IssueRunner {
   public static int run(@NotNull SourceFile file, @NotNull Path testDir, @NotNull Reporter reporter) throws IOException {
-    var result = new IssueParser().accept(new BaseMdParser(file, reporter, ImmutableSeq.of(InterestingLanguage.ALL))
-      .parseLiterate());
+    var result = new IssueParser(file, reporter).parse();
 
     if (result == null) {
-      System.err.println("No aya project is found or issue checker is not enable.");
+      System.err.println("Issue tracker is not enabled.");
       return -1;
     }
 
-    var files = result.component1();
-    var version = result.component2();
+    var files = result.files();
+    var version = result.ayaVersion();
 
     IssueRunner.setup(files, testDir);
     System.out.println(version == null ? null : version.versionNumber());
