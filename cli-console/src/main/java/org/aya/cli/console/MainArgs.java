@@ -95,6 +95,8 @@ public class MainArgs {
   public boolean prettySSR;
   @Option(names = {"--ascii-only"}, description = "Do not show unicode in success/fail message.")
   public boolean asciiOnly;
+  @Option(names = {"--no-color"}, description = "Do not output with ansi codes.")
+  public boolean noColor;
   @Option(names = {"--module-path"}, description = "Search for module under this path.")
   public List<String> modulePaths;
   @Option(names = {"--verbosity", "-v"}, description = "Minimum severity of error reported." + CANDIDATES, defaultValue = "WARN")

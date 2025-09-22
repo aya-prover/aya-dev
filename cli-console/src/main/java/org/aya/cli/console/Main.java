@@ -58,7 +58,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     replConfig.loadPrelude = !noPrelude;
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
-    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    var reporter = AnsiReporter.stdio(!noColor, !asciiOnly, prettierOptions, verbosity);
     var renderOptions = createRenderOptions(replConfig);
     var outputPath = outputFile != null ? Paths.get(outputFile) : null;
     // Force it to have a pretty stage so info != null
@@ -87,7 +87,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     replConfig.loadPrelude = !noPrelude;
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
-    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    var reporter = AnsiReporter.stdio(!noColor, !asciiOnly, prettierOptions, verbosity);
     var renderOptions = createRenderOptions(replConfig);
     replConfig.close();
     var pretty = computePrettyInfo(outputPath, renderOptions, prettierOptions);
@@ -112,7 +112,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     var replConfig = ReplConfig.loadFromDefault();
     replConfig.loadPrelude = !noPrelude;
     var prettierOptions = replConfig.literatePrettier.prettierOptions;
-    var reporter = AnsiReporter.stdio(!asciiOnly, prettierOptions, verbosity);
+    var reporter = AnsiReporter.stdio(!noColor, !asciiOnly, prettierOptions, verbosity);
     replConfig.close();
 
     if (outputFile == null) outputFile = ".";

@@ -26,14 +26,14 @@ public record AnsiReporter(
   @NotNull Consumer<String> out,
   @NotNull Consumer<String> err
 ) implements Reporter {
-  @Contract(pure = true, value = "_, _, _ -> new")
-  public static @NotNull AnsiReporter stdio(boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
+  @Contract(pure = true, value = "_, _, _, _ -> new")
+  public static @NotNull AnsiReporter stdio(boolean ansi, boolean unicode, @NotNull PrettierOptions options, @NotNull Problem.Severity minimum) {
     if (unicode) try {
       var out = ReplUtil.jlineDumbTerminalWriter();
-      return new AnsiReporter(true, () -> true, () -> options, minimum, out, out);
+      return new AnsiReporter(ansi, () -> true, () -> options, minimum, out, out);
     } catch (Exception _) {
     }
-    return new AnsiReporter(true, () -> unicode, () -> options, minimum,
+    return new AnsiReporter(ansi, () -> unicode, () -> options, minimum,
       System.out::println, System.err::println);
   }
 
@@ -43,7 +43,8 @@ public record AnsiReporter(
       // If it's `SourcePos.NONE`, it's a compiler output!
       && problem.sourcePos() != SourcePos.NONE) return;
     var errorMsg = Reporter.errorMessage(problem, options.get(), unicode.getAsBoolean(), supportAnsi, terminalWidth());
-    if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN) err.accept(errorMsg);
+    if (level == Problem.Severity.ERROR || level == Problem.Severity.WARN)
+      err.accept(errorMsg);
     else out.accept(errorMsg);
   }
 
