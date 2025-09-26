@@ -219,6 +219,9 @@ public class CorePrettier extends BasePrettier<Term> {
       case PartialTerm(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
       case LetTerm let -> {
         var unlet = let.unlet(nameGen);
+        if (unlet.definedAs().isEmpty()) {
+          yield term(outer, unlet.body());
+        }
         var letSeq = unlet.definedAs().view()
           .map(letBind ->
             visitLetBind(varDoc(letBind.name()), Doc.empty(), term(Outer.Free, letBind.definedAs().wellTyped())));

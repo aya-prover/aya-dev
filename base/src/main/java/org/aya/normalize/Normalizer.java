@@ -77,6 +77,9 @@ public final class Normalizer implements UnaryOperator<Term> {
         case DepTypeTerm(var kk, var param, var body) -> {
           return new DepTypeTerm(kk, apply(param), body.reapply(this));
         }
+        case LetTerm(var definedAs, var body) -> {
+          term = body.apply(apply(definedAs));
+        }
         case StableWHNF _ -> {
           return term.descent(this);
         }
@@ -231,10 +234,6 @@ public final class Normalizer implements UnaryOperator<Term> {
           }
           term = result;
           continue;
-        }
-        case LetTerm(var definedAs, var body) -> {
-          definedAs = apply(definedAs);
-          term = body.apply(definedAs);
         }
       }
     }

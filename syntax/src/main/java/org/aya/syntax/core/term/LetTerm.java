@@ -35,9 +35,13 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     var definedAs = FreezableMutableList.<LetFreeTerm>create();
     Term let = this;
 
-    while (let instanceof LetTerm(var term, var body)) {
+    while (let instanceof LetTerm(var term, var remain)) {
+      if (term instanceof FreeTerm free) {
+        let = remain.apply(free);
+        continue;
+      }
       var bind = new LetFreeTerm(nameGen.bindName(term), new Jdg.TypeMissing(term));
-      var freeBody = body.apply(bind);
+      var freeBody = remain.apply(bind);
 
       definedAs.append(bind);
       let = freeBody;
