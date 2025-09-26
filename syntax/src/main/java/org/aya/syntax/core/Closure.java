@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core;
 
@@ -6,7 +6,9 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -31,6 +33,11 @@ public sealed interface Closure extends UnaryOperator<Term> {
   @Override Term apply(Term term);
   default @NotNull Term apply(LocalVar var) { return apply(new FreeTerm(var)); }
   @NotNull Closure.Locns toLocns();
+
+  default @NotNull Closure reapply(UnaryOperator<Term> f) {
+    var fresh = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Tyck);
+    return f.apply(apply(fresh)).bind(fresh);
+  }
 
   record Const(@NotNull Term term) implements Closure {
     @Override public Closure descent(IndexedFunction<Term, Term> f) {

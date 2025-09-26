@@ -11,7 +11,6 @@ import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.range.primitive.IntRange;
-import kala.tuple.Tuple2;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.syntax.core.Closure;
@@ -122,6 +121,8 @@ public interface AbstractTele {
 
   default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
 
+  record VarredParam(@NotNull LocalVar var, @NotNull Param type) {}
+
   /// Default implementation of {@link AbstractTele}
   ///
   /// @param telescope bound parameters, that is, the later parameter can refer to the former parameters
@@ -144,12 +145,9 @@ public interface AbstractTele {
       return new Locns(boundTele.prepended(type).toSeq(), result.bindAt(var, telescope.size()));
     }
 
-    public @NotNull Locns bindTele(@NotNull SeqView<Tuple2<LocalVar, Param>> tele) {
-      return tele.foldRight(this, (pair, acc) -> {
-        var var = pair.component1();
-        var type = pair.component2();
-        return acc.bind(var, type);
-      });
+    public @NotNull Locns bindTele(@NotNull SeqView<VarredParam> tele) {
+      return tele.foldRight(this, (pair, acc) ->
+        acc.bind(pair.var, pair.type));
     }
 
     // public @NotNull Locns drop(int count) {

@@ -262,7 +262,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       if (whnf(resultType) instanceof EqTerm eq) {
         if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
         var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
-          : new Closure.Jit(i -> new PAppTerm(result.wellTyped(), i, eq.a(), eq.b()));
+          : new Closure.Jit(i -> new PAppTerm(result.wellTyped(), i, eq.a(), eq.b()).make());
         return new Jdg.Default(new LamTerm(closure), eq);
       }
     }

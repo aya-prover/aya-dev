@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
@@ -31,9 +31,9 @@ public sealed interface RuleReducer extends Callable.Tele {
     @Override int ulift,
     @Override @NotNull ImmutableSeq<Term> args
   ) implements RuleReducer {
-    private @NotNull Fn update(@NotNull Shaped.Applicable<FnDefLike> rule, @NotNull ImmutableSeq<Term> args) {
+    private @NotNull Term update(@NotNull Shaped.Applicable<FnDefLike> rule, @NotNull ImmutableSeq<Term> args) {
       return args.sameElements(this.args, true) && rule == this.rule
-        ? this : new Fn(rule, ulift, args);
+        ? this : new Fn(rule, ulift, args).make();
     }
 
     @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
@@ -57,7 +57,7 @@ public sealed interface RuleReducer extends Callable.Tele {
 
     @Override public @NotNull ConDefLike ref() { return rule.ref(); }
 
-    public @NotNull RuleReducer.Con update(
+    public @NotNull Term update(
       @NotNull Shaped.Applicable<ConDefLike> rule,
       @NotNull ImmutableSeq<Term> ownerArgs,
       @NotNull ImmutableSeq<Term> conArgs
@@ -65,7 +65,7 @@ public sealed interface RuleReducer extends Callable.Tele {
       return ownerArgs.sameElements(this.ownerArgs, true)
         && conArgs.sameElements(this.conArgs, true)
         && rule == this.rule
-        ? this : new Con(rule, ulift, ownerArgs, conArgs);
+        ? this : new Con(rule, ulift, ownerArgs, conArgs).make();
     }
 
     @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {

@@ -11,15 +11,14 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.term.AppTerm;
-import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.core.term.ProjTerm;
-import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
+import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.terck.CallGraph;
@@ -150,14 +149,40 @@ public record CallResolver(
   }
 
   private void visitTerm(@NotNull Term term) {
+    if (stopOnBinders(term)) return;
+
     // TODO: Improve error reporting to include the original call
     var normalizer = new Normalizer(state);
     normalizer.opaque = ImmutableSet.from(targets.map(TyckDef::ref));
     term = normalizer.apply(term);
+    if (stopOnBinders(term)) return;
     if (term instanceof Callable.Tele call) resolveCall(call);
     term.descent((_, child) -> {
       visitTerm(child);
       return child;
     });
+  }
+
+  /// Special handling of all binding structures
+  private boolean stopOnBinders(@NotNull Term term) {
+    switch (term) {
+      case LamTerm(var body) -> {
+        visitTerm(body.apply(new LocalVar("_")));
+        return true;
+      }
+      case DepTypeTerm(_, var param, var body) -> {
+        visitTerm(param);
+        visitTerm(body.apply(new LocalVar("_")));
+        return true;
+      }
+      case CoeTerm(var type, var r, var s) -> {
+        visitTerm(r);
+        visitTerm(s);
+        visitTerm(type.apply(new LocalVar("_")));
+        return true;
+      }
+      default -> { }
+    }
+    return false;
   }
 }

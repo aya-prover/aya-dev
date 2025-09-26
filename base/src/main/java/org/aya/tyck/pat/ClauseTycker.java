@@ -244,7 +244,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       // fill missing patterns
       // This is not a typo of "repl"
       var instRepi = sigIter.unpiBody().makePi().instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
-      var instUnpiParam = DepTypeTerm.unpiDBI(instRepi, UnaryOperator.identity(), userUnpiSize);
+      var instUnpiParam = DepTypeTerm.unpiUnsafe(instRepi, UnaryOperator.identity(), userUnpiSize);
       var missingPats = instUnpiParam.params().mapIndexed((idx, x) ->
         // It would be nice if we have a SourcePos here
         new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck),

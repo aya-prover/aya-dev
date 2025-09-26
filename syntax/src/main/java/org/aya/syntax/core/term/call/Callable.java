@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
@@ -10,11 +10,17 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @see BetaRedex#make(java.util.function.UnaryOperator)
  */
 public sealed interface Callable extends Term permits MatchCall, Callable.Tele, MetaCall {
   @NotNull ImmutableSeq<@NotNull Term> args();
+
+  static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, UnaryOperator<Term> f) {
+    return descent(args, (_, t) -> f.apply(t));
+  }
 
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, IndexedFunction<Term, Term> f) {
     // return args.map(arg -> f.apply(0, arg));

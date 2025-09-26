@@ -20,6 +20,7 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
@@ -43,7 +44,7 @@ import static org.aya.generic.State.Stuck;
 public final class Normalizer implements UnaryOperator<Term> {
   public final @NotNull TyckState state;
   public @NotNull ImmutableSet<AnyVar> opaque = ImmutableSet.empty();
-  private boolean usePostTerm = false;
+  private boolean fullNormalize = false;
   public Normalizer(@NotNull TyckState state) { this.state = state; }
 
   /**
@@ -56,90 +57,128 @@ public final class Normalizer implements UnaryOperator<Term> {
         term instanceof FreeTerm ||
         // ConCall for point constructors are always in WHNF
         (term instanceof ConCall con && !con.ref().hasEq());
-      if (alreadyWHNF && !usePostTerm) return term;
-      var descentedTerm = term.descent(this);
-      if (alreadyWHNF && usePostTerm) return descentedTerm;
-      // descent may change the java type of term, i.e. beta reduce,
-      // and can also reduce the subterms. We intend to return the reduction
-      // result when it beta reduces, so keep `descentedTerm` both when in NF mode or
-      // the term is not a call term.
-      var defaultValue = usePostTerm || term instanceof BetaRedex ? descentedTerm : term;
+      if (alreadyWHNF && !fullNormalize) return term;
 
-      switch (descentedTerm) {
-        case StableWHNF _, FreeTerm _ -> {
-          return descentedTerm;
+      switch (term) {
+        case FreeTerm _, SortTerm _ -> {
+          return term;
         }
+        // Already full NF mode
+        case LamTerm(var lam) -> {
+          return new LamTerm(lam.reapply(this));
+        }
+        case EqTerm(var A, var a, var b) -> {
+          return new EqTerm(A.reapply(this), apply(a), apply(b));
+        }
+        case DepTypeTerm(var kk, var param, var body) -> {
+          return new DepTypeTerm(kk, apply(param), body.reapply(this));
+        }
+        case StableWHNF _ -> {
+          return term.descent(this);
+        }
+        case LocalTerm _ -> throw new IllegalStateException("Local term escapes: " + term);
         case BetaRedex app -> {
-          var result = app.make(this);
-          if (result == app) return defaultValue;
-          term = result;
-          continue;
+          var result = app.descent(this);
+          if (result == app) return app;
+          if (!(result instanceof BetaRedex newApp)) {
+            term = result;
+            continue;
+          } else {
+            // Try again and see if it gets stuck
+            var tryMake = newApp.make();
+            if (tryMake != newApp) {
+              term = tryMake;
+              continue;
+            } else {
+              return newApp;
+            }
+          }
         }
-        case FnCall(JitFn instance, int ulift, var args, _) -> {
+        case FnCall(JitFn instance, int ulift, var args, var tc) -> {
+          args = Callable.descent(args, this);
           var result = instance.invoke(this, args);
-          if (result instanceof FnCall(var ref, _, var newArgs, _) &&
-            ref == instance && newArgs.sameElements(args, true)
-          ) return defaultValue;
+          if (result instanceof FnCall(var ref, _, var newArgs, _) && ref == instance) {
+            if (newArgs.sameElements(args, true)) return term;
+            if (fullNormalize) return new FnCall(ref, ulift, args, tc);
+          }
           term = result.elevate(ulift);
           continue;
         }
-        case FnCall(FnDef.Delegate delegate, int ulift, var args, _) -> {
+        case FnCall(FnDef.Delegate delegate, int ulift, var args, var tc) -> {
+          var whnfArgs = Callable.descent(args, this);
           FnDef core = delegate.core();
-          if (core == null) return defaultValue;
+          if (core == null) {
+            return fullNormalize ? new FnCall(delegate, ulift, whnfArgs, tc) : term;
+          }
           if (!isOpaque(core)) switch (core.body()) {
             case Either.Left(var body): {
-              term = body.instTele(args.view());
+              term = body.instTele(whnfArgs.view());
               continue;
             }
             case Either.Right(var body): {
               var result = tryUnfoldClauses(body.matchingsView(),
-                args, core.is(Modifier.Overlap), ulift);
+                whnfArgs, core.is(Modifier.Overlap), ulift);
               // we may get stuck
-              if (result == null) return defaultValue;
+              if (result == null) {
+                if (args.sameElements(whnfArgs, true)) return term;
+                return new FnCall(delegate, ulift, whnfArgs, tc);
+              }
               term = result;
               continue;
             }
           }
-          return defaultValue;
+          return term;
         }
-        case RuleReducer reduceRule -> {
-          var result = reduceRule.make();
-          if (result != reduceRule) {
-            term = result;
+        case RuleReducer rule -> {
+          var newArgs = Callable.descent(rule.args(), this);
+          var reduction = rule.rule().apply(newArgs);
+          if (reduction != null) {
+            term = reduction;
             continue;
           }
           // We can't handle it, try to delegate to FnCall
-          switch (reduceRule) {
+          switch (rule) {
             case RuleReducer.Fn fn -> {
-              term = fn.toFnCall();
+              var fnCall = new FnCall(fn.rule().ref(), fn.ulift(), newArgs);
+              term = apply(fnCall);
+              if (term == fnCall) return rule;
               continue;
             }
             case RuleReducer.Con _ -> {
-              return descentedTerm;
+              return term;
             }
           }
         }
-        case ConCall(var head, _) when !head.ref().hasEq() -> {
-          return descentedTerm;
-        }
-        case ConCall call when call.conArgs().getLast() instanceof DimTerm dim -> {
-          return call.head().ref().equality(call.args(), dim == DimTerm.I0);
+        case ConCall call -> {
+          if (call.ref().hasEq() && apply(call.conArgs().getLast()) instanceof DimTerm dim) {
+            term = call.head().ref().equality(call.args(), dim == DimTerm.I0);
+            continue;
+          }
+          return term.descent(this);
         }
         case PrimCall prim -> {
+          var newArgs = Callable.descent(prim.args(), this);
+          if (newArgs.sameElements(prim.args(), true))
+            return prim;
+          prim = new PrimCall(prim.ref(), prim.ulift(), newArgs);
           return state.primFactory.unfold(prim, state);
         }
         case MetaPatTerm meta -> {
-          return meta.inline(this);
+          term = meta.inline(this);
+          if (meta == term) return meta;
+          continue;
         }
         case MetaCall meta -> {
-          return state.computeSolution(meta, this);
+          term = state.computeSolution(meta, this);
+          if (meta == term) return meta;
+          continue;
         }
         case MetaLitTerm meta -> {
           return meta.inline(this);
         }
         case CoeTerm coe -> {
-          var r = coe.r();
-          var s = coe.s();
+          var r = apply(coe.r());
+          var s = apply(coe.s());
           var A = coe.type();
           if (state.isConnected(r, s)) return LamTerm.ID;
 
@@ -157,28 +196,37 @@ public final class Normalizer implements UnaryOperator<Term> {
               return LamTerm.ID;
             }
             case null, default -> {
-              return defaultValue;
+              if (r == coe.r() && s == coe.s()) return coe;
+              if (fullNormalize) return new CoeTerm(A, r, s);
+              return coe;
             }
           }
         }
         case MatchCall(Matchy clauses, var discr, var captures) -> {
-          var result = tryUnfoldClauses(clauses.clauses().view(), discr, false, (discrSubst, body) ->
-            body.instTele(captures.view().concat(discrSubst)));
-          if (result == null) return defaultValue;
+          var whnfDiscr = Callable.descent(discr, this);
+          var result = tryUnfoldClauses(clauses.clauses().view(), whnfDiscr, false,
+            (discrSubst, body) ->
+              body.instTele(captures.view().concat(discrSubst)));
+          if (result == null) {
+            if (discr.sameElements(whnfDiscr, true)) return term;
+            if (fullNormalize) return new MatchCall(clauses, whnfDiscr, captures);
+            return term;
+          }
           term = result;
           continue;
         }
         case MatchCall(JitMatchy fn, var discr, var captures) -> {
+          discr = Callable.descent(discr, this);
           var result = fn.invoke(this, captures, discr);
-          if (result instanceof MatchCall(var ref, var newDiscr, var newCaptures) &&
-            ref == fn && newDiscr.sameElements(discr, true) &&
-            newCaptures.sameElements(captures, true)
-          ) return defaultValue;
+          if (result instanceof MatchCall(var ref, var newDiscr, var newCaptures) && ref == fn) {
+            if (newDiscr.sameElements(discr, true) &&
+              newCaptures.sameElements(captures, true))
+              return term;
+            if (fullNormalize) return new MatchCall(ref, discr, captures);
+            return term;
+          }
           term = result;
           continue;
-        }
-        default -> {
-          return defaultValue;
         }
       }
     }
@@ -215,7 +263,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   }
 
   private class Full implements UnaryOperator<Term> {
-    { usePostTerm = true; }
+    { fullNormalize = true; }
 
     @Override public Term apply(Term term) { return Normalizer.this.apply(term); }
   }

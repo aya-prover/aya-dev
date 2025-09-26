@@ -480,11 +480,10 @@ In file $FILE:28:12 ->
   30 │       | 114, suc b => suc b
      │         ╰─────────────────╯ confluence: this clause is substituted to `515`
   31 │       | 114, 514 => 515
-     │         ╰─────────────╯ confluence: this clause is substituted to `suc 513`
+     │         ╰─────────────╯ confluence: this clause is substituted to `514`
 
 Error: The 2nd and the 3rd clauses are not confluent because we failed to unify
-         suc 513
-         (Normalized: 514)
+         514
        and
          515
 
@@ -668,7 +667,8 @@ In file $FILE:4:4 ->
 Error: The 3rd clause matches on a path constructor. We failed to unify
          1
        with
-         0
+         test (signed false 0)
+         (Normalized: 0)
        for the arguments:
          posneg 0
        Normalized:
@@ -731,8 +731,7 @@ In file $FILE:8:4 ->
 Error: The 4th clause matches on a path constructor. We failed to unify
          0
        with
-         abs (posneg n 0)
-         (Normalized: abs (pos n))
+         abs (pos n)
        for the arguments:
          posneg n 0
        Normalized:

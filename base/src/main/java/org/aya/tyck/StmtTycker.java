@@ -155,7 +155,7 @@ public record StmtTycker(
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }
             if (!hasLhsError) {
-              var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.nameSourcePos());
+              var hitConflChecker = new IApplyConfl<>(def, tycker, fnDecl.nameSourcePos());
               hitConflChecker.check();
             }
 
@@ -360,7 +360,8 @@ public record StmtTycker(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       boundDataCall, boundariesWithDummy))
-      .bindTele(ownerBinds.zip(ownerTele).view());
+      // TODO[kala]: replace with .view().zip
+      .bindTele(ownerBinds.zip(ownerTele, AbstractTele.VarredParam::new).view());
     var wholeSigResult = (TupTerm) wholeSig.result();
     boundDataCall = (DataCall) wholeSigResult.lhs();
     if (boundaries != null) boundaries = (EqTerm) wholeSigResult.rhs();
