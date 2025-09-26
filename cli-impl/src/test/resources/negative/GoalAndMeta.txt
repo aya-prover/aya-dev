@@ -339,3 +339,16 @@ Error: Equations do not have solutions!
 7 error(s), 0 warning(s).
 Let's learn from that.
 
+EmptyContext:
+In file $FILE:1:19 ->
+
+  1 │   def test : Type => {? ?}
+    │                      ╰───╯
+
+Goal: Goal of type
+        Type 0
+        (Normalized: Type 0)
+
+0 error(s), 0 warning(s).
+Let's learn from that.
+
