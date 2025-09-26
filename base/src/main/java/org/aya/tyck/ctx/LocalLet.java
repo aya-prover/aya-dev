@@ -23,13 +23,9 @@ public record LocalLet(
   @Override @Nullable LocalLet parent,
   @NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let
 ) implements Scoped<LocalVar, LocalLet.DefinedAs, LocalLet> {
-  /// @param isLet whether this record is introduced by a LetTerm
-  /// In the future, we can reimplement [org.aya.tyck.pat.PatternTycker#asSubst]
-  /// using let term, so this can be eliminated and the treatment of let and local variable
-  /// will be uniform. 🍻
-  public record DefinedAs(@NotNull Jdg definedAs, boolean isLet) {
+  public record DefinedAs(@NotNull Jdg definedAs) {
     public @NotNull DefinedAs map(@NotNull UnaryOperator<Jdg> f) {
-      return new DefinedAs(f.apply(definedAs), isLet);
+      return new DefinedAs(f.apply(definedAs));
     }
   }
 
@@ -55,7 +51,7 @@ public record LocalLet(
   }
   @Override public void putLocal(@NotNull LocalVar key, @NotNull LocalLet.DefinedAs value) { let.put(key, value); }
 
-  public void put(@NotNull LocalVar key, @NotNull Jdg definedAs, boolean isLet) {
-    put(key, new DefinedAs(definedAs, isLet));
+  public void put(@NotNull LocalVar key, @NotNull Jdg definedAs) {
+    put(key, new DefinedAs(definedAs));
   }
 }
