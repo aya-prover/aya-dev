@@ -206,8 +206,8 @@ val ossrhPassword = propOrEnv("mavenCentralPortalPassword")
 
 if (ossrhUsername.isNotEmpty()) nmcpAggregation {
   centralPortal {
-    username = property("mavenCentralPortalUsername").toString()
-    password = property("mavenCentralPortalPassword").toString()
+    username = ossrhUsername
+    password = ossrhPassword
     if (isRelease) publishingType = "USER_MANAGED"
     else publishingType = "AUTOMATIC"
   }
