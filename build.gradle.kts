@@ -55,7 +55,7 @@ val useJacoco = listOf("base", "syntax", "producer", "pretty", "cli-impl", "jit-
 /** gradle.properties or environmental variables */
 fun propOrEnv(name: String): String =
   if (hasProperty(name)) property(name).toString()
-  else (System.getenv(name) ?: "")
+  else System.getenv(name) ?: ""
 
 val isSnapshot = projectVersion.toString().endsWith("SNAPSHOT")
 val isRelease = !isSnapshot
@@ -206,8 +206,8 @@ val ossrhPassword = propOrEnv("mavenCentralPortalPassword")
 
 if (ossrhUsername.isNotEmpty()) nmcpAggregation {
   centralPortal {
-    username = property("mavenCentralPortalUsername").toString()
-    password = property("mavenCentralPortalPassword").toString()
+    username = ossrhUsername
+    password = ossrhPassword
     if (isRelease) publishingType = "USER_MANAGED"
     else publishingType = "AUTOMATIC"
   }
