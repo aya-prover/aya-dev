@@ -20,13 +20,12 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
-import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,14 +60,18 @@ public final class Normalizer implements UnaryOperator<Term> {
       if (alreadyWHNF && !fullNormalize) return term;
 
       switch (term) {
-        case FreeTerm _ -> {
+        case FreeTerm _, SortTerm _ -> {
           return term;
         }
-        // TODO: do this for DepTypeTerm
+        // Already full NF mode
         case LamTerm(var lam) -> {
-          // Already full NF
-          var fresh = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Tyck);
-          return new LamTerm(apply(lam.apply(fresh)).bind(fresh));
+          return new LamTerm(lam.reapply(this));
+        }
+        case EqTerm(var A, var a, var b) -> {
+          return new EqTerm(A.reapply(this), apply(a), apply(b));
+        }
+        case DepTypeTerm(var kk, var param, var body) -> {
+          return new DepTypeTerm(kk, apply(param), body.reapply(this));
         }
         case StableWHNF _ -> {
           return term.descent(this);
@@ -97,7 +100,6 @@ public final class Normalizer implements UnaryOperator<Term> {
           if (result instanceof FnCall(var ref, _, var newArgs, _) && ref == instance) {
             if (newArgs.sameElements(args, true)) return term;
             if (fullNormalize) return new FnCall(ref, ulift, args, tc);
-            return term;
           }
           term = result.elevate(ulift);
           continue;
