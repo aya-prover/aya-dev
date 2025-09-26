@@ -3,10 +3,10 @@
 package org.aya.tyck.pat;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.Modifier;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.pat.PatMatcher;
-import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
 import org.aya.syntax.ref.MapLocalCtx;
@@ -14,7 +14,6 @@ import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.tycker.Contextful;
 import org.aya.tyck.tycker.Unifiable;
-import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
@@ -53,19 +52,21 @@ public record IApplyConfl<Tycker extends Unifiable & Contextful>(
 
   private void apply(int i, PatMatcher.NoMeta chillMatcher) {
     var matching = matchings.get(i);
-    var ctx = new MapLocalCtx();
-    var cases = new PatToTerm.Monadic(ctx).list(matching.data().patterns().view());
-    if (cases.sizeEquals(1)) return;
-    if (cases.isEmpty()) Panic.unreachable();
-    tycker.setLocalCtx(ctx);
-    var nth = i + 1;
-    cases.forEach(args -> doCompare(chillMatcher, args, matching, nth));
+    var pats = matching.data().patterns().view();
+    var ctx = new DimInPatsPermutation.CtxExtractinator(new MapLocalCtx(), MutableList.create());
+    ctx.visit(pats);
+    tycker.setLocalCtx(ctx.ctx());
+
+    DimInPatsPermutation.forEach(pats, args -> {
+      var nth = i + 1;
+      doCompare(chillMatcher, args, matching, nth);
+    });
   }
 
   private void doCompare(PatMatcher.NoMeta chillMatcher, ImmutableSeq<Term> args, WithPos<Term.Matching> matching, int nth) {
     var currentClause = chillMatcher.apply(matching.data(), args);
-    var anoNormalized = tycker.whnf(new FnCall(new FnDef.Delegate(def.ref()), 0, args));
-    tycker.unifyTermReported(anoNormalized, currentClause, def.result().instTele(args.view()),
+    var ano = new FnCall(new FnDef.Delegate(def.ref()), 0, args.map(tycker::whnf));
+    tycker.unifyTermReported(ano, currentClause, def.result().instTele(args.view()),
       sourcePos, comparison -> new ClausesProblem.Conditions(
         sourcePos, matching.sourcePos(), nth, args, new UnifyInfo(tycker.state()), comparison));
   }
