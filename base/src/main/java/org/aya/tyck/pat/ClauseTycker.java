@@ -279,7 +279,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         // not be added to the localCtx of tycker, causing assertion errors
         wellBody = new ErrorTerm(bodyExpr.data());
       } else {
-        // the localCtx will be restored after exiting [subscoped]e
+        // the localCtx will be restored after exiting [subscoped]
         exprTycker.setLocalCtx(result.localCtx);
         result.dumpLocalLetTo(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
