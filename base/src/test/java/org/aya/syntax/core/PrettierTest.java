@@ -32,8 +32,8 @@ public class PrettierTest {
     assertEquals("""
       def plus (a b : Nat) : Nat
         | 0, c => c
-        | S c, 0 => S (plus c 0)
-        | S c, S d => S (plus c (S d))""", fnPlus.easyToString());
+        | S c, 0 => let o := 0 in S (plus c o)
+        | S c, S d => let s := S d in S (plus c s)""", fnPlus.easyToString());
     // no new line at the end!!
     assertEquals("""
       def swap (a : Nat) : Nat => match a {
