@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -12,8 +12,8 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
   public static final int INDEX_FST = 1;
   public static final int INDEX_SND = 2;
 
-  public @NotNull ProjTerm update(@NotNull Term of, boolean fst) {
-    return this.of == of && this.fst == fst ? this : new ProjTerm(of, fst);
+  public @NotNull Term update(@NotNull Term of, boolean fst) {
+    return this.of == of && this.fst == fst ? this : new ProjTerm(of, fst).make();
   }
 
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
