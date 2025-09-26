@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
-import java.io.Serializable;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
@@ -26,8 +22,12 @@ import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
-/// together with their overrides in [LocalTerm] and [FreeTerm].
+/// together with their overrides in [LocalTerm] and [FreeTermLike].
 public sealed interface Term extends Serializable, AyaDocile
   permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
@@ -39,9 +39,9 @@ public sealed interface Term extends Serializable, AyaDocile
     return bindAllFrom(ImmutableSeq.of(var), depth);
   }
 
-  /// Replacing all [FreeTerm] of leaf nodes with [LocalTerm] since `fromDepth`.
+  /// Replacing all [FreeTermLike] of leaf nodes with [LocalTerm] since `fromDepth`.
   ///
-  /// the i-th [FreeTerm#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
+  /// the i-th [FreeTermLike#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
   ///
   /// @see #replaceAllFrom
   default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {

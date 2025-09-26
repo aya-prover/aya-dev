@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core;
 
@@ -39,6 +39,13 @@ public sealed interface Jdg {
     @Override public @NotNull Term type() { return lazyType.get(); }
     @Override public @NotNull Lazy map(@NotNull UnaryOperator<Term> f) {
       return new Lazy(f.apply(wellTyped), lazyType.map(f));
+    }
+  }
+
+  record TypeMissing(@Override @NotNull Term wellTyped) implements Jdg {
+    @Override public @NotNull Term type() { throw new UnsupportedOperationException("type missing"); }
+    @Override public @NotNull TypeMissing map(@NotNull UnaryOperator<Term> f) {
+      return new TypeMissing(f.apply(wellTyped));
     }
   }
 }

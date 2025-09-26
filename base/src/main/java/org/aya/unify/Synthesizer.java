@@ -5,7 +5,6 @@ package org.aya.unify;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -91,7 +90,7 @@ public record Synthesizer(
       }
       case TupTerm _, LamTerm _, PartialTerm _ -> null;
       case FreeTerm(var var) -> localCtx().get(var);
-      case LetFreeTerm(var _, var definedAs) -> synthesize(definedAs);
+      case LetFreeTerm(var _, var definedAs) -> definedAs.type();
       case LocalTerm _, LetTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
       case ProjTerm(var of, var fst) -> {

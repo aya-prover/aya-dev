@@ -221,7 +221,7 @@ public class CorePrettier extends BasePrettier<Term> {
         var unlet = let.unlet(nameGen);
         var letSeq = unlet.definedAs().view()
           .map(letBind ->
-            visitLetBind(varDoc(letBind.name()), Doc.empty(), term(Outer.Free, letBind.definedAs())));
+            visitLetBind(varDoc(letBind.name()), Doc.empty(), term(Outer.Free, letBind.definedAs().wellTyped())));
         var body = term(Outer.Free, unlet.body());
         var letDoc = visitLet(letSeq, body);
 

@@ -4,11 +4,11 @@ package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
-import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
+/// Used only for extracting pattern matching definitions.
 public record FreeCollector(@NotNull MutableSet<FreeTermLike> frees) implements UnaryOperator<Term> {
   public FreeCollector() { this(MutableSet.create()); }
   @Override public Term apply(Term term) {

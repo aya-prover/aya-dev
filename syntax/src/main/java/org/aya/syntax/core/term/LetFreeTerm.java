@@ -7,17 +7,14 @@ import org.aya.syntax.core.Jdg;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
-
-public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull Term definedAs) implements FreeTermLike {
-  public @NotNull LetFreeTerm update(@NotNull Term definedAs) {
-    return definedAs == definedAs()
+public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull Jdg definedAs) implements FreeTermLike {
+  public @NotNull LetFreeTerm update(@NotNull Jdg definedAs) {
+    return definedAs.wellTyped() == definedAs().wellTyped()
       ? this
       : new LetFreeTerm(name, definedAs);
   }
 
-  @Override
-  public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, definedAs));
+  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+    return update(definedAs.map(t -> f.apply(0, t)));
   }
 }

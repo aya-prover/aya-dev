@@ -64,7 +64,7 @@ public final class Normalizer implements UnaryOperator<Term> {
           return term;
         }
         case LetFreeTerm(var _, var definedAs) -> {
-          term = definedAs;
+          term = definedAs.wellTyped();
           continue;
         }
         // Already full NF mode

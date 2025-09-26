@@ -7,10 +7,8 @@ import kala.collection.mutable.FreezableMutableList;
 import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.marker.BetaRedex;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
-import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -40,7 +38,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     Term let = this;
 
     while (let instanceof LetTerm(var term, var body)) {
-      var bind = new LetFreeTerm(nameGen.bindName(term), term);
+      var bind = new LetFreeTerm(nameGen.bindName(term), new Jdg.TypeMissing(term));
       var freeBody = body.apply(bind);
 
       definedAs.append(bind);
@@ -52,7 +50,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
 
   public static @NotNull Term bind(@NotNull LetFreeTerm bind, @NotNull Term body) {
     var name = bind.name();
-    var definedAs = bind.definedAs();
+    var definedAs = bind.definedAs().wellTyped();
     var boundBody = body.bind(name);
     if (boundBody.body() == body) return body;
     return new LetTerm(definedAs, boundBody);
