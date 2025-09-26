@@ -121,7 +121,7 @@ public interface AbstractTele {
 
   default @NotNull AbstractTele lift(int i) { return i == 0 ? this : new Lift(this, i); }
 
-  public record VarredParam(@NotNull LocalVar var, @NotNull Param type) {}
+  record VarredParam(@NotNull LocalVar var, @NotNull Param type) {}
 
   /// Default implementation of {@link AbstractTele}
   ///
