@@ -106,9 +106,12 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+      assert exprTycker.localLet().let().isEmpty();
+      assert asSubst.parent() == null;
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
         .put(ref, subst));
-      exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
+      asSubst.let().forEach((ref, subst) -> exprTycker.localLet()
+        .put(ref, subst));
     }
   }
 
