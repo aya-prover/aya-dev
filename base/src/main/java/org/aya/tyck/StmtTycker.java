@@ -155,7 +155,7 @@ public record StmtTycker(
               def = new FnDef(fnRef, fnDecl.modifiers, Either.right(coreBody));
             }
             if (!hasLhsError) {
-              var hitConflChecker = new IApplyConfl(def, tycker, fnDecl.nameSourcePos());
+              var hitConflChecker = new IApplyConfl<>(def, tycker, fnDecl.nameSourcePos());
               hitConflChecker.check();
             }
 

@@ -10,9 +10,10 @@ import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
 import org.aya.syntax.ref.MapLocalCtx;
-import org.aya.tyck.ExprTycker;
 import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.UnifyInfo;
+import org.aya.tyck.tycker.Contextful;
+import org.aya.tyck.tycker.Unifiable;
 import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
@@ -37,11 +38,11 @@ import java.util.function.UnaryOperator;
 /// The latter looks like smaller number of checks, but honestly I don't know how to do it in terms of
 /// pure patterns. The old version of Aya used a hack based on object identity, and I don't like it.
 /// This one is translatable to a purely functional programming language.
-public record IApplyConfl(
+public record IApplyConfl<Tycker extends Unifiable & Contextful>(
   @NotNull FnDef def, @NotNull ImmutableSeq<WithPos<Term.Matching>> matchings,
-  boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull ExprTycker tycker
+  boolean orderIndep, @NotNull SourcePos sourcePos, @NotNull Tycker tycker
 ) {
-  public IApplyConfl(@NotNull FnDef def, @NotNull ExprTycker tycker, @NotNull SourcePos pos) {
+  public IApplyConfl(@NotNull FnDef def, @NotNull Tycker tycker, @NotNull SourcePos pos) {
     this(def, def.body().getRightValue().clauses, def.is(Modifier.Overlap), pos, tycker);
   }
   public void check() {
@@ -66,6 +67,6 @@ public record IApplyConfl(
     var anoNormalized = tycker.whnf(new FnCall(new FnDef.Delegate(def.ref()), 0, args));
     tycker.unifyTermReported(anoNormalized, currentClause, def.result().instTele(args.view()),
       sourcePos, comparison -> new ClausesProblem.Conditions(
-        sourcePos, matching.sourcePos(), nth, args, new UnifyInfo(tycker.state), comparison));
+        sourcePos, matching.sourcePos(), nth, args, new UnifyInfo(tycker.state()), comparison));
   }
 }

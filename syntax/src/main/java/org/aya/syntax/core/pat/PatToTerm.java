@@ -12,8 +12,6 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public interface PatToTerm {
   static @NotNull Term visit(@NotNull Pat pat) {
     return switch (pat) {
@@ -31,7 +29,7 @@ public interface PatToTerm {
     };
   }
 
-  record Monadic(@NotNull LocalCtx ctx) implements Function<Pat, ImmutableSeq<Term>> {
+  record Monadic(@NotNull LocalCtx ctx) {
     /**
      * Vertically two possibilities:
      * [ [0]
@@ -41,26 +39,31 @@ public interface PatToTerm {
       ImmutableSeq.of(DimTerm.I0), ImmutableSeq.of(DimTerm.I1)
     );
     public @NotNull ImmutableSeq<ImmutableSeq<Term>> list(@NotNull SeqView<Pat> pats) {
-      return list(pats, ImmutableSeq.of(ImmutableSeq.empty()));
+      return list(pats, SeqView.empty());
     }
-    private @NotNull ImmutableSeq<ImmutableSeq<Term>> list(@NotNull SeqView<Pat> pats, @NotNull ImmutableSeq<ImmutableSeq<Term>> base) {
-      if (pats.isEmpty()) return base;
+    private @NotNull ImmutableSeq<ImmutableSeq<Term>> list(
+      @NotNull SeqView<Pat> pats, @NotNull SeqView<Term> prefix
+    ) {
+      if (pats.isEmpty()) return ImmutableSeq.of(prefix.toSeq());
       // We have non-deterministically one of these head
-      var headND = apply(pats.getFirst());
-      // We have non-deterministically one of these tails
-      var tailND = list(pats.drop(1), base);
-      return tailND.flatMap(ogList -> headND.map(ogList::prepended));
+      var headND = apply(pats.getFirst(), prefix);
+      return headND.flatMap(head -> {
+        // We have non-deterministically one of these tails
+        var tailND = list(pats.drop(1), prefix.appended(head));
+        return tailND.map(tail -> tail.prepended(head));
+      });
     }
 
-    @Override public ImmutableSeq<Term> apply(Pat pat) {
+    public ImmutableSeq<Term> apply(Pat pat, SeqView<Term> prefix) {
       return switch (pat) {
         case Pat.Misc _, Pat.Meta _ -> Panic.unreachable();
         case Pat.ShapedInt si -> ImmutableSeq.of(si.toTerm());
         case Pat.Bind bind -> {
-          ctx.put(bind.bind(), bind.type());
+          ctx.put(bind.bind(), bind.type().instTele(prefix));
           yield ImmutableSeq.of(new FreeTerm(bind.bind()));
         }
-        case Pat.Con con when con.ref().hasEq() -> list(con.args().view().dropLast(1), BOUNDARIES)
+        case Pat.Con con when con.ref().hasEq() -> BOUNDARIES.flatMap(dim ->
+          list(con.args().view().dropLast(1), prefix.appended(dim)))
           .map(args -> {
             return new ConCall(con.head(), args);
           });
