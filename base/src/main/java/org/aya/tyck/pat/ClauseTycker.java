@@ -106,7 +106,9 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+      // We assume that this method is called right after a subscope, and we own the current layer of the localLet
       assert exprTycker.localLet().let().isEmpty();
+      // Sanity check
       assert asSubst.parent() == null;
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
         .put(ref, subst));
@@ -392,6 +394,10 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /// Bind all judgments in {@param lets} on {@param term}, [LocalLet#parent] not included.
+  /// Because only the current layer corresponds to the telescope, which is what we want to let-bind.
+  /// For function definitions there should only be one layer, so it's irrelevant anyway.
+  /// But this method is also used for checking `match` expressions, where the parent layer might
+  /// contain let bindings from real let expressions,
   ///
   /// @param term a free term
   public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
