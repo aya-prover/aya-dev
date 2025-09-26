@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
-import java.io.Serializable;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
@@ -21,16 +17,19 @@ import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.marker.TyckInternal;
 import org.aya.syntax.core.term.xtt.CoeTerm;
-import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
-/// together with their overrides in [LocalTerm] and [FreeTerm].
+/// together with their overrides in [LocalTerm] and [FreeTermLike].
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
+  permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, Formation, StableWHNF, TyckInternal, CoeTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);
@@ -40,9 +39,9 @@ public sealed interface Term extends Serializable, AyaDocile
     return bindAllFrom(ImmutableSeq.of(var), depth);
   }
 
-  /// Replacing all [FreeTerm] of leaf nodes with [LocalTerm] since `fromDepth`.
+  /// Replacing all [FreeTermLike] of leaf nodes with [LocalTerm] since `fromDepth`.
   ///
-  /// the i-th [FreeTerm#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
+  /// the i-th [FreeTermLike#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
   ///
   /// @see #replaceAllFrom
   default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
@@ -113,32 +112,31 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
-  /**
-   * For example, a {@link LamTerm}:
-   * <pre>
-   *     Γ, a : A ⊢ b : B
-   * --------------------------
-   * Γ ⊢ fn (a : A) => (b : B)
-   * </pre>
-   * {@code f} will apply to {@code b}, but the context of {@code b}: `Γ, a : A` has a new binding,
-   * therefore the implementation should be {@code f.apply(1, b)}.
-   * In the other hand, a {@link AppTerm}:
-   * <pre>
-   *  Γ ⊢ g : A → B   Γ ⊢ a : A
-   *  --------------------------
-   *         Γ ⊢ g a : B
-   *  </pre>
-   * {@code f} will apply to both {@code g} and {@code a}, but the context of them have no extra binding,
-   * so the implementation should be {@code f.apply(0, g)} and {@code f.apply(0, a)}
-   *
-   * @param f a "mapper" which will apply to all sub nodes of {@link Term}.
-   *          The index indicates how many new bindings are introduced.
-   * @implNote implements {@link Term#bindAt} and {@link Term#replaceAllFrom} if this term is a leaf node.
-   * Also, {@param f} should preserve {@link Closure} (with possible change of the implementation).
-   * @apiNote Note that {@link Term}s provided by {@param f} might contain {@link LocalTerm},
-   * therefore your {@param f} should be able to handle them.
-   * Also, {@code descent} on a JIT Term may be restricted, only bindings are accessible.
-   */
+  /// For example, a {@link LamTerm}:
+  /// ```
+  ///     Γ, a : A ⊢ b : B
+  /// --------------------------
+  /// Γ ⊢ fn (a : A) => (b : B)
+  ///```
+  /// `f` will apply to `b``, but the context of `b`: `Γ, a : A` has a new binding,
+  /// therefore the implementation should be `f.apply(1, b)`.
+  /// In the other hand, a [AppTerm]:
+  ///```
+  /// Γ ⊢ g : A → B   Γ ⊢ a : A
+  /// --------------------------
+  ///        Γ ⊢ g a : B
+  ///```
+  ///`f` will apply to both `g` and `a`, but the context of them have no extra binding,
+  /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
+  ///
+  /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
+  ///                   The index indicates how many new bindings are introduced.
+  /// @implNote implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
+  ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
+  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm],
+  ///          therefore your {@param f} should be able to handle them,
+  ///          or don't [#descent] [Term] that contains bound term if your {@param f} cannot handle them.
+  ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
   @ApiStatus.NonExtendable

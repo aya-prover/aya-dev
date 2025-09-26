@@ -60,7 +60,7 @@ public class CorePrettier extends BasePrettier<Term> {
   public CorePrettier(@NotNull PrettierOptions options) { super(options); }
   @Override public @NotNull Doc term(@NotNull Outer outer, @NotNull Term preterm) {
     return switch (preterm) {
-      case FreeTerm(var var) -> varDoc(var);
+      case FreeTermLike t -> varDoc(t.name());
       case LocalTerm(var idx) -> Doc.plain("^" + idx);
       case MetaCall(var name, var args) -> {
         var inner = Doc.cat(Doc.plain("?"), varDoc(name));
@@ -217,6 +217,21 @@ public class CorePrettier extends BasePrettier<Term> {
         yield Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, lhs), term(Outer.AppSpine, rhs), term(Outer.AppSpine, A));
       }
       case PartialTerm(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
+      case LetTerm let -> {
+        var unlet = let.unlet(nameGen);
+        if (unlet.definedAs().isEmpty()) {
+          yield term(outer, unlet.body());
+        }
+        var letSeq = unlet.definedAs().view()
+          .map(letBind ->
+            visitLetBind(varDoc(letBind.name()), Doc.empty(), term(Outer.Free, letBind.definedAs().wellTyped())));
+        var body = term(Outer.Free, unlet.body());
+        var letDoc = visitLet(letSeq, body);
+
+        unlet.definedAs().forEach(t -> nameGen.unbindName(t.name()));
+
+        yield letDoc;
+      }
     };
   }
 
