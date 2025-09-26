@@ -112,32 +112,31 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
-  /**
-   * For example, a {@link LamTerm}:
-   * <pre>
-   *     Γ, a : A ⊢ b : B
-   * --------------------------
-   * Γ ⊢ fn (a : A) => (b : B)
-   * </pre>
-   * {@code f} will apply to {@code b}, but the context of {@code b}: `Γ, a : A` has a new binding,
-   * therefore the implementation should be {@code f.apply(1, b)}.
-   * In the other hand, a {@link AppTerm}:
-   * <pre>
-   *  Γ ⊢ g : A → B   Γ ⊢ a : A
-   *  --------------------------
-   *         Γ ⊢ g a : B
-   *  </pre>
-   * {@code f} will apply to both {@code g} and {@code a}, but the context of them have no extra binding,
-   * so the implementation should be {@code f.apply(0, g)} and {@code f.apply(0, a)}
-   *
-   * @param f a "mapper" which will apply to all sub nodes of {@link Term}.
-   *          The index indicates how many new bindings are introduced.
-   * @implNote implements {@link Term#bindAt} and {@link Term#replaceAllFrom} if this term is a leaf node.
-   * Also, {@param f} should preserve {@link Closure} (with possible change of the implementation).
-   * @apiNote Note that {@link Term}s provided by {@param f} might contain {@link LocalTerm},
-   * therefore your {@param f} should be able to handle them.
-   * Also, {@code descent} on a JIT Term may be restricted, only bindings are accessible.
-   */
+  /// For example, a {@link LamTerm}:
+  /// ```
+  ///     Γ, a : A ⊢ b : B
+  /// --------------------------
+  /// Γ ⊢ fn (a : A) => (b : B)
+  ///```
+  /// `f` will apply to `b``, but the context of `b`: `Γ, a : A` has a new binding,
+  /// therefore the implementation should be `f.apply(1, b)`.
+  /// In the other hand, a [AppTerm]:
+  ///```
+  /// Γ ⊢ g : A → B   Γ ⊢ a : A
+  /// --------------------------
+  ///        Γ ⊢ g a : B
+  ///```
+  ///`f` will apply to both `g` and `a`, but the context of them have no extra binding,
+  /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
+  ///
+  /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
+  ///                   The index indicates how many new bindings are introduced.
+  /// @implNote implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
+  ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
+  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm],
+  ///          therefore your {@param f} should be able to handle them,
+  ///          or don't [#descent] [Term] that contains bound term if your {@param f} cannot handle them.
+  ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
   @ApiStatus.NonExtendable
