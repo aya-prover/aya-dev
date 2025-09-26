@@ -135,6 +135,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (lhs instanceof RuleReducer.Fn fn) lhs = fn.toFnCall();
     if (rhs instanceof RuleReducer.Fn fn) rhs = fn.toFnCall();
     return switch (new Pair<>(lhs, rhs)) {
+      case Pair(LetFreeTerm lFree, LetFreeTerm rFree) when lFree.name() == rFree.name() ->
+        lFree.definedAs().type();
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(PrimCall lFn, PrimCall rFn) -> compareCallApprox(lFn, rFn);
