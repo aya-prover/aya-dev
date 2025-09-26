@@ -22,9 +22,11 @@ import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +61,17 @@ public final class Normalizer implements UnaryOperator<Term> {
       if (alreadyWHNF && !fullNormalize) return term;
 
       switch (term) {
-        case StableWHNF _, FreeTerm _ -> {
+        case FreeTerm _ -> {
           return term;
+        }
+        // TODO: do this for DepTypeTerm
+        case LamTerm(var lam) -> {
+          // Already full NF
+          var fresh = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Tyck);
+          return new LamTerm(apply(lam.apply(fresh)).bind(fresh));
+        }
+        case StableWHNF _ -> {
+          return term.descent(this);
         }
         case LocalTerm _ -> throw new IllegalStateException("Local term escapes: " + term);
         case BetaRedex app -> {
@@ -94,7 +105,9 @@ public final class Normalizer implements UnaryOperator<Term> {
         case FnCall(FnDef.Delegate delegate, int ulift, var args, var tc) -> {
           var whnfArgs = Callable.descent(args, this);
           FnDef core = delegate.core();
-          if (core == null) return term;
+          if (core == null) {
+            return fullNormalize ? new FnCall(delegate, ulift, whnfArgs, tc) : term;
+          }
           if (!isOpaque(core)) switch (core.body()) {
             case Either.Left(var body): {
               term = body.instTele(whnfArgs.view());
