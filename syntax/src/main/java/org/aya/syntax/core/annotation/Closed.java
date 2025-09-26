@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 
 /// Annotations whether a [Term] is a (dbi-)closed term, which means it has **NO** uncaptured [org.aya.syntax.core.term.LocalTerm], thus
 /// it is dbi-closed.
+/// This basically a [Term] version of [org.jetbrains.annotations.NotNull].
 ///
 /// @see Bound
 @Retention(RetentionPolicy.SOURCE)
