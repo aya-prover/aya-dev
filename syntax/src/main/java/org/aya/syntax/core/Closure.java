@@ -3,6 +3,7 @@
 package org.aya.syntax.core;
 
 import kala.function.IndexedFunction;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.Term;
@@ -64,7 +65,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
     @Override public Term apply(Term term) { return lam.apply(term); }
   }
 
-  record Locns(Term body) implements Closure {
+  record Locns(@Bound Term body) implements Closure {
     @Override public Closure descent(IndexedFunction<Term, Term> f) {
       var result = f.apply(1, body);
       if (result == body) return this;

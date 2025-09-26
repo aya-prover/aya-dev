@@ -14,6 +14,6 @@ import java.lang.annotation.Target;
 ///
 /// @see Closed
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE_USE, ElementType.METHOD, ElementType.LOCAL_VARIABLE, ElementType.PARAMETER})
 public @interface Bound {
 }

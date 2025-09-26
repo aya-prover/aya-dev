@@ -10,6 +10,7 @@ import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.marker.BetaRedex;
@@ -35,7 +36,7 @@ public sealed interface Term extends Serializable, AyaDocile
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);
   }
 
-  default @NotNull Term bindAt(@NotNull LocalVar var, int depth) {
+  default @NotNull @Bound Term bindAt(@NotNull LocalVar var, int depth) {
     return bindAllFrom(ImmutableSeq.of(var), depth);
   }
 
@@ -44,7 +45,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// the i-th [FreeTermLike#name] in `vars` will be replaced by a [LocalTerm] with index `fromDepth + i`.
   ///
   /// @see #replaceAllFrom
-  default @NotNull Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
+  default @NotNull @Bound Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
     if (vars.isEmpty()) return this;
     return descent((i, t) -> t.bindAllFrom(vars, fromDepth + i));
   }
@@ -66,12 +67,12 @@ public sealed interface Term extends Serializable, AyaDocile
   /// Used nontrivially for pattern match expressions, where the clauses are lifted to a global definition,
   /// so after binding the pattern-introduced variables, we need to bind all the free vars,
   /// which will be indexed from the bindCount, rather than 0.
-  default @NotNull Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
+  default @NotNull @Bound Term bindTele(int depth, @NotNull SeqView<LocalVar> teleVars) {
     if (teleVars.isEmpty()) return this;
     return bindAllFrom(teleVars.reversed().toSeq(), depth);
   }
 
-  default @NotNull Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
+  default @NotNull @Bound Term bindTele(@NotNull SeqView<LocalVar> teleVars) {
     return bindTele(0, teleVars);
   }
 
@@ -135,7 +136,7 @@ public sealed interface Term extends Serializable, AyaDocile
   ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
   /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm],
   ///          therefore your {@param f} should be able to handle them,
-  ///          or don't [#descent] [Term] that contains bound term if your {@param f} cannot handle them.
+  ///          or don't [#descent] on [Term] that contains [Bound] term if your {@param f} cannot handle them.
   ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
