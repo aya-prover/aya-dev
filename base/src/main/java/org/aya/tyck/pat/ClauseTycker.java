@@ -187,7 +187,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
       var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
       newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
-      curLhs.asSubst.let().replaceAll((_, t) -> t.map(j -> j.map(lets)));
+      curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
@@ -389,7 +389,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  /// Bind all [LocalLet.DefinedAs] in {@param lets} on {@param term}, [LocalLet#parent] is not included.
+  /// Bind all judgments in {@param lets} on {@param term}, [LocalLet#parent] is not included.
   ///
   /// @param term a free term
   public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
@@ -397,7 +397,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     return lets
       .fold(SeqView.<LetFreeTerm>empty(), (let, acc) ->
         acc.prependedAll(let.let().mapTo(MutableList.create(),
-          (k, v) -> new LetFreeTerm(k, v.definedAs()))))
+          LetFreeTerm::new)))
       .foldRight(term, LetTerm::bind);
   }
 
@@ -416,7 +416,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
     // map in place 😱😱😱😱
-    result.asSubst().let().replaceAll((_, t) -> t.map(ClauseTycker::inlineTerm));
+    result.asSubst().let().replaceAll((_, t) -> inlineTerm(t));
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }
