@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.pat;
 
-import java.util.Objects;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -47,6 +43,10 @@ import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
@@ -394,7 +394,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
     // only one level
     return lets.let().toSeq().foldRight(term, (let, acc) -> {
-      var letFree = new LetFreeTerm(let.component1(), let.component2().definedAs().wellTyped());
+      var letFree = new LetFreeTerm(let.component1(), let.component2().definedAs());
       return LetTerm.bind(letFree, acc);
     });
   }

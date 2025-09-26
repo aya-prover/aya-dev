@@ -2,10 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
-import java.util.Comparator;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.collection.mutable.MutableList;
@@ -51,6 +47,10 @@ import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public final class ExprTycker extends AbstractTycker implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
@@ -533,7 +533,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
         var definedAs = localLet.get(ref);
         var jdg = definedAs.definedAs();
         var term = definedAs.isLet()
-          ? new LetFreeTerm(ref, jdg.wellTyped())
+          ? new LetFreeTerm(ref, jdg)
           : jdg.wellTyped();
         var start = new Jdg.Default(term, jdg.type());
         yield ArgsComputer.generateApplication(this, args, start).lift(lift);
@@ -578,13 +578,12 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // Now everything is in form `let f : G := g in h`
 
     var type = freezeHoles(ty(typeExpr));
-    var definedAsResult = inherit(definedAsExpr, type);
-    var definedAs = definedAsResult.wellTyped();
+    var definedAs = inherit(definedAsExpr, type);
 
-    addWithTerm(letBind, letBind.sourcePos(), definedAsResult.type());
+    addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subscope()) {
-      localLet.put(bindName, definedAsResult, true);
+      localLet.put(bindName, definedAs, true);
       var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
