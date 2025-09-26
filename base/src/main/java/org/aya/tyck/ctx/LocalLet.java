@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.ctx;
 
-import java.util.function.UnaryOperator;
-
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.control.Option;
 import org.aya.syntax.core.Jdg;
@@ -13,6 +11,8 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Scoped;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.UnaryOperator;
 
 /**
  * A locally, lazy substitution<br/>
@@ -24,6 +24,9 @@ public record LocalLet(
   @NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let
 ) implements Scoped<LocalVar, LocalLet.DefinedAs, LocalLet> {
   /// @param isLet whether this record is introduced by a LetTerm
+  /// In the future, we can reimplement [org.aya.tyck.pat.PatternTycker#asSubst]
+  /// using let term, so this can be eliminated and the treatment of let and local variable
+  /// will be uniform. 🍻
   public record DefinedAs(@NotNull Jdg definedAs, boolean isLet) {
     public @NotNull DefinedAs map(@NotNull UnaryOperator<Jdg> f) {
       return new DefinedAs(f.apply(definedAs), isLet);
