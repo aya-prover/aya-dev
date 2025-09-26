@@ -132,6 +132,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   private @Nullable Term compareCalls(@NotNull Term lhs, @NotNull Term rhs) {
+    if (lhs instanceof RuleReducer.Fn fn) lhs = fn.toFnCall();
+    if (rhs instanceof RuleReducer.Fn fn) rhs = fn.toFnCall();
     return switch (new Pair<>(lhs, rhs)) {
       case Pair(FnCall lFn, FnCall rFn) -> compareCallApprox(lFn, rFn);
       case Pair(DataCall lFn, DataCall rFn) -> compareCallApprox(lFn, rFn);

@@ -116,6 +116,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             case RuleReducer.Fn fn -> {
               var fnCall = new FnCall(fn.rule().ref(), fn.ulift(), newArgs);
               term = apply(fnCall);
+              if (term == fnCall) return rule;
               continue;
             }
             case RuleReducer.Con _ -> {
@@ -131,6 +132,10 @@ public final class Normalizer implements UnaryOperator<Term> {
           return term.descent(this);
         }
         case PrimCall prim -> {
+          var newArgs = Callable.descent(prim.args(), this);
+          if (newArgs.sameElements(prim.args(), true))
+            return prim;
+          prim = new PrimCall(prim.ref(), prim.ulift(), newArgs);
           return state.primFactory.unfold(prim, state);
         }
         case MetaPatTerm meta -> {
