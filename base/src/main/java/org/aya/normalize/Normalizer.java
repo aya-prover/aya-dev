@@ -62,7 +62,8 @@ public final class Normalizer implements UnaryOperator<Term> {
         case StableWHNF _, FreeTerm _ -> {
           return term;
         }
-        case LocalTerm _ -> throw new IllegalStateException("Local term escapes: " + term);
+        case LocalTerm _ ->
+          throw new IllegalStateException("Local term escapes: " + term);
         case BetaRedex app -> {
           var result = app.descent(this);
           if (result == app) return app;
@@ -103,16 +104,18 @@ public final class Normalizer implements UnaryOperator<Term> {
           }
           return term;
         }
-        case RuleReducer reduceRule -> {
-          var result = reduceRule.descent(this);
-          if (result != reduceRule) {
-            term = result;
+        case RuleReducer rule -> {
+          var newArgs = Callable.descent(rule.args(), this);
+          var reduction = rule.rule().apply(newArgs);
+          if (reduction != null) {
+            term = reduction;
             continue;
           }
           // We can't handle it, try to delegate to FnCall
-          switch (reduceRule) {
+          switch (rule) {
             case RuleReducer.Fn fn -> {
-              term = fn.toFnCall();
+              var fnCall = new FnCall(fn.rule().ref(), fn.ulift(), newArgs);
+              term = apply(fnCall);
               continue;
             }
             case RuleReducer.Con _ -> {
@@ -132,10 +135,12 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case MetaPatTerm meta -> {
           term = meta.inline(this);
+          if (meta == term) return meta;
           continue;
         }
         case MetaCall meta -> {
           term = state.computeSolution(meta, this);
+          if (meta == term) return meta;
           continue;
         }
         case MetaLitTerm meta -> {
