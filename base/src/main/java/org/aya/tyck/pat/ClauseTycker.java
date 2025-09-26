@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
-import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
@@ -389,16 +388,15 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  /// Bind all judgments in {@param lets} on {@param term}, [LocalLet#parent] is not included.
+  /// Bind all judgments in {@param lets} on {@param term}, [LocalLet#parent] not included.
   ///
   /// @param term a free term
   public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
     // only one level
-    return lets
-      .fold(SeqView.<LetFreeTerm>empty(), (let, acc) ->
-        acc.prependedAll(let.let().mapTo(MutableList.create(),
-          LetFreeTerm::new)))
-      .foldRight(term, LetTerm::bind);
+    return lets.let()
+      .toSeq()
+      .foldRight(term, (t, acc) ->
+        LetTerm.bind(new LetFreeTerm(t.component1(), t.component2()), acc));
   }
 
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
