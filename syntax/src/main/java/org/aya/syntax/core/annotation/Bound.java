@@ -10,6 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /// Annotations whether a [Term] is a bound term, which means it **MAY** have uncaptured [org.aya.syntax.core.term.LocalTerm].
+/// This basically a [Term] version of [org.jetbrains.annotations.Nullable].
 ///
 /// @see Closed
 @Retention(RetentionPolicy.SOURCE)
