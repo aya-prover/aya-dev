@@ -105,15 +105,15 @@ public final class ClauseTycker implements Problematic, Stateful {
 
     /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
-    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
+    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean inline) {
       // We assume that this method is called right after a subscope, and we own the current layer of the localLet
       assert exprTycker.localLet().let().isEmpty();
       // Sanity check
       assert asSubst.parent() == null;
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
-        .put(ref, subst));
+        .put(ref, subst, inline));
       asSubst.let().forEach((ref, subst) -> exprTycker.localLet()
-        .put(ref, subst));
+        .put(ref, subst.definedAs(), inline));
     }
   }
 
@@ -191,7 +191,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
       var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
       newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
-      curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
+      curLhs.asSubst.let().replaceAll((_, t) -> t.map(j -> j.map(lets)));
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
@@ -315,7 +315,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       } else {
         // the localCtx will be restored after exiting [subscoped]
         exprTycker.setLocalCtx(result.localCtx);
-        result.dumpLocalLetTo(teleBinds, exprTycker);
+        result.dumpLocalLetTo(teleBinds, exprTycker, false);
         // now exprTycker has all substitutions that PatternTycker introduced.
         var rawCheckedBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
@@ -405,7 +405,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     return lets.let()
       .toSeq()
       .foldRight(term, (t, acc) ->
-        LetTerm.bind(new LetFreeTerm(t.component1(), t.component2()), acc));
+        LetTerm.bind(new LetFreeTerm(t.component1(), t.component2().definedAs()), acc));
   }
 
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
@@ -423,7 +423,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
     // map in place 😱😱😱😱
-    result.asSubst().let().replaceAll((_, t) -> inlineTerm(t));
+    result.asSubst().let().replaceAll((_, t) -> t.map(ClauseTycker::inlineTerm));
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }
