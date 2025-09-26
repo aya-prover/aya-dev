@@ -300,7 +300,7 @@ public record StmtTycker(
       var patWithTypeBound = Pat.collectVariables(lhsResult.allPats());
       wellPats = patWithTypeBound.component2();
       tycker.setLocalCtx(lhsResult.localCtx());
-      lhsResult.dumpLocalLetTo(ownerBinds, tycker, false);
+      lhsResult.dumpLocalLetTo(ownerBinds, tycker);
       // Here we don't use wellPats but instead a "freePats" because we want them to be bound
       freeDataCall = new DataCall(dataDef, 0, lhsResult.allPats().map(PatToTerm::visit).toSeq());
 

@@ -532,9 +532,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       case LocalVar ref when localLet.contains(ref) -> {
         var definedAs = localLet.get(ref);
         var jdg = definedAs.definedAs();
-        var term = definedAs.isLet()
-          ? new LetFreeTerm(ref, jdg)
-          : jdg.wellTyped();
+        var term = new LetFreeTerm(ref, jdg);
         var start = new Jdg.Default(term, jdg.type());
         yield ArgsComputer.generateApplication(this, args, start).lift(lift);
       }
@@ -583,7 +581,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subscope()) {
-      localLet.put(bindName, definedAs, true);
+      localLet.put(bindName, definedAs);
       var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());

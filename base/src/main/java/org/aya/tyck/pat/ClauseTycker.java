@@ -7,6 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntArray;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
@@ -105,9 +106,9 @@ public final class ClauseTycker implements Problematic, Stateful {
 
     /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
-    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean introLet) {
+    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
-        .put(ref, subst, introLet));
+        .put(ref, subst));
       exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
     }
   }
@@ -310,7 +311,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       } else {
         // the localCtx will be restored after exiting [subscoped]
         exprTycker.setLocalCtx(result.localCtx);
-        result.dumpLocalLetTo(teleBinds, exprTycker, true);
+        result.dumpLocalLetTo(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
         wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
@@ -393,10 +394,11 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// @param term a free term
   public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
     // only one level
-    return lets.let().toSeq().foldRight(term, (let, acc) -> {
-      var letFree = new LetFreeTerm(let.component1(), let.component2().definedAs());
-      return LetTerm.bind(letFree, acc);
-    });
+    return lets
+      .fold(SeqView.<LetFreeTerm>empty(), (let, acc) ->
+        acc.prependedAll(let.let().mapTo(MutableList.create(),
+          (k, v) -> new LetFreeTerm(k, v.definedAs()))))
+      .foldRight(term, LetTerm::bind);
   }
 
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {

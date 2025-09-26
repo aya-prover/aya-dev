@@ -26,7 +26,7 @@ public final class PatBinder extends MatcherBase {
   }
   @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) {
     if (matched instanceof FreeTerm(var name) && bind.bind() == name) return;
-    let.let().put(bind.bind(), new Jdg.Default(matched, bind.type()).map(let), false);
+    let.let().put(bind.bind(), new Jdg.Default(matched, bind.type()).map(let));
   }
   public LetReplacer apply(@NotNull ImmutableSeq<Pat> pats, @NotNull ImmutableSeq<Term> term) {
     try {
