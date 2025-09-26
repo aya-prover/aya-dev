@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -99,5 +99,9 @@ public interface GoalAndMeta {
       (xs ++ (ys ++ zs)) ((xs ++ ys) ++ zs) elim xs
     | [] ⇒ refl
     | x :> _ => pmap (x :>) (++-assoc' _ _ _)
+    """;
+
+  @Language("Aya") String testEmptyContext = """
+    def test : Type => {? ?}
     """;
 }

@@ -33,9 +33,7 @@ public record Goal(
       Doc.english("Goal of type"),
       Doc.par(1, result.toDoc(options)),
       Doc.par(1, Doc.parened(Doc.sep(Doc.plain("Normalized:"),
-        fullNormalize(result).toDoc(options)))),
-      Doc.plain("Context:"),
-      Doc.vcat(hole.args().map(arg -> renderScopeVar(options, arg)))
+        fullNormalize(result).toDoc(options))))
       // ,meta.conditions.isNotEmpty() ? Doc.vcat(
       //   ImmutableSeq.of(Doc.plain("To ensure confluence:"))
       //     .concat(meta.conditions.toSeq().map(tup -> Doc.par(1, Doc.cat(
@@ -46,6 +44,10 @@ public record Goal(
       //     )))))
       //   : Doc.empty()
     );
+    if (hole.args().isNotEmpty()) {
+      lines.append(Doc.plain("Context:"));
+      lines.append(Doc.vcat(hole.args().map(arg -> renderScopeVar(options, arg))));
+    }
     var metas = state.solutions;
     if (metas.containsKey(meta)) {
       lines.insert(0, Doc.par(1, metas.get(meta).toDoc(options)));

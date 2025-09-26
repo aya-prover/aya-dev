@@ -155,7 +155,7 @@ public record DepTypeTerm(
     while ((bound == -1 || i < bound)
       && pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
       // Note: PatternTycker depends on the licit of unpi param, be careful to change it!
-      params.append(new Param(Integer.toString(i++), param, true));
+      params.append(new Param("a" + i++, param, true));
       term = body.toLocns().body();
     }
 
