@@ -55,7 +55,7 @@ val useJacoco = listOf("base", "syntax", "producer", "pretty", "cli-impl", "jit-
 /** gradle.properties or environmental variables */
 fun propOrEnv(name: String): String =
   if (hasProperty(name)) property(name).toString()
-  else (System.getenv(name) ?: "")
+  else System.getenv(name) ?: ""
 
 val isSnapshot = projectVersion.toString().endsWith("SNAPSHOT")
 val isRelease = !isSnapshot

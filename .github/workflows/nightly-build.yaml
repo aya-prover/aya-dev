@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'aya-prover/aya-dev' && needs.check-aya-version.outputs.isSnapshot == 'true'
     env:
-      ossrhUsername: ${{ secrets.OSSRHUSERNAME }}
-      ossrhPassword: ${{ secrets.OSSRHPASSWORD }}
+      mavenCentralPortalUsername: ${{ secrets.MAVENCENTRALPORTALUSERNAME }}
+      mavenCentralPortalPassword: ${{ secrets.MAVENCENTRALPORTALPASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java ${{ needs.check-aya-version.outputs.javaVersion }}
