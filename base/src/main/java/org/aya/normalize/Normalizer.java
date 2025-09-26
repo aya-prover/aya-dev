@@ -106,7 +106,7 @@ public final class Normalizer implements UnaryOperator<Term> {
               // we may get stuck
               if (result == null) {
                 if (args.sameElements(whnfArgs, true)) return term;
-                return new FnCall(delegate, ulift, args, tc);
+                return new FnCall(delegate, ulift, whnfArgs, tc);
               }
               term = result;
               continue;
