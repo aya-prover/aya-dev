@@ -396,7 +396,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the refs match),
       // so we are unable to do more if we can't normalize them.
-      case FnCall _, PrimCall _ -> null;
+      case FnCall _, RuleReducer _, PrimCall _ -> null;
 
       default -> throw noRules(lhs);
     };
