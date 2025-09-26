@@ -317,9 +317,9 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.setLocalCtx(result.localCtx);
         result.dumpLocalLetTo(teleBinds, exprTycker);
         // now exprTycker has all substitutions that PatternTycker introduced.
-        wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
+        var rawCheckedBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
-        wellBody = zonker.zonk(wellBody);
+        var zonkBody = zonker.zonk(rawCheckedBody);
 
         // bind all pat bindings
         var patWithTypeBound = Pat.collectVariables(result.allPats());
@@ -329,9 +329,9 @@ public final class ClauseTycker implements Problematic, Stateful {
         bindCount = patBindTele.size();
 
         // eta body with inserted patterns
-        wellBody = AppTerm.make(wellBody, result.missingPats().view().map(PatToTerm::visit));
-        wellBody = makeLet(exprTycker.localLet(), wellBody);
-        wellBody = wellBody.bindTele(patBindTele.view());
+        var insertPatternBody = AppTerm.make(zonkBody, result.missingPats().view().map(PatToTerm::visit));
+        var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
+        wellBody = insertLetBody.bindTele(patBindTele.view());
       }
 
       return new Pat.Preclause<>(result.sourcePos, pats.toSeq(), bindCount,
