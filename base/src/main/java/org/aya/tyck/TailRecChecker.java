@@ -3,44 +3,51 @@
 package org.aya.tyck;
 
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.term.LetTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
 import org.aya.tyck.error.TailRecError;
 import org.aya.tyck.tycker.Problematic;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.UnaryOperator;
-
 public interface TailRecChecker {
-  class TailRecDescent implements UnaryOperator<Term> {
+  class TailRecDescent {
     private final Problematic reporter;
     private final FnDecl self;
-    private boolean atTailPosition = true;
 
     public TailRecDescent(@NotNull Problematic reporter, @NotNull FnDecl self) {
       this.reporter = reporter;
       this.self = self;
     }
 
-    @Override
-    public Term apply(@NotNull Term term) {
+    public Term apply(@NotNull @Bound Term term, boolean tailPosition) {
       switch (term) {
         case FnCall(var ref, int ulift, var args, _) -> {
           if (ref instanceof FnDef.Delegate d && d.ref.equals(self.ref) && args.size() == self.telescope.size()) {
-            if (!atTailPosition) reporter.fail(new TailRecError(self.nameSourcePos()));
+            if (!tailPosition) reporter.fail(new TailRecError(self.nameSourcePos()));
             return new FnCall(ref, ulift, args, true);
           }
         }
+        case LetTerm l -> {
+          var definedAs = l.definedAs();
+          var body = l.body();
+
+          definedAs = apply(definedAs, false);
+          body = body.reapply(t -> apply(t, true));
+
+          return l.update(definedAs, body);
+        }
         default -> { }
       }
-      atTailPosition = false;
-      return term.descent(this);
+
+      return term.descent(t -> apply(t, false));
     }
   }
 
-  static @NotNull Term assertTailRec(@NotNull Problematic reporter, @NotNull Term term, @NotNull FnDecl self) {
+  static @NotNull Term assertTailRec(@NotNull Problematic reporter, @NotNull @Bound Term term, @NotNull FnDecl self) {
     var desc = new TailRecDescent(reporter, self);
-    return desc.apply(term);
+    return desc.apply(term, true);
   }
 }
