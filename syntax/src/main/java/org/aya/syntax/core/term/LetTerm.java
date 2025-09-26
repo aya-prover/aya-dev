@@ -20,13 +20,11 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
       : new LetTerm(definedAs, body);
   }
 
-  @Override
-  public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, definedAs), body.descent(f));
   }
 
-  @Override
-  public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
+  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
     return mapper.apply(body.apply(definedAs));
   }
 

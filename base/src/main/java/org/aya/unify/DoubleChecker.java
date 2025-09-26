@@ -84,6 +84,10 @@ public record DoubleChecker(
         unifier.compare(preterm, newMeta, null);
         yield true;
       }
+      // Ideally we would imitate the let behavior in ExprTycker, but that requires too much change.
+      // Hope we never reach this -- once this becomes a bottleneck in the slightest way we should
+      // add `localLet` to this class.
+      case LetTerm let -> inherit(let.make(), expected);
       case PartialTerm(var element) -> whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
         ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
         : failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
