@@ -52,10 +52,10 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   public TermExprializer(
-          @NotNull ExprBuilder builder,
+    @NotNull ExprBuilder builder,
     @NotNull SerializerContext context,
     @NotNull ImmutableSeq<JavaExpr> instantiates,
-          boolean allowLocalTer
+    boolean allowLocalTer
   ) {
     super(builder, context);
     this.instantiates = instantiates;
@@ -94,8 +94,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   public static @NotNull JavaExpr buildFnCall(
-          @NotNull ExprBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
-          int ulift, @NotNull ImmutableSeq<JavaExpr> args
+    @NotNull ExprBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
+    int ulift, @NotNull ImmutableSeq<JavaExpr> args
   ) {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
@@ -146,6 +146,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
         yield subst;
       }
+      // LetFreeTerm should NOT appear
       case TyckInternal i -> throw new Panic(i.getClass().toString());
       case Callable.SharableCall call when call.ulift() == 0 && call.args().isEmpty() ->
         getCallInstance(CallKind.from(call), call.ref());
@@ -258,6 +259,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(A)
       ));
       case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
+      case LetTerm(var definedAs, var body) -> // TODO
+        builder.mkNew(LetTerm.class, ImmutableSeq.of(doSerialize(definedAs), serializeClosure(body)));
     };
   }
 

@@ -91,7 +91,8 @@ public record Synthesizer(
       }
       case TupTerm _, LamTerm _, PartialTerm _ -> null;
       case FreeTerm(var var) -> localCtx().get(var);
-      case LetFreeTerm _, LocalTerm _, LetTerm _ -> Panic.unreachable();
+      case LetFreeTerm(var _, var definedAs) -> synthesize(definedAs);
+      case LocalTerm _, LetTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
       case ProjTerm(var of, var fst) -> {
         var ofTy = trySynth(of);

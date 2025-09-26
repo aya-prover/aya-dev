@@ -11,5 +11,5 @@ import org.aya.syntax.core.term.repr.MetaLitTerm;
  * So, in the compiler, we expect these things to be thrown away.
  */
 public sealed interface TyckInternal extends Term
-  permits ErrorTerm, FreeTerm, FreeTermLike, MetaPatTerm, MetaCall, MetaLitTerm {
+  permits ErrorTerm, FreeTermLike, MetaPatTerm, MetaCall, MetaLitTerm {
 }
