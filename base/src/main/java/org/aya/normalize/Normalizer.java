@@ -62,13 +62,23 @@ public final class Normalizer implements UnaryOperator<Term> {
         case StableWHNF _, FreeTerm _ -> {
           return term;
         }
-        case LocalTerm _ ->
-          throw new IllegalStateException("Local term escapes: " + term);
+        case LocalTerm _ -> throw new IllegalStateException("Local term escapes: " + term);
         case BetaRedex app -> {
           var result = app.descent(this);
           if (result == app) return app;
-          term = result;
-          continue;
+          if (!(result instanceof BetaRedex newApp)) {
+            term = result;
+            continue;
+          } else {
+            // Try again and see if it gets stuck
+            var tryMake = newApp.make();
+            if (tryMake != newApp) {
+              term = tryMake;
+              continue;
+            } else {
+              return newApp;
+            }
+          }
         }
         case FnCall(JitFn instance, int ulift, var args, var tc) -> {
           args = Callable.descent(args, this);
