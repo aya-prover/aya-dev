@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import kala.control.Either;
 import org.aya.generic.Modifier;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public record FnDef(
   @NotNull DefVar<FnDef, FnDecl> ref,
   @NotNull EnumSet<Modifier> modifiers,
-  @NotNull Either<Term, FnClauseBody> body
+  @NotNull Either<@Bound Term, FnClauseBody> body
 ) implements TopLevelDef {
   public FnDef { ref.initialize(this); }
 
