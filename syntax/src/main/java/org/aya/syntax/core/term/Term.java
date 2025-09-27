@@ -11,6 +11,7 @@ import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.marker.BetaRedex;
@@ -79,23 +80,24 @@ public sealed interface Term extends Serializable, AyaDocile
   /// Replacing indexes from `from` to `from + list.size()` (exclusive) with `list`,
   /// a [LocalTerm] with index `from + i` will be replaced by `list[i]` if possible.
   ///
+  /// @param list a list of term, [Closed] is required
   /// @see #bindAllFrom
   @ApiStatus.Internal
-  default @NotNull Term replaceAllFrom(int from, @NotNull ImmutableSeq<Term> list) {
+  default @NotNull Term replaceAllFrom(int from, @NotNull ImmutableSeq<@Closed Term> list) {
     if (list.isEmpty()) return this;
     return descent((i, t) -> t.replaceAllFrom(from + i, list));
   }
 
   /// @see #replaceAllFrom(int, ImmutableSeq)
   /// @see #instTele(SeqView)
-  default @NotNull Term instTeleFrom(int from, @NotNull SeqView<Term> tele) {
+  default @NotNull Term instTeleFrom(int from, @NotNull SeqView<@Closed Term> tele) {
     return replaceAllFrom(from, tele.reversed().toSeq());
   }
 
   /// Corresponds to _instantiate_ operator in \[MM 2004\].
   /// Could be called `apply` similar to Mini-TT, but `apply` is used a lot as method name in Java.
   @ApiStatus.Internal
-  default @NotNull Term instantiate(Term arg) {
+  default @NotNull Term instantiate(@Closed Term arg) {
     return instTeleFrom(0, SeqView.of(arg));
   }
 
@@ -105,7 +107,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// we can instantiate the result `P ?2 ?0 ?1` by some argument `[ 114514 , false , tt ]`,
   /// now it becomes `P 114514 tt false`.
   /// Without this method, we need to reverse the list.
-  default @NotNull Term instTele(@NotNull SeqView<Term> tele) {
+  default @NotNull Term instTele(@NotNull SeqView<@Closed Term> tele) {
     return instTeleFrom(0, tele);
   }
 
@@ -160,7 +162,7 @@ public sealed interface Term extends Serializable, AyaDocile
     return descent(t -> t.doElevate(level));
   }
 
-  record Matching(@NotNull ImmutableSeq<Pat> patterns, int bindCount, @NotNull Term body) {
+  record Matching(@NotNull ImmutableSeq<Pat> patterns, int bindCount, @NotNull @Bound Term body) {
     public @NotNull Matching update(@NotNull Term body) {
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }

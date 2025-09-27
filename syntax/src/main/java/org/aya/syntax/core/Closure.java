@@ -24,7 +24,9 @@ import java.util.function.UnaryOperator;
  */
 public sealed interface Closure extends UnaryOperator<Term> {
   static @NotNull Closure mkConst(@NotNull Term term) { return new Const(term); }
-  Closure descent(IndexedFunction<Term, Term> f);
+
+  /// Make sure you can handle [Bound] term, or use [#reapply(UnaryOperator)] instead.
+  Closure descent(IndexedFunction<@Bound Term, Term> f);
 
   /**
    * Corresponds to <emph>instantiate</emph> operator in [MM 2004],
@@ -33,9 +35,15 @@ public sealed interface Closure extends UnaryOperator<Term> {
    */
   @Override Term apply(Term term);
   default @NotNull Term apply(LocalVar var) { return apply(new FreeTerm(var)); }
-  @NotNull Closure.Locns toLocns();
 
-  default @NotNull Closure reapply(UnaryOperator<Term> f) {
+  default @NotNull Closure.Locns toLocns() {
+    return reapply(UnaryOperator.identity());
+  }
+
+  /// Perform operation on a `Closure` in a safe manner
+  ///
+  /// @param f the bound/close kind of receiving term is determined by the bound/close kind of this Closure.
+  default @NotNull Closure.Locns reapply(UnaryOperator<Term> f) {
     var fresh = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Tyck);
     return f.apply(apply(fresh)).bind(fresh);
   }
@@ -57,10 +65,6 @@ public sealed interface Closure extends UnaryOperator<Term> {
    * So it is important to immediately descent into the body, which we do so using {@link #toLocns()}.
    */
   record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {
-    @Override public @NotNull Closure.Locns toLocns() {
-      var antiMatter = new LocalVar("matter");
-      return lam.apply(new FreeTerm(antiMatter)).bind(antiMatter);
-    }
     @Override public Closure descent(IndexedFunction<Term, Term> f) { return toLocns().descent(f); }
     @Override public Term apply(Term term) { return lam.apply(term); }
   }
