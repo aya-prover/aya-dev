@@ -8,6 +8,7 @@ rootProject.name = "aya-prover"
 }
 
 include(
+  "anf",
   "cli-impl",
   "cli-console",
   "tools",
