@@ -9,7 +9,7 @@ java = "22"
 # https://github.com/JetBrains/java-annotations
 annotations = "26.0.2"
 # https://github.com/Glavo/kala-common
-kala = "0.83.0"
+kala = "0.82.0"
 # https://picocli.info
 picocli = "4.7.7"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
