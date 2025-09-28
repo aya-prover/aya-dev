@@ -229,5 +229,5 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)) tasks.register("showCCR") {
 }
 
 tasks.withType<Sync>().configureEach {
-  dependsOn(tasks.findByPath(":buildSrc:copyModuleInfo"))
+  dependsOn(tasks.getByPath(":buildSrc:copyModuleInfo"))
 }
