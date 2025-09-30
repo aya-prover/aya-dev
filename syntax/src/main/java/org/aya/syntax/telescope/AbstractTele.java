@@ -42,13 +42,17 @@ public interface AbstractTele {
   }
 
   static @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele) {
+    return enrich(tele, GenerateKind.Basic.Pretty);
+  }
+
+  static @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele, @NotNull GenerateKind usage) {
     var richTele = FreezableMutableList.<ParamLike<Term>>create();
 
     for (var i = 0; i < tele.telescopeSize(); ++i) {
       var binds = richTele.<Term>map(x -> new FreeTerm(x.ref()));
       var type = tele.telescope(i, binds);
       richTele.append(new RichParam(
-        new LocalVar(tele.telescopeName(i), SourcePos.NONE, GenerateKind.Basic.Pretty),
+        new LocalVar(tele.telescopeName(i), SourcePos.NONE, usage),
         type,
         tele.telescopeLicit(i))
       );

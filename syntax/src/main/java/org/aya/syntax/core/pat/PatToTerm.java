@@ -6,6 +6,8 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
 import org.jetbrains.annotations.NotNull;
 
+/// [org.aya.syntax.core.annotation.Bound]-friendly,
+/// the dbi-context doesn't change during the recursion, as no new binding is introduced.
 public interface PatToTerm {
   static @NotNull Term visit(@NotNull Pat pat) {
     return switch (pat) {

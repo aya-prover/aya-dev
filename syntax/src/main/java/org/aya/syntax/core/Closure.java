@@ -42,7 +42,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
 
   /// Perform operation on a `Closure` in a safe manner
   ///
-  /// @param f the bound/close kind of receiving term is determined by the bound/close kind of this Closure.
+  /// @param f the db-closeness of receiving term is determined by the db-closeness of this Closure.
   default @NotNull Closure.Locns reapply(UnaryOperator<Term> f) {
     var fresh = new LocalVar("_", SourcePos.NONE, GenerateKind.Basic.Tyck);
     return f.apply(apply(fresh)).bind(fresh);

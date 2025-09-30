@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.Objects;
 
+/// may relate to [org.aya.generic.Nested]
 public class PusheenIterator<T, R> implements Pusheenable<T, Pusheenable<T, R>> {
   protected final Iterator<T> iter;
   protected @Nullable T peek;
@@ -33,6 +34,10 @@ public class PusheenIterator<T, R> implements Pusheenable<T, Pusheenable<T, R>> 
     return realPeek;
   }
 
+  /// Called then [#peek] will be set
+  ///
+  /// @param peeked a newly peeked [T] from somewhere
+  /// @return the new value for [#peek]
   protected @NotNull T postDoPeek(@NotNull T peeked) {
     return peeked;
   }
