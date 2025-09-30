@@ -70,12 +70,11 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   /// @param result     the result according to the pattern tycking, the
-  ///                                     [#params] is always empty if the signature result is
-  ///                                     [org.aya.tyck.pat.iter.Pusheenable.Const].
-  ///                                     The result is always [Closed] under [#localCtx]
-  /// @param paramSubst substitution for parameter, in the same ordeer as parameter.
-  ///                                     [Closed] under [#localCtx]
-  ///                                     Only used by ExprTycker, see [#dumpLocalLetTo]
+  ///                   [#params] is always empty if the signature result is
+  ///                   [org.aya.tyck.pat.iter.Pusheenable.Const].
+  ///                   The result is always [Closed] under [#localCtx]
+  /// @param paramSubst substitution for parameter, in the same ordeer as parameter. [Closed] under [#localCtx].
+  ///                   Only used by ExprTycker, see [#dumpLocalLetTo]
   /// @param freePats   free version of the patterns, [Closed] under [#localCtx()]
   /// @param asSubst    substitution of the `as` patterns, [Closed] under [#localCtx]
   /// @implNote TL;DR: `freePats.dropLast(unpiParamSize)` is compatible with [#localCtx], [#paramSubst], [#result] and [#body]
