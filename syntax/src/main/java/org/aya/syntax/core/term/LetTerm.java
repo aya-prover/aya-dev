@@ -8,6 +8,8 @@ import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +57,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     return new Unlet(definedAs.toSeq(), let);
   }
 
-  public static @NotNull Term bind(@NotNull LetFreeTerm bind, @NotNull Term body) {
+  public static @NotNull @Closed Term bind(@NotNull LetFreeTerm bind, @NotNull @Closed Term body) {
     var name = bind.name();
     var definedAs = bind.definedAs().wellTyped();
     var boundBody = body.bind(name);

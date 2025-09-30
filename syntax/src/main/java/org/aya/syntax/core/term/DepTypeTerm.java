@@ -11,6 +11,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.xtt.CoeTerm;
@@ -150,7 +151,7 @@ public record DepTypeTerm(
 
   /// @param bound -1 for unlimited
   public static @NotNull Unpi unpiAndBind(
-    @NotNull Term term, @NotNull UnaryOperator<Term> pre,
+    @NotNull @Closed Term term, @NotNull UnaryOperator<@Closed Term> pre,
     @NotNull MutableList<LocalVar> names
   ) {
     var params = MutableList.<Param>create();

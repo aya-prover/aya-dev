@@ -15,6 +15,8 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.ParamLike;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.RichParam;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
@@ -128,7 +130,7 @@ public interface AbstractTele {
   /// @param telescope bound parameters, that is, the later parameter can refer to the former parameters
   ///                                  by {@link org.aya.syntax.core.term.LocalTerm}
   /// @param result    bound result
-  record Locns(@NotNull ImmutableSeq<Param> telescope, @NotNull Term result) implements AbstractTele {
+  record Locns(@NotNull ImmutableSeq<@Bound Param> telescope, @NotNull @Bound Term result) implements AbstractTele {
     @Override public int telescopeSize() { return telescope.size(); }
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
@@ -155,7 +157,7 @@ public interface AbstractTele {
     //   return new Locns(telescope.drop(count), result);
     // }
 
-    @Override public @NotNull Locns inst(ImmutableSeq<Term> preArgs) {
+    @Override public @NotNull Locns inst(ImmutableSeq<@Closed Term> preArgs) {
       if (preArgs.isEmpty()) return this;
       assert preArgs.size() <= telescopeSize();
       var view = preArgs.view();
