@@ -15,13 +15,14 @@ import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
@@ -68,26 +69,27 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  /**
-   * @param result     the result according to the pattern tycking, the
-   *                   {@link DepTypeTerm.Unpi#params} is always empty if the signature result is
-   *                   {@link org.aya.tyck.pat.iter.Pusheenable.Const}
-   * @param paramSubst substitution for parameter, in the same ordeer as parameter.
-   *                   See {@link PatternTycker#paramSubst}. Only used by ExprTyckerm, see {@link #dumpLocalLetTo}
-   * @param freePats   a free version of the patterns, see {@link #freePats()}
-   * @param asSubst    substitution of the {@code as} patterns
-   * @implNote If there are fewer pats than parameters, there will be some pats inserted,
-   * but this will not affect {@code paramSubst}, and the inserted pat are "ignored" in tycking
-   * of the body, because we check the body against to {@link #result}.
-   * Then we apply the inserted pats to the body to complete it.
-   */
+  /// @param result     the result according to the pattern tycking, the
+  ///                                     [#params] is always empty if the signature result is
+  ///                                     [org.aya.tyck.pat.iter.Pusheenable.Const].
+  ///                                     The result is always [Closed] under [#localCtx]
+  /// @param paramSubst substitution for parameter, in the same ordeer as parameter.
+  ///                                     [Closed] under [#localCtx]
+  ///                                     Only used by ExprTycker, see [#dumpLocalLetTo]
+  /// @param freePats   free version of the patterns, [Closed] under [#localCtx()]
+  /// @param asSubst    substitution of the `as` patterns, [Closed] under [#localCtx]
+  /// @implNote TL;DR: `freePats.dropLast(unpiParamSize)` is compatible with [#localCtx], [#paramSubst], [#result] and [#body]
+  /// If there are fewer pats than parameters, there will be some pats inserted,
+  /// but this will not affect `paramSubst`, and the inserted pat are "ignored" in tycking
+  /// of the body, because we check the body against to [#result].
+  /// Then we apply the inserted pats to the body to complete it.
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull Term result, int unpiParamSize,
-    @NotNull ImmutableSeq<Pat> freePats,
+    @NotNull @Closed Term result, int unpiParamSize,
+    @NotNull ImmutableSeq<@Closed Pat> freePats,
     @Override @NotNull SourcePos sourcePos,
     @Nullable WithPos<Expr> body,
-    @NotNull ImmutableSeq<Jdg> paramSubst,
+    @NotNull ImmutableSeq<@Closed Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
@@ -243,14 +245,14 @@ public final class ClauseTycker implements Problematic, Stateful {
 
       // fill missing patterns
       // This is not a typo of "repl"
-      var instRepi = sigIter.unpiBody().makePi().instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
-      var instUnpiParam = DepTypeTerm.unpiUnsafe(instRepi, UnaryOperator.identity(), userUnpiSize);
-      var missingPats = instUnpiParam.params().mapIndexed((idx, x) ->
-        // It would be nice if we have a SourcePos here
-        new Pat.Bind(new LocalVar("unpi" + idx, SourcePos.NONE, GenerateKind.Basic.Tyck),
-          x.type()));
+      @Closed var instRepi = sigIter.unpiBody().makePi()
+        // safe to inst, as paramSubst is closed
+        .instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
+      var instUnpiParam = DepTypeTerm.unpiUnsafe(instRepi, userUnpiSize);
+      var freeParam = AbstractTele.enrich(new AbstractTele.Locns(instUnpiParam.params(), instUnpiParam.body()));
+      var missingPats = freeParam.map((x) -> new Pat.Bind(x.ref(), x.type()));
 
-      var wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
+      ImmutableSeq<@Closed Pat> wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
       return new LhsResult(ctx, instRepi, userUnpiSize,
         wellTypedPats, clause.sourcePos, patIter.exprBody(),
         patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
