@@ -4,6 +4,7 @@ package org.aya.syntax.telescope;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -34,7 +35,7 @@ public record Signature(@NotNull AbstractTele.Locns telescope, @NotNull Immutabl
    * The nicest thing about this is that if the whole thing is de Bruijn indexed,
    * the unpi-ed version of it will have the correct de Bruijn index.
    */
-  public @NotNull Signature pusheen(UnaryOperator<Term> pre) {
+  public @NotNull Signature pusheen(UnaryOperator<@Closed Term> pre) {
     var vars = params().mapTo(MutableList.create(), p -> new LocalVar(p.name()));
     var resultPushed = DepTypeTerm.unpiAndBind(result().instTeleVar(vars.view()), pre, vars);
     return new Signature(

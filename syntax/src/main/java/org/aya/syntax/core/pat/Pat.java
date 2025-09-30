@@ -10,6 +10,7 @@ import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.RichParam;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -61,7 +62,7 @@ public sealed interface Pat {
    * @param pats the patterns
    * @return (free variables, bound patterns)
    */
-  static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<Pat>>
+  static @NotNull Pair<MutableList<LocalVar>, ImmutableSeq<@Bound Pat>>
   collectVariables(@NotNull SeqView<Pat> pats) {
     var buffer = MutableList.<LocalVar>create();
     var newPats = pats.map(p -> p.bind(buffer)).toSeq();

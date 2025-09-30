@@ -6,6 +6,8 @@ import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
 import org.jetbrains.annotations.NotNull;
 
+/// [org.aya.syntax.core.annotation.Bound]-friendly,
+/// the dbi-context doesn't change during the recursion, as no new binding is introduced.
 public interface PatToTerm {
   static @NotNull Term visit(@NotNull Pat pat) {
     return switch (pat) {
@@ -16,6 +18,7 @@ public interface PatToTerm {
         // case UntypedBind -> Panic.unreachable();
       };
       case Pat.Bind bind -> new FreeTerm(bind.bind());
+      // FIXME: need a shapeFactory and produce RuleReducer if possible
       case Pat.Con con -> new ConCall(con.head(), con.args().map(PatToTerm::visit));
       case Pat.Tuple(var l, var r) -> new TupTerm(visit(l), visit(r));
       case Pat.Meta meta -> new MetaPatTerm(meta);

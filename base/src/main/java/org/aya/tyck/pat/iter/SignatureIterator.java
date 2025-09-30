@@ -5,6 +5,7 @@ package org.aya.tyck.pat.iter;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableBooleanSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
+/// A iterator for signature, traversal all parameters, and extracts parameters from its result if possible.
 public class SignatureIterator extends PusheenIterator<Param, Term> {
   public static @NotNull Pusheenable<Param, @NotNull Term> makePusheen(@NotNull DepTypeTerm.Unpi unpi) {
     if (unpi.params().isEmpty()) {
@@ -44,26 +46,26 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
   }
 
   public static @NotNull SignatureIterator make(
-    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull ImmutableSeq<@Bound Param> telescope,
     @NotNull DepTypeTerm.Unpi unpi
   ) {
     return new SignatureIterator(telescope, makePusheen(unpi), null);
   }
 
   public final @Nullable ImmutableBooleanSeq elims;
-  private final @NotNull MutableList<Param> consumed = MutableList.create();
+  private final @NotNull MutableList<@Bound Param> consumed = MutableList.create();
   private int teleIndex = 0;
 
-  public SignatureIterator(ImmutableSeq<Param> tele, @NotNull Pusheenable<Param, Term> cat, @Nullable ImmutableBooleanSeq elims) {
+  public SignatureIterator(ImmutableSeq<@Bound Param> tele, @NotNull Pusheenable<@Bound Param, @Bound Term> cat, @Nullable ImmutableBooleanSeq elims) {
     this(tele.iterator(), cat, elims);
   }
 
-  public SignatureIterator(Iterator<Param> iter, @NotNull Pusheenable<Param, Term> cat, @Nullable ImmutableBooleanSeq elims) {
+  public SignatureIterator(Iterator<@Bound Param> iter, @NotNull Pusheenable<@Bound Param, @Bound Term> cat, @Nullable ImmutableBooleanSeq elims) {
     super(iter, cat);
     this.elims = elims;
   }
 
-  @Override public @NotNull Pusheenable<Param, Term> body() {
+  @Override public @NotNull Pusheenable<@Bound Param, @Bound Term> body() {
     return super.body();
   }
 
@@ -77,7 +79,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
     };
   }
 
-  @Override public Param next() {
+  @Override public @Bound Param next() {
     var theNext = super.next();
     consumed.append(theNext);
     return theNext;
@@ -88,7 +90,7 @@ public class SignatureIterator extends PusheenIterator<Param, Term> {
   }
 
   @Override
-  protected @NotNull Param postDoPeek(@NotNull Param peeked) {
+  protected @NotNull @Bound Param postDoPeek(@NotNull @Bound Param peeked) {
     var index = teleIndex++;
     if (elims == null || index >= elims.size()) return peeked;
     return new Param(peeked.name(), peeked.type(), elims.get(index));

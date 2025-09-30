@@ -13,6 +13,7 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.def.PrimDef;
@@ -87,7 +88,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
   /**
    * @param type may not be in whnf, because we want unnormalized type to be used for unification.
    */
-  public @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull Term type) {
+  public @NotNull @Closed Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull @Closed Term type) {
     return switch (expr.data()) {
       case Expr.Lambda lam -> {
         var ref = lam.ref();
@@ -255,7 +256,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    * @param result wellTyped + actual type from synthesize
    * @param expr   original expr, used for error reporting
    */
-  private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
+  private @NotNull Jdg inheritFallbackUnify(@NotNull @Closed Term type, @NotNull @Closed Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     var resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
@@ -318,7 +319,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return true;
   }
 
-  public @NotNull Term ty(@NotNull WithPos<Expr> expr) {
+  public @NotNull @Closed Term ty(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
@@ -366,7 +367,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     };
   }
 
-  public @NotNull Jdg synthesize(@NotNull WithPos<Expr> expr) {
+  public @NotNull @Closed Jdg synthesize(@NotNull WithPos<Expr> expr) {
     var result = doSynthesize(expr);
     if (expr.data() instanceof Expr.WithTerm with) {
       addWithTerm(with, expr.sourcePos(), result.type());
@@ -374,7 +375,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return result;
   }
 
-  public @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
+  public @NotNull @Closed Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Sugar s -> throw new Panic(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
@@ -552,7 +553,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    *
    * @param checker check the type of the body of {@param let}
    */
-  private @NotNull Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, Jdg> checker) {
+  private @NotNull @Closed Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, @Closed Jdg> checker) {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();

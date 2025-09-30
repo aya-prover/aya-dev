@@ -51,6 +51,8 @@ public abstract class PatMatcher extends MatcherBase {
     // also replace the bindings in pat as sub-meta,
     // so that we can solve this meta more.
 
+    // this is why no scope problem, we don't use those foreign [Pat.Bind] directly, instead, we replace them with [Pat.Meta],
+    // and make fresh [LocalVar] for them when inlined.
     var eater = new BindEater(matched.toSeq(), MutableList.create());
     var boroboroPat = eater.apply(pat);   // It looks boroboro, there are holes on it.
     meta.solution().set(boroboroPat);

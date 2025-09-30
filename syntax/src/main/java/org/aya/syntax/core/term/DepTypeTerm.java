@@ -11,6 +11,8 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.xtt.CoeTerm;
@@ -135,22 +137,23 @@ public record DepTypeTerm(
     return new UnpiNamed(params, names, term);
   }
 
+  /// db-closeness inherits from the term which this [Unpi] comes from
   public record Unpi(
-    @NotNull ImmutableSeq<Param> params,
-    @NotNull Term body
+    @NotNull ImmutableSeq<@Bound Param> params,
+    @NotNull @Bound Term body
   ) {
-    public Unpi(@NotNull Term body) {
+    public Unpi(@NotNull @Bound Term body) {
       this(ImmutableSeq.empty(), body);
     }
 
+    /// @return db-closeness inherits the term which this [Unpi] comes from.
     public @NotNull Term makePi() {
       return DepTypeTerm.makePi(params.view().map(Param::type), body);
     }
   }
 
-  /// @param bound -1 for unlimited
-  public static @NotNull Unpi unpiAndBind(
-    @NotNull Term term, @NotNull UnaryOperator<Term> pre,
+  public static @NotNull @Closed Unpi unpiAndBind(
+    @NotNull @Closed Term term, @NotNull UnaryOperator<@Closed Term> pre,
     @NotNull MutableList<LocalVar> names
   ) {
     var params = MutableList.<Param>create();
@@ -166,10 +169,10 @@ public record DepTypeTerm(
     return new Unpi(params.toSeq(), term.bindTele(names.view()));
   }
 
-  public static @NotNull Unpi unpiUnsafe(@NotNull Term term, @NotNull UnaryOperator<Term> pre, int bound) {
+  public static @NotNull Unpi unpiUnsafe(@NotNull @Bound Term term, int bound) {
     var params = MutableList.<Param>create();
     var i = 0;
-    while (i < bound && pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
+    while (i < bound && term instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi) {
       // Note: PatternTycker depends on the licit of unpi param, be careful to change it!
       params.append(new Param("a" + i++, param, true));
       term = body.toLocns().body();
@@ -214,7 +217,8 @@ public record DepTypeTerm(
     return pi;
   }
 
-  @ForLSP public static @NotNull Term makePi(@NotNull SeqView<@NotNull Term> telescope, @NotNull Term body) {
+  @ForLSP
+  public static @NotNull Term makePi(@NotNull SeqView<@NotNull @Bound Term> telescope, @NotNull @Bound Term body) {
     return telescope.foldRight(body, (param, cod) -> new DepTypeTerm(DTKind.Pi, param, new Closure.Locns(cod)));
   }
 }

@@ -4,10 +4,11 @@ package org.aya.syntax.core.term;
 
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull Jdg definedAs) implements FreeTermLike {
+public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull @Closed Jdg definedAs) implements FreeTermLike {
   public @NotNull LetFreeTerm update(@NotNull Jdg definedAs) {
     return definedAs.wellTyped() == definedAs().wellTyped()
       ? this

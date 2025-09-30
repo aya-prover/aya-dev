@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
 import org.aya.normalize.Finalizer;
 import org.aya.normalize.Normalizer;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
@@ -25,7 +26,7 @@ import java.util.function.Supplier;
  */
 public interface Stateful {
   @NotNull TyckState state();
-  default @NotNull Term whnf(@NotNull Term term) { return new Normalizer(state()).apply(term); }
+  default @NotNull @Closed Term whnf(@NotNull @Closed Term term) { return new Normalizer(state()).apply(term); }
   /// Does not validate solution.
   default void solve(MetaVar meta, Term solution) { state().solve(meta, solution); }
   default @NotNull Term freezeHoles(@NotNull Term term) { return new Finalizer.Freeze(this).zonk(term); }

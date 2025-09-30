@@ -10,6 +10,7 @@ import kala.control.Result;
 import org.aya.generic.Modifier;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitMatchy;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.pat.PatMatcher;
@@ -51,7 +52,7 @@ public final class Normalizer implements UnaryOperator<Term> {
    * This function is tail-recursion optimized.
    * To tail-recursively call `apply`, assign `term` with the result and `continue`.
    */
-  @SuppressWarnings("UnnecessaryContinue") @Override public Term apply(Term term) {
+  @SuppressWarnings("UnnecessaryContinue") @Override public @Closed Term apply(@Closed Term term) {
     while (true) {
       var alreadyWHNF = term instanceof StableWHNF ||
         term instanceof FreeTerm ||
@@ -68,6 +69,9 @@ public final class Normalizer implements UnaryOperator<Term> {
           continue;
         }
         // Already full NF mode
+        // Although normalizing a LamTerm looks very bad, but it is required due to our elaboration for partial application:
+        // For `f : A -> B -> C` and `a : A`, we will elaborate `f a` as `fn b => f a b`. If `f a` can be normalized, then
+        // we hope `fn b => f a b` can be normalized too.
         case LamTerm(var lam) -> {
           return new LamTerm(lam.reapply(this));
         }
@@ -80,6 +84,8 @@ public final class Normalizer implements UnaryOperator<Term> {
         case LetTerm(var definedAs, var body) -> {
           term = body.apply(apply(definedAs));
         }
+        // Already full NF mode
+        // Make sure you handle all [Term]s that contains [Closure] before, such as [LamTerm]
         case StableWHNF _ -> {
           return term.descent(this);
         }
