@@ -312,6 +312,9 @@ public class PatternTycker implements Problematic, Stateful {
       wellTyped.appendAll(generated);
 
       // avoid unnecessary pusheen
+      // removing this cannot get rid of [missingPats] in [ClauseTycker#checkLhs]
+      // it is still possible that the body is not lambda while its type is Pi
+      // (consider `def foo : A -> B => ...` and `def bar ... : A -> B | ... => foo` where `foo` is a `FnCall`)
       if (patterns.isFromPusheen() && telescope.isFromPusheen()) {
         break;
       }

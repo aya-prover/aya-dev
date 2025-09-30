@@ -295,6 +295,8 @@ public final class ClauseTycker implements Problematic, Stateful {
 
         // eta body with inserted patterns
         // make before [Pat.collectVariables], as we need [pats] are [Closed].
+        // FIXME: don't takeLast(result.unpiParamSize), or even don't store unpiParamSize, instead, store [missingPats].
+        //        cause [missingPats] [checkLhs] inserts may have length less than [unpiParamSize]
         @Closed var insertPatternBody = AppTerm.make(zonkBody, pats.view().takeLast(result.unpiParamSize).map(PatToTerm::visit));
         var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
 
