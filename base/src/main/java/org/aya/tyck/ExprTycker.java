@@ -256,7 +256,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
    * @param result wellTyped + actual type from synthesize
    * @param expr   original expr, used for error reporting
    */
-  private @NotNull Jdg inheritFallbackUnify(@NotNull Term type, @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
+  private @NotNull Jdg inheritFallbackUnify(@NotNull @Closed Term type, @NotNull @Closed Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     var resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)

@@ -9,7 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/// Annotations whether a [Term] is a bound term, which means it **MAY** have uncaptured [org.aya.syntax.core.term.LocalTerm].
+/// Annotations whether a [Term] is a bound/dbi-open term, which means it **MAY** have uncaptured [org.aya.syntax.core.term.LocalTerm].
 /// This basically a [Term] version of [org.jetbrains.annotations.Nullable].
 ///
 /// ## What kind of operation is considered not [Bound]-friendly?

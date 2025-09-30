@@ -84,6 +84,8 @@ public final class Normalizer implements UnaryOperator<Term> {
         case LetTerm(var definedAs, var body) -> {
           term = body.apply(apply(definedAs));
         }
+        // Already full NF mode
+        // Make sure you handle all [Term]s that contains [Closure] before, such as [LamTerm]
         case StableWHNF _ -> {
           return term.descent(this);
         }

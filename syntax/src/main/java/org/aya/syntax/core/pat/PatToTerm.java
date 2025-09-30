@@ -16,6 +16,7 @@ public interface PatToTerm {
         // case UntypedBind -> Panic.unreachable();
       };
       case Pat.Bind bind -> new FreeTerm(bind.bind());
+      // FIXME: need a shapeFactory and produce RuleReducer if possible
       case Pat.Con con -> new ConCall(con.head(), con.args().map(PatToTerm::visit));
       case Pat.Tuple(var l, var r) -> new TupTerm(visit(l), visit(r));
       case Pat.Meta meta -> new MetaPatTerm(meta);
