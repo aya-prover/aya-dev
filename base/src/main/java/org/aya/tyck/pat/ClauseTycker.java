@@ -321,16 +321,18 @@ public final class ClauseTycker implements Problematic, Stateful {
         exprTycker.solveMetas();
         var zonkBody = zonker.zonk(rawCheckedBody);
 
+        // eta body with inserted patterns
+        // make before [Pat.collectVariables], as we need [pats] are [Closed].
+        @Closed var insertPatternBody = AppTerm.make(zonkBody, result.missingPats().view().map(PatToTerm::visit));
+        var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
+
         // bind all pat bindings
-        var patWithTypeBound = Pat.collectVariables(result.allPats());
+        var patWithTypeBound = Pat.collectVariables(pats.view());
         pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 
         bindCount = patBindTele.size();
 
-        // eta body with inserted patterns
-        var insertPatternBody = AppTerm.make(zonkBody, result.missingPats().view().map(PatToTerm::visit));
-        var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
         wellBody = insertLetBody.bindTele(patBindTele.view());
       }
 
@@ -400,7 +402,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// contain let bindings from real let expressions,
   ///
   /// @param term a free term
-  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull Term term) {
+  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull @Closed Term term) {
     // only one level
     return lets.let()
       .toSeq()
