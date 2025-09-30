@@ -28,6 +28,11 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     return mapper.apply(body.apply(definedAs));
   }
 
+  public static @NotNull Term makeAll(@NotNull Term term) {
+    if (term instanceof LetTerm l) l.make(LetTerm::makeAll);
+    return term;
+  }
+
   public record Unlet(@NotNull ImmutableSeq<LetFreeTerm> definedAs, @NotNull Term body) {
   }
 

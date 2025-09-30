@@ -12,6 +12,7 @@ import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.term.LetTerm;
 import org.aya.syntax.core.term.call.FnCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +95,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-              if (matching.body() instanceof FnCall call && call.tailCall()) {
+            if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
                 var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
                   .take(count)
                   .map(LocalVariable::ref)
