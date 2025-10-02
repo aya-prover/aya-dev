@@ -55,3 +55,12 @@ module PullRequest1268 {
   def elims {A : Type} (a : A) (B : Type) (b : B) {C : Type} : Fn (D : Type) D -> D elim a, b
   | a => fn b D => id D
 }
+
+module Issue1380 {
+  def id (A : Type) : A -> A => fn a => a
+
+  def test (A : Type) : Fn (B: Type) (b : B) -> B
+  | a, B => fn b => id B b
+
+  def eval : test Nat Nat 0 = 0 => refl
+}

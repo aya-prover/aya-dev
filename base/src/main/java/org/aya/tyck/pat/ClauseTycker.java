@@ -69,14 +69,16 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  /// @param result     the result according to the pattern tycking, the
-  ///                   [#params] is always empty if the signature result is
-  ///                   [org.aya.tyck.pat.iter.Pusheenable.Const].
-  ///                   The result is always [Closed] under [#localCtx]
-  /// @param paramSubst substitution for parameter, in the same ordeer as parameter. [Closed] under [#localCtx].
-  ///                   Only used by ExprTycker, see [#dumpLocalLetTo]
-  /// @param freePats   free version of the patterns, [Closed] under [#localCtx()]
-  /// @param asSubst    substitution of the `as` patterns, [Closed] under [#localCtx]
+  /// @param result      the result according to the pattern tycking, the
+  ///                    [#params] is always empty if the signature result is
+  ///                    [org.aya.tyck.pat.iter.Pusheenable.Const].
+  ///                    The result is always [Closed] under [#localCtx]
+  /// @param paramSubst  substitution for parameter, in the same ordeer as parameter. [Closed] under [#localCtx].
+  ///                    Only used by ExprTycker, see [#dumpLocalLetTo]
+  /// @param tyckedPats  tycked, free version of the patterns, [Closed] under [#localCtx()]
+  /// @param missingPats patterns that makes [#freePats()] agree with the pusheen signature. Be careful that [#missingPats]
+  ///                    is not necessary to be [Pat.Bind], see [Worker#refinePattern].
+  /// @param asSubst     substitution of the `as` patterns, [Closed] under [#localCtx]
   /// @implNote TL;DR: `freePats.dropLast(unpiParamSize)` is compatible with [#localCtx], [#paramSubst], [#result] and [#body]
   /// If there are fewer pats than parameters, there will be some pats inserted,
   /// but this will not affect `paramSubst`, and the inserted pat are "ignored" in tycking
@@ -84,14 +86,24 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// Then we apply the inserted pats to the body to complete it.
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull @Closed Term result, int unpiParamSize,
-    @NotNull ImmutableSeq<@Closed Pat> freePats,
+    @NotNull @Closed Term result,
+    @NotNull ImmutableSeq<@Closed Pat> tyckedPats,
+    @NotNull ImmutableSeq<@Closed Pat> missingPats,
     @Override @NotNull SourcePos sourcePos,
     @Nullable WithPos<Expr> body,
     @NotNull ImmutableSeq<@Closed Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
+    public @NotNull ImmutableSeq<@Closed Pat> freePats() {
+      return tyckedPats.appendedAll(missingPats);
+    }
+
+    @Deprecated
+    public int unpiParamSize() {
+      return missingPats.size();
+    }
+
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
@@ -168,7 +180,10 @@ public final class ClauseTycker implements Problematic, Stateful {
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
-        sibling, lets.apply(curLhs.result), curLhs.unpiParamSize, newPatterns,
+        sibling, lets.apply(curLhs.result),
+        newPatterns.dropLast(curLhs.unpiParamSize()),
+        // Well... It is possible if the type has only one constructor, like Unit
+        newPatterns.takeLast(curLhs.unpiParamSize()),
         curLhs.sourcePos, curLhs.body, paramSubst, curLhs.asSubst, curLhs.hasError);
     }
 
@@ -247,13 +262,16 @@ public final class ClauseTycker implements Problematic, Stateful {
       @Closed var instRepi = sigIter.unpiBody().makePi()
         // safe to inst, as paramSubst is closed
         .instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
+      // unpi [instRepi] **at most** [userUnpiSize]
       var instUnpiParam = DepTypeTerm.unpiUnsafe(instRepi, userUnpiSize);
+      // be careful that [freeParam.size() <= userUnpiSize], `==` is not always true.
       var freeParam = AbstractTele.enrich(new AbstractTele.Locns(instUnpiParam.params(), instUnpiParam.body()));
       var missingPats = freeParam.map((x) -> new Pat.Bind(x.ref(), x.type()));
 
-      ImmutableSeq<@Closed Pat> wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
-      return new LhsResult(ctx, instRepi, userUnpiSize,
-        wellTypedPats, clause.sourcePos, patIter.exprBody(),
+      // ImmutableSeq<@Closed Pat> wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
+      return new LhsResult(ctx, instRepi,
+        patResult.wellTyped(), ImmutableSeq.narrow(missingPats),
+        clause.sourcePos, patIter.exprBody(),
         patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
     }
   }
@@ -296,7 +314,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         bindCount = patBindTele.size();
 
         // eta body with inserted patterns
-        wellBody = AppTerm.make(wellBody, pats.view().takeLast(result.unpiParamSize).map(PatToTerm::visit));
+        wellBody = AppTerm.make(wellBody, result.missingPats().view().map(PatToTerm::visit));
         wellBody = wellBody.bindTele(patBindTele.view());
       }
 
