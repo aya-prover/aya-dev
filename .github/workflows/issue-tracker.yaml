@@ -1,0 +1,26 @@
+on:
+  push:
+    branches:
+      - main
+  issues:
+    types:
+      - opened
+
+jobs:
+  issue-tracker:
+    runs-on: ubuntu-lastest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Setup Aya
+        uses: 'HoshinoTented/setup-aya@v1'
+        with:
+          # TODO: change to main after merge
+          # Also, we can reuse previously build aya
+          refs: 'issue-checker'
+      - name: Run Issue Tracker
+        uses: 'HoshinoTented/issue-tracker@v1'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue: ${{ github.event.issue.number }}
