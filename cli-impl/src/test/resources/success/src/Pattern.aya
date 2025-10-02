@@ -49,6 +49,10 @@ module PullRequest1268 {
   def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (d : D) D -> D
   | a, b, D => fn d => id D
 
+  // allInOneNoElim cannot cover the pusheen from body case (but cover the pusheen from signature case)
+  def allInOneNoElim^C (A : Type) (B : Type) : Fn (b : B) B -> B
+  | A => fn B => fn d => id B
+
   // telescope: A a B b C
   // unpi: D d0 -> d1
   @suppress(LocalShadow)
