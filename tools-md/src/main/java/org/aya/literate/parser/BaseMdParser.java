@@ -209,7 +209,12 @@ public class BaseMdParser {
     if (type == MarkdownElementTypes.HTML_BLOCK) {
       var content = getTextInNode(node);
       if (content.startsWith("<!--")) {
-        return new Literate.Raw(Doc.empty());
+        var end = content.lastIndexOf("-->");
+        if (end == -1) {
+          end = content.length();
+        }
+
+        return new Literate.Comment(content.substring(4, end));
       }
     }
 

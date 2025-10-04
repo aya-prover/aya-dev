@@ -88,6 +88,7 @@ public interface Literate extends Docile {
     public final @NotNull String language;
     public final @NotNull String code;
 
+    // TODO: seems we can construct empty source pos, update code
     /**
      * The source pos of this code block, without '```\n' and '\n```'<br/>
      * It is null if the code block is empty, because we are unable to construct an empty {@link SourcePos}
@@ -114,6 +115,13 @@ public interface Literate extends Docile {
   record Unsupported(@NotNull ImmutableSeq<Literate> children) implements Literate {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(children.map(Literate::toDoc));
+    }
+  }
+
+  record Comment(@NotNull String comment) implements Literate {
+    @Override
+    public @NotNull Doc toDoc() {
+      return Doc.empty();
     }
   }
 }
