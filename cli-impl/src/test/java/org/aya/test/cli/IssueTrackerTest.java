@@ -3,7 +3,7 @@
 package org.aya.test.cli;
 
 import org.aya.cli.issue.IssueParser;
-import org.aya.cli.issue.IssueRunner;
+import org.aya.cli.issue.IssueSetup;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.test.TestRunner;
 import org.aya.util.position.SourceFile;
@@ -23,6 +23,6 @@ public class IssueTrackerTest {
 
     var files = result.files();
 
-    IssueRunner.setup(files, Path.of("build/issue-tracker"));
+    IssueSetup.setup(files, Path.of("build/issue-tracker"));
   }
 }

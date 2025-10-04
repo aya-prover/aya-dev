@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
-public class IssueRunner {
+public class IssueSetup {
   public static int run(@NotNull SourceFile file, @NotNull Path testDir, @NotNull Reporter reporter) throws IOException {
     var result = new IssueParser(file, reporter).parse();
 
@@ -24,7 +24,7 @@ public class IssueRunner {
     var files = result.files();
     var version = result.ayaVersion();
 
-    IssueRunner.setup(files, testDir);
+    IssueSetup.setup(files, testDir);
     System.out.println(version == null ? null : version.versionNumber());
     System.out.println(files.joinToString(" ", (f) -> {
       if (f.name() == null) return "<unnamed>.aya";
@@ -52,7 +52,7 @@ public class IssueRunner {
       {
         "ayaVersion": "114514",
         "group": "org.aya-prover",
-        "name" : "issue-checker",
+        "name" : "issue-tracker",
         "version": "0.1.0"
       }
       """);

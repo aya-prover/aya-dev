@@ -3,7 +3,7 @@
 package org.aya.cli.console;
 
 import org.aya.cli.interactive.ReplConfig;
-import org.aya.cli.issue.IssueRunner;
+import org.aya.cli.issue.IssueSetup;
 import org.aya.cli.library.LibraryCompiler;
 import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.literate.FlclFaithfulPrettier;
@@ -116,7 +116,7 @@ public class Main extends MainArgs implements Callable<Integer> {
     replConfig.close();
 
     if (outputFile == null) outputFile = ".";
-    return IssueRunner.run(SourceFile.from(SourceFileLocator.EMPTY, Path.of(inputFile)), Path.of(outputFile), reporter);
+    return IssueSetup.run(SourceFile.from(SourceFileLocator.EMPTY, Path.of(inputFile)), Path.of(outputFile), reporter);
   }
 
   private @Nullable CompilerFlags.PrettyInfo computePrettyInfo(

@@ -2,8 +2,6 @@ module aya.cli.console {
   requires transitive aya.cli.impl;
   requires transitive aya.repl;
 
-  requires static org.jetbrains.annotations;
-
   requires com.google.gson;
   requires info.picocli;
   requires org.jline.builtins;
@@ -12,6 +10,7 @@ module aya.cli.console {
   requires java.net.http;
   requires aya.producer;
   requires com.google.errorprone.annotations;
+  requires org.jetbrains.annotations;
 
   exports org.aya.cli.plct;
   exports org.aya.cli.repl;
