@@ -16,9 +16,8 @@ jobs:
       - name: Setup Aya
         uses: 'HoshinoTented/setup-aya@v1'
         with:
-          # TODO: change to main after merge
           # Also, we can reuse previously build aya
-          refs: 'issue-checker'
+          refs: 'main'
       - name: Run Issue Tracker
         uses: 'HoshinoTented/issue-tracker@v1'
         with:
