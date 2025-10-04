@@ -1,3 +1,4 @@
+name: issue tracker
 on:
   push:
     branches:
@@ -8,7 +9,7 @@ on:
 
 jobs:
   issue-tracker:
-    runs-on: ubuntu-lastest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
