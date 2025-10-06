@@ -66,14 +66,15 @@ public record PatClassifier(
     return subst.appended(term);
   }
 
+  /// @param freePats the second layer of [SeqView] should be friendly for random access
   public static @NotNull ImmutableSeq<PatClass.Seq<Term, Pat>> classify(
-    @NotNull SeqView<ImmutableSeq<Pat>> freePats,
+    @NotNull SeqView<SeqView<Pat>> freePats,
     @NotNull SeqView<Param> telescope, @NotNull AbstractTycker tycker,
     @NotNull SourcePos pos
   ) {
     var classifier = new PatClassifier(tycker, pos);
     var cl = classifier.classifyN(ImmutableSeq.empty(), telescope, freePats
-      .mapIndexed((i, clause) -> new Indexed<>(clause.view(), i))
+      .mapIndexed((i, clause) -> new Indexed<>(clause, i))
       .toSeq(), 4);
     var p = cl.partition(c -> c.cls().isEmpty());
     var missing = p.component1();
