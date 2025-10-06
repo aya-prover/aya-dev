@@ -192,6 +192,7 @@ public record PatClassifier(
     };
   }
 
+  /// @return `result[i] : List<T>` means the `i`-th user clause is used by these pat classes
   public static <T extends PatClass> MutableSeq<MutableList<T>> firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
     @NotNull Problematic reporter, @NotNull ImmutableSeq<T> classes
