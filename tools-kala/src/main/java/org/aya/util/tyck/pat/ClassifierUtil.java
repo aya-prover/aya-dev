@@ -8,12 +8,10 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import org.aya.util.Pair;
 import org.aya.util.position.SourceNode;
-import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
-import java.util.function.ObjIntConsumer;
 
 public interface ClassifierUtil<Subst, Term, Param, Pat> {
   Param subst(Subst subst, Param param);
@@ -56,17 +54,16 @@ public interface ClassifierUtil<Subst, Term, Param, Pat> {
         .map(args -> args.pair(subclauses)));
   }
 
+  /// @return `result[i] : List<T>` means the `i`-th user clause is used by these pat classes
   static <T extends PatClass> MutableSeq<MutableList<T>> firstMatchDomination(
     @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull ObjIntConsumer<SourcePos> report, @NotNull ImmutableSeq<T> classes
+    @NotNull ImmutableSeq<T> classes
   ) {
     // StackOverflow says they're initialized to zero
     var numbers = MutableSeq.fill(clauses.size(), _ -> MutableList.<T>create());
     classes.forEach(results ->
       numbers.get(results.cls().min()).append(results));
     // ^ The minimum is not always the first one
-    for (int i = 0; i < numbers.size(); i++)
-      if (numbers.get(i).isEmpty()) report.accept(clauses.get(i).sourcePos(), i + 1);
     return numbers;
   }
 }

@@ -7,7 +7,6 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.generic.State;
 import org.aya.generic.term.DTKind;
@@ -26,7 +25,6 @@ import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.Pair;
-import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.tyck.pat.ClassifierUtil;
@@ -190,15 +188,6 @@ public record PatClassifier(
       case Pat.Bind _ -> new Indexed<>(conTele.view().map(Param::toFreshPat), ix);
       default -> null;
     };
-  }
-
-  /// @return `result[i] : List<T>` means the `i`-th user clause is used by these pat classes
-  public static <T extends PatClass> MutableSeq<MutableList<T>> firstMatchDomination(
-    @NotNull ImmutableSeq<? extends SourceNode> clauses,
-    @NotNull Problematic reporter, @NotNull ImmutableSeq<T> classes
-  ) {
-    return ClassifierUtil.firstMatchDomination(clauses, (pos, i) -> reporter.fail(
-      new ClausesProblem.FMDomination(i, pos)), classes);
   }
 
   private record ConTele(

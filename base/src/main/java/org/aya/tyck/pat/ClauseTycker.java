@@ -26,6 +26,7 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
+import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.pat.iter.LambdaPusheen;
 import org.aya.tyck.pat.iter.PatternIterator;
@@ -37,6 +38,7 @@ import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.tyck.pat.ClassifierUtil;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -127,17 +129,23 @@ public final class ClauseTycker implements Problematic, Stateful {
           lhs.view().map(LhsResult::allPats),
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
-          var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
+          var usages = ClassifierUtil.firstMatchDomination(clauses, classes);
           // for the `i`-th clause
           for (int i = 0; i < usages.size(); i++) {
+            var clause = clauses.get(i);
             // skip absurd clauses
-            if (clauses.get(i).expr.isEmpty()) continue;
+            if (clause.expr.isEmpty()) continue;
             var currentClasses = usages.get(i);
-            // if the clause is only reachable for a single leaf in the case tree
-            if (currentClasses.sizeEquals(1)) {
-              // try to refine the patterns
-              var newLhs = refinePattern(lhs.get(i), currentClasses.getAny());
-              if (newLhs != null) lhs.set(i, newLhs);
+            switch (currentClasses.size()) {
+              // if the clause is unreachable
+              case 0 -> parent.fail(new ClausesProblem.FMDomination(i + 1, clause.sourcePos));
+              // if the clause is only reachable for a single leaf in the case tree
+              case 1 -> {
+                // try to refine the patterns
+                var newLhs = refinePattern(lhs.get(i), currentClasses.getAny());
+                if (newLhs != null) lhs.set(i, newLhs);
+              }
+              default -> {}
             }
           }
         }
@@ -161,7 +169,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// f x = body2
     ///```
     /// The `x` in the second case is only reachable for input `suc y`,
-    /// and we can realize this by inspecting the result of [PatClassifier#firstMatchDomination].
+    /// and we can realize this by inspecting the result of [ClassifierUtil#firstMatchDomination].
     /// So, we can replace `x` with `suc y` to help computing the result type.
     /// A more realistic motivating example can be found
     /// [here](https://twitter.com/zornsllama/status/1465435870861926400).
