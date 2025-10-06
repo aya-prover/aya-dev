@@ -46,8 +46,13 @@ module Issue630 {
 module PullRequest1268 {
   def id (A : Type) : A -> A => fn a => a
 
-  def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (d : D) D -> D
-  | a, b, D => fn d => id D
+  def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (E : Type) (e : E) E -> E
+  | a, b, D => fn E => fn e => id E
+
+  def test0 (A : Type) : Fn (B: Type) (b : B) -> B
+  | a, B => fn b => id B b
+
+  def eval0 : test0 Nat Nat 0 = 0 => refl
 
   // telescope: A a B b C
   // unpi: D d0 -> d1

@@ -14,7 +14,7 @@ import java.util.function.UnaryOperator;
 public record LetReplacer(@NotNull LocalLet let) implements UnaryOperator<Term> {
   @Override public Term apply(Term term) {
     return switch (term) {
-      case FreeTerm(var name) when let.contains(name) -> apply(let.get(name).wellTyped());
+      case FreeTerm(var name) when let.contains(name) -> apply(let.getTerm(name));
       default -> term.descent(this);
     };
   }

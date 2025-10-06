@@ -529,8 +529,15 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) ->
-        ArgsComputer.generateApplication(this, args, localLet.get(ref)).lift(lift);
+      case LocalVar ref when localLet.contains(ref) -> {
+        var definedAs = localLet.get(ref);
+        var jdg = definedAs.definedAs();
+        var term = definedAs.inline()
+          ? jdg.wellTyped()
+          : new LetFreeTerm(ref, jdg);
+        var start = new Jdg.Default(term, jdg.type());
+        yield ArgsComputer.generateApplication(this, args, start).lift(lift);
+      }
       case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
         new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
@@ -557,6 +564,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();
+    var bindName = letBind.bindName();
     var typeExpr = Expr.buildPi(letBind.sourcePos(),
       letBind.telescope().view(), letBind.result());
     // as well as the body of the binding, for example:
@@ -570,13 +578,17 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     // Now everything is in form `let f : G := g in h`
 
     var type = freezeHoles(ty(typeExpr));
-    var definedAsResult = inherit(definedAsExpr, type);
+    var definedAs = inherit(definedAsExpr, type);
 
-    addWithTerm(letBind, letBind.sourcePos(), definedAsResult.type());
+    addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subscope()) {
-      localLet.put(let.bind().bindName(), definedAsResult);
-      return checker.apply(let.body());
+      localLet.put(bindName, definedAs, false);
+      var result = checker.apply(let.body());
+      var letFree = new LetFreeTerm(bindName, definedAs);
+      var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
+      var typeLet = LetTerm.bind(letFree, result.type());
+      return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
 
