@@ -26,6 +26,7 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ExprTycker;
 import org.aya.tyck.TyckState;
 import org.aya.tyck.ctx.LocalLet;
+import org.aya.tyck.error.ClausesProblem;
 import org.aya.tyck.error.PatternProblem;
 import org.aya.tyck.pat.iter.LambdaPusheen;
 import org.aya.tyck.pat.iter.PatternIterator;
@@ -37,6 +38,7 @@ import org.aya.util.position.SourceNode;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.tyck.pat.ClassifierUtil;
 import org.aya.util.tyck.pat.PatClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -69,29 +71,38 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
-  /// @param result     the result according to the pattern tycking, the
-  ///                   [#params] is always empty if the signature result is
-  ///                   [org.aya.tyck.pat.iter.Pusheenable.Const].
-  ///                   The result is always [Closed] under [#localCtx]
-  /// @param paramSubst substitution for parameter, in the same ordeer as parameter. [Closed] under [#localCtx].
-  ///                   Only used by ExprTycker, see [#dumpLocalLetTo]
-  /// @param freePats   free version of the patterns, [Closed] under [#localCtx()]
-  /// @param asSubst    substitution of the `as` patterns, [Closed] under [#localCtx]
-  /// @implNote TL;DR: `freePats.dropLast(unpiParamSize)` is compatible with [#localCtx], [#paramSubst], [#result] and [#body]
-  /// If there are fewer pats than parameters, there will be some pats inserted,
+  /// @param result      the result according to the pattern tycking, the
+  ///                    [#params] is always empty if the signature result is
+  ///                    [org.aya.tyck.pat.iter.Pusheenable.Const].
+  ///                    The result is always [Closed] under [#localCtx]
+  /// @param paramSubst  substitution for parameter, in the same ordeer as parameter. [Closed] under [#localCtx].
+  ///                    Only used by ExprTycker, see [#dumpLocalLetTo]
+  /// @param tyckedPats  tycked, free version of the patterns, [Closed] under [#localCtx()]
+  /// @param missingPats patterns that makes [#allPats()] agree with the pusheen signature. Be careful that [#missingPats]
+  ///                    are not necessarily [Pat.Bind], see [Worker#refinePattern].
+  /// @param asSubst     substitution of the `as` patterns, [Closed] under [#localCtx]
+  /// @implNote TL;DR: [#tyckedPats] is compatible with [#localCtx], [#paramSubst], [#result] and [#body].
+  /// If there are fewer pats than parameters, we insert pats (called [#missingPats]) at the end,
   /// but this will not affect `paramSubst`, and the inserted pat are "ignored" in tycking
   /// of the body, because we check the body against to [#result].
-  /// Then we apply the inserted pats to the body to complete it.
+  /// Then we apply the inserted pats to the body  (essentially using [#allPats()]) to complete it.
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull @Closed Term result, int unpiParamSize,
-    @NotNull ImmutableSeq<@Closed Pat> freePats,
+    @NotNull @Closed Term result,
+    @NotNull ImmutableSeq<@Closed Pat> tyckedPats,
+    @NotNull ImmutableSeq<@Closed Pat> missingPats,
     @Override @NotNull SourcePos sourcePos,
     @Nullable WithPos<Expr> body,
     @NotNull ImmutableSeq<@Closed Jdg> paramSubst,
     @NotNull LocalLet asSubst,
     boolean hasError
   ) implements SourceNode {
+    public @NotNull SeqView<@Closed Pat> allPats() {
+      return tyckedPats.view().appendedAll(missingPats);
+    }
+
+    public int userPatSize() { return tyckedPats.size(); }
+
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
       teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
@@ -115,16 +126,26 @@ public final class ClauseTycker implements Problematic, Stateful {
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
         classes = PatClassifier.classify(
-          lhs.view().map(LhsResult::freePats),
+          lhs.view().map(LhsResult::allPats),
           telescope.view().concat(unpi.params()), parent.exprTycker, overallPos);
         if (clauses.isNotEmpty()) {
-          var usages = PatClassifier.firstMatchDomination(clauses, parent, classes);
+          var usages = ClassifierUtil.firstMatchDomination(clauses, classes);
+          // for the `i`-th clause
           for (int i = 0; i < usages.size(); i++) {
-            if (clauses.get(i).expr.isEmpty()) continue;
+            var clause = clauses.get(i);
+            // skip absurd clauses
+            if (clause.expr.isEmpty()) continue;
             var currentClasses = usages.get(i);
-            if (currentClasses.sizeEquals(1)) {
-              var newLhs = refinePattern(lhs.get(i), currentClasses.get(0));
-              if (newLhs != null) lhs.set(i, newLhs);
+            switch (currentClasses.size()) {
+              // if the clause is unreachable
+              case 0 -> parent.fail(new ClausesProblem.FMDomination(i + 1, clause.sourcePos));
+              // if the clause is only reachable for a single leaf in the case tree
+              case 1 -> {
+                // try to refine the patterns
+                var newLhs = refinePattern(lhs.get(i), currentClasses.getAny());
+                if (newLhs != null) lhs.set(i, newLhs);
+              }
+              default -> {}
             }
           }
         }
@@ -148,7 +169,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// f x = body2
     ///```
     /// The `x` in the second case is only reachable for input `suc y`,
-    /// and we can realize this by inspecting the result of [PatClassifier#firstMatchDomination].
+    /// and we can realize this by inspecting the result of [ClassifierUtil#firstMatchDomination].
     /// So, we can replace `x` with `suc y` to help computing the result type.
     /// A more realistic motivating example can be found
     /// [here](https://twitter.com/zornsllama/status/1465435870861926400).
@@ -158,7 +179,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// all of these need to be changed accordingly.
     /// This method performs these changes.
     private @Nullable LhsResult refinePattern(LhsResult curLhs, PatClass.Seq<Term, Pat> curCls) {
-      var lets = new PatBinder().apply(curLhs.freePats(), curCls.term());
+      var lets = new PatBinder().apply(curLhs.allPats().toSeq(), curCls.term());
       if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
         return null;
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
@@ -168,7 +189,10 @@ public final class ClauseTycker implements Problematic, Stateful {
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
-        sibling, lets.apply(curLhs.result), curLhs.unpiParamSize, newPatterns,
+        sibling, lets.apply(curLhs.result),
+        newPatterns.take(curLhs.userPatSize()),
+        // We previously assume all the "inserted patterns" are `Pat.Bind`, which is not true after refinement
+        newPatterns.drop(curLhs.userPatSize()),
         curLhs.sourcePos, curLhs.body, paramSubst, curLhs.asSubst, curLhs.hasError);
     }
 
@@ -247,13 +271,16 @@ public final class ClauseTycker implements Problematic, Stateful {
       @Closed var instRepi = sigIter.unpiBody().makePi()
         // safe to inst, as paramSubst is closed
         .instTele(patResult.paramSubst().view().map(Jdg::wellTyped));
+      // unpi [instRepi] **at most** [userUnpiSize]
       var instUnpiParam = DepTypeTerm.unpiUnsafe(instRepi, userUnpiSize);
+      // be careful that [freeParam.size() <= userUnpiSize], `==` is not always true.
       var freeParam = AbstractTele.enrich(new AbstractTele.Locns(instUnpiParam.params(), instUnpiParam.body()));
       var missingPats = freeParam.map((x) -> new Pat.Bind(x.ref(), x.type()));
 
-      ImmutableSeq<@Closed Pat> wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
-      return new LhsResult(ctx, instRepi, userUnpiSize,
-        wellTypedPats, clause.sourcePos, patIter.exprBody(),
+      // ImmutableSeq<@Closed Pat> wellTypedPats = patResult.wellTyped().appendedAll(missingPats);
+      return new LhsResult(ctx, instRepi,
+        patResult.wellTyped(), ImmutableSeq.narrow(missingPats),
+        clause.sourcePos, patIter.exprBody(),
         patResult.paramSubst(), patResult.asSubst(), patResult.hasError());
     }
   }
@@ -271,7 +298,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;
-      var pats = result.freePats();
+      var pats = result.allPats();
       if (bodyExpr == null) wellBody = null;
       else if (result.hasError) {
         // In case the patterns are malformed, do not check the body
@@ -289,18 +316,18 @@ public final class ClauseTycker implements Problematic, Stateful {
         wellBody = zonker.zonk(wellBody);
 
         // bind all pat bindings
-        var patWithTypeBound = Pat.collectVariables(result.freePats().view());
-        pats = patWithTypeBound.component2();
+        var patWithTypeBound = Pat.collectVariables(result.allPats());
+        pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 
         bindCount = patBindTele.size();
 
         // eta body with inserted patterns
-        wellBody = AppTerm.make(wellBody, pats.view().takeLast(result.unpiParamSize).map(PatToTerm::visit));
+        wellBody = AppTerm.make(wellBody, result.missingPats().view().map(PatToTerm::visit));
         wellBody = wellBody.bindTele(patBindTele.view());
       }
 
-      return new Pat.Preclause<>(result.sourcePos, pats, bindCount,
+      return new Pat.Preclause<>(result.sourcePos, pats.toSeq(), bindCount,
         wellBody == null ? null : WithPos.dummy(wellBody));
     }
   }
