@@ -166,8 +166,7 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
     return pool.invokeDynamicEntry(bsmEntry, nameAndType);
   }
 
-  @Override
-  public void close() {
+  @Override public void close() {
     ImmutableSeq<InnerClassInfo> innerClassesEntries;
     var outerClassData = classData.outer();
     if (outerClassData == null) {

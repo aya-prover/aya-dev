@@ -8,14 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public class AsmArgumentProvider implements ArgumentProvider {
-  public final @NotNull ImmutableSeq<ClassDesc> parameters;
-  public final boolean isStatic;
-
-  public AsmArgumentProvider(@NotNull ImmutableSeq<ClassDesc> parameters, boolean isStatic) {
-    this.parameters = parameters;
-    this.isStatic = isStatic;
-  }
+public record AsmArgumentProvider(
+  @NotNull ImmutableSeq<ClassDesc> parameters,
+  boolean isStatic
+) implements ArgumentProvider {
 
   @Override public @NotNull AsmVariable arg(int nth) {
     assert nth < parameters.size();

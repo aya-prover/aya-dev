@@ -3,8 +3,6 @@
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.serializers.ModuleSerializer;
-import org.aya.compiler.serializers.SerializerContext;
-import org.aya.compiler.serializers.TermExprializer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.ResolveInfo;
@@ -13,12 +11,9 @@ import org.aya.resolve.module.DumbModuleLoader;
 import org.aya.resolve.module.ModuleCallback;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitFn;
-import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.AppTerm;
-import org.aya.syntax.core.term.LamTerm;
-import org.aya.syntax.core.term.LocalTerm;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.util.FileUtil;
 import org.aya.util.position.SourceFile;
@@ -26,12 +21,8 @@ import org.aya.util.reporter.ThrowingReporter;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import source.SourceClassBuilder;
-import source.SourceCodeBuilder;
-import source.SourceFreeJavaBuilder;
 
 import java.io.IOException;
-import java.lang.constant.ConstantDescs;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -81,17 +72,6 @@ public class CompileTest {
     var idLamResult = idLam.invoke(UnaryOperator.identity(), ImmutableSeq.empty());
     var finalResult = new AppTerm(idLamResult, mResult).make();
     System.out.println(finalResult.easyToString());
-  }
-
-  @Test public void serLam() {
-    var fjb = SourceFreeJavaBuilder.create();
-    var dummy = new SourceCodeBuilder(new SourceClassBuilder(fjb, ConstantDescs.CD_Object, fjb.sourceBuilder()), fjb.sourceBuilder());
-    // \ t. (\0. 0 t)
-    var lam = new LamTerm(new Closure.Jit(t -> new LamTerm(new Closure.Locns(new AppTerm(new LocalTerm(0), t)))));
-    var out = new TermExprializer(dummy, new SerializerContext(null, new ModuleSerializer.MatchyRecorder()), ImmutableSeq.empty())
-      .serialize(lam);
-
-    System.out.println(out);
   }
 
   public record TyckResult(@NotNull ImmutableSeq<TyckDef> defs, @NotNull ResolveInfo info) { }
