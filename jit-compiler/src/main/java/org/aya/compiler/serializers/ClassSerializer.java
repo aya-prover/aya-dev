@@ -8,6 +8,7 @@ import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.ClassDef;
@@ -43,7 +44,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
     builder.returnWith(memsRef);
   }
 
-  @Override public @NotNull ClassSerializer serialize(@NotNull ClassBuilder builder, ClassDef unit) {
+  @Override public @NotNull ClassSerializer serialize(@NotNull AstClassBuilder builder, ClassDef unit) {
     buildFramework(builder, unit, builder0 -> {
       builder0.buildMethod(
         AstUtil.fromClass(JitMember.class).arrayType(),
@@ -55,7 +56,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
     return this;
   }
 
-  @Override protected @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, ClassDef unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, ClassDef unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
   }

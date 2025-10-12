@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
@@ -42,21 +43,21 @@ public abstract class ClassTargetSerializer<T> {
     @Override public Class<? extends Annotation> annotationType() { return AyaMetadata.class; }
   }
 
-  protected @NotNull FieldRef buildInstance(@NotNull ClassBuilder builder) {
+  protected @NotNull FieldRef buildInstance(@NotNull AstClassBuilder builder) {
     return builder.buildConstantField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
       b.mkNew(thisConstructor, ImmutableSeq.empty()));
   }
 
-  protected abstract @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, T unit);
+  protected abstract @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, T unit);
 
   protected abstract @NotNull String className(T unit);
 
   protected abstract @NotNull AyaMetadata buildMetadata(T unit);
 
   protected void buildFramework(
-    @NotNull ClassBuilder builder,
+    @NotNull AstClassBuilder builder,
     @NotNull T unit,
-    @NotNull Consumer<ClassBuilder> continuation
+    @NotNull Consumer<AstClassBuilder> continuation
   ) {
     var className = className(unit);
     builder.buildNestedClass(buildMetadata(unit), className, superClass, nestBuilder -> {
@@ -67,7 +68,7 @@ public abstract class ClassTargetSerializer<T> {
     });
   }
 
-  public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
+  public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull AstClassBuilder builder, T unit);
 
   public @NotNull SerializerContext buildSerializerContext(@NotNull JavaExpr normalizer) {
     return new SerializerContext(normalizer, recorder);

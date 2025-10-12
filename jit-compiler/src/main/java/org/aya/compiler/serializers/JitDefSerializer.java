@@ -4,9 +4,9 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.ExprBuilder;
 import org.aya.compiler.morphism.JavaExpr;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.def.TyckDef;
@@ -53,7 +53,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     return NameSerializer.javifyClassName(unit.ref());
   }
 
-  protected void buildFramework(@NotNull ClassBuilder builder, @NotNull T unit, @NotNull Consumer<ClassBuilder> continuation) {
+  protected void buildFramework(@NotNull AstClassBuilder builder, @NotNull T unit, @NotNull Consumer<AstClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
         nestBuilder.buildConstantField(AstUtil.fromClass(callBaseClass()),
@@ -66,5 +66,5 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   }
 
   @Override
-  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
+  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull AstClassBuilder builder, T unit);
 }
