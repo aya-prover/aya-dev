@@ -28,12 +28,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
+public final class AsmClassBuilder implements AutoCloseable {
   public final @NotNull ClassData classData;
   public final @NotNull org.glavo.classfile.ClassBuilder writer;
   public final @NotNull AsmOutputCollector collector;
   public final @NotNull MutableList<String> nestedMembers = MutableList.create();
-  public final @NotNull MutableMap<FieldRef, Function<ExprBuilder, JavaExpr>> fieldInitializers = MutableLinkedHashMap.of();
+  public final @NotNull MutableMap<FieldRef, Function<AsmCodeBuilder, AsmExpr>> fieldInitializers = MutableLinkedHashMap.of();
   private int lambdaCounter = 0;
 
   /// @see java.lang.invoke.LambdaMetafactory#metafactory
@@ -66,8 +66,9 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
   public @NotNull ClassDesc owner() { return classData.className(); }
   public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
-  @Override public void
-  buildNestedClass(@NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<ClassBuilder> builder) {
+  public void buildNestedClass(
+    @NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<AsmClassBuilder> builder
+  ) {
     AsmJavaBuilder.buildClass(collector, ayaMetadata,
       new ClassData(owner().nested(name), AstUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),
@@ -95,25 +96,23 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
     return new MethodRef(owner(), name, returnType, paramTypes, false);
   }
 
-  @Override public @NotNull MethodRef buildMethod(
+  public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, AsmCodeBuilder> builder
   ) {
     return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder::accept);
   }
 
-  @Override
-  public @NotNull MethodRef buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder) {
+  public @NotNull MethodRef buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgumentProvider, AsmCodeBuilder> builder) {
     return buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
       builder.accept(ap, cb);
       cb.writer().return_();
     });
   }
 
-  @Override
-  public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name, @NotNull Function<ExprBuilder, JavaExpr> initializer) {
+  public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name, @NotNull Function<AsmCodeBuilder, AsmExpr> initializer) {
     writer.withField(name, returnType, AccessFlags.ofField(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL).flagsMask());
 
     var ref = new FieldRef(owner(), returnType, name);
@@ -124,7 +123,7 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
   public @NotNull InvokeDynamicEntry makeLambda(
     @NotNull ImmutableSeq<ClassDesc> captureTypes,
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> builder
   ) {
     var pool = writer.constantPool();
     var lambdaMethodName = "lambda$" + lambdaCounter++;

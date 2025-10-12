@@ -52,6 +52,7 @@ public interface CodeBuilder extends ExprBuilder {
   );
 
   void returnWith(@NotNull JavaExpr expr);
+
   default void unreachable() {
     returnWith(invoke(Constants.PANIC, ImmutableSeq.empty()));
   }

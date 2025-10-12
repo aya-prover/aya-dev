@@ -5,8 +5,6 @@ package org.aya.compiler.morphism.asm;
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.JavaBuilder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.glavo.classfile.*;
@@ -23,13 +21,13 @@ import java.util.stream.Collectors;
 /// Resources:
 /// * <a href="https://viewer.glavo.org/">ClassViewer</a>
 /// * <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html">Class File Specification</a>
-public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) implements JavaBuilder<C> {
+public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) {
   /// @return the class descriptor
   public static @NotNull ClassDesc buildClass(
     @NotNull AsmOutputCollector collector,
     @Nullable AyaMetadata metadata,
     @NotNull ClassData classData,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull Consumer<AsmClassBuilder> builder
   ) {
     var realClassName = classData.className();
     var bc = ClassFile.of().build(realClassName, cb -> {
@@ -87,11 +85,11 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     return realClassName;
   }
 
-  @Override public @NotNull C buildClass(
+  public @NotNull C buildClass(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull Consumer<AsmClassBuilder> builder
   ) {
     buildClass(collector, metadata, new ClassData(className, AstUtil.fromClass(superclass), null), builder);
     return collector;

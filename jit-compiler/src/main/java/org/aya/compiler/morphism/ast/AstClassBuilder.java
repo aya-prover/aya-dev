@@ -4,9 +4,12 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
+import kala.collection.mutable.MutableLinkedHashMap;
+import kala.collection.mutable.MutableMap;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +24,18 @@ public record AstClassBuilder(
   @NotNull ClassDesc parentOrThis,
   @Nullable String nested,
   @NotNull Class<?> superclass,
-  @NotNull FreezableMutableList<AstDecl> members
-) implements ClassBuilder {
+  @NotNull FreezableMutableList<AstDecl> members,
+  @NotNull MutableMap<FieldRef, Function<AstExprBuilder, AstExpr>> fieldInitializers
+) {
+  public AstClassBuilder(
+    @Nullable AyaMetadata metadata,
+    @NotNull ClassDesc parentOrThis,
+    @Nullable String nested,
+    @NotNull Class<?> superclass
+  ) {
+    this(metadata, parentOrThis, nested, superclass, FreezableMutableList.create(), MutableLinkedHashMap.of());
+  }
+
   public @NotNull AstDecl.Clazz build() {
     return new AstDecl.Clazz(metadata, parentOrThis, nested, superclass, members.freeze());
   }
@@ -31,54 +44,54 @@ public record AstClassBuilder(
     return nested == null ? parentOrThis : parentOrThis.nested(nested);
   }
 
-  @Override public void buildNestedClass(
+  public void buildNestedClass(
     @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull Consumer<AstClassBuilder> builder
   ) {
-    var classBuilder = new AstClassBuilder(ayaMetadata, className(), name, superclass, FreezableMutableList.create());
+    var classBuilder = new AstClassBuilder(ayaMetadata, className(), name, superclass);
     builder.accept(classBuilder);
     members.append(classBuilder.build());
   }
 
   private void buildMethod(
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
   ) {
     var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
     builder.accept(new AstArgumentProvider(ref.paramTypes().size()), codeBuilder);
     members.append(new AstDecl.Method(ref, codeBuilder.build()));
   }
 
-  @Override public @NotNull MethodRef buildMethod(
+  public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
   ) {
     var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, builder);
     return ref;
   }
 
-  @Override public @NotNull MethodRef buildConstructor(
+  public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
   ) {
     var ref = ClassBuilder.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, builder);
     return ref;
   }
 
-  @Override public @NotNull FieldRef buildConstantField(
+  public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
-    @NotNull Function<ExprBuilder, JavaExpr> initializer
+    @NotNull Function<AstExprBuilder, AstExpr> initializer
   ) {
     var ref = new FieldRef(className(), returnType, name);
-    var expr = (AstExpr) initializer.apply(AstExprBuilder.INSTANCE);
-    members.append(new AstDecl.ConstantField(ref, expr));
+    fieldInitializers.put(ref, initializer);
+    members.append(new AstDecl.ConstantField(ref));
     return ref;
   }
 }

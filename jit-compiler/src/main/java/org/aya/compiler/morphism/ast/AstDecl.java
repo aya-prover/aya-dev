@@ -30,5 +30,5 @@ public sealed interface AstDecl {
     @NotNull ImmutableSeq<AstStmt> body
   ) implements AstDecl { }
 
-  record ConstantField(@NotNull FieldRef signature, @NotNull AstExpr init) implements AstDecl { }
+  record ConstantField(@NotNull FieldRef signature) implements AstDecl { }
 }

@@ -12,14 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 
 public sealed interface AstExpr extends JavaExpr {
-  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstExpr> args) implements AstExpr { }
+  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   record RefVariable(@NotNull AstVariable var) implements AstExpr { }
   record RefCapture(int capture) implements AstExpr { }
-  record Invoke(@NotNull MethodRef methodRef, @Nullable AstExpr owner,
-                @NotNull ImmutableSeq<AstExpr> args) implements AstExpr { }
-  record RefField(@NotNull FieldRef fieldRef, @Nullable AstExpr owner) implements AstExpr { }
+  record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
+                @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
+  record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr { }
   record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr { }
-  record Lambda(@NotNull ImmutableSeq<AstExpr> captures, @NotNull MethodRef method,
+  record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,
                 @NotNull ImmutableSeq<AstStmt> body) implements AstExpr { }
 
   sealed interface Const extends AstExpr { }
@@ -31,6 +31,6 @@ public sealed interface AstExpr extends JavaExpr {
 
   record Array(@NotNull ClassDesc type, int length,
                @Nullable ImmutableSeq<AstExpr> initializer) implements AstExpr { }
-  record GetArray(@NotNull AstExpr array, int index) implements AstExpr { }
-  record CheckCast(@NotNull AstExpr obj, @NotNull ClassDesc as) implements AstExpr { }
+  record GetArray(@NotNull AstVariable array, int index) implements AstExpr { }
+  record CheckCast(@NotNull AstVariable obj, @NotNull ClassDesc as) implements AstExpr { }
 }

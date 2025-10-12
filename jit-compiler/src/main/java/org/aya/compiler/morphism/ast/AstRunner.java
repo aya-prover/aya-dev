@@ -4,8 +4,12 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
+import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.asm.AsmClassBuilder;
+import org.aya.compiler.morphism.asm.AsmCodeBuilder;
+import org.aya.compiler.morphism.asm.AsmJavaBuilder;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,13 +18,13 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class AstRunner<Carrier> {
-  private final @NotNull JavaBuilder<Carrier> runner;
+public final class AstRunner<Carrier extends AsmOutputCollector> {
+  private final @NotNull AsmJavaBuilder<Carrier> runner;
 
   // TODO: trying to use MutableArray<LocalVariable>, our VariablePool has a good property
   private @UnknownNullability MutableMap<Integer, LocalVariable> binding;
 
-  public AstRunner(@NotNull JavaBuilder<Carrier> runner) {
+  public AstRunner(@NotNull AsmJavaBuilder<Carrier> runner) {
     this.runner = runner;
     this.binding = null;
   }
@@ -30,11 +34,11 @@ public final class AstRunner<Carrier> {
       cb -> runFree(cb, free.members()));
   }
 
-  private void runFree(@NotNull ClassBuilder builder, @NotNull ImmutableSeq<AstDecl> frees) {
+  private void runFree(@NotNull AsmClassBuilder builder, @NotNull ImmutableSeq<AstDecl> frees) {
     frees.forEach(it -> runFree(builder, it));
   }
 
-  private void runFree(@NotNull ClassBuilder builder, @NotNull AstDecl free) {
+  private void runFree(@NotNull AsmClassBuilder builder, @NotNull AstDecl free) {
     try (var _ = new SubscopeHandle(MutableMap.create())) {
       switch (free) {
         case AstDecl.Clazz(var metadata, _, var nested, var superclass, var members) -> {
@@ -43,21 +47,23 @@ public final class AstRunner<Carrier> {
         }
         case AstDecl.ConstantField constantField ->
           builder.buildConstantField(constantField.signature().returnType(), constantField.signature().name(),
-            eb -> runFree(null, eb, constantField.init()));
+            eb -> {
+              throw new UnsupportedOperationException("Not implemented");
+            });
         case AstDecl.Method(var sig, var body) -> {
           if (sig.isConstructor()) {
             builder.buildConstructor(sig.paramTypes(),
-              (ap, cb) -> runFree(ap, cb, body));
+              (ap, cb) -> interpStmt(ap, cb, body));
           } else {
             builder.buildMethod(sig.returnType(), sig.name(), sig.paramTypes(),
-              (ap, cb) -> runFree(ap, cb, body));
+              (ap, cb) -> interpStmt(ap, cb, body));
           }
         }
       }
     }
   }
 
-  private @NotNull ImmutableSeq<JavaExpr> runFree(@Nullable ArgumentProvider ap, @NotNull ExprBuilder builder, @NotNull ImmutableSeq<AstExpr> exprs) {
+  private @NotNull ImmutableSeq<JavaExpr> interpExpr(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstExpr> exprs) {
     return exprs.map(it -> runFree(ap, builder, it));
   }
 
@@ -71,37 +77,37 @@ public final class AstRunner<Carrier> {
     };
   }
 
-  private JavaExpr runFree(@Nullable ArgumentProvider ap, @NotNull ExprBuilder builder, @NotNull AstExpr expr) {
+  private JavaExpr runFree(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
       case AstExpr.RefVariable(var theVar) -> builder.refVar(runFree(ap, theVar));
       case AstExpr.Array(var type, var length, var initializer) ->
-        builder.mkArray(type, length, initializer == null ? null : runFree(ap, builder, initializer));
-      case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(runFree(ap, builder, obj), as);
+        builder.mkArray(type, length, initializer == null ? null : interpExpr(ap, builder, initializer));
+      case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(runFree(ap, obj), as);
       case AstExpr.Iconst(var i) -> builder.iconst(i);
       case AstExpr.Bconst(var b) -> builder.iconst(b);
       case AstExpr.Sconst(var s) -> builder.aconst(s);
       case AstExpr.Null(var ty) -> builder.aconstNull(ty);
-      case AstExpr.GetArray(var arr, var idx) -> builder.getArray(runFree(ap, builder, arr), idx);
+      case AstExpr.GetArray(var arr, var idx) -> builder.getArray(runFree(ap, arr), idx);
       case AstExpr.Invoke(var ref, var owner, var args) -> {
-        var argsExpr = runFree(ap, builder, args);
+        var argsExpr = runFree(ap, args);
         yield owner == null
           ? builder.invoke(ref, argsExpr)
-          : builder.invoke(ref, runFree(ap, builder, owner), argsExpr);
+          : builder.invoke(ref, runFree(ap, owner), argsExpr);
       }
       case AstExpr.Lambda(var lamCaptures, var methodRef, var body) -> {
-        var captureExprs = runFree(ap, builder, lamCaptures);
+        var captureExprs = runFree(ap, lamCaptures);
 
         // run captures outside subscope!
         // brand-new scope! the lambda body lives in a difference place to the current scope
         try (var _ = new SubscopeHandle(MutableMap.create())) {
           yield builder.mkLambda(captureExprs, methodRef, (lap, cb) ->
-            runFree(lap, cb, body));
+            interpStmt(lap, cb, body));
         }
       }
-      case AstExpr.New(var ref, var args) -> builder.mkNew(ref, runFree(ap, builder, args));
+      case AstExpr.New(var ref, var args) -> builder.mkNew(ref, runFree(ap, args));
       case AstExpr.RefEnum(var enumClass, var enumName) -> builder.refEnum(enumClass, enumName);
       case AstExpr.RefField(var fieldRef, var owner) -> owner != null
-        ? builder.refField(fieldRef, runFree(ap, builder, owner))
+        ? builder.refField(fieldRef, runFree(ap, owner))
         : builder.refField(fieldRef);
       case AstExpr.This _ -> builder.thisRef();
       case AstExpr.RefCapture(var idx) -> {
@@ -114,29 +120,29 @@ public final class AstRunner<Carrier> {
     };
   }
 
-  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull ImmutableSeq<AstStmt> free) {
+  private void interpStmt(@NotNull ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstStmt> free) {
     free.forEach(it -> runFree(ap, builder, it));
   }
 
-  private void runFree(@NotNull ArgumentProvider ap, @NotNull CodeBuilder builder, @NotNull AstStmt free) {
+  private void runFree(@NotNull ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstStmt free) {
     switch (free) {
       case AstStmt.Break _ -> builder.breakOut();
       case AstStmt.Unreachable _ -> builder.unreachable();
-      case AstStmt.Breakable(var inner) -> builder.breakable(cb -> runFree(ap, cb, inner));
-      case AstStmt.WhileTrue(var inner) -> builder.whileTrue(cb -> runFree(ap, cb, inner));
+      case AstStmt.Breakable(var inner) -> builder.breakable(cb -> interpStmt(ap, cb, inner));
+      case AstStmt.WhileTrue(var inner) -> builder.whileTrue(cb -> interpStmt(ap, cb, inner));
       case AstStmt.Continue _ -> builder.continueLoop();
       case AstStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
       case AstStmt.Exec exec -> builder.exec(runFree(ap, builder, exec.expr()));
       case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
-        Consumer<CodeBuilder> thenBlock = cb -> {
+        Consumer<AsmCodeBuilder> thenBlock = cb -> {
           try (var _ = subscoped()) {
-            runFree(ap, cb, thenBody);
+            interpStmt(ap, cb, thenBody);
           }
         };
-        Consumer<CodeBuilder> elseBlock = elseBody != null
+        Consumer<AsmCodeBuilder> elseBlock = elseBody != null
           ? cb -> {
           try (var _ = subscoped()) {
-            runFree(ap, cb, elseBody);
+            interpStmt(ap, cb, elseBody);
           }
         } : null;
 
@@ -149,7 +155,7 @@ public final class AstRunner<Carrier> {
             builder.ifInstanceOf(runFree(ap, builder, lhs), rhs, (cb, var) -> {
               try (var _ = subscoped()) {
                 bindVar(asTerm.index(), var);
-                runFree(ap, cb, thenBody);      // prevent unnecessary subscoping
+                interpStmt(ap, cb, thenBody);      // prevent unnecessary subscoping
               }
             }, elseBlock);
           }
@@ -165,15 +171,15 @@ public final class AstRunner<Carrier> {
         builder.updateArray(runFree(ap, builder, arr), idx, runFree(ap, builder, update));
       case AstStmt.SetVariable(var var, var update) ->
         builder.updateVar(runFree(ap, var), runFree(ap, builder, update));
-      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, runFree(ap, builder, args));
+      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, interpExpr(ap, builder, args));
       case AstStmt.Switch(var elim, var cases, var branches, var defaultCase) ->
         builder.switchCase(runFree(ap, elim), cases, (cb, kase) -> {
           // slow impl, i am lazy
           int idx = cases.indexOf(kase);
           assert idx != -1;
           var branch = branches.get(idx);
-          runFree(ap, cb, branch);
-        }, cb -> runFree(ap, cb, defaultCase));
+          interpStmt(ap, cb, branch);
+        }, cb -> interpStmt(ap, cb, defaultCase));
     }
   }
 
