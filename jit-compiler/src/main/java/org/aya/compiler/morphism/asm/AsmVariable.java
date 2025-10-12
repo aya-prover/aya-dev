@@ -22,6 +22,6 @@ public record AsmVariable(int slot, @NotNull ClassDesc type, boolean isThis) imp
   }
 
   public @NotNull String name() {
-    return isThis ? "this" : "var" + slot;
+    return isThis ? "this" : ("var" + slot);
   }
 }
