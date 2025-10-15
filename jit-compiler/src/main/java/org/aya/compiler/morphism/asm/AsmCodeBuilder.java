@@ -8,7 +8,6 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
@@ -362,22 +361,22 @@ public record AsmCodeBuilder(
     });
   }
 
-  public @NotNull AsmExpr getArray(@NotNull JavaExpr array, int index) {
-    var expr = assertExpr(array);
-    var component = expr.type().componentType();
+  public @NotNull AsmExpr getArray(@NotNull LocalVariable array, int index) {
+    var var = assertVar(array);
+    var component = var.type().componentType();
     assert component != null;
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
     return AsmExpr.withType(component, builder -> {
-      expr.accept(builder);
+      builder.loadVar(var);
       builder.iconst(index).accept(builder);
       builder.writer.arrayLoadInstruction(kind);
     });
   }
 
-  public @NotNull AsmExpr checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as) {
+  public @NotNull AsmExpr checkcast(@NotNull LocalVariable obj, @NotNull ClassDesc as) {
     return AsmExpr.withType(as, builder -> {
-      builder.loadExpr(obj);
+      builder.loadVar(obj);
       builder.writer.checkcast(as);
     });
   }
