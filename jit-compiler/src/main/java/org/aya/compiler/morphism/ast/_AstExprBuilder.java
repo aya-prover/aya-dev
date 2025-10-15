@@ -18,7 +18,7 @@ import java.util.function.BiConsumer;
 
 import static org.aya.compiler.morphism.ast.AstCodeBuilder.assertFreeExpr;
 
-public enum AstExprBuilder implements ExprBuilder {
+public enum _AstExprBuilder implements ExprBuilder {
   INSTANCE;
 
   @Override public @NotNull AstExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {

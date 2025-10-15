@@ -42,7 +42,7 @@ public record AstCodeBuilder(
   public static @NotNull AstVariable assertFreeVariable(@NotNull LocalVariable var) { return (AstVariable) var; }
   public @NotNull AstVariable.Local acquireVariable() { return new AstVariable.Local(pool.acquire()); }
 
-  @Override public @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
+  @Override public @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable AstExpr initializer) {
     var theVar = acquireVariable();
     stmts.append(new AstStmt.DeclareVariable(type, theVar));
     if (initializer != null) updateVar(theVar, initializer);
@@ -151,61 +151,61 @@ public record AstCodeBuilder(
   }
 
   @Override public @NotNull JavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.mkNew(conRef, args);
+    return _AstExprBuilder.INSTANCE.mkNew(conRef, args);
   }
 
   @Override public @NotNull JavaExpr refVar(@NotNull LocalVariable name) {
-    return AstExprBuilder.INSTANCE.refVar(name);
+    return _AstExprBuilder.INSTANCE.refVar(name);
   }
 
   @Override public @NotNull JavaExpr
   invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.invoke(method, owner, args);
+    return _AstExprBuilder.INSTANCE.invoke(method, owner, args);
   }
 
   @Override public @NotNull JavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.invoke(method, args);
+    return _AstExprBuilder.INSTANCE.invoke(method, args);
   }
 
   @Override public @NotNull JavaExpr refField(@NotNull FieldRef field) {
-    return AstExprBuilder.INSTANCE.refField(field);
+    return _AstExprBuilder.INSTANCE.refField(field);
   }
 
   @Override public @NotNull JavaExpr refField(@NotNull FieldRef field, @NotNull JavaExpr owner) {
-    return AstExprBuilder.INSTANCE.refField(field, owner);
+    return _AstExprBuilder.INSTANCE.refField(field, owner);
   }
 
   @Override public @NotNull JavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
-    return AstExprBuilder.INSTANCE.refEnum(enumClass, enumName);
+    return _AstExprBuilder.INSTANCE.refEnum(enumClass, enumName);
   }
 
   @Override
   public @NotNull JavaExpr mkLambda(@NotNull ImmutableSeq<JavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> builder) {
-    return AstExprBuilder.INSTANCE.mkLambda(captures, method, builder);
+    return _AstExprBuilder.INSTANCE.mkLambda(captures, method, builder);
   }
 
-  @Override public @NotNull JavaExpr iconst(int i) { return AstExprBuilder.INSTANCE.iconst(i); }
-  @Override public @NotNull JavaExpr iconst(boolean b) { return AstExprBuilder.INSTANCE.iconst(b); }
+  @Override public @NotNull JavaExpr iconst(int i) { return _AstExprBuilder.INSTANCE.iconst(i); }
+  @Override public @NotNull JavaExpr iconst(boolean b) { return _AstExprBuilder.INSTANCE.iconst(b); }
   @Override public @NotNull JavaExpr aconst(@NotNull String value) {
-    return AstExprBuilder.INSTANCE.aconst(value);
+    return _AstExprBuilder.INSTANCE.aconst(value);
   }
 
   @Override public @NotNull JavaExpr aconstNull(@NotNull ClassDesc type) {
-    return AstExprBuilder.INSTANCE.aconstNull(type);
+    return _AstExprBuilder.INSTANCE.aconstNull(type);
   }
 
-  @Override public @NotNull JavaExpr thisRef() { return AstExprBuilder.INSTANCE.thisRef(); }
+  @Override public @NotNull JavaExpr thisRef() { return _AstExprBuilder.INSTANCE.thisRef(); }
 
   @Override public @NotNull JavaExpr
   mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<JavaExpr> initializer) {
-    return AstExprBuilder.INSTANCE.mkArray(type, length, initializer);
+    return _AstExprBuilder.INSTANCE.mkArray(type, length, initializer);
   }
 
   @Override public @NotNull JavaExpr getArray(@NotNull JavaExpr array, int index) {
-    return AstExprBuilder.INSTANCE.getArray(array, index);
+    return _AstExprBuilder.INSTANCE.getArray(array, index);
   }
 
   @Override public @NotNull JavaExpr checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as) {
-    return AstExprBuilder.INSTANCE.checkcast(obj, as);
+    return _AstExprBuilder.INSTANCE.checkcast(obj, as);
   }
 }

@@ -25,7 +25,7 @@ public record AstClassBuilder(
   @Nullable String nested,
   @NotNull Class<?> superclass,
   @NotNull FreezableMutableList<AstDecl> members,
-  @NotNull MutableMap<FieldRef, Function<AstExprBuilder, AstExpr>> fieldInitializers
+  @NotNull MutableMap<FieldRef, Function<_AstExprBuilder, AstExpr>> fieldInitializers
 ) {
   public AstClassBuilder(
     @Nullable AyaMetadata metadata,
@@ -87,7 +87,7 @@ public record AstClassBuilder(
   public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
-    @NotNull Function<AstExprBuilder, AstExpr> initializer
+    @NotNull Function<_AstExprBuilder, AstExpr> initializer
   ) {
     var ref = new FieldRef(className(), returnType, name);
     fieldInitializers.put(ref, initializer);
