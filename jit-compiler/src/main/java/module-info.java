@@ -5,6 +5,7 @@ module aya.compiler {
 
   requires static org.jetbrains.annotations;
   requires org.glavo.classfile;
+  requires kala.collection;
 
   exports org.aya.compiler;
   exports org.aya.compiler.serializers;
