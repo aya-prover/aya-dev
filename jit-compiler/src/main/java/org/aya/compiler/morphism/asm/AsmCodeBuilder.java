@@ -80,7 +80,7 @@ public record AsmCodeBuilder(
     return variable;
   }
 
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<LocalVariable> superConArgs) {
     invoke(
       InvokeKind.Special,
       FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
@@ -127,9 +127,9 @@ public record AsmCodeBuilder(
     ifThenElse(Opcode.IFNE, thenBlock, elseBlock);
   }
 
-  public void ifInstanceOf(@NotNull JavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    var lhsExpr = assertExpr(lhs);
-    lhsExpr.accept(this);
+  public void ifInstanceOf(@NotNull LocalVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    var lhsExpr = assertVar(lhs);
+    loadVar(lhsExpr);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
       var cast = builder.checkcast(lhs, rhs);
@@ -227,8 +227,8 @@ public record AsmCodeBuilder(
   public void invoke(
     @NotNull InvokeKind kind,
     @NotNull MethodRef ref,
-    @Nullable JavaExpr self,
-    @NotNull ImmutableSeq<JavaExpr> args
+    @Nullable LocalVariable self,
+    @NotNull ImmutableSeq<LocalVariable> args
   ) {
     var owner = ref.owner();
     var name = ref.name();
@@ -238,10 +238,10 @@ public record AsmCodeBuilder(
     assert (self == null) == (kind == InvokeKind.Static);
 
     if (self != null) {
-      loadExpr(self);
+      loadVar(self);
     }
 
-    args.forEach(this::loadExpr);
+    args.forEach(this::loadVar);
 
     switch (kind) {
       case Static -> writer.invokestatic(owner, name, desc, isInterface);
@@ -256,23 +256,25 @@ public record AsmCodeBuilder(
     }
   }
 
-  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
+  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<LocalVariable> args) {
     return AsmExpr.withType(conRef.owner(), builder -> {
       builder.writer.new_(conRef.owner());
       builder.invoke(
         InvokeKind.Special,
         conRef,
+        // TODO: I don't know what to put here
         AsmExpr.withType(conRef.owner(), builder0 -> builder0.writer.dup()),
         args
       );
     });
   }
 
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AsmExpr.withType(method.returnType(), builder -> builder.invoke(InvokeKind.Virtual, method, owner, args));
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull LocalVariable owner, @NotNull ImmutableSeq<LocalVariable> args) {
+    return AsmExpr.withType(method.returnType(), builder ->
+      builder.invoke(InvokeKind.Virtual, method, owner, args));
   }
 
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<LocalVariable> args) {
     return AsmExpr.withType(method.returnType(), builder ->
       builder.invoke(InvokeKind.Static, method, null, args));
   }
@@ -281,9 +283,9 @@ public record AsmCodeBuilder(
     return AsmExpr.withType(field.returnType(), builder ->
       builder.writer.getstatic(field.owner(), field.name(), field.returnType()));
   }
-  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull JavaExpr owner) {
+  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull LocalVariable owner) {
     return AsmExpr.withType(field.returnType(), builder -> {
-      builder.loadExpr(owner);
+      builder.loadVar(owner);
       builder.writer.getfield(field.owner(), field.name(), field.returnType());
     });
   }
@@ -294,13 +296,13 @@ public record AsmCodeBuilder(
   }
 
   public @NotNull AsmExpr
-  mkLambda(@NotNull ImmutableSeq<JavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody) {
-    var captureExprs = captures.map(this::assertExpr);
-    var captureTypes = captureExprs.map(AsmExpr::type);
+  mkLambda(@NotNull ImmutableSeq<LocalVariable> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody) {
+    var captureExprs = captures.map(this::assertVar);
+    var captureTypes = captureExprs.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);
 
     return AsmExpr.withType(method.owner(), builder -> {
-      captureExprs.forEach(t -> t.accept(builder));
+      captureExprs.forEach(builder::loadVar);
       builder.writer.invokedynamic(indy);
     });
   }

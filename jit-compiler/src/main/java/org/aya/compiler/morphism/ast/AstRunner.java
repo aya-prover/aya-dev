@@ -6,7 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.LocalVariable;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.asm.AsmClassBuilder;
 import org.aya.compiler.morphism.asm.AsmCodeBuilder;
 import org.aya.compiler.morphism.asm.AsmJavaBuilder;
@@ -65,6 +66,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private @NotNull ImmutableSeq<JavaExpr> interpExpr(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstExpr> exprs) {
     return exprs.map(it -> runFree(ap, builder, it));
+  }
+
+  private ImmutableSeq<LocalVariable> runFree(@Nullable ArgumentProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
+    return vars.map(it -> runFree(ap, it));
   }
 
   private LocalVariable runFree(@Nullable ArgumentProvider ap, @NotNull AstVariable var) {
