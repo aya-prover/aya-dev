@@ -86,7 +86,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     return switch (expr) {
       case AstExpr.RefVariable(var theVar) -> builder.refVar(runFree(ap, theVar));
       case AstExpr.Array(var type, var length, var initializer) ->
-        builder.mkArray(type, length, initializer == null ? null : interpExpr(ap, builder, initializer));
+        builder.mkArray(type, length, initializer == null ? null : runFree(ap, initializer));
       case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(runFree(ap, obj), as);
       case AstExpr.Iconst(var i) -> builder.iconst(i);
       case AstExpr.Bconst(var b) -> builder.iconst(b);

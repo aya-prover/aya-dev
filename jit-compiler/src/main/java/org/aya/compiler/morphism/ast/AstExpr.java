@@ -30,7 +30,7 @@ public sealed interface AstExpr extends JavaExpr {
   enum This implements AstExpr { INSTANCE }
 
   record Array(@NotNull ClassDesc type, int length,
-               @Nullable ImmutableSeq<AstExpr> initializer) implements AstExpr { }
+               @Nullable ImmutableSeq<AstVariable> initializer) implements AstExpr { }
   record GetArray(@NotNull AstVariable array, int index) implements AstExpr { }
   record CheckCast(@NotNull AstVariable obj, @NotNull ClassDesc as) implements AstExpr { }
 }

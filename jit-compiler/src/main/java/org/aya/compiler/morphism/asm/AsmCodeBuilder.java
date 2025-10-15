@@ -95,7 +95,7 @@ public record AsmCodeBuilder(
     writer.storeInstruction(asmVar.kind(), asmVar.slot());
   }
 
-  public void updateArray(@NotNull JavaExpr array, int idx, @NotNull JavaExpr update) {
+  public void updateArray(@NotNull JavaExpr array, int idx, @NotNull LocalVariable update) {
     var expr = assertExpr(array);
     var component = expr.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
@@ -103,7 +103,7 @@ public record AsmCodeBuilder(
 
     expr.accept(this);
     iconst(idx).accept(this);
-    loadExpr(update);
+    loadVar(update);
     writer.arrayStoreInstruction(kind);
   }
 
@@ -341,7 +341,7 @@ public record AsmCodeBuilder(
     return AsmExpr.withType(parent.owner(), builder -> builder.writer.aload(0));
   }
 
-  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<JavaExpr> initializer) {
+  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends LocalVariable> initializer) {
     var arrayType = type.arrayType();
     var dup = AsmExpr.withType(arrayType, builder -> builder.writer.dup());
 
