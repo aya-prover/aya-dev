@@ -6,9 +6,9 @@ import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,18 +18,18 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 public interface CodeBuilder {
-  @NotNull LocalVariable makeVar(@NotNull ClassDesc type, @Nullable AstExpr initializer);
+  @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable AstExpr initializer);
 
-  default LocalVariable makeVar(@NotNull Class<?> type, @Nullable AstExpr initializer) {
+  default AstVariable makeVar(@NotNull Class<?> type, @Nullable AstExpr initializer) {
     return makeVar(AstUtil.fromClass(type), initializer);
   }
 
   void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstExpr> superConArgs);
-  void updateVar(@NotNull LocalVariable var, @NotNull AstExpr update);
+  void updateVar(@NotNull AstVariable var, @NotNull AstExpr update);
   void updateArray(@NotNull AstExpr array, int idx, @NotNull AstExpr update);
-  void ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
-  void ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
-  void ifInstanceOf(@NotNull AstExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+  void ifNotTrue(@NotNull AstVariable notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+  void ifTrue(@NotNull AstVariable theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
+  void ifInstanceOf(@NotNull AstExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, AstVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
   void ifIntEqual(@NotNull AstExpr lhs, int rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
   void ifRefEqual(@NotNull AstExpr lhs, @NotNull AstExpr rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
   void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock);
@@ -49,7 +49,7 @@ public interface CodeBuilder {
   /// @apiNote the {@param branch}es must return or [#breakOut], this method will NOT generate the `break`
   /// instruction therefore the control flow will pass to the next case.
   void switchCase(
-    @NotNull LocalVariable elim,
+    @NotNull AstVariable elim,
     @NotNull ImmutableIntSeq cases,
     @NotNull ObjIntConsumer<CodeBuilder> branch,
     @NotNull Consumer<CodeBuilder> defaultCase
@@ -78,7 +78,7 @@ public interface CodeBuilder {
     return mkNew(conRef, args);
   }
 
-  default @NotNull AstExpr refVar(@NotNull LocalVariable name) { return name.ref(); }
+  default @NotNull AstExpr refVar(@NotNull AstVariable name) { return name.ref(); }
 
   /// Invoke a (non-interface) method on {@param owner}.
   @NotNull AstExpr invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args);
