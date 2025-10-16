@@ -10,6 +10,7 @@ import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.asm.AsmClassBuilder;
 import org.aya.compiler.morphism.asm.AsmCodeBuilder;
+import org.aya.compiler.morphism.asm.AsmExpr;
 import org.aya.compiler.morphism.asm.AsmJavaBuilder;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     };
   }
 
-  private JavaExpr runFree(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
+  private AsmExpr runFree(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
       case AstExpr.Array(var type, var length, var initializer) ->
         builder.mkArray(type, length, initializer == null ? null : runFree(ap, initializer));

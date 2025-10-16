@@ -4,7 +4,6 @@ package org.aya.compiler.morphism.ast;
 
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 public record AstArgumentProvider(int paramCount) implements ArgumentProvider {
@@ -14,7 +13,7 @@ public record AstArgumentProvider(int paramCount) implements ArgumentProvider {
   }
 
   record Lambda(int captureCount, int paramCount) implements ArgumentProvider.Lambda {
-    @Override public @NotNull JavaExpr capture(int nth) {
+    @Override public @NotNull AstExpr capture(int nth) {
       assert nth < captureCount;
       return new AstExpr.RefCapture(nth);
     }

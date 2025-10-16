@@ -341,9 +341,9 @@ public record AsmCodeBuilder(
     return AsmExpr.withType(type, builder -> builder.writer.aconst_null());
   }
 
-  public @NotNull AsmExpr thisRef() {
+  public @NotNull AsmVariable thisRef() {
     assert hasThis;
-    return AsmExpr.withType(parent.owner(), builder -> builder.writer.aload(0));
+    return AsmVariable.mkThis(parent.owner());
   }
 
   public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends LocalVariable> initializer) {

@@ -21,6 +21,10 @@ public record AsmVariable(int slot, @NotNull ClassDesc type, boolean isThis) imp
     return AsmExpr.withType(type, builder -> builder.writer().loadInstruction(kind(), slot));
   }
 
+  public static @NotNull AsmVariable mkThis(@NotNull ClassDesc type) {
+    return new AsmVariable(0, type, true);
+  }
+
   public @NotNull String name() {
     return isThis ? "this" : ("var" + slot);
   }
