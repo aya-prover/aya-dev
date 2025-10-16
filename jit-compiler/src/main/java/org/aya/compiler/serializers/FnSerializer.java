@@ -103,8 +103,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
                 assert argTerms.size() == args.size();
                 // Will cause conflict in theory, but won't in practice due to current local variable
                 // declaration heuristics.
-                argTerms.zip(args).forEach(tup -> {
-                  builder0.updateVar(tup.component1(), tup.component2());
+                argTerms.forEachWith(args, (a, b) -> {
+                  builder0.updateVar(a, b);
                 });
                 builder0.continueLoop();
               } else {
