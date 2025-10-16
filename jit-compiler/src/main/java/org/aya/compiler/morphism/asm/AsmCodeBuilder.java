@@ -8,6 +8,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
@@ -167,6 +168,10 @@ public record AsmCodeBuilder(
   public void breakOut() {
     if (breaking == null) Panic.unreachable();
     writer.goto_(breaking);
+  }
+
+  public void unreachable() {
+    returnWith(invoke(Constants.PANIC, ImmutableSeq.empty()));
   }
 
   public void whileTrue(@NotNull Consumer<AsmCodeBuilder> innerBlock) {
