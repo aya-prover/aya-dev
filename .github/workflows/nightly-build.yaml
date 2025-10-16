@@ -107,3 +107,14 @@ jobs:
           assets: lsp-fatjar.jar;cli-fatjar.jar;${{ steps.collect_jlinkAyaZip.outputs.jlinkFiles }}
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
+      - name: Install Built Aya
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ needs.check-aya-version.outputs.projectVersion }}/$RUNNER_ARCH
+          mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar
+      - name: Run Issue Tracker
+        if: matrix.os == 'ubuntu-latest'
+        uses: 'HoshinoTented/issue-tracker@v1'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue: ${{ github.event.issue.number }}
