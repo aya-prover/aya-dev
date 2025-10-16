@@ -84,7 +84,6 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private JavaExpr runFree(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
-      case AstExpr.RefVariable(var theVar) -> builder.refVar(runFree(ap, theVar));
       case AstExpr.Array(var type, var length, var initializer) ->
         builder.mkArray(type, length, initializer == null ? null : runFree(ap, initializer));
       case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(runFree(ap, obj), as);

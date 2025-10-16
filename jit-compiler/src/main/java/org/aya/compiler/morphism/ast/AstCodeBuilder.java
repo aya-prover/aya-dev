@@ -189,7 +189,6 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
-    // TODO: check for single variable expr & prevent adding another layer
     var index = pool.acquire();
     var astVar = new AstVariable.Local(index);
     stmts.append(new AstStmt.DeclareVariable(Constants.CD_Term, astVar));
