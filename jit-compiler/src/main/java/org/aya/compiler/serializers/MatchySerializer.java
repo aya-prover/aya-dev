@@ -7,6 +7,10 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -28,7 +32,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     super(JitMatchy.class, recorder);
   }
 
-  @Override protected @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, MatchyData unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, MatchyData unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
     );
@@ -42,12 +46,12 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return InvokeSignatureHelper.parameters(ImmutableSeq.fill(capturec + argc, Constants.CD_Term).view());
   }
 
-  public static @NotNull JavaExpr makeInvoke(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstExpr makeInvoke(
+    @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull JavaExpr normalizer,
-    @NotNull ImmutableSeq<JavaExpr> captures,
-    @NotNull ImmutableSeq<JavaExpr> args
+    @NotNull AstVariable normalizer,
+    @NotNull ImmutableSeq<AstVariable> captures,
+    @NotNull ImmutableSeq<AstVariable> args
   ) {
     var instance = TermExprializer.getInstance(builder, owner);
     var ref = new MethodRef(

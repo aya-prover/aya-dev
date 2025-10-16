@@ -6,5 +6,5 @@ import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 public interface LocalVariable {
-  @NotNull JavaExpr ref();
+  // @NotNull JavaExpr ref();
 }

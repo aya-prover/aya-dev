@@ -17,7 +17,7 @@ public record AsmVariable(int slot, @NotNull ClassDesc type, boolean isThis) imp
     return TypeKind.fromDescriptor(type.descriptorString());
   }
 
-  @Override public @NotNull AsmExpr ref() {
+  public @NotNull AsmExpr ref() {
     return AsmExpr.withType(type, builder -> builder.writer().loadInstruction(kind(), slot));
   }
 

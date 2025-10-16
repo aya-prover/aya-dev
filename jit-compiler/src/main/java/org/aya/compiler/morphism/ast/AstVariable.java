@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface AstVariable extends LocalVariable {
   record Local(int index) implements AstVariable {
-    @Override public @NotNull JavaExpr ref() { return new AstExpr.RefVariable(this); }
   }
   record Arg(int nth) implements AstVariable {
-    @Override public @NotNull JavaExpr ref() { return new AstExpr.RefVariable(this); }
+  }
+  record Capture(int nth) implements AstVariable {
   }
 }

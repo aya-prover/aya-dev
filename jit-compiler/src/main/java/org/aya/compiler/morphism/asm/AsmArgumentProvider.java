@@ -26,9 +26,9 @@ public record AsmArgumentProvider(
       this.parameters = parameters;
     }
 
-    @Override public @NotNull AsmExpr capture(int nth) {
+    @Override public @NotNull AsmVariable capture(int nth) {
       assert nth < captures.size();
-      return new AsmVariable(nth, captures.get(nth), false).ref();
+      return new AsmVariable(nth, captures.get(nth), false);
     }
 
     @Override public @NotNull AsmVariable arg(int nth) {

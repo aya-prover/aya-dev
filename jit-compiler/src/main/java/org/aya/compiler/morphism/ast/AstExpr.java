@@ -13,7 +13,7 @@ import java.lang.constant.ClassDesc;
 
 public sealed interface AstExpr extends JavaExpr {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
-  record RefCapture(int capture) implements AstExpr { }
+  // record RefCapture(int capture) implements AstExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
                 @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr { }

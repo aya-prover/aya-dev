@@ -75,6 +75,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         if (ap == null) yield Panic.unreachable();
         yield ap.arg(arg.nth());
       }
+      case AstVariable.Capture(var nth) -> {
+        if (!(ap instanceof ArgumentProvider.Lambda lap)) yield Panic.unreachable();
+        yield lap.capture(nth);
+      }
     };
   }
 
@@ -110,13 +114,6 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         ? builder.refField(fieldRef, runFree(ap, owner))
         : builder.refField(fieldRef);
       case AstExpr.This _ -> builder.thisRef().ref();
-      case AstExpr.RefCapture(var idx) -> {
-        if (!(ap instanceof ArgumentProvider.Lambda lap)) {
-          yield Panic.unreachable();
-        }
-
-        yield (AsmExpr) lap.capture(idx);
-      }
     };
   }
 

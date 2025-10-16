@@ -4,9 +4,12 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -41,16 +44,16 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, FnDef unit) {
+  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
   }
 
-  public static @NotNull JavaExpr makeInvoke(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstExpr makeInvoke(
+    @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull JavaExpr normalizer,
-    @NotNull ImmutableSeq<JavaExpr> args
+    @NotNull AstVariable normalizer,
+    @NotNull ImmutableSeq<AstVariable> args
   ) {
     var ref = new MethodRef(
       owner, "invoke", Constants.CD_Term,
@@ -59,26 +62,24 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     );
 
     var instance = TermExprializer.getInstance(builder, owner);
-    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
+    return AbstractExprializer.makeCallInvoke(ref, instance, normalizer, args.view());
   }
 
   /**
    * Build fixed argument `invoke`
    */
   private void buildInvoke(
-    @NotNull CodeBuilder topBuilder,
+    @NotNull AstCodeBuilder topBuilder,
     @NotNull FnDef unit,
-    @NotNull LocalVariable preTerm,
-    @NotNull ImmutableSeq<LocalVariable> argTerms
+    @NotNull AstVariable normalizer,
+    @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    Consumer<CodeBuilder> buildFn = builder -> {
-      Consumer<CodeBuilder> onStuckCon = cb -> {
-        var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms.map(LocalVariable::ref));
+    Consumer<AstCodeBuilder> buildFn = builder -> {
+      Consumer<AstCodeBuilder> onStuckCon = cb -> {
+        var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms);
         cb.returnWith(stuckTerm);
       };
 
-      var argExprs = argTerms.map(LocalVariable::ref);
-      var normalizer = preTerm.ref();
       var serializerContext = buildSerializerContext(normalizer);
 
       if (unit.is(Modifier.Opaque)) {
@@ -88,29 +89,28 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
       switch (unit.body()) {
         case Either.Left(var expr) -> {
-          var result = serializerContext.serializeTermUnderTele(builder, expr, argExprs);
+          var result = serializerContext.serializeTermUnderTele(builder, expr, argTerms);
           builder.returnWith(result);
         }
         case Either.Right(var clauses) -> {
-          var ser = new PatternSerializer(argExprs, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
+          var ser = new PatternSerializer(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
             if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
                 var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
                   .take(count)
-                  .map(LocalVariable::ref)
                   .toSeq());
                 assert argTerms.size() == args.size();
                 // Will cause conflict in theory, but won't in practice due to current local variable
                 // declaration heuristics.
                 argTerms.forEachWith(args, (a, b) -> {
+                  // TODO: how to?
                   builder0.updateVar(a, b);
                 });
                 builder0.continueLoop();
               } else {
                 var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
                   .take(count)
-                  .map(LocalVariable::ref)
                   .toSeq());
                 builder0.returnWith(result);
               }
@@ -131,15 +131,15 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build vararg `invoke`
    */
   private void buildInvoke(
-    @NotNull CodeBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull FnDef unit,
     @NotNull MethodRef invokeMethod,
-    @NotNull LocalVariable normalizerTerm,
-    @NotNull LocalVariable argsTerm
+    @NotNull AstVariable normalizerTerm,
+    @NotNull AstVariable argsTerm
   ) {
     var teleSize = unit.telescope().size();
-    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm.ref(), teleSize);
-    var result = AbstractExprializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm.ref(), args.view());
+    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
+    var result = AbstractExprializer.makeCallInvoke(invokeMethod, builder.thisRef(), normalizerTerm, args.view());
     builder.returnWith(result);
   }
 
@@ -151,7 +151,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return shapeMaybe.get().shape().ordinal();
   }
 
-  @Override public @NotNull FnSerializer serialize(@NotNull ClassBuilder builder, FnDef unit) {
+  @Override public @NotNull FnSerializer serialize(@NotNull AstClassBuilder builder, FnDef unit) {
     buildFramework(builder, unit, builder0 -> {
       var fixedInvoke = builder0.buildMethod(
         Constants.CD_Term,

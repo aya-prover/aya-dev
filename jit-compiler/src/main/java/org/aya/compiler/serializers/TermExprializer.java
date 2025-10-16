@@ -9,6 +9,10 @@ import kala.tuple.Tuple2;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ast.AstArgumentProvider;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.core.Closure;
@@ -37,36 +41,36 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
 
   /// Terms that should be instantiated
-  private final @NotNull ImmutableSeq<JavaExpr> instantiates;
-  private final @NotNull MutableLinkedHashMap<LocalVar, JavaExpr> binds;
+  private final @NotNull ImmutableSeq<AstVariable> instantiates;
+  private final @NotNull MutableLinkedHashMap<LocalVar, AstVariable> binds;
 
   /// Whether allow {@link LocalTerm}, false in default (in order to report unexpected LocalTerm)
   private final boolean allowLocalTerm;
 
   public TermExprializer(
-    @NotNull ExprBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
-    @NotNull ImmutableSeq<JavaExpr> instantiates
+    @NotNull ImmutableSeq<AstVariable> instantiates
   ) {
     this(builder, context, instantiates, false);
   }
 
   public TermExprializer(
-    @NotNull ExprBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
-    @NotNull ImmutableSeq<JavaExpr> instantiates,
-    boolean allowLocalTer
+    @NotNull ImmutableSeq<AstVariable> instantiates,
+    boolean allowLocalTerm
   ) {
     super(builder, context);
     this.instantiates = instantiates;
-    this.allowLocalTerm = allowLocalTer;
+    this.allowLocalTerm = allowLocalTerm;
     this.binds = MutableLinkedHashMap.of();
   }
 
   private TermExprializer(
-    @NotNull ExprBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
-    @NotNull MutableLinkedHashMap<LocalVar, JavaExpr> newBinds,
+    @NotNull MutableLinkedHashMap<LocalVar, AstVariable> newBinds,
     boolean allowLocalTerm
   ) {
     super(builder, context);
@@ -75,7 +79,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull JavaExpr serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
+  private @NotNull AstVariable serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
       case IntegerOps.ConRule conRule -> builder.mkNew(IntegerOps.ConRule.class, ImmutableSeq.of(
         getInstance(conRule.ref()),
@@ -93,48 +97,52 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     };
   }
 
-  public static @NotNull JavaExpr buildFnCall(
-    @NotNull ExprBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
-    int ulift, @NotNull ImmutableSeq<JavaExpr> args
+  public static @NotNull AstVariable buildFnCall(
+    @NotNull AstCodeBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
+    int ulift, @NotNull ImmutableSeq<AstVariable> args
   ) {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
-      builder.iconst(ulift),
+      builder.bindExpr(new AstExpr.Iconst(ulift)),
       AbstractExprializer.makeImmutableSeq(builder, Term.class, args)
     ));
   }
 
-  private @NotNull JavaExpr getNormalizer() {
+  private @NotNull AstVariable getNormalizer() {
     var normalizer = context.normalizer();
     if (normalizer == null) {
-      normalizer = Constants.unaryOperatorIdentity(builder);
+      normalizer = builder.bindExpr(Constants.unaryOperatorIdentity(builder));
     }
 
     return normalizer;
   }
 
-  private @NotNull JavaExpr
-  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<JavaExpr> args) {
+  private @NotNull AstVariable
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<AstVariable> args) {
     var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
+    var invokeVar = builder.bindExpr(invokeExpr);
 
     if (ulift != 0) {
-      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
-    } else return invokeExpr;
+      var elevate = new AstExpr.Invoke(Constants.ELEVATE, invokeVar, ImmutableSeq.of(builder.iconst(ulift)));
+      return builder.bindExpr(elevate);
+    } else return invokeVar;
   }
 
   // There is a chance I need to add lifting to match, so keep a function for us to
   // add the if-else in it
-  private @NotNull JavaExpr buildMatchyInvoke(
+  private @NotNull AstVariable buildMatchyInvoke(
     @NotNull ClassDesc matchyClass,
-    @NotNull ImmutableSeq<JavaExpr> args,
-    @NotNull ImmutableSeq<JavaExpr> captures
+    @NotNull ImmutableSeq<AstVariable> args,
+    @NotNull ImmutableSeq<AstVariable> captures
   ) {
     var normalizer = getNormalizer();
-    return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
+    var invoke = MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
+    return builder.bindExpr(invoke);
   }
 
-  @Override protected @NotNull JavaExpr doSerialize(@NotNull Term term) {
+  /// UNPURE
+  @Override protected @NotNull AstVariable doSerialize(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         // It is possible that we meet bind here,
@@ -159,7 +167,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
-      case LamTerm lamTerm -> builder.mkNew(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body())));
+      case LamTerm lamTerm ->
+        builder.bindExpr(new AstExpr.New(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body()))));
       case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
         getInstance(ref),
         builder.iconst(ulift),
@@ -171,7 +180,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case FnCall(var ref, var ulift, var args, var tailCall) ->
+      case FnCall(var ref, var ulift, var args, _) ->
         buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
         var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
@@ -180,7 +189,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeToImmutableSeq(Term.class, ownerArgs),
           serializeToImmutableSeq(Term.class, conArgs)
         ));
-        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        var invoke = new AstExpr.Invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        yield builder.bindExpr(invoke);
       }
       case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
@@ -188,7 +198,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           builder.iconst(ulift),
           serializeToImmutableSeq(Term.class, args)
         ));
-        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        var invoke = new AstExpr.Invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        yield builder.bindExpr(invoke);
       }
       case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
       case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
@@ -264,46 +275,48 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     };
   }
 
-  private @NotNull JavaExpr makeLambda(
+  private @NotNull AstVariable makeLambda(
     @NotNull MethodRef lambdaType,
-    @NotNull BiFunction<ArgumentProvider, TermExprializer, JavaExpr> cont
+    @NotNull BiFunction<AstArgumentProvider.Lambda, TermExprializer, AstVariable> cont
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
-    var fullCaptures = entries.map(Tuple2::component2);
-    boolean hasNormalizer;
-    if (context.normalizer() != null) {
-      hasNormalizer = true;
+    var fullCaptures = entries.view().map(Tuple2::component2);
+    boolean hasNormalizer = context.normalizer() != null;
+    if (hasNormalizer) {
       fullCaptures = fullCaptures.prepended(context.normalizer());
-    } else {
-      hasNormalizer = false;
     }
 
-    return builder.mkLambda(fullCaptures, lambdaType, (ap, builder) -> {
-      var newContext = new SerializerContext(context.normalizer() == null ? null : InvokeSignatureHelper.normalizer(ap), context.recorder());
+    var lam = builder.mkLambda(fullCaptures.toSeq(), lambdaType, (ap, builder) -> {
+      var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizer(ap) : null;
+      var newContext = new SerializerContext(normalizer, context.recorder());
       var captured = entries.mapIndexed((i, tup) -> {
-        var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
+        var capturedExpr = InvokeSignatureHelper.capture(ap, i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
       var result = cont.apply(ap, new TermExprializer(this.builder, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder.returnWith(result);
     });
+
+    return builder.bindExpr(lam);
   }
 
-  private @NotNull JavaExpr makeClosure(@NotNull BiFunction<TermExprializer, JavaExpr, JavaExpr> cont) {
-    return makeLambda(Constants.CLOSURE, (ap, te) ->
-      cont.apply(te, builder.checkcast(ap.arg(0).ref(), Constants.CD_Term)));
+  private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermExprializer, AstVariable, AstVariable> cont) {
+    return makeLambda(Constants.CLOSURE, (ap, te) -> {
+      var casted = new AstExpr.CheckCast(ap.arg(0), Constants.CD_Term);
+      return cont.apply(te, te.builder.bindExpr(casted));
+    });
   }
 
-  private @NotNull JavaExpr serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
+  private @NotNull AstVariable serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
     return makeImmutableSeq(Closure.class, cls.map(this::serializeClosure));
   }
 
-  private @NotNull JavaExpr with(
+  private @NotNull AstVariable with(
     @NotNull LocalVar var,
-    @NotNull JavaExpr subst,
-    @NotNull Supplier<JavaExpr> continuation
+    @NotNull AstVariable subst,
+    @NotNull Supplier<AstVariable> continuation
   ) {
     this.binds.put(var, subst);
     var result = continuation.get();
@@ -311,7 +324,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return result;
   }
 
-  private @NotNull JavaExpr serializeClosure(@NotNull Closure body) {
+  private @NotNull AstVariable serializeClosure(@NotNull Closure body) {
     if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
 
     var var = new LocalVar("<jit>");
@@ -324,16 +337,18 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return builder.mkNew(Closure.Jit.class, ImmutableSeq.of(closure));
   }
 
-  private @NotNull JavaExpr serializeConst(Term appliedBody) {
-    return builder.invoke(Constants.CLOSURE_MKCONST, ImmutableSeq.of(doSerialize(appliedBody)));
+  private @NotNull AstVariable serializeConst(@NotNull Term appliedBody) {
+    var invoke = new AstExpr.Invoke(Constants.CLOSURE_MKCONST, null, ImmutableSeq.of(doSerialize(appliedBody)));
+    return builder.bindExpr(invoke);
   }
 
-  private @NotNull JavaExpr makeAppNew(@NotNull Class<?> className, Term... terms) {
+  private @NotNull AstVariable makeAppNew(@NotNull Class<?> className, Term... terms) {
     var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
-    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+    var invoke = new AstExpr.Invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+    return builder.bindExpr(invoke);
   }
 
-  private @NotNull JavaExpr makeMemberNew(@NotNull MemberCall call) {
+  private @NotNull AstVariable makeMemberNew(@NotNull MemberCall call) {
     var obj = builder.mkNew(MemberCall.class, ImmutableSeq.of(
       doSerialize(call.of()),
       getInstance(call.ref()),
@@ -341,10 +356,11 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       serializeToImmutableSeq(Term.class, call.args())
     ));
 
-    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+    var invoke = new AstExpr.Invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
+    return builder.bindExpr(invoke);
   }
 
-  @Override public @NotNull JavaExpr serialize(Term unit) {
+  @Override public @NotNull AstVariable serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instTeleVar(vars.view());
@@ -352,7 +368,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
 
     return doSerialize(unit);
   }
-  public @NotNull ImmutableSeq<JavaExpr> serializeTailCall(@NotNull FnCall unit) {
+  public @NotNull ImmutableSeq<AstVariable> serializeTailCall(@NotNull FnCall unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     var instantiated = (FnCall) unit.instTeleVar(vars.view());

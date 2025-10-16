@@ -8,7 +8,6 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ public record AstClassBuilder(
   @Nullable String nested,
   @NotNull Class<?> superclass,
   @NotNull FreezableMutableList<AstDecl> members,
-  @NotNull MutableMap<FieldRef, Function<_AstExprBuilder, AstExpr>> fieldInitializers
+  @NotNull MutableMap<FieldRef, Function<AstCodeBuilder, AstVariable>> fieldInitializers
 ) {
   public AstClassBuilder(
     @Nullable AyaMetadata metadata,
@@ -57,7 +56,7 @@ public record AstClassBuilder(
 
   private void buildMethod(
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
   ) {
     var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
     builder.accept(new AstArgumentProvider(ref.paramTypes().size()), codeBuilder);
@@ -68,7 +67,7 @@ public record AstClassBuilder(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
   ) {
     var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, builder);
@@ -77,7 +76,7 @@ public record AstClassBuilder(
 
   public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
   ) {
     var ref = ClassBuilder.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, builder);
@@ -87,7 +86,7 @@ public record AstClassBuilder(
   public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
-    @NotNull Function<_AstExprBuilder, AstExpr> initializer
+    @NotNull Function<AstCodeBuilder, AstVariable> initializer
   ) {
     var ref = new FieldRef(className(), returnType, name);
     fieldInitializers.put(ref, initializer);

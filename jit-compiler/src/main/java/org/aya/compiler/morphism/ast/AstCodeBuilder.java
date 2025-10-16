@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.morphism.ast;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.FreezableMutableList;
@@ -9,6 +10,8 @@ import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +39,10 @@ public record AstCodeBuilder(
 
   public @NotNull ImmutableSeq<AstStmt> build() { return stmts.freeze(); }
 
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstExpr> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstVariable> superConArgs) {
     assert isConstructor;
     assert superConParams.sizeEquals(superConArgs);
-    var argVars = bindExprs(superConArgs);
-    stmts.append(new AstStmt.Super(superConParams, argVars));
+    stmts.append(new AstStmt.Super(superConParams, superConArgs));
   }
 
   public void updateVar(@NotNull AstVariable var, @NotNull AstExpr update) {
@@ -127,6 +129,10 @@ public record AstCodeBuilder(
   }
 
   public void returnWith(@NotNull AstExpr expr) {
+    stmts.append(new AstStmt.Return(bindExpr(expr)));
+  }
+
+  public void returnWith(@NotNull AstVariable expr) {
     stmts.append(new AstStmt.Return(expr));
   }
 
@@ -139,6 +145,21 @@ public record AstCodeBuilder(
     return new AstExpr.New(conRef, varArgs);
   }
 
+  /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.
+  public @NotNull AstVariable mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<AstVariable> args) {
+    var candidates = ImmutableArray.wrap(className.getConstructors())
+      .filter(c -> c.getParameterCount() == args.size());
+
+    assert candidates.size() == 1 : "Ambiguous constructors: count " + candidates.size();
+
+    var first = candidates.getFirst();
+    var desc = AstUtil.fromClass(className);
+    var conRef = ClassBuilder.makeConstructorRef(desc,
+      ImmutableArray.wrap(first.getParameterTypes())
+        .map(AstUtil::fromClass));
+    return bindExpr(new AstExpr.New(conRef, args));
+  }
+
   public @NotNull AstExpr
   invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args) {
     return new AstExpr.Invoke(method, bindExpr(owner), bindExprs(args));
@@ -148,8 +169,8 @@ public record AstCodeBuilder(
     return new AstExpr.Invoke(method, null, bindExprs(args));
   }
 
-  public @NotNull AstExpr refField(@NotNull FieldRef field) {
-    return new AstExpr.RefField(field, null);
+  public @NotNull AstVariable refField(@NotNull FieldRef field) {
+    return bindExpr(new AstExpr.RefField(field, null));
   }
 
   public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
@@ -160,12 +181,33 @@ public record AstCodeBuilder(
     return new AstExpr.RefEnum(enumClass, enumName);
   }
 
+  public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
+    var cd = AstUtil.fromClass(value.getClass());
+    var name = value.name();
+    return bindExpr(refEnum(cd, name));
+  }
+
+  public @NotNull AstVariable iconst(int i) {
+    return bindExpr(new AstExpr.Iconst(i));
+  }
+
+  public @NotNull AstVariable aconst(@NotNull String str) {
+    return bindExpr(new AstExpr.Sconst(str));
+  }
+
+  public @NotNull AstVariable iconst(boolean b) {
+    return bindExpr(new AstExpr.Bconst(b));
+  }
+
+  public @NotNull AstVariable thisRef() {
+    return bindExpr(AstExpr.This.INSTANCE);
+  }
+
   public @NotNull AstExpr mkLambda(
-    @NotNull ImmutableSeq<AstExpr> captures,
+    @NotNull ImmutableSeq<AstVariable> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgumentProvider.Lambda, AstCodeBuilder> builder
   ) {
-    var varCaptures = bindExprs(captures);
     var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
     // [captures.size()..]th parameters are lambda arguments
@@ -173,10 +215,10 @@ public record AstCodeBuilder(
     // as the arguments does NOT count as [local](AstVariable.Local) variables, but instead a [reference to the argument](AstVariable.Arg).
     var lambdaBodyBuilder = new AstCodeBuilder(FreezableMutableList.create(),
       new VariablePool(), false, false);
-    builder.accept(new AstArgumentProvider.Lambda(varCaptures.size(), argc), lambdaBodyBuilder);
+    builder.accept(new AstArgumentProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
-    return new AstExpr.Lambda(varCaptures, method, lambdaBody);
+    return new AstExpr.Lambda(captures, method, lambdaBody);
   }
 
   public @NotNull AstExpr

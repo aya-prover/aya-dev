@@ -12,6 +12,7 @@ import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -54,7 +55,7 @@ public final class PatternSerializer {
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  @UnknownNullability ImmutableSeq<LocalVariable> result;
+  @UnknownNullability ImmutableSeq<AstVariable> result;
   @UnknownNullability LocalVariable matchState;
   @UnknownNullability LocalVariable subMatchState;
 

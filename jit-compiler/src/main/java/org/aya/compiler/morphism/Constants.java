@@ -9,6 +9,8 @@ import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -233,7 +235,7 @@ public final class Constants {
     true
   );
 
-  public static @NotNull JavaExpr unaryOperatorIdentity(@NotNull ExprBuilder builder) {
+  public static @NotNull AstExpr unaryOperatorIdentity(@NotNull AstCodeBuilder builder) {
     return builder.invoke(CLOSURE_ID, ImmutableSeq.empty());
   }
 
