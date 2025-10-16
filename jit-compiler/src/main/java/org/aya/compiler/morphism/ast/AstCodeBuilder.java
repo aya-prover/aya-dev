@@ -50,7 +50,9 @@ public record AstCodeBuilder(
   }
 
   public void updateArray(@NotNull AstExpr array, int idx, @NotNull AstExpr update) {
-    stmts.append(new AstStmt.SetArray(array, idx, update));
+    var arrVar = bindExpr(array);
+    var updateVar = bindExpr(update);
+    stmts.append(new AstStmt.SetArray(arrVar, idx, updateVar));
   }
 
   private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
@@ -163,6 +165,11 @@ public record AstCodeBuilder(
   public @NotNull AstExpr
   invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args) {
     return new AstExpr.Invoke(method, bindExpr(owner), bindExprs(args));
+  }
+
+  public @NotNull AstExpr
+  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstExpr> args) {
+    return new AstExpr.Invoke(method, owner, bindExprs(args));
   }
 
   public @NotNull AstExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstExpr> args) {
