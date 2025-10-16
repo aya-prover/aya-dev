@@ -242,6 +242,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
+    if (expr instanceof AstExpr.Ref(var ref)) return ref;
     return bindExpr(Constants.CD_Term, expr);
   }
 

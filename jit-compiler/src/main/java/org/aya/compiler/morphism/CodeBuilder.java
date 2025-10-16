@@ -74,8 +74,6 @@ public interface CodeBuilder {
     return mkNew(conRef, args);
   }
 
-  default @NotNull AstExpr refVar(@NotNull AstVariable name) { return name.ref(); }
-
   /// Invoke a (non-interface) method on {@param owner}.
   @NotNull AstExpr invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args);
 

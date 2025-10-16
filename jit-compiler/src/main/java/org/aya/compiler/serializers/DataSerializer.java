@@ -5,7 +5,12 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -28,13 +33,12 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  @Override public @NotNull DataSerializer serialize(@NotNull ClassBuilder builder, DataDef unit) {
+  @Override public @NotNull DataSerializer serialize(@NotNull AstClassBuilder builder, DataDef unit) {
     buildFramework(builder, unit, builder0 -> builder0.buildMethod(
       AstUtil.fromClass(JitCon.class).arrayType(),
       "constructors",
-      ImmutableSeq.empty(), (_, cb) -> {
-        buildConstructors(cb, unit);
-      }));
+      ImmutableSeq.empty(), (_, cb) ->
+        buildConstructors(cb, unit)));
 
     return this;
   }
@@ -70,27 +74,26 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, DataDef unit) {
+  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, DataDef unit) {
     return super.superConArgs(builder, unit).appended(builder.iconst(unit.body().size()));
   }
 
   /**
    * @see JitData#constructors()
    */
-  private void buildConstructors(@NotNull CodeBuilder builder, DataDef unit) {
+  private void buildConstructors(@NotNull AstCodeBuilder builder, DataDef unit) {
     var cons = Constants.JITDATA_CONS;
-    var consRef = builder.refField(cons, builder.thisRef());
+    var consRef = new AstExpr.RefField(cons, builder.thisRef());
 
     if (unit.body().isEmpty()) {
       builder.returnWith(consRef);
       return;
     }
 
-    builder.ifNull(builder.getArray(consRef, 0), cb -> {
-      unit.body().forEachIndexed((idx, con) -> {
-        cb.updateArray(consRef, idx, AbstractExprializer.getInstance(builder, con));
-      });
-    }, null);
+    builder.ifNull(builder.getArray(consRef, 0), cb ->
+      unit.body().forEachIndexed((idx, con) ->
+        cb.updateArray(consRef, idx,
+          new AstExpr.Ref(AbstractExprializer.getInstance(builder, con)))), null);
 
     builder.returnWith(consRef);
   }
