@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.asm.AsmClassBuilder;
 import org.aya.compiler.morphism.asm.AsmCodeBuilder;
 import org.aya.compiler.morphism.asm.AsmExpr;
@@ -63,10 +62,6 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         }
       }
     }
-  }
-
-  private @NotNull ImmutableSeq<JavaExpr> interpExpr(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstExpr> exprs) {
-    return exprs.map(it -> runFree(ap, builder, it));
   }
 
   private ImmutableSeq<LocalVariable> runFree(@Nullable ArgumentProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
@@ -157,7 +152,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           case AstStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
             var asTerm = as.get();
             assert asTerm != null;
-            builder.ifInstanceOf(runFree(ap, builder, lhs), rhs, (cb, var) -> {
+            builder.ifInstanceOf(runFree(ap, lhs), rhs, (cb, var) -> {
               try (var _ = subscoped()) {
                 bindVar(asTerm.index(), var);
                 interpStmt(ap, cb, thenBody);      // prevent unnecessary subscoping
@@ -165,18 +160,18 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
             }, elseBlock);
           }
           case AstStmt.Condition.IsIntEqual(var lhs, var rhs) ->
-            builder.ifIntEqual(runFree(ap, builder, lhs), rhs, thenBlock, elseBlock);
-          case AstStmt.Condition.IsNull(var ref) -> builder.ifNull(runFree(ap, builder, ref), thenBlock, elseBlock);
+            builder.ifIntEqual(runFree(ap, lhs), rhs, thenBlock, elseBlock);
+          case AstStmt.Condition.IsNull(var ref) -> builder.ifNull(runFree(ap, ref), thenBlock, elseBlock);
           case AstStmt.Condition.IsRefEqual(var lhs, var rhs) ->
-            builder.ifRefEqual(runFree(ap, builder, lhs), runFree(ap, builder, rhs), thenBlock, elseBlock);
+            builder.ifRefEqual(runFree(ap, lhs), runFree(ap, rhs), thenBlock, elseBlock);
         }
       }
-      case AstStmt.Return(var expr) -> builder.returnWith(runFree(ap, builder, expr));
+      case AstStmt.Return(var expr) -> builder.returnWith(runFree(ap, expr));
       case AstStmt.SetArray(var arr, var idx, var update) ->
-        builder.updateArray(runFree(ap, builder, arr), idx, runFree(ap, builder, update));
+        builder.updateArray(runFree(ap, arr), idx, runFree(ap, update));
       case AstStmt.SetVariable(var var, var update) ->
         builder.updateVar(runFree(ap, var), runFree(ap, builder, update));
-      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, interpExpr(ap, builder, args));
+      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, runFree(ap, args));
       case AstStmt.Switch(var elim, var cases, var branches, var defaultCase) ->
         builder.switchCase(runFree(ap, elim), cases, (cb, kase) -> {
           // slow impl, i am lazy

@@ -96,13 +96,13 @@ public record AsmCodeBuilder(
     writer.storeInstruction(asmVar.kind(), asmVar.slot());
   }
 
-  public void updateArray(@NotNull JavaExpr array, int idx, @NotNull LocalVariable update) {
-    var expr = assertExpr(array);
+  public void updateArray(@NotNull LocalVariable array, int idx, @NotNull LocalVariable update) {
+    var expr = assertVar(array);
     var component = expr.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
-    expr.accept(this);
+    loadVar(expr);
     iconst(idx).accept(this);
     loadVar(update);
     writer.arrayStoreInstruction(kind);
@@ -139,20 +139,20 @@ public record AsmCodeBuilder(
     }, elseBlock);
   }
 
-  public void ifIntEqual(@NotNull JavaExpr lhs, int rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadExpr(lhs);
+  public void ifIntEqual(@NotNull LocalVariable lhs, int rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(lhs);
     loadExpr(iconst(rhs));
     ifThenElse(Opcode.IF_ICMPEQ, thenBlock, elseBlock);
   }
 
-  public void ifRefEqual(@NotNull JavaExpr lhs, @NotNull JavaExpr rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadExpr(lhs);
-    loadExpr(rhs);
+  public void ifRefEqual(@NotNull LocalVariable lhs, @NotNull LocalVariable rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(lhs);
+    loadVar(rhs);
     ifThenElse(Opcode.IF_ACMPEQ, thenBlock, elseBlock);
   }
 
-  public void ifNull(@NotNull JavaExpr isNull, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadExpr(isNull);
+  public void ifNull(@NotNull LocalVariable isNull, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(isNull);
     ifThenElse(Opcode.IFNULL, thenBlock, elseBlock);
   }
 
@@ -218,10 +218,10 @@ public record AsmCodeBuilder(
     subscoped(defaultCase);
   }
 
-  public void returnWith(@NotNull JavaExpr expr) {
-    var asmExpr = assertExpr(expr);
-    var kind = TypeKind.fromDescriptor(asmExpr.type().descriptorString());
-    asmExpr.accept(this);
+  public void returnWith(@NotNull LocalVariable expr) {
+    var asmVar = assertVar(expr);
+    var kind = TypeKind.fromDescriptor(asmVar.type().descriptorString());
+    loadVar(asmVar);
     writer.returnInstruction(kind);
   }
 
