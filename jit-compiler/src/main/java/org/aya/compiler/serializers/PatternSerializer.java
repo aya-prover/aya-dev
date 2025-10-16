@@ -7,8 +7,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
@@ -99,7 +99,7 @@ public final class PatternSerializer {
 
       case Pat.Con con -> {
         var whnf = context.whnf(builder, term);
-        builder.ifInstanceOf(whnf, AstUtil.fromClass(ConCallLike.class),
+        builder.ifInstanceOf(whnf, JavaUtil.fromClass(ConCallLike.class),
           (builder1, conTerm) -> builder1.ifRefEqual(
             AbstractExprializer.getRef(builder1, CallKind.Con, conTerm),
             AbstractExprializer.getInstance(builder1, con.ref()),
@@ -132,7 +132,7 @@ public final class PatternSerializer {
       }
       case Pat.Tuple(var l, var r) -> {
         var whnf = context.whnf(builder, term);
-        builder.ifInstanceOf(whnf, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
+        builder.ifInstanceOf(whnf, JavaUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           // TODO: use doSerialize on many pat version
           var lhs = new AstExpr.Invoke(Constants.TUP_LHS, tupTerm, ImmutableSeq.empty());
           doSerialize(builder0, l, builder0.bindExpr(lhs), Once.of(builder1 -> {
@@ -173,7 +173,7 @@ public final class PatternSerializer {
   }
 
   private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull AstVariable term) {
-    builder.ifInstanceOf(term, AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+    builder.ifInstanceOf(term, JavaUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
       var intTermRepr = new AstExpr.Invoke(
         Constants.INT_REPR,
         intTerm,

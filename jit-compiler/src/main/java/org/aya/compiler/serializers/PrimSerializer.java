@@ -3,7 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
@@ -21,7 +21,7 @@ public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
   @Override protected @NotNull Class<?> callClass() { return PrimCall.class; }
 
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
-    return super.superConParams().appended(AstUtil.fromClass(PrimDef.ID.class));
+    return super.superConParams().appended(JavaUtil.fromClass(PrimDef.ID.class));
   }
 
   @Override

@@ -5,8 +5,8 @@ package org.aya.compiler.serializers;
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -34,7 +34,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override protected @NotNull Class<?> callBaseClass() { return ConCallLike.class; }
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appendedAll(ImmutableSeq.of(
-      AstUtil.fromClass(JitData.class),
+      JavaUtil.fromClass(JitData.class),
       ConstantDescs.CD_int, ConstantDescs.CD_boolean
     ));
   }
@@ -96,7 +96,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     buildFramework(builder0, unit, builder -> {
       if (unit.pats.isNotEmpty()) {
         builder.buildMethod(
-          AstUtil.fromClass(Result.class),
+          JavaUtil.fromClass(Result.class),
           "isAvailable",
           InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_ImmutableSeq).view()),
           (ap, builder1) ->

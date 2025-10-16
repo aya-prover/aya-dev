@@ -10,7 +10,8 @@ import kala.value.LazyValue;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
@@ -49,7 +50,7 @@ public final class AsmClassBuilder implements AutoCloseable {
     this.collector = collector;
     this.lambdaBoostrapMethodHandle = LazyValue.of(() -> writer.constantPool().methodHandleEntry(MethodHandleDesc.ofMethod(
       DirectMethodHandleDesc.Kind.STATIC,
-      AstUtil.fromClass(LambdaMetafactory.class),
+      JavaUtil.fromClass(LambdaMetafactory.class),
       "metafactory",
       MethodTypeDesc.of(
         ConstantDescs.CD_CallSite,
@@ -70,7 +71,7 @@ public final class AsmClassBuilder implements AutoCloseable {
     @NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<AsmClassBuilder> builder
   ) {
     AsmJavaBuilder.buildClass(collector, ayaMetadata,
-      new ClassData(owner().nested(name), AstUtil.fromClass(superclass),
+      new ClassData(owner().nested(name), JavaUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),
       builder);
     nestedMembers.append(name);

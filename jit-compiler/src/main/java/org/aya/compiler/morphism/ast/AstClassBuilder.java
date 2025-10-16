@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +78,7 @@ public record AstClassBuilder(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
   ) {
-    var ref = ClassBuilder.makeConstructorRef(className(), paramTypes);
+    var ref = JavaUtil.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, builder);
     return ref;
   }

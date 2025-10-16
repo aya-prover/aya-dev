@@ -5,7 +5,9 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.FreeJavaResolver;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
@@ -86,7 +88,7 @@ public abstract class AbstractExprializer<T> {
 
       args = terms;
     } else {
-      var var = builder.bindExpr(new AstExpr.Array(AstUtil.fromClass(typeName), terms.size(), terms));
+      var var = builder.bindExpr(new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), terms));
       args = ImmutableSeq.of(var);
     }
 

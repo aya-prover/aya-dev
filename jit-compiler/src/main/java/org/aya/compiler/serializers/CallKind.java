@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.FnDefLike;
@@ -22,8 +22,8 @@ public enum CallKind {
   public final @NotNull ClassDesc refType;
 
   CallKind(@NotNull Class<?> callType, @NotNull Class<?> refType) {
-    this.callType = AstUtil.fromClass(callType);
-    this.refType = AstUtil.fromClass(refType);
+    this.callType = JavaUtil.fromClass(callType);
+    this.refType = JavaUtil.fromClass(refType);
   }
 
   public static @NotNull CallKind from(@NotNull Callable.Tele call) {

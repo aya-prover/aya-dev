@@ -9,7 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
-public interface ClassBuilder {
+public interface JavaUtil {
+  static @NotNull ClassDesc fromClass(@NotNull Class<?> clazz) {
+    return ClassDesc.ofDescriptor(clazz.descriptorString());
+  }
+
   static @NotNull MethodRef makeConstructorRef(@NotNull ClassDesc owner, @NotNull ImmutableSeq<ClassDesc> parameterTypes) {
     return new MethodRef(owner, ConstantDescs.INIT_NAME, ConstantDescs.CD_void, parameterTypes, false);
   }

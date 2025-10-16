@@ -4,8 +4,8 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -45,7 +45,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
 
   @Override public @NotNull ClassSerializer serialize(@NotNull AstClassBuilder builder, ClassDef unit) {
     buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      AstUtil.fromClass(JitMember.class).arrayType(),
+      JavaUtil.fromClass(JitMember.class).arrayType(),
       "membars",
       ImmutableSeq.empty(),
       (ap, cb) -> buildMembers(cb, unit)));

@@ -9,9 +9,8 @@ import kala.collection.mutable.FreezableMutableList;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,10 +154,10 @@ public record AstCodeBuilder(
     assert candidates.size() == 1 : "Ambiguous constructors: count " + candidates.size();
 
     var first = candidates.getFirst();
-    var desc = AstUtil.fromClass(className);
-    var conRef = ClassBuilder.makeConstructorRef(desc,
+    var desc = JavaUtil.fromClass(className);
+    var conRef = JavaUtil.makeConstructorRef(desc,
       ImmutableArray.wrap(first.getParameterTypes())
-        .map(AstUtil::fromClass));
+        .map(JavaUtil::fromClass));
     return bindExpr(new AstExpr.New(conRef, args));
   }
 
@@ -189,7 +188,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
-    var cd = AstUtil.fromClass(value.getClass());
+    var cd = JavaUtil.fromClass(value.getClass());
     var name = value.name();
     return bindExpr(cd, refEnum(cd, name));
   }

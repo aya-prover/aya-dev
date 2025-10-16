@@ -3,7 +3,6 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
@@ -23,12 +22,12 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull JavaExpr serializeTerm(@NotNull Term term) {
+  private @NotNull AstVariable serializeTerm(@NotNull Term term) {
     return new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 
-  private @NotNull JavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
+  private @NotNull AstVariable serializeConHead(@NotNull ConCallLike.Head head) {
     var termSer = new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(

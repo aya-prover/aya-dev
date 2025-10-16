@@ -39,14 +39,14 @@ import static java.lang.constant.ConstantDescs.INIT_NAME;
 public final class Constants {
   private Constants() { }
 
-  public static final @NotNull ClassDesc CD_Term = AstUtil.fromClass(Term.class);
-  public static final @NotNull ClassDesc CD_Seq = AstUtil.fromClass(Seq.class);
-  public static final @NotNull ClassDesc CD_ImmutableSeq = AstUtil.fromClass(ImmutableSeq.class);
-  public static final @NotNull ClassDesc CD_MutableSeq = AstUtil.fromClass(MutableSeq.class);
-  public static final @NotNull ClassDesc CD_Thunk = AstUtil.fromClass(Supplier.class);
-  public static final @NotNull ClassDesc CD_Closure = AstUtil.fromClass(Closure.class);
-  public static final @NotNull ClassDesc CD_UnaryOperator = AstUtil.fromClass(UnaryOperator.class);
-  public static final @NotNull ClassDesc CD_Result = AstUtil.fromClass(Result.class);
+  public static final @NotNull ClassDesc CD_Term = JavaUtil.fromClass(Term.class);
+  public static final @NotNull ClassDesc CD_Seq = JavaUtil.fromClass(Seq.class);
+  public static final @NotNull ClassDesc CD_ImmutableSeq = JavaUtil.fromClass(ImmutableSeq.class);
+  public static final @NotNull ClassDesc CD_MutableSeq = JavaUtil.fromClass(MutableSeq.class);
+  public static final @NotNull ClassDesc CD_Thunk = JavaUtil.fromClass(Supplier.class);
+  public static final @NotNull ClassDesc CD_Closure = JavaUtil.fromClass(Closure.class);
+  public static final @NotNull ClassDesc CD_UnaryOperator = JavaUtil.fromClass(UnaryOperator.class);
+  public static final @NotNull ClassDesc CD_Result = JavaUtil.fromClass(Result.class);
   public static final @NotNull String NAME_OF = "of";
   public static final @NotNull String NAME_EMPTY = "empty";
 
@@ -60,14 +60,14 @@ public final class Constants {
 
   // () -> Term
   public static final @NotNull MethodRef THUNK = new MethodRef(
-    AstUtil.fromClass(Supplier.class),
+    JavaUtil.fromClass(Supplier.class),
     "get",
     ConstantDescs.CD_Object, ImmutableSeq.empty(),
     true
   );
 
   public static final @NotNull MethodRef FUNCTION = new MethodRef(
-    AstUtil.fromClass(Function.class),
+    JavaUtil.fromClass(Function.class),
     "apply",
     ConstantDescs.CD_Object, ImmutableSeq.of(ConstantDescs.CD_Object),
     true
@@ -96,15 +96,15 @@ public final class Constants {
   );
 
   public static final @NotNull MethodRef IMMTREESEQ = new MethodRef(
-    AstUtil.fromClass(ImmutableTreeSeq.class),
+    JavaUtil.fromClass(ImmutableTreeSeq.class),
     NAME_OF,
-    AstUtil.fromClass(ImmutableTreeSeq.class),
+    JavaUtil.fromClass(ImmutableTreeSeq.class),
     ImmutableSeq.of(ConstantDescs.CD_Object.arrayType()),
     false
   );
 
   public static final @NotNull MethodRef BETAMAKE = new MethodRef(
-    AstUtil.fromClass(BetaRedex.class),
+    JavaUtil.fromClass(BetaRedex.class),
     "make",
     CD_Term, ImmutableSeq.empty(),
     true
@@ -121,7 +121,7 @@ public final class Constants {
    * @see RuleReducer#make()
    */
   public static final @NotNull MethodRef RULEREDUCER_MAKE = new MethodRef(
-    AstUtil.fromClass(RuleReducer.class),
+    JavaUtil.fromClass(RuleReducer.class),
     "make",
     CD_Term, ImmutableSeq.empty(),
     true
@@ -142,7 +142,7 @@ public final class Constants {
    * @see Panic#unreachable()
    */
   public static final @NotNull MethodRef PANIC = new MethodRef(
-    AstUtil.fromClass(Panic.class),
+    JavaUtil.fromClass(Panic.class),
     "unreachable",
     ConstantDescs.CD_Object,
     ImmutableSeq.empty(),
@@ -150,7 +150,7 @@ public final class Constants {
   );
 
   public static final @NotNull MethodRef INT_REPR = new MethodRef(
-    AstUtil.fromClass(IntegerTerm.class),
+    JavaUtil.fromClass(IntegerTerm.class),
     "repr",
     ConstantDescs.CD_int,
     ImmutableSeq.empty(),
@@ -161,7 +161,7 @@ public final class Constants {
    * @see ConCallLike#conArgs()
    */
   public static final @NotNull MethodRef CONARGS = new MethodRef(
-    AstUtil.fromClass(ConCallLike.class),
+    JavaUtil.fromClass(ConCallLike.class),
     "conArgs",
     CD_ImmutableSeq,
     ImmutableSeq.empty(),
@@ -172,7 +172,7 @@ public final class Constants {
    * @see TupTerm#lhs()
    */
   public static final @NotNull MethodRef TUP_LHS = new MethodRef(
-    AstUtil.fromClass(TupTerm.class),
+    JavaUtil.fromClass(TupTerm.class),
     "lhs",
     CD_Term,
     ImmutableSeq.empty(),
@@ -183,7 +183,7 @@ public final class Constants {
    * @see TupTerm#rhs()
    */
   public static final @NotNull MethodRef TUP_RHS = new MethodRef(
-    AstUtil.fromClass(TupTerm.class),
+    JavaUtil.fromClass(TupTerm.class),
     "rhs",
     CD_Term,
     ImmutableSeq.empty(),
@@ -213,14 +213,14 @@ public final class Constants {
   );
 
   public static final @NotNull FieldRef JITDATA_CONS = new FieldRef(
-    AstUtil.fromClass(JitData.class),
-    AstUtil.fromClass(JitCon.class).arrayType(),
+    JavaUtil.fromClass(JitData.class),
+    JavaUtil.fromClass(JitCon.class).arrayType(),
     "constructors"
   );
 
   public static final @NotNull FieldRef JITCLASS_MEMS = new FieldRef(
-    AstUtil.fromClass(JitClass.class),
-    AstUtil.fromClass(JitMember.class).arrayType(),
+    JavaUtil.fromClass(JitClass.class),
+    JavaUtil.fromClass(JitMember.class).arrayType(),
     "members"
   );
 
@@ -228,9 +228,9 @@ public final class Constants {
    * @see UnaryOperator#identity()
    */
   public static final @NotNull MethodRef CLOSURE_ID = new MethodRef(
-    AstUtil.fromClass(UnaryOperator.class),
+    JavaUtil.fromClass(UnaryOperator.class),
     "identity",
-    AstUtil.fromClass(UnaryOperator.class),
+    JavaUtil.fromClass(UnaryOperator.class),
     ImmutableSeq.empty(),
     true
   );
@@ -243,12 +243,12 @@ public final class Constants {
    * @see PatMatcher#apply(ImmutableSeq, ImmutableSeq)
    */
   public static final @NotNull MethodRef PATMATCHER_APPLY = new MethodRef(
-    AstUtil.fromClass(PatMatcher.class), "apply",
+    JavaUtil.fromClass(PatMatcher.class), "apply",
     CD_Result, ImmutableSeq.of(CD_ImmutableSeq, CD_ImmutableSeq), false
   );
 
   public static final @NotNull MethodRef LAMBDA_NEW = new MethodRef(
-    AstUtil.fromClass(LamTerm.class),
+    JavaUtil.fromClass(LamTerm.class),
     INIT_NAME,
     CD_void, ImmutableSeq.of(CD_Closure),
     false);

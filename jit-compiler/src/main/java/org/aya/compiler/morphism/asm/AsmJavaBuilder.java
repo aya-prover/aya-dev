@@ -4,7 +4,7 @@ package org.aya.compiler.morphism.asm;
 
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.morphism.AstUtil;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.glavo.classfile.*;
@@ -58,14 +58,14 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
         }
         if (metadata.recognition().length != 0) {
           var recognitionValue = AnnotationValue.ofArray(
-            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(AstUtil.fromClass(CodeShape.GlobalId.class), x.name()))
+            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(JavaUtil.fromClass(CodeShape.GlobalId.class), x.name()))
               .collect(Collectors.toList())
           );
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
         }
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
-          AstUtil.fromClass(AyaMetadata.class),
+          JavaUtil.fromClass(AyaMetadata.class),
           attributes.asJava()
         )));
       }
@@ -91,7 +91,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     @NotNull Class<?> superclass,
     @NotNull Consumer<AsmClassBuilder> builder
   ) {
-    buildClass(collector, metadata, new ClassData(className, AstUtil.fromClass(superclass), null), builder);
+    buildClass(collector, metadata, new ClassData(className, JavaUtil.fromClass(superclass), null), builder);
     return collector;
   }
 }

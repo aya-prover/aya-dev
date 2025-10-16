@@ -37,7 +37,7 @@ public final class FreeJavaResolver {
   public static @NotNull FieldRef resolve(@NotNull Class<?> owner, @NotNull String name) {
     try {
       var field = owner.getField(name);
-      return resolve(AstUtil.fromClass(owner), name, AstUtil.fromClass(field.getType()));
+      return resolve(JavaUtil.fromClass(owner), name, JavaUtil.fromClass(field.getType()));
     } catch (NoSuchFieldException e) {
       throw new Panic(e);
     }
@@ -59,10 +59,10 @@ public final class FreeJavaResolver {
     var reallyFound = found.getFirst();
 
     return resolve(
-      AstUtil.fromClass(owner),
+      JavaUtil.fromClass(owner),
       name,
-      AstUtil.fromClass(reallyFound.getReturnType()),
-      ImmutableSeq.from(reallyFound.getParameterTypes()).map(AstUtil::fromClass),
+      JavaUtil.fromClass(reallyFound.getReturnType()),
+      ImmutableSeq.from(reallyFound.getParameterTypes()).map(JavaUtil::fromClass),
       reallyFound.getDeclaringClass().isInterface()
     );
   }
