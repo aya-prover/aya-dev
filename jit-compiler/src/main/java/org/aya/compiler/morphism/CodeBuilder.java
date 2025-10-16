@@ -20,10 +20,6 @@ import java.util.function.ObjIntConsumer;
 public interface CodeBuilder {
   @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable AstExpr initializer);
 
-  default AstVariable makeVar(@NotNull Class<?> type, @Nullable AstExpr initializer) {
-    return makeVar(AstUtil.fromClass(type), initializer);
-  }
-
   void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstExpr> superConArgs);
   void updateVar(@NotNull AstVariable var, @NotNull AstExpr update);
   void updateArray(@NotNull AstExpr array, int idx, @NotNull AstExpr update);

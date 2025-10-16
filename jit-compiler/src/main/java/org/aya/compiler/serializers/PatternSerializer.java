@@ -9,9 +9,9 @@ import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.CodeBuilder;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaExpr;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -30,19 +30,19 @@ import java.util.function.Consumer;
  */
 public final class PatternSerializer {
   @FunctionalInterface
-  public interface SuccessContinuation extends TriConsumer<PatternSerializer, CodeBuilder, Integer> {
+  public interface SuccessContinuation extends TriConsumer<PatternSerializer, AstCodeBuilder, Integer> {
   }
 
   // Just for checking
-  public final static class Once implements Consumer<CodeBuilder> {
-    public static @NotNull Once of(@NotNull Consumer<CodeBuilder> run) { return new Once(run); }
-    private final @NotNull Consumer<CodeBuilder> run;
+  public final static class Once implements Consumer<AstCodeBuilder> {
+    public static @NotNull Once of(@NotNull Consumer<AstCodeBuilder> run) { return new Once(run); }
+    private final @NotNull Consumer<AstCodeBuilder> run;
     private boolean dirty = false;
 
-    public Once(@NotNull Consumer<CodeBuilder> run) { this.run = run; }
+    public Once(@NotNull Consumer<AstCodeBuilder> run) { this.run = run; }
 
     @Override
-    public void accept(CodeBuilder freeClassBuilder) {
+    public void accept(AstCodeBuilder freeClassBuilder) {
       if (dirty) throw new Panic("Once");
       dirty = true;
       this.run.accept(freeClassBuilder);
@@ -59,14 +59,14 @@ public final class PatternSerializer {
   @UnknownNullability LocalVariable subMatchState;
 
   private final @NotNull ImmutableSeq<JavaExpr> argNames;
-  private final @NotNull Consumer<CodeBuilder> onFailed;
+  private final @NotNull Consumer<AstCodeBuilder> onFailed;
   private final @NotNull SerializerContext context;
   private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternSerializer(
     @NotNull ImmutableSeq<JavaExpr> argNames,
-    @NotNull Consumer<CodeBuilder> onFailed,
+    @NotNull Consumer<AstCodeBuilder> onFailed,
     @NotNull SerializerContext context,
     boolean isOverlap
   ) {
@@ -79,7 +79,7 @@ public final class PatternSerializer {
   // region Serializing
 
   private void doSerialize(
-    @NotNull CodeBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull Pat pat,
     @NotNull JavaExpr term,
     @NotNull Once onMatchSucc
@@ -156,9 +156,9 @@ public final class PatternSerializer {
    * @param continuation    on match success
    */
   private void multiStage(
-    @NotNull CodeBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull JavaExpr term,
-    @NotNull ImmutableSeq<BiConsumer<CodeBuilder, LocalVariable>> preContinuation,
+    @NotNull ImmutableSeq<BiConsumer<AstCodeBuilder, LocalVariable>> preContinuation,
     @NotNull Once continuation
   ) {
     updateSubstate(builder, false);
@@ -172,8 +172,8 @@ public final class PatternSerializer {
     builder.ifTrue(subMatchState, continuation, null);
   }
 
-  private void matchInt(@NotNull CodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
-    builder.ifInstanceOf(builder.refVar(term), AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+  private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
+    builder.ifInstanceOf(term, AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
       var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
         builder0.refVar(intTerm),
@@ -191,7 +191,7 @@ public final class PatternSerializer {
    * @apiNote {@code pats.sizeEquals(terms)}
    */
   private void doSerialize(
-    @NotNull CodeBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull SeqView<Pat> pats,
     @NotNull SeqView<JavaExpr> terms,
     @NotNull Once continuation
@@ -209,20 +209,20 @@ public final class PatternSerializer {
   // endregion Serializing
 
   // region Java Source Code Generate API
-  private void onStuck(@NotNull CodeBuilder builder) {
+  private void onStuck(@NotNull AstCodeBuilder builder) {
     if (!isOverlap) builder.breakOut();
   }
 
-  private void updateSubstate(@NotNull CodeBuilder builder, boolean state) {
+  private void updateSubstate(@NotNull AstCodeBuilder builder, boolean state) {
     builder.updateVar(subMatchState, builder.iconst(state));
   }
 
-  private void updateState(@NotNull CodeBuilder builder, int state) {
+  private void updateState(@NotNull AstCodeBuilder builder, int state) {
     builder.updateVar(matchState, builder.iconst(state));
   }
   // endregion Java Source Code Generate API
 
-  public PatternSerializer serialize(@NotNull CodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
+  public PatternSerializer serialize(@NotNull AstCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
       onFailed.accept(builder);
       return this;
@@ -262,7 +262,7 @@ public final class PatternSerializer {
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, CodeBuilder::unreachable);
+    }, AstCodeBuilder::unreachable);
 
     return this;
   }
