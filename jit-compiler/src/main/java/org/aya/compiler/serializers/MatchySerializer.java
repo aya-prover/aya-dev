@@ -6,7 +6,8 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ClassBuilder;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -65,15 +66,15 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   private void buildInvoke(
-    @NotNull CodeBuilder builder, @NotNull MatchyData data,
-    @NotNull LocalVariable pre,
-    @NotNull ImmutableSeq<LocalVariable> captures, @NotNull ImmutableSeq<LocalVariable> args
+    @NotNull AstCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull AstVariable pre,
+    @NotNull ImmutableSeq<AstVariable> captures, @NotNull ImmutableSeq<AstVariable> args
   ) {
     var unit = data.matchy;
     var captureExprs = captures.map(LocalVariable::ref);
     var argExprs = args.map(LocalVariable::ref);
 
-    Consumer<CodeBuilder> onFailed = b -> {
+    Consumer<AstCodeBuilder> onFailed = b -> {
       var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
         AbstractExprializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
         AbstractExprializer.makeImmutableSeq(b, Term.class, captureExprs),
@@ -111,11 +112,11 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
    * @see JitMatchy#invoke(java.util.function.UnaryOperator, Seq, Seq)
    */
   private void buildInvoke(
-    @NotNull CodeBuilder builder,
+    @NotNull AstCodeBuilder builder,
     @NotNull MatchyData data,
     @NotNull MethodRef invokeRef,
-    @NotNull LocalVariable normalizer,
-    @NotNull LocalVariable captures, @NotNull LocalVariable args
+    @NotNull AstVariable normalizer,
+    @NotNull AstVariable captures, @NotNull AstVariable args
   ) {
     var capturec = data.capturesSize;
     int argc = data.argsSize;
@@ -129,7 +130,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   /** @see JitMatchy#type */
-  private void buildType(@NotNull CodeBuilder builder, @NotNull MatchyData data, @NotNull LocalVariable captures, @NotNull LocalVariable args) {
+  private void buildType(@NotNull AstCodeBuilder builder, @NotNull MatchyData data, @NotNull AstVariable captures, @NotNull AstVariable args) {
     var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures.ref(), data.capturesSize);
     var argSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, args.ref(), data.argsSize);
     var result = serializeTermUnderTeleWithoutNormalizer(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
