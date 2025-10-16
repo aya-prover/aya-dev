@@ -139,10 +139,6 @@ public record AstCodeBuilder(
     return new AstExpr.New(conRef, varArgs);
   }
 
-  public @NotNull AstExpr refVar(@NotNull AstVariable name) {
-    return new AstExpr.RefVariable(name);
-  }
-
   public @NotNull AstExpr
   invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args) {
     return new AstExpr.Invoke(method, bindExpr(owner), bindExprs(args));
@@ -183,18 +179,6 @@ public record AstCodeBuilder(
     return new AstExpr.Lambda(varCaptures, method, lambdaBody);
   }
 
-  public @NotNull AstExpr iconst(int i) { return _AstExprBuilder.INSTANCE.iconst(i); }
-  public @NotNull AstExpr iconst(boolean b) { return _AstExprBuilder.INSTANCE.iconst(b); }
-  public @NotNull AstExpr aconst(@NotNull String value) {
-    return _AstExprBuilder.INSTANCE.aconst(value);
-  }
-
-  public @NotNull AstExpr aconstNull(@NotNull ClassDesc type) {
-    return _AstExprBuilder.INSTANCE.aconstNull(type);
-  }
-
-  public @NotNull AstExpr thisRef() { return _AstExprBuilder.INSTANCE.thisRef(); }
-
   public @NotNull AstExpr
   mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<AstExpr> initializer) {
     return new AstExpr.Array(type, length, initializer == null ? null : bindExprs(initializer));
@@ -202,10 +186,6 @@ public record AstCodeBuilder(
 
   public @NotNull AstExpr getArray(@NotNull AstExpr array, int index) {
     return new AstExpr.GetArray(bindExpr(array), index);
-  }
-
-  public @NotNull AstExpr checkcast(@NotNull AstExpr obj, @NotNull ClassDesc as) {
-    return _AstExprBuilder.INSTANCE.checkcast(obj, as);
   }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
