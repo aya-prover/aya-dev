@@ -26,6 +26,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
+import static java.lang.constant.ConstantDescs.CD_Object;
+
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method
 public record AsmCodeBuilder(
@@ -171,7 +173,8 @@ public record AsmCodeBuilder(
   }
 
   public void unreachable() {
-    returnWith(invoke(Constants.PANIC, ImmutableSeq.empty()));
+    returnWith(makeVar(CD_Object,
+      invoke(Constants.PANIC, ImmutableSeq.empty())));
   }
 
   public void whileTrue(@NotNull Consumer<AsmCodeBuilder> innerBlock) {
@@ -263,14 +266,10 @@ public record AsmCodeBuilder(
 
   public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<LocalVariable> args) {
     return AsmExpr.withType(conRef.owner(), builder -> {
-      builder.writer.new_(conRef.owner());
-      builder.invoke(
-        InvokeKind.Special,
-        conRef,
-        // TODO: I don't know what to put here
-        AsmExpr.withType(conRef.owner(), builder0 -> builder0.writer.dup()),
-        args
-      );
+      var var = builder.makeVar(conRef.owner(), AsmExpr.withType(conRef.owner(), builder0 ->
+        builder0.writer.new_(conRef.owner())));
+      builder.invoke(InvokeKind.Special, conRef, var, args);
+      builder.loadVar(var);
     });
   }
 
@@ -348,23 +347,25 @@ public record AsmCodeBuilder(
 
   public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends LocalVariable> initializer) {
     var arrayType = type.arrayType();
-    var dup = AsmExpr.withType(arrayType, builder -> builder.writer.dup());
 
     return AsmExpr.withType(arrayType, builder -> {
       builder.iconst(length).accept(builder);
 
       var kind = TypeKind.fromDescriptor(type.descriptorString());
-      if (kind == TypeKind.ReferenceType) {
-        builder.writer.anewarray(type);
-      } else {
-        builder.writer.newarray(kind);
-      }
+      var var = builder.makeVar(arrayType, AsmExpr.withType(arrayType, builder0 -> {
+        if (kind == TypeKind.ReferenceType) {
+          builder0.writer.anewarray(type);
+        } else {
+          builder0.writer.newarray(kind);
+        }
+      }));
 
       if (initializer != null) {
         assert initializer.size() == length;
         initializer.forEachIndexed((i, init) ->
-          builder.updateArray(dup, i, init));
+          builder.updateArray(var, i, init));
       }
+      builder.loadVar(var);
     });
   }
 

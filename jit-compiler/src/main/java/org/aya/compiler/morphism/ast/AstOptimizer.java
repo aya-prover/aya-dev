@@ -44,7 +44,7 @@ public interface AstOptimizer {
             yield branch.getFirst().view();
           } else if (branch.sizeEquals(2)) {
             yield SeqView.of(new AstStmt.IfThenElse(
-              new AstStmt.Condition.IsIntEqual(new AstExpr.RefVariable(elim), cases.getFirst()),
+              new AstStmt.Condition.IsIntEqual(elim, cases.getFirst()),
               branch.getFirst(),
               branch.getLast()
             ));
