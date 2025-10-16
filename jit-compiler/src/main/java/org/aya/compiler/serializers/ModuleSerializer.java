@@ -22,7 +22,7 @@ import java.lang.constant.ClassDesc;
 import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 /**
- * Serializing a module, note that it may not a file module, so we need not to make importing.
+ * Serializing a module, note that it may not be a file module, so we need not make imports.
  */
 public final class ModuleSerializer {
   /** Input to the module serializer. */

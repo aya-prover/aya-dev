@@ -39,8 +39,7 @@ public final class PatternSerializer {
 
     public Once(@NotNull Consumer<AstCodeBuilder> run) { this.run = run; }
 
-    @Override
-    public void accept(AstCodeBuilder freeClassBuilder) {
+    @Override public void accept(AstCodeBuilder freeClassBuilder) {
       if (dirty) throw new Panic("Once");
       dirty = true;
       this.run.accept(freeClassBuilder);
