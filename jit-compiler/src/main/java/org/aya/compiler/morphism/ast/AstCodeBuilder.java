@@ -19,7 +19,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
-public class AstCodeBuilder(
+public record AstCodeBuilder(
   @NotNull FreezableMutableList<AstStmt> stmts,
   @NotNull VariablePool pool,
   boolean isConstructor,
@@ -210,15 +210,14 @@ public class AstCodeBuilder(
   }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
-    // var index = pool.acquire();
-    // stmts.append();
-    return null;
+    var index = pool.acquire();
+    var astVar = new AstVariable.Local(index);
+    stmts.append(new AstStmt.DeclareVariable(Constants.CD_TERM, astVar));
+    stmts.append(new AstStmt.SetVariable(astVar, expr));
+    return astVar;
   }
 
   public @NotNull ImmutableSeq<AstVariable> bindExprs(@NotNull ImmutableSeq<AstExpr> exprs) {
-    // exprs.map(expr -> {
-    //   var index = pool.acquire();
-    // });
-    return null;
+    return exprs.map(this::bindExpr);
   }
 }

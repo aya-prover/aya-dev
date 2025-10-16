@@ -13,7 +13,7 @@ import java.lang.constant.ClassDesc;
 public sealed interface AstStmt {
   record DeclareVariable(@NotNull ClassDesc type, @NotNull AstVariable.Local theVar) implements AstStmt { }
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
-               @NotNull ImmutableSeq<AstExpr> superConArgs) implements AstStmt { }
+               @NotNull ImmutableSeq<AstVariable> superConArgs) implements AstStmt { }
   record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt { }
   record SetArray(@NotNull AstExpr array, int index, @NotNull AstExpr update) implements AstStmt { }
 
