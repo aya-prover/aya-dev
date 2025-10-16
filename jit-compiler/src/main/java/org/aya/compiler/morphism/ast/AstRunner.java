@@ -109,13 +109,13 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
       case AstExpr.RefField(var fieldRef, var owner) -> owner != null
         ? builder.refField(fieldRef, runFree(ap, owner))
         : builder.refField(fieldRef);
-      case AstExpr.This _ -> builder.thisRef();
+      case AstExpr.This _ -> builder.thisRef().ref();
       case AstExpr.RefCapture(var idx) -> {
         if (!(ap instanceof ArgumentProvider.Lambda lap)) {
           yield Panic.unreachable();
         }
 
-        yield lap.capture(idx);
+        yield (AsmExpr) lap.capture(idx);
       }
     };
   }
