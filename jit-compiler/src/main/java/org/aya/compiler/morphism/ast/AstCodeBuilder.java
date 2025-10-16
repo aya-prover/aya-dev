@@ -28,7 +28,7 @@ public record AstCodeBuilder(
   boolean isBreakable
 ) {
   public @NotNull ImmutableSeq<AstStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
-    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool, isConstructor, isBreakable);
+    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool.copy(), isConstructor, isBreakable);
     block.accept(inner);
     return inner.build();
   }
@@ -71,7 +71,7 @@ public record AstCodeBuilder(
   }
 
   public void
-  ifInstanceOf(@NotNull AstExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AstCodeBuilder, AstVariable> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  ifInstanceOf(@NotNull AstVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AstCodeBuilder, AstVariable> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
     var varHolder = MutableValue.<AstVariable.Local>create();
     buildIf(new AstStmt.Condition.IsInstanceOf(lhs, rhs, varHolder), b -> {
       var asTerm = b.acquireVariable();
@@ -80,11 +80,11 @@ public record AstCodeBuilder(
     }, elseBlock);
   }
 
-  public void ifIntEqual(@NotNull AstExpr lhs, int rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  public void ifIntEqual(@NotNull AstVariable lhs, int rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
     buildIf(new AstStmt.Condition.IsIntEqual(lhs, rhs), thenBlock, elseBlock);
   }
 
-  public void ifRefEqual(@NotNull AstExpr lhs, @NotNull AstExpr rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  public void ifRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
     buildIf(new AstStmt.Condition.IsRefEqual(lhs, rhs), thenBlock, elseBlock);
   }
 

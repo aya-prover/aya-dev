@@ -16,6 +16,7 @@ public sealed interface AstExpr extends JavaExpr {
   // record RefCapture(int capture) implements AstExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
                 @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
+  record Ref(@NotNull AstVariable variable) implements AstExpr { }
   record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr { }
   record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr { }
   record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,

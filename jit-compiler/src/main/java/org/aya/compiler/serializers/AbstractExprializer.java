@@ -113,11 +113,13 @@ public abstract class AbstractExprializer<T> {
     return getInstance(builder, NameSerializer.getClassDesc(def));
   }
 
-  public static @NotNull AstExpr getRef(@NotNull AstCodeBuilder builder, @NotNull CallKind callType, @NotNull AstExpr call) {
-    return builder.invoke(FreeJavaResolver.resolve(
+  public static @NotNull AstVariable getRef(@NotNull AstCodeBuilder builder, @NotNull CallKind callType, @NotNull AstVariable call) {
+    var invoke = new AstExpr.Invoke(FreeJavaResolver.resolve(
       callType.callType, AyaSerializer.FIELD_INSTANCE,
       callType.refType, ImmutableSeq.empty(), true
     ), call, ImmutableSeq.empty());
+
+    return builder.bindExpr(invoke);
   }
 
   public final @NotNull AstVariable getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {

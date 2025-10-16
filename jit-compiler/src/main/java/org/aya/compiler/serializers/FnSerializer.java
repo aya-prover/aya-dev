@@ -105,7 +105,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
                 // declaration heuristics.
                 argTerms.forEachWith(args, (a, b) -> {
                   // TODO: how to?
-                  builder0.updateVar(a, b);
+                  builder0.updateVar(a, new AstExpr.Ref(b));
                 });
                 builder0.continueLoop();
               } else {

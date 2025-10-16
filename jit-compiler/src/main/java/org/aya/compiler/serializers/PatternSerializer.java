@@ -7,14 +7,12 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
@@ -58,14 +56,14 @@ public final class PatternSerializer {
   @UnknownNullability AstVariable matchState;
   @UnknownNullability AstVariable subMatchState;
 
-  private final @NotNull ImmutableSeq<JavaExpr> argNames;
+  private final @NotNull ImmutableSeq<AstVariable> argNames;
   private final @NotNull Consumer<AstCodeBuilder> onFailed;
   private final @NotNull SerializerContext context;
   private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternSerializer(
-    @NotNull ImmutableSeq<JavaExpr> argNames,
+    @NotNull ImmutableSeq<AstVariable> argNames,
     @NotNull Consumer<AstCodeBuilder> onFailed,
     @NotNull SerializerContext context,
     boolean isOverlap
@@ -81,7 +79,7 @@ public final class PatternSerializer {
   private void doSerialize(
     @NotNull AstCodeBuilder builder,
     @NotNull Pat pat,
-    @NotNull JavaExpr term,
+    @NotNull AstVariable term,
     @NotNull Once onMatchSucc
   ) {
     switch (pat) {
@@ -95,7 +93,7 @@ public final class PatternSerializer {
         }
       }
       case Pat.Bind _ -> {
-        builder.updateVar(result.get(bindCount++), term);
+        builder.updateVar(result.get(bindCount++), new AstExpr.Ref(term));
         onMatchSucc.accept(builder);
       }
 
@@ -103,10 +101,10 @@ public final class PatternSerializer {
         var whnf = context.whnf(builder, term);
         builder.ifInstanceOf(whnf, AstUtil.fromClass(ConCallLike.class),
           (builder1, conTerm) -> builder1.ifRefEqual(
-            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm.ref()),
+            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm),
             AbstractExprializer.getInstance(builder1, con.ref()),
             builder2 -> {
-              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm.ref(), ImmutableSeq.empty());
+              var conArgsTerm = builder2.bindExpr(new AstExpr.Invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty()));
               var conArgs = AbstractExprializer.fromSeq(
                 builder2,
                 Constants.CD_Term,
@@ -126,7 +124,7 @@ public final class PatternSerializer {
           (builder0, mTerm) ->
             matchInt(builder0, shapedInt, mTerm),
           (builder0, mTerm) ->
-            doSerialize(builder0, shapedInt.constructorForm(), builder.refVar(mTerm),
+            doSerialize(builder0, shapedInt.constructorForm(), mTerm,
               // There will a sequence of [subMatchState = true] if there are a lot of [Pat.ShapedInt],
               // but our optimizer will fix them
               Once.of(builder1 -> updateSubstate(builder1, true)))
@@ -136,10 +134,10 @@ public final class PatternSerializer {
         var whnf = context.whnf(builder, term);
         builder.ifInstanceOf(whnf, AstUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           // TODO: use doSerialize on many pat version
-          var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm.ref(), ImmutableSeq.empty());
-          doSerialize(builder0, l, lhs, Once.of(builder1 -> {
-            var rhs = builder0.invoke(Constants.TUP_RHS, tupTerm.ref(), ImmutableSeq.empty());
-            doSerialize(builder1, r, rhs, onMatchSucc);
+          var lhs = new AstExpr.Invoke(Constants.TUP_LHS, tupTerm, ImmutableSeq.empty());
+          doSerialize(builder0, l, builder0.bindExpr(lhs), Once.of(builder1 -> {
+            var rhs = new AstExpr.Invoke(Constants.TUP_RHS, tupTerm, ImmutableSeq.empty());
+            doSerialize(builder1, r, builder1.bindExpr(rhs), onMatchSucc);
           }));
         }, this::onStuck);
       }
@@ -151,36 +149,38 @@ public final class PatternSerializer {
    * <p>
    * Note that {@param preContinuation}s should not invoke {@param continuation}!
    *
-   * @param term            the expression be matched, not always a variable reference
-   * @param preContinuation matching cases, only the last one can invoke multiStage
+   * @param term            an immutable variable that be matched
+   * @param preContinuation matching cases, only the last one can invoke multiStage, must not modify the given variable
    * @param continuation    on match success
    */
   private void multiStage(
     @NotNull AstCodeBuilder builder,
-    @NotNull JavaExpr term,
-    @NotNull ImmutableSeq<BiConsumer<AstCodeBuilder, LocalVariable>> preContinuation,
+    @NotNull AstVariable term,
+    @NotNull ImmutableSeq<BiConsumer<AstCodeBuilder, AstVariable>> preContinuation,
     @NotNull Once continuation
   ) {
     updateSubstate(builder, false);
-    var tmpName = builder.makeVar(Term.class, term);
+
+    // all [preContinuation] won't modify or store [term], and [term] will not be updated
+    // so we pass [term] directly is safe
 
     for (var pre : preContinuation) {
       builder.ifNotTrue(subMatchState, builder0 ->
-        pre.accept(builder0, tmpName), null);
+        pre.accept(builder0, term), null);
     }
 
     builder.ifTrue(subMatchState, continuation, null);
   }
 
-  private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull LocalVariable term) {
+  private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull AstVariable term) {
     builder.ifInstanceOf(term, AstUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
-      var intTermRepr = builder0.invoke(
+      var intTermRepr = new AstExpr.Invoke(
         Constants.INT_REPR,
-        builder0.refVar(intTerm),
+        intTerm,
         ImmutableSeq.empty()
       );
 
-      builder0.ifIntEqual(intTermRepr, pat.repr(), builder1 -> {
+      builder0.ifIntEqual(builder0.bindExpr(intTermRepr), pat.repr(), builder1 -> {
         // Pat.ShapedInt provides no binds
         updateSubstate(builder1, true);
       }, null);
@@ -193,7 +193,7 @@ public final class PatternSerializer {
   private void doSerialize(
     @NotNull AstCodeBuilder builder,
     @NotNull SeqView<Pat> pats,
-    @NotNull SeqView<JavaExpr> terms,
+    @NotNull SeqView<AstVariable> terms,
     @NotNull Once continuation
   ) {
     if (pats.isEmpty()) {
@@ -214,11 +214,11 @@ public final class PatternSerializer {
   }
 
   private void updateSubstate(@NotNull AstCodeBuilder builder, boolean state) {
-    builder.updateVar(subMatchState, builder.iconst(state));
+    builder.updateVar(subMatchState, new AstExpr.Bconst(state));
   }
 
   private void updateState(@NotNull AstCodeBuilder builder, int state) {
-    builder.updateVar(matchState, builder.iconst(state));
+    builder.updateVar(matchState, new AstExpr.Iconst(state));
   }
   // endregion Java Source Code Generate API
 
@@ -232,7 +232,8 @@ public final class PatternSerializer {
     int binds = bindSize.max();
 
     // generates local term variables
-    result = ImmutableSeq.fill(binds, _ -> builder.aconstNull(Constants.CD_Term));
+    result = ImmutableSeq.fill(binds, _ -> builder.bindExpr(new AstExpr.Null(Constants.CD_Term)));
+
     // whether the match success or mismatch, 0 implies mismatch
     matchState = builder.iconst(0);
     subMatchState = builder.iconst(false);
