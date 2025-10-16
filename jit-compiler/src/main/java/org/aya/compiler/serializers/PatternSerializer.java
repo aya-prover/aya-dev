@@ -22,7 +22,6 @@ import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 
-import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -56,8 +55,8 @@ public final class PatternSerializer {
   ) { }
 
   @UnknownNullability ImmutableSeq<AstVariable> result;
-  @UnknownNullability LocalVariable matchState;
-  @UnknownNullability LocalVariable subMatchState;
+  @UnknownNullability AstVariable matchState;
+  @UnknownNullability AstVariable subMatchState;
 
   private final @NotNull ImmutableSeq<JavaExpr> argNames;
   private final @NotNull Consumer<AstCodeBuilder> onFailed;
@@ -233,10 +232,10 @@ public final class PatternSerializer {
     int binds = bindSize.max();
 
     // generates local term variables
-    result = ImmutableSeq.fill(binds, _ -> builder.makeVar(Constants.CD_Term, builder.aconstNull(Constants.CD_Term)));
+    result = ImmutableSeq.fill(binds, _ -> builder.aconstNull(Constants.CD_Term));
     // whether the match success or mismatch, 0 implies mismatch
-    matchState = builder.makeVar(ConstantDescs.CD_int, builder.iconst(0));
-    subMatchState = builder.makeVar(ConstantDescs.CD_boolean, builder.iconst(false));
+    matchState = builder.iconst(0);
+    subMatchState = builder.iconst(false);
 
     builder.breakable(mBuilder -> unit.forEachIndexed((idx, clause) -> {
       var jumpCode = idx + 1;

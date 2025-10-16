@@ -9,7 +9,6 @@ import kala.collection.mutable.FreezableMutableList;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.AstUtil;
 import org.aya.compiler.morphism.ClassBuilder;
 import org.aya.compiler.morphism.Constants;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
@@ -54,8 +54,8 @@ public record AstCodeBuilder(
   }
 
   private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
-    var thenBlockBody = subscoped(isBreakable, thenBlock::accept);
-    var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock::accept);
+    var thenBlockBody = subscoped(isBreakable, thenBlock);
+    var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock);
 
     stmts.append(new AstStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
@@ -93,7 +93,7 @@ public record AstCodeBuilder(
   }
 
   public void breakable(@NotNull Consumer<AstCodeBuilder> innerBlock) {
-    var innerBlockBody = subscoped(true, innerBlock::accept);
+    var innerBlockBody = subscoped(true, innerBlock);
     stmts.append(new AstStmt.Breakable(innerBlockBody));
   }
 
@@ -103,7 +103,7 @@ public record AstCodeBuilder(
   }
 
   public void whileTrue(@NotNull Consumer<AstCodeBuilder> innerBlock) {
-    var innerBlockBody = subscoped(false, innerBlock::accept);
+    var innerBlockBody = subscoped(false, innerBlock);
     stmts.append(new AstStmt.WhileTrue(innerBlockBody));
   }
 
@@ -123,7 +123,7 @@ public record AstCodeBuilder(
   ) {
     var branchBodies = cases.mapToObj(kase ->
       subscoped(isBreakable, b -> branch.accept(b, kase)));
-    var defaultBody = subscoped(isBreakable, defaultCase::accept);
+    var defaultBody = subscoped(isBreakable, defaultCase);
 
     stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
@@ -184,19 +184,23 @@ public record AstCodeBuilder(
   public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
     var cd = AstUtil.fromClass(value.getClass());
     var name = value.name();
-    return bindExpr(refEnum(cd, name));
+    return bindExpr(cd, refEnum(cd, name));
   }
 
   public @NotNull AstVariable iconst(int i) {
-    return bindExpr(new AstExpr.Iconst(i));
+    return bindExpr(ConstantDescs.CD_int, new AstExpr.Iconst(i));
   }
 
   public @NotNull AstVariable aconst(@NotNull String str) {
-    return bindExpr(new AstExpr.Sconst(str));
+    return bindExpr(ConstantDescs.CD_String, new AstExpr.Sconst(str));
+  }
+
+  public @NotNull AstVariable aconstNull(ClassDesc desc) {
+    // TODO
   }
 
   public @NotNull AstVariable iconst(boolean b) {
-    return bindExpr(new AstExpr.Bconst(b));
+    return bindExpr(ConstantDescs.CD_boolean, new AstExpr.Bconst(b));
   }
 
   public @NotNull AstVariable thisRef() {
@@ -231,9 +235,13 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
+    return bindExpr(Constants.CD_Term, expr);
+  }
+
+  public @NotNull AstVariable bindExpr(@NotNull ClassDesc desc, @NotNull AstExpr expr) {
     var index = pool.acquire();
     var astVar = new AstVariable.Local(index);
-    stmts.append(new AstStmt.DeclareVariable(Constants.CD_Term, astVar));
+    stmts.append(new AstStmt.DeclareVariable(desc, astVar));
     stmts.append(new AstStmt.SetVariable(astVar, expr));
     return astVar;
   }
