@@ -234,6 +234,8 @@ public record AsmCodeBuilder(
     @Nullable LocalVariable self,
     @NotNull ImmutableSeq<LocalVariable> args
   ) {
+    assert ref.checkArguments(args);
+
     var owner = ref.owner();
     var name = ref.name();
     var desc = MethodTypeDesc.of(ref.returnType(), ref.paramTypes().asJava());
