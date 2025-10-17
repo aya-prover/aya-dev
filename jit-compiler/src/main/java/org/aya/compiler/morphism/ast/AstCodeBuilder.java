@@ -246,8 +246,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable bindExpr(@NotNull ClassDesc desc, @NotNull AstExpr expr) {
-    var index = pool.acquire();
-    var astVar = new AstVariable.Local(index);
+    var astVar = acquireVariable();
     stmts.append(new AstStmt.DeclareVariable(desc, astVar));
     stmts.append(new AstStmt.SetVariable(astVar, expr));
     return astVar;

@@ -5,7 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -38,8 +38,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return flag;
   }
 
-  @Override
-  protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
+  @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
     return super.superConParams().appended(ConstantDescs.CD_int);
   }
 
@@ -96,17 +95,15 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           var ser = new PatternSerializer(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-            if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
+              if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
                 var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
                   .take(count)
                   .toSeq());
                 assert argTerms.size() == args.size();
                 // Will cause conflict in theory, but won't in practice due to current local variable
                 // declaration heuristics.
-                argTerms.forEachWith(args, (a, b) -> {
-                  // TODO: how to?
-                  builder0.updateVar(a, new AstExpr.Ref(b));
-                });
+                argTerms.forEachWith(args, (a, b) ->
+                  builder0.updateVar(a, new AstExpr.Ref(b)));
                 builder0.continueLoop();
               } else {
                 var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
