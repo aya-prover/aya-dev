@@ -5,12 +5,9 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.asm.AsmClassBuilder;
-import org.aya.compiler.morphism.asm.AsmCodeBuilder;
-import org.aya.compiler.morphism.asm.AsmExpr;
-import org.aya.compiler.morphism.asm.AsmJavaBuilder;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.asm.*;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +19,8 @@ import java.util.function.Consumer;
 public final class AstRunner<Carrier extends AsmOutputCollector> {
   private final @NotNull AsmJavaBuilder<Carrier> runner;
 
-  // TODO: trying to use MutableArray<LocalVariable>, our VariablePool has a good property
-  private @UnknownNullability MutableMap<Integer, LocalVariable> binding;
+  // TODO: trying to use MutableArray<AsmVariable>, our VariablePool has a good property
+  private @UnknownNullability MutableMap<Integer, AsmVariable> binding;
 
   public AstRunner(@NotNull AsmJavaBuilder<Carrier> runner) {
     this.runner = runner;
@@ -64,19 +61,20 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     }
   }
 
-  private ImmutableSeq<LocalVariable> runFree(@Nullable ArgumentProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
+  private ImmutableSeq<AsmVariable> runFree(@Nullable ArgumentProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
     return vars.map(it -> runFree(ap, it));
   }
 
-  private LocalVariable runFree(@Nullable ArgumentProvider ap, @NotNull AstVariable var) {
+  private AsmVariable runFree(@Nullable ArgumentProvider ap, @NotNull AstVariable var) {
     return switch (var) {
       case AstVariable.Local local -> getVar(local.index());
       case AstVariable.Arg arg -> {
         if (ap == null) yield Panic.unreachable();
-        yield ap.arg(arg.nth());
+        if (!(ap instanceof AsmArgumentProvider lap)) yield Panic.unreachable();
+        yield lap.arg(arg.nth());
       }
       case AstVariable.Capture(var nth) -> {
-        if (!(ap instanceof ArgumentProvider.Lambda lap)) yield Panic.unreachable();
+        if (!(ap instanceof AsmArgumentProvider.Lambda lap)) yield Panic.unreachable();
         yield lap.capture(nth);
       }
     };
@@ -84,6 +82,8 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private AsmExpr runFree(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
+      case AstExpr.Ref(var ref) -> AsmExpr.withType(Constants.CD_Term,
+        builder0 -> builder0.loadVar(runFree(ap, ref)));
       case AstExpr.Array(var type, var length, var initializer) ->
         builder.mkArray(type, length, initializer == null ? null : runFree(ap, initializer));
       case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(runFree(ap, obj), as);
@@ -180,18 +180,18 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     }
   }
 
-  private @NotNull LocalVariable getVar(int index) {
+  private @NotNull AsmVariable getVar(int index) {
     return Objects.requireNonNull(binding.getOrNull(index), "No substitution for local variable: " + index);
   }
 
-  private void bindVar(int index, @NotNull LocalVariable userVar) {
+  private void bindVar(int index, @NotNull AsmVariable userVar) {
     var exists = binding.put(index, userVar);
     if (exists.isNotEmpty()) Panic.unreachable();
   }
 
   private class SubscopeHandle implements AutoCloseable {
-    private final @UnknownNullability MutableMap<Integer, LocalVariable> oldBinding = binding;
-    public SubscopeHandle(@NotNull MutableMap<Integer, LocalVariable> newScope) { binding = newScope; }
+    private final @UnknownNullability MutableMap<Integer, AsmVariable> oldBinding = binding;
+    public SubscopeHandle(@NotNull MutableMap<Integer, AsmVariable> newScope) { binding = newScope; }
     @Override public void close() { binding = oldBinding; }
   }
 
