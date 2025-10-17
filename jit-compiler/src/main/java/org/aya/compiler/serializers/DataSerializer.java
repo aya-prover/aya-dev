@@ -83,17 +83,17 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
    */
   private void buildConstructors(@NotNull AstCodeBuilder builder, DataDef unit) {
     var cons = Constants.JITDATA_CONS;
-    var consRef = new AstExpr.RefField(cons, builder.thisRef());
+    var consRef = builder.bindExpr(cons.returnType(), new AstExpr.RefField(cons, builder.thisRef()));
 
     if (unit.body().isEmpty()) {
       builder.returnWith(consRef);
       return;
     }
 
-    builder.ifNull(builder.getArray(consRef, 0), cb ->
+    builder.ifNull(new AstExpr.GetArray(consRef, 0), cb ->
       unit.body().forEachIndexed((idx, con) ->
         cb.updateArray(consRef, idx,
-          new AstExpr.Ref(AbstractExprializer.getInstance(builder, con)))), null);
+          AbstractExprializer.getInstance(builder, con))), null);
 
     builder.returnWith(consRef);
   }

@@ -69,8 +69,11 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
       case AstVariable.Local local -> getVar(local.index());
       case AstVariable.Arg arg -> {
         if (ap == null) yield Panic.unreachable();
-        if (!(ap instanceof AsmArgumentProvider lap)) yield Panic.unreachable();
-        yield lap.arg(arg.nth());
+        yield switch (ap) {
+          case AsmArgumentProvider aap -> aap.arg(arg.nth());
+          case AsmArgumentProvider.Lambda lap -> lap.arg(arg.nth());
+          default -> Panic.unreachable();
+        };
       }
       case AstVariable.Capture(var nth) -> {
         if (!(ap instanceof AsmArgumentProvider.Lambda lap)) yield Panic.unreachable();
@@ -187,7 +190,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private void bindVar(int index, @NotNull AsmVariable userVar) {
     var exists = binding.put(index, userVar);
-    if (exists.isNotEmpty()) Panic.unreachable();
+    // if (exists.isNotEmpty()) Panic.unreachable();
   }
 
   private class SubscopeHandle implements AutoCloseable {

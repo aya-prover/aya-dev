@@ -295,7 +295,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         var capturedExpr = InvokeSignatureHelper.capture(ap, i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
-      var result = cont.apply(ap, new TermExprializer(this.builder, newContext,
+      var result = cont.apply(ap, new TermExprializer(builder, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder.returnWith(result);
     });

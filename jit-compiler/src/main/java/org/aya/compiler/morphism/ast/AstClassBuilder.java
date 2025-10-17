@@ -37,7 +37,7 @@ public record AstClassBuilder(
 
   public @NotNull AstDecl.Clazz build() {
     if (fieldInitializers.isNotEmpty()) {
-      var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), false, false);
+      var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), false, false);
       fieldInitializers.forEach((fieldRef, init) ->
         codeBuilder.updateField(fieldRef, init.apply(codeBuilder)));
       members.append(new AstDecl.StaticInitBlock(codeBuilder.build()));
@@ -64,7 +64,7 @@ public record AstClassBuilder(
     @NotNull MethodRef ref,
     @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
   ) {
-    var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
+    var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
     builder.accept(new AstArgumentProvider(ref.paramTypes().size()), codeBuilder);
     members.append(new AstDecl.Method(ref, codeBuilder.build()));
   }

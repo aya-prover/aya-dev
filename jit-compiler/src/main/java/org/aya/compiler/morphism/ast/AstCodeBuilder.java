@@ -21,13 +21,14 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 public record AstCodeBuilder(
+  @NotNull AstClassBuilder owner,
   @NotNull FreezableMutableList<AstStmt> stmts,
   @NotNull VariablePool pool,
   boolean isConstructor,
   boolean isBreakable
 ) {
   public @NotNull ImmutableSeq<AstStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
-    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool.copy(), isConstructor, isBreakable);
+    var inner = new AstCodeBuilder(owner, FreezableMutableList.create(), pool.copy(), isConstructor, isBreakable);
     block.accept(inner);
     return inner.build();
   }
@@ -51,10 +52,8 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.SetVariable(var, update));
   }
 
-  public void updateArray(@NotNull AstExpr array, int idx, @NotNull AstExpr update) {
-    var arrVar = bindExpr(array);
-    var updateVar = bindExpr(update);
-    stmts.append(new AstStmt.SetArray(arrVar, idx, updateVar));
+  public void updateArray(@NotNull AstVariable array, int idx, @NotNull AstVariable update) {
+    stmts.append(new AstStmt.SetArray(array, idx, update));
   }
 
   private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
@@ -102,6 +101,7 @@ public record AstCodeBuilder(
   }
 
   public void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+    // FIXME: incorrect, isNull means check if [isNull] is null
     var isNullVar = bindExpr(ConstantDescs.CD_boolean, isNull);
     buildIf(new AstStmt.Condition.IsNull(isNullVar), thenBlock, elseBlock);
   }
@@ -142,6 +142,7 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
 
+  /// @param expr must have type [Term]
   public void returnWith(@NotNull AstExpr expr) {
     stmts.append(new AstStmt.Return(bindExpr(expr)));
   }
@@ -189,10 +190,11 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable refField(@NotNull FieldRef field) {
-    return bindExpr(new AstExpr.RefField(field, null));
+    return bindExpr(field.returnType(), new AstExpr.RefField(field, null));
   }
 
   public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
+    // FIXME: type
     return new AstExpr.RefField(field, bindExpr(owner));
   }
 
@@ -215,7 +217,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable thisRef() {
-    return bindExpr(AstExpr.This.INSTANCE);
+    return bindExpr(owner.className(), AstExpr.This.INSTANCE);
   }
 
   public @NotNull AstExpr mkLambda(
@@ -228,7 +230,7 @@ public record AstCodeBuilder(
     // [captures.size()..]th parameters are lambda arguments
     // Note that the [VariablePool] counts from 0,
     // as the arguments does NOT count as [local](AstVariable.Local) variables, but instead a [reference to the argument](AstVariable.Arg).
-    var lambdaBodyBuilder = new AstCodeBuilder(FreezableMutableList.create(),
+    var lambdaBodyBuilder = new AstCodeBuilder(owner, FreezableMutableList.create(),
       new VariablePool(), false, false);
     builder.accept(new AstArgumentProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
