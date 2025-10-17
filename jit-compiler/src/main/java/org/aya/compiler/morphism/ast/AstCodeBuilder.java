@@ -101,8 +101,8 @@ public record AstCodeBuilder(
   }
 
   public void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
-    // FIXME: incorrect, isNull means check if [isNull] is null
-    var isNullVar = bindExpr(ConstantDescs.CD_boolean, isNull);
+    // we don't care what type it is
+    var isNullVar = bindExpr(ConstantDescs.CD_Object, isNull);
     buildIf(new AstStmt.Condition.IsNull(isNullVar), thenBlock, elseBlock);
   }
 
@@ -155,9 +155,8 @@ public record AstCodeBuilder(
     stmts.append(AstStmt.Unreachable.INSTANCE);
   }
 
-  public @NotNull AstExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstExpr> args) {
-    var varArgs = bindExprs(args);
-    return new AstExpr.New(conRef, varArgs);
+  public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
   }
 
   /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.
@@ -172,31 +171,31 @@ public record AstCodeBuilder(
     var conRef = JavaUtil.makeConstructorRef(desc,
       ImmutableArray.wrap(first.getParameterTypes())
         .map(JavaUtil::fromClass));
-    return bindExpr(new AstExpr.New(conRef, args));
+    return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
   }
 
-  public @NotNull AstExpr
-  invoke(@NotNull MethodRef method, @NotNull AstExpr owner, @NotNull ImmutableSeq<AstExpr> args) {
-    return new AstExpr.Invoke(method, bindExpr(owner), bindExprs(args));
+  public @NotNull AstVariable
+  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(method.returnType(), new AstExpr.Invoke(method, owner, args));
   }
 
-  public @NotNull AstExpr
-  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstExpr> args) {
-    return new AstExpr.Invoke(method, owner, bindExprs(args));
-  }
+  // public @NotNull AstExpr
+  // invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstExpr> args) {
+  //   return new AstExpr.Invoke(method, owner, bindExprs(args));
+  // }
 
-  public @NotNull AstExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstExpr> args) {
-    return new AstExpr.Invoke(method, null, bindExprs(args));
+  public @NotNull AstVariable invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(method.returnType(), new AstExpr.Invoke(method, null, args));
   }
 
   public @NotNull AstVariable refField(@NotNull FieldRef field) {
     return bindExpr(field.returnType(), new AstExpr.RefField(field, null));
   }
 
-  public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
-    // FIXME: type
-    return new AstExpr.RefField(field, bindExpr(owner));
-  }
+  // public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
+  //   // FIXME: type
+  //   return new AstExpr.RefField(field, bindExpr(owner));
+  // }
 
   public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
     var cd = JavaUtil.fromClass(value.getClass());
@@ -220,7 +219,11 @@ public record AstCodeBuilder(
     return bindExpr(owner.className(), AstExpr.This.INSTANCE);
   }
 
-  public @NotNull AstExpr mkLambda(
+  public @NotNull AstVariable checkcast(@NotNull AstVariable obj, @NotNull ClassDesc type) {
+    return bindExpr(type, new AstExpr.CheckCast(obj, type));
+  }
+
+  public @NotNull AstVariable mkLambda(
     @NotNull ImmutableSeq<AstVariable> captures,
     @NotNull MethodRef method,
     @NotNull BiConsumer<AstArgumentProvider.Lambda, AstCodeBuilder> builder
@@ -235,12 +238,16 @@ public record AstCodeBuilder(
     builder.accept(new AstArgumentProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
-    return new AstExpr.Lambda(captures, method, lambdaBody);
+    return bindExpr(method.owner(), new AstExpr.Lambda(captures, method, lambdaBody));
   }
 
-  public @NotNull AstExpr getArray(@NotNull AstExpr array, int index) {
-    return new AstExpr.GetArray(bindExpr(array), index);
+  public @NotNull AstVariable makeArray(@NotNull ClassDesc elementType, int size, @NotNull ImmutableSeq<AstVariable> initializer) {
+    return bindExpr(elementType.arrayType(), new AstExpr.Array(elementType, size, initializer));
   }
+
+  // public @NotNull AstExpr getArray(@NotNull AstExpr array, int index) {
+  //   return new AstExpr.GetArray(bindExpr(array), index);
+  // }
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
     if (expr instanceof AstExpr.Ref(var ref)) return ref;

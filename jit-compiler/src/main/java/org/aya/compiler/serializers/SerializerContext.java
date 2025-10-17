@@ -48,8 +48,7 @@ public record SerializerContext(
    */
   public @NotNull AstVariable whnf(@NotNull AstCodeBuilder builder, @NotNull AstVariable term) {
     if (normalizer == null) return term;
-    var invoke = new AstExpr.Invoke(Constants.CLOSURE, normalizer, ImmutableSeq.of(term));
-    var whnfed = new AstExpr.CheckCast(builder.bindExpr(invoke), Constants.CD_Term);
-    return builder.bindExpr(whnfed);
+    var invoke = builder.invoke(Constants.CLOSURE, normalizer, ImmutableSeq.of(term));
+    return builder.checkcast(invoke, Constants.CD_Term);
   }
 }

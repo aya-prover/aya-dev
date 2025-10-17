@@ -112,7 +112,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   private @NotNull AstVariable getNormalizer() {
     var normalizer = context.normalizer();
     if (normalizer == null) {
-      normalizer = builder.bindExpr(Constants.unaryOperatorIdentity(builder));
+      normalizer = Constants.unaryOperatorIdentity(builder);
     }
 
     return normalizer;
@@ -122,12 +122,10 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<AstVariable> args) {
     var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
-    var invokeVar = builder.bindExpr(invokeExpr);
 
     if (ulift != 0) {
-      var elevate = new AstExpr.Invoke(Constants.ELEVATE, invokeVar, ImmutableSeq.of(builder.iconst(ulift)));
-      return builder.bindExpr(elevate);
-    } else return invokeVar;
+      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
+    } else return invokeExpr;
   }
 
   // There is a chance I need to add lifting to match, so keep a function for us to
@@ -138,8 +136,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<AstVariable> captures
   ) {
     var normalizer = getNormalizer();
-    var invoke = MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
-    return builder.bindExpr(invoke);
+    return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
   }
 
   /// UNPURE
@@ -168,8 +165,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
       case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
-      case LamTerm lamTerm ->
-        builder.bindExpr(new AstExpr.New(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body()))));
+      case LamTerm lamTerm -> builder.mkNew(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body())));
       case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
         getInstance(ref),
         builder.iconst(ulift),
@@ -190,8 +186,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeToImmutableSeq(Term.class, ownerArgs),
           serializeToImmutableSeq(Term.class, conArgs)
         ));
-        var invoke = new AstExpr.Invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
-        yield builder.bindExpr(invoke);
+        var invoke = builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        yield invoke;
       }
       case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
@@ -199,8 +195,8 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           builder.iconst(ulift),
           serializeToImmutableSeq(Term.class, args)
         ));
-        var invoke = new AstExpr.Invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
-        yield builder.bindExpr(invoke);
+        var invoke = builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
+        yield invoke;
       }
       case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
       case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
@@ -300,13 +296,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       builder.returnWith(result);
     });
 
-    return builder.bindExpr(lam);
+    return lam;
   }
 
   private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermExprializer, AstVariable, AstVariable> cont) {
     return makeLambda(Constants.CLOSURE, (ap, te) -> {
-      var casted = new AstExpr.CheckCast(ap.arg(0), Constants.CD_Term);
-      return cont.apply(te, te.builder.bindExpr(casted));
+      var casted = te.builder.checkcast(ap.arg(0), Constants.CD_Term);
+      return cont.apply(te, casted);
     });
   }
 
@@ -339,14 +335,12 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull AstVariable serializeConst(@NotNull Term appliedBody) {
-    var invoke = new AstExpr.Invoke(Constants.CLOSURE_MKCONST, null, ImmutableSeq.of(doSerialize(appliedBody)));
-    return builder.bindExpr(invoke);
+    return builder.invoke(Constants.CLOSURE_MKCONST, null, ImmutableSeq.of(doSerialize(appliedBody)));
   }
 
   private @NotNull AstVariable makeAppNew(@NotNull Class<?> className, Term... terms) {
     var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
-    var invoke = new AstExpr.Invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
-    return builder.bindExpr(invoke);
+    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
   private @NotNull AstVariable makeMemberNew(@NotNull MemberCall call) {
@@ -357,8 +351,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       serializeToImmutableSeq(Term.class, call.args())
     ));
 
-    var invoke = new AstExpr.Invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
-    return builder.bindExpr(invoke);
+    return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
   @Override public @NotNull AstVariable serialize(Term unit) {

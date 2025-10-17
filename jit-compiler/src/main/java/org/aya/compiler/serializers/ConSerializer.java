@@ -55,7 +55,8 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     @NotNull AstVariable normalizer,
     @NotNull AstVariable argsTerm
   ) {
-    var termSeq = builder.bindExpr(new AstExpr.Invoke(Constants.SEQ_TOSEQ, argsTerm, ImmutableSeq.empty()));
+    var invoke = new AstExpr.Invoke(Constants.SEQ_TOSEQ, argsTerm, ImmutableSeq.empty());
+    var termSeq = builder.bindExpr(invoke.methodRef().returnType(), invoke);
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
     var patsTerm = unit.pats.map(x ->
       new PatternExprializer(builder, buildSerializerContext(normalizer), true)

@@ -40,12 +40,12 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     var licit = tele.view().map(Param::explicit)
       .map(builder::iconst)
       .toSeq();
-    var licitExpr = new AstExpr.Array(ConstantDescs.CD_boolean, licit.size(), licit);
+    var licitExpr = builder.makeArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
       .map(builder::aconst)
       .toSeq();
-    var namesExpr = new AstExpr.Array(ConstantDescs.CD_String, names.size(), names);
-    return ImmutableSeq.of(sizeExpr, builder.bindExpr(licitExpr), builder.bindExpr(namesExpr));
+    var namesExpr = builder.makeArray(ConstantDescs.CD_String, names.size(), names);
+    return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, T unit) {

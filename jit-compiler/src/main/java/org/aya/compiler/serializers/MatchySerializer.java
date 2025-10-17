@@ -45,7 +45,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return InvokeSignatureHelper.parameters(ImmutableSeq.fill(capturec + argc, Constants.CD_Term).view());
   }
 
-  public static @NotNull AstExpr makeInvoke(
+  public static @NotNull AstVariable makeInvoke(
     @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc owner,
     @NotNull AstVariable normalizer,
@@ -60,7 +60,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return AbstractExprializer.makeCallInvoke(ref, instance, normalizer, captures.view().appendedAll(args));
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
   }
 
   private void buildInvoke(

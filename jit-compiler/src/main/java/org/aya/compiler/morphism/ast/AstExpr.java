@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
+// TODO: consider [AstExpr#type]
 public sealed interface AstExpr {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   // record RefCapture(int capture) implements AstExpr { }

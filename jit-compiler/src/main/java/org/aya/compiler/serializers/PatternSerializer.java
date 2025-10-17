@@ -103,7 +103,7 @@ public final class PatternSerializer {
             AbstractExprializer.getRef(builder1, CallKind.Con, conTerm),
             AbstractExprializer.getInstance(builder1, con.ref()),
             builder2 -> {
-              var conArgsTerm = builder2.bindExpr(new AstExpr.Invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty()));
+              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
               var conArgs = AbstractExprializer.fromSeq(
                 builder2,
                 Constants.CD_Term,
@@ -133,10 +133,10 @@ public final class PatternSerializer {
         var whnf = context.whnf(builder, term);
         builder.ifInstanceOf(whnf, JavaUtil.fromClass(TupTerm.class), (builder0, tupTerm) -> {
           // TODO: use doSerialize on many pat version
-          var lhs = new AstExpr.Invoke(Constants.TUP_LHS, tupTerm, ImmutableSeq.empty());
-          doSerialize(builder0, l, builder0.bindExpr(lhs), Once.of(builder1 -> {
-            var rhs = new AstExpr.Invoke(Constants.TUP_RHS, tupTerm, ImmutableSeq.empty());
-            doSerialize(builder1, r, builder1.bindExpr(rhs), onMatchSucc);
+          var lhs = builder0.invoke(Constants.TUP_LHS, tupTerm, ImmutableSeq.empty());
+          doSerialize(builder0, l, lhs, Once.of(builder1 -> {
+            var rhs = builder1.invoke(Constants.TUP_RHS, tupTerm, ImmutableSeq.empty());
+            doSerialize(builder1, r, rhs, onMatchSucc);
           }));
         }, this::onStuck);
       }
@@ -173,13 +173,13 @@ public final class PatternSerializer {
 
   private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull AstVariable term) {
     builder.ifInstanceOf(term, JavaUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
-      var intTermRepr = new AstExpr.Invoke(
+      var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
         intTerm,
         ImmutableSeq.empty()
       );
 
-      builder0.ifIntEqual(builder0.bindExpr(intTermRepr), pat.repr(), builder1 -> {
+      builder0.ifIntEqual(intTermRepr, pat.repr(), builder1 -> {
         // Pat.ShapedInt provides no binds
         updateSubstate(builder1, true);
       }, null);

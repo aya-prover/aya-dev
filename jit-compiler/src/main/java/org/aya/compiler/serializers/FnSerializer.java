@@ -48,7 +48,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
   }
 
-  public static @NotNull AstExpr makeInvoke(
+  public static @NotNull AstVariable makeInvoke(
     @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc owner,
     @NotNull AstVariable normalizer,
@@ -61,7 +61,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     );
 
     var instance = TermExprializer.getInstance(builder, owner);
-    return AbstractExprializer.makeCallInvoke(ref, instance, normalizer, args.view());
+    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
   }
 
   /**
@@ -136,7 +136,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
-    var result = AbstractExprializer.makeCallInvoke(invokeMethod, builder.thisRef(), normalizerTerm, args.view());
+    var result = AbstractExprializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
     builder.returnWith(result);
   }
 

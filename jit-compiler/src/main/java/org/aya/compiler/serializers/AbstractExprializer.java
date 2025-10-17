@@ -95,7 +95,7 @@ public abstract class AbstractExprializer<T> {
     }
 
     var invoke = new AstExpr.Invoke(con, null, args);
-    return builder.bindExpr(invoke);
+    return builder.bindExpr(con.returnType(), invoke);
   }
 
   /**
@@ -123,7 +123,7 @@ public abstract class AbstractExprializer<T> {
       callType.refType, ImmutableSeq.empty(), true
     ), call, ImmutableSeq.empty());
 
-    return builder.bindExpr(invoke);
+    return builder.bindExpr(invoke.methodRef().returnType(), invoke);
   }
 
   public final @NotNull AstVariable getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
@@ -150,8 +150,8 @@ public abstract class AbstractExprializer<T> {
     int size
   ) {
     var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
-    var cast = new AstExpr.CheckCast(builder.bindExpr(result), elementType);
-    return builder.bindExpr(cast);
+    var cast = new AstExpr.CheckCast(builder.bindExpr(ConstantDescs.CD_Object, result), elementType);
+    return builder.bindExpr(elementType, cast);
   }
 
   /**
@@ -165,13 +165,13 @@ public abstract class AbstractExprializer<T> {
    */
   public abstract @NotNull AstVariable serialize(T unit);
 
-  public static @NotNull AstExpr makeCallInvoke(
+  public static @NotNull AstVariable makeCallInvoke(
+    @NotNull AstCodeBuilder builder,
     @NotNull MethodRef ref,
     @NotNull AstVariable instance,
     @NotNull AstVariable normalizer,
     @NotNull SeqView<AstVariable> args
   ) {
-
-    return new AstExpr.Invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
+    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
   }
 }
