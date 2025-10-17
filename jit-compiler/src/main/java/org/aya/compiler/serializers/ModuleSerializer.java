@@ -7,8 +7,8 @@ import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.morphism.asm.AsmJavaBuilder;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstOptimizer;
 import org.aya.compiler.morphism.ast.AstRunner;
+import org.aya.compiler.morphism.ast.BlockSimplifier;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
@@ -88,7 +88,7 @@ public final class ModuleSerializer {
     while (recorder.todoMatchies.isNotEmpty()) matchySerializer
       .serialize(classBuilder, recorder.todoMatchies.removeLast());
     var freeJava = classBuilder.build();
-    freeJava = AstOptimizer.optimizeClass(freeJava);
+    freeJava = BlockSimplifier.optimizeClass(freeJava);
     return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava);
   }
 }

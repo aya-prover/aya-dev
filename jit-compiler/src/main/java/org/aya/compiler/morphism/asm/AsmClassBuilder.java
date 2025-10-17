@@ -96,13 +96,13 @@ public final class AsmClassBuilder implements AutoCloseable {
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, AsmCodeBuilder> builder
+    @NotNull BiConsumer<AsmArgumentProvider, AsmCodeBuilder> builder
   ) {
-    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder::accept);
+    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder);
   }
 
-  public @NotNull MethodRef buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgumentProvider, AsmCodeBuilder> builder) {
-    return buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
+  public void buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<AsmArgumentProvider, AsmCodeBuilder> builder) {
+    buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
       builder.accept(ap, cb);
       cb.writer().return_();
     });
