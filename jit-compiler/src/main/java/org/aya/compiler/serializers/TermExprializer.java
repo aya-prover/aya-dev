@@ -288,7 +288,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizer(ap) : null;
       var newContext = new SerializerContext(normalizer, context.recorder());
       var captured = entries.mapIndexed((i, tup) -> {
-        var capturedExpr = InvokeSignatureHelper.capture(ap, i);
+        var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
       var result = cont.apply(ap, new TermExprializer(builder, newContext,
@@ -335,7 +335,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   }
 
   private @NotNull AstVariable serializeConst(@NotNull Term appliedBody) {
-    return builder.invoke(Constants.CLOSURE_MKCONST, null, ImmutableSeq.of(doSerialize(appliedBody)));
+    return builder.invoke(Constants.CLOSURE_MKCONST, ImmutableSeq.of(doSerialize(appliedBody)));
   }
 
   private @NotNull AstVariable makeAppNew(@NotNull Class<?> className, Term... terms) {

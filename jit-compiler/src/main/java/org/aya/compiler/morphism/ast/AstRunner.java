@@ -127,8 +127,16 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     switch (free) {
       case AstStmt.Break _ -> builder.breakOut();
       case AstStmt.Unreachable _ -> builder.unreachable();
-      case AstStmt.Breakable(var inner) -> builder.breakable(cb -> interpStmts(ap, cb, inner));
-      case AstStmt.WhileTrue(var inner) -> builder.whileTrue(cb -> interpStmts(ap, cb, inner));
+      case AstStmt.Breakable(var inner) -> {
+        try (var _ = subscoped()) {
+          builder.breakable(cb -> interpStmts(ap, cb, inner));
+        }
+      }
+      case AstStmt.WhileTrue(var inner) -> {
+        try (var _ = subscoped()) {
+          builder.whileTrue(cb -> interpStmts(ap, cb, inner));
+        }
+      }
       case AstStmt.Continue _ -> builder.continueLoop();
       case AstStmt.DeclareVariable(var type, var theVar) -> bindVar(theVar.index(), builder.makeVar(type, null));
       case AstStmt.Exec(var exec) -> builder.exec(interpExpr(ap, builder, exec));
@@ -178,8 +186,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           int idx = cases.indexOf(kase);
           assert idx != -1;
           var branch = branches.get(idx);
-          interpStmts(ap, cb, branch);
-        }, cb -> interpStmts(ap, cb, defaultCase));
+          try (var _ = subscoped()) {
+            interpStmts(ap, cb, branch);
+          }
+        }, cb -> { try (var _ = subscoped()) { interpStmts(ap, cb, defaultCase); } });
       case AstStmt.SetStaticField(var fieldRef, var update) -> builder.setStaticField(fieldRef, interpVar(ap, update));
     }
   }
@@ -190,7 +200,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private void bindVar(int index, @NotNull AsmVariable userVar) {
     var exists = binding.put(index, userVar);
-    // if (exists.isNotEmpty()) Panic.unreachable();
+    if (exists.isNotEmpty()) Panic.unreachable();
   }
 
   private class SubscopeHandle implements AutoCloseable {
