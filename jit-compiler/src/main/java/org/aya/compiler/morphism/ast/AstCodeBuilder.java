@@ -90,7 +90,8 @@ public record AstCodeBuilder(
   }
 
   public void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsNull(isNull), thenBlock, elseBlock);
+    var isNullVar = bindExpr(isNull);
+    buildIf(new AstStmt.Condition.IsNull(isNullVar), thenBlock, elseBlock);
   }
 
   public void breakable(@NotNull Consumer<AstCodeBuilder> innerBlock) {
@@ -202,7 +203,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable aconstNull(ClassDesc desc) {
-    // TODO
+    return bindExpr(desc, new AstExpr.Null(desc));
   }
 
   public @NotNull AstVariable iconst(boolean b) {
