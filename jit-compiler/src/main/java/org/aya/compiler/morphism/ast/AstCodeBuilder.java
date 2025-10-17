@@ -102,7 +102,7 @@ public record AstCodeBuilder(
   }
 
   public void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
-    var isNullVar = bindExpr(isNull);
+    var isNullVar = bindExpr(ConstantDescs.CD_boolean, isNull);
     buildIf(new AstStmt.Condition.IsNull(isNullVar), thenBlock, elseBlock);
   }
 

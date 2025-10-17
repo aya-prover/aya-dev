@@ -88,7 +88,9 @@ public abstract class AbstractExprializer<T> {
 
       args = terms;
     } else {
-      var var = builder.bindExpr(new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), terms));
+      var var = builder.bindExpr(
+        JavaUtil.fromClass(typeName.arrayType()),
+        new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), terms));
       args = ImmutableSeq.of(var);
     }
 

@@ -8,7 +8,8 @@ import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.ast.AstArgumentProvider;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -103,7 +104,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   ) {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
-      builder.bindExpr(new AstExpr.Iconst(ulift)),
+      builder.iconst(ulift),
       AbstractExprializer.makeImmutableSeq(builder, Term.class, args)
     ));
   }
