@@ -12,4 +12,8 @@ public interface ArgumentProvider {
   }
 
   @NotNull LocalVariable arg(int nth);
+
+  @NotNull ArgumentProvider EMPTY = _ -> {
+    throw new IndexOutOfBoundsException();
+  };
 }

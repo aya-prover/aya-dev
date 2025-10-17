@@ -5,6 +5,7 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.MutableValue;
+import org.aya.compiler.FieldRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ public sealed interface AstStmt {
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
                @NotNull ImmutableSeq<AstVariable> superConArgs) implements AstStmt { }
   record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt { }
+  record SetStaticField(@NotNull FieldRef var, @NotNull AstVariable update) implements AstStmt { }
   record SetArray(@NotNull AstVariable array, int index, @NotNull AstVariable update) implements AstStmt { }
 
   sealed interface Condition {

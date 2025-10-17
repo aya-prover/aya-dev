@@ -44,6 +44,9 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.Super(superConParams, superConArgs));
   }
 
+  public void updateField(@NotNull FieldRef field, @NotNull AstVariable update) {
+    stmts.append(new AstStmt.SetStaticField(field, update));
+  }
   public void updateVar(@NotNull AstVariable var, @NotNull AstExpr update) {
     stmts.append(new AstStmt.SetVariable(var, update));
   }

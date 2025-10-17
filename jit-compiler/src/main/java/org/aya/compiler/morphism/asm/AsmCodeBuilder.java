@@ -221,6 +221,11 @@ public record AsmCodeBuilder(
     writer.returnInstruction(kind);
   }
 
+  public void setStaticField(FieldRef fieldRef, AsmVariable update) {
+    loadVar(update);
+    writer().putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
+  }
+
   public enum InvokeKind {
     Special, Virtual, Static
   }

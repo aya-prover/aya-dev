@@ -44,7 +44,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           builder.buildNestedClass(metadata, nested, superclass, cb -> interpDecls(cb, members));
         }
         case AstDecl.ConstantField constantField ->
-          builder.buildFieldDecl(constantField.signature().returnType(), constantField.signature().name());
+          builder.buildStaticField(constantField.signature().returnType(), constantField.signature().name());
         case AstDecl.Method(var sig, var body) -> {
           if (sig.isConstructor()) {
             builder.buildConstructor(sig.paramTypes(),
@@ -54,6 +54,8 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
               (ap, cb) -> interpStmts(ap, cb, body));
           }
         }
+        case AstDecl.StaticInitBlock(var block) -> builder.buildStaticInitBlock(cb ->
+          interpStmts(ArgumentProvider.EMPTY, cb, block));
       }
     }
   }
@@ -141,7 +143,8 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         } : null;
 
         switch (cond) {
-          case AstStmt.Condition.IsFalse(var isFalse) -> builder.ifNotTrue(interpVar(ap, isFalse), thenBlock, elseBlock);
+          case AstStmt.Condition.IsFalse(var isFalse) ->
+            builder.ifNotTrue(interpVar(ap, isFalse), thenBlock, elseBlock);
           case AstStmt.Condition.IsTrue(var isTrue) -> builder.ifTrue(interpVar(ap, isTrue), thenBlock, elseBlock);
           case AstStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
             var asTerm = as.get();
@@ -174,6 +177,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           var branch = branches.get(idx);
           interpStmts(ap, cb, branch);
         }, cb -> interpStmts(ap, cb, defaultCase));
+      case AstStmt.SetStaticField(var fieldRef, var update) -> builder.setStaticField(fieldRef, interpVar(ap, update));
     }
   }
 

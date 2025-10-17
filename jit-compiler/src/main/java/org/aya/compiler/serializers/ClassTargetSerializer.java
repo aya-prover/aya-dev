@@ -47,7 +47,7 @@ public abstract class ClassTargetSerializer<T> {
   }
 
   protected @NotNull FieldRef buildInstance(@NotNull AstClassBuilder builder) {
-    return builder.buildField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
+    return builder.buildConstantField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
       b.bindExpr(new AstExpr.New(thisConstructor, ImmutableSeq.empty())));
   }
 

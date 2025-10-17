@@ -3,12 +3,9 @@
 package org.aya.compiler.morphism.asm;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.value.LazyValue;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.JavaUtil;
@@ -27,14 +24,12 @@ import java.lang.invoke.LambdaMetafactory;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public final class AsmClassBuilder implements AutoCloseable {
   public final @NotNull ClassData classData;
   public final @NotNull org.glavo.classfile.ClassBuilder writer;
   public final @NotNull AsmOutputCollector collector;
   public final @NotNull MutableList<String> nestedMembers = MutableList.create();
-  public final @NotNull MutableMap<FieldRef, Function<AsmCodeBuilder, AsmExpr>> fieldInitializers = MutableLinkedHashMap.of();
   private int lambdaCounter = 0;
 
   /// @see java.lang.invoke.LambdaMetafactory#metafactory
@@ -113,7 +108,7 @@ public final class AsmClassBuilder implements AutoCloseable {
     });
   }
 
-  public void buildFieldDecl(@NotNull ClassDesc returnType, @NotNull String name) {
+  public void buildStaticField(@NotNull ClassDesc returnType, @NotNull String name) {
     writer.withField(name, returnType, AccessFlags.ofField(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL).flagsMask());
   }
 
@@ -182,18 +177,14 @@ public final class AsmClassBuilder implements AutoCloseable {
       var pool = writer.constantPool();
       writer.with(NestMembersAttribute.of(nestedMembers.map(t -> pool.classEntry(owner().nested(t))).asJava()));
     }
+  }
 
-    if (fieldInitializers.isNotEmpty()) {
-      writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
-        try (var acb = new AsmCodeBuilder(cb, this, ImmutableSeq.empty(), false)) {
-          fieldInitializers.forEach((fieldRef, init) -> {
-            var expr = init.apply(acb);
-            acb.loadExpr(expr);
-            cb.putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
-          });
-          cb.return_();
-        }
-      });
-    }
+  public void buildStaticInitBlock(Consumer<AsmCodeBuilder> body) {
+    writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
+      try (var acb = new AsmCodeBuilder(cb, this, ImmutableSeq.empty(), false)) {
+        body.accept(acb);
+        cb.return_();
+      }
+    });
   }
 }

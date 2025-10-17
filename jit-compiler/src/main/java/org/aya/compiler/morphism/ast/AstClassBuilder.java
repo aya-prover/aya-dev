@@ -36,6 +36,12 @@ public record AstClassBuilder(
   }
 
   public @NotNull AstDecl.Clazz build() {
+    if (fieldInitializers.isNotEmpty()) {
+      var codeBuilder = new AstCodeBuilder(FreezableMutableList.create(), new VariablePool(), false, false);
+      fieldInitializers.forEach((fieldRef, init) ->
+        codeBuilder.updateField(fieldRef, init.apply(codeBuilder)));
+      members.append(new AstDecl.StaticInitBlock(codeBuilder.build()));
+    }
     return new AstDecl.Clazz(metadata, parentOrThis, nested, superclass, members.freeze());
   }
 
@@ -83,7 +89,7 @@ public record AstClassBuilder(
     return ref;
   }
 
-  public @NotNull FieldRef buildField(
+  public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull Function<AstCodeBuilder, AstVariable> initializer
