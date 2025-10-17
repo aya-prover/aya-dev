@@ -51,10 +51,8 @@ public record AsmCodeBuilder(
       null, null, hasThis);
   }
 
-  public @NotNull AsmVariable assertVar(@NotNull AsmVariable var) { return var; }
   public void loadVar(@NotNull AsmVariable var) {
-    var asmVar = assertVar(var);
-    writer.loadInstruction(asmVar.kind(), asmVar.slot());
+    writer.loadInstruction(var.kind(), var.slot());
   }
 
   public void loadExpr(@NotNull AsmExpr expr) { expr.accept(this); }
@@ -87,18 +85,16 @@ public record AsmCodeBuilder(
   }
 
   public void updateVar(@NotNull AsmVariable var, @NotNull AsmExpr update) {
-    var asmVar = assertVar(var);
     update.accept(this);
-    writer.storeInstruction(asmVar.kind(), asmVar.slot());
+    writer.storeInstruction(var.kind(), var.slot());
   }
 
   public void updateArray(@NotNull AsmVariable array, int idx, @NotNull AsmVariable update) {
-    var expr = assertVar(array);
-    var component = expr.type().componentType();
+    var component = array.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
-    loadVar(expr);
+    loadVar(array);
     iconst(idx).accept(this);
     loadVar(update);
     writer.arrayStoreInstruction(kind);
@@ -125,8 +121,7 @@ public record AsmCodeBuilder(
   }
 
   public void ifInstanceOf(@NotNull AsmVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, AsmVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    var lhsExpr = assertVar(lhs);
-    loadVar(lhsExpr);
+    loadVar(lhs);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
       var cast = builder.checkcast(lhs, rhs);
@@ -215,9 +210,8 @@ public record AsmCodeBuilder(
   }
 
   public void returnWith(@NotNull AsmVariable expr) {
-    var asmVar = assertVar(expr);
-    var kind = TypeKind.fromDescriptor(asmVar.type().descriptorString());
-    loadVar(asmVar);
+    var kind = TypeKind.fromDescriptor(expr.type().descriptorString());
+    loadVar(expr);
     writer.returnInstruction(kind);
   }
 
@@ -287,6 +281,7 @@ public record AsmCodeBuilder(
     return AsmExpr.withType(field.returnType(), builder ->
       builder.writer.getstatic(field.owner(), field.name(), field.returnType()));
   }
+
   public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull AsmVariable owner) {
     return AsmExpr.withType(field.returnType(), builder -> {
       builder.loadVar(owner);
@@ -304,12 +299,11 @@ public record AsmCodeBuilder(
     @NotNull MethodRef method,
     @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody
   ) {
-    var captureExprs = captures.map(this::assertVar);
-    var captureTypes = captureExprs.map(AsmVariable::type);
+    var captureTypes = captures.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);
 
     return AsmExpr.withType(method.owner(), builder -> {
-      captureExprs.forEach(builder::loadVar);
+      captures.forEach(builder::loadVar);
       builder.writer.invokedynamic(indy);
     });
   }
@@ -373,13 +367,12 @@ public record AsmCodeBuilder(
   }
 
   public @NotNull AsmExpr getArray(@NotNull AsmVariable array, int index) {
-    var var = assertVar(array);
-    var component = var.type().componentType();
+    var component = array.type().componentType();
     assert component != null;
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
     return AsmExpr.withType(component, builder -> {
-      builder.loadVar(var);
+      builder.loadVar(array);
       builder.iconst(index).accept(builder);
       builder.writer.arrayLoadInstruction(kind);
     });

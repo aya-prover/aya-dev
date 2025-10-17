@@ -18,14 +18,10 @@ public record AsmArgumentProvider(
     return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth), false);
   }
 
-  public static final class Lambda implements ArgumentProvider.Lambda {
-    public final @NotNull ImmutableSeq<ClassDesc> captures;
-    public final @NotNull ImmutableSeq<ClassDesc> parameters;
-    public Lambda(@NotNull ImmutableSeq<ClassDesc> captures, @NotNull ImmutableSeq<ClassDesc> parameters) {
-      this.captures = captures;
-      this.parameters = parameters;
-    }
-
+  public record Lambda(
+    @NotNull ImmutableSeq<ClassDesc> captures,
+    @NotNull ImmutableSeq<ClassDesc> parameters
+  ) implements ArgumentProvider.Lambda {
     @Override public @NotNull AsmVariable capture(int nth) {
       assert nth < captures.size();
       return new AsmVariable(nth, captures.get(nth), false);
