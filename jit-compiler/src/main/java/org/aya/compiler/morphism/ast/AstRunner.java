@@ -127,8 +127,8 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
       case AstStmt.Breakable(var inner) -> builder.breakable(cb -> interpStmts(ap, cb, inner));
       case AstStmt.WhileTrue(var inner) -> builder.whileTrue(cb -> interpStmts(ap, cb, inner));
       case AstStmt.Continue _ -> builder.continueLoop();
-      case AstStmt.DeclareVariable mkVar -> bindVar(mkVar.theVar().index(), builder.makeVar(mkVar.type(), null));
-      case AstStmt.Exec exec -> builder.exec(interpExpr(ap, builder, exec.expr()));
+      case AstStmt.DeclareVariable(var type, var theVar) -> bindVar(theVar.index(), builder.makeVar(type, null));
+      case AstStmt.Exec(var exec) -> builder.exec(interpExpr(ap, builder, exec));
       case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
         Consumer<AsmCodeBuilder> thenBlock = cb -> {
           try (var _ = subscoped()) {
