@@ -56,7 +56,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   protected void buildFramework(@NotNull AstClassBuilder builder, @NotNull T unit, @NotNull Consumer<AstClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
-        nestBuilder.buildConstantField(JavaUtil.fromClass(callBaseClass()),
+        nestBuilder.buildField(JavaUtil.fromClass(callBaseClass()),
           AyaSerializer.FIELD_EMPTYCALL, cb ->
             buildEmptyCall(cb, unit));
       }

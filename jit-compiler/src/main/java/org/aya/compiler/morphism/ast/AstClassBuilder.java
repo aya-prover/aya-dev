@@ -83,7 +83,7 @@ public record AstClassBuilder(
     return ref;
   }
 
-  public @NotNull FieldRef buildConstantField(
+  public @NotNull FieldRef buildField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull Function<AstCodeBuilder, AstVariable> initializer

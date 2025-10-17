@@ -5,7 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
@@ -47,7 +47,7 @@ public abstract class ClassTargetSerializer<T> {
   }
 
   protected @NotNull FieldRef buildInstance(@NotNull AstClassBuilder builder) {
-    return builder.buildConstantField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
+    return builder.buildField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
       b.bindExpr(new AstExpr.New(thisConstructor, ImmutableSeq.empty())));
   }
 

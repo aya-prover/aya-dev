@@ -113,9 +113,8 @@ public final class AsmClassBuilder implements AutoCloseable {
     });
   }
 
-  public @NotNull FieldRef buildFieldDecl(@NotNull ClassDesc returnType, @NotNull String name) {
+  public void buildFieldDecl(@NotNull ClassDesc returnType, @NotNull String name) {
     writer.withField(name, returnType, AccessFlags.ofField(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL).flagsMask());
-    return new FieldRef(owner(), returnType, name);
   }
 
   public @NotNull InvokeDynamicEntry makeLambda(
