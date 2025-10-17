@@ -3,8 +3,6 @@
 package org.aya.compiler.morphism.ast;
 
 import org.aya.compiler.LocalVariable;
-import org.aya.compiler.morphism.JavaExpr;
-import org.jetbrains.annotations.NotNull;
 
 public sealed interface AstVariable extends LocalVariable {
   record Local(int index) implements AstVariable {

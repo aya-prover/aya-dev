@@ -5,13 +5,12 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-public sealed interface AstExpr extends JavaExpr {
+public sealed interface AstExpr {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   // record RefCapture(int capture) implements AstExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,

@@ -10,7 +10,6 @@ import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
 import org.glavo.classfile.Label;
 import org.glavo.classfile.Opcode;
@@ -56,13 +55,12 @@ public record AsmCodeBuilder(
   }
 
   public @NotNull AsmVariable assertVar(@NotNull LocalVariable var) { return (AsmVariable) var; }
-  public @NotNull AsmExpr assertExpr(@NotNull JavaExpr expr) { return (AsmExpr) expr; }
   public void loadVar(@NotNull LocalVariable var) {
     var asmVar = assertVar(var);
     writer.loadInstruction(asmVar.kind(), asmVar.slot());
   }
 
-  public void loadExpr(@NotNull JavaExpr expr) { assertExpr(expr).accept(this); }
+  public void loadExpr(@NotNull AsmExpr expr) { expr.accept(this); }
   public void close() { pool.submit(this); }
 
   public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
@@ -77,7 +75,7 @@ public record AsmCodeBuilder(
 
   public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, continuing, block); }
 
-  public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
+  public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable AsmExpr initializer) {
     var variable = pool.acquire(type);
     if (initializer != null) updateVar(variable, initializer);
     return variable;
@@ -91,10 +89,9 @@ public record AsmCodeBuilder(
       superConArgs);
   }
 
-  public void updateVar(@NotNull LocalVariable var, @NotNull JavaExpr update) {
+  public void updateVar(@NotNull LocalVariable var, @NotNull AsmExpr update) {
     var asmVar = assertVar(var);
-    var expr = assertExpr(update);
-    expr.accept(this);
+    update.accept(this);
     writer.storeInstruction(asmVar.kind(), asmVar.slot());
   }
 
@@ -190,10 +187,9 @@ public record AsmCodeBuilder(
     writer.goto_(continuing);
   }
 
-  public void exec(@NotNull JavaExpr expr) {
-    var asmExpr = assertExpr(expr);
-    asmExpr.accept(this);
-    if (!asmExpr.type().equals(ConstantDescs.CD_void)) {
+  public void exec(@NotNull AsmExpr expr) {
+    expr.accept(this);
+    if (!expr.type().equals(ConstantDescs.CD_void)) {
       writer.pop();
     }
   }
@@ -299,8 +295,11 @@ public record AsmCodeBuilder(
     return refField(ref);
   }
 
-  public @NotNull AsmExpr
-  mkLambda(@NotNull ImmutableSeq<LocalVariable> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody) {
+  public @NotNull AsmExpr mkLambda(
+    @NotNull ImmutableSeq<LocalVariable> captures,
+    @NotNull MethodRef method,
+    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody
+  ) {
     var captureExprs = captures.map(this::assertVar);
     var captureTypes = captureExprs.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);

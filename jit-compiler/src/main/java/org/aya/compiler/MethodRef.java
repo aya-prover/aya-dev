@@ -3,7 +3,6 @@
 package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -19,7 +18,7 @@ public record MethodRef(
   public boolean isConstructor() {
     return name().equals(ConstantDescs.INIT_NAME);
   }
-  public boolean checkArguments(@NotNull ImmutableSeq<JavaExpr> args) {
+  public boolean checkArguments(@NotNull ImmutableSeq<?> args) {
     return paramTypes.sizeEquals(args);
   }
 }

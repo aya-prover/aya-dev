@@ -5,7 +5,6 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.compiler.morphism.ast.AstArgumentProvider;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.jetbrains.annotations.Contract;
@@ -25,10 +24,6 @@ public class InvokeSignatureHelper {
 
   public static @NotNull ImmutableSeq<ClassDesc> parameters(@NotNull SeqView<ClassDesc> extraParams) {
     return extraParams.prepended(Constants.CD_UnaryOperator).toSeq();
-  }
-
-  public static @NotNull ImmutableSeq<JavaExpr> captures(@NotNull JavaExpr normalizer, @NotNull SeqView<JavaExpr> extraCaptures) {
-    return extraCaptures.prepended(normalizer).toSeq();
   }
 
   public static @NotNull AstVariable normalizer(@NotNull AstArgumentProvider ap) {
