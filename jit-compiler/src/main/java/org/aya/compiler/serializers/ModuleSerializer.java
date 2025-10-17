@@ -89,6 +89,6 @@ public final class ModuleSerializer {
       .serialize(classBuilder, recorder.todoMatchies.removeLast());
     var freeJava = classBuilder.build();
     freeJava = AstOptimizer.optimizeClass(freeJava);
-    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).runFree(freeJava);
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava);
   }
 }

@@ -10,6 +10,7 @@ import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.util.Panic;
+import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
 import org.glavo.classfile.Opcode;
 import org.glavo.classfile.TypeKind;
@@ -29,7 +30,7 @@ import static java.lang.constant.ConstantDescs.CD_Object;
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method
 public record AsmCodeBuilder(
-  @NotNull org.glavo.classfile.CodeBuilder writer,
+  @NotNull CodeBuilder writer,
   @NotNull AsmClassBuilder parent,
   @NotNull AsmVariablePool pool,
   @Nullable Label breaking,
@@ -40,17 +41,14 @@ public record AsmCodeBuilder(
   public static final @NotNull AsmExpr nein = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_0());
 
   public AsmCodeBuilder(
-    @NotNull org.glavo.classfile.CodeBuilder writer,
+    @NotNull CodeBuilder writer,
     @NotNull AsmClassBuilder parent,
     @NotNull ImmutableSeq<ClassDesc> parameterTypes,
     boolean hasThis
   ) {
     this(writer, parent,
       AsmVariablePool.from(hasThis ? parent.owner() : null, parameterTypes),
-      null,
-      null,
-      hasThis
-    );
+      null, null, hasThis);
   }
 
   public @NotNull AsmVariable assertVar(@NotNull AsmVariable var) { return var; }
@@ -62,13 +60,13 @@ public record AsmCodeBuilder(
   public void loadExpr(@NotNull AsmExpr expr) { expr.accept(this); }
   public void close() { pool.submit(this); }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
+  public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
     try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, continuing, hasThis)) {
       block.accept(innerBuilder);
     }
   }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
+  public void subscoped(@NotNull CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
     subscoped(innerWrite, breaking, continuing, block);
   }
 

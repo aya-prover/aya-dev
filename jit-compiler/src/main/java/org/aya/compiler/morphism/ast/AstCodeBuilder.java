@@ -61,18 +61,27 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
 
-  public void
-  ifNotTrue(@NotNull AstVariable notTrue, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  public void ifNotTrue(
+    @NotNull AstVariable notTrue,
+    @NotNull Consumer<AstCodeBuilder> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
     buildIf(new AstStmt.Condition.IsFalse(notTrue), thenBlock, elseBlock);
   }
 
-  public void
-  ifTrue(@NotNull AstVariable theTrue, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  public void ifTrue(
+    @NotNull AstVariable theTrue,
+    @NotNull Consumer<AstCodeBuilder> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
     buildIf(new AstStmt.Condition.IsTrue(theTrue), thenBlock, elseBlock);
   }
 
-  public void
-  ifInstanceOf(@NotNull AstVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AstCodeBuilder, AstVariable> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+  public void ifInstanceOf(
+    @NotNull AstVariable lhs, @NotNull ClassDesc rhs,
+    @NotNull BiConsumer<AstCodeBuilder, AstVariable> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
     var varHolder = MutableValue.<AstVariable.Local>create();
     buildIf(new AstStmt.Condition.IsInstanceOf(lhs, rhs, varHolder), b -> {
       var asTerm = b.acquireVariable();
@@ -184,14 +193,10 @@ public record AstCodeBuilder(
     return new AstExpr.RefField(field, bindExpr(owner));
   }
 
-  public @NotNull AstExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
-    return new AstExpr.RefEnum(enumClass, enumName);
-  }
-
   public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
     var cd = JavaUtil.fromClass(value.getClass());
     var name = value.name();
-    return bindExpr(cd, refEnum(cd, name));
+    return bindExpr(cd, new AstExpr.RefEnum(cd, name));
   }
 
   public @NotNull AstVariable iconst(int i) {
@@ -200,10 +205,6 @@ public record AstCodeBuilder(
 
   public @NotNull AstVariable aconst(@NotNull String str) {
     return bindExpr(ConstantDescs.CD_String, new AstExpr.Sconst(str));
-  }
-
-  public @NotNull AstVariable aconstNull(ClassDesc desc) {
-    return bindExpr(desc, new AstExpr.Null(desc));
   }
 
   public @NotNull AstVariable iconst(boolean b) {
@@ -230,11 +231,6 @@ public record AstCodeBuilder(
     var lambdaBody = lambdaBodyBuilder.build();
 
     return new AstExpr.Lambda(captures, method, lambdaBody);
-  }
-
-  public @NotNull AstExpr
-  mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<AstExpr> initializer) {
-    return new AstExpr.Array(type, length, initializer == null ? null : bindExprs(initializer));
   }
 
   public @NotNull AstExpr getArray(@NotNull AstExpr array, int index) {
