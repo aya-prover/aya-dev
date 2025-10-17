@@ -7,6 +7,7 @@ import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.util.ArrayUtil;
 import org.glavo.classfile.*;
 import org.glavo.classfile.attribute.NestHostAttribute;
 import org.glavo.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
@@ -57,9 +58,9 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
         }
         if (metadata.recognition().length != 0) {
-          var recognitionValue = AnnotationValue.ofArray(
-            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(JavaUtil.fromClass(CodeShape.GlobalId.class), x.name()))
-              .collect(Collectors.toList())
+          var recognitionValue = AnnotationValue.ofArray(ArrayUtil.map(metadata.recognition(),
+            new AnnotationValue[0], x ->
+              AnnotationValue.ofEnum(JavaUtil.fromClass(CodeShape.GlobalId.class), x.name()))
           );
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
         }
