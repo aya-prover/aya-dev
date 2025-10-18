@@ -103,10 +103,17 @@ public final class ClauseTycker implements Problematic, Stateful {
 
     public int userPatSize() { return tyckedPats.size(); }
 
+    /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
-    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker) {
-      teleBinds.forEachWith(paramSubst, exprTycker.localLet()::put);
-      exprTycker.setLocalLet(exprTycker.localLet().derive(asSubst.let()));
+    public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean inline) {
+      // We assume that this method is called right after a subscope, and we own the current layer of the localLet
+      assert exprTycker.localLet().let().isEmpty();
+      // Sanity check
+      assert asSubst.parent() == null;
+      teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
+        .put(ref, subst, inline));
+      asSubst.let().forEach((ref, subst) -> exprTycker.localLet()
+        .put(ref, subst.definedAs(), inline));
     }
   }
 
@@ -180,12 +187,11 @@ public final class ClauseTycker implements Problematic, Stateful {
     /// This method performs these changes.
     private @Nullable LhsResult refinePattern(LhsResult curLhs, PatClass.Seq<Term, Pat> curCls) {
       var lets = new PatBinder().apply(curLhs.allPats().toSeq(), curCls.term());
-      if (lets.let().let().allMatch((_, j) -> j.wellTyped() instanceof FreeTerm))
-        return null;
+      if (lets.let().allFreeLocal()) return null;
       var sibling = Objects.requireNonNull(curLhs.localCtx.parent()).derive();
       var newPatterns = curCls.pat().map(pat -> pat.descentTerm(lets));
       newPatterns.forEach(pat -> pat.consumeBindings(sibling::put));
-      curLhs.asSubst.let().replaceAll((_, t) -> t.map(lets));
+      curLhs.asSubst.let().replaceAll((_, t) -> t.map(j -> j.map(lets)));
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
@@ -309,22 +315,25 @@ public final class ClauseTycker implements Problematic, Stateful {
       } else {
         // the localCtx will be restored after exiting [subscoped]
         exprTycker.setLocalCtx(result.localCtx);
-        result.dumpLocalLetTo(teleBinds, exprTycker);
+        result.dumpLocalLetTo(teleBinds, exprTycker, false);
         // now exprTycker has all substitutions that PatternTycker introduced.
-        wellBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
+        var rawCheckedBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
-        wellBody = zonker.zonk(wellBody);
+        var zonkBody = zonker.zonk(rawCheckedBody);
+
+        // eta body with inserted patterns
+        // make before [Pat.collectVariables], as we need [pats] are [Closed].
+        @Closed var insertPatternBody = AppTerm.make(zonkBody, result.missingPats().view().map(PatToTerm::visit));
+        var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
 
         // bind all pat bindings
-        var patWithTypeBound = Pat.collectVariables(result.allPats());
+        var patWithTypeBound = Pat.collectVariables(pats.view());
         pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 
         bindCount = patBindTele.size();
 
-        // eta body with inserted patterns
-        wellBody = AppTerm.make(wellBody, result.missingPats().view().map(PatToTerm::visit));
-        wellBody = wellBody.bindTele(patBindTele.view());
+        wellBody = insertLetBody.bindTele(patBindTele.view());
       }
 
       return new Pat.Preclause<>(result.sourcePos, pats.toSeq(), bindCount,
@@ -386,6 +395,21 @@ public final class ClauseTycker implements Problematic, Stateful {
     }
   }
 
+  /// Bind all judgments in {@param lets} on {@param term}, [LocalLet#parent] not included.
+  /// Because only the current layer corresponds to the telescope, which is what we want to let-bind.
+  /// For function definitions there should only be one layer, so it's irrelevant anyway.
+  /// But this method is also used for checking `match` expressions, where the parent layer might
+  /// contain let bindings from real let expressions,
+  ///
+  /// @param term a free term
+  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull @Closed Term term) {
+    // only one level
+    return lets.let()
+      .toSeq()
+      .foldRight(term, (t, acc) ->
+        LetTerm.bind(new LetFreeTerm(t.component1(), t.component2().definedAs()), acc));
+  }
+
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
     return r.map(new TermInline());
   }
@@ -401,7 +425,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 
     // map in place 😱😱😱😱
-    result.asSubst().let().replaceAll((_, t) -> inlineTerm(t));
+    result.asSubst().let().replaceAll((_, t) -> t.map(ClauseTycker::inlineTerm));
 
     return new PatternTycker.TyckResult(wellTyped, paramSubst, result.asSubst(), result.hasError());
   }

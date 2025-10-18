@@ -46,8 +46,8 @@ module Issue630 {
 module PullRequest1268 {
   def id (A : Type) : A -> A => fn a => a
 
-  def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (d : D) D -> D
-  | a, b, D => fn d => id D
+  def allInOneNoElim {A : Type} (a : A) {B : Type} (b : B) {C : Type} : Fn (D : Type) (E : Type) (e : E) E -> E
+  | a, b, D => fn E => fn e => id E
 
   // allInOneNoElim cannot cover the pusheen from body case (but cover the pusheen from signature case)
   def allInOneNoElim^C (A : Type) (B : Type) : Fn (b : B) B -> B

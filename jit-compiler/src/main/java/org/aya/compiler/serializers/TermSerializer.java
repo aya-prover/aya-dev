@@ -268,7 +268,7 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
       case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
       case LetTerm(var definedAs, var body) -> {
         var defVar = new LocalVar("<let>");
-        var letDef = serialize(definedAs);
+        var letDef = doSerialize(definedAs);
         yield with(defVar, letDef, () -> doSerialize(body.apply(defVar)));
       }
     };
