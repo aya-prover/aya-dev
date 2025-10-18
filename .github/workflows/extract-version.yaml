@@ -15,7 +15,7 @@ jobs:
   extract-version:
     runs-on: ubuntu-latest
     outputs:
-      projectVersion: ${{ steps.check.outputs.ayaVersion }}
+      projectVersion: ${{ steps.check.outputs.projectVersion }}
       isSnapshot: ${{ steps.check.outputs.isSnapshot }}
       javaVersion: ${{ steps.check.outputs.javaVersion }}
     steps:
