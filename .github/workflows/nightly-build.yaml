@@ -110,8 +110,10 @@ jobs:
       - name: Install Built Aya
         if: matrix.os == 'ubuntu-latest'
         run: |
-          TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ needs.check-aya-version.outputs.projectVersion }}/$RUNNER_ARCH
-          mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar
+          ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
+          TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ needs.check-aya-version.outputs.projectVersion }}/$ARCH
+          mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
+          echo "Aya is installed at $TC_ROOT"
       - name: Run Issue Tracker
         if: matrix.os == 'ubuntu-latest'
         uses: 'HoshinoTented/issue-tracker@v1'
