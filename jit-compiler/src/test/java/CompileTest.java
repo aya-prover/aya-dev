@@ -81,9 +81,13 @@ public class CompileTest {
 
   public static void serializeFrom(@NotNull TyckResult result, @NotNull Path base) throws IOException {
     new ModuleSerializer(result.info.shapeFactory())
-      .serialize(new ModuleSerializer.ModuleResult(
-        DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
+      .serialize(computeModuleResult(result))
       .writeTo(base);
+  }
+
+  public static ModuleSerializer.@NotNull ModuleResult computeModuleResult(@NotNull TyckResult result) {
+    return new ModuleSerializer.ModuleResult(
+      DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class));
   }
 
   @Test public void testAsm() throws IOException {
@@ -102,7 +106,8 @@ public class CompileTest {
     var moduleLoader = new DumbModuleLoader(REPORTER, new EmptyContext(FILE));
     var callback = new ModuleCallback<RuntimeException>() {
       ImmutableSeq<TyckDef> ok;
-      @Override public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
+      @Override
+      public void onModuleTycked(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) { ok = defs; }
     };
     var info = moduleLoader.tyckModule(moduleLoader.resolve(new AyaParserImpl(REPORTER).program(
       new SourceFile("<baka>", FILE, code)).program()), callback);

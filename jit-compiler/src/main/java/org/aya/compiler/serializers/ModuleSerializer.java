@@ -19,6 +19,7 @@ import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.constant.ClassDesc;
 
@@ -81,6 +82,18 @@ public final class ModuleSerializer {
   }
 
   public @NotNull AsmOutputCollector.Default serialize(ModuleResult unit) {
+    var classBuilder = serializeToANF(unit);
+    var freeJava = classBuilder.build();
+    freeJava = BlockSimplifier.optimizeClass(freeJava);
+    var usedClasses = classBuilder.usedClasses();
+    var systemResolver = ClassHierarchyResolver.defaultResolver();
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava,
+      classDesc -> usedClasses.getOrElse(classDesc, () ->
+        systemResolver.getClassInfo(classDesc)));
+  }
+
+  @VisibleForTesting
+  public @NotNull AstClassBuilder serializeToANF(ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);
@@ -94,12 +107,6 @@ public final class ModuleSerializer {
     var matchySerializer = new MatchySerializer(recorder);
     while (recorder.todoMatchies.isNotEmpty()) matchySerializer
       .serialize(classBuilder, recorder.todoMatchies.removeLast());
-    var freeJava = classBuilder.build();
-    freeJava = BlockSimplifier.optimizeClass(freeJava);
-    var usedClasses = classBuilder.usedClasses();
-    var systemResolver = ClassHierarchyResolver.defaultResolver();
-    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava,
-      classDesc -> usedClasses.getOrElse(classDesc, () ->
-        systemResolver.getClassInfo(classDesc)));
+    return classBuilder;
   }
 }

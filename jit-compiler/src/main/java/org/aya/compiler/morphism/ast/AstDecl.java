@@ -6,12 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.syntax.compile.AyaMetadata;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
 public sealed interface AstDecl {
+  @Debug.Renderer(text = "className().toString()")
   record Clazz(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc owner,
@@ -25,6 +27,7 @@ public sealed interface AstDecl {
   }
 
   /// Constructors also count as method, with method name "<init>".
+  @Debug.Renderer(text = "signature().name()")
   record Method(
     @NotNull MethodRef signature,
     @NotNull ImmutableSeq<AstStmt> body
