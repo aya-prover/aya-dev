@@ -3,26 +3,33 @@
 package org.aya.compiler.morphism.asm;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 
-public record AsmArgumentProvider(
-  @NotNull ImmutableSeq<ClassDesc> parameters,
-  boolean isStatic
-) implements ArgumentProvider {
+/// The implementation should be pure (at least, same input same output, some kind of side effect is acceptable)
+public interface AsmArgsProvider {
+  @NotNull AsmVariable arg(int nth);
 
-  @Override public @NotNull AsmVariable arg(int nth) {
-    assert nth < parameters.size();
-    return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth), false);
+  @NotNull AsmArgsProvider EMPTY = _ -> {
+    throw new IndexOutOfBoundsException();
+  };
+
+  record FnParam(
+    @NotNull ImmutableSeq<ClassDesc> parameters,
+    boolean isStatic
+  ) implements AsmArgsProvider {
+    @Override public @NotNull AsmVariable arg(int nth) {
+      assert nth < parameters.size();
+      return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth), false);
+    }
   }
 
-  public record Lambda(
+  record Lambda(
     @NotNull ImmutableSeq<ClassDesc> captures,
     @NotNull ImmutableSeq<ClassDesc> parameters
-  ) implements ArgumentProvider.Lambda {
-    @Override public @NotNull AsmVariable capture(int nth) {
+  ) implements AsmArgsProvider {
+    public @NotNull AsmVariable capture(int nth) {
       assert nth < captures.size();
       return new AsmVariable(nth, captures.get(nth), false);
     }
