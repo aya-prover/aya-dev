@@ -34,7 +34,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   @Override
   protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, MemberDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
-      AbstractExprializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
+      AbstractExprSerializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
       builder.iconst(unit.index()),
       serializeTermWithoutNormalizer(builder, unit.type())
     ));

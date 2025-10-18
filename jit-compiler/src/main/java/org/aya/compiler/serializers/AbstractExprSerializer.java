@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
-public abstract class AbstractExprializer<T> {
+public abstract class AbstractExprSerializer<T> {
   protected final @NotNull AstCodeBuilder builder;
   protected final @NotNull SerializerContext context;
 
-  protected AbstractExprializer(@NotNull AstCodeBuilder builder, @NotNull SerializerContext context) {
+  protected AbstractExprSerializer(@NotNull AstCodeBuilder builder, @NotNull SerializerContext context) {
     this.builder = builder;
     this.context = context;
   }

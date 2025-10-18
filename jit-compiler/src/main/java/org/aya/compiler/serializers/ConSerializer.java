@@ -41,7 +41,7 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
 
   @Override protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, ConDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
-      AbstractExprializer.getInstance(builder, unit.dataRef),
+      AbstractExprSerializer.getInstance(builder, unit.dataRef),
       builder.iconst(unit.selfTele.size()),
       builder.iconst(unit.equality != null)
     ));
@@ -59,10 +59,10 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     var termSeq = builder.bindExpr(invoke.methodRef().returnType(), invoke);
     // It is too stupid to serialize pat meta solving, so we just call PatMatcher
     var patsTerm = unit.pats.map(x ->
-      new PatternExprializer(builder, buildSerializerContext(normalizer), true)
+      new PatternSerializer(builder, buildSerializerContext(normalizer), true)
         .serialize(x)
     );
-    var patsSeq = AbstractExprializer.makeImmutableSeq(builder, Pat.class, patsTerm);
+    var patsSeq = AbstractExprSerializer.makeImmutableSeq(builder, Pat.class, patsTerm);
     var matcherTerm = builder.mkNew(PatMatcher.InferMeta.class,
       ImmutableSeq.of(normalizer));
 

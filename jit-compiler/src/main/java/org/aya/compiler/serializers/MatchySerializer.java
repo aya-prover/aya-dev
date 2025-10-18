@@ -52,7 +52,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     @NotNull ImmutableSeq<AstVariable> captures,
     @NotNull ImmutableSeq<AstVariable> args
   ) {
-    var instance = TermExprializer.getInstance(builder, owner);
+    var instance = TermSerializer.getInstance(builder, owner);
     var ref = new MethodRef(
       owner, "invoke",
       Constants.CD_Term,
@@ -60,7 +60,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
   }
 
   private void buildInvoke(
@@ -72,9 +72,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
     Consumer<AstCodeBuilder> onFailed = b -> {
       var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
-        AbstractExprializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
-        AbstractExprializer.makeImmutableSeq(b, Term.class, captures),
-        AbstractExprializer.makeImmutableSeq(b, Term.class, args)
+        AbstractExprSerializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
+        AbstractExprSerializer.makeImmutableSeq(b, Term.class, captures),
+        AbstractExprSerializer.makeImmutableSeq(b, Term.class, args)
       ));
       b.returnWith(result);
     };
@@ -87,7 +87,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var serializerContext = buildSerializerContext(normalizer);
 
     var matching = unit.clauses().map(clause ->
-      new PatternSerializer.Matching(clause.bindCount(), clause.patterns(),
+      new PatternCompiler.Matching(clause.bindCount(), clause.patterns(),
         (ps, cb, binds) -> {
           var fullSeq = ps.result.view()
             .take(binds)
@@ -98,7 +98,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
         })
     );
 
-    new PatternSerializer(args, onFailed, serializerContext, false)
+    new PatternCompiler(args, onFailed, serializerContext, false)
       .serialize(builder, matching);
   }
 
@@ -114,9 +114,9 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   ) {
     var capturec = data.capturesSize;
     int argc = data.argsSize;
-    var preArgs = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures, capturec)
+    var preArgs = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, captures, capturec)
       .view()
-      .appendedAll(AbstractExprializer.fromSeq(builder, Constants.CD_Term, args, argc));
+      .appendedAll(AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, argc));
     var fullArgs = InvokeSignatureHelper.args(normalizer, preArgs);
     var invokeExpr = new AstExpr.Invoke(invokeRef, builder.thisRef(), fullArgs);
 
@@ -125,8 +125,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
   /** @see JitMatchy#type */
   private void buildType(@NotNull AstCodeBuilder builder, @NotNull MatchyData data, @NotNull AstVariable captures, @NotNull AstVariable args) {
-    var captureSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, captures, data.capturesSize);
-    var argSeq = AbstractExprializer.fromSeq(builder, Constants.CD_Term, args, data.argsSize);
+    var captureSeq = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, captures, data.capturesSize);
+    var argSeq = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, data.argsSize);
     var result = serializeTermUnderTeleWithoutNormalizer(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
     builder.returnWith(result);
   }

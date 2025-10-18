@@ -60,8 +60,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       false
     );
 
-    var instance = TermExprializer.getInstance(builder, owner);
-    return AbstractExprializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
+    var instance = TermSerializer.getInstance(builder, owner);
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
   }
 
   /**
@@ -75,7 +75,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     Consumer<AstCodeBuilder> buildFn = builder -> {
       Consumer<AstCodeBuilder> onStuckCon = cb -> {
-        var stuckTerm = TermExprializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms);
+        var stuckTerm = TermSerializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms);
         cb.returnWith(stuckTerm);
       };
 
@@ -92,8 +92,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           builder.returnWith(result);
         }
         case Either.Right(var clauses) -> {
-          var ser = new PatternSerializer(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
-          ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternSerializer.Matching(
+          var ser = new PatternCompiler(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
+          ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternCompiler.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
               if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
                 var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
@@ -135,8 +135,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull AstVariable argsTerm
   ) {
     var teleSize = unit.telescope().size();
-    var args = AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
-    var result = AbstractExprializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
+    var args = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
+    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
     builder.returnWith(result);
   }
 

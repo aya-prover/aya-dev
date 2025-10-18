@@ -38,7 +38,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
     builder.ifNull(new AstExpr.GetArray(memsRef, 0), cb ->
       unit.members().forEachIndexed((idx, con) ->
         cb.updateArray(memsRef, idx,
-          AbstractExprializer.getInstance(builder, con))), null);
+          AbstractExprSerializer.getInstance(builder, con))), null);
 
     builder.returnWith(memsRef);
   }
