@@ -9,6 +9,7 @@ import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.asm.*;
 import org.aya.util.Panic;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -27,9 +28,9 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     this.binding = null;
   }
 
-  public Carrier interpClass(@NotNull AstDecl.Clazz free) {
+  public Carrier interpClass(@NotNull AstDecl.Clazz free, @NotNull ClassHierarchyResolver hierarchyResolver) {
     return runner.buildClass(free.metadata(), free.owner(), free.superclass(),
-      cb -> interpDecls(cb, free.members()));
+      hierarchyResolver, cb -> interpDecls(cb, free.members()));
   }
 
   private void interpDecls(@NotNull AsmClassBuilder builder, @NotNull ImmutableSeq<AstDecl> frees) {

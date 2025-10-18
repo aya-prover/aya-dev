@@ -15,6 +15,7 @@ import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -89,6 +90,8 @@ public final class ModuleSerializer {
       .serialize(classBuilder, recorder.todoMatchies.removeLast());
     var freeJava = classBuilder.build();
     freeJava = BlockSimplifier.optimizeClass(freeJava);
-    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava);
+    // TODO: store class hierarchy information in below
+    var hierarchyResolver = ClassHierarchyResolver.defaultResolver();
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava, hierarchyResolver);
   }
 }

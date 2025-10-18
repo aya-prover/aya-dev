@@ -23,15 +23,15 @@ import java.util.stream.Collectors;
 /// * <a href="https://viewer.glavo.org/">ClassViewer</a>
 /// * <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html">Class File Specification</a>
 public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) {
-  /// @return the class descriptor
-  public static @NotNull ClassDesc buildClass(
+  public static void buildClass(
     @NotNull AsmOutputCollector collector,
     @Nullable AyaMetadata metadata,
     @NotNull ClassData classData,
+    @NotNull ClassHierarchyResolver hierarchyResolver,
     @NotNull Consumer<AsmClassBuilder> builder
   ) {
     var realClassName = classData.className();
-    var bc = ClassFile.of().build(realClassName, cb -> {
+    var bc = ClassFile.of(ClassFile.ClassHierarchyResolverOption.of(hierarchyResolver)).build(realClassName, cb -> {
       cb.withFlags(AccessFlag.PUBLIC, AccessFlag.FINAL, AccessFlag.SUPER);
       cb.withSuperclass(classData.classSuper());
 
@@ -73,7 +73,7 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
 
       // endregion metadata
 
-      try (var acb = new AsmClassBuilder(classData, cb, collector)) {
+      try (var acb = new AsmClassBuilder(classData, cb, collector, hierarchyResolver)) {
         builder.accept(acb);
       }
 
@@ -83,16 +83,17 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     });
 
     collector.write(realClassName, bc);
-    return realClassName;
   }
 
   public @NotNull C buildClass(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
+    @NotNull ClassHierarchyResolver hierarchyResolver,
     @NotNull Consumer<AsmClassBuilder> builder
   ) {
-    buildClass(collector, metadata, new ClassData(className, JavaUtil.fromClass(superclass), null), builder);
+    var classData = new ClassData(className, JavaUtil.fromClass(superclass), null);
+    buildClass(collector, metadata, classData, hierarchyResolver, builder);
     return collector;
   }
 }

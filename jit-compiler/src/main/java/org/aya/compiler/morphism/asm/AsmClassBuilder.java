@@ -12,6 +12,7 @@ import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.glavo.classfile.attribute.InnerClassInfo;
 import org.glavo.classfile.attribute.InnerClassesAttribute;
 import org.glavo.classfile.attribute.NestMembersAttribute;
@@ -34,11 +35,13 @@ public final class AsmClassBuilder implements AutoCloseable {
 
   /// @see java.lang.invoke.LambdaMetafactory#metafactory
   private final @NotNull LazyValue<MethodHandleEntry> lambdaBoostrapMethodHandle;
+  public final @NotNull ClassHierarchyResolver hierarchyResolver;
 
   public AsmClassBuilder(
     @NotNull ClassData classData,
     @NotNull org.glavo.classfile.ClassBuilder writer,
-    @NotNull AsmOutputCollector collector
+    @NotNull AsmOutputCollector collector,
+    @NotNull ClassHierarchyResolver hierarchyResolver
   ) {
     this.classData = classData;
     this.writer = writer;
@@ -57,18 +60,20 @@ public final class AsmClassBuilder implements AutoCloseable {
         ConstantDescs.CD_MethodType
       )
     )));
+    this.hierarchyResolver = hierarchyResolver;
   }
 
   public @NotNull ClassDesc owner() { return classData.className(); }
   public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
   public void buildNestedClass(
-    @NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<AsmClassBuilder> builder
+    @NotNull AyaMetadata ayaMetadata, @NotNull String name,
+    @NotNull Class<?> superclass, @NotNull Consumer<AsmClassBuilder> builder
   ) {
     AsmJavaBuilder.buildClass(collector, ayaMetadata,
       new ClassData(owner().nested(name), JavaUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),
-      builder);
+      hierarchyResolver, builder);
     nestedMembers.append(name);
   }
 
