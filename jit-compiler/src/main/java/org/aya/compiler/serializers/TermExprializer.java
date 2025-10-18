@@ -12,7 +12,6 @@ import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.ast.AstArgumentProvider;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
@@ -26,13 +25,14 @@ import org.aya.syntax.core.term.repr.*;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Panic;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
+import static org.aya.compiler.morphism.Constants.*;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
@@ -122,6 +122,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<AstVariable> args) {
     var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
+    builder.markUsage(defClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitFn));
 
     if (ulift != 0) {
       return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
@@ -136,6 +137,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<AstVariable> captures
   ) {
     var normalizer = getNormalizer();
+    builder.markUsage(matchyClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitMatchy));
     return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
   }
 

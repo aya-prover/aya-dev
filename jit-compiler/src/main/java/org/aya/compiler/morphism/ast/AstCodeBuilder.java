@@ -11,6 +11,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,7 +143,7 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
 
-  /// @param expr must have type [Term]
+  /// @param expr must have type [org.aya.syntax.core.term.Term]
   public void returnWith(@NotNull AstExpr expr) {
     stmts.append(new AstStmt.Return(bindExpr(expr)));
   }
@@ -157,6 +158,10 @@ public record AstCodeBuilder(
 
   public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) {
     return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
+  }
+
+  public void markUsage(@NotNull ClassDesc used, @NotNull ClassHierarchyResolver.ClassHierarchyInfo info) {
+    owner.usedClasses().put(used, info);
   }
 
   /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.

@@ -10,6 +10,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public record AstClassBuilder(
   @Nullable String nested,
   @NotNull Class<?> superclass,
   @NotNull FreezableMutableList<AstDecl> members,
+  @NotNull MutableMap<ClassDesc, ClassHierarchyResolver.ClassHierarchyInfo> usedClasses,
   @NotNull MutableMap<FieldRef, Function<AstCodeBuilder, AstVariable>> fieldInitializers
 ) {
   public AstClassBuilder(
@@ -32,7 +34,10 @@ public record AstClassBuilder(
     @Nullable String nested,
     @NotNull Class<?> superclass
   ) {
-    this(metadata, parentOrThis, nested, superclass, FreezableMutableList.create(), MutableLinkedHashMap.of());
+    this(metadata, parentOrThis, nested, superclass,
+      FreezableMutableList.create(),
+      MutableMap.create(),
+      MutableLinkedHashMap.of());
   }
 
   public @NotNull AstDecl.Clazz build() {

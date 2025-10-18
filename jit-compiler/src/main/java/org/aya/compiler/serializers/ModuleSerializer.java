@@ -90,8 +90,9 @@ public final class ModuleSerializer {
       .serialize(classBuilder, recorder.todoMatchies.removeLast());
     var freeJava = classBuilder.build();
     freeJava = BlockSimplifier.optimizeClass(freeJava);
-    // TODO: store class hierarchy information in below
-    var hierarchyResolver = ClassHierarchyResolver.defaultResolver();
-    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava, hierarchyResolver);
+    var usedClasses = classBuilder.usedClasses();
+    var systemResolver = ClassHierarchyResolver.defaultResolver();
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava,
+      classDesc -> usedClasses.getOrElse(classDesc, () -> systemResolver.getClassInfo(classDesc)));
   }
 }
