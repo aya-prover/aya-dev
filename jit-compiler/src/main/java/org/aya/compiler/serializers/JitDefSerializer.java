@@ -46,7 +46,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   protected @NotNull Class<?> callBaseClass() { return callClass(); }
 
   protected final AstVariable buildEmptyCall(@NotNull AstCodeBuilder builder, @NotNull TyckDef def) {
-    return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprializer.getInstance(builder, def)));
+    return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprSerializer.getInstance(builder, def)));
   }
 
   @Override protected @NotNull String className(T unit) {

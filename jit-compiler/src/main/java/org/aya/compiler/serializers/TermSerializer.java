@@ -10,7 +10,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.ast.AstArgumentProvider;
+import org.aya.compiler.morphism.ast.AstArgsProvider;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.stmt.Shaped;
@@ -36,7 +36,7 @@ import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
-public final class TermExprializer extends AbstractExprializer<Term> {
+public final class TermSerializer extends AbstractExprSerializer<Term> {
   public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
 
@@ -47,7 +47,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   /// Whether allow {@link LocalTerm}, false in default (in order to report unexpected LocalTerm)
   private final boolean allowLocalTerm;
 
-  public TermExprializer(
+  public TermSerializer(
     @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
     @NotNull ImmutableSeq<AstVariable> instantiates
@@ -55,7 +55,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     this(builder, context, instantiates, false);
   }
 
-  public TermExprializer(
+  public TermSerializer(
     @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
     @NotNull ImmutableSeq<AstVariable> instantiates,
@@ -67,7 +67,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     this.binds = MutableLinkedHashMap.of();
   }
 
-  private TermExprializer(
+  private TermSerializer(
     @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
     @NotNull MutableLinkedHashMap<LocalVar, AstVariable> newBinds,
@@ -104,7 +104,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
       builder.iconst(ulift),
-      AbstractExprializer.makeImmutableSeq(builder, Term.class, args)
+      AbstractExprSerializer.makeImmutableSeq(builder, Term.class, args)
     ));
   }
 
@@ -266,14 +266,17 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         doSerialize(A)
       ));
       case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
-      case LetTerm(var definedAs, var body) -> // TODO
-        builder.mkNew(LetTerm.class, ImmutableSeq.of(doSerialize(definedAs), serializeClosure(body)));
+      case LetTerm(var definedAs, var body) -> {
+        var defVar = new LocalVar("<let>");
+        var letDef = serialize(definedAs);
+        yield with(defVar, letDef, () -> doSerialize(body.apply(defVar)));
+      }
     };
   }
 
   private @NotNull AstVariable makeLambda(
     @NotNull MethodRef lambdaType,
-    @NotNull BiFunction<AstArgumentProvider.Lambda, TermExprializer, AstVariable> cont
+    @NotNull BiFunction<AstArgsProvider.Lambda, TermSerializer, AstVariable> cont
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
@@ -290,13 +293,13 @@ public final class TermExprializer extends AbstractExprializer<Term> {
         var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
-      var result = cont.apply(ap, new TermExprializer(builder1, newContext,
+      var result = cont.apply(ap, new TermSerializer(builder1, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder1.returnWith(result);
     });
   }
 
-  private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermExprializer, AstVariable, AstVariable> cont) {
+  private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermSerializer, AstVariable, AstVariable> cont) {
     return makeLambda(Constants.CLOSURE, (ap, te) -> {
       var casted = te.builder.checkcast(ap.arg(0), Constants.CD_Term);
       return cont.apply(te, casted);

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.util.Panic;
@@ -297,7 +296,7 @@ public record AsmCodeBuilder(
   public @NotNull AsmExpr mkLambda(
     @NotNull ImmutableSeq<AsmVariable> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody
+    @NotNull BiConsumer<AsmArgsProvider.FnParam.Lambda, AsmCodeBuilder> lamBody
   ) {
     var captureTypes = captures.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);

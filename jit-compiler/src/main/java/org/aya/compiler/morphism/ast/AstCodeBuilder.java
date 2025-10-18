@@ -231,7 +231,7 @@ public record AstCodeBuilder(
   public @NotNull AstVariable mkLambda(
     @NotNull ImmutableSeq<AstVariable> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<AstArgumentProvider.Lambda, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgsProvider.Lambda, AstCodeBuilder> builder
   ) {
     var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
@@ -240,7 +240,7 @@ public record AstCodeBuilder(
     // as the arguments does NOT count as [local](AstVariable.Local) variables, but instead a [reference to the argument](AstVariable.Arg).
     var lambdaBodyBuilder = new AstCodeBuilder(owner, FreezableMutableList.create(),
       new VariablePool(), false, false);
-    builder.accept(new AstArgumentProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
+    builder.accept(new AstArgsProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
     return bindExpr(method.owner(), new AstExpr.Lambda(captures, method, lambdaBody));
@@ -264,9 +264,5 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.DeclareVariable(desc, astVar));
     stmts.append(new AstStmt.SetVariable(astVar, expr));
     return astVar;
-  }
-
-  public @NotNull ImmutableSeq<AstVariable> bindExprs(@NotNull ImmutableSeq<AstExpr> exprs) {
-    return exprs.map(this::bindExpr);
   }
 }

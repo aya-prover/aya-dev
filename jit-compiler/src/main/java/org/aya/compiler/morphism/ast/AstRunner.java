@@ -5,7 +5,6 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.asm.*;
 import org.aya.util.Panic;
@@ -56,34 +55,34 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           }
         }
         case AstDecl.StaticInitBlock(var block) -> builder.buildStaticInitBlock(cb ->
-          interpStmts(ArgumentProvider.EMPTY, cb, block));
+          interpStmts(AsmArgsProvider.EMPTY, cb, block));
       }
     }
   }
 
-  private ImmutableSeq<AsmVariable> interpVars(@Nullable ArgumentProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
+  private ImmutableSeq<AsmVariable> interpVars(@Nullable AsmArgsProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
     return vars.map(it -> interpVar(ap, it));
   }
 
-  private AsmVariable interpVar(@Nullable ArgumentProvider ap, @NotNull AstVariable var) {
+  private AsmVariable interpVar(@Nullable AsmArgsProvider ap, @NotNull AstVariable var) {
     return switch (var) {
       case AstVariable.Local local -> getVar(local.index());
       case AstVariable.Arg arg -> {
         if (ap == null) yield Panic.unreachable();
         yield switch (ap) {
-          case AsmArgumentProvider aap -> aap.arg(arg.nth());
-          case AsmArgumentProvider.Lambda lap -> lap.arg(arg.nth());
+          case AsmArgsProvider.FnParam aap -> aap.arg(arg.nth());
+          case AsmArgsProvider.FnParam.Lambda lap -> lap.arg(arg.nth());
           default -> Panic.unreachable();
         };
       }
       case AstVariable.Capture(var nth) -> {
-        if (!(ap instanceof AsmArgumentProvider.Lambda lap)) yield Panic.unreachable();
+        if (!(ap instanceof AsmArgsProvider.FnParam.Lambda lap)) yield Panic.unreachable();
         yield lap.capture(nth);
       }
     };
   }
 
-  private AsmExpr interpExpr(@Nullable ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
+  private AsmExpr interpExpr(@Nullable AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
       case AstExpr.Ref(var ref) -> AsmExpr.withType(Constants.CD_Term,
         builder0 -> builder0.loadVar(interpVar(ap, ref)));
@@ -120,11 +119,11 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     };
   }
 
-  private void interpStmts(@NotNull ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstStmt> free) {
+  private void interpStmts(@NotNull AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<AstStmt> free) {
     free.forEach(it -> interpStmt(ap, builder, it));
   }
 
-  private void interpStmt(@NotNull ArgumentProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstStmt free) {
+  private void interpStmt(@NotNull AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstStmt free) {
     switch (free) {
       case AstStmt.Break _ -> builder.breakOut();
       case AstStmt.Unreachable _ -> builder.unreachable();

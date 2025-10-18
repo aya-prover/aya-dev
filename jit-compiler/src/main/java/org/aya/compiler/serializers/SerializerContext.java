@@ -5,7 +5,6 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
@@ -22,7 +21,7 @@ public record SerializerContext(
     @NotNull Term term,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    return new TermExprializer(builder, this, argTerms)
+    return new TermSerializer(builder, this, argTerms)
       .serialize(term);
   }
 
@@ -31,14 +30,14 @@ public record SerializerContext(
     @NotNull FnCall term,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    return new TermExprializer(builder, this, argTerms).serializeTailCall(term);
+    return new TermSerializer(builder, this, argTerms).serializeTailCall(term);
   }
 
   public @NotNull AstVariable serializeTermUnderTele(
     @NotNull AstCodeBuilder builder, @NotNull Term term,
     @NotNull AstVariable argsTerm, int size
   ) {
-    return serializeTermUnderTele(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
+    return serializeTermUnderTele(builder, term, AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
   }
 
   /**

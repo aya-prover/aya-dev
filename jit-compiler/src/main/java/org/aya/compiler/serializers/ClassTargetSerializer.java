@@ -87,7 +87,7 @@ public abstract class ClassTargetSerializer<T> {
     @NotNull AstVariable argsTerm, int size
   ) {
     return serializeTermUnderTeleWithoutNormalizer(builder, term,
-      AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size)
+      AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, argsTerm, size)
     );
   }
 
@@ -96,7 +96,7 @@ public abstract class ClassTargetSerializer<T> {
     @NotNull Term term,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    return new TermExprializer(builder, buildSerializerContext(), argTerms)
+    return new TermSerializer(builder, buildSerializerContext(), argTerms)
       .serialize(term);
   }
 
