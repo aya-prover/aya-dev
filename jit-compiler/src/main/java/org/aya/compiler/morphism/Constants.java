@@ -11,7 +11,10 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
-import org.aya.syntax.compile.*;
+import org.aya.syntax.compile.JitClass;
+import org.aya.syntax.compile.JitCon;
+import org.aya.syntax.compile.JitData;
+import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.pat.PatMatcher;
 import org.aya.syntax.core.term.LamTerm;
@@ -42,8 +45,8 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_MutableSeq = JavaUtil.fromClass(MutableSeq.class);
   public static final @NotNull ClassDesc CD_Thunk = JavaUtil.fromClass(Supplier.class);
   public static final @NotNull ClassDesc CD_Closure = JavaUtil.fromClass(Closure.class);
-  public static final @NotNull ClassDesc CD_JitFn = JavaUtil.fromClass(JitFn.class);
-  public static final @NotNull ClassDesc CD_JitMatchy = JavaUtil.fromClass(JitMatchy.class);
+  public static final @NotNull ClassDesc CD_JitCon = JavaUtil.fromClass(JitCon.class);
+  public static final @NotNull ClassDesc CD_ConCallLike = JavaUtil.fromClass(ConCallLike.class);
   public static final @NotNull ClassDesc CD_UnaryOperator = JavaUtil.fromClass(UnaryOperator.class);
   public static final @NotNull ClassDesc CD_Result = JavaUtil.fromClass(Result.class);
   public static final @NotNull String NAME_OF = "of";
@@ -160,7 +163,7 @@ public final class Constants {
    * @see ConCallLike#conArgs()
    */
   public static final @NotNull MethodRef CONARGS = new MethodRef(
-    JavaUtil.fromClass(ConCallLike.class),
+    CD_ConCallLike,
     "conArgs",
     CD_ImmutableSeq,
     ImmutableSeq.empty(),

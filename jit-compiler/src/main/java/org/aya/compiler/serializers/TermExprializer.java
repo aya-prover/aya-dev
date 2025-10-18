@@ -25,14 +25,13 @@ import org.aya.syntax.core.term.repr.*;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Panic;
-import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import static org.aya.compiler.morphism.Constants.*;
+import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
 
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
@@ -122,7 +121,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
   buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<AstVariable> args) {
     var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
-    builder.markUsage(defClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitFn));
+    // builder.markUsage(defClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitFn));
 
     if (ulift != 0) {
       return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
@@ -137,7 +136,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
     @NotNull ImmutableSeq<AstVariable> captures
   ) {
     var normalizer = getNormalizer();
-    builder.markUsage(matchyClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitMatchy));
+    // builder.markUsage(matchyClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitMatchy));
     return MatchySerializer.makeInvoke(builder, matchyClass, normalizer, captures, args);
   }
 
@@ -188,8 +187,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           serializeToImmutableSeq(Term.class, ownerArgs),
           serializeToImmutableSeq(Term.class, conArgs)
         ));
-        var invoke = builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
-        yield invoke;
+        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
       case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
@@ -197,8 +195,7 @@ public final class TermExprializer extends AbstractExprializer<Term> {
           builder.iconst(ulift),
           serializeToImmutableSeq(Term.class, args)
         ));
-        var invoke = builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
-        yield invoke;
+        yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
       }
       case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
       case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
@@ -286,19 +283,17 @@ public final class TermExprializer extends AbstractExprializer<Term> {
       fullCaptures = fullCaptures.prepended(context.normalizer());
     }
 
-    var lam = builder.mkLambda(fullCaptures.toSeq(), lambdaType, (ap, builder) -> {
+    return builder.mkLambda(fullCaptures.toSeq(), lambdaType, (ap, builder1) -> {
       var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizer(ap) : null;
       var newContext = new SerializerContext(normalizer, context.recorder());
       var captured = entries.mapIndexed((i, tup) -> {
         var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
-      var result = cont.apply(ap, new TermExprializer(builder, newContext,
+      var result = cont.apply(ap, new TermExprializer(builder1, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
-      builder.returnWith(result);
+      builder1.returnWith(result);
     });
-
-    return lam;
   }
 
   private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermExprializer, AstVariable, AstVariable> cont) {

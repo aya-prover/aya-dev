@@ -4,7 +4,9 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.asm.AsmJavaBuilder;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstRunner;
@@ -83,7 +85,11 @@ public final class ModuleSerializer {
     var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);
 
-    var classBuilder = new AstClassBuilder(metadata, desc, null, JitUnit.class);
+    var classMarkers = MutableMap.of(
+      Constants.CD_ImmutableSeq, ClassHierarchyResolver.ClassHierarchyInfo.ofInterface(),
+      Constants.CD_ConCallLike, ClassHierarchyResolver.ClassHierarchyInfo.ofInterface()
+    );
+    var classBuilder = new AstClassBuilder(metadata, desc, null, classMarkers, JitUnit.class);
     unit.defs.forEach(def -> doSerialize(classBuilder, def));
     var matchySerializer = new MatchySerializer(recorder);
     while (recorder.todoMatchies.isNotEmpty()) matchySerializer
@@ -93,6 +99,7 @@ public final class ModuleSerializer {
     var usedClasses = classBuilder.usedClasses();
     var systemResolver = ClassHierarchyResolver.defaultResolver();
     return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava,
-      classDesc -> usedClasses.getOrElse(classDesc, () -> systemResolver.getClassInfo(classDesc)));
+      classDesc -> usedClasses.getOrElse(classDesc, () ->
+        systemResolver.getClassInfo(classDesc)));
   }
 }

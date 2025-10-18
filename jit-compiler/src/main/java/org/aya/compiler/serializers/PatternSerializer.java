@@ -14,14 +14,16 @@ import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.TupTerm;
-import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.util.Panic;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.aya.compiler.morphism.Constants.CD_ConCallLike;
 
 /**
  * We do not serialize meta solve, it is annoying
@@ -98,22 +100,26 @@ public final class PatternSerializer {
 
       case Pat.Con con -> {
         var whnf = context.whnf(builder, term);
-        builder.ifInstanceOf(whnf, JavaUtil.fromClass(ConCallLike.class),
-          (builder1, conTerm) -> builder1.ifRefEqual(
-            AbstractExprializer.getRef(builder1, CallKind.Con, conTerm),
-            AbstractExprializer.getInstance(builder1, con.ref()),
-            builder2 -> {
-              var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
-              var conArgs = AbstractExprializer.fromSeq(
-                builder2,
-                Constants.CD_Term,
-                conArgsTerm,
-                con.args().size()
-              );
+        builder.ifInstanceOf(whnf, CD_ConCallLike,
+          (builder1, conTerm) -> {
+            var conDesc = NameSerializer.getClassDesc(con.ref());
+            builder1.markUsage(conDesc, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(Constants.CD_JitCon));
+            builder1.ifRefEqual(
+              AbstractExprializer.getRef(builder1, CallKind.Con, conTerm),
+              AbstractExprializer.getInstance(builder1, conDesc),
+              builder2 -> {
+                var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
+                var conArgs = AbstractExprializer.fromSeq(
+                  builder2,
+                  Constants.CD_Term,
+                  conArgsTerm,
+                  con.args().size()
+                );
 
-              doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
-            }, null /* mismatch, do nothing */
-          ), this::onStuck);
+                doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
+              }, null /* mismatch, do nothing */
+            );
+          }, this::onStuck);
       }
       case Pat.Meta _ -> Panic.unreachable();
       case Pat.ShapedInt shapedInt -> {

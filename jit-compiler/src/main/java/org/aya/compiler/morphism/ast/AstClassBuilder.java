@@ -30,13 +30,13 @@ public record AstClassBuilder(
 ) {
   public AstClassBuilder(
     @Nullable AyaMetadata metadata,
-    @NotNull ClassDesc parentOrThis,
-    @Nullable String nested,
+    @NotNull ClassDesc parentOrThis, @Nullable String nested,
+    @NotNull MutableMap<ClassDesc, ClassHierarchyResolver.ClassHierarchyInfo> classMarkers,
     @NotNull Class<?> superclass
   ) {
     this(metadata, parentOrThis, nested, superclass,
       FreezableMutableList.create(),
-      MutableMap.create(),
+      classMarkers,
       MutableLinkedHashMap.of());
   }
 
@@ -60,7 +60,7 @@ public record AstClassBuilder(
     @NotNull Class<?> superclass,
     @NotNull Consumer<AstClassBuilder> builder
   ) {
-    var classBuilder = new AstClassBuilder(ayaMetadata, className(), name, superclass);
+    var classBuilder = new AstClassBuilder(ayaMetadata, className(), name, usedClasses, superclass);
     builder.accept(classBuilder);
     members.append(classBuilder.build());
   }
