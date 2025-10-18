@@ -67,10 +67,10 @@ public record AstClassBuilder(
 
   private void buildMethod(
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
     var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
-    builder.accept(new AstArgumentProvider(ref.paramTypes().size()), codeBuilder);
+    builder.accept(new AstArgsProvider.FnParam(ref.paramTypes().size()), codeBuilder);
     members.append(new AstDecl.Method(ref, codeBuilder.build()));
   }
 
@@ -78,7 +78,7 @@ public record AstClassBuilder(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
     var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, builder);
@@ -87,7 +87,7 @@ public record AstClassBuilder(
 
   public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AstArgumentProvider, AstCodeBuilder> builder
+    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
     var ref = JavaUtil.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, builder);

@@ -5,7 +5,7 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstArgumentProvider;
+import org.aya.compiler.morphism.ast.AstArgsProvider;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -26,21 +26,21 @@ public class InvokeSignatureHelper {
     return extraParams.prepended(Constants.CD_UnaryOperator).toSeq();
   }
 
-  public static @NotNull AstVariable normalizer(@NotNull AstArgumentProvider ap) {
+  public static @NotNull AstVariable normalizer(@NotNull AstArgsProvider.FnParam ap) {
     return ap.arg(0);
   }
 
   @Contract(pure = true)
-  public static @NotNull AstVariable normalizer(AstArgumentProvider.Lambda ap) {
+  public static @NotNull AstVariable normalizer(AstArgsProvider.Lambda ap) {
     return ap.capture(0);
   }
 
-  public static @NotNull AstVariable arg(@NotNull AstArgumentProvider ap, int nth) {
+  public static @NotNull AstVariable arg(@NotNull AstArgsProvider.FnParam ap, int nth) {
     return ap.arg(1 + nth);
   }
 
   @Contract(pure = true)
-  public static @NotNull AstVariable capture(@NotNull AstArgumentProvider.Lambda ap, int nth) {
+  public static @NotNull AstVariable capture(@NotNull AstArgsProvider.Lambda ap, int nth) {
     return ap.capture(1 + nth);
   }
 

@@ -10,7 +10,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.ast.AstArgumentProvider;
+import org.aya.compiler.morphism.ast.AstArgsProvider;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.stmt.Shaped;
@@ -276,7 +276,7 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
 
   private @NotNull AstVariable makeLambda(
     @NotNull MethodRef lambdaType,
-    @NotNull BiFunction<AstArgumentProvider.Lambda, TermSerializer, AstVariable> cont
+    @NotNull BiFunction<AstArgsProvider.Lambda, TermSerializer, AstVariable> cont
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();

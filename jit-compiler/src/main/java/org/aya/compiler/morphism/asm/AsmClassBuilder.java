@@ -7,7 +7,6 @@ import kala.collection.mutable.MutableList;
 import kala.value.LazyValue;
 import org.aya.compiler.AsmOutputCollector;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ArgumentProvider;
 import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.glavo.classfile.AccessFlag;
@@ -120,7 +119,7 @@ public final class AsmClassBuilder implements AutoCloseable {
   public @NotNull InvokeDynamicEntry makeLambda(
     @NotNull ImmutableSeq<ClassDesc> captureTypes,
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> builder
+    @NotNull BiConsumer<AsmArgumentProvider.Lambda, AsmCodeBuilder> builder
   ) {
     var pool = writer.constantPool();
     var lambdaMethodName = "lambda$" + lambdaCounter++;

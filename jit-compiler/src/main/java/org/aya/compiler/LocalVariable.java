@@ -3,5 +3,4 @@
 package org.aya.compiler;
 
 public interface LocalVariable {
-  // @NotNull JavaExpr ref();
 }
