@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.morphism.asm;
 
-import org.aya.compiler.morphism.JavaExpr;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -12,7 +11,7 @@ import java.util.function.Consumer;
 public record AsmExpr(
   @NotNull ClassDesc type,
   @NotNull Consumer<AsmCodeBuilder> cont
-) implements JavaExpr, Consumer<AsmCodeBuilder> {
+) implements Consumer<AsmCodeBuilder> {
   public static @NotNull AsmExpr withType(@NotNull ClassDesc type, @NotNull Consumer<AsmCodeBuilder> cont) {
     return new AsmExpr(type, cont);
   }

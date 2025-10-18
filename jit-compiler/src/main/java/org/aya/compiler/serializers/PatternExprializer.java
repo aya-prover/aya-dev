@@ -3,9 +3,8 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.ExprBuilder;
-import org.aya.compiler.morphism.JavaExpr;
-import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
@@ -17,18 +16,18 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
   private final boolean allowLocalTerm;
 
   PatternExprializer(
-          @NotNull ExprBuilder builder, @NotNull SerializerContext context, boolean allowLocalTerm
+    @NotNull AstCodeBuilder builder, @NotNull SerializerContext context, boolean allowLocalTerm
   ) {
     super(builder, context);
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull JavaExpr serializeTerm(@NotNull Term term) {
+  private @NotNull AstVariable serializeTerm(@NotNull Term term) {
     return new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 
-  private @NotNull JavaExpr serializeConHead(@NotNull ConCallLike.Head head) {
+  private @NotNull AstVariable serializeConHead(@NotNull ConCallLike.Head head) {
     var termSer = new TermExprializer(builder, context, ImmutableSeq.empty(), allowLocalTerm);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
@@ -38,7 +37,7 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
     ));
   }
 
-  @Override protected @NotNull JavaExpr doSerialize(@NotNull Pat term) {
+  @Override protected @NotNull AstVariable doSerialize(@NotNull Pat term) {
     return switch (term) {
       case Pat.Misc misc -> builder.refEnum(misc);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
@@ -64,5 +63,5 @@ public final class PatternExprializer extends AbstractExprializer<Pat> {
     };
   }
 
-  @Override public @NotNull JavaExpr serialize(Pat unit) { return doSerialize(unit); }
+  @Override public @NotNull AstVariable serialize(Pat unit) { return doSerialize(unit); }
 }

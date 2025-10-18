@@ -9,4 +9,6 @@ module aya.compiler {
   exports org.aya.compiler;
   exports org.aya.compiler.serializers;
   exports org.aya.compiler.morphism;
+  exports org.aya.compiler.morphism.ast;
+  exports org.aya.compiler.morphism.asm;
 }

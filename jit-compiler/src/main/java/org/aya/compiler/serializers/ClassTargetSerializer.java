@@ -5,7 +5,11 @@ package org.aya.compiler.serializers;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
@@ -42,21 +46,21 @@ public abstract class ClassTargetSerializer<T> {
     @Override public Class<? extends Annotation> annotationType() { return AyaMetadata.class; }
   }
 
-  protected @NotNull FieldRef buildInstance(@NotNull ClassBuilder builder) {
+  protected @NotNull FieldRef buildInstance(@NotNull AstClassBuilder builder) {
     return builder.buildConstantField(thisConstructor.owner(), STATIC_FIELD_INSTANCE, b ->
-      b.mkNew(thisConstructor, ImmutableSeq.empty()));
+      b.bindExpr(thisConstructor.owner(), new AstExpr.New(thisConstructor, ImmutableSeq.empty())));
   }
 
-  protected abstract @NotNull MethodRef buildConstructor(@NotNull ClassBuilder builder, T unit);
+  protected abstract @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, T unit);
 
   protected abstract @NotNull String className(T unit);
 
   protected abstract @NotNull AyaMetadata buildMetadata(T unit);
 
   protected void buildFramework(
-    @NotNull ClassBuilder builder,
+    @NotNull AstClassBuilder builder,
     @NotNull T unit,
-    @NotNull Consumer<ClassBuilder> continuation
+    @NotNull Consumer<AstClassBuilder> continuation
   ) {
     var className = className(unit);
     builder.buildNestedClass(buildMetadata(unit), className, superClass, nestBuilder -> {
@@ -67,9 +71,9 @@ public abstract class ClassTargetSerializer<T> {
     });
   }
 
-  public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull ClassBuilder builder, T unit);
+  public abstract @NotNull ClassTargetSerializer<T> serialize(@NotNull AstClassBuilder builder, T unit);
 
-  public @NotNull SerializerContext buildSerializerContext(@NotNull JavaExpr normalizer) {
+  public @NotNull SerializerContext buildSerializerContext(@NotNull AstVariable normalizer) {
     return new SerializerContext(normalizer, recorder);
   }
 
@@ -78,23 +82,25 @@ public abstract class ClassTargetSerializer<T> {
     return new SerializerContext(null, recorder);
   }
 
-  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
-    @NotNull ExprBuilder builder, @NotNull Term term,
-    @NotNull JavaExpr argsTerm, int size
+  public @NotNull AstVariable serializeTermUnderTeleWithoutNormalizer(
+    @NotNull AstCodeBuilder builder, @NotNull Term term,
+    @NotNull AstVariable argsTerm, int size
   ) {
-    return serializeTermUnderTeleWithoutNormalizer(builder, term, AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
+    return serializeTermUnderTeleWithoutNormalizer(builder, term,
+      AbstractExprializer.fromSeq(builder, Constants.CD_Term, argsTerm, size)
+    );
   }
 
-  public @NotNull JavaExpr serializeTermUnderTeleWithoutNormalizer(
-    @NotNull ExprBuilder builder,
+  public @NotNull AstVariable serializeTermUnderTeleWithoutNormalizer(
+    @NotNull AstCodeBuilder builder,
     @NotNull Term term,
-    @NotNull ImmutableSeq<JavaExpr> argTerms
+    @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
     return new TermExprializer(builder, buildSerializerContext(), argTerms)
       .serialize(term);
   }
 
-  public @NotNull JavaExpr serializeTermWithoutNormalizer(@NotNull CodeBuilder builder, @NotNull Term term) {
+  public @NotNull AstVariable serializeTermWithoutNormalizer(@NotNull AstCodeBuilder builder, @NotNull Term term) {
     return serializeTermUnderTeleWithoutNormalizer(builder, term, ImmutableSeq.empty());
   }
 }

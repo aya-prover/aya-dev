@@ -2,210 +2,271 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.morphism.ast;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.JavaExpr;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.JavaUtil;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
 public record AstCodeBuilder(
+  @NotNull AstClassBuilder owner,
   @NotNull FreezableMutableList<AstStmt> stmts,
   @NotNull VariablePool pool,
   boolean isConstructor,
   boolean isBreakable
-) implements CodeBuilder {
+) {
   public @NotNull ImmutableSeq<AstStmt> subscoped(boolean isBreakable, @NotNull Consumer<AstCodeBuilder> block) {
-    var inner = new AstCodeBuilder(FreezableMutableList.create(), pool, isConstructor, isBreakable);
+    var inner = new AstCodeBuilder(owner, FreezableMutableList.create(), pool.copy(), isConstructor, isBreakable);
     block.accept(inner);
     return inner.build();
   }
 
+  public @NotNull AstVariable.Local acquireVariable() {
+    return new AstVariable.Local(pool.acquire());
+  }
+
   public @NotNull ImmutableSeq<AstStmt> build() { return stmts.freeze(); }
-  public static @NotNull AstExpr assertFreeExpr(@NotNull JavaExpr expr) { return (AstExpr) expr; }
 
-  public static @NotNull ImmutableSeq<AstExpr> assertFreeExpr(@NotNull ImmutableSeq<JavaExpr> exprs) {
-    return exprs.map(x -> (AstExpr) x);
-  }
-
-  public static @NotNull AstVariable assertFreeVariable(@NotNull LocalVariable var) { return (AstVariable) var; }
-  public @NotNull AstVariable.Local acquireVariable() { return new AstVariable.Local(pool.acquire()); }
-
-  @Override public @NotNull AstVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
-    var theVar = acquireVariable();
-    stmts.append(new AstStmt.DeclareVariable(type, theVar));
-    if (initializer != null) updateVar(theVar, initializer);
-    return theVar;
-  }
-
-  @Override
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstVariable> superConArgs) {
     assert isConstructor;
     assert superConParams.sizeEquals(superConArgs);
-    stmts.append(new AstStmt.Super(superConParams, assertFreeExpr(superConArgs)));
+    stmts.append(new AstStmt.Super(superConParams, superConArgs));
   }
 
-  @Override public void updateVar(@NotNull LocalVariable var, @NotNull JavaExpr update) {
-    stmts.append(new AstStmt.SetVariable(assertFreeVariable(var), assertFreeExpr(update)));
+  public void updateField(@NotNull FieldRef field, @NotNull AstVariable update) {
+    stmts.append(new AstStmt.SetStaticField(field, update));
+  }
+  public void updateVar(@NotNull AstVariable var, @NotNull AstExpr update) {
+    stmts.append(new AstStmt.SetVariable(var, update));
   }
 
-  @Override public void updateArray(@NotNull JavaExpr array, int idx, @NotNull JavaExpr update) {
-    stmts.append(new AstStmt.SetArray(assertFreeExpr(array), idx, assertFreeExpr(update)));
+  public void updateArray(@NotNull AstVariable array, int idx, @NotNull AstVariable update) {
+    stmts.append(new AstStmt.SetArray(array, idx, update));
   }
 
-  private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    var thenBlockBody = subscoped(isBreakable, thenBlock::accept);
-    var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock::accept);
+  private void buildIf(@NotNull AstStmt.Condition condition, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+    var thenBlockBody = subscoped(isBreakable, thenBlock);
+    var elseBlockBody = elseBlock == null ? null : subscoped(isBreakable, elseBlock);
 
     stmts.append(new AstStmt.IfThenElse(condition, thenBlockBody, elseBlockBody));
   }
 
-  @Override public void
-  ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsFalse(assertFreeVariable(notTrue)), thenBlock, elseBlock);
+  public void ifNotTrue(
+    @NotNull AstVariable notTrue,
+    @NotNull Consumer<AstCodeBuilder> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
+    buildIf(new AstStmt.Condition.IsFalse(notTrue), thenBlock, elseBlock);
   }
 
-  @Override public void
-  ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsTrue(assertFreeVariable(theTrue)), thenBlock, elseBlock);
+  public void ifTrue(
+    @NotNull AstVariable theTrue,
+    @NotNull Consumer<AstCodeBuilder> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
+    buildIf(new AstStmt.Condition.IsTrue(theTrue), thenBlock, elseBlock);
   }
 
-  @Override public void
-  ifInstanceOf(@NotNull JavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
+  public void ifInstanceOf(
+    @NotNull AstVariable lhs, @NotNull ClassDesc rhs,
+    @NotNull BiConsumer<AstCodeBuilder, AstVariable> thenBlock,
+    @Nullable Consumer<AstCodeBuilder> elseBlock
+  ) {
     var varHolder = MutableValue.<AstVariable.Local>create();
-    buildIf(new AstStmt.Condition.IsInstanceOf(assertFreeExpr(lhs), rhs, varHolder), b -> {
-      var asTerm = ((AstCodeBuilder) b).acquireVariable();
+    buildIf(new AstStmt.Condition.IsInstanceOf(lhs, rhs, varHolder), b -> {
+      var asTerm = b.acquireVariable();
       varHolder.set(asTerm);
       thenBlock.accept(b, asTerm);
     }, elseBlock);
   }
 
-  @Override
-  public void ifIntEqual(@NotNull JavaExpr lhs, int rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsIntEqual(assertFreeExpr(lhs), rhs), thenBlock, elseBlock);
+  public void ifIntEqual(@NotNull AstVariable lhs, int rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+    buildIf(new AstStmt.Condition.IsIntEqual(lhs, rhs), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifRefEqual(@NotNull JavaExpr lhs, @NotNull JavaExpr rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsRefEqual(assertFreeExpr(lhs), assertFreeExpr(rhs)), thenBlock, elseBlock);
+  public void ifRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+    buildIf(new AstStmt.Condition.IsRefEqual(lhs, rhs), thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifNull(@NotNull JavaExpr isNull, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    buildIf(new AstStmt.Condition.IsNull(assertFreeExpr(isNull)), thenBlock, elseBlock);
+  public void ifNull(@NotNull AstExpr isNull, @NotNull Consumer<AstCodeBuilder> thenBlock, @Nullable Consumer<AstCodeBuilder> elseBlock) {
+    // we don't care what type it is
+    var isNullVar = bindExpr(ConstantDescs.CD_Object, isNull);
+    buildIf(new AstStmt.Condition.IsNull(isNullVar), thenBlock, elseBlock);
   }
 
-  @Override public void breakable(@NotNull Consumer<CodeBuilder> innerBlock) {
-    var innerBlockBody = subscoped(true, innerBlock::accept);
+  public void breakable(@NotNull Consumer<AstCodeBuilder> innerBlock) {
+    var innerBlockBody = subscoped(true, innerBlock);
     stmts.append(new AstStmt.Breakable(innerBlockBody));
   }
 
-  @Override public void breakOut() {
+  public void breakOut() {
     assert isBreakable;
     stmts.append(AstStmt.Break.INSTANCE);
   }
 
-  @Override public void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock) {
-    var innerBlockBody = subscoped(false, innerBlock::accept);
+  public void whileTrue(@NotNull Consumer<AstCodeBuilder> innerBlock) {
+    var innerBlockBody = subscoped(false, innerBlock);
     stmts.append(new AstStmt.WhileTrue(innerBlockBody));
   }
 
-  @Override public void continueLoop() {
+  public void continueLoop() {
     stmts.append(AstStmt.Continue.INSTANCE);
   }
 
-  @Override public void exec(@NotNull JavaExpr expr) {
-    stmts.append(new AstStmt.Exec(assertFreeExpr(expr)));
+  public void exec(@NotNull AstExpr expr) {
+    stmts.append(new AstStmt.Exec(expr));
   }
 
-  @Override public void switchCase(
-    @NotNull LocalVariable elim,
+  public void switchCase(
+    @NotNull AstVariable elim,
     @NotNull ImmutableIntSeq cases,
-    @NotNull ObjIntConsumer<CodeBuilder> branch,
-    @NotNull Consumer<CodeBuilder> defaultCase
+    @NotNull ObjIntConsumer<AstCodeBuilder> branch,
+    @NotNull Consumer<AstCodeBuilder> defaultCase
   ) {
     var branchBodies = cases.mapToObj(kase ->
       subscoped(isBreakable, b -> branch.accept(b, kase)));
-    var defaultBody = subscoped(isBreakable, defaultCase::accept);
+    var defaultBody = subscoped(isBreakable, defaultCase);
 
-    stmts.append(new AstStmt.Switch(assertFreeVariable(elim), cases, branchBodies, defaultBody));
+    stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
 
-  @Override public void returnWith(@NotNull JavaExpr expr) {
-    stmts.append(new AstStmt.Return(assertFreeExpr(expr)));
+  /// @param expr must have type [org.aya.syntax.core.term.Term]
+  public void returnWith(@NotNull AstExpr expr) {
+    stmts.append(new AstStmt.Return(bindExpr(expr)));
   }
 
-  @Override public void unreachable() {
+  public void returnWith(@NotNull AstVariable expr) {
+    stmts.append(new AstStmt.Return(expr));
+  }
+
+  public void unreachable() {
     stmts.append(AstStmt.Unreachable.INSTANCE);
   }
 
-  @Override public @NotNull JavaExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.mkNew(conRef, args);
+  public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
   }
 
-  @Override public @NotNull JavaExpr refVar(@NotNull LocalVariable name) {
-    return AstExprBuilder.INSTANCE.refVar(name);
+  public void markUsage(@NotNull ClassDesc used, @NotNull ClassHierarchyResolver.ClassHierarchyInfo info) {
+    owner.usedClasses().put(used, info);
   }
 
-  @Override public @NotNull JavaExpr
-  invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.invoke(method, owner, args);
+  /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.
+  public @NotNull AstVariable mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<AstVariable> args) {
+    var candidates = ImmutableArray.wrap(className.getConstructors())
+      .filter(c -> c.getParameterCount() == args.size());
+
+    assert candidates.size() == 1 : "Ambiguous constructors: count " + candidates.size();
+
+    var first = candidates.getFirst();
+    var desc = JavaUtil.fromClass(className);
+    var conRef = JavaUtil.makeConstructorRef(desc,
+      ImmutableArray.wrap(first.getParameterTypes())
+        .map(JavaUtil::fromClass));
+    return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
   }
 
-  @Override public @NotNull JavaExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AstExprBuilder.INSTANCE.invoke(method, args);
+  public @NotNull AstVariable
+  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(method.returnType(), new AstExpr.Invoke(method, owner, args));
   }
 
-  @Override public @NotNull JavaExpr refField(@NotNull FieldRef field) {
-    return AstExprBuilder.INSTANCE.refField(field);
+  // public @NotNull AstExpr
+  // invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstExpr> args) {
+  //   return new AstExpr.Invoke(method, owner, bindExprs(args));
+  // }
+
+  public @NotNull AstVariable invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstVariable> args) {
+    return bindExpr(method.returnType(), new AstExpr.Invoke(method, null, args));
   }
 
-  @Override public @NotNull JavaExpr refField(@NotNull FieldRef field, @NotNull JavaExpr owner) {
-    return AstExprBuilder.INSTANCE.refField(field, owner);
+  public @NotNull AstVariable refField(@NotNull FieldRef field) {
+    return bindExpr(field.returnType(), new AstExpr.RefField(field, null));
   }
 
-  @Override public @NotNull JavaExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
-    return AstExprBuilder.INSTANCE.refEnum(enumClass, enumName);
+  // public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
+  //   // FIXME: type
+  //   return new AstExpr.RefField(field, bindExpr(owner));
+  // }
+
+  public @NotNull AstVariable refEnum(@NotNull Enum<?> value) {
+    var cd = JavaUtil.fromClass(value.getClass());
+    var name = value.name();
+    return bindExpr(cd, new AstExpr.RefEnum(cd, name));
   }
 
-  @Override
-  public @NotNull JavaExpr mkLambda(@NotNull ImmutableSeq<JavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> builder) {
-    return AstExprBuilder.INSTANCE.mkLambda(captures, method, builder);
+  public @NotNull AstVariable iconst(int i) {
+    return bindExpr(ConstantDescs.CD_int, new AstExpr.Iconst(i));
   }
 
-  @Override public @NotNull JavaExpr iconst(int i) { return AstExprBuilder.INSTANCE.iconst(i); }
-  @Override public @NotNull JavaExpr iconst(boolean b) { return AstExprBuilder.INSTANCE.iconst(b); }
-  @Override public @NotNull JavaExpr aconst(@NotNull String value) {
-    return AstExprBuilder.INSTANCE.aconst(value);
+  public @NotNull AstVariable aconst(@NotNull String str) {
+    return bindExpr(ConstantDescs.CD_String, new AstExpr.Sconst(str));
   }
 
-  @Override public @NotNull JavaExpr aconstNull(@NotNull ClassDesc type) {
-    return AstExprBuilder.INSTANCE.aconstNull(type);
+  public @NotNull AstVariable iconst(boolean b) {
+    return bindExpr(ConstantDescs.CD_boolean, new AstExpr.Bconst(b));
   }
 
-  @Override public @NotNull JavaExpr thisRef() { return AstExprBuilder.INSTANCE.thisRef(); }
-
-  @Override public @NotNull JavaExpr
-  mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<JavaExpr> initializer) {
-    return AstExprBuilder.INSTANCE.mkArray(type, length, initializer);
+  public @NotNull AstVariable thisRef() {
+    return bindExpr(owner.className(), AstExpr.This.INSTANCE);
   }
 
-  @Override public @NotNull JavaExpr getArray(@NotNull JavaExpr array, int index) {
-    return AstExprBuilder.INSTANCE.getArray(array, index);
+  public @NotNull AstVariable checkcast(@NotNull AstVariable obj, @NotNull ClassDesc type) {
+    return bindExpr(type, new AstExpr.CheckCast(obj, type));
   }
 
-  @Override public @NotNull JavaExpr checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as) {
-    return AstExprBuilder.INSTANCE.checkcast(obj, as);
+  public @NotNull AstVariable mkLambda(
+    @NotNull ImmutableSeq<AstVariable> captures,
+    @NotNull MethodRef method,
+    @NotNull BiConsumer<AstArgumentProvider.Lambda, AstCodeBuilder> builder
+  ) {
+    var argc = method.paramTypes().size();
+    // [0..captures.size()]th parameters are captures
+    // [captures.size()..]th parameters are lambda arguments
+    // Note that the [VariablePool] counts from 0,
+    // as the arguments does NOT count as [local](AstVariable.Local) variables, but instead a [reference to the argument](AstVariable.Arg).
+    var lambdaBodyBuilder = new AstCodeBuilder(owner, FreezableMutableList.create(),
+      new VariablePool(), false, false);
+    builder.accept(new AstArgumentProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
+    var lambdaBody = lambdaBodyBuilder.build();
+
+    return bindExpr(method.owner(), new AstExpr.Lambda(captures, method, lambdaBody));
+  }
+
+  public @NotNull AstVariable makeArray(@NotNull ClassDesc elementType, int size, @NotNull ImmutableSeq<AstVariable> initializer) {
+    return bindExpr(elementType.arrayType(), new AstExpr.Array(elementType, size, initializer));
+  }
+
+  // public @NotNull AstExpr getArray(@NotNull AstExpr array, int index) {
+  //   return new AstExpr.GetArray(bindExpr(array), index);
+  // }
+
+  public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
+    if (expr instanceof AstExpr.Ref(var ref)) return ref;
+    return bindExpr(Constants.CD_Term, expr);
+  }
+
+  public @NotNull AstVariable bindExpr(@NotNull ClassDesc desc, @NotNull AstExpr expr) {
+    var astVar = acquireVariable();
+    stmts.append(new AstStmt.DeclareVariable(desc, astVar));
+    stmts.append(new AstStmt.SetVariable(astVar, expr));
+    return astVar;
+  }
+
+  public @NotNull ImmutableSeq<AstVariable> bindExprs(@NotNull ImmutableSeq<AstExpr> exprs) {
+    return exprs.map(this::bindExpr);
   }
 }

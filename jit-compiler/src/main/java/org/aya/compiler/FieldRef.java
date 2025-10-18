@@ -10,5 +10,4 @@ public record FieldRef(
   @NotNull ClassDesc owner,
   @NotNull ClassDesc returnType,
   @NotNull String name
-) {
-}
+) { }

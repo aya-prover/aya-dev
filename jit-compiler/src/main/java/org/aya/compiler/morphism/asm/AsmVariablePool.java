@@ -13,7 +13,7 @@ public record AsmVariablePool(int offset, @NotNull MutableList<AsmVariable> vars
   public static @NotNull AsmVariablePool from(@Nullable ClassDesc thisType, @NotNull ImmutableSeq<ClassDesc> telescope) {
     var scope = new AsmVariablePool();
     if (thisType != null) {
-      scope.vars.append(new AsmVariable(0, thisType, true));
+      scope.vars.append(AsmVariable.mkThis(thisType));
     }
 
     telescope.forEach(scope::acquire);

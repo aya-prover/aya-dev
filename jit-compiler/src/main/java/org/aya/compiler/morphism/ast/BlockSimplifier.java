@@ -9,7 +9,11 @@ import org.aya.compiler.morphism.ast.AstDecl.ConstantField;
 import org.aya.compiler.morphism.ast.AstDecl.Method;
 import org.jetbrains.annotations.NotNull;
 
-public interface AstOptimizer {
+/// This class removes unnecessary `break` statements (at the end of breakable blocks)
+/// and simplifies `switch` statements by removing some absurd cases, and flattening
+/// some `switch` statements into `if-then-else` statements or even removing them
+/// if they have only one branch.
+public interface BlockSimplifier {
   static @NotNull Clazz optimizeClass(Clazz clazz) {
     return (Clazz) optimize(clazz);
   }
@@ -17,11 +21,12 @@ public interface AstOptimizer {
   static @NotNull AstDecl optimize(AstDecl decl) {
     return switch (decl) {
       case Clazz(var metadata, var owner, var nested, var superclass, var members) -> {
-        var newMembers = members.map(AstOptimizer::optimize);
+        var newMembers = members.map(BlockSimplifier::optimize);
         yield new Clazz(metadata, owner, nested, superclass, newMembers);
       }
       case ConstantField field -> field;
       case Method(var signature, var body) -> new Method(signature, optimizeBlock(body, false));
+      case AstDecl.StaticInitBlock(var block) -> new AstDecl.StaticInitBlock(optimizeBlock(block, false));
     };
   }
 
@@ -44,7 +49,7 @@ public interface AstOptimizer {
             yield branch.getFirst().view();
           } else if (branch.sizeEquals(2)) {
             yield SeqView.of(new AstStmt.IfThenElse(
-              new AstStmt.Condition.IsIntEqual(new AstExpr.RefVariable(elim), cases.getFirst()),
+              new AstStmt.Condition.IsIntEqual(elim, cases.getFirst()),
               branch.getFirst(),
               branch.getLast()
             ));

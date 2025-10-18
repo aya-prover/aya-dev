@@ -3,17 +3,16 @@
 package org.aya.compiler.morphism.asm;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.value.LazyValue;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.ArgumentProvider;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.glavo.classfile.AccessFlag;
 import org.glavo.classfile.AccessFlags;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.glavo.classfile.attribute.InnerClassInfo;
 import org.glavo.classfile.attribute.InnerClassesAttribute;
 import org.glavo.classfile.attribute.NestMembersAttribute;
@@ -26,30 +25,30 @@ import java.lang.invoke.LambdaMetafactory;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
+public final class AsmClassBuilder implements AutoCloseable {
   public final @NotNull ClassData classData;
   public final @NotNull org.glavo.classfile.ClassBuilder writer;
   public final @NotNull AsmOutputCollector collector;
   public final @NotNull MutableList<String> nestedMembers = MutableList.create();
-  public final @NotNull MutableMap<FieldRef, Function<ExprBuilder, JavaExpr>> fieldInitializers = MutableLinkedHashMap.of();
   private int lambdaCounter = 0;
 
   /// @see java.lang.invoke.LambdaMetafactory#metafactory
   private final @NotNull LazyValue<MethodHandleEntry> lambdaBoostrapMethodHandle;
+  public final @NotNull ClassHierarchyResolver hierarchyResolver;
 
   public AsmClassBuilder(
     @NotNull ClassData classData,
     @NotNull org.glavo.classfile.ClassBuilder writer,
-    @NotNull AsmOutputCollector collector
+    @NotNull AsmOutputCollector collector,
+    @NotNull ClassHierarchyResolver hierarchyResolver
   ) {
     this.classData = classData;
     this.writer = writer;
     this.collector = collector;
     this.lambdaBoostrapMethodHandle = LazyValue.of(() -> writer.constantPool().methodHandleEntry(MethodHandleDesc.ofMethod(
       DirectMethodHandleDesc.Kind.STATIC,
-      AstUtil.fromClass(LambdaMetafactory.class),
+      JavaUtil.fromClass(LambdaMetafactory.class),
       "metafactory",
       MethodTypeDesc.of(
         ConstantDescs.CD_CallSite,
@@ -61,17 +60,20 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
         ConstantDescs.CD_MethodType
       )
     )));
+    this.hierarchyResolver = hierarchyResolver;
   }
 
   public @NotNull ClassDesc owner() { return classData.className(); }
   public @NotNull ClassDesc ownerSuper() { return classData.classSuper(); }
 
-  @Override public void
-  buildNestedClass(@NotNull AyaMetadata ayaMetadata, @NotNull String name, @NotNull Class<?> superclass, @NotNull Consumer<ClassBuilder> builder) {
+  public void buildNestedClass(
+    @NotNull AyaMetadata ayaMetadata, @NotNull String name,
+    @NotNull Class<?> superclass, @NotNull Consumer<AsmClassBuilder> builder
+  ) {
     AsmJavaBuilder.buildClass(collector, ayaMetadata,
-      new ClassData(owner().nested(name), AstUtil.fromClass(superclass),
+      new ClassData(owner().nested(name), JavaUtil.fromClass(superclass),
         new ClassData.Outer(classData, name)),
-      builder);
+      hierarchyResolver, builder);
     nestedMembers.append(name);
   }
 
@@ -95,36 +97,30 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
     return new MethodRef(owner(), name, returnType, paramTypes, false);
   }
 
-  @Override public @NotNull MethodRef buildMethod(
+  public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder
+    @NotNull BiConsumer<AsmArgumentProvider, AsmCodeBuilder> builder
   ) {
-    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder::accept);
+    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder);
   }
 
-  @Override
-  public @NotNull MethodRef buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgumentProvider, CodeBuilder> builder) {
-    return buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
+  public void buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<AsmArgumentProvider, AsmCodeBuilder> builder) {
+    buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
       builder.accept(ap, cb);
       cb.writer().return_();
     });
   }
 
-  @Override
-  public @NotNull FieldRef buildConstantField(@NotNull ClassDesc returnType, @NotNull String name, @NotNull Function<ExprBuilder, JavaExpr> initializer) {
+  public void buildStaticField(@NotNull ClassDesc returnType, @NotNull String name) {
     writer.withField(name, returnType, AccessFlags.ofField(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL).flagsMask());
-
-    var ref = new FieldRef(owner(), returnType, name);
-    fieldInitializers.put(ref, initializer);
-    return ref;
   }
 
   public @NotNull InvokeDynamicEntry makeLambda(
     @NotNull ImmutableSeq<ClassDesc> captureTypes,
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> builder
+    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> builder
   ) {
     var pool = writer.constantPool();
     var lambdaMethodName = "lambda$" + lambdaCounter++;
@@ -186,18 +182,14 @@ public final class AsmClassBuilder implements ClassBuilder, AutoCloseable {
       var pool = writer.constantPool();
       writer.with(NestMembersAttribute.of(nestedMembers.map(t -> pool.classEntry(owner().nested(t))).asJava()));
     }
+  }
 
-    if (fieldInitializers.isNotEmpty()) {
-      writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
-        try (var acb = new AsmCodeBuilder(cb, this, ImmutableSeq.empty(), false)) {
-          fieldInitializers.forEach((fieldRef, init) -> {
-            var expr = init.apply(acb);
-            acb.loadExpr(expr);
-            cb.putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
-          });
-          cb.return_();
-        }
-      });
-    }
+  public void buildStaticInitBlock(Consumer<AsmCodeBuilder> body) {
+    writer.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, AccessFlags.ofMethod(AccessFlag.STATIC).flagsMask(), cb -> {
+      try (var acb = new AsmCodeBuilder(cb, this, ImmutableSeq.empty(), false)) {
+        body.accept(acb);
+        cb.return_();
+      }
+    });
   }
 }

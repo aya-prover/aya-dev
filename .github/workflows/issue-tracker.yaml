@@ -1,14 +1,12 @@
 name: issue tracker
 on:
-  push:
-    branches:
-      - main
   issues:
     types:
       - opened
 
 jobs:
   issue-tracker:
+    if: ${{ startsWith(github.event.issue.body, '<!-- ISSUE TRACKER ENABLE -->') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -81,7 +81,7 @@ public class CompileTest {
 
   public static void serializeFrom(@NotNull TyckResult result, @NotNull Path base) throws IOException {
     new ModuleSerializer(result.info.shapeFactory())
-      .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
+      .serialize(new ModuleSerializer.ModuleResult(
         DumbModuleLoader.DUMB_MODULE_NAME, result.defs.filterIsInstance(TopLevelDef.class)))
       .writeTo(base);
   }

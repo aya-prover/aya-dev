@@ -24,11 +24,14 @@ public sealed interface AstDecl {
     }
   }
 
-  // Constructors also count as method, with method name "<init>".
+  /// Constructors also count as method, with method name "<init>".
   record Method(
     @NotNull MethodRef signature,
     @NotNull ImmutableSeq<AstStmt> body
   ) implements AstDecl { }
 
-  record ConstantField(@NotNull FieldRef signature, @NotNull AstExpr init) implements AstDecl { }
+  /// Used for initializing constant, static fields
+  record StaticInitBlock(@NotNull ImmutableSeq<AstStmt> body) implements AstDecl { }
+
+  record ConstantField(@NotNull FieldRef signature) implements AstDecl { }
 }

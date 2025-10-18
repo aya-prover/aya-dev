@@ -122,7 +122,7 @@ public class DiskCompilerAdvisor implements CompilerAdvisor {
     @NotNull ModuleLoader recurseLoader
   ) throws IOException, ClassNotFoundException {
     var javaCode = new ModuleSerializer(resolveInfo.shapeFactory())
-      .serializeWithBestBuilder(new ModuleSerializer.ModuleResult(
+      .serialize(new ModuleSerializer.ModuleResult(
         QPath.fileLevel(file.moduleName()),
         defs.filterIsInstance(TopLevelDef.class)));
     var libraryRoot = file.owner.outDir();

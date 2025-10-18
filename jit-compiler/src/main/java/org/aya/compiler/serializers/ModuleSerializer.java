@@ -4,28 +4,28 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.JavaBuilder;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.asm.AsmJavaBuilder;
-import org.aya.compiler.morphism.ast.AstJavaBuilder;
-import org.aya.compiler.morphism.ast.AstOptimizer;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstRunner;
+import org.aya.compiler.morphism.ast.BlockSimplifier;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
+import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.constant.ClassDesc;
 
 import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 /**
- * Serializing a module, note that it may not a file module, so we need not to make importing.
+ * Serializing a module, note that it may not be a file module, so we need not make imports.
  */
 public final class ModuleSerializer {
   /** Input to the module serializer. */
@@ -48,17 +48,17 @@ public final class ModuleSerializer {
     this.shapeFactory = shapeFactory;
   }
 
-  private void serializeCons(@NotNull ClassBuilder builder, @NotNull DataDef dataDef) {
+  private void serializeCons(@NotNull AstClassBuilder builder, @NotNull DataDef dataDef) {
     var ser = new ConSerializer(recorder);
     dataDef.body().forEach(con -> ser.serialize(builder, con));
   }
 
-  private void serializeMems(@NotNull ClassBuilder builder, @NotNull ClassDef classDef) {
+  private void serializeMems(@NotNull AstClassBuilder builder, @NotNull ClassDef classDef) {
     var ser = new MemberSerializer(recorder);
     classDef.members().forEach(mem -> ser.serialize(builder, mem));
   }
 
-  private void doSerialize(@NotNull ClassBuilder builder, @NotNull TyckDef unit) {
+  private void doSerialize(@NotNull AstClassBuilder builder, @NotNull TyckDef unit) {
     switch (unit) {
       case FnDef teleDef -> new FnSerializer(shapeFactory, recorder)
         .serialize(builder, teleDef);
@@ -80,23 +80,26 @@ public final class ModuleSerializer {
     }
   }
 
-  public @NotNull AsmOutputCollector.Default serializeWithBestBuilder(ModuleResult unit) {
-    var freeJava = serialize(AstJavaBuilder.INSTANCE, unit);
-    freeJava = AstOptimizer.optimizeClass(freeJava);
-    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).runFree(freeJava);
-  }
-
-  @VisibleForTesting
-  public <Carrier> Carrier serialize(@NotNull JavaBuilder<Carrier> builder, ModuleResult unit) {
+  public @NotNull AsmOutputCollector.Default serialize(ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
     var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
       "", -1, -1, new CodeShape.GlobalId[0]);
 
-    return builder.buildClass(metadata, desc, JitUnit.class, cb -> {
-      unit.defs.forEach(def -> doSerialize(cb, def));
-      var matchySerializer = new MatchySerializer(recorder);
-      while (recorder.todoMatchies.isNotEmpty()) matchySerializer
-        .serialize(cb, recorder.todoMatchies.removeLast());
-    });
+    var classMarkers = MutableMap.of(
+      Constants.CD_ImmutableSeq, ClassHierarchyResolver.ClassHierarchyInfo.ofInterface(),
+      Constants.CD_ConCallLike, ClassHierarchyResolver.ClassHierarchyInfo.ofInterface()
+    );
+    var classBuilder = new AstClassBuilder(metadata, desc, null, classMarkers, JitUnit.class);
+    unit.defs.forEach(def -> doSerialize(classBuilder, def));
+    var matchySerializer = new MatchySerializer(recorder);
+    while (recorder.todoMatchies.isNotEmpty()) matchySerializer
+      .serialize(classBuilder, recorder.todoMatchies.removeLast());
+    var freeJava = classBuilder.build();
+    freeJava = BlockSimplifier.optimizeClass(freeJava);
+    var usedClasses = classBuilder.usedClasses();
+    var systemResolver = ClassHierarchyResolver.defaultResolver();
+    return new AstRunner<>(new AsmJavaBuilder<>(new AsmOutputCollector.Default())).interpClass(freeJava,
+      classDesc -> usedClasses.getOrElse(classDesc, () ->
+        systemResolver.getClassInfo(classDesc)));
   }
 }

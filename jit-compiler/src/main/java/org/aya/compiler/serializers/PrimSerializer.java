@@ -3,10 +3,10 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.CodeBuilder;
-import org.aya.compiler.morphism.JavaExpr;
+import org.aya.compiler.morphism.JavaUtil;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.call.PrimCall;
@@ -21,15 +21,15 @@ public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
   @Override protected @NotNull Class<?> callClass() { return PrimCall.class; }
 
   @Override protected @NotNull ImmutableSeq<ClassDesc> superConParams() {
-    return super.superConParams().appended(AstUtil.fromClass(PrimDef.ID.class));
+    return super.superConParams().appended(JavaUtil.fromClass(PrimDef.ID.class));
   }
 
   @Override
-  protected @NotNull ImmutableSeq<JavaExpr> superConArgs(@NotNull CodeBuilder builder, PrimDef unit) {
+  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, PrimDef unit) {
     return super.superConArgs(builder, unit).appended(builder.refEnum(unit.id()));
   }
 
-  @Override public @NotNull PrimSerializer serialize(@NotNull ClassBuilder builder, PrimDef unit) {
+  @Override public @NotNull PrimSerializer serialize(@NotNull AstClassBuilder builder, PrimDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }

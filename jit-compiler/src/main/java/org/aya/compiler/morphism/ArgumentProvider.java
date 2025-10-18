@@ -8,8 +8,12 @@ import org.jetbrains.annotations.NotNull;
 /// The implementation should be pure (at least, same input same output, some kind of side effect is acceptable)
 public interface ArgumentProvider {
   interface Lambda extends ArgumentProvider {
-    @NotNull JavaExpr capture(int nth);
+    @NotNull LocalVariable capture(int nth);
   }
 
   @NotNull LocalVariable arg(int nth);
+
+  @NotNull ArgumentProvider EMPTY = _ -> {
+    throw new IndexOutOfBoundsException();
+  };
 }

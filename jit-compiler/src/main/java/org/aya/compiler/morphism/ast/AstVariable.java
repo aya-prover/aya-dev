@@ -3,14 +3,12 @@
 package org.aya.compiler.morphism.ast;
 
 import org.aya.compiler.LocalVariable;
-import org.aya.compiler.morphism.JavaExpr;
-import org.jetbrains.annotations.NotNull;
 
 public sealed interface AstVariable extends LocalVariable {
   record Local(int index) implements AstVariable {
-    @Override public @NotNull JavaExpr ref() { return new AstExpr.RefVariable(this); }
   }
   record Arg(int nth) implements AstVariable {
-    @Override public @NotNull JavaExpr ref() { return new AstExpr.RefVariable(this); }
+  }
+  record Capture(int nth) implements AstVariable {
   }
 }

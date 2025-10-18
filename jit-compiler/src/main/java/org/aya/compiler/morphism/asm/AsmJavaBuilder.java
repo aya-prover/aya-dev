@@ -4,11 +4,10 @@ package org.aya.compiler.morphism.asm;
 
 import kala.collection.mutable.MutableList;
 import org.aya.compiler.AsmOutputCollector;
-import org.aya.compiler.morphism.AstUtil;
-import org.aya.compiler.morphism.ClassBuilder;
-import org.aya.compiler.morphism.JavaBuilder;
+import org.aya.compiler.morphism.JavaUtil;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.repr.CodeShape;
+import org.aya.util.ArrayUtil;
 import org.glavo.classfile.*;
 import org.glavo.classfile.attribute.NestHostAttribute;
 import org.glavo.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
@@ -23,16 +22,16 @@ import java.util.stream.Collectors;
 /// Resources:
 /// * <a href="https://viewer.glavo.org/">ClassViewer</a>
 /// * <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html">Class File Specification</a>
-public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) implements JavaBuilder<C> {
-  /// @return the class descriptor
-  public static @NotNull ClassDesc buildClass(
+public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector) {
+  public static void buildClass(
     @NotNull AsmOutputCollector collector,
     @Nullable AyaMetadata metadata,
     @NotNull ClassData classData,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull ClassHierarchyResolver hierarchyResolver,
+    @NotNull Consumer<AsmClassBuilder> builder
   ) {
     var realClassName = classData.className();
-    var bc = ClassFile.of().build(realClassName, cb -> {
+    var bc = ClassFile.of(ClassFile.ClassHierarchyResolverOption.of(hierarchyResolver)).build(realClassName, cb -> {
       cb.withFlags(AccessFlag.PUBLIC, AccessFlag.FINAL, AccessFlag.SUPER);
       cb.withSuperclass(classData.classSuper());
 
@@ -59,22 +58,22 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_SHAPE, shapeValue));
         }
         if (metadata.recognition().length != 0) {
-          var recognitionValue = AnnotationValue.ofArray(
-            Arrays.stream(metadata.recognition()).map(x -> AnnotationValue.ofEnum(AstUtil.fromClass(CodeShape.GlobalId.class), x.name()))
-              .collect(Collectors.toList())
+          var recognitionValue = AnnotationValue.ofArray(ArrayUtil.map(metadata.recognition(),
+            new AnnotationValue[0], x ->
+              AnnotationValue.ofEnum(JavaUtil.fromClass(CodeShape.GlobalId.class), x.name()))
           );
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
         }
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
-          AstUtil.fromClass(AyaMetadata.class),
+          JavaUtil.fromClass(AyaMetadata.class),
           attributes.asJava()
         )));
       }
 
       // endregion metadata
 
-      try (var acb = new AsmClassBuilder(classData, cb, collector)) {
+      try (var acb = new AsmClassBuilder(classData, cb, collector, hierarchyResolver)) {
         builder.accept(acb);
       }
 
@@ -84,16 +83,17 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
     });
 
     collector.write(realClassName, bc);
-    return realClassName;
   }
 
-  @Override public @NotNull C buildClass(
+  public @NotNull C buildClass(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc className,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<ClassBuilder> builder
+    @NotNull ClassHierarchyResolver hierarchyResolver,
+    @NotNull Consumer<AsmClassBuilder> builder
   ) {
-    buildClass(collector, metadata, new ClassData(className, AstUtil.fromClass(superclass), null), builder);
+    var classData = new ClassData(className, JavaUtil.fromClass(superclass), null);
+    buildClass(collector, metadata, classData, hierarchyResolver, builder);
     return collector;
   }
 }

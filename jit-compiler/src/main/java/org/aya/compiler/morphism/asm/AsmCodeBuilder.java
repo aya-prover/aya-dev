@@ -5,13 +5,12 @@ package org.aya.compiler.morphism.asm;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.compiler.FieldRef;
-import org.aya.compiler.LocalVariable;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.ArgumentProvider;
-import org.aya.compiler.morphism.CodeBuilder;
+import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.JavaExpr;
 import org.aya.util.Panic;
+import org.glavo.classfile.CodeBuilder;
 import org.glavo.classfile.Label;
 import org.glavo.classfile.Opcode;
 import org.glavo.classfile.TypeKind;
@@ -26,63 +25,58 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
+import static java.lang.constant.ConstantDescs.CD_Object;
+
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method
 public record AsmCodeBuilder(
-  @NotNull org.glavo.classfile.CodeBuilder writer,
+  @NotNull CodeBuilder writer,
   @NotNull AsmClassBuilder parent,
   @NotNull AsmVariablePool pool,
   @Nullable Label breaking,
   @Nullable Label continuing,
   boolean hasThis
-) implements CodeBuilder, AutoCloseable {
+) implements AutoCloseable {
   public static final @NotNull AsmExpr ja = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_1());
   public static final @NotNull AsmExpr nein = AsmExpr.withType(ConstantDescs.CD_boolean, builder -> builder.writer.iconst_0());
 
   public AsmCodeBuilder(
-    @NotNull org.glavo.classfile.CodeBuilder writer,
+    @NotNull CodeBuilder writer,
     @NotNull AsmClassBuilder parent,
     @NotNull ImmutableSeq<ClassDesc> parameterTypes,
     boolean hasThis
   ) {
     this(writer, parent,
       AsmVariablePool.from(hasThis ? parent.owner() : null, parameterTypes),
-      null,
-      null,
-      hasThis
-    );
+      null, null, hasThis);
   }
 
-  public @NotNull AsmVariable assertVar(@NotNull LocalVariable var) { return (AsmVariable) var; }
-  public @NotNull AsmExpr assertExpr(@NotNull JavaExpr expr) { return (AsmExpr) expr; }
-  public void loadVar(@NotNull LocalVariable var) {
-    var asmVar = assertVar(var);
-    writer.loadInstruction(asmVar.kind(), asmVar.slot());
+  public void loadVar(@NotNull AsmVariable var) {
+    writer.loadInstruction(var.kind(), var.slot());
   }
 
-  public void loadExpr(@NotNull JavaExpr expr) { assertExpr(expr).accept(this); }
-  @Override public void close() { pool.submit(this); }
+  public void loadExpr(@NotNull AsmExpr expr) { expr.accept(this); }
+  public void close() { pool.submit(this); }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
+  public void subscoped(@NotNull CodeBuilder innerWriter, @Nullable Label breaking, @Nullable Label continuing, @NotNull Consumer<AsmCodeBuilder> block) {
     try (var innerBuilder = new AsmCodeBuilder(innerWriter, parent, pool.subscope(), breaking, continuing, hasThis)) {
       block.accept(innerBuilder);
     }
   }
 
-  public void subscoped(@NotNull org.glavo.classfile.CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
+  public void subscoped(@NotNull CodeBuilder innerWrite, @NotNull Consumer<AsmCodeBuilder> block) {
     subscoped(innerWrite, breaking, continuing, block);
   }
 
   public void subscoped(@NotNull Consumer<AsmCodeBuilder> block) { subscoped(writer, breaking, continuing, block); }
 
-  @Override public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable JavaExpr initializer) {
+  public @NotNull AsmVariable makeVar(@NotNull ClassDesc type, @Nullable AsmExpr initializer) {
     var variable = pool.acquire(type);
     if (initializer != null) updateVar(variable, initializer);
     return variable;
   }
 
-  @Override public void
-  invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<JavaExpr> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AsmVariable> superConArgs) {
     invoke(
       InvokeKind.Special,
       FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
@@ -90,51 +84,44 @@ public record AsmCodeBuilder(
       superConArgs);
   }
 
-  @Override public void updateVar(@NotNull LocalVariable var, @NotNull JavaExpr update) {
-    var asmVar = assertVar(var);
-    var expr = assertExpr(update);
-    expr.accept(this);
-    writer.storeInstruction(asmVar.kind(), asmVar.slot());
+  public void updateVar(@NotNull AsmVariable var, @NotNull AsmExpr update) {
+    update.accept(this);
+    writer.storeInstruction(var.kind(), var.slot());
   }
 
-  @Override public void updateArray(@NotNull JavaExpr array, int idx, @NotNull JavaExpr update) {
-    var expr = assertExpr(array);
-    var component = expr.type().componentType();
+  public void updateArray(@NotNull AsmVariable array, int idx, @NotNull AsmVariable update) {
+    var component = array.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
-    expr.accept(this);
+    loadVar(array);
     iconst(idx).accept(this);
-    loadExpr(update);
+    loadVar(update);
     writer.arrayStoreInstruction(kind);
   }
 
-  public void ifThenElse(@NotNull Opcode code, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
+  public void ifThenElse(@NotNull Opcode code, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
     if (elseBlock != null) {
       writer.ifThenElse(code,
         builder -> subscoped(builder, thenBlock),
-        builder -> subscoped(builder, elseBlock::accept));
+        builder -> subscoped(builder, elseBlock));
     } else {
       writer.ifThen(code, builder -> subscoped(builder, thenBlock));
     }
   }
 
-  @Override
-  public void ifNotTrue(@NotNull LocalVariable notTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
+  public void ifNotTrue(@NotNull AsmVariable notTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
     loadVar(notTrue);
-    ifThenElse(Opcode.IFEQ, thenBlock::accept, elseBlock);
+    ifThenElse(Opcode.IFEQ, thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifTrue(@NotNull LocalVariable theTrue, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
+  public void ifTrue(@NotNull AsmVariable theTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
     loadVar(theTrue);
-    ifThenElse(Opcode.IFNE, thenBlock::accept, elseBlock);
+    ifThenElse(Opcode.IFNE, thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifInstanceOf(@NotNull JavaExpr lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<CodeBuilder, LocalVariable> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    var lhsExpr = assertExpr(lhs);
-    lhsExpr.accept(this);
+  public void ifInstanceOf(@NotNull AsmVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, AsmVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(lhs);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
       var cast = builder.checkcast(lhs, rhs);
@@ -143,63 +130,68 @@ public record AsmCodeBuilder(
     }, elseBlock);
   }
 
-  @Override
-  public void ifIntEqual(@NotNull JavaExpr lhs, int rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    loadExpr(lhs);
+  public void ifIntEqual(@NotNull AsmVariable lhs, int rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(lhs);
     loadExpr(iconst(rhs));
-    ifThenElse(Opcode.IF_ICMPEQ, thenBlock::accept, elseBlock);
+    ifThenElse(Opcode.IF_ICMPEQ, thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifRefEqual(@NotNull JavaExpr lhs, @NotNull JavaExpr rhs, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    loadExpr(lhs);
-    loadExpr(rhs);
-    ifThenElse(Opcode.IF_ACMPEQ, thenBlock::accept, elseBlock);
+  public void ifRefEqual(@NotNull AsmVariable lhs, @NotNull AsmVariable rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(lhs);
+    loadVar(rhs);
+    ifThenElse(Opcode.IF_ACMPEQ, thenBlock, elseBlock);
   }
 
-  @Override
-  public void ifNull(@NotNull JavaExpr isNull, @NotNull Consumer<CodeBuilder> thenBlock, @Nullable Consumer<CodeBuilder> elseBlock) {
-    loadExpr(isNull);
-    ifThenElse(Opcode.IFNULL, thenBlock::accept, elseBlock);
+  public void ifNull(@NotNull AsmVariable isNull, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    loadVar(isNull);
+    ifThenElse(Opcode.IFNULL, thenBlock, elseBlock);
   }
 
-  @Override public void breakable(@NotNull Consumer<CodeBuilder> innerBlock) {
+  public void breakable(@NotNull Consumer<AsmCodeBuilder> innerBlock) {
     // sorry, nesting breakable is unsupported.
     if (breaking != null) Panic.unreachable();
     writer.block(builder -> {
       var endLabel = builder.breakLabel();
-      subscoped(builder, endLabel, continuing, innerBlock::accept);
+      subscoped(builder, endLabel, continuing, innerBlock);
     });
   }
 
-  @Override public void breakOut() {
+  public void breakOut() {
     if (breaking == null) Panic.unreachable();
     writer.goto_(breaking);
   }
 
-  @Override public void whileTrue(@NotNull Consumer<CodeBuilder> innerBlock) {
+  public void unreachable() {
+    returnWith(makeVar(CD_Object,
+      invoke(Constants.PANIC, ImmutableSeq.empty())));
+  }
+
+  public void whileTrue(@NotNull Consumer<AsmCodeBuilder> innerBlock) {
     if (continuing != null) Panic.unreachable();
     writer.block(builder -> {
       var continueLabel = builder.startLabel();
-      subscoped(builder, breaking, continueLabel, innerBlock::accept);
+      subscoped(builder, breaking, continueLabel, innerBlock);
     });
   }
 
-  @Override public void continueLoop() {
+  public void continueLoop() {
     if (continuing == null) Panic.unreachable();
     writer.goto_(continuing);
   }
 
-  @Override public void exec(@NotNull JavaExpr expr) {
-    var asmExpr = assertExpr(expr);
-    asmExpr.accept(this);
-    if (!asmExpr.type().equals(ConstantDescs.CD_void)) {
+  public void exec(@NotNull AsmExpr expr) {
+    expr.accept(this);
+    if (!expr.type().equals(ConstantDescs.CD_void)) {
       writer.pop();
     }
   }
 
-  @Override public void
-  switchCase(@NotNull LocalVariable elim, @NotNull ImmutableIntSeq cases, @NotNull ObjIntConsumer<CodeBuilder> branch, @NotNull Consumer<CodeBuilder> defaultCase) {
+  public void switchCase(
+    @NotNull AsmVariable elim,
+    @NotNull ImmutableIntSeq cases,
+    @NotNull ObjIntConsumer<AsmCodeBuilder> branch,
+    @NotNull Consumer<AsmCodeBuilder> defaultCase
+  ) {
     var switchCases = cases.mapToObj(i -> SwitchCase.of(i, writer.newLabel()));
     var defaultLabel = writer.newLabel();
 
@@ -214,14 +206,18 @@ public record AsmCodeBuilder(
     );
 
     writer.labelBinding(defaultLabel);
-    subscoped(defaultCase::accept);
+    subscoped(defaultCase);
   }
 
-  @Override public void returnWith(@NotNull JavaExpr expr) {
-    var asmExpr = assertExpr(expr);
-    var kind = TypeKind.fromDescriptor(asmExpr.type().descriptorString());
-    asmExpr.accept(this);
+  public void returnWith(@NotNull AsmVariable expr) {
+    var kind = TypeKind.fromDescriptor(expr.type().descriptorString());
+    loadVar(expr);
     writer.returnInstruction(kind);
+  }
+
+  public void setStaticField(FieldRef fieldRef, AsmVariable update) {
+    loadVar(update);
+    writer().putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
   }
 
   public enum InvokeKind {
@@ -231,9 +227,11 @@ public record AsmCodeBuilder(
   public void invoke(
     @NotNull InvokeKind kind,
     @NotNull MethodRef ref,
-    @Nullable JavaExpr self,
-    @NotNull ImmutableSeq<JavaExpr> args
+    @Nullable AsmVariable self,
+    @NotNull ImmutableSeq<AsmVariable> args
   ) {
+    assert ref.checkArguments(args);
+
     var owner = ref.owner();
     var name = ref.name();
     var desc = MethodTypeDesc.of(ref.returnType(), ref.paramTypes().asJava());
@@ -242,10 +240,10 @@ public record AsmCodeBuilder(
     assert (self == null) == (kind == InvokeKind.Static);
 
     if (self != null) {
-      loadExpr(self);
+      loadVar(self);
     }
 
-    args.forEach(this::loadExpr);
+    args.forEach(this::loadVar);
 
     switch (kind) {
       case Static -> writer.invokestatic(owner, name, desc, isInterface);
@@ -260,57 +258,57 @@ public record AsmCodeBuilder(
     }
   }
 
-  @Override public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<JavaExpr> args) {
+  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AsmVariable> args) {
     return AsmExpr.withType(conRef.owner(), builder -> {
-      builder.writer.new_(conRef.owner());
-      builder.invoke(
-        InvokeKind.Special,
-        conRef,
-        AsmExpr.withType(conRef.owner(), builder0 -> builder0.writer.dup()),
-        args
-      );
+      var var = builder.makeVar(conRef.owner(), AsmExpr.withType(conRef.owner(), builder0 ->
+        builder0.writer.new_(conRef.owner())));
+      builder.invoke(InvokeKind.Special, conRef, var, args);
+      builder.loadVar(var);
     });
   }
 
-  @Override
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull JavaExpr owner, @NotNull ImmutableSeq<JavaExpr> args) {
-    return AsmExpr.withType(method.returnType(), builder -> builder.invoke(InvokeKind.Virtual, method, owner, args));
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull AsmVariable owner, @NotNull ImmutableSeq<AsmVariable> args) {
+    return AsmExpr.withType(method.returnType(), builder ->
+      builder.invoke(InvokeKind.Virtual, method, owner, args));
   }
 
-  @Override public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<JavaExpr> args) {
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AsmVariable> args) {
     return AsmExpr.withType(method.returnType(), builder ->
       builder.invoke(InvokeKind.Static, method, null, args));
   }
 
-  @Override public @NotNull AsmExpr refField(@NotNull FieldRef field) {
+  public @NotNull AsmExpr refField(@NotNull FieldRef field) {
     return AsmExpr.withType(field.returnType(), builder ->
       builder.writer.getstatic(field.owner(), field.name(), field.returnType()));
   }
-  @Override public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull JavaExpr owner) {
+
+  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull AsmVariable owner) {
     return AsmExpr.withType(field.returnType(), builder -> {
-      builder.loadExpr(owner);
+      builder.loadVar(owner);
       builder.writer.getfield(field.owner(), field.name(), field.returnType());
     });
   }
 
-  @Override public @NotNull AsmExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
+  public @NotNull AsmExpr refEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) {
     var ref = FreeJavaResolver.resolve(enumClass, enumName, enumClass);
     return refField(ref);
   }
 
-  @Override public @NotNull AsmExpr
-  mkLambda(@NotNull ImmutableSeq<JavaExpr> captures, @NotNull MethodRef method, @NotNull BiConsumer<ArgumentProvider.Lambda, CodeBuilder> lamBody) {
-    var captureExprs = captures.map(this::assertExpr);
-    var captureTypes = captureExprs.map(AsmExpr::type);
+  public @NotNull AsmExpr mkLambda(
+    @NotNull ImmutableSeq<AsmVariable> captures,
+    @NotNull MethodRef method,
+    @NotNull BiConsumer<ArgumentProvider.Lambda, AsmCodeBuilder> lamBody
+  ) {
+    var captureTypes = captures.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);
 
     return AsmExpr.withType(method.owner(), builder -> {
-      captureExprs.forEach(t -> t.accept(builder));
+      captures.forEach(builder::loadVar);
       builder.writer.invokedynamic(indy);
     });
   }
 
-  @Override public @NotNull AsmExpr iconst(int i) {
+  public @NotNull AsmExpr iconst(int i) {
     return AsmExpr.withType(ConstantDescs.CD_int, builder -> {
       switch (i) {
         case -1 -> builder.writer.iconst_m1();
@@ -329,60 +327,60 @@ public record AsmCodeBuilder(
     });
   }
 
-  @Override public @NotNull AsmExpr iconst(boolean b) { return b ? ja : nein; }
-  @Override public @NotNull AsmExpr aconst(@NotNull String value) {
+  public @NotNull AsmExpr iconst(boolean b) { return b ? ja : nein; }
+  public @NotNull AsmExpr aconst(@NotNull String value) {
     return AsmExpr.withType(ConstantDescs.CD_String, builder ->
       builder.writer.ldc(builder.writer.constantPool().stringEntry(value)));
   }
 
-  @Override public @NotNull AsmExpr aconstNull(@NotNull ClassDesc type) {
+  public @NotNull AsmExpr aconstNull(@NotNull ClassDesc type) {
     return AsmExpr.withType(type, builder -> builder.writer.aconst_null());
   }
 
-  @Override public @NotNull AsmExpr thisRef() {
+  public @NotNull AsmVariable thisRef() {
     assert hasThis;
-    return AsmExpr.withType(parent.owner(), builder -> builder.writer.aload(0));
+    return AsmVariable.mkThis(parent.owner());
   }
 
-  @Override
-  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<JavaExpr> initializer) {
+  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends AsmVariable> initializer) {
     var arrayType = type.arrayType();
-    var dup = AsmExpr.withType(arrayType, builder -> builder.writer.dup());
 
     return AsmExpr.withType(arrayType, builder -> {
       builder.iconst(length).accept(builder);
 
       var kind = TypeKind.fromDescriptor(type.descriptorString());
-      if (kind == TypeKind.ReferenceType) {
-        builder.writer.anewarray(type);
-      } else {
-        builder.writer.newarray(kind);
-      }
+      var var = builder.makeVar(arrayType, AsmExpr.withType(arrayType, builder0 -> {
+        if (kind == TypeKind.ReferenceType) {
+          builder0.writer.anewarray(type);
+        } else {
+          builder0.writer.newarray(kind);
+        }
+      }));
 
       if (initializer != null) {
         assert initializer.size() == length;
         initializer.forEachIndexed((i, init) ->
-          builder.updateArray(dup, i, init));
+          builder.updateArray(var, i, init));
       }
+      builder.loadVar(var);
     });
   }
 
-  @Override public @NotNull AsmExpr getArray(@NotNull JavaExpr array, int index) {
-    var expr = assertExpr(array);
-    var component = expr.type().componentType();
+  public @NotNull AsmExpr getArray(@NotNull AsmVariable array, int index) {
+    var component = array.type().componentType();
     assert component != null;
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
     return AsmExpr.withType(component, builder -> {
-      expr.accept(builder);
+      builder.loadVar(array);
       builder.iconst(index).accept(builder);
       builder.writer.arrayLoadInstruction(kind);
     });
   }
 
-  @Override public @NotNull AsmExpr checkcast(@NotNull JavaExpr obj, @NotNull ClassDesc as) {
+  public @NotNull AsmExpr checkcast(@NotNull AsmVariable obj, @NotNull ClassDesc as) {
     return AsmExpr.withType(as, builder -> {
-      builder.loadExpr(obj);
+      builder.loadVar(obj);
       builder.writer.checkcast(as);
     });
   }

@@ -5,7 +5,12 @@ package org.aya.compiler.serializers;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.*;
+import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.FreeJavaResolver;
+import org.aya.compiler.morphism.JavaUtil;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.jetbrains.annotations.NotNull;
@@ -14,22 +19,22 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 
 public abstract class AbstractExprializer<T> {
-  protected final @NotNull ExprBuilder builder;
+  protected final @NotNull AstCodeBuilder builder;
   protected final @NotNull SerializerContext context;
 
-  protected AbstractExprializer(@NotNull ExprBuilder builder, @NotNull SerializerContext context) {
+  protected AbstractExprializer(@NotNull AstCodeBuilder builder, @NotNull SerializerContext context) {
     this.builder = builder;
     this.context = context;
   }
 
-  public @NotNull JavaExpr makeImmutableSeq(
+  public @NotNull AstVariable makeImmutableSeq(
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<JavaExpr> terms
+    @NotNull ImmutableSeq<AstVariable> terms
   ) {
     return makeImmutableSeq(builder, typeName, terms);
   }
 
-  public @NotNull JavaExpr serializeToImmutableSeq(
+  public @NotNull AstVariable serializeToImmutableSeq(
     @NotNull Class<?> typeName,
     @NotNull ImmutableSeq<T> terms
   ) {
@@ -37,10 +42,10 @@ public abstract class AbstractExprializer<T> {
     return makeImmutableSeq(typeName, sered);
   }
 
-  public static @NotNull JavaExpr makeImmutableSeq(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstVariable makeImmutableSeq(
+    @NotNull AstCodeBuilder builder,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<JavaExpr> terms
+    @NotNull ImmutableSeq<AstVariable> terms
   ) {
     return makeImmutableSeq(builder, Constants.IMMSEQ, typeName, terms);
   }
@@ -56,13 +61,13 @@ public abstract class AbstractExprializer<T> {
   /// @see ImmutableSeq#of(Object, Object, Object, Object)
   /// @see ImmutableSeq#of(Object, Object, Object, Object, Object)
   /// @see ImmutableSeq#of(Object[])
-  public static @NotNull JavaExpr makeImmutableSeq(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstVariable makeImmutableSeq(
+    @NotNull AstCodeBuilder builder,
     @NotNull MethodRef con,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<JavaExpr> terms
+    @NotNull ImmutableSeq<AstVariable> terms
   ) {
-    ImmutableSeq<JavaExpr> args;
+    ImmutableSeq<AstVariable> args;
 
     if (terms.size() <= 5) {
       String name = con.name();
@@ -83,39 +88,45 @@ public abstract class AbstractExprializer<T> {
 
       args = terms;
     } else {
-      args = ImmutableSeq.of(builder.mkArray(AstUtil.fromClass(typeName), terms.size(), terms));
+      var var = builder.bindExpr(
+        JavaUtil.fromClass(typeName.arrayType()),
+        new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), terms));
+      args = ImmutableSeq.of(var);
     }
 
-    return builder.invoke(con, args);
+    var invoke = new AstExpr.Invoke(con, null, args);
+    return builder.bindExpr(con.returnType(), invoke);
   }
 
   /**
    * Return the reference to the {@code INSTANCE} field of the compiled class to {@param def}
    */
-  public final @NotNull JavaExpr getInstance(@NotNull AnyDef def) {
+  public final @NotNull AstVariable getInstance(@NotNull AnyDef def) {
     return getInstance(builder, def);
   }
 
-  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull TyckDef def) {
+  public static @NotNull AstVariable getInstance(@NotNull AstCodeBuilder builder, @NotNull TyckDef def) {
     return getInstance(builder, AnyDef.fromVar(def.ref()));
   }
 
-  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull ClassDesc desc) {
+  public static @NotNull AstVariable getInstance(@NotNull AstCodeBuilder builder, @NotNull ClassDesc desc) {
     return builder.refField(FreeJavaResolver.resolve(desc, AyaSerializer.STATIC_FIELD_INSTANCE, desc));
   }
 
-  public static @NotNull JavaExpr getInstance(@NotNull ExprBuilder builder, @NotNull AnyDef def) {
+  public static @NotNull AstVariable getInstance(@NotNull AstCodeBuilder builder, @NotNull AnyDef def) {
     return getInstance(builder, NameSerializer.getClassDesc(def));
   }
 
-  public static @NotNull JavaExpr getRef(@NotNull ExprBuilder builder, @NotNull CallKind callType, @NotNull JavaExpr call) {
-    return builder.invoke(FreeJavaResolver.resolve(
+  public static @NotNull AstVariable getRef(@NotNull AstCodeBuilder builder, @NotNull CallKind callType, @NotNull AstVariable call) {
+    var invoke = new AstExpr.Invoke(FreeJavaResolver.resolve(
       callType.callType, AyaSerializer.FIELD_INSTANCE,
       callType.refType, ImmutableSeq.empty(), true
     ), call, ImmutableSeq.empty());
+
+    return builder.bindExpr(invoke.methodRef().returnType(), invoke);
   }
 
-  public final @NotNull JavaExpr getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
+  public final @NotNull AstVariable getCallInstance(@NotNull CallKind callType, @NotNull AnyDef def) {
     return builder.refField(FreeJavaResolver.resolve(
       NameSerializer.getClassDesc(def),
       AyaSerializer.FIELD_EMPTYCALL,
@@ -123,42 +134,43 @@ public abstract class AbstractExprializer<T> {
     );
   }
 
-  public static @NotNull ImmutableSeq<JavaExpr> fromSeq(
-    @NotNull ExprBuilder builder,
+  public static @NotNull ImmutableSeq<AstVariable> fromSeq(
+    @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc elementType,
-    @NotNull JavaExpr theSeq,
+    @NotNull AstVariable theSeq,
     int size
   ) {
     return ImmutableSeq.fill(size, idx -> makeSeqGet(builder, elementType, theSeq, idx));
   }
 
-  public static @NotNull JavaExpr makeSeqGet(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstVariable makeSeqGet(
+    @NotNull AstCodeBuilder builder,
     @NotNull ClassDesc elementType,
-    @NotNull JavaExpr theSeq,
+    @NotNull AstVariable theSeq,
     int size
   ) {
-    var result = builder.invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
-    return builder.checkcast(result, elementType);
+    var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
+    var cast = new AstExpr.CheckCast(builder.bindExpr(ConstantDescs.CD_Object, result), elementType);
+    return builder.bindExpr(elementType, cast);
   }
 
   /**
    * Actually perform serialization, unlike {@link #serialize}
    * which will perform some initialization after a {@code T} is obtained.
    */
-  protected abstract @NotNull JavaExpr doSerialize(@NotNull T term);
+  protected abstract @NotNull AstVariable doSerialize(@NotNull T term);
 
   /**
    * Prepare and perform {@link #doSerialize}
    */
-  public abstract @NotNull JavaExpr serialize(T unit);
+  public abstract @NotNull AstVariable serialize(T unit);
 
-  public static @NotNull JavaExpr makeCallInvoke(
-    @NotNull ExprBuilder builder,
+  public static @NotNull AstVariable makeCallInvoke(
+    @NotNull AstCodeBuilder builder,
     @NotNull MethodRef ref,
-    @NotNull JavaExpr instance,
-    @NotNull JavaExpr normalizer,
-    @NotNull SeqView<JavaExpr> args
+    @NotNull AstVariable instance,
+    @NotNull AstVariable normalizer,
+    @NotNull SeqView<AstVariable> args
   ) {
     return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
   }
