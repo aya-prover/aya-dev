@@ -1,5 +1,48 @@
 # Early changelog
 
+## v0.39
+
+We have downgraded to Java 22 because there are breaking changes in terms of the compilation
+strategy for pattern matching, making the compiled code not runnable in the IntelliJ plugin.
+
+When IntelliJ upgrades to Java 25 LTS, we will follow up immediately. We have already upgraded
+gradle to 9.1.0, which supports running on Java 25.
+
+User-visible new features:
+
+- Supporting code for completion.
+- Maven portal migration. I feel like we just migrated to ossrh yesterday...
+- Supporting code for inlay hint for types of lambda parameters.
+- In the goal messages, when the context is empty, Aya no longer shows the `Context:` header.
+
+Less-visible new features:
+
+- Aya has `let` definitions in the core language now. Compared to using `(\x. v) u`,
+  the `let x := u in v` avoids creating a closure and guarantees call-by-value.
+  Furthermore, the `tailrec` optimization is aware of let expressions.
+- The JIT compiler now generates A-Normal Form IR, which is similar to 3-address code.
+  This will open the door for dataflow analysis in the future, and it interacts nicely
+  with `let` expressions in the core language.
+- There are two cases where the elaborator generates `let` expressions:
+  1. For pattern matching definitions, we `let`-bind the variables from original
+     signature as the patterns.
+  2. When users write `let` definitions in Aya source code.
+- We completely overhauled the normalizer. Before, it has a cringe way of reusing some
+  traversal logic, which is slightly incorrect. We no longer do that and instead we
+  case on the term former first, then for each case we do the right thing. This is
+  closer to a faithful implementation of rule-based stepping.
+- Parsing of nested structures (Pi, lambda, let, etc.) should be slightly faster.
+
+Completely invisible changes:
+
+- We now make sure to normalize terms only when there are no De-Bruijn indices in them.
+  It is incorrect otherwise, but we are not doing sufficiently complicated normalization
+  to trigger this bug before.
+- We now use gradle test suites to manage junit dependencies.
+
+Apart from all those, there are bug fixes in the JIT compiler and pusheen in pattern
+matching elaboration.
+
 ## v0.38
 
 We are now living on Java 24!

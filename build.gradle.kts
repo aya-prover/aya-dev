@@ -12,7 +12,7 @@ plugins {
   `maven-publish`
   signing
   alias(libs.plugins.jlink) apply false
-  id("com.gradleup.nmcp.aggregation").version("1.0.1")
+  id("com.gradleup.nmcp.aggregation").version("1.2.0")
 }
 
 var projectVersion: String by rootProject.ext
