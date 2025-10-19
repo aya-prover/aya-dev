@@ -36,7 +36,7 @@ import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
-public final class TermSerializer extends AbstractExprSerializer<Term> {
+public class TermSerializer extends AbstractExprSerializer<Term> {
   public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
 
