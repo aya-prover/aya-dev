@@ -11,7 +11,6 @@ import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.BetaRedex;
-import org.aya.util.IterableUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -41,15 +40,12 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
   public record Unlet(@NotNull ImmutableSeq<LetFreeTerm> definedAs, @NotNull Term body) {
   }
 
-  /// Extract the inner most body of [this] [LetTerm], be aware that the returned [Term] is [Bound].
+  /// Extract the innermost body of `this` [LetTerm], be aware that the returned [Term] is [Bound].
   public static @NotNull @Bound Term unletBody(Term term) {
-    if (!(term instanceof LetTerm let)) return term;
-    var view = IterableUtil.of(IterableUtil.<Term>generator(let, t -> {
-      if (t instanceof LetTerm l) return l.body().unwrap();
-      return null;
-    }));
-
-    return view.getLast();
+    while ((term instanceof LetTerm let)) {
+      term = let.body().unwrap();
+    }
+    return term;
   }
 
   public @NotNull Unlet unlet(@NotNull Renamer nameGen) {
