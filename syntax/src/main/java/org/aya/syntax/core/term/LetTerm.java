@@ -42,9 +42,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
 
   /// Extract the innermost body of `this` [LetTerm], be aware that the returned [Term] is [Bound].
   public static @NotNull @Bound Term unletBody(Term term) {
-    while ((term instanceof LetTerm let)) {
-      term = let.body().unwrap();
-    }
+    while (term instanceof LetTerm let) term = let.body().unwrap();
     return term;
   }
 

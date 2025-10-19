@@ -8,7 +8,6 @@ import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
@@ -16,7 +15,6 @@ import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.LetTerm;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.FnCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,33 +72,6 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull AstVariable normalizer,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    final class TailRecTermSerializer extends TermSerializer {
-      public TailRecTermSerializer(@NotNull AstCodeBuilder builder, @NotNull SerializerContext context, @NotNull ImmutableSeq<AstVariable> instantiates) {
-        super(builder, context, instantiates);
-      }
-
-      /// Assumption: `term.tailCall() == true` implies `unit == term.ref()`
-      @Override
-      protected @NotNull AstVariable doSerialize(@NotNull Term term) {
-        if (term instanceof FnCall call && call.tailCall()) {
-          var args = call.args().map(this::doSerialize);
-          // call.tailCall() == true means:
-          // * [call] is the body of [unit]
-          // * [call] is the let body of some let which is the body of [unit]
-          // thus the returned [AstVariable] is used by caller, and we can return a dummy caller as long as the caller never uses it.
-          assert argTerms.size() == args.size();
-          // Will cause conflict in theory, but won't in practice due to current local variable
-          // declaration heuristics.
-          argTerms.forEachWith(args, (a, b) ->
-            builder.updateVar(a, new AstExpr.Ref(b)));
-          builder.continueLoop();
-          return new AstVariable.Local(-1);
-        } else {
-          return super.doSerialize(term);
-        }
-      }
-    }
-
     Consumer<AstCodeBuilder> buildFn = builder -> {
       Consumer<AstCodeBuilder> onStuckCon = cb -> {
         var stuckTerm = TermSerializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms);
@@ -123,10 +94,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           var ser = new PatternCompiler(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternCompiler.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-            if (LetTerm.unletBody(matching.body()) instanceof FnCall call && call.tailCall()) {
-              var te = new TailRecTermSerializer(builder0, serializerContext, patSer.result.view().take(count).toSeq());
-              var dummy = te.serialize(matching.body());
-              assert dummy instanceof AstVariable.Local(int index) && index == -1;
+              if (LetTerm.unletBody(matching.body()) instanceof FnCall call && call.tailCall()) {
+                var te = new TermSerializer(builder0, serializerContext, argTerms, patSer.result.view().take(count).toSeq());
+                var dummy = te.serialize(matching.body());
+                assert dummy instanceof AstVariable.Local(int index) && index == -1;
               } else {
                 var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
                   .take(count)
