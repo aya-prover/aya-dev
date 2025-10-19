@@ -2,7 +2,7 @@
 # The Version of this project, aka, The Aya Theorem Prover.
 # Remove "-SNAPSHOT" suffix and run gradle publish to release a new version.
 # After that, increase the version number and add "-SNAPSHOT" suffix back for next cycle.
-project = "0.39.0-SNAPSHOT"
+project = "0.39.0"
 
 # https://openjdk.org/
 java = "22"
@@ -24,7 +24,7 @@ gson = "2.13.2"
 # https://github.com/beryx/badass-jlink-plugin
 jlink = "3.1.3"
 # https://github.com/jacoco/jacoco
-jacoco = "0.8.13"
+jacoco = "0.8.14"
 
 [plugins]
 jlink = { id = "org.beryx.jlink", version.ref = "jlink" }
