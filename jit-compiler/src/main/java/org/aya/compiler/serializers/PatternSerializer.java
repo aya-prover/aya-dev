@@ -23,12 +23,12 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
   }
 
   private @NotNull AstVariable serializeTerm(@NotNull Term term) {
-    return new TermSerializer(builder, context, ImmutableSeq.empty(), allowLocalTerm)
+    return new TermSerializer(builder, context, null, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 
   private @NotNull AstVariable serializeConHead(@NotNull ConCallLike.Head head) {
-    var termSer = new TermSerializer(builder, context, ImmutableSeq.empty(), allowLocalTerm);
+    var termSer = new TermSerializer(builder, context, null, ImmutableSeq.empty(), allowLocalTerm);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
       getInstance(head.ref()),

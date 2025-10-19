@@ -26,16 +26,24 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     return update(f.apply(0, definedAs), body.descent(f));
   }
 
-  @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
+  /// @apiNote this [LetTerm] must be [Closed]
+  @Override public @NotNull @Closed Term make(@NotNull UnaryOperator<@Closed Term> mapper) {
+    // [body] and [definedAs] are closed since [this] is [Closed], thus [body.apply(definedAs)] is also closed.
     return mapper.apply(body.apply(definedAs));
   }
 
-  public static @NotNull Term makeAll(@NotNull Term term) {
+  public static @NotNull @Closed Term makeAll(@NotNull @Closed Term term) {
     if (term instanceof LetTerm l) l.make(LetTerm::makeAll);
     return term;
   }
 
   public record Unlet(@NotNull ImmutableSeq<LetFreeTerm> definedAs, @NotNull Term body) {
+  }
+
+  /// Extract the innermost body of `this` [LetTerm], be aware that the returned [Term] is [Bound].
+  public static @NotNull @Bound Term unletBody(Term term) {
+    while (term instanceof LetTerm let) term = let.body().unwrap();
+    return term;
   }
 
   public @NotNull Unlet unlet(@NotNull Renamer nameGen) {

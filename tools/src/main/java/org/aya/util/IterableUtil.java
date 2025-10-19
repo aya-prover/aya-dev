@@ -2,10 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import org.jetbrains.annotations.NotNull;
 
 public interface IterableUtil {
   static <T> void forEach(@NotNull Iterable<T> it, @NotNull BiConsumer<T, T> separator, @NotNull Consumer<T> run) {

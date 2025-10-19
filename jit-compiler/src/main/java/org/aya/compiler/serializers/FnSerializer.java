@@ -8,7 +8,6 @@ import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
@@ -95,16 +94,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
           var ser = new PatternCompiler(argTerms, onStuckCon, serializerContext, unit.is(Modifier.Overlap));
           ser.serialize(builder, clauses.matchingsView().map(matching -> new PatternCompiler.Matching(
               matching.bindCount(), matching.patterns(), (patSer, builder0, count) -> {
-              if (LetTerm.makeAll(matching.body()) instanceof FnCall call && call.tailCall()) {
-                var args = serializerContext.serializeTailCallUnderTele(builder0, call, patSer.result.view()
-                  .take(count)
-                  .toSeq());
-                assert argTerms.size() == args.size();
-                // Will cause conflict in theory, but won't in practice due to current local variable
-                // declaration heuristics.
-                argTerms.forEachWith(args, (a, b) ->
-                  builder0.updateVar(a, new AstExpr.Ref(b)));
-                builder0.continueLoop();
+              if (LetTerm.unletBody(matching.body()) instanceof FnCall call && call.tailCall()) {
+                var te = new TermSerializer(builder0, serializerContext, argTerms, patSer.result.view().take(count).toSeq());
+                var dummy = te.serialize(matching.body());
+                assert dummy instanceof AstVariable.Local(int index) && index == -1;
               } else {
                 var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
                   .take(count)

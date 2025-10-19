@@ -96,7 +96,7 @@ public abstract class ClassTargetSerializer<T> {
     @NotNull Term term,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    return new TermSerializer(builder, buildSerializerContext(), argTerms)
+    return new TermSerializer(builder, buildSerializerContext(), null, argTerms)
       .serialize(term);
   }
 

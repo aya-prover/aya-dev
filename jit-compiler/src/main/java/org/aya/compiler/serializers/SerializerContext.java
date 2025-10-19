@@ -7,7 +7,6 @@ import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.FnCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,29 +20,14 @@ public record SerializerContext(
     @NotNull Term term,
     @NotNull ImmutableSeq<AstVariable> argTerms
   ) {
-    return new TermSerializer(builder, this, argTerms)
+    return new TermSerializer(builder, this, null, argTerms)
       .serialize(term);
-  }
-
-  public @NotNull ImmutableSeq<AstVariable> serializeTailCallUnderTele(
-    @NotNull AstCodeBuilder builder,
-    @NotNull FnCall term,
-    @NotNull ImmutableSeq<AstVariable> argTerms
-  ) {
-    return new TermSerializer(builder, this, argTerms).serializeTailCall(term);
-  }
-
-  public @NotNull AstVariable serializeTermUnderTele(
-    @NotNull AstCodeBuilder builder, @NotNull Term term,
-    @NotNull AstVariable argsTerm, int size
-  ) {
-    return serializeTermUnderTele(builder, term, AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, argsTerm, size));
   }
 
   /**
    * Apply {@link #normalizer} to {@param term}, note that this method may introduce statements (i.e. variable declaration).
    *
-   * @return the java expr of whnfed term
+   * @return the java expr of wh-normalized term
    */
   public @NotNull AstVariable whnf(@NotNull AstCodeBuilder builder, @NotNull AstVariable term) {
     if (normalizer == null) return term;

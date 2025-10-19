@@ -21,6 +21,10 @@ import java.util.function.UnaryOperator;
 /// Note that you shouldn't supply a [LocalTerm] to "DeBruijn Index"-lize a [Closure],
 /// since it may contain another [Closure], the safe way is to supply a [FreeTerm] then bind it,
 /// see [#toLocns()]
+///
+/// ## Db-closeness
+/// Db-closeness annotations can also apply to [Closure], we consider a [Closure] is [Closed]
+/// if for any [Closed] [Term] `t`, `this.apply(t)` is [Closed], otherwise, we say this [Closure] is [Bound].
 public sealed interface Closure extends UnaryOperator<Term> {
   static @NotNull Closure mkConst(@NotNull Term term) { return new Const(term); }
 
@@ -38,6 +42,15 @@ public sealed interface Closure extends UnaryOperator<Term> {
 
   default @NotNull Closure.Locns toLocns() {
     return reapply(UnaryOperator.identity());
+  }
+
+  /// @return the inner [Term] directly
+  default @NotNull @Bound Term unwrap() {
+    return switch (this) {
+      case Const aConst -> aConst.term();
+      case Jit jit -> jit.toLocns().body();
+      case Locns locns -> locns.body();
+    };
   }
 
   /// Perform operation on a `Closure` in a safe manner

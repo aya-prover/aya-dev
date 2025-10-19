@@ -12,6 +12,7 @@ import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.ast.AstArgsProvider;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
@@ -26,6 +27,7 @@ import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.util.function.BiFunction;
@@ -36,10 +38,12 @@ import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
 /**
  * Build the "constructor form" of {@link Term}, but in Java.
  */
-public final class TermSerializer extends AbstractExprSerializer<Term> {
+public class TermSerializer extends AbstractExprSerializer<Term> {
   public static final @NotNull FieldRef TYPE0_FIELD = FreeJavaResolver.resolve(SortTerm.class, "Type0");
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
 
+  /// Parameters of the function being serialized, if not null
+  private final @Nullable ImmutableSeq<AstVariable> argTerms;
   /// Terms that should be instantiated
   private final @NotNull ImmutableSeq<AstVariable> instantiates;
   private final @NotNull MutableLinkedHashMap<LocalVar, AstVariable> binds;
@@ -50,18 +54,21 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
   public TermSerializer(
     @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
+    @Nullable ImmutableSeq<AstVariable> argTerms,
     @NotNull ImmutableSeq<AstVariable> instantiates
   ) {
-    this(builder, context, instantiates, false);
+    this(builder, context, argTerms, instantiates, false);
   }
 
   public TermSerializer(
     @NotNull AstCodeBuilder builder,
     @NotNull SerializerContext context,
+    @Nullable ImmutableSeq<AstVariable> argTerms,
     @NotNull ImmutableSeq<AstVariable> instantiates,
     boolean allowLocalTerm
   ) {
     super(builder, context);
+    this.argTerms = argTerms;
     this.instantiates = instantiates;
     this.allowLocalTerm = allowLocalTerm;
     this.binds = MutableLinkedHashMap.of();
@@ -76,6 +83,7 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
     super(builder, context);
     this.instantiates = ImmutableSeq.empty();
     this.binds = newBinds;
+    this.argTerms = null;
     this.allowLocalTerm = allowLocalTerm;
   }
 
@@ -178,6 +186,21 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
         builder.iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
+      /// Assumption: `term.tailCall() == true` implies `unit == term.ref()`
+      case FnCall call when argTerms != null && call.tailCall() -> {
+        var args = call.args().map(this::doSerialize);
+        // call.tailCall() == true means:
+        // * [call] is the body of [unit]
+        // * [call] is the let body of some let which is the body of [unit]
+        // thus the returned [AstVariable] is used by caller, and we can return a dummy caller as long as the caller never uses it.
+        assert argTerms.size() == args.size();
+        // Will cause conflict in theory, but won't in practice due to current local variable
+        // declaration heuristics.
+        argTerms.forEachWith(args, (a, b) ->
+          builder.updateVar(a, new AstExpr.Ref(b)));
+        builder.continueLoop();
+        yield new AstVariable.Local(-1);
+      }
       case FnCall(var ref, var ulift, var args, _) ->
         buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
@@ -268,7 +291,7 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
       case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
       case LetTerm(var definedAs, var body) -> {
         var defVar = new LocalVar("<let>");
-        var letDef = serialize(definedAs);
+        var letDef = doSerialize(definedAs);
         yield with(defVar, letDef, () -> doSerialize(body.apply(defVar)));
       }
     };
@@ -361,13 +384,5 @@ public final class TermSerializer extends AbstractExprSerializer<Term> {
     vars.forEachWith(instantiates, binds::put);
 
     return doSerialize(unit);
-  }
-  public @NotNull ImmutableSeq<AstVariable> serializeTailCall(@NotNull FnCall unit) {
-    binds.clear();
-    var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
-    var instantiated = (FnCall) unit.instTeleVar(vars.view());
-    vars.forEachWith(instantiates, binds::put);
-
-    return instantiated.args().map(this::doSerialize);
   }
 }
