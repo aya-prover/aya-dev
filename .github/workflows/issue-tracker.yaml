@@ -1,22 +1,43 @@
 name: issue tracker
 on:
+  push:
+    branches:
+      - main
   issues:
     types:
       - opened
 
 jobs:
+  check-aya-version:
+    uses: aya-prover/aya-dev/.github/workflows/extract-version.yaml@main
   issue-tracker:
-    if: ${{ startsWith(github.event.issue.body, '<!-- ISSUE TRACKER ENABLE -->') }}
+    needs: [check-aya-version]
+    if: ${{ github.event.issue == null || startsWith(github.event.issue.body, '<!-- ISSUE TRACKER ENABLE -->') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
     steps:
-      - name: Setup Aya
-        uses: 'HoshinoTented/setup-aya@v1'
+      - name: Restore Aya
+        id: restore-aya
+        uses: 'actions/cache@v4'
         with:
-          # Also, we can reuse previously build aya
-          refs: 'main'
+          path: ./cli-fatjar.jar
+          key: nightly-build
+      - name: Download Nightly Build
+        if: steps.restore-aya.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/aya-prover/aya-dev/releases/download/nightly-build/cli-fatjar.jar
+      - name: Install Aya Tool Cache
+        run: |
+          ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
+          TC_ROOT=$RUNNER_TOOL_CACHE/aya/$PROJECT_VERSION/$ARCH
+          mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
+      - name: Setup Java ${{ needs.check-aya-version.outputs.javaVersion }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'liberica'
+          java-version: ${{ needs.check-aya-version.outputs.javaVersion }}
       - name: Run Issue Tracker
         uses: 'HoshinoTented/issue-tracker@v1'
         with:

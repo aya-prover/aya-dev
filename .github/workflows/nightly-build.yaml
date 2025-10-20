@@ -89,6 +89,15 @@ jobs:
           cp ./ide-lsp/build/libs/*-fat.jar ./lsp-fatjar.jar
           cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
 
+      - name: Cache fat jar
+        if: matrix.os == 'ubuntu-latest'
+        id: cache-aya
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ./cli-fatjar.jar
+          key: nightly-build
+
       - name: Get current date
         id: date
         run: echo "MY_DATE=$(date +%Y/%m/%d-%H:%M)" >> $GITHUB_ENV
@@ -107,16 +116,3 @@ jobs:
           assets: lsp-fatjar.jar;cli-fatjar.jar;${{ steps.collect_jlinkAyaZip.outputs.jlinkFiles }}
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
-      - name: Install Built Aya
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
-          TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ needs.check-aya-version.outputs.projectVersion }}/$ARCH
-          mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
-          echo "Aya is installed at $TC_ROOT"
-      - name: Run Issue Tracker
-        if: matrix.os == 'ubuntu-latest'
-        uses: 'HoshinoTented/issue-tracker@v1'
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue: ${{ github.event.issue.number }}
