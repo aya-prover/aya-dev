@@ -116,3 +116,6 @@ jobs:
           assets: lsp-fatjar.jar;cli-fatjar.jar;${{ steps.collect_jlinkAyaZip.outputs.jlinkFiles }}
           replace_assets: true
           github_token: ${{ secrets.GH_TOKEN }}
+  issue-tracker:
+    needs: [nightly-build]
+    uses: aya-prover/aya-dev/.github/workflows/issue-tracker.yaml@main

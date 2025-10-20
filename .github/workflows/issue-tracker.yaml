@@ -1,11 +1,9 @@
 name: issue tracker
 on:
-  push:
-    branches:
-      - main
   issues:
     types:
       - opened
+  workflow_call:
 
 jobs:
   issue-tracker:

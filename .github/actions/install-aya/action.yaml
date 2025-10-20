@@ -4,8 +4,6 @@ runs:
   using: composite
   steps:
     - uses: actions/checkout@v4
-      with:
-        repository: aya-prover/aya-dev
     # TODO: How to unify with extract-version.yaml?
     - name: Extract versions from Gradle's libs.versions.toml
       id: extract-version
