@@ -10,19 +10,38 @@ import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.ThrowingReporter;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class IssueTrackerTest {
   @Test
   public void testParse() throws Exception {
     var source = SourceFile.from("Template.md", TestRunner.TEST_DIR.resolve("issue-tracker/Template.md"));
-    var result = Objects.requireNonNull(
-      new IssueParser(source, new ThrowingReporter(AyaPrettierOptions.debug())).parse()
-    );
+    var wd = Path.of("build/issue-tracker");
+    IssueSetup.run(source, wd, new ThrowingReporter(AyaPrettierOptions.debug()));
 
-    var files = result.files();
+    var metadata = Files.readString(wd.resolve(IssueSetup.METADATA_FILE));
+    assertEquals("""
+      {
+        "version": {
+          "major": 0,
+          "minor": 39,
+          "patch": 0,
+          "snapshot": false,
+          "hash": null,
+          "java": -1
+        },
+        "files": [
+          "foo.aya"
+        ]
+      }""", metadata);
 
-    IssueSetup.setup(files, Path.of("build/issue-tracker"));
+    var fooAya = Files.readString(wd.resolve("src").resolve("foo.aya"));
+    assertEquals("""
+      inductive Nat | zro | suc Nat
+      
+      def what => 0""", fooAya);
   }
 }

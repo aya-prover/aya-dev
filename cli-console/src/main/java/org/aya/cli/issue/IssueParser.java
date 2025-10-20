@@ -20,14 +20,26 @@ import java.util.regex.Pattern;
 public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter reporter) {
   /// @param name with postfix, in fact, this can be a path, such as `bar/foo.aya`
   public record File(@Nullable String name, @NotNull String content) { }
-  public record Version(int major, int minor, boolean snapshot, @Nullable String hash) {
+  public record Version(int major, int minor, int patch, boolean snapshot, @Nullable String hash, int java) {
+    public Version {
+      // java == -1 implies hash not null
+      assert java == -1 || hash != null;
+    }
+
     public @NotNull String versionNumber() {
-      return major + "." + minor;
+      return major + "." + minor + "." + patch;
     }
 
     @Override
     public @NotNull String toString() {
-      return versionNumber() + (snapshot ? "-SNAPSHOT" : "") + (hash == null ? "" : " (" + hash + ")");
+      var versionPostfix = java == -1
+        ? ""
+        : ", jdk " + java;
+      var hashAndVersion = hash == null
+        ? ""
+        : "(" + hash + versionPostfix + ")";
+
+      return versionNumber() + (snapshot ? "-SNAPSHOT" : "") + hashAndVersion;
     }
   }
 
@@ -37,7 +49,8 @@ public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter repor
     VERSION, FILES
   }
 
-  public static final @NotNull Pattern VERSION_PATTERN = Pattern.compile("(\\d+).(\\d+)(-SNAPSHOT)?( \\([a-z\\d]{16}\\))?");
+  // Aya v<MAJOR>.<MINOR>.<PATCH>-SNAPSHOT (<COMMIT HASH>, jdk <JAVA VERSION>)
+  public static final @NotNull Pattern VERSION_PATTERN = Pattern.compile("(?:Aya v?)?(\\d+)\\.(\\d+)(?:\\.(\\d+))?(-SNAPSHOT)?(?: \\(([a-z0-9]{40})(?:, jdk (\\d+))?\\))?");
 
   // TODO: less functional, use mutability
   // TODO: not sure if we really need to parse markdown
@@ -136,10 +149,14 @@ public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter repor
     if (matcher.find()) {
       var major = Integer.parseInt(matcher.group(1));
       var minor = Integer.parseInt(matcher.group(2));
-      var isSnapshot = matcher.group(3) != null;
-      var commit = matcher.group(4);
+      var rawPatch = matcher.group(3);
+      var patch = rawPatch == null ? 0 : Integer.parseInt(rawPatch);
+      var isSnapshot = matcher.group(4) != null;
+      var commit = matcher.group(5);
+      var rawJavaVersion = matcher.group(6);
+      var javaVersion = rawJavaVersion == null ? -1 : Integer.parseInt(rawJavaVersion);
 
-      return new Version(major, minor, isSnapshot, commit);
+      return new Version(major, minor, patch, isSnapshot, commit, javaVersion);
     }
 
     return null;

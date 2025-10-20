@@ -43,6 +43,7 @@ aya-jbmd-ext = { group = "org.aya-prover.upstream", name = "jb-md-ij", version.r
 kala-base = { group = "org.glavo.kala", name = "kala-base", version.ref = "kala" }
 kala-collection = { group = "org.glavo.kala", name = "kala-collection", version.ref = "kala" }
 kala-common = { group = "org.glavo.kala", name = "kala-common", version.ref = "kala" }
+kala-gson = { group = "org.glavo.kala", name = "kala-common-gson", version.ref = "kala" }
 
 picocli-runtime = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 picocli-codegen = { group = "info.picocli", name = "picocli-codegen", version.ref = "picocli" }

@@ -13,7 +13,7 @@ What Version: 114514
 In `foo.aya`:
 
 ```aya
-inductive Nat | zro | suc
+inductive Nat | zro | suc Nat
 
 def what => 0
 ```

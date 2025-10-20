@@ -11,6 +11,7 @@ module aya.cli.console {
   requires aya.producer;
   requires com.google.errorprone.annotations;
   requires org.jetbrains.annotations;
+  requires kala.common.gson;
 
   exports org.aya.cli.plct;
   exports org.aya.cli.repl;
