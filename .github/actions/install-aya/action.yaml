@@ -1,0 +1,46 @@
+name: Install Nightly Aya
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: aya-prover/aya-dev
+    # TODO: How to unify with extract-version.yaml?
+    - name: Extract versions from Gradle's libs.versions.toml
+      id: extract-version
+      shell: bash
+      run: |
+        # We use `head -n1` to select the first line matching the regex, 
+        # so be sure to put these versions in the very beginning of the file.
+        projectVersion=$(cat ./gradle/libs.versions.toml | grep -Po 'project(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+        javaVersion=$(cat ./gradle/libs.versions.toml | grep -Po 'java(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+
+        isSnapshot="$(echo "$projectVersion" | grep -q "SNAPSHOT" && echo true || echo false)"
+        echo "Detected Project version: $projectVersion, is snapshot: $isSnapshot, Java version: $javaVersion"
+
+        echo "projectVersion=${projectVersion}" >> $GITHUB_OUTPUT
+        echo "isSnapshot=${isSnapshot}" >> $GITHUB_OUTPUT
+        echo "javaVersion=${javaVersion}" >> $GITHUB_OUTPUT
+    - name: Restore Aya
+      id: restore-aya
+      uses: 'actions/cache@v4'
+      with:
+        path: ./cli-fatjar.jar
+        key: nightly-build
+    - name: Download Nightly Build
+      if: steps.restore-aya.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        wget https://github.com/aya-prover/aya-dev/releases/download/nightly-build/cli-fatjar.jar
+    - name: Install Aya Tool Cache
+      shell: bash
+      run: |
+        ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
+        TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ steps.extract-version.outputs.projectVersion }}/$ARCH
+        mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
+    - name: Setup Java ${{ steps.extract-version.outputs.javaVersion }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'liberica'
+        java-version: ${{ steps.extract-version.outputs.javaVersion }}

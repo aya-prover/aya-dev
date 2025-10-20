@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import kala.collection.immutable.ImmutableSeq;
 import kala.gson.collection.CollectionTypeAdapter;
 import org.aya.generic.Constants;
+import org.aya.util.FileUtil;
 import org.aya.util.position.SourceFile;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,10 @@ public class IssueSetup {
   }
 
   public static void setup(@NotNull ImmutableSeq<IssueParser.File> files, @NotNull Path testDir) throws IOException {
+    // TODO: improve user experience
+    if (!FileUtil.isClean(testDir))
+      throw new IllegalArgumentException("The working directory " + testDir + " is not empty.");
+
     var sourceRoot = testDir.resolve("src").normalize();
     sourceRoot.toFile().mkdirs();
 
