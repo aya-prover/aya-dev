@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class IssueTrackerTest {
   @Test
@@ -43,5 +44,19 @@ public class IssueTrackerTest {
       inductive Nat | zro | suc Nat
       
       def what => 0""", fooAya);
+  }
+
+  @Test
+  public void testDevil() {
+    var base = Path.of("src");
+
+    var file = new IssueParser.File("../../../../../../etc/shadow", "");
+    assertNull(file.getValidFileName(base));
+
+    file = new IssueParser.File("/root", "");
+    assertNull(file.getValidFileName(base));
+
+    file = new IssueParser.File("arith/nat/base.aya", "");
+    assertEquals(Path.of("src/arith/nat/base.aya"), file.getValidFileName(base));
   }
 }

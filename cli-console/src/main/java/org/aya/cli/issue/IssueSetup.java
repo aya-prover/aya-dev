@@ -49,17 +49,20 @@ public class IssueSetup {
   }
 
   public static void setup(@NotNull ImmutableSeq<IssueParser.File> files, @NotNull Path testDir) throws IOException {
-    var sourceRoot = testDir.resolve("src");
+    var sourceRoot = testDir.resolve("src").normalize();
     sourceRoot.toFile().mkdirs();
 
     files.forEachChecked(file -> {
-      var fileName = file.name();
-      if (fileName == null) fileName = UUID.randomUUID().toString().replace("-", "") + Constants.AYA_POSTFIX;
+      // the only case that [resolvedFile] escaped is that we have a symbolic link under [sourceRoot]
+      var resolvedFile = file.getValidFileName(sourceRoot);
 
-      var path = Path.of(fileName);
-      var theFile = sourceRoot.resolve(path);
-      theFile.getParent().toFile().mkdirs();
-      Files.writeString(theFile, file.content());
+      if (file.name() == null || resolvedFile == null) {
+        var fileName = UUID.randomUUID().toString().replace("-", "") + Constants.AYA_POSTFIX;
+        resolvedFile = sourceRoot.resolve(fileName).normalize();
+      }
+
+      resolvedFile.getParent().toFile().mkdirs();
+      Files.writeString(resolvedFile, file.content());
     });
 
     var ayaJson = testDir.resolve(Constants.AYA_JSON);
