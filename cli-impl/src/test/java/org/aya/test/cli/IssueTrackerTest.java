@@ -56,6 +56,14 @@ public class IssueTrackerTest {
     assertThrows(IllegalArgumentException.class, () -> {
       IssueSetup.run(source, WORKING_DIRECTORY, new ThrowingReporter(AyaPrettierOptions.debug()));
     });
+
+    // test on directory with no child
+
+    FileUtil.deleteRecursively(WORKING_DIRECTORY);
+    WORKING_DIRECTORY.toFile().mkdirs();
+
+    // no exception is okay
+    IssueSetup.run(source, WORKING_DIRECTORY, new ThrowingReporter(AyaPrettierOptions.debug()));
   }
 
   @Test
