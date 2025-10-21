@@ -16,12 +16,28 @@ import java.lang.constant.ClassDesc;
 
 // TODO: consider [AstExpr#type]
 public sealed interface AstExpr extends Docile {
-  default @Override @NotNull Doc toDoc() {
-    return Doc.plain("<unimplemented pretty print>");
+  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(
+        Doc.styled(BasePrettier.KEYWORD, "new"),
+        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstVariable::toDoc)))
+      );
+    }
   }
-  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
+
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
-                @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
+                @NotNull ImmutableSeq<AstVariable> args) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      Doc ownerDoc = owner != null
+        ? owner.toDoc()
+        : Doc.plain(methodRef.owner().displayName());
+      return Doc.sep(
+        Doc.styled(BasePrettier.KEYWORD, "invoke"),
+        Doc.cat(ownerDoc, Doc.plain("."), Doc.plain(methodRef.name())),
+        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstVariable::toDoc)))
+      );
+    }
+  }
 
   record Ref(@NotNull AstVariable variable) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
@@ -39,9 +55,22 @@ public sealed interface AstExpr extends Docile {
     }
   }
 
-  record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr { }
+  record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.plain(enumClass.displayName() + "." + enumName);
+    }
+  }
+
   record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,
-                @NotNull ImmutableSeq<AstStmt> body) implements AstExpr { }
+                @NotNull ImmutableSeq<AstStmt> body) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.vcat(
+        Doc.sep(
+          Doc.styled(BasePrettier.KEYWORD, "lambda capturing "),
+          Doc.commaList(captures.view().map(AstVariable::toDoc))),
+        Doc.nest(2, Doc.vcat(body.view().map(AstStmt::toDoc))));
+    }
+  }
 
   sealed interface Const extends AstExpr { }
   record Iconst(int value) implements Const {
@@ -72,7 +101,24 @@ public sealed interface AstExpr extends Docile {
   }
 
   record Array(@NotNull ClassDesc type, int length,
-               @Nullable ImmutableSeq<AstVariable> initializer) implements AstExpr { }
+               @Nullable ImmutableSeq<AstVariable> initializer) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      var header = Doc.sep(
+        Doc.styled(BasePrettier.KEYWORD, "array"),
+        Doc.plain(type.displayName()),
+        Doc.plain("[" + length + "]"));
+      if (initializer == null) return header;
+      if (initializer.sizeLessThanOrEquals(10))
+        return Doc.sep(
+          header,
+          Doc.commaList(initializer.view().map(AstVariable::toDoc)));
+      else return Doc.vcat(
+        header,
+        Doc.styled(BasePrettier.KEYWORD, "elements"),
+        Doc.nest(2, Doc.commaList(initializer.view().map(AstVariable::toDoc)))
+      );
+    }
+  }
 
   record GetArray(@NotNull AstVariable array, int index) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
