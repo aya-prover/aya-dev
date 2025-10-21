@@ -1,0 +1,35 @@
+inputs:
+  version-file:
+    description: "The path to 'libs.versions.toml', default to './gradle/libs.versions.toml'"
+    default: './gradle/libs.versions.toml'
+
+outputs:
+  projectVersion:
+    description: "The version of this project"
+    value: ${{ steps.check.outputs.projectVersion }}
+  isSnapshot:
+    description: "Whether this is a snapshot build"
+    value: ${{ steps.check.outputs.isSnapshot }}
+  javaVersion:
+    description: "The Java version required to build this project"
+    value: ${{ steps.check.outputs.javaVersion }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract versions from Gradle's libs.versions.toml
+      id: check
+      shell: bash
+      run: |
+        TOML_FILE="${{ inputs.version-file }}"
+        # We use `head -n1` to select the first line matching the regex, 
+        # so be sure to put these versions in the very beginning of the file.
+        projectVersion=$(cat $TOML_FILE | grep -Po 'project(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+        javaVersion=$(cat $TOML_FILE | grep -Po 'java(\s*)=(\s*)"\K.*?(?=")' | head -n1)
+        
+        isSnapshot="$(echo "$projectVersion" | grep -q "SNAPSHOT" && echo true || echo false)"
+        echo "Detected Project version: $projectVersion, is snapshot: $isSnapshot, Java version: $javaVersion"
+        
+        echo "projectVersion=${projectVersion}" >> $GITHUB_OUTPUT
+        echo "isSnapshot=${isSnapshot}" >> $GITHUB_OUTPUT
+        echo "javaVersion=${javaVersion}" >> $GITHUB_OUTPUT
