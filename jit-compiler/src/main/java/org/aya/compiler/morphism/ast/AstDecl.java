@@ -5,6 +5,8 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.aya.syntax.compile.AyaMetadata;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,12 @@ public sealed interface AstDecl {
   record Method(
     @NotNull MethodRef signature,
     @NotNull ImmutableSeq<AstStmt> body
-  ) implements AstDecl { }
+  ) implements AstDecl, Docile {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.vcat(signature.toDoc(),
+        Doc.nest(2, Doc.vcat(body.view().map(AstStmt::toDoc))));
+    }
+  }
 
   /// Used for initializing constant, static fields
   record StaticInitBlock(@NotNull ImmutableSeq<AstStmt> body) implements AstDecl { }

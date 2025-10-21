@@ -83,6 +83,8 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
       ReplCommands.TOGGLE_PRETTY,
       ReplCommands.SHOW_TYPE,
       ReplCommands.SHOW_MCT,
+      ReplCommands.SHOW_ANF,
+      ReplCommands.SHOW_OPT_ANF,
       ReplCommands.SHOW_INFO,
       ReplCommands.SHOW_PARSE_TREE,
       ReplCommands.CHANGE_PP_WIDTH,
@@ -121,7 +123,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
 
   @Override public void run() {
     if (!config.quiet) {
-      println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH
+      println("Aya v" + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH
         + ", jdk " + GeneratedVersion.JDK_VERSION + ")");
       var hint = hintMessage();
       if (hint != null) println(hint);

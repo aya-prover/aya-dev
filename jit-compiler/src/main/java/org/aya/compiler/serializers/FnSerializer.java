@@ -3,15 +3,18 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstDecl;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
+import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.LetTerm;
@@ -22,6 +25,9 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.EnumSet;
 import java.util.function.Consumer;
+
+import static org.aya.compiler.morphism.Constants.CD_Term;
+import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -54,8 +60,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull ImmutableSeq<AstVariable> args
   ) {
     var ref = new MethodRef(
-      owner, "invoke", Constants.CD_Term,
-      InvokeSignatureHelper.parameters(ImmutableSeq.fill(args.size(), Constants.CD_Term).view()),
+      owner, "invoke", CD_Term,
+      InvokeSignatureHelper.parameters(ImmutableSeq.fill(args.size(), CD_Term).view()),
       false
     );
 
@@ -63,10 +69,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
   }
 
-  /**
-   * Build fixed argument `invoke`
-   */
-  private void buildInvoke(
+  /// Build fixed argument `invoke`
+  private void buildInvokeBody(
     @NotNull AstCodeBuilder topBuilder,
     @NotNull FnDef unit,
     @NotNull AstVariable normalizer,
@@ -117,6 +121,19 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     }
   }
 
+  /// @param unit must be elaborated
+  public @NotNull AstDecl.Method buildInvokeForPrettyPrint(@NotNull FnDef unit) {
+    var module = unit.ref().module;
+    assert module != null;
+    var desc = ClassDesc.of(getReference(module, null, NameSerializer.NameType.ClassName));
+    var classBuilder = new AstClassBuilder(null, desc, null, MutableMap.create(), JitUnit.class);
+    buildFixedInvoke(unit, classBuilder);
+    return classBuilder.members().view()
+      .filterIsInstance(AstDecl.Method.class)
+      .find(it -> "invoke".equals(it.signature().name()))
+      .get();
+  }
+
   /**
    * Build vararg `invoke`
    */
@@ -128,7 +145,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     @NotNull AstVariable argsTerm
   ) {
     var teleSize = unit.telescope().size();
-    var args = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, argsTerm, teleSize);
+    var args = AbstractExprSerializer.fromSeq(builder, CD_Term, argsTerm, teleSize);
     var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
     builder.returnWith(result);
   }
@@ -143,20 +160,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
   @Override public @NotNull FnSerializer serialize(@NotNull AstClassBuilder builder, FnDef unit) {
     buildFramework(builder, unit, builder0 -> {
-      var fixedInvoke = builder0.buildMethod(
-        Constants.CD_Term,
-        "invoke",
-        InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), Constants.CD_Term).view()),
-        (ap, cb) -> {
-          var pre = InvokeSignatureHelper.normalizer(ap);
-          var args = ImmutableSeq.fill(unit.telescope().size(),
-            i -> InvokeSignatureHelper.arg(ap, i));
-          buildInvoke(cb, unit, pre, args);
-        }
-      );
+      var fixedInvoke = buildFixedInvoke(unit, builder0);
 
       builder0.buildMethod(
-        Constants.CD_Term,
+        CD_Term,
         "invoke",
         InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_Seq).view()),
         (ap, cb) ->
@@ -165,5 +172,19 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     });
 
     return this;
+  }
+
+  private @NotNull MethodRef buildFixedInvoke(FnDef unit, AstClassBuilder builder) {
+    return builder.buildMethod(
+      CD_Term,
+      "invoke",
+      InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), CD_Term).view()),
+      (ap, cb) -> {
+        var pre = InvokeSignatureHelper.normalizer(ap);
+        var args = ImmutableSeq.fill(unit.telescope().size(),
+          i -> InvokeSignatureHelper.arg(ap, i));
+        buildInvokeBody(cb, unit, pre, args);
+      }
+    );
   }
 }
