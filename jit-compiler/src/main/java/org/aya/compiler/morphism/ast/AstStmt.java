@@ -63,8 +63,24 @@ public sealed interface AstStmt extends Docile {
   record IfThenElse(@NotNull Condition cond, @NotNull ImmutableSeq<AstStmt> thenBlock,
                     @Nullable ImmutableSeq<AstStmt> elseBlock) implements AstStmt { }
 
-  record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
-  record WhileTrue(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
+  record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(
+        Doc.styled(BasePrettier.KEYWORD, "breakable"),
+        Doc.nest(2, Doc.vcat(block.view().map(AstStmt::toDoc)))
+      );
+    }
+  }
+
+  record WhileTrue(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.vcat(
+        Doc.styled(BasePrettier.KEYWORD, "loop"),
+        Doc.nest(2, Doc.vcat(block.view().map(AstStmt::toDoc)))
+      );
+    }
+  }
+
   enum SingletonStmt implements AstStmt {
     Break,
     Continue,
@@ -98,14 +114,15 @@ public sealed interface AstStmt extends Docile {
           branchesDoc.set(i, Doc.sep(
             Doc.styled(BasePrettier.KEYWORD, "case"),
             Doc.plain(String.valueOf(cases.get(i))),
-            Doc.plain(": "),
+            Doc.symbol("->"),
             stmts.getFirst().toDoc()
           ));
         } else {
           branchesDoc.set(i, Doc.vcat(
             Doc.sep(
               Doc.styled(BasePrettier.KEYWORD, "case"),
-              Doc.plain(String.valueOf(cases.get(i)))
+              Doc.plain(String.valueOf(cases.get(i))),
+              Doc.symbol("->")
             ),
             Doc.nest(2, Doc.vcat(stmts.view().map(AstStmt::toDoc)))));
         }
