@@ -87,12 +87,12 @@ public sealed interface AstStmt extends Docile {
     }
     record IsIntEqual(@NotNull AstVariable lhs, int rhs) implements Condition {
       @Override public @NotNull Doc toDoc() {
-        return Doc.sep(lhs.toDoc(), Doc.symbol("=="), Doc.plain(String.valueOf(rhs)));
+        return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if int eq"), lhs.toDoc(), Doc.plain(String.valueOf(rhs)));
       }
     }
     record IsRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs) implements Condition {
       @Override public @NotNull Doc toDoc() {
-        return Doc.sep(lhs.toDoc(), Doc.symbol("=="), rhs.toDoc());
+        return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if ref eq"), lhs.toDoc(), rhs.toDoc());
       }
     }
     record IsNull(@NotNull AstVariable ref) implements Condition {
