@@ -1,22 +1,23 @@
-name: issue tracker
+name: track pr
+
 on:
-  issues:
-    types:
-      - opened
-  workflow_call:
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
 
 jobs:
-  issue-tracker:
-    if: ${{ github.event.issue == null || startsWith(github.event.issue.body, '<!-- ISSUE TRACKER ENABLE -->') }}
+  run-tracker:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      issues: write
+      issues: read
+      pull-requests: write
     steps:
       - name: Install Aya
         uses: 'aya-prover/aya-dev/.github/actions/install-aya@main'
-      - name: Run Issue Tracker
+      - name: Run Issue Tracker For PR
         uses: 'HoshinoTented/issue-tracker@v1'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue: ${{ github.event.issue.number }}
+          pull_request: true

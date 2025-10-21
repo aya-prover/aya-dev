@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
@@ -42,6 +42,17 @@ public interface FileUtil {
         .collect(ImmutableSeq.factory())
         .forEachChecked(Files::deleteIfExists);
     }
+  }
+
+  /// Check if [#path] is clean
+  ///
+  /// @return true if [#path] doesn't exist, or [#path] is a directory and has no children.
+  static boolean isClean(@NotNull Path path) {
+    var file = path.toFile();
+    if (!file.exists()) return true;
+    var children = file.list();
+    if (children == null) return false;
+    return children.length == 0;
   }
 
   static @NotNull ImmutableSeq<Path> collectSource(@NotNull Path srcRoot, @NotNull ImmutableSeq<String> postfix, int maxDepth) {

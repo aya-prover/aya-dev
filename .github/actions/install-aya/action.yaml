@@ -1,0 +1,32 @@
+name: Install Nightly Aya
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+    # The only purpose of this step is to get the right java version
+    - name: Extract versions from Gradle's libs.versions.toml
+      id: extract-version
+      uses: aya-prover/aya-dev/.github/actions/extract-version@main
+    - name: Restore Aya
+      id: restore-aya
+      uses: 'actions/cache@v4'
+      with:
+        path: ./cli-fatjar.jar
+        key: nightly-build
+    - name: Download Nightly Build
+      if: steps.restore-aya.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        wget https://github.com/aya-prover/aya-dev/releases/download/nightly-build/cli-fatjar.jar
+    - name: Install Aya to Tool Cache
+      shell: bash
+      run: |
+        ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
+        TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ steps.extract-version.outputs.projectVersion }}/$ARCH
+        mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
+    - name: Setup Java ${{ steps.extract-version.outputs.javaVersion }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'liberica'
+        java-version: ${{ steps.extract-version.outputs.javaVersion }}
