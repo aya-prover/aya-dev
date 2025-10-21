@@ -2,14 +2,12 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
+import org.aya.compiler.serializers.FnSerializer;
+import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
@@ -21,9 +19,12 @@ import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.AnyDefVar;
-import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public interface ReplCommands {
   record Code(@NotNull String code) { }
@@ -52,12 +53,16 @@ public interface ReplCommands {
     }
   };
 
-  @NotNull Command SHOW_MCT = new Command(ImmutableSeq.of("case-tree"), "Show the case tree of a pattern-matching function") {
-    @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl, @NotNull Code code) {
-      var resolved = repl.replCompiler.parseToAnyVar(code.code);
-      if (!(resolved instanceof AnyDefVar anyDefVar)) return Result.err("Not a valid reference", true);
-      if (!(anyDefVar instanceof DefVar<?, ?> defVar)) return Result.err("JIT-compiled defs are unsupported", true);
-      if (!(defVar.core instanceof FnDef fn)) return Result.err("Not a function", true);
+  @NotNull Command SHOW_ANF = new FnCommand(ImmutableSeq.of("compile-anf"), "Show the compiled function in A-Normal Form") {
+    @Override public @NotNull Result executeFn(@NotNull AyaRepl repl, FnDef fn) {
+      var ser = new FnSerializer(repl.replCompiler.getShapeFactory(), new ModuleSerializer.MatchyRecorder());
+      var method = ser.buildInvokeForPrettyPrint(fn);
+      return new Result(Output.stdout(method.toDoc()), true);
+    }
+  };
+
+  @NotNull Command SHOW_MCT = new FnCommand(ImmutableSeq.of("case-tree"), "Show the case tree of a pattern-matching function") {
+    @Override public @NotNull Result executeFn(@NotNull AyaRepl repl, FnDef fn) {
       if (!(fn.body() instanceof Either.Right(var body))) return Result.err("Not a pattern-matching function", true);
       var classes = body.classes.map(cl ->
         Doc.sep(Doc.commaList(cl.term().view().map(t -> t.toDoc(repl.prettierOptions()))),
