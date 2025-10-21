@@ -17,15 +17,37 @@ import java.util.Locale;
 
 public sealed interface AstStmt extends Docile {
   @Override default @NotNull Doc toDoc() {
-    return Doc.plain("inst");
+    return Doc.plain("<unimplemented pretty print>");
   }
 
-  record DeclareVariable(@NotNull ClassDesc type, @NotNull AstVariable.Local theVar) implements AstStmt { }
+  record DeclareVariable(@NotNull ClassDesc type, @NotNull AstVariable.Local theVar) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "let"),
+        Doc.cat(theVar.toDoc(), Doc.plain(":")),
+        Doc.plain(type.descriptorString()));
+    }
+  }
+
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
                @NotNull ImmutableSeq<AstVariable> superConArgs) implements AstStmt { }
-  record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt { }
+
+  record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(var.toDoc(), Doc.symbol(":="), update.toDoc());
+    }
+  }
+
   record SetStaticField(@NotNull FieldRef var, @NotNull AstVariable update) implements AstStmt { }
-  record SetArray(@NotNull AstVariable array, int index, @NotNull AstVariable update) implements AstStmt { }
+
+  record SetArray(@NotNull AstVariable array, int index, @NotNull AstVariable update) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(
+        Doc.cat(array.toDoc(), Doc.plain("[" + index + "]")),
+        Doc.symbol(":="),
+        update.toDoc()
+      );
+    }
+  }
 
   sealed interface Condition {
     record IsFalse(@NotNull AstVariable var) implements Condition { }
@@ -52,10 +74,19 @@ public sealed interface AstStmt extends Docile {
     }
   }
 
-  record Exec(@NotNull AstExpr expr) implements AstStmt { }
+  record Exec(@NotNull AstExpr expr) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return expr.toDoc();
+    }
+  }
+
   record Switch(@NotNull AstVariable elim, @NotNull ImmutableIntSeq cases,
                 @NotNull ImmutableSeq<ImmutableSeq<AstStmt>> branch,
                 @NotNull ImmutableSeq<AstStmt> defaultCase) implements AstStmt { }
 
-  record Return(@NotNull AstVariable expr) implements AstStmt { }
+  record Return(@NotNull AstVariable expr) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "return"), expr.toDoc());
+    }
+  }
 }

@@ -5,13 +5,18 @@ package org.aya.compiler.morphism.ast;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
 // TODO: consider [AstExpr#type]
-public sealed interface AstExpr {
+public sealed interface AstExpr extends Docile {
+  default @Override @NotNull Doc toDoc() {
+    return Doc.plain("<unimplemented pretty print>");
+  }
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   // record RefCapture(int capture) implements AstExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
