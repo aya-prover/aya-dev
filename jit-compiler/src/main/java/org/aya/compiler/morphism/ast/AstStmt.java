@@ -4,6 +4,7 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.MutableSeq;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
 import org.aya.prettier.BasePrettier;
@@ -24,7 +25,7 @@ public sealed interface AstStmt extends Docile {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "let"),
         Doc.cat(theVar.toDoc(), Doc.plain(":")),
-        Doc.plain(type.descriptorString()));
+        Doc.plain(type.displayName()));
     }
   }
 
@@ -42,7 +43,7 @@ public sealed interface AstStmt extends Docile {
   record SetArray(@NotNull AstVariable array, int index, @NotNull AstVariable update) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(
-        Doc.cat(array.toDoc(), Doc.plain("[" + index + "]")),
+        Doc.cat(array.toDoc(), Doc.wrap("[", "]", Doc.plain(String.valueOf(index)))),
         Doc.symbol(":="),
         update.toDoc()
       );
@@ -82,7 +83,37 @@ public sealed interface AstStmt extends Docile {
 
   record Switch(@NotNull AstVariable elim, @NotNull ImmutableIntSeq cases,
                 @NotNull ImmutableSeq<ImmutableSeq<AstStmt>> branch,
-                @NotNull ImmutableSeq<AstStmt> defaultCase) implements AstStmt { }
+                @NotNull ImmutableSeq<AstStmt> defaultCase) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      var caseDocs = Doc.sep(Doc.styled(BasePrettier.KEYWORD, "switch"),
+        elim.toDoc());
+      var branchesDoc = MutableSeq.<Doc>create(cases.size() + 1);
+      for (int i = 0; i < cases.size(); i++) {
+        var stmts = branch.get(i);
+        if (stmts.sizeEquals(1)) {
+          branchesDoc.set(i, Doc.sep(
+            Doc.styled(BasePrettier.KEYWORD, "case"),
+            Doc.plain(String.valueOf(cases.get(i))),
+            Doc.plain(": "),
+            stmts.getFirst().toDoc()
+          ));
+        } else {
+          branchesDoc.set(i, Doc.vcat(
+            Doc.sep(
+              Doc.styled(BasePrettier.KEYWORD, "case"),
+              Doc.plain(String.valueOf(cases.get(i)))
+            ),
+            Doc.nest(2, Doc.vcat(stmts.view().map(AstStmt::toDoc)))));
+        }
+      }
+      var defaultDoc = Doc.sep(
+        Doc.styled(BasePrettier.KEYWORD, "default"),
+        Doc.nest(2, Doc.vcat(defaultCase.view().map(AstStmt::toDoc)))
+      );
+      branchesDoc.set(cases.size(), defaultDoc);
+      return Doc.vcat(caseDocs, Doc.nest(2, Doc.vcat(branchesDoc)));
+    }
+  }
 
   record Return(@NotNull AstVariable expr) implements AstStmt {
     @Override public @NotNull Doc toDoc() {

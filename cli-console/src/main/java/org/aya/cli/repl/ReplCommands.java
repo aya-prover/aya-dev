@@ -6,6 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
+import org.aya.compiler.morphism.ast.AstDecl;
+import org.aya.compiler.morphism.ast.BlockSimplifier;
 import org.aya.compiler.serializers.FnSerializer;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.prettier.AyaPrettierOptions;
@@ -57,6 +59,15 @@ public interface ReplCommands {
     @Override public @NotNull Result executeFn(@NotNull AyaRepl repl, FnDef fn) {
       var ser = new FnSerializer(repl.replCompiler.getShapeFactory(), new ModuleSerializer.MatchyRecorder());
       var method = ser.buildInvokeForPrettyPrint(fn);
+      return new Result(Output.stdout(method.toDoc()), true);
+    }
+  };
+
+  @NotNull Command SHOW_OPT_ANF = new FnCommand(ImmutableSeq.of("optimize-anf"), "Show the pre-optimized function in A-Normal Form") {
+    @Override public @NotNull Result executeFn(@NotNull AyaRepl repl, FnDef fn) {
+      var ser = new FnSerializer(repl.replCompiler.getShapeFactory(), new ModuleSerializer.MatchyRecorder());
+      var method = ser.buildInvokeForPrettyPrint(fn);
+      method = (AstDecl.Method) BlockSimplifier.optimize(method);
       return new Result(Output.stdout(method.toDoc()), true);
     }
   };
