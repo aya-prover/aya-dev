@@ -9,17 +9,17 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface AstVariable extends Docile {
   record Local(int index) implements AstVariable {
     @Override public @NotNull Doc toDoc() {
-      return Doc.plain("." + index) ;
+      return Doc.plain("%" + index) ;
     }
   }
   record Arg(int nth) implements AstVariable {
     @Override public @NotNull Doc toDoc() {
-      return Doc.plain("arg." + nth);
+      return Doc.plain("arg%" + nth);
     }
   }
   record Capture(int nth) implements AstVariable {
     @Override public @NotNull Doc toDoc() {
-      return Doc.plain("capture." + nth);
+      return Doc.plain("capture%" + nth);
     }
   }
 }
