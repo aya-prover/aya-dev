@@ -85,9 +85,13 @@ public sealed interface AstStmt extends Docile {
                 @NotNull ImmutableSeq<ImmutableSeq<AstStmt>> branch,
                 @NotNull ImmutableSeq<AstStmt> defaultCase) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
+      var size = cases.size();
+      if (defaultCase.isNotEmpty()) size++;
       var caseDocs = Doc.sep(Doc.styled(BasePrettier.KEYWORD, "switch"),
-        elim.toDoc());
-      var branchesDoc = MutableSeq.<Doc>create(cases.size() + 1);
+        elim.toDoc(),
+        Doc.styled(BasePrettier.KEYWORD, "amongst"),
+        Doc.plain(String.valueOf(size)));
+      var branchesDoc = MutableSeq.<Doc>create(size);
       for (int i = 0; i < cases.size(); i++) {
         var stmts = branch.get(i);
         if (stmts.sizeEquals(1)) {
@@ -106,11 +110,13 @@ public sealed interface AstStmt extends Docile {
             Doc.nest(2, Doc.vcat(stmts.view().map(AstStmt::toDoc)))));
         }
       }
-      var defaultDoc = Doc.sep(
-        Doc.styled(BasePrettier.KEYWORD, "default"),
-        Doc.nest(2, Doc.vcat(defaultCase.view().map(AstStmt::toDoc)))
-      );
-      branchesDoc.set(cases.size(), defaultDoc);
+      if (defaultCase.isNotEmpty()) {
+        var defaultDoc = Doc.sep(
+          Doc.styled(BasePrettier.KEYWORD, "default"),
+          Doc.nest(2, Doc.vcat(defaultCase.view().map(AstStmt::toDoc)))
+        );
+        branchesDoc.set(cases.size(), defaultDoc);
+      }
       return Doc.vcat(caseDocs, Doc.nest(2, Doc.vcat(branchesDoc)));
     }
   }

@@ -22,8 +22,23 @@ public sealed interface AstExpr extends Docile {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
   record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
                 @NotNull ImmutableSeq<AstVariable> args) implements AstExpr { }
-  record Ref(@NotNull AstVariable variable) implements AstExpr { }
-  record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr { }
+
+  record Ref(@NotNull AstVariable variable) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      return variable.toDoc();
+    }
+  }
+
+  record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr {
+    @Override public @NotNull Doc toDoc() {
+      if (owner != null) {
+        return Doc.cat(owner.toDoc(), Doc.plain("."), Doc.plain(fieldRef.name()));
+      } else {
+        return Doc.cat(Doc.plain(fieldRef.owner().displayName() + "."), Doc.plain(fieldRef.name()));
+      }
+    }
+  }
+
   record RefEnum(@NotNull ClassDesc enumClass, @NotNull String enumName) implements AstExpr { }
   record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,
                 @NotNull ImmutableSeq<AstStmt> body) implements AstExpr { }
