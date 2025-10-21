@@ -142,7 +142,12 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           builder.whileTrue(cb -> interpStmts(ap, cb, inner));
         }
       }
-      case AstStmt.DeclareVariable(var type, var theVar) -> bindVar(theVar.index(), builder.makeVar(type, null));
+      case AstStmt.DeclareVariable(var type, var theVar, var initializer) -> {
+        bindVar(theVar.index(), builder.makeVar(type, null));
+        if (initializer != null) {
+          builder.updateVar(getVar(theVar.index()), interpExpr(ap, builder, initializer));
+        }
+      }
       case AstStmt.Exec(var exec) -> builder.exec(interpExpr(ap, builder, exec));
       case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
         Consumer<AsmCodeBuilder> thenBlock = cb -> {

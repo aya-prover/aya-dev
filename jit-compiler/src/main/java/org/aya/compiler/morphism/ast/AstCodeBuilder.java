@@ -261,8 +261,7 @@ public record AstCodeBuilder(
 
   public @NotNull AstVariable bindExpr(@NotNull ClassDesc desc, @NotNull AstExpr expr) {
     var astVar = acquireVariable();
-    stmts.append(new AstStmt.DeclareVariable(desc, astVar));
-    stmts.append(new AstStmt.SetVariable(astVar, expr));
+    stmts.append(new AstStmt.DeclareVariable(desc, astVar, expr));
     return astVar;
   }
 }

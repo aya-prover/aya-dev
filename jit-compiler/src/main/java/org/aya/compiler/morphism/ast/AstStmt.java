@@ -22,11 +22,22 @@ public sealed interface AstStmt extends Docile {
     return Doc.plain("<unimplemented pretty print>");
   }
 
-  record DeclareVariable(@NotNull ClassDesc type, @NotNull AstVariable.Local theVar) implements AstStmt {
+  record DeclareVariable(
+    @NotNull ClassDesc type,
+    @NotNull AstVariable.Local theVar,
+    @Nullable AstExpr initializer
+  ) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
-      return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "let"),
+      var list = MutableList.of(
+        Doc.styled(BasePrettier.KEYWORD, "let"),
         Doc.cat(theVar.toDoc(), Doc.plain(":")),
-        Doc.plain(type.displayName()));
+        Doc.plain(type.displayName())
+      );
+      if (initializer != null) {
+        list.append(Doc.symbol(":="));
+        list.append(initializer.toDoc());
+      }
+      return Doc.sep(list);
     }
   }
 
@@ -97,7 +108,7 @@ public sealed interface AstStmt extends Docile {
       var list = MutableList.of(
         cond.toDoc(),
         Doc.nest(2, Doc.vcat(thenBlock.view().map(AstStmt::toDoc))));
-      if (elseBlock != null) {
+      if (elseBlock != null && elseBlock.isNotEmpty()) {
         list.append(Doc.styled(BasePrettier.KEYWORD, "else"));
         list.append(Doc.nest(2, Doc.vcat(elseBlock.view().map(AstStmt::toDoc))));
       }
@@ -107,7 +118,7 @@ public sealed interface AstStmt extends Docile {
 
   record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
-      return Doc.sep(
+      return Doc.vcat(
         Doc.styled(BasePrettier.KEYWORD, "breakable"),
         Doc.nest(2, Doc.vcat(block.view().map(AstStmt::toDoc)))
       );
@@ -170,7 +181,7 @@ public sealed interface AstStmt extends Docile {
         }
       }
       if (defaultCase.isNotEmpty()) {
-        var defaultDoc = Doc.sep(
+        var defaultDoc = Doc.vcat(
           Doc.styled(BasePrettier.KEYWORD, "default"),
           Doc.nest(2, Doc.vcat(defaultCase.view().map(AstStmt::toDoc)))
         );
