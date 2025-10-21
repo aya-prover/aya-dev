@@ -34,7 +34,12 @@ public class IssueSetup {
     var files = result.files();
     var version = result.ayaVersion();
 
-    IssueSetup.setup(files, testDir);
+    try {
+      IssueSetup.setup(files, testDir);
+    } catch (IOException | IllegalArgumentException e) {
+      System.err.println(e.getMessage());
+      return -2;
+    }
 
     var metadata = new Metadata(version, files.map(it -> it.name() == null ? UNNAMED : it.name()));
     var gson = new GsonBuilder()
@@ -50,7 +55,6 @@ public class IssueSetup {
   }
 
   public static void setup(@NotNull ImmutableSeq<IssueParser.File> files, @NotNull Path testDir) throws IOException {
-    // TODO: improve user experience
     if (!FileUtil.isClean(testDir))
       throw new IllegalArgumentException("The working directory " + testDir + " is not empty.");
 

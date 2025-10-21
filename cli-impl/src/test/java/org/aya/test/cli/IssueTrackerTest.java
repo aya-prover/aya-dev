@@ -53,9 +53,9 @@ public class IssueTrackerTest {
 
     // test on dirty directory
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      IssueSetup.run(source, WORKING_DIRECTORY, new ThrowingReporter(AyaPrettierOptions.debug()));
-    });
+    assertEquals(-2,
+      IssueSetup.run(source, WORKING_DIRECTORY, new ThrowingReporter(AyaPrettierOptions.debug()))
+    );
 
     // test on directory with no child
 
