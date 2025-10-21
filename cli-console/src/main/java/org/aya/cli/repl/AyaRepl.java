@@ -121,7 +121,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
 
   @Override public void run() {
     if (!config.quiet) {
-      println("Aya " + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH
+      println("Aya v" + GeneratedVersion.VERSION_STRING + " (" + GeneratedVersion.COMMIT_HASH
         + ", jdk " + GeneratedVersion.JDK_VERSION + ")");
       var hint = hintMessage();
       if (hint != null) println(hint);

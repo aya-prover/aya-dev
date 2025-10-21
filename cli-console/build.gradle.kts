@@ -10,6 +10,7 @@ dependencies {
   api(project(":tools-repl"))
   api(project(":cli-impl"))
   implementation(project(":producer"))
+  implementation(project(":jit-compiler"))
   implementation(libs.kala.gson)
   implementation(libs.picocli.runtime)
   annotationProcessor(libs.picocli.codegen)

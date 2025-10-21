@@ -6,12 +6,18 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
+import org.aya.pretty.doc.Doc;
+import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-public sealed interface AstStmt {
+public sealed interface AstStmt extends Docile {
+  @Override default @NotNull Doc toDoc() {
+    return Doc.plain("inst");
+  }
+
   record DeclareVariable(@NotNull ClassDesc type, @NotNull AstVariable.Local theVar) implements AstStmt { }
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
                @NotNull ImmutableSeq<AstVariable> superConArgs) implements AstStmt { }

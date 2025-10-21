@@ -9,6 +9,7 @@ module aya.cli.console {
   requires org.jline.terminal;
   requires java.net.http;
   requires aya.producer;
+  requires aya.compiler;
   requires com.google.errorprone.annotations;
   requires org.jetbrains.annotations;
   requires kala.common.gson;
