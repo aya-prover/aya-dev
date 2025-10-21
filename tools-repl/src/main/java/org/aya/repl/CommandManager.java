@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.repl;
 
@@ -41,9 +41,9 @@ public class CommandManager {
   }
 
   private @NotNull CommandGen genCommand(@NotNull Command c) {
-    var entry = ArraySeq.wrap(c.getClass().getDeclaredMethods())
+    var entry = ArraySeq.wrap(c.getClass().getMethods())
       .findFirst(method -> method.isAnnotationPresent(Command.Entry.class));
-    if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.getClass());
+    if (entry.isEmpty()) throw new IllegalArgumentException("no entry found in " + c.names());
     try {
       var method = entry.get();
       method.setAccessible(true); // for anonymous class
