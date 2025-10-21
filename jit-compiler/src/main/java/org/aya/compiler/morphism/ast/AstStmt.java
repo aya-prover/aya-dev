@@ -6,12 +6,14 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
+import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.util.Locale;
 
 public sealed interface AstStmt extends Docile {
   @Override default @NotNull Doc toDoc() {
@@ -39,10 +41,16 @@ public sealed interface AstStmt extends Docile {
                     @Nullable ImmutableSeq<AstStmt> elseBlock) implements AstStmt { }
 
   record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
-  enum Break implements AstStmt { INSTANCE }
   record WhileTrue(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt { }
-  enum Continue implements AstStmt { INSTANCE }
-  enum Unreachable implements AstStmt { INSTANCE }
+  enum SingletonStmt implements AstStmt {
+    Break,
+    Continue,
+    Unreachable;
+
+    @Override public @NotNull Doc toDoc() {
+      return Doc.styled(BasePrettier.KEYWORD, name().toLowerCase(Locale.ROOT));
+    }
+  }
 
   record Exec(@NotNull AstExpr expr) implements AstStmt { }
   record Switch(@NotNull AstVariable elim, @NotNull ImmutableIntSeq cases,

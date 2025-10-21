@@ -114,7 +114,7 @@ public record AstCodeBuilder(
 
   public void breakOut() {
     assert isBreakable;
-    stmts.append(AstStmt.Break.INSTANCE);
+    stmts.append(AstStmt.SingletonStmt.Break);
   }
 
   public void whileTrue(@NotNull Consumer<AstCodeBuilder> innerBlock) {
@@ -123,7 +123,7 @@ public record AstCodeBuilder(
   }
 
   public void continueLoop() {
-    stmts.append(AstStmt.Continue.INSTANCE);
+    stmts.append(AstStmt.SingletonStmt.Continue);
   }
 
   public void exec(@NotNull AstExpr expr) {
@@ -153,7 +153,7 @@ public record AstCodeBuilder(
   }
 
   public void unreachable() {
-    stmts.append(AstStmt.Unreachable.INSTANCE);
+    stmts.append(AstStmt.SingletonStmt.Unreachable);
   }
 
   public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) {

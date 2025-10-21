@@ -44,7 +44,7 @@ public interface BlockSimplifier {
         branch = branch.map(it -> optimizeBlock(it, endOfBreakable));
         defaultCase = optimizeBlock(defaultCase, endOfBreakable);
         if (branch.isEmpty()) yield defaultCase.view();
-        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == AstStmt.Unreachable.INSTANCE) {
+        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == AstStmt.SingletonStmt.Unreachable) {
           if (branch.sizeEquals(1)) {
             yield branch.getFirst().view();
           } else if (branch.sizeEquals(2)) {
@@ -68,7 +68,7 @@ public interface BlockSimplifier {
         }
         yield SeqView.of(new AstStmt.IfThenElse(cond, thenBlock, elseBlock));
       }
-      case AstStmt.Break _ when endOfBreakable -> SeqView.empty();
+      case AstStmt.SingletonStmt st when st == AstStmt.SingletonStmt.Break && endOfBreakable -> SeqView.empty();
       default -> SeqView.of(stmt);
     };
   }

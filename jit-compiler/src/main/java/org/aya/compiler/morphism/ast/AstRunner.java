@@ -125,8 +125,13 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
   private void interpStmt(@NotNull AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstStmt free) {
     switch (free) {
-      case AstStmt.Break _ -> builder.breakOut();
-      case AstStmt.Unreachable _ -> builder.unreachable();
+      case AstStmt.SingletonStmt stmt -> {
+        switch (stmt) {
+          case Break -> builder.breakOut();
+          case Continue -> builder.continueLoop();
+          case Unreachable -> builder.unreachable();
+        }
+      }
       case AstStmt.Breakable(var inner) -> {
         try (var _ = subscoped()) {
           builder.breakable(cb -> interpStmts(ap, cb, inner));
@@ -137,7 +142,6 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
           builder.whileTrue(cb -> interpStmts(ap, cb, inner));
         }
       }
-      case AstStmt.Continue _ -> builder.continueLoop();
       case AstStmt.DeclareVariable(var type, var theVar) -> bindVar(theVar.index(), builder.makeVar(type, null));
       case AstStmt.Exec(var exec) -> builder.exec(interpExpr(ap, builder, exec));
       case AstStmt.IfThenElse(var cond, var thenBody, var elseBody) -> {
