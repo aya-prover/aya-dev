@@ -4,6 +4,7 @@ package org.aya.compiler.morphism.ast;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSeq;
 import kala.value.MutableValue;
 import org.aya.compiler.FieldRef;
@@ -50,18 +51,59 @@ public sealed interface AstStmt extends Docile {
     }
   }
 
-  sealed interface Condition {
-    record IsFalse(@NotNull AstVariable var) implements Condition { }
-    record IsTrue(@NotNull AstVariable var) implements Condition { }
+  sealed interface Condition extends Docile {
+    record IsFalse(@NotNull AstVariable var) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "unless"), var.toDoc());
+      }
+    }
+    record IsTrue(@NotNull AstVariable var) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if"), var.toDoc());
+      }
+    }
     record IsInstanceOf(@NotNull AstVariable lhs, @NotNull ClassDesc rhs,
-                        @NotNull MutableValue<AstVariable.Local> asTerm) implements Condition { }
-    record IsIntEqual(@NotNull AstVariable lhs, int rhs) implements Condition { }
-    record IsRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs) implements Condition { }
-    record IsNull(@NotNull AstVariable ref) implements Condition { }
+                        @NotNull MutableValue<AstVariable.Local> asTerm) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(
+          Doc.styled(BasePrettier.KEYWORD, "if let"),
+          Doc.cat(asTerm.get().toDoc(), Doc.plain(":")),
+          Doc.plain(rhs.displayName()),
+          Doc.styled(BasePrettier.KEYWORD, ":="),
+          lhs.toDoc()
+        );
+      }
+    }
+    record IsIntEqual(@NotNull AstVariable lhs, int rhs) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(lhs.toDoc(), Doc.symbol("=="), Doc.plain(String.valueOf(rhs)));
+      }
+    }
+    record IsRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(lhs.toDoc(), Doc.symbol("=="), rhs.toDoc());
+      }
+    }
+    record IsNull(@NotNull AstVariable ref) implements Condition {
+      @Override public @NotNull Doc toDoc() {
+        return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if null"), ref.toDoc());
+      }
+    }
   }
 
   record IfThenElse(@NotNull Condition cond, @NotNull ImmutableSeq<AstStmt> thenBlock,
-                    @Nullable ImmutableSeq<AstStmt> elseBlock) implements AstStmt { }
+                    @Nullable ImmutableSeq<AstStmt> elseBlock) implements AstStmt {
+    @Override public @NotNull Doc toDoc() {
+      var list = MutableList.of(
+        cond.toDoc(),
+        Doc.nest(2, Doc.vcat(thenBlock.view().map(AstStmt::toDoc))));
+      if (elseBlock != null) {
+        list.append(Doc.styled(BasePrettier.KEYWORD, "else"));
+        list.append(Doc.nest(2, Doc.vcat(elseBlock.view().map(AstStmt::toDoc))));
+      }
+      return Doc.vcat(list);
+    }
+  }
 
   record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
