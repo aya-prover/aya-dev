@@ -30,12 +30,12 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return Constants.JIT_TELE_CON_PARAMS;
   }
 
-  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, T unit) {
+  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, T unit) {
     var tele = unit.telescope();
     var size = tele.size();
     var sizeExpr = builder.iconst(size);
     var licit = tele.view().map(Param::explicit)
-      .map(builder::iconst)
+      .<AstValue>map(builder::iconst)
       .toSeq();
     var licitExpr = builder.makeArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)

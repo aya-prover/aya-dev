@@ -70,7 +70,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, DataDef unit) {
+  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, DataDef unit) {
     return super.superConArgs(builder, unit).appended(builder.iconst(unit.body().size()));
   }
 

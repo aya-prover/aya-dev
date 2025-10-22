@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
@@ -45,7 +46,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
+  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
       .appended(builder.iconst(modifierFlags(unit.modifiers())));
   }
@@ -62,7 +63,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       false
     );
 
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, args.view());
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, SeqView.narrow(args.view()));
   }
 
   /// Build fixed argument `invoke`
@@ -142,7 +143,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprSerializer.fromSeq(builder, CD_Term, argsTerm, teleSize);
-    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, normalizerTerm, args.view());
+    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, normalizerTerm,
+      SeqView.narrow(args.view()));
     builder.returnWith(result);
   }
 

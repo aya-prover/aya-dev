@@ -8,10 +8,14 @@ import java.lang.constant.ClassDesc;
 import java.util.function.Consumer;
 
 /// An expr of bytecode is a function that push something to the stack
+/// @see AsmValue.AsmExprValue
 public record AsmExpr(
   @NotNull ClassDesc type,
   @NotNull Consumer<AsmCodeBuilder> cont
 ) implements Consumer<AsmCodeBuilder> {
+  public static @NotNull AsmExpr withType(@NotNull ClassDesc type, @NotNull AsmVariable variable) {
+    return withType(type, builder -> builder.loadVar(variable));
+  }
   public static @NotNull AsmExpr withType(@NotNull ClassDesc type, @NotNull Consumer<AsmCodeBuilder> cont) {
     return new AsmExpr(type, cont);
   }

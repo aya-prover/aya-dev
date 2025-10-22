@@ -10,10 +10,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.ast.AstArgsProvider;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.core.Closure;
@@ -140,7 +137,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
   // add the if-else in it
   private @NotNull AstVariable buildMatchyInvoke(
     @NotNull ClassDesc matchyClass,
-    @NotNull ImmutableSeq<AstVariable> args,
+    @NotNull ImmutableSeq<AstValue> args,
     @NotNull ImmutableSeq<AstVariable> captures
   ) {
     var normalizer = getNormalizer();

@@ -3,6 +3,7 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
@@ -47,7 +48,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     @NotNull ClassDesc owner,
     @NotNull AstVariable normalizer,
     @NotNull ImmutableSeq<AstVariable> captures,
-    @NotNull ImmutableSeq<AstVariable> args
+    @NotNull ImmutableSeq<AstValue> args
   ) {
     var ref = new MethodRef(
       owner, "invoke",
@@ -56,7 +57,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, captures.view().appendedAll(args));
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, args.view().prependedAll(captures));
   }
 
   private void buildInvoke(
@@ -113,7 +114,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var preArgs = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, captures, capturec)
       .view()
       .appendedAll(AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, argc));
-    var fullArgs = InvokeSignatureHelper.args(normalizer, preArgs);
+    var fullArgs = InvokeSignatureHelper.args(normalizer, SeqView.narrow(preArgs));
     var invokeExpr = new AstExpr.Invoke(invokeRef, builder.thisRef(), fullArgs);
 
     builder.returnWith(invokeExpr);

@@ -15,8 +15,6 @@ import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.constant.ClassDesc;
-
 public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   public ClassSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
     super(JitClass.class, recorder);
