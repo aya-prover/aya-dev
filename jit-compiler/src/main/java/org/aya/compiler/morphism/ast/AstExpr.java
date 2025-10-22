@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-// TODO: consider [AstExpr#type]
 public sealed interface AstExpr extends Docile {
   record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
@@ -69,7 +68,7 @@ public sealed interface AstExpr extends Docile {
     }
   }
 
-  sealed interface Const extends AstExpr { }
+  sealed interface Const extends AstExpr, AstValue { }
   record Iconst(int value) implements Const {
     @Override public @NotNull Doc toDoc() {
       return Doc.plain(Integer.toString(value));
@@ -90,7 +89,7 @@ public sealed interface AstExpr extends Docile {
       return Doc.styled(BasePrettier.KEYWORD, "null");
     }
   }
-  enum This implements AstExpr {
+  enum This implements Const {
     INSTANCE;
     @Override public @NotNull Doc toDoc() {
       return Doc.styled(BasePrettier.KEYWORD, "this");
