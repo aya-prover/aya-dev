@@ -76,7 +76,7 @@ public final class AsmClassBuilder implements AutoCloseable {
     nestedMembers.append(name);
   }
 
-  public @NotNull MethodRef buildMethod(
+  public void buildMethod(
     @NotNull String name,
     @NotNull AccessFlags flags,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
@@ -85,24 +85,29 @@ public final class AsmClassBuilder implements AutoCloseable {
   ) {
     var desc = MethodTypeDesc.of(returnType, paramTypes.asJava());
     writer.withMethod(name, desc, flags.flagsMask(), mBuilder -> {
-      var ap = new AsmArgsProvider.FnParam(paramTypes, false);
+      var ap = new AsmArgsProvider.FnParam(paramTypes, flags.has(AccessFlag.STATIC));
       mBuilder.withCode(cb -> {
-        try (var acb = new AsmCodeBuilder(cb, this, paramTypes, true)) {
+        try (var acb = new AsmCodeBuilder(cb, this, paramTypes, !flags.has(AccessFlag.STATIC))) {
           builder.accept(ap, acb);
         }
       });
     });
-
-    return new MethodRef(owner(), name, returnType, paramTypes, false);
   }
 
-  public @NotNull MethodRef buildMethod(
-    @NotNull ClassDesc returnType,
-    @NotNull String name,
+  public void buildMethod(
+    @NotNull ClassDesc returnType, @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder
   ) {
-    return buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder);
+    buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder);
+  }
+
+  public void buildStaticMethod(
+    @NotNull ClassDesc returnType, @NotNull String name,
+    @NotNull ImmutableSeq<ClassDesc> paramTypes,
+    @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder
+  ) {
+    buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL), paramTypes, returnType, builder);
   }
 
   public void buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder) {

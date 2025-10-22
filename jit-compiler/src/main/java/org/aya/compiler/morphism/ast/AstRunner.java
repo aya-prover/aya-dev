@@ -45,7 +45,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         }
         case AstDecl.ConstantField constantField ->
           builder.buildStaticField(constantField.signature().returnType(), constantField.signature().name());
-        case AstDecl.Method(var sig, var body) -> {
+        case AstDecl.Method(var sig, var isStatic, var body) when isStatic ->
+          builder.buildStaticMethod(sig.returnType(), sig.name(), sig.paramTypes(),
+            (ap, cb) -> interpStmts(ap, cb, body));
+        case AstDecl.Method(var sig, _, var body) -> {
           if (sig.isConstructor()) {
             builder.buildConstructor(sig.paramTypes(),
               (ap, cb) -> interpStmts(ap, cb, body));
@@ -172,7 +175,7 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
             builder.ifInstanceOf(interpVar(ap, lhs), rhs, (cb, var) -> {
               try (var _ = subscoped()) {
                 bindVar(asTerm.index(), var);
-                interpStmts(ap, cb, thenBody);      // prevent unnecessary subscoping
+                interpStmts(ap, cb, thenBody); // prevent unnecessary subscoping
               }
             }, elseBlock);
           }

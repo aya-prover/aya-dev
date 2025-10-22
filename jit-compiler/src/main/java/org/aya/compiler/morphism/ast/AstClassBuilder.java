@@ -66,12 +66,23 @@ public record AstClassBuilder(
   }
 
   private void buildMethod(
-    @NotNull MethodRef ref,
+    @NotNull MethodRef ref, boolean isStatic,
     @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
     var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
     builder.accept(new AstArgsProvider.FnParam(ref.paramTypes().size()), codeBuilder);
-    members.append(new AstDecl.Method(ref, codeBuilder.build()));
+    members.append(new AstDecl.Method(ref, isStatic, codeBuilder.build()));
+  }
+
+  public @NotNull MethodRef buildMethod(
+    @NotNull ClassDesc returnType,
+    @NotNull String name, boolean isStatic,
+    @NotNull ImmutableSeq<ClassDesc> paramTypes,
+    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
+  ) {
+    var ref = new MethodRef(className(), name, returnType, paramTypes, false);
+    buildMethod(ref, isStatic, builder);
+    return ref;
   }
 
   public @NotNull MethodRef buildMethod(
@@ -80,9 +91,7 @@ public record AstClassBuilder(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
-    var ref = new MethodRef(className(), name, returnType, paramTypes, false);
-    buildMethod(ref, builder);
-    return ref;
+    return buildMethod(returnType, name, false, paramTypes, builder);
   }
 
   public @NotNull MethodRef buildConstructor(
@@ -90,7 +99,7 @@ public record AstClassBuilder(
     @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
   ) {
     var ref = JavaUtil.makeConstructorRef(className(), paramTypes);
-    buildMethod(ref, builder);
+    buildMethod(ref, false, builder);
     return ref;
   }
 

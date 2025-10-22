@@ -32,6 +32,7 @@ public sealed interface AstDecl {
   @Debug.Renderer(text = "signature().name()")
   record Method(
     @NotNull MethodRef signature,
+    boolean isStatic,
     @NotNull ImmutableSeq<AstStmt> body
   ) implements AstDecl, Docile {
     @Override public @NotNull Doc toDoc() {

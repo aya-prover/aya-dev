@@ -180,7 +180,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable
-  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstVariable> args) {
+  invoke(@NotNull MethodRef method, @Nullable AstVariable owner, @NotNull ImmutableSeq<AstVariable> args) {
     return bindExpr(method.returnType(), new AstExpr.Invoke(method, owner, args));
   }
 

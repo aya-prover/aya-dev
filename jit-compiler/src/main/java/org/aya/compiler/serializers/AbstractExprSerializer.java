@@ -168,10 +168,9 @@ public abstract class AbstractExprSerializer<T> {
   public static @NotNull AstVariable makeCallInvoke(
     @NotNull AstCodeBuilder builder,
     @NotNull MethodRef ref,
-    @NotNull AstVariable instance,
     @NotNull AstVariable normalizer,
     @NotNull SeqView<AstVariable> args
   ) {
-    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
+    return builder.invoke(ref, null, InvokeSignatureHelper.args(normalizer, args));
   }
 }

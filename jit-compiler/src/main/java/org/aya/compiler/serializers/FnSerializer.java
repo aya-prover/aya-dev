@@ -65,8 +65,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       false
     );
 
-    var instance = TermSerializer.getInstance(builder, owner);
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, args.view());
   }
 
   /// Build fixed argument `invoke`
@@ -146,7 +145,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprSerializer.fromSeq(builder, CD_Term, argsTerm, teleSize);
-    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
+    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, normalizerTerm, args.view());
     builder.returnWith(result);
   }
 
@@ -177,7 +176,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private @NotNull MethodRef buildFixedInvoke(FnDef unit, AstClassBuilder builder) {
     return builder.buildMethod(
       CD_Term,
-      "invoke",
+      "invoke", true,
       InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), CD_Term).view()),
       (ap, cb) -> {
         var pre = InvokeSignatureHelper.normalizer(ap);

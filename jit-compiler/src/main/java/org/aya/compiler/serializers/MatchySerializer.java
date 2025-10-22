@@ -52,7 +52,6 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     @NotNull ImmutableSeq<AstVariable> captures,
     @NotNull ImmutableSeq<AstVariable> args
   ) {
-    var instance = TermSerializer.getInstance(builder, owner);
     var ref = new MethodRef(
       owner, "invoke",
       Constants.CD_Term,
@@ -60,7 +59,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, captures.view().appendedAll(args));
   }
 
   private void buildInvoke(
@@ -145,13 +144,13 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
 
-      var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke",
+      var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke", true,
         makeInvokeParameters(capturec, argc), (ap, cb) -> {
-        var pre = InvokeSignatureHelper.normalizer(ap);
-        var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
-        var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
-        buildInvoke(cb, unit, pre, captures, args);
-      });
+          var pre = InvokeSignatureHelper.normalizer(ap);
+          var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
+          var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
+          buildInvoke(cb, unit, pre, captures, args);
+        });
 
       builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
         Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq
