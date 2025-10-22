@@ -40,9 +40,7 @@ public sealed interface AstExpr extends Docile {
   }
 
   record Ref(@NotNull AstVariable variable) implements AstExpr {
-    @Override public @NotNull Doc toDoc() {
-      return variable.toDoc();
-    }
+    @Override public @NotNull Doc toDoc() { return variable.toDoc(); }
   }
 
   record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr {
@@ -64,8 +62,7 @@ public sealed interface AstExpr extends Docile {
   record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,
                 @NotNull ImmutableSeq<AstStmt> body) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
-      return Doc.vcat(
-        Doc.sep(
+      return Doc.vcat(Doc.sep(
           Doc.styled(BasePrettier.KEYWORD, "lambda capturing "),
           Doc.commaList(captures.view().map(AstVariable::toDoc))),
         Doc.nest(2, Doc.vcat(body.view().map(AstStmt::toDoc))));
@@ -100,13 +97,15 @@ public sealed interface AstExpr extends Docile {
     }
   }
 
-  record Array(@NotNull ClassDesc type, int length,
-               @Nullable ImmutableSeq<AstVariable> initializer) implements AstExpr {
+  record Array(
+    @NotNull ClassDesc type, int length,
+    @Nullable ImmutableSeq<AstVariable> initializer
+  ) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       var header = Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "array"),
         Doc.plain(type.displayName()),
-        Doc.plain("[" + length + "]"));
+        Doc.wrap("[", "]", Doc.plain(String.valueOf(length))));
       if (initializer == null) return header;
       if (initializer.sizeLessThanOrEquals(10))
         return Doc.sep(
