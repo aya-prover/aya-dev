@@ -15,6 +15,8 @@ import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ClassDesc;
+
 public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   public ClassSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
     super(JitClass.class, recorder);
@@ -45,16 +47,15 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
 
   @Override public @NotNull ClassSerializer serialize(@NotNull AstClassBuilder builder, ClassDef unit) {
     buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      JavaUtil.fromClass(JitMember.class).arrayType(),
-      "membars",
+      JavaUtil.fromClass(JitMember.class).arrayType(), "membars", false,
       ImmutableSeq.empty(),
-      (ap, cb) -> buildMembers(cb, unit)));
+      (_, cb) -> buildMembers(cb, unit)));
 
     return this;
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, ClassDef unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) ->
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
   }
 }

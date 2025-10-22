@@ -85,15 +85,6 @@ public record AstClassBuilder(
     return ref;
   }
 
-  public @NotNull MethodRef buildMethod(
-    @NotNull ClassDesc returnType,
-    @NotNull String name,
-    @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
-  ) {
-    return buildMethod(returnType, name, false, paramTypes, builder);
-  }
-
   public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder

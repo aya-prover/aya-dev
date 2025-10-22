@@ -7,10 +7,7 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -60,8 +57,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   ) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (unit.telescope().isNotEmpty()) nestBuilder.buildMethod(
-        Constants.CD_Term,
-        "telescope",
+        Constants.CD_Term, "telescope", false,
         ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
         (ap, cb) -> {
           var i = ap.arg(0);
@@ -70,22 +66,18 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
         });
 
       nestBuilder.buildMethod(
-        Constants.CD_Term,
-        "result",
+        Constants.CD_Term, "result", false,
         ImmutableSeq.of(Constants.CD_Seq),
         (ap, cb) -> {
           var teleArgs = ap.arg(0);
           buildResult(cb, unit, teleArgs);
-        }
-      );
+        });
 
       continuation.accept(nestBuilder);
     });
   }
 
-  @Override protected boolean shouldBuildEmptyCall(@NotNull T unit) {
-    return unit.telescope().isEmpty();
-  }
+  @Override protected boolean shouldBuildEmptyCall(@NotNull T unit) { return unit.telescope().isEmpty(); }
 
   /**
    * @see JitTele#telescope(int, Term...)
@@ -98,10 +90,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
       IntRange.closedOpen(0, tele.size()).collect(ImmutableIntSeq.factory()),
       (cb, kase) -> {
         var result = serializeTermUnderTeleWithoutNormalizer(
-          cb,
-          tele.get(kase).type(),
-          teleArgsTerm, kase
-        );
+          cb, tele.get(kase).type(), teleArgsTerm, kase);
 
         cb.returnWith(result);
       },

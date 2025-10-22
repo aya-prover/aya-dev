@@ -7,10 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -35,8 +32,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
   @Override public @NotNull DataSerializer serialize(@NotNull AstClassBuilder builder, DataDef unit) {
     buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      JavaUtil.fromClass(JitCon.class).arrayType(),
-      "constructors",
+      JavaUtil.fromClass(JitCon.class).arrayType(), "constructors", false,
       ImmutableSeq.empty(), (_, cb) ->
         buildConstructors(cb, unit)));
 

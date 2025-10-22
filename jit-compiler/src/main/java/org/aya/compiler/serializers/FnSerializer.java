@@ -7,10 +7,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstDecl;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -162,8 +159,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       var fixedInvoke = buildFixedInvoke(unit, builder0);
 
       builder0.buildMethod(
-        CD_Term,
-        "invoke",
+        CD_Term, "invoke", false,
         InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_Seq).view()),
         (ap, cb) ->
           buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0))

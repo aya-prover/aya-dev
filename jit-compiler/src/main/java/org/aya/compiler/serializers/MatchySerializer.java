@@ -6,10 +6,7 @@ import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -152,22 +149,15 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
           buildInvoke(cb, unit, pre, captures, args);
         });
 
-      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
+      builder.buildMethod(Constants.CD_Term, "invoke", false, ImmutableSeq.of(
         Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) -> {
-        var pre = ap.arg(0);
-        var captures = ap.arg(1);
-        var args = ap.arg(2);
-        buildInvoke(cb, unit, fixedInvokeRef, pre, captures, args);
-      });
+      ), (ap, cb) ->
+        buildInvoke(cb, unit, fixedInvokeRef, ap.arg(0), ap.arg(1), ap.arg(2)));
 
-      builder.buildMethod(Constants.CD_Term, "type", ImmutableSeq.of(
+      builder.buildMethod(Constants.CD_Term, "type", false, ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) -> {
-        var captures = ap.arg(0);
-        var args = ap.arg(1);
-        buildType(cb, unit, captures, args);
-      });
+      ), (ap, cb) ->
+        buildType(cb, unit, ap.arg(0), ap.arg(1)));
     });
 
     return this;
