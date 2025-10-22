@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstValue;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
@@ -35,7 +36,7 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, MemberDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprSerializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
-      builder.iconst(unit.index()),
+      new AstExpr.Iconst(unit.index()),
       serializeTermWithoutNormalizer(builder, unit.type())
     ));
   }

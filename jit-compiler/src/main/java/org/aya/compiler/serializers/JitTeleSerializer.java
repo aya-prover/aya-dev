@@ -33,13 +33,13 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, T unit) {
     var tele = unit.telescope();
     var size = tele.size();
-    var sizeExpr = builder.iconst(size);
+    var sizeExpr = new AstExpr.Iconst(size);
     var licit = tele.view().map(Param::explicit)
-      .<AstValue>map(builder::iconst)
+      .<AstValue>map(AstExpr.Bconst::new)
       .toSeq();
     var licitExpr = builder.makeArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
-      .map(builder::aconst)
+      .<AstValue>map(AstExpr.Sconst::new)
       .toSeq();
     var namesExpr = builder.makeArray(ConstantDescs.CD_String, names.size(), names);
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);

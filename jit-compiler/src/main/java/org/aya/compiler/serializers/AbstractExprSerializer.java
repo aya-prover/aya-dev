@@ -150,7 +150,7 @@ public abstract class AbstractExprSerializer<T> {
     @NotNull AstVariable theSeq,
     int size
   ) {
-    var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
+    var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(new AstExpr.Iconst(size)));
     var cast = new AstExpr.CheckCast(builder.bindExpr(ConstantDescs.CD_Object, result), elementType);
     return builder.bindExpr(elementType, cast);
   }

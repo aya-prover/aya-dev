@@ -48,7 +48,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   @Override
   protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
-      .appended(builder.iconst(modifierFlags(unit.modifiers())));
+      .appended(new AstExpr.Iconst(modifierFlags(unit.modifiers())));
   }
 
   public static @NotNull AstVariable makeInvoke(

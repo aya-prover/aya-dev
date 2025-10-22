@@ -108,7 +108,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
   ) {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
-      builder.iconst(ulift),
+      new AstExpr.Iconst(ulift),
       AbstractExprSerializer.makeImmutableSeq(builder, Term.class, args)
     ));
   }
@@ -129,7 +129,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     // builder.markUsage(defClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitFn));
 
     if (ulift != 0) {
-      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(builder.iconst(ulift)));
+      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(new AstExpr.Iconst(ulift)));
     } else return invokeExpr;
   }
 
@@ -164,23 +164,23 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         getCallInstance(CallKind.from(call), call.ref());
       case ClassCall(var ref, var ulift, var args) -> builder.mkNew(ClassCall.class, ImmutableSeq.of(
         getInstance(ref),
-        builder.iconst(ulift),
+        new AstExpr.Iconst(ulift),
         serializeClosureToImmutableSeq(args)
       ));
       case MemberCall call -> makeMemberNew(call);
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
-      case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(builder.iconst(index)));
+      case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(new AstExpr.Iconst(index)));
       case LamTerm lamTerm -> builder.mkNew(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body())));
       case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
         getInstance(ref),
-        builder.iconst(ulift),
+        new AstExpr.Iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
       case ConCall(var head, var args) -> builder.mkNew(ConCall.class, ImmutableSeq.of(
         getInstance(head.ref()),
         serializeToImmutableSeq(Term.class, head.ownerArgs()),
-        builder.iconst(head.ulift()),
+        new AstExpr.Iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
       /// Assumption: `term.tailCall() == true` implies `unit == term.ref()`
@@ -203,7 +203,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
         var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
           serializeApplicable(rule),
-          builder.iconst(ulift),
+          new AstExpr.Iconst(ulift),
           serializeToImmutableSeq(Term.class, ownerArgs),
           serializeToImmutableSeq(Term.class, conArgs)
         ));
@@ -212,7 +212,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
           serializeApplicable(rule),
-          builder.iconst(ulift),
+          new AstExpr.Iconst(ulift),
           serializeToImmutableSeq(Term.class, args)
         ));
         yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
@@ -220,7 +220,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
       case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
       case SortTerm(var kind, var ulift) ->
-        builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), builder.iconst(ulift)));
+        builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), new AstExpr.Iconst(ulift)));
       case DepTypeTerm(var kind, var param, var body) -> builder.mkNew(DepTypeTerm.class, ImmutableSeq.of(
         builder.refEnum(kind),
         doSerialize(param),
@@ -233,7 +233,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       ));
       case ProjTerm(var of, var fst) -> builder.mkNew(ProjTerm.class, ImmutableSeq.of(
         doSerialize(of),
-        builder.iconst(fst)
+        new AstExpr.Bconst(fst)
       ));
       case PAppTerm(var fun, var arg, var a, var b) -> makeAppNew(PAppTerm.class,
         fun, arg, a, b
@@ -249,11 +249,11 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       ));
       case PrimCall(var ref, var ulift, var args) -> builder.mkNew(PrimCall.class, ImmutableSeq.of(
         getInstance(ref),
-        builder.iconst(ulift),
+        new AstExpr.Iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
       case IntegerTerm(var repr, var zero, var suc, var type) -> builder.mkNew(IntegerTerm.class, ImmutableSeq.of(
-        builder.iconst(repr),
+        new AstExpr.Iconst(repr),
         getInstance(zero),
         getInstance(suc),
         doSerialize(type)
@@ -265,7 +265,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         doSerialize(type)
       ));
       case StringTerm stringTerm -> builder.mkNew(StringTerm.class, ImmutableSeq.of(
-        builder.aconst(stringTerm.string())
+        new AstExpr.Sconst(stringTerm.string())
       ));
       case ClassCastTerm(var classRef, var subterm, var rember, var forgor) ->
         builder.mkNew(ClassCastTerm.class, ImmutableSeq.of(
@@ -367,7 +367,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     var obj = builder.mkNew(MemberCall.class, ImmutableSeq.of(
       doSerialize(call.of()),
       getInstance(call.ref()),
-      builder.iconst(call.ulift()),
+      new AstExpr.Iconst(call.ulift()),
       serializeToImmutableSeq(Term.class, call.args())
     ));
 

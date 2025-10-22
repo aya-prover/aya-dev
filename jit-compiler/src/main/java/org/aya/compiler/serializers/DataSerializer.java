@@ -71,7 +71,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
 
   @Override
   protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, DataDef unit) {
-    return super.superConArgs(builder, unit).appended(builder.iconst(unit.body().size()));
+    return super.superConArgs(builder, unit).appended(new AstExpr.Iconst(unit.body().size()));
   }
 
   /**
@@ -79,7 +79,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
    */
   private void buildConstructors(@NotNull AstCodeBuilder builder, DataDef unit) {
     var cons = Constants.JITDATA_CONS;
-    var consRef = builder.bindExpr(cons.returnType(), new AstExpr.RefField(cons, builder.thisRef()));
+    var consRef = builder.bindExpr(cons.returnType(), new AstExpr.RefField(cons, AstExpr.This.INSTANCE));
 
     if (unit.body().isEmpty()) {
       builder.returnWith(consRef);

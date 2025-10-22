@@ -240,8 +240,8 @@ public final class PatternCompiler {
     result = ImmutableSeq.fill(binds, _ -> builder.bindExpr(new AstExpr.Null(Constants.CD_Term)));
 
     // whether the match success or mismatch, 0 implies mismatch
-    matchState = builder.bindExpr(builder.iconst(0));
-    subMatchState = builder.bindExpr(builder.iconst(false));
+    matchState = builder.bindExpr(new AstExpr.Iconst(0));
+    subMatchState = builder.bindExpr(new AstExpr.Bconst(false));
 
     builder.breakable(mBuilder -> unit.forEachIndexed((idx, clause) -> {
       var jumpCode = idx + 1;

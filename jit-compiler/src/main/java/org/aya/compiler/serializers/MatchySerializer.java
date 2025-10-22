@@ -115,7 +115,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       .view()
       .appendedAll(AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, argc));
     var fullArgs = InvokeSignatureHelper.args(normalizer, SeqView.narrow(preArgs));
-    var invokeExpr = new AstExpr.Invoke(invokeRef, builder.thisRef(), fullArgs);
+    var invokeExpr = new AstExpr.Invoke(invokeRef, AstExpr.This.INSTANCE, fullArgs);
 
     builder.returnWith(invokeExpr);
   }

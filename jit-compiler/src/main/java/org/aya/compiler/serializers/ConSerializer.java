@@ -39,8 +39,8 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
   @Override protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, ConDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprSerializer.getInstance(builder, unit.dataRef),
-      builder.iconst(unit.selfTele.size()),
-      builder.iconst(unit.equality != null)
+      new AstExpr.Iconst(unit.selfTele.size()),
+      new AstExpr.Bconst(unit.equality != null)
     ));
   }
 

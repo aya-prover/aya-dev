@@ -208,22 +208,6 @@ public record AstCodeBuilder(
     return bindExpr(cd, new AstExpr.RefEnum(cd, name));
   }
 
-  public @NotNull AstExpr.Iconst iconst(int i) {
-    return new AstExpr.Iconst(i);
-  }
-
-  public @NotNull AstValue aconst(@NotNull String str) {
-    return new AstExpr.Sconst(str);
-  }
-
-  public @NotNull AstExpr.Bconst iconst(boolean b) {
-    return new AstExpr.Bconst(b);
-  }
-
-  public @NotNull AstExpr.This thisRef() {
-    return AstExpr.This.INSTANCE;
-  }
-
   public @NotNull AstVariable checkcast(@NotNull AstVariable obj, @NotNull ClassDesc type) {
     return bindExpr(type, new AstExpr.CheckCast(obj, type));
   }

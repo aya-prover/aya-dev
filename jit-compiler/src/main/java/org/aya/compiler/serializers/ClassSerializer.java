@@ -28,7 +28,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   // TODO: unify with DataSerializer#buildConstructors
   private void buildMembers(@NotNull AstCodeBuilder builder, ClassDef unit) {
     var mems = Constants.JITCLASS_MEMS;
-    var memsRef = builder.bindExpr(mems.returnType(), new AstExpr.RefField(mems, builder.thisRef()));
+    var memsRef = builder.bindExpr(mems.returnType(), new AstExpr.RefField(mems, AstExpr.This.INSTANCE));
 
     if (unit.members().isEmpty()) {
       builder.returnWith(memsRef);
