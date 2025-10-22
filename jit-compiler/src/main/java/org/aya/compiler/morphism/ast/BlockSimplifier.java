@@ -25,7 +25,8 @@ public interface BlockSimplifier {
         yield new Clazz(metadata, owner, nested, superclass, newMembers);
       }
       case ConstantField field -> field;
-      case Method(var signature, var body) -> new Method(signature, optimizeBlock(body, false));
+      case Method(var signature, var isStatic, var body) -> new Method(signature, isStatic,
+        optimizeBlock(body, false));
       case AstDecl.StaticInitBlock(var block) -> new AstDecl.StaticInitBlock(optimizeBlock(block, false));
     };
   }

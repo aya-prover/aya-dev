@@ -10,6 +10,7 @@ import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.JavaUtil;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstValue;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -29,7 +30,7 @@ public abstract class AbstractExprSerializer<T> {
 
   public @NotNull AstVariable makeImmutableSeq(
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<AstVariable> terms
+    @NotNull ImmutableSeq<AstValue> terms
   ) {
     return makeImmutableSeq(builder, typeName, terms);
   }
@@ -38,14 +39,14 @@ public abstract class AbstractExprSerializer<T> {
     @NotNull Class<?> typeName,
     @NotNull ImmutableSeq<T> terms
   ) {
-    var sered = terms.map(this::doSerialize);
+    var sered = terms.<AstValue>map(this::doSerialize);
     return makeImmutableSeq(typeName, sered);
   }
 
   public static @NotNull AstVariable makeImmutableSeq(
     @NotNull AstCodeBuilder builder,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<AstVariable> terms
+    @NotNull ImmutableSeq<? extends AstValue> terms
   ) {
     return makeImmutableSeq(builder, Constants.IMMSEQ, typeName, terms);
   }
@@ -65,9 +66,9 @@ public abstract class AbstractExprSerializer<T> {
     @NotNull AstCodeBuilder builder,
     @NotNull MethodRef con,
     @NotNull Class<?> typeName,
-    @NotNull ImmutableSeq<AstVariable> terms
+    @NotNull ImmutableSeq<? extends AstValue> terms
   ) {
-    ImmutableSeq<AstVariable> args;
+    ImmutableSeq<AstValue> args;
 
     if (terms.size() <= 5) {
       String name = con.name();
@@ -86,11 +87,11 @@ public abstract class AbstractExprSerializer<T> {
         con.returnType(), params,
         con.isInterface());
 
-      args = terms;
+      args = ImmutableSeq.narrow(terms);
     } else {
       var var = builder.bindExpr(
         JavaUtil.fromClass(typeName.arrayType()),
-        new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), terms));
+        new AstExpr.Array(JavaUtil.fromClass(typeName), terms.size(), ImmutableSeq.narrow(terms)));
       args = ImmutableSeq.of(var);
     }
 
@@ -149,7 +150,7 @@ public abstract class AbstractExprSerializer<T> {
     @NotNull AstVariable theSeq,
     int size
   ) {
-    var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(builder.iconst(size)));
+    var result = new AstExpr.Invoke(Constants.SEQ_GET, theSeq, ImmutableSeq.of(new AstExpr.Iconst(size)));
     var cast = new AstExpr.CheckCast(builder.bindExpr(ConstantDescs.CD_Object, result), elementType);
     return builder.bindExpr(elementType, cast);
   }
@@ -168,10 +169,9 @@ public abstract class AbstractExprSerializer<T> {
   public static @NotNull AstVariable makeCallInvoke(
     @NotNull AstCodeBuilder builder,
     @NotNull MethodRef ref,
-    @NotNull AstVariable instance,
     @NotNull AstVariable normalizer,
-    @NotNull SeqView<AstVariable> args
+    @NotNull SeqView<AstValue> args
   ) {
-    return builder.invoke(ref, instance, InvokeSignatureHelper.args(normalizer, args));
+    return builder.invoke(ref, null, InvokeSignatureHelper.args(normalizer, args));
   }
 }

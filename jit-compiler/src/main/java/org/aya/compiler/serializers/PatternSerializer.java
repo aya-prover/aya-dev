@@ -4,6 +4,7 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
@@ -32,7 +33,7 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
       getInstance(head.ref()),
-      builder.iconst(head.ulift()),
+      new AstExpr.Iconst(head.ulift()),
       makeImmutableSeq(Term.class, head.ownerArgs().map(termSer::serialize))
     ));
   }
@@ -43,7 +44,7 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
       // it is safe to new a LocalVar, this method will be called when meta solving only,
       // but the meta solver will eat all LocalVar so that it will be happy.
       case Pat.Bind bind -> builder.mkNew(Pat.Bind.class, ImmutableSeq.of(
-        builder.mkNew(LocalVar.class, ImmutableSeq.of(builder.aconst(bind.bind().name()))),
+        builder.mkNew(LocalVar.class, ImmutableSeq.of(new AstExpr.Sconst(bind.bind().name()))),
         serializeTerm(bind.type())
       ));
       case Pat.Con con -> builder.mkNew(Pat.Con.class, ImmutableSeq.of(
@@ -51,7 +52,7 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
         serializeConHead(con.head())
       ));
       case Pat.ShapedInt shapedInt -> builder.mkNew(Pat.ShapedInt.class, ImmutableSeq.of(
-        builder.iconst(shapedInt.repr()),
+        new AstExpr.Iconst(shapedInt.repr()),
         getInstance(shapedInt.zero()),
         getInstance(shapedInt.suc()),
         serializeTerm(shapedInt.type())

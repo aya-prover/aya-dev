@@ -75,11 +75,11 @@ public record AsmCodeBuilder(
     return variable;
   }
 
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AsmVariable> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AsmValue> superConArgs) {
     invoke(
       InvokeKind.Special,
       FreeJavaResolver.resolve(parent.ownerSuper(), ConstantDescs.INIT_NAME, ConstantDescs.CD_void, superConParams, false),
-      thisRef(),
+      new AsmValue.AsmValuriable(thisRef()),
       superConArgs);
   }
 
@@ -88,14 +88,14 @@ public record AsmCodeBuilder(
     writer.storeInstruction(var.kind(), var.slot());
   }
 
-  public void updateArray(@NotNull AsmVariable array, int idx, @NotNull AsmVariable update) {
+  public void updateArray(@NotNull AsmVariable array, int idx, @NotNull AsmValue update) {
     var component = array.type().componentType();
     assert component != null;     // null if non-array, which is unacceptable
     var kind = TypeKind.fromDescriptor(component.descriptorString());
 
     loadVar(array);
     iconst(idx).accept(this);
-    loadVar(update);
+    update.accept(this);
     writer.arrayStoreInstruction(kind);
   }
 
@@ -109,18 +109,18 @@ public record AsmCodeBuilder(
     }
   }
 
-  public void ifNotTrue(@NotNull AsmVariable notTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadVar(notTrue);
+  public void ifNotTrue(@NotNull AsmValue notTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    notTrue.accept(this);
     ifThenElse(Opcode.IFEQ, thenBlock, elseBlock);
   }
 
-  public void ifTrue(@NotNull AsmVariable theTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadVar(theTrue);
+  public void ifTrue(@NotNull AsmValue theTrue, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    theTrue.accept(this);
     ifThenElse(Opcode.IFNE, thenBlock, elseBlock);
   }
 
-  public void ifInstanceOf(@NotNull AsmVariable lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, AsmVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadVar(lhs);
+  public void ifInstanceOf(@NotNull AsmValue lhs, @NotNull ClassDesc rhs, @NotNull BiConsumer<AsmCodeBuilder, AsmVariable> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    lhs.accept(this);
     writer.instanceof_(rhs);
     ifThenElse(Opcode.IFNE, builder -> {
       var cast = builder.checkcast(lhs, rhs);
@@ -129,8 +129,8 @@ public record AsmCodeBuilder(
     }, elseBlock);
   }
 
-  public void ifIntEqual(@NotNull AsmVariable lhs, int rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
-    loadVar(lhs);
+  public void ifIntEqual(@NotNull AsmValue lhs, int rhs, @NotNull Consumer<AsmCodeBuilder> thenBlock, @Nullable Consumer<AsmCodeBuilder> elseBlock) {
+    lhs.accept(this);
     loadExpr(iconst(rhs));
     ifThenElse(Opcode.IF_ICMPEQ, thenBlock, elseBlock);
   }
@@ -214,8 +214,8 @@ public record AsmCodeBuilder(
     writer.returnInstruction(kind);
   }
 
-  public void setStaticField(FieldRef fieldRef, AsmVariable update) {
-    loadVar(update);
+  public void setStaticField(FieldRef fieldRef, AsmValue update) {
+    update.accept(this);
     writer().putstatic(fieldRef.owner(), fieldRef.name(), fieldRef.returnType());
   }
 
@@ -226,8 +226,8 @@ public record AsmCodeBuilder(
   public void invoke(
     @NotNull InvokeKind kind,
     @NotNull MethodRef ref,
-    @Nullable AsmVariable self,
-    @NotNull ImmutableSeq<AsmVariable> args
+    @Nullable AsmValue self,
+    @NotNull ImmutableSeq<AsmValue> args
   ) {
     assert ref.checkArguments(args);
 
@@ -239,10 +239,10 @@ public record AsmCodeBuilder(
     assert (self == null) == (kind == InvokeKind.Static);
 
     if (self != null) {
-      loadVar(self);
+      self.accept(this);
     }
 
-    args.forEach(this::loadVar);
+    args.forEach(v -> v.accept(this));
 
     switch (kind) {
       case Static -> writer.invokestatic(owner, name, desc, isInterface);
@@ -257,21 +257,21 @@ public record AsmCodeBuilder(
     }
   }
 
-  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AsmVariable> args) {
+  public @NotNull AsmExpr mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AsmValue> args) {
     return AsmExpr.withType(conRef.owner(), builder -> {
       var var = builder.makeVar(conRef.owner(), AsmExpr.withType(conRef.owner(), builder0 ->
         builder0.writer.new_(conRef.owner())));
-      builder.invoke(InvokeKind.Special, conRef, var, args);
+      builder.invoke(InvokeKind.Special, conRef, new AsmValue.AsmValuriable(var), args);
       builder.loadVar(var);
     });
   }
 
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull AsmVariable owner, @NotNull ImmutableSeq<AsmVariable> args) {
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull AsmValue owner, @NotNull ImmutableSeq<AsmValue> args) {
     return AsmExpr.withType(method.returnType(), builder ->
       builder.invoke(InvokeKind.Virtual, method, owner, args));
   }
 
-  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AsmVariable> args) {
+  public @NotNull AsmExpr invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AsmValue> args) {
     return AsmExpr.withType(method.returnType(), builder ->
       builder.invoke(InvokeKind.Static, method, null, args));
   }
@@ -281,9 +281,9 @@ public record AsmCodeBuilder(
       builder.writer.getstatic(field.owner(), field.name(), field.returnType()));
   }
 
-  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull AsmVariable owner) {
+  public @NotNull AsmExpr refField(@NotNull FieldRef field, @NotNull AsmValue owner) {
     return AsmExpr.withType(field.returnType(), builder -> {
-      builder.loadVar(owner);
+      owner.accept(this);
       builder.writer.getfield(field.owner(), field.name(), field.returnType());
     });
   }
@@ -341,7 +341,7 @@ public record AsmCodeBuilder(
     return AsmVariable.mkThis(parent.owner());
   }
 
-  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends AsmVariable> initializer) {
+  public @NotNull AsmExpr mkArray(@NotNull ClassDesc type, int length, @Nullable ImmutableSeq<? extends AsmValue> initializer) {
     var arrayType = type.arrayType();
 
     return AsmExpr.withType(arrayType, builder -> {
@@ -377,9 +377,9 @@ public record AsmCodeBuilder(
     });
   }
 
-  public @NotNull AsmExpr checkcast(@NotNull AsmVariable obj, @NotNull ClassDesc as) {
+  public @NotNull AsmExpr checkcast(@NotNull AsmValue obj, @NotNull ClassDesc as) {
     return AsmExpr.withType(as, builder -> {
-      builder.loadVar(obj);
+      obj.accept(builder);
       builder.writer.checkcast(as);
     });
   }

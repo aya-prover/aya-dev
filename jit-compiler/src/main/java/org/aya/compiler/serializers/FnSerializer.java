@@ -2,15 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.compiler.serializers;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstDecl;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.generic.Modifier;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -48,9 +46,9 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
+  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
-      .appended(builder.iconst(modifierFlags(unit.modifiers())));
+      .appended(new AstExpr.Iconst(modifierFlags(unit.modifiers())));
   }
 
   public static @NotNull AstVariable makeInvoke(
@@ -65,8 +63,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       false
     );
 
-    var instance = TermSerializer.getInstance(builder, owner);
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, args.view());
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, SeqView.narrow(args.view()));
   }
 
   /// Build fixed argument `invoke`
@@ -146,7 +143,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprSerializer.fromSeq(builder, CD_Term, argsTerm, teleSize);
-    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, builder.thisRef(), normalizerTerm, args.view());
+    var result = AbstractExprSerializer.makeCallInvoke(builder, invokeMethod, normalizerTerm,
+      SeqView.narrow(args.view()));
     builder.returnWith(result);
   }
 
@@ -163,8 +161,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       var fixedInvoke = buildFixedInvoke(unit, builder0);
 
       builder0.buildMethod(
-        CD_Term,
-        "invoke",
+        CD_Term, "invoke", false,
         InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_Seq).view()),
         (ap, cb) ->
           buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0))
@@ -177,7 +174,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private @NotNull MethodRef buildFixedInvoke(FnDef unit, AstClassBuilder builder) {
     return builder.buildMethod(
       CD_Term,
-      "invoke",
+      "invoke", true,
       InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), CD_Term).view()),
       (ap, cb) -> {
         var pre = InvokeSignatureHelper.normalizer(ap);

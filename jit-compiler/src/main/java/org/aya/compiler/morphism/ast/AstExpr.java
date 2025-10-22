@@ -14,19 +14,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-// TODO: consider [AstExpr#type]
 public sealed interface AstExpr extends Docile {
-  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) implements AstExpr {
+  record New(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstValue> args) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "new"),
-        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstVariable::toDoc)))
+        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstValue::toDoc)))
       );
     }
   }
 
-  record Invoke(@NotNull MethodRef methodRef, @Nullable AstVariable owner,
-                @NotNull ImmutableSeq<AstVariable> args) implements AstExpr {
+  record Invoke(@NotNull MethodRef methodRef, @Nullable AstValue owner,
+                @NotNull ImmutableSeq<AstValue> args) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       Doc ownerDoc = owner != null
         ? owner.toDoc()
@@ -34,18 +33,16 @@ public sealed interface AstExpr extends Docile {
       return Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "invoke"),
         Doc.cat(ownerDoc, Doc.plain("."), Doc.plain(methodRef.name())),
-        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstVariable::toDoc)))
+        Doc.wrap("(", ")", Doc.commaList(args.view().map(AstValue::toDoc)))
       );
     }
   }
 
   record Ref(@NotNull AstVariable variable) implements AstExpr {
-    @Override public @NotNull Doc toDoc() {
-      return variable.toDoc();
-    }
+    @Override public @NotNull Doc toDoc() { return variable.toDoc(); }
   }
 
-  record RefField(@NotNull FieldRef fieldRef, @Nullable AstVariable owner) implements AstExpr {
+  record RefField(@NotNull FieldRef fieldRef, @Nullable AstValue owner) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       if (owner != null) {
         return Doc.cat(owner.toDoc(), Doc.plain("."), Doc.plain(fieldRef.name()));
@@ -64,15 +61,14 @@ public sealed interface AstExpr extends Docile {
   record Lambda(@NotNull ImmutableSeq<AstVariable> captures, @NotNull MethodRef method,
                 @NotNull ImmutableSeq<AstStmt> body) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
-      return Doc.vcat(
-        Doc.sep(
+      return Doc.vcat(Doc.sep(
           Doc.styled(BasePrettier.KEYWORD, "lambda capturing "),
           Doc.commaList(captures.view().map(AstVariable::toDoc))),
         Doc.nest(2, Doc.vcat(body.view().map(AstStmt::toDoc))));
     }
   }
 
-  sealed interface Const extends AstExpr { }
+  sealed interface Const extends AstExpr, AstValue { }
   record Iconst(int value) implements Const {
     @Override public @NotNull Doc toDoc() {
       return Doc.plain(Integer.toString(value));
@@ -93,29 +89,31 @@ public sealed interface AstExpr extends Docile {
       return Doc.styled(BasePrettier.KEYWORD, "null");
     }
   }
-  enum This implements AstExpr {
+  enum This implements Const {
     INSTANCE;
     @Override public @NotNull Doc toDoc() {
       return Doc.styled(BasePrettier.KEYWORD, "this");
     }
   }
 
-  record Array(@NotNull ClassDesc type, int length,
-               @Nullable ImmutableSeq<AstVariable> initializer) implements AstExpr {
+  record Array(
+    @NotNull ClassDesc type, int length,
+    @Nullable ImmutableSeq<AstValue> initializer
+  ) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       var header = Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "array"),
         Doc.plain(type.displayName()),
-        Doc.plain("[" + length + "]"));
+        Doc.wrap("[", "]", Doc.plain(String.valueOf(length))));
       if (initializer == null) return header;
       if (initializer.sizeLessThanOrEquals(10))
         return Doc.sep(
           header,
-          Doc.commaList(initializer.view().map(AstVariable::toDoc)));
+          Doc.commaList(initializer.view().map(AstValue::toDoc)));
       else return Doc.vcat(
         header,
         Doc.styled(BasePrettier.KEYWORD, "elements"),
-        Doc.nest(2, Doc.commaList(initializer.view().map(AstVariable::toDoc)))
+        Doc.nest(2, Doc.commaList(initializer.view().map(AstValue::toDoc)))
       );
     }
   }
@@ -126,7 +124,7 @@ public sealed interface AstExpr extends Docile {
     }
   }
 
-  record CheckCast(@NotNull AstVariable obj, @NotNull ClassDesc as) implements AstExpr {
+  record CheckCast(@NotNull AstValue obj, @NotNull ClassDesc as) implements AstExpr {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "checkcast"),

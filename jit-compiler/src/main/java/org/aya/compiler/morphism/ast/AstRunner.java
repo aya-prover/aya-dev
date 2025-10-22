@@ -45,7 +45,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
         }
         case AstDecl.ConstantField constantField ->
           builder.buildStaticField(constantField.signature().returnType(), constantField.signature().name());
-        case AstDecl.Method(var sig, var body) -> {
+        case AstDecl.Method(var sig, var isStatic, var body) when isStatic ->
+          builder.buildStaticMethod(sig.returnType(), sig.name(), sig.paramTypes(),
+            (ap, cb) -> interpStmts(ap, cb, body));
+        case AstDecl.Method(var sig, _, var body) -> {
           if (sig.isConstructor()) {
             builder.buildConstructor(sig.paramTypes(),
               (ap, cb) -> interpStmts(ap, cb, body));
@@ -60,7 +63,18 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     }
   }
 
-  private ImmutableSeq<AsmVariable> interpVars(@Nullable AsmArgsProvider ap, @NotNull ImmutableSeq<AstVariable> vars) {
+  private ImmutableSeq<AsmValue> interpVars(
+    @Nullable AsmArgsProvider ap,
+    @NotNull AsmCodeBuilder builder,
+    @NotNull ImmutableSeq<? extends AstValue> vars
+  ) {
+    return vars.map(it -> interpVar(ap, builder, it));
+  }
+
+  private ImmutableSeq<AsmVariable> interpVars(
+    @Nullable AsmArgsProvider ap,
+    @NotNull ImmutableSeq<AstVariable> vars
+  ) {
     return vars.map(it -> interpVar(ap, it));
   }
 
@@ -82,23 +96,30 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
     };
   }
 
+  private AsmValue interpVar(@Nullable AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstValue var) {
+    return switch (var) {
+      case AstVariable variable -> new AsmValue.AsmValuriable(interpVar(ap, variable));
+      case AstExpr.Const val -> new AsmValue.AsmExprValue(interpExpr(ap, builder, val).cont());
+    };
+  }
+
   private AsmExpr interpExpr(@Nullable AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull AstExpr expr) {
     return switch (expr) {
       case AstExpr.Ref(var ref) -> AsmExpr.withType(Constants.CD_Term,
-        builder0 -> builder0.loadVar(interpVar(ap, ref)));
+        builder0 -> interpVar(ap, builder0, ref).accept(builder0));
       case AstExpr.Array(var type, var length, var initializer) ->
-        builder.mkArray(type, length, initializer == null ? null : interpVars(ap, initializer));
-      case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(interpVar(ap, obj), as);
+        builder.mkArray(type, length, initializer == null ? null : interpVars(ap, builder, initializer));
+      case AstExpr.CheckCast(var obj, var as) -> builder.checkcast(interpVar(ap, builder, obj), as);
       case AstExpr.Iconst(var i) -> builder.iconst(i);
       case AstExpr.Bconst(var b) -> builder.iconst(b);
       case AstExpr.Sconst(var s) -> builder.aconst(s);
       case AstExpr.Null(var ty) -> builder.aconstNull(ty);
       case AstExpr.GetArray(var arr, var idx) -> builder.getArray(interpVar(ap, arr), idx);
       case AstExpr.Invoke(var ref, var owner, var args) -> {
-        var argsExpr = interpVars(ap, args);
+        var argsExpr = interpVars(ap, builder, args);
         yield owner == null
           ? builder.invoke(ref, argsExpr)
-          : builder.invoke(ref, interpVar(ap, owner), argsExpr);
+          : builder.invoke(ref, interpVar(ap, builder, owner), argsExpr);
       }
       case AstExpr.Lambda(var lamCaptures, var methodRef, var body) -> {
         var captureExprs = interpVars(ap, lamCaptures);
@@ -110,10 +131,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
             interpStmts(lap, cb, body));
         }
       }
-      case AstExpr.New(var ref, var args) -> builder.mkNew(ref, interpVars(ap, args));
+      case AstExpr.New(var ref, var args) -> builder.mkNew(ref, interpVars(ap, builder, args));
       case AstExpr.RefEnum(var enumClass, var enumName) -> builder.refEnum(enumClass, enumName);
       case AstExpr.RefField(var fieldRef, var owner) -> owner != null
-        ? builder.refField(fieldRef, interpVar(ap, owner))
+        ? builder.refField(fieldRef, interpVar(ap, builder, owner))
         : builder.refField(fieldRef);
       case AstExpr.This _ -> builder.thisRef().ref();
     };
@@ -164,20 +185,21 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
 
         switch (cond) {
           case AstStmt.Condition.IsFalse(var isFalse) ->
-            builder.ifNotTrue(interpVar(ap, isFalse), thenBlock, elseBlock);
-          case AstStmt.Condition.IsTrue(var isTrue) -> builder.ifTrue(interpVar(ap, isTrue), thenBlock, elseBlock);
+            builder.ifNotTrue(interpVar(ap, builder, isFalse), thenBlock, elseBlock);
+          case AstStmt.Condition.IsTrue(var isTrue) ->
+            builder.ifTrue(interpVar(ap, builder, isTrue), thenBlock, elseBlock);
           case AstStmt.Condition.IsInstanceOf(var lhs, var rhs, var as) -> {
             var asTerm = as.get();
             assert asTerm != null;
-            builder.ifInstanceOf(interpVar(ap, lhs), rhs, (cb, var) -> {
+            builder.ifInstanceOf(interpVar(ap, builder, lhs), rhs, (cb, var) -> {
               try (var _ = subscoped()) {
                 bindVar(asTerm.index(), var);
-                interpStmts(ap, cb, thenBody);      // prevent unnecessary subscoping
+                interpStmts(ap, cb, thenBody); // prevent unnecessary subscoping
               }
             }, elseBlock);
           }
           case AstStmt.Condition.IsIntEqual(var lhs, var rhs) ->
-            builder.ifIntEqual(interpVar(ap, lhs), rhs, thenBlock, elseBlock);
+            builder.ifIntEqual(interpVar(ap, builder, lhs), rhs, thenBlock, elseBlock);
           case AstStmt.Condition.IsNull(var ref) -> builder.ifNull(interpVar(ap, ref), thenBlock, elseBlock);
           case AstStmt.Condition.IsRefEqual(var lhs, var rhs) ->
             builder.ifRefEqual(interpVar(ap, lhs), interpVar(ap, rhs), thenBlock, elseBlock);
@@ -185,10 +207,10 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
       }
       case AstStmt.Return(var expr) -> builder.returnWith(interpVar(ap, expr));
       case AstStmt.SetArray(var arr, var idx, var update) ->
-        builder.updateArray(interpVar(ap, arr), idx, interpVar(ap, update));
+        builder.updateArray(interpVar(ap, arr), idx, interpVar(ap, builder, update));
       case AstStmt.SetVariable(var var, var update) ->
         builder.updateVar(interpVar(ap, var), interpExpr(ap, builder, update));
-      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, interpVars(ap, args));
+      case AstStmt.Super(var params, var args) -> builder.invokeSuperCon(params, interpVars(ap, builder, args));
       case AstStmt.Switch(var elim, var cases, var branches, var defaultCase) ->
         builder.switchCase(interpVar(ap, elim), cases, (cb, kase) -> {
           // slow impl, i am lazy
@@ -199,7 +221,8 @@ public final class AstRunner<Carrier extends AsmOutputCollector> {
             interpStmts(ap, cb, branch);
           }
         }, cb -> { try (var _ = subscoped()) { interpStmts(ap, cb, defaultCase); } });
-      case AstStmt.SetStaticField(var fieldRef, var update) -> builder.setStaticField(fieldRef, interpVar(ap, update));
+      case AstStmt.SetStaticField(var fieldRef, var update) ->
+        builder.setStaticField(fieldRef, interpVar(ap, builder, update));
     }
   }
 

@@ -7,10 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.ConDef;
@@ -39,11 +36,11 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     ));
   }
 
-  @Override protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, ConDef unit) {
+  @Override protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, ConDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprSerializer.getInstance(builder, unit.dataRef),
-      builder.iconst(unit.selfTele.size()),
-      builder.iconst(unit.equality != null)
+      new AstExpr.Iconst(unit.selfTele.size()),
+      new AstExpr.Bconst(unit.equality != null)
     ));
   }
 
@@ -97,17 +94,14 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
     buildFramework(builder0, unit, builder -> {
       if (unit.pats.isNotEmpty()) {
         builder.buildMethod(
-          JavaUtil.fromClass(Result.class),
-          "isAvailable",
+          JavaUtil.fromClass(Result.class), "isAvailable", false,
           InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_ImmutableSeq).view()),
           (ap, builder1) ->
             buildIsAvailable(builder1, unit, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0)));
       }
 
       if (unit.equality != null) {
-        builder.buildMethod(
-          Constants.CD_Term,
-          "equality",
+        builder.buildMethod(Constants.CD_Term, "equality", false,
           ImmutableSeq.of(Constants.CD_Seq, ConstantDescs.CD_boolean),
           (ap, cb) -> {
             var argsTerm = ap.arg(0);

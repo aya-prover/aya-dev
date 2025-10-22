@@ -7,10 +7,7 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -33,16 +30,16 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     return Constants.JIT_TELE_CON_PARAMS;
   }
 
-  protected @NotNull ImmutableSeq<AstVariable> superConArgs(@NotNull AstCodeBuilder builder, T unit) {
+  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, T unit) {
     var tele = unit.telescope();
     var size = tele.size();
-    var sizeExpr = builder.iconst(size);
+    var sizeExpr = new AstExpr.Iconst(size);
     var licit = tele.view().map(Param::explicit)
-      .map(builder::iconst)
+      .<AstValue>map(AstExpr.Bconst::new)
       .toSeq();
     var licitExpr = builder.makeArray(ConstantDescs.CD_boolean, licit.size(), licit);
     var names = tele.view().map(Param::name)
-      .map(builder::aconst)
+      .<AstValue>map(AstExpr.Sconst::new)
       .toSeq();
     var namesExpr = builder.makeArray(ConstantDescs.CD_String, names.size(), names);
     return ImmutableSeq.of(sizeExpr, licitExpr, namesExpr);
@@ -60,8 +57,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   ) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (unit.telescope().isNotEmpty()) nestBuilder.buildMethod(
-        Constants.CD_Term,
-        "telescope",
+        Constants.CD_Term, "telescope", false,
         ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
         (ap, cb) -> {
           var i = ap.arg(0);
@@ -70,22 +66,18 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
         });
 
       nestBuilder.buildMethod(
-        Constants.CD_Term,
-        "result",
+        Constants.CD_Term, "result", false,
         ImmutableSeq.of(Constants.CD_Seq),
         (ap, cb) -> {
           var teleArgs = ap.arg(0);
           buildResult(cb, unit, teleArgs);
-        }
-      );
+        });
 
       continuation.accept(nestBuilder);
     });
   }
 
-  @Override protected boolean shouldBuildEmptyCall(@NotNull T unit) {
-    return unit.telescope().isEmpty();
-  }
+  @Override protected boolean shouldBuildEmptyCall(@NotNull T unit) { return unit.telescope().isEmpty(); }
 
   /**
    * @see JitTele#telescope(int, Term...)
@@ -98,10 +90,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
       IntRange.closedOpen(0, tele.size()).collect(ImmutableIntSeq.factory()),
       (cb, kase) -> {
         var result = serializeTermUnderTeleWithoutNormalizer(
-          cb,
-          tele.get(kase).type(),
-          teleArgsTerm, kase
-        );
+          cb, tele.get(kase).type(), teleArgsTerm, kase);
 
         cb.returnWith(result);
       },

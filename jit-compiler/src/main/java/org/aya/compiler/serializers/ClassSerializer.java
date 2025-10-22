@@ -28,7 +28,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   // TODO: unify with DataSerializer#buildConstructors
   private void buildMembers(@NotNull AstCodeBuilder builder, ClassDef unit) {
     var mems = Constants.JITCLASS_MEMS;
-    var memsRef = builder.bindExpr(mems.returnType(), new AstExpr.RefField(mems, builder.thisRef()));
+    var memsRef = builder.bindExpr(mems.returnType(), new AstExpr.RefField(mems, AstExpr.This.INSTANCE));
 
     if (unit.members().isEmpty()) {
       builder.returnWith(memsRef);
@@ -45,16 +45,15 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
 
   @Override public @NotNull ClassSerializer serialize(@NotNull AstClassBuilder builder, ClassDef unit) {
     buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      JavaUtil.fromClass(JitMember.class).arrayType(),
-      "membars",
+      JavaUtil.fromClass(JitMember.class).arrayType(), "membars", false,
       ImmutableSeq.empty(),
-      (ap, cb) -> buildMembers(cb, unit)));
+      (_, cb) -> buildMembers(cb, unit)));
 
     return this;
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, ClassDef unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (ap, cb) ->
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
   }
 }

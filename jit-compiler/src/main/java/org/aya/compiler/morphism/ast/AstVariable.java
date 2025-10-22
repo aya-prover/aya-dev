@@ -3,10 +3,9 @@
 package org.aya.compiler.morphism.ast;
 
 import org.aya.pretty.doc.Doc;
-import org.aya.pretty.doc.Docile;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface AstVariable extends Docile {
+public sealed interface AstVariable extends AstValue {
   record Local(int index) implements AstVariable {
     @Override public @NotNull Doc toDoc() {
       return Doc.plain("%" + index) ;

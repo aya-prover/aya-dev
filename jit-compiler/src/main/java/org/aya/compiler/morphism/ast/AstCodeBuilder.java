@@ -11,6 +11,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
+import org.aya.syntax.core.term.Term;
 import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public record AstCodeBuilder(
 
   public @NotNull ImmutableSeq<AstStmt> build() { return stmts.freeze(); }
 
-  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstVariable> superConArgs) {
+  public void invokeSuperCon(@NotNull ImmutableSeq<ClassDesc> superConParams, @NotNull ImmutableSeq<AstValue> superConArgs) {
     assert isConstructor;
     assert superConParams.sizeEquals(superConArgs);
     stmts.append(new AstStmt.Super(superConParams, superConArgs));
@@ -143,9 +144,9 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
 
-  /// @param expr must have type [org.aya.syntax.core.term.Term]
+  /// @param expr must have type [Term]
   public void returnWith(@NotNull AstExpr expr) {
-    stmts.append(new AstStmt.Return(bindExpr(expr)));
+    returnWith(bindExpr(expr));
   }
 
   public void returnWith(@NotNull AstVariable expr) {
@@ -156,7 +157,7 @@ public record AstCodeBuilder(
     stmts.append(AstStmt.SingletonStmt.Unreachable);
   }
 
-  public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstVariable> args) {
+  public @NotNull AstVariable mkNew(@NotNull MethodRef conRef, @NotNull ImmutableSeq<AstValue> args) {
     return bindExpr(conRef.owner(), new AstExpr.New(conRef, args));
   }
 
@@ -165,7 +166,7 @@ public record AstCodeBuilder(
   }
 
   /// A `new` expression, the class should have only one (public) constructor with parameter count `args.size()`.
-  public @NotNull AstVariable mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<AstVariable> args) {
+  public @NotNull AstVariable mkNew(@NotNull Class<?> className, @NotNull ImmutableSeq<AstValue> args) {
     var candidates = ImmutableArray.wrap(className.getConstructors())
       .filter(c -> c.getParameterCount() == args.size());
 
@@ -180,7 +181,7 @@ public record AstCodeBuilder(
   }
 
   public @NotNull AstVariable
-  invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstVariable> args) {
+  invoke(@NotNull MethodRef method, @Nullable AstVariable owner, @NotNull ImmutableSeq<AstValue> args) {
     return bindExpr(method.returnType(), new AstExpr.Invoke(method, owner, args));
   }
 
@@ -189,7 +190,7 @@ public record AstCodeBuilder(
   //   return new AstExpr.Invoke(method, owner, bindExprs(args));
   // }
 
-  public @NotNull AstVariable invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstVariable> args) {
+  public @NotNull AstVariable invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<AstValue> args) {
     return bindExpr(method.returnType(), new AstExpr.Invoke(method, null, args));
   }
 
@@ -206,22 +207,6 @@ public record AstCodeBuilder(
     var cd = JavaUtil.fromClass(value.getClass());
     var name = value.name();
     return bindExpr(cd, new AstExpr.RefEnum(cd, name));
-  }
-
-  public @NotNull AstVariable iconst(int i) {
-    return bindExpr(ConstantDescs.CD_int, new AstExpr.Iconst(i));
-  }
-
-  public @NotNull AstVariable aconst(@NotNull String str) {
-    return bindExpr(ConstantDescs.CD_String, new AstExpr.Sconst(str));
-  }
-
-  public @NotNull AstVariable iconst(boolean b) {
-    return bindExpr(ConstantDescs.CD_boolean, new AstExpr.Bconst(b));
-  }
-
-  public @NotNull AstVariable thisRef() {
-    return bindExpr(owner.className(), AstExpr.This.INSTANCE);
   }
 
   public @NotNull AstVariable checkcast(@NotNull AstVariable obj, @NotNull ClassDesc type) {
@@ -246,7 +231,7 @@ public record AstCodeBuilder(
     return bindExpr(method.owner(), new AstExpr.Lambda(captures, method, lambdaBody));
   }
 
-  public @NotNull AstVariable makeArray(@NotNull ClassDesc elementType, int size, @NotNull ImmutableSeq<AstVariable> initializer) {
+  public @NotNull AstVariable makeArray(@NotNull ClassDesc elementType, int size, @NotNull ImmutableSeq<AstValue> initializer) {
     return bindExpr(elementType.arrayType(), new AstExpr.Array(elementType, size, initializer));
   }
 
@@ -256,6 +241,14 @@ public record AstCodeBuilder(
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
     if (expr instanceof AstExpr.Ref(var ref)) return ref;
+    if (expr instanceof AstExpr.Const val) return bindExpr(switch (val) {
+      case AstExpr.Bconst _ -> ConstantDescs.CD_boolean;
+      case AstExpr.Iconst _ -> ConstantDescs.CD_int;
+      case AstExpr.Null(var ty) -> ty;
+      case AstExpr.Sconst _ -> ConstantDescs.CD_String;
+      case AstExpr.This _ -> owner.parentOrThis();
+    }, val);
+    // Here we can only trust the callers
     return bindExpr(Constants.CD_Term, expr);
   }
 

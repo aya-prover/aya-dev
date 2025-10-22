@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.AstArgsProvider;
+import org.aya.compiler.morphism.ast.AstValue;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class InvokeSignatureHelper {
     return ap.capture(1 + nth);
   }
 
-  public static @NotNull ImmutableSeq<AstVariable> args(@NotNull AstVariable normalizer, @NotNull SeqView<AstVariable> args) {
+  public static @NotNull ImmutableSeq<AstValue> args(@NotNull AstVariable normalizer, @NotNull SeqView<AstValue> args) {
     return args.prepended(normalizer).toSeq();
   }
 }

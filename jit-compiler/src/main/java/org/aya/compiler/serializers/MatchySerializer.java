@@ -3,13 +3,11 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.Seq;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -50,9 +48,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     @NotNull ClassDesc owner,
     @NotNull AstVariable normalizer,
     @NotNull ImmutableSeq<AstVariable> captures,
-    @NotNull ImmutableSeq<AstVariable> args
+    @NotNull ImmutableSeq<AstValue> args
   ) {
-    var instance = TermSerializer.getInstance(builder, owner);
     var ref = new MethodRef(
       owner, "invoke",
       Constants.CD_Term,
@@ -60,7 +57,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       false
     );
 
-    return AbstractExprSerializer.makeCallInvoke(builder, ref, instance, normalizer, captures.view().appendedAll(args));
+    return AbstractExprSerializer.makeCallInvoke(builder, ref, normalizer, args.view().prependedAll(captures));
   }
 
   private void buildInvoke(
@@ -117,8 +114,8 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     var preArgs = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, captures, capturec)
       .view()
       .appendedAll(AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, argc));
-    var fullArgs = InvokeSignatureHelper.args(normalizer, preArgs);
-    var invokeExpr = new AstExpr.Invoke(invokeRef, builder.thisRef(), fullArgs);
+    var fullArgs = InvokeSignatureHelper.args(normalizer, SeqView.narrow(preArgs));
+    var invokeExpr = new AstExpr.Invoke(invokeRef, AstExpr.This.INSTANCE, fullArgs);
 
     builder.returnWith(invokeExpr);
   }
@@ -145,30 +142,23 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
 
-      var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke",
+      var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke", true,
         makeInvokeParameters(capturec, argc), (ap, cb) -> {
-        var pre = InvokeSignatureHelper.normalizer(ap);
-        var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
-        var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
-        buildInvoke(cb, unit, pre, captures, args);
-      });
+          var pre = InvokeSignatureHelper.normalizer(ap);
+          var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
+          var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
+          buildInvoke(cb, unit, pre, captures, args);
+        });
 
-      builder.buildMethod(Constants.CD_Term, "invoke", ImmutableSeq.of(
+      builder.buildMethod(Constants.CD_Term, "invoke", false, ImmutableSeq.of(
         Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) -> {
-        var pre = ap.arg(0);
-        var captures = ap.arg(1);
-        var args = ap.arg(2);
-        buildInvoke(cb, unit, fixedInvokeRef, pre, captures, args);
-      });
+      ), (ap, cb) ->
+        buildInvoke(cb, unit, fixedInvokeRef, ap.arg(0), ap.arg(1), ap.arg(2)));
 
-      builder.buildMethod(Constants.CD_Term, "type", ImmutableSeq.of(
+      builder.buildMethod(Constants.CD_Term, "type", false, ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) -> {
-        var captures = ap.arg(0);
-        var args = ap.arg(1);
-        buildType(cb, unit, captures, args);
-      });
+      ), (ap, cb) ->
+        buildType(cb, unit, ap.arg(0), ap.arg(1)));
     });
 
     return this;

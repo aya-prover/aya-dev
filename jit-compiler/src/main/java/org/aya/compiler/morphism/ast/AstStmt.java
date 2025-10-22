@@ -42,7 +42,7 @@ public sealed interface AstStmt extends Docile {
   }
 
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
-               @NotNull ImmutableSeq<AstVariable> superConArgs) implements AstStmt { }
+               @NotNull ImmutableSeq<AstValue> superConArgs) implements AstStmt { }
 
   record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt {
     @Override public @NotNull Doc toDoc() {
