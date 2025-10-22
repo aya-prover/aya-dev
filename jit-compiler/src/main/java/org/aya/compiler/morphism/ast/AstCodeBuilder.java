@@ -11,6 +11,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
+import org.aya.syntax.core.term.Term;
 import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +144,7 @@ public record AstCodeBuilder(
     stmts.append(new AstStmt.Switch(elim, cases, branchBodies, defaultBody));
   }
 
-  /// @param expr must have type [org.aya.syntax.core.term.Term]
+  /// @param expr must have type [Term]
   public void returnWith(@NotNull AstExpr expr) {
     stmts.append(new AstStmt.Return(bindExpr(expr)));
   }
@@ -240,6 +241,13 @@ public record AstCodeBuilder(
 
   public @NotNull AstVariable bindExpr(@NotNull AstExpr expr) {
     if (expr instanceof AstExpr.Ref(var ref)) return ref;
+    if (expr instanceof AstExpr.Const val) return bindExpr(switch (val) {
+      case AstExpr.Bconst _ -> ConstantDescs.CD_boolean;
+      case AstExpr.Iconst _ -> ConstantDescs.CD_int;
+      case AstExpr.Null(var ty) -> ty;
+      case AstExpr.Sconst _ -> ConstantDescs.CD_String;
+      case AstExpr.This _ -> owner.parentOrThis();
+    }, val);
     return bindExpr(Constants.CD_Term, expr);
   }
 
