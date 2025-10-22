@@ -19,5 +19,5 @@ jobs:
         uses: 'HoshinoTented/issue-tracker@v1'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          issue: ${{ github.event.issue.number }}
+          issue: ${{ github.event.pull_request.number }}
           pull_request: true
