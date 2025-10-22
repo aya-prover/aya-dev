@@ -70,6 +70,7 @@ public interface BlockSimplifier {
         yield SeqView.of(new AstStmt.IfThenElse(cond, thenBlock, elseBlock));
       }
       case AstStmt.SingletonStmt st when st == AstStmt.SingletonStmt.Break && endOfBreakable -> SeqView.empty();
+      case AstStmt.WhileTrue(var stmts) -> SeqView.of(new AstStmt.WhileTrue(optimizeBlock(stmts, true)));
       default -> SeqView.of(stmt);
     };
   }
