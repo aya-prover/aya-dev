@@ -14,7 +14,6 @@ import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.TupTerm;
-import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.util.Panic;
 import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +23,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.morphism.Constants.CD_ConCallLike;
+import static org.aya.compiler.morphism.Constants.CD_IntegerTerm;
 
 /**
  * We do not serialize meta solve, it is annoying
@@ -178,7 +178,7 @@ public final class PatternCompiler {
   }
 
   private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull AstVariable term) {
-    builder.ifInstanceOf(term, JavaUtil.fromClass(IntegerTerm.class), (builder0, intTerm) -> {
+    builder.ifInstanceOf(term, CD_IntegerTerm, (builder0, intTerm) -> {
       var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
         intTerm,

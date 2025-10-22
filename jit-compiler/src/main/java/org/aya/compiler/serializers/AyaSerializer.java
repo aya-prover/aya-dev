@@ -7,4 +7,5 @@ public interface AyaSerializer {
   String STATIC_FIELD_INSTANCE = "INSTANCE";
   String FIELD_INSTANCE = "ref";
   String FIELD_EMPTYCALL = "ourCall";
+  String METHOD_MAKE_INTEGER = "makeInteger";
 }

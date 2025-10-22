@@ -146,7 +146,7 @@ public record AstCodeBuilder(
 
   /// @param expr must have type [Term]
   public void returnWith(@NotNull AstExpr expr) {
-    stmts.append(new AstStmt.Return(bindExpr(expr)));
+    returnWith(bindExpr(expr));
   }
 
   public void returnWith(@NotNull AstVariable expr) {
@@ -248,6 +248,7 @@ public record AstCodeBuilder(
       case AstExpr.Sconst _ -> ConstantDescs.CD_String;
       case AstExpr.This _ -> owner.parentOrThis();
     }, val);
+    // Here we can only trust the callers
     return bindExpr(Constants.CD_Term, expr);
   }
 

@@ -46,6 +46,7 @@ public final class Constants {
   public static final @NotNull ClassDesc CD_Thunk = JavaUtil.fromClass(Supplier.class);
   public static final @NotNull ClassDesc CD_Closure = JavaUtil.fromClass(Closure.class);
   public static final @NotNull ClassDesc CD_JitCon = JavaUtil.fromClass(JitCon.class);
+  public static final @NotNull ClassDesc CD_IntegerTerm = JavaUtil.fromClass(IntegerTerm.class);
   public static final @NotNull ClassDesc CD_ConCallLike = JavaUtil.fromClass(ConCallLike.class);
   public static final @NotNull ClassDesc CD_UnaryOperator = JavaUtil.fromClass(UnaryOperator.class);
   public static final @NotNull ClassDesc CD_Result = JavaUtil.fromClass(Result.class);

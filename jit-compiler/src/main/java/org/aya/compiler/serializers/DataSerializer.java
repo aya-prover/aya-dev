@@ -6,15 +6,22 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import org.aya.compiler.morphism.Constants;
+import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.*;
+import org.aya.compiler.morphism.ast.AstClassBuilder;
+import org.aya.compiler.morphism.ast.AstCodeBuilder;
+import org.aya.compiler.morphism.ast.AstExpr;
+import org.aya.compiler.morphism.ast.AstValue;
 import org.aya.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.DataDef;
 import org.aya.syntax.core.def.TyckAnyDef;
+import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +37,34 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     this.shapeFactory = shapeFactory;
   }
 
-  @Override public @NotNull DataSerializer serialize(@NotNull AstClassBuilder builder, DataDef unit) {
-    buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      JavaUtil.fromClass(JitCon.class).arrayType(), "constructors", false,
-      ImmutableSeq.empty(), (_, cb) ->
-        buildConstructors(cb, unit)));
+  @Override public @NotNull DataSerializer serialize(@NotNull AstClassBuilder topBuilder, DataDef unit) {
+    buildFramework(topBuilder, unit, builder -> {
+      builder.buildMethod(
+        JavaUtil.fromClass(JitCon.class).arrayType(), "constructors", false,
+        ImmutableSeq.empty(), (_, cb) ->
+          buildConstructors(cb, unit));
+
+      var anyDef = AnyDef.fromVar(unit.ref());
+      var maybe = shapeFactory.find(anyDef);
+      if (maybe.isDefined()) {
+        var recognition = maybe.get();
+        if (recognition.shape() == AyaShape.NAT_SHAPE) builder.buildMethod(
+          Constants.CD_IntegerTerm, AyaSerializer.METHOD_MAKE_INTEGER, true, ImmutableSeq.of(ConstantDescs.CD_int),
+          (ap, codeBuilder) -> {
+            var ourCall = codeBuilder.bindExpr(new AstExpr.RefField(FreeJavaResolver.resolve(
+              NameSerializer.getClassDesc(anyDef),
+              AyaSerializer.FIELD_EMPTYCALL,
+              JavaUtil.fromClass(DataCall.class)), null));
+
+            codeBuilder.returnWith(codeBuilder.mkNew(IntegerTerm.class, ImmutableSeq.of(
+              ap.arg(0),
+              AbstractExprSerializer.getInstance(codeBuilder, recognition.getCon(CodeShape.GlobalId.ZERO)),
+              AbstractExprSerializer.getInstance(codeBuilder, recognition.getCon(CodeShape.GlobalId.SUC)),
+              ourCall
+            )));
+          });
+      }
+    });
 
     return this;
   }

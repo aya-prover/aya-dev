@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -252,12 +253,14 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         new AstExpr.Iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
-      case IntegerTerm(var repr, var zero, var suc, var type) -> builder.mkNew(IntegerTerm.class, ImmutableSeq.of(
-        new AstExpr.Iconst(repr),
-        getInstance(zero),
-        getInstance(suc),
-        doSerialize(type)
-      ));
+      case IntegerTerm(var repr, _, _, var type) -> builder.invoke(
+        new MethodRef(
+          NameSerializer.getClassDesc(type.ref()),
+          AyaSerializer.METHOD_MAKE_INTEGER,
+          Constants.CD_IntegerTerm,
+          ImmutableSeq.of(ConstantDescs.CD_int),false),
+        ImmutableSeq.of(new AstExpr.Iconst(repr))
+      );
       case ListTerm(var repr, var nil, var cons, var type) -> builder.mkNew(ListTerm.class, ImmutableSeq.of(
         makeImmutableSeq(builder, Constants.IMMTREESEQ, Term.class, repr.map(this::doSerialize)),
         getInstance(nil),
