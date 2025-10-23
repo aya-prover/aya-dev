@@ -138,12 +138,15 @@ public class ReplCompilerTest {
   @Test public void issue1396() {
     compile("open inductive Nat | zero | suc Nat");
     compile("""
-      def infix + (a b : Nat) : Nat elim a
-      | 0 => b
-      | suc a => suc (a + b)
-      def infix * (a b : Nat) : Nat elim a
-      | 0 => 0
-      | suc a => b + (a * b)
+      overlap def infix + (a b : Nat) : Nat
+      | 0, b => b
+      | a, 0 => a
+      | suc a, b => suc (a + b)
+      | a, suc b => suc (a + b)
+      overlap def infix * (a b : Nat) : Nat
+      | 0, b => 0
+      | a, 0 => 0
+      | suc a, b => b + (a * b)
       tailrec def fac' (a ans : Nat) : Nat elim a
       | 0 => ans
       | suc n => fac' n (ans * a)
