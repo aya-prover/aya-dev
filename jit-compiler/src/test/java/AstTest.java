@@ -62,22 +62,4 @@ public class AstTest {
     pretty = (AstDecl.Method) BlockSimplifier.optimize(pretty);
     System.out.println(pretty.toDoc().commonRender());
   }
-
-  @Test public void optimizeBlock() {
-    var result = CompileTest.tyck("""
-      open inductive Nat | zero | suc Nat
-      def infix + (a b : Nat) : Nat
-      | 0, b => b
-      | suc a, b => suc (a + b)
-      
-      tailrec def sum (n ans : Nat) : Nat elim n
-      | 0 => ans
-      | suc m => sum m (n + ans)
-      """);
-    var compiler = new FnSerializer(result.info().shapeFactory(), new ModuleSerializer.MatchyRecorder());
-    var pretty = compiler.buildInvokeForPrettyPrint(result.defs().filterIsInstance(FnDef.class)
-      .find(it -> "sum".equals(it.ref().name())).get());
-    var prettyOpt = (AstDecl.Method) BlockSimplifier.optimize(pretty);
-    System.out.println(prettyOpt.toDoc().commonRender());
-  }
 }
