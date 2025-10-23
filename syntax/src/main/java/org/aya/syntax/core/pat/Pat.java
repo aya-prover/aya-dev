@@ -16,6 +16,7 @@ import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
+import org.aya.syntax.core.term.repr.IntegerOps;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.ref.GenerateKind;
 import org.aya.syntax.ref.LocalCtx;
@@ -147,12 +148,16 @@ public sealed interface Pat {
 
   record Con(
     @Override @NotNull ImmutableSeq<Pat> args,
-    @NotNull ConCallLike.Head head
+    @NotNull ConCallLike.Head head,
+    @Nullable Shaped.Applicable<ConDefLike> rule
   ) implements Pat {
+    public Con(@NotNull ImmutableSeq<Pat> args, @NotNull ConCallLike.Head head) {
+      this(args, head, null);
+    }
     public @NotNull ConDefLike ref() { return head.ref(); }
     public @NotNull Con update(@NotNull ImmutableSeq<Pat> args, @NotNull ConCallLike.Head head) {
       return this.args.sameElements(args, true) && head == this.head
-        ? this : new Con(args, head);
+        ? this : new Con(args, head, rule);
     }
 
     @Override public @NotNull Pat descentPat(@NotNull UnaryOperator<Pat> op) {
@@ -249,12 +254,15 @@ public sealed interface Pat {
       return update((DataCall) type.bindTele(vars.view()));
     }
     @Override public @NotNull Con makeZero() {
-      return new Pat.Con(ImmutableSeq.empty(), makeHead(zero));
+      return new Pat.Con(ImmutableSeq.empty(), makeHead(zero),
+        new IntegerOps.ConRule(zero, new IntegerTerm(0, zero, suc, type)));
     }
 
     @Override public @NotNull Con makeSuc(@NotNull Pat pat) {
-      return new Pat.Con(ImmutableSeq.of(pat), makeHead(suc));
+      return new Pat.Con(ImmutableSeq.of(pat), makeHead(suc),
+        new IntegerOps.ConRule(suc, new IntegerTerm(0, zero, suc, type)));
     }
+
     private ConCallLike.@NotNull Head makeHead(@NotNull ConDefLike conRef) {
       return new ConCallLike.Head(conRef, 0, ImmutableSeq.empty());
     }

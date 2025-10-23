@@ -4,6 +4,7 @@ package org.aya.syntax.core.pat;
 
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
+import org.aya.syntax.core.term.call.RuleReducer;
 import org.jetbrains.annotations.NotNull;
 
 /// [org.aya.syntax.core.annotation.Bound]-friendly,
@@ -18,8 +19,14 @@ public interface PatToTerm {
         // case UntypedBind -> Panic.unreachable();
       };
       case Pat.Bind bind -> new FreeTerm(bind.bind());
-      // FIXME: need a shapeFactory and produce RuleReducer if possible
-      case Pat.Con con -> new ConCall(con.head(), con.args().map(PatToTerm::visit));
+      case Pat.Con(var args, var head, var rule) -> {
+        var conArgs = args.map(PatToTerm::visit);
+        if (rule != null) {
+          yield new RuleReducer.Con(rule, 0, head.ownerArgs(), conArgs);
+        } else {
+          yield new ConCall(head, conArgs);
+        }
+      }
       case Pat.Tuple(var l, var r) -> new TupTerm(visit(l), visit(r));
       case Pat.Meta meta -> new MetaPatTerm(meta);
       case Pat.ShapedInt si -> si.toTerm();
