@@ -10,6 +10,7 @@ import kala.value.MutableValue;
 import org.aya.generic.Constants;
 import org.aya.generic.Renamer;
 import org.aya.generic.State;
+import org.aya.generic.stmt.Shaped;
 import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.syntax.compile.JitCon;
@@ -146,8 +147,12 @@ public class PatternTycker implements Problematic, Stateful {
           pattern);
 
         // check if this Con is a ShapedCon
-        var typeRecog = state().shapeFactory.find(conCore.dataRef()).getOrNull();
-        yield new Pat.Con(patterns, realCon.conHead);
+        Shaped.Applicable<ConDefLike> shape = null;
+        var typeRecog = state().shapeFactory.find(conCore.dataRef());
+        if (typeRecog.isDefined()) {
+          shape = AyaShape.ofCon(conCore, typeRecog.get(), realCon.data());
+        }
+        yield new Pat.Con(patterns, realCon.conHead, shape);
       }
       case Pattern.Bind bindPat -> {
         var bind = bindPat.bind();

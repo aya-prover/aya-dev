@@ -134,6 +134,29 @@ public class ReplCompilerTest {
     assertEquals(6, integer.repr());
   }
 
+  /// This is not a repl test, but with the repl infrastructure it's easiest to have it here.
+  @Test public void issue1396() {
+    compile("open inductive Nat | zero | suc Nat");
+    compile("""
+      overlap def infix + (a b : Nat) : Nat
+      | 0, b => b
+      | a, 0 => a
+      | suc a, b => suc (a + b)
+      | a, suc b => suc (a + b)
+      overlap def infix * (a b : Nat) : Nat
+      | 0, b => 0
+      | a, 0 => 0
+      | suc a, b => b + (a * b)
+      tailrec def fac' (a ans : Nat) : Nat elim a
+      | 0 => ans
+      | suc n => fac' n (ans * a)
+      """);
+    // Must be in FULL NF mode
+    var term = compiler.compileToContext("fac' 5 1", NormalizeMode.FULL).getRightValue();
+    var integer = assertInstanceOf(IntegerTerm.class, term);
+    assertEquals(120, integer.repr());
+  }
+
   private @Nullable AnyVar findContext(@NotNull String name) {
     var ctx = compiler.getContext();
     var result = ctx.getMaybe(new QualifiedID(SourcePos.NONE,
