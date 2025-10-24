@@ -9,6 +9,11 @@ import java.util.Arrays;
 
 public interface CountingReporter extends Reporter {
   int problemSize(@NotNull Problem.Severity severity);
+
+  /// Clear the counting of this [CountingReporter], the reported [Problem] **MAY** still be reported.
+  ///
+  /// @see Delegated#clear()
+  /// @see CollectingReporter#clear()
   void clear();
   default int errorSize() { return problemSize(Problem.Severity.ERROR); }
   default int warningSize() { return problemSize(Problem.Severity.WARN); }
