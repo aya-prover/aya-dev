@@ -37,12 +37,14 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
       - name: Generate fat jar and install aya
+        if: github.event.pull_request != null
         run: |
           ./gradlew fatJar --no-daemon --stacktrace --warning-mode all
           cp ./cli-console/build/libs/*-fat.jar ./cli-fatjar.jar
           
+          AYA_VERSION=${{ needs.check-aya-version.outputs.projectVersion }}
           ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
-          TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ steps.extract-version.outputs.projectVersion }}/$ARCH
+          TC_ROOT=$RUNNER_TOOL_CACHE/aya/$AYA_VERSION/$ARCH
           mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
       - name: Run issue tracker
         if: github.event.pull_request != null
