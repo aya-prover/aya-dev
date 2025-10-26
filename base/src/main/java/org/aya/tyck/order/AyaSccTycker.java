@@ -24,6 +24,7 @@ import org.aya.tyck.StmtTycker;
 import org.aya.tyck.error.TyckOrderError;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.util.Panic;
+import org.aya.util.reporter.ClearableReporter;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.terck.CallGraph;
@@ -41,7 +42,7 @@ import java.util.Comparator;
  */
 public record AyaSccTycker(
   @NotNull StmtTycker tycker,
-  @NotNull CountingReporter.Delegated reporter,
+  @NotNull ClearableReporter reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull TyckDef> wellTyped
 ) implements SccTycker<TyckOrder, AyaSccTycker.SccTyckingFailed>, Problematic {

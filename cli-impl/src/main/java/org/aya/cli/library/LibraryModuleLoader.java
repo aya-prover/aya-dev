@@ -16,7 +16,7 @@ import org.aya.resolve.module.ModuleLoader;
 import org.aya.syntax.AyaFiles;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.ClearableReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ import java.nio.file.Path;
  * @see FileModuleLoader
  */
 record LibraryModuleLoader(
-  @Override @NotNull CountingReporter.Delegated reporter,
+  @Override @NotNull ClearableReporter reporter,
   @NotNull LibraryOwner owner,
   @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states

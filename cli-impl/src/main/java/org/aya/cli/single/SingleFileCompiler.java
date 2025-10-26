@@ -10,6 +10,7 @@ import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
 import org.aya.util.position.SourceFileLocator;
+import org.aya.util.reporter.ClearableReporter;
 import org.aya.util.reporter.CollectingReporter;
 import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
@@ -23,7 +24,7 @@ public final class SingleFileCompiler {
   /// For pretty-printing
   public final @NotNull CollectingReporter collectingReporter;
   /// For actual error reporting
-  public final @NotNull CountingReporter.Delegated countingReporter;
+  public final @NotNull ClearableReporter countingReporter;
   public final @NotNull CompilerFlags flags;
   public final @NotNull SourceFileLocator locator;
   public final @NotNull AyaParserImpl ayaParser;

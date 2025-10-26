@@ -7,14 +7,14 @@ import kala.control.Result;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.error.LoadErrorKind;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.reporter.CountingReporter;
+import org.aya.util.reporter.ClearableReporter;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author re-xyr
  */
 public record ModuleListLoader(
-  @Override @NotNull CountingReporter.Delegated reporter,
+  @Override @NotNull ClearableReporter reporter,
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
   @Override
