@@ -18,7 +18,7 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
   private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
   public final @NotNull ML loader;
 
-  @Override public @NotNull CountingReporter reporter() { return loader.reporter(); }
+  @Override public @NotNull CountingReporter.Delegated reporter() { return loader.reporter(); }
   public CachedModuleLoader(@NotNull ML loader) { this.loader = loader; }
 
   @Override public @NotNull Result<ResolveInfo, LoadErrorKind>

@@ -39,7 +39,7 @@ import java.nio.file.Path;
  * @see FileModuleLoader
  */
 record LibraryModuleLoader(
-  @Override @NotNull CountingReporter reporter,
+  @Override @NotNull CountingReporter.Delegated reporter,
   @NotNull LibraryOwner owner,
   @NotNull CompilerAdvisor advisor,
   @NotNull LibraryModuleLoader.United states

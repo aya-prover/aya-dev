@@ -11,6 +11,7 @@ import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
 import org.aya.util.position.SourceFileLocator;
 import org.aya.util.reporter.CollectingReporter;
+import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class SingleFileCompiler {
-  public final @NotNull CollectingReporter reporter;
+  /// For pretty-printing
+  public final @NotNull CollectingReporter collectingReporter;
+  /// For actual error reporting
+  public final @NotNull CountingReporter.Delegated countingReporter;
   public final @NotNull CompilerFlags flags;
   public final @NotNull SourceFileLocator locator;
   public final @NotNull AyaParserImpl ayaParser;
@@ -32,13 +36,14 @@ public final class SingleFileCompiler {
     @Nullable SourceFileLocator baseLocator
   ) {
     this.flags = flags;
-    reporter = CollectingReporter.delegate(baseReporter);
+    collectingReporter = CollectingReporter.delegate(baseReporter);
+    countingReporter = CountingReporter.delegate(collectingReporter);
     locator = baseLocator != null ? baseLocator : new SourceFileLocator.Module(flags.modulePaths());
-    ayaParser = new AyaParserImpl(reporter);
-    fileManager = new SingleAyaFile.Factory(reporter);
-    loader = new CachedModuleLoader<>(new ModuleListLoader(this.reporter,
+    ayaParser = new AyaParserImpl(countingReporter);
+    fileManager = new SingleAyaFile.Factory(countingReporter);
+    loader = new CachedModuleLoader<>(new ModuleListLoader(countingReporter,
       flags.modulePaths().map(path ->
-          new FileModuleLoader(locator, path, reporter, ayaParser, fileManager))
+          new FileModuleLoader(locator, path, countingReporter, ayaParser, fileManager))
         .toSeq()));
   }
 
@@ -53,15 +58,15 @@ public final class SingleFileCompiler {
     @NotNull ModuleContext context,
     @Nullable ModuleCallback<E> moduleCallback
   ) throws IOException {
-    return CompilerUtil.catching(reporter, flags, () -> {
+    return CompilerUtil.catching(countingReporter, flags, () -> {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser).program();
-      ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.raw);
+      ayaFile.pretty(flags, program, collectingReporter, CliEnums.PrettyStage.raw);
       loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
         ayaFile.tyckAdditional(resolveInfo);
-        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.scoped);
-        ayaFile.pretty(flags, defs, reporter, CliEnums.PrettyStage.typed);
-        ayaFile.pretty(flags, program, reporter, CliEnums.PrettyStage.literate);
+        ayaFile.pretty(flags, program, collectingReporter, CliEnums.PrettyStage.scoped);
+        ayaFile.pretty(flags, defs, collectingReporter, CliEnums.PrettyStage.typed);
+        ayaFile.pretty(flags, program, collectingReporter, CliEnums.PrettyStage.literate);
         if (moduleCallback != null) moduleCallback.onModuleTycked(resolveInfo, defs);
       });
     });

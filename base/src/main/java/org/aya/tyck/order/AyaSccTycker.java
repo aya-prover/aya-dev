@@ -41,7 +41,7 @@ import java.util.Comparator;
  */
 public record AyaSccTycker(
   @NotNull StmtTycker tycker,
-  @NotNull CountingReporter reporter,
+  @NotNull CountingReporter.Delegated reporter,
   @NotNull ResolveInfo resolveInfo,
   @NotNull MutableList<@NotNull TyckDef> wellTyped
 ) implements SccTycker<TyckOrder, AyaSccTycker.SccTyckingFailed>, Problematic {
@@ -59,7 +59,7 @@ public record AyaSccTycker(
       else checkMutual(scc);
       return ImmutableSeq.empty();
     } catch (SccTyckingFailed failed) {
-      reporter.clear();
+      reporter.clearCounts();
       return failed.what;
     }
   }

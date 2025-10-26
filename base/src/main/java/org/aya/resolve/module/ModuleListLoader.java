@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author re-xyr
  */
 public record ModuleListLoader(
-  @Override @NotNull CountingReporter reporter,
+  @Override @NotNull CountingReporter.Delegated reporter,
   @NotNull ImmutableSeq<? extends ModuleLoader> loaders
 ) implements ModuleLoader {
   @Override

@@ -364,7 +364,7 @@ public class LibraryCompiler {
         tyckOne(f);
         var reporter = moduleLoader.reporter();
         if (reporter.anyError()) {
-          reporter.clear();
+          reporter.clearCounts();
           return ImmutableSeq.of(f);
         }
       }

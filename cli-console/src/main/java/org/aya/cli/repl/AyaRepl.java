@@ -2,11 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.repl;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.cli.console.AnsiReporter;
@@ -28,6 +23,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jline.builtins.Completers;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public abstract class AyaRepl implements Closeable, Runnable, Repl {
   public static int start(
@@ -139,7 +139,7 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
    * <code>false</code> if it should quit.
    */
   private boolean singleLoop() {
-    replCompiler.reporter.clear();
+    replCompiler.reporter.clearCounts();
     return loop(config.prompt, commandManager);
   }
 

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader extends Problematic {
-  @Override @NotNull CountingReporter reporter();
+  @Override @NotNull CountingReporter.Delegated reporter();
   default <E extends Exception> @Nullable ResolveInfo tyckModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,

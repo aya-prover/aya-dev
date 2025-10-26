@@ -58,7 +58,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ReplCompiler {
-  public final @NotNull CountingReporter reporter;
+  public final @NotNull CountingReporter.Delegated reporter;
   public final @NotNull ImmutableSeq<Path> modulePaths;
   public final @NotNull MutableList<ResolveInfo> imports = MutableList.create();
   private final @NotNull SourceFileLocator locator;

@@ -23,13 +23,14 @@ import java.nio.file.Path;
 public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
-  @Override @NotNull CountingReporter reporter,
+  @Override @NotNull CountingReporter.Delegated reporter,
   @NotNull GenericAyaParser parser,
   @NotNull GenericAyaFile.Factory fileManager,
   @NotNull PrimFactory primFactory
 ) implements ModuleLoader {
   public FileModuleLoader(
-    @NotNull SourceFileLocator locator, @NotNull Path basePath, @NotNull CountingReporter reporter,
+    @NotNull SourceFileLocator locator, @NotNull Path basePath,
+    @NotNull CountingReporter.Delegated reporter,
     @NotNull GenericAyaParser parser, @NotNull GenericAyaFile.Factory fileManager
   ) {
     this(locator, basePath, reporter, parser, fileManager, new PrimFactory());

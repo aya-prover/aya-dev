@@ -7,14 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/// A mutable reporter that counts problems.
 public interface CountingReporter extends Reporter {
   int problemSize(@NotNull Problem.Severity severity);
 
-  /// Clear the counting of this [CountingReporter], the reported [Problem] **MAY** still be reported.
-  ///
-  /// @see Delegated#clear()
-  /// @see CollectingReporter#clear()
-  void clear();
   default int errorSize() { return problemSize(Problem.Severity.ERROR); }
   default int warningSize() { return problemSize(Problem.Severity.WARN); }
   default int goalSize() { return problemSize(Problem.Severity.GOAL); }
@@ -24,13 +20,8 @@ public interface CountingReporter extends Reporter {
     return String.format("%d error(s), %d warning(s).", errorSize(), warningSize());
   }
 
-  /** Wrap a reporter if it is not a counting reporter. */
-  static @NotNull CountingReporter of(@NotNull Reporter reporter) {
-    return reporter instanceof CountingReporter counting ? counting : delegate(reporter);
-  }
-
   /** Forcibly wrap a reporter. */
-  static @NotNull CountingReporter delegate(@NotNull Reporter reporter) {
+  static @NotNull CountingReporter.Delegated delegate(@NotNull Reporter reporter) {
     return new Delegated(reporter);
   }
 
@@ -43,7 +34,7 @@ public interface CountingReporter extends Reporter {
       return count[severity.ordinal()];
     }
 
-    @Override public void clear() {
+    public void clearCounts() {
       Arrays.fill(count, 0);
     }
 

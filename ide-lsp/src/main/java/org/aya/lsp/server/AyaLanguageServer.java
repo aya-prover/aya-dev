@@ -2,15 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.google.gson.Gson;
 import kala.collection.CollectionView;
 import kala.collection.SeqView;
@@ -54,6 +45,15 @@ import org.aya.util.reporter.BufferReporter;
 import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
@@ -247,7 +247,7 @@ public class AyaLanguageServer implements LanguageServer {
   public @NotNull ImmutableSeq<HighlightResult> loadLibrary(@NotNull LibraryOwner owner) {
     Log.i("Loading library %s", owner.underlyingLibrary().name());
     // start compiling
-    reporter.clear();
+    reporter.reset();
     var primFactory = primFactory(owner);
     try {
       LibraryCompiler.newCompiler(primFactory, reporter, FLAGS, advisor, owner).start();
