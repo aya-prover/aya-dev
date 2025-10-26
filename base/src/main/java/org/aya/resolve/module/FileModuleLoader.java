@@ -12,7 +12,7 @@ import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.util.position.SourceFileLocator;
-import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -23,13 +23,13 @@ import java.nio.file.Path;
 public record FileModuleLoader(
   @NotNull SourceFileLocator locator,
   @NotNull Path basePath,
-  @Override @NotNull Reporter reporter,
+  @Override @NotNull CountingReporter reporter,
   @NotNull GenericAyaParser parser,
   @NotNull GenericAyaFile.Factory fileManager,
   @NotNull PrimFactory primFactory
 ) implements ModuleLoader {
   public FileModuleLoader(
-    @NotNull SourceFileLocator locator, @NotNull Path basePath, @NotNull Reporter reporter,
+    @NotNull SourceFileLocator locator, @NotNull Path basePath, @NotNull CountingReporter reporter,
     @NotNull GenericAyaParser parser, @NotNull GenericAyaFile.Factory fileManager
   ) {
     this(locator, basePath, reporter, parser, fileManager, new PrimFactory());

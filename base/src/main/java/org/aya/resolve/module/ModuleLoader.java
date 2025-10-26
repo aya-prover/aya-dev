@@ -17,6 +17,7 @@ import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.order.AyaOrgaTycker;
 import org.aya.tyck.order.AyaSccTycker;
 import org.aya.tyck.tycker.Problematic;
+import org.aya.util.reporter.CountingReporter;
 import org.aya.util.reporter.DelayedReporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author re-xyr
  */
 public interface ModuleLoader extends Problematic {
+  @Override @NotNull CountingReporter reporter();
   default <E extends Exception> @Nullable ResolveInfo tyckModule(
     @NotNull PrimFactory primFactory,
     @NotNull ModuleContext context,

@@ -8,7 +8,7 @@ import kala.control.Result;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.error.LoadErrorKind;
 import org.aya.syntax.ref.ModulePath;
-import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.CountingReporter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +18,7 @@ public class CachedModuleLoader<ML extends ModuleLoader> implements ModuleLoader
   private final @NotNull MutableMap<@NotNull String, ResolveInfo> cache = MutableTreeMap.of();
   public final @NotNull ML loader;
 
-  @Override public @NotNull Reporter reporter() { return loader.reporter(); }
+  @Override public @NotNull CountingReporter reporter() { return loader.reporter(); }
   public CachedModuleLoader(@NotNull ML loader) { this.loader = loader; }
 
   @Override public @NotNull Result<ResolveInfo, LoadErrorKind>
