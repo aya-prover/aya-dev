@@ -22,8 +22,9 @@ runs:
     - name: Install Aya to Tool Cache
       shell: bash
       run: |
+        AYA_VERSION=${{ steps.extract-version.outputs.projectVersion }}
         ARCH=$(echo $RUNNER_ARCH | tr '[:upper:]' '[:lower:]')
-        TC_ROOT=$RUNNER_TOOL_CACHE/aya/${{ steps.extract-version.outputs.projectVersion }}/$ARCH
+        TC_ROOT=$RUNNER_TOOL_CACHE/aya/$AYA_VERSION/$ARCH
         mkdir -p $TC_ROOT && cp ./cli-fatjar.jar $TC_ROOT/cli-fatjar.jar && touch "$TC_ROOT.complete"
     - name: Setup Java ${{ steps.extract-version.outputs.javaVersion }}
       uses: actions/setup-java@v4

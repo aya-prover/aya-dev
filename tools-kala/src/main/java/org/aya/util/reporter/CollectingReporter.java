@@ -12,7 +12,7 @@ public interface CollectingReporter extends CountingReporter {
     return problems().count(it -> it.level() == severity);
   }
 
-  @Override default void clear() {
+  default void reset() {
     problems().clear();
   }
 

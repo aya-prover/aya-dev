@@ -52,8 +52,9 @@ public class LibraryCompiler {
 
   private LibraryCompiler(@NotNull Reporter reporter, @NotNull CompilerFlags flags, @NotNull LibraryOwner owner, @NotNull CompilerAdvisor advisor, @NotNull LibraryModuleLoader.United states) {
     var counting = CountingReporter.delegate(reporter);
+    var tyckCounting = CountingReporter.delegate(counting);
     this.advisor = advisor;
-    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(counting, owner, advisor, states));
+    this.moduleLoader = new CachedModuleLoader<>(new LibraryModuleLoader(tyckCounting, owner, advisor, states));
     this.reporter = counting;
     this.flags = flags;
     this.owner = owner;
@@ -266,7 +267,7 @@ public class LibraryCompiler {
     advisor.prepareLibraryOutput(owner);
     advisor.notifyIncrementalJob(modified, SCCs);
 
-    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(reporter, moduleLoader, advisor), affected);
+    var tycker = new LibraryOrgaTycker(new LibrarySccTycker(moduleLoader, advisor), affected);
     SCCs.forEachChecked(tycker::tyckSCC);
     if (tycker.skippedSet.isNotEmpty()) {
       reporter.reportString("I dislike the following module(s):");
@@ -353,7 +354,6 @@ public class LibraryCompiler {
   }
 
   record LibrarySccTycker(
-    @NotNull CountingReporter reporter,
     @NotNull ModuleLoader moduleLoader,
     @NotNull CompilerAdvisor advisor
   ) implements SccTycker<LibrarySource, IOException> {
@@ -362,8 +362,9 @@ public class LibraryCompiler {
       for (var f : order) advisor.clearModuleOutput(f);
       for (var f : order) {
         tyckOne(f);
+        var reporter = moduleLoader.reporter();
         if (reporter.anyError()) {
-          reporter.clear();
+          reporter.clearCounts();
           return ImmutableSeq.of(f);
         }
       }
@@ -372,6 +373,7 @@ public class LibraryCompiler {
 
     private void tyckOne(@NotNull LibrarySource file) {
       var moduleName = file.moduleName();
+      var reporter = moduleLoader.reporter();
       reporter.reportNest("[Tyck] %s (%s)".formatted(
         moduleName.toString(), file.displayPath()), LibraryOwner.DEFAULT_INDENT);
       var startTime = System.currentTimeMillis();

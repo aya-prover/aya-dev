@@ -46,10 +46,7 @@ import org.aya.tyck.tycker.TeleTycker;
 import org.aya.util.position.SourceFileLocator;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
-import org.aya.util.reporter.CountingReporter;
-import org.aya.util.reporter.DelayedReporter;
-import org.aya.util.reporter.Problem;
-import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ReplCompiler {
-  public final @NotNull CountingReporter reporter;
+  public final @NotNull ClearableReporter reporter;
   public final @NotNull ImmutableSeq<Path> modulePaths;
   public final @NotNull MutableList<ResolveInfo> imports = MutableList.create();
   private final @NotNull SourceFileLocator locator;

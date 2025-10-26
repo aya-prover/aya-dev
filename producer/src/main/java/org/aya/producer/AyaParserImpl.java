@@ -10,6 +10,7 @@ import org.aya.intellij.MarkerNodeWrapper;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
 import org.aya.parser.AyaPsiElementTypes;
+import org.aya.producer.error.ParseError;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.GenericAyaProgram;
 import org.aya.syntax.concrete.Expr;
@@ -17,7 +18,6 @@ import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
-import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,8 @@ public record AyaParserImpl(@NotNull Reporter reporter) implements GenericAyaPar
     var node = ParserUtil.reportErrorElements(parseNode(sourceFile.sourceCode()), errorReport, reporter);
     var parse = new AyaProducer(Either.left(errorReport), reporter).program(node);
     if (parse.isRight()) {
-      reporter.reportString("Expect statement, got repl expression", Problem.Severity.ERROR);
+      reporter.report(new ParseError(parse.getRightValue().sourcePos(),
+        "Expect statement, got repl expression"));
       return new NodedAyaProgram(ImmutableSeq.empty(), node);
     }
     return new NodedAyaProgram(parse.getLeftValue(), node);

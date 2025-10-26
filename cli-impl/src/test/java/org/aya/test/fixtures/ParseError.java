@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -35,4 +35,5 @@ public interface ParseError {
     | _ => 0
     """;
   @Language("Aya") String testIncorrectReturn = "def lt_intersect : {A : Type} : A";
+  @Language("Aya") String testIssue1390 = "parse error";
 }

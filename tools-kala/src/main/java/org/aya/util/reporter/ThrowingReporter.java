@@ -16,5 +16,4 @@ public record ThrowingReporter(@NotNull PrettierOptions options) implements Coun
   }
 
   @Override public int problemSize(Problem.@NotNull Severity severity) { return 0; }
-  @Override public void clear() { }
 }

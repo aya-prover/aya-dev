@@ -123,7 +123,8 @@ public class TestRunner {
         stream.println(name.substring(4) + ":");
         var code = (String) field.get(null);
         runSingleCase(code, compiler);
-        compiler.reporter.clear();
+        compiler.collectingReporter.reset();
+        compiler.countingReporter.clearCounts();
         stream.println();
       }
       System.out.println("Done!");
