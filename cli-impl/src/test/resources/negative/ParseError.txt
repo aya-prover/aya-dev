@@ -141,3 +141,14 @@ Parsing interrupted due to:
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+Issue1390:
+In file $FILE:1:0 ->
+
+  1 │   parse error
+    │   ╰─────────╯
+
+Error: Expect statement, got repl expression
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
