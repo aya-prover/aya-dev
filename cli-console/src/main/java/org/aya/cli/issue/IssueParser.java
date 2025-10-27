@@ -4,8 +4,11 @@ package org.aya.cli.issue;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableEnumSet;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import kala.control.OptionContainer;
+import kala.control.Result;
 import org.aya.literate.Literate;
 import org.aya.literate.parser.BaseMdParser;
 import org.aya.literate.parser.InterestingLanguage;
@@ -58,20 +61,50 @@ public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter repor
     }
   }
 
-  public record ParseResult(@NotNull ImmutableSeq<File> files, @Nullable Version ayaVersion) { }
+  public record ParseResult(
+    @NotNull MutableEnumSet<Modifiers> modifiers,
+    @NotNull ImmutableSeq<File> files,
+    @Nullable Version ayaVersion
+  ) { }
 
   public enum BlockType implements BlockParser.Kind {
     VERSION, FILES
   }
 
+  public enum Modifiers {
+    // invert the success condition
+    INVERTED,
+    // always success
+    PASS
+  }
+
   // Aya v<MAJOR>.<MINOR>.<PATCH>-SNAPSHOT (<COMMIT HASH>, jdk <JAVA VERSION>)
   public static final @NotNull Pattern VERSION_PATTERN = Pattern.compile("(?:Aya v?)?(\\d+)\\.(\\d+)(?:\\.(\\d+))?(-SNAPSHOT)?(?: \\(([a-z0-9]{40})(?:, jdk (\\d+))?\\))?");
   public static final @NotNull Pattern FILE_PATTERN = Pattern.compile("[a-zA-Z0-9\\-_/]+\\.aya");
+  public static final @NotNull Pattern INDICATOR = Pattern.compile("^<!-- ISSUE TRACKER ENABLE (([A-Z]+ )*)-->");
 
   /// @return null if issue tracker is not enabled
   public @Nullable ParseResult parse() {
-    var isEnabled = issueFile.sourceCode().stripLeading().startsWith("<!-- ISSUE TRACKER ENABLE -->");
+    var beginMatcher = INDICATOR.matcher(issueFile.sourceCode().stripLeading());
+    var isEnabled = beginMatcher.find();
     if (!isEnabled) return null;
+
+    // modifiers
+    var rawModifiers = beginMatcher.group(1);
+    var modiList = rawModifiers == null || rawModifiers.isEmpty()
+      ? ImmutableSeq.<String>empty()
+      : ImmutableSeq.from(rawModifiers.split(" "));
+
+    var parsedModi = modiList.view().<Result<Modifiers, String>>map(it -> {
+      try {
+        return Result.ok(Modifiers.valueOf(it));
+      } catch (IllegalArgumentException _) {
+        return Result.err(it);
+      }
+    });
+
+    // TODO: report unknown modifier, we may need a reporter
+    var modifiers = MutableEnumSet.from(Modifiers.class, parsedModi.mapNotNull(OptionContainer::getOrNull));
 
     var blocks = BlockParser.parse(issueFile, reporter, s -> {
       try {
@@ -100,7 +133,7 @@ public record IssueParser(@NotNull SourceFile issueFile, @NotNull Reporter repor
       return parseFiles(seq.view());
     });
 
-    return new ParseResult(ayaFiles, version);
+    return new ParseResult(modifiers, ayaFiles, version);
   }
 
   private static @NotNull ImmutableSeq<File> parseFiles(@NotNull SeqView<Literate> seq) {

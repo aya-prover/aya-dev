@@ -1,4 +1,4 @@
-<!-- ISSUE TRACKER ENABLE -->
+<!-- ISSUE TRACKER ENABLE PASS -->
 
 ## Versions
 

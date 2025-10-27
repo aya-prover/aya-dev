@@ -18,7 +18,12 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public class IssueSetup {
-  public record Metadata(@Nullable IssueParser.Version version, @NotNull ImmutableSeq<String> files) { }
+  public record Metadata(
+    @Nullable IssueParser.Version version,
+    @NotNull ImmutableSeq<String> files,
+    boolean inverted,
+    boolean pass
+  ) { }
 
   public static final @NotNull String UNNAMED = "<unnamed>" + Constants.AYA_POSTFIX;
   public static final @NotNull String METADATA_FILE = "metadata.json";
@@ -41,7 +46,10 @@ public class IssueSetup {
       return -2;
     }
 
-    var metadata = new Metadata(version, files.map(it -> it.name() == null ? UNNAMED : it.name()));
+    var inverted = result.modifiers().contains(IssueParser.Modifiers.INVERTED);
+    var pass = result.modifiers().contains(IssueParser.Modifiers.PASS);
+
+    var metadata = new Metadata(version, files.map(it -> it.name() == null ? UNNAMED : it.name()), inverted, pass);
     var gson = new GsonBuilder()
       .registerTypeAdapterFactory(CollectionTypeAdapter.factory())
       .serializeNulls()

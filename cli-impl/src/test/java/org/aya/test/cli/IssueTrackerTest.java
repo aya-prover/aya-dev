@@ -42,7 +42,9 @@ public class IssueTrackerTest {
         },
         "files": [
           "foo.aya"
-        ]
+        ],
+        "inverted": false,
+        "pass": true
       }""", metadata);
 
     var fooAya = Files.readString(WORKING_DIRECTORY.resolve("src").resolve("foo.aya"));
