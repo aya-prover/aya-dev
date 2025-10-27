@@ -289,12 +289,14 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
       resultType = whnf(resultType);
       if (resultType instanceof ClassCall resultClazz) {
         // TODO: check whether resultClazz <: clazz
-        if (resultClazz.ref() == clazz.ref()) {
+        if (resultClazz.ref().equals(clazz.ref())) {
           // No need to coerce
           if (clazz.args().size() == resultClazz.args().size()) return result;
           var forget = resultClazz.args().drop(clazz.args().size());
           return new Jdg.Default(ClassCastTerm.make(clazz.ref(), result.wellTyped(), clazz.args(), forget), type);
         } else {
+          fail(new ClassError.DifferentClass(expr.sourcePos(),
+            clazz, resultClazz));
           return makeErrorResult(type, result);
         }
       }

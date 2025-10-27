@@ -35,6 +35,17 @@ public interface ClassError extends TyckError, SourceNodeProblem {
     }
   }
 
+  record DifferentClass(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull ClassCall want, @NotNull ClassCall got
+  ) implements TyckError {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(
+        Doc.english("Expected an instance of class"), BasePrettier.refVar(want.ref()),
+        Doc.english("but got"), BasePrettier.refVar(got.ref()));
+    }
+  }
+
   record ProjIxError(@Override @NotNull SourceNode expr, int actual)
     implements TyckError, SourceNodeProblem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
