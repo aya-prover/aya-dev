@@ -15,7 +15,8 @@ import java.lang.annotation.Target;
 ///
 /// ## What kind of operations are considered [Bound]-unfriendly?
 ///
-/// Any operation that moves [Term] to a higher/lower level, for example, descent and normalize term `fn => (fn => ^1 ^0) 0`
+/// Any operation that moves [Term] to a higher/lower (dbi-)level, for example,
+/// descent and normalize term[^2] `fn => (fn => ^1 ^0) 0`
 /// is considered not [Bound]-friendly, as it becomes `fn => ^1 0`, which is ill-scoped.
 /// Here is a table of [Bound]-friendly of common operations:
 ///
@@ -32,6 +33,8 @@ import java.lang.annotation.Target;
 /// [^1]: Although normalizer **can** safely normalize [Bound] term,
 ///       but we let it fails on [LocalTerm] to reveal potential bugs.
 ///       Thus, operations that depend on normalizer become not [Bound]-friendly.
+/// [^2]: This is not [Bound]-friendly cause `^0` is not the outermost index. In most case, this is the main reason
+///       that an operation is not [Bound]-friendly.
 ///
 /// @see Closed
 @Retention(RetentionPolicy.SOURCE)

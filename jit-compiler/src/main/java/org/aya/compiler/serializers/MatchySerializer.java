@@ -11,7 +11,6 @@ import org.aya.compiler.morphism.ast.*;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
-import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MatchCall;
 import org.jetbrains.annotations.NotNull;
@@ -130,10 +129,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
 
   @Override protected @NotNull AyaMetadata buildMetadata(@NotNull MatchyData unit) {
     var qname = unit.matchy.qualifiedName();
-    return new AyaMetadataImpl(
-      qname.module(), qname.name(),
-      -1, -1, new CodeShape.GlobalId[0]
-    );
+    return new AyaMetadataImpl(qname.module(), qname.name());
   }
 
   @Override public @NotNull ClassTargetSerializer<MatchyData>

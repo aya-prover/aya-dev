@@ -17,6 +17,7 @@ public @interface AyaMetadata {
   @NonNls String NAME_ASSOC = "assoc";
   @NonNls String NAME_SHAPE = "shape";
   @NonNls String NAME_RECOGNITION = "recognition";
+  @NonNls String INSTANCE_OF_CLASS = "instanceOfClass";
 
   @NotNull String[] module();
   int fileModuleSize();
@@ -26,4 +27,5 @@ public @interface AyaMetadata {
   /// @return the index in the AyaShape enum, -1 if null
   int shape() default -1;
   @NotNull CodeShape.GlobalId[] recognition() default { };
+  @NotNull Class<?> instanceOfClass() default Object.class;
 }
