@@ -12,7 +12,7 @@ import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstRunner;
 import org.aya.compiler.morphism.ast.BlockSimplifier;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
-import org.aya.primitive.ShapeFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.ref.QPath;

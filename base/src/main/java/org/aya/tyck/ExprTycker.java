@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
+import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Closure;

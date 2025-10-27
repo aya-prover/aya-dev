@@ -4,14 +4,14 @@ package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
-import org.aya.primitive.PrimFactory;
-import org.aya.primitive.ShapeFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.error.LoadErrorKind;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.resolve.salt.PatternBinParser;
+import org.aya.states.primitive.PrimFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.tyck.order.AyaOrgaTycker;

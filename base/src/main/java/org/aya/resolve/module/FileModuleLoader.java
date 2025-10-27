@@ -3,10 +3,10 @@
 package org.aya.resolve.module;
 
 import kala.control.Result;
-import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.error.LoadErrorKind;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.AyaFiles;
 import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.GenericAyaParser;

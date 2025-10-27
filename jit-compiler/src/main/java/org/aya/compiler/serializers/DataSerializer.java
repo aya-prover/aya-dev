@@ -12,7 +12,7 @@ import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstCodeBuilder;
 import org.aya.compiler.morphism.ast.AstExpr;
 import org.aya.compiler.morphism.ast.AstValue;
-import org.aya.primitive.ShapeFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.core.def.AnyDef;
