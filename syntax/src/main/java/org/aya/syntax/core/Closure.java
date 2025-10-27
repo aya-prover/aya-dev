@@ -31,7 +31,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// Make sure you can handle [Bound] term, or use [#reapply(UnaryOperator)] instead.
   Closure descent(IndexedFunction<@Bound Term, Term> f);
 
-  /// Corresponds to _instantiate_ operator in [MM 2004],
+  /// Corresponds to _instantiate_ operator in \[MM 2004\],
   /// _instantiate_ the body with given {@param term}.
   /// Called `apply` due to Mini-TT.
   ///
