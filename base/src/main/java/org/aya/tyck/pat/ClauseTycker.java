@@ -103,7 +103,6 @@ public final class ClauseTycker implements Problematic, Stateful {
 
     public int userPatSize() { return tyckedPats.size(); }
 
-    /// @apiNote Remember to call [LetFreeTermInliner#apply] after use.
     @Contract(mutates = "param2")
     public void dumpLocalLetTo(@NotNull ImmutableSeq<LocalVar> teleBinds, @NotNull ExprTycker exprTycker, boolean inline) {
       // We assume that this method is called right after a subscope, and we own the current layer of the localLet

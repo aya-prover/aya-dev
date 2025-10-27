@@ -21,6 +21,6 @@ public class GlobalInstanceSet {
   }
 
   @NotNull Seq<FnDefLike> findInstanceDecls(@NotNull ClassDefLike clazz) {
-    return instanceMap.get(clazz);
+    return instanceMap.getOrPut(clazz, MutableList::create);
   }
 }
