@@ -35,4 +35,9 @@ public interface ClassError {
     class B
     def test : B => new A
     """;
+
+  @Language("Aya") String testAmbInstances = """
+    open class A | foo : Type
+    def test (a b : A) => foo
+    """;
 }

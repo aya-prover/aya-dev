@@ -85,7 +85,7 @@ In file $FILE:2:12 ->
   2 │   def test => A
     │               ╰╯
 
-Error: Instances for the class Ok not found
+Error: Instances for the class-call Ok not found
 
 1 error(s), 0 warning(s).
 Let's learn from that.
@@ -99,6 +99,18 @@ In file $FILE:3:16 ->
     │                   ╰───╯
 
 Error: Expected an instance of class B but got A
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+AmbInstances:
+In file $FILE:2:22 ->
+
+  1 │   open class A | foo : Type
+  2 │   def test (a b : A) => foo
+    │                         ╰─╯
+
+Error: Non-unique instances for the class-call A found: a, b
 
 1 error(s), 0 warning(s).
 Let's learn from that.
