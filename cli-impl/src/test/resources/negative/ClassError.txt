@@ -90,3 +90,16 @@ Error: Instances for the class Ok not found
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+DiffClass:
+In file $FILE:3:16 ->
+
+  1 │   class A
+  2 │   class B
+  3 │   def test : B => new A
+    │                   ╰───╯
+
+Error: Expected an instance of class B but got A
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
