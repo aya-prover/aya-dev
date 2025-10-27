@@ -2,12 +2,16 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states;
 
+import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.core.def.ClassDefLike;
+import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
+import org.aya.unify.TermComparator;
 import org.jetbrains.annotations.NotNull;
 
 /// Local instance set.
@@ -27,5 +31,12 @@ public class InstanceSet {
   public void put(@NotNull LocalVar instance, @NotNull ClassCall type) {
     instanceMap.getOrPut(type.ref(), MutableList::create).append(instance);
     instanceTypes.put(instance, type);
+  }
+  public @NotNull SeqView<Term> find(ClassCall clazz, TermComparator comparator) {
+    var local = instanceMap.getOrPut(clazz.ref(), MutableList::create);
+    var global = parent.findInstanceDecls(clazz.ref());
+    if (global.isEmpty() && local.isEmpty()) return SeqView.empty();
+    // TODO: consider instances from `parent`
+    return local.view().map(FreeTerm::new);
   }
 }

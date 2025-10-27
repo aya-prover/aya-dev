@@ -61,11 +61,16 @@ public class ArgsComputer {
 
   private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
     if (param.type() instanceof ClassCall clazz) {
-      // TODO: resolve instance
-      var thises = tycker.state.classThis;
-      if (thises.isNotEmpty()) return new FreeTerm(thises.peek());
-      tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
-      return new ErrorTerm(opt -> BasePrettier.refVar(clazz.ref()));
+      var thises = tycker.state.instanceSet
+        .find(clazz, tycker.unifier(pos, Ordering.Eq))
+        .toSeq();
+      if (thises.isEmpty() || thises.sizeGreaterThan(1)) {
+        if (thises.isEmpty()) tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
+        // TODO: else: report ambiguity
+        return new ErrorTerm(_ -> BasePrettier.refVar(clazz.ref()));
+      } else {
+        return thises.getAny();
+      }
     } else {
       return tycker.mockTerm(param, pos);
     }

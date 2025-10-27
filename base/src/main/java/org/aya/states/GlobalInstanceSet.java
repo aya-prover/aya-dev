@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states;
 
-import kala.collection.SeqView;
+import kala.collection.Seq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.syntax.core.def.ClassDefLike;
@@ -20,7 +20,7 @@ public class GlobalInstanceSet {
     instanceMap.getOrPut(clazz, MutableList::create).append(instance);
   }
 
-  public @NotNull SeqView<FnDefLike> findInstanceDecls(@NotNull ClassDefLike clazz) {
-    return instanceMap.get(clazz).view();
+  @NotNull Seq<FnDefLike> findInstanceDecls(@NotNull ClassDefLike clazz) {
+    return instanceMap.get(clazz);
   }
 }

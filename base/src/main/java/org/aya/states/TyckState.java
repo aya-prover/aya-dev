@@ -11,6 +11,7 @@ import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -53,6 +54,11 @@ public final class TyckState {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
     this.instanceSet = instanceSet;
+  }
+
+  public void pushThis(@NotNull LocalVar thisVar, @NotNull ClassCall type) {
+    classThis.push(thisVar);
+    instanceSet.put(thisVar, type);
   }
 
   private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
