@@ -10,6 +10,8 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.normalize.Finalizer;
 import org.aya.pretty.doc.Doc;
+import org.aya.states.GlobalInstanceSet;
+import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
@@ -62,16 +64,19 @@ import static org.aya.tyck.tycker.TeleTycker.loadTele;
 /// The header of a [ClassDef] is just all of its [ClassMember]s.
 public record StmtTycker(
   @NotNull SuppressingReporter reporter, @NotNull ModulePath fileModule,
-  @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
+  @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory,
+  @NotNull GlobalInstanceSet globalInstances
 ) implements Problematic {
   private @NotNull ExprTycker mkTycker() {
-    return new ExprTycker(new TyckState(shapeFactory, primFactory), reporter, fileModule);
+    var tyckState = new TyckState(shapeFactory, primFactory, new InstanceSet(globalInstances));
+    return new ExprTycker(tyckState, reporter, fileModule);
   }
   public StmtTycker(
     @NotNull Reporter reporter, @NotNull ModulePath fileModule,
-    @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory
+    @NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory,
+    @NotNull GlobalInstanceSet globalInstances
   ) {
-    this(new SuppressingReporter(reporter), fileModule, shapeFactory, primFactory);
+    this(new SuppressingReporter(reporter), fileModule, shapeFactory, primFactory, globalInstances);
   }
   public void suppress(@NotNull Decl decl) {
     var suppressInfo = decl.pragmaInfo.suppressWarn;

@@ -39,14 +39,20 @@ public final class TyckState {
   public final @NotNull MutableStack<LocalVar> classThis = MutableStack.create();
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
+  public final @NotNull InstanceSet instanceSet;
   private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
 
   public static final DynamicForest.Handle I0 = DynamicForest.create();
   public static final DynamicForest.Handle I1 = DynamicForest.create();
 
-  public TyckState(@NotNull ShapeFactory shapeFactory, @NotNull PrimFactory primFactory) {
+  public TyckState(
+    @NotNull ShapeFactory shapeFactory,
+    @NotNull PrimFactory primFactory,
+    @NotNull InstanceSet instanceSet
+  ) {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
+    this.instanceSet = instanceSet;
   }
 
   private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {

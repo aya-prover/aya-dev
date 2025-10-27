@@ -7,6 +7,8 @@ import org.aya.generic.stmt.TyckOrder;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.salt.AyaBinOpSet;
+import org.aya.states.GlobalInstanceSet;
+import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
@@ -36,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  * @param opSet        operators local to this module
  * @param opRename     open/import renames with operators
  * @param depGraph     local to this module
- * @param imports      importing information, it only contains the modules that is explicitly imported, 
+ * @param imports      importing information, it only contains the modules that is explicitly imported,
  *                     should not be confused with the {@code import} in {@link ModuleContext#importModuleContext}
  * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String}
  *                     because we can re-export a module inside another module without import it.
@@ -46,6 +48,7 @@ public record ResolveInfo(
   @NotNull ModuleContext thisModule,
   @NotNull PrimFactory primFactory,
   @NotNull ShapeFactory shapeFactory,
+  @NotNull GlobalInstanceSet instancesSet,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<AnyDef, OpRenameInfo> opRename,
   @NotNull MutableMap<ModuleName.Qualified, ImportInfo> imports,
@@ -58,10 +61,13 @@ public record ResolveInfo(
     @NotNull ShapeFactory shapeFactory,
     @NotNull AyaBinOpSet opSet
   ) {
-    this(thisModule, primFactory, shapeFactory, opSet,
+    this(thisModule, primFactory, shapeFactory, new GlobalInstanceSet(), opSet,
       MutableMap.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
   }
-  public @NotNull TyckState makeTyckState() { return new TyckState(shapeFactory, primFactory); }
+  public @NotNull TyckState makeTyckState() {
+    return new TyckState(shapeFactory, primFactory, new InstanceSet(instancesSet));
+  }
+
   public @NotNull ModulePath modulePath() { return thisModule.modulePath(); }
 
   public ExprTycker newTycker() { return newTycker(opSet.reporter); }
