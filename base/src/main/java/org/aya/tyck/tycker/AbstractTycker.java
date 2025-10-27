@@ -1,15 +1,15 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
 import kala.value.LazyValue;
 import org.aya.generic.Renamer;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ExprTycker;
-import org.aya.tyck.TyckState;
 import org.aya.unify.Synthesizer;
 import org.aya.unify.TermComparator;
 import org.aya.util.reporter.Reporter;

@@ -8,9 +8,11 @@ import kala.collection.immutable.ImmutableArray;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Shaped;
+import org.aya.states.TyckState;
 import org.aya.syntax.compile.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.term.Term;
@@ -18,7 +20,6 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.tyck.TyckState;
 import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public record AppTycker<Ex extends Exception>(
   /// ```
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, BiFunction<Term[], Term, Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], Term, Jdg>, Jdg, Ex> {
   }
 
   public AppTycker(
@@ -136,13 +137,14 @@ public record AppTycker<Ex extends Exception>(
       if (operator != null) {
         return new Jdg.Default(new RuleReducer.Fn(operator, 0, argsSeq), result);
       }
-      Term fnCall;
+      @Closed Term fnCall;
       if (fnDef.is(Modifier.Inline)) {
         fnCall = switch (fnDef) {
           case JitFn jit -> jit.invoke(UnaryOperator.identity(), argsSeq);
           case FnDef.Delegate def -> {
             // This must succeed, see org.aya.producer.AyaProducer#fnDecl
             var core = def.core().body().getLeftValue();
+            // as all Call in aya is a full call, thus instTele must produce a Closed term.
             yield core.instTele(argsSeq.view());
           }
         };

@@ -3,6 +3,7 @@
 package org.aya.unify;
 
 import org.aya.generic.term.DTKind;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
@@ -11,7 +12,6 @@ import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.syntax.core.term.xtt.PartialTyTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.error.DoubleCheckError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.tycker.AbstractTycker;

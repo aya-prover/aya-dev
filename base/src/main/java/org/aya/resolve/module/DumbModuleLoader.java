@@ -4,10 +4,10 @@ package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Result;
-import org.aya.primitive.PrimFactory;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.error.LoadErrorKind;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;

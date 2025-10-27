@@ -31,7 +31,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// Make sure you can handle [Bound] term, or use [#reapply(UnaryOperator)] instead.
   Closure descent(IndexedFunction<@Bound Term, Term> f);
 
-  /// Corresponds to _instantiate_ operator in [MM 2004],
+  /// Corresponds to _instantiate_ operator in \[MM 2004\],
   /// _instantiate_ the body with given {@param term}.
   /// Called `apply` due to Mini-TT.
   ///
@@ -75,6 +75,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// because sometimes descent have side-effects. An example is find-usages in meta resolution,
   /// it relies on descent and counting the number of free vars along the way.
   /// So it is important to immediately descent into the body, which we do so using [#toLocns()].
+  /// TODO: I was wondering if [lam] should be `UnaryOperator<@Closed Term>`
   record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {
     @Override public Closure descent(IndexedFunction<Term, Term> f) { return toLocns().descent(f); }
     @Override public Term apply(Term term) { return lam.apply(term); }

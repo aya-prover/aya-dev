@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.normalize;
 
@@ -7,6 +7,7 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
+import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.term.MetaPatTerm;
@@ -16,7 +17,6 @@ import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.ref.MetaVar;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.reporter.Reporter;

@@ -9,6 +9,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -20,7 +21,6 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.error.LevelError;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Contextful;
@@ -44,9 +44,16 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @Nullable FailureData failure = null;
   final @NotNull Renamer nameGen = new Renamer();
 
-  // If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
-  private boolean solveMeta = true;
+  /// If false, we refrain from solving meta, and return false if we encounter a non-identical meta.
+  /// Used for approximate comparison.
+  private boolean solveMetaForApprox = true;
+  /// If false, do not try to solve metas. This is used for filtering instance candidates.
+  private boolean solveMetaInstances = true;
   private final MutableStack<MutableList<TyckState.Eqn>> weWillSee = MutableStack.create();
+
+  public void instanceFilteringMode() {
+    this.solveMetaInstances = false;
+  }
 
   public TermComparator(
     @NotNull TyckState state, @NotNull LocalCtx ctx,
@@ -88,7 +95,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
-    if (solveMeta) {
+    if (solveMetaInstances && solveMetaForApprox) {
       var result = doSolveMeta(meta, rhs, type);
       if (result == null) fail(meta, rhs);
       return result;
@@ -116,12 +123,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * so don't forget to reset the {@link #failure} after first failure.
    */
   private @Nullable Term compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
-    var prev = solveMeta;
-    solveMeta = false;
+    var prev = solveMetaForApprox;
+    solveMetaForApprox = false;
     weWillSee.push(MutableList.create());
     var result = compareCalls(lhs, rhs);
     var weWillSeeThisTime = weWillSee.pop();
-    solveMeta = prev;
+    solveMetaForApprox = prev;
     if (result != null) {
       for (var eqn : weWillSeeThisTime) {
         // Make sure to call `solveEqn` on a fresh Unifier to have the correct `localCtx`

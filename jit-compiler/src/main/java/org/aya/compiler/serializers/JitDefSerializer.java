@@ -33,7 +33,8 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
       module, ref.name(),
       assocIdx,
       buildShape(unit),
-      buildRecognition(unit)
+      buildRecognition(unit),
+      Object.class
     );
   }
 

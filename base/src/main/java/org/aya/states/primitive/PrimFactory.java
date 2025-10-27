@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.primitive;
+package org.aya.states.primitive;
 
 import kala.collection.Map;
 import kala.collection.immutable.ImmutableMap;
@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import org.aya.normalize.Normalizer;
+import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
@@ -19,7 +20,6 @@ import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 

@@ -4,11 +4,11 @@ package org.aya.cli.single;
 
 import org.aya.cli.utils.CliEnums;
 import org.aya.cli.utils.CompilerUtil;
-import org.aya.primitive.PrimFactory;
 import org.aya.producer.AyaParserImpl;
 import org.aya.resolve.context.EmptyContext;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.module.*;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.util.position.SourceFileLocator;
 import org.aya.util.reporter.ClearableReporter;
 import org.aya.util.reporter.CollectingReporter;

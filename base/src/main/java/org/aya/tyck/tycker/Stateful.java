@@ -4,11 +4,11 @@ package org.aya.tyck.tycker;
 
 import org.aya.normalize.Finalizer;
 import org.aya.normalize.Normalizer;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
-import org.aya.tyck.TyckState;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 

@@ -64,6 +64,11 @@ public record AsmJavaBuilder<C extends AsmOutputCollector>(@NotNull C collector)
           );
           attributes.append(AnnotationElement.of(AyaMetadata.NAME_RECOGNITION, recognitionValue));
         }
+        if (metadata.instanceOfClass() != Object.class) {
+          var instanceOfClassValue = AnnotationValue.ofClass(
+            JavaUtil.fromClass(metadata.instanceOfClass()));
+          attributes.append(AnnotationElement.of(AyaMetadata.INSTANCE_OF_CLASS, instanceOfClassValue));
+        }
 
         cb.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(
           JavaUtil.fromClass(AyaMetadata.class),

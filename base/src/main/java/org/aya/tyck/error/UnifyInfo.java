@@ -4,8 +4,8 @@ package org.aya.tyck.error;
 
 import kala.collection.mutable.MutableList;
 import org.aya.pretty.doc.Doc;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.term.Term;
-import org.aya.tyck.TyckState;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.unify.TermComparator;
 import org.aya.util.PrettierOptions;

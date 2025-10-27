@@ -17,7 +17,7 @@ import org.aya.cli.single.CompilerFlags;
 import org.aya.cli.utils.CliEnums;
 import org.aya.ide.LspPrimFactory;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.primitive.PrimFactory;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.util.FileUtil;
 import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.NotNull;

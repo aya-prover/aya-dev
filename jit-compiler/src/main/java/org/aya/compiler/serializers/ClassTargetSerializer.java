@@ -35,13 +35,20 @@ public abstract class ClassTargetSerializer<T> {
   public record AyaMetadataImpl(
     @Override @NotNull String[] module, @Override int fileModuleSize,
     @Override @NotNull String name, @Override int assoc, @Override int shape,
-    @Override @NotNull CodeShape.GlobalId[] recognition
+    @Override @NotNull CodeShape.GlobalId[] recognition,
+    @Override @NotNull Class<?> instanceOfClass
   ) implements AyaMetadata {
     public AyaMetadataImpl(
       @NotNull QPath path, @NotNull String name, int assoc, int shape,
-      @NotNull CodeShape.GlobalId[] recognition
+      @NotNull CodeShape.GlobalId[] recognition,
+      @NotNull Class<?> instanceOfClass
     ) {
-      this(path.module().module().toArray(new String[0]), path.fileModuleSize(), name, assoc, shape, recognition);
+      this(path.module().module().toArray(new String[0]),
+        path.fileModuleSize(), name, assoc, shape, recognition,
+        instanceOfClass);
+    }
+    public AyaMetadataImpl(@NotNull QPath path, @NotNull String name) {
+      this(path, name, -1, -1, new CodeShape.GlobalId[0], Object.class);
     }
     @Override public Class<? extends Annotation> annotationType() { return AyaMetadata.class; }
   }

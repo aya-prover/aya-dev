@@ -1,6 +1,6 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.primitive;
+package org.aya.states.primitive;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;

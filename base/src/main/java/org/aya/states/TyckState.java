@@ -1,14 +1,14 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.tyck;
+package org.aya.states;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
-import org.aya.primitive.PrimFactory;
-import org.aya.primitive.ShapeFactory;
+import org.aya.states.primitive.PrimFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;

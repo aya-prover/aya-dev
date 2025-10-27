@@ -62,7 +62,7 @@ public interface AbstractTele {
   }
 
   /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
-  default @NotNull Term telescope(int i, Term[] teleArgs) {
+  default @NotNull @Closed Term telescope(int i, @Closed Term[] teleArgs) {
     return telescope(i, ArraySeq.wrap(teleArgs));
   }
 
@@ -71,14 +71,14 @@ public interface AbstractTele {
   ///
   /// @param teleArgs the arguments to the former parameters
   /// @return the type of {@param i}-th parameter.
-  default @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+  default @NotNull @Closed Term telescope(int i, Seq<@Closed Term> teleArgs) {
     return Panic.unreachable();
   }
 
   /// Get the result of this signature
   ///
   /// @param teleArgs the arguments to all parameters.
-  @NotNull Term result(Seq<Term> teleArgs);
+  @NotNull @Closed Term result(Seq<@Closed Term> teleArgs);
 
   /// Return the amount of parameters.
   int telescopeSize();
@@ -96,11 +96,11 @@ public interface AbstractTele {
   /// @see #telescope
   /// @see #telescopeName
   /// @see #telescopeLicit
-  default @NotNull Param telescopeRich(int i, Term... teleArgs) {
+  default @NotNull Param telescopeRich(int i, @Closed Term... teleArgs) {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
 
-  default @NotNull Term result(Term... teleArgs) {
+  default @NotNull @Closed Term result(@Closed Term... teleArgs) {
     return result(ArraySeq.wrap(teleArgs));
   }
 
@@ -109,16 +109,16 @@ public interface AbstractTele {
       .view().mapToObj(this::telescopeName);
   }
 
-  default @NotNull Term makePi() {
+  default @NotNull @Closed Term makePi() {
     return makePi(Seq.empty());
   }
 
-  default @NotNull Term makePi(@NotNull Seq<Term> initialArgs) {
+  default @NotNull @Closed Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
     return new PiBuilder(this).make(0, initialArgs);
   }
 
   record PiBuilder(AbstractTele telescope) {
-    public @NotNull Term make(int i, Seq<Term> args) {
+    public @NotNull Term make(int i, Seq<@Closed Term> args) {
       return i == telescope.telescopeSize() ? telescope.result(args) :
         new DepTypeTerm(DTKind.Pi, telescope.telescope(i, args), new Closure.Jit(arg ->
           make(i + 1, args.appended(arg))));

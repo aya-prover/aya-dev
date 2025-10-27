@@ -10,7 +10,7 @@ import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.ast.*;
 import org.aya.generic.Modifier;
-import org.aya.primitive.ShapeFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.FnDef;

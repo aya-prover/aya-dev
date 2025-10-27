@@ -12,10 +12,9 @@ import org.aya.compiler.morphism.ast.AstClassBuilder;
 import org.aya.compiler.morphism.ast.AstRunner;
 import org.aya.compiler.morphism.ast.BlockSimplifier;
 import org.aya.compiler.serializers.MatchySerializer.MatchyData;
-import org.aya.primitive.ShapeFactory;
+import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitUnit;
 import org.aya.syntax.core.def.*;
-import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.ref.QPath;
 import org.glavo.classfile.ClassHierarchyResolver;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +94,7 @@ public final class ModuleSerializer {
   @VisibleForTesting
   public @NotNull AstClassBuilder serializeToANF(ModuleResult unit) {
     var desc = ClassDesc.of(getReference(unit.name, null, NameSerializer.NameType.ClassName));
-    var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name,
-      "", -1, -1, new CodeShape.GlobalId[0]);
+    var metadata = new ClassTargetSerializer.AyaMetadataImpl(unit.name, "");
 
     var classMarkers = MutableMap.of(
       Constants.CD_ImmutableSeq, ClassHierarchyResolver.ClassHierarchyInfo.ofInterface(),
