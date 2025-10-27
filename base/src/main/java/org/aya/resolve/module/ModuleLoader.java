@@ -28,16 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ModuleLoader extends Problematic {
   @Override @NotNull ClearableReporter reporter();
-  default <E extends Exception> @Nullable ResolveInfo tyckModule(
-    @NotNull PrimFactory primFactory,
-    @NotNull ModuleContext context,
-    @NotNull ImmutableSeq<Stmt> program,
-    @Nullable ModuleCallback<E> onTycked
-  ) throws E {
-    var info = resolveModule(primFactory, context, program, this);
-    if (info == null) return null;
-    return tyckModule(info, onTycked);
-  }
 
   default <E extends Exception> @NotNull ResolveInfo
   tyckModule(@NotNull ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
