@@ -28,9 +28,4 @@ public class InstanceSet {
     instanceMap.getOrPut(type.ref(), MutableList::create).append(instance);
     instanceTypes.put(instance, type);
   }
-
-  /// Temporary
-  public static @NotNull InstanceSet dummy() {
-    return new InstanceSet(new GlobalInstanceSet());
-  }
 }

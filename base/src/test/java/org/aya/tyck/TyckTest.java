@@ -7,9 +7,6 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import org.aya.normalize.Normalizer;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.module.ModuleCallback;
-import org.aya.states.InstanceSet;
-import org.aya.states.TyckState;
-import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.SyntaxTestUtil;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.term.Term;
@@ -81,8 +78,7 @@ public class TyckTest {
     var largeList = mkList.apply(ImmutableIntSeq.fill(50, () -> random.nextInt(400)));
     var term = new FnCall(tree_sortNat, 0, ImmutableSeq.of(largeList));
 
-    var normalizer = new Normalizer(new TyckState(
-      result.info().shapeFactory(), new PrimFactory(), InstanceSet.dummy()));
+    var normalizer = new Normalizer(result.info.makeTyckState());
     var sortResult = new Object() {
       Term t;
     };
