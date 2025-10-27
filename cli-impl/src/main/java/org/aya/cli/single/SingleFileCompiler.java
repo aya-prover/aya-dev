@@ -63,7 +63,9 @@ public final class SingleFileCompiler {
       var ayaFile = fileManager.createAyaFile(locator, sourceFile);
       var program = ayaFile.parseMe(ayaParser).program();
       ayaFile.pretty(flags, program, collectingReporter, CliEnums.PrettyStage.raw);
-      loader.tyckModule(new PrimFactory(), context, program, (resolveInfo, defs) -> {
+      var info = loader.resolveModule(new PrimFactory(), context, program, loader);
+      if (info == null) return;
+      loader.tyckModule(info, (resolveInfo, defs) -> {
         ayaFile.tyckAdditional(resolveInfo);
         ayaFile.pretty(flags, program, collectingReporter, CliEnums.PrettyStage.scoped);
         ayaFile.pretty(flags, defs, collectingReporter, CliEnums.PrettyStage.typed);

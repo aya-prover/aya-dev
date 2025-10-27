@@ -48,7 +48,8 @@ public record AyaSccTycker(
 ) implements SccTycker<TyckOrder, AyaSccTycker.SccTyckingFailed>, Problematic {
   public static @NotNull AyaSccTycker create(ResolveInfo info, @NotNull Reporter outReporter) {
     var counting = CountingReporter.delegate(outReporter);
-    var stmt = new StmtTycker(counting, info.modulePath(), info.shapeFactory(), info.primFactory());
+    var stmt = new StmtTycker(counting, info.modulePath(),
+      info.shapeFactory(), info.primFactory(), info.instancesSet());
     return new AyaSccTycker(stmt, counting, info, MutableList.create());
   }
 

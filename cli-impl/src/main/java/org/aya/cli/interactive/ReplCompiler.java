@@ -28,6 +28,8 @@ import org.aya.resolve.module.ModuleListLoader;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.resolve.salt.Desalt;
 import org.aya.resolve.visitor.ExprResolver;
+import org.aya.states.GlobalInstanceSet;
+import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
@@ -61,7 +63,6 @@ public class ReplCompiler {
   private final @NotNull SourceFileLocator locator;
   private final @NotNull CachedModuleLoader<ModuleListLoader> loader;
   private final @NotNull ReplContext context;
-  private final @NotNull PrimFactory primFactory;
   private final @NotNull ReplShapeFactory shapeFactory;
   private final @NotNull GenericAyaFile.Factory fileManager;
   private final @NotNull AyaBinOpSet opSet;
@@ -75,7 +76,7 @@ public class ReplCompiler {
     this.modulePaths = modulePaths;
     reporter = CountingReporter.delegate(delegateReporter);
     this.locator = locator != null ? locator : new SourceFileLocator.Module(this.modulePaths);
-    this.primFactory = new PrimFactory() {
+    var primFactory = new PrimFactory() {
       @Override public boolean isForbiddenRedefinition(PrimDef.@NotNull ID id, boolean isJit) {
         return false;
       }
@@ -87,7 +88,8 @@ public class ReplCompiler {
     var parser = new AyaParserImpl(reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
       new FileModuleLoader(this.locator, path, reporter, parser, fileManager, primFactory))));
-    tcState = new TyckState(shapeFactory, primFactory);
+    var replInstances = new GlobalInstanceSet();
+    tcState = new TyckState(shapeFactory, primFactory, new InstanceSet(replInstances));
   }
 
   private @NotNull ExprResolver.LiterateResolved
@@ -105,7 +107,7 @@ public class ReplCompiler {
   private void loadLibrary(@NotNull Path libraryRoot) throws IOException {
     var flags = new CompilerFlags(CompilerFlags.Message.EMOJI, false, true, null, modulePaths.view(), null);
     try {
-      var compiler = LibraryCompiler.newCompiler(primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
+      var compiler = LibraryCompiler.newCompiler(tcState.primFactory, reporter, flags, CompilerAdvisor.onDisk(), libraryRoot);
       compiler.start();
       importModule(compiler.libraryOwner());
     } catch (LibraryConfigData.BadConfig bad) {
@@ -177,7 +179,7 @@ public class ReplCompiler {
   }
 
   private @NotNull ResolveInfo makeResolveInfo(@NotNull ModuleContext ctx) {
-    var resolveInfo = new ResolveInfo(ctx, primFactory, shapeFactory, opSet);
+    var resolveInfo = new ResolveInfo(ctx, tcState.primFactory, tcState.shapeFactory, opSet);
     imports.forEach(ii -> resolveInfo.imports().put(
       ii.modulePath().asName(), new ResolveInfo.ImportInfo(ii, false)));
     return resolveInfo;
