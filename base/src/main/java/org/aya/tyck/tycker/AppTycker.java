@@ -162,7 +162,7 @@ public record AppTycker<Ex extends Exception>(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
-    state.classThis.pop();
+    state.popThis();
     return result;
   }
 

@@ -61,6 +61,12 @@ public final class TyckState {
     instanceSet.put(thisVar, type);
   }
 
+  public @NotNull LocalVar popThis() {
+    var thisVar = classThis.pop();
+    instanceSet.remove(thisVar);
+    return thisVar;
+  }
+
   private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
     return switch (term) {
       case FreeTerm(var v) -> create ? connections.getOrPut(v, DynamicForest::create) : connections.getOrNull(v);

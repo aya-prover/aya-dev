@@ -259,7 +259,7 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(zonker::zonk)
       .bindTele(
-        tycker.state.classThis.pop(),
+        tycker.state.popThis(),
         new Param("self", classCall, false),
         classRef.concrete.nameSourcePos()
       );

@@ -66,7 +66,7 @@ public class ArgsComputer {
         .toSeq();
       if (thises.isEmpty() || thises.sizeGreaterThan(1)) {
         if (thises.isEmpty()) tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
-        // TODO: else: report ambiguity
+        else tycker.fail(new ClassError.InstanceAmbiguous(pos, clazz, thises));
         return new ErrorTerm(_ -> BasePrettier.refVar(clazz.ref()));
       } else {
         return thises.getAny();

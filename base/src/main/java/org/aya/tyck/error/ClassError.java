@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.error;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourceNode;
@@ -30,8 +32,19 @@ public interface ClassError extends TyckError, SourceNodeProblem {
 
   record InstanceNotFound(@Override @NotNull SourcePos sourcePos, @NotNull ClassCall clazz) implements TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.english("Instances for the class"),
-        BasePrettier.refVar(clazz.ref()), Doc.english("not found"));
+      return Doc.sep(Doc.english("Instances for the class-call"),
+        clazz.toDoc(options), Doc.english("not found"));
+    }
+  }
+
+  record InstanceAmbiguous(
+    @Override @NotNull SourcePos sourcePos,
+    @NotNull ClassCall clazz, @NotNull ImmutableSeq<Term> instances
+  ) implements TyckError {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.english("Non-unique instances for the class-call"),
+        clazz.toDoc(options), Doc.english("found:"),
+        Doc.commaList(instances.map(i -> i.toDoc(options))));
     }
   }
 

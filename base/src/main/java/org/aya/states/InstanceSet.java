@@ -39,4 +39,14 @@ public class InstanceSet {
     // TODO: consider instances from `parent`
     return local.view().map(FreeTerm::new);
   }
+
+  public void remove(LocalVar thisVar) {
+    // Calling `getLocal` and `get` are equivalent here, since no parent
+    var ty = instanceTypes.getLocal(thisVar);
+    if (ty.isDefined()) {
+      var clazz = ((ClassCall) ty.get()).ref();
+      var list = instanceMap.getOrNull(clazz);
+      if (list != null) list.remove(thisVar);
+    }
+  }
 }
