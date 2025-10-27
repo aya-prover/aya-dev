@@ -156,12 +156,13 @@ public record AppTycker<Ex extends Exception>(
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var self = LocalVar.generate("self");
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
-    state.classThis.push(self);
+    state.pushThis(self, new ClassCall(clazz, 0, ImmutableArray.empty()));
+    // TODO: we ought to update the type info of `self` in the TyckState
     var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
-    state.classThis.pop();
+    state.popThis();
     return result;
   }
 

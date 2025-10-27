@@ -13,7 +13,7 @@ import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.ref.LocalCtx;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.syntax.telescope.Signature;
@@ -25,7 +25,7 @@ import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public sealed interface TeleTycker extends Contextful {
+public sealed interface TeleTycker {
   /**
    * Tyck a expr that is expected to be a type
    *
@@ -33,6 +33,7 @@ public sealed interface TeleTycker extends Contextful {
    */
   @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult);
   void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type);
+  void putLocal(@NotNull LocalVar var, @NotNull Term type);
 
   /**
    * @return a locally nameless signature computed from what's in the localCtx.
@@ -67,7 +68,7 @@ public sealed interface TeleTycker extends Contextful {
     return MutableSeq.from(cTele.view().map(p -> {
       var pTy = checkType(p.typeExpr(), false);
       addWithTerm(p, p.sourcePos(), pTy);
-      localCtx().put(p.ref(), pTy);
+      putLocal(p.ref(), pTy);
       return new Param(p.ref().name(), pTy, p.explicit());
     }));
   }
@@ -82,15 +83,23 @@ public sealed interface TeleTycker extends Contextful {
     var tele = MutableList.<LocalVar>create();
 
     binds.forEachWith(signature.params(), (ref, param) -> {
-      tycker.localCtx().put(ref, param.type().instTeleVar(tele.view()));
+      var ty = param.type().instTeleVar(tele.view());
+      tycker.localCtx().put(ref, ty);
+      if (ty instanceof ClassCall clazz) {
+        tycker.state.instanceSet.put(ref, clazz);
+      }
       tele.append(ref);
     });
   }
 
   sealed interface Impl extends TeleTycker {
     @NotNull ExprTycker tycker();
-    @Override default @NotNull LocalCtx localCtx() { return tycker().localCtx(); }
-    @Override default @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) { return tycker().setLocalCtx(ctx); }
+    @Override default void putLocal(@NotNull LocalVar var, @NotNull Term type) {
+      tycker().localCtx().put(var, type);
+      if (type instanceof ClassCall clazz) {
+        tycker().state.instanceSet.put(var, clazz);
+      }
+    }
   }
 
   record Default(@Override @NotNull ExprTycker tycker) implements Impl {

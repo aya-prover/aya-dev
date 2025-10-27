@@ -379,9 +379,10 @@ public class LibraryCompiler {
       var startTime = System.currentTimeMillis();
 
       var loaded = moduleLoader.load(moduleName);
-      if (loaded.getErrOrNull() == LoadErrorKind.Resolve) return;
+      var err = loaded.getErrOrNull();
+      if (err == LoadErrorKind.Resolve) return;
       // we also handle [Resolve] here, the code in [tyckSCC] will handle the case.
-      if (loaded.getErrOrNull() == LoadErrorKind.NotFound || file.resolveInfo() == null)
+      if (err == LoadErrorKind.NotFound || file.resolveInfo() == null)
         throw new Panic("Unable to load module: " + moduleName);
       // [NotFound] is kinda impossible, as we are using SccTycker.
       // TODO: ^ is it?

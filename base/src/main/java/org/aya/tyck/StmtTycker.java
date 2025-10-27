@@ -247,9 +247,9 @@ public record StmtTycker(
     if (member.ref.core != null) return;
     var classRef = member.classRef;
     var self = classRef.concrete.self;
-    tycker.state.classThis.push(self);
     var classCall = new ClassCall(new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
     tycker.localCtx().put(self, classCall);
+    tycker.state.pushThis(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
@@ -259,7 +259,7 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(zonker::zonk)
       .bindTele(
-        tycker.state.classThis.pop(),
+        tycker.state.popThis(),
         new Param("self", classCall, false),
         classRef.concrete.nameSourcePos()
       );

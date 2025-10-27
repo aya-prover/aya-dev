@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -28,5 +28,16 @@ public interface ClassError {
   @Language("Aya") String testInstNotFound = """
     open class Ok | A : Type
     def test => A
+    """;
+
+  @Language("Aya") String testDiffClass = """
+    class A
+    class B
+    def test : B => new A
+    """;
+
+  @Language("Aya") String testAmbInstances = """
+    open class A | foo : Type
+    def test (a b : A) => foo
     """;
 }

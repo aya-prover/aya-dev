@@ -16,3 +16,5 @@ def norm1 : Kontainer::walue {subtype} = 0 => refl
 // In core:
 // (cast [Taipe := Nat] [walue := 0] (new Kontainer Nat 0)) .walue
 // -> 0 (it is recorded in the ClassCastTerm!)
+
+def projTest (a : Kontainer) => Kontainer::walue
