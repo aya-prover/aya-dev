@@ -250,6 +250,7 @@ public record StmtTycker(
     tycker.state.classThis.push(self);
     var classCall = new ClassCall(new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
     tycker.localCtx().put(self, classCall);
+    tycker.state.instanceSet.put(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
