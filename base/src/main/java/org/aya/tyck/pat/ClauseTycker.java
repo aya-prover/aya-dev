@@ -128,7 +128,6 @@ public final class ClauseTycker implements Problematic, Stateful {
   ) {
     public @NotNull WorkerResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
-
       ImmutableSeq<PatClass.Seq<Term, Pat>> classes;
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
@@ -195,7 +194,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
-        sibling, lets.apply(curLhs.result),
+        sibling, lets.accept(curLhs.result),
         newPatterns.take(curLhs.userPatSize()),
         // We previously assume all the "inserted patterns" are `Pat.Bind`, which is not true after refinement
         newPatterns.drop(curLhs.userPatSize()),

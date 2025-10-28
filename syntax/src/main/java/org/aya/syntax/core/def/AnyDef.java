@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
 import org.aya.syntax.compile.JitData;
 import org.aya.syntax.compile.JitDef;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
@@ -57,5 +58,5 @@ public sealed interface AnyDef extends OpDecl
     };
   }
 
-  @NotNull AbstractTele signature();
+  @Closed @NotNull AbstractTele signature();
 }
