@@ -1,0 +1,92 @@
+From f7258acb5e04969ab4d0ab6fcd9657c67c9f0adb Mon Sep 17 00:00:00 2001
+From: definfo <hjsdbb1@gmail.com>
+Date: Thu, 8 May 2025 16:01:31 +0800
+Subject: [PATCH 1/2] fix: patch on gradle deps resolution
+
+---
+ cli-console/build.gradle.kts |  5 +++--
+ ide-lsp/build.gradle.kts     | 10 +++++-----
+ syntax/build.gradle.kts      |  4 ++--
+ 3 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/cli-console/build.gradle.kts b/cli-console/build.gradle.kts
+index 66079cd69..46806df86 100644
+--- a/cli-console/build.gradle.kts
++++ b/cli-console/build.gradle.kts
+@@ -1,9 +1,10 @@
+ // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+ // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
++plugins { application }
++
+ import org.aya.gradle.CommonTasks
+ 
+ val mainClassQName = "org.aya.cli.console.Main"
+-CommonTasks.fatJar(project, mainClassQName)
+ application.mainClass.set(mainClassQName)
+ 
+ dependencies {
+@@ -18,7 +19,7 @@ dependencies {
+   testImplementation(libs.hamcrest)
+ }
+ 
+-plugins { application }
++CommonTasks.fatJar(project, mainClassQName)
+ 
+ tasks.withType<AbstractCopyTask>().configureEach {
+   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+diff --git a/ide-lsp/build.gradle.kts b/ide-lsp/build.gradle.kts
+index 95d9e72ee..39256f9e2 100644
+--- a/ide-lsp/build.gradle.kts
++++ b/ide-lsp/build.gradle.kts
+@@ -1,5 +1,9 @@
+ // Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+ // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
++plugins {
++  id("org.beryx.jlink")
++}
++
+ import org.apache.tools.ant.taskdefs.condition.Os
+ import org.aya.gradle.CommonTasks
+ import org.aya.gradle.JdkUrls
+@@ -7,8 +11,6 @@ import java.nio.file.Files
+ import java.security.MessageDigest
+ import java.util.*
+ 
+-CommonTasks.fatJar(project, Constants.mainClassQName)
+-
+ dependencies {
+   // NOTE: use `api`. IntelliJ plugin needs it temporarily (should depend on ide instead of lsp).
+   api(project(":ide"))
+@@ -20,9 +22,7 @@ dependencies {
+   testImplementation(libs.hamcrest)
+ }
+ 
+-plugins {
+-  id("org.beryx.jlink")
+-}
++CommonTasks.fatJar(project, Constants.mainClassQName)
+ 
+ tasks.withType<JavaCompile>().configureEach {
+   doFirst {
+diff --git a/syntax/build.gradle.kts b/syntax/build.gradle.kts
+index dd7ed0d78..2b6277de2 100644
+--- a/syntax/build.gradle.kts
++++ b/syntax/build.gradle.kts
+@@ -3,8 +3,6 @@
+ 
+ import org.aya.gradle.CommonTasks
+ 
+-CommonTasks.fatJar(project, "N/A")
+-
+ dependencies {
+   api(project(":tools-kala"))
+   api(project(":tools-md"))
+@@ -14,3 +12,5 @@ dependencies {
+   testImplementation(libs.junit.jupiter)
+   testImplementation(libs.hamcrest)
+ }
++
++CommonTasks.fatJar(project, "N/A")
+-- 
+2.48.1
+
