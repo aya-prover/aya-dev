@@ -28,8 +28,9 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
 
   /// @apiNote this [LetTerm] must be [Closed]
   @Override public @NotNull @Closed Term make(@NotNull UnaryOperator<@Closed Term> mapper) {
+    @Closed LetTerm self = this;
     // [body] and [definedAs] are closed since [this] is [Closed], thus [body.apply(definedAs)] is also closed.
-    return mapper.apply(body.apply(definedAs));
+    return mapper.apply(body.apply(self.definedAs()));
   }
 
   public static @NotNull @Closed Term makeAll(@NotNull @Closed Term term) {
@@ -46,16 +47,18 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     return term;
   }
 
+  /// @apiNote `this` must be [Closed]
   public @NotNull Unlet unlet(@NotNull Renamer nameGen) {
     var definedAs = FreezableMutableList.<LetFreeTerm>create();
-    Term let = this;
+    @Closed Term let = this;
 
-    while (let instanceof LetTerm(var term, var remain)) {
-      if (term instanceof FreeTerm free) {
+    while (let instanceof LetTerm(@Closed Term term, @Closed Closure remain)) {
+      if (term instanceof @Closed FreeTerm free) {
         let = remain.apply(free);
         continue;
       }
-      var bind = new LetFreeTerm(nameGen.bindName(term), new Jdg.TypeMissing(term));
+
+      @Closed LetFreeTerm bind = new LetFreeTerm(nameGen.bindName(term), Jdg.TypeMissing.of(term));
       var freeBody = remain.apply(bind);
 
       definedAs.append(bind);

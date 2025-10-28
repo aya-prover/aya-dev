@@ -7,6 +7,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
@@ -52,7 +53,9 @@ public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef
     assert signature != null : defVar.name();
     return signature.telescope();
   }
-  static @NotNull AbstractTele.Locns defSignature(@NotNull TyckDef core) {
+
+  /// a raw signature of top-level def is always [Closed]
+  static @Closed @NotNull AbstractTele.Locns defSignature(@NotNull TyckDef core) {
     return new AbstractTele.Locns(core.telescope(), core.result());
   }
 

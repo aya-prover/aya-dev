@@ -3,6 +3,7 @@
 package org.aya.syntax.core;
 
 import kala.value.LazyValue;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,10 @@ public sealed interface Jdg {
   }
 
   record TypeMissing(@Override @NotNull Term wellTyped) implements Jdg {
+    public static @Closed TypeMissing of(@Closed Term wellTyped) {
+      return new TypeMissing(wellTyped);
+    }
+
     @Override public @NotNull Term type() { throw new UnsupportedOperationException("type missing"); }
     @Override public @NotNull TypeMissing map(@NotNull UnaryOperator<Term> f) {
       return new TypeMissing(f.apply(wellTyped));

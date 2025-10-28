@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Param;
@@ -48,18 +49,18 @@ public interface Contextful {
    *
    * @see LocalCtx#extract()
    */
-  default @NotNull MetaCall freshMeta(String name, @NotNull SourcePos pos, MetaVar.Requirement req, boolean isUser) {
+  default @Closed @NotNull MetaCall freshMeta(String name, @NotNull SourcePos pos, MetaVar.Requirement req, boolean isUser) {
     var vars = localCtx().extract().toSeq();
     var args = vars.<Term>map(FreeTerm::new);
     return new MetaCall(new MetaVar(name, pos, args.size(), req.bind(vars.view()), isUser), args);
   }
 
   /** @see org.aya.syntax.ref.MetaVar#asDt */
-  default @NotNull Term generatePi(Expr.@NotNull Lambda expr, SourcePos sourcePos) {
+  default @Closed @NotNull Term generatePi(Expr.@NotNull Lambda expr, SourcePos sourcePos) {
     return generatePi(sourcePos, expr.ref().name());
   }
 
-  private @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {
+  private @Closed @NotNull Term generatePi(@NotNull SourcePos pos, @NotNull String name) {
     var domain = freshMeta(name + "ty", pos, MetaVar.Misc.IsType, false);
     var codomain = freshMeta(name + "ret", pos, MetaVar.Misc.IsType, false);
     return new DepTypeTerm(DTKind.Pi, domain, Closure.mkConst(codomain));

@@ -31,6 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiFunction;
 
 /// Index-safe telescope
+///
+/// Dblity annotation can be applied to this type, and an AbstractTele is considered [Closed] if:
+/// * For i-th (count from `0`) parameter `p`, `p.instTele(i closed terms)` is [Closed]
+/// * the [#result] is treated as `telescopeSize()-th` parameter.
 public interface AbstractTele {
   /// Replace [org.aya.syntax.core.term.FreeTerm] in {@param tele} with appropriate index
   ///
@@ -139,9 +143,13 @@ public interface AbstractTele {
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
+      assert teleArgs.sizeEquals(i);
       return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
-    @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instTele(teleArgs.view()); }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
+      assert teleArgs.sizeEquals(telescopeSize());
+      return result.instTele(teleArgs.view());
+    }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
     }

@@ -4,6 +4,7 @@ package org.aya.syntax.core.def;
 
 import java.util.Objects;
 
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QName;
@@ -22,7 +23,7 @@ public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef 
   @Override public final @NotNull String name() { return ref.name(); }
   @Override public final @Nullable Assoc assoc() { return ref.assoc(); }
   @Override public @NotNull QName qualifiedName() { return new QName(ref); }
-  @Override public @NotNull AbstractTele signature() { return TyckDef.defSignature(ref); }
+  @Override public @Closed @NotNull AbstractTele signature() { return TyckDef.defSignature(ref); }
   @Override public boolean equals(Object obj) {
     return obj instanceof TyckAnyDef<?> that && ref.equals(that.ref);
   }

@@ -29,7 +29,7 @@ public interface Stateful {
   default @NotNull @Closed Term whnf(@NotNull @Closed Term term) { return new Normalizer(state()).apply(term); }
   /// Does not validate solution.
   default void solve(MetaVar meta, Term solution) { state().solve(meta, solution); }
-  default @NotNull Term freezeHoles(@NotNull Term term) { return new Finalizer.Freeze(this).zonk(term); }
+  default @NotNull @Closed Term freezeHoles(@NotNull @Closed Term term) { return new Finalizer.Freeze(this).zonk(term); }
 
   @ForLSP default @NotNull Term fullNormalize(Term result) {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
