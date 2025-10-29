@@ -93,19 +93,20 @@ public final class TyckState {
 
   public void solveMetas(@NotNull Reporter reporter) {
     int postSimplificationSize = -1;
+    // equations that are solved by nonstandard methods
     var evilEqns = MutableList.<Eqn>create();
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
       var frozenEqns = eqns.toSeq();
+      // are we making progress?
       if (postSimplificationSize == frozenEqns.size()) {
-        // TODO: report error, cannot solve eqns
         reporter.report(new MetaVarError.CannotSolveEquations(frozenEqns));
         return;
       } else postSimplificationSize = frozenEqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       if (frozenEqns.isNotEmpty()) for (var eqn : frozenEqns) {
-        if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);
+        if (solveEqn(reporter, eqn, false) == Decision.YES) evilEqns.append(eqn);
       }
     }
     if (evilEqns.isNotEmpty()) {

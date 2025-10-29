@@ -77,8 +77,10 @@ public final class Unifier extends TermComparator {
             // computeReturnType does not return UNSURE
             return Panic.unreachable();
           }
-          case YES -> returnType = null;
+          // fallthrough
+          case YES -> {}
         }
+        returnType = null;
       }
       case RelDec.Proof(var p) -> returnType = p;
     }
