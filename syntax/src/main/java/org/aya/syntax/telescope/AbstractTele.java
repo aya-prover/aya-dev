@@ -144,7 +144,6 @@ public interface AbstractTele {
     @Override public boolean telescopeLicit(int i) { return telescope.get(i).explicit(); }
     @Override public @NotNull String telescopeName(int i) { return telescope.get(i).name(); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      assert teleArgs.sizeEquals(i);
       return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
