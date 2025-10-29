@@ -70,7 +70,7 @@ public record YouTrack(
     body.classes.forEach(results -> {
       var contents = results.cls().mapToObj(i -> new Info(i, body.clauses.get(i)));
       for (int i = 1, size = contents.size(); i < size; i++) {
-        try (var _ = tycker.subscope()) {
+        try (var _ = tycker.subLocalCtx()) {
           unifyClauses(type, contents.get(i - 1), contents.get(i), doms);
         }
       }

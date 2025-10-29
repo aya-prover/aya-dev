@@ -255,7 +255,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   ) {
     var tycker = newPatternTycker(sigIter, sigIter.elims != null);
     // PatClassifier relies on the subscope behavior happened here
-    try (var _ = exprTycker.subscope()) {
+    try (var _ = exprTycker.subLocalCtx()) {
       // If a pattern occurs in elimination environment, then we check if it contains absurd pattern.
       // If it is not the case, the pattern must be accompanied by a body.
       if (isFn && !clause.patterns.anyMatch(p -> hasAbsurdity(p.term().data())) && clause.expr.isEmpty()) {
@@ -304,7 +304,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> teleBinds,
     @NotNull LhsResult result
   ) {
-    try (var _ = exprTycker.subscope()) {
+    try (var _ = exprTycker.subscope(true, true, false)) {
       var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;

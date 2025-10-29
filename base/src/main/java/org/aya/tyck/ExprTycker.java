@@ -188,7 +188,7 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
     ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns
   ) {
-    try (var _ = subscope()) {
+    try (var _ = subLocalCtx()) {
       var tele = MutableList.<LocalVar>create();
       wellArgs.forEachWith(discriminant, (arg, discr) -> {
         if (discr.asBinding() != null) {
@@ -581,7 +581,7 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
 
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
-    try (var _ = subscope()) {
+    try (var _ = subLocalLet()) {
       localLet.put(bindName, definedAs, false);
       var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
@@ -607,26 +607,49 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     }
   }
 
-  public record SubscopedNoVar(
-    @NotNull LocalCtx parentCtx, @NotNull LocalLet parentDef,
-    @NotNull InstanceSet parentInstanceSet,
+  public record SubscopedAll(
+    @Nullable LocalCtx parentCtx, @Nullable LocalLet parentDef,
+    @Nullable InstanceSet parentInstanceSet,
     @NotNull ExprTycker tycker
   ) implements AutoCloseable {
     @Override public void close() {
-      tycker.setLocalCtx(parentCtx);
-      tycker.setLocalLet(parentDef);
-      tycker.setInstanceSet(parentInstanceSet);
-      tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
+      // TODO: maybe add a check/report if any derive keep empty (not be modified after subscope)?
+
+      if (parentCtx != null) tycker.setLocalCtx(parentCtx);
+      if (parentDef != null) tycker.setLocalLet(parentDef);
+      if (parentInstanceSet != null) tycker.setInstanceSet(parentInstanceSet);
+      if (parentCtx != null) {
+        // FIXME: always or only when parentCtx is derived?
+        tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
+      }
     }
+  }
+
+  public @NotNull ExprTycker.SubscopedAll subLocalCtx() {
+    return subscope(true, false, false);
+  }
+
+  public @NotNull ExprTycker.SubscopedAll subLocalLet() {
+    return subscope(false, true, false);
+  }
+
+  public @NotNull ExprTycker.SubscopedAll subInstanceSet() {
+    return subscope(false, false, true);
+  }
+
+  public @NotNull ExprTycker.SubscopedAll subscope() {
+    return subscope(true, true, true);
   }
 
   /// Expectation on the usage: `localCtx` being either unused or inserted a lot,
   /// and `localLet` being inserted only once.
-  public @NotNull SubscopedNoVar subscope() {
-    return new SubscopedNoVar(
-      setLocalCtx(localCtx().derive()),
-      setLocalLet(localLet().derive()),
-      setInstanceSet(instanceSet.derive()),
+  public @NotNull ExprTycker.SubscopedAll subscope(
+    boolean deriveLocalCtx, boolean deriveLocalLet, boolean deriveInstanceSet
+  ) {
+    return new SubscopedAll(
+      deriveLocalCtx ? setLocalCtx(localCtx().derive()) : null,
+      deriveLocalLet ? setLocalLet(localLet().derive()) : null,
+      deriveInstanceSet ? setInstanceSet(instanceSet.derive()) : null,
       this
     );
   }
