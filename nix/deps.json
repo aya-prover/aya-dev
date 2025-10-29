@@ -1,0 +1,405 @@
+{
+ "!comment": "This is a nixpkgs Gradle dependency lockfile. For more details, refer to the Gradle section in the nixpkgs manual.",
+ "!version": 1,
+ "https://plugins.gradle.org/m2": {
+  "com/gradleup/gratatouille#gratatouille-tasks-runtime/0.1.1": {
+   "jar": "sha256-MHdWyovWT5BfkytVBt5wqoq77VazYC/bbXDCTBbkCsk=",
+   "module": "sha256-moHn66UznxZ1oEMTuSTCiFBvoN8amktca6pnF0fZ8q8=",
+   "pom": "sha256-/+ESjtA6IV+fQ3o5BhyZB6NSriYQSvGMwR9f66TTFuk="
+  },
+  "com/gradleup/gratatouille#gratatouille-wiring-runtime/0.1.1": {
+   "jar": "sha256-LkBU5X5ObnNGIiYd+5MYuZ5SZmKidEuEuT81bxKNalY=",
+   "module": "sha256-17q8mJHxyfHWp6nEt6ArGwPYIyEvz9X4UyBBv3EBJJA=",
+   "pom": "sha256-wT1BgmR30hfpwF/uDrQHQhTpN6CTt5MYA3EP3o1GdSg="
+  },
+  "com/gradleup/nmcp#nmcp/1.2.0": {
+   "jar": "sha256-6NrRUmFFtd6KBW55m/eIXUiq559w+l0HWb1bete4m1Q=",
+   "module": "sha256-D2/EMcFYw0Tm+YY2J9NfO1Z64UrMCMBps+9BavXEqFY=",
+   "pom": "sha256-z/fcOkDnxEXcr87cxvYs04UnqQb9edooN625bhIxyfU="
+  },
+  "com/gradleup/nmcp/aggregation#com.gradleup.nmcp.aggregation.gradle.plugin/1.2.0": {
+   "pom": "sha256-8Tmp7PDUU8+1ZnkD9k60Z2SCaE1s2QNwhRwUjx/Sc7s="
+  },
+  "com/squareup/okhttp3#okhttp/4.12.0": {
+   "jar": "sha256-sQUAgbFLt6On5VpNPvAbXc+rxFO0VzpPwBl2cZHV9OA=",
+   "module": "sha256-YH4iD/ghW5Kdgpu/VPMyiU8UWbTXlZea6vy8wc6lTPM=",
+   "pom": "sha256-fHNwQKlBlSLnxQzAJ0FqcP58dinlKyGZNa3mtBGcfTg="
+  },
+  "com/squareup/okio#okio-jvm/3.8.0": {
+   "jar": "sha256-iPt59v4aRirPCjvSV2uhUlwp8pgl7+zuxwp0esHG/JA=",
+   "module": "sha256-2GYvXpeluYF/0S0pFA410KOiPNdN4UU6jXyifVBlWck=",
+   "pom": "sha256-v4QMb2WRo8f9f092ya++HwXg0a2M1RaDpSko9p1RyUs="
+  },
+  "com/squareup/okio#okio/3.8.0": {
+   "module": "sha256-ZqlWWun0Hir9D8mwL/OXYvkHeQPXq9ZfR37bnpfOB+Q=",
+   "pom": "sha256-/vASWBErw/3ff18z2ewD6Q23hhv6QIPYHPDOTa1pnLo="
+  },
+  "io/github/pdvrieze/xmlutil#core-jvmcommon/0.91.1": {
+   "jar": "sha256-5CwXfuZz/ubOQjYBNzO/mUDkxiqjHZ1CUll5NKYtd54=",
+   "module": "sha256-wtnSP/cpgeKhNMrR5Kfz+CVS5xcOoekc9nh7/dE5hOA=",
+   "pom": "sha256-t0yth8Ruuz4QHo+LkudNfzY0q6Ev6iEVqbXp0foKt5c="
+  },
+  "io/github/pdvrieze/xmlutil#core/0.91.1": {
+   "module": "sha256-ml0JULR4s+Hx+Pg4HKBt8u7P4mbIOh9sZFG1I+Z+tCI=",
+   "pom": "sha256-uiWQIiFBRKD/rLYsNqCQAs38gpzsQ8f2bRDFD1Ac0KY="
+  },
+  "io/github/pdvrieze/xmlutil#serialization-jvm/0.91.1": {
+   "jar": "sha256-W0sfs554kTtmJtNExd6POiIMiEk+Sin2iVf4cRoQYgY=",
+   "module": "sha256-/AOBUsXA6u4DGOLEI/Um76baeLOhW3Tuf5VJLHjjUsk=",
+   "pom": "sha256-kFCkfrm1+6nzIcIrbPOde1Nwmy6EzY/51W2X5gnK6pQ="
+  },
+  "io/github/pdvrieze/xmlutil#serialization/0.91.1": {
+   "module": "sha256-Y2E+8kbACKXn7vIN5pTnupH3NvuyuPKrk5phJ3eeXBA=",
+   "pom": "sha256-F5plNVCk6MvEubBClLhtWdV0dptRHQaNDDAz8IR9mzw="
+  },
+  "org/beryx#badass-jlink-plugin/3.1.3": {
+   "jar": "sha256-2GievCLcBpg3WsaEHep23em1Q6kgW/fLFNzET/v99gA=",
+   "module": "sha256-FnogeApeGbRUUJnX/cBRAj0uD9RWwc6qqinRLf0LXvQ=",
+   "pom": "sha256-hxMC7pW+Z93NTEEgh4sV30fgfZCI2+tMus5iGDdNqx8="
+  },
+  "org/beryx/jlink#org.beryx.jlink.gradle.plugin/3.1.3": {
+   "pom": "sha256-S9pQnIlx/bxI4ceXuEnuT8tqEMwnOAGzrlSVGEGsSH4="
+  },
+  "org/jetbrains#annotations/13.0": {
+   "jar": "sha256-rOKhDcji1f00kl7KwD5JiLLA+FFlDJS4zvSbob0RFHg=",
+   "pom": "sha256-llrrK+3/NpgZvd4b96CzuJuCR91pyIuGN112Fju4w5c="
+  },
+  "org/jetbrains/kotlin#kotlin-stdlib-jdk7/1.9.0": {
+   "jar": "sha256-t5eaeqyUBV8Nnx/TtHzl/+HLYDKoQrqfvnGG8IUokXg=",
+   "pom": "sha256-wRB08MiYqYuGPGFEcdQ409+Soewzgqbjf5NdfXGVS1o="
+  },
+  "org/jetbrains/kotlin#kotlin-stdlib-jdk8/1.9.0": {
+   "jar": "sha256-pZ+iT98f+1lLrs2/D9EAEPl3zqECNtSH/jRkl3pzd/o=",
+   "pom": "sha256-ZNWY3YjiUEZnMeIDBKtvBsu7urfuMitHA7a1n4gcT5I="
+  },
+  "org/jetbrains/kotlin#kotlin-stdlib/2.2.0": {
+   "jar": "sha256-ZdEthaO4ZcFg25FHhRcSpksQ2t1osi7qIqlb+KhnDco=",
+   "module": "sha256-pbmP3NnbAX1ULhlyJdzuGNZYpW3h2yzEHhMZbWsXaaQ=",
+   "pom": "sha256-jDyCEAfBNBFVhzm589U4LrgVUds4lc/7iVYeVsD03BY="
+  },
+  "org/jetbrains/kotlin#kotlin-test/2.0.0": {
+   "jar": "sha256-hDjMEXadoxy7REXfr9EsCM9AFdqjh5YxBvEhqFpWhkw=",
+   "module": "sha256-U8DxehOIBBzfhXj9xCXccXIh8XfIyDn7KTCgiVGqHSU=",
+   "pom": "sha256-FaAJZVQVFUKI62gfVZaoF+uL6TAV6SKdlu0InZVBHgc="
+  },
+  "org/jetbrains/kotlinx#kotlinx-coroutines-bom/1.10.2": {
+   "pom": "sha256-+vDGU45T3cBJmmNmTY52PCFlgLLhjnIsy98bQxpq/iY="
+  },
+  "org/jetbrains/kotlinx#kotlinx-coroutines-core-jvm/1.10.2": {
+   "jar": "sha256-XKF1s43zMf1kFVs1zYyuElH6nuNpcJs21C4KKIzM4/0=",
+   "module": "sha256-6eSnS02/4PXr7tiNSfNUbD7DCJQZsg5SUEAxNcLGTFM=",
+   "pom": "sha256-ZY9Xa5bIMuc4JAatsZfWTY4ul94Q6W36NwDez6KmDe8="
+  },
+  "org/jetbrains/kotlinx#kotlinx-coroutines-core/1.10.2": {
+   "module": "sha256-j+JUF35xGnzRijwG2CQvzpRfQcLMoT3BmzOuQqVDUBY=",
+   "pom": "sha256-UZ2lQACW80YqTa6AeDrQUEE9S8gex65T+udq7wzL7Uw="
+  },
+  "org/jetbrains/kotlinx#kotlinx-serialization-bom/1.8.1": {
+   "pom": "sha256-APNVWudiSFHGfbEsMIvJziauMnzw1yR2akAeW6AGCMc="
+  },
+  "org/jetbrains/kotlinx#kotlinx-serialization-core-jvm/1.8.1": {
+   "jar": "sha256-NWW21NeJv3BoPEVWaUQof8HY3HXCPZi9h9AQWcx28rM=",
+   "module": "sha256-++GdWIrX1fZGZmaCA0/0Tglo0iBx/mzPn5ngPHpe+lc=",
+   "pom": "sha256-RGZV6NQ4KL+7OHzp0VGpNxowkrSLkJ6AYGtT/FiXnig="
+  },
+  "org/jetbrains/kotlinx#kotlinx-serialization-core/1.8.1": {
+   "module": "sha256-eL3oMFSUrxs445ZrUleskINAFkk/i60hm4iGx/vbJdU=",
+   "pom": "sha256-Rz8Ko+Sheqt4YNykkNxC6rthJPHSlT5qmVoIcX5QxxQ="
+  },
+  "org/jetbrains/kotlinx#kotlinx-serialization-json-jvm/1.8.1": {
+   "jar": "sha256-h2nlZHVX43AJGcMtUI9cXa1TxdgjTNEIRjVPvP8UqiQ=",
+   "module": "sha256-uZHLSTQAwdlgut+oYhcVjGN+XsqIgbIM0BJbtOz8+DE=",
+   "pom": "sha256-1mXWtB/gWPZmpvOGrS5JzBAe+P0u7+/vy8ER6R7oJDY="
+  },
+  "org/jetbrains/kotlinx#kotlinx-serialization-json/1.8.1": {
+   "module": "sha256-f33wBUM932BPUqq9avsh65YJMZfLS90Hk8SEydPEtnU=",
+   "pom": "sha256-x3AMmcg94CtGVBo9fktps4h0m3wPV9zrRU0UPyzYens="
+  }
+ },
+ "https://repo.maven.apache.org/maven2": {
+  "com/github/vbmacher#java-cup-runtime/11b-20160615-1": {
+   "jar": "sha256-fvoQ0aHYp3+FW+RuFPEBH/cW4qAAo0M1tX5E7u1o4Ds=",
+   "pom": "sha256-PSFfdJ+PmPmVHxbayKDxdh7JkJP3yxEVUZXHKD5yPXQ="
+  },
+  "com/google/code/findbugs#jsr305/3.0.2": {
+   "jar": "sha256-dmrSoHg/JoeWLIrXTO7MOKKLn3Ki0IXuQ4t4E+ko0Mc=",
+   "pom": "sha256-GYidvfGyVLJgGl7mRbgUepdGRIgil2hMeYr+XWPXjf4="
+  },
+  "com/google/code/gson#gson-parent/2.13.1": {
+   "pom": "sha256-+IEKzlDd/j/ag9ESbeZdmdXSUVoUo2uIvrG5mkdpeDY="
+  },
+  "com/google/code/gson#gson-parent/2.13.2": {
+   "pom": "sha256-g6tSip1Q/XauuK1vcns+6ct2ZYYlV3TtFsqMTHbZ2s0="
+  },
+  "com/google/code/gson#gson/2.13.1": {
+   "pom": "sha256-wPZXItdcDljNGDWzBGBG9ga12mmZBBYfjba3j+ubQBo="
+  },
+  "com/google/code/gson#gson/2.13.2": {
+   "jar": "sha256-3QzhtVo+0ggMtw+cZVhQzahsIGhiMQAJ3LXlyVJlpeA=",
+   "pom": "sha256-OqBqp8D5rwkpYaQtCVeOQyS+FGNIoO5u1HhX98Jne3Y="
+  },
+  "com/google/errorprone#error_prone_annotations/2.41.0": {
+   "jar": "sha256-pW54K1tQgRrCBAc6NVoh2RWiEH/OE+xxEzGtA29mD8w=",
+   "pom": "sha256-oVHfHi4LSGGNiwahgHSKKbOrs5sbI5b2och5pydIjG4="
+  },
+  "com/google/errorprone#error_prone_parent/2.41.0": {
+   "pom": "sha256-xTg4jXYKXByY3PBvbtPP5fEaZRgn21y9LtgojHlcrUI="
+  },
+  "de/jflex#jflex-parent/1.9.1": {
+   "pom": "sha256-SeCzT6VDxd8R6az4agpV7r+hrzCasodhUWCBmWLLfRE="
+  },
+  "de/jflex#jflex/1.9.1": {
+   "jar": "sha256-KIjZDWpe43FmpeM5sWFq06JgTmzOJG5h3q8RVIexg1A=",
+   "pom": "sha256-AZo/nkX+zw+Gy8J77WOwXu5zsVUYB3m+B/sXPAz8bOc="
+  },
+  "info/picocli#picocli-codegen/4.7.7": {
+   "jar": "sha256-ba5oIyzh0VK45HTVvRiI0QC8jOoquTB6TlqgThNX0mE=",
+   "pom": "sha256-JsgAo/b7dn4wCrLbF6qhz1NsuEYpo9R1bVQLnB0BwSw="
+  },
+  "info/picocli#picocli/4.7.7": {
+   "jar": "sha256-+G4w//0Q0rE7jKqNSyN6fuYfL/zPWxlB3nGLdl0jW/g=",
+   "pom": "sha256-GxjTYxNN9mYx0rn3R1Bo1zQiW6OJzfkIKhvYvakNV9M="
+  },
+  "org/apache/ant#ant-launcher/1.10.13": {
+   "jar": "sha256-zXaVs7+2lkq3G2oLMdrWAAWud/5QITI2Rnmqzwj3eXA=",
+   "pom": "sha256-ApkvvDgFU1bzyU0B6qJJmcsCoJuqnB/fXqx2t8MVY8o="
+  },
+  "org/apache/ant#ant-parent/1.10.13": {
+   "pom": "sha256-blv8hwgiFD8f+7LG8I7EiHctsxSlKDMC9IFLEms0aTk="
+  },
+  "org/apache/ant#ant/1.10.13": {
+   "jar": "sha256-vvv8eedE6Yks+n25bfO26C3BfSVxr0KqQnl2/CIpmDg=",
+   "pom": "sha256-J5NR7tkLj3QbtIyVvmHD7CRU48ipr7Q7zB0LrB3aE3o="
+  },
+  "org/apiguardian#apiguardian-api/1.1.2": {
+   "jar": "sha256-tQlEisUG1gcxnxglN/CzXXEAdYLsdBgyofER5bW3Czg=",
+   "module": "sha256-4IAoExN1s1fR0oc06aT7QhbahLJAZByz7358fWKCI/w=",
+   "pom": "sha256-MjVQgdEJCVw9XTdNWkO09MG3XVSemD71ByPidy5TAqA="
+  },
+  "org/aya-prover/upstream#build-util-jflex/0.0.39": {
+   "jar": "sha256-kEJstPuAx2TGZFYNQqEAt2XCM9pAc3Y8sjyQ3XCFzdE=",
+   "module": "sha256-w45yb/bMsAJkywIFwgQDgcrhN1Vj4MpM+eQxYOYwWlc=",
+   "pom": "sha256-WQRi7Gnxv92h+H/g4eZuL5ZxZtqSxzhSqiuw0VeBuL8="
+  },
+  "org/aya-prover/upstream#build-util/0.0.39": {
+   "jar": "sha256-ie+6vf+GmWkbmS2rRM9zyOtpwcdUC2bO7DH1MxUZPKs=",
+   "module": "sha256-QJLmU427fQ7c1wiS0xQE1188ODuiO2hza9HjzFGpL+o=",
+   "pom": "sha256-OvX56DNCP2dCcADLG339U+f/r6fCH5jLTcSsisQI468="
+  },
+  "org/aya-prover/upstream#ij-parsing-core/0.0.39": {
+   "jar": "sha256-RvvroDxV8Tkhl5NbHH6I6BWG2otUVVVu4IB9HzkJPPs=",
+   "module": "sha256-tNdZPs83jGOlSwcN25Tip3IqKSNAIuyfWG2GjX6d0Qk=",
+   "pom": "sha256-d6gQTLIGODtcHUu2rxgXBbLCN28A2NnkQsQrHEJwA/o="
+  },
+  "org/aya-prover/upstream#ij-parsing-wrapper/0.0.39": {
+   "jar": "sha256-Cf7EhXT9ckNlm6G3pMGw9KwU5p3e5S0XU5i6IzQVyCs=",
+   "module": "sha256-id4YawuHE5L+6TyV2khZd/jQNlb8a4oFZpGB9OrBtsE=",
+   "pom": "sha256-YhlOQMhbXbNj1dYeNwAetgnMkybP3m5lTOGM5PTILRs="
+  },
+  "org/aya-prover/upstream#ij-util-text/0.0.39": {
+   "jar": "sha256-Bt90kF0je0SgawO1czYL5XislJCMFilkc06AkKupAk8=",
+   "module": "sha256-OROeT84UTBNPHy/wqSPVW346+auCYq1G/+uzMMEPEmI=",
+   "pom": "sha256-/llsyccxec1G+UesoUqU/pE4m9DxeuBHYJAL0GqGkZc="
+  },
+  "org/aya-prover/upstream#javacs-protocol/0.0.39": {
+   "jar": "sha256-kiRumcZ3YZS8W37hacaAXlv4NuP/Tms5hJ7E2CeIO6c=",
+   "module": "sha256-mgEjRst/83FTb1BaLsFp2X7EHlvIsY5f5KnDEXYlRs8=",
+   "pom": "sha256-zz5f+kjVUpOLitqlMxbIGAYEDBsdPvubzv/5yjTfAoY="
+  },
+  "org/aya-prover/upstream#jb-md-ij/0.0.39": {
+   "jar": "sha256-Vrds/zD/xl6tNp/T3dXRQKfiLCqSmxzJja23SCnF/Sc=",
+   "module": "sha256-U9OAqB+kt2eajR+7hkeo+p28wf28nWQ3v2PG+YSEX1w=",
+   "pom": "sha256-NsyFe6s5tfw+47mSmoHTSpBi3PqZtJKUdtXTRrvAI0w="
+  },
+  "org/aya-prover/upstream#jb-md/0.0.39": {
+   "jar": "sha256-hf6ibbbLc5ZMnKS1ssPzk+YE4pbbX0/Pmnj0JUpddEo=",
+   "module": "sha256-n/Dthu7PzDlCfjKvBsIzOSRytqHCvfwt+GWmCXbB4KE=",
+   "pom": "sha256-pqVuqOZ+i9igjL53hB9tuUJcc8jYike7xIwT5ijgNIA="
+  },
+  "org/aya-prover/upstream#lang-syntax/0.0.39": {
+   "jar": "sha256-3Gb/eFHFCJ20CeHkjItSX+g8zZuAo6B+A9gA52EKNV0=",
+   "module": "sha256-z6sciUrWNou5NXs2MBUcBe8q/amCqTjGLdcixzYVYDM=",
+   "pom": "sha256-RTREzqs48XkE2e2fCmK4zftls3r6iLnBkcSDprmt+pY="
+  },
+  "org/glavo#classfile/0.5.0": {
+   "jar": "sha256-GLhPbNfqzPUbaAwrG6anXxDl3eYUtffNCIAwk/Ip62M=",
+   "pom": "sha256-Zcfc9ERP/32GfKKyVPuTcq3edOnMNqG69sNWd9b3+MQ="
+  },
+  "org/glavo/kala#kala-base/0.82.0": {
+   "jar": "sha256-HFkH5yG5iPtlyjoS2uI/StCi/VjqBwTIIIIN1ExjqhU=",
+   "pom": "sha256-OTVS2UO/FBYGx+lblPM+bcQ94PWs6c+ENhHvlUsQ1J4="
+  },
+  "org/glavo/kala#kala-collection-primitive/0.82.0": {
+   "jar": "sha256-kqXQ6Yx5ck3oGG5U0l60h82C89RBfcbbgRGJTxQhlQw=",
+   "pom": "sha256-47boAB7ylTaMagpx+to6piL2movEBrrR34J4S1NjaCA="
+  },
+  "org/glavo/kala#kala-collection/0.82.0": {
+   "jar": "sha256-9nbJKEPr5KQ1Jg2FJAfTBXNVxM/R/9ipNKWNXNQLYmw=",
+   "pom": "sha256-DEzVyZQ9MkEoDgA9YNmkG1l7H5W2ie+9kcKA2UNTCWI="
+  },
+  "org/glavo/kala#kala-common-gson/0.82.0": {
+   "jar": "sha256-3OLmtuvKZovUWb9VkdonCMrvWKG0NercC3pD6+8ZgGo=",
+   "pom": "sha256-Yh/zapoiaypNVcTHhoAJoc1ucU5ob8bLgWZnUytekZE="
+  },
+  "org/glavo/kala#kala-common/0.82.0": {
+   "jar": "sha256-Xno6Izw3Hv4BrZ6WuG+GmI9my9zOE8a3jUqBfuxKa6k=",
+   "pom": "sha256-ql2Vsuc+YwmQQYQ+ILHdzGEzOKCi8RcWHVU4KsoFVNU="
+  },
+  "org/jacoco#org.jacoco.agent/0.8.13": {
+   "jar": "sha256-nbPJ1ddPqHCyYbZKMIJBLhvW4i6fqY9HN7G/+K+cxk0=",
+   "pom": "sha256-auuUf988z1Qlydq41oPWu+MPCSjEWnAuYlWMblXmRLc="
+  },
+  "org/jacoco#org.jacoco.agent/0.8.14": {
+   "jar": "sha256-IL6YUzhb38ZaWSlkNBLQkkPRRRQwS4m6I6JlFYzIeSs=",
+   "pom": "sha256-lD537VzLma7rP+VkP+paY29vgo45WPhgX0Jt3Jr6uMk="
+  },
+  "org/jacoco#org.jacoco.ant/0.8.13": {
+   "jar": "sha256-ZDS4VS/z0OSi+70Tpu+xJODJykU4F8YsA96DkNh//RE=",
+   "pom": "sha256-I4tCPVxuZQ9LQPF1T42iYQDHpzYz5d1RKIxzgHRj744="
+  },
+  "org/jacoco#org.jacoco.ant/0.8.14": {
+   "jar": "sha256-n/9olU1d46rSv4OOr4hu1n0sIqLWxvCVVIut6MRcrq4=",
+   "pom": "sha256-L8jktUIWP+7zRetZ6Ji8697hb2XfQDAwMtkgYkJ7FaU="
+  },
+  "org/jacoco#org.jacoco.build/0.8.13": {
+   "pom": "sha256-mUw64c/KZ2WWj+Pt5PN5mGrrLn61GiAUyqSgnXGo9KM="
+  },
+  "org/jacoco#org.jacoco.build/0.8.14": {
+   "pom": "sha256-h9BZs1hJ35d3kUj9flL2Px/NA6Tn5kwqYabJzOYajec="
+  },
+  "org/jacoco#org.jacoco.core/0.8.13": {
+   "jar": "sha256-UUwj32z9AV19g8EKeS41q2int+gvPWo6RIF2LBMuM6k=",
+   "pom": "sha256-73/2F3zZcB1QXv6C9N1P6l5fcssEesK088qitBbaD08="
+  },
+  "org/jacoco#org.jacoco.core/0.8.14": {
+   "jar": "sha256-KKu/DupaCOTyQJfy+6xmPKF8NBwlw6BNkNbNMllDyZU=",
+   "pom": "sha256-e3W64sF3mvVENpgzr+HWj1o5VekdFmyxnf+IZTSxrWw="
+  },
+  "org/jacoco#org.jacoco.report/0.8.13": {
+   "jar": "sha256-gTMoCgqkQ1i+nRNrUjcDQvRVzLlEquB0OCIKd2YleKI=",
+   "pom": "sha256-EBBlOpAAx+qoVqJx+E0HH/Rt6nojdbhKitmiOz5lPOg="
+  },
+  "org/jacoco#org.jacoco.report/0.8.14": {
+   "jar": "sha256-o+ICYGCri41cZQcGQGI0u0wDPf1Tdq/rixZm6O0nxFM=",
+   "pom": "sha256-4uvyxYD4avp/dfQ6KBCd2JTEJGOSi8mRF3fjUnUQjlg="
+  },
+  "org/jetbrains#annotations/26.0.1": {
+   "module": "sha256-x/njSbNN+LIRRw4imGJEnDzBPLweeMebKXo3Ryey5gU=",
+   "pom": "sha256-kEBuKDkHRCqz88ZftqO25RdILNb4Ywgep70sggENrFc="
+  },
+  "org/jetbrains#annotations/26.0.2": {
+   "jar": "sha256-IDe+N4mA07qTM+l5VfOyzeOSqhJNBMpzzi7uZlcZkpc=",
+   "module": "sha256-vvC4NSst/Uy3FV7MKjkie/FqPghme6vsZQx2sau/zss=",
+   "pom": "sha256-fr7Oreja2nyxfv8+AUkiw5Ai0qN44+LSRh8o8Bb/x/c="
+  },
+  "org/jetbrains/kotlin#kotlin-stdlib/2.2.20-Beta1": {
+   "jar": "sha256-JI/+r+a1OcBAnEeB1QbRX8SwWKK6Tr29ZcBR/jK96eA=",
+   "module": "sha256-PJza8B8/YuEyqiphomO4v68CGY0pYkOQyCDqbxy366g=",
+   "pom": "sha256-EYDsTo5QFhlZFVWDtBiAPcpcbv3V0nOfgdwcxzXOp24="
+  },
+  "org/jline#jline-builtins/3.30.6": {
+   "jar": "sha256-bnSeSZHr4vyNPir4x2DoCv4UeUr1in5+0wDVP0zKY3w=",
+   "pom": "sha256-V0f2rZTKifH1LVuOJutBmvrA5eD0yiEumIkOseI41aY="
+  },
+  "org/jline#jline-native/3.30.6": {
+   "jar": "sha256-Q8NvCTRUWpVJ+zyP86+jYcMg7+HJR1ns0Js0Bkg5fIA=",
+   "pom": "sha256-yHC+cymTnXtPEBOlSMgyV6bCXGLYuQBlKyAJmvip9Q4="
+  },
+  "org/jline#jline-reader/3.30.6": {
+   "jar": "sha256-BlylWZcTqL+A+xGyRAHr5b6SgWzaD6m3NFDXZ6ht0H8=",
+   "pom": "sha256-08WxWQoV0akSngxe5dMSbiWEcDppNze8N/LHCYHb88E="
+  },
+  "org/jline#jline-style/3.30.6": {
+   "jar": "sha256-RnbML0KKkxEYZkN43oVkmhP2mJ6wYzZUmGk2Hw2wNRM=",
+   "pom": "sha256-L762sNqEZbUfV8uSl22slAY12HWFXrbSDFV1pAttM2c="
+  },
+  "org/jline#jline-terminal-jni/3.30.6": {
+   "jar": "sha256-9CohrBEh4lNnOjd6r+wkMw2LZG2DHh4CrIVsFqkt6V4=",
+   "pom": "sha256-LmwEyXf/Xy0pIBPDWxK5wRG98/WLBzRAjUUNNOHdgEA="
+  },
+  "org/jline#jline-terminal/3.30.6": {
+   "jar": "sha256-mo396KJbCpaHzxHg3UoShmXoMfFPnO2F/8KE062603Q=",
+   "pom": "sha256-Yv7vISV+WE0/bEvZIqStBnVudSYwwK8IKJzgEEKWoCo="
+  },
+  "org/junit#junit-bom/5.14.0-RC1": {
+   "module": "sha256-IKTNhHlKzh4MMa+WWtrvx8H+100qdZXY6DySd41CM4E=",
+   "pom": "sha256-UhOfTGmALNAkkNgXKwHLg539RIH6xgVXUaadkXhfuGM="
+  },
+  "org/junit/jupiter#junit-jupiter-api/5.14.0-RC1": {
+   "jar": "sha256-KtEu6sM7YtTtYKBcZyCIVY1+yao/YIPjJnCC78q8ai0=",
+   "module": "sha256-/Ls5WoUOS85fLWZClprxY3Zui0JjRal37NrkiGviqc0=",
+   "pom": "sha256-s5tOz3mfo7xsaUInopiQNI9wwOWB+EpIE9S1CO42j0I="
+  },
+  "org/junit/jupiter#junit-jupiter-engine/5.14.0-RC1": {
+   "jar": "sha256-qbEhYb5Y5x16obbpFIqwV2OeKZG1VBSFtnfb5MdLFCc=",
+   "module": "sha256-JpwBEeXW02MYcibVPBQuyPGrEf1C768yvp8I2uYksuI=",
+   "pom": "sha256-oyXGkdCN6LeJ12S6/dQlBJYP8JqmLJZjalvMP2Gt3SY="
+  },
+  "org/junit/jupiter#junit-jupiter-params/5.14.0-RC1": {
+   "jar": "sha256-U4P4J2MB0CSCDdtqLEz8EiV31CPGPrBRi3SLKt3/3/I=",
+   "module": "sha256-z9VjbyGCsYp6IJmPiIYhlH4CHGrfz6Gy6vNcPMHuM3I=",
+   "pom": "sha256-eiKwR3+oZb0smbJcO7aMfMzwXaJTS0gha7yB/IRV7XE="
+  },
+  "org/junit/jupiter#junit-jupiter/5.14.0-RC1": {
+   "jar": "sha256-3SxGb3F+ZSCPFA12V6tb2ZIiK5FtF3o8G/GVQM1gimY=",
+   "module": "sha256-vCxY5J6k/lYOZWRKr5dWGeq65Uza4C/A/4yv9m79jXA=",
+   "pom": "sha256-L7bTlIDP1MnCrVgi0HM1dzqsJaDRoZ19ZbSj+uhVdp8="
+  },
+  "org/junit/platform#junit-platform-commons/1.14.0-RC1": {
+   "jar": "sha256-5q7Deixvn2fy72SatstMI+Cz8ppDUqJkqAVqVW+vGbc=",
+   "module": "sha256-jxm9Qh5LnTl7p7rYf1QbKYGqbP7dwW5igxaW56l0Tw0=",
+   "pom": "sha256-NfaVYLA3A8DXHbEqZK7dXbwBB7YVv50Wq5NsnN8t6fs="
+  },
+  "org/junit/platform#junit-platform-engine/1.14.0-RC1": {
+   "jar": "sha256-2XZhAxaHORQqkf1jD1ySvVB05CqHXZxt4lgTSTY9kms=",
+   "module": "sha256-nTGrDtz8OuT9719OaEpXwio2ZBoJro0ZWJY3hDogtDA=",
+   "pom": "sha256-lr7aNZki+rQfe7Dm8OjJIAsZ3fuh7y+bBWxl6tqGqCo="
+  },
+  "org/junit/platform#junit-platform-launcher/1.14.0-RC1": {
+   "jar": "sha256-uYowFFddFCsmEGtnlfNl5JGgxgLk3SCHGA80zuorUnI=",
+   "module": "sha256-tbZBOR/pEotmRmy+YTvdaXzX05YBxZc94FKdhbD+zok=",
+   "pom": "sha256-mRbF/BtTr5+6iYnRid+VP1tlndWo07LrzkqycojMwjc="
+  },
+  "org/opentest4j#opentest4j/1.3.0": {
+   "jar": "sha256-SOLfY2yrZWPO1k3N/4q7I1VifLI27wvzdZhoLd90Lxs=",
+   "module": "sha256-SL8dbItdyU90ZSvReQD2VN63FDUCSM9ej8onuQkMjg0=",
+   "pom": "sha256-m/fP/EEPPoNywlIleN+cpW2dQ72TfjCUhwbCMqlDs1U="
+  },
+  "org/ow2#ow2/1.5.1": {
+   "pom": "sha256-Mh3bt+5v5PU96mtM1tt0FU1r+kI5HB92OzYbn0hazwU="
+  },
+  "org/ow2/asm#asm-bom/9.8": {
+   "pom": "sha256-DaHcsibmzf2ttNrFkZFruRe1c3RnTZG9LxMAMTe0FSA="
+  },
+  "org/ow2/asm#asm-bom/9.9": {
+   "pom": "sha256-D6JzNvp7YpI8qb3GlSbr5xKjv7H37ov3bEoLP4XxnWI="
+  },
+  "org/ow2/asm#asm-commons/9.8": {
+   "jar": "sha256-MwGhwctMWfzFKSZI2sHXxa7UwPBn376IhzuM3+d0BPQ=",
+   "pom": "sha256-95PnjwH3A3F9CUcuVs3yEv4piXDIguIRbo5Un7bRQMI="
+  },
+  "org/ow2/asm#asm-commons/9.9": {
+   "jar": "sha256-2y9vJhULvnwSZga0oRUYNrzCKh4FpCOzWFaYvs6ZX/g=",
+   "pom": "sha256-GKXT7xN351RLPKMhDyYTlrmH9gEO9ZHThyra5jEZ7kM="
+  },
+  "org/ow2/asm#asm-tree/9.8": {
+   "jar": "sha256-FLeIDLfIXu0QHicQQy/D/7gydVMqaolNxMQJXUmtWfE=",
+   "pom": "sha256-cUnn+qDhkSlvh5ru2SCciULTmPBpjSzKGpxijy4qj3c="
+  },
+  "org/ow2/asm#asm-tree/9.9": {
+   "jar": "sha256-QhePN3XJxj+eXhRGdH0ptOyk2RvW515cQ8+jcqR9OMY=",
+   "pom": "sha256-0BeI7Y5ujiSsr2y0p73MJzNBYlL6oAIylZ4+Lp3xv0Q="
+  },
+  "org/ow2/asm#asm/9.8": {
+   "jar": "sha256-h26raoPa7K1cpn65/KuwY8l7WuuM8fynqYns3hdSIFE=",
+   "pom": "sha256-wTZ8O7OD12Gef3l+ON91E4hfLu8ErntZCPaCImV7W6o="
+  },
+  "org/ow2/asm#asm/9.9": {
+   "jar": "sha256-A9madK0e5ccTNO9nQ39O9P40iMqnyW2GRavHPI4gF9Q=",
+   "pom": "sha256-z4Ye8edF1XFUr3muFN80DtU0Hl3NAVfO/NLrfxqgXFc="
+  },
+  "org/sonatype/oss#oss-parent/7": {
+   "pom": "sha256-tR+IZ8kranIkmVV/w6H96ne9+e9XRyL+kM5DailVlFQ="
+  }
+ }
+}

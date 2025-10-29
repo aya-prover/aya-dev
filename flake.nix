@@ -3,22 +3,50 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # Provide jdk22
+    nixpkgs-jdk.url = "github:NixOS/nixpkgs/release-24.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-jdk,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [ jdk gradle ];
-        };
-      });
+        pkgs-jdk = nixpkgs-jdk.legacyPackages.${system};
 
-  nixConfig = {
-    # Cache for the Rust toolchain in fenix
-    extra-substituters = [ "https://nix-community.cachix.org" ];
-    extra-trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
-  };
+        # Parse gradle/libs.versions.toml for required project/jdk versions
+        inherit (builtins.fromTOML (builtins.readFile ./gradle/libs.versions.toml)) versions;
+
+        jdk = pkgs-jdk."jdk${versions.java}";
+        gradle = pkgs.gradle_9;
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            jdk
+            gradle
+          ];
+        };
+        packages = rec {
+          Aya = pkgs.callPackage ./nix/package.nix {
+            inherit jdk gradle;
+            version = versions.project;
+            rev = self.rev or "dirty";
+          };
+          ayaPackages = pkgs.lib.recurseIntoAttrs (
+            pkgs.callPackage ./nix/aya-packages.nix {
+              inherit Aya;
+            }
+          );
+          inherit (ayaPackages) aya aya-minimal;
+        };
+      }
+    );
 }
