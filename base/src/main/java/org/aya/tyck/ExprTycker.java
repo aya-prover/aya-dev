@@ -578,7 +578,12 @@ public final class ExprTycker extends ScopedTycker {
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subLocalLet()) {
-      addLetBind(bindName, definedAs, false);
+      if (letBind.isClassCandidate()) {
+        addLetBind(bindName, definedAs, false);
+      } else {
+        localLet().put(bindName, definedAs, false);
+      }
+
       @Closed var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
