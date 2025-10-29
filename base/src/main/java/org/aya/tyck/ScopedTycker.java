@@ -5,6 +5,9 @@ package org.aya.tyck;
 import kala.collection.mutable.MutableStack;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
@@ -116,5 +119,17 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
     var old = localLet;
     this.localLet = let;
     return old;
+  }
+
+  /// Add a record which introduced by a [Expr.LetBind].
+  /// This method will trying to add this record to [#instanceSet].
+  ///
+  /// @apiNote this method also modified [#instanceSet], so make sure you provide `true` in [#subscope(boolean, boolean, boolean)]
+  public void addLetBind(@NotNull LocalVar ref, @Closed @NotNull Jdg subst, boolean inline) {
+    localLet().put(ref, subst, inline);
+    // TODO: do we need to normalize the type?
+    if (subst.type() instanceof ClassCall call) {
+      instanceSet.putParam(ref, call);
+    }
   }
 }

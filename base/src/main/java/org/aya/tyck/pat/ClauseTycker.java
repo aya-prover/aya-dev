@@ -21,7 +21,6 @@ import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
@@ -111,10 +110,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       // Sanity check
       assert asSubst.parent() == null;
       teleBinds.forEachWith(paramSubst, (ref, subst) -> {
-        exprTycker.localLet().put(ref, subst, inline);
-        if (subst.type() instanceof ClassCall clazz) {
-          exprTycker.instanceSet.put(new LetFreeTerm(ref, subst), clazz);
-        }
+        exprTycker.addLetBind(ref, subst, inline);
       });
       asSubst.let().forEach((ref, subst) ->
         exprTycker.localLet().put(ref, subst.definedAs(), inline));
@@ -304,7 +300,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> teleBinds,
     @NotNull LhsResult result
   ) {
-    try (var _ = exprTycker.subscope(true, true, false)) {
+    try (var _ = exprTycker.subscope(true, true, true)) {
       var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;

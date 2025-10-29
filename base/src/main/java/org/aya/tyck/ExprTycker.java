@@ -570,14 +570,14 @@ public final class ExprTycker extends ScopedTycker {
 
     // Now everything is in form `let f : G := g in h`
 
-    var type = freezeHoles(ty(typeExpr));
-    var definedAs = inherit(definedAsExpr, type);
+    @Closed var type = freezeHoles(ty(typeExpr));
+    @Closed var definedAs = inherit(definedAsExpr, type);
 
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subLocalLet()) {
-      localLet().put(bindName, definedAs, false);
-      var result = checker.apply(let.body());
+      addLetBind(bindName, definedAs, false);
+      @Closed var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
       var typeLet = LetTerm.bind(letFree, result.type());
