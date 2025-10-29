@@ -253,10 +253,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @NotNull Decision checkApproxResult(@Closed @Nullable Term type, @Closed @NotNull RelDec<Term> approxResult) {
     var state = approxResult.downgrade();
     if (state == Decision.YES) {
-      if (type != null) {
-        if (!(approxResult.isYes())) return Panic.unreachable();
-        return compare(approxResult.get(), type, null);
-      }
+      if (type != null) return compare(approxResult.get(), type, null);
 
       return Decision.YES;
     } else return state;
