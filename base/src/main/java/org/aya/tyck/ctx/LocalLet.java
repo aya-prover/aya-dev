@@ -38,8 +38,9 @@ public record LocalLet(
   public LocalLet() { this(null, MutableLinkedHashMap.of()); }
   @Override public @NotNull LocalLet self() { return this; }
 
+  /// @return small local lets, because we usually run into small lets
   @Override public @NotNull LocalLet derive() {
-    return derive(MutableLinkedHashMap.of());
+    return derive(new MutableLinkedHashMap<>(1));
   }
 
   public @NotNull LocalLet derive(@NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let) {

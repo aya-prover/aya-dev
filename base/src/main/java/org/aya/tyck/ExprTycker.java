@@ -622,6 +622,8 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
+  /// Expectation on the usage: `localCtx` being either unused or inserted a lot,
+  /// and `localLet` being inserted only once.
   public @NotNull SubscopedNoVar subscope() {
     return new SubscopedNoVar(
       setLocalCtx(localCtx().derive()),

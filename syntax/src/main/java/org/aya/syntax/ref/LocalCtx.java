@@ -4,8 +4,8 @@ package org.aya.syntax.ref;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableTreeSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableLinkedHashMap;
-import kala.collection.mutable.MutableList;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.Scoped;
@@ -29,8 +29,10 @@ public sealed interface LocalCtx extends Scoped<LocalVar, @Closed Term, LocalCtx
   @NotNull LocalCtx clone();
   @Override default @NotNull LocalCtx self() { return this; }
 
+  /// @return using empty maps because we either don't use it (we're using let instead) or we
+  /// insert to it a lot
   @Override @Contract("-> new") default @NotNull LocalCtx derive() {
-    return new MapLocalCtx(MutableLinkedHashMap.of(), MutableList.create(), this);
+    return new MapLocalCtx(new MutableLinkedHashMap<>(0), MutableArrayList.create(0), this);
   }
   @Contract("_,_->new") default @NotNull LocalCtx derive1(@NotNull LocalVar var, @NotNull Term type) {
     return new SeqLocalCtx(ImmutableTreeSeq.of(type), ImmutableTreeSeq.of(var), this);
