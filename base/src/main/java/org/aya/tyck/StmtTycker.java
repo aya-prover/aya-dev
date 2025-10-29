@@ -113,11 +113,11 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // In the ordering, we guarantee that expr bodied fn are always checked as a whole
             assert tycker != null;
-            @Closed Term expectedType = signature.result(teleVars.view());
-            var result = tycker.inherit(expr, expectedType).wellTyped();
+            @Closed var expectedType = signature.result(teleVars.view());
+            @Closed var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
             var zonker = new Finalizer.Zonk<>(tycker);
-            var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
+            @Bound var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
             yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
@@ -130,6 +130,7 @@ public record StmtTycker(
             // we do not load signature here, so we need a fresh ExprTycker
             tycker = mkTycker();
             var userTeleSize = fnDecl.telescope.size();
+            // we did pusheen in checkHeader
             var userTele = signature.params().take(userTeleSize);
             var pusheenTele = signature.params().drop(userTeleSize);
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
@@ -222,7 +223,7 @@ public record StmtTycker(
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
           _ -> Doc.plain("universe")));
         // cause signature is Closed
-        @Closed AbstractTele.Locns closedDataSig = new AbstractTele.Locns(signature.params(), sort);
+        @Closed var closedDataSig = new AbstractTele.Locns(signature.params(), sort);
         data.ref.signature = new Signature(closedDataSig, signature.pos());
       }
       case FnDecl fn -> {

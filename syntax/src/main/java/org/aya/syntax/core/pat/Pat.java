@@ -282,7 +282,7 @@ public sealed interface Pat {
    */
   record Preclause<T extends AyaDocile>(
     @NotNull SourcePos sourcePos,
-    @NotNull ImmutableSeq<Pat> pats,
+    @NotNull ImmutableSeq<@Bound Pat> pats,
     int bindCount, @Nullable WithPos<T> expr
   ) {
     public static @NotNull Option<WithPos<Term.Matching>> lift(@NotNull Preclause<Term> clause) {

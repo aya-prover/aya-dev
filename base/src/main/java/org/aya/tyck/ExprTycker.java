@@ -527,14 +527,16 @@ public final class ExprTycker extends ScopedTycker {
       case LocalVar ref when localLet().contains(ref) -> {
         var definedAs = localLet().get(ref);
         @Closed Jdg jdg = definedAs.definedAs();
-        var term = definedAs.inline()
+        @Closed var term = definedAs.inline()
           ? jdg.wellTyped()
           : new LetFreeTerm(ref, jdg);
-        var start = new Jdg.Default(term, jdg.type());
+        @Closed var start = new Jdg.Default(term, jdg.type());
         yield ArgsComputer.generateApplication(this, args, start).lift(lift);
       }
-      case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
-        new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
+      case LocalVar lVar -> {
+        @Closed var jdg = new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar));
+        yield ArgsComputer.generateApplication(this, args, jdg).lift(lift);
+      }
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
       case DefVar<?, ?> defVar -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->

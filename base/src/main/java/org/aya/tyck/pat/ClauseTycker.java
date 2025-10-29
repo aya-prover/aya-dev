@@ -16,6 +16,7 @@ import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
@@ -118,9 +119,12 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   public record WorkerResult(FnClauseBody wellTyped, boolean hasLhsError) { }
+
+  /// @param telescope the user defined telescope, the whole telescope should be [Closed].
+  /// @param unpi      the result of unpi on user defined result, should be [Closed] under [#telescope].
   public record Worker(
     @NotNull ClauseTycker parent,
-    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull ImmutableSeq<@Bound Param> telescope,
     @NotNull DepTypeTerm.Unpi unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
@@ -327,6 +331,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
         // bind all pat bindings
         var patWithTypeBound = Pat.collectVariables(pats);
+        // pat is now Bound
         pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 

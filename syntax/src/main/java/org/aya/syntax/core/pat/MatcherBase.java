@@ -4,6 +4,8 @@ package org.aya.syntax.core.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.State;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.TupTerm;
@@ -16,13 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public abstract class MatcherBase {
-  private final @NotNull UnaryOperator<Term> pre;
-  protected MatcherBase(@NotNull UnaryOperator<Term> pre) { this.pre = pre; }
+  private final @NotNull UnaryOperator<@Closed Term> pre;
+  protected MatcherBase(@NotNull UnaryOperator<@Closed Term> pre) { this.pre = pre; }
 
-  /// Match {@param term} against to {@param pat}
+  /// Match {@param term} against to {@param pat},
+  /// produces substitution of corresponding bindings of {@param pat} in [#matched] if success.
   ///
-  /// Produces substitution of corresponding bindings of {@param pat} in [#matched] if success
-  protected void match(@NotNull Pat pat, @NotNull Term term) throws Failure {
+  /// The dblity of [Pat] is unknown, this depends on the implementation and the usage.
+  /// @see PatMatcher
+  protected void match(@NotNull Pat pat, @Closed @NotNull Term term) throws Failure {
     switch (pat) {
       // We stuck on absurd patterns, as if this is reached, the term must have an empty type,
       // which we should be expecting to refute, not to compute on it.
@@ -32,7 +36,7 @@ public abstract class MatcherBase {
           // case UntypedBind -> onMatchBind(term);
         }
       }
-      case Pat.Bind bind -> onMatchBind(bind, term);
+      case @Closed Pat.Bind bind -> onMatchBind(bind, term);
       case Pat.Con con -> {
         switch (pre.apply(term)) {
           case ConCallLike kon -> {
@@ -40,43 +44,43 @@ public abstract class MatcherBase {
             matchMany(con.args(), kon.conArgs());
             // ^ arguments for data should not be matched
           }
-          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
+          case @Closed MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
-      case Pat.Tuple(var l, var r) -> {
+      case Pat.Tuple(@Closed var l, @Closed var r) -> {
         switch (pre.apply(term)) {
-          case TupTerm(var ll, var rr) -> {
+          case TupTerm(@Closed var ll, @Closed var rr) -> {
             match(l, ll);
             match(r, rr);
           }
-          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
+          case @Closed MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
       // You can't match with a tycking pattern!
       case Pat.Meta _ -> throw new Panic("Illegal pattern: Pat.Meta");
-      case Pat.ShapedInt lit -> {
+      case @Closed Pat.ShapedInt lit -> {
         switch (pre.apply(term)) {
           case IntegerTerm rit -> {
             if (lit.repr() != rit.repr()) throw new Failure(State.Mismatch);
           }
-          case ConCall con -> match(lit.constructorForm(), con);
+          case @Closed ConCall con -> match(lit.constructorForm(), con);
           // we only need to handle matching both literals, otherwise we just rematch it
           // with constructor form to reuse the code as much as possible (like solving MetaPats).
-          case Term t -> match(lit.constructorForm(), t);
+          case @Closed Term t -> match(lit.constructorForm(), t);
         }
       }
     }
   }
-  protected abstract void onMetaPat(@NotNull Pat pat, MetaPatTerm metaPatTerm) throws Failure;
-  protected abstract void onMatchBind(Pat.Bind bind, @NotNull Term matched);
+  protected abstract void onMetaPat(@NotNull Pat pat, @Closed @NotNull MetaPatTerm metaPatTerm) throws Failure;
+  protected abstract void onMatchBind(Pat.@NotNull Bind bind, @Closed @NotNull Term matched);
   /**
    * @see #match(Pat, Term)
    */
   protected void matchMany(
     @NotNull ImmutableSeq<Pat> pats,
-    @NotNull ImmutableSeq<Term> terms
+    @NotNull ImmutableSeq<@Closed Term> terms
   ) throws Failure {
     assert pats.sizeEquals(terms) : "List size mismatch 😱";
     pats.forEachWithChecked(terms, this::match);

@@ -6,6 +6,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
@@ -32,7 +33,7 @@ public record Synthesizer(
     renamer.store(tycker.localCtx());
   }
 
-  public boolean inheritPiDom(@NotNull Term ty, @NotNull SortTerm expected) {
+  public boolean inheritPiDom(@Closed @NotNull Term ty, @NotNull SortTerm expected) {
     if (ty instanceof MetaCall meta && meta.ref().req() == MetaVar.Misc.IsType) {
       var typed = meta.asPiDom(expected);
       // The old code checks recursion in solve, now we don't, but it's okay,
@@ -49,18 +50,18 @@ public record Synthesizer(
     };
   }
 
-  public @Nullable Term trySynth(@NotNull Term term) {
-    var result = synthesize(term);
+  public @Closed @Nullable Term trySynth(@Closed @NotNull Term term) {
+    @Closed var result = synthesize(term);
     return result == null ? null : whnf(result);
   }
 
-  public @NotNull Term synth(@NotNull Term term) {
+  public @Closed @NotNull Term synth(@Closed @NotNull Term term) {
     var result = trySynth(term);
     assert result != null : term.easyToString() + " : " + term.getClass();
     return result;
   }
 
-  public @NotNull Term synthDontNormalize(@NotNull Term term) {
+  public @Closed @NotNull Term synthDontNormalize(@Closed @NotNull Term term) {
     var result = synthesize(term);
     assert result != null : term.easyToString() + " : " + term.getClass();
     return result;
@@ -70,10 +71,10 @@ public record Synthesizer(
    * @param term a whnfed term
    * @return type of term if success
    */
-  private @Nullable Term synthesize(@NotNull Term term) {
+  private @Closed @Nullable Term synthesize(@Closed @NotNull Term term) {
     return switch (term) {
-      case AppTerm(var f, var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
-      case DepTypeTerm(var kind, var piParam, var body) -> {
+      case AppTerm(@Closed var f, @Closed var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
+      case DepTypeTerm(var kind, @Closed var piParam, @Closed var body) -> {
         if (!(trySynth(piParam) instanceof SortTerm pSort)) yield null;
 
         Term bTy;
@@ -95,7 +96,7 @@ public record Synthesizer(
       case LetTerm let -> synthesize(let.make());
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
-      case ProjTerm(var of, var fst) -> {
+      case ProjTerm(@Closed var of, var fst) -> {
         var ofTy = trySynth(of);
         if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
         yield fst ? lhs : rhs.apply(ProjTerm.fst(of));
@@ -109,17 +110,17 @@ public record Synthesizer(
 
       case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
         type.instTele(args.view());
-      case MetaCall meta -> {
+      case @Closed MetaCall meta -> {
         if (!state().solutions.containsKey(meta.ref())) yield null;
         yield trySynth(whnf(meta));
       }
       case CoeTerm coe -> coe.family();
-      case EqTerm eq -> trySynth(eq.appA(DimTerm.I0));
-      case PAppTerm papp -> {
+      case @Closed EqTerm eq -> trySynth(eq.appA(DimTerm.I0));
+      case @Closed PAppTerm papp -> {
         if (!(trySynth(papp.fun()) instanceof EqTerm eq)) yield null;
         yield eq.appA(papp.arg());
       }
-      case PartialTyTerm ty -> {
+      case @Closed PartialTyTerm ty -> {
         if (!(trySynth(ty.ty()) instanceof SortTerm sort)) yield null;
         yield new SortTerm(SortKind.Set, sort.lift());
       }
@@ -150,7 +151,7 @@ public record Synthesizer(
         case Whatever -> false;
         case IsType -> true;
       };
-      case MetaVar.OfType(var type) -> trySynth(type) instanceof SortTerm;
+      case MetaVar.OfType(@Closed var type) -> trySynth(type) instanceof SortTerm;
       case MetaVar.PiDom _ -> true;
     };
   }

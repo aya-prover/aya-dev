@@ -31,7 +31,7 @@ public interface Stateful {
   default void solve(MetaVar meta, Term solution) { state().solve(meta, solution); }
   default @Closed @NotNull Term freezeHoles(@Closed @NotNull Term term) { return new Finalizer.Freeze(this).zonk(term); }
 
-  @ForLSP default @NotNull Term fullNormalize(Term result) {
+  @ForLSP default @Closed @NotNull Term fullNormalize(@Closed @NotNull Term result) {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 

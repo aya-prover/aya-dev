@@ -5,6 +5,8 @@ package org.aya.tyck.pat;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.normalize.LetReplacer;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.pat.MatcherBase;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.FreeTerm;
@@ -21,16 +23,17 @@ public final class PatBinder extends MatcherBase {
   public PatBinder() {
     super(UnaryOperator.identity());
   }
-  @Override protected void onMetaPat(@NotNull Pat pat, MetaPatTerm metaPatTerm) {
+  @Override protected void onMetaPat(@Closed @NotNull Pat pat, @Closed @NotNull MetaPatTerm metaPatTerm) {
     Panic.unreachable();
   }
-  @Override protected void onMatchBind(Pat.Bind bind, @NotNull Term matched) {
+  @Override protected void onMatchBind(Pat.@Closed @NotNull Bind bind, @Closed @NotNull Term matched) {
     if (matched instanceof FreeTerm(var name) && bind.bind() == name) return;
-    let.let().put(bind.bind(), new LocalLet.DefinedAs(new Jdg.Default(matched, bind.type()).map(let),
+    @Closed var jdg = new Jdg.Default(matched, bind.type());
+    let.let().put(bind.bind(), new LocalLet.DefinedAs(jdg.map(let),
       // `inline` will not be used
       false));
   }
-  public LetReplacer apply(@NotNull ImmutableSeq<Pat> pats, @NotNull ImmutableSeq<Term> term) {
+  public LetReplacer apply(@NotNull ImmutableSeq<@Closed Pat> pats, @NotNull ImmutableSeq<@Closed Term> term) {
     try {
       matchMany(pats, term);
       return let;

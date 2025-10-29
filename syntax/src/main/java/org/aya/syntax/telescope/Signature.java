@@ -5,6 +5,7 @@ package org.aya.syntax.telescope;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.FreeTerm;
@@ -25,8 +26,8 @@ import java.util.function.UnaryOperator;
 public record Signature(@Closed @NotNull AbstractTele.Locns telescope, @NotNull ImmutableSeq<SourcePos> pos) {
   public Signature { assert telescope.telescopeSize() == pos.size(); }
 
-  public @NotNull ImmutableSeq<Param> params() { return telescope.telescope(); }
-  public @NotNull Term result() { return telescope.result(); }
+  public @NotNull ImmutableSeq<@Bound Param> params() { return telescope.telescope(); }
+  public @Bound @NotNull Term result() { return telescope.result(); }
   public @Closed @NotNull Term result(SeqView<LocalVar> vars) {
     return telescope.result(vars.<Term>map(FreeTerm::new).toSeq());
   }

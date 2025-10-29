@@ -162,7 +162,7 @@ public sealed interface Term extends Serializable, AyaDocile
     return descent(t -> t.doElevate(level));
   }
 
-  record Matching(@NotNull ImmutableSeq<Pat> patterns, int bindCount, @NotNull @Bound Term body) {
+  record Matching(@NotNull ImmutableSeq<@Bound Pat> patterns, int bindCount, @NotNull @Bound Term body) {
     public @NotNull Matching update(@NotNull Term body) {
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }
