@@ -146,7 +146,7 @@ public final class ExprTycker extends ScopedTycker {
         default -> fail(expr.data(), BadTypeError.sigmaCon(state, expr, type));
       };
       case Expr.Array arr when arr.arrayBlock().isRight()
-        && whnf(type) instanceof @Closed DataCall dataCall
+        && whnf(type) instanceof DataCall dataCall
         && state.shapeFactory.find(dataCall.ref()).getOrNull() instanceof ShapeRecognition recog
         && recog.shape() == AyaShape.LIST_SHAPE -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
@@ -168,8 +168,7 @@ public final class ExprTycker extends ScopedTycker {
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, storedTy), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
-      case Expr.Partial(var element) ->
-        whnf(type) instanceof PartialTyTerm(@Closed Term r, @Closed Term s, @Closed Term A)
+      case Expr.Partial(var element) -> whnf(type) instanceof PartialTyTerm(var r, var s, var A)
         ? withConnection(whnf(r), whnf(s), () -> {
         var wellElement = inherit(element, A);
         return new Jdg.Default(new PartialTerm(wellElement.wellTyped()), type);

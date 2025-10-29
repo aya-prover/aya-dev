@@ -76,13 +76,13 @@ public final class Normalizer implements UnaryOperator<Term> {
         case LamTerm(var lam) -> {
           return new LamTerm(lam.reapply(this));
         }
-        case EqTerm(@Closed var A, @Closed var a, @Closed var b) -> {
+        case EqTerm(var A, var a, var b) -> {
           return new EqTerm(A.reapply(this), apply(a), apply(b));
         }
-        case DepTypeTerm(@Closed var kk, @Closed var param, @Closed var body) -> {
+        case DepTypeTerm(var kk, var param, var body) -> {
           return new DepTypeTerm(kk, apply(param), body.reapply(this));
         }
-        case LetTerm(@Closed var definedAs, @Closed var body) -> {
+        case LetTerm(var definedAs, var body) -> {
           term = body.apply(apply(definedAs));
           continue;
         }
@@ -164,7 +164,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
-        case @Closed ConCall call -> {
+        case ConCall call -> {
           if (call.ref().hasEq() && apply(call.conArgs().getLast()) instanceof DimTerm dim) {
             var args = Callable.descent(call.args(), this);
             term = call.head().ref().equality(args, dim == DimTerm.I0);
@@ -193,7 +193,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         case MetaLitTerm meta -> {
           return meta.inline(this);
         }
-        case @Closed CoeTerm coe -> {
+        case CoeTerm coe -> {
           var r = apply(coe.r());
           var s = apply(coe.s());
           @Closed var A = coe.type();
