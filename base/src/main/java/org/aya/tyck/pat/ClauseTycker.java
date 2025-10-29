@@ -331,7 +331,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         var insertLetBody = makeLet(exprTycker.localLet(), insertPatternBody);
 
         // bind all pat bindings
-        var patWithTypeBound = Pat.collectVariables(pats.view());
+        var patWithTypeBound = Pat.collectVariables(pats);
         pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 
