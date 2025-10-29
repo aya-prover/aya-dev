@@ -5,51 +5,23 @@ package org.aya.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
 public sealed interface RelDec<T> {
-  sealed interface Strict<T> extends RelDec<T> {
-    @Override default @NotNull Strict<T> map(@NotNull UnaryOperator<T> f) { return this; }
-    @NotNull Strict<T> flatMap(@NotNull Function<T, Strict<T>> bind);
-    @Override @NotNull RelDec.Strict<T> lub(@NotNull Decision state);
-  }
-
-  sealed interface Claim<T> extends RelDec<T> { }
-
-  record Proof<T>(@NotNull T proof) implements Strict<T> {
+  record Proof<T>(@NotNull T proof) implements RelDec<T> {
     @Override public @NotNull Decision downgrade() { return Decision.YES; }
     @Override public @NotNull T getOrNull() { return proof; }
-    @Override public @NotNull Strict<T> map(@NotNull UnaryOperator<T> f) { return new Proof<>(f.apply(proof)); }
-    @Override public @NotNull Strict<T> lub(@NotNull Decision state) {
+    @Override public @NotNull RelDec<T> lub(@NotNull Decision state) {
       return switch (state) {
-        case NO, UNSURE -> new StrictClaim<>(state);
+        case NO, UNSURE -> new Claim<>(state);
         case YES -> this;
       };
     }
-    @Override public @NotNull Strict<T> flatMap(@NotNull Function<T, Strict<T>> bind) {
-      return bind.apply(proof);
-    }
   }
 
-  record StrictClaim<T>(@NotNull Decision claim) implements Strict<T>, Claim<T> {
-    public StrictClaim { assert claim != Decision.YES; }
+  record Claim<T>(@NotNull Decision claim) implements RelDec<T> {
     @Override public @NotNull Decision downgrade() { return claim; }
     @Override public @Nullable T getOrNull() { return null; }
-    @Override public @NotNull Strict<T> lub(@NotNull Decision state) {
-      // never fail, claim is never YES, thus claim.lub(state) is never YES
-      return new StrictClaim<>(claim.lub(state));
-    }
-    @Override public @NotNull Strict<T> flatMap(@NotNull Function<T, Strict<T>> bind) { return this; }
-  }
-  enum YesClaim implements Claim<Object> {
-    INSTANCE;
-    @Override public @NotNull YesClaim map(@NotNull UnaryOperator<Object> f) { return this; }
-    @Override public @NotNull Decision downgrade() { return Decision.YES; }
-    @Override public @NotNull Object getOrNull() { return Panic.unreachable(); }
-    @Override public @NotNull RelDec<Object> lub(@NotNull Decision state) {
-      if (state == Decision.YES) return this;
-      return from(state);
+    @Override public @NotNull RelDec<T> lub(@NotNull Decision state) {
+      return new Claim<>(claim.lub(state));
     }
   }
   static <T> Proof<T> of(T proof) { return new Proof<>(proof); }
@@ -60,11 +32,12 @@ public sealed interface RelDec<T> {
       case YES -> yes();
     };
   }
-  @NotNull StrictClaim<Object> UNSURE_INSTANCE = new StrictClaim<>(Decision.UNSURE);
-  @NotNull StrictClaim<Object> NO_INSTANCE = new StrictClaim<>(Decision.NO);
-  static <T> Claim<T> yes() { return (Claim<T>) YesClaim.INSTANCE; }
-  static <T> StrictClaim<T> unsure() { return (StrictClaim<T>) UNSURE_INSTANCE; }
-  static <T> StrictClaim<T> no() { return (StrictClaim<T>) NO_INSTANCE; }
+  @NotNull Claim<Object> YES_INSTANCE = new Claim<>(Decision.YES);
+  @NotNull Claim<Object> UNSURE_INSTANCE = new Claim<>(Decision.UNSURE);
+  @NotNull Claim<Object> NO_INSTANCE = new Claim<>(Decision.NO);
+  @SuppressWarnings("unchecked") static <T> Claim<T> yes() { return (Claim<T>) YES_INSTANCE; }
+  @SuppressWarnings("unchecked") static <T> Claim<T> unsure() { return (Claim<T>) UNSURE_INSTANCE; }
+  @SuppressWarnings("unchecked") static <T> Claim<T> no() { return (Claim<T>) NO_INSTANCE; }
 
   static @NotNull <T> RelDec<T> yes(@Nullable T maybeProof) {
     if (maybeProof != null) return of(maybeProof);
@@ -84,6 +57,4 @@ public sealed interface RelDec<T> {
     if (!(this instanceof Proof<T>(var proof))) return Panic.unreachable();
     return proof;
   }
-
-  @NotNull RelDec<T> map(@NotNull UnaryOperator<T> f);
 }

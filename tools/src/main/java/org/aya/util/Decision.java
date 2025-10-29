@@ -55,11 +55,7 @@ public enum Decision {
     return state ? YES : NO;
   }
 
-  public <T> RelDec.@NotNull Claim<T> toClaim() {
-    return RelDec.from(this);
-  }
-
-  public <T> RelDec.@NotNull Strict<T> toRelDec(@NotNull Supplier<T> onSucc) {
+  public <T> @NotNull RelDec<T> toRelDec(@NotNull Supplier<T> onSucc) {
     return switch (this) {
       case NO -> RelDec.no();
       case UNSURE -> RelDec.unsure();
@@ -67,7 +63,7 @@ public enum Decision {
     };
   }
 
-  public <T> RelDec.@NotNull Strict<T> toRelDec(@NotNull T proof) {
+  public <T> @NotNull RelDec<T> toRelDec(@NotNull T proof) {
     return switch (this) {
       case NO -> RelDec.no();
       case UNSURE -> RelDec.unsure();
