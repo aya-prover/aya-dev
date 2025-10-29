@@ -581,7 +581,7 @@ public final class ExprTycker extends ScopedTycker {
 
     try (var _ = subLocalLet()) {
       if (letBind.isClassCandidate()) {
-        addLetBind(bindName, definedAs, false);
+        addLetBind(bindName, definedAs, false, true);
       } else {
         localLet().put(bindName, definedAs, false);
       }

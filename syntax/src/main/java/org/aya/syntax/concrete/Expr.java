@@ -576,7 +576,7 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs,
     @NotNull MutableValue<Term> theCoreType,
-    boolean isClassCandidate      // can be extends to a modifier list in the furture
+    boolean isClassCandidate      // can be extended to a modifier list in the future
   ) implements SourceNode, Named, WithTerm {
     public LetBind(
       @NotNull SourcePos sourcePos,

@@ -52,7 +52,8 @@ public final class Normalizer implements UnaryOperator<Term> {
    * This function is tail-recursion optimized.
    * To tail-recursively call `apply`, assign `term` with the result and `continue`.
    */
-  @SuppressWarnings("UnnecessaryContinue") @Override public @Closed @NotNull Term apply(@Closed @NotNull Term term) {
+  @SuppressWarnings("UnnecessaryContinue") @Override
+  public @Closed @NotNull Term apply(@Closed @NotNull Term term) {
     while (true) {
       var alreadyWHNF = term instanceof StableWHNF ||
         term instanceof FreeTerm ||
@@ -83,6 +84,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case LetTerm(@Closed var definedAs, @Closed var body) -> {
           term = body.apply(apply(definedAs));
+          continue;
         }
         // Already full NF mode
         // Make sure you handle all [Term]s that contains [Closure] before, such as [LamTerm]

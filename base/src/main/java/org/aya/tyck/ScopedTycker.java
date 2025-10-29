@@ -13,6 +13,7 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ctx.LocalLet;
+import org.aya.tyck.error.ClassError;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Unifiable;
 import org.aya.unify.TermComparator;
@@ -125,11 +126,20 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
   /// This method will trying to add this record to [#instanceSet].
   ///
   /// @apiNote this method also modified [#instanceSet], so make sure you provide `true` in [#subscope(boolean, boolean, boolean)]
-  public void addLetBind(@NotNull LocalVar ref, @Closed @NotNull Jdg subst, boolean inline) {
+  public void addLetBind(
+    @NotNull LocalVar ref, @Closed @NotNull Jdg subst,
+    boolean inline, boolean reallyWant
+  ) {
     localLet().put(ref, subst, inline);
-    // TODO: do we need to normalize the type?
     if (subst.type() instanceof ClassCall call) {
       instanceSet.putParam(ref, call);
+    } else if (reallyWant) {
+      var whnf = whnf(subst.type());
+      if  (whnf instanceof ClassCall call2) {
+        instanceSet.putParam(ref, call2);
+      } else {
+        fail(new ClassError.NotInstance(ref.definition(), subst.type(), this));
+      }
     }
   }
 }
