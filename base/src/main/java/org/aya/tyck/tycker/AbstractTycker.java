@@ -9,8 +9,7 @@ import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.tyck.ExprTycker;
-import org.aya.tyck.InstanceResolver;
+import org.aya.tyck.ScopedTycker;
 import org.aya.unify.Synthesizer;
 import org.aya.unify.TermComparator;
 import org.aya.util.reporter.Reporter;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * the {@link LocalCtx} that you own it, i.e. obtained from {@link AbstractTycker#subscope}.
  * In fact, this is the rule of ownership 🦀🦀🦀.<br/>
  */
-public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits InstanceResolver, TermComparator {
+public sealed abstract class AbstractTycker implements Stateful, Contextful, Problematic permits ScopedTycker, TermComparator {
   public final @NotNull TyckState state;
   private @NotNull LocalCtx localCtx;
   public final @NotNull Reporter reporter;

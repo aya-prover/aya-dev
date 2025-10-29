@@ -20,7 +20,7 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.tyck.InstanceResolver;
+import org.aya.tyck.ScopedTycker;
 import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.function.UnaryOperator;
 
 public record AppTycker<Ex extends Exception>(
   @Override @NotNull TyckState state,
-  @NotNull InstanceResolver tycker,
+  @NotNull ScopedTycker tycker,
   @NotNull SourcePos pos,
   int argsCount, int lift,
   @NotNull Factory<Ex> makeArgs
@@ -50,7 +50,7 @@ public record AppTycker<Ex extends Exception>(
   }
 
   public AppTycker(
-    @NotNull InstanceResolver tycker, @NotNull SourcePos pos,
+    @NotNull ScopedTycker tycker, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) {
     this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
