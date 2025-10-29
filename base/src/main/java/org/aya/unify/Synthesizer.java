@@ -73,8 +73,8 @@ public record Synthesizer(
    */
   private @Closed @Nullable Term synthesize(@Closed @NotNull Term term) {
     return switch (term) {
-      case AppTerm(@Closed var f, @Closed var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
-      case DepTypeTerm(var kind, @Closed var piParam, @Closed var body) -> {
+      case AppTerm(var f, var a) -> trySynth(f) instanceof DepTypeTerm pi ? pi.body().apply(a) : null;
+      case DepTypeTerm(var kind, var piParam, var body) -> {
         if (!(trySynth(piParam) instanceof SortTerm pSort)) yield null;
 
         Term bTy;
@@ -96,7 +96,7 @@ public record Synthesizer(
       case LetTerm let -> synthesize(let.make());
       case LocalTerm _ -> Panic.unreachable();
       case MetaPatTerm meta -> meta.meta().type();
-      case ProjTerm(@Closed var of, var fst) -> {
+      case ProjTerm(var of, var fst) -> {
         var ofTy = trySynth(of);
         if (!(ofTy instanceof DepTypeTerm(var kind, var lhs, var rhs) && kind == DTKind.Sigma)) yield null;
         yield fst ? lhs : rhs.apply(ProjTerm.fst(of));
@@ -110,17 +110,17 @@ public record Synthesizer(
 
       case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
         type.instTele(args.view());
-      case @Closed MetaCall meta -> {
+      case MetaCall meta -> {
         if (!state().solutions.containsKey(meta.ref())) yield null;
         yield trySynth(whnf(meta));
       }
       case CoeTerm coe -> coe.family();
-      case @Closed EqTerm eq -> trySynth(eq.appA(DimTerm.I0));
-      case @Closed PAppTerm papp -> {
+      case EqTerm eq -> trySynth(eq.appA(DimTerm.I0));
+      case PAppTerm papp -> {
         if (!(trySynth(papp.fun()) instanceof EqTerm eq)) yield null;
         yield eq.appA(papp.arg());
       }
-      case @Closed PartialTyTerm ty -> {
+      case PartialTyTerm ty -> {
         if (!(trySynth(ty.ty()) instanceof SortTerm sort)) yield null;
         yield new SortTerm(SortKind.Set, sort.lift());
       }

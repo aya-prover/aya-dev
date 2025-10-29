@@ -47,7 +47,7 @@ public abstract class PatMatcher extends MatcherBase {
 
   private static @Closed @NotNull Term realSolution(@Closed @NotNull MetaPatTerm term) {
     @Closed Pat pat = term.meta();
-    while (pat instanceof Pat.@Closed Meta meta && meta.solution().get() instanceof @Closed Pat notNullPat)
+    while (pat instanceof Pat.@Closed Meta meta && meta.solution().get() instanceof Pat notNullPat)
       pat = notNullPat;
     return PatToTerm.visit(pat);
   }
@@ -73,7 +73,7 @@ public abstract class PatMatcher extends MatcherBase {
     @Override
     protected void onMetaPat(@Bound @NotNull Pat pat, @Closed @NotNull MetaPatTerm term) throws MatcherBase.Failure {
       @Closed var maybeMeta = realSolution(term);
-      if (maybeMeta instanceof MetaPatTerm(@Closed var meta)) {
+      if (maybeMeta instanceof MetaPatTerm(var meta)) {
         var bindsMetas = doSolveMeta(pat, meta);
         bindsMetas.forEach(this::onMatchBind);
       } else {
@@ -87,7 +87,7 @@ public abstract class PatMatcher extends MatcherBase {
     @Override protected void onMetaPat(@Bound @NotNull Pat pat, @Closed @NotNull MetaPatTerm term) throws Failure {
       switch (realSolution(term)) {
         case MetaPatTerm _ -> throw new Failure(State.Stuck);
-        case @Closed Term maybeMeta -> match(pat, maybeMeta);
+        case Term maybeMeta -> match(pat, maybeMeta);
       }
     }
 

@@ -4,7 +4,6 @@ package org.aya.syntax.core.pat;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.State;
-import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Term;

@@ -52,8 +52,8 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     var definedAs = FreezableMutableList.<LetFreeTerm>create();
     @Closed Term let = this;
 
-    while (let instanceof LetTerm(@Closed Term term, @Closed Closure remain)) {
-      if (term instanceof @Closed FreeTerm free) {
+    while (let instanceof LetTerm(var term, var remain)) {
+      if (term instanceof FreeTerm free) {
         let = remain.apply(free);
         continue;
       }
