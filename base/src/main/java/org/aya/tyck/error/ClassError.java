@@ -44,7 +44,7 @@ public interface ClassError extends TyckError, SourceNodeProblem {
     @NotNull Stateful state
   ) implements TyckError {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      var docs = MutableList.of(Doc.english("To be a valid instance, the type of this variable should be a class-call, but it isn't:"));
+      var docs = MutableList.of(Doc.english("To be an instance, the type should be a class-call, but it isn't:"));
       UnifyInfo.exprInfo(shouldBeClass, options, state, docs);
       return Doc.vcat(docs);
     }
