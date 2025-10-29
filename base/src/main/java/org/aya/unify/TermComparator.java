@@ -37,8 +37,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-// TODO: remove suppressing after refactor
-@SuppressWarnings("Dblity")
 public abstract sealed class TermComparator extends AbstractTycker permits Unifier {
   protected final @NotNull SourcePos pos;
   protected @NotNull Ordering cmp;
@@ -74,7 +72,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
   /** The "flex-flex" case with identical meta ref */
-  private @Nullable Term sameMeta(@NotNull MetaCall meta, @Nullable Term type, MetaCall rMeta) {
+  private @Nullable Term sameMeta(@Closed @NotNull MetaCall meta, @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
     if (meta.args().size() != rMeta.args().size()) return null;
     for (var i = 0; i < meta.args().size(); i++) {
       var cmpRes = compare(meta.args().get(i), rMeta.args().get(i), null);
@@ -92,9 +90,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
-  protected @Nullable Term solveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  protected @Nullable Term solveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     rhs = whnf(rhs);
-    if (rhs instanceof MetaCall rMeta && rMeta.ref() == meta.ref())
+    if (rhs instanceof @Closed MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
     if (solveMetaInstances && solveMetaForApprox) {
@@ -124,7 +122,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * For lossy comparisons, when we fail, we will need to compare them again later,
    * so don't forget to reset the {@link #failure} after first failure.
    */
-  private @Closed @NotNull RelDec<Term> compareApprox(@NotNull Term lhs, @NotNull Term rhs) {
+  private @Closed @NotNull RelDec<Term> compareApprox(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs) {
     var prev = solveMetaForApprox;
     solveMetaForApprox = false;
     weWillSee.push(MutableList.create());
@@ -147,7 +145,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
-  private @Closed @NotNull RelDec<Term> compareCalls(@NotNull Term lhs, @NotNull Term rhs) {
+  private @Closed @NotNull RelDec<Term> compareCalls(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs) {
     if (lhs instanceof RuleReducer.Fn fn) lhs = fn.toFnCall();
     if (rhs instanceof RuleReducer.Fn fn) rhs = fn.toFnCall();
     return switch (new Pair<>(lhs, rhs)) {
@@ -159,7 +157,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == rInt.repr() ? RelDec.of(lInt.type()) : RelDec.no();
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
-      case Pair(MemberCall lMem, MemberCall rMem) -> {
+      case Pair(@Closed MemberCall lMem, @Closed MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield RelDec.no();
         // TODO: type info?
         var result = compare(lMem.of(), rMem.of(), null);
@@ -197,8 +195,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (checkApproxResult(type, compareApprox(preLhs, preRhs)) == ThreeState.YES) return ThreeState.YES;
     failure = null;
 
-    var lhs = whnf(preLhs);
-    var rhs = whnf(preRhs);
+    @Closed var lhs = whnf(preLhs);
+    @Closed var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs) &&
       checkApproxResult(type, compareApprox(lhs, rhs)) == ThreeState.YES) return ThreeState.YES;
 
@@ -229,7 +227,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    *            if there is a {@link MetaCall} then it must be lhs.
    *            Reason: we case on lhs.
    */
-  private @NotNull ThreeState doCompare(Term lhs, Term rhs, @Nullable Term type) {
+  private @NotNull ThreeState doCompare(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     var result = type == null
       ? compareUntyped(lhs, rhs).downgrade()
       : doCompareTyped(lhs, rhs, type);
@@ -238,8 +236,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
+  /// TODO: approxResult is always a [#compareApprox] call, inline?
   /// @param approxResult must with a proof if YES
-  private @NotNull ThreeState checkApproxResult(@Nullable Term type, @NotNull RelDec<Term> approxResult) {
+  private @NotNull ThreeState checkApproxResult(@Closed @Nullable Term type, @Closed @NotNull RelDec<Term> approxResult) {
     var state = approxResult.downgrade();
     if (state == ThreeState.YES) {
       if (type != null) {
@@ -263,17 +262,18 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (classCall.args().size() == classCall.ref().members().size()) yield ThreeState.YES;
         // TODO: skip comparing fields that already have impl specified in the type
         // FIXME: not a good idea to use view
-        yield classCall.ref().members().view().map(member -> {
+        yield ThreeState.minOfAll(classCall.ref().members(), member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
           var ty = member.signature().inst(ImmutableSeq.of(lhs));
-          var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
-          var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
+          // l/r proj are closed since l/r hs are closed
+          @Closed var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
+          @Closed var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
           return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
-        }).fold(ThreeState.YES, ThreeState::min);
+        });
       }
-      case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
+      case @Closed EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
+        case Pair(LamTerm(@Closed var lbody), LamTerm(@Closed var rbody)) -> {
           try (var scope = subscope(DimTyTerm.INSTANCE)) {
             var var = scope.var();
             yield compare(
@@ -283,8 +283,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
             );
           }
         }
-        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
-        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
+        case Pair(@Closed LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
+        case Pair(_, @Closed LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
       case @Closed DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
@@ -298,8 +298,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
             );
           }
         }
-        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
-        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
+        case Pair(@Closed LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
+        case Pair(_, @Closed LamTerm rambda) -> compareLambda(rambda, lhs, pi);
         default -> compare(lhs, rhs, null);
       };
       // Sigma types
@@ -309,8 +309,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(lProj, rProj, lTy).lub(() ->
           compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj)));
       }
-      case PartialTerm(var element1) -> {
-        if (!(rhs instanceof PartialTerm(var element2)) || !(type instanceof PartialTyTerm(var r, var s, var A)))
+      case PartialTerm(@Closed var element1) -> {
+        if (!(rhs instanceof PartialTerm(@Closed var element2)) || !(type instanceof PartialTyTerm(
+          @Closed var r, @Closed var s, @Closed var A
+        )))
           yield ThreeState.NO;
         yield withConnection(whnf(r), whnf(s), () -> doCompareTyped(element1, element2, A));
       }
@@ -320,7 +322,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   /// Compare head-normalized {@param preLhs} and whnfed {@param preRhs} without type information.
   ///
-  /// @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are _the same_, null otherwise.
+  /// @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are _the same_
   private RelDec.@Closed @NotNull Strict<Term> compareUntyped(@Closed @NotNull Term preLhs, @Closed @NotNull Term preRhs) {
     {
       @Closed var result = compareApprox(preLhs, preRhs);
@@ -328,8 +330,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       failure = null;
     }
 
-    var lhs = whnf(preLhs);
-    var rhs = whnf(preRhs);
+    @Closed var lhs = whnf(preLhs);
+    @Closed var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs)) {
       @Closed var result = compareCalls(lhs, rhs);
       if (result.isYes()) return RelDec.of(whnf(result.get()));
@@ -356,17 +358,18 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       });
 
     return switch (lhs) {
-      case AppTerm(var f, var a) -> {
-        if (!(rhs instanceof AppTerm(var g, var b))) yield RelDec.no();
+      case AppTerm(@Closed var f, @Closed var a) -> {
+        if (!(rhs instanceof AppTerm(@Closed var g, @Closed var b))) yield RelDec.no();
         var fTy = compareUntyped(f, g);
         // TODO: not sure
         if (!fTy.isYes()) yield RelDec.no();
-        if (!(fTy.get() instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi)) yield RelDec.no();
+        if (!(fTy.get() instanceof DepTypeTerm(var kk, @Closed var param, var body) && kk == DTKind.Pi))
+          yield RelDec.no();
         yield compare(a, b, param).toRelDec(() ->
           body.apply(a));
       }
-      case PAppTerm(var f, var a, _, _) -> {
-        if (!(rhs instanceof PAppTerm(var g, var b, _, _))) yield RelDec.no();
+      case PAppTerm(@Closed var f, @Closed var a, _, _) -> {
+        if (!(rhs instanceof PAppTerm(@Closed var g, @Closed var b, _, _))) yield RelDec.no();
         var fTy = compareUntyped(f, g);
         // TODO: not sure
         if (!fTy.isYes()) yield RelDec.no();
@@ -374,8 +377,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(a, b, DimTyTerm.INSTANCE).toRelDec(() ->
           eq.appA(a));
       }
-      case CoeTerm coe -> {
-        if (!(rhs instanceof CoeTerm(var rType, var rR, var rS))) yield RelDec.no();
+      case @Closed CoeTerm coe -> {
+        if (!(rhs instanceof CoeTerm(@Closed var rType, @Closed var rR, @Closed var rS))) yield RelDec.no();
 
         // TODO: not sure
         var result = compare(coe.r(), rR, DimTyTerm.INSTANCE);
@@ -389,10 +392,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           yield tyResult.toRelDec(coe.family());
         }
       }
-      case ProjTerm(var lof, var lfst) -> {
+      case ProjTerm(@Closed var lof, var lfst) -> {
         // Since {lhs} and {rhs} are whnf, at this point, {lof} is unable to evaluate.
         // Thus the only thing we can do is check whether {lof} and {rhs.of(}} (if rhs is ProjTerm) are 'the same'.
-        if (!(rhs instanceof ProjTerm(var rof, var rfst))) yield RelDec.no();
+        if (!(rhs instanceof ProjTerm(@Closed var rof, var rfst))) yield RelDec.no();
         var result = compareUntyped(lof, rof);
         // TODO: not sure
         if (!result.isYes()) yield result;
@@ -400,7 +403,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           yield RelDec.no();
         if (lfst != rfst) yield RelDec.no();
         if (lfst) yield RelDec.of(lhsT);
-        yield RelDec.of(rhsTClos.apply(new ProjTerm(lof, true)));
+        yield RelDec.of(rhsTClos.apply(ProjTerm.make(lof, true)));
       }
       case FreeTerm(var lvar) -> rhs instanceof FreeTerm(var rvar) && lvar == rvar
         ? RelDec.of(localCtx().get(lvar))
@@ -414,33 +417,39 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case ListTerm list -> switch (rhs) {
         case ListTerm rist -> {
           var lRepr = list.repr();
-          var rRepr = list.repr();
+          var rRepr = rist.repr();
 
           if (!lRepr.sizeEquals(rRepr)) yield RelDec.no();
 
           var result = compareMany(lRepr, rRepr, null).downgrade();
           yield result.toRelDec(list.type());
         }
-        case ConCall rCon -> compareUntyped(list.constructorForm(), rCon);
+        case @Closed ConCall rCon -> {
+          @Closed var conForm = list.constructorForm();
+          yield compareUntyped(conForm, rCon);
+        }
         default -> RelDec.no();
       };
       // fallback case
       case ConCallLike lCon -> switch (rhs) {
-        case ListTerm rList -> compareUntyped(lhs, rList.constructorForm());
+        case ListTerm rList -> {
+          @Closed var conForm = rList.constructorForm();
+          yield compareUntyped(lhs, conForm);
+        }
         case ConCallLike rCon -> compareCallApprox(lCon, rCon);
         default -> RelDec.no();
       };
-      case MetaLitTerm mlt -> switch (rhs) {
-        case IntegerTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
-        case ListTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
+      case @Closed MetaLitTerm mlt -> switch (rhs) {
+        case @Closed IntegerTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
+        case @Closed ListTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
         case ConCall _ -> throw new UnsupportedOperationException("TODO (I have no time to implement this)");
-        case MetaLitTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
+        case @Closed MetaLitTerm mrt -> compareMetaLitWithLit(mlt, mrt.repr(), mrt.type());
         default -> RelDec.no();
       };
-      case MemberCall memberCall -> {
+      case @Closed MemberCall memberCall -> {
         // it is impossible that memberCall.of() is a cast term, since it is whnfed.
         assert !(memberCall.of() instanceof ClassCastTerm);
-        if (rhs instanceof MemberCall memberCarr) {
+        if (rhs instanceof @Closed MemberCall memberCarr) {
           assert !(memberCarr.of() instanceof ClassCastTerm);
           yield compareUntyped(memberCall.of(), memberCarr.of());
         } else {
@@ -456,7 +465,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private RelDec.@Closed @NotNull Strict<Term> compareMetaLitWithLit(@NotNull MetaLitTerm lhs, Object repr, @NotNull Term rhsType) {
+  private RelDec.@Closed @NotNull Strict<Term> compareMetaLitWithLit(@Closed @NotNull MetaLitTerm lhs, Object repr, @Closed @NotNull Term rhsType) {
     if (!Objects.equals(lhs.repr(), repr)) return RelDec.no();
     return compare(lhs.type(), rhsType, null).toRelDec(lhs.type());
   }
@@ -576,7 +585,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         ? compareTypeWith(lParam, rParam, () -> ThreeState.NO, var ->
         compare(lBody.apply(var), rBody.apply(var), null))
         : ThreeState.NO;
-      case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
+      case Pair(@Closed SortTerm lhs, @Closed SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(
         EqTerm(@Closed var A, @Closed var a0, @Closed var a1), EqTerm(@Closed var B, @Closed var b0, @Closed var b1)
       ) -> {

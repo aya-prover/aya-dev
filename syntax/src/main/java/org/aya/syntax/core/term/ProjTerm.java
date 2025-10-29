@@ -30,7 +30,7 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
   }
 
   /** Unwrap {@code of.index} if possible */
-  public static @NotNull Term make(@Closed @NotNull Term of, boolean fst) {
+  public static @Closed @NotNull Term make(@Closed @NotNull Term of, boolean fst) {
     return new ProjTerm(of, fst).make();
   }
 

@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 // https://github.com/JetBrains/intellij-community/blob/c5faaba98523d9f336cc78e986221bf23c53b7fb/platform/util/multiplatform/src/com/intellij/util/ThreeState.kt
@@ -19,6 +21,17 @@ public enum ThreeState {
   /// Zero: [#NO]
   public static @NotNull ThreeState min(@NotNull ThreeState lhs, @NotNull ThreeState rhs) {
     return ThreeState.values()[Math.min(lhs.ordinal(), rhs.ordinal())];
+  }
+
+  public static <T> @NotNull ThreeState minOfAll(@NotNull ImmutableSeq<T> seq, @NotNull Function<T, ThreeState> f) {
+    var acc = YES;
+
+    for (var elem : seq) {
+      acc = acc.lub(f.apply(elem));
+      if (acc == NO) return NO;
+    }
+
+    return acc;
   }
 
   public @NotNull ThreeState lub(@NotNull ThreeState other) {
