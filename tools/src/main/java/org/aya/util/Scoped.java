@@ -60,14 +60,12 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
 
   default @NotNull V get(@NotNull K key) {
     var found = findFirst(self -> self.getLocal(key).getOrNull());
-    if (found == null) {
-      throw new Panic("¿: Not in scope: " + key);
-    }
+    assert found != null : "¿: Not in scope: " + key;
     return found;
   }
 
   default void put(@NotNull K key, @NotNull V value) {
-    if (contains(key)) throw new Panic("Existing " + key);
+    assert !contains(key) : "Existing " + key;
     putLocal(key, value);
   }
 
