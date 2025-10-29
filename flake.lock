@@ -34,7 +34,7 @@
         "type": "github"
       }
     },
-    "nixpkgs-jdk": {
+    "nixpkgs-24_05": {
       "locked": {
         "lastModified": 1735651292,
         "narHash": "sha256-YLbzcBtYo1/FEzFsB3AnM16qFc6fWPMIoOuSoDwvg9g=",
@@ -54,7 +54,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-jdk": "nixpkgs-jdk"
+        "nixpkgs-24_05": "nixpkgs-24_05"
       }
     },
     "systems": {
