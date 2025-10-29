@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 // https://github.com/JetBrains/intellij-community/blob/c5faaba98523d9f336cc78e986221bf23c53b7fb/platform/util/multiplatform/src/com/intellij/util/ThreeState.kt
-public enum ThreeState {
+public enum Decision {
   NO, UNSURE, YES;
 
   public boolean toBoolean() {
@@ -19,11 +19,11 @@ public enum ThreeState {
 
   /// Identity: [#YES]
   /// Zero: [#NO]
-  public static @NotNull ThreeState min(@NotNull ThreeState lhs, @NotNull ThreeState rhs) {
-    return ThreeState.values()[Math.min(lhs.ordinal(), rhs.ordinal())];
+  public static @NotNull Decision min(@NotNull Decision lhs, @NotNull Decision rhs) {
+    return Decision.values()[Math.min(lhs.ordinal(), rhs.ordinal())];
   }
 
-  public static <T> @NotNull ThreeState minOfAll(@NotNull ImmutableSeq<T> seq, @NotNull Function<T, ThreeState> f) {
+  public static <T> @NotNull Decision minOfAll(@NotNull ImmutableSeq<T> seq, @NotNull Function<T, Decision> f) {
     var acc = YES;
 
     for (var elem : seq) {
@@ -34,10 +34,10 @@ public enum ThreeState {
     return acc;
   }
 
-  public @NotNull ThreeState lub(@NotNull ThreeState other) {
+  public @NotNull Decision lub(@NotNull Decision other) {
     return min(this, other);
   }
-  public @NotNull ThreeState lub(@NotNull Supplier<ThreeState> f) {
+  public @NotNull Decision lub(@NotNull Supplier<Decision> f) {
     if (this == NO) return this;
     return lub(f.get());
   }
@@ -47,11 +47,11 @@ public enum ThreeState {
     return f.get().lub(this);
   }
 
-  public boolean atLeast(@NotNull ThreeState other) {
+  public boolean atLeast(@NotNull Decision other) {
     return other.ordinal() <= this.ordinal();
   }
 
-  public static @NotNull ThreeState from(boolean state) {
+  public static @NotNull Decision from(boolean state) {
     return state ? YES : NO;
   }
 

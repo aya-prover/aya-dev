@@ -72,36 +72,43 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
   /** The "flex-flex" case with identical meta ref */
-  private @Nullable Term sameMeta(@Closed @NotNull MetaCall meta, @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
-    if (meta.args().size() != rMeta.args().size()) return null;
+  private @Closed @NotNull RelDec<Term> sameMeta(@Closed @NotNull MetaCall meta, @Closed @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
+    if (meta.args().size() != rMeta.args().size()) return RelDec.unsure();    // TODO: unsure?
     for (var i = 0; i < meta.args().size(); i++) {
       var cmpRes = compare(meta.args().get(i), rMeta.args().get(i), null);
-      if (cmpRes == ThreeState.NO) {    // TODO: what about UNSURE?
-        return null;
+      if (cmpRes == Decision.NO) {    // TODO: what about UNSURE?
+        return RelDec.no();   // TODO: no or unsure?
       }
     }
-    if (type != null) return type;
-    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return ty;
+    if (type != null) return RelDec.of(type);
+    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return RelDec.of(ty);   // TODO: is ty always Closed?
     // Honestly, this is a bit sus
-    return ErrorTerm.typeOf(meta);
+    return RelDec.yes();
   }
 
   public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
     return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
-  protected @Nullable Term solveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
+  protected @Closed @NotNull RelDec<Term> solveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     rhs = whnf(rhs);
     if (rhs instanceof @Closed MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
     if (solveMetaInstances && solveMetaForApprox) {
+      // TODO: refactor Unifier#doSolveMeta
       var result = doSolveMeta(meta, rhs, type);
       if (result == null) fail(meta, rhs);
-      return result;
+
+      // TODO: compatibility shit, remove this
+      if (result == null) {
+        return RelDec.unsure();
+      } else {
+        return RelDec.of(result);
+      }
     } else {
       weWillSee.peek().append(createEqn(meta, rhs, type));
-      return type != null ? type : ErrorTerm.typeOf(meta);
+      return type != null ? RelDec.of(type) : RelDec.yes();
     }
   }
 
@@ -131,12 +138,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     solveMetaForApprox = prev;
 
     if (result.isYes()) {
-      var acc = ThreeState.YES;
+      var acc = Decision.YES;
       for (var eqn : weWillSeeThisTime) {
         // Make sure to call `solveEqn` on a fresh Unifier to have the correct `localCtx`
         var solveRes = state.solveEqn(reporter, eqn, true);
         acc = acc.lub(solveRes);
-        if (acc == ThreeState.NO) return RelDec.no();   // shortcut TODO what about UNSURE
+        if (acc == Decision.NO) return RelDec.no();   // shortcut TODO what about UNSURE
       }
 
       return result.lub(acc);
@@ -188,28 +195,28 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   /// Compare two terms with the given {@param type} (if not null)
   ///
-  /// @return [ThreeState#YES] if they are 'the same' under {@param type}, [ThreeState#NO] if they are NOT 'the same',
-  /// [ThreeState#UNSURE] if not sure, this is typically caused by a failed meta solve.
-  public @NotNull ThreeState compare(@Closed @NotNull Term preLhs, @Closed @NotNull Term preRhs, @Closed @Nullable Term type) {
-    if (preLhs == preRhs || preLhs instanceof ErrorTerm || preRhs instanceof ErrorTerm) return ThreeState.YES;
-    if (checkApproxResult(type, compareApprox(preLhs, preRhs)) == ThreeState.YES) return ThreeState.YES;
+  /// @return [Decision#YES] if they are 'the same' under {@param type}, [Decision#NO] if they are NOT 'the same',
+  /// [Decision#UNSURE] if not sure, this is typically caused by a failed meta solve.
+  public @NotNull Decision compare(@Closed @NotNull Term preLhs, @Closed @NotNull Term preRhs, @Closed @Nullable Term type) {
+    if (preLhs == preRhs || preLhs instanceof ErrorTerm || preRhs instanceof ErrorTerm) return Decision.YES;
+    if (checkApproxResult(type, compareApprox(preLhs, preRhs)) == Decision.YES) return Decision.YES;
     failure = null;
 
     @Closed var lhs = whnf(preLhs);
     @Closed var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs) &&
-      checkApproxResult(type, compareApprox(lhs, rhs)) == ThreeState.YES) return ThreeState.YES;
+      checkApproxResult(type, compareApprox(lhs, rhs)) == Decision.YES) return Decision.YES;
 
-    if (rhs instanceof MetaCall rMeta) {
+    if (rhs instanceof @Closed MetaCall rMeta) {
       // In case we're comparing two metas with one IsType and the other has OfType,
       // prefer solving the IsType one as the OfType one.
-      if (lhs instanceof MetaCall lMeta && lMeta.ref().req() == MetaVar.Misc.IsType)
-        return solveMeta(lMeta, rMeta, type) != null;
-      return swapped(() -> solveMeta(rMeta, lhs, type)) != null;
+      if (lhs instanceof @Closed MetaCall lMeta && lMeta.ref().req() == MetaVar.Misc.IsType)
+        return solveMeta(lMeta, rMeta, type).downgrade();
+      return swapped(() -> solveMeta(rMeta, lhs, type)).downgrade();
     }
     // ^ Beware of the order!!
-    if (lhs instanceof MetaCall lMeta) {
-      return solveMeta(lMeta, rhs, type) != null;
+    if (lhs instanceof @Closed MetaCall lMeta) {
+      return solveMeta(lMeta, rhs, type).downgrade();
     }
 
     if (rhs instanceof MemberCall && !(lhs instanceof MemberCall)) {
@@ -227,26 +234,26 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    *            if there is a {@link MetaCall} then it must be lhs.
    *            Reason: we case on lhs.
    */
-  private @NotNull ThreeState doCompare(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
+  private @NotNull Decision doCompare(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     var result = type == null
       ? compareUntyped(lhs, rhs).downgrade()
       : doCompareTyped(lhs, rhs, type);
 
-    if (result == ThreeState.NO) fail(lhs, rhs);
+    if (result == Decision.NO) fail(lhs, rhs);
     return result;
   }
 
   /// TODO: approxResult is always a [#compareApprox] call, inline?
   /// @param approxResult must with a proof if YES
-  private @NotNull ThreeState checkApproxResult(@Closed @Nullable Term type, @Closed @NotNull RelDec<Term> approxResult) {
+  private @NotNull Decision checkApproxResult(@Closed @Nullable Term type, @Closed @NotNull RelDec<Term> approxResult) {
     var state = approxResult.downgrade();
-    if (state == ThreeState.YES) {
+    if (state == Decision.YES) {
       if (type != null) {
         if (!(approxResult.isYes())) return Panic.unreachable();
         return compare(approxResult.get(), type, null);
       }
 
-      return ThreeState.YES;
+      return Decision.YES;
     } else return state;
   }
 
@@ -254,15 +261,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   ///
   /// @param type the type in whnf.
   /// @return whether they are 'the same' and their types are {@param type}
-  private @NotNull ThreeState doCompareTyped(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @NotNull Term type) {
+  private @NotNull Decision doCompareTyped(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @NotNull Term type) {
     return switch (whnf(type)) {
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
-      case ErrorTerm _ -> ThreeState.YES;
+      case ErrorTerm _ -> Decision.YES;
       case ClassCall classCall -> {
-        if (classCall.args().size() == classCall.ref().members().size()) yield ThreeState.YES;
+        if (classCall.args().size() == classCall.ref().members().size()) yield Decision.YES;
         // TODO: skip comparing fields that already have impl specified in the type
         // FIXME: not a good idea to use view
-        yield ThreeState.minOfAll(classCall.ref().members(), member -> {
+        yield Decision.minOfAll(classCall.ref().members(), member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
           var ty = member.signature().inst(ImmutableSeq.of(lhs));
@@ -313,7 +320,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(rhs instanceof PartialTerm(@Closed var element2)) || !(type instanceof PartialTyTerm(
           @Closed var r, @Closed var s, @Closed var A
         )))
-          yield ThreeState.NO;
+          yield Decision.NO;
         yield withConnection(whnf(r), whnf(s), () -> doCompareTyped(element1, element2, A));
       }
       default -> compareUntyped(lhs, rhs).downgrade();
@@ -382,9 +389,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
         // TODO: not sure
         var result = compare(coe.r(), rR, DimTyTerm.INSTANCE);
-        if (result == ThreeState.NO) yield RelDec.no();
+        if (result == Decision.NO) yield RelDec.no();
         result = compare(coe.s(), rS, DimTyTerm.INSTANCE);
-        if (result != ThreeState.NO) yield RelDec.no();
+        if (result != Decision.NO) yield RelDec.no();
 
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
@@ -409,7 +416,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         ? RelDec.of(localCtx().get(lvar))
         : RelDec.no();
       case DimTerm l -> rhs instanceof DimTerm r && l == r ? RelDec.of(l) : RelDec.no();
-      case MetaCall mCall -> solveMeta(mCall, rhs, null);
+      case MetaCall mCall -> solveMeta(mCall, rhs, null);   // TODO: what about this?
       // By typing invariant, they should have the same type, so no need to check for repr equality.
       case IntegerTerm(var lepr, _, _, var ty) -> rhs instanceof IntegerTerm rInt && lepr == rInt.repr()
         ? RelDec.of(ty)
@@ -471,7 +478,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
-  private @NotNull ThreeState compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull DepTypeTerm type) {
+  private @NotNull Decision compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull DepTypeTerm type) {
     try (var scope = subscope(type.param())) {
       var var = scope.var();
       @Closed var lhsBody = lambda.body().apply(var);
@@ -480,7 +487,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
   }
 
-  private @NotNull ThreeState compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull EqTerm type) {
+  private @NotNull Decision compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull EqTerm type) {
     try (var scope = subscope(DimTyTerm.INSTANCE)) {
       var var = scope.var();
       @Closed var lhsBody = lambda.body().apply(var);
@@ -500,7 +507,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     assert types == null || rist.sizeEquals(types.telescopeSize());
     var argsCum = new Term[list.size()];
 
-    var ret = ThreeState.YES;
+    var ret = Decision.YES;
 
     for (var i = 0; i < argsCum.length; ++i) {
       @Closed var l = list.get(i);
@@ -508,7 +515,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       @Closed @Nullable var ty = types == null ? null : types.telescope(i, argsCum);
       ret = ret.lub(compare(l, r, ty));
       // TODO: not sure if we should continue when UNSURE
-      if (ret == ThreeState.NO) return RelDec.no();
+      if (ret == Decision.NO) return RelDec.no();
       argsCum[i] = l;
     }
 
@@ -526,7 +533,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @NotNull Supplier<R> onFailed,
     @NotNull Function<LocalVar, R> continuation
   ) {
-    if (compare(lTy, rTy, null) == ThreeState.NO) return onFailed.get();
+    if (compare(lTy, rTy, null) == Decision.NO) return onFailed.get();
     try (var scope = subscope(lTy)) {
       var var = scope.var();
       return continuation.apply(var);
@@ -546,25 +553,25 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private @NotNull ThreeState compareSort(@Closed @NotNull SortTerm l, @Closed @NotNull SortTerm r) {
+  private @NotNull Decision compareSort(@Closed @NotNull SortTerm l, @Closed @NotNull SortTerm r) {
     return switch (cmp) {
       case Gt -> {
         if (!sortLt(r, l)) {
           fail(new LevelError(pos, l, r, false));
-          yield ThreeState.NO;
-        } else yield ThreeState.YES;
+          yield Decision.NO;
+        } else yield Decision.YES;
       }
       case Eq -> {
         if (!(l.kind() == r.kind() && l.lift() == r.lift())) {
           fail(new LevelError(pos, l, r, true));
-          yield ThreeState.NO;
-        } else yield ThreeState.YES;
+          yield Decision.NO;
+        } else yield Decision.YES;
       }
       case Lt -> {
         if (!sortLt(l, r)) {
           fail(new LevelError(pos, r, l, false));
-          yield ThreeState.NO;
-        } else yield ThreeState.YES;
+          yield Decision.NO;
+        } else yield Decision.YES;
       }
     };
   }
@@ -573,31 +580,31 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * Compare two type formation
    * Note: don't confuse with {@link TermComparator#doCompareTyped(Term, Term, Term)}
    */
-  private @NotNull ThreeState doCompareType(@Closed @NotNull Formation preLhs, @Closed @NotNull Term preRhs) {
-    if (preLhs.getClass() != preRhs.getClass()) return ThreeState.NO;
+  private @NotNull Decision doCompareType(@Closed @NotNull Formation preLhs, @Closed @NotNull Term preRhs) {
+    if (preLhs.getClass() != preRhs.getClass()) return Decision.NO;
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
-      case Pair(DimTyTerm _, DimTyTerm _) -> ThreeState.YES;
+      case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
       case Pair(
         DepTypeTerm(var lK, @Closed var lParam, @Closed var lBody),
         DepTypeTerm(var rK, @Closed var rParam, @Closed var rBody)
       ) -> lK == rK
-        ? compareTypeWith(lParam, rParam, () -> ThreeState.NO, var ->
+        ? compareTypeWith(lParam, rParam, () -> Decision.NO, var ->
         compare(lBody.apply(var), rBody.apply(var), null))
-        : ThreeState.NO;
+        : Decision.NO;
       case Pair(@Closed SortTerm lhs, @Closed SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(
         EqTerm(@Closed var A, @Closed var a0, @Closed var a1), EqTerm(@Closed var B, @Closed var b0, @Closed var b1)
       ) -> {
-        var tyResult = ThreeState.YES;
+        var tyResult = Decision.YES;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
-          tyResult = ThreeState.min(tyResult, compare(A.apply(var), B.apply(var), null));
+          tyResult = Decision.min(tyResult, compare(A.apply(var), B.apply(var), null));
         }
 
-        if (tyResult == ThreeState.NO) yield ThreeState.NO;
+        if (tyResult == Decision.NO) yield Decision.NO;
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
-        yield ThreeState.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
+        yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
       case Pair(
         PartialTyTerm(@Closed var lhs1, @Closed var rhs1, @Closed var A1),
@@ -605,7 +612,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       ) -> {
         @Closed var wl2 = whnf(lhs2);
         @Closed var wr2 = whnf(rhs2);
-        if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield ThreeState.NO;
+        if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield Decision.NO;
         yield withConnection(wl2, wr2, () -> compare(A1, A2, null));
       }
       default -> throw noRules(preLhs);
@@ -639,7 +646,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Maybe you're looking for {@link #compare} or {@link TyckState#solveEqn} instead. */
-  @ApiStatus.Internal public @NotNull ThreeState checkEqn(@NotNull TyckState.Eqn eqn) {
+  @ApiStatus.Internal public @NotNull Decision checkEqn(@NotNull TyckState.Eqn eqn) {
     if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
     else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;

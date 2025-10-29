@@ -4,14 +4,12 @@ package org.aya.states;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -86,7 +84,7 @@ public final class TyckState {
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
   @ApiStatus.Internal
-  public @NotNull ThreeState solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
+  public @NotNull Decision solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;

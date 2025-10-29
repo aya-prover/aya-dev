@@ -19,15 +19,15 @@ public sealed interface RelDec<T> {
 
     @Override
     @NotNull
-    RelDec.Strict<T> lub(@NotNull ThreeState state);
+    RelDec.Strict<T> lub(@NotNull Decision state);
   }
 
   sealed interface Claim<T> extends RelDec<T> { }
 
   record Proof<T>(@NotNull T proof) implements Strict<T> {
     @Override
-    public @NotNull ThreeState downgrade() {
-      return ThreeState.YES;
+    public @NotNull Decision downgrade() {
+      return Decision.YES;
     }
 
     @Override
@@ -41,7 +41,7 @@ public sealed interface RelDec<T> {
     }
 
     @Override
-    public @NotNull Strict<T> lub(@NotNull ThreeState state) {
+    public @NotNull Strict<T> lub(@NotNull Decision state) {
       return switch (state) {
         case NO, UNSURE -> new StrictClaim<>(state);
         case YES -> this;
@@ -54,13 +54,13 @@ public sealed interface RelDec<T> {
     }
   }
 
-  record StrictClaim<T>(@NotNull ThreeState claim) implements Strict<T>, Claim<T> {
+  record StrictClaim<T>(@NotNull Decision claim) implements Strict<T>, Claim<T> {
     public StrictClaim {
-      assert claim != ThreeState.YES;
+      assert claim != Decision.YES;
     }
 
     @Override
-    public @NotNull ThreeState downgrade() {
+    public @NotNull Decision downgrade() {
       return claim;
     }
 
@@ -70,7 +70,7 @@ public sealed interface RelDec<T> {
     }
 
     @Override
-    public @NotNull Strict<T> lub(@NotNull ThreeState state) {
+    public @NotNull Strict<T> lub(@NotNull Decision state) {
       // never fail, claim is never YES, thus claim.lub(state) is never YES
       return new StrictClaim<>(claim.lub(state));
     }
@@ -85,8 +85,8 @@ public sealed interface RelDec<T> {
     INSTANCE;
 
     @Override
-    public @NotNull ThreeState downgrade() {
-      return ThreeState.YES;
+    public @NotNull Decision downgrade() {
+      return Decision.YES;
     }
 
     @Override
@@ -95,8 +95,8 @@ public sealed interface RelDec<T> {
     }
 
     @Override
-    public @NotNull RelDec<Object> lub(@NotNull ThreeState state) {
-      if (state == ThreeState.YES) return this;
+    public @NotNull RelDec<Object> lub(@NotNull Decision state) {
+      if (state == Decision.YES) return this;
       return from(state);
     }
   }
@@ -105,8 +105,8 @@ public sealed interface RelDec<T> {
     return new Proof<>(proof);
   }
 
-  static <T> Claim<T> from(@NotNull ThreeState claim) {
-    if (claim == ThreeState.YES) return yes();
+  static <T> Claim<T> from(@NotNull Decision claim) {
+    if (claim == Decision.YES) return yes();
     return new StrictClaim<>(claim);
   }
 
@@ -115,11 +115,11 @@ public sealed interface RelDec<T> {
   }
 
   static <T> StrictClaim<T> unsure() {
-    return new StrictClaim<>(ThreeState.UNSURE);
+    return new StrictClaim<>(Decision.UNSURE);
   }
 
   static <T> StrictClaim<T> no() {
-    return new StrictClaim<>(ThreeState.NO);
+    return new StrictClaim<>(Decision.NO);
   }
 
   static <T> @NotNull RelDec.Strict<T> ofNullable(@Nullable T maybeProof) {
@@ -127,20 +127,20 @@ public sealed interface RelDec<T> {
     return no();
   }
 
-  @NotNull ThreeState downgrade();
+  @NotNull Decision downgrade();
 
   default boolean isNo() {
-    return downgrade() == ThreeState.NO;
+    return downgrade() == Decision.NO;
   }
 
   default boolean isYes() {
-    return downgrade() == ThreeState.YES;
+    return downgrade() == Decision.YES;
   }
 
-  @NotNull RelDec<T> lub(@NotNull ThreeState state);
+  @NotNull RelDec<T> lub(@NotNull Decision state);
 
-  /// @return the containing proof, null if this is [Claim] with [ThreeState#UNSURE] or [ThreeState#NO].
-  /// @throws Panic if this is [Claim] with [ThreeState#YES]
+  /// @return the containing proof, null if this is [Claim] with [Decision#UNSURE] or [Decision#NO].
+  /// @throws Panic if this is [Claim] with [Decision#YES]
   @Nullable T getOrNull();
 
   default @NotNull T get() {
