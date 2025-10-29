@@ -649,6 +649,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   @ApiStatus.Internal public @NotNull Decision checkEqn(@NotNull TyckState.Eqn eqn) {
     if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
-    else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()) != null;
+    else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()).downgrade();
   }
 }
