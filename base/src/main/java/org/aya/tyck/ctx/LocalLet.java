@@ -40,11 +40,11 @@ public record LocalLet(
 
   /// @return small local lets, because we usually run into small lets
   @Override public @NotNull LocalLet derive() {
-    return derive(new MutableLinkedHashMap<>(1));
+    return derive(1);
   }
 
-  public @NotNull LocalLet derive(@NotNull MutableLinkedHashMap<LocalVar, LocalLet.DefinedAs> let) {
-    return new LocalLet(this, let);
+  public @NotNull LocalLet derive(int initialCapacity) {
+    return new LocalLet(this, new MutableLinkedHashMap<>(initialCapacity));
   }
 
   @Override public @NotNull Option<LocalLet.DefinedAs> getLocal(@NotNull LocalVar key) {

@@ -32,7 +32,7 @@ public sealed interface LocalCtx extends Scoped<LocalVar, @Closed Term, LocalCtx
   /// @return using empty maps because we either don't use it (we're using let instead) or we
   /// insert to it a lot
   @Override @Contract("-> new") default @NotNull LocalCtx derive() {
-    return new MapLocalCtx(new MutableLinkedHashMap<>(0), MutableArrayList.create(0), this);
+    return new MapLocalCtx(new MutableLinkedHashMap<>(), MutableArrayList.create(), this);
   }
   @Contract("_,_->new") default @NotNull LocalCtx derive1(@NotNull LocalVar var, @NotNull Term type) {
     return new SeqLocalCtx(ImmutableTreeSeq.of(type), ImmutableTreeSeq.of(var), this);

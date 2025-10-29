@@ -33,13 +33,9 @@ import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
-import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.tycker.AppTycker;
-import org.aya.tyck.tycker.Unifiable;
-import org.aya.unify.TermComparator;
-import org.aya.unify.Unifier;
 import org.aya.util.Ordering;
 import org.aya.util.Panic;
 import org.aya.util.position.SourceNode;
@@ -53,11 +49,10 @@ import java.util.Comparator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public final class ExprTycker extends InstanceResolver implements Unifiable {
+public final class ExprTycker extends ScopedTycker {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
   public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
-  private @NotNull LocalLet localLet;
   private final @NotNull ModulePath fileModule;
 
   public void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type) {
@@ -72,7 +67,6 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     @NotNull Reporter reporter, @NotNull ModulePath fileModule
   ) {
     super(state, instanceSet, new MapLocalCtx(), reporter);
-    this.localLet = new LocalLet();
     this.fileModule = fileModule;
   }
 
@@ -188,7 +182,7 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
     ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns
   ) {
-    try (var _ = subscope()) {
+    try (var _ = subLocalCtx()) {
       var tele = MutableList.<LocalVar>create();
       wellArgs.forEachWith(discriminant, (arg, discr) -> {
         if (discr.asBinding() != null) {
@@ -528,8 +522,8 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
     return switch (f) {
-      case LocalVar ref when localLet.contains(ref) -> {
-        var definedAs = localLet.get(ref);
+      case LocalVar ref when localLet().contains(ref) -> {
+        var definedAs = localLet().get(ref);
         var jdg = definedAs.definedAs();
         var term = definedAs.inline()
           ? jdg.wellTyped()
@@ -581,8 +575,8 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
 
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
-    try (var _ = subscope()) {
-      localLet.put(bindName, definedAs, false);
+    try (var _ = subLocalLet()) {
+      localLet().put(bindName, definedAs, false);
       var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
@@ -590,58 +584,6 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
       return new Jdg.Default(wellTypedLet, typeLet);
     }
   }
-
-  // region Overrides and public APIs
-  @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
-    return new Unifier(state(), localCtx(), reporter(), pos, order, true);
-  }
-
-  public record SubscopedVar(
-    @NotNull LocalCtx parentCtx,
-    @NotNull LocalVar var,
-    @NotNull ExprTycker tycker
-  ) implements AutoCloseable {
-    @Override public void close() {
-      tycker.setLocalCtx(parentCtx);
-      tycker.state.removeConnection(var);
-    }
-  }
-
-  public record SubscopedNoVar(
-    @NotNull LocalCtx parentCtx, @NotNull LocalLet parentDef,
-    @NotNull InstanceSet parentInstanceSet,
-    @NotNull ExprTycker tycker
-  ) implements AutoCloseable {
-    @Override public void close() {
-      tycker.setLocalCtx(parentCtx);
-      tycker.setLocalLet(parentDef);
-      tycker.setInstanceSet(parentInstanceSet);
-      tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
-    }
-  }
-
-  /// Expectation on the usage: `localCtx` being either unused or inserted a lot,
-  /// and `localLet` being inserted only once.
-  public @NotNull SubscopedNoVar subscope() {
-    return new SubscopedNoVar(
-      setLocalCtx(localCtx().derive()),
-      setLocalLet(localLet().derive()),
-      setInstanceSet(instanceSet.derive()),
-      this
-    );
-  }
-
-  public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
-    return new SubscopedVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
-  }
-
-  public @NotNull LocalLet localLet() { return localLet; }
-  public @NotNull LocalLet setLocalLet(@NotNull LocalLet let) {
-    var old = localLet;
-    this.localLet = let;
-    return old;
-  }
-  // endregion Overrides and public APIs
 
   protected static final class NotPi extends Exception {
     public final @NotNull Term actual;

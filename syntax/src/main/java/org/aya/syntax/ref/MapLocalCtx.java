@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
 import kala.collection.SeqView;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
@@ -20,6 +21,9 @@ public record MapLocalCtx(
 ) implements LocalCtx {
   public MapLocalCtx() {
     this(MutableLinkedHashMap.of(), MutableList.create(), null);
+  }
+  public MapLocalCtx(int initialCapacity, @Nullable LocalCtx parent) {
+    this(new MutableLinkedHashMap<>(initialCapacity), MutableArrayList.create(initialCapacity), parent);
   }
 
   @Override public boolean isEmpty() {
