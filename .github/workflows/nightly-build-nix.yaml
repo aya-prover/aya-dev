@@ -1,0 +1,46 @@
+name: nightly-nix-cache
+on:
+  push:
+    branches:
+      - main
+jobs:
+  check-deps-lock:
+    uses: aya-prover/aya-dev/.github/workflows/check-deps-lock.yaml@main
+
+  nightly-build-nix:
+    needs: [check-deps-lock]
+    runs-on: ${{ matrix.os }}
+    if: github.repository == 'aya-prover/aya-dev'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: x86_64-linux
+          - os: ubuntu-24.04-arm
+            platform: aarch64-linux
+          - os: macos-15-intel
+            platform: x86_64-darwin
+          - os: macos-latest
+            platform: aarch64-darwin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Nix
+        uses: nixbuild/nix-quick-install-action@v34
+        with:
+          nix_conf: |
+            extra-substituters = https://aya-prover.cachix.org
+            extra-trusted-public-keys = aya-prover.cachix.org-1:BNuUD9aNZMDmYISC77aqZfzP4l9XtTHQvYwPhKO+Msg=
+
+      - name: Run build tasks in Nix and upload cache
+        run: |
+          nix run github:Mic92/nix-fast-build -- \
+            --skip-cached \
+            --no-nom \
+            --cachix-cache aya-prover \
+            --flake ".#packages.${{ matrix.platform }}"
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}

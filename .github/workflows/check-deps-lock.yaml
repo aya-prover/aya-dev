@@ -1,0 +1,38 @@
+name: check if deps.json is up-to-date
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+jobs:
+  check-deps-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Nix
+        uses: nixbuild/nix-quick-install-action@v34
+
+      # https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
+      - run: |
+          mkdir -p /etc/apparmor.d
+
+          cat << EOF > /etc/apparmor.d/bwrap
+          abi <abi/4.0>,
+          include <tunables/global>
+          
+          profile bwrap /usr/bin/bwrap flags=(unconfined) {
+            userns,
+          
+            # Site-specific additions and overrides. See local/README for details.
+            include if exists <local/bwrap>
+          }
+          EOF
+
+      - name: Check if Gradle deps.json is up-to-date
+        run: |
+          CI=1 bash .github/workflows/check-nix-gradle-lock.sh
