@@ -91,6 +91,16 @@ hacking Aya, but can be annoying sometimes. You can manually refresh the symbols
 ![Sync All Gradle Projects](./images/search_sync_all.png)
 </details>
 
+For Nix users, run `nix develop` to enter a development shell with JDK and Gradle,
+or use [direnv](direnv) to automatically activate/deactivate shell in 
+And run `nix build .#aya` to build aya-prover from source.
+
+> [NOTE for developers]
+> After modifying dependency versions in Gradle,
+> please run `.github/workflows/check-nix-gradle-lock.sh`
+> and commit any changes in `nix/deps.json` in order to
+> synchronize Nix lock for Gradle dependencies.
+
 ## Authoring and running tests
 
 We prefer using integration tests, which is very convenient -- all fixtures can use the stdlib,
