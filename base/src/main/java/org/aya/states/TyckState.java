@@ -58,7 +58,7 @@ public final class TyckState {
 
   public void pushThis(@NotNull LocalVar thisVar, @NotNull ClassCall type) {
     classThis.push(thisVar);
-    instanceSet.put(thisVar, type);
+    instanceSet.putParam(thisVar, type);
   }
 
   public @NotNull LocalVar popThis() {
