@@ -15,6 +15,6 @@ import java.util.function.UnaryOperator;
 
 public sealed interface BetaRedex extends Term permits AppTerm, LetTerm, ProjTerm, MemberCall, PAppTerm {
   /// @apiNote `this` is required to be [Closed]
-  @NotNull @Closed Term make(@NotNull UnaryOperator<@Closed Term> mapper);
+  @Closed @NotNull Term make(@NotNull UnaryOperator<@Closed Term> mapper);
   default @Closed @NotNull Term make() { return make(UnaryOperator.identity()); }
 }

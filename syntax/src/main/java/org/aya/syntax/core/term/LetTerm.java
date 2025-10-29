@@ -27,13 +27,13 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
   }
 
   /// @apiNote this [LetTerm] must be [Closed]
-  @Override public @NotNull @Closed Term make(@NotNull UnaryOperator<@Closed Term> mapper) {
+  @Override public @Closed @NotNull Term make(@NotNull UnaryOperator<@Closed Term> mapper) {
     @Closed LetTerm self = this;
     // [body] and [definedAs] are closed since [this] is [Closed], thus [body.apply(definedAs)] is also closed.
     return mapper.apply(body.apply(self.definedAs()));
   }
 
-  public static @NotNull @Closed Term makeAll(@NotNull @Closed Term term) {
+  public static @Closed @NotNull Term makeAll(@Closed @NotNull Term term) {
     if (term instanceof LetTerm l) l.make(LetTerm::makeAll);
     return term;
   }
@@ -68,7 +68,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
     return new Unlet(definedAs.toSeq(), let);
   }
 
-  public static @NotNull @Closed Term bind(@NotNull LetFreeTerm bind, @NotNull @Closed Term body) {
+  public static @Closed @NotNull Term bind(@NotNull LetFreeTerm bind, @Closed @NotNull Term body) {
     var name = bind.name();
     var definedAs = bind.definedAs().wellTyped();
     var boundBody = body.bind(name);

@@ -21,7 +21,7 @@ public record LetReplacer(@NotNull LocalLet let) implements UnaryOperator<Term> 
     };
   }
 
-  public @NotNull @Closed Term accept(@NotNull @Closed Term term) {
+  public @Closed @NotNull Term accept(@Closed @NotNull Term term) {
     return apply(term);
   }
 }

@@ -27,7 +27,7 @@ public record Signature(@Closed @NotNull AbstractTele.Locns telescope, @NotNull 
 
   public @NotNull ImmutableSeq<Param> params() { return telescope.telescope(); }
   public @NotNull Term result() { return telescope.result(); }
-  public @NotNull @Closed Term result(SeqView<LocalVar> vars) {
+  public @Closed @NotNull Term result(SeqView<LocalVar> vars) {
     return telescope.result(vars.<Term>map(FreeTerm::new).toSeq());
   }
 

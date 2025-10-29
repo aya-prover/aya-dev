@@ -153,8 +153,8 @@ public record DepTypeTerm(
     }
   }
 
-  public static @NotNull @Closed Unpi unpiAndBind(
-    @NotNull @Closed Term term, @NotNull UnaryOperator<@Closed Term> pre,
+  public static @Closed @NotNull Unpi unpiAndBind(
+    @Closed @NotNull Term term, @NotNull UnaryOperator<@Closed Term> pre,
     @NotNull MutableList<LocalVar> names
   ) {
     var params = MutableList.<Param>create();

@@ -26,10 +26,10 @@ import java.util.function.Supplier;
  */
 public interface Stateful {
   @NotNull TyckState state();
-  default @NotNull @Closed Term whnf(@NotNull @Closed Term term) { return new Normalizer(state()).apply(term); }
+  default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
   /// Does not validate solution.
   default void solve(MetaVar meta, Term solution) { state().solve(meta, solution); }
-  default @NotNull @Closed Term freezeHoles(@NotNull @Closed Term term) { return new Finalizer.Freeze(this).zonk(term); }
+  default @Closed @NotNull Term freezeHoles(@Closed @NotNull Term term) { return new Finalizer.Freeze(this).zonk(term); }
 
   @ForLSP default @NotNull Term fullNormalize(Term result) {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);

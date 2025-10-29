@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 /// @param definedAs never get bind in the lifecycle of [LetFreeTerm]
 @Closed
-public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull @Closed Jdg definedAs) implements FreeTermLike {
+public record LetFreeTerm(@Override @NotNull LocalVar name, @Closed @NotNull Jdg definedAs) implements FreeTermLike {
   public @NotNull LetFreeTerm update(@Closed @NotNull Jdg definedAs) {
     return definedAs.wellTyped() == definedAs().wellTyped()
       ? this

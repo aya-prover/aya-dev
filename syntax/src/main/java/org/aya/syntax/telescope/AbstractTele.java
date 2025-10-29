@@ -66,7 +66,7 @@ public interface AbstractTele {
   }
 
   /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
-  default @NotNull @Closed Term telescope(int i, @Closed Term[] teleArgs) {
+  default @Closed @NotNull Term telescope(int i, @Closed Term[] teleArgs) {
     return telescope(i, ArraySeq.wrap(teleArgs));
   }
 
@@ -75,14 +75,14 @@ public interface AbstractTele {
   ///
   /// @param teleArgs the arguments to the former parameters
   /// @return the type of {@param i}-th parameter.
-  default @NotNull @Closed Term telescope(int i, Seq<@Closed Term> teleArgs) {
+  default @Closed @NotNull Term telescope(int i, Seq<@Closed Term> teleArgs) {
     return Panic.unreachable();
   }
 
   /// Get the result of this signature
   ///
   /// @param teleArgs the arguments to all parameters.
-  @NotNull @Closed Term result(Seq<@Closed Term> teleArgs);
+  @Closed @NotNull Term result(Seq<@Closed Term> teleArgs);
 
   /// Return the amount of parameters.
   int telescopeSize();
@@ -104,7 +104,7 @@ public interface AbstractTele {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
 
-  default @NotNull @Closed Term result(@Closed Term... teleArgs) {
+  default @Closed @NotNull Term result(@Closed Term... teleArgs) {
     return result(ArraySeq.wrap(teleArgs));
   }
 
@@ -113,11 +113,11 @@ public interface AbstractTele {
       .view().mapToObj(this::telescopeName);
   }
 
-  default @NotNull @Closed Term makePi() {
+  default @Closed @NotNull Term makePi() {
     return makePi(Seq.empty());
   }
 
-  default @NotNull @Closed Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
+  default @Closed @NotNull Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
     return new PiBuilder(this).make(0, initialArgs);
   }
 

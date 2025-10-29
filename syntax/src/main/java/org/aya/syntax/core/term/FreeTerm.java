@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Closed
 public record FreeTerm(@NotNull LocalVar name) implements FreeTermLike {
-  public static @NotNull @Closed FreeTerm of(@NotNull LocalVar name) {
+  public static @Closed @NotNull FreeTerm of(@NotNull LocalVar name) {
     return new FreeTerm(name);
   }
 

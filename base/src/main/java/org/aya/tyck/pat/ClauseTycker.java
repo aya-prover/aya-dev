@@ -88,7 +88,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// Then we apply the inserted pats to the body  (essentially using [#allPats()]) to complete it.
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull @Closed Term result,
+    @Closed @NotNull Term result,
     @NotNull ImmutableSeq<@Closed Pat> tyckedPats,
     @NotNull ImmutableSeq<@Closed Pat> missingPats,
     @Override @NotNull SourcePos sourcePos,
@@ -401,7 +401,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// contain let bindings from real let expressions,
   ///
   /// @param term a free term
-  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull @Closed Term term) {
+  public static @NotNull Term makeLet(@NotNull LocalLet lets, @Closed @NotNull Term term) {
     // only one level
     return lets.let()
       .toSeq()

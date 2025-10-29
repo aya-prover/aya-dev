@@ -29,7 +29,7 @@ public record LocalLet(
   /// @param inline whether this record should be immediately inlined when met.
   /// @see org.aya.tyck.StmtTycker#checkKitsune(DataCon, ExprTycker)
   /// @see org.aya.tyck.pat.ClauseTycker.LhsResult#dumpLocalLetTo
-  public record DefinedAs(@NotNull @Closed Jdg definedAs, boolean inline) {
+  public record DefinedAs(@Closed @NotNull Jdg definedAs, boolean inline) {
     public @NotNull DefinedAs map(@NotNull UnaryOperator<@Closed Jdg> f) {
       return new DefinedAs(f.apply(definedAs), inline);
     }
@@ -58,7 +58,7 @@ public record LocalLet(
   }
   @Override public void putLocal(@NotNull LocalVar key, @NotNull LocalLet.DefinedAs value) { let.put(key, value); }
 
-  public void put(@NotNull LocalVar key, @NotNull @Closed Jdg definedAs, boolean inline) {
+  public void put(@NotNull LocalVar key, @Closed @NotNull Jdg definedAs, boolean inline) {
     put(key, new DefinedAs(definedAs, inline));
   }
 }

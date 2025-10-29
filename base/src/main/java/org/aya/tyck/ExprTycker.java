@@ -79,7 +79,7 @@ public final class ExprTycker extends ScopedTycker {
   /**
    * @param type may not be in whnf, because we want unnormalized type to be used for unification.
    */
-  public @NotNull @Closed Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull @Closed Term type) {
+  public @Closed @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @Closed @NotNull Term type) {
     return switch (expr.data()) {
       case Expr.Lambda lam -> {
         var ref = lam.ref();
@@ -248,7 +248,7 @@ public final class ExprTycker extends ScopedTycker {
    * @param result wellTyped + actual type from synthesize
    * @param expr   original expr, used for error reporting
    */
-  private @NotNull Jdg inheritFallbackUnify(@NotNull @Closed Term type, @NotNull @Closed Jdg result, @NotNull WithPos<Expr> expr) {
+  private @NotNull Jdg inheritFallbackUnify(@Closed @NotNull Term type, @Closed @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
     @Closed Term resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
@@ -313,7 +313,7 @@ public final class ExprTycker extends ScopedTycker {
     return true;
   }
 
-  public @NotNull @Closed Term ty(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Term ty(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
@@ -347,7 +347,7 @@ public final class ExprTycker extends ScopedTycker {
     return new Jdg.Sort(sort(expr, ty(expr)));
   }
 
-  private @NotNull SortTerm sort(@NotNull WithPos<Expr> errorMsg, @NotNull @Closed Term term) {
+  private @NotNull SortTerm sort(@NotNull WithPos<Expr> errorMsg, @Closed @NotNull Term term) {
     return switch (whnf(term)) {
       case SortTerm u -> u;
       case MetaCall hole -> {
@@ -361,7 +361,7 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  public @NotNull @Closed Jdg synthesize(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Jdg synthesize(@NotNull WithPos<Expr> expr) {
     var result = doSynthesize(expr);
     if (expr.data() instanceof Expr.WithTerm with) {
       addWithTerm(with, expr.sourcePos(), result.type());
@@ -369,7 +369,7 @@ public final class ExprTycker extends ScopedTycker {
     return result;
   }
 
-  public @NotNull @Closed Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Sugar s -> throw new Panic(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
@@ -555,7 +555,7 @@ public final class ExprTycker extends ScopedTycker {
    *
    * @param checker check the type of the body of {@param let}
    */
-  private @NotNull @Closed Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, @Closed Jdg> checker) {
+  private @Closed @NotNull Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, @Closed Jdg> checker) {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();

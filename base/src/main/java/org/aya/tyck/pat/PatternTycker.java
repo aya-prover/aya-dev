@@ -58,7 +58,7 @@ import java.util.function.Predicate;
 public class PatternTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
   private final boolean allowImplicit;
-  /// A bound telescope (i.e. all the reference to the former parameter are
+  /// A closed telescope with bound-version parameter (i.e. all the reference to the former parameter are
   /// [org.aya.syntax.core.term.LocalTerm])
   private final @NotNull SignatureIterator telescope;
 
@@ -72,7 +72,7 @@ public class PatternTycker implements Problematic, Stateful {
   /// Almost equivalent to {@code telescope.peek()}, but we may instantiate it.
   ///
   /// @see #instCurrentParam()
-  private @UnknownNullability Param currentParam = null;
+  private @Closed @UnknownNullability Param currentParam = null;
   private boolean hasError = false;
   private final @NotNull Renamer nameGen;
 
@@ -118,7 +118,7 @@ public class PatternTycker implements Problematic, Stateful {
    * @param type    the type of {@param pattern}, it probably contains {@link MetaPatTerm}
    * @return a well-typed {@link Pat}, but still need to be inline!
    */
-  private @NotNull @Closed Pat doTyck(@NotNull WithPos<Pattern> pattern, @NotNull @Closed Term type) {
+  private @Closed @NotNull Pat doTyck(@NotNull WithPos<Pattern> pattern, @Closed @NotNull Term type) {
     return switch (pattern.data()) {
       case Pattern.Absurd _ -> {
         var selection = makeSureEmpty(type, pattern);
@@ -128,12 +128,14 @@ public class PatternTycker implements Problematic, Stateful {
         yield Pat.Misc.Absurd;
       }
       case Pattern.Tuple(var l, var r) -> {
-        if (!(exprTycker.whnf(type) instanceof DepTypeTerm(var kind, var lT, var rT) && kind == DTKind.Sigma)) {
+        if (!(exprTycker.whnf(type) instanceof DepTypeTerm(
+          var kind, @Closed var lT, @Closed var rT
+        ) && kind == DTKind.Sigma)) {
           var frozen = freezeHoles(type);
           yield withError(new PatternProblem.TupleNonSig(pattern, this, frozen), frozen);
         }
-        var lhs = doTyck(l, lT);
-        yield new Pat.Tuple(lhs, doTyck(r, rT.apply(PatToTerm.visit(lhs))));
+        @Closed var lhs = doTyck(l, lT);
+        yield new Pat.Tuple(lhs, doTyck(r, rT.apply(PatToTerm.accept(lhs))));
       }
       case Pattern.Con con -> {
         var realCon = makeSureAvail(type, con.resolved().data(), pattern);
@@ -202,7 +204,7 @@ public class PatternTycker implements Problematic, Stateful {
         yield withError(new PatternProblem.BadLitPattern(pattern, ty), ty);
       }
       case Pattern.As(var inner, var as, var typeRef) -> {
-        var innerPat = doTyck(inner, type);
+        @Closed var innerPat = doTyck(inner, type);
 
         typeRef.set(type);
         addAsSubst(as, innerPat, type);
@@ -367,6 +369,8 @@ public class PatternTycker implements Problematic, Stateful {
 
   /// Must be called before using [#currentParam]
   private @NotNull Closer instCurrentParam() {
+    // let i := paramSubst.size(), then `currentParam` is `i-th` parameter,
+    // thus the following reassignment is safe cause `instTele` returns a Closed Term.
     currentParam = currentParam.descent(t -> t.instTele(paramSubst.view().map(Jdg::wellTyped)));
     return CLOSER;
   }
@@ -379,15 +383,15 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * Checking {@param pattern} with {@link PatternTycker#currentParam}
    */
-  private @NotNull @Closed Pat tyckPattern(@NotNull WithPos<Pattern> pattern) {
+  private @Closed @NotNull Pat tyckPattern(@NotNull WithPos<Pattern> pattern) {
     try (var _ = instCurrentParam()) {
-      var result = doTyck(pattern, currentParam.type());
+      @Closed var result = doTyck(pattern, currentParam.type());
       addArgSubst(result, currentParam.type());
       return result;
     }
   }
 
-  private @NotNull @Closed Pat doGeneratePattern(@NotNull @Closed Term type, @NotNull String name, @NotNull SourcePos pos) {
+  private @Closed @NotNull Pat doGeneratePattern(@Closed @NotNull Term type, @NotNull String name, @NotNull SourcePos pos) {
     var freshVar = nameGen.bindName(name);
     if (exprTycker.whnf(type) instanceof DataCall dataCall) {
       // this pattern would be a Con, it can be inferred
@@ -405,10 +409,10 @@ public class PatternTycker implements Problematic, Stateful {
    * we generate a MetaPat for each,
    * so that they can be inferred during {@link ClauseTycker}
    */
-  private @NotNull @Closed Pat generatePattern() {
+  private @Closed @NotNull Pat generatePattern() {
     try (var _ = instCurrentParam()) {
       // TODO: I NEED A SOURCE POS!!
-      var pat = doGeneratePattern(currentParam.type(), currentParam.name(), SourcePos.NONE);
+      @Closed var pat = doGeneratePattern(currentParam.type(), currentParam.name(), SourcePos.NONE);
       addArgSubst(pat, currentParam.type());
       return pat;
     }
@@ -426,12 +430,13 @@ public class PatternTycker implements Problematic, Stateful {
     return tyckResult.wellTyped;
   }
 
-  private void addArgSubst(@NotNull @Closed Pat pattern, @NotNull @Closed Term type) {
+  private void addArgSubst(@Closed @NotNull Pat pattern, @Closed @NotNull Term type) {
     paramSubst.append(new Jdg.Default(PatToTerm.visit(pattern), type));
   }
 
-  private void addAsSubst(@NotNull LocalVar as, @NotNull Pat pattern, @NotNull @Closed Term type) {
-    asSubst.put(as, new Jdg.Default(PatToTerm.visit(pattern), type), false);
+  private void addAsSubst(@NotNull LocalVar as, @Closed @NotNull Pat pattern, @Closed @NotNull Term type) {
+    @Closed var jdg = new Jdg.Default(PatToTerm.accept(pattern), type);
+    asSubst.put(as, jdg, false);
   }
 
   private @NotNull TyckResult done(@NotNull MutableList<@Closed Pat> wellTyped) {
@@ -439,13 +444,13 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private record Selection(
-    @NotNull @Closed DataCall data,
+    @Closed @NotNull DataCall data,
     @NotNull ImmutableSeq<@Closed Term> ownerArgs,
-    @NotNull ConCallLike.@Closed Head conHead
+    ConCallLike.@Closed @NotNull Head conHead
   ) { }
 
-  private @Nullable ConCallLike.Head makeSureEmpty(@Closed Term type, @NotNull WithPos<Pattern> pattern) {
-    if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
+  private @Nullable ConCallLike.Head makeSureEmpty(@Closed @NotNull Term type, @NotNull WithPos<Pattern> pattern) {
+    if (!(exprTycker.whnf(type) instanceof @Closed DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }
@@ -470,7 +475,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private @Nullable Selection makeSureAvail(@Closed Term type, @NotNull ConDefLike name, @NotNull WithPos<Pattern> pattern) {
-    if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
+    if (!(exprTycker.whnf(type) instanceof @Closed DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }
@@ -480,9 +485,11 @@ public class PatternTycker implements Problematic, Stateful {
     }
 
     return switch (checkAvail(dataCall, name, exprTycker.state)) {
-      case Result.Ok(var subst) -> new Selection(
-        dataCall, subst,
-        new ConCallLike.Head(name, dataCall.ulift(), subst));
+      case Result.Ok(var subst) -> {
+        // head is Closed if subst is Closed
+        @Closed var head = new ConCallLike.Head(name, dataCall.ulift(), subst);
+        yield new Selection(dataCall, subst, head);
+      }
       case Result.Err(_) -> {
         // Here, name != null, and is not in the list of checked body
         foundError(new PatternProblem.UnavailableCon(pattern, dataCall));
@@ -509,9 +516,10 @@ public class PatternTycker implements Problematic, Stateful {
   /**
    * Check whether {@param con} is available under {@param type}
    */
-  public static @NotNull Result<ImmutableSeq<Term>, State> checkAvail(
-    @NotNull @Closed DataCall type, @NotNull ConDefLike con, @NotNull TyckState state
+  public static @NotNull Result<ImmutableSeq<@Closed Term>, State> checkAvail(
+    @Closed @NotNull DataCall type, @NotNull ConDefLike con, @NotNull TyckState state
   ) {
+    // TODO: verify db-lity
     return switch (con) {
       case JitCon jitCon -> jitCon.isAvailable(new Normalizer(state), type.args());
       case ConDef.Delegate conDef -> {
@@ -526,23 +534,27 @@ public class PatternTycker implements Problematic, Stateful {
     };
   }
 
-  private @NotNull Pat randomPat(@Closed Term param) {
+  private @Closed @NotNull Pat randomPat(@Closed @NotNull Term param) {
     return new Pat.Bind(nameGen.bindName(param), param);
   }
 
   // region Error Reporting
+
   @Override public @NotNull Reporter reporter() { return exprTycker.reporter; }
   @Override public @NotNull TyckState state() { return exprTycker.state; }
 
-  private @NotNull Pat withError(Problem problem, Term param) {
+  private @NotNull Pat withError(Problem problem, @NotNull Term param) {
     foundError(problem);
     // In case something's wrong, produce a random pattern
-    return randomPat(param);
+    @Closed var p = param;
+    // this pat is only used for error reporting, the dblity doesn't matter
+    return randomPat(p);
   }
 
   private void foundError(@Nullable Problem problem) {
     hasError = true;
     if (problem != null) fail(problem);
   }
+
   // endregion Error Reporting
 }

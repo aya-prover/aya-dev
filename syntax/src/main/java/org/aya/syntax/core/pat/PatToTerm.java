@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.pat;
 
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.RuleReducer;
@@ -31,5 +32,9 @@ public interface PatToTerm {
       case Pat.Meta meta -> new MetaPatTerm(meta);
       case Pat.ShapedInt si -> si.toTerm();
     };
+  }
+
+  static @Closed @NotNull Term accept(@Closed @NotNull Pat pat) {
+    return visit(pat);
   }
 }
