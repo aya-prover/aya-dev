@@ -9,6 +9,7 @@ import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
 import org.aya.pretty.doc.Doc;
+import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
@@ -35,7 +36,6 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ctx.LocalLet;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
-import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.AppTycker;
 import org.aya.tyck.tycker.Unifiable;
 import org.aya.unify.TermComparator;
@@ -53,7 +53,7 @@ import java.util.Comparator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public final class ExprTycker extends AbstractTycker implements Unifiable {
+public final class ExprTycker extends InstanceResolver implements Unifiable {
   public final @NotNull MutableTreeSet<WithPos<Expr.WithTerm>> withTerms =
     MutableTreeSet.create(Comparator.comparing(SourceNode::sourcePos));
   public final @NotNull MutableList<WithPos<Expr.Hole>> userHoles = MutableList.create();
@@ -67,17 +67,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     }
   }
 
-  private ExprTycker(
-    @NotNull TyckState state, @NotNull LocalCtx ctx, @NotNull LocalLet let,
+  public ExprTycker(
+    @NotNull TyckState state, @NotNull InstanceSet instanceSet,
     @NotNull Reporter reporter, @NotNull ModulePath fileModule
   ) {
-    super(state, ctx, reporter);
-    this.localLet = let;
+    super(state, instanceSet, new MapLocalCtx(), reporter);
+    this.localLet = new LocalLet();
     this.fileModule = fileModule;
-  }
-
-  public ExprTycker(@NotNull TyckState state, @NotNull Reporter reporter, @NotNull ModulePath fileModule) {
-    this(state, new MapLocalCtx(), new LocalLet(), reporter, fileModule);
   }
 
   public void solveMetas() {
@@ -613,11 +609,13 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
 
   public record SubscopedNoVar(
     @NotNull LocalCtx parentCtx, @NotNull LocalLet parentDef,
+    @NotNull InstanceSet parentInstanceSet,
     @NotNull ExprTycker tycker
   ) implements AutoCloseable {
     @Override public void close() {
       tycker.setLocalCtx(parentCtx);
       tycker.setLocalLet(parentDef);
+      tycker.setInstanceSet(parentInstanceSet);
       tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
     }
   }
@@ -628,6 +626,7 @@ public final class ExprTycker extends AbstractTycker implements Unifiable {
     return new SubscopedNoVar(
       setLocalCtx(localCtx().derive()),
       setLocalLet(localLet().derive()),
+      setInstanceSet(instanceSet.derive()),
       this
     );
   }

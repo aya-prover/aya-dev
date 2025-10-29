@@ -61,7 +61,7 @@ public class ArgsComputer {
 
   private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
     if (param.type() instanceof ClassCall clazz) {
-      var thises = tycker.state.instanceSet
+      var thises = tycker.instanceSet
         .find(clazz, tycker.unifier(pos, Ordering.Eq))
         .toSeq();
       if (thises.isEmpty() || thises.sizeGreaterThan(1)) {

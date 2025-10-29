@@ -20,6 +20,7 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
+import org.aya.tyck.InstanceResolver;
 import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import java.util.function.UnaryOperator;
 
 public record AppTycker<Ex extends Exception>(
   @Override @NotNull TyckState state,
-  @NotNull AbstractTycker tycker,
+  @NotNull InstanceResolver tycker,
   @NotNull SourcePos pos,
   int argsCount, int lift,
   @NotNull Factory<Ex> makeArgs
@@ -49,7 +50,7 @@ public record AppTycker<Ex extends Exception>(
   }
 
   public AppTycker(
-    @NotNull AbstractTycker tycker, @NotNull SourcePos pos,
+    @NotNull InstanceResolver tycker, @NotNull SourcePos pos,
     int argsCount, int lift, @NotNull Factory<Ex> makeArgs
   ) {
     this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
@@ -156,13 +157,13 @@ public record AppTycker<Ex extends Exception>(
   private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var self = LocalVar.generate("self");
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
-    state.pushThis(self, new ClassCall(clazz, 0, ImmutableArray.empty()));
+    tycker.pushThis(self, new ClassCall(clazz, 0, ImmutableArray.empty()));
     // TODO: we ought to update the type info of `self` in the TyckState
     var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
-    state.popThis();
+    tycker.popThis();
     return result;
   }
 

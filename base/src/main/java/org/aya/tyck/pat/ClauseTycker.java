@@ -21,6 +21,7 @@ import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
@@ -109,10 +110,14 @@ public final class ClauseTycker implements Problematic, Stateful {
       assert exprTycker.localLet().let().isEmpty();
       // Sanity check
       assert asSubst.parent() == null;
-      teleBinds.forEachWith(paramSubst, (ref, subst) -> exprTycker.localLet()
-        .put(ref, subst, inline));
-      asSubst.let().forEach((ref, subst) -> exprTycker.localLet()
-        .put(ref, subst.definedAs(), inline));
+      teleBinds.forEachWith(paramSubst, (ref, subst) -> {
+        exprTycker.localLet().put(ref, subst, inline);
+        if (subst.type() instanceof ClassCall clazz) {
+          exprTycker.instanceSet.put(new LetFreeTerm(ref, subst), clazz);
+        }
+      });
+      asSubst.let().forEach((ref, subst) ->
+        exprTycker.localLet().put(ref, subst.definedAs(), inline));
     }
   }
 

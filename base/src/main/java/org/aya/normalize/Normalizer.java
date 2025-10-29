@@ -164,9 +164,11 @@ public final class Normalizer implements UnaryOperator<Term> {
         }
         case ConCall call -> {
           if (call.ref().hasEq() && apply(call.conArgs().getLast()) instanceof DimTerm dim) {
-            term = call.head().ref().equality(call.args(), dim == DimTerm.I0);
+            var args = Callable.descent(call.args(), this);
+            term = call.head().ref().equality(args, dim == DimTerm.I0);
             continue;
           }
+          // Already in fullNormalize mode
           return term.descent(this);
         }
         case PrimCall prim -> {
