@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
@@ -14,7 +14,7 @@ class GenerateVersionTask extends DefaultTask {
     group = "build setup"
   }
 
-  final @InputDirectory File inputDir = project.rootProject.file(".git")
+  final @InputDirectory File dotGitDir = project.rootProject.file(".git")
   @OutputDirectory File outputDir
   @Input String className
   @Input def basePackage = project.group
@@ -22,7 +22,10 @@ class GenerateVersionTask extends DefaultTask {
   @Input int jdkVersion
 
   @TaskAction def run() {
-    def stdout = BuildUtil.gitRev(project.rootDir)
+    String stdout = "unknown"
+    if (dotGitDir.exists())
+      // This will be trimmed inside BuildUtil.gitRev
+      stdout = BuildUtil.gitRev(project.rootDir)
     def code = """\
       package ${basePackage}.prelude;
       import ${basePackage}.util.Version;
@@ -30,8 +33,8 @@ class GenerateVersionTask extends DefaultTask {
       import org.jetbrains.annotations.NonNls;
       public class $className {
         public static final @NotNull @NonNls String VERSION_STRING = "$taskVersion";
-        public static final @NotNull @NonNls String COMMIT_HASH = "${stdout.toString().trim()}";
-        public static final @NotNull @NonNls String JDK_VERSION = "${jdkVersion}";
+        public static final @NotNull @NonNls String COMMIT_HASH = "$stdout";
+        public static final @NotNull @NonNls String JDK_VERSION = "$jdkVersion";
         public static final @NotNull Version VERSION = Version.create(VERSION_STRING);
       }""".stripIndent()
     outputDir.mkdirs()
