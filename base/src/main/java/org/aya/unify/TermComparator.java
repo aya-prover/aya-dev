@@ -186,7 +186,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   /// Compare the arguments of two callable ONLY, this method will NOT try to
   /// normalize and then compare (while the old version of Aya does).
-  private RelDec.@Closed @NotNull Strict<Term> compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) {
+  private @Closed @NotNull RelDec<Term> compareCallApprox(@NotNull Callable.Tele lhs, @NotNull Callable.Tele rhs) {
     if (!lhs.ref().equals(rhs.ref())) return RelDec.no();
     return compareMany(lhs.args(), rhs.args(),
       lhs.ref().signature().lift(Math.min(lhs.ulift(), rhs.ulift())));
@@ -474,13 +474,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private RelDec.@Closed @NotNull Strict<Term> compareMetaLitWithLit(@Closed @NotNull MetaLitTerm lhs, Object repr, @Closed @NotNull Term rhsType) {
+  private @Closed @NotNull RelDec<Term>
+  compareMetaLitWithLit(@Closed @NotNull MetaLitTerm lhs, Object repr, @Closed @NotNull Term rhsType) {
     if (!Objects.equals(lhs.repr(), repr)) return RelDec.no();
     return compare(lhs.type(), rhsType, null).toRelDec(lhs.type());
   }
 
   /** Compare {@param lambda} and {@param rhs} with {@param type} */
-  private @NotNull Decision compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull DepTypeTerm type) {
+  private @NotNull Decision
+  compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull DepTypeTerm type) {
     try (var scope = subscope(type.param())) {
       var var = scope.var();
       @Closed var lhsBody = lambda.body().apply(var);
@@ -489,7 +491,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
   }
 
-  private @NotNull Decision compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull EqTerm type) {
+  private @NotNull Decision
+  compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull EqTerm type) {
     try (var scope = subscope(DimTyTerm.INSTANCE)) {
       var var = scope.var();
       @Closed var lhsBody = lambda.body().apply(var);
@@ -500,7 +503,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /// @return `Proof(null)` if `types` == null
-  private RelDec.@Closed @NotNull Strict<@Nullable Term> compareMany(
+  private @Closed @NotNull RelDec<@Nullable Term> compareMany(
     @NotNull ImmutableSeq<@Closed Term> list,
     @NotNull ImmutableSeq<@Closed Term> rist,
     @Closed @Nullable AbstractTele types

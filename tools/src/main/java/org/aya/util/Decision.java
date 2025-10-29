@@ -42,7 +42,7 @@ public enum Decision {
     return lub(f.get());
   }
 
-  public <T> RelDec.@NotNull Strict<T> lubRelDec(@NotNull Supplier<RelDec.Strict<T>> f) {
+  public <T> @NotNull RelDec<T> lubRelDec(@NotNull Supplier<RelDec<T>> f) {
     if (this == NO) return RelDec.no();
     return f.get().lub(this);
   }
