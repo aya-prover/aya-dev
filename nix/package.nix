@@ -42,14 +42,9 @@ stdenv.mkDerivation (finalAttrs: {
     );
   };
 
-  patches = [
-    ./patches/0001-fix-patch-on-gradle-deps-resolution.patch
-    ./patches/0002-fix-patch-GenerateVersionTask.patch
-  ];
-
   postPatch = ''
     substituteInPlace buildSrc/src/main/groovy/org/aya/gradle/GenerateVersionTask.groovy \
-      --replace-fail "\"__COMMIT_HASH__\"" "\"${rev}\""
+      --replace-fail "def stdout = \"__COMMIT_HASH__\"" "String stdout = \"${rev}\""
   '';
 
   nativeBuildInputs = [
