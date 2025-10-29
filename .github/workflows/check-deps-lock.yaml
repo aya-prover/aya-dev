@@ -10,29 +10,23 @@ jobs:
   check-deps-lock:
     runs-on: ubuntu-latest
     steps:
+      - name: Disable apparmor user namespace restrictions
+        run: |
+          # workaround https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
+          sudo sysctl -w kernel.unprivileged_userns_clone=1
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Setup Nix
-        uses: nixbuild/nix-quick-install-action@v34
+        uses: cachix/install-nix-action@v31
+        # This action will raise `error: opening lock file '/nix/var/nix/db/big-lock': Read-only file system`,
+        # which could be caused by single-user installation.
+        # uses: nixbuild/nix-quick-install-action@v34
 
-      # https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
-      - run: |
-          mkdir -p /etc/apparmor.d
-
-          cat << EOF > /etc/apparmor.d/bwrap
-          abi <abi/4.0>,
-          include <tunables/global>
-          
-          profile bwrap /usr/bin/bwrap flags=(unconfined) {
-            userns,
-          
-            # Site-specific additions and overrides. See local/README for details.
-            include if exists <local/bwrap>
-          }
-          EOF
-
-      - name: Check if Gradle deps.json is up-to-date
+      - name: Check if nix/deps.json is up-to-date
         run: |
-          CI=1 bash .github/workflows/check-nix-gradle-lock.sh
+          bash .github/workflows/check-nix-gradle-lock.sh

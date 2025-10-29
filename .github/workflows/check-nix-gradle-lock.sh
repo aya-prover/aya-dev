@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-# ENV declaring whether this script runs inside CI or not
-CI=${CI:-0}
-
-if [[ $CI -eq 1 ]]; then
+# CI runners should exit immediately on error
+if [[ -n $CI ]]; then
   set -e
 fi
 
@@ -14,7 +12,7 @@ eval $(nix build .#Aya.mitmCache.updateScript --no-link --print-out-paths)
 
 # Check whether nix/deps.json is modified or not
 git diff --exit-code nix/deps.json || \
-  if [[ $CI -eq 1 ]]; then
+  if [[ -n $CI ]]; then
     printf "ERROR: Outdated nix/deps.json detected.
-            Please run .github/workflows/check-nix-gradle.lock.sh and commit changes."
+    Please run .github/workflows/check-nix-gradle.lock.sh and commit changes."
   fi
