@@ -71,19 +71,23 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    */
   protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
-  /** The "flex-flex" case with identical meta ref */
+  /// The "flex-flex" case with identical meta ref.
+  /// Already knows that {@param meta} and {@param rMeta} have the same ref.
   private @Closed @NotNull RelDec<Term> sameMeta(@Closed @NotNull MetaCall meta, @Closed @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
-    if (meta.args().size() != rMeta.args().size()) return RelDec.unsure();    // TODO: unsure?
+    if (meta.args().size() != rMeta.args().size()) return RelDec.no();
+    var ret = Decision.YES;
     for (var i = 0; i < meta.args().size(); i++) {
       var cmpRes = compare(meta.args().get(i), rMeta.args().get(i), null);
-      if (cmpRes == Decision.NO) {    // TODO: what about UNSURE?
-        return RelDec.no();   // TODO: no or unsure?
+      if ((ret = cmpRes.lub(ret)) == Decision.NO) {
+        return RelDec.no();
       }
     }
-    if (type != null) return RelDec.of(type);
-    if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return RelDec.of(ty);   // TODO: is ty always Closed?
-    // Honestly, this is a bit sus
-    return RelDec.yes();
+    if (ret == Decision.YES) {
+      if (type != null) return RelDec.of(type);
+      if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return RelDec.of(ty);
+      // TODO: might need to inst the type
+    }
+    return RelDec.from(ret);
   }
 
   public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
@@ -137,13 +141,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     var weWillSeeThisTime = weWillSee.pop();
     solveMetaForApprox = prev;
 
-    if (result.isYes()) {
+    // Yes -> solve the eqns and the result = lub of all eqn results
+    // Unsure -> try to solve the eqns, if all Yes -> return Unsure
+    // No -> return No
+    if (!result.isNo()) {
       var acc = Decision.YES;
       for (var eqn : weWillSeeThisTime) {
         // Make sure to call `solveEqn` on a fresh Unifier to have the correct `localCtx`
         var solveRes = state.solveEqn(reporter, eqn, true);
-        acc = acc.lub(solveRes);
-        if (acc == Decision.NO) return RelDec.no();   // shortcut TODO what about UNSURE
+        if ((acc = acc.lub(solveRes)) == Decision.NO) return RelDec.no(); // shortcut
       }
 
       return result.lub(acc);
@@ -243,7 +249,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return result;
   }
 
-  /// TODO: approxResult is always a [#compareApprox] call, inline?
   /// @param approxResult must with a proof if YES
   private @NotNull Decision checkApproxResult(@Closed @Nullable Term type, @Closed @NotNull RelDec<Term> approxResult) {
     var state = approxResult.downgrade();
@@ -352,7 +357,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
 
     if (result.isYes()) return RelDec.of(whnf(result.get()));
-    // TODO: also fail on unsure?
+    // Generate failure info when unsure, even though it's unlikely to be used
     fail(lhs, rhs);
     return result;
   }
@@ -514,7 +519,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       @Closed var r = rist.get(i);
       @Closed @Nullable var ty = types == null ? null : types.telescope(i, argsCum);
       ret = ret.lub(compare(l, r, ty));
-      // TODO: not sure if we should continue when UNSURE
+      // If we have Yes, Yes, ..., Yes, Unsure, we shouldn't return unsure immediately
+      // there might be a No later, and in that case we should return No
       if (ret == Decision.NO) return RelDec.no();
       argsCum[i] = l;
     }
