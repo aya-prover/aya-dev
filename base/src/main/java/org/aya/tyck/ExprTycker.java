@@ -613,37 +613,30 @@ public final class ExprTycker extends InstanceResolver implements Unifiable {
     @NotNull ExprTycker tycker
   ) implements AutoCloseable {
     @Override public void close() {
-      // TODO: maybe add a check/report if any derive keep empty (not be modified after subscope)?
-
-      if (parentCtx != null) tycker.setLocalCtx(parentCtx);
+      if (parentCtx != null) {
+        tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
+        tycker.setLocalCtx(parentCtx);
+      }
       if (parentDef != null) tycker.setLocalLet(parentDef);
       if (parentInstanceSet != null) tycker.setInstanceSet(parentInstanceSet);
-      if (parentCtx != null) {
-        // FIXME: always or only when parentCtx is derived?
-        tycker.localCtx().extractLocal().forEach(tycker.state::removeConnection);
-      }
     }
   }
 
-  public @NotNull ExprTycker.SubscopedAll subLocalCtx() {
+  public @NotNull SubscopedAll subLocalCtx() {
     return subscope(true, false, false);
   }
 
-  public @NotNull ExprTycker.SubscopedAll subLocalLet() {
+  public @NotNull SubscopedAll subLocalLet() {
     return subscope(false, true, false);
   }
 
-  public @NotNull ExprTycker.SubscopedAll subInstanceSet() {
+  public @NotNull SubscopedAll subInstanceSet() {
     return subscope(false, false, true);
-  }
-
-  public @NotNull ExprTycker.SubscopedAll subscope() {
-    return subscope(true, true, true);
   }
 
   /// Expectation on the usage: `localCtx` being either unused or inserted a lot,
   /// and `localLet` being inserted only once.
-  public @NotNull ExprTycker.SubscopedAll subscope(
+  public @NotNull SubscopedAll subscope(
     boolean deriveLocalCtx, boolean deriveLocalLet, boolean deriveInstanceSet
   ) {
     return new SubscopedAll(

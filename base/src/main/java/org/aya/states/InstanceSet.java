@@ -4,6 +4,7 @@ package org.aya.states;
 
 import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
@@ -22,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 /// Local instance set.
 /// Mutable during the typechecking of a single declaration.
 ///
-/// @see GlobalInstanceSet
 /// @param root shared in the entire chain of instance sets, so `this.root == this.parent.root`
+/// @see GlobalInstanceSet
 public record InstanceSet(
   @NotNull GlobalInstanceSet root,
   @Override @Nullable InstanceSet parent,
@@ -37,7 +38,10 @@ public record InstanceSet(
     this(root, null);
   }
   @Override public @NotNull InstanceSet self() { return this; }
-  @Override public @NotNull InstanceSet derive() { return new InstanceSet(root, this); }
+  @Override public @NotNull InstanceSet derive() {
+    return new InstanceSet(root, this,
+      new MutableHashMap<>(1), new MapLocalCtx(1, null));
+  }
   @Override public @NotNull Option<ClassCall> getLocal(@NotNull FreeTermLike key) {
     return instanceTypes.getLocal(key.name()).map(it -> (ClassCall) it);
   }
