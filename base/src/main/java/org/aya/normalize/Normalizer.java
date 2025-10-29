@@ -52,7 +52,7 @@ public final class Normalizer implements UnaryOperator<Term> {
    * This function is tail-recursion optimized.
    * To tail-recursively call `apply`, assign `term` with the result and `continue`.
    */
-  @SuppressWarnings("UnnecessaryContinue") @Override public @Closed Term apply(@Closed Term term) {
+  @SuppressWarnings("UnnecessaryContinue") @Override public @Closed @NotNull Term apply(@Closed @NotNull Term term) {
     while (true) {
       var alreadyWHNF = term instanceof StableWHNF ||
         term instanceof FreeTerm ||
@@ -75,13 +75,13 @@ public final class Normalizer implements UnaryOperator<Term> {
         case LamTerm(var lam) -> {
           return new LamTerm(lam.reapply(this));
         }
-        case EqTerm(var A, var a, var b) -> {
+        case EqTerm(@Closed var A, @Closed var a, @Closed var b) -> {
           return new EqTerm(A.reapply(this), apply(a), apply(b));
         }
-        case DepTypeTerm(var kk, var param, var body) -> {
+        case DepTypeTerm(@Closed var kk, @Closed var param, @Closed var body) -> {
           return new DepTypeTerm(kk, apply(param), body.reapply(this));
         }
-        case LetTerm(var definedAs, var body) -> {
+        case LetTerm(@Closed var definedAs, @Closed var body) -> {
           term = body.apply(apply(definedAs));
         }
         // Already full NF mode
@@ -152,7 +152,7 @@ public final class Normalizer implements UnaryOperator<Term> {
           // We can't handle it, try to delegate to FnCall
           switch (rule) {
             case RuleReducer.Fn fn -> {
-              var fnCall = new FnCall(fn.rule().ref(), fn.ulift(), newArgs);
+              @Closed var fnCall = new FnCall(fn.rule().ref(), fn.ulift(), newArgs);
               term = apply(fnCall);
               if (term == fnCall) return rule;
               continue;
@@ -162,7 +162,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
-        case ConCall call -> {
+        case @Closed ConCall call -> {
           if (call.ref().hasEq() && apply(call.conArgs().getLast()) instanceof DimTerm dim) {
             var args = Callable.descent(call.args(), this);
             term = call.head().ref().equality(args, dim == DimTerm.I0);
@@ -191,10 +191,10 @@ public final class Normalizer implements UnaryOperator<Term> {
         case MetaLitTerm meta -> {
           return meta.inline(this);
         }
-        case CoeTerm coe -> {
+        case @Closed CoeTerm coe -> {
           var r = apply(coe.r());
           var s = apply(coe.s());
-          var A = coe.type();
+          @Closed var A = coe.type();
           if (state.isConnected(r, s)) return LamTerm.ID;
 
           var i = new LocalVar("i");
@@ -210,7 +210,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             case DataCall data when data.args().isEmpty() -> {
               return LamTerm.ID;
             }
-            case null, default -> {
+            default -> {
               if (r == coe.r() && s == coe.s()) return coe;
               if (fullNormalize) return new CoeTerm(A, r, s);
               return coe;
@@ -280,12 +280,12 @@ public final class Normalizer implements UnaryOperator<Term> {
   private class Full implements UnaryOperator<Term> {
     { fullNormalize = true; }
 
-    @Override public Term apply(Term term) { return Normalizer.this.apply(term); }
+    @Override public @Closed @NotNull Term apply(@Closed @NotNull Term term) { return Normalizer.this.apply(term); }
   }
 
   /// Do NOT use this in the type checker.
   /// This is for REPL/literate mode and testing.
-  public @NotNull Term normalize(Term term, NormalizeMode mode) {
+  public @Closed @NotNull Term normalize(@Closed @NotNull Term term, NormalizeMode mode) {
     return switch (mode) {
       case HEAD -> apply(term);
       case FULL -> new Full().apply(term);

@@ -105,7 +105,7 @@ public final class ExprTycker extends ScopedTycker {
             var term = new LamTerm(core);
             yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
           }
-          case MetaCall metaCall -> {
+          case @Closed MetaCall metaCall -> {
             @Closed DepTypeTerm pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
             if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
             unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
@@ -396,8 +396,8 @@ public final class ExprTycker extends ScopedTycker {
           }
 
           return switch (whnf(result.type())) {
-            case MetaCall metaCall -> {
-              var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
+            case @Closed MetaCall metaCall -> {
+              @Closed var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
               if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
               unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, sigma, null);
               if (iix == ProjTerm.INDEX_FST) {
