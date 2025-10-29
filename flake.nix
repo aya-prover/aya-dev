@@ -3,8 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # Provide jdk22
-    nixpkgs-24_05.url = "github:NixOS/nixpkgs/release-24.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -12,7 +10,6 @@
     {
       self,
       nixpkgs,
-      nixpkgs-24_05,
       flake-utils,
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -20,12 +17,6 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            # workaround for JDK 22 deprecation in latest nixpkgs
-            (self: super: {
-              jdk22 = nixpkgs-24_05.legacyPackages.${system}.jdk22;
-            })
-          ];
         };
 
         # Parse gradle/libs.versions.toml for required project/jdk versions

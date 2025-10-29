@@ -95,11 +95,24 @@ For Nix users, run `nix develop` to enter a development shell with JDK and Gradl
 or use [direnv](direnv) to automatically activate/deactivate shell in 
 And run `nix build .#aya` to build aya-prover from source.
 
+You may use our binary cache on [Cachix](Cachix) to save time from compilation:
+
+```sh
+# Permanently add to $XDG_CONFIG_HOME/nix/nix.conf
+nix run nixpkgs#cachix -- use aya-prover
+# Temporary usage
+nix <subcommand> \
+  --option extra-substituters "https://aya-prover.cachix.org" \
+  --option extra-trusted-public-keys "aya-prover.cachix.org-1:BNuUD9aNZMDmYISC77aqZfzP4l9XtTHQvYwPhKO+Msg="
+```
+
 > [NOTE for developers]
 > After modifying dependency versions in Gradle,
 > please run `.github/workflows/check-nix-gradle-lock.sh`
-> and commit any changes in `nix/deps.json` in order to
+> and commit changes in `nix/deps.json` in order to
 > synchronize Nix lock for Gradle dependencies.
+
+[Cachix](https://app.cachix.org/)
 
 ## Authoring and running tests
 
