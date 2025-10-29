@@ -66,9 +66,9 @@ public sealed interface RelDec<T> {
   static <T> StrictClaim<T> unsure() { return (StrictClaim<T>) UNSURE_INSTANCE; }
   static <T> StrictClaim<T> no() { return (StrictClaim<T>) NO_INSTANCE; }
 
-  static @NotNull <T> Strict<T> ofNullable(@Nullable T maybeProof) {
+  static @NotNull <T> RelDec<T> yes(@Nullable T maybeProof) {
     if (maybeProof != null) return of(maybeProof);
-    return no();
+    return yes();
   }
 
   @NotNull Decision downgrade();

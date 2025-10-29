@@ -173,10 +173,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
       case Pair(@Closed MemberCall lMem, @Closed MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield RelDec.no();
-        // TODO: type info?
         var result = compare(lMem.of(), rMem.of(), null);
         yield result.lubRelDec(() ->
-          compareMany(lMem.args(), rMem.args(),
+          compareMany(lMem.projArgs(), rMem.projArgs(),
             lMem.ref().signature()
               .inst(ImmutableSeq.of(lMem.of()))
               .lift(Math.min(lMem.ulift(), rMem.ulift()))));

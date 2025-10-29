@@ -86,7 +86,7 @@ public final class Unifier extends TermComparator {
     }
     if (wantToReturn) {
       state.addEqn(createEqn(meta, rhs, returnType));
-      return RelDec.of(returnType);
+      return RelDec.yes(returnType);
     }
 
     // In this case, the solution may not be unique (see #608),
@@ -95,7 +95,7 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> FindUsage.free(tmpRhs, var) > 0)) {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs, returnType));
-        return RelDec.of(returnType);
+        return RelDec.yes(returnType);
       } else {
         reportBadSpine(meta, rhs);
         return RelDec.no();
@@ -115,7 +115,7 @@ public final class Unifier extends TermComparator {
     if (findUsage.metaUsage > 0) {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs, returnType));
-        return RelDec.of(returnType);
+        return RelDec.yes(returnType);
       } else {
         fail(new MetaVarError.BadlyScopedError(meta, rhs, inverted));
         return RelDec.no();
@@ -129,7 +129,7 @@ public final class Unifier extends TermComparator {
     var candidate = rhs.bindTele(inverted.view());
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
-    return RelDec.of(returnType);
+    return RelDec.yes(returnType);
   }
 
   private @Closed @NotNull RelDec<Term>

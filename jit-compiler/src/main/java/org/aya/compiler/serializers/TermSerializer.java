@@ -371,7 +371,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       doSerialize(call.of()),
       getInstance(call.ref()),
       new AstExpr.Iconst(call.ulift()),
-      serializeToImmutableSeq(Term.class, call.args())
+      serializeToImmutableSeq(Term.class, call.projArgs())
     ));
 
     return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
