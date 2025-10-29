@@ -86,7 +86,7 @@ public final class ExprTycker extends ScopedTycker {
         var body = lam.body();
 
         yield switch (whnf(type)) {
-          case DepTypeTerm(var kind, var dom, @Closed Closure cod) when kind == DTKind.Pi -> {
+          case DepTypeTerm(var kind, var dom, var cod) when kind == DTKind.Pi -> {
             // unifyTyReported(param, dom, expr);
             try (var _ = subscope(ref, dom)) {
               addWithTerm(lam, expr.sourcePos(), dom);
@@ -94,7 +94,7 @@ public final class ExprTycker extends ScopedTycker {
               yield new Jdg.Default(new LamTerm(core), type);
             }
           }
-          case @Closed EqTerm eq -> {
+          case EqTerm eq -> {
             Closure.Locns core;
             try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
               addWithTerm(lam, expr.sourcePos(), DimTyTerm.INSTANCE);
@@ -105,7 +105,7 @@ public final class ExprTycker extends ScopedTycker {
             var term = new LamTerm(core);
             yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
           }
-          case @Closed MetaCall metaCall -> {
+          case MetaCall metaCall -> {
             @Closed DepTypeTerm pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
             if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
             unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
@@ -137,12 +137,12 @@ public final class ExprTycker extends ScopedTycker {
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
       case Expr.BinTuple(var lhs, var rhs) -> switch (whnf(type)) {
-        case DepTypeTerm(var kind, @Closed Term lhsT, @Closed Closure rhsTClos) when kind == DTKind.Sigma -> {
+        case DepTypeTerm(var kind, Term lhsT, Closure rhsTClos) when kind == DTKind.Sigma -> {
           @Closed Term lhsX = inherit(lhs, lhsT).wellTyped();
           var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
           yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
         }
-        case @Closed MetaCall meta -> inheritFallbackUnify(meta, synthesize(expr), expr);
+        case MetaCall meta -> inheritFallbackUnify(meta, synthesize(expr), expr);
         default -> fail(expr.data(), BadTypeError.sigmaCon(state, expr, type));
       };
       case Expr.Array arr when arr.arrayBlock().isRight()
@@ -395,7 +395,7 @@ public final class ExprTycker extends ScopedTycker {
           }
 
           return switch (whnf(result.type())) {
-            case @Closed MetaCall metaCall -> {
+            case MetaCall metaCall -> {
               @Closed var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
               if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
               unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, sigma, null);
