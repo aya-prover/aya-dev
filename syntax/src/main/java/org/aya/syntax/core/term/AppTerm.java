@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.function.IndexedFunction;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +22,9 @@ public record AppTerm(@NotNull Term fun, @NotNull Term arg) implements BetaRedex
     return update(f.apply(0, fun), f.apply(0, arg), term -> f.apply(0, term));
   }
 
-  public static @NotNull Term make(@NotNull Term f, @NotNull Term a) { return new AppTerm(f, a).make(); }
-  public static @NotNull Term make(@NotNull Term f, @NotNull SeqView<Term> args) {
-    for (var arg : args) f = make(f, arg);
+  public static @Closed @NotNull Term make(@Closed @NotNull Term f, @Closed @NotNull Term a) { return new AppTerm(f, a).make(); }
+  public static @Closed @NotNull Term make(@Closed @NotNull Term f, @NotNull SeqView<@Closed Term> args) {
+    for (@Closed var arg : args) f = make(f, arg);
     return f;
   }
 

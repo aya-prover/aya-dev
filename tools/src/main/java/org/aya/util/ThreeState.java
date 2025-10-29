@@ -29,6 +29,11 @@ public enum ThreeState {
     return lub(f.get());
   }
 
+  public <T> RelDec.@NotNull Strict<T> lubRelDec(@NotNull Supplier<RelDec.Strict<T>> f) {
+    if (this == NO) return RelDec.no();
+    return f.get().lub(this);
+  }
+
   public boolean atLeast(@NotNull ThreeState other) {
     return other.ordinal() <= this.ordinal();
   }

@@ -19,10 +19,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarError;
 import org.aya.unify.Unifier;
-import org.aya.util.DynamicForest;
-import org.aya.util.Ordering;
-import org.aya.util.Panic;
-import org.aya.util.PrettierOptions;
+import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -89,7 +86,7 @@ public final class TyckState {
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
   @ApiStatus.Internal
-  public boolean solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
+  public @NotNull ThreeState solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;

@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
 import kala.function.IndexedFunction;
 import org.aya.generic.term.SortKind;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ice1000, tsao-chi
  */
+@Closed
 public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, Formation {
   public SortTerm(@NotNull SortKind kind, int lift) {
     this.kind = kind;
